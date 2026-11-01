@@ -33,6 +33,7 @@ for key,entry in v['passed'].items():
         fields=('ns','ca','reord','reownd_us','rack_rtt_us','recovery','out','cwnd','sacked','fack','una','seq_flight','wnd')
         transition=[{'before':{k:prior[k] for k in fields if k in prior},'after':{k:sample[k] for k in fields if k in sample}} for prior,sample in zip(received,received[1:]) if 'reord' in sample and bool(sample['reord'])!=bool(prior['reord'])]
         row['flows'][side]={'order':details['in_order'],'losses':{d:details.get(d) for d in ['forward','reverse']},'first_loss_epochs':len(epochs),'pre_threshold':sum(d<0 for d in deltas),'no_third_sack_while_hole_open':sum(e.get('retransmit_us') is not None and e.get('third_to_retransmit_us') is None for e in epochs),'no_observed_repair':sum(e.get('retransmit_us') is None for e in epochs),'eligible':len(measurable),'over_10ms':sum(d>10000 for d in measurable),'median_ms':median(measurable)/1000 if measurable else None,'reord_samples':sum(bool(s.get('reord')) for s in received) if side=='netstack' else None,'samples':len(received),'first_sample_reordered':bool(received[0].get('reord')) if side=='netstack' else None,'transitions':transition}
+        row['flows'][side]['longest_data_gap'] = details.get('longest_data_gap')
     summary['rows'][key]=row
 for cc in ['reno','cubic']:
     data=[]

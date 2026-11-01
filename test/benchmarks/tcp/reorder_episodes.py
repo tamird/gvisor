@@ -5,6 +5,7 @@ import csv
 import gzip
 import hashlib
 import io
+from itertools import pairwise
 import json
 from pathlib import Path
 import sys
@@ -55,6 +56,45 @@ def matching(source,sink):
             possible.update(candidates[bisect.bisect_left(candidates,a):bisect.bisect_right(candidates,b)])
     return (set(range(len(source)))-possible,exact)
 
+def longest_data_gap(packets, offsets, payload_bytes, observed_ns, samples):
+    """Count retransmissions between advances of the sender's sequence number."""
+    if payload_bytes >= 2**32:
+        return {"unavailable": "trace could span a full sequence space"}
+    if any(a[0] > b[0] for a, b in pairwise(packets)):
+        return {"unavailable": "sender capture times are out of order"}
+    # The capture includes the handshake. Count repeated bytes only where we
+    # have observed every preceding byte, including those sent before sampling.
+    start, stop = observed_ns
+    last_progress = start
+    longest = (0, start, start, 0)
+    retransmissions = 0
+    sent = 0
+    for packet, offset in zip(packets, offsets, strict=True):
+        when = packet[0] * 1000  # Wire timestamps are in microseconds.
+        if when > stop:
+            break
+        if offset > sent:
+            return {"unavailable": "sender capture has an unobserved sequence range"}
+        sequence_end = offset + packet[5]
+        if when >= start:
+            if sequence_end > sent:
+                longest = max(longest, (when - last_progress, last_progress, when, retransmissions))
+                last_progress = when
+                retransmissions = 0
+            else:
+                retransmissions += 1
+        sent = max(sent, sequence_end)
+    duration, begin, end, count = max(longest, (stop - last_progress, last_progress, stop, retransmissions))
+    inside = [s for s in samples if begin <= s["ns"] <= end]
+    return {
+        "duration_ns": duration, "begin_ns": begin, "end_ns": end,
+        "retransmissions": count, "samples": len(inside),
+        "socket_ranges": {
+            k: [min(s[k] for s in inside), max(s[k] for s in inside)]
+            for k in ("cwnd", "out", "wnd", "queued") if inside and k in inside[0]
+        },
+    }
+
 def summary(case,wire,client,server,lane):
     port=wire["client_port"];peer=wire["wan_port"]
     data=lambda rows:[p for p in rows if p[1:3]==(port,peer) and p[5]>0]
@@ -98,6 +138,8 @@ def summary(case,wire,client,server,lane):
     if case.split("/")[-2] == "measured":
         samples=[json.loads(l) for l in contents(prefix(case)+"-"+lane+"-samples.jsonl").splitlines()]
         samples=[r for r in samples if r["port"]==port]
+        bounds = v["passed"][case]["sockets"][lane]["observed_ns"]
+        d["longest_data_gap"] = longest_data_gap(src, seqs, wire["sender_payload_bytes"], bounds, samples)
     if samples and "reownd_us" in samples[0]:
         d["window_us"]=pct([r["reownd_us"] for r in samples])
         d["reordered_samples"]=sum(r["reord"] for r in samples)
