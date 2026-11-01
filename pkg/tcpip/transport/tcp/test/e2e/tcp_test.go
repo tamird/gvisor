@@ -3840,6 +3840,38 @@ func TestUndelay(t *testing.T) {
 	})
 }
 
+func TestRetransmittedGSOSegments(t *testing.T) {
+	const mss = 100
+	clock := faketime.NewManualClock()
+	c := context.NewWithOpts(t, context.Options{
+		EnableV4: true,
+		MTU:      e2e.DefaultMTU,
+		Clock:    clock,
+	})
+	defer c.Cleanup()
+	c.SetGSOEnabled(true)
+	c.CreateConnectedWithRawOptions(context.TestInitialSequenceNumber, 30000, -1, []byte{
+		header.TCPOptionMSS, 4, 0, mss,
+	})
+
+	data := make([]byte, 4*mss)
+	if _, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil {
+		t.Fatalf("Write: %s", err)
+	}
+	c.ReceiveAndCheckPacket(data, 0, len(data))
+	var info tcpip.TCPInfoOption
+	if err := c.EP.GetSockOpt(&info); err != nil {
+		t.Fatalf("GetSockOpt(TCPInfoOption): %s", err)
+	}
+	clock.Advance(info.RTO)
+	c.ReceiveAndCheckPacket(data, 0, mss)
+	c.SendAck(seqnum.Value(context.TestInitialSequenceNumber).Add(1), mss)
+	c.ReceiveAndCheckPacket(data, mss, 2*mss)
+	if got, want := c.Stack().Stats().TCP.Retransmits.Value(), uint64(3); got != want {
+		t.Errorf("retransmitted segments for one MSS and a two-MSS batch = %d, want %d", got, want)
+	}
+}
+
 func TestMSSNotDelayed(t *testing.T) {
 	tests := []struct {
 		name string
