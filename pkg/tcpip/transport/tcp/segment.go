@@ -186,6 +186,12 @@ func (s *segment) merge(oth *segment) {
 // to be called to ensure memory accounting for receive/send buffer
 // queues is done properly.
 func (s *segment) setOwner(ep *Endpoint, qFlags queueFlags) {
+	if s.ep == ep && s.qFlags == qFlags {
+		return
+	}
+	if s.ep != nil && s.qFlags == recvQ {
+		s.ep.updateReceiveMemUsed(-s.segMemSize())
+	}
 	switch qFlags {
 	case recvQ:
 		ep.updateReceiveMemUsed(s.segMemSize())

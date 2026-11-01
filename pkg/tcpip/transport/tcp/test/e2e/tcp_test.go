@@ -6731,7 +6731,101 @@ func TestKeepalive(t *testing.T) {
 	}
 }
 
+func TestReceiveChargeAfterHandshakeData(t *testing.T) {
+	for _, cookies := range []tcpip.TCPAlwaysUseSynCookies{false, true} {
+		t.Run(fmt.Sprintf("cookies=%t", cookies), func(t *testing.T) {
+			c := context.New(t, 16384)
+			defer c.Cleanup()
+			if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &cookies); err != nil {
+				t.Fatalf("SetTransportProtocolOption(TCPAlwaysUseSynCookies): %s", err)
+			}
+			c.Create(-1)
+			listener := c.EP
+			if err := listener.Bind(tcpip.FullAddress{Port: context.StackPort}); err != nil {
+				t.Fatalf("Bind: %s", err)
+			}
+			if err := listener.Listen(2); err != nil {
+				t.Fatalf("Listen: %s", err)
+			}
+			accept := func() tcpip.Endpoint {
+				t.Helper()
+				ep, _, err := listener.Accept(nil)
+				if err != nil {
+					t.Fatalf("Accept: %s", err)
+				}
+				return ep
+			}
+			syn := func(port uint16) context.Headers {
+				irs, iss := startHandshake(t, c, port, bool(cookies))
+				return context.Headers{SrcPort: port, DstPort: context.StackPort, Flags: header.TCPFlagAck, SeqNum: irs + 1, AckNum: iss + 1, RcvWnd: 30000}
+			}
+			first := syn(context.TestPort)
+			next := first
+			if cookies {
+				// This peer's final ACK will arrive on the same listener.
+				next = syn(context.TestPort + 1)
+			}
+			data := bytes.Repeat([]byte{'x'}, 8192)
+			c.SendPacket(data, &first)
+			ack := c.GetPacket()
+			checker.IPv4(t, ack, checker.TCP(checker.DstPort(first.SrcPort), checker.TCPAckNum(uint32(first.SeqNum)+uint32(len(data)))))
+			ack.Release()
+			child := accept()
+			defer child.Close()
+			if got := (&endpointTester{child}).CheckRead(t); !bytes.Equal(got, data) {
+				t.Fatalf("read %d bytes of the handshake payload, want %d", len(got), len(data))
+			}
+			// Without cookies the final ACK is queued twice at the child.
+			// With cookies the listener hands it to the child instead.
+			owner := child
+			if cookies {
+				owner = listener
+			} else {
+				next.SeqNum += seqnum.Value(len(data))
+			}
+			owner.SocketOptions().SetReceiveBufferSize(4096, true)
+			c.SendPacket([]byte{'y'}, &next)
+			if got := owner.Stats().(*tcp.Stats).ReceiveErrors.SegmentQueueDropped.Value(); got != 0 {
+				t.Fatalf("drained handshake payload still causes queue drops: got %d, want 0", got)
+			}
+			// Wait for this peer's data ACK, ignoring window updates.
+			for {
+				packet := c.GetPacket()
+				h := header.TCP(header.IPv4(packet.AsSlice()).Payload())
+				match := h.DestinationPort() == next.SrcPort && h.AckNumber() == uint32(next.SeqNum+1)
+				packet.Release()
+				if match {
+					break
+				}
+			}
+			if cookies {
+				child = accept()
+				defer child.Close()
+			}
+			if got := (&endpointTester{child}).CheckRead(t); string(got) != "y" {
+				t.Fatalf("read after draining handshake data = %q, want y", got)
+			}
+		})
+	}
+}
+
 func executeHandshake(t *testing.T, c *context.Context, srcPort uint16, synCookieInUse bool) (irs, iss seqnum.Value) {
+	t.Helper()
+
+	irs, iss = startHandshake(t, c, srcPort, synCookieInUse)
+	// Send ACK.
+	c.SendPacket(nil, &context.Headers{
+		SrcPort: srcPort,
+		DstPort: context.StackPort,
+		Flags:   header.TCPFlagAck,
+		SeqNum:  irs + 1,
+		AckNum:  iss + 1,
+		RcvWnd:  30000,
+	})
+	return irs, iss
+}
+
+func startHandshake(t *testing.T, c *context.Context, srcPort uint16, synCookieInUse bool) (irs, iss seqnum.Value) {
 	t.Helper()
 
 	// Send a SYN request.
@@ -6773,15 +6867,6 @@ func executeHandshake(t *testing.T, c *context.Context, srcPort uint16, synCooki
 
 	checker.IPv4(t, b, checker.TCP(tcpCheckers...))
 
-	// Send ACK.
-	c.SendPacket(nil, &context.Headers{
-		SrcPort: srcPort,
-		DstPort: context.StackPort,
-		Flags:   header.TCPFlagAck,
-		SeqNum:  irs + 1,
-		AckNum:  iss + 1,
-		RcvWnd:  30000,
-	})
 	return irs, iss
 }
 
