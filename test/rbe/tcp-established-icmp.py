@@ -31,7 +31,7 @@ def observe(path):
     terminal = "--- PASS: TestTCPConnectICMPError" in text
     stale = sorted(set(re.findall(r"STALE_ICMP ack_barrier=true seq_delta=3 stale_poll=(\d+) stale_so=(\d+) live_poll=(\d+) live_so=(\d+) new_data=true", text)))
     nogo = any(e.get("id", {}).get("targetCompleted", {}).get("label") == "//pkg/tcpip/transport/tcp:tcp_nogo" and e.get("completed", {}).get("success") for e in events)
-    ok = stale == [("0", "0", "8", "113")] and nogo and not rc and msg == expected and io == expected_io and mlive == sorted(expected) and ilive == sorted(expected_io) and terminal and len(inv) == len(summaries) == 1 and set(summaries.values()) == {"PASSED"}
+    ok = stale == [("0", "0", "8", "113")] and nogo and not rc and msg == expected and io == expected_io and mlive == sorted(expected) and ilive == sorted(expected_io) and terminal and len(inv) == 1 and summaries == {"//test/packetimpact/tests:tcp_connect_icmp_error_netstack_test": "PASSED", "//pkg/tcpip/transport/tcp:tcp_nogo": "PASSED"}
     return {"verified": ok, "stale": stale, "nogo": nogo, "exit": rc, "invocations": inv, "summaries": summaries, "pending_socket_error": msg, "io_error": io, "continued_msg": mlive, "continued_io": ilive, "terminal": terminal, "fixture": (path / "fixture").read_text().split()[0], "start": (path / "start").read_text().strip(), "finish": (path / "finish").read_text().strip(), "diagnostics": [l[:380] for l in text.splitlines() if ("pending error not returned" in l or l.startswith(("ERROR:", "FAIL:", "--- FAIL:")) or "defined and not used" in l or "undefined:" in l) and not any(w in l.lower() for w in ("token", "credential", "remote_header", "bes_header"))][:8]}
 
 

@@ -1,0 +1,169 @@
+{
+  "verified": true,
+  "source": "6e495e3a3aa3235b3e6595697b723a533de80aa6",
+  "arms": {
+    "netstack": {
+      "verified": true,
+      "stale": [
+        [
+          "0",
+          "0",
+          "8",
+          "113"
+        ]
+      ],
+      "nogo": true,
+      "exit": 0,
+      "invocations": [
+        "65b09a69-05f7-42fa-9222-fc9dd42bb985"
+      ],
+      "summaries": {
+        "//pkg/tcpip/transport/tcp:tcp_nogo": "PASSED",
+        "//test/packetimpact/tests:tcp_connect_icmp_error_netstack_test": "PASSED"
+      },
+      "pending_socket_error": {
+        "4-0-false": [
+          0,
+          113,
+          0,
+          -1,
+          11,
+          0,
+          0,
+          11,
+          0
+        ],
+        "4-0-true": [
+          0,
+          113,
+          0,
+          -1,
+          11,
+          0,
+          0,
+          11,
+          0
+        ],
+        "4-1-false": [
+          8,
+          113,
+          0,
+          -1,
+          11,
+          0,
+          0,
+          11,
+          0
+        ],
+        "4-1-true": [
+          8,
+          113,
+          8,
+          -1,
+          11,
+          0,
+          0,
+          11,
+          0
+        ],
+        "6-0-false": [
+          0,
+          101,
+          0,
+          -1,
+          11,
+          0,
+          0,
+          11,
+          0
+        ],
+        "6-0-true": [
+          0,
+          101,
+          0,
+          -1,
+          11,
+          0,
+          0,
+          11,
+          0
+        ],
+        "6-1-false": [
+          8,
+          101,
+          0,
+          -1,
+          11,
+          0,
+          0,
+          11,
+          0
+        ],
+        "6-1-true": [
+          8,
+          101,
+          8,
+          -1,
+          11,
+          0,
+          0,
+          11,
+          0
+        ]
+      },
+      "io_error": {
+        "4-read": [
+          8,
+          -1,
+          113,
+          0,
+          0
+        ],
+        "4-write": [
+          8,
+          -1,
+          113,
+          0,
+          0
+        ],
+        "6-read": [
+          8,
+          -1,
+          101,
+          0,
+          0
+        ],
+        "6-write": [
+          8,
+          -1,
+          101,
+          0,
+          0
+        ]
+      },
+      "continued_msg": [
+        "4-0-false",
+        "4-0-true",
+        "4-1-false",
+        "4-1-true",
+        "6-0-false",
+        "6-0-true",
+        "6-1-false",
+        "6-1-true"
+      ],
+      "continued_io": [
+        "4-read",
+        "4-write",
+        "6-read",
+        "6-write"
+      ],
+      "terminal": true,
+      "fixture": "1dfa7b0e566611f852add4d3c823c3887c45c1d7275ebb019f084b81eef9fa2b",
+      "start": "2026-11-01T08:52:06Z",
+      "finish": "2026-11-01T08:55:45Z",
+      "diagnostics": []
+    }
+  },
+  "verification": "Replayed the original archive. Both explicit labels emitted PASSED test summaries, including the Nogo target. The initial report incorrectly required only one summary.",
+  "original_artifact": "https://github.com/tamird/gvisor/actions/runs/41290595890/artifacts/13077440855"
+}
