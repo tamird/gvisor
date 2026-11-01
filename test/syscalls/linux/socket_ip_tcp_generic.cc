@@ -25,6 +25,7 @@
 #include <sys/un.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <cerrno>
 #include <climits>
 #include <cstring>
@@ -54,6 +55,82 @@ constexpr int kPositiveTimeoutMs = 60 * 1000;
 
 // The amount of time to wait for something unexpected to not occur.
 constexpr int kNegativeTimeoutMs = 3 * 1000;
+
+TEST_P(TCPSocketPairTest, WriteAfterShrinkingFullReceiveBuffer) {
+  auto sockets = ASSERT_NO_ERRNO_AND_VALUE(NewSocketPair());
+  const int writer = sockets->first_fd();
+  const int peer = sockets->second_fd();
+  constexpr int large = 128 * 1024;
+  constexpr int small = 4096;
+  ASSERT_THAT(setsockopt(writer, SOL_SOCKET, SO_RCVBUF, &large, sizeof(large)),
+              SyscallSucceeds());
+  constexpr int pending = 64 * 1024;
+  std::vector<char> data(pending, 'p');
+  ASSERT_THAT(WriteFd(peer, data.data(), data.size()), SyscallSucceedsWithValue(pending));
+  int unread = 0;
+  const absl::Time deadline = absl::Now() + absl::Seconds(5);
+  while (absl::Now() < deadline) {
+    ASSERT_THAT(ioctl(writer, FIONREAD, &unread), SyscallSucceeds());
+    if (unread == pending) break;
+    absl::SleepFor(absl::Milliseconds(1));
+  }
+  ASSERT_EQ(unread, pending);
+  ASSERT_THAT(setsockopt(writer, SOL_SOCKET, SO_RCVBUF, &small, sizeof(small)),
+              SyscallSucceeds());
+  ASSERT_THAT(setsockopt(writer, SOL_SOCKET, SO_SNDBUF, &small, sizeof(small)),
+              SyscallSucceeds());
+  int rcv = 0, snd = 0;
+  socklen_t len = sizeof(int);
+  ASSERT_THAT(getsockopt(writer, SOL_SOCKET, SO_RCVBUF, &rcv, &len), SyscallSucceeds());
+  ASSERT_THAT(getsockopt(writer, SOL_SOCKET, SO_SNDBUF, &snd, &len), SyscallSucceeds());
+  ASSERT_GT(unread, rcv + snd);
+  // Progress in this direction requires ACKs at writer while all of the
+  // original data remains unread there.
+  const struct linger reset = {1, 0};
+  ASSERT_THAT(setsockopt(writer, SOL_SOCKET, SO_LINGER, &reset, sizeof(reset)),
+              SyscallSucceeds());
+  ASSERT_THAT(setsockopt(peer, SOL_SOCKET, SO_LINGER, &reset, sizeof(reset)),
+              SyscallSucceeds());
+  constexpr int total = 256 * 1024;
+  std::vector<char> out(total), in(total);
+  for (int i = 0; i < total; ++i) out[i] = static_cast<char>(i);
+  int sent = 0, got = 0;
+  const auto end = absl::Now() + absl::Seconds(5);
+  fprintf(stderr, "SHRINK_PHASE transfer unread=%d rcv=%d snd=%d\n", unread, rcv, snd);
+  while (got < total && absl::Now() < end) {
+    if (sent < total) {
+      const auto n = RetryEINTR(send)(writer, out.data() + sent, total - sent, MSG_DONTWAIT);
+      if (n < 0) {
+        ASSERT_THAT(n, SyscallFailsWithErrno(EAGAIN));
+      } else {
+        ASSERT_GT(n, 0);
+        sent += n;
+      }
+    }
+    const auto n = RetryEINTR(recv)(peer, in.data() + got, total - got, MSG_DONTWAIT);
+    if (n < 0) {
+      ASSERT_THAT(n, SyscallFailsWithErrno(EAGAIN));
+    } else {
+      ASSERT_GT(n, 0);
+      got += n;
+    }
+    if (got != total) {
+      struct pollfd fds[] = {{writer, static_cast<short>(sent == total ? 0 : POLLOUT), 0},
+                             {peer, POLLIN, 0}};
+      ASSERT_THAT(RetryEINTR(poll)(fds, 2, 10), SyscallSucceeds());
+    }
+  }
+  fprintf(stderr, "SHRINK_PHASE progress accepted=%d delivered=%d\n", sent, got);
+  ASSERT_EQ(got, total) << "reverse transfer stalled after shrinking: accepted=" << sent;
+  ASSERT_EQ(in, out);
+  ASSERT_THAT(shutdown(writer, SHUT_WR), SyscallSucceeds());
+  struct pollfd eof = {peer, POLLIN, 0};
+  ASSERT_THAT(RetryEINTR(poll)(&eof, 1, 5000), SyscallSucceedsWithValue(1));
+  char byte;
+  ASSERT_THAT(RetryEINTR(recv)(peer, &byte, 1, MSG_DONTWAIT), SyscallSucceedsWithValue(0));
+  ASSERT_THAT(ioctl(writer, FIONREAD, &unread), SyscallSucceeds());
+  EXPECT_EQ(unread, pending);
+}
 
 TEST_P(TCPSocketPairTest, TcpInfoSucceeds) {
   auto sockets = ASSERT_NO_ERRNO_AND_VALUE(NewSocketPair());
