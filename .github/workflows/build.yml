@@ -1,35 +1,67 @@
-name: CI
-
-"on":
+name: Verify source runtime staging
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/buildkite-source-release-staging]
+permissions:
+  contents: read
 jobs:
-  build:
+  install:
+    if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    timeout-minutes: 75
+    env:
+      PRODUCT: e7e0d5319eb716c82471abf477c3acff9d63e9ca
+      BASE: aa767e4c43d011121271551fe24da501a56f729d
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Install the source release using the Buildkite hook
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD^^)" = "$BASE"
+          git diff --exit-code "$PRODUCT" HEAD -- . ':!.github/workflows/build.yml'
+          git checkout --detach "$PRODUCT"
+          python3 - <<'PY'
+          import json, os, subprocess, time
+          from pathlib import Path
+          tmp = Path(os.environ['RUNNER_TEMP'])
+          rec = {'source': os.environ['PRODUCT'], 'base': os.environ['BASE'], 'expected': ['docker-builder', 'six-sidecars', 'default-registration', 'guest'], 'executed': [], 'failures': [], 'skips': [], 'complete': False}
+          try:
+              src = Path('.buildkite/hooks/pre-command').read_text()
+              start = src.index('  export BUILDKITE_STAGED_BINARIES_DIRECTORY=')
+              end = src.index('  if [[ "$HAD_EXPERIMENTAL"', start)
+              env = dict(os.environ, RUNTIME='buildkite_runtime', DOCKER_BUILD='true')
+              env.pop('STAGED_BINARIES', None)
+              env.pop('RUNTIME_ARGS', None)
+              subprocess.run(['bash', '-euc', src[start:end]], env=env, check=True)
+              rec['executed'].append('docker-builder')
+              cfg = json.loads(subprocess.check_output(['sudo','cat','/etc/docker/daemon.json']))
+              rt = cfg['runtimes']['buildkite_runtime']
+              rec['runtimeArgs'] = rt.get('runtimeArgs',[])
+              assert not rec['runtimeArgs']
+              rec['executed'].append('default-registration')
+              binary = Path(rt['path'])
+              rec['sidecars'] = sorted(p.name for p in (binary.parent/'gvisor-bin').iterdir() if os.access(p, os.X_OK))
+              assert set(rec['sidecars']) == {'gvisor_sentry','gvisor-sentry-prewarmer','checkpointgofer','runsc-metric-server','runsc-fd-parking','gvisor-proc-umounter'}, rec['sidecars']
+              rec['executed'].append('six-sidecars')
+              subprocess.run(['sudo','systemctl','restart','docker'],check=True)
+              subprocess.run(['bash','-euo','pipefail','-c','tar -C / -chf - bin/true lib/x86_64-linux-gnu/libc.so.6 lib64/ld-linux-x86-64.so.2 | docker import - hook-probe'],check=True)
+              rec['guestExit'] = subprocess.run(['docker','run','--rm','--network=none','--runtime=buildkite_runtime','hook-probe','/bin/true'],timeout=60).returncode
+              assert rec['guestExit'] == 0
+              rec['executed'].append('guest')
+              rec['complete'] = True
+          except BaseException as ex:
+              rec['failures'].append(str(ex))
+              raise
+          finally:
+              rec['missing'] = sorted(set(rec['expected'])-set(rec['executed']))
+              rec['verifiedAt'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+              (tmp/'source-release.json').write_text(json.dumps(rec,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: source-release
+          path: ${{ runner.temp }}/source-release.json
+          if-no-files-found: warn
