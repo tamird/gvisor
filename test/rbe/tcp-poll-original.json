@@ -1,0 +1,327 @@
+{
+  "expected": [
+    "poll-native",
+    "poll-stock",
+    "poll-candidate",
+    "amd64-tests",
+    "amd64-nogo",
+    "arm64-nogo",
+    "arm64-owners"
+  ],
+  "completed": 7,
+  "verdict_at": "2026-11-01T07:49:12.503983+00:00",
+  "verified": false,
+  "results": {
+    "poll-native": {
+      "source": "7fb0cf64f8d7c099e9388cb61d6f3f87156286a1",
+      "exit": 0,
+      "start": "2026-11-01T06:59:36Z",
+      "end": "2026-11-01T07:03:01Z",
+      "invocation": [
+        "b36a0d94-741f-4541-a56f-4ccd193727af"
+      ],
+      "finish": {
+        "name": "SUCCESS"
+      },
+      "assertions": {
+        "AllInetTests/SimpleTcpSocketTest.NonBlockingConnectRefused/0": {
+          "status": "OK",
+          "examples": []
+        },
+        "AllInetTests/SimpleTcpSocketTest.NonBlockingConnectRefused/1": {
+          "status": "OK",
+          "examples": []
+        },
+        "AllInetTests/SimpleTcpSocketTest.SynRcvdOnListenerShutdown/0": {
+          "status": "OK",
+          "examples": []
+        },
+        "AllInetTests/SimpleTcpSocketTest.SynRcvdOnListenerShutdown/1": {
+          "status": "OK",
+          "examples": []
+        }
+      },
+      "fixture": "4c2e1b4c387b5be37c8310c121c101db0a5eb523328ebb7bdee7d48cbc3b3971",
+      "expected": [
+        "AllInetTests/SimpleTcpSocketTest.NonBlockingConnectRefused/0",
+        "AllInetTests/SimpleTcpSocketTest.NonBlockingConnectRefused/1",
+        "AllInetTests/SimpleTcpSocketTest.SynRcvdOnListenerShutdown/0",
+        "AllInetTests/SimpleTcpSocketTest.SynRcvdOnListenerShutdown/1"
+      ],
+      "missing": [],
+      "cases": {
+        "OK": 4
+      },
+      "skips": [],
+      "targets": {
+        "//test/syscalls:tcp_socket_test_native": "PASSED"
+      },
+      "verified": true,
+      "diagnostics": []
+    },
+    "poll-stock": {
+      "source": "aa767e4c43d011121271551fe24da501a56f729d",
+      "exit": 3,
+      "start": "2026-11-01T07:03:01Z",
+      "end": "2026-11-01T07:04:34Z",
+      "invocation": [
+        "db998569-bfa4-4ad6-a550-e245b720623c"
+      ],
+      "finish": {
+        "name": "TESTS_FAILED",
+        "code": 3
+      },
+      "assertions": {
+        "AllInetTests/SimpleTcpSocketTest.NonBlockingConnectRefused/0": {
+          "status": "FAIL",
+          "examples": [
+            "test/syscalls/linux/tcp_socket.cc:1840\nExpected equality of these values:\n  poll_fd.revents & 0x008\n    Which is: 8\n  0\n"
+          ]
+        },
+        "AllInetTests/SimpleTcpSocketTest.NonBlockingConnectRefused/1": {
+          "status": "FAIL",
+          "examples": [
+            "test/syscalls/linux/tcp_socket.cc:1840\nExpected equality of these values:\n  poll_fd.revents & 0x008\n    Which is: 8\n  0\n"
+          ]
+        },
+        "AllInetTests/SimpleTcpSocketTest.SynRcvdOnListenerShutdown/0": {
+          "status": "OK",
+          "examples": []
+        },
+        "AllInetTests/SimpleTcpSocketTest.SynRcvdOnListenerShutdown/1": {
+          "status": "OK",
+          "examples": []
+        }
+      },
+      "fixture": "4c2e1b4c387b5be37c8310c121c101db0a5eb523328ebb7bdee7d48cbc3b3971",
+      "expected": [
+        "AllInetTests/SimpleTcpSocketTest.NonBlockingConnectRefused/0",
+        "AllInetTests/SimpleTcpSocketTest.NonBlockingConnectRefused/1",
+        "AllInetTests/SimpleTcpSocketTest.SynRcvdOnListenerShutdown/0",
+        "AllInetTests/SimpleTcpSocketTest.SynRcvdOnListenerShutdown/1"
+      ],
+      "missing": [],
+      "cases": {
+        "FAIL": 2,
+        "OK": 2
+      },
+      "skips": [],
+      "targets": {
+        "//test/syscalls:tcp_socket_test_runsc_ptrace": "FAILED"
+      },
+      "verified": false,
+      "diagnostics": [
+        "FAIL: //test/syscalls:tcp_socket_test_runsc_ptrace (Exit 1) (see /root/.cache/bazel/_bazel_root/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/bazel-out/k8-fastbuild/testlogs/test/syscalls/tcp_socket_test_runsc_ptrace/test.log)"
+      ]
+    },
+    "poll-candidate": {
+      "source": "7fb0cf64f8d7c099e9388cb61d6f3f87156286a1",
+      "exit": 0,
+      "start": "2026-11-01T07:04:34Z",
+      "end": "2026-11-01T07:04:43Z",
+      "invocation": [
+        "931eb686-64e4-4073-aaa2-c775280da3c6"
+      ],
+      "finish": {
+        "name": "SUCCESS"
+      },
+      "assertions": {
+        "AllInetTests/SimpleTcpSocketTest.NonBlockingConnectRefused/0": {
+          "status": "OK",
+          "examples": []
+        },
+        "AllInetTests/SimpleTcpSocketTest.NonBlockingConnectRefused/1": {
+          "status": "OK",
+          "examples": []
+        },
+        "AllInetTests/SimpleTcpSocketTest.SynRcvdOnListenerShutdown/0": {
+          "status": "OK",
+          "examples": []
+        },
+        "AllInetTests/SimpleTcpSocketTest.SynRcvdOnListenerShutdown/1": {
+          "status": "OK",
+          "examples": []
+        }
+      },
+      "fixture": "4c2e1b4c387b5be37c8310c121c101db0a5eb523328ebb7bdee7d48cbc3b3971",
+      "expected": [
+        "AllInetTests/SimpleTcpSocketTest.NonBlockingConnectRefused/0",
+        "AllInetTests/SimpleTcpSocketTest.NonBlockingConnectRefused/1",
+        "AllInetTests/SimpleTcpSocketTest.SynRcvdOnListenerShutdown/0",
+        "AllInetTests/SimpleTcpSocketTest.SynRcvdOnListenerShutdown/1"
+      ],
+      "missing": [],
+      "cases": {
+        "OK": 4
+      },
+      "skips": [],
+      "targets": {
+        "//test/syscalls:tcp_socket_test_runsc_ptrace": "PASSED"
+      },
+      "verified": true,
+      "diagnostics": []
+    },
+    "amd64-tests": {
+      "source": "7fb0cf64f8d7c099e9388cb61d6f3f87156286a1",
+      "exit": 0,
+      "start": "2026-11-01T07:04:43Z",
+      "end": "2026-11-01T07:07:22Z",
+      "invocation": [
+        "66cd2f03-1dd6-42a4-80c3-45fa792e42ee"
+      ],
+      "finish": {
+        "name": "SUCCESS"
+      },
+      "failures": {},
+      "missing": [],
+      "owner_xml": {
+        "pkg_tcpip_transport_tcp_test_e2e_tcp_sack_test.xml": 0,
+        "pkg_tcpip_transport_tcp_test_e2e_tcp_timestamp_test.xml": 0,
+        "pkg_tcpip_transport_tcp_test_e2e_forwarder_test.xml": 0,
+        "pkg_tcpip_transport_tcp_test_e2e_rcv_test.xml": 0,
+        "pkg_tcpip_transport_tcp_test_e2e_tcp_test.xml": 0,
+        "pkg_tcpip_transport_tcp_test_e2e_tcp_acktiming_test.xml": 0,
+        "pkg_tcpip_transport_tcp_test_e2e_tcp_noracedetector_test.xml": 0,
+        "pkg_tcpip_transport_tcp_tcp_test.xml": 0,
+        "pkg_tcpip_transport_tcp_test_e2e_tcp_rack_test.xml": 0,
+        "pkg_tcpip_transport_tcp_test_e2e_dual_stack_test.xml": 0,
+        "pkg_tcpip_transport_tcp_test_e2e_sack_scoreboard_test.xml": 0
+      },
+      "owners": [
+        "//pkg/tcpip/transport/tcp/test/e2e:dual_stack_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:forwarder_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:rcv_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:sack_scoreboard_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_acktiming_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_noracedetector_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_timestamp_test",
+        "//pkg/tcpip/transport/tcp:tcp_test"
+      ],
+      "cases": {},
+      "skips": [],
+      "targets": {
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_acktiming_test": "PASSED",
+        "//pkg/tcpip/transport/tcp/test/e2e:rcv_test": "PASSED",
+        "//pkg/tcpip/transport/tcp/test/e2e:sack_scoreboard_test": "PASSED",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_timestamp_test": "PASSED",
+        "//pkg/tcpip/transport/tcp:tcp_test": "PASSED",
+        "//pkg/tcpip/transport/tcp/test/e2e:forwarder_test": "PASSED",
+        "//pkg/tcpip/transport/tcp/test/e2e:dual_stack_test": "PASSED",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_noracedetector_test": "PASSED",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test": "PASSED",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test": "PASSED",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_test": "PASSED"
+      },
+      "verified": true,
+      "diagnostics": []
+    },
+    "amd64-nogo": {
+      "source": "7fb0cf64f8d7c099e9388cb61d6f3f87156286a1",
+      "exit": 0,
+      "start": "2026-11-01T07:07:22Z",
+      "end": "2026-11-01T07:09:12Z",
+      "invocation": [
+        "595eb50b-659b-44af-98cc-a6e96b334282"
+      ],
+      "finish": {
+        "name": "SUCCESS"
+      },
+      "failures": {},
+      "missing": [],
+      "owner_xml": {
+        "pkg_tcpip_transport_tcp_test_e2e_tcp_test_nogo.xml": 1,
+        "pkg_tcpip_transport_tcp_tcp_nogo.xml": 1
+      },
+      "owners": [
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_test_nogo",
+        "//pkg/tcpip/transport/tcp:tcp_nogo"
+      ],
+      "cases": {
+        "OK": 2
+      },
+      "skips": [],
+      "targets": {
+        "//pkg/tcpip/transport/tcp:tcp_nogo": "PASSED",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_test_nogo": "PASSED"
+      },
+      "verified": true,
+      "diagnostics": []
+    },
+    "arm64-nogo": {
+      "source": "7fb0cf64f8d7c099e9388cb61d6f3f87156286a1",
+      "exit": 124,
+      "start": "2026-11-01T07:09:12Z",
+      "end": "2026-11-01T07:29:12Z",
+      "invocation": [
+        "682879f2-96f2-4282-a900-d6ce980b2e83"
+      ],
+      "finish": null,
+      "failures": {},
+      "missing": [
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_test_nogo"
+      ],
+      "owner_xml": {
+        "pkg_tcpip_transport_tcp_test_e2e_tcp_test_nogo.xml": 1,
+        "pkg_tcpip_transport_tcp_tcp_nogo.xml": 1
+      },
+      "owners": [
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_test_nogo",
+        "//pkg/tcpip/transport/tcp:tcp_nogo"
+      ],
+      "cases": {
+        "OK": 2
+      },
+      "skips": [],
+      "targets": {
+        "//pkg/tcpip/transport/tcp:tcp_nogo": "FAILED"
+      },
+      "verified": false,
+      "diagnostics": [
+        "FAIL: //pkg/tcpip/transport/tcp:tcp_nogo (Exit 126) (see /root/.cache/bazel/_bazel_root/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/bazel-out/aarch64-fastbuild/testlogs/pkg/tcpip/transport/tcp/tcp_nogo/test.log)"
+      ]
+    },
+    "arm64-owners": {
+      "source": "7fb0cf64f8d7c099e9388cb61d6f3f87156286a1",
+      "exit": 124,
+      "start": "2026-11-01T07:29:12Z",
+      "end": "2026-11-01T07:49:12Z",
+      "invocation": [],
+      "finish": null,
+      "build_only": true,
+      "missing": [
+        "//pkg/tcpip/transport/tcp/test/e2e:dual_stack_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:forwarder_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:rcv_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:sack_scoreboard_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_acktiming_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_noracedetector_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_timestamp_test",
+        "//pkg/tcpip/transport/tcp:tcp_test"
+      ],
+      "owners": [
+        "//pkg/tcpip/transport/tcp/test/e2e:dual_stack_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:forwarder_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:rcv_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:sack_scoreboard_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_acktiming_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_noracedetector_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_test",
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_timestamp_test",
+        "//pkg/tcpip/transport/tcp:tcp_test"
+      ],
+      "cases": {},
+      "skips": [],
+      "targets": {},
+      "verified": false,
+      "diagnostics": []
+    }
+  }
+}

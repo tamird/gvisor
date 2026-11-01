@@ -1,0 +1,89 @@
+"""Read only selected outcomes, named Go cases and bounded remote CAS receipts."""
+from collections import Counter
+from hashlib import sha256
+import json
+import os
+from pathlib import Path
+import re
+import sys
+from urllib.request import Request, urlopen
+
+out = Path(os.environ["RUNNER_TEMP"]) / "tcp-evidence"
+source = "7fb0cf64f8d7c099e9388cb61d6f3f87156286a1"
+iid = "66cd2f03-1dd6-42a4-80c3-45fa792e42ee"
+owners = ["//pkg/tcpip/transport/tcp:tcp_test"] + ["//pkg/tcpip/transport/tcp/test/e2e:" + t for t in "tcp_test dual_stack_test forwarder_test rcv_test sack_scoreboard_test tcp_timestamp_test tcp_rack_test tcp_acktiming_test tcp_sack_test tcp_noracedetector_test".split()]
+lint = ["//pkg/tcpip/transport/tcp:tcp_nogo", "//pkg/tcpip/transport/tcp/test/e2e:tcp_test_nogo"]
+
+
+def go_counts(text):
+    ended = re.findall(r"(?m)^\s*--- (PASS|FAIL|SKIP): (\S+)", text)
+    return {"outcomes": dict(Counter(k for k, _ in ended)),
+            "skips": sorted(n for k, n in ended if k == "SKIP"),
+            "failures": sorted(n for k, n in ended if k == "FAIL")}
+
+
+def rpc(method, req, raw=False):
+    url = "https://app.buildbuddy.io/api/v1/" + method
+    request = Request(url, data=json.dumps(req).encode(), headers={"Content-Type": "application/json", "x-buildbuddy-api-key": os.environ['BUILDBUDDY_API_KEY']})
+    with urlopen(request, timeout=24) as resp:
+        data = resp.read(16*1024*1024+1)
+    if len(data)>16*1024*1024:
+        raise ValueError('oversized response')
+    return data if raw else json.loads(data)
+
+
+def recover_original():
+    rows = {}
+    for label in owners:
+        try:
+            acts = rpc("GetAction", {"selector": {"invocation_id": iid, "target_label": label}}).get("action",[])
+            uris = {f['uri'] for a in acts for f in a.get('file', []) if f.get('name','').split('/')[-1]=='test.log' and f.get('uri')}
+            if len(uris) != 1:
+                rows[label] = {"status":"no unique original test log", "distinct":len(uris)}
+                continue
+            uri, = uris
+            ident = re.search(r'/(?:blobs|compressed-blobs/zstd)/([0-9a-f]{64})/(\d+)$', uri)
+            if not ident: raise ValueError('unsupported digest')
+            data=rpc('GetFile',{'uri':uri},raw=True)
+            if int(ident[2]) != len(data) or ident[1] != sha256(data).hexdigest():
+                raise ValueError('CAS digest mismatch')
+            text=data.decode(errors='replace')
+            rows[label]={'sha256':ident[1], 'bytes':len(data), 'go_pass_footer': bool(re.search(r'(?m)^PASS\s*$',text)), **go_counts(text)}
+        except Exception as e:
+            rows[label]={'error_type':type(e).__name__}
+    (out/'original-go-logs.json').write_text(json.dumps({'invocation':iid, 'targets':rows},indent=2)+'\n')
+
+
+def inspect(name, labels):
+    d=out/name
+    if not (d/'exit').is_file(): return {'verified':False,'missing':labels}
+    actual={}
+    inv=[]
+    for line in (d/'bep').open() if (d/'bep').is_file() else []:
+        try: e=json.loads(line)
+        except ValueError: continue
+        if 'started' in e: inv.append(e['started']['uuid'])
+        if 'testSummary' in e: actual[e['id']['testSummary']['label']]=e['testSummary']['overallStatus']
+    rows={}
+    for label in labels:
+        log=Path('bazel-testlogs')/label.removeprefix('//').replace(':','/')/'test.log'
+        if not log.exists(): continue
+        text=log.read_text(errors='replace')
+        rows[label]={'digest':sha256(log.read_bytes()).hexdigest(),**go_counts(text)}
+    rc=int((d/'exit').read_text())
+    ok=rc==0 and set(actual)==set(labels) and all(v=='PASSED' for v in actual.values())
+    if name=='owners': ok &= len(rows)==len(labels) and all(r['outcomes'].get('PASS',0)>0 and not r['failures'] for r in rows.values())
+    detail=[s[:300] for s in (d/'log').read_text(errors='replace').splitlines() if s.startswith(('ERROR:','FAIL:','/bin/bash:')) and not any(x in s.lower() for x in ['token','header','credential','api-key'])][:6]
+    return {'verified':ok,'source':source,'host_arch':os.uname().machine,'exit':rc,'start':(d/'start').read_text().strip(),'end':(d/'end').read_text().strip(),'invocations':inv,'target_status':actual,'missing':sorted(set(labels)-actual.keys()), 'individual_go_results':rows, 'first_diagnostics':detail}
+
+
+if sys.argv[1]=='original':
+    recover_original()
+elif sys.argv[1]=='labels':
+    print('\n'.join(owners if sys.argv[2]=='owners' else lint))
+elif sys.argv[1]=='inspect':
+    n=sys.argv[2];r=inspect(n,owners if n=='owners' else lint)
+    (out/(n+'.json')).write_text(json.dumps(r,indent=2)+'\n')
+elif sys.argv[1]=='finish':
+    ok=all(json.loads((out/(n+'.json')).read_text())['verified'] for n in ['owners','analysis'])
+    raise SystemExit(not ok)

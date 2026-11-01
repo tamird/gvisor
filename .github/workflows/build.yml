@@ -1,73 +1,70 @@
-name: Measure established TCP ICMP error delivery
+name: Recover native ARM64 TCP poll qualification
 on:
   push:
     branches: [qualification/tcp-poll-consumed-error]
 permissions:
   contents: read
 jobs:
-  syscalls:
-    if: github.repository == 'tamird/gvisor'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 85
+  arm:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 95
     env:
-      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      PACKET: 1dd6ebc0115dcf69806034f43e757ac92ad76612
-      CANDIDATE: 7fb0cf64f8d7c099e9388cb61d6f3f87156286a1
-      STOCK: aa767e4c43d011121271551fe24da501a56f729d
+      SOURCE: 7fb0cf64f8d7c099e9388cb61d6f3f87156286a1
     steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 5, persist-credentials: false}
-    - name: Prepare the pinned compiler coordinator and RBE workers
-      env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: |
-        set -euo pipefail
-        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
-        echo '{"verified":false,"reason":"qualification incomplete"}' > "$RUNNER_TEMP/records/verdict.json"
-        cp test/rbe/tcp-established-icmp.py "$RUNNER_TEMP/verify-tcp.py"
-        cp test/rbe/tcp-established-icmp.txt "$RUNNER_TEMP/fixture.txt"
-        git fetch -q --depth=1 https://github.com/tamird/gvisor.git "$STOCK" "$PACKET"
-        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
-        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
-        umask 077
-        {
-          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
-          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-        } > "$RUNNER_TEMP/tcp.bazelrc"
-        unset BUILDBUDDY_API_KEY
-        docker pull --platform=linux/amd64 "$GNU"
-        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --sysctl net.ipv6.conf.lo.disable_ipv6=0 -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
-        docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
-        docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
-        docker exec tcp-compiler python3 -c 'import socket; s=socket.socket(socket.AF_INET6); s.bind(("::1",0)); print(s.getsockname())' > "$RUNNER_TEMP/records/native-ipv6"
-    - name: Observe one live socket with and without IP_RECVERR on each system
-      run: |
-        set -euo pipefail
-        git checkout --quiet --detach "$STOCK"
-        test "$(git rev-parse HEAD)" = "$STOCK"
-        # These two fork-only runner files provision the same privileged
-        # packet guest that has run this exact native/netstack test pair.
-        git restore --source="$PACKET" -- test/packetimpact/runner/defs.bzl test/packetimpact/runner/main.go
-        python3 - <<'PYFIX'
-        from pathlib import Path
-        import os
-        p=Path('test/packetimpact/runner/main.go');s=p.read_text();assert s.count('^TestListenerReusesReceiveBuffer$')==1;p.write_text(s.replace('^TestListenerReusesReceiveBuffer$', '^TestEstablishedICMPPoll$'))
-        p=Path('test/packetimpact/tests/tcp_connect_icmp_error_test.go');s=p.read_text();assert s.count('import (')==1;p.write_text(s.replace('import (','import (\n\t"context"')+(Path(os.environ['RUNNER_TEMP'])/'fixture.txt').read_text())
-        PYFIX
-        for arm in native netstack; do
-          d=$RUNNER_TEMP/records/$arm; mkdir -p "$d"
-          target="//test/packetimpact/tests:tcp_connect_icmp_error_${arm}_test"
-          sha256sum test/packetimpact/tests/tcp_connect_icmp_error_test.go > "$d/fixture"
-          date -u +%FT%TZ > "$d/start"; rc=0
-          timeout 2100 docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --platforms=//tools/bazeldefs:linux_amd64 --jobs=32 --build_tag_filters= --test_tag_filters= --strategy=TestRunner=remote --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel --test_output=all --test_timeout=300 --test_sharding_strategy=disabled --build_event_json_file="$d/bep" "$target" > "$d/bazel.log" 2>&1 || rc=$?
-          printf '%s\n' "$rc" > "$d/exit"; date -u +%FT%TZ > "$d/finish"
-          python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records" progress
-        done
-        python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records"
-    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      if: always()
-      with:
-        name: established-icmp-wire
-        path: ${{ runner.temp }}/records/verdict.json
-        if-no-files-found: error
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Replay the original target and socket results without repeating them
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/tcp-evidence"
+          cp test/rbe/tcp-poll-recovery.py "$RUNNER_TEMP/receipt.py"
+          python3 test/rbe/tcp-poll-result.py replay test/rbe/tcp-poll-original.json "$RUNNER_TEMP/tcp-evidence/socket-controls.json"
+          python3 "$RUNNER_TEMP/receipt.py" original
+      - name: Supply native GNU compiler tools and the cross tools the split analyzer selects
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = aarch64
+          git fetch --quiet --depth=1 https://github.com/tamird/gvisor.git "$SOURCE"
+          git checkout --quiet --detach "$SOURCE"
+          test "$(git rev-parse HEAD)" = "$SOURCE"
+          sudo apt-get -qq update
+          sudo apt-get -yq install --no-install-recommends g++ g++-x86-64-linux-gnu
+          x86_64-linux-gnu-gcc -dumpfullversion
+          aarch64-linux-gnu-gcc -dumpfullversion
+          command -v bazelisk
+      - name: Execute TCP owners and analyzers on the native ARM64 runner
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          rc="$RUNNER_TEMP/arm.bazelrc"
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          {
+            printf '%s\n' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --remote_cache_compression'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          for name in owners analysis; do
+            d="$RUNNER_TEMP/tcp-evidence/$name"; mkdir -p "$d"
+            mapfile -t labels < <(python3 "$RUNNER_TEMP/receipt.py" labels "$name")
+            args=(); if [[ "$name" == owners ]]; then args+=(--test_arg=-test.v); fi
+            date -u +%FT%TZ > "$d/start"; code=0
+            timeout -k 25s 34m bazelisk --bazelrc="$rc" test --config=aarch64 --platforms=//tools/bazeldefs:linux_arm64 --spawn_strategy=local --strategy=TestRunner=local --jobs=4 --nocache_test_results --test_output=errors --test_sharding_strategy=disabled --keep_going --build_event_json_file="$d/bep" "${args[@]}" "${labels[@]}" > "$d/log" 2>&1 || code=$?
+            printf '%s\n' "$code" > "$d/exit"; date -u +%FT%TZ > "$d/end"
+            python3 "$RUNNER_TEMP/receipt.py" inspect "$name"
+          done
+          python3 "$RUNNER_TEMP/receipt.py" finish
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: terminal-poll-recovery
+          path: ${{ runner.temp }}/tcp-evidence/*.json
+          if-no-files-found: error
