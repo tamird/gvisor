@@ -526,6 +526,9 @@ func TestEnumerateAndFetchQemuLicenseSource(t *testing.T) {
 		sha      = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 		commit   = "0123456789abcdef0123456789abcdef01234567"
 		source   = "https://raw.githubusercontent.com/qemu/qemu/" + commit + "/COPYING"
+		gpl2Text = `This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the Free
+Software Foundation, version 2.`
 	)
 
 	dir := t.TempDir()
@@ -627,7 +630,7 @@ func TestEnumerateAndFetchQemuLicenseSource(t *testing.T) {
 			}
 			return &http.Response{
 				StatusCode: http.StatusOK,
-				Body:       io.NopCloser(strings.NewReader(bsdText)),
+				Body:       io.NopCloser(strings.NewReader(gpl2Text)),
 			}, nil
 		}),
 	}
@@ -638,8 +641,8 @@ func TestEnumerateAndFetchQemuLicenseSource(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(got) != 1 || got[0].LicenseSource != source || !slices.Equal(got[0].License, Licenses{"BSD-3-Clause"}) {
-		t.Fatalf("readEntries after Fetch = %+v, want preserved LicenseSource and BSD-3-Clause", got)
+	if len(got) != 1 || got[0].LicenseSource != source || !slices.Equal(got[0].License, Licenses{"GPL-2.0-only"}) {
+		t.Fatalf("readEntries after Fetch = %+v, want preserved LicenseSource and GPL-2.0-only", got)
 	}
 
 	// Failing notice classification fails Fetch while keeping the explicit entry on disk.
