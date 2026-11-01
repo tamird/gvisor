@@ -1,4 +1,5 @@
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//tools:defs.bzl", "cc_binary", "go_binary")
 
 package(
@@ -54,4 +55,12 @@ sh_binary(
         ":tcp_proxy",
     ],
     visibility = ["//:sandbox"],
+)
+
+# Fork-only diagnostic on the privileged native Linux benchmark coordinator.
+sh_test(
+    name = "queue_slot_replay",
+    srcs = ["queue_slot_replay.py"],
+    data = ["queue_slot_fixture.json"],
+    tags = ["local", "manual"],
 )

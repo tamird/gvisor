@@ -1,37 +1,36 @@
-name: Measure TCP repair accounting against a competing Linux sender
+name: Replay one TCP queue slot on native Linux
 on:
   push:
-    branches: [qualification/tcp-shared-accepted-repair]
+    branches: [qualification/tcp-queue-slot-replay]
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-shared-accepted-repair'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-queue-slot-replay'
     runs-on: ubuntu-24.04
-    timeout-minutes: 70
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: 30
           persist-credentials: false
-      - name: Build proxy and run matched transfers
-        run: bash test/benchmarks/tcp/current-shared-driver.sh
-      - name: Reconcile expected trials, receiver intervals and socket samples
-        if: always()
-        run: python3 test/benchmarks/tcp/current-shared-report.py
-      - name: Match each observed packet and recovery interval across the WAN
-        if: always()
-        run: python3 test/benchmarks/tcp/reorder_episodes.py "$RUNNER_TEMP/tcp-public" "$RUNNER_TEMP/tcp-public/episodes.json"
-      - name: Keep original exits, captures and paired decision criteria
-        if: always()
+      - name: Observe netem queue admissions and peer delivery
         run: |
+          set -eu
           mkdir -p "$RUNNER_TEMP/tcp-public"
-          cp test/benchmarks/tcp/competition-protocol.md "$RUNNER_TEMP/tcp-public/"
-          python3 test/benchmarks/tcp/competition-summary.py
-      - name: Publish allowlisted evidence
+          sudo -n modprobe sch_netem
+          command -v tc
+          uname -r > "$RUNNER_TEMP/tcp-public/kernel.txt"
+          cp test/benchmarks/tcp/queue_slot_fixture.json "$RUNNER_TEMP/tcp-public/"
+          bazel test --jobs=4 --nocache_test_results --test_output=errors --strategy=TestRunner=local --test_env=QUEUE_REPLAY_OUTPUT="$RUNNER_TEMP/tcp-public" //test/benchmarks/tcp:queue_slot_replay
+      - name: Retain the test output on an unsuccessful run
+        if: failure()
+        run: |
+          p=bazel-testlogs/test/benchmarks/tcp/queue_slot_replay/test.log
+          if test -f "$p"; then cp "$p" "$RUNNER_TEMP/tcp-public/test.log"; fi
+      - name: Keep all timing controls and the queue verdict
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: tcp-shared-accepted-repair
+          name: tcp-queue-slot-replay
           path: ${{ runner.temp }}/tcp-public/
           if-no-files-found: error
