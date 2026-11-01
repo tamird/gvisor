@@ -239,9 +239,7 @@ type Queue struct {
 //
 // +checklocksexclude:q.mu
 func (q *Queue) EventRegister(e *Entry) {
-	q.mu.Lock()
 	q.list.PushBack(e)
-	q.mu.Unlock()
 }
 
 // EventUnregister removes the given waiter entry from the wait queue.
