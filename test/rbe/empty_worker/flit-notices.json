@@ -1,0 +1,90 @@
+{
+  "source": "feab64aff25e950f5f3095c73cc5f6176efedddc",
+  "original": "https://github.com/tamird/gvisor/actions/runs/41262687910/artifacts/13065459539",
+  "original_sha256": "434e9d46e0bafe1c7aee8c7f98de6a1d6850424f81cd1781ea17f0b403ccef2d",
+  "original_status": "red: three paths, two distinct upstream notices",
+  "original_gates": {
+    "registered-runtime": {
+      "args": [
+        "bazel",
+        "--bazelrc=/home/runner/work/_temp/sidecar.bazelrc",
+        "aquery",
+        "--config=x86_64",
+        "--lockfile_mode=off",
+        "--//sandboxexec/sandbox/python:dist_version=2026.10.29.2",
+        "mnemonic(\"SandboxExecDist\", //sandboxexec/sandbox/python:dist)"
+      ],
+      "started": "2026-11-01T01:50:00.180691+00:00",
+      "native_exit": 0,
+      "finished": "2026-11-01T01:50:43.032808+00:00",
+      "invocations": [
+        "ba24445d-823d-4d98-ac22-b9ee7b1b338a"
+      ],
+      "diagnostics": [
+        "  Inputs: [external/+_repo_rules3+sandboxexec_flit_core/file/flit_core-3.12.0-py3-none-any.whl, external/rules_python++python+python_3_11_x86_64-unknown-linux-gnu/bin/2to3, external/rules_python++python+python_3_11_x86_64-unknown-linux-gnu/bin/2to3-3.11, external/rules_python++python+python_3_11_x86_64-unknown-linux-gnu/bin/idle3, external/rules_python++python+python_3_11_x86_64-unknown-linux-gnu/bin/idle3.11, external/rules_python++python+python_3_11_x86_64-unknown-linux-gnu/bin/pip, external/rules_python++python+python_3_11_x86_64-unknown-linux-gnu/bin/pip3, external/rules_python++python+python_3_11_x86_64-unknown-linux-gnu/bin/pip3.11, external/rules_python++python+python_3_11_x86_64-unkn"
+      ],
+      "interpreter": "Inputs: [external/+_repo_rules3+sandboxexec_flit_core/file/flit_core-3.12.0-py3-none-any.whl, external/rules_python++python+python_3_11_x86_64-unknown-linux-gnu/bin/2to3, external/rules_python++python+python_3_11_x86_64-unknown-linux-gnu/bin/2to3-3.11, external/rules_python++python+python_3_11_x86_64-unknown-linux-gnu/bin/idle3, external/rules_python++python+python_3_11_x86_64-unknown-linux-gnu/bin/idle3.11, external/rules_python++python+python_3",
+      "verdict": "PASS"
+    },
+    "ordinary-artifacts": {
+      "args": [
+        "bazel",
+        "--bazelrc=/home/runner/work/_temp/sidecar.bazelrc",
+        "build",
+        "--config=x86_64",
+        "--lockfile_mode=off",
+        "--//sandboxexec/sandbox/python:dist_version=2026.10.29.2",
+        "//sandboxexec/sandbox/python:dist"
+      ],
+      "started": "2026-11-01T01:50:43.053777+00:00",
+      "native_exit": 0,
+      "finished": "2026-11-01T01:50:46.168859+00:00",
+      "invocations": [
+        "e06c45e7-e038-4bdc-b2a7-ac3a0c2653e2"
+      ],
+      "diagnostics": [],
+      "files": {
+        "gvisor-2026.10.29.2.tar.gz": "9cdaec448c1329d4ada80a078cd9ab9dae5483c2ae85f1117dd925c9118999a5",
+        "gvisor-2026.10.29.2-py3-none-any.whl": "1cf05c1d0af71953ef9626a15d803e27a4bbf59025dde4a2ff309606890c3378"
+      },
+      "verdict": "PASS"
+    },
+    "canonical-license": {
+      "args": [
+        "make",
+        "DOCKER_BUILD=false",
+        "DOCKER_CLI_PATH=/bin/false",
+        "STARTUP_OPTIONS=--bazelrc=/home/runner/work/_temp/sidecar.bazelrc",
+        "run",
+        "TARGETS=//tools/licensecheck/main:licensecheck",
+        "ARGS=--mode=verify"
+      ],
+      "started": "2026-11-01T01:50:46.169790+00:00",
+      "native_exit": 0,
+      "finished": "2026-11-01T01:52:45.322662+00:00",
+      "invocations": [
+        "7d4d34ea-6459-48a0-8228-7ab3c2eeaa3d",
+        "2c480b51-0f28-436d-8fe7-e3d5fd6fe451"
+      ],
+      "diagnostics": [],
+      "verdict": "PASS"
+    }
+  },
+  "wheel": "https://files.pythonhosted.org/packages/f2/65/b6ba90634c984a4fcc02c7e3afe523fef500c4980fec67cc27536ee50acf/flit_core-3.12.0-py3-none-any.whl",
+  "wheel_sha256": "e7a0304069ea895172e3c7bb703292e992c5d1555dd1233ab7b5621b5b69e62c",
+  "notice_paths": {
+    "flit_core-3.12.0.dist-info/licenses/LICENSE": "35b4f1dec512e617077fd6980dbb43ef8c2887adc5d0185edb4c04da175dd816",
+    "flit_core-3.12.0.dist-info/licenses/flit_core/vendor/tomli-1.2.3.dist-info/LICENSE": "b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe",
+    "flit_core/vendor/tomli-1.2.3.dist-info/LICENSE": "b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe"
+  },
+  "distinct_texts": {
+    "b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe": "MIT",
+    "35b4f1dec512e617077fd6980dbb43ef8c2887adc5d0185edb4c04da175dd816": "BSD-3-Clause"
+  },
+  "scratch_builds": "https://github.com/tamird/gvisor/actions/runs/41262122405/artifacts/13065846593",
+  "make_staging": "https://github.com/tamird/gvisor/actions/runs/41262372819/artifacts/13065956385",
+  "comparison_and_installs": "https://github.com/tamird/gvisor/actions/runs/41183200050/artifacts/13035474364",
+  "original_bazel_completed": "2026-11-01T01:52:45.322662+00:00",
+  "receipt_reconciled": "2026-11-01T01:53:57.226363+00:00",
+  "verdict": "All three Bazel gates passed. The catalog records both distinct notices."
+}
