@@ -285,16 +285,21 @@ func main() {
 	emitRegister := func(name string) {
 		initCalls = append(initCalls, fmt.Sprintf("%sRegister((*%s)(nil))", statePrefix, name))
 	}
-	// emitRegisterNoHooks registers a struct type without beforeSave and
-	// afterLoad methods, which the state package may save without calling
-	// its StateSave and StateLoad methods if all its fields are plain data.
-	emitRegisterNoHooks := func(name string) {
-		initCalls = append(initCalls, fmt.Sprintf("%sRegisterNoHooks((*%s)(nil))", statePrefix, name))
-	}
-	// emitRegisterStruct registers a struct type with generated StateSave
+	// emitRegisterGeneratedStruct registers a struct type with generated StateSave
 	// and StateLoad methods.
-	emitRegisterStruct := func(name string) {
-		initCalls = append(initCalls, fmt.Sprintf("%sRegisterStruct((*%s)(nil))", statePrefix, name))
+	emitRegisterGeneratedStruct := func(name string, beforeSave, afterLoad bool) {
+		var hooks []string
+		if beforeSave {
+			hooks = append(hooks, statePrefix+"BeforeSaveHook")
+		}
+		if afterLoad {
+			hooks = append(hooks, statePrefix+"AfterLoadHook")
+		}
+		expr := "0"
+		if len(hooks) != 0 {
+			expr = strings.Join(hooks, " | ")
+		}
+		initCalls = append(initCalls, fmt.Sprintf("%sRegisterGeneratedStruct((*%s)(nil), %s)", statePrefix, name, expr))
 	}
 	emitRegisterIdent := func(name, base string) {
 		initCalls = append(initCalls, fmt.Sprintf("%sRegisterIdent((*%s)(nil), (*%s)(nil))", statePrefix, name, base))
@@ -613,10 +618,8 @@ func main() {
 
 					// Add to our registration.
 					switch {
-					case generateSaverLoader && !hasBeforeSave && !hasAfterLoad:
-						emitRegisterNoHooks(ts.Name.Name)
 					case generateSaverLoader:
-						emitRegisterStruct(ts.Name.Name)
+						emitRegisterGeneratedStruct(ts.Name.Name, hasBeforeSave, hasAfterLoad)
 					default:
 						emitRegister(ts.Name.Name)
 					}

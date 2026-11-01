@@ -276,6 +276,7 @@ func (ds *graphDecodeState) readObjects(root unsafe.Pointer, rootType *typeInfo)
 	ds.objs = slices.Grow(ds.objs[:0], n)[:n]
 	ds.ods = slices.Grow(ds.ods[:0], n)[:n]
 	var totalBytes uint64
+	var loadHooks int
 	for i := range ds.objs {
 		o := &ds.objs[i]
 		ds.ods[i] = graphObjectDecodeState{cbHead: -1, cbTail: -1, waitHead: -1, waitTail: -1}
@@ -306,6 +307,9 @@ func (ds *graphDecodeState) readObjects(root unsafe.Pointer, rootType *typeInfo)
 				o.ti = rootType
 				o.size = o.ti.size
 				o.base = root
+				if !o.inexact && o.ti.hasLoadHook {
+					loadHooks++
+				}
 				continue
 			}
 			o.ti = ds.typeAt(d.uvarint())
@@ -343,6 +347,15 @@ func (ds *graphDecodeState) readObjects(root unsafe.Pointer, rootType *typeInfo)
 		default:
 			Failf("invalid object kind %d", o.kind)
 		}
+		if o.kind == objKindValue && !o.inexact && o.ti.hasLoadHook {
+			loadHooks++
+		}
+	}
+	if !ds.noCallbacks {
+		// Reserve at most one callback per validated object row, even when its
+		// type has many inline hooks. Array capacities and map entry counts do
+		// not contribute.
+		ds.cbs = slices.Grow(ds.cbs, loadHooks)
 	}
 }
 

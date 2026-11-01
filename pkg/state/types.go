@@ -296,8 +296,13 @@ var globalTypeDatabase = map[string]reflect.Type{}
 // reverseTypeDatabase holds immutable metadata indexed by the original type.
 var reverseTypeDatabase = map[reflect.Type]wire.Type{}
 
-// noHooksTypes contains types registered with RegisterNoHooks.
-var noHooksTypes = map[reflect.Type]bool{}
+type structRegistration struct {
+	noHooks   bool
+	generated bool
+	afterLoad bool
+}
+
+var registeredStructs = map[reflect.Type]structRegistration{}
 
 // identBases maps +stateify identtype struct types to their base struct types.
 var identBases = map[reflect.Type]reflect.Type{}
@@ -306,7 +311,7 @@ func isNoHooks(t reflect.Type) bool {
 	for base, ok := identBases[t]; ok; base, ok = identBases[base] {
 		t = base
 	}
-	return noHooksTypes[t]
+	return registeredStructs[t].noHooks
 }
 
 // binaryTypes maps types registered with registerBinary to their names.
@@ -318,7 +323,7 @@ var binaryTypes = map[reflect.Type]string{}
 func Release() {
 	globalTypeDatabase = nil
 	reverseTypeDatabase = nil
-	noHooksTypes = nil
+	registeredStructs = nil
 	identBases = nil
 	binaryTypes = nil
 	typeInfosMu.Lock()
@@ -376,7 +381,7 @@ type StructType interface {
 //
 // This must be called on init and only done once.
 func RegisterStruct(t StructType) {
-	registerStruct(t, false)
+	registerStruct(t, structRegistration{})
 }
 
 // RegisterNoHooks registers a struct type whose StateSave and StateLoad
@@ -386,7 +391,28 @@ func RegisterStruct(t StructType) {
 //
 // This must be called on init and only done once.
 func RegisterNoHooks(t StructType) {
-	registerStruct(t, true)
+	registerStruct(t, structRegistration{noHooks: true})
+}
+
+// StructHooks identifies user hooks called by generated state methods.
+type StructHooks uint8
+
+const (
+	// BeforeSaveHook indicates that StateSave invokes beforeSave.
+	BeforeSaveHook StructHooks = 1 << iota
+	// AfterLoadHook indicates that StateLoad schedules StateAfterLoad.
+	AfterLoadHook
+)
+
+// RegisterGeneratedStruct registers a struct with stateify-generated methods.
+// StateLoad must load each saved field once and call AfterLoadTo once if hooks
+// includes AfterLoadHook. Promoted methods do not add hooks. This lets Load
+// reserve space for hooks before decoding the fields. Zero hooks has the same
+// meaning as RegisterNoHooks.
+//
+// This must be called on init and only done once.
+func RegisterGeneratedStruct(t StructType, hooks StructHooks) {
+	registerStruct(t, structRegistration{noHooks: hooks == 0, generated: true, afterLoad: hooks&AfterLoadHook != 0})
 }
 
 // RegisterIdent registers a struct type defined over base (+stateify identtype),
@@ -400,17 +426,17 @@ func RegisterIdent(t, base StructType) {
 		Failf("RegisterIdent must be called on pointers")
 	}
 	identBases[typ.Elem()] = baseTyp.Elem()
-	registerStruct(t, false)
+	registerStruct(t, structRegistration{})
 }
 
-func registerStruct(t StructType, noHooks bool) {
+func registerStruct(t StructType, registration structRegistration) {
 	typ := reflect.TypeOf(t)
 	if typ == nil || typ.Kind() != reflect.Ptr {
 		Failf("RegisterStruct must be called on pointers")
 	}
 	typ = typ.Elem()
-	if noHooks {
-		noHooksTypes[typ] = true
+	if registration != (structRegistration{}) {
+		registeredStructs[typ] = registration
 	}
 	if eagerTypeInfo {
 		Register(t)

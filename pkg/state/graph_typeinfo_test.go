@@ -471,10 +471,10 @@ func TestUnregisteredZeroFieldSaverLoader(t *testing.T) {
 func TestSchemaFingerprintCompleteness(t *testing.T) {
 	withTempReg := func(name string, typ reflect.Type, noHooks bool, fn func()) {
 		prev, hadPrev := globalTypeDatabase[name]
-		prevNH := noHooksTypes[typ]
+		prevRegistration, hadRegistration := registeredStructs[typ]
 		globalTypeDatabase[name] = typ
 		if noHooks {
-			noHooksTypes[typ] = true
+			registeredStructs[typ] = structRegistration{noHooks: true}
 		}
 		fingerprint.Store(0)
 		defer func() {
@@ -483,8 +483,10 @@ func TestSchemaFingerprintCompleteness(t *testing.T) {
 			} else {
 				delete(globalTypeDatabase, name)
 			}
-			if !prevNH {
-				delete(noHooksTypes, typ)
+			if hadRegistration {
+				registeredStructs[typ] = prevRegistration
+			} else {
+				delete(registeredStructs, typ)
 			}
 			fingerprint.Store(0)
 		}()
@@ -693,5 +695,133 @@ func TestGraphIndirectInexactTypesRoundTrip(t *testing.T) {
 	}
 	if loaded.zeroArrPtrPtr == nil || *loaded.zeroArrPtrPtr == nil {
 		t.Errorf("loaded.zeroArrPtrPtr = %v, want non-nil", loaded.zeroArrPtrPtr)
+	}
+}
+
+type reservationHook struct {
+	runs int `state:"nosave"`
+}
+
+func (*reservationHook) StateTypeName() string { return "state.reservationHook" }
+func (*reservationHook) StateFields() []string { return nil }
+func (*reservationHook) StateSave(Sink)        {}
+func (h *reservationHook) StateLoad(_ context.Context, s Source) {
+	s.AfterLoadTo(h)
+}
+func (h *reservationHook) StateAfterLoad(context.Context) { h.runs++ }
+
+type reservationParent struct {
+	reservationHook
+	omitted   reservationHook `state:"nosave"`
+	converted reservationHook `state:".(int)"`
+	array     [2]reservationHook
+}
+
+// The promoted method is not a hook scheduled by reservationParent.StateLoad.
+var _ AfterLoader = (*reservationParent)(nil)
+
+func (*reservationParent) StateTypeName() string { return "state.reservationParent" }
+func (*reservationParent) StateFields() []string {
+	return []string{"reservationHook", "array", "converted"}
+}
+func (p *reservationParent) StateSave(s Sink) {
+	s.Save(0, &p.reservationHook)
+	s.Save(1, &p.array)
+	s.SaveValue(2, p.converted.runs)
+}
+func (p *reservationParent) StateLoad(_ context.Context, s Source) {
+	s.Load(0, &p.reservationHook)
+	s.Load(1, &p.array)
+	s.LoadValueTo(2, (*int)(nil), p)
+}
+func (p *reservationParent) StateLoadValue(_ context.Context, slot int, value any) {
+	if slot != 2 {
+		panic("unexpected slot")
+	}
+	p.converted.runs = value.(int)
+}
+
+type reservationAlias reservationParent
+
+func (*reservationAlias) StateTypeName() string { return "state.reservationAlias" }
+func (*reservationAlias) StateFields() []string { return (*reservationParent)(nil).StateFields() }
+func (p *reservationAlias) StateSave(s Sink)    { (*reservationParent)(p).StateSave(s) }
+func (p *reservationAlias) StateLoad(ctx context.Context, s Source) {
+	(*reservationParent)(p).StateLoad(ctx, s)
+}
+
+type reservationCustom reservationParent
+
+func (*reservationCustom) StateTypeName() string { return "state.reservationCustom" }
+func (*reservationCustom) StateFields() []string { return (*reservationParent)(nil).StateFields() }
+func (p *reservationCustom) StateSave(s Sink)    { (*reservationParent)(p).StateSave(s) }
+func (p *reservationCustom) StateLoad(ctx context.Context, s Source) {
+	(*reservationParent)(p).StateLoad(ctx, s)
+}
+
+func init() {
+	RegisterGeneratedStruct((*reservationHook)(nil), AfterLoadHook)
+	RegisterGeneratedStruct((*reservationParent)(nil), 0)
+	RegisterIdent((*reservationAlias)(nil), (*reservationParent)(nil))
+	RegisterStruct((*reservationCustom)(nil))
+}
+
+func TestGeneratedHookReservation(t *testing.T) {
+	for _, tc := range []struct {
+		typ  reflect.Type
+		want bool
+	}{
+		{reflect.TypeFor[reservationHook](), true},
+		{reflect.TypeFor[reservationParent](), true},
+		{reflect.TypeFor[reservationAlias](), true},
+		{reflect.TypeFor[reservationCustom](), false},
+	} {
+		if got, want := typeInfoOf(tc.typ).hasLoadHook, tc.want; got != want {
+			t.Errorf("%v guaranteed hook = %t, want %t", tc.typ, got, want)
+		}
+	}
+
+	for _, noCallbacks := range []bool{false, true} {
+		t.Run(fmt.Sprintf("noCallbacks=%t", noCallbacks), func(t *testing.T) {
+			saved := reservationParent{converted: reservationHook{runs: 23}}
+			var loaded reservationParent
+			ds := &graphDecodeState{ctx: t.Context(), noCallbacks: noCallbacks}
+			defer ds.release()
+			ds.in.b = encodeRawGraph(t, &saved)
+			// Skip the magic and fingerprint to inspect the reservation between
+			// reading the object table and decoding its payload.
+			ds.in.uint32()
+			ds.in.uint64()
+			ds.readTypes()
+			ds.readObjects(unsafe.Pointer(&loaded), typeInfoOf(reflect.TypeFor[reservationParent]()))
+			want := 1
+			if noCallbacks {
+				want = 0
+			}
+			if got := cap(ds.cbs); got < want || (noCallbacks && got != 0) {
+				t.Fatalf("reserved capacity = %d, want at least %d", got, want)
+			}
+			ds.readTargets()
+			ds.decodeObjects()
+			want = 3 // The inline hook and two array elements; no outer hook.
+			if noCallbacks {
+				want = 0
+			}
+			if got := len(ds.cbs); got != want {
+				t.Fatalf("queued hooks = %d, want %d", got, want)
+			}
+			ds.runCallbacks()
+			if !noCallbacks {
+				if got, want := loaded.reservationHook.runs, 1; got != want {
+					t.Errorf("inline hook calls = %d, want %d", got, want)
+				}
+				if got, want := loaded.converted.runs, saved.converted.runs; got != want {
+					t.Errorf("converted value = %d, want %d", got, want)
+				}
+				if got, want := loaded.omitted.runs, 0; got != want {
+					t.Errorf("omitted hook calls = %d, want %d", got, want)
+				}
+			}
+		})
 	}
 }
