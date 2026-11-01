@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T16:43:48.546844+00:00",
+    "updatedAt": "2026-11-01T16:59:39.784864+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42345,6 +42345,40 @@
         {
           "label": "Upstream directory-watching fix",
           "url": "https://github.com/bazelbuild/bazel/issues/30883"
+        }
+      ]
+    },
+    {
+      "id": "pr:16793",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16793,
+      "ref": "hostinet-shutdown-rd-recv",
+      "head": "c16f3c5e55d1740154b7ddfa0300ef0dff0202ce",
+      "title": "Review hostinet read shutdown across TCP reconnect",
+      "url": "https://github.com/google/gvisor/pull/16793",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "summary": "After a failed SHUT_RD, AF_UNSPEC and reconnect, Linux waited for the receive timeout. The proposed change returned EOF on both IPv4 and IPv6, then received the next byte.",
+      "updatedAt": "2026-11-01T16:59:39.784864+00:00",
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "c16f3c5e55d1740154b7ddfa0300ef0dff0202ce",
+        "url": "https://github.com/google/gvisor/pull/16793",
+        "title": "Post the syscall finding on hostinet reconnect",
+        "summary": "After a failed SHUT_RD, AF_UNSPEC and reconnect, Linux waited for the receive timeout. The proposed change returned EOF on both IPv4 and IPv6, then received the next byte.",
+        "body": "Can a second TCP read that still gets EAGAIN go through the normal wait/deadline path? `recvClosed` stays set across `connect(AF_UNSPEC)`. I called `shutdown(SHUT_RD)` on a fresh TCP socket (ENOTCONN), disconnected with AF_UNSPEC, then connected to a listener. With the peer open and no data queued, Linux waited for the 150 ms receive timeout and returned EAGAIN; this change returned EOF immediately. Both subsequently received the peer’s byte. Without the disconnect, Linux and this change both correctly returned EOF.\n\nOn TCP, the second host read already returns zero for a real read shutdown. That leaves the synthetic EOF for datagram sockets, without clearing the flag on every connect. [Shared syscall test](https://github.com/tamird/gvisor/blob/5f7d378a3/test/syscalls/linux/tcp_socket.cc#L230-L277) · [native IPv4/IPv6 and hostinet IPv4](https://github.com/tamird/gvisor/actions/runs/41327870699/artifacts/13092287012) · [hostinet IPv6](https://github.com/tamird/gvisor/actions/runs/41328486242/artifacts/13091944899).",
+        "requestedAt": "2026-11-01T16:59:39.784864+00:00"
+      },
+      "evidence": [
+        {
+          "label": "Native Linux, stock and proposed head",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41327870699/artifacts/13092287012"
+        },
+        {
+          "label": "IPv6 hostinet results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41328486242/artifacts/13091944899"
         }
       ]
     }
