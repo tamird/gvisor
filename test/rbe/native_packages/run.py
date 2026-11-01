@@ -226,11 +226,17 @@ def main():
     if original_tests([dict(actual, executable="external/bazel_tools/tools/test/test-setup.sh")], targets):
         raise ValueError("The verifier accepts a shell TestRunner as native")
     write(out / "wrapper-control.json", {"status": "PASS", "provenance": control["provenance"]})
-    subprocess.run(["git", "checkout", "--detach", SOURCE], check=True, stdout=subprocess.DEVNULL)
-    if git("rev-parse", "HEAD").decode().strip() != SOURCE or git("diff", "HEAD", "--").strip():
-        raise ValueError("Product source does not match the qualified commit")
-    binary = tmp / "bazel-candidate"
-    binary_sha256 = hashlib.sha256(binary.read_bytes()).hexdigest()
+    try:
+        subprocess.run(["git", "checkout", "--detach", SOURCE], check=True, stdout=subprocess.DEVNULL)
+        if git("rev-parse", "HEAD").decode().strip() != SOURCE or git("diff", "HEAD", "--").strip():
+            raise ValueError("Product source does not match the qualified commit")
+        binary = tmp / "bazel-candidate"
+        binary_sha256 = hashlib.sha256(binary.read_bytes()).hexdigest()
+    except (subprocess.CalledProcessError, OSError, ValueError) as err:
+        write(out / "summary.json", {"source": SOURCE, "status": "INCOMPLETE",
+                                    "phase": "source_and_supplier_inputs", "executed_targets": 0,
+                                    "collection_error": str(err), "verified_at": now()})
+        return 1
     bazel = [str(binary), "--bazelrc=" + str(tmp / "sidecar.bazelrc")]
     rows = []
     for arch in ("amd64",):
@@ -250,7 +256,7 @@ def main():
             rows.append(row)
     status = "FAIL" if any(row["status"] == "FAIL" for row in rows) else "PASS" if all(row["status"] == "PASS" for row in rows) else "INCOMPLETE"
     summary = {"source": SOURCE, "status": status, "rows": rows, "verified_at": now(),
-               "native_bazel": {"supplier_source": "b70c334832ca2a1109a8b5e8cdc632b411174b6f",
+               "native_bazel": {"supplier_source": "c2f5f79dce24877679cede14b85666b7ca65c6de",
                                 "member": "bazel-candidate",
                                 "sha256": binary_sha256,
                                 "identity": "Canonical supplier build; static embedded ELF verified in supplier.json",
