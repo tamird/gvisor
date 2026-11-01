@@ -567,105 +567,138 @@ func TestForwardingWithLinkResolutionFailure(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			clock := faketime.NewManualClock()
+		for _, flow := range []string{"ordinary", "aggregate"} {
+			t.Run(test.name+"/"+flow, func(t *testing.T) {
+				if flow == "aggregate" {
+					test.mtu = 1280
+				}
+				clock := faketime.NewManualClock()
 
-			s := stack.New(stack.Options{
-				NetworkProtocols:   test.networkProtocolFactory,
-				TransportProtocols: []stack.TransportProtocolFactory{test.transportProtocol},
-				Clock:              clock,
-			})
-			defer s.Destroy()
+				s := stack.New(stack.Options{
+					NetworkProtocols:   test.networkProtocolFactory,
+					TransportProtocols: []stack.TransportProtocolFactory{test.transportProtocol},
+					Clock:              clock,
+				})
+				defer s.Destroy()
 
-			// Set up endpoint through which we will receive packets.
-			incomingEndpoint := channel.New(1, test.mtu, "")
-			if err := s.CreateNIC(incomingNICID, incomingEndpoint); err != nil {
-				t.Fatalf("CreateNIC(%d, _): %s", incomingNICID, err)
-			}
-			incomingProtoAddr := tcpip.ProtocolAddress{
-				Protocol:          test.networkProtocolNumber,
-				AddressWithPrefix: test.incomingAddr,
-			}
-			if err := s.AddProtocolAddress(incomingNICID, incomingProtoAddr, stack.AddressProperties{}); err != nil {
-				t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", incomingNICID, incomingProtoAddr, err)
-			}
-
-			// Set up endpoint through which we will attempt to forward packets.
-			outgoingEndpoint := channel.New(1, test.mtu, outgoingLinkAddr)
-			outgoingEndpoint.LinkEPCapabilities |= stack.CapabilityResolutionRequired
-			if err := s.CreateNIC(outgoingNICID, outgoingEndpoint); err != nil {
-				t.Fatalf("CreateNIC(%d, _): %s", outgoingNICID, err)
-			}
-			outgoingProtoAddr := tcpip.ProtocolAddress{
-				Protocol:          test.networkProtocolNumber,
-				AddressWithPrefix: test.outgoingAddr,
-			}
-			if err := s.AddProtocolAddress(outgoingNICID, outgoingProtoAddr, stack.AddressProperties{}); err != nil {
-				t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", outgoingNICID, outgoingProtoAddr, err)
-			}
-
-			s.SetRouteTable([]tcpip.Route{
-				{
-					Destination: test.incomingAddr.Subnet(),
-					NIC:         incomingNICID,
-				},
-				{
-					Destination: test.outgoingAddr.Subnet(),
-					NIC:         outgoingNICID,
-				},
-			})
-
-			if err := s.SetForwardingDefaultAndAllNICs(test.networkProtocolNumber, true); err != nil {
-				t.Fatalf("SetForwardingDefaultAndAllNICs(%d, true): %s", test.networkProtocolNumber, err)
-			}
-
-			test.rx(incomingEndpoint, test.sourceAddr, test.destAddr)
-
-			nudConfigs, err := s.NUDConfigurations(outgoingNICID, test.networkProtocolNumber)
-			if err != nil {
-				t.Fatalf("s.NUDConfigurations(%d, %d): %s", outgoingNICID, test.networkProtocolNumber, err)
-			}
-			// Trigger the first packet on the endpoint.
-			clock.RunImmediatelyScheduledJobs()
-
-			for i := 0; i < int(nudConfigs.MaxMulticastProbes); i++ {
-				request := outgoingEndpoint.Read()
-				if request == nil {
-					t.Fatal("expected ARP packet through outgoing NIC")
+				// Set up endpoint through which we will receive packets.
+				incomingEndpoint := channel.New(1, test.mtu, "")
+				if err := s.CreateNIC(incomingNICID, incomingEndpoint); err != nil {
+					t.Fatalf("CreateNIC(%d, _): %s", incomingNICID, err)
+				}
+				incomingProtoAddr := tcpip.ProtocolAddress{
+					Protocol:          test.networkProtocolNumber,
+					AddressWithPrefix: test.incomingAddr,
+				}
+				if err := s.AddProtocolAddress(incomingNICID, incomingProtoAddr, stack.AddressProperties{}); err != nil {
+					t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", incomingNICID, incomingProtoAddr, err)
 				}
 
-				test.linkResolutionRequestChecker(t, request, test.outgoingAddr.Address, test.destAddr)
-				request.DecRef()
+				// Set up endpoint through which we will attempt to forward packets.
+				outgoingEndpoint := channel.New(1, test.mtu, outgoingLinkAddr)
+				outgoingEndpoint.LinkEPCapabilities |= stack.CapabilityResolutionRequired
+				if err := s.CreateNIC(outgoingNICID, outgoingEndpoint); err != nil {
+					t.Fatalf("CreateNIC(%d, _): %s", outgoingNICID, err)
+				}
+				outgoingProtoAddr := tcpip.ProtocolAddress{
+					Protocol:          test.networkProtocolNumber,
+					AddressWithPrefix: test.outgoingAddr,
+				}
+				if err := s.AddProtocolAddress(outgoingNICID, outgoingProtoAddr, stack.AddressProperties{}); err != nil {
+					t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", outgoingNICID, outgoingProtoAddr, err)
+				}
 
-				// Advance the clock the span of one request timeout.
-				clock.Advance(nudConfigs.RetransmitTimer)
-			}
+				s.SetRouteTable([]tcpip.Route{
+					{
+						Destination: test.incomingAddr.Subnet(),
+						NIC:         incomingNICID,
+					},
+					{
+						Destination: test.outgoingAddr.Subnet(),
+						NIC:         outgoingNICID,
+					},
+				})
 
-			// Next, we make a blocking read to retrieve the error packet. This is
-			// necessary because outgoing packets are dequeued asynchronously when
-			// link resolution fails, and this dequeue is what triggers the ICMP
-			// error.
-			reply := incomingEndpoint.Read()
-			if reply == nil {
-				t.Fatal("expected ICMP packet through incoming NIC")
-			}
+				if err := s.SetForwardingDefaultAndAllNICs(test.networkProtocolNumber, true); err != nil {
+					t.Fatalf("SetForwardingDefaultAndAllNICs(%d, true): %s", test.networkProtocolNumber, err)
+				}
 
-			payload := stack.PayloadSince(reply.NetworkHeader())
-			defer payload.Release()
-			test.icmpReplyChecker(t, payload, test.incomingAddr.Address, test.sourceAddr)
-			reply.DecRef()
+				if flow == "ordinary" {
+					test.rx(incomingEndpoint, test.sourceAddr, test.destAddr)
+				} else {
+					const payloadSize = 2000
+					ipSize := header.IPv4MinimumSize
+					gsoType := stack.GSOTCPv4
+					if test.networkProtocolNumber == header.IPv6ProtocolNumber {
+						ipSize = header.IPv6MinimumSize
+						gsoType = stack.GSOTCPv6
+					}
+					data := make([]byte, ipSize+header.TCPMinimumSize+payloadSize)
+					tcpH := header.TCP(data[ipSize:])
+					tcpH.Encode(&header.TCPFields{SrcPort: 14011, DstPort: 1111, SeqNum: 1000, AckNum: 1, Flags: header.TCPFlagAck, DataOffset: header.TCPMinimumSize})
+					xsum := header.PseudoHeaderChecksum(header.TCPProtocolNumber, test.sourceAddr, test.destAddr, uint16(len(tcpH)))
+					tcpH.SetChecksum(^tcpH.CalculateChecksum(xsum))
+					if gsoType == stack.GSOTCPv4 {
+						h := header.IPv4(data)
+						h.Encode(&header.IPv4Fields{TotalLength: uint16(len(data)), ID: 123, Flags: header.IPv4FlagDontFragment, TTL: ttl, Protocol: uint8(header.TCPProtocolNumber), SrcAddr: test.sourceAddr, DstAddr: test.destAddr})
+						h.SetChecksum(^h.CalculateChecksum())
+					} else {
+						h := header.IPv6(data)
+						h.Encode(&header.IPv6Fields{PayloadLength: uint16(len(tcpH)), TransportProtocol: header.TCPProtocolNumber, HopLimit: ttl, SrcAddr: test.sourceAddr, DstAddr: test.destAddr})
+					}
+					pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: buffer.MakeWithData(data)})
+					pkt.NetworkProtocolNumber = test.networkProtocolNumber
+					pkt.RXGSO = stack.GSO{Type: gsoType, MSS: 1000}
+					incomingEndpoint.InjectInbound(test.networkProtocolNumber, pkt)
+					pkt.DecRef()
+				}
 
-			// Since link resolution failed, we don't expect the packet to be
-			// forwarded.
-			forwardedPacket := outgoingEndpoint.Read()
-			if forwardedPacket != nil {
-				t.Fatalf("expected no ICMP Echo packet through outgoing NIC, instead found: %#v", forwardedPacket)
-			}
+				nudConfigs, err := s.NUDConfigurations(outgoingNICID, test.networkProtocolNumber)
+				if err != nil {
+					t.Fatalf("s.NUDConfigurations(%d, %d): %s", outgoingNICID, test.networkProtocolNumber, err)
+				}
+				// Trigger the first packet on the endpoint.
+				clock.RunImmediatelyScheduledJobs()
 
-			if got, want := s.Stats().IP.Forwarding.HostUnreachable.Value(), expectedHostUnreachableErrorCount; int(got) != want {
-				t.Errorf("got rt.Stats().IP.Forwarding.HostUnreachable.Value() = %d, want = %d", got, want)
-			}
-		})
+				for i := 0; i < int(nudConfigs.MaxMulticastProbes); i++ {
+					request := outgoingEndpoint.Read()
+					if request == nil {
+						t.Fatal("expected ARP packet through outgoing NIC")
+					}
+
+					test.linkResolutionRequestChecker(t, request, test.outgoingAddr.Address, test.destAddr)
+					request.DecRef()
+
+					// Advance the clock the span of one request timeout.
+					clock.Advance(nudConfigs.RetransmitTimer)
+				}
+
+				// Next, we make a blocking read to retrieve the error packet. This is
+				// necessary because outgoing packets are dequeued asynchronously when
+				// link resolution fails, and this dequeue is what triggers the ICMP
+				// error.
+				reply := incomingEndpoint.Read()
+				if reply == nil {
+					t.Fatalf("MISSING_ICMP proto=%d flow=%s after %d unanswered link probes", test.networkProtocolNumber, flow, nudConfigs.MaxMulticastProbes)
+				}
+
+				payload := stack.PayloadSince(reply.NetworkHeader())
+				defer payload.Release()
+				test.icmpReplyChecker(t, payload, test.incomingAddr.Address, test.sourceAddr)
+				reply.DecRef()
+
+				// Since link resolution failed, we don't expect the packet to be
+				// forwarded.
+				forwardedPacket := outgoingEndpoint.Read()
+				if forwardedPacket != nil {
+					t.Fatalf("expected no ICMP Echo packet through outgoing NIC, instead found: %#v", forwardedPacket)
+				}
+
+				if got, want := s.Stats().IP.Forwarding.HostUnreachable.Value(), expectedHostUnreachableErrorCount; int(got) < want || (flow == "ordinary" && int(got) != want) {
+					t.Errorf("got rt.Stats().IP.Forwarding.HostUnreachable.Value() = %d, want = %d", got, want)
+				}
+			})
+		}
 	}
 }
 
