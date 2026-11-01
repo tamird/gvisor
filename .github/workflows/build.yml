@@ -1,19 +1,17 @@
-name: Build ordinary Go archives with a tool-free worker /tmp
+name: Replay the two kernel analyzer actions with 2 GB
 on:
   push:
-    branches: [qualification/go-stdlib-worker-tmp-control]
+    branches: [qualification/nogo-remote-memory]
 permissions:
   contents: read
 jobs:
   compare:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 7
+    timeout-minutes: 20
     env:
-      EXEC_CPU: amd64
       BB_ARCH: x86_64
       BB_HASH: 205fb4074012858c858ec357cb0cf1ed0b1fbf8707c5f385efd4abd52bb2cead
-      BAZELISK_HASH: e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {persist-credentials: false, fetch-depth: 5}
@@ -23,11 +21,11 @@ jobs:
           curl -fsSL "https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-$BB_ARCH" -o "$RUNNER_TEMP/bb"
           echo "$BB_HASH  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod 0500 "$RUNNER_TEMP/bb"
-      - name: Replay only the original stdlib listing with absent TMPDIR
+      - name: Replay the original inputs and reconcile both target architectures
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 test/rbe/go_stdlib_workdir/qualify.py --missing-only
-      - name: Verify exactly the typed evidence files
+        run: python3 test/rbe/native_packages/analyzer_memory.py
+      - name: Check the public evidence
         id: privacy
         if: always()
         env:
@@ -36,19 +34,14 @@ jobs:
           python3 - <<'PYTHON'
           import os
           from pathlib import Path
-          root = Path(os.environ["RUNNER_TEMP"]) / "go-temp-evidence"
-          allowed = {"image.json", "go.json", "missing.json", "clang.json", "original-verdict.json", "verdict.json"}
-          paths = list(root.iterdir())
-          assert paths and all(p.is_file() and not p.is_symlink() and p.name in allowed for p in paths)
+          f = Path(os.environ["RUNNER_TEMP"]) / "analyzer-memory.json"
+          assert f.is_file() and not f.is_symlink()
           key = os.environ["ACCESS"].encode()
-          assert key
-          for path in paths:
-              raw = path.read_bytes()
-              assert not any(marker in raw for marker in (key, b"remote_header", b"bes_header", b"Authorization:", b"X-Amz-Signature", b"Bearer "))
+          assert key and not any(m in f.read_bytes() for m in (key, b"remote_header", b"Authorization:", b"Bearer "))
           PYTHON
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
-          name: reconciled-arm64-worker-tmp
-          path: ${{ runner.temp }}/go-temp-evidence/*.json
+          name: original-kernel-analyzer-memory
+          path: ${{ runner.temp }}/analyzer-memory.json
           if-no-files-found: error
