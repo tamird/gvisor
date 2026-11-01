@@ -1,7 +1,7 @@
 name: Qualify the static Linux native test wrapper
 on:
   push:
-    branches: [qualification/native-wrapper-static-linux]
+    branches: [qualification/native-wrapper-buildbuddy-network]
 permissions:
   contents: read
 jobs:
@@ -34,6 +34,8 @@ jobs:
             printf 'build:buildbuddy --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build:buildbuddy --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$RUNNER_TEMP/supplier.bazelrc"
+          mkdir -p ../supplier/qualification_platform
+          cp test/rbe/native_packages/supplier-platform.BUILD ../supplier/qualification_platform/BUILD
           unset BUILDBUDDY_API_KEY
           curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
           echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
