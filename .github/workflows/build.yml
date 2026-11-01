@@ -21,6 +21,7 @@ jobs:
       run: |
         set -euo pipefail
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
+        echo '{"verified":false,"reason":"qualification incomplete"}' > "$RUNNER_TEMP/records/verdict.json"
         cp test/rbe/tcp-poll-result.py "$RUNNER_TEMP/verify-tcp.py"
         cp test/rbe/tcp-poll-sample.cc.inc "$RUNNER_TEMP/probe"
         git fetch -q --depth=1 https://github.com/tamird/gvisor.git "$STOCK"
@@ -41,6 +42,15 @@ jobs:
     - name: Record each native and guest action independently
       run: |
         set -euo pipefail
+        git checkout --quiet --detach "$STOCK"
+        python3 - <<'PYFIX'
+        import os
+        from pathlib import Path
+        f=Path('test/syscalls/linux/tcp_socket.cc'); text=f.read_text()
+        start=text.index('TEST_P(SimpleTcpSocketTest, NonBlockingConnectRefused)')
+        at=text.index('  // Avoiding triggering save',start)
+        f.write_text(text[:at]+Path(os.environ['RUNNER_TEMP'],'probe').read_text()+text[at:])
+        PYFIX
         for name in poll-native poll-stock; do
           src=$STOCK
           testname=tcp_socket_test
@@ -51,16 +61,6 @@ jobs:
           if [[ "$name" == *-native ]]; then executor=local; platform=native; fi
           git checkout --quiet --detach "$src"
           [[ "$(git rev-parse HEAD)" == "$src" ]]
-          if [[ "$name" == poll-native ]]; then
-            python3 - <<'PYFIX'
-          import os
-          from pathlib import Path
-          f=Path('test/syscalls/linux/tcp_socket.cc'); text=f.read_text()
-          start=text.index('TEST_P(SimpleTcpSocketTest, NonBlockingConnectRefused)')
-          at=text.index('  // Avoiding triggering save',start)
-          f.write_text(text[:at]+Path(os.environ['RUNNER_TEMP'],'probe').read_text()+text[at:])
-          PYFIX
-          fi
           d=$RUNNER_TEMP/records/$name; mkdir -p "$d"
           sha256sum "$path" > "$d/fixture-sha256"
           target="//test/syscalls:${testname}_${platform}"
