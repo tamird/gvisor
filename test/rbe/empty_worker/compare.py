@@ -20,7 +20,7 @@ gnu = "docker://mirror.gcr.io/library/gcc@sha256:66035d353338cb93b64f621393dc6fe
 pkg = "//pkg/sentry/platform/systrap/sysmsg:"
 package = "//pkg/gohacks:gohacks"
 probe = "//test/rbe/empty_worker:root"
-results = {"base":os.environ["BASE"],"original":os.environ["ORIGINAL"],"corrected":os.environ["CORRECTED"],"carrier":os.environ["GITHUB_SHA"],"worker_image":image,"client":"Ubuntu 24.04; repository evaluation, receipt inspection and workspace-status script on the client"}
+results = {"corrected":os.environ["CORRECTED"],"carrier":os.environ["GITHUB_SHA"],"worker_image":image,"client":"Ubuntu 24.04; repository evaluation, receipt inspection and workspace-status script on the client"}
 def now():
     return datetime.now(timezone.utc).isoformat()
 def run(*args):
@@ -29,27 +29,6 @@ def save():
     (out/"result.json").write_text(json.dumps(results, indent=2)+"\n")
 def sha(data):
     return hashlib.sha256(data).hexdigest()
-def provenance():
-    def get(url, headers=None):
-        with urlopen(Request(url, headers=headers or {}),timeout=45) as response:
-            return response.read()
-    def check(endpoint, key):
-        data = get(endpoint+key, headers)
-        assert "sha256:"+sha(data)==key
-        return data
-    token = json.loads(get("https://auth.docker.io/token?service=registry.docker.io&scope=repository:library/hello-world:pull"))["token"]
-    headers = {"Authorization":"Bearer "+token,"Accept":"application/vnd.oci.image.index.v1+json, application/vnd.oci.image.manifest.v1+json"}
-    root = "https://registry-1.docker.io/v2/library/hello-world/"
-    index = image.split("@")[1]
-    entries = json.loads(check(root+"manifests/",index))
-    manifest, = [e["digest"] for e in entries["manifests"] if e["platform"].get("architecture")=="arm64" and e["platform"].get("os")=="linux"]
-    layer, = json.loads(check(root+"manifests/",manifest))["layers"]
-    data = check(root+"blobs/",layer["digest"])
-    with tarfile.open(fileobj=io.BytesIO(data)) as archive:
-        name, = archive.getnames()
-        assert name=="hello" and archive.getmember(name).isreg()
-        hello=sha(archive.extractfile(name).read())
-    return dict(index=index,manifest=manifest,layer=layer["digest"],layer_bytes=len(data),image_paths=[name],hello_sha256=hello)
 def source(ref):
     changed=run("git","diff","--name-only").splitlines()
     if changed:
@@ -62,7 +41,7 @@ def source(ref):
 def rows(log):
     if not log.exists(): return []
     # Keep the argv, result, platform and output digests for relevant actions only.
-    jq = r'''select(((.targetLabel // "")|test("^//:release$|^//vdso:")) or .mnemonic=="GoLink" or .mnemonic=="PrecompileSeccomp" or .mnemonic=="ProtocAuthenticityCheck" or .mnemonic=="GoToolchainBinaryBuild" or ((.exitCode // 0)!=0) or ((.status // "")!="")) | {label:.targetLabel,mnemonic,runner,cacheHit,exitCode,status,action:.digest,platform:.platform,executable:.commandArgs[0],outputs:[.actualOutputs[]? | {path,digest}],argv:(if ((.targetLabel//"")|contains("systrap/sysmsg")) and (.mnemonic=="CppLink" or .mnemonic=="CppCompile" or .mnemonic=="Genrule") then .commandArgs else [] end)}'''
+    jq = r'''select(((.targetLabel // "")|test("^//:release$|^//vdso:|^//runsc/(fdparking|prewarmer|procumounter):")) or .mnemonic=="GoLink" or .mnemonic=="PrecompileSeccomp" or .mnemonic=="ProtocAuthenticityCheck" or .mnemonic=="GoToolchainBinaryBuild" or ((.exitCode // 0)!=0) or ((.status // "")!="")) | {label:.targetLabel,mnemonic,runner,cacheHit,exitCode,status,action:.digest,platform:.platform,executable:.commandArgs[0],raceFlags:(if .mnemonic=="GoLink" then [.commandArgs[]?|select(.=="-race" or .=="-static")] else [] end),outputs:[.actualOutputs[]? | {path,digest}],argv:(if ((.targetLabel//"")|contains("systrap/sysmsg")) and (.mnemonic=="CppLink" or .mnemonic=="CppCompile" or .mnemonic=="Genrule") then .commandArgs else [] end)}'''
     with subprocess.Popen([str(tmp/"bb"),"print","--compact_execution_log="+str(log)],stdout=subprocess.PIPE) as decode:
         raw = subprocess.check_output(["jq","-c",jq],stdin=decode.stdout)
         decode.stdout.close()
@@ -105,79 +84,112 @@ def elf(path):
         assert head[:6]==b"\x7fELF\x02\x01" and int.from_bytes(head[18:20],"little")==machine
         stream.seek(0)
         return {"sha256":hashlib.file_digest(stream,"sha256").hexdigest(),"bytes":path.stat().st_size,"elf_machine":machine}
-def smoke(install,busybox):
-    bundle=tmp/"guest-bundle"; fs=bundle/"rootfs"; fs.mkdir(parents=True)
-    (fs/"proc").mkdir()
-    shutil.copy2(busybox,fs/"busybox")
-    (fs/"busybox").chmod(0o755)
-    expected="release-"+cpu+"-"+results["corrected"][:9]
-    (fs/"probe").write_text(expected)
-    process={"terminal":False,"user":{"uid":0,"gid":0},"cwd":"/",
-             "args":["/busybox","sh","-ec",'/busybox cat /probe; printf "\\n"; /busybox uname -m'],"env":["PATH=/"]}
-    spec={"ociVersion":"1.0.2","root":{"path":"rootfs"},"process":process,
-          "mounts":[{"type":"proc","source":"proc","destination":"/proc"}],
-          "linux":{"namespaces":[{"type":n} for n in ("pid","mount","uts","ipc","network")]}}
-    (bundle/"config.json").write_text(json.dumps(spec))
-    state=tmp/"oci-state";state.mkdir()
-    apparmor=Path("/proc/sys/kernel/apparmor_restrict_unprivileged_userns")
-    if apparmor.exists() and apparmor.read_text().strip()!="0":
-        subprocess.run(["sudo","sysctl","-w","kernel.apparmor_restrict_unprivileged_userns=0"],check=True)
-    args=["sudo","-n","--",str(install/"runsc"),"--root="+str(state),"--platform=systrap","--network=none",
-          "--overlay2=none","--host-settings=ignore","--ignore-cgroups"]
-    cid="scratch-release"
-    sub=results["native_smoke"]={"privileged_host":platform.platform(),"started":now(),"guest":guest,
-        "elf":elf(fs/"busybox"),"read_from_guest":expected,"runsc_flags":args[4:],"sidecar_source":"adjacent gvisor-bin from //:release"}
-    save()
-    try:
-        proc=subprocess.run(["timeout","--kill-after=5","90",*args,"run","--bundle="+str(bundle),cid],
-                            stdin=subprocess.DEVNULL,capture_output=True,text=True)
-        sub.update(exit=proc.returncode,stdout=proc.stdout[:1000],stderr=proc.stderr[-5000:],finished=now())
-        assert proc.returncode==0 and proc.stdout.splitlines()==[expected,machine_name], "guest did not emit both expected outputs"
-        sub["verdict"]="GUEST_EXECUTED"
-    finally:
-        subprocess.run(["timeout","20",*args,"delete","--force",cid],capture_output=True)
-        save()
+
+from urllib.parse import urlencode
+from urllib.request import HTTPRedirectHandler, Request, build_opener
+import sys
+
+race_label = "//runsc:runsc-race"
+install = tmp/"make-runtime"
+mode = sys.argv[1]
+if mode != "build":
+    results=json.loads((out/"result.json").read_text())
+mode_target = ["--compilation_mode=fastbuild",
+               "--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
+               "--extra_toolchains=//test/rbe/go_bootstrap:linux_amd64_ash"]
 try:
-    assert platform.machine()==machine_name
-    assert run("git","rev-parse","HEAD^")==os.environ["CORRECTED"]
-    source(os.environ["CORRECTED"])
-    results.update(cpu=cpu,mode="fastbuild",public_target="//:release",declared_staging="679ce6be6e12e3d5d896b96294be4dd59473537f",
-                   original_worker_controls={"arm64":13061034514,"amd64":13056457271},private_cli_evidence=13063272315)
-    opts=["--compilation_mode=fastbuild","--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
-          "--extra_toolchains=//test/rbe/go_bootstrap:linux_"+cpu+"_ash"]
-    result,actions=invoke(cpu,cpu,["//:release",guest],opts)
-    failed=[a for a in actions if a.get("exitCode") or a.get("status")]
-    result["failed_actions"]=[{k:a.get(k) for k in ("label","mnemonic","executable","runner","exitCode","status","action","platform")} for a in failed]
-    save()
-    if result["native_exit"]!=0:
-        results["verdict"]="BUILD_FAILED";raise SystemExit(1)
-    stage=[(a,o) for a in actions if a["label"]=="//:release" for o in a["outputs"] if "/bin/release/" in o["path"]]
-    if {o["path"].split("/bin/release/",1)[1] for a,o in stage}!=files:
-        raise ValueError("public release staging outputs were missing from the compact log: "+str([o["path"] for a,o in stage]))
-    execroot=Path(run("bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"info","execution_root"))
-    install=tmp/"native-release";install.mkdir()
-    result["artifacts"]={}
-    for a,o in stage:
-        rel=o["path"].split("/bin/release/",1)[1]
-        p=execroot/o["path"]
-        info=elf(p)
-        assert info["sha256"]==o["digest"]["hash"] and info["bytes"]==int(o["digest"]["sizeBytes"])
-        props={item["name"]:item["value"] for item in a["platform"]["properties"]}
-        assert props.get("Arch")==cpu and props.get("container-image")==image
-        dest=install/rel;dest.parent.mkdir(exist_ok=True);shutil.copy2(p,dest)
-        assert os.access(dest,os.X_OK)
-        result["artifacts"][rel]=dict(**info,mnemonic=a["mnemonic"],runner=a.get("runner"),cache_hit=a.get("cacheHit",False),action=a["action"],worker=props)
-    result["verdict"]="EIGHT_RELEASE_ELFS_VERIFIED";save()
-    # Fetch Bazel's actual declared source file, not a client system utility.
-    cquery=run("bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"cquery","--output=files",guest)
-    paths=[execroot/line for line in cquery.splitlines() if line.endswith("/payload/usr/bin/busybox")]
-    if len(paths)!=1: raise ValueError("expected one BusyBox source path; got "+repr(cquery[:350]))
-    smoke(install,paths[0])
-    results["verdict"]="RELEASE_FILES_AND_NATIVE_GUEST_VERIFIED"
-except Exception as exc:
-    results["error"]=type(exc).__name__+": "+str(exc)[:400]
-    results["verdict"]="INCOMPLETE"
-finally:
-    results["verified"]=now();save()
-    print(cpu,results.get("verdict"),results.get("error"),flush=True)
-sys.exit(results["verdict"]!="RELEASE_FILES_AND_NATIVE_GUEST_VERIFIED")
+    assert platform.machine()=="x86_64"
+    if mode=="build":
+        # Inspect the original generated tools whose execve returned ENOENT.
+        class NoRedirect(HTTPRedirectHandler):
+            def redirect_request(self,*args):return None
+        old_tools={}
+        for label,digest in {'//tools/go_marshal:go_marshal': {'hash': 'b672c44ed337e59f52ce202588aba1a122ed185c036f2f24916e9d0516db68f8', 'sizeBytes': '3632136'}, '//tools/go_stateify:stateify': {'hash': '667ac09b09de48db6c8652a869368c6fb048db52918ff67b2d173ee779c2dfcc', 'sizeBytes': '7851976'}, '//tools/go_generics/go_merge:go_merge': {'hash': '98f4a260d8216a47f6d3f3b86d6258c186a5174478b6ea4f1ce1cd26af73f910', 'sizeBytes': '3221352'}, '//tools/nogo:nogo': {'hash': '68fc90a5ac05dcb7cf30d5949b4794b25040d24debf315e2521f66acef43db4b', 'sizeBytes': '13959144'}}.items():
+            h,n=digest["hash"],int(digest["sizeBytes"])
+            url="https://app.buildbuddy.io/file/download?"+urlencode({"bytestream_url":"bytestream://remote.buildbuddy.io/blobs/"+h+"/"+str(n),"invocation_id":'4daac496-4164-41d6-9806-674a5fefa11e',"filename":label.rsplit(":",1)[1]})
+            obj=tmp/"original-tool.elf"
+            req=Request(url,headers={"x-buildbuddy-api-key":os.environ["BUILDBUDDY_API_KEY"]})
+            with build_opener(NoRedirect).open(req,timeout=90) as stream,obj.open("wb") as output:shutil.copyfileobj(stream,output)
+            assert elf(obj)["sha256"]==h and obj.stat().st_size==n
+            lines=run("readelf","-lWd",str(obj)).splitlines()
+            interp=[l.strip() for l in lines if "Requesting program interpreter" in l]
+            assert len(interp)==1, (label,interp)
+            old_tools[label]={"sha256":h,"bytes":n,"interpreter":interp[0],"needed":[l.strip() for l in lines if "(NEEDED)" in l]}
+        results["original_generator_elf"]=old_tools;save()
+        pl="//test/rbe/empty_worker:amd64"
+        labels=set({'//tools/go_marshal:go_marshal': {'hash': 'b672c44ed337e59f52ce202588aba1a122ed185c036f2f24916e9d0516db68f8', 'sizeBytes': '3632136'}, '//tools/go_stateify:stateify': {'hash': '667ac09b09de48db6c8652a869368c6fb048db52918ff67b2d173ee779c2dfcc', 'sizeBytes': '7851976'}, '//tools/go_generics/go_merge:go_merge': {'hash': '98f4a260d8216a47f6d3f3b86d6258c186a5174478b6ea4f1ce1cd26af73f910', 'sizeBytes': '3221352'}, '//tools/nogo:nogo': {'hash': '68fc90a5ac05dcb7cf30d5949b4794b25040d24debf315e2521f66acef43db4b', 'sizeBytes': '13959144'}})|{"//tools/go_generics:go_generics"}
+        for candidate in ['70909b2ac428cde38872b0c0180cdbb3ce587673','d842707a168b1d45dd759edf231c83113ff521fd']:
+            source(candidate)
+            results["corrected"]=candidate
+            assert "smoke-race-tests: RUNSC_TARGET = //runsc:runsc-race" in Path("Makefile").read_text() and 'race = "on"' in Path("runsc/BUILD").read_text()
+            argv=["bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"aquery","--config=x86_64","--host_platform="+pl,"--extra_execution_platforms="+pl,*mode_target,"--output=jsonproto","--noinclude_artifacts","mnemonic('GoLink',deps("+race_label+"))"]
+            metadata=json.loads(run(*argv)); target_ids={str(t["id"]):t["label"].lstrip("@") for t in metadata["targets"]}
+            checked=[]
+            for row in metadata["actions"]:
+                label=target_ids[str(row["targetId"])]
+                if label in labels:
+                    checked.append({"label":label,"configuration":row.get("configurationId"),"race":"-race" in row["arguments"]})
+            assert {i["label"] for i in checked}==labels,(checked,labels)
+            results.setdefault("source_aqueries",[]).append({"source":candidate,"tool_link_modes":checked});save()
+            if not any(i["race"] for i in checked):break
+        else:raise AssertionError("generator race mode still present; no compile dispatched")
+        result,actions=invoke("race","amd64",[race_label],[*mode_target,"--modify_execution_info=^GoLink$=+no-remote-cache"])
+        if result["native_exit"]:
+            results["verdict"]="RACE_BUILD_FAILED";save();raise SystemExit(1)
+        pl="//test/rbe/empty_worker:amd64"
+        output_paths=run("bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"cquery","--config=x86_64","--host_platform="+pl,"--extra_execution_platforms="+pl,*mode_target,"--modify_execution_info=^GoLink$=+no-remote-cache","--output=files",race_label)
+        execroot=Path(run("bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"info","execution_root"))
+        paths=[execroot/l for l in output_paths.splitlines() if l.startswith("bazel-out/")]
+        binary,=[p for p in paths if p.is_file() and p.read_bytes()[:4]==b"\x7fELF"]
+        info=elf(binary)
+        links=[a for a in actions if a["mnemonic"]=="GoLink" and any(o.get("digest",{}).get("hash")==info["sha256"] and int(o["digest"]["sizeBytes"])==info["bytes"] for o in a["outputs"])]
+        link,=links
+        props={p["name"]:p["value"] for p in link["platform"]["properties"]}
+        assert link["runner"]=="remote" and not link.get("cacheHit") and props["Arch"]=="amd64" and props["container-image"]==image
+        flags=link.get("raceFlags",[]);raw=binary.read_bytes()
+        marker={s:s.encode() in raw for s in ["runtime.raceinit","ThreadSanitizer","__tsan_init"]}
+        results["race_binary"]={**info,"target":race_label,"configured_output":str(binary.relative_to(execroot)),"go_link":link["action"],"exec_properties":props,"link_runner":link["runner"],"cached":bool(link.get("cacheHit")),"link_flags":flags,"markers":marker,"original_scratch_root_control":"https://github.com/tamird/gvisor/actions/runs/41238540967/artifacts/13056457271"}
+        assert marker["runtime.raceinit"] and (marker["ThreadSanitizer"] or marker["__tsan_init"])
+        install.mkdir()
+        shutil.copy2(binary,install/"runsc");assert elf(install/"runsc")==info
+        results["verdict"]="RACE_LINK_VERIFIED";save()
+    elif mode=="recover":
+        assert results["verdict"]=="RACE_LINK_VERIFIED"
+        manifest=json.loads((tmp/"ordinary-sidecars.json").read_text())
+        assert manifest["source"]=='f906c5dd87aeffc3a6f5cec8275b6102a278ea0a' and manifest["original_run"]==41257521162
+        inv=manifest["invocation"]
+        class NoRedirect(HTTPRedirectHandler):
+            def redirect_request(self,*args):return None
+        recovered={}
+        for rel,entry in manifest["files"].items():
+            h,n=entry["sha256"],entry["bytes"]
+            url="https://app.buildbuddy.io/file/download?"+urlencode({"bytestream_url":"bytestream://remote.buildbuddy.io/blobs/"+h+"/"+str(n),"invocation_id":inv,"filename":Path(rel).name})
+            req=Request(url,headers={"x-buildbuddy-api-key":os.environ["BUILDBUDDY_API_KEY"]})
+            dest=install/rel;dest.parent.mkdir(exist_ok=True)
+            with build_opener(NoRedirect).open(req,timeout=90) as stream,dest.open("wb") as body:shutil.copyfileobj(stream,body)
+            dest.chmod(0o755);info=elf(dest);assert info["bytes"]==n and info["sha256"]==h
+            recovered[rel]=info
+        results["ordinary_release"]={"source":manifest["source"],"invocation":inv,"prior_receipt":manifest["prior_receipt"],"recovered":recovered}
+        results["verdict"]="ORIGINAL_RELEASE_FILES_VERIFIED";save()
+    else:
+        assert mode=="guest" and results["verdict"]=="ORIGINAL_RELEASE_FILES_VERIFIED"
+        assert os.getuid()!=0 and "BUILDBUDDY_API_KEY" not in os.environ and not (tmp/"sidecar.bazelrc").exists()
+        apparmor=Path("/proc/sys/kernel/apparmor_restrict_unprivileged_userns")
+        if apparmor.exists() and apparmor.read_text().strip()!="0":
+            subprocess.run(["sudo","sysctl","-w","kernel.apparmor_restrict_unprivileged_userns=0"],check=True)
+        subprocess.run(["unshare","-Ur","true"],check=True)
+        flags=["--alsologtostderr","--network","none","--debug","--TESTONLY-unsafe-nonroot=true","--rootless","do","true"]
+        env={k:os.environ[k] for k in ("HOME","LOGNAME","USER","LANG","PATH","XDG_RUNTIME_DIR") if k in os.environ}
+        env["GLIBC_TUNABLES"]="glibc.pthread.rseq=0"
+        assert elf(install/"runsc")["sha256"]==results["race_binary"]["sha256"]
+        log=tmp/"native-do.log"
+        start=now()
+        with log.open("w") as f: proc=subprocess.run(["timeout","--kill-after=5s","120s",str(install/"runsc"),*flags],env=env,stdout=f,stderr=subprocess.STDOUT)
+        text=log.read_text(errors="replace"); lines=text.splitlines()
+        interesting=[l[:700] for l in lines if any(key in l.lower() for key in ("starting container","loading sandbox","changing configuration rootdir","sentry binary","gvisor_sentry","exited with","sandbox exited","creating container","error","fatal","permission denied","threadsanitizer","start root")) and not re.search(r"credential|api.key|authorization|remote.header",l,re.I)]
+        results["native_smoke"]={"uid":os.getuid(),"kernel":platform.platform(),"args":flags,"glibc_tunables":env["GLIBC_TUNABLES"],"input_sha256":results["race_binary"]["sha256"],"started":start,"finished":now(),"exit":proc.returncode,"diagnostics":interesting[:12]+interesting[-12:],"log_sha256":sha(log.read_bytes()),"log_lines":len(lines)}
+        assert proc.returncode==0 and "Changing configuration RootDir" in text
+        results["verdict"]="RACE_CLI_LINKED_ON_SCRATCH_AND_ROOTLESS_GUEST_EXECUTED";save()
+except BaseException as err:
+    results["phase"]=mode;results["error"]=repr(err)[:800];results["verified_at"]=now();save();raise
+results["verified_at"]=now();save()
