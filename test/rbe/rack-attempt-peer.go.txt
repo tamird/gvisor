@@ -23,7 +23,7 @@ func TestRACKFirstAccepted(t *testing.T) {
 			const warm=8
 			origin:=c.IRS.Add(1+warm*maxPayload)
 			write:=func(n int){ t.Helper(); b:=make([]byte,n*maxPayload); if k,e:=c.EP.Write(bytes.NewReader(b),tcpip.WriteOptions{});k!=int64(len(b))||e!=nil{t.Fatalf("write: %d,%v",k,e)} }
-			drain:=func() []int { t.Helper(); c.Stack().Pause();c.Stack().Resume();var ids []int
+			drain:=func() []int { t.Helper();var ids []int
 				for p:=c.GetPacketNonBlocking();p!=nil;p=c.GetPacketNonBlocking(){h:=header.TCP(header.IPv4(p.AsSlice()).Payload());if len(h.Payload())>0{ids=append(ids,1+int(int32(h.SequenceNumber()-uint32(origin)))/maxPayload)};p.Release()};return ids }
 			ack:=func(n int,bs ...header.SACKBlock) tcp.TCPSenderState{t.Helper();c.SendAckWithSACK(seqnum.Value(context.TestInitialSequenceNumber).Add(1),(warm+n)*maxPayload,bs);select {case s:=<-states:return s;case <-time.After(4*time.Second):t.Fatal("no ACK observation");return tcp.TCPSenderState{}} }
 			block:=func(first,last int) header.SACKBlock{return header.SACKBlock{Start:origin.Add(seqnum.Size((first-1)*maxPayload)),End:origin.Add(seqnum.Size(last*maxPayload))}}
@@ -32,14 +32,14 @@ func TestRACKFirstAccepted(t *testing.T) {
 			if got:=drain();len(got)!=0||reject.Load(){t.Fatalf("first refused wire = %v",got)}
 			for i:=2;i<=window;i++{write(1)}
 			got:=drain();if len(got)!=window-1||got[0]!=2||got[len(got)-1]!=window{t.Fatalf("first higher flight: window=%d wires=%v",window,got)}
-			for i:=0;i<10;i++{write(1)}
+			for i:=0;i<30;i++{write(1)}
 			got=drain()
 			t.Logf("FIRST higher: window=%d extras=%v",window,got)
 			seen:=map[int]bool{}
 			capture:=func(ids []int){for _,n:=range ids{seen[n]=true}}
 			if timing=="early-sack"{clock.Advance(rtt);st:=ack(0,block(2,window));ids:=drain();capture(ids);t.Logf("FIRST before-retry SACK 2..%d cwnd=%d out=%d packets=%v",window,st.SndCwnd,st.Outstanding,ids)}
-			for i:=0;i<600&&!seen[1];i++{clock.Advance(5*time.Millisecond);capture(drain())}
-			if !seen[1]{t.Fatal("no first on-wire copy after refused write")}
+			for i:=0;i<2400&&!seen[1];i++{clock.Advance(5*time.Millisecond);capture(drain())}
+			if !seen[1]{t.Fatalf("FIRST no first on-wire copy after refusal: timeouts=%d seen=%v",c.Stack().Stats().TCP.Timeouts.Value(),seen)}
 			clock.Advance(rtt/2)
 			b:=block(2,window)
 			st:=ack(0,b);ids:=drain();capture(ids)

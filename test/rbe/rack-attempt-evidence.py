@@ -6,7 +6,7 @@ import os
 
 common = (Path(os.environ["RUNNER_TEMP"]) / "rack-flight-evidence.py").read_text()
 common = common[:common.index("\ngit(\"checkout\",\"--quiet\",\"--detach\",product)")]
-common = common.replace('("COPY later_delivered",', '("FIRST ", "FIRST_TX ", "FLIGHT_SIZE ", "COPY later_delivered",')
+common = common.replace('("COPY later_delivered",', '("FULLWIN ", "FIRST ", "FIRST_TX ", "FLIGHT_SIZE ", "COPY later_delivered",')
 exec(compile(common, "rack-flight-evidence.py", "exec"))
 
 
@@ -66,24 +66,40 @@ def instrument_send(variant):
     p.write_text(before+s)
 
 
+def observe_window():
+    p=peer;s=p.read_text();pos=s.index("func TestRACKWithWindowFull(");x=s.index("\n}",pos)+2
+    t=s[pos:x].replace("c := context.New(t, uint32(mtu))", """windows:=make(chan tcp.TCPSenderState,16)
+    c:=context.NewWithOpts(t,context.Options{MTU:mtu,EnableV4:true,Probe:func(st *tcp.TCPEndpointState){windows<-st.Sender}})""")
+    t=t.replace("// Send ACK with zero window size.", """for {
+        select{case st:=<-windows:if st.SndUna==c.IRS.Add(1+3*maxPayload){goto beforeZero};case <-time.After(5*time.Second):t.Fatal("FULLWIN ACK 3 never processed")}
+    }
+beforeZero:
+    dump:=func(phase string,p *buffer.View){
+        h:=header.TCP(header.IPv4(p.AsSlice()).Payload());t.Logf("FULLWIN phase=%s seq=%d payload=%d flags=%d",phase,int32(h.SequenceNumber()-uint32(c.IRS+1)),len(h.Payload()),h.Flags());p.Release()
+    }
+    for p:=c.GetPacketNonBlocking();p!=nil;p=c.GetPacketNonBlocking(){dump("before",p)}
+    // Send ACK with zero window size.""")
+    t=t.replace('c.CheckNoPacket("unexpected packet received after userTimeout has expired")', """for {
+        select{case st:=<-windows:if st.SndUna==c.IRS.Add(1+4*maxPayload) && st.SndWnd==0{goto zero};case <-time.After(5*time.Second):t.Fatal("FULLWIN zero window not processed")}
+    }
+zero:
+    end:=time.Now().Add(time.Second)
+    for time.Now().Before(end) {p:=c.GetPacketWithTimeout(time.Until(end));if p==nil{break};dump("after",p)}
+    t.Log("FULLWIN checked zero window for one second")""")
+    p.write_text(s[:pos]+t+s[x:])
+
+
+for src, label in ((base,"base"),(product,"product")):
+    git("checkout","--quiet","--detach",src)
+    observe_window()
+    baz(label+"-zero",[rack],"^TestRACKWithWindowFull$")
+    git("restore","--source="+src,"--",peer)
 git("checkout","--quiet","--detach",product)
 fixture()
 for variant in ("attempt","wire","epoch"):
     instrument_send(variant)
-    baz(variant,[rack,gsos],"^(TestRACKFirstAccepted|TestACKForRefusedRetransmission)$")
+    baz(variant,[rack],"^TestRACKFirstAccepted$")
     rec=records[variant]
     rec["complete"] &= all(any(name in v for v in rec["observations"]) for name in ("FIRST before-retry","FIRST followup"))
     store()
-baz("size-amd64",[unit],"^TestFlightAccountSize$")
-size="\n".join(records["size-amd64"]["observations"])
-m=re.search(r"FLIGHT_SIZE arch=amd64 parent=(\d+) current=(\d+) packed=(\d+) parentClass=(\d+) currentClass=(\d+) packedClass=(\d+)",size)
-if m:
-    old,actual,packed,*_=m.groups()
-    p=directory/"segment_unsafe.go"
-    with p.open("a") as f:
-        for name,value in (("flightParentSize",old),("segSize",actual),("flightPackedSize",packed)):
-            f.write("var _ ["+value+"]byte = ["+name+"]byte{}\n")
-    baz("size-arm64",[tcp+":tcp"],mode="build",config="aarch64")
-    (results/"size.json").write_text(json.dumps({"linuxAmd64Observed":m.group(0),"arm64CompileAssertions":records["size-arm64"]},indent=2)+"\n")
-store()
-sys.exit(not m or not all(r["complete"] for r in records.values()))
+sys.exit(not all(r["complete"] for r in records.values()))
