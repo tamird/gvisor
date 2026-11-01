@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T08:08:39.992196+00:00",
+    "updatedAt": "2026-11-01T08:28:22.390757+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -47909,9 +47909,18 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T02:03:58.422526+00:00",
+      "updatedAt": "2026-11-01T08:28:22.390757+00:00",
       "summary": "The graph codec is now the default. On a four-worker Nginx checkpoint, encoding took 2.25 ms instead of 12.71 ms and decoding took 8.99 ms instead of 17.75 ms. All four round-trip bugs tracked in #16715 are fixed. Increasing the UDP receive queue did not grow the index table. Smaller writer buffers and clearing fewer decoder slots did not speed up Nginx checkpoints. Separating callback payloads reduced allocated bytes without improving the time to Nginx’s first HTTP response.",
       "findings": [
+        {
+          "text": "An actual Sentry checkpoint of 50,000 empty tmpfs files contained 7,302,517 bytes of kernel objects and 135,168 bytes of pages. Checkpoint took 167 ms. Starting a fresh sandbox, restoring it and running /bin/true took 154 ms; the restored guest listed every file. Six single-CPU benchmark samples gave median Encode and Decode times of 141 and 103 ms. Decode with GC took 163 ms, with three collections. Per-function CPU profiles are being recovered.",
+          "evidence": [
+            {
+              "label": "50,000 tmpfs files after real restore and 18 paired-phase observations on the same checkpoint",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41288508688/artifacts/13076561165"
+            }
+          ]
+        },
         {
           "text": "Saving 2,048 slices with the same base address took 56.540 ms narrowest-first versus 0.052 ms widest-first. Extending the backing array in place removed all 4,192,256 parent traversals; the final five-sample medians were 0.076 ms and 0.053 ms. Both orders wrote 8,119 bytes and retained alias identity. One four-worker Nginx checkpoint contained no eligible extensions.",
           "evidence": [
@@ -50791,8 +50800,12 @@
           ]
         }
       ],
-      "nextStep": "Keep the existing checkpoint writer. Focus further measurements on costs visible when saving or restoring a real workload.",
+      "nextStep": "Locate the dominant CPU and allocation costs in the 50,000-file checkpoint before proposing another optimization. Retain the real guest restore as the end-to-end comparison.",
       "evidence": [
+        {
+          "label": "50,000 tmpfs files after real restore and 18 paired-phase observations on the same checkpoint",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41288508688/artifacts/13076561165"
+        },
         {
           "label": "Same ELF at both paths: all 20 fresh services with Sentry smaps and status",
           "url": "https://github.com/tamird/gvisor/actions/runs/41262862646/artifacts/13065538468"
@@ -57674,12 +57687,16 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T08:08:39.992196+00:00",
+      "updatedAt": "2026-11-01T08:25:06.500974+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
-          "text": "On both native architectures, 309 of the 311 applicable //runsc/... targets built on empty workers, including all four required runsc binaries. The remaining two depend on the secfuzz generator, which invokes /bin/bash. The 75 labels removed since the Ubuntu inventory were intermediate generated-source targets. This was a build, so the run did not execute the Go suites. A two-file template experiment also built the missing owners, but open #16604 removes the same shell pipeline and fixes the compiler memory failure in the generated fuzz blocks. Use #16604 for integration.",
+          "text": "All 311 applicable //runsc/... targets built on AMD64 and ARM64. The original wildcard at 09bf3b1cb built 309 targets, including all four runsc binaries. At 3b0984fd6, the two reviewed commits from #16604 removed the secfuzz shell dependency. All 14 affected targets built. The other 297 results come from the original run. The 75 labels removed since the Ubuntu inventory were generated-source intermediates. A narrower template experiment did not address the generated Go compiler memory use.",
           "evidence": [
+            {
+              "label": "Both scratch architectures: 14 affected targets rebuilt, including the two original failures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41287882710/artifacts/13076081988"
+            },
             {
               "label": "Both architectures, including the two original owner failures",
               "url": "https://github.com/tamird/gvisor/actions/runs/41280610640/artifacts/13075550613"
@@ -58994,8 +59011,16 @@
           ]
         }
       ],
-      "nextStep": "Qualify the existing secfuzz PR #16604 against the two remaining runsc build failures on both scratch worker architectures, then execute named state and TCP tests there. Finish the empty-client fetch work with Gazelle and bazel_lib and follow the LLVM, Debian-layer and Jekyll dependencies. The release pipeline still needs native smoke tests for its optimized binaries.",
+      "nextStep": "Trace the Go SDK builder failure on the scratch workers and execute named state and TCP tests. The first attempt reached zero tests and its driver selected the earlier source. Finish the empty-client fetch work with Gazelle and bazel_lib and the native release smoke tests.",
       "evidence": [
+        {
+          "label": "Both scratch architectures: 14 affected targets rebuilt, including the two original failures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41287882710/artifacts/13076081988"
+        },
+        {
+          "label": "Separate state and TCP test attempt: Go SDK builder failed before any case ran",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41288127365/artifacts/13076431184"
+        },
         {
           "label": "18 recovered host-layout targets and four gRPC host ELF interpreters on AMD64/ARM64",
           "url": "https://github.com/tamird/gvisor/actions/runs/41278670429/artifacts/13072880293"
@@ -59862,10 +59887,27 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-01T07:48:29.705288+00:00",
+      "updatedAt": "2026-11-01T08:28:22.390757+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "Retain the minimum-RTT safeguard. Prioritize reproducible recovery defects and review changes to SACK, probe timing and receive-queue pressure.",
+      "nextStep": "Test error delivery on established TCP connections, including the separate ICMPv6 address-unreachable dispatch. Compare read-half shutdown readiness under poll and epoll on Linux and gVisor. Continue the recovery and receive-queue investigations.",
       "findings": [
+        {
+          "text": "On an established TCP connection with extended errors enabled, Linux reported an injected host-unreachable error through poll and SO_ERROR. Its MSG_ERRQUEUE stayed empty. Stock gVisor returned an IPv4 error-queue record; on IPv6, an address-unreachable message produced no error at all. The sockets still transferred data. The error-queue and IPv6 dispatch paths are being tested separately. An IPv6 network-unreachable control reached the existing dispatcher and reproduced the IPv4 TCP error-queue difference.",
+          "evidence": [
+            {
+              "label": "IPv4: both SO_ERROR and MSG_ERRQUEUE read orders, IP_RECVERR off/on",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41287689004/artifacts/13076340709"
+            },
+            {
+              "label": "IPv6: the same four checks with an address-unreachable ICMPv6 message",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41288203533/artifacts/13075879856"
+            },
+            {
+              "label": "IPv6 network-unreachable follows the existing dispatch path and reproduces the TCP error-queue difference",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41288587364/artifacts/13075614629"
+            }
+          ]
+        },
         {
           "text": "After a refused TCP connect, Linux reused the same descriptor to deliver a byte in all three retry sequences. Netstack delivered none. Linux returned a pending asynchronous refusal once through SO_ERROR; netstack returned it twice. Two AF_UNSPEC disconnects on a fresh Linux socket advanced TIOCOUTQ from zero to 2 and then 4. Netstack rejected both disconnects. A separate change reports unsent data, unacknowledged data and FIN after establishment, including outstanding bytes after reset. Its 24 shared syscall cases passed on Linux and the candidate and failed on stock. It does not implement refused connections.",
           "evidence": [
@@ -60261,6 +60303,18 @@
         }
       ],
       "evidence": [
+        {
+          "label": "IPv6 network-unreachable follows the existing dispatch path and reproduces the TCP error-queue difference",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41288587364/artifacts/13075614629"
+        },
+        {
+          "label": "IPv4: both SO_ERROR and MSG_ERRQUEUE read orders, IP_RECVERR off/on",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41287689004/artifacts/13076340709"
+        },
+        {
+          "label": "IPv6: the same four checks with an address-unreachable ICMPv6 message",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41288203533/artifacts/13075879856"
+        },
         {
           "label": "Reviewer guide: TCP recovery and performance fixes",
           "url": "https://github.com/google/gvisor/issues/16670"
