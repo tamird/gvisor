@@ -589,10 +589,9 @@ func (e *Endpoint) handleListenSegment(ctx *listenContext, s *segment) tcpip.Err
 			df:        e.pmtud == tcpip.PMTUDiscoveryWant || e.pmtud == tcpip.PMTUDiscoveryDo || e.pmtud == tcpip.PMTUDiscoveryProbe,
 			expOptVal: e.getExperimentOptionValue(route),
 		}
-		if err := e.sendSynTCP(route, fields, synOpts); err != nil {
-			return err
+		if err := e.sendSynTCP(route, fields, synOpts); err == nil {
+			e.stack.Stats().TCP.ListenOverflowSynCookieSent.Increment()
 		}
-		e.stack.Stats().TCP.ListenOverflowSynCookieSent.Increment()
 		return nil
 
 	case s.flags.Contains(header.TCPFlagAck):
