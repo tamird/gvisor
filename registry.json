@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T02:17:14.051007+00:00",
+    "updatedAt": "2026-11-01T02:48:55.837565+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41144,6 +41144,52 @@
         "requestedAt": "2026-11-01T02:17:14.051007+00:00",
         "summary": "Open the standalone FIN-WAIT-2 restore fix upstream? It has no prerequisite.",
         "body": "After shutdown(SHUT_WR), a socket in FIN-WAIT-2 can still receive\ndata. Restore armed the orphan timeout even while a descriptor was\nopen. With TCP_LINGER2 set to -1, that timer could close the socket\nas soon as it was restored.\n\nUse the same closed-endpoint check when restoring the timer, receiving\nthe FIN acknowledgment, and closing a socket already in FIN-WAIT-2.\nExercise the open read side before and after a checkpoint."
+      }
+    },
+    {
+      "id": "branch:tcp-listener-transfer",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-listener-transfer",
+      "head": "3732b4758e2276a9e60ff9ed250ee0a10339e8db",
+      "title": "Transfer TCP receive charges with handshake data",
+      "url": "https://github.com/tamird/gvisor/commit/3732b4758",
+      "updatedAt": "2026-11-01T02:48:55.837565+00:00",
+      "status": "Contributor review requested",
+      "summary": "With a small receive buffer, the fifth SYN-cookie connection on stock gVisor never made the listener readable when its final ACK carried 512 bytes. Linux and corrected gVisor delivered all eight such connections; all three delivered eight ordinary connections. The fix moves the receive charge from the listening socket to the accepted socket.",
+      "evidence": [
+        {
+          "label": "Wire receipts: native Linux, stock gVisor, corrected gVisor and TCP Nogo",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41265485310/artifacts/13067017335"
+        },
+        {
+          "label": "TCP owning suites and migration tests: 560 normal and 556 race records, no skips or missing results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41265984209/artifacts/13068165052"
+        },
+        {
+          "label": "Stock packet trace: the fifth cookie connection timed out",
+          "url": "https://app.buildbuddy.io/invocation/0eb56bce-6219-4c3d-a4b4-0fa3229667ce"
+        },
+        {
+          "label": "Native Linux: 16 handshakes delivered their full payloads",
+          "url": "https://app.buildbuddy.io/invocation/9bc9a9c8-c1b5-4077-be12-f7a1bf08b24a"
+        },
+        {
+          "label": "Corrected gVisor: 16 handshakes delivered their full payloads",
+          "url": "https://app.buildbuddy.io/invocation/c908fb88-774c-40a0-a65c-02aa3581144e"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "3732b4758e2276a9e60ff9ed250ee0a10339e8db",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/3732b4758",
+        "title": "Transfer TCP receive charges with handshake data",
+        "requestedAt": "2026-11-01T02:48:55.837565+00:00",
+        "summary": "Open the standalone fix for receive accounting on TCP listeners? It has no prerequisite.",
+        "body": "With SYN cookies and a small receive buffer, a listener can stop\naccepting connections even after the application reads and closes every\naccepted socket. When each connection sends 512 bytes on its final ACK,\nthe first four succeed but the fifth never makes the listener readable.\n\nThat ACK passes from the listener to the accepted socket. Each enqueue\ncharges the segment to its new socket, but freeing it releases only the\nlast charge. Transfer the charge when the segment changes sockets and\nkeep it when the same socket requeues it.\n\nExercise eight successive connections with and without SYN cookies.\nLinux and gVisor both accept all eight and deliver their payloads."
       }
     }
   ],
