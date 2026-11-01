@@ -41435,15 +41435,28 @@
       "title": "Check the descriptor table’s writer lock",
       "url": "https://github.com/tamird/gvisor/commit/b5c5589ba",
       "group": "runtime",
-      "updatedAt": "2026-11-01T06:03:00.137286+00:00",
-      "status": "Agent work",
-      "summary": "Nogo caught unguarded bitmap and descriptor writes on both architectures. The combined revision also checks the flag-only swap used by the dup fix. Its final analyzer and missing-lock control are being verified.",
+      "updatedAt": "2026-11-01T06:11:46.802628+00:00",
+      "status": "Contributor review requested",
+      "summary": "Check the mutex that serializes descriptor replacement and flag updates. Removing the mutex from the flag-only paths made both AMD64 and ARM64 Nogo reject the swaps. Removing it from RemoveIf also failed at the outer iterator call.",
       "evidence": [
+        {
+          "label": "Three final analyzer owners and six deliberate missing-lock diagnostics on both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41279221605/artifacts/13072043420"
+        },
         {
           "label": "Original guard and deliberately unlocked RemoveIf control",
           "url": "https://github.com/tamird/gvisor/actions/runs/41278383474/artifacts/13071759313"
         }
-      ]
+      ],
+      "contributorReview": {
+        "head": "b5c5589bad4519a4bd03ae2939379ebf0d09d2b1",
+        "status": "pending",
+        "kind": "proposal",
+        "title": "Check the descriptor table’s writer lock",
+        "url": "https://github.com/tamird/gvisor/commit/b5c5589ba",
+        "body": "Submit this checklocks-only follow-up after the descriptor replacement fix. Both the reference-owning setter and the flag-only swap require the mutex. Three analyzer targets accepted the final source, and removing locks triggered all six intended diagnostics on each architecture.",
+        "requestedAt": "2026-11-01T06:11:46.802628+00:00"
+      }
     }
   ],
   "edges": [
