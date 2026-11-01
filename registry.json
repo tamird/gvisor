@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T08:28:22.390757+00:00",
+    "updatedAt": "2026-11-01T08:55:45.390254+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -47909,15 +47909,19 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T08:28:22.390757+00:00",
+      "updatedAt": "2026-11-01T08:52:55.845490+00:00",
       "summary": "The graph codec is now the default. On a four-worker Nginx checkpoint, encoding took 2.25 ms instead of 12.71 ms and decoding took 8.99 ms instead of 17.75 ms. All four round-trip bugs tracked in #16715 are fixed. Increasing the UDP receive queue did not grow the index table. Smaller writer buffers and clearing fewer decoder slots did not speed up Nginx checkpoints. Separating callback payloads reduced allocated bytes without improving the time to Nginx’s first HTTP response.",
       "findings": [
         {
-          "text": "An actual Sentry checkpoint of 50,000 empty tmpfs files contained 7,302,517 bytes of kernel objects and 135,168 bytes of pages. Checkpoint took 167 ms. Starting a fresh sandbox, restoring it and running /bin/true took 154 ms; the restored guest listed every file. Six single-CPU benchmark samples gave median Encode and Decode times of 141 and 103 ms. Decode with GC took 163 ms, with three collections. Per-function CPU profiles are being recovered.",
+          "text": "An actual Sentry checkpoint of 50,000 empty tmpfs files contained 7,302,517 bytes of kernel objects and 135,168 bytes of pages. Checkpoint took 167 ms. Starting a fresh sandbox, restoring it and running /bin/true took 154 ms; the restored guest listed every file. Six single-CPU benchmark samples gave median Encode and Decode times of 141 and 103 ms. Decode with GC took 163 ms, with three collections. With GC enabled, 360 ms of 1.58 s of sampled loadKernel CPU went through callback execution. The largest of those paths (220 ms) restored the parent pointer of a tmpfs directory entry.",
           "evidence": [
             {
               "label": "50,000 tmpfs files after real restore and 18 paired-phase observations on the same checkpoint",
               "url": "https://github.com/tamird/gvisor/actions/runs/41288508688/artifacts/13076561165"
+            },
+            {
+              "label": "Per-function CPU samples from the original processes",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41289006099/artifacts/13076482536"
             }
           ]
         },
@@ -50800,7 +50804,7 @@
           ]
         }
       ],
-      "nextStep": "Locate the dominant CPU and allocation costs in the 50,000-file checkpoint before proposing another optimization. Retain the real guest restore as the end-to-end comparison.",
+      "nextStep": "Measure whether the callback that restores a field can also release its dependency. Compare both decoders on one frozen image and verify all 50,000 files in fresh guest restores.",
       "evidence": [
         {
           "label": "50,000 tmpfs files after real restore and 18 paired-phase observations on the same checkpoint",
@@ -57687,7 +57691,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T08:25:06.500974+00:00",
+      "updatedAt": "2026-11-01T08:52:55.845635+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -57708,6 +57712,23 @@
             {
               "label": "Template experiment: both scratch builds and original generated sources",
               "url": "https://github.com/tamird/gvisor/actions/runs/41286671141/artifacts/13075642170"
+            }
+          ]
+        },
+        {
+          "text": "The shell setting for Go SDK bootstrap was lost when Bazel selected tools for the execution platform. Making the setting universal selected the declared ash on both CPUs and got past bootstrap. On AMD64, starting the embedded posix_tw failed with ENOENT. On ARM64, the compiled test wrapper exited successfully but wrote an empty XML suite. Neither run qualified a named test. The build-only result above is independent of test execution.",
+          "evidence": [
+            {
+              "label": "Original and corrected action arguments, wrapper paths, and case counts",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41289663114/artifacts/13077071459"
+            },
+            {
+              "label": "Scoped toolchain patch",
+              "url": "https://github.com/tamird/gvisor/commit/851d04fc2"
+            },
+            {
+              "label": "Original wrapper exit and output from both CPUs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41290695384/artifacts/13077530903"
             }
           ]
         },
@@ -59011,7 +59032,7 @@
           ]
         }
       ],
-      "nextStep": "Trace the Go SDK builder failure on the scratch workers and execute named state and TCP tests. The first attempt reached zero tests and its driver selected the earlier source. Finish the empty-client fetch work with Gazelle and bazel_lib and the native release smoke tests.",
+      "nextStep": "Check the interpreter recorded in the embedded AMD64 wrapper and compare a portable build on both workers. On ARM64, run the two owners with named Go test output enabled.",
       "evidence": [
         {
           "label": "Both scratch architectures: 14 affected targets rebuilt, including the two original failures",
@@ -59887,12 +59908,12 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-01T08:28:22.390757+00:00",
+      "updatedAt": "2026-11-01T08:52:55.845639+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "Test error delivery on established TCP connections, including the separate ICMPv6 address-unreachable dispatch. Compare read-half shutdown readiness under poll and epoll on Linux and gVisor. Continue the recovery and receive-queue investigations.",
+      "nextStep": "Check the sequence quoted by ICMP against data still outstanding. Qualify the half-close fix and measure open-socket poll cost. Compare FIN versus reset after shutdown with unread data.",
       "findings": [
         {
-          "text": "On an established TCP connection with extended errors enabled, Linux reported an injected host-unreachable error through poll and SO_ERROR. Its MSG_ERRQUEUE stayed empty. Stock gVisor returned an IPv4 error-queue record; on IPv6, an address-unreachable message produced no error at all. The sockets still transferred data. The error-queue and IPv6 dispatch paths are being tested separately. An IPv6 network-unreachable control reached the existing dispatcher and reproduced the IPv4 TCP error-queue difference.",
+          "text": "On an established TCP connection with extended errors enabled, Linux reported an injected host-unreachable error through poll and SO_ERROR. Its MSG_ERRQUEUE stayed empty. Stock gVisor returned an IPv4 error-queue record; on IPv6, an address-unreachable message produced no error at all. The sockets still transferred data. The error-queue and IPv6 dispatch paths are being tested separately. An IPv6 network-unreachable control reached the existing dispatcher and reproduced the IPv4 TCP error-queue difference. With later data outstanding, Linux ignored an error quoting an already acknowledged segment. A prototype reported EHOSTUNREACH for both stale and outstanding quotes.",
           "evidence": [
             {
               "label": "IPv4: both SO_ERROR and MSG_ERRQUEUE read orders, IP_RECVERR off/on",
@@ -59905,6 +59926,23 @@
             {
               "label": "IPv6 network-unreachable follows the existing dispatch path and reproduces the TCP error-queue difference",
               "url": "https://github.com/tamird/gvisor/actions/runs/41288587364/artifacts/13075614629"
+            },
+            {
+              "label": "Stale versus outstanding ICMP quotes on the same live connection",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41289845793/artifacts/13076738006"
+            }
+          ]
+        },
+        {
+          "text": "Linux reported POLLRDHUP after local read shutdown and woke an epoll watch interested only in EPOLLRDHUP when the peer sent FIN. On stock gVisor the local result depended on an earlier POLLIN poll and the peer-FIN watch timed out, on both IPv4 and IPv6.",
+          "evidence": [
+            {
+              "label": "Identical Linux and gVisor syscall tests",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41288718074/artifacts/13076651174"
+            },
+            {
+              "label": "Candidate and open-socket performance comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41290171945"
             }
           ]
         },
