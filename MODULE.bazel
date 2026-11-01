@@ -45,7 +45,7 @@ single_version_override(
         "//tools:rules_cgo.patch",
         "//tools:rules_go_export.patch",
         "//tools:rules_go_bootstrap_shell.patch",
-        "//tools:rules_go_temp_env.patch",
+        "//tools:rules_go_output_temp.patch",
     ],
     version = "0.63.0",
 )

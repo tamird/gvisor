@@ -1,0 +1,59 @@
+diff --git a/go/tools/builders/env.go b/go/tools/builders/env.go
+--- a/go/tools/builders/env.go
++++ b/go/tools/builders/env.go
+@@ -96,6 +96,16 @@
+ 	return nil
+ }
+ 
++// useOutputTempDir lets Go and its child processes create temporary files
++// beside declared outputs when no Unix temporary directory was configured.
++// Use an absolute path since children may change working directory.
++func useOutputTempDir(dir string) error {
++	if runtime.GOOS == "windows" || os.Getenv("TMPDIR") != "" {
++		return nil
++	}
++	return os.Setenv("TMPDIR", abs(dir))
++}
++
+ // workDir returns a path to a temporary work directory. The same directory
+ // is returned on multiple calls. The caller is responsible for cleaning
+ // up the work directory by calling cleanup.
+diff --git a/go/tools/builders/stdlib.go b/go/tools/builders/stdlib.go
+--- a/go/tools/builders/stdlib.go
++++ b/go/tools/builders/stdlib.go
+@@ -50,6 +50,9 @@
+ 		return fmt.Errorf("GOROOT not set")
+ 	}
+ 	output := abs(*out)
++	if err := useOutputTempDir(output); err != nil {
++		return err
++	}
+ 
+ 	// Fail fast if cgo is required but a toolchain is not configured.
+ 	if os.Getenv("CGO_ENABLED") == "1" && filepath.Base(os.Getenv("CC")) == "vc_installation_error.bat" {
+diff --git a/go/tools/builders/stdliblist.go b/go/tools/builders/stdliblist.go
+--- a/go/tools/builders/stdliblist.go
++++ b/go/tools/builders/stdliblist.go
+@@ -232,6 +232,9 @@
+ 	// that file paths in the generated JSON are still valid.
+ 	//
+ 	// Here we replicate goRoot(absolute path of goenv.sdk) to newGoRoot.
++	if err := useOutputTempDir(filepath.Dir(*out)); err != nil {
++		return err
++	}
+ 	cloneBase, cleanup, err := goenv.workDir()
+ 	if err != nil {
+ 		return err
+diff --git a/go/tools/builders/compilepkg.go b/go/tools/builders/compilepkg.go
+--- a/go/tools/builders/compilepkg.go
++++ b/go/tools/builders/compilepkg.go
+@@ -85,6 +85,9 @@
+ 	cgoEnabled := os.Getenv("CGO_ENABLED") == "1"
+ 	cc := os.Getenv("CC")
+ 	outLinkobjPath = abs(outLinkobjPath)
++	if err := useOutputTempDir(filepath.Dir(outLinkobjPath)); err != nil {
++		return err
++	}
+ 	for i := range unfilteredSrcs {
+ 		unfilteredSrcs[i] = abs(unfilteredSrcs[i])
+ 	}
