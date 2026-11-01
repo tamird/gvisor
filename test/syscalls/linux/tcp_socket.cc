@@ -174,6 +174,7 @@ class TcpSocketTest : public ::testing::TestWithParam<int> {
   // Creates three sockets that will be used by test cases -- a listener, one
   // that connects, and the accepted one.
   void SetUp() override;
+  void CheckLingerOnExit(bool abortive);
 
   // Listening socket.
   FileDescriptor listener_;
@@ -612,15 +613,11 @@ TEST_P(TcpSocketTest, ClosedReadBlockingSocket) {
 
 // Test that the exit of a process that holds the last reference to a socket
 // with SO_LINGER set does not linger.
-TEST_P(TcpSocketTest, NoLingerOnProcessExit) {
-  // hostinet closes the host socket from a sentry thread that is not exiting,
-  // so the host kernel lingers.
-  SKIP_IF(IsRunningWithHostinet());
-
+void TcpSocketTest::CheckLingerOnExit(bool abortive) {
   constexpr int kLingerTimeout = 10;  // Seconds.
   struct linger sl = {
       .l_onoff = 1,
-      .l_linger = kLingerTimeout,
+      .l_linger = abortive ? 0 : kLingerTimeout,
   };
   ASSERT_THAT(
       setsockopt(connected_.get(), SOL_SOCKET, SO_LINGER, &sl, sizeof(sl)),
@@ -656,17 +653,28 @@ TEST_P(TcpSocketTest, NoLingerOnProcessExit) {
   EXPECT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0)
       << "status " << status;
 
-  // The close was still graceful: the peer reads all the data and then EOF,
-  // not a reset.
+  // Drain any acknowledged data before checking how the connection closed.
   std::vector<char> buf(1 << 16);
   int n = -1;
   do {
     struct pollfd poll_fd = {accepted_.get(), POLLIN, 0};
     ASSERT_THAT(RetryEINTR(poll)(&poll_fd, 1, kTimeoutMillis),
                 SyscallSucceedsWithValue(1));
-    ASSERT_THAT(n = RetryEINTR(read)(accepted_.get(), buf.data(), buf.size()),
-                SyscallSucceeds());
+    n = RetryEINTR(read)(accepted_.get(), buf.data(), buf.size());
   } while (n > 0);
+  if (abortive) {
+    EXPECT_THAT(n, SyscallFailsWithErrno(ECONNRESET));
+  } else {
+    EXPECT_THAT(n, SyscallSucceedsWithValue(0));
+  }
+}
+
+TEST_P(TcpSocketTest, NoLingerOnProcessExit) {
+  CheckLingerOnExit(/*abortive=*/false);
+}
+
+TEST_P(TcpSocketTest, AbortiveLingerOnExit) {
+  CheckLingerOnExit(/*abortive=*/true);
 }
 
 TEST_P(TcpSocketTest, MsgTrunc) {
