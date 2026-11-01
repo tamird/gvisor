@@ -11,7 +11,7 @@ INITIAL = "b2937125-638e-4a32-bb32-3e34e7409377"
 RECOVERY = "73a118498559c484b13c4e7c848e861e3b92dfb4"
 TARGETS = ("//runsc/sandbox:sandbox_test", "//tools/gvisor2pcap:gvisor2pcap_test")
 forbidden = re.compile(r"authorization|bearer|credential|remote_header|bes_header|api.?key|token|password", re.I)
-pattern = re.compile(r"(?:network|gvisor2pcap)_test\.go:[0-9]+:|^\s*--- (?:FAIL|PASS|SKIP): Test|^=== RUN\s+Test|^PASS$|^FAIL$|operation not permitted|permission denied|no tests to run|invalid regexp|flag provided but not defined|invalid argument|protocol not available", re.I)
+pattern = re.compile(r"(?:network|gvisor2pcap)_test\.go:[0-9]+:|^\s*--- (?:FAIL|PASS|SKIP): Test|^=== RUN\s+Test|^PASS$|^FAIL$|operation not permitted|permission denied|no tests to run|invalid regexp|flag provided but not defined|invalid argument|protocol not available|^\s*(?:got|want)\s+", re.I)
 blobpath = re.compile(r"bytestream://(?:remote|app)\.buildbuddy\.io/(?:[^?#\s]+/)?blobs/([0-9a-f]{64})/(\d+)")
 def collect(uid):
     result = {}
@@ -37,7 +37,7 @@ def collect(uid):
                 if name == "test.xml":
                     file["cases"] = {c.get("name"): [x.tag for x in c if x.tag in ("skipped", "failure", "error")] for c in ET.fromstring(data).iter("testcase")}
                 else:
-                    file["lines"] = [line.strip()[:450] for line in data.decode(errors="replace").splitlines() if pattern.search(line) and not forbidden.search(line)][:180]
+                    file["lines"] = [line.strip()[:2500] for line in data.decode(errors="replace").splitlines() if pattern.search(line) and not forbidden.search(line)][:180]
                 label_result["files"].append(file)
     return result
 record = {"invocations": {}, "unavailable": {}, "source": RECOVERY}
@@ -47,7 +47,7 @@ def lookup(label, call):
     except Exception as e:
         record["unavailable"][label] = type(e).__name__
         return []
-uids = [INITIAL]
+uids = [INITIAL, "f44b16c7-2ef9-4bad-9eec-094d94b8aab3"]
 selector = {"selector": {"commit_sha": RECOVERY}, "count": 20}
 for row in lookup("GetInvocation", lambda: pages("GetInvocation", selector, "invocation")):
     uid = value(row, "invocationId", "invocation_id") or (row.get("id") or {}).get("invocationId")

@@ -21,26 +21,13 @@ def now() -> str:
 temp = Path(os.environ["RUNNER_TEMP"])
 records = temp / "records"
 phase = sys.argv[1]
-package = "//test/rbe/forward_gso:"
-command, labels, budget = "test", [package+"forwarding_test"], "15m"
-modes = ["one", "two"] if phase == "fixed" else []
-network_tests = (
-    "TestCollectLinksAndRoutes_SingleInterface", "TestCollectLinksAndRoutes_LoopbackOnly",
-    "TestCollectLinksAndRoutes_MultipleInterfaces", "TestCollectLinksAndRoutes_IPv6Disabled",
-    "TestCollectLinksAndRoutes_DownInterface", "TestCollectLinksAndRoutes_NoUsableAddresses",
-    "TestCollectLinksAndRoutes_LoopbackExtraRoutes", "TestDialExternalUDS", "TestConfigureProxyLink",
-    "TestDialExternalUDSRejectsStreamPeer", "TestDialExternalUDSMissingPath", "TestPrimaryInterface",
-)
-network = "//runsc/sandbox:sandbox_test"
-converter = "//tools/gvisor2pcap:gvisor2pcap_test"
-if phase == "native-owners":
-    labels = [network, converter]
-    budget = "18m"
-elif phase == "boot":
-    labels = ["//runsc/boot:boot_nogo"]
-    budget = "43m"
-else:
+if phase not in ("stale", "per-link"):
     raise ValueError(phase)
+network = "//runsc/sandbox:sandbox_test"
+labels = [network]
+command, budget = "test", "12m"
+network_tests = tuple("TestCollectLinksAndRoutes_" + case for case in
+                      ("SingleInterface", "MultipleInterfaces", "IPv6Disabled"))
 invocation = str(uuid.uuid4())
 receipt = records / (phase + ".json")
 record = dict(phase=phase, started=now(), result="started", invocation=invocation, labels=labels,
@@ -112,11 +99,8 @@ args = ["docker", "exec", "tcp-compiler", "timeout", "--signal=INT", "--kill-aft
         "--strategy_regexp=^Analyzing.(@@)?//pkg/abi/linux:linux$=local",
         "--remote_download_outputs=toplevel", "--invocation_id=" + invocation, "--build_event_json_file=" + str(bep),
         "--build_metadata=REPO_URL=https://github.com/tamird/gvisor", "--build_metadata=COMMIT_SHA=" + os.environ["GITHUB_SHA"]]
-if phase == "native-owners":
-    args += ["--test_filter=^(" + "|".join((*network_tests, "TestGvisor2PCAP")) + ")($|/)",
-             "--strategy=TestRunner=local", "--test_arg=-test.v", "--nocache_test_results", "--test_timeout=300"]
-else:
-    args += ["--test_timeout=300"]
+args += ["--test_filter=^(" + "|".join(network_tests) + ")$",
+         "--strategy=TestRunner=local", "--test_arg=-test.v", "--nocache_test_results", "--test_timeout=300"]
 with log.open("wb") as f, subprocess.Popen([*args, *labels], stdout=f, stderr=subprocess.STDOUT) as proc:
     while True:
         try:
@@ -144,18 +128,20 @@ for label in labels:
             checks.setdefault(name, [])
         else:
             checks[name] = [result]
-    failures[label] = [line.strip()[:230] for line in output.splitlines()
-                       if re.search(r"network_test.go:[0-9]+:|gvisor2pcap_test.go:[0-9]+:|^FAIL:|^--- FAIL", line)
-                       and not secrets.search(line)][:20]
+    failures[label] = [line.strip()[:2500] for line in output.splitlines()
+                       if re.search(r"network_test.go:[0-9]+:|gvisor2pcap_test.go:[0-9]+:|^ *got |^ *want |^FAIL:|^--- FAIL", line)
+                       and not secrets.search(line)][:45]
     owner_cases[label] = checks
-wanted = {network: network_tests, converter: ("TestGvisor2PCAP",)} if phase == "native-owners" else {}
-missing = {label: sorted(set(names) - set(c.split("/")[0] for c in owner_cases[label])) for label, names in wanted.items()}
-record.update(xml=owner_cases, missingCases=missing, testDiagnostics=failures)
-ok = (set(completions) == set(labels) and all(completions.values()) and all(owner_cases.values())
-      and not any(missing.values()) and all(not faults for cases in owner_cases.values() for faults in cases.values())
-      and results == summaries == ["PASSED"] * len(labels))
-record["result"] = "verified" if rc == 0 and ok else "failed"
-record["verifiedAt"] = now()
+cases = owner_cases[network]
+status = "FAILED" if phase == "stale" else "PASSED"
+ok = (len(results) == len(summaries) == 1 and results == summaries == [status]
+      and set(completions) == set(labels) and set(cases) == set(network_tests))
+if phase == "stale":
+    ok = ok and rc == 3 and all(any(t in ("failure", "FAIL") for t in marks) for marks in cases.values())
+    ok = ok and any("Defaultv4Gateway mismatch" in line for line in failures[network])
+else:
+    ok = ok and rc == 0 and all(completions.values()) and not any(cases.values())
+record.update(xml=owner_cases, testDiagnostics=failures, result="verified" if ok else "failed", verifiedAt=now())
 save()
 print(json.dumps(record, indent=2))
-sys.exit(record["result"] != "verified")
+sys.exit(not ok)

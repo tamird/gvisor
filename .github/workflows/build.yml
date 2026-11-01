@@ -1,39 +1,113 @@
-name: Recover original network setup records
+name: Read one packet capture for all network interfaces
 on:
   push:
-    branches: [qualification/pcap-owner-original-evidence]
+    branches: [qualification/pcap-default-route-controls]
 permissions:
   contents: read
+  actions: read
 jobs:
-  inspect:
+  router:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 8
+    timeout-minutes: 35
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      STOCK: aa767e4c43d011121271551fe24da501a56f729d
+      FIXED: 28cfe8fb884b83198704dd55a9ee53ac596b59fe
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 1, persist-credentials: false}
-    - name: Fetch the right original record readers
+      with: {fetch-depth: 8, persist-credentials: false}
+    - name: Prepare the trusted GNU native test environment
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
         set -euo pipefail
-        mkdir "$RUNNER_TEMP/records"
+        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
+        printf '{"verified":false,"reason":"no matched route controls"}\n' > "$RUNNER_TEMP/records/verdict.json"
+        git merge-base --is-ancestor "$FIXED" HEAD
+        test "$(git rev-parse "$FIXED^")" = "$STOCK"
+        git diff --exit-code "$FIXED" HEAD -- pkg runsc
+        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run --init -d --privileged --name tcp-compiler --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec tcp-compiler ip -V
+        docker exec tcp-compiler unshare -n sh -ec 'ip link set lo up; ip -6 address show dev lo | grep -Fq ::1'
+    - name: Retrieve the original got and want routes
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail
         exporter=1fcf113e6349cc55f6321968944da1933ece3252
         reporter=fb60e127516defd6aab633f80be09a03022f0737
         git fetch -q --no-tags --depth=1 https://github.com/tamird/gvisor.git "$reporter" "$exporter"
         for mod in qualification_report unit_matrix; do git show "$reporter:test/rbe/$mod.py" > "$RUNNER_TEMP/$mod.py"; done
         git show "$exporter:test/rbe/semop_owner_recovery.py" > "$RUNNER_TEMP/semop_owner_recovery.py"
-    - name: Recover saved logs and XML
-      env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: |
         PYTHONPATH="$RUNNER_TEMP" python3 test/rbe/forward_gso/original_results.py
-        python3 - <<'PY'
+    - name: Compare the same three stale expectations on the unmodified direct parent
+      run: |
+        set -euo pipefail
+        git checkout "$STOCK" -- pkg/tcpip/link/sniffer/sniffer.go runsc/boot/network.go runsc/boot/sentryapi/network.go
+        git diff --exit-code "$STOCK" -- pkg runsc tools
+        PRODUCT_SHA="$STOCK" python3 test/rbe/forward_gso/qualify.py stale
+    - name: Check the PCAP source with the route owner's pending correction
+      if: ${{ !cancelled() }}
+      run: |
+        set -euo pipefail
+        git checkout "$FIXED" -- pkg/tcpip/link/sniffer/sniffer.go runsc/boot/network.go runsc/boot/sentryapi/network.go
+        git diff --exit-code "$FIXED" -- pkg runsc tools
+        route=1be6183240b96e6ac4ac51a9f03463ae3077a43f
+        git fetch -q --depth=2 --no-tags https://github.com/tamird/gvisor.git "$route"
+        git diff "$route^" "$route" -- runsc/sandbox/BUILD runsc/sandbox/network.go runsc/sandbox/network_test.go | git apply
+        git diff --exit-code "$FIXED" -- pkg runsc/boot tools
+        PRODUCT_SHA="$FIXED+$route" python3 test/rbe/forward_gso/qualify.py per-link
+    - name: Compare the original PCAP and direct-parent route mismatches
+      if: always()
+      run: |
+        python3 - <<'PYREPORT'
+        import json, os, re, sys
+        from pathlib import Path
+        root = Path(os.environ['RUNNER_TEMP'])/'records'
+        def read(name):
+            p = root/(name + '.json')
+            return json.loads(p.read_text()) if p.is_file() else {}
+        label = '//runsc/sandbox:sandbox_test'
+        native = 'f44b16c7-2ef9-4bad-9eec-094d94b8aab3'
+        files = read('original-owners').get('invocations', {}).get(native, {}).get(label, {}).get('files', [])
+        lines = next((f['lines'] for f in files if f['name'] == 'test.log'), [])
+        stale, corrected = read('stale'), read('per-link')
+        def routes(lines):
+            return sorted(re.sub(r'(?i)(?:[a-f0-9]{2}:){5}[a-f0-9]{2}', '<mac>', line.strip()) for line in lines if re.match(r'^(?:got|want) ', line.strip()))
+        old, new = routes(stale.get('testDiagnostics', {}).get(label, [])), routes(lines)
+        same = bool(old) and old == new
+        ok = same and all(arm.get('result') == 'verified' for arm in [stale, corrected])
+        (root/'verdict.json').write_text(json.dumps(dict(verified=ok, stale=stale.get('result'), corrected=corrected.get('result'), matchingGotWant=same, parentLines=len(old), proposalLines=len(new), originalNative=native), indent=2))
+        sys.exit(not ok)
+        PYREPORT
+    - name: Check artifact contents before publication
+      id: privacy
+      if: always()
+      env:
+        KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PYTHON'
         import os
         from pathlib import Path
-        secret = os.environ['BUILDBUDDY_API_KEY'].encode()
-        assert secret and secret not in (Path(os.environ['RUNNER_TEMP'])/'records/original-owners.json').read_bytes()
-        PY
+        key = os.environ["KEY"].encode()
+        assert key
+        for path in (Path(os.environ["RUNNER_TEMP"]) / "records").glob("*"):
+            assert key not in path.read_bytes(), path.name
+        PYTHON
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.privacy.outcome == 'success'
       with:
-        name: original-network-records
+        name: native-route-controls
         path: ${{ runner.temp }}/records
         if-no-files-found: error
