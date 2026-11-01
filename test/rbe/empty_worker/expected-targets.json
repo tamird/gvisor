@@ -1,0 +1,17 @@
+{
+  "scope": "//tools/...",
+  "required_labels": [
+    "//tools/actionlint:actionlint",
+    "//tools/buildkite_coordinator:buildkite_coordinator",
+    "//tools/go_stateify:stateify",
+    "//tools/gvisor2pcap:gvisor2pcap",
+    "//tools/licensecheck:licensecheck",
+    "//tools/nvidia_driver_differ:driver_ast_parser",
+    "//tools/profiletool:profiletool"
+  ],
+  "skipped": {
+    "amd64": [],
+    "arm64": []
+  },
+  "provenance": "Retain the complete configured wildcard from an independent --nobuild on this source; compare the full build against that manifest, including zero-action targets. No previous whole tools wildcard manifest was located."
+}
