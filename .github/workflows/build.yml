@@ -1,35 +1,100 @@
-name: CI
-
-"on":
+name: Check the shared-memory syscall cases and include-cleaner on GNU Linux
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/shm-native-gnu-includes]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  qualify:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      PRODUCT: 154269d6f7268496ae9583afe929ca5eb0c37cf8
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 2, persist-credentials: false}
+    - name: Prepare the existing GNU compiler and native TestRunner
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -euo pipefail
+        w="$RUNNER_TEMP/shm-gnu"
+        mkdir -p "$w/public" "$w/bin" "$w/platform"
+        cp test/rbe/shm-gnu-check.py "$w/check.py"
+        test "$(git rev-parse HEAD^)" = "$PRODUCT"
+        git checkout -q --detach "$PRODUCT"
+        test "$(git rev-parse HEAD^{tree})" = e1d4f1b96f4b5072e57080cbe816df2eeda55665
+        printf 'module(name="tcp_gnu")\n' > "$w/platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$w/platform/BUILD"
+        umask 077
+        {
+          printf '%s\n' 'build --config=x86_64' 'build --jobs=64' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$w/platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$w/gnu.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        if [[ $(cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns 2>/dev/null) == 1 ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name shm-gnu --entrypoint /bin/bash --user root --cap-add=SYS_ADMIN --cap-add=SYS_PTRACE --security-opt apparmor=unconfined --env PRODUCT --env "WORK=$w" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec shm-gnu unshare -Urnm sh -ec 'mount -t tmpfs tmpfs /mnt'
+        docker exec shm-gnu sh -ec 'uname -srm; getconf GNU_LIBC_VERSION; gcc -dumpfullversion' > "$w/public/coordinator.txt"
+        actual=$(docker exec shm-gnu sh -ec 'command -v bazel')
+        printf '#!/bin/sh\nexec "%s" --bazelrc="%s" "$@"\n' "$actual" "$w/gnu.bazelrc" > "$w/bin/bazel"
+        chmod 755 "$w/bin/bazel"
+    - name: Run the four original shared-memory cases on the native kernel
+      id: syscalls
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        w="$RUNNER_TEMP/shm-gnu"
+        filter=ShmTest.AttachDetach:ShmTest.DetachedSegmentsPersist:ShmTest.RemovedSegmentsAreDestroyed:ShmDeathTest.SegmentNotAccessibleAfterDetach
+        rc=0
+        docker exec shm-gnu "$w/bin/bazel" test --strategy=TestRunner=local --nocache_test_results --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=errors --test_timeout=300 --test_sharding_strategy=disabled --test_env="GTEST_FILTER=$filter" --build_event_json_file="$w/events" //test/syscalls:shm_test_native > "$w/syscalls.log" 2>&1 || rc=$?
+        printf '%s\n' "$rc" > "$w/syscalls.exit"
+        docker exec shm-gnu python3 "$w/check.py" syscalls "$w"
+    - name: Generate real compile commands for the two source owners
+      id: database
+      if: ${{ !cancelled() && steps.syscalls.outcome != 'skipped' }}
+      run: |
+        set -euo pipefail
+        w="$RUNNER_TEMP/shm-gnu"
+        rc=0
+        docker exec shm-gnu sh -ec 'export PATH="$WORK/bin:$PATH"; python3 tools/gen_compile_commands.py //test/syscalls/linux:shm_test //test/util:multiprocess_util' > "$w/database.log" 2>&1 || rc=$?
+        printf '%s\n' "$rc" > "$w/database.exit"
+        docker exec shm-gnu python3 "$w/check.py" database "$w"
+        test "$rc" = 0
+    - name: Enforce the repository's include-cleaner configuration
+      if: ${{ !cancelled() && steps.database.outcome == 'success' }}
+      run: |
+        set -euo pipefail
+        w="$RUNNER_TEMP/shm-gnu"
+        rc=0
+        docker exec shm-gnu tools/lint.sh clang-tidy > "$w/lint.log" 2>&1 || rc=$?
+        printf '%s\n' "$rc" > "$w/lint.exit"
+        docker exec shm-gnu python3 "$w/check.py" lint "$w"
+    - name: Retain the scope and both original dispositions
+      if: always()
+      run: |
+        set -euo pipefail
+        w="$RUNNER_TEMP/shm-gnu"
+        mkdir -p "$w/public"
+        python3 - "$w/public" <<'PY'
+        from datetime import datetime, timezone
+        import json, os, pathlib, sys
+        out = pathlib.Path(sys.argv[1])
+        phases = {}
+        for phase in ("syscalls", "database", "lint"):
+            path = out / f"{phase}.json"
+            phases[phase] = path.is_file() and json.loads(path.read_text()).get("verified") is True
+        passed = all(phases.values())
+        (out/"verdict.json").write_text(json.dumps(dict(source=os.environ["PRODUCT"], phases=phases, verified=passed, completed=datetime.now(timezone.utc).isoformat()), indent=2))
+        print(phases)
+        raise SystemExit(0 if passed else 1)
+        PY
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: shm-gnu-results
+        path: ${{ runner.temp }}/shm-gnu/public/
+        if-no-files-found: error
