@@ -1,35 +1,33 @@
-name: Build the optimized release packages on native scratch workers
+name: Compare the declared Flit backend with the two original release frontends
 on:
   push:
-    branches: [qualification/package-empty-worker-arm64]
+    branches: [qualification/python-release-flit-hooks]
 permissions:
   contents: read
+  actions: read
 jobs:
   compare:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - {cpu: arm64, os: ubuntu-24.04-arm, bb: arm64, bb_sha: 5e8586e88d169395c2119a4143aa4d86d9b53d7abab3520acc735473f2bd2a90, bazelisk_sha: bb608519a440d45d10304eb684a73a2b6bb7699c5b0e5434361661b25f113a5d}
-          - {cpu: amd64, os: ubuntu-24.04, bb: x86_64, bb_sha: bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224, bazelisk_sha: e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76}
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
     env:
-      EXEC_CPU: ${{ matrix.cpu }}
-      BB_ARCH: ${{ matrix.bb }}
-      BB_HASH: ${{ matrix.bb_sha }}
-      BAZELISK_HASH: ${{ matrix.bazelisk_sha }}
-    timeout-minutes: 58
+      EXEC_CPU: amd64
+      BB_ARCH: x86_64
+      BB_HASH: bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224
+      BAZELISK_HASH: e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 5}
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Get the original PyPA build, uv and CPython 3.7.17 install records
+        env: {GH_TOKEN: "${{ github.token }}"}
+        run: gh api repos/tamird/gvisor/actions/artifacts/13035474364/zip > "$RUNNER_TEMP/frontend.zip"
       - name: Pin Bazel and the compact action log reader
         run: |
           set -eu
           export USE_BAZEL_VERSION=$(cat images/default/bazelversion)
           echo "USE_BAZEL_VERSION=$USE_BAZEL_VERSION" >> "$GITHUB_ENV"
           mkdir -p "$RUNNER_TEMP/bazelisk-bin"
-          curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-$EXEC_CPU -o "$RUNNER_TEMP/bazelisk-bin/bazel"
+          curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$RUNNER_TEMP/bazelisk-bin/bazel"
           echo "$BAZELISK_HASH  $RUNNER_TEMP/bazelisk-bin/bazel" | sha256sum -c -
           chmod +x "$RUNNER_TEMP/bazelisk-bin/bazel"
           echo "$RUNNER_TEMP/bazelisk-bin" >> "$GITHUB_PATH"
@@ -37,16 +35,13 @@ jobs:
           curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-$BB_ARCH -o "$RUNNER_TEMP/bb"
           echo "$BB_HASH  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod 0755 "$RUNNER_TEMP/bb"
-      - name: Build the three official optimized packages and verify their contents
+      - name: Build the two distributions on the AMD64 and ARM64 scratch executors
         env:
-          BASE: ddf4c56a5ae1a1e539ec5989649930c97c26e593
-          ORIGINAL: ec550a48a00e04396c21617a152224096bf93af2
-          CORRECTED: 2dd42c8895f0de061285704a46b8de3cdaa6a1b4
-          AMD64_CONTROL: 17927b34de218b8c26b5feb834856d7d49259444
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+          PROOF: 7cfa6f9cbf2920874de6d611ca1a278b1471bb8d
+          PRODUCT: 9fdfeec6eec72081a859d408c558fbe2e554e604
         run: |
           set -eu
-          test -n "$BUILDBUDDY_API_KEY"
           umask 077
           {
             printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --action_env=TMPDIR=.' 'build --host_action_env=TMPDIR=.'
@@ -54,11 +49,11 @@ jobs:
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$RUNNER_TEMP/sidecar.bazelrc"
           unset BUILDBUDDY_API_KEY
-          cp test/rbe/empty_worker/compare.py "$RUNNER_TEMP/package-compare.py"
-          python3 "$RUNNER_TEMP/package-compare.py"
+          cp test/rbe/empty_worker/qualify_flit.py "$RUNNER_TEMP/qualify_flit.py"
+          python3 "$RUNNER_TEMP/qualify_flit.py"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: optimized-packages-${{ matrix.cpu }}
-          path: ${{ runner.temp }}/package-evidence
+          name: flit-frontend-comparison
+          path: ${{ runner.temp }}/flit-evidence
           if-no-files-found: error
