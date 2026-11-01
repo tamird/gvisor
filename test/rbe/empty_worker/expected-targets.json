@@ -1,0 +1,22 @@
+{
+  "scope": "//tools/licensecheck:licensecheck_test",
+  "expected": {
+    "amd64": [
+      "//tools/licensecheck:licensecheck_test"
+    ],
+    "arm64": [
+      "//tools/licensecheck:licensecheck_test"
+    ]
+  },
+  "required_labels": [
+    "//tools/licensecheck:licensecheck_test"
+  ],
+  "skipped": {
+    "amd64": [],
+    "arm64": []
+  },
+  "provenance": "Only missing owner in original 190-label tools build. Original artifact 13074631555 on 6bbc4a648 retains 189 successful labels per architecture; recover this sole failed source. No other labels rebuilt.",
+  "extra_flags": [
+    "--jobs=400"
+  ]
+}
