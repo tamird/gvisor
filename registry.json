@@ -57599,9 +57599,22 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T06:51:56.536223+00:00",
+      "updatedAt": "2026-11-01T07:10:33.324919+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "On empty workers, the combined source built all 1,487 //pkg/... targets on AMD64 and all 1,485 compatible targets on ARM64. Bazel skipped two incompatible slimvm targets on ARM64. All 21 earlier failures now build, including the NVIDIA parity-test binary. The receipts account for 26,409 actions, including cache hits, all on the specified scratch platforms. This was a build; none of the test binaries ran. Repository fetching used Ubuntu.",
+          "evidence": [
+            {
+              "label": "Per-architecture target, skip, execution-platform and cache receipts",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41280373232/artifacts/13073454040"
+            },
+            {
+              "label": "Combined build input",
+              "url": "https://github.com/tamird/gvisor/commit/6bbc4a648"
+            }
+          ]
+        },
         {
           "text": "From empty caches, a Linux client with Bazel, runtime libraries, network and CA certificates could analyze //:release on AMD64 and native ARM64 after two dependency changes. Without uname, bazel_lib 3.2.2 tried to resolve a nonexistent archive toolchain. On ARM64, updating bazel_lib alone exposed Gazelle’s dependency on the env executable. Updating both analyzed 424,022 configured targets on ARM64 and 421,743 on AMD64. These were analysis-only runs.",
           "evidence": [
@@ -57616,7 +57629,7 @@
           ]
         },
         {
-          "text": "Both gRPC service libraries now build on each scratch architecture with musl selected only for execution tools. The five host executables per architecture have no ELF interpreter or shared dependencies. The target C++ compilations still use GNU, and both architectures generated identical service sources. Separately, the LLVM change built and ran both TableGen programs, preserved all 9,899 embedded helper bytes and picked up a local source edit without a clean build. These targeted checks cover the earlier failure sites. The complete package wildcard and the NVIDIA parity test still need the combined source.",
+          "text": "Both gRPC service libraries now build on each scratch architecture with musl selected only for execution tools. The five host executables per architecture have no ELF interpreter or shared dependencies. The target C++ compilations still use GNU, and both architectures generated identical service sources. Separately, the LLVM change built and ran both TableGen programs, preserved all 9,899 embedded helper bytes and picked up a local source edit without a clean build.",
           "evidence": [
             {
               "label": "Service owners, generated files, five static tools and target compile settings on each architecture",
@@ -57629,7 +57642,7 @@
           ]
         },
         {
-          "text": "The targeted follow-up built all 18 host-layout owners and both supporting c-ares headers on each empty worker. Across the unchanged and corrected targets, AMD64 now has 1,484 successes out of 1,487. ARM64 has 1,482 plus two explicitly incompatible slimvm targets. The two service targets need four host executables with dynamic loader dependencies. The remaining NVIDIA parity target also invokes Bash in LLVM’s instrumentor header generator. Targeted work continues on these three; a final same-source sweep is pending.",
+          "text": "The host-layout changes built all 18 affected targets and both c-ares headers on each architecture. The remaining failures at this stage identified dynamic dependencies in host gRPC tools and Bash in LLVM’s instrumentor header generator.",
           "url": "https://github.com/tamird/gvisor/actions/runs/41278670429/artifacts/13072880293"
         },
         {
@@ -58866,7 +58879,7 @@
           ]
         }
       ],
-      "nextStep": "Follow the Debian layer change in rules_distroless #293. Keep the Jekyll renderer queued for the upstream rules_img release. Prepare the development-checkpoint identity fix for review on its rules_go prerequisite. Qualify the release change with the current graph default and on ARM64 before moving the broader build change to review. The ARM64 eventfd case reached the ordinary TestRunner; use that qualified path for the next relevant syscall coverage. Check whether the approved release changes also replace the Buildkite artifact commands and smoke-test the already built optimized binaries on native Linux.",
+      "nextStep": "Check the full runsc and tools target lists on both scratch worker architectures. Compare the tools verifier’s reporting delay with the full package run. Finish the empty-client fetch work with Gazelle and bazel_lib, and follow the upstream LLVM, Debian-layer and Jekyll dependencies. The release pipeline still needs native smoke tests for the optimized binaries.",
       "evidence": [
         {
           "label": "18 recovered host-layout targets and four gRPC host ELF interpreters on AMD64/ARM64",
