@@ -41,3 +41,26 @@ func (e *callbackEntries) containsAnyLocked(keys []string) bool {
 func (e *callbackEntries) indexAnyLocked(keys []string) int {
 	return slices.IndexFunc(keys, e.hasKeyLocked)
 }
+
+// A predicate can run zero, one, or many times. After ContainsFunc returns,
+// the caller can rely on its lock only if each invocation preserves it.
+func (e *callbackEntries) releaseInPredicate(keys []string) {
+	e.mu.Lock()
+	slices.ContainsFunc(keys, func(string) bool { // +checklocksfail=callback changes held locks
+		e.mu.Unlock()
+		return true
+	})
+	delete(e.entries, "")
+	e.mu.Unlock()
+}
+
+func (e *callbackEntries) switchLocksInPredicate(other *callbackEntries, keys []string) {
+	e.mu.Lock()
+	slices.ContainsFunc(keys, func(string) bool { // +checklocksfail=callback changes held locks
+		e.mu.Unlock()
+		other.mu.Lock()
+		return true
+	})
+	delete(e.entries, "")
+	e.mu.Unlock()
+}
