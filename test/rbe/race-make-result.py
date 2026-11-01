@@ -19,6 +19,7 @@ try:
     for filename in ["initial-user.log","initial-client.log","ready-client.log","bazel-argv.log"]:
         path=work/filename
         if path.exists():result[filename]=sanitize(path.read_text(errors="replace").splitlines())[-18:]
+    result['runtimeMessages'] = sanitize([line for line in lines if 'gvisor_sentry' in line or 'Changing configuration RootDir' in line])[-16:]
     if result["makeExit"]:
         result["originalMakeDiagnostic"]=sanitize(lines)[:40]+sanitize(lines)[-96:]
     stages={}
@@ -36,6 +37,7 @@ try:
                 stage["buildExit"]=e["finished"].get("exitCode",{}).get("code",0)
         stage["compilationSummary"]=[l for l in lines if re.search(r'processes:|process: ',l)][-2:]
     result["builds"]=stages
+    result['stagedMemberSummary'] = {str(f.relative_to(work/'runtime')):f.stat().st_size for f in (work/'runtime').rglob('*') if f.is_file()}
     assert result["makeExit"]==0,"ordinary make smoke failed"
     assert result["guestUid"]!=0 and result["nativeMachine"]=="x86_64" and result["glibcTunables"]=="glibc.pthread.rseq=0"
     for stage in stages.values():

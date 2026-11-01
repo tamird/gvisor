@@ -15,7 +15,7 @@ jobs:
       GLIBC_TUNABLES: glibc.pthread.rseq=0
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 3, persist-credentials: false}
+        with: {fetch-depth: 5, persist-credentials: false}
       - name: Prepare the ordinary pinned GNU coordinator and its matching RBE worker
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -25,6 +25,7 @@ jobs:
           dest="$RUNNER_TEMP/race-make"
           mkdir -p "$dest/records" "$dest/platform" "$HOME/.cache"
           cp test/rbe/race-make-result.py "$dest/verify.py"
+          python3 test/rbe/race-make-owner.py
           git checkout --detach "$PRODUCT"
           git diff --quiet
           printf 'module(name="gnu_runtime")\n' > "$dest/platform/MODULE.bazel"
@@ -32,7 +33,7 @@ jobs:
           docker pull --platform=linux/amd64 "$GNU"
           docker run -d --name smoke-compiler --user "$(id -u):$(id -g)" -e HOME="$HOME" -e USER="$USER" -e LOGNAME="$USER" -v "$HOME/.cache:$HOME/.cache" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$dest:$dest" -w "$GITHUB_WORKSPACE" --entrypoint /bin/bash "$GNU" -c 'sleep infinity'
           {
-            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=gnu_runtime=$dest/platform" 'build --extra_execution_platforms=@gnu_runtime//:gnu' 'build --host_platform=@gnu_runtime//:gnu' 'build --jobs=48'
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=gnu_runtime=$dest/platform" 'build --extra_execution_platforms=@gnu_runtime//:gnu' 'build --host_platform=@gnu_runtime//:gnu' 'build --jobs=48' 'build --strategy_regexp=^Analyzing.(@@)?//pkg/abi/linux:linux$=local'
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } | docker exec -i smoke-compiler sh -c 'umask 077; cat > /tmp/make-remote.bazelrc'
@@ -82,14 +83,28 @@ jobs:
           dest="$RUNNER_TEMP/race-make"
           export RUNTIME_DIR="$dest/runtime"
           printf '%s\n' 'make smoke-race-tests BAZEL=<pinned GNU compiler coordinator>; DOCKER_BUILD=false; BAZEL_OPTIONS=--config=x86_64' > "$dest/command"
+          # This library's complete transitive actions finished in the prior Make
+          # run. A miss here must abort, without entering a cold compilation.
+          docker exec smoke-compiler bazel --bazelrc=/tmp/make-remote.bazelrc build --color=no --curses=no --config=x86_64 --remote_download_outputs=toplevel --experimental_remote_require_cached //pkg/abi/linux:linux > "$dest/cache-only.log" 2>&1 || {
+            grep -E 'Invocation ID|remote cache hit|^ERROR:|Resource Exhausted|cache miss' "$dest/cache-only.log" | tail -12 > "$dest/records/cache-only.txt"
+            exit 1
+          }
+          grep -E 'Invocation ID|remote cache hit|Build completed' "$dest/cache-only.log" | tail -8 > "$dest/records/cache-only.txt"
+          grep -q 'remote cache hit' "$dest/records/cache-only.txt"
+          # Record only the selected local analyzer's RSS; never retain argv or env.
+          docker exec smoke-compiler bash -c 'while true; do for pid in $(pgrep -f "[n]ogo.*[-]package(=| )gvisor.dev/gvisor/pkg/abi/linux( |$)" || true); do awk "/^VmHWM:/ {print \"localAnalyzerRssKiB\", \$2}" /proc/$pid/status 2>/dev/null || true; done; sleep 2; done' > "$dest/local-abi.log" &
+          probe=$!
+          trap 'kill "$probe" 2>/dev/null || true' EXIT
+          awk '/^MemTotal:/ {print $2}' /proc/meminfo > "$dest/records/host-memory-kib.txt"
           date --utc --iso-8601=ns > "$dest/start"
           status=0
           timeout --kill-after=10s 70m make DOCKER_BUILD=false DOCKER_CLI_PATH=/bin/false BAZEL="$dest/bazel" BAZEL_OPTIONS=--config=x86_64 smoke-race-tests > "$dest/make.log" 2>&1 || status=$?
           date --utc --iso-8601=ns > "$dest/finish"
+          sort -nrk2 "$dest/local-abi.log" | awk 'NR==1 {print}' > "$dest/records/local-abi-peak.txt"
           python3 "$dest/verify.py" "$status"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
           name: native-matched-race-make
-          path: ${{ runner.temp }}/race-make/records/result.json
+          path: ${{ runner.temp }}/race-make/records/
           if-no-files-found: error
