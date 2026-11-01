@@ -1,35 +1,37 @@
-name: CI
-
-"on":
+name: Qualify Buildkite staged runtime
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/staged-runtime-install-args]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  install:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      BASE: aa767e4c43d011121271551fe24da501a56f729d
+      PRODUCT: 48bb04b95031635b26a742ec3d3e86eb8ba0851d
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Prepare the pinned release and a one-command container
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD^^)" = "$BASE"
+          git diff --exit-code "$PRODUCT" HEAD -- . ':!.github/workflows/build.yml' ':!test/rbe/probe-staged-runtime.py'
+          curl -fsSL --retry 2 -o "$RUNNER_TEMP/release.tar.bz2" https://github.com/google/gvisor/releases/download/release-20261026.0/gvisor-x86_64.tar.bz2
+          echo "096589d2d6078ba4caa26aa0200932f571aa5da9d08a5156b98ab1d93fa54468  $RUNNER_TEMP/release.tar.bz2" | sha256sum -c -
+          mkdir "$RUNNER_TEMP/release"
+          tar -xjf "$RUNNER_TEMP/release.tar.bz2" -C "$RUNNER_TEMP/release"
+          test -x "$RUNNER_TEMP/release/runsc"
+          tar -C / -chf - bin/true lib/x86_64-linux-gnu/libc.so.6 lib64/ld-linux-x86-64.so.2 | docker import - hook-probe
+      - name: Install both versions and start a container through each runtime
+        run: python3 test/rbe/probe-staged-runtime.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: staged-runtime-verdict
+          path: ${{ runner.temp }}/verdict.json
+          if-no-files-found: warn
