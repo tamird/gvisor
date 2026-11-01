@@ -1,35 +1,82 @@
-name: CI
-
-"on":
+name: Compare forwarded TCP with host segmentation enabled and disabled
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-forwarded-gso-replay]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  router:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 32
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      PRODUCT_SHA: aa767e4c43d011121271551fe24da501a56f729d
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 2, persist-credentials: false}
+    - name: Prepare the compiler and isolated router lab
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
+        printf '{"verified":false,"reason":"no completed transfer evidence"}\n' > "$RUNNER_TEMP/records/verdict.json"
+        test "$(git rev-parse HEAD^)" = "$PRODUCT_SHA"
+        git diff --exit-code "$PRODUCT_SHA" HEAD -- pkg runsc
+        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --privileged --name tcp-compiler --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec tcp-compiler ip -V
+        docker exec tcp-compiler /bin/sh -ec 'if ! command -v ethtool >/dev/null; then apt-get update -qq && apt-get install -y --no-install-recommends ethtool; fi; ethtool --version'
+    - name: Bind the original Linux wire and release evidence
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        gh api repos/tamird/gvisor/actions/artifacts/13089681341/zip > "$RUNNER_TEMP/original.zip"
+        python3 - <<'PYORIGINAL'
+        import json, os, pathlib, zipfile
+        temp = pathlib.Path(os.environ["RUNNER_TEMP"])
+        with zipfile.ZipFile(temp / "original.zip") as z:
+            for phase, invocation in [("linux","e310eef2-43f7-4738-8398-d85658f35453"),("release","7ec54384-edc1-4d84-9455-4bcbdb699dee")]:
+                doc = json.loads(z.read(phase+".json"))
+                assert doc["product"] == os.environ["PRODUCT_SHA"] and doc["result"] == "verified" and doc["invocation"] == invocation
+                assert doc["carrier"] == "abf194f99051816894f26c2e51a39ca073f7fab8"
+                if phase == "linux":
+                    assert doc["xml"] == {"linux": []} and doc["transfer"]["results"]["linux"]["complete"]
+                else:
+                    assert all(doc["completed"].get(t) for t in ["//:release","//test/rbe/forward_gso:router"])
+                doc["originalArtifact"] = 13089681341
+                (temp / "records" / (phase+".json")).write_text(json.dumps(doc, indent=2))
+        PYORIGINAL
+    - name: Require a complete transfer with sender aggregation disabled
+      run: python3 test/rbe/forward_gso/qualify.py guest
+    - name: Report the original three cases
+      if: always()
+      run: |
+        python3 - <<'PYREPORT'
+        import json, os, pathlib, sys
+        root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'records'
+        phases = {key: json.loads(p.read_text()) if (p := root / (key + '.json')).is_file() else {} for key in ('linux','release','guest')}
+        verdict = {key: row.get('result', 'not run') for key, row in phases.items()}
+        passed = all(r == 'verified' for r in verdict.values())
+        (root/'verdict.json').write_text(json.dumps({'verified': passed, 'phases': verdict}, indent=2) + '\n')
+        print(verdict)
+        sys.exit(not passed)
+        PYREPORT
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: forwarded-tcp-segmentation
+        path: ${{ runner.temp }}/records
+        if-no-files-found: error
