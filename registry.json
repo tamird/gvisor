@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T01:51:20.575751+00:00",
+    "updatedAt": "2026-11-01T02:03:58.422526+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2028,10 +2028,30 @@
       "url": "https://github.com/tamird/gvisor/commit/b5bd72431",
       "group": "release",
       "status": "Agent work",
-      "summary": "The large Bazel release action at b5bd72431 and the wheel scanner amendment at d67495aac are withheld after contributor feedback. The existing setuptools release produced identical file contents across workers, but gzip and tar metadata differed. No catalog amendment is needed for the backend-only experiment. The native uv_build backend requires Python 3.8 or newer, which excludes the package’s supported Python 3.7 source installs.\n\nWith Flit 3.12 and a fixed SOURCE_DATE_EPOCH, both existing release frontends produced byte-identical wheel and source archives on one Linux worker. Each installed offline on actual CPython 3.7.17 with stock-equivalent modules and README. License-Expression preserves Apache-2.0, replacing the legacy License field and classifier. The old setuptools-generated files drop out of the source archive. The overall comparison failed on two other checks. uv left two lockfiles in the stock temporary directory, and Hatchling included a parent .gitignore symlink that uv rejected in this Bazel fixture. The original cross-worker results remain below.",
+      "summary": "The large Bazel release action at b5bd72431 and the wheel scanner amendment at d67495aac are withheld after contributor feedback. The existing setuptools release produced identical file contents across workers, but gzip and tar metadata differed. No catalog amendment is needed for the backend-only experiment. The native uv_build backend requires Python 3.8 or newer, which excludes the package’s supported Python 3.7 source installs.\n\nWith Flit 3.12 and a fixed SOURCE_DATE_EPOCH, both existing release frontends produced byte-identical wheel and source archives on one Linux worker. Each installed offline on actual CPython 3.7.17 with stock-equivalent modules and README. License-Expression preserves Apache-2.0, replacing the legacy License field and classifier. The old setuptools-generated files drop out of the source archive. The overall comparison failed on two other checks. uv left two lockfiles in the stock temporary directory, and Hatchling included a parent .gitignore symlink that uv rejected in this Bazel fixture. The original cross-worker results remain below.\n\nOn feab64aff Bazel calls Flit’s two public build hooks with one pinned build dependency. AMD64 and ARM64 scratch actions produced the wheel and source archive previously installed offline on CPython 3.7.17. Make staged the same bytes with Docker disabled. The default registered Python and standalone license check passed. The wheel has three license paths containing two distinct texts, both cataloged. The versioned Buildkite producer still needs the Make change that respects its environment, or an explicit DOCKER_BUILD=false.",
       "updatedAt": "2026-10-31T08:10:45.007273+00:00",
       "head": "b5bd72431940ce903fe7521e2498811d8420f750",
       "evidence": [
+        {
+          "label": "Original artifact: license paths and distinct contents",
+          "url": "https://github.com/tamird/gvisor/blob/fbad82d90/test/rbe/empty_worker/flit-notices.json"
+        },
+        {
+          "label": "Flit hook proposal",
+          "url": "https://github.com/tamird/gvisor/commit/feab64aff"
+        },
+        {
+          "label": "AMD64 and ARM64 scratch builds",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41262122405/artifacts/13065846593"
+        },
+        {
+          "label": "Make staging without Docker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41262372819/artifacts/13065956385"
+        },
+        {
+          "label": "Default Python and license check on standalone source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41262687910/artifacts/13065459539"
+        },
         {
           "label": "Both release frontends and Python 3.7.17 installations, with stock and Hatchling diagnostics",
           "url": "https://github.com/tamird/gvisor/actions/runs/41183200050/artifacts/13035474364"
@@ -47354,8 +47374,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-31T17:39:47.195+00:00",
-      "summary": "The graph codec is now the default. On a four-worker Nginx checkpoint, encoding took 2.25 ms instead of 12.71 ms and decoding took 8.99 ms instead of 17.75 ms. All four round-trip bugs tracked in #16715 are fixed. Increasing the UDP receive queue did not grow the index table. Smaller writer buffers and clearing fewer decoder slots did not speed up Nginx checkpoints.",
+      "updatedAt": "2026-11-01T02:03:58.422526+00:00",
+      "summary": "The graph codec is now the default. On a four-worker Nginx checkpoint, encoding took 2.25 ms instead of 12.71 ms and decoding took 8.99 ms instead of 17.75 ms. All four round-trip bugs tracked in #16715 are fixed. Increasing the UDP receive queue did not grow the index table. Smaller writer buffers and clearing fewer decoder slots did not speed up Nginx checkpoints. Separating callback payloads reduced allocated bytes without improving the time to Nginx’s first HTTP response.",
       "findings": [
         {
           "text": "Saving 2,048 slices with the same base address took 56.540 ms narrowest-first versus 0.052 ms widest-first. Extending the backing array in place removed all 4,192,256 parent traversals; the final five-sample medians were 0.076 ms and 0.053 ms. Both orders wrote 8,119 bytes and retained alias identity. One four-worker Nginx checkpoint contained no eligible extensions.",
@@ -50208,10 +50228,52 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41223475050/artifacts/13050961268"
             }
           ]
+        },
+        {
+          "text": "Splitting hook payloads from callback dependencies saved 259,608 allocated bytes (10.1%) per fresh Nginx kernel decode but added 12 allocations. In 64 fresh-process pairs it did not reduce kernel decode CPU or wall time. In 24 live four-worker pairs, time to the first correct HTTP response was 293.2 ms with stock and 293.5 ms with the split (p=.751). Preserve the existing callback representation.",
+          "evidence": [
+            {
+              "label": "Fresh four-worker Nginx decode: CPU and allocation profiles",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41258446034/artifacts/13064387000"
+            },
+            {
+              "label": "64 fresh-process pairs: kernel bytes, allocations and CPU time",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41259632057/artifacts/13064817202"
+            },
+            {
+              "label": "24 paired live restores: kernel, Docker, first response and Sentry residency",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41260899405/artifacts/13065464108"
+            }
+          ]
+        },
+        {
+          "text": "The original 24 live pairs showed 41.15 MiB peak RSS for stock and 49.02 MiB for the split, but the two binaries ran from different locations. Four balanced blocks ran each identical ELF both from Bazel runfiles and from a guest copy. Changing only the location added 3.95–4.55 MiB peak RSS for stock and 6.61–6.95 MiB for the split. The direct mappings included 6 MiB of file-backed huge pages, the copies zero. With identical runfiles staging, both Sentries used about 49 MiB, including 34 MiB of executable mappings. Do not attribute the original difference to callback storage; compare binaries staged the same way, and report mapped code separately from anonymous memory.",
+          "evidence": [
+            {
+              "label": "Same ELF at both paths: all 20 fresh services with Sentry smaps and status",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41262862646/artifacts/13065538468"
+            }
+          ]
         }
       ],
       "nextStep": "Keep the existing checkpoint writer. Focus further measurements on costs visible when saving or restoring a real workload.",
       "evidence": [
+        {
+          "label": "Same ELF at both paths: all 20 fresh services with Sentry smaps and status",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41262862646/artifacts/13065538468"
+        },
+        {
+          "label": "Fresh four-worker Nginx decode: CPU and allocation profiles",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41258446034/artifacts/13064387000"
+        },
+        {
+          "label": "64 fresh-process pairs: kernel bytes, allocations and CPU time",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41259632057/artifacts/13064817202"
+        },
+        {
+          "label": "24 paired live restores: kernel, Docker, first response and Sentry residency",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41260899405/artifacts/13065464108"
+        },
         {
           "label": "Nginx: 123,446 bytes copied into the 145,519-byte graph; 104 bytes of temporary array data",
           "url": "https://github.com/tamird/gvisor/actions/runs/41214389529/artifacts/13047653511"
@@ -51250,6 +51312,101 @@
         }
       ],
       "comparisons": [
+        {
+          "title": "Callback storage: from decoding to the first response",
+          "description": "Four-worker Nginx. Fresh-process replay used 64 paired trials; live service restore used 24 paired trials. Times are medians.",
+          "columns": [
+            "Measurement",
+            "Stock",
+            "Split",
+            "Result"
+          ],
+          "rows": [
+            [
+              "Kernel decode allocations",
+              "2,564,760 B",
+              "2,305,152 B",
+              "−10.1%; 12 extra allocations"
+            ],
+            [
+              "Kernel load in live restore",
+              "24.46 ms",
+              "23.81 ms",
+              "p=.111"
+            ],
+            [
+              "Docker restore",
+              "289.0 ms",
+              "289.3 ms",
+              "p=.736"
+            ],
+            [
+              "First HTTP 200",
+              "293.2 ms",
+              "293.5 ms",
+              "p=.751"
+            ]
+          ],
+          "note": "Both live arms used the same configuration and served the same 1,024-byte response; the service trials include pages and hooks beyond graph decoding. The allocation count does not predict time to service.",
+          "evidence": [
+            {
+              "label": "64 fresh-process pairs: kernel bytes, allocations and CPU time",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41259632057/artifacts/13064817202"
+            },
+            {
+              "label": "24 paired live restores: kernel, Docker, first response and Sentry residency",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41260899405/artifacts/13065464108"
+            }
+          ]
+        },
+        {
+          "title": "Same Sentry ELF, different executable staging",
+          "description": "Median MiB from four balanced blocks on one worker, after the first correct HTTP response. All 20 trials, including warmups, checked the actual running Sentry hash.",
+          "columns": [
+            "Build and location",
+            "Peak RSS",
+            "Anonymous",
+            "Sentry mappings",
+            "File-backed huge pages in Sentry ELF"
+          ],
+          "rows": [
+            [
+              "Stock, guest copy",
+              "44.54",
+              "8.84",
+              "29.89",
+              "0"
+            ],
+            [
+              "Stock, Bazel runfiles",
+              "48.91",
+              "8.96",
+              "34.14",
+              "6"
+            ],
+            [
+              "Split, guest copy",
+              "41.93",
+              "8.66",
+              "27.45",
+              "0"
+            ],
+            [
+              "Split, Bazel runfiles",
+              "48.65",
+              "8.71",
+              "34.20",
+              "6"
+            ]
+          ],
+          "note": "Peak RSS is cumulative; its components are sampled at the first response. The original run did not record these components, so the exact contribution of staging to each old sample is unknown.",
+          "evidence": [
+            {
+              "label": "Same ELF at both paths: all 20 fresh services with Sentry smaps and status",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41262862646/artifacts/13065538468"
+            }
+          ]
+        },
         {
           "title": "Graph vs legacy: four-worker Nginx",
           "description": "Same generator head (c6afaa53a), one captured kernel, 16 balanced pairs on a single AMD64 worker.",
