@@ -1,4 +1,4 @@
-name: Stage the original Flit distributions with Make and no builder
+name: Verify the ordinary release backend and its two upstream notices
 on:
   push:
     branches: [qualification/python-release-flit-hooks]
@@ -17,12 +17,15 @@ jobs:
       BAZELISK_HASH: e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 3}
+        with: {persist-credentials: false, fetch-depth: 1}
       - name: Get the original PyPA build, uv and CPython 3.7.17 install records
         env: {GH_TOKEN: "${{ github.token }}"}
         run: |
           gh api repos/tamird/gvisor/actions/artifacts/13035474364/zip > "$RUNNER_TEMP/frontend.zip"
-          gh api repos/tamird/gvisor/actions/artifacts/13065846593/zip > "$RUNNER_TEMP/scratch.zip"
+      - name: Preserve the qualifier and select the exact product
+        run: cp test/rbe/empty_worker/qualify_flit.py "$RUNNER_TEMP/qualify_flit.py"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, ref: feab64aff25e950f5f3095c73cc5f6176efedddc}
       - name: Pin Bazel and the compact action log reader
         run: |
           set -eu
@@ -37,11 +40,11 @@ jobs:
           curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-$BB_ARCH -o "$RUNNER_TEMP/bb"
           echo "$BB_HASH  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod 0755 "$RUNNER_TEMP/bb"
-      - name: Run only the ordinary native Make staging invocation
+      - name: Build with the default registered Python and check the canonical catalog
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-          PROOF: 9bcccb5e2a4313a01f0104d62166f42b43482b5f
-          PRODUCT: 8533dc779cb762ff39360e8d2d644202e2e32c74
+          PROOF: feab64aff25e950f5f3095c73cc5f6176efedddc
+          PRODUCT: feab64aff25e950f5f3095c73cc5f6176efedddc
         run: |
           set -eu
           umask 077
@@ -51,7 +54,6 @@ jobs:
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$RUNNER_TEMP/sidecar.bazelrc"
           unset BUILDBUDDY_API_KEY
-          cp test/rbe/empty_worker/qualify_flit.py "$RUNNER_TEMP/qualify_flit.py"
           python3 "$RUNNER_TEMP/qualify_flit.py"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
