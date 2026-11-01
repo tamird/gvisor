@@ -127,9 +127,11 @@ steps:
   - <<: *common
     <<: *source_test_presubmit
     label: ":world_map: Build runsc and pkg (AMD64)"
+    env:
+      DOCKER_BUILD: "false"
     commands:
-      - "make build TARGETS=//pkg/..."
-      - "make build OPTIONS='--build_tag_filters=-network_plugins' TARGETS='//runsc/...'"
+      - bazel build --config=x86_64 //pkg/...
+      - bazel build --config=x86_64 --build_tag_filters=-network_plugins //runsc/...
     agents:
       arch: "amd64"
       queue: "default"
@@ -137,9 +139,11 @@ steps:
   - <<: *common
     <<: *source_test_presubmit
     label: ":world_map: Build runsc and pkg (ARM64)"
+    env:
+      DOCKER_BUILD: "false"
     commands:
-      - "make build TARGETS=//pkg/..."
-      - "make build OPTIONS='--build_tag_filters=-network_plugins' TARGETS='//runsc/...'"
+      - bazel build --config=aarch64 //pkg/...
+      - bazel build --config=aarch64 --build_tag_filters=-network_plugins //runsc/...
     agents:
       arch: "arm64"
       queue: "arm64"
