@@ -1,0 +1,15 @@
+platform(
+    name = "amd64_musl",
+    constraint_values = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+        "@llvm//constraints/libc:musl",
+    ],
+    exec_properties = {
+        "Arch": "amd64",
+        "OSFamily": "linux",
+        "container-image": "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef",
+        "workload-isolation-type": "oci",
+    },
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,8 @@
+{
+  "scope": "@@+http_archive+libpluginstack//:libpluginstack",
+  "expected": {"amd64": ["@@+http_archive+libpluginstack//:libpluginstack"]},
+  "skipped": {"amd64": []},
+  "required_labels": ["@@+http_archive+libpluginstack//:libpluginstack"],
+  "extra_flags": ["--config=plugin-tldk", "--compilation_mode=opt"],
+  "provenance": "Exact declared archive library from google/gvisor#15153 at 675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa; no prior scratch qualification."
+}
