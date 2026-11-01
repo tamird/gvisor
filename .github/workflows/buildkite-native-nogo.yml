@@ -1,0 +1,51 @@
+name: Native Buildkite Nogo wildcard
+on:
+  push:
+    branches: [qualification/buildkite-nogo-wildcard]
+permissions:
+  contents: read
+jobs:
+  native:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      PRODUCT: 37a2769ad5a2d358914f0794b783769f586fc534
+      DOCKER_BUILD: 'false'
+      DOCKER_HOST: unix:///nonexistent-gvisor-builder.sock
+      BUILDKITE_LABEL: ':golang: Nogo tests'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Run the complete Buildkite Nogo command on the native host
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/nogo-receipts"
+          echo '{"verified":false,"reason":"qualification incomplete"}' > "$RUNNER_TEMP/nogo-receipts/verdict.json"
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          cp .github/qualification/native-nogo.py "$RUNNER_TEMP"
+          git checkout --quiet --detach "$PRODUCT"
+          test "$(uname -m)" = x86_64
+          # Exercise only the native install block, without the Buildkite
+          # agent's Docker daemon and machine-wide sysctl housekeeping.
+          sed -n '/^install_.*bazel() {$/,$p' .buildkite/hooks/pre-command > "$RUNNER_TEMP/nogo-setup.bash"
+          source "$RUNNER_TEMP/nogo-setup.bash"
+          test -n "$BUILDKITE_BAZEL_DIRECTORY"
+          test "$(bazel --version)" = "bazel $(cat .bazelversion)"
+          umask 077
+          {
+            echo 'build --jobs=4'
+            echo 'test --nocache_test_results'
+            echo 'build --remote_cache='
+            echo 'build --remote_executor='
+          } > "$RUNNER_TEMP/nogo-resources.bazelrc"
+          df -h .
+          python3 "$RUNNER_TEMP/native-nogo.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: native-buildkite-nogo
+          path: ${{ runner.temp }}/nogo-receipts/
+          if-no-files-found: error
