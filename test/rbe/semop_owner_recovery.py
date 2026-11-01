@@ -1,6 +1,7 @@
 """Recover the original semaphore owner results before running missing owners."""
 
 import datetime
+import gzip
 import hashlib
 import json
 import os
@@ -9,15 +10,13 @@ import re
 import shutil
 import subprocess
 import sys
-import urllib.request
+import zipfile
 import uuid
 import xml.etree.ElementTree as ET
 
 import qualification_report as reporter
 
 SOURCE = "14a4e93a872bf6dd49893b6bd9a5f55517167e2b"
-WORKFLOW = "4ea5a7772d5b18cb08ac2cf6aa7c3a96faca40f8"
-ORIGINAL_HOST = "d92c44459829"
 OWNERS = [
     "//pkg/sentry/kernel/ipc:ipc_nogo",
     "//pkg/sentry/kernel:kernel_nogo",
@@ -26,7 +25,7 @@ OWNERS = [
     "//pkg/sentry/syscalls/linux:linux_nogo",
     "//pkg/sentry/socket/control:control_test",
 ]
-STORED_PATTERN = OWNERS[0] + " and 5 more"
+MISSING = [OWNERS[1], OWNERS[4]]
 ROOT = Path(os.environ["RUNNER_TEMP"])
 OUT = ROOT / "semop-owner-evidence"
 OUT.mkdir(exist_ok=True)
@@ -43,170 +42,28 @@ def write(path, value):
     path.write_text(content)
 
 
-class NoRedirect(urllib.request.HTTPRedirectHandler):
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
-        return None
-
-
-def request(method, body, raw=False):
-    path = "/rpc/BuildBuddyService/SearchInvocation" if method == "SearchInvocation" else "/api/v1/" + method
-    req = urllib.request.Request(
-        "https://app.buildbuddy.io" + path,
-        data=json.dumps(body).encode(),
-        headers={"Content-Type": "application/json", "x-buildbuddy-api-key": KEY},
-    )
-    with urllib.request.build_opener(NoRedirect()).open(req, timeout=60) as response:
-        content = response.read(32 * 1024 * 1024 + 1)
-    assert len(content) <= 32 * 1024 * 1024
-    return content if raw else json.loads(content)
-
-
-def pages(method, body, field):
-    result = []
-    for _ in range(5):
-        value = request(method, body)
-        result.extend(value.get(field, []))
-        token = value.get("nextPageToken", value.get("next_page_token"))
-        if not token:
-            return result
-        body = dict(body, page_token=token)
-    raise ValueError("Invocation metadata exceeded bounded pagination")
-
-
-def value(item, camel, snake):
-    return item.get(camel, item.get(snake))
-
-
-def identifier(item):
-    return str(uuid.UUID(value(item.get("id", item), "invocationId", "invocation_id")))
-
-
-def xml_record(path):
-    counts = reporter.xml_cases(path)
-    names = ["/".join(filter(None, (case.get("classname"), case.get("name"))))
-             for case in ET.parse(path).getroot().iter("testcase")]
-    return {**reporter.file_record(path), "cases": counts, "names": names}
-
-
-def recovered_target(invocation, label):
-    targets = pages("GetTarget", {"selector": {"invocation_id": invocation, "label": label}}, "target")
-    rows = [item for item in targets if item.get("label") == label]
-    result = {"label": label, "status": "INCOMPLETE", "cache": "unknown: original command allowed cached tests", "reports": []}
-    if len(rows) != 1:
-        result["reason"] = "missing or ambiguous original target"
-        return result
-    original = rows[0]
-    assert identifier(original) == invocation
-    result["original_status"] = original.get("status")
-    result["timing"] = original.get("timing", {})
-    if original.get("status") in ("FAILED", "TIMED_OUT", "FAILED_TO_BUILD", "TOOL_FAILED", "FLAKY", 3, 6, 7, 9, 11):
-        result["status"] = "FAIL"
-    try:
-        actions = pages("GetAction", {"selector": {"invocation_id": invocation, "target_label": label}}, "action")
-        for index, action in enumerate(actions):
-            assert value(action, "targetLabel", "target_label") == label
-            assert identifier(action) == invocation
-            for file in action.get("file", []):
-                if file.get("name") != "test.xml":
-                    continue
-                uri = file.get("uri", "")
-                match = re.fullmatch(r"bytestream://(?:remote|app)\.buildbuddy\.io/(?:[^?#\s]+/)?blobs/([0-9a-f]{64})/(\d+)", uri)
-                if not match:
-                    raise ValueError("Original XML lacks supported digest-bound CAS URI")
-                content = request("GetFile", {"uri": uri}, raw=True)
-                assert len(content) == int(match[2]) and hashlib.sha256(content).hexdigest() == match[1]
-                assert not KEY or KEY.encode() not in content
-                name = label[2:].replace("/", "_").replace(":", "_") + f"-{index}.xml"
-                path = OUT / name
-                path.write_bytes(content)
-                result["reports"].append({"path": name, **xml_record(path)})
-    except Exception as err:
-        result["report_error_type"] = type(err).__name__
-        return result
-    if any(item["cases"]["failed"] for item in result["reports"]):
-        result["status"] = "FAIL"
-    elif (result["status"] != "FAIL" and original.get("status") in ("PASSED", 5)
-          and result["reports"] and all(item["cases"]["passed"] > 0 for item in result["reports"])):
-        result["status"] = "PASS"
-    return result
-
-
-def recover():
-    row = {"status": "INCOMPLETE", "source": SOURCE, "workflow": WORKFLOW,
-           "original_run": 41309783355, "original_artifact": 13089814511,
-           "original_artifact_sha256": "12ec60d60ad308da2e726d538cb88034f3fe03862c100cbcc7c65539c31a9d4e",
-           "expected": OWNERS, "queries": [], "owners": [], "started_at": now()}
+def prior():
+    path = ROOT / "semop-prior.zip"
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    assert digest == "5e54e4170122fb66ad56d3b7d300d79a7ce84ab854303baa7dcab64992093794"
+    with zipfile.ZipFile(path) as archive:
+        old = json.loads(archive.read("retry.json"))
+    assert old["source"] == SOURCE
+    passed = [row["owner"]["label"] for row in old["executed"]
+              if row["status"] == "PASSED" and row["xml"]["passed"] > 0 and not row["xml"]["failed"]
+              and not row["cached_locally"] and row["execution_info"] == {"strategy": "remote"}]
+    assert sorted(passed) == sorted(set(OWNERS) - set(MISSING))
+    assert {row["label"] for row in old["missing"]} == set(MISSING)
+    row = {"status": "INCOMPLETE", "source": SOURCE, "passed": passed, "missing": MISSING,
+           "originalBazelExit": old["bep_finish"]["exitCode"], "priorArtifact": 13091282823,
+           "priorSHA256": digest, "actionDiagnosticArtifact": 13096994117}
     write(OUT / "original.json", row)
-    candidates = {}
-    for source in (SOURCE, WORKFLOW):
-        try:
-            items = pages("GetInvocation", {"selector": {"commit_sha": source}}, "invocation")
-            row["queries"].append({"source": source, "count": len(items)})
-            for item in items:
-                candidates[identifier(item)] = item
-        except Exception as err:
-            row["queries"].append({"source": source, "error_type": type(err).__name__})
-    def matches(items):
-        selected = []
-        for uid, item in items.items():
-            pattern = item.get("pattern", "")
-            patterns = pattern if isinstance(pattern, list) else [pattern]
-            created = int(value(item, "createdAtUsec", "created_at_usec") or 0)
-            stamp = datetime.datetime.fromtimestamp(created / 1e6, datetime.timezone.utc).isoformat()
-            if (patterns == [STORED_PATTERN] and item.get("host") == ORIGINAL_HOST
-                    and "2026-11-01T13:15:00" <= stamp < "2026-11-01T13:20:00"):
-                selected.append(uid)
-        return selected
-
-    if not matches(candidates):
-        try:
-            items = pages("SearchInvocation", {"query": {
-                "pattern": STORED_PATTERN, "command": "test", "host": ORIGINAL_HOST,
-                "updated_after": "2026-11-01T13:15:00Z", "updated_before": "2026-11-01T16:00:00Z",
-            }, "count": 20}, "invocation")
-            row["queries"].append({"pattern_search_count": len(items)})
-            for item in items:
-                candidates[identifier(item)] = item
-        except Exception as err:
-            row["queries"].append({"pattern_search_error": type(err).__name__})
-    selected = matches(candidates)
-    row["matching_invocations"] = selected
-    if len(selected) == 1:
-        uid = selected[0]
-        original, = pages("GetInvocation", {"selector": {"invocation_id": uid}, "include_metadata": True}, "invocation")
-        sha = value(original, "commitSha", "commit_sha")
-        assert sha in (None, "", SOURCE, WORKFLOW), "Original source metadata conflicts with the fixed workflow"
-        assert original.get("host") == ORIGINAL_HOST
-        targets = pages("GetTarget", {"selector": {"invocation_id": uid}}, "target")
-        assert {item["label"] for item in targets} <= set(OWNERS)
-        row["invocation"] = uid
-        row["source_binding"] = {
-            "reported_commit": sha,
-            "basis": "immutable workflow checkout; exact original Docker coordinator, owner pattern and start time",
-            "original_coordinator_log_job": 124857542298,
-            "coordinator_host_matches": True,
-        }
-        row["invocation_metadata"] = {key: original.get(key) for key in (
-            "commitSha", "pattern", "success", "bazelExitCode", "invocationStatus", "createdAtUsec", "updatedAtUsec", "durationUsec")}
-        for label in OWNERS:
-            try:
-                row["owners"].append(recovered_target(uid, label))
-            except Exception as err:
-                row["owners"].append({"label": label, "status": "INCOMPLETE", "error_type": type(err).__name__})
-            write(OUT / "original.json", row)
-    else:
-        row["reason"] = "Original invocation unavailable or ambiguous"
-    row["status"] = "FAIL" if any(item["status"] == "FAIL" for item in row["owners"]) else "PASS" if len(row["owners"]) == 6 and all(item["status"] == "PASS" for item in row["owners"]) else "INCOMPLETE"
-    row["missing"] = [label for label in OWNERS if not any(item["label"] == label and item["status"] in ("PASS", "FAIL") for item in row["owners"])]
-    row["verified_at"] = now()
-    write(OUT / "original.json", row)
-    (ROOT / "semop-missing.txt").write_text("\n".join(row["missing"]) + "\n")
-    print("Original", row["status"], "missing owners", len(row["missing"]), flush=True)
+    (ROOT / "semop-missing.txt").write_text("\n".join(MISSING) + "\n")
 
 
 def retry():
     missing = (ROOT / "semop-missing.txt").read_text().split()
-    assert missing and set(missing) <= set(OWNERS) and len(set(missing)) == len(missing)
+    assert missing == MISSING
     original = json.loads((OUT / "original.json").read_text())
     assert missing == original["missing"]
     private = ROOT / "semop-owner-private"
@@ -217,18 +74,39 @@ def retry():
     (private / "commit").write_bytes(git("cat-file", "commit", SOURCE))
     (private / "before").write_bytes(git("diff", "HEAD", "--"))
     assert not (private / "before").read_bytes()
-    args = ["test", "--config=x86_64", "--jobs=4", "--keep_going", "--build_tag_filters=", "--test_tag_filters=",
+    invocation = str(uuid.uuid4())
+    write(OUT / "invocation.json", {"source": SOURCE, "id": invocation, "expected": missing, "at": now()})
+    args = ["test", "--invocation_id=" + invocation,
+            "--local_resources=cpu=1",
+            "--strategy_regexp=Analyzing .*//pkg/sentry/(kernel:kernel|syscalls/linux:linux)=local", "--config=x86_64", "--jobs=4", "--keep_going", "--build_tag_filters=", "--test_tag_filters=",
             "--noremote_local_fallback", "--strategy=TestRunner=remote", "--test_timeout=300", "--test_output=errors", "--nocache_test_results",
             "--modify_execution_info=^TestRunner$=+no-remote-cache", "--test_env=GO_TEST_WRAP_TESTV=1",
             "--remote_download_outputs=toplevel", "--remote_download_regex=.*[/]test[.](log|xml)$",
-            "--build_event_json_file_path_conversion=false",
+            "--profile=" + str(private / "profile.gz"), "--build_event_json_file_path_conversion=false",
             "--build_event_json_file=" + str(private / "raw.json"), *missing]
     (private / "arguments").write_text("\n".join(args) + "\n")
     write(OUT / "retry.json", {"status": "INCOMPLETE", "source": SOURCE, "expected": missing, "started_at": now()})
     with (private / "bazel.log").open("wb") as log:
-        rc = subprocess.run(["timeout", "--signal=INT", "--kill-after=30s", "20m", "bazel", "--noblock_for_lock",
+        rc = subprocess.run(["timeout", "--signal=INT", "--kill-after=30s", "55m", "bazel", "--noblock_for_lock",
                              "--bazelrc=" + str(ROOT / "tcp.bazelrc"), *args], stdout=log, stderr=log).returncode
     finished = now()
+    profile_summary = {}
+    profile = private / "profile.gz"
+    if profile.exists():
+        try:
+            with gzip.open(profile, "rt") as stream:
+                trace = json.load(stream)
+            for event in trace.get("traceEvents", []):
+                name = str(event.get("name", ""))
+                for label in ("//pkg/sentry/kernel:kernel", "//pkg/sentry/syscalls/linux:linux"):
+                    if "Analyzing" in name and label in name:
+                        phase = event.get("cat", "")
+                        if re.fullmatch(r"[a-zA-Z _-]{1,70}", phase):
+                            counts = profile_summary.setdefault(label, {})
+                            counts[phase] = counts.get(phase, 0) + 1
+        except (OSError, ValueError):
+            profile_summary = {"status": "incomplete profile"}
+    write(OUT / "action-profile.json", profile_summary)
     (private / "exit").write_text(str(rc))
     write(OUT / "retry.json", {"status": "FAIL" if rc else "INCOMPLETE", "source": SOURCE,
                                "expected": missing, "native_exit": rc, "execution_finished_at": finished})
@@ -249,10 +127,20 @@ def retry():
             result["errors"].append("Retry lacks fresh remote test execution")
             if result["status"] == "PASS":
                 result["status"] = "INCOMPLETE"
+    markers = {}
     for record in captured["reports"]:
+        if record["name"] == "test.log":
+            label = record["identity"]["label"]
+            log = (private / record["path"]).read_bytes()
+            markers[label] = [arch for arch in ("amd64", "arm64") if arch.encode() + b"..." in log]
         if record["name"] == "test.xml":
             source = private / record["path"]
             shutil.copyfile(source, OUT / ("retry-" + record["sha256"] + ".xml"))
+    result["architectureMarkers"] = markers
+    if markers != dict.fromkeys(MISSING, ["amd64", "arm64"]):
+        result["errors"].append("Missing architecture markers in original TestRunner logs")
+        if result["status"] == "PASS":
+            result["status"] = "INCOMPLETE"
     write(OUT / "retry.json", result)
     print("Retry", result["status"], result["case_counts"], flush=True)
 
@@ -274,7 +162,7 @@ if __name__ == "__main__":
     if mode == "finish":
         sys.exit(finish())
     try:
-        {"recover": recover, "retry": retry}[mode]()
+        {"prior": prior, "retry": retry}[mode]()
     except Exception as err:
         write(OUT / (mode + "-error.json"), {"status": "INCOMPLETE", "error_type": type(err).__name__, "verified_at": now()})
         raise SystemExit(1)
