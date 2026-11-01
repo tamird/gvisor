@@ -252,7 +252,9 @@ smoke-tests: $(RUNTIME_BIN) ## Runs a simple smoke test after building runsc.
 	@$(RUNTIME_BIN) --alsologtostderr --network none --debug --TESTONLY-unsafe-nonroot=true --rootless do true
 .PHONY: smoke-tests
 
-smoke-race-tests: RUNSC_TARGET = $(RACE_FLAGS) //runsc:runsc-race
+# runsc-race instruments its dependencies. A global race configuration would
+# also instrument the Go tools Bazel runs to generate their sources.
+smoke-race-tests: RUNSC_TARGET = //runsc:runsc-race
 smoke-race-tests: $(RUNTIME_BIN) ## Runs a smoke test after build building runsc in race configuration.
 	@$(RUNTIME_BIN) --alsologtostderr --network none --debug --TESTONLY-unsafe-nonroot=true --rootless do true
 .PHONY: smoke-race-tests
