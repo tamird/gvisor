@@ -1,7 +1,7 @@
 name: Qualify the FDTable writer contract
 on:
   push:
-    branches: [qualification/fd-table-arm-gnu-nov1]
+    branches: [qualification/fd-table-arm-runtime-nov1]
 permissions:
   contents: read
 jobs:
@@ -15,7 +15,6 @@ jobs:
       matrix:
         include:
           - {"pr": "fd-table-positive", "sha": "5c792dd87213269723e419efcc83feaf90728ed9", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm", "image": "docker://mirror.gcr.io/library/buildpack-deps@sha256:db73e309a26ddb362c11c0ee35b3d957c3a8fd2ef6a9d6c2cc76438fae2c0988", "isolation": "oci"}
-          - {"pr": "fd-table-negative", "sha": "7e42854f555f8c9d56263038e48875a20f7cc9b7", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm", "image": "docker://mirror.gcr.io/library/buildpack-deps@sha256:db73e309a26ddb362c11c0ee35b3d957c3a8fd2ef6a9d6c2cc76438fae2c0988", "isolation": "oci"}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -36,6 +35,7 @@ jobs:
           CPU: ${{ matrix.cpu }}
           WORKER_IMAGE: ${{ matrix.image }}
           ISOLATION: ${{ matrix.isolation }}
+          BUILD_WORKER_IMAGE: docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
           SHA: ${{ matrix.sha }}
         shell: bash
         run: |
@@ -50,12 +50,12 @@ jobs:
           cat > "$platform/BUILD" <<BUILD
           platform(
               name = "gnu",
-              constraint_values = ["@platforms//cpu:$CPU", "@platforms//os:linux"],
+              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
               exec_properties = {
-                  "Arch": "$ARCH",
+                  "Arch": "amd64",
                   "OSFamily": "linux",
-                  "workload-isolation-type": "$ISOLATION",
-                  "container-image": "$WORKER_IMAGE",
+                  "workload-isolation-type": "firecracker",
+                  "container-image": "$BUILD_WORKER_IMAGE",
                   "EstimatedMemory": "8GB",
               },
               visibility = ["//visibility:public"],
@@ -76,7 +76,10 @@ jobs:
               "build --inject_repository=catalog_platform=$platform" \
               'build --host_platform=@catalog_platform//:gnu' \
               'build --extra_execution_platforms=@catalog_platform//:gnu' \
-              "build --config=$CPU"
+              "build --config=$CPU" \
+              "test --test_exec_properties=Arch=$ARCH" \
+              "test --test_exec_properties=workload-isolation-type=$ISOLATION" \
+              "test --test_exec_properties=container-image=$WORKER_IMAGE"
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$rc"

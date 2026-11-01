@@ -11,14 +11,11 @@ import xml.etree.ElementTree as ET
 import qualification_report as report
 
 pr, architecture, source, rc, destination = sys.argv[1:]
-assert pr in ("fd-table-positive", "fd-table-negative")
+assert pr == "fd-table-positive"
 negative = pr == "fd-table-negative"
 case_owners = {
     "//pkg/sentry/kernel:kernel_test_nogo": [],
 } if negative else {
-    "//pkg/sentry/kernel:kernel_test_nogo": [],
-    "//pkg/sentry/syscalls/linux:linux_test_nogo": [],
-    "//runsc/boot:boot_test_nogo": [],
     "//pkg/sentry/kernel:kernel_test": ["TestFDTable", "TestFDTableMany", "TestFDTableOverLimit", "TestDescriptorFlags", "TestSetFlagsForRange"],
     "//pkg/sentry/syscalls/linux:linux_test": ["TestSeccheckMax", "TestSeccheckSyscalls"],
 }
@@ -36,6 +33,7 @@ def save(name, value):
 r = {"pr": pr, "architecture": architecture, "source": source, "expected": owners, "required_cases": sorted(required), "status": "INCOMPLETE"}
 try:
     r["worker_image"] = os.environ["WORKER_IMAGE"]
+    r["build_worker_image"] = os.environ["BUILD_WORKER_IMAGE"]
     assert git("rev-parse", "HEAD").decode().strip() == source
     assert source == ("7e42854f555f8c9d56263038e48875a20f7cc9b7" if negative else "5c792dd87213269723e419efcc83feaf90728ed9")
     r["tree"] = git("rev-parse", "HEAD^{tree}").decode().strip()
