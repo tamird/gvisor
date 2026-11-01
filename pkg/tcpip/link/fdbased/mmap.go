@@ -169,9 +169,15 @@ func (d *packetMMapDispatcher) readMMappedPackets() (stack.PacketBufferList, boo
 
 	for hdr.tpStatus()&tpStatusUser == 1 {
 		// Copy out the packet from the mmapped frame to a locally owned buffer.
-		pkts.PushBack(stack.NewPacketBuffer(stack.PacketBufferOptions{
+		pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 			Payload: buffer.MakeWithView(buffer.NewViewWithData(hdr.Payload())),
-		}))
+		})
+		if d.e.gsoKind == stack.HostGSOSupported && hdr.tpMac() >= virtioNetHdrSize {
+			// Linux tpacket_rcv places the virtio header immediately before tp_mac.
+			v := hdr[int(hdr.tpMac())-virtioNetHdrSize : hdr.tpMac()]
+			setReceiveGSO(pkt, v, d.e.hdrSize)
+		}
+		pkts.PushBack(pkt)
 		// Release packet to kernel.
 		hdr.setTPStatus(tpStatusKernel)
 		d.ringOffset = (d.ringOffset + 1) % tpFrameNR

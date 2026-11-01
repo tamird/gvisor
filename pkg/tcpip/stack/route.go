@@ -326,6 +326,53 @@ func (r *Route) RequiresTXTransportChecksum() bool {
 	return r.outgoingNIC.NetworkLinkEndpoint.Capabilities()&CapabilityTXChecksumOffload == 0
 }
 
+// PrepareForwardedPacket prepares the transport checksum for the outgoing
+// link. A host TCP aggregate can remain whole only if the link can segment it
+// and each resulting packet fits its MTU.
+func (r *Route) PrepareForwardedPacket(pkt *PacketBuffer, rx GSO) {
+	if rx.MSS != 0 && r.HasHostGSOCapability() && r.prepareForwardedTCPGSO(pkt, rx) {
+		return
+	}
+	if r.RequiresTXTransportChecksum() {
+		pkt.CalculateTransportChecksum()
+	}
+}
+
+func (r *Route) prepareForwardedTCPGSO(pkt *PacketBuffer, rx GSO) bool {
+	if uint32(pkt.Size()) > r.GSOMaxSize() || int(rx.L3HdrLen) != len(pkt.NetworkHeader().Slice()) || pkt.Network().TransportProtocol() != header.TCPProtocolNumber {
+		return false
+	}
+	var minHdrLen int
+	switch n := pkt.Network().(type) {
+	case header.IPv4:
+		if rx.Type != GSOTCPv4 || n.More() || n.FragmentOffset() != 0 {
+			return false
+		}
+		minHdrLen = header.IPv4MinimumSize
+	case header.IPv6:
+		if rx.Type != GSOTCPv6 {
+			return false
+		}
+		minHdrLen = header.IPv6MinimumSize
+	default:
+		return false
+	}
+	n, t := pkt.checksumHeaders()
+	tcp, ok := t.(header.TCP)
+	if !ok || int(tcp.DataOffset()) != len(tcp) {
+		return false
+	}
+	// Route.MTU excludes the base IP header; count TCP and any IP options.
+	if uint32(int(rx.L3HdrLen)-minHdrLen+len(tcp)+int(rx.MSS)) > r.MTU() {
+		return false
+	}
+	// CHECKSUM_PARTIAL contains the pseudo-header sum. The host finishes
+	// the checksum for each packet after segmentation.
+	tcp.SetChecksum(header.PseudoHeaderChecksum(header.TCPProtocolNumber, n.SourceAddress(), n.DestinationAddress(), uint16(len(tcp)+pkt.Data().Size())))
+	pkt.GSOOptions = rx
+	return true
+}
+
 // HasGVisorGSOCapability returns true if the route supports gVisor GSO.
 func (r *Route) HasGVisorGSOCapability() bool {
 	if gso, ok := r.outgoingNIC.NetworkLinkEndpoint.(GSOEndpoint); ok {
