@@ -1,7 +1,7 @@
-name: Inspect TCP socket errors after a refused connection
+name: Check TCP half-close readiness on Linux and gVisor
 on:
   push:
-    branches: [qualification/tcp-poll-consumed-error]
+    branches: [qualification/tcp-half-close-readiness]
 permissions:
   contents: read
 jobs:
@@ -47,15 +47,14 @@ jobs:
         import os
         from pathlib import Path
         f=Path('test/syscalls/linux/tcp_socket.cc'); text=f.read_text()
-        start=text.index('TEST_P(SimpleTcpSocketTest, NonBlockingConnectRefused)')
-        at=text.index('  // Avoiding triggering save',start)
+        at=text.index('TEST_P(TcpSocketTest, PollAfterShutdown)')
         f.write_text(text[:at]+Path(os.environ['RUNNER_TEMP'],'probe').read_text()+text[at:])
         PYFIX
         for name in poll-native poll-stock; do
           src=$STOCK
           testname=tcp_socket_test
           path=test/syscalls/linux/tcp_socket.cc
-          filter='AllInetTests/SimpleTcpSocketTest.NonBlockingConnectRefused/*'
+          filter='AllInetTests/TcpSocketTest.HalfCloseReadiness*'
           executor=remote
           platform=runsc_ptrace
           if [[ "$name" == *-native ]]; then executor=local; platform=native; fi
@@ -80,6 +79,6 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: tcp-error-consumption
+        name: tcp-half-close-readiness
         path: ${{ runner.temp }}/records/verdict.json
         if-no-files-found: error
