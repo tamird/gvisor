@@ -1,4 +1,4 @@
-name: Read original hostinet process-exit results
+name: Retain actual TCP linger syscall XML
 on:
   push:
     branches: [qualification/hostinet-exit-linger-original-receipt]
@@ -11,12 +11,12 @@ jobs:
     timeout-minutes: 9
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-    - name: Read the original per-target records
+    - name: Read the three original GTest XML files
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: python3 test/rbe/hostinet_linger_original.py
+      run: python3 test/rbe/hostinet_linger_xml.py
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: hostinet-exit-linger-original-receipt
-        path: original-verdict.json
+        name: hostinet-linger-gtest-xml
+        path: linger-receipts/
         if-no-files-found: error
