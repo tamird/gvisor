@@ -457,7 +457,9 @@ func (s *Set) SetVal(ctx context.Context, num int32, val int16, creds *auth.Cred
 	sem.value = val
 	sem.pid = pid
 	s.changeTime = ktime.NowFromContext(ctx)
+	s.mu.Unlock()
 	s.wakeWaiters(int(num))
+	s.mu.Lock()
 	return nil
 }
 
