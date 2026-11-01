@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T20:46:51.279434+00:00",
+    "updatedAt": "2026-11-01T20:57:36.045285+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42538,6 +42538,44 @@
         "summary": "Open the independent semaphore PID fix?",
         "body": "Keep the writer’s PID in each namespace that could see it, so lookup still works after the writer exits. Seven syscall cases passed on Linux and corrected gVisor. Stock failed the waitpid and namespace cases. The original aggregate verdict was incomplete; its three original XML files record those outcomes. A separate run restored fourteen times across the two namespace cases. All six package and analyzer targets passed. The standalone commit only changes the wrapping of two test assertions from the qualified source."
       }
+    },
+    {
+      "id": "pr:14458",
+      "type": "pr",
+      "number": 14458,
+      "repo": "google/gvisor",
+      "ref": "rfc4015-spurious-recovery-response",
+      "head": "1af4ae880239496a8470baaa16f34b131d4fe045",
+      "title": "TCP: respond to a spurious loss recovery",
+      "url": "https://github.com/google/gvisor/pull/14458",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "summary": "On #14458, a delayed original left the slow-start threshold at 2 packets instead of restoring 10 after timestamp wrap or a second timeout. The detector predates the proposed response. The tested correction kept the threshold at 2 after a real second repair.",
+      "updatedAt": "2026-11-01T20:56:16.869578+00:00",
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "1af4ae880239496a8470baaa16f34b131d4fe045",
+        "url": "https://github.com/google/gvisor/pull/14458/files#diff-0912a3274bb72f64af67df685e65186477ca212ce5ad3d655a37ba9872a64fd1R1810",
+        "title": "Post the Eifel timestamp finding",
+        "summary": "On #14458, a delayed original left the slow-start threshold at 2 packets instead of restoring 10 after timestamp wrap or a second timeout. The detector predates the proposed response. The tested correction kept the threshold at 2 after a real second repair.",
+        "body": "The existing detector can miss a delayed original here. With RACK off, the first advancing ACK echoed the original packet’s timestamp (4294967290), which preceded the first repair (994). Because the timestamp wrapped, this branch didn’t run and `ssthresh` stayed at 2 packets instead of returning to 10.\n\nThe same thing happened without wrap after a second timeout cleared `retransmitTS`. Changing only the comparison then restored 10 for a genuine second repair. [Keeping the first repair’s timestamp for the whole recovery episode and comparing in serial order](https://github.com/tamird/gvisor/compare/47d4d443c...1c3a16f77) distinguished the original from both repairs in [all eight packet traces](https://github.com/tamird/gvisor/actions/runs/41348536380/artifacts/13100039686). A separate detector fix would cover both cases for this response.\n\nReview by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-01T20:56:16.869578+00:00"
+      },
+      "evidence": [
+        {
+          "label": "Eight packet traces on each of three senders",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41348536380/artifacts/13100039686"
+        },
+        {
+          "label": "Tested detector correction",
+          "url": "https://github.com/tamird/gvisor/compare/47d4d443c...1c3a16f77"
+        },
+        {
+          "label": "Reviewer discussion and independent performance evidence",
+          "url": "https://github.com/google/gvisor/pull/14458#issuecomment-6545722386"
+        }
+      ]
     }
   ],
   "edges": [
@@ -48941,7 +48979,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T20:46:51.279434+00:00",
+      "updatedAt": "2026-11-01T20:57:36.045285+00:00",
       "summary": "A restore of 50,000 tmpfs files queued 150,890 callbacks. About a third came from inode after-load hooks, a third from converting dentry parents, and a third from directory maps waiting for their children.",
       "findings": [
         {
@@ -52077,6 +52115,15 @@
             {
               "label": "Graph checkpoint findings",
               "url": "https://github.com/google/gvisor/issues/16715"
+            }
+          ]
+        },
+        {
+          "text": "The 50,000-file checkpoint benchmark completed Encode and Decode without a GC on the default worker or with a 2 GiB Go memory limit. At a deliberate 64 MiB limit the same input triggered 20 collections during Encode and 13 during Decode. SetGCPercent(-1) leaves the memory-limit trigger active.",
+          "evidence": [
+            {
+              "label": "Six benchmark observations on the same checkpoint",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41348084998/artifacts/13099864337"
             }
           ]
         }
