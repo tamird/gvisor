@@ -32,6 +32,8 @@ func BenchmarkEstablishedReadiness(b *testing.B) {
 		{"Read", waiter.ReadableEvents, 0},
 		{"Write", waiter.WritableEvents, waiter.WritableEvents},
 		{"ReadWrite", waiter.ReadableEvents | waiter.WritableEvents, waiter.WritableEvents},
+		{"ReadHangup", waiter.EventRdHUp, 0},
+		{"WriteReadHangup", waiter.WritableEvents | waiter.EventRdHUp, waiter.WritableEvents},
 	} {
 		b.Run(tc.name, func(b *testing.B) {
 			if got, want := ep.Readiness(tc.mask), tc.want; got != want {
@@ -76,13 +78,13 @@ try:
             rows = {}
             raw = []
             for line in run.stdout.splitlines():
-                match = re.fullmatch(r"BenchmarkEstablishedReadiness/(Read|Write|ReadWrite)(?:-1)?\s+\d+\s+([0-9.]+) ns/op(?:\s+.*)?", line.strip())
+                match = re.fullmatch(r"BenchmarkEstablishedReadiness/(Read|Write|ReadWrite|ReadHangup|WriteReadHangup)(?:-1)?\s+\d+\s+([0-9.]+) ns/op(?:\s+.*)?", line.strip())
                 if match:
                     name, value = match.groups()
                     assert name not in rows, name
                     rows[name] = float(value)
                     raw.append(line.strip())
-            assert set(rows) == {"Read", "Write", "ReadWrite"}, sorted(rows)
+            assert set(rows) == {"Read", "Write", "ReadWrite", "ReadHangup", "WriteReadHangup"}, sorted(rows)
             with (out / (arm + ".bench")).open("a") as log:
                 print(*raw, sep="\n", file=log)
             for name, value in rows.items():
