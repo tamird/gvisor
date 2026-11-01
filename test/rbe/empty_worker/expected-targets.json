@@ -9,7 +9,9 @@
     "--config=plugin-tldk",
     "--compilation_mode=opt"
   ],
-  "provenance": "Exact declared archive library from google/gvisor#15153 at 675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa; no prior scratch qualification.",
+  "provenance": "Six plugin BUILD/patch/toolchain files and both archive declarations are byte-identical to public #15153 at 675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa; compiler/tool prerequisites are reused from f728497c0a91ca4a40cf6d29953a3ee963a0a1f9.",
   "expected_count": 1,
-  "required_target_name": "libpluginstack"
+  "required_target_name": "libpluginstack",
+  "plugin_source": "675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa",
+  "compiler_integration_source": "f728497c0a91ca4a40cf6d29953a3ee963a0a1f9"
 }

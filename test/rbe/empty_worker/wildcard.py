@@ -249,12 +249,14 @@ for arch in ("amd64",):
     except Exception as error:
         summary["architectures"][arch] = {"error": repr(error)[:1400]}
     write(out / "summary.json", summary)
-summary["overlay_sha256"] = hashlib.sha256(Path("test/rbe/empty_worker/BUILD").read_bytes()).hexdigest()
+summary["execution_platform_file_sha256"] = hashlib.sha256(Path("test/rbe/empty_worker/BUILD").read_bytes()).hexdigest()
 summary["source_clean"] = subprocess.run(["git","diff","--quiet",source,"--"]).returncode == 0
 failed = any(v.get("phases", {}).get("build", {}).get("exit", 0) != 0 for v in summary["architectures"].values())
 summary["status"] = "FAIL" if failed else "PASS" if summary["source_clean"] and all(v.get("successful_observation") for v in summary["architectures"].values()) else "INCOMPLETE"
 summary["coverage"] = {"requested_owner": scope, "test_cases_executed": 0,
-                       "public_source": source, "qualification_overlay": "test/rbe/empty_worker/BUILD"}
+                       "plugin_source": baseline["plugin_source"],
+                       "compiler_integration_source": baseline["compiler_integration_source"],
+                       "execution_platform_file": "test/rbe/empty_worker/BUILD"}
 summary["verified_at"] = now()
 write(out / "summary.json", summary)
 print(summary["status"], flush=True)

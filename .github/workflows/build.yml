@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: carrier, persist-credentials: false, fetch-depth: 1}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: product, ref: 675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa, persist-credentials: false, fetch-depth: 1}
+        with: {path: product, ref: e02abab8e7275cb32b4ec11d89230325b658b58c, persist-credentials: false, fetch-depth: 1}
       - name: Prepare private remote configuration and declared execution platform
         working-directory: carrier
         env:
@@ -35,13 +35,15 @@ jobs:
           chmod 0755 "$RUNNER_TEMP/bb"
           cp test/rbe/empty_worker/{wildcard.py,expected-targets.json} "$RUNNER_TEMP/"
           mkdir -p ../product/test/rbe/empty_worker
-          cp test/rbe/empty_worker/BUILD ../product/test/rbe/empty_worker/BUILD
+          if [ ! -e ../product/test/rbe/empty_worker/BUILD ]; then
+            cp test/rbe/empty_worker/BUILD ../product/test/rbe/empty_worker/BUILD
+          fi
           bazel --bazelrc="$RUNNER_TEMP/sidecar.bazelrc" run //tools/actionlint -- "$PWD/.github/workflows/build.yml" > "$RUNNER_TEMP/actionlint.log" 2>&1 || { tail -20 "$RUNNER_TEMP/actionlint.log"; exit 1; }
           printf '%s\n' '{"status":"PASS","phase":"bootstrap","executed_targets":0}' > "$RUNNER_TEMP/package-evidence/bootstrap.json"
       - name: Analyze and build the original GNU plugin library
         working-directory: product
         env:
-          PRODUCT: 675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa
+          PRODUCT: e02abab8e7275cb32b4ec11d89230325b658b58c
         run: python3 "$RUNNER_TEMP/wildcard.py"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
