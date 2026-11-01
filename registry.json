@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T01:23:49.375840+00:00",
+    "updatedAt": "2026-11-01T01:33:29.729737+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41010,6 +41010,36 @@
           "https://github.com/tamird/gvisor/actions/runs/41254788649/artifacts/13063425831",
           "https://github.com/tamird/gvisor/actions/runs/41256814960/artifacts/13064285013"
         ]
+      }
+    },
+    {
+      "id": "branch:tcp-refused-error-once",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/tcp-refused-error-once",
+      "head": "1b759ec4ef4873233e6e85b624e97be216a8d455",
+      "title": "Report a refused TCP connection only once",
+      "url": "https://github.com/tamird/gvisor/commit/1b759ec4e",
+      "updatedAt": "2026-11-01T01:33:29.729737+00:00",
+      "status": "Contributor review requested",
+      "summary": "After a blocking connect returned ECONNREFUSED, stock netstack returned the same error again through SO_ERROR; a nonblocking socket could consume it twice through SO_ERROR. Linux and the corrected stack reported the refusal once in both cases. Socket reuse after refusal is a separate investigation.",
+      "evidence": [
+        {
+          "label": "Identical shared socket regression on native Linux, stock netstack, and the corrected source; both stock assertions returned errno 111, no skips",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41260983000/artifacts/13064538803"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "1b759ec4ef4873233e6e85b624e97be216a8d455",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/1b759ec4e",
+        "title": "Report a refused TCP connection only once",
+        "requestedAt": "2026-11-01T01:33:29.729737+00:00",
+        "summary": "Review the standalone, three-line correction for upstream submission. It has no prerequisite.",
+        "body": "A failed handshake stores the same error twice. After connect reports\nECONNREFUSED, SO_ERROR returns it again. A nonblocking socket can read\nthe same refusal twice through SO_ERROR.\n\nRecord the handshake failure only in the terminal error consumed by\nconnect, read, write, and SO_ERROR. Leave separately reported soft\nerrors alone."
       }
     }
   ],
