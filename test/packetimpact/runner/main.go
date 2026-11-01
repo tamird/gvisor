@@ -173,7 +173,7 @@ func main() {
 	// Start the test itself.
 	testResult := make(chan error, 1)
 	go func() {
-		testArgs := []string{"--dut_infos_json", string(dutJSON)}
+		testArgs := []string{"--dut_infos_json", string(dutJSON), "-test.v", "-test.run=^TestListenerReusesReceiveBuffer$"}
 		if variant == "native" {
 			testArgs = append(testArgs, "-native")
 		}
