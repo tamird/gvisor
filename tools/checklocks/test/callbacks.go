@@ -64,3 +64,14 @@ func (e *callbackEntries) switchLocksInPredicate(other *callbackEntries, keys []
 	delete(e.entries, "")
 	e.mu.Unlock()
 }
+
+func (e *callbackEntries) temporarilyReleaseInPredicate(keys []string) {
+	e.mu.Lock()
+	slices.ContainsFunc(keys, func(key string) bool {
+		e.mu.Unlock()
+		e.mu.Lock()
+		return e.hasKeyLocked(key)
+	})
+	delete(e.entries, "")
+	e.mu.Unlock()
+}
