@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T20:02:19.223466+00:00",
+    "updatedAt": "2026-11-01T20:25:10.080082+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42496,6 +42496,48 @@
           "url": "https://github.com/tamird/gvisor/commit/a79d4bf1b"
         }
       ]
+    },
+    {
+      "id": "branch:semctl-writer-pid",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/semctl-writer-pid",
+      "head": "eb90d9a01b36a0a55412c223d21cc3f3dd0c47ef",
+      "title": "Report a semaphore writer’s PID after it exits",
+      "url": "https://github.com/tamird/gvisor/commit/eb90d9a01",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T20:25:10.080082+00:00",
+      "summary": "After a parent reaps its child, Linux semctl(GETPID) still returns the child’s PID. gVisor could return zero, or resolve an unrelated PID in a sibling namespace.",
+      "evidence": [
+        {
+          "label": "Original XML: seven passes on Linux and corrected gVisor, two stock failures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41309783355/artifacts/13089814511"
+        },
+        {
+          "label": "Fourteen restores across the two namespace cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41311155030/artifacts/13085875303"
+        },
+        {
+          "label": "Six package and analyzer targets, including AMD64 and ARM64 Nogo",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41346312383/artifacts/13099069066"
+        },
+        {
+          "label": "Standalone formatting comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41342624016/artifacts/13097468715"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "eb90d9a01b36a0a55412c223d21cc3f3dd0c47ef",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/eb90d9a01",
+        "title": "Report a semaphore writer’s PID after it exits",
+        "requestedAt": "2026-11-01T20:25:10.080082+00:00",
+        "summary": "Open the independent semaphore PID fix?",
+        "body": "Keep the writer’s PID in each namespace that could see it, so lookup still works after the writer exits. Seven syscall cases passed on Linux and corrected gVisor. Stock failed the waitpid and namespace cases. The original aggregate verdict was incomplete; its three original XML files record those outcomes. A separate run restored fourteen times across the two namespace cases. All six package and analyzer targets passed. The standalone commit only changes the wrapping of two test assertions from the qualified source."
+      }
     }
   ],
   "edges": [
@@ -58943,7 +58985,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T20:02:19.223466+00:00",
+      "updatedAt": "2026-11-01T20:25:10.080082+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -60533,11 +60575,19 @@
             {
               "label": "Original failing command and exit status",
               "url": "https://github.com/tamird/gvisor/actions/runs/41344636849/artifacts/13097844259"
+            },
+            {
+              "label": "Plugin selection",
+              "url": "https://github.com/google/gvisor/blob/aa767e4c4/pkg/sentry/socket/plugin/cgo/BUILD#L8-L29"
+            },
+            {
+              "label": "Ordinary release targets",
+              "url": "https://github.com/google/gvisor/blob/aa767e4c4/tools/release.bzl#L13-L40"
             }
           ]
         }
       ],
-      "nextStep": "The optional DPDK plugin still needs a way to launch its POSIX helpers with a declared shell. Review the four direct invocations together before rebuilding. The archive has not yet built on the tool-free worker.",
+      "nextStep": "Prioritize the ordinary release and CI actions. The optional TLDK build selects two extra binaries and runs a dedicated ConnectToSelf integration test. Keep both consumers for future scratch qualification of the vendor-patched DPDK build.",
       "evidence": [
         {
           "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
