@@ -174,8 +174,6 @@ func (f *FDTable) forEachUpTo(ctx context.Context, maxFd int32, fn func(fd int32
 
 // ForEach acquires f.mu and iterates over all non-nil files upto maxFd in sorted order.
 func (f *FDTable) ForEach(ctx context.Context, fn func(fd int32, file *vfs.FileDescription, flags FDFlags) bool) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
 	f.forEach(ctx, fn)
 }
 
@@ -477,12 +475,10 @@ func (f *FDTable) Remove(ctx context.Context, fd int32) *vfs.FileDescription {
 		return nil
 	}
 
-	f.mu.Lock()
 	df := f.set(fd, nil, FDFlags{}) // Zap entry.
 	if df != nil {
 		f.fdBitmap.Remove(uint32(fd))
 	}
-	f.mu.Unlock()
 
 	if df != nil {
 		f.fileUnlock(ctx, df)
