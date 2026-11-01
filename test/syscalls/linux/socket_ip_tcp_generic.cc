@@ -55,6 +55,38 @@ constexpr int kPositiveTimeoutMs = 60 * 1000;
 // The amount of time to wait for something unexpected to not occur.
 constexpr int kNegativeTimeoutMs = 3 * 1000;
 
+TEST(TcpOutputQueueTest, RefusedConnect) {
+  struct sockaddr_in addr = {};
+  addr.sin_family = AF_INET;
+  addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  auto server = ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET, SOCK_STREAM, 0));
+  ASSERT_THAT(bind(server.get(), AsSockAddr(&addr), sizeof(addr)),
+              SyscallSucceeds());
+  socklen_t len = sizeof(addr);
+  ASSERT_THAT(getsockname(server.get(), AsSockAddr(&addr), &len), SyscallSucceeds());
+
+  for (const int flags : {0, static_cast<int>(SOCK_NONBLOCK)}) {
+    auto client = ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET, SOCK_STREAM | flags, 0));
+    ASSERT_THAT(RetryEINTR(connect)(client.get(), AsSockAddr(&addr), len),
+                SyscallFailsWithErrno(flags ? EINPROGRESS : ECONNREFUSED));
+    struct pollfd pfd = {client.get(), POLLERR | POLLHUP, 0};
+    ASSERT_THAT(RetryEINTR(poll)(&pfd, 1, kPositiveTimeoutMs),
+                SyscallSucceedsWithValue(1));
+    int queued = -1;
+    ASSERT_THAT(ioctl(client.get(), TIOCOUTQ, &queued), SyscallSucceeds());
+    int err = 0;
+    socklen_t err_len = sizeof(err);
+    ASSERT_THAT(getsockopt(client.get(), SOL_SOCKET, SO_ERROR, &err, &err_len),
+                SyscallSucceeds());
+    ASSERT_EQ(err, flags ? ECONNREFUSED : 0);
+    int after = -1;
+    ASSERT_THAT(ioctl(client.get(), TIOCOUTQ, &after), SyscallSucceeds());
+    fprintf(stderr, "REFUSED async=%d queued=%d after_error=%d\n",
+            int(flags != 0), queued, after);
+    EXPECT_EQ(queued, after);
+  }
+}
+
 TEST_P(TCPSocketPairTest, TcpInfoSucceeds) {
   auto sockets = ASSERT_NO_ERRNO_AND_VALUE(NewSocketPair());
 
