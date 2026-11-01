@@ -406,7 +406,7 @@ func (ds *graphDecodeState) decodeElems(elem *typeInfo, p unsafe.Pointer, n uint
 		ds.lastRef = -1
 		ds.decodeValue(elem, add(p, i*esz))
 		if ds.lastRef >= 0 {
-			ds.wait(ds.cur, ds.lastRef, decodeCallback{waiter: -1})
+			ds.wait(ds.cur, ds.lastRef, decodeCallback{})
 		}
 	}
 	ds.lastRef = -1
@@ -432,12 +432,12 @@ func (ds *graphDecodeState) decodeInterface(ti *typeInfo, p unsafe.Pointer) {
 	if ti.emptyIface {
 		*(*eface)(p) = eface{typ: dyn.rtype, data: data}
 		if deferred != nil {
-			ds.addCallback(ds.cur, decodeCallback{fn: func() { (*eface)(p).data = *deferred }, waiter: -1})
+			ds.addCallback(ds.cur, decodeCallback{fn: func() { (*eface)(p).data = *deferred }})
 		}
 	} else {
 		*(*iface)(p) = iface{tab: ds.itabCache.get(ti, dyn), data: data}
 		if deferred != nil {
-			ds.addCallback(ds.cur, decodeCallback{fn: func() { (*iface)(p).data = *deferred }, waiter: -1})
+			ds.addCallback(ds.cur, decodeCallback{fn: func() { (*iface)(p).data = *deferred }})
 		}
 	}
 }
@@ -535,12 +535,12 @@ func (ds *graphDecodeState) decodeMap(ti *typeInfo, m unsafe.Pointer, n int) {
 		ds.lastRef = -1
 		ds.decodeValue(kt, kp)
 		if ds.lastRef >= 0 {
-			ds.wait(ds.cur, ds.lastRef, decodeCallback{waiter: -1})
+			ds.wait(ds.cur, ds.lastRef, decodeCallback{})
 		}
 		ds.lastRef = -1
 		ds.decodeValue(et, ep)
 		if ds.lastRef >= 0 {
-			ds.wait(ds.cur, ds.lastRef, decodeCallback{waiter: -1})
+			ds.wait(ds.cur, ds.lastRef, decodeCallback{})
 		}
 		if !ds.noCallbacks && ds.deferred != deferred {
 			ds.deferMapSetIndex(ti.typ, m, k, e)
@@ -557,8 +557,7 @@ func (ds *graphDecodeState) decodeMap(ti *typeInfo, m unsafe.Pointer, n int) {
 func (ds *graphDecodeState) deferMapSetIndex(mapTyp reflect.Type, m unsafe.Pointer, k, e reflect.Value) {
 	mv := reflect.NewAt(mapTyp, unsafe.Pointer(&m)).Elem()
 	ds.addCallback(ds.cur, decodeCallback{
-		fn:     func() { mv.SetMapIndex(k, e) },
-		waiter: -1,
+		fn: func() { mv.SetMapIndex(k, e) },
 	})
 }
 
