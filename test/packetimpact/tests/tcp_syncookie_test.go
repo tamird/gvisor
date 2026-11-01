@@ -15,6 +15,7 @@
 package tcp_syncookie_test
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"math"
@@ -145,5 +146,42 @@ func TestTCPSynCookie(t *testing.T) {
 				})
 			}
 		})
+	}
+}
+
+// TestListenerReusesReceiveBuffer keeps one handshake pending so the
+// listener may use SYN cookies for subsequent connections. Data on the
+// final ACK belongs to the accepted socket once it leaves the listener.
+func TestListenerReusesReceiveBuffer(t *testing.T) {
+	dut := testbench.NewDUT(t)
+	listener, port := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1)
+	defer dut.Close(t, listener)
+	dut.SetSockOptInt(t, listener, unix.SOL_SOCKET, unix.SO_RCVBUF, 1)
+
+	startHandshake := func(t *testing.T) *testbench.TCPIPv4 {
+		t.Helper()
+		conn := dut.Net.NewTCPIPv4(t, testbench.TCP{DstPort: &port}, testbench.TCP{SrcPort: &port})
+		t.Cleanup(func() { conn.Close(t) })
+		conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn)})
+		if _, err := conn.Expect(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn | header.TCPFlagAck)}, time.Second); err != nil {
+			t.Fatalf("waiting for SYN-ACK: %v", err)
+		}
+		return &conn
+	}
+	startHandshake(t)
+	payload := testbench.GenerateRandomPayload(t, 1200)
+	for i := 0; i < 8; i++ {
+		if !t.Run(fmt.Sprintf("connection%d", i), func(t *testing.T) {
+			conn := startHandshake(t)
+			conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck)}, &testbench.Payload{Bytes: payload})
+			dut.PollOne(t, listener, unix.POLLIN, time.Second)
+			fd, _ := dut.Accept(t, listener)
+			defer dut.Close(t, fd)
+			if got := dut.Recv(t, fd, int32(len(payload)), unix.MSG_WAITALL); !bytes.Equal(got, payload) {
+				t.Fatalf("received %d bytes, want the %d-byte handshake payload", len(got), len(payload))
+			}
+		}) {
+			break
+		}
 	}
 }
