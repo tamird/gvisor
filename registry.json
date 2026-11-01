@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T17:27:38.345053+00:00",
+    "updatedAt": "2026-11-01T17:36:49.836627+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42155,8 +42155,8 @@
       "title": "Share one packet capture across network interfaces",
       "url": "https://github.com/tamird/gvisor/tree/proposal/network-pcap-setup",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-01T17:27:38.345053+00:00",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T17:36:49.836627+00:00",
       "summary": "FD-based and XDP backends now hand their endpoints to one NIC setup path. The first successfully constructed external endpoint opens the shared capture; later interfaces append their packets.",
       "evidence": [
         {
@@ -42178,6 +42178,10 @@
         {
           "label": "Three netlink cases fail on the parent and pass with #15866",
           "url": "https://github.com/tamird/gvisor/actions/runs/41329357634/artifacts/13093005036"
+        },
+        {
+          "label": "Original boot analyzer action failed in its proc dependency",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41328544063/artifacts/13093327461"
         }
       ],
       "refinement": {
@@ -42187,6 +42191,17 @@
         "after": {
           "head": "28cfe8fb884b83198704dd55a9ee53ac596b59fe"
         }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "28cfe8fb884b83198704dd55a9ee53ac596b59fe",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/28cfe8fb8",
+        "title": "Configure packet capture once across external interfaces",
+        "requestedAt": "2026-11-01T17:36:49.836627+00:00",
+        "summary": "Open the revised PR after the boot analyzer passes?",
+        "body": "The RPC separates optional files from link descriptors up front. Both backends use addExternalNIC, which opens the capture on its first interface and wraps each endpoint there. One- and two-interface guests started and wrote a single PCAP header with traffic on every interface. Three route tests also fail on the parent and pass with #15866. Physical XDP was not exercised. A remote analysis action failed before boot_nogo ran; the Linux coordinator is recovering that check."
       }
     },
     {
