@@ -427,7 +427,8 @@ func TestSACKBridgesRetransmittedQueueFragment(t *testing.T) {
 	s.ep.SACKPermitted = true
 	s.ep.scoreboard = NewSACKScoreboard(1000, 0)
 	first := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.MakeWithView(buffer.NewViewSize(1000)), 0)
-	first.sequenceNumber, first.gsoStart, first.gsoMSS, first.xmitCount = 2000, 2000, 1000, 1
+	first.sequenceNumber, first.xmitCount = 2000, 1
+	first.lastTx = packetLayout{start: 2000, mss: 1000}
 	s.MaxPayloadSize = 500
 	first.acked, first.lost = true, true
 	s.writeList.PushBack(first)
@@ -443,7 +444,7 @@ func TestSACKBridgesRetransmittedQueueFragment(t *testing.T) {
 	}
 	// The middle fragment has since been transmitted separately. The last
 	// fragment still owns the original transmitted unit [2000,3000).
-	middle.gsoStart, middle.gsoMSS, middle.truncatedTail = 2300, 400, false
+	middle.lastTx = packetLayout{start: 2300, mss: 400}
 	apply := func(block header.SACKBlock) {
 		merged := s.ep.scoreboard.Insert(block)
 		block.End = s.ep.scoreboard.creditEnd(block.End, merged.End)

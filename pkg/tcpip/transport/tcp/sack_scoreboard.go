@@ -186,24 +186,38 @@ type packetRun struct {
 	count int
 }
 
+// packetLayout describes a transmission accepted by the link. A queue split
+// does not create a packet: only the fragment containing the last byte of a
+// transmitted unit counts that packet. A zero MSS means no transmission.
+//
+// +stateify savable
+type packetLayout struct {
+	start         seqnum.Value
+	mss           uint16
+	truncatedTail bool
+}
+
 func (s *segment) sackPackets() packetRun {
-	b := s.sackBlock()
-	mss := seqnum.Size(s.gsoMSS)
+	return s.lastTx.packets(s.sackBlock())
+}
+
+func (l packetLayout) packets(b header.SACKBlock) packetRun {
+	mss := seqnum.Size(l.mss)
 	if mss == 0 {
 		// Entries constructed without a recorded transmission contain one
 		// unit. Production transmit records a size for every sent packet.
 		return packetRun{b, b.Start.Size(b.End), 1}
 	}
-	first := s.gsoStart.Size(b.Start) / mss
-	last := s.gsoStart.Size(b.End)
-	if s.truncatedTail {
+	first := l.start.Size(b.Start) / mss
+	last := l.start.Size(b.End)
+	if l.truncatedTail {
 		last -= last % mss
 	}
 	// The last short packet of a real transmission owns its endpoint too.
 	n := (last+mss-1)/mss - first
 	return packetRun{header.SACKBlock{
-		Start: s.gsoStart.Add(first * mss),
-		End:   s.gsoStart.Add(last),
+		Start: l.start.Add(first * mss),
+		End:   l.start.Add(last),
 	}, mss, int(n)}
 }
 

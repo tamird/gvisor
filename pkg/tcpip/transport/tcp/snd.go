@@ -669,6 +669,7 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	s.SackedOut = 0
 	for seg := s.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
 		seg.sackCredit = 0
+		seg.forgetFlight()
 	}
 	s.updateWriteNext(s.writeList.Front())
 
@@ -735,7 +736,8 @@ func (s *sender) splitSeg(seg *segment, size int) {
 		seg.flags &^= header.TCPFlagPsh
 	}
 	seg.pkt.Data().CapLength(size)
-	seg.truncatedTail = true
+	seg.lastTx.truncatedTail = true
+	seg.originalInFlight.truncatedTail = true
 	if seg.xmitCount != 0 && s.ep.SACKPermitted && !s.ep.scoreboard.Empty() {
 		s.updateSACKCredit(seg, header.SACKBlock{})
 		s.updateSACKCredit(nSeg, header.SACKBlock{})
@@ -1257,6 +1259,13 @@ func (s *sender) SetPipe() {
 	pipe := 0
 	smss := seqnum.Size(s.ep.scoreboard.SMSS())
 	for s1 := s.writeList.Front(); s1 != nil && s1.payloadSize() != 0 && s.isAssignedSequenceNumber(s1); s1 = s1.Next() {
+		if !s1.sequenceNumber.LessThan(s.SndNxt) {
+			break
+		}
+		if s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 {
+			pipe += s.rackPipe(s1)
+			continue
+		}
 		// With GSO each segment can be much larger than SMSS. So check the segment
 		// in SMSS sized ranges.
 		segEnd := s1.sequenceNumber.Add(seqnum.Size(s1.payloadSize()))
@@ -1271,9 +1280,6 @@ func (s *sender) SetPipe() {
 			// After initializing pipe to zero, the following steps are
 			// taken for each octet 'S1' in the sequence space between
 			// HighACK and HighData that has not been SACKed:
-			if !s1.sequenceNumber.LessThan(s.SndNxt) {
-				break
-			}
 			if s.ep.scoreboard.IsSACKED(sb) {
 				continue
 			}
@@ -1285,11 +1291,7 @@ func (s *sender) SetPipe() {
 			// NOTE: here we mark the whole segment as lost. We do not try
 			// and test every byte in our write buffer as we maintain our
 			// pipe in terms of outstanding packets and not bytes.
-			//
-			// A segment RACK marked lost is not in flight either, as in
-			// Linux's tcp_packets_in_flight. IsLost alone needs SACKed data
-			// above the segment, which a tail loss never produces.
-			if !s1.lost && !s.ep.scoreboard.IsRangeLost(sb) {
+			if !s.ep.scoreboard.IsRangeLost(sb) {
 				pipe++
 			}
 			// SetPipe():
@@ -1944,19 +1946,27 @@ func (s *sender) sendSegment(seg *segment) sendResult {
 	}
 	seg.xmitTime = now
 	seg.xmitCount++
-	seg.lost = false
-
 	if err == nil || n != 0 {
+		seg.lost = false
 		seg.acked = false
 		mss := seg.logicalLen()
 		if s.gso && s.ep.gso.MSS != 0 {
 			mss = min(mss, seqnum.Size(s.ep.gso.MSS))
 		}
-		if mss != 0 && (seg.gsoMSS != uint16(mss) || seg.gsoStart != seg.sequenceNumber || seg.truncatedTail) {
-			seg.gsoStart, seg.gsoMSS, seg.truncatedTail = seg.sequenceNumber, uint16(mss), false
+		tx := packetLayout{start: seg.sequenceNumber, mss: uint16(mss)}
+		if mss != 0 && seg.lastTx != tx {
+			seg.lastTx = tx
 			if s.ep.SACKPermitted && !s.ep.scoreboard.Empty() {
 				s.updateSACKCredit(seg, header.SACKBlock{})
 			}
+		}
+		// A SACK above new data may imply its loss. A transmission below
+		// SND.NXT repairs a hole: even if an earlier attempt failed at
+		// the link, the peer's old SACKs cannot account for this copy.
+		if seg.sequenceNumber == s.SndNxt {
+			seg.originalInFlight = tx
+		} else {
+			seg.repairInFlight = true
 		}
 	}
 

@@ -55,9 +55,8 @@ type segment struct {
 	segmentEntry
 	segmentRefs
 
-	ep     *Endpoint
-	qFlags queueFlags
-	id     stack.TransportEndpointID `state:"manual"`
+	ep *Endpoint
+	id stack.TransportEndpointID `state:"manual"`
 
 	pkt *stack.PacketBuffer
 
@@ -71,23 +70,26 @@ type segment struct {
 	csumValid bool
 
 	// parsedOptions stores the parsed values from the options in the segment.
-	parsedOptions  header.TCPOptions
-	options        []byte `state:".([]byte)"`
-	hasNewSACKInfo bool
+	parsedOptions header.TCPOptions
+	options       []byte `state:".([]byte)"`
 
-	// A transmit queue entry may be split without sending a packet. Its
-	// wire units still start on the original MSS grid; only the rightmost
-	// child owns the final short unit.
-	truncatedTail bool
-	gsoMSS        uint16
-	gsoStart      seqnum.Value
-	rcvdTime      tcpip.MonotonicTime
+	// lastTx describes the last transmission accepted by the link. SACK
+	// uses its packet boundaries even after a send queue entry is split.
+	lastTx packetLayout
+	// RACK can send a probe before it knows whether the original was
+	// lost. Account for those copies independently: the retransmission
+	// may cover only part of an original packet or use a different MSS.
+	originalInFlight packetLayout
+	rcvdTime         tcpip.MonotonicTime
 	// xmitTime is the last transmit time of this segment.
 	xmitTime  tcpip.MonotonicTime
 	xmitCount uint32
 	// acked indicates whether RACK has observed a SACK for this transmission.
 	// Resetting the scoreboard does not change which transmission it was.
-	acked bool
+	acked          bool
+	hasNewSACKInfo bool
+	repairInFlight bool
+	qFlags         queueFlags
 
 	// dataMemSize is the memory used by pkt initially. The value is used for
 	// memory accounting in the receive buffer instead of pkt.MemSize() because
@@ -173,9 +175,9 @@ func (s *segment) clone() *segment {
 	t.xmitCount = s.xmitCount
 	t.acked = s.acked
 	t.lost = s.lost
-	t.gsoMSS = s.gsoMSS
-	t.gsoStart = s.gsoStart
-	t.truncatedTail = s.truncatedTail
+	t.lastTx = s.lastTx
+	t.originalInFlight = s.originalInFlight
+	t.repairInFlight = s.repairInFlight
 	t.ep = s.ep
 	t.qFlags = s.qFlags
 	t.dataMemSize = s.dataMemSize

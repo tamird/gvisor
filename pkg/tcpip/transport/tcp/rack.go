@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
+	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
 )
 
@@ -372,6 +373,42 @@ func (rc *rackControl) exitRecovery() {
 	rc.exitedRecovery = true
 }
 
+// forgetFlight removes all copies that a retransmission timeout or RACK
+// declared lost. Retrying the data puts only the accepted repair back in
+// flight; it does not revive the original transmission.
+func (s *segment) forgetFlight() {
+	s.originalInFlight = packetLayout{}
+	s.repairInFlight = false
+}
+
+// rackPipe estimates how many unsacked packets for seg are still in flight.
+// SACKs above a hole can establish that its original was lost, but say
+// nothing about a repair sent after those packets.
+//
+// +checklocks:s.ep.mu
+func (s *sender) rackPipe(seg *segment) int {
+	inFlight := 0
+	if seg.originalInFlight.mss != 0 {
+		p := seg.originalInFlight.packets(seg.sackBlock())
+		for start := p.block.Start; start.LessThan(p.block.End); {
+			end := start.Add(min(p.mss, start.Size(p.block.End)))
+			b := header.SACKBlock{Start: start, End: end}
+			if b.Start.LessThan(s.SndUna) {
+				b.Start = s.SndUna
+			}
+			if b.Start.LessThan(b.End) && !s.ep.scoreboard.IsSACKED(b) && !s.ep.scoreboard.IsRangeLost(b) {
+				inFlight++
+			}
+			start = end
+		}
+	}
+	if seg.repairInFlight {
+		p := seg.sackPackets()
+		inFlight += p.count - s.ep.scoreboard.sackedPackets(p, s.SndUna, header.SACKBlock{})
+	}
+	return inFlight
+}
+
 // detectLoss marks the segment as lost if the reordering window has elapsed
 // and the ACK is not received. It will also arm the reorder timer.
 // See: https://tools.ietf.org/html/draft-ietf-tcpm-rack-08#section-7.2 Step 5.
@@ -400,6 +437,7 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 			timeRemaining := seg.xmitTime.Sub(rcvTime) + rc.RTT + rc.ReoWnd + clockResolution
 			if timeRemaining < 0 || (timeRemaining == 0 && clockResolution == 0) {
 				seg.lost = true
+				seg.forgetFlight()
 				numLost++
 			} else {
 				// Arm the timer through the uncertainty boundary, so that a timer
