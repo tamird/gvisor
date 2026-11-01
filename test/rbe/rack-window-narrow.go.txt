@@ -1,0 +1,67 @@
+func TestRACKWithWindowFullNarrow(t *testing.T) {
+	c := context.New(t, uint32(mtu))
+	defer c.Cleanup()
+
+	e2e.SetStackSACKPermitted(t, c, true)
+	peer := e2e.CreateConnectedWithSACKAndTS(c)
+	const numPkts = 10
+	data := make([]byte, numPkts*maxPayload)
+	for i := range data {
+		data[i] = byte(i)
+	}
+
+	// Write the data.
+	var r bytes.Reader
+	r.Reset(data)
+	if _, err := c.EP.Write(&r, tcpip.WriteOptions{}); err != nil {
+		t.Fatalf("Write failed: %s", err)
+	}
+
+	bytesRead := 0
+	for i := 0; i < numPkts; i++ {
+		c.ReceiveAndCheckPacketWithOptions(data, bytesRead, maxPayload, e2e.TSOptionSize)
+		bytesRead += maxPayload
+	}
+
+	// Expect retransmission of last packet due to TLP.
+	c.ReceiveAndCheckPacketWithOptions(data, (numPkts-1)*maxPayload, maxPayload, e2e.TSOptionSize)
+
+	// SACK for first and last packet.
+	start := c.IRS.Add(seqnum.Size(maxPayload))
+	end := start.Add(seqnum.Size(maxPayload))
+	dsackStart := c.IRS.Add(seqnum.Size(1 + (numPkts-1)*maxPayload))
+	dsackEnd := dsackStart.Add(seqnum.Size(maxPayload))
+	// Allow one repair at a time so a packet sent before the zero-window
+	// update cannot be mistaken for one sent after it.
+	peer.Flags = header.TCPFlagAck
+	peer.WndSize = maxPayload
+	peer.AckNum = c.IRS.Add(1 + 2*maxPayload)
+	options := [40]byte{header.TCPOptionNOP, header.TCPOptionNOP}
+	n := header.EncodeSACKBlocks([]header.SACKBlock{{dsackStart, dsackEnd}, {start, end}}, options[2:])
+	peer.SendPacket(nil, options[:2+n])
+
+	var info tcpip.TCPInfoOption
+	if err := c.EP.GetSockOpt(&info); err != nil {
+		t.Fatalf("GetSockOpt failed: %v", err)
+	}
+	// Wait for RTT to trigger recovery.
+	time.Sleep(info.RTT)
+
+	// Expect retransmission of #2 packet.
+	c.ReceiveAndCheckPacketWithOptions(data, 2*maxPayload, maxPayload, e2e.TSOptionSize)
+
+	// Send ACK for #2 packet.
+	peer.AckNum = peer.AckNum.Add(maxPayload)
+	peer.SendPacket(nil, nil)
+
+	// Expect retransmission of #3 packet.
+	c.ReceiveAndCheckPacketWithOptions(data, 3*maxPayload, maxPayload, e2e.TSOptionSize)
+
+	// Send ACK with zero window size.
+	peer.AckNum = peer.AckNum.Add(maxPayload)
+	peer.WndSize = 0
+	peer.SendPacket(nil, nil)
+
+	// No packet should be received as the receive window size is zero.
+	c.CheckNoPacket("retransmission after the peer closed its window")
+}

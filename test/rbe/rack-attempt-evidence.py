@@ -83,23 +83,25 @@ beforeZero:
         select{case st:=<-windows:if st.SndUna==c.IRS.Add(1+4*maxPayload) && st.SndWnd==0{goto zero};case <-time.After(5*time.Second):t.Fatal("FULLWIN zero window not processed")}
     }
 zero:
-    end:=time.Now().Add(time.Second)
-    for time.Now().Before(end) {p:=c.GetPacketWithTimeout(time.Until(end));if p==nil{break};dump("after",p)}
+    deadline:=time.Now().Add(time.Second)
+    for time.Now().Before(deadline) {p:=c.GetPacketWithTimeout(time.Until(deadline));if p==nil{break};dump("after",p)}
     t.Log("FULLWIN checked zero window for one second")""")
     p.write_text(s[:pos]+t+s[x:])
 
 
+narrow=(temp / "rack-window-narrow.go.txt").read_text()
+positive=narrow.replace("WithWindowFullNarrow","WithWindowFullPositive").replace("peer.WndSize = 0","peer.WndSize = maxPayload").replace('c.CheckNoPacket("retransmission after the peer closed its window")','c.ReceiveAndCheckPacketWithOptions(data, 4*maxPayload, maxPayload, e2e.TSOptionSize)')
 for src, label in ((base,"base"),(product,"product")):
     git("checkout","--quiet","--detach",src)
     observe_window()
-    baz(label+"-zero",[rack],"^TestRACKWithWindowFull$")
-    git("restore","--source="+src,"--",peer)
-git("checkout","--quiet","--detach",product)
-fixture()
-for variant in ("attempt","wire","epoch"):
-    instrument_send(variant)
-    baz(variant,[rack],"^TestRACKFirstAccepted$")
-    rec=records[variant]
-    rec["complete"] &= all(any(name in v for v in rec["observations"]) for name in ("FIRST before-retry","FIRST followup"))
+    with peer.open("a") as f:
+        f.write("\n"+narrow+"\n"+positive)
+    baz(label+"-zero",[rack],"^TestRACKWithWindowFull(Narrow|Positive)?$")
+    rec=records[label+"-zero"]
+    rec["complete"] &= rec["count"]=={"PASS":3,"FAIL":0,"SKIP":0} and any("FULLWIN checked" in v for v in rec["observations"])
+    for line in (results/(label+"-zero")/"console").read_text().splitlines():
+        if re.search(r'tcp_rack_test.go:\d+:',line) and 'FIRST_TX' not in line:
+            rec.setdefault("diagnostics",[]).append(line[:300])
     store()
+    git("restore","--source="+src,"--",peer)
 sys.exit(not all(r["complete"] for r in records.values()))
