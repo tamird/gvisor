@@ -264,7 +264,7 @@ func replyWithReset(st *stack.Stack, s *segment, tos, ipv4TTL uint8, ipv6HopLimi
 	p := stack.NewPacketBuffer(stack.PacketBufferOptions{ReserveHeaderBytes: hdrSize})
 	defer p.DecRef()
 
-	return sendTCP(route, tcpFields{
+	_, err = sendTCP(route, tcpFields{
 		id:        s.id,
 		ttl:       ttl,
 		tos:       tos,
@@ -274,6 +274,7 @@ func replyWithReset(st *stack.Stack, s *segment, tos, ipv4TTL uint8, ipv6HopLimi
 		rcvWnd:    0,
 		expOptVal: expOptVal,
 	}, p, stack.GSO{}, nil /* PacketOwner */)
+	return err
 }
 
 // SetOption implements stack.TransportProtocol.SetOption.

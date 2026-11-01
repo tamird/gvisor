@@ -10,6 +10,7 @@ go_test(
     size = "large",
     srcs = [
         "mark_test.go",
+        "tcp_gso_write_test.go",
         "tcp_migration_test.go",
         "tcp_test.go",
     ],
