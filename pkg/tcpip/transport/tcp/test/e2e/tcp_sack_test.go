@@ -27,6 +27,7 @@ import (
 	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checker"
+	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp"
@@ -1010,4 +1011,108 @@ func TestMain(m *testing.M) {
 	time.Sleep(1 * time.Second)
 	refs.DoLeakCheck()
 	os.Exit(code)
+}
+
+func TestEifelWrapUndo(t *testing.T) {
+	for _, wrap := range []bool{false, true} {
+		for _, delivered := range []string{"original", "repair", "second-repair"} {
+			t.Run(fmt.Sprintf("wrap=%t/%s", wrap, delivered), func(t *testing.T) {
+				clock := faketime.NewManualClock()
+				c := context.NewWithOpts(t, context.Options{MTU: mtu, EnableV4: true, Clock: clock})
+				defer c.Cleanup()
+				e2e.SetStackSACKPermitted(t, c, true)
+				e2e.SetStackTCPRecovery(t, c, 0)
+				peer := e2e.CreateConnectedWithSACKAndTS(c)
+				info := func() tcpip.TCPInfoOption {
+					t.Helper()
+					var info tcpip.TCPInfoOption
+					if err := c.EP.GetSockOpt(&info); err != nil {
+						t.Fatalf("TCP_INFO: %v", err)
+					}
+					return info
+				}
+				// The address pair has a randomized timestamp offset. Move the
+				// quiescent connection's clock so the *wire* TSval crosses zero
+				// between precisely the two transmissions under comparison.
+				rto := info().RTO
+				if rto < 10*time.Millisecond || rto > time.Minute {
+					t.Fatalf("unexpected starting RTO: %s", rto)
+				}
+				start := uint32(1000)
+				if wrap {
+					start = ^uint32(0) - 5
+					if delivered == "second-repair" {
+						start -= uint32(rto.Milliseconds())
+					}
+				}
+				clock.Advance(time.Duration(start-peer.RecentTS) * time.Millisecond)
+				data := make([]byte, 5*maxPayload)
+				for i := range data {
+					data[i] = byte(i)
+				}
+				if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || int(n) != len(data) {
+					t.Fatalf("write got (%d,%v), want (%d,nil)", n, err, len(data))
+				}
+				packet := func(off int) uint32 {
+					t.Helper()
+					v := c.GetPacket()
+					defer v.Release()
+					h := header.TCP(header.IPv4(v.AsSlice()).Payload())
+					checkReceivedPacket(t, c, h, uint32(off), v, data)
+					if len(h.Payload()) != maxPayload || !h.ParsedOptions().TS {
+						t.Fatalf("offset %d, length %d, options %+v", off, len(h.Payload()), h.ParsedOptions())
+					}
+					return h.ParsedOptions().TSVal
+				}
+				original := packet(0)
+				if original != start {
+					t.Fatalf("initial timestamp %d, wanted %d (handshake %d)", original, start, peer.RecentTS)
+				}
+				for off := maxPayload; off < len(data); off += maxPayload {
+					if ts := packet(off); ts != original {
+						t.Fatalf("initial flight timestamp = %d, want %d", ts, original)
+					}
+				}
+				clock.Advance(info().RTO + time.Millisecond)
+				first := packet(0)
+				accepted := original
+				if delivered != "original" {
+					accepted = first
+				}
+				if delivered == "second-repair" {
+					clock.Advance(info().RTO + time.Millisecond)
+					accepted = packet(0)
+				}
+				if info().CcState != tcpip.RTORecovery || (first < original) != (wrap && delivered != "second-repair") || (accepted < first && delivered == "second-repair") != (wrap && delivered == "second-repair") {
+					t.Fatalf("invalid flight topology: original=%d first=%d accepted=%d, state=%v", original, first, accepted, info().CcState)
+				}
+				// Only A is acknowledged. Its timestamp identifies which copy
+				// actually arrived; a DSACK or a full-flight ACK cannot decide it.
+				ack := func(n int, seq, echo uint32) {
+					t.Helper()
+					opt := [12]byte{header.TCPOptionNOP, header.TCPOptionNOP}
+					header.EncodeTSOption(seq, echo, opt[2:])
+					c.SendPacket(nil, &context.Headers{SrcPort: context.TestPort, DstPort: c.Port, Flags: header.TCPFlagAck, SeqNum: peer.NextSeqNum, AckNum: c.IRS.Add(1 + seqnum.Size(n)), RcvWnd: 30000, TCPOpts: opt[:]})
+				}
+				ack(maxPayload, 10, accepted)
+				next := packet(maxPayload)
+				ack(len(data), 11, next)
+				if err := testutil.Poll(func() error {
+					if x := info(); x.CcState != tcpip.Open {
+						return fmt.Errorf("TCP_INFO state %v", x.CcState)
+					}
+					return nil
+				}, time.Second); err != nil {
+					t.Fatal(err)
+				}
+				end := info()
+				n := c.Stack().Stats().TCP.SpuriousRTORecovery.Value()
+				t.Logf("EIFEL delivered=%s wrap=%t original=%d first=%d echo=%d next=%d spurious=%d cwnd=%d threshold=%d", delivered, wrap, original, first, accepted, next, n, end.SndCwnd, end.SndSsthresh)
+				wantUndo := delivered == "original"
+				if (n == 1) != wantUndo || (end.SndSsthresh == tcp.InitialCwnd) != wantUndo {
+					t.Errorf("detected %d spurious timeouts, exit threshold %d, want undo=%t", n, end.SndSsthresh, wantUndo)
+				}
+			})
+		}
+	}
 }
