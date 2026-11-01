@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T06:33:17.043911+00:00",
+    "updatedAt": "2026-11-01T07:12:21.056431+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -57643,11 +57643,21 @@
         },
         {
           "text": "The host-layout changes built all 18 affected targets and both c-ares headers on each architecture. The remaining failures at this stage identified dynamic dependencies in host gRPC tools and Bash in LLVM’s instrumentor header generator.",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41278670429/artifacts/13072880293"
+          "evidence": [
+            {
+              "label": "Both host-layout builds and c-ares headers",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41278670429/artifacts/13072880293"
+            }
+          ]
         },
         {
           "text": "Building //pkg/... on empty workers found 1,487 top-level labels on each architecture. AMD64 built 1,466. ARM64 built 1,464 and skipped two incompatible slimvm targets. Twenty-one failed on each: 18 host-layout generator/test targets, two gRPC service targets and the NVIDIA parity test’s LLVM parser. The bundled receipts recorded no local spawn. The last build finished at 05:45:09.805 UTC and the verified verdict arrived at 05:47:27.836 (138 s); no manual reconstruction was needed.",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41276314920/artifacts/13072650316"
+          "evidence": [
+            {
+              "label": "Original package builds and missing targets on each architecture",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41276314920/artifacts/13072650316"
+            }
+          ]
         },
         {
           "text": "The Buildkite AMD64 race smoke originally failed 216 executions on the empty worker. Four source-generation and analysis tools required the missing ELF loader. With race selected on the launcher target, the empty worker linked an 18,195,680-byte race binary. A native unprivileged guest ran that binary with the seven previously built release files; its development stamps differed. Separately, the ordinary GNU Make recipe built and staged all eight files from 8c6ed7a88, and the Sentry confirmed the same stamp before the rootless guest exited successfully. The GNU recovery reused cached outputs and ran the Linux ABI analyzer locally. The final proposal also makes the developer shortcut issue the exact Bazel command used to build that launcher.",
@@ -59747,7 +59757,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-01T06:49:35.306610+00:00",
+      "updatedAt": "2026-11-01T07:13:51.137754+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Retain the minimum-RTT safeguard. Prioritize reproducible recovery defects and review changes to SACK, probe timing and receive-queue pressure.",
       "findings": [
@@ -59984,6 +59994,19 @@
             {
               "label": "Downstream forwarder confirmation",
               "url": "https://github.com/google/gvisor/pull/15019#issuecomment-6362902795"
+            }
+          ]
+        },
+        {
+          "text": "For an idle reader, coalescing on #15433 made all 3,000 seven-byte replies available before the first read, matching Linux. Stock, #15325 and #15325 with the ACK-queue cap each queued 1,414 bytes on IPv4 and 1,372 on IPv6 within five seconds. The test verified all 21,000 payload bytes on both passing implementations. This distinguishes the idle-reader stall from the ACK-queue memory problem.",
+          "evidence": [
+            {
+              "label": "Same syscall test on Linux and four gVisor implementations",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41283134522/artifacts/13074338127"
+            },
+            {
+              "label": "Maintainer review order",
+              "url": "https://github.com/google/gvisor/issues/16670"
             }
           ]
         },
