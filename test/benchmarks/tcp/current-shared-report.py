@@ -2,6 +2,7 @@
 import csv
 import json
 import os
+import re
 from pathlib import Path
 from statistics import median
 import subprocess
@@ -82,7 +83,13 @@ def trial(root, mode, case):
     assert B-A>35
     rates={}
     sockets={}
+    complete_rates={}
     for p,stack,lo,hi,dur,intervals,residual in sides:
+        received = read_json(p / "receiver.json")["end"]["sum_received"]
+        complete_rates[stack] = {"bytes": received["bytes"], "seconds": dur,
+                                 "mbps": received["bytes"] * 8 / dur / 1e6}
+        for filename in ("receiver.json", "flow-phases.tsv", "iperf-attempts.tsv"):
+            (public / f"{p.name}-{filename}").write_bytes((p / filename).read_bytes())
         lower=sum(i["bytes"] for i in intervals if lo+i["start"]>=A and hi+i["end"]<=B)
         upper=sum(i["bytes"] for i in intervals if hi+i["end"]>A and lo+i["start"]<B)
         rates[stack]=[max(0,lower+min(residual,0))*8/(B-A)/1e6,(upper+max(residual,0))*8/(B-A)/1e6]
@@ -115,14 +122,14 @@ def trial(root, mode, case):
         full_flow = [v for v in rows if v["stack"] == stack and v["port"] == r[0]["port"]]
         dest.write_text("".join(json.dumps(v)+"\n" for v in full_flow))
     g,l=rates["netstack"],rates["linux"]
-    return dict(overlap_seconds=B-A,mbps_bounds=rates,netstack_share_bounds=[g[0]/(g[0]+l[1]),g[1]/(g[1]+l[0])],sockets=sockets)
+    return dict(overlap_seconds=B-A,receiver_rates=complete_rates,mbps_bounds=rates,netstack_share_bounds=[g[0]/(g[0]+l[1]),g[1]/(g[1]+l[0])],sockets=sockets)
 
 root=Path(os.environ["RUNNER_TEMP"])/"qualification/current-shared"
 destination=Path(os.environ["RUNNER_TEMP"])/"tcp-public"
 destination.mkdir(exist_ok=True)
 heads=(destination/"source-heads").read_text().splitlines() if (destination/"source-heads").exists() else []
 verdict={"heads":heads,"baseline":heads[0] if heads else None,"harness":os.environ["GITHUB_SHA"],"passed":{},"failures":{},"missing":[]}
-expected=[(arm,cc) for arm in ("a-before","a-amended","b-amended","b-before") for cc in ("reno","cubic")]
+expected=[(f"{first}{pair}-{arm}", "cubic") for pair in range(1,4) for first in ("primary","secondary") for arm in ("before","amended")]
 for arm,cc in expected:
     experiment=cc+"-netstack"
     name=arm+"/measured/"+experiment
@@ -140,10 +147,24 @@ for arm,cc in expected:
         d["exit"]=int((folder/"exit.txt").read_text().strip())
         for p in ("qdisc-before.txt","qdisc-after.txt","interface-features.txt"):
             (public/(cc+"-"+p)).write_bytes((folder/"results"/p).read_bytes())
+        ordered = sorted(d["wire"], key=lambda stack: d["wire"][stack]["first_original_seconds"])
+        first_data = [d["wire"][stack]["first_original_seconds"] for stack in ordered]
+        d["first_data_order"] = ordered
+        d["first_data_gap_s"] = first_data[1] - first_data[0]
+        want = "netstack" if arm.startswith("primary") else "linux"
+        d["order_verified"] = ordered[0] == want
+        qdisc = {}
+        for phase in ("before","after"):
+            content = (folder / "results" / f"qdisc-{phase}.txt").read_text()
+            for dev in ("wan.0", "wan.1"):
+                chunk = content.split(dev + "\n", 1)[1].split("\nwan.",1)[0]
+                assert "limit 100 delay 50ms rate 20Mbit" in chunk
+                qdisc[phase,dev] = int(re.search(r"\(dropped (\d+),", chunk)[1])
+        d["qdisc_drops"] = {dev:qdisc["after",dev]-qdisc["before",dev] for dev in ("wan.0","wan.1")}
         verdict["passed"][name]=d
     except (AssertionError,KeyError,ValueError,IndexError,OSError,subprocess.SubprocessError) as exc:
         verdict["failures"][name]={"reason":repr(exc),"diagnostics":diagnostics(folder)}
 verdict["driver"]=read_json(root/"completion.json") if (root/"completion.json").exists() else None
-verdict["status"]="pass" if len(verdict["passed"])==len(expected) and verdict["driver"] and verdict["driver"]["status"]==0 else "incomplete"
+verdict["status"]="pass" if len(verdict["passed"])==len(expected) and verdict["driver"] and verdict["driver"]["status"]==0 and all(t["order_verified"] for t in verdict["passed"].values()) else "incomplete"
 (destination/"verdict.json").write_text(json.dumps(verdict,indent=2)+"\n")
 if verdict["status"]!="pass":raise SystemExit(1)

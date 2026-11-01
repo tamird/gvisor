@@ -856,6 +856,9 @@ run_flow() {
       return 1
     }
     record_flow_phase both-proxies-ready
+    # The research pair keeps both taps fixed and orders only the application
+    # starts. Waiting before the shared listener barrier cannot order them.
+    if [[ -n "${TCP_FIRST_FLOW:-}" && "\$flow" != "${TCP_FIRST_FLOW:-}" ]]; then sleep 0.5; fi
   fi
 
   # Show traffic information for the original uninstrumented native mode.

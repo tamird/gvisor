@@ -1,14 +1,14 @@
-name: Measure TCP repair accounting against a competing Linux sender
+name: Measure queued TCP write packetization against a competing Linux sender
 on:
   push:
-    branches: [qualification/tcp-shared-accepted-repair]
+    branches: [qualification/tcp-wire-tail-wan]
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-shared-accepted-repair'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-wire-tail-wan'
     runs-on: ubuntu-24.04
-    timeout-minutes: 70
+    timeout-minutes: 65
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -19,19 +19,10 @@ jobs:
       - name: Reconcile expected trials, receiver intervals and socket samples
         if: always()
         run: python3 test/benchmarks/tcp/current-shared-report.py
-      - name: Match each observed packet and recovery interval across the WAN
-        if: always()
-        run: python3 test/benchmarks/tcp/reorder_episodes.py "$RUNNER_TEMP/tcp-public" "$RUNNER_TEMP/tcp-public/episodes.json"
-      - name: Keep original exits, captures and paired decision criteria
-        if: always()
-        run: |
-          mkdir -p "$RUNNER_TEMP/tcp-public"
-          cp test/benchmarks/tcp/competition-protocol.md "$RUNNER_TEMP/tcp-public/"
-          python3 test/benchmarks/tcp/competition-summary.py
       - name: Publish allowlisted evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: tcp-shared-accepted-repair
+          name: tcp-wire-tail-wan
           path: ${{ runner.temp }}/tcp-public/
           if-no-files-found: error

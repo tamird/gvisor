@@ -54,5 +54,23 @@ def capture(d, public, name):
              "sender_acks":len(tx_ack),"receiver_acks":len(rx_ack),
              "sender_sack_acks":sum(bool(r[7]) for r in tx_ack),"receiver_sack_acks":sum(bool(r[7]) for r in rx_ack)}
         assert any(r[6] & 2 for r in tx if r[1:3]==(flow,port)) and any(r[6]&2 for r in rx if r[1:3]==(flow,port))
+        syn = next(r for r in tx if r[1:3] == (flow, port) and r[6] & 2)
+        origin = (syn[3] + 1) % 2**32
+        high = 0
+        original = Counter()
+        for packet in tx_data:
+            offset = (packet[3] - origin) % 2**32
+            size = packet[5]
+            assert offset <= high and (offset == high or offset + size <= high)
+            if offset == high:
+                original[size] += 1
+                high += size
+        mss = original.most_common(1)[0][0]
+        assert mss == (1420 if stack == "netstack" else 1448) and max(original) == mss
+        out.update(first_original_seconds=tx_data[0][0], original_bytes=high,
+                   original_packets=sum(original.values()), wire_mss=mss, original_sizes=dict(original),
+                   less_than_mss=sum(count for size, count in original.items() if size < mss),
+                   tail_108=original[108], missing_data_transmissions=len(tx_data) - len(rx_data))
+        assert out["missing_data_transmissions"] >= 0
         verdict[stack]=out
     return verdict

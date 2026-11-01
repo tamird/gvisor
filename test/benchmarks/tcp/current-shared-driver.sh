@@ -11,12 +11,9 @@ finish() {
 }
 trap finish EXIT
 [[ "$(git rev-parse HEAD)" == "$GITHUB_SHA" ]]
-before=6241e4df320ecaff3131e092fbc827aaa26a2423
-amended=b0d2148f41d2d35577b5fe759192f71947cc87fd
-base=bc87c0ee4bef70580104e832095bc89a93029440
-git fetch --quiet --no-tags --depth=2 https://github.com/tamird/gvisor.git "$before"
-[[ "$(git rev-parse HEAD^)" == "$amended" ]]
-[[ "$(git rev-parse "$before^")" == "$base" && "$(git rev-parse "$amended^")" == "$base" ]]
+before=392e96e68067ec5215f08b15b1fbf764363cd3f4
+amended=dd04639096e969c890527083548ccbb13125e63a
+[[ "$(git rev-parse HEAD^)" == "$amended" && "$(git rev-parse "$amended^")" == "$before" ]]
 git diff --exit-code "$before" "$amended" -- test
 git diff --exit-code "$amended" -- pkg runsc tools .bazelrc MODULE.bazel
 printf '%s\n' "$before" "$amended" "$GITHUB_SHA" > "$out/production.txt"
@@ -28,7 +25,7 @@ phase=build
 mkdir -p "$RUNNER_TEMP/tcp-public"
 printf '%s\n' "$before" "$amended" "$GITHUB_SHA" > "$RUNNER_TEMP/tcp-public/source-heads"
 mapfile -t sources < <(git diff --name-only "$before" "$amended")
-expected=(pkg/tcpip/transport/tcp/{rack.go,rack_test.go,sack_scoreboard.go,segment.go,snd.go})
+expected=(pkg/tcpip/transport/tcp/snd.go)
 [[ "${sources[*]}" == "${expected[*]}" ]]
 for variant in before amended; do
   sourcesha=$before
@@ -56,7 +53,7 @@ run_pair() {
   shift 7
   mkdir -p "$dir"
   local ec=0
-  sudo -n timeout --signal=INT --kill-after=15s "${limit}s" "$RUNNER_TEMP/start-tcp-trial" --sender-observation "$mode" "$flag" --no-user-ns --congestion-control "$cc" --second-client "$other" --second-congestion-control "$cc" --second-start-delay 0 --latency-probe --output-dir "$dir/results" --ideal --mtu 1500 --latency 100 --rate 20 --queue-packets 100 --duration "$duration" --num-client-threads 1 --sack --disable-linux-gso --disable-linux-gro "$@" > "$dir/stdout" 2> "$dir/stderr" || ec=$?
+  sudo -n env TCP_FIRST_FLOW="$first" timeout --signal=INT --kill-after=15s "${limit}s" "$RUNNER_TEMP/start-tcp-trial" --sender-observation "$mode" "$flag" --no-user-ns --congestion-control "$cc" --second-client "$other" --second-congestion-control "$cc" --second-start-delay 0 --latency-probe --output-dir "$dir/results" --ideal --mtu 1500 --latency 100 --rate 20 --queue-packets 100 --duration "$duration" --num-client-threads 1 --sack --disable-linux-gso --disable-linux-gro "$@" > "$dir/stdout" 2> "$dir/stderr" || ec=$?
   sudo -n chown -hR "$(id -u):$(id -g)" "$dir"
   echo "$ec" > "$dir/exit.txt"
   return "$ec"
@@ -64,25 +61,19 @@ run_pair() {
 phase=trials
 status=0
 python3 - "$RUNNER_TEMP/tcp-public/schedule.txt" <<'PYTHON'
-import random
 import sys
 from pathlib import Path
-seed = 16738
-rng = random.Random(seed)
-ccs = ["reno", "cubic"]
-rng.shuffle(ccs)
+
 rows = []
-for pair in ("a", "b"):
-    order = ccs if pair == "a" else list(reversed(ccs))
-    for position in range(2):
-        for cc in order:
-            offset = (cc == "cubic") ^ (pair == "b")
-            variant = ("before", "amended")[(position + offset) % 2]
-            rows.append(f"{pair}-{variant} {cc}")
-assert len(set(rows)) == 8
+for i in range(3):
+    for first in (("primary", "secondary") if i % 2 == 0 else ("secondary", "primary")):
+        variants = ("before", "amended") if (i + (first == "secondary")) % 2 == 0 else ("amended", "before")
+        for variant in variants:
+            rows.append(f"{first}{i + 1}-{variant} cubic {first}")
+assert len(set(rows)) == 12
 Path(sys.argv[1]).write_text("\n".join(rows) + "\n")
 PYTHON
-while read -r arm cc; do
+while read -r arm cc first; do
   variant=${arm#*-}
   dir="$out/$arm/measured/$cc-netstack"
   mkdir -p "$dir"
