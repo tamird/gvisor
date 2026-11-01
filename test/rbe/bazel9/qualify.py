@@ -55,7 +55,7 @@ def phase(name, args, expect_error=None, seconds=2400, cwd=None):
     try:
         with log.open("w") as stream:
             result = subprocess.run(["docker", "exec", *location, "gnu", str(T / ("bazel-" + version)),
-                                     "--bazelrc=" + str(T / "bb.rc"), cmd, "--color=no", "--curses=no", "--invocation_id=" + uid,
+                                     *(["--ignore_all_rc_files"] if cwd else ["--bazelrc=" + str(T / "bb.rc")]), cmd, "--color=no", "--curses=no", "--invocation_id=" + uid,
                                      *rest], stdout=stream, stderr=subprocess.STDOUT, timeout=seconds)
         row["exit"] = result.returncode
     except subprocess.TimeoutExpired:
@@ -158,12 +158,19 @@ def dirwatch():
 
 OUT.mkdir(exist_ok=True)
 persist()
-report["original"] = "https://github.com/tamird/gvisor/actions/runs/41327424761/artifacts/13091404793"
+report["originals"] = ["https://github.com/tamird/gvisor/actions/runs/41327424761/artifacts/13093756324", "https://github.com/tamird/gvisor/actions/runs/41328055309/artifacts/13093552026"]
 try:
-    checkout(PRODUCT)
     version = "9.3.1"
+    if ARCH == "amd64":
+        checkout(STOCK)
+        phase("stock-coral-control", ["query", "@crosstool//:toolchains"], r"(cc_toolchain|cc_common|CcToolchainConfigInfo).*(not defined|removed|undefined|no longer a predeclared)")
+    checkout(PRODUCT)
+    if ARCH == "amd64":
+        independent("dirwatch", dirwatch)
     assert Path(".bazelversion").read_text().strip() == version
-    phase("release-and-test", ["build", *options(), RELEASE, HOSTARCH], seconds=3600)
+    phase("release-and-test", ["build", *options(), "--strategy=GoStaticAnalysis=local",
+                              "--strategy=GoStandardLibraryAnalysis=local", "--local_resources=cpu=2", "--noremote_upload_local_results",
+                              RELEASE, HOSTARCH], seconds=6600)
     if report["phases"]["release-and-test"]["ok"]:
         independent("release-artifacts", native_files)
     report["complete"] = bool(report.get("outputs")) and all(row["ok"] for row in report["phases"].values())

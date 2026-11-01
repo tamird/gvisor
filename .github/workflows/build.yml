@@ -1,7 +1,7 @@
-name: Recover the original ARM64 Bazel 9 release and native smoke
+name: Finish the Bazel 9 release and smoke on both Linux architectures
 on:
   push:
-    branches: [qualification/bazel-9-3-1-arm-release]
+    branches: [qualification/bazel-9-3-1-release-recovery]
 permissions:
   contents: read
 jobs:
@@ -9,9 +9,9 @@ jobs:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     strategy:
       fail-fast: false
-      matrix: {arch: [arm64]}
+      matrix: {arch: [amd64, arm64]}
     runs-on: ubuntu-24.04
-    timeout-minutes: 120
+    timeout-minutes: 135
     env:
       ARCH: ${{ matrix.arch }}
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
@@ -25,7 +25,7 @@ jobs:
           set -euo pipefail
           d="$RUNNER_TEMP/bazel9"
           mkdir -p "$d/records" "$d/platform"
-          cp test/rbe/bazel9/{qualify.py,lint_sources.bzl} "$d"
+          cp test/rbe/bazel9/{qualify.py,lint_sources.bzl,original_failure.py} "$d"
           printf '%s\n' '{"complete":false,"phase":"bootstrap"}' > "$d/records/verdict.json"
           for ver in 8.8.1 9.3.1; do
             curl --retry 3 -fsSL "https://releases.bazel.build/$ver/release/bazel-$ver-linux-x86_64" -o "$d/bazel-$ver"
@@ -44,32 +44,13 @@ jobs:
           docker pull --platform=linux/amd64 "$GNU"
           docker run --init -d --name gnu --entrypoint /bin/bash --user root -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e "GIT_CONFIG_VALUE_0=$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
           for ver in 8.8.1 9.3.1; do [[ "$(docker exec gnu "$d/bazel-$ver" --version)" == "bazel $ver" ]]; done
+      - name: Recover the original analyzer RPC failure
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 "$RUNNER_TEMP/bazel9/original_failure.py"
       - name: Build the release and hostarch test with the pinned tools
+        if: ${{ !cancelled() }}
         run: python3 "$RUNNER_TEMP/bazel9/qualify.py"
-      - name: Isolate the previous client transition using only bazel info
-        if: always()
-        run: |
-          set -euo pipefail
-          d="$RUNNER_TEMP/bazel9"
-          mkdir -p "$d/client-control"
-          touch "$d/client-control/MODULE.bazel"
-          docker run -d --name bare --entrypoint /bin/bash --user root -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$d/client-control" "$GNU" -c 'sleep infinity'
-          for container in bare gnu; do
-            rc=0
-            for version in 8.8.1 9.3.1; do
-              log="$d/client-$container-$version.log"
-              docker exec -w "$d/client-control" "$container" "$d/bazel-$version" --ignore_all_rc_files info release >"$log" 2>&1 || rc=$?
-              grep -Eq "^release $version$|^FATAL: Attempted to kill stale server process" "$log"
-              echo "$container $version exit=$rc" >> "$d/records/client-transition.txt"
-              grep -E "^(release |FATAL: Attempted to kill stale server process)" "$log" >> "$d/records/client-transition.txt"
-            done
-            if [[ "$container" == bare ]]; then
-              [[ $rc -eq 36 ]]
-              grep -q "using SIGKILL, but it did not die in a timely fashion" "$log"
-            else
-              [[ $rc -eq 0 ]]
-            fi
-          done
       - name: Check receipt boundary
         id: privacy
         if: always()
@@ -80,8 +61,10 @@ jobs:
           import os
           from pathlib import Path
           key = os.environ["BB_KEY"].encode()
-          report = (Path(os.environ["RUNNER_TEMP"]) / "bazel9/records/verdict.json").read_bytes()
-          assert key and key not in report and b'x-buildbuddy-api-key' not in report.lower()
+          for file in (Path(os.environ["RUNNER_TEMP"]) / "bazel9/records").iterdir():
+              assert file.is_file() and file.name in {"verdict.json", "original-rpc.json"}
+              report = file.read_bytes()
+              assert key and key not in report and b'x-buildbuddy-api-key' not in report.lower()
           PY
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
@@ -101,6 +84,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - {arch: amd64, runner: ubuntu-24.04, machine: x86_64}
           - {arch: arm64, runner: ubuntu-24.04-arm, machine: aarch64}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 10
