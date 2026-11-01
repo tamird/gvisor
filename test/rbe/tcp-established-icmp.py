@@ -28,6 +28,6 @@ if __name__=="__main__":
     root=Path(sys.argv[1])
     rows={arm:observe(root/arm) for arm in ["native","netstack"]}
     ok=all(r["verified"] for r in rows.values()) and len({r.get("fixture_sha256") for r in rows.values()})==1
-    (root/"verdict.json").write_text(json.dumps({"verified":ok,"source":os.environ["STOCK"],"arms":rows},indent=2)+"\n")
+    (root/"verdict.json").write_text(json.dumps({"verified":ok,"source":os.environ["STOCK"],"network":"IPv6","arms":rows},indent=2)+"\n")
     if len(sys.argv)==2:
         raise SystemExit(not ok)

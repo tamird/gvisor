@@ -1,4 +1,4 @@
-name: Distinguish TCP socket errors from queued ICMP messages
+name: Compare established IPv6 TCP socket errors and its error queue
 on:
   push:
     branches: [qualification/tcp-established-icmp-recvmsg]
@@ -70,6 +70,6 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: established-icmp-recvmsg
+        name: established-icmpv6-recvmsg
         path: ${{ runner.temp }}/records/verdict.json
         if-no-files-found: error

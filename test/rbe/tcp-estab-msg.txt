@@ -4,14 +4,20 @@ func TestEstablishedICMPPoll(t *testing.T) {
 		for _, msgFirst := range []bool{false, true} {
 			t.Run(fmt.Sprintf("enabled_%d_msgfirst_%t", enabled, msgFirst), func(t *testing.T) {
 				dut := testbench.NewDUT(t)
-				listener, port := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1)
+				listener, port := dut.CreateBoundSocket(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, dut.Net.RemoteIPv6)
+				dut.Listen(t, listener, 1)
 				defer dut.Close(t, listener)
-				conn := dut.Net.NewTCPIPv4(t, testbench.TCP{DstPort: &port}, testbench.TCP{SrcPort: &port})
+				conn := dut.Net.NewTCPIPv6(t, testbench.TCP{DstPort: &port}, testbench.TCP{SrcPort: &port})
 				defer conn.Close(t)
-				conn.Connect(t)
+				sendTCP := func(flags header.TCPFlags) {
+					conn.SendFrame(t, conn.CreateFrame(t, testbench.Layers{&testbench.TCP{Flags: testbench.TCPFlags(flags)}}))
+				}
+				sendTCP(header.TCPFlagSyn)
+				if _, err := conn.ExpectData(t, &testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn|header.TCPFlagAck)}, nil, time.Second); err != nil { t.Fatalf("missing IPv6 SYN-ACK: %v", err) }
+				sendTCP(header.TCPFlagAck)
 				fd, _ := dut.Accept(t, listener)
 				defer dut.Close(t, fd)
-				dut.SetSockOptInt(t, fd, unix.SOL_IP, unix.IP_RECVERR, enabled)
+				dut.SetSockOptInt(t, fd, unix.IPPROTO_IPV6, unix.IPV6_RECVERR, enabled)
 				pollerr := func(wait time.Duration) int16 {
 					fds := dut.Poll(t, []unix.PollFd{{Fd: fd, Events: unix.POLLERR}}, wait)
 					if len(fds) == 0 { return 0 }
@@ -21,7 +27,17 @@ func TestEstablishedICMPPoll(t *testing.T) {
 				dut.Send(t, fd, []byte("quote me"), 0)
 				frame, err := conn.ExpectData(t, &testbench.TCP{}, &testbench.Payload{Bytes: []byte("quote me")}, time.Second)
 				if err != nil { t.Fatalf("TCP payload to quote: %v", err) }
-				sendICMPError(t, &conn, frame[len(frame)-2].(*testbench.TCP))
+				tcp := frame[len(frame)-2].(*testbench.TCP)
+				quotedLayers := testbench.Layers{tcp.Prev(), tcp}
+				quote, err := quotedLayers.ToBytes()
+				if err != nil { t.Fatalf("marshal quoted IPv6/TCP: %v", err) }
+				msgLayers := conn.CreateFrame(t, nil)
+				msgLayers[len(msgLayers)-1] = &testbench.ICMPv6{
+					Type: testbench.ICMPv6Type(header.ICMPv6DstUnreachable),
+					Code: testbench.ICMPv6Code(header.ICMPv6AddressUnreachable),
+					Payload: quote,
+				}
+				conn.SendFrameStateless(t, msgLayers)
 				signals := pollerr(time.Second)
 				var soError int32
 				var afterFirst int16
@@ -39,9 +55,9 @@ func TestEstablishedICMPPoll(t *testing.T) {
 					if err!=nil || len(cms)!=1 {t.Fatalf("recvmsg ancillary data: %d bytes, messages=%v, err=%v", len(msg.GetControl()),cms,err)}
 					c:=cms[0]
 					level,typ=c.Header.Level,c.Header.Type
-					if level!=unix.IPPROTO_IP || typ!=unix.IP_RECVERR || len(c.Data)<16 {t.Fatalf("unexpected control level=%d type=%d len=%d",level,typ,len(c.Data))}
+					if level!=unix.IPPROTO_IPV6 || typ!=unix.IPV6_RECVERR || len(c.Data)<16 {t.Fatalf("unexpected control level=%d type=%d len=%d",level,typ,len(c.Data))}
 					ee=binary.NativeEndian.Uint32(c.Data[:4]);origin,icmpType,icmpCode=c.Data[4],c.Data[5],c.Data[6]
-					if ee!=uint32(unix.EHOSTUNREACH) || origin!=2 || icmpType!=3 || icmpCode!=1 || msg.GetMsgFlags()&unix.MSG_ERRQUEUE==0 {t.Fatalf("wrong extended ICMP error: flags %#x errno/origin/type/code=%d/%d/%d/%d", msg.GetMsgFlags(),ee,origin,icmpType,icmpCode)}
+					if ee!=uint32(unix.EHOSTUNREACH) || origin!=3 || icmpType!=1 || icmpCode!=3 || msg.GetMsgFlags()&unix.MSG_ERRQUEUE==0 {t.Fatalf("wrong extended ICMP error: flags %#x errno/origin/type/code=%d/%d/%d/%d", msg.GetMsgFlags(),ee,origin,icmpType,icmpCode)}
 				}
 				if msgFirst {
 					afterFirst=pollerr(0)
@@ -50,7 +66,7 @@ func TestEstablishedICMPPoll(t *testing.T) {
 				empty:=dut.RecvErrMessage(t,fd)
 				if empty.GetRet()!=-1 || empty.GetErrno_()!=int32(unix.EAGAIN) {t.Fatalf("repeat recvmsg: n=%d errno=%d",empty.GetRet(),empty.GetErrno_())}
 				t.Logf("ESTAB_MSG opt=%d first=%t poll=%d so=%d afterfirst=%d n=%d errno=%d flags=%d cbytes=%d level=%d type=%d ee=%d origin=%d itype=%d code=%d again=%d final=%d",enabled,msgFirst,signals,soError,afterFirst,msg.GetRet(),msg.GetErrno_(),msg.GetMsgFlags(),len(msg.GetControl()),level,typ,ee,origin,icmpType,icmpCode,empty.GetErrno_(),pollerr(0))
-				conn.Send(t,testbench.TCP{Flags:testbench.TCPFlags(header.TCPFlagAck)})
+				sendTCP(header.TCPFlagAck)
 				dut.Send(t,fd,[]byte("still connected"),0)
 				if _,err:=conn.ExpectData(t,&testbench.TCP{},&testbench.Payload{Bytes:[]byte("still connected")},2*time.Second);err!=nil{t.Fatalf("connection did not carry fresh application data: %v",err)}
 				t.Logf("ESTAB_MSG_LIVE opt=%d first=%t",enabled,msgFirst)
