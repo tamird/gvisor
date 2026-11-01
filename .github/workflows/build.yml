@@ -28,7 +28,7 @@ jobs:
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
         git merge-base --is-ancestor "$CANDIDATE" HEAD
         git merge-base --is-ancestor "$STOCK" HEAD
-        [[ "$(git rev-parse "$CANDIDATE^")" == "$PRODUCT" && "$(git rev-parse "$PRODUCT^")" == "$BASE" && "$(git rev-parse "$STOCK^")" == "$BASE" ]]
+        [[ "$(git rev-parse "$CANDIDATE^")" == "$PRODUCT" && "$PRODUCT" == "$BASE" && "$(git rev-parse "$STOCK^")" == "$BASE" ]]
         git diff --exit-code "$CANDIDATE" HEAD -- pkg test/benchmarks
         for f in window_qualification.sh window_report.py qualification_report.py unit_matrix.py identify.py verify.py; do
           cp "test/rbe/$f" "$RUNNER_TEMP/$f"
