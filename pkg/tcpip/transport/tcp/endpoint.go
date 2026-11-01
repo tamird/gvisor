@@ -75,17 +75,6 @@ const (
 	SegOverheadFactor = 2
 )
 
-type connDirectionState uint32
-
-// Connection direction states used for directionState checks in endpoint struct
-// to detect half-closed connection and deliver POLLRDHUP
-const (
-	connDirectionStateOpen      connDirectionState = 0
-	connDirectionStateRcvClosed connDirectionState = 1
-	connDirectionStateSndClosed connDirectionState = 2
-	connDirectionStateAll       connDirectionState = connDirectionStateOpen | connDirectionStateRcvClosed | connDirectionStateSndClosed
-)
-
 // connected returns true when s is one of the states representing an
 // endpoint connected to a peer.
 func (s EndpointState) connected() bool {
@@ -415,11 +404,6 @@ type Endpoint struct {
 	// methods.
 	state atomicbitops.Uint32 `state:".(EndpointState)"`
 
-	// connectionDirectionState records whether sending and receiving are closed.
-	//
-	// +checkatomic
-	connectionDirectionState atomicbitops.Uint32
-
 	// origEndpointState is only used during a restore phase to save the
 	// endpoint state at restore time as the socket is moved to it's correct
 	// state.
@@ -460,8 +444,8 @@ type Endpoint struct {
 	// TCPEndpointStateInner.RecentTS.
 	recentTSTime tcpip.MonotonicTime
 
-	// shutdownFlags represent the current shutdown state of the endpoint.
-	shutdownFlags tcpip.ShutdownFlags
+	// shutdownFlags records local shutdown requests. Writers hold mu.
+	shutdownFlags atomicbitops.Int64 `state:".(tcpip.ShutdownFlags)"`
 
 	// tcpRecovery is the loss recovery algorithm used by TCP.
 	tcpRecovery tcpip.TCPRecovery
@@ -937,7 +921,8 @@ func newEndpoint(s *stack.Stack, protocol *protocol, netProto tcpip.NetworkProto
 func (e *Endpoint) Readiness(mask waiter.EventMask) waiter.EventMask {
 	result := waiter.EventMask(0)
 
-	switch e.EndpointState() {
+	state := e.EndpointState()
+	switch state {
 	case StateInitial, StateBound:
 		// This prevents blocking of new sockets which are not
 		// connected when SO_LINGER is set.
@@ -960,36 +945,36 @@ func (e *Endpoint) Readiness(mask waiter.EventMask) waiter.EventMask {
 			e.acceptMu.Unlock()
 		}
 	}
-	if e.EndpointState().connected() {
-		// Determine if the endpoint is writable if requested.
-		if (mask & waiter.WritableEvents) != 0 {
+	if state.connected() {
+		if mask&waiter.WritableEvents != 0 {
 			e.sndQueueInfo.sndQueueMu.Lock()
-			sndBufSize := e.getSendBufferSize()
-			if e.sndQueueInfo.SndClosed || e.sndQueueInfo.SndBufUsed < sndBufSize {
+			if e.sndQueueInfo.SndClosed || e.sndQueueInfo.SndBufUsed < e.getSendBufferSize() {
 				result |= waiter.WritableEvents
-			}
-			if e.sndQueueInfo.SndClosed {
-				e.updateConnDirectionState(connDirectionStateSndClosed)
 			}
 			e.sndQueueInfo.sndQueueMu.Unlock()
 		}
 
-		// Determine if the endpoint is readable if requested.
-		if (mask & waiter.ReadableEvents) != 0 {
+		// Closing the send side queues FIN and takes the connection out of
+		// ESTABLISHED or CLOSE-WAIT. From then on, closing the receive side
+		// also reports POLLHUP, even to callers that requested no events.
+		sendClosed := state != StateEstablished && state != StateCloseWait
+		// A peer FIN leaves ESTABLISHED before closing the receive queue.
+		// Without a local SHUT_RD, an established socket cannot report
+		// read hangup. A shutdown request alone does not prove closure.
+		if sendClosed || mask&waiter.ReadableEvents != 0 || (mask&waiter.EventRdHUp != 0 &&
+			(state != StateEstablished || tcpip.ShutdownFlags(e.shutdownFlags.Load())&tcpip.ShutdownRead != 0)) {
 			e.rcvQueueMu.Lock()
-			if e.RcvBufUsed > 0 || e.RcvClosed {
+			if mask&waiter.ReadableEvents != 0 && (e.RcvBufUsed > 0 || e.RcvClosed) {
 				result |= waiter.ReadableEvents
 			}
 			if e.RcvClosed {
-				e.updateConnDirectionState(connDirectionStateRcvClosed)
+				result |= waiter.EventRdHUp
+				if sendClosed {
+					result |= waiter.EventHUp
+				}
 			}
 			e.rcvQueueMu.Unlock()
 		}
-	}
-
-	// Determine whether endpoint is half-closed with rcv shutdown
-	if e.connDirectionState() == connDirectionStateRcvClosed {
-		result |= waiter.EventRdHUp
 	}
 
 	return result
@@ -2637,28 +2622,18 @@ func (e *Endpoint) Shutdown(flags tcpip.ShutdownFlags) tcpip.Error {
 // +checklocks:e.mu
 // +checklocksexclude:e.snd.rtt.rttMutex
 func (e *Endpoint) shutdownLocked(flags tcpip.ShutdownFlags) tcpip.Error {
-	e.shutdownFlags |= flags
+	flags |= tcpip.ShutdownFlags(e.shutdownFlags.Load())
+	e.shutdownFlags.Store(int64(flags))
 	switch {
 	case e.EndpointState().connected():
 		// Close for read.
-		if e.shutdownFlags&tcpip.ShutdownRead != 0 {
-			// Mark read side as closed.
-			e.rcvQueueMu.Lock()
-			e.RcvClosed = true
-			e.rcvQueueMu.Unlock()
-			// Wake up any readers that maybe waiting for the stream to become
-			// readable.
-			events := waiter.ReadableEvents
-			if e.shutdownFlags&tcpip.ShutdownWrite == 0 {
-				// If ShutdownWrite is not set, write end won't close and
-				// we end up with a half-closed connection
-				events |= waiter.EventRdHUp
-			}
-			e.waiterQueue.Notify(events)
+		if flags&tcpip.ShutdownRead != 0 {
+			e.closeReceive()
+			e.notifyShutdown(waiter.ReadableEvents | waiter.EventRdHUp)
 		}
 
 		// Close for write.
-		if e.shutdownFlags&tcpip.ShutdownWrite != 0 {
+		if flags&tcpip.ShutdownWrite != 0 {
 			e.sndQueueInfo.sndQueueMu.Lock()
 			if e.sndQueueInfo.SndClosed {
 				// Already closed.
@@ -2674,7 +2649,6 @@ func (e *Endpoint) shutdownLocked(flags tcpip.ShutdownFlags) tcpip.Error {
 			// not yet transmitted when the write queue is blocked.
 			s := newOutgoingSegment(e.TransportEndpointInfo.ID, e.stack.Clock(), buffer.Buffer{}, e.ops.GetMark())
 			e.snd.writeList.PushBack(s)
-			e.updateConnDirectionState(connDirectionStateSndClosed)
 			switch e.EndpointState() {
 			case StateCloseWait:
 				e.setEndpointState(StateLastAck)
@@ -2693,12 +2667,12 @@ func (e *Endpoint) shutdownLocked(flags tcpip.ShutdownFlags) tcpip.Error {
 
 			// Wake up any writers that maybe waiting for the stream to become
 			// writable.
-			e.waiterQueue.Notify(waiter.WritableEvents)
+			e.notifyShutdown(waiter.WritableEvents)
 		}
 
 		return nil
 	case e.EndpointState() == StateListen:
-		if e.shutdownFlags&tcpip.ShutdownRead != 0 {
+		if flags&tcpip.ShutdownRead != 0 {
 			// Reset all connections from the accept queue and keep the
 			// worker running so that it can continue handling incoming
 			// segments by replying with RST.
@@ -2755,8 +2729,7 @@ func (e *Endpoint) listen(backlog int) tcpip.Error {
 			e.acceptQueue.pendingEndpoints = make(map[*Endpoint]struct{})
 		}
 
-		e.shutdownFlags = 0
-		e.updateConnDirectionState(connDirectionStateOpen)
+		e.shutdownFlags.Store(0)
 		e.rcvQueueMu.Lock()
 		e.RcvClosed = false
 		e.rcvQueueMu.Unlock()
@@ -3125,21 +3098,31 @@ func (e *Endpoint) updateSndBufferUsage(v int) {
 	}
 }
 
-// readyToRead is called when a new segment is ready to be read, or when the
-// connection is closed for receiving (in which case s will be nil).
+// readyToRead queues a segment for the application.
 //
 // +checklocks:e.mu
 func (e *Endpoint) readyToRead(s *segment) {
 	e.rcvQueueMu.Lock()
-	if s != nil {
-		e.RcvBufUsed += s.payloadSize()
-		s.IncRef()
-		e.rcvQueue.PushBack(s)
-	} else {
-		e.RcvClosed = true
-	}
+	e.RcvBufUsed += s.payloadSize()
+	s.IncRef()
+	e.rcvQueue.PushBack(s)
 	e.rcvQueueMu.Unlock()
 	e.waiterQueue.Notify(waiter.ReadableEvents)
+}
+
+// closeReceive marks the receive queue closed.
+//
+// +checklocks:e.mu
+func (e *Endpoint) closeReceive() {
+	e.rcvQueueMu.Lock()
+	defer e.rcvQueueMu.Unlock()
+	e.RcvClosed = true
+}
+
+// notifyShutdown wakes waiters for the newly closed direction. When the other
+// direction is also closed, POLLHUP wakes even waiters with no requested events.
+func (e *Endpoint) notifyShutdown(events waiter.EventMask) {
+	e.waiterQueue.Notify(events | (e.Readiness(waiter.EventHUp) & waiter.EventHUp))
 }
 
 // receiveBufferAvailableLocked calculates how many bytes are still available
@@ -3194,17 +3177,6 @@ func (e *Endpoint) maxReceiveBufferSize() int {
 		return MaxBufferSize
 	}
 	return rs.Max
-}
-
-// connDirectionState returns the send and receive close state of the endpoint.
-func (e *Endpoint) connDirectionState() connDirectionState {
-	return connDirectionState(e.connectionDirectionState.Load())
-}
-
-// updateConnDirectionState adds closed directions to the endpoint's state.
-// Passing connDirectionStateOpen leaves the state unchanged.
-func (e *Endpoint) updateConnDirectionState(state connDirectionState) {
-	atomicbitops.OrUint32(&e.connectionDirectionState, uint32(state))
 }
 
 // rcvWndScaleForHandshake computes the receive window scale to offer to the

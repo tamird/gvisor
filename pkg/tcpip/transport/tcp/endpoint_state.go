@@ -98,6 +98,16 @@ func (a *acceptQueue) loadEndpoints(_ context.Context, acceptedEndpoints []*Endp
 	}
 }
 
+// saveShutdownFlags is invoked by stateify.
+func (e *Endpoint) saveShutdownFlags() tcpip.ShutdownFlags {
+	return tcpip.ShutdownFlags(e.shutdownFlags.Load())
+}
+
+// loadShutdownFlags is invoked by stateify.
+func (e *Endpoint) loadShutdownFlags(_ context.Context, flags tcpip.ShutdownFlags) {
+	e.shutdownFlags.Store(int64(flags))
+}
+
 // saveState is invoked by stateify.
 func (e *Endpoint) saveState() EndpointState {
 	return e.EndpointState()

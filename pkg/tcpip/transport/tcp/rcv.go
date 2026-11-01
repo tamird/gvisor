@@ -21,6 +21,7 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
+	"gvisor.dev/gvisor/pkg/waiter"
 )
 
 // receiver holds the state necessary to receive TCP segments and turn them
@@ -227,10 +228,6 @@ func (r *receiver) consumeSegment(s *segment, segSeq seqnum.Value, segLen seqnum
 		// Send ACK immediately.
 		r.ep.snd.sendAck()
 
-		// Tell any readers that no more data will come.
-		r.closed = true
-		r.ep.readyToRead(nil)
-
 		// We just received a FIN, our next state depends on whether we sent a
 		// FIN already or not.
 		switch r.ep.EndpointState() {
@@ -247,6 +244,10 @@ func (r *receiver) consumeSegment(s *segment, segSeq seqnum.Value, segLen seqnum
 		case StateFinWait2:
 			r.ep.setEndpointState(StateTimeWait)
 		}
+
+		// Tell any readers that no more data will come.
+		r.closed = true
+		r.ep.closeReceive()
 
 		// Flush out any pending segments, except the very first one if
 		// it happens to be the one we're handling now because the
@@ -265,7 +266,7 @@ func (r *receiver) consumeSegment(s *segment, segSeq seqnum.Value, segLen seqnum
 			r.pendingRcvdSegments[i] = nil
 		}
 		r.pendingRcvdSegments = r.pendingRcvdSegments[:first]
-		r.ep.updateConnDirectionState(connDirectionStateRcvClosed)
+		r.ep.notifyShutdown(waiter.ReadableEvents | waiter.EventRdHUp)
 
 		return true
 	}
