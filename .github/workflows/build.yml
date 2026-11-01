@@ -1,14 +1,14 @@
-name: Run the original GNU plugin Make target with declared shell programs
+name: Build the GNU plugin with declared shell and metadata tools
 on:
   push:
-    branches: [qualification/plugin-declared-programs]
+    branches: [qualification/plugin-shell-closure]
 permissions:
   contents: read
 jobs:
   plugin:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 44
+    timeout-minutes: 49
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: product, fetch-depth: 2, persist-credentials: false}
@@ -53,6 +53,12 @@ jobs:
       - name: Build only the original plugin target and verify its action
         working-directory: product
         run: python3 test/rbe/plugin_programs/qualify.py
+      - name: Read the original action diagnostics and generator use
+        if: always()
+        working-directory: product
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -B test/rbe/plugin_programs/action_log.py
       - name: Check the typed evidence boundary
         id: privacy
         if: always()
@@ -75,6 +81,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
-          name: original-plugin-declared-programs
+          name: plugin-shell-closure
           path: ${{ runner.temp }}/plugin-evidence/*.json
           if-no-files-found: error

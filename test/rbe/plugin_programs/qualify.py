@@ -12,7 +12,10 @@ OUT = TMP / "plugin-evidence"
 TARGET = "@libpluginstack//:libpluginstack"
 OWNER = "@@+_repo_rules+libpluginstack//:libpluginstack"
 NATIVE = "docker://gcr.io/distroless/static-debian13@sha256:d03c145fad326bff275ec4106475ed8310426caf709decd9f8cbc494af59bc18"
-BASE = "7dc8df3c4bb7da1bc04037fe9a2d641cb36cc5a4"
+BASE = "4fd5a2d964498b7afefd0d4ee858d4d362e7ea6a"
+CONFIG = "@@+_repo_rules+libpluginstack//:pmd_config"
+HELPER = "@@+_repo_rules+plugin_dpdk//:pmdinfogen"
+COMPILER_IMAGE = "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"
 OLD = "6fea7f1fe69df20db5f2358d5ecdeefba46ea16303228d402e900c626a08521a/351"
 
 
@@ -56,13 +59,13 @@ def diagnostics(text):
 
 
 def audit(compact):
-    query = """select(.spawn != null) | .spawn | select(.targetLabel == $owner and .mnemonic == "CcMakeMakeRule")
-        | {mnemonic, targetLabel, args:(.args[0:2]), digest, runner, cacheHit, exitCode, status,
+    query = """select(.spawn != null) | .spawn | select(.targetLabel == $owner or .targetLabel == $config or .targetLabel == $helper or (.exitCode != null and .exitCode != 0))
+        | {mnemonic, targetLabel, args:(if .targetLabel == $owner or .targetLabel == $config or .targetLabel == $helper then .args[0:2] else [] end), digest, runner, cacheHit, exitCode, status,
         platform:[.platform.properties[]?|select(.name=="Arch" or .name=="OSFamily" or
                .name=="container-image" or .name=="workload-isolation-type" or .name=="recycle-runner")]}"""
     with subprocess.Popen([str(TMP / "bb"), "print", "--raw", "--compact_execution_log=" + str(compact)],
                           stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) as reader:
-        rows = subprocess.run(["jq", "-c", "--arg", "owner", OWNER, query], stdin=reader.stdout,
+        rows = subprocess.run(["jq", "-c", "--arg", "owner", OWNER, "--arg", "config", CONFIG, "--arg", "helper", HELPER, query], stdin=reader.stdout,
                               stdout=subprocess.PIPE, text=True, check=True)
         reader.stdout.close()
         assert reader.wait() == 0
@@ -73,6 +76,10 @@ def main():
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     r = {"source": head, "base": BASE, "target": TARGET, "old_invocation": "9125942b-1fc2-42df-b235-6dee4e0ae37a",
          "old_action": OLD, "old_launch": "/bin/bash", "old_exit": 1, "worker": NATIVE,
+         "previous_helper_failure": {"invocation": "f9a06f1c-cc5f-4b9c-b518-128f1505231b",
+                                     "action": "28ae53bea672c865eada319c9fb0c64f84085a01d2779651eb8fa3191be9c5de/376",
+                                     "exit": 2, "helper": "gen-config-h.sh"},
+         "expected": {"target": TARGET, "support": [CONFIG, HELPER]},
          "started": now(), "status": "INCOMPLETE"}
     save(r)
     try:
@@ -87,7 +94,7 @@ def main():
         flags = ["--config=x86_64", "--config=plugin-tldk", "-c", "opt", "--host_platform=" + plat,
                  "--extra_execution_platforms=" + plat, "--remote_accept_cached",
                  "--noremote_upload_local_results", "--jobs=400", "--remote_download_outputs=minimal",
-                 "--remote_download_regex=(^|/)libpluginstack[.]a$", "--noremote_local_fallback",
+                 "--remote_download_regex=(^|/)(libpluginstack[.]a|dpdk-pmdinfogen|rte_config[.]h)$", "--noremote_local_fallback",
                  "--spawn_strategy=remote", "--color=no", "--curses=no",
                  "--registry=" + (Path(os.environ["GITHUB_WORKSPACE"]) / "registry").as_uri(),
                  "--registry=https://bcr.bazel.build", "--build_event_json_file=" + str(bep),
@@ -96,11 +103,12 @@ def main():
         with log.open("w") as dst:
             rc = subprocess.run(["timeout", "--signal=INT", "--kill-after=25s", "38m",
                                  *bazel, "build", *flags, TARGET], stdout=dst, stderr=subprocess.STDOUT).returncode
-        r.update(build_exit=rc, build_finished=now(), status="FAIL" if rc else "INCOMPLETE")
+        r.update(build_exit=rc, build_status="FAIL" if rc else "PASS", build_finished=now(), status="FAIL" if rc else "INCOMPLETE")
         save(r)
         r.update(diagnostics(log.read_text(errors="replace")))
         save(r)
-        files = []
+        file_sets = {}
+        roots = []
         for line in bep.open():
             event = json.loads(line)
             if "started" in event:
@@ -110,25 +118,70 @@ def main():
                 r["bazel_finished"] = {k: finished.get(k) for k in ("exitCode", "finishTime")}
             if "targetCompleted" in event["id"] and event["id"]["targetCompleted"]["label"] in (TARGET, OWNER) and "aspect" not in event["id"]["targetCompleted"]:
                 r["target_completed"] = bool(event.get("completed", {}).get("success"))
-            for file in event.get("namedSetOfFiles", {}).get("files", []):
-                if file["name"].endswith("/libpluginstack.a"):
-                    files.append(file)
+                roots = [f["id"] for group in event.get("completed", {}).get("outputGroup", [])
+                         if group["name"] == "default" for f in group.get("fileSets", [])]
+            if "namedSetOfFiles" in event:
+                file_sets[event["id"]["namedSet"]["id"]] = event["namedSetOfFiles"]
         save(r)
         actions = audit(compact)
-        r["make_actions"] = actions
+        r["actions"] = actions
         save(r)
-        assert len(actions) == 1
-        action, = actions
-        props = {item["name"]: item["value"] for item in action["platform"]}
-        assert props["container-image"] == NATIVE and props["Arch"] == "amd64"
-        assert props["recycle-runner"] == "false" and props["workload-isolation-type"] == "oci"
-        assert action["runner"] == "remote" and not action["cacheHit"] and action["args"][0].endswith("plugin_programs/bin/bash")
-        assert action["args"][1].endswith("wrapper_build_script.sh")
-        r["verified_launch"] = True
+        make_actions = [a for a in actions if a["targetLabel"] == OWNER and a["mnemonic"] == "CcMakeMakeRule"]
+        if rc == 0 or make_actions:
+            assert len(make_actions) == 1
+            action, = make_actions
+            props = {item["name"]: item["value"] for item in action["platform"]}
+            assert props["container-image"] == NATIVE and props["Arch"] == "amd64"
+            assert props["recycle-runner"] == "false" and props["workload-isolation-type"] == "oci"
+            assert action["runner"] == "remote" and not action["cacheHit"] and action["args"][0].endswith("plugin_programs/bin/bash")
+            assert action["args"][1].endswith("wrapper_build_script.sh")
+            r["verified_launch"] = True
         if rc == 0:
-            assert not action["exitCode"] and r["target_completed"] and files
+            assert not action["exitCode"] and r["target_completed"] and roots
+            files = []
+            visited = set()
+            while roots:
+                node = roots.pop()
+                if node in visited:
+                    continue
+                visited.add(node)
+                group = file_sets[node]
+                files.extend(f for f in group.get("files", []) if f["name"].rsplit("/", 1)[-1]
+                             in ("libpluginstack.a", "dpdk-pmdinfogen", "rte_config.h"))
+                roots.extend(f["id"] for f in group.get("fileSets", []))
             from urllib.parse import unquote, urlparse
-            archives = {Path(unquote(urlparse(f["uri"]).path)) for f in files}
+            assert all(urlparse(f["uri"]).scheme == "file" for f in files)
+            outputs = {}
+            for file in files:
+                name = file["name"].rsplit("/", 1)[-1]
+                path = Path(unquote(urlparse(file["uri"]).path))
+                outputs.setdefault(name, set()).add(path)
+            assert set(outputs) == {"libpluginstack.a", "dpdk-pmdinfogen", "rte_config.h"}
+            assert all(len(paths) == 1 for paths in outputs.values())
+            binary = next(iter(outputs["dpdk-pmdinfogen"]))
+            binary_data = binary.read_bytes()
+            header = subprocess.check_output(["readelf", "-h", binary], text=True)
+            segments = subprocess.check_output(["readelf", "-l", binary], text=True)
+            dynamic = subprocess.check_output(["readelf", "-d", binary], text=True)
+            assert binary_data.startswith(b"\x7fELF") and "Advanced Micro Devices X86-64" in header
+            assert "INTERP" not in segments and "(NEEDED)" not in dynamic
+            r["helper"] = {"sha256": hashlib.sha256(binary_data).hexdigest(), "bytes": len(binary_data),
+                           "machine": "x86_64", "interpreter": None, "needed": []}
+            config = next(iter(outputs["rte_config.h"])).read_bytes()
+            assert b"#define RTE_ARCH_64" in config and b"#define RTE_ARCH_X86_64" in config
+            r["configuration"] = {"sha256": hashlib.sha256(config).hexdigest(), "bytes": len(config),
+                                  "helper_matches_plugin": True}
+            support = [a for a in actions if a["targetLabel"] in (CONFIG, HELPER)]
+            assert {a["mnemonic"] for a in support if a["targetLabel"] == HELPER} >= {"CppCompile", "CppLink"}
+            assert any(a["targetLabel"] == CONFIG and a["mnemonic"] == "CcMakeMakeRule" for a in support)
+            for a in support:
+                properties = {v["name"]: v["value"] for v in a["platform"]}
+                assert properties["Arch"] == "amd64" and properties["OSFamily"] == "linux"
+                assert properties["container-image"] == (NATIVE if a["targetLabel"] == CONFIG else COMPILER_IMAGE)
+                assert not a["exitCode"] and (a["runner"] == "remote" or a["cacheHit"])
+            r["support_disposition"] = {"fresh_remote": sum(not a["cacheHit"] for a in support),
+                                       "cached": sum(bool(a["cacheHit"]) for a in support)}
+            archives = outputs["libpluginstack.a"]
             assert len(archives) == 1
             path, = archives
             data = path.read_bytes()
@@ -137,7 +190,10 @@ def main():
                                               stderr=subprocess.DEVNULL)
             required = ["plugin_socket", "plugin_epoll_wait", "plugin_get_port_range"]
             assert all(re.search(r"\bT " + name + r"$", symbols, re.M) for name in required)
-            r["archive"] = {"sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data), "defined": required}
+            pmd_symbols = re.findall(r"\b[RD] (\w+_pmd_info)$", symbols, re.M)
+            assert pmd_symbols
+            r["archive"] = {"sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data),
+                            "defined": required, "pmd_info_symbols": sorted(set(pmd_symbols))}
             r["status"] = "PASS"
     except Exception as exc:
         import traceback
