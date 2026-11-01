@@ -613,10 +613,6 @@ TEST_P(TcpSocketTest, ClosedReadBlockingSocket) {
 // Test that the exit of a process that holds the last reference to a socket
 // with SO_LINGER set does not linger.
 TEST_P(TcpSocketTest, NoLingerOnProcessExit) {
-  // hostinet closes the host socket from a sentry thread that is not exiting,
-  // so the host kernel lingers.
-  SKIP_IF(IsRunningWithHostinet());
-
   constexpr int kLingerTimeout = 10;  // Seconds.
   struct linger sl = {
       .l_onoff = 1,
@@ -667,6 +663,58 @@ TEST_P(TcpSocketTest, NoLingerOnProcessExit) {
     ASSERT_THAT(n = RetryEINTR(read)(accepted_.get(), buf.data(), buf.size()),
                 SyscallSucceeds());
   } while (n > 0);
+}
+
+TEST_P(TcpSocketTest, AbortiveLingerOnExit) {
+  constexpr int kLingerTimeout = 10;  // Seconds.
+  struct linger sl = {
+      .l_onoff = 1,
+      .l_linger = 0,
+  };
+  ASSERT_THAT(
+      setsockopt(connected_.get(), SOL_SOCKET, SO_LINGER, &sl, sizeof(sl)),
+      SyscallSucceeds());
+  // Fill the buffers, so that the peer cannot acknowledge the FIN.
+  FillSocketBuffers(connected_.get(), accepted_.get());
+
+  int pipe_fds[2];
+  ASSERT_THAT(pipe(pipe_fds), SyscallSucceeds());
+  FileDescriptor read_fd(pipe_fds[0]);
+  FileDescriptor write_fd(pipe_fds[1]);
+
+  const DisableSave disable_save;  // Timing-related.
+  const pid_t child = fork();
+  if (child == 0) {
+    // Wait until the parent closes its copy of the socket, then exit with the
+    // last reference to it.
+    TEST_PCHECK(close(write_fd.get()) == 0);
+    char c;
+    TEST_PCHECK(RetryEINTR(read)(read_fd.get(), &c, sizeof(c)) == 0);
+    _exit(0);
+  }
+  ASSERT_THAT(child, SyscallSucceeds());
+  read_fd.reset();
+  connected_.reset();
+
+  const absl::Time start = absl::Now();
+  write_fd.reset();
+  int status;
+  ASSERT_THAT(RetryEINTR(waitpid)(child, &status, 0),
+              SyscallSucceedsWithValue(child));
+  EXPECT_LT(absl::Now() - start, absl::Seconds(kLingerTimeout) / 2);
+  EXPECT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0)
+      << "status " << status;
+
+  std::vector<char> buf(1 << 16);
+  for (;;) {
+    struct pollfd pfd = {accepted_.get(), POLLIN, 0};
+    ASSERT_THAT(RetryEINTR(poll)(&pfd, 1, kTimeoutMillis), SyscallSucceedsWithValue(1));
+    const ssize_t n = RetryEINTR(read)(accepted_.get(), buf.data(), buf.size());
+    if (n <= 0) {
+      EXPECT_THAT(n, SyscallFailsWithErrno(ECONNRESET));
+      break;
+    }
+  }
 }
 
 TEST_P(TcpSocketTest, MsgTrunc) {
