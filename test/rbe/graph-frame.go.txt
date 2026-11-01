@@ -39,3 +39,21 @@ func TestFrameObservation(t *testing.T) {
 		t.Logf("FRAME bytes=%v load=%s print=%s decoded=%v", raw[len(raw)-3:], outcome(loadErr), outcome(printErr), got)
 	}
 }
+
+func TestNestedMapHintObservation(t *testing.T) {
+	const entries = 4096
+	inner := make(map[uint16]uint16, entries)
+	for i := range entries {
+		inner[uint16(i)] = uint16(i ^ 0x5a5a)
+	}
+	saved := map[uint8]map[uint16]uint16{7: inner}
+	var buf bytes.Buffer
+	if _, err := saveGraph(t.Context(), &buf, &saved); err != nil {
+		t.Fatal(err)
+	}
+	var got map[uint8]map[uint16]uint16
+	if _, err := Load(t.Context(), &buf, &got); err != nil || !reflect.DeepEqual(got, saved) {
+		t.Fatalf("inner map after Load: entries=%d, err=%v", len(got[7]), err)
+	}
+	t.Logf("restored nested map: %d entries", len(got[7]))
+}

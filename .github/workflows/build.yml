@@ -1,7 +1,7 @@
-name: Check graph object frame boundaries
+name: Preserve map allocation hints across graph frames
 on:
   push:
-    branches: [qualification/graph-object-frame]
+    branches: [qualification/graph-object-frame-map-hint]
 permissions:
   contents: read
 jobs:
@@ -11,8 +11,8 @@ jobs:
     timeout-minutes: 58
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      ORIGINAL: bbbffffceb3a75fff59dabbcfb37f16859de4de2
-      FIXED: 806d287283514e775da65332b4a678504fb14b2d
+      ORIGINAL: 806d287283514e775da65332b4a678504fb14b2d
+      FIXED: b566fb649a4b59739223fd939aac5dbc3c052fb6
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with: {fetch-depth: 5, persist-credentials: false}
@@ -23,6 +23,7 @@ jobs:
         set -euo pipefail
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
         echo '{"verified":false,"reason":"qualification incomplete"}' > "$RUNNER_TEMP/records/verdict.json"
+        git fetch --quiet --depth=1 https://github.com/tamird/gvisor.git "$FIXED"
         cp test/rbe/graph-frame.py test/rbe/graph-frame.go.txt "$RUNNER_TEMP/"
         printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
         printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
@@ -50,7 +51,8 @@ jobs:
           case "$arm" in
             original|fixed)
               cat "$RUNNER_TEMP/graph-frame.go.txt" >> pkg/state/graph_decode_callbacks_test.go
-              args+=(--test_filter='^(TestGraphMapPayloadLength|TestFrameObservation)$' --test_arg=-test.v --test_env=GO_TEST_WRAP_TESTV=1)
+              python3 "$RUNNER_TEMP/graph-frame.py" instrument
+              args+=(--test_filter='^(TestNestedMapHintObservation|TestFrameObservation)$' --test_arg=-test.v --test_env=GO_TEST_WRAP_TESTV=1)
               ;;
             normal|race) labels+=(//pkg/state/tests:tests_test);;
           esac
@@ -66,7 +68,7 @@ jobs:
             done
           done
           if [[ "$arm" == original || "$arm" == fixed ]]; then
-            git restore -- pkg/state/graph_decode_callbacks_test.go
+            git restore -- pkg/state/graph_decode_callbacks_test.go pkg/state/graph_decode_values_unsafe.go
           fi
         done
     - name: Verify original executions and their public Load and Print outcomes
@@ -75,6 +77,6 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: graph-object-frame
+        name: graph-object-frame-map-hint
         path: ${{ runner.temp }}/records/verdict.json
         if-no-files-found: error

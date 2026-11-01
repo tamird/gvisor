@@ -5,7 +5,16 @@ import json
 import os
 from pathlib import Path
 import re
+import sys
 import xml.etree.ElementTree as et
+
+if sys.argv[1:] == ["instrument"]:
+    path = Path("pkg/state/graph_decode_values_unsafe.go")
+    s = path.read_text()
+    marker = "\t\to.base = reflect.MakeMapWithSize(ti.typ, hint).UnsafePointer()"
+    assert s.count(marker) == 1
+    path.write_text(s.replace(marker, '\t\tif o.size == 4096 { println("HINT", o.size, hint) }\n' + marker))
+    raise SystemExit(0)
 
 root = Path(os.environ["RUNNER_TEMP"])
 labels = ("//pkg/state:state_test", "//pkg/state/tests:tests_test")
@@ -48,13 +57,13 @@ for arm in ("original", "fixed", "normal", "race"):
                 if "finished" in ev:
                     build_end = ev["finished"].get("finishTime")
     ok = read("source").strip() == os.environ["ORIGINAL" if arm == "original" else "FIXED"]
-    ok &= read("exit").strip() == ("3" if arm == "original" else "0")
+    ok &= read("exit").strip() == "0"
     owners = {}
     for label in suites:
         family = groups[label]
         action = [x for name, statuses in results.items() if name in family for x in statuses]
         summary = [v for k, v in summaries.items() if k in family]
-        want = "FAILED" if arm == "original" else "PASSED"
+        want = "PASSED"
         ok &= action == [want] and summary == [want]
         stem = label.split(":")[-1]
         cases = {}
@@ -69,17 +78,19 @@ for arm in ("original", "fixed", "normal", "race"):
         counts = dict(collections.Counter(cases.values()))
         logs = read(stem + ".test.log")
         traces = re.findall(r"FRAME bytes=\[[^\n]+", logs)
-        needed = ["TestGraphMapPayloadLength", "TestFrameObservation"] if focus else [
+        needed = ["TestNestedMapHintObservation", "TestFrameObservation"] if focus else [
             "TestGraphMapPayloadLength", "TestGraphDeferredObjectDecode/multi_pass_round_trip",
             "TestGraphDeferredObjectDecode/deferred_trailing_data_error",
             "TestPrintGraphUnexportedInlineMapAndTrailingData"] if label == labels[0] else []
         relevant = {k: cases.get(k) for k in needed}
-        ok &= bool(cases) and all(v == ("failure" if arm == "original" and k == "TestGraphMapPayloadLength" else "passed") for k, v in relevant.items())
+        ok &= bool(cases) and all(v == "passed" for k, v in relevant.items())
         if focus:
-            state = "ok" if arm == "original" else "truncated"
+            state = "truncated"
             ok &= len(traces) == 3 and traces[0] == traces[2] == "FRAME bytes=[2 7 11] load=ok print=ok decoded=map[7:11]" and traces[1].startswith(f"FRAME bytes=[1 7 11] load={state} print={state} decoded=")
-            if arm == "original":
-                ok &= "load accepted a one-byte map payload and returned map[7:11]" in logs
+            matched = re.findall(r"^HINT 4096 (\d+)$", logs, re.M)
+            hint = int(matched[0]) if len(matched) == 1 else 0
+            ok &= ("restored nested map: 4096 entries" in logs and (0 < hint < 4096 if arm == "original" else hint == 4096))
+            traces.extend("HINT 4096 " + v for v in matched)
         else:
             ok &= counts.get("passed", 0) > 0 and not ({"failure", "error"} & counts.keys())
         owners[label] = dict(actions=action, summaries=summary, testEndUnixMs=max((v for k,v in exec_end.items() if k in family), default=None), counts=counts, required=relevant, observed=traces)
