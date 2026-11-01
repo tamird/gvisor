@@ -198,7 +198,8 @@ def collect(arch):
         record["verified_at"]=now()
         write(folder/"receipt.json",row)
         print(arch,phase,rc,len(expanded),record.get("dispositions"),record.get("actions"),record.get("first_errors",[])[:1],flush=True)
-        if phase=="analysis" and (rc or not census or census != expected):
+        if phase=="analysis" and (rc or len(census) != baseline["expected_count"]
+                                  or any(not label.endswith("//:" + baseline["required_target_name"]) for label in census)):
             break
     return row
 
@@ -224,7 +225,8 @@ def verdict(row, expected, skips):
         and not build["without_configuration"] and not build["missing_configured"]
         and not build["missing_completion"]
         and build.get("projection_control", {}).get("equal")
-        and set(baseline.get("required_labels", [])) <= set(expected)
+        and len(expected) == baseline["expected_count"]
+        and all(label.endswith("//:" + baseline["required_target_name"]) for label in expected)
         and stats.get("decoder_exits") == [0, 0] and stats.get("total", 0) > 0
         and stats["total"] == stats["observed_platform"]
         and stats["total"] == stats["remote"] + stats["cached_on_platform"]
