@@ -1,7 +1,7 @@
-name: Recover original semaphore progress
+name: Identify the remaining semaphore analysis actions
 on:
   push:
-    branches: [qualification/make-original-checks]
+    branches: [qualification/semop-stalled-executions]
 permissions:
   contents: read
 jobs:
@@ -14,21 +14,12 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {persist-credentials: false, fetch-depth: 1}
-      - name: Prepare the unchanged metadata reader
-        run: |
-          set -eu
-          mkdir -p "$RUNNER_TEMP/original-metadata-evidence"
-          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/original-metadata-evidence/summary.json"
-          git fetch -q --no-tags --depth=1 origin "$REPORTER"
-          for module in qualification_report unit_matrix; do
-            git show "$REPORTER:test/rbe/$module.py" > "$RUNNER_TEMP/$module.py"
-          done
-          cp test/rbe/semop_owner_recovery.py test/rbe/original_metadata_recovery.py "$RUNNER_TEMP/"
-          python3 -c 'import ast, sys; ast.parse(open(sys.argv[1]).read())' "$RUNNER_TEMP/original_metadata_recovery.py"
-      - name: Read only the two identified original invocation logs
+      - name: Retrieve only retained action metadata from both original builds
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 "$RUNNER_TEMP/original_metadata_recovery.py" progress
+        run: |
+          mkdir -p "$RUNNER_TEMP/original-metadata-evidence"
+          python3 test/rbe/semop_action_attempts.py
       - name: Check the explicit artifact boundary
         id: privacy
         if: always()
@@ -49,6 +40,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
-          name: original-metadata-evidence
+          name: semaphore-action-attempts
           path: ${{ runner.temp }}/original-metadata-evidence
           if-no-files-found: error
