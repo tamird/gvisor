@@ -8,7 +8,8 @@ from pathlib import Path
 
 root = Path(os.environ["RUNNER_TEMP"])
 out = {}
-for arm in ("linux", "stock", "netstack", "rack", "owners"):
+arms = ("permanent_linux", "permanent_fixed", "permanent_stock", "late_fixed", "late_mutant", "netstack", "rack", "owners")
+for arm in arms:
     d = root / "records" / arm
     if not (d / "exit").exists():
         out[arm] = {"passed": False, "reason": "not completed"}
@@ -44,16 +45,31 @@ for arm in ("linux", "stock", "netstack", "rack", "owners"):
                 cases[case.get("name", "")] = [c.tag for c in case if c.tag in ("failure", "error", "skipped")]
         except (OSError, ET.ParseError):
             pass
-        passed = action == summary == ["PASSED"] and code == 0
+        passed = action == summary == ["PASSED"]
         names = []
         if arm in ("linux", "stock", "netstack"):
             names.extend("TestLimitedTransmitRecovery/" + case for case in ("small", "threshold"))
         if arm in ("netstack", "rack"):
             names.extend("TestSACKCreditBeforeCumulativeACK/" + case for case in ("open", "closed"))
+        if arm.startswith(("permanent_", "late_")):
+            names.append("TestLimitedTransmit")
         named = {k: v for k, v in cases.items() if any(k.endswith(name) for name in names)}
         passed &= all(any(k.endswith(name) and not v for k,v in named.items()) for name in names)
-        trace = [s.strip() for s in text.splitlines() if "CREDIT mode=" in s or "LIMIT mode=" in s]
+        trace = [
+            s.strip()[:560] for s in text.splitlines()
+            if any(marker in s for marker in (
+                "CREDIT mode=", "LIMIT mode=", "LATE withheld until cumulative ACK",
+                "fourth duplicate ACK sent packet", "first duplicate ACK sent both queued packets",
+            )) or re.search(r"tcp_retransmits_test.go:\d+: packet \d+:", s)
+        ]
+        if arm in ("permanent_stock", "late_mutant"):
+            expected = r"packet 10:" if arm == "permanent_stock" else "fourth duplicate ACK sent packet 10 queued after the third"
+            passed = code == 3 and action == summary == ["FAILED"] and bool(re.search(expected, text)) and any("failure" in v for v in named.values())
+        if arm == "late_fixed":
+            passed &= any("LATE withheld until cumulative ACK" in line for line in trace)
         for case in names:
+            if "/" not in case:
+                continue
             scenario = case.split("/")[1]
             measured = [s for s in trace if "mode=" + scenario + " " in s]
             passed &= len(measured) == 1
@@ -82,7 +98,8 @@ for arm in ("linux", "stock", "netstack", "rack", "owners"):
             passed &= bool(cases) and len([k for k,v in cases.items() if not v])>0
         note = [s.strip()[:520] for s in (text + "\n" + log).splitlines() if re.search(r"SETUP mode=|CREDIT mode=|LIMIT mode=|unexpected|no repair|: error:|fatal error:|command not found|INFO: Elapsed time|tcp_rack_test.go:\d+|^ERROR:|^panic:|^--- FAIL|^FAIL:|^--- SKIP|failed to|disable RACK|check RACK|command returned|operation not permitted|read-only file system", s) and not re.search("token|authorization|api[_-]?key|bearer|remote[_-]?header|password",s,re.I)]
         results[label] = {"passed":passed, "actual":sorted(actual), "action":action, "summary":summary, "xml":len(cases), "skips":sum("skipped" in v for v in cases.values()), "named":named, "observations":trace, "diagnostics":note[-24:] if not passed or arm=="stock" else []}
-    out[arm] = {"passed": all(r["passed"] for r in results.values()), "source":(d/"head").read_text().strip(), "exit":code, "targets":results, "invocations":re.findall(r"Invocation ID: ([\w-]+)", log)}
+    exit_ok = code == (3 if arm in ("permanent_stock", "late_mutant") else 0)
+    out[arm] = {"passed": exit_ok and all(r["passed"] for r in results.values()), "source":(d/"head").read_text().strip(), "exit":code, "targets":results, "invocations":re.findall(r"Invocation ID: ([\w-]+)", log)}
 record = {"fixture":hashlib.sha256((root/"rack-fresh-head.go.txt").read_bytes()).hexdigest(), "arms":out, "complete":all(r["passed"] for r in out.values())}
 (root/"records/verdict.json").write_text(json.dumps(record,indent=2)+"\n")
 raise SystemExit(not record["complete"])
