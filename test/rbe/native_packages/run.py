@@ -22,9 +22,10 @@ CASES = {TARGETS[0]: ["ForkTest/Simple", "ForkTest/Pipe", "ForkTest/SharedMappin
 LINK_TARGETS = ["//test/syscalls/linux:fork_test", "//test/runner/setup_container:setup_container"]
 ABI = {"selected": "static glibc 2.44 on both native scratch execution architectures",
        "supplier_proposal": "https://github.com/hermeticbuild/hermetic-llvm/pull/768",
-       "supplier_source": "11ce0016d9cf92a1927b0303973095a5fe80addd",
+       "supplier_source": "2aabeae31470b4ac062918e53fc109859b6fca88",
        "supplier_base": "llvm 0.8.24",
-       "supplier_delta": "Unmodified first four proposal commits, excluding unrelated libstdc++",
+       "supplier_delta": "First four proposal commits, excluding unrelated libstdc++, plus action-local compiler temporary files",
+       "prior_static_GNU_attempt": {"run": 41308187475, "artifact": 13084852008, "status": "FAIL", "executed_cases": 0},
        "GNU_boundary_proof": {"run": 41302038018, "artifact": 13082191714},
        "launcher_proposal": "8919cb68b11643114c1f28c1a756902a2958bda0",
        "scope": "Ordinary native entry point and proposed GNU static platform, no run_under or per-target change",
