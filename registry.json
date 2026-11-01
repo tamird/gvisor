@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T16:10:03.057491+00:00",
+    "updatedAt": "2026-11-01T16:33:36.019669+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -17,7 +17,8 @@
       "bazel-contrib/rules_python": "none",
       "bazelbuild/bazel": "none",
       "hermeticbuild/rules_rs": "none",
-      "bazel-contrib/rules_distroless": "none"
+      "bazel-contrib/rules_distroless": "none",
+      "periareon/rules_cc_autoconf": "none"
     },
     "registeredOnlyRepositories": [
       "nodejs/node",
@@ -26,9 +27,10 @@
       "bazel-contrib/rules_python",
       "bazelbuild/bazel",
       "hermeticbuild/rules_rs",
-      "bazel-contrib/rules_distroless"
+      "bazel-contrib/rules_distroless",
+      "periareon/rules_cc_autoconf"
     ],
-    "registryDate": "2026-11-01T16:10:03.057491+00:00"
+    "registryDate": "2026-11-01"
   },
   "groups": [
     {
@@ -34486,7 +34488,7 @@
       "title": "Use the registered Buildifier binary for source lint",
       "url": "https://github.com/google/gvisor/pull/16663",
       "group": "analysis",
-      "summary": "Run the pinned Buildifier through Bazel and use its own diff and fix modes on the repository’s tracked inputs. The builder image no longer downloads Buildifier. The proposed amendment is being revised: nine workspace and compatibility controls passed. Deleting a source directory broke discovery on both Bazel 8.8.1 and released 8.8.2 (Bazel #30883); Bazel 9.3 contains the fix.",
+      "summary": "Run the pinned Buildifier through Bazel and use its own diff and fix modes on the repository’s tracked inputs. The builder image no longer downloads Buildifier. The proposed amendment is being revised: nine workspace and compatibility controls passed. Deleting a source directory broke discovery on both Bazel 8.8.1 and released 8.8.2 (Bazel #30883); Bazel 9.3 contains the fix. The direct Bazel 9 upgrade now supplies the fix, replacing the proposed 8.x backport.",
       "evidence": [
         {
           "label": "All 614 tracked files, seven damaged-file diffs and repairs, malformed-input behavior, and CLI identity",
@@ -34574,7 +34576,7 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-01T00:05:24.396268+00:00",
+      "updatedAt": "2026-11-01T16:33:36.019669+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
@@ -40962,9 +40964,9 @@
       "head": "4536e0533ea9be6ad8b3123a7026e6a8012f3205",
       "title": "Backport directory-watch invalidation to Bazel 8.9",
       "url": "https://github.com/tamird/bazel/commit/4536e0533",
-      "updatedAt": "2026-11-01T00:05:24.396268+00:00",
-      "status": "Contributor review requested",
-      "summary": "Removing a previously watched source directory could make the next Bazel build fail while trying to list it. Backport the existing upstream fix to release-8.9.0: record its type before listing it, and invalidate cached repository inputs made under the former rule.",
+      "updatedAt": "2026-11-01T16:33:36.019669+00:00",
+      "status": "Superseded",
+      "summary": "The fork backported the directory-invalidation fix to release-8.9.0. gVisor is moving directly to Bazel 9.3.1, which already includes the upstream correction.",
       "evidence": [
         {
           "label": "37 Java tests, four shell cases and the actual gVisor remove/recreate controls",
@@ -40977,19 +40979,13 @@
         {
           "label": "Original fix on Bazel main",
           "url": "https://github.com/bazelbuild/bazel/commit/6a3de202f"
+        },
+        {
+          "label": "Upstream fix shipped in Bazel 9.3",
+          "url": "https://github.com/bazelbuild/bazel/issues/30883"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "4536e0533ea9be6ad8b3123a7026e6a8012f3205",
-        "baseHead": "3bfdf3b354ae822628647997e43015744a7acda6",
-        "url": "https://github.com/tamird/bazel/commit/4536e0533",
-        "title": "Backport directory-watch invalidation to Bazel 8.9",
-        "requestedAt": "2026-11-01T00:05:24.396268+00:00",
-        "summary": "Review submission of this backport to bazelbuild/bazel’s release-8.9.0 branch. gVisor lint adoption remains separate.",
-        "body": "Backport 6a3de202f from Bazel main to 8.9.\n\nWhen a watched directory disappears between builds, invalidate the\nrepository instead of requesting a directory listing for the missing\npath. Record the file type before the directory contents, and preserve\nthat order when checking the recorded inputs.\n\nInvalidate remote repository cache entries that predate this check.\nUse the 8.x DirTree constructor and its FileValue.Key test fixture."
-      }
+      "inactive": true
     },
     {
       "id": "branch:hermetic-llvm-link-wrapper-musl",
@@ -42154,18 +42150,22 @@
       "id": "branch:multi-link-pcap",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "proposal/multi-link-pcap",
-      "head": "053adf359924c8fba79e0e28ff0cf5638a913bb2",
+      "ref": "proposal/network-pcap-setup",
+      "head": "28cfe8fb884b83198704dd55a9ee53ac596b59fe",
       "title": "Share one packet capture across network interfaces",
-      "url": "https://github.com/tamird/gvisor/tree/proposal/multi-link-pcap",
+      "url": "https://github.com/tamird/gvisor/tree/proposal/network-pcap-setup",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T15:54:06.326682+00:00",
-      "summary": "Starting runsc with packet capture and two network interfaces failed with EINVAL. The fixed runtime wrote one capture header and all ten records, including traffic from both interfaces. The existing single-interface capture still parsed.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-01T16:27:35.574350+00:00",
+      "summary": "FD-based and XDP backends now hand their endpoints to one NIC setup path. The first successfully constructed external endpoint opens the shared capture; later interfaces append their packets.",
       "evidence": [
         {
-          "label": "Review commit",
-          "url": "https://github.com/tamird/gvisor/commit/053adf359"
+          "label": "Review refactor",
+          "url": "https://github.com/tamird/gvisor/commit/28cfe8fb8"
+        },
+        {
+          "label": "Live capture and owning checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41326153933"
         },
         {
           "label": "Two-interface startup failed on stock",
@@ -42176,16 +42176,13 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41322736747/artifacts/13089828658"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "053adf359924c8fba79e0e28ff0cf5638a913bb2",
-        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
-        "url": "https://github.com/tamird/gvisor/commit/053adf359",
-        "title": "Share one packet capture across network interfaces",
-        "requestedAt": "2026-11-01T15:54:06.326682+00:00",
-        "summary": "Open the standalone packet-capture fix?",
-        "body": "With two network interfaces, runsc wrote the capture header to the\nsecond packet socket. The write failed with EINVAL and the sandbox\ncould not start.\n\nRead the capture file after all link FDs and write its header once.\nTraffic from both links now parses as one packet stream. The optional\nNAT table still follows the capture file."
+      "refinement": {
+        "before": {
+          "head": "053adf359924c8fba79e0e28ff0cf5638a913bb2"
+        },
+        "after": {
+          "head": "28cfe8fb884b83198704dd55a9ee53ac596b59fe"
+        }
       }
     },
     {
@@ -42197,10 +42194,14 @@
       "title": "Run POSIX compiler probes without a shell",
       "url": "https://github.com/tamird/rules_cc_autoconf/tree/proposal/direct-compiler-launch",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T15:54:06.326682+00:00",
+      "status": "Published",
+      "updatedAt": "2026-11-01T16:27:35.574350+00:00",
       "summary": "A shell-free worker cached two supported C features as missing. Calling the declared compiler directly made both checks succeed. The supplier’s three existing and extended test targets passed on AMD64, along with formatting.",
       "evidence": [
+        {
+          "label": "Upstream PR #267",
+          "url": "https://github.com/periareon/rules_cc_autoconf/pull/267"
+        },
         {
           "label": "Review commit",
           "url": "https://github.com/tamird/rules_cc_autoconf/commit/b0b4b6c17"
@@ -42214,17 +42215,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41323290323/artifacts/13090301128"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "b0b4b6c173c4312c14f3c5a427e9e3cb7271143c",
-        "baseHead": "f0a9efec3c81f0b64489dd811567b3ee5b6fb25a",
-        "url": "https://github.com/tamird/rules_cc_autoconf/commit/b0b4b6c17",
-        "title": "Run POSIX compiler probes without a shell",
-        "requestedAt": "2026-11-01T15:54:06.326682+00:00",
-        "summary": "Open the upstream rules_cc_autoconf PR?",
-        "body": "Configuration checks report missing types and headers on remote workers\nwithout /bin/sh, even when the declared compiler supports them. Launch\ncompiler and preprocessor arguments directly with posix_spawnp. Preserve\noutput redirection and report process startup, wait and signal failures\ninstead of caching a negative capability. Ordinary compiler rejections\nremain negative probe results.\n\nKeep the Windows command path unchanged. Exercise argument boundaries,\noutput streams and process errors, including the checker CLI paths for\ncompile, sizeof and alignof probes."
-      }
+      "inactive": true
     },
     {
       "id": "branch:ipc-guard-registry",
@@ -42235,10 +42226,14 @@
       "title": "Guard SysV IPC registry operations with the registry mutex",
       "url": "https://github.com/tamird/gvisor/tree/proposal/ipc-guard-registry",
       "group": "analysis",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T16:10:03.057491+00:00",
+      "status": "Published",
+      "updatedAt": "2026-11-01T16:33:36.019669+00:00",
       "summary": "Keeping a pointer to an IPC registry after unlocking allowed an unchecked call to ObjectCount. With the caller’s existing mutex moved to the common registry, both the AMD64 and ARM64 analyzers caught that call. The fixed code passed all four owning analyzers and all three AMD64 SysV syscall suites, with 101 records total and no skips.",
       "evidence": [
+        {
+          "label": "gVisor #16795",
+          "url": "https://github.com/google/gvisor/pull/16795"
+        },
         {
           "label": "Standalone commit",
           "url": "https://github.com/tamird/gvisor/commit/6ff606c7e"
@@ -42248,17 +42243,93 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41323263703/artifacts/13090538239"
         }
       ],
+      "inactive": true
+    },
+    {
+      "id": "pr:periareon/rules_cc_autoconf:267",
+      "type": "pr",
+      "repo": "periareon/rules_cc_autoconf",
+      "number": 267,
+      "ref": "proposal/direct-compiler-launch",
+      "head": "b0b4b6c173c4312c14f3c5a427e9e3cb7271143c",
+      "title": "Run POSIX compiler probes without a shell",
+      "url": "https://github.com/periareon/rules_cc_autoconf/pull/267",
+      "group": "bazel",
+      "status": "open",
+      "summary": "Compiler probes run the declared compiler directly on POSIX. The previous Bash launcher failed on the scratch worker before the compiler could examine its input.",
+      "updatedAt": "2026-11-01T16:27:35.574350+00:00",
+      "evidence": [
+        {
+          "label": "Review commit",
+          "url": "https://github.com/tamird/rules_cc_autoconf/commit/b0b4b6c17"
+        },
+        {
+          "label": "Same compiler, flags and four fresh configure actions per source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41322597750/artifacts/13090111207"
+        },
+        {
+          "label": "Original test reports and formatting",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41323290323/artifacts/13090301128"
+        }
+      ]
+    },
+    {
+      "id": "branch:state-grow-callback-table",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/state-grow-callback-table",
+      "head": "b511f04a71139a2dd8dfafb1a968a2590a2dc6f9",
+      "title": "Grow large checkpoint callback tables in fewer steps",
+      "url": "https://github.com/tamird/gvisor/tree/proposal/state-grow-callback-table",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "summary": "Eight paired 50,000-file restores reached their first guest command in 153.6 ms versus 163.9 ms. The decoder copied fewer large tables; the retained heap grew by 2.30 MiB, and some warmed map cases took 2–3.5% longer.",
+      "updatedAt": "2026-11-01T16:27:35.574350+00:00",
+      "evidence": [
+        {
+          "label": "Implementation and benchstat",
+          "url": "https://github.com/tamird/gvisor/commit/b511f04a7"
+        },
+        {
+          "label": "Native restores, boundary cases and integration checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41323238175/artifacts/13090878783"
+        }
+      ],
       "contributorReview": {
         "status": "pending",
         "kind": "proposal",
-        "head": "6ff606c7ea63a15bb43201115ace2c59c2b3918d",
+        "head": "b511f04a71139a2dd8dfafb1a968a2590a2dc6f9",
         "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
-        "url": "https://github.com/tamird/gvisor/commit/6ff606c7e",
-        "title": "Guard SysV IPC registry operations with the registry mutex",
-        "requestedAt": "2026-11-01T16:10:03.057491+00:00",
-        "summary": "Open the standalone SysV registry lock PR?",
-        "body": "The message, semaphore and shared-memory registries serialize operations\non an ipc.Registry. Guarding the caller’s registry pointer checks the\nlookup of that pointer, but permits a caller to retain it and access\nthe ID or key map after unlocking.\n\nMove the existing mutex into ipc.Registry and require it on the map\noperations. Callers still hold the same lock across lookup, creation\nand their own resource accounting."
+        "url": "https://github.com/tamird/gvisor/commit/b511f04a7",
+        "title": "Grow large checkpoint callback tables in fewer steps",
+        "requestedAt": "2026-11-01T16:27:35.574350+00:00",
+        "summary": "Open the callback-table optimization with its measured memory and latency tradeoff?",
+        "body": "Eight paired 50,000-file restores reached their first guest command in 153.6 ms versus 163.9 ms. The decoder copied fewer large tables; the retained heap grew by 2.30 MiB, and some warmed map cases took 2–3.5% longer."
       }
+    },
+    {
+      "id": "pr:16795",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16795,
+      "ref": "proposal/ipc-guard-registry",
+      "head": "6ff606c7ea63a15bb43201115ace2c59c2b3918d",
+      "title": "Guard SysV IPC registry operations with the registry mutex",
+      "url": "https://github.com/google/gvisor/pull/16795",
+      "group": "analysis",
+      "status": "open",
+      "summary": "Keeping a pointer to an IPC registry after unlocking allowed an unchecked call to ObjectCount. With the caller’s existing mutex moved to the common registry, both the AMD64 and ARM64 analyzers caught that call. The fixed code passed all four owning analyzers and all three AMD64 SysV syscall suites, with 101 records total and no skips.",
+      "updatedAt": "2026-11-01T16:33:36.019669+00:00",
+      "evidence": [
+        {
+          "label": "Standalone commit",
+          "url": "https://github.com/tamird/gvisor/commit/6ff606c7e"
+        },
+        {
+          "label": "Unlocked registry access on both architectures and 101 corrected records",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41323263703/artifacts/13090538239"
+        }
+      ]
     }
   ],
   "edges": [
@@ -45609,16 +45680,6 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:bazel-8-dirwatch",
-      "to": "pr:16663",
-      "reason": "The proposed gVisor lint source inventory needs a compatible Bazel release containing this directory-deletion fix. A fork backport alone does not satisfy the prerequisite.",
-      "evidence": [
-        "https://github.com/bazelbuild/bazel/issues/30883",
-        "https://github.com/tamird/gvisor/actions/runs/41253749549/artifacts/13062399500"
-      ]
-    },
-    {
-      "type": "depends_on",
       "from": "pr:16496",
       "to": "branch:buildkite-native-packages",
       "reason": "The runsc wildcard requires the corrected cgroup fixture.",
@@ -48637,7 +48698,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T16:10:03.057491+00:00",
+      "updatedAt": "2026-11-01T16:33:36.019669+00:00",
       "summary": "Callback storage accounted for most temporary allocation while restoring 50,000 tmpfs files. Chunked storage brought up the guest 34 ms sooner but slowed small map and slice loads. A separate four-worker Nginx checkpoint encoded in 2.25 ms and decoded in 8.99 ms with the default graph codec, compared with 12.71 ms and 17.75 ms with the legacy codec.",
       "findings": [
         {
@@ -51694,9 +51755,35 @@
               "url": "https://github.com/google/gvisor/issues/14229"
             }
           ]
+        },
+        {
+          "text": "Eight paired 50,000-file restores reached their first guest command in 153.6 ms versus 163.9 ms. The decoder copied fewer large tables; the retained heap grew by 2.30 MiB, and some warmed map cases took 2–3.5% longer.",
+          "evidence": [
+            {
+              "label": "Nine-line table growth change",
+              "url": "https://github.com/tamird/gvisor/commit/b511f04a7"
+            },
+            {
+              "label": "Paired restore and heap measurements",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41323238175/artifacts/13090878783"
+            }
+          ]
+        },
+        {
+          "text": "On ext4 with 200 MiB free, stock runsc reported ENOSPC during an uncompressed 1 GiB checkpoint. With sufficient space it restored all 1,073,741,824 bytes and matched the original SHA-256. The silent success reported in #14229 remains unreproduced.",
+          "evidence": [
+            {
+              "label": "Native ext4 checkpoint, restore, and digest",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41326174727/artifacts/13091019939"
+            },
+            {
+              "label": "Original RFC",
+              "url": "https://github.com/google/gvisor/issues/14229"
+            }
+          ]
         }
       ],
-      "nextStep": "Compare a nine-line change to contiguous table growth on the same three callback counts and the 50,000-file kernel. Compare the near-full disk case using the reporter’s layer size.",
+      "nextStep": "Compare the reporter’s exact runsc version, flags and orchestration if available. Review the measured callback-table latency and retained heap.",
       "evidence": [
         {
           "label": "16 paired decodes of the same checkpoint, both live restore checks and state suites",
@@ -58613,7 +58700,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T15:53:17.540212+00:00",
+      "updatedAt": "2026-11-01T16:27:35.574350+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -60162,9 +60249,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41323290323/artifacts/13090301128"
             }
           ]
+        },
+        {
+          "text": "The compiler-probe fix is upstream for review. The next scratch build reached the libpluginstack foreign-build rule and failed starting /bin/bash before running its Makefile.",
+          "evidence": [
+            {
+              "label": "Compiler probe PR",
+              "url": "https://github.com/periareon/rules_cc_autoconf/pull/267"
+            },
+            {
+              "label": "libpluginstack scratch build",
+              "url": "https://app.buildbuddy.io/invocation/9125942b-1fc2-42df-b235-6dee4e0ae37a"
+            }
+          ]
         }
       ],
-      "nextStep": "Send the supplier fix after contributor review. Verify the Make/plugin consumer on the scratch worker.",
+      "nextStep": "Qualify the actual Make consumer and trace the libpluginstack shell action to its owning rule.",
       "evidence": [
         {
           "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
@@ -61114,9 +61214,9 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-01T15:53:17.540212+00:00",
+      "updatedAt": "2026-11-01T16:33:36.019669+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "Preserve the host segment size from socket ingress through forwarding. Validate real forwarded packets and a genuine over-MTU packet with DF set. Limited Transmit is awaiting contributor review.",
+      "nextStep": "Check SNAT and capture ICMP at the external sender to distinguish the reporter’s observed behavior.",
       "findings": [
         {
           "text": "Using the existing local shutdown flags to skip an unnecessary receive-queue lock reduced the added cost of an established-socket RDHUP poll from 4.38 to 0.94 ns per call. With write interest too, it fell from 4.68 to 0.60 ns. Six IPv4/IPv6 syscall cases passed, including mandatory hangup with an empty interest mask.",
@@ -61681,6 +61781,32 @@
               "url": "https://github.com/google/gvisor/issues/16670"
             }
           ]
+        },
+        {
+          "text": "A nested gVisor bridge and veth child converted valid host-ingress TCP aggregation into 149 ICMP fragmentation-needed responses for 149 aggregates. Native Linux forwarded the same workload. The reporter did not observe the ICMP responses.",
+          "evidence": [
+            {
+              "label": "Original topology and packet traces",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41325815845/artifacts/13091301673"
+            }
+          ]
+        },
+        {
+          "text": "Konstantin Bogomolov’s existing five commits forwarded the full 1 MiB in the nested bridge/veth case. All 742 captured IPv4 TCP packets had valid checksums and fit the 1,466-byte inner MTU. Stock logged 149 fragmentation-needed responses. These were single transfers without SNAT.",
+          "evidence": [
+            {
+              "label": "Original contributor’s series",
+              "url": "https://github.com/konstantin-s-bogom/gvisor/commit/fcef0b0ac"
+            },
+            {
+              "label": "Native/stock and earlier patch comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41326041166/artifacts/13090604672"
+            },
+            {
+              "label": "Living review guide",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            }
+          ]
         }
       ],
       "evidence": [
@@ -62101,6 +62227,44 @@
         {
           "label": "All three syscall arms, checkpoint restore, release build, proc package and both Nogo owners",
           "url": "https://github.com/tamird/gvisor/actions/runs/41200711011/artifacts/13042014044"
+        }
+      ]
+    },
+    {
+      "id": "investigation:bazel-9-upgrade",
+      "title": "Upgrade gVisor to Bazel 9",
+      "status": "active",
+      "owner": "Build tools",
+      "updatedAt": "2026-11-01T16:33:36.019669+00:00",
+      "summary": "Move the shared Docker and Bazelisk pin from 8.8.1 to 9.3.1. Fix compatibility in the current compiler setup so the upgrade can land independently of hermetic-llvm.",
+      "nextStep": "Run the normal build and analysis on both architectures and the existing directory-invalidation regression, then submit the smallest working upgrade for review.",
+      "findings": [
+        {
+          "text": "Bazel 9.3 includes the fix for the directory-deletion regression. Two previous compatibility commits are candidates for the Coral toolchain and the pinned LLVM source. The earlier gRPC and C++ dependency work was already handled.",
+          "evidence": [
+            {
+              "label": "Original Coral change",
+              "url": "https://github.com/google/gvisor/pull/14985"
+            },
+            {
+              "label": "LLVM loads",
+              "url": "https://github.com/tamird/gvisor/commit/93efd0694"
+            }
+          ]
+        }
+      ],
+      "evidence": [
+        {
+          "label": "Bazel 9.3.1 release",
+          "url": "https://github.com/bazelbuild/bazel/releases/tag/9.3.1"
+        },
+        {
+          "label": "Directory invalidation issue",
+          "url": "https://github.com/bazelbuild/bazel/issues/30883"
+        },
+        {
+          "label": "Original gVisor reproduction",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41253749549/artifacts/13062399500"
         }
       ]
     }
