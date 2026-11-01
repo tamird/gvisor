@@ -27,6 +27,7 @@ ABI = {"selected": "static glibc 2.44 on both native scratch execution architect
        "supplier_delta": "First four proposal commits, excluding unrelated libstdc++, plus action-local compiler temporary files",
        "prior_static_GNU_attempt": {"run": 41308187475, "artifact": 13084852008, "status": "FAIL", "executed_cases": 0},
        "prior_test_platform_attempt": {"run": 41310064493, "artifact": 13085665548, "status": "FAIL", "executed_cases": 0, "static_ELFs": "PASS"},
+       "prior_custom_test_toolchain_proof": {"run": 41312235714, "artifact": 13085862397, "status": "PASS", "executed_cases": 6},
        "GNU_boundary_proof": {"run": 41302038018, "artifact": 13082191714},
        "launcher_proposal": "8919cb68b11643114c1f28c1a756902a2958bda0",
        "scope": "Ordinary native entry point and proposed GNU static platform, no run_under or per-target change",
@@ -314,10 +315,52 @@ def static_link_controls():
     return {"status": "PASS", "controls": 1 + len(mutations)}
 
 
-def link_graph(bazel, common, work):
+def execution_platforms(graph, compile_platform, test_platform):
+    """Bind ordinary compile and test actions to their separate platforms."""
+    targets = {str(t["id"]): t["label"] for t in graph["targets"]}
+    expected = {"CppLink": LINK_TARGETS, "TestRunner": TARGETS}
+    result = {}
+    for mnemonic, labels in expected.items():
+        selected = [{"target": targets[str(action["targetId"])],
+                     "execution_platform": action["executionPlatform"]}
+                    for action in graph["actions"]
+                    if action["mnemonic"] == mnemonic
+                    and targets[str(action["targetId"])] in labels]
+        platform = test_platform if mnemonic == "TestRunner" else compile_platform
+        if (collections.Counter(row["target"] for row in selected) != collections.Counter(labels)
+                or any(row["execution_platform"].removeprefix("@@") != platform for row in selected)):
+            raise ValueError(mnemonic + " does not select the expected native execution platform")
+        result[mnemonic] = selected
+    return result
+
+
+def execution_platform_controls():
+    targets = [*LINK_TARGETS, *TARGETS]
+    graph = {"targets": [{"id": i, "label": label} for i, label in enumerate(targets)],
+             "actions": [{"mnemonic": "CppLink" if i < len(LINK_TARGETS) else "TestRunner",
+                          "targetId": i, "executionPlatform": "//fixture:compile" if i < len(LINK_TARGETS) else "//fixture:test"}
+                         for i in range(len(targets))]}
+    execution_platforms(graph, "//fixture:compile", "//fixture:test")
+    for mutation in ("wrong_test_platform", "missing_test", "duplicate_test"):
+        changed = json.loads(json.dumps(graph))
+        if mutation == "wrong_test_platform":
+            changed["actions"][-1]["executionPlatform"] = "//fixture:other_cpu"
+        elif mutation == "missing_test":
+            changed["actions"].pop()
+        else:
+            changed["actions"].append(changed["actions"][-1])
+        try:
+            execution_platforms(changed, "//fixture:compile", "//fixture:test")
+        except ValueError:
+            continue
+        raise ValueError("Execution-platform predicate accepts " + mutation)
+    return {"status": "PASS", "controls": 4}
+
+
+def link_graph(bazel, common, work, compile_platform, test_platform):
     """Analyze, but never execute, the two normal C++ inputs of the syscall entry point."""
-    selected = "set(" + " ".join(LINK_TARGETS) + ")"
-    query = ('outputs(".*/(fork_test|setup_container|glibc_library_search_directory|crt_objects_directory_linux|libc[.]a|libm[.]a|r?crt1[.]o|crti[.]o|crtn[.]o)$", '
+    selected = "set(" + " ".join([*LINK_TARGETS, *TARGETS]) + ")"
+    query = ('outputs(".*/(fork_test|setup_container|test[.]log|glibc_library_search_directory|crt_objects_directory_linux|libc[.]a|libm[.]a|r?crt1[.]o|crti[.]o|crtn[.]o)$", '
              'deps(' + selected + '))')
     raw = work / "link-graph.json"
     started = now()
@@ -336,8 +379,11 @@ def link_graph(bazel, common, work):
                                       and not re.search(r"api.key|remote.header|bes.header|authorization|credential|token=", line, re.I)][:12]
     if code == 0:
         try:
-            result.update(static_links(json.loads(raw.read_text())))
+            graph = json.loads(raw.read_text())
+            result.update(static_links(graph))
+            result["execution_platforms"] = execution_platforms(graph, compile_platform, test_platform)
         except (KeyError, ValueError) as err:
+            result["status"] = "INCOMPLETE"
             result["reason"] = str(err)
     result["verified_at"] = now()
     return result
@@ -359,14 +405,16 @@ def qualify(arch, variant, source, tmp, out, private, bazel):
     target_platform = "@llvm//platforms:linux_" + {"amd64": "x86_64", "arm64": "aarch64"}[arch] + "_glibc_static"
     row["target_platform"] = target_platform
     row["execution_platform"] = platform
-    row["test_toolchain"] = "//test/rbe/empty_worker:static_glibc_" + arch + "_test"
+    test_platform = "//test/rbe/empty_worker:static_glibc_" + arch
+    row["test_execution_platform"] = test_platform
+    row["test_toolchain"] = "@bazel_tools//tools/test:default_test_toolchain"
+    row["test_toolchain_label_evidence"] = "Inferred from the built-in default and absence of custom test-toolchain registration; actual execution platforms are verified from aquery and executed actions"
     common = ["--config=" + {"amd64": "x86_64", "arm64": "aarch64"}[arch],
               "--platforms=" + target_platform, "--dynamic_mode=off",
               "--compilation_mode=fastbuild", "--host_platform=" + platform,
-              "--extra_execution_platforms=" + platform,
+              "--extra_execution_platforms=" + platform + "," + test_platform,
               "--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
               "--extra_toolchains=//test/rbe/go_bootstrap:linux_" + arch + "_ash",
-              "--extra_toolchains=//test/rbe/empty_worker:static_glibc_" + arch + "_test",
               "--noincompatible_exclude_starlark_flags_from_exec_config",
               "--workspace_status_command=", "--host_features=fully_static_link",
               "--incompatible_use_native_posix_test_wrapper", "--nocache_test_results",
@@ -377,7 +425,7 @@ def qualify(arch, variant, source, tmp, out, private, bazel):
               "--noremote_upload_local_results",
               "--noremote_local_fallback", "--spawn_strategy=remote", "--keep_going",
               "--color=no", "--curses=no"]
-    row["phases"]["static_link_graph"] = link_graph(bazel, common, work)
+    row["phases"]["static_link_graph"] = link_graph(bazel, common, work, platform, test_platform)
     write(public / "receipt.json", row)
     if row["phases"]["static_link_graph"]["status"] != "PASS":
         return row
@@ -453,6 +501,7 @@ def main():
     private = tmp / "native-package-private"
     private.mkdir(exist_ok=True)
     write(out / "static-link-controls.json", static_link_controls())
+    write(out / "execution-platform-controls.json", execution_platform_controls())
     control = json.loads((tmp / "native-wrapper-control.json").read_text())
     actual = control["test_action"]
     targets = [actual["target"]]
