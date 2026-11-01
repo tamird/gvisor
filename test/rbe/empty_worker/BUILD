@@ -59,23 +59,19 @@ platform(
     visibility = ["//visibility:public"],
 )
 
-# Static glibc tests need the same Linux CPU ABI, but not the worker's libc.
-# The execution platform can therefore keep using musl for its build tools.
+# Bazel's default test toolchain matches every target constraint. These
+# execution platforms support the static GNU target ABI on an empty root;
+# compiler tools continue to select the musl execution platforms above.
 [
-    toolchain(
-        name = "static_glibc_%s_test" % arch,
-        exec_compatible_with = [
-            "@platforms//cpu:" + cpu,
-            "@platforms//os:linux",
-        ],
-        target_compatible_with = [
-            "@llvm//constraints/glibc_linkage:static",
-            "@llvm//constraints/libc:gnu.2.44",
-            "@platforms//cpu:" + cpu,
-            "@platforms//os:linux",
-        ],
-        toolchain = "@bazel_tools//tools/test:empty_toolchain",
-        toolchain_type = "@bazel_tools//tools/test:default_test_toolchain_type",
+    platform(
+        name = "static_glibc_" + arch,
+        parents = ["@llvm//platforms:linux_" + cpu + "_glibc_static"],
+        exec_properties = {
+            "Arch": arch,
+            "OSFamily": "linux",
+            "container-image": "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef",
+            "workload-isolation-type": "oci",
+        },
         visibility = ["//visibility:public"],
     )
     for arch, cpu in [
