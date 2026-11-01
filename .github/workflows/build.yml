@@ -1,92 +1,39 @@
-name: Read one packet capture for all network interfaces
+name: Recover original network setup records
 on:
   push:
-    branches: [qualification/pcap-setup-owners-recovery]
+    branches: [qualification/pcap-owner-original-evidence]
 permissions:
   contents: read
-  actions: read
 jobs:
-  router:
+  inspect:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 75
-    env:
-      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      STOCK: aa767e4c43d011121271551fe24da501a56f729d
-      FIXED: 28cfe8fb884b83198704dd55a9ee53ac596b59fe
+    timeout-minutes: 8
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 4, persist-credentials: false}
-    - name: Prepare the compiler and isolated router lab
-      env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      with: {fetch-depth: 1, persist-credentials: false}
+    - name: Fetch the right original record readers
       run: |
         set -euo pipefail
-        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
-        printf '{"verified":false,"reason":"no completed transfer evidence"}\n' > "$RUNNER_TEMP/records/verdict.json"
-        test "$(git rev-parse HEAD^^)" = "$FIXED"
-        test "$(git rev-parse HEAD^^^)" = "$STOCK"
-        git diff --exit-code "$FIXED" HEAD -- pkg runsc
-        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
-        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
-        umask 077
-        {
-          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
-          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-        } > "$RUNNER_TEMP/tcp.bazelrc"
-        unset BUILDBUDDY_API_KEY
-        docker pull --platform=linux/amd64 "$GNU"
-        docker run --init -d --privileged --name tcp-compiler --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
-        docker exec tcp-compiler ip -V
-        docker exec tcp-compiler /bin/sh -ec 'if ! command -v ping >/dev/null; then apt-get update -qq && apt-get install -y --no-install-recommends iputils-ping; fi; ping -V'
-    - name: Recover original failures and conversion evidence
+        mkdir "$RUNNER_TEMP/records"
+        exporter=1fcf113e6349cc55f6321968944da1933ece3252
+        reporter=fb60e127516defd6aab633f80be09a03022f0737
+        git fetch -q --no-tags --depth=1 https://github.com/tamird/gvisor.git "$reporter" "$exporter"
+        for mod in qualification_report unit_matrix; do git show "$reporter:test/rbe/$mod.py" > "$RUNNER_TEMP/$mod.py"; done
+        git show "$exporter:test/rbe/semop_owner_recovery.py" > "$RUNNER_TEMP/semop_owner_recovery.py"
+    - name: Recover saved logs and XML
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        git fetch -q --no-tags --depth=1 https://github.com/tamird/gvisor.git 1fcf113e6349cc55f6321968944da1933ece3252
-        for f in semop_owner_recovery.py qualification_report.py; do
-          git show "FETCH_HEAD:test/rbe/$f" > "$RUNNER_TEMP/$f"
-        done
         PYTHONPATH="$RUNNER_TEMP" python3 test/rbe/forward_gso/original_results.py
-    - name: Run route, proxy and conversion tests with network privileges
-      if: ${{ !cancelled() }}
-      run: |
-        git diff --exit-code "$FIXED" -- pkg runsc tools
-        PRODUCT_SHA="$FIXED" python3 test/rbe/forward_gso/qualify.py native-owners
-    - name: Complete the missing boot analyzer
-      if: ${{ !cancelled() }}
-      run: PRODUCT_SHA="$FIXED" python3 test/rbe/forward_gso/qualify.py boot
-    - name: Reconcile previously missing targets
-      if: always()
-      run: |
-        python3 - <<'PYREPORT'
-        import json, os, pathlib, sys
-        root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'records'
-        phases = {key: json.loads(p.read_text()) if (p := root / (key + '.json')).is_file() else {} for key in ('native-owners','boot')}
-        verdict = {key: row.get('result', 'not run') for key, row in phases.items()}
-        passed = all(r == 'verified' for r in verdict.values())
-        (root/'verdict.json').write_text(json.dumps({'verified': passed, 'phases': verdict}, indent=2) + '\n')
-        print(verdict)
-        sys.exit(not passed)
-        PYREPORT
-    - name: Check artifact contents before publication
-      id: privacy
-      if: always()
-      env:
-        KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: |
-        python3 - <<'PYTHON'
+        python3 - <<'PY'
         import os
         from pathlib import Path
-        key = os.environ["KEY"].encode()
-        assert key
-        for path in (Path(os.environ["RUNNER_TEMP"]) / "records").glob("*"):
-            assert key not in path.read_bytes(), path.name
-        PYTHON
+        secret = os.environ['BUILDBUDDY_API_KEY'].encode()
+        assert secret and secret not in (Path(os.environ['RUNNER_TEMP'])/'records/original-owners.json').read_bytes()
+        PY
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      if: always() && steps.privacy.outcome == 'success'
       with:
-        name: network-interface-owners
+        name: original-network-records
         path: ${{ runner.temp }}/records
         if-no-files-found: error
