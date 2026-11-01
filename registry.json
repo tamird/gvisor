@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T21:14:06.082065+00:00",
+    "updatedAt": "2026-11-01T21:23:09+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42576,6 +42576,40 @@
           "url": "https://github.com/google/gvisor/pull/14458#issuecomment-6545722386"
         }
       ]
+    },
+    {
+      "id": "branch:tcp-eifel-first-repair",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-eifel-first-repair",
+      "head": "9dbf919c7a32add65b269dac2cd66891a29a640f",
+      "title": "Keep the first TCP retransmission timestamp",
+      "url": "https://github.com/tamird/gvisor/commit/9dbf919c7",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T21:22:23+00:00",
+      "summary": "TCP can miss evidence that a timeout was unnecessary when the timestamp wraps or a second timeout clears the first retransmission’s timestamp. Keep that timestamp until recovery ends and compare the ACK’s echo in TCP serial order.",
+      "evidence": [
+        {
+          "label": "Final ACK tests: stock, corrected SACK suite and Nogo on both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41351297555/artifacts/13101204074"
+        },
+        {
+          "label": "Unchanged transport and RACK suites and transport Nogo",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41349787642/artifacts/13100613145"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "9dbf919c7a32add65b269dac2cd66891a29a640f",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/9dbf919c7",
+        "title": "Keep the first TCP retransmission timestamp",
+        "requestedAt": "2026-11-01T21:22:23+00:00",
+        "summary": "Open the standalone TCP timestamp detection fix?",
+        "body": "In four packet cases, stock missed both delayed originals: one after timestamp wrap and one after a second timeout. The fix recognized both. Both senders ignored genuine retransmissions. The checks cover 87 passing TCP tests: 31 in the revised SACK suite and 56 in the unchanged transport and RACK suites. Both Nogo targets passed on AMD64 and ARM64."
+      }
     }
   ],
   "edges": [
