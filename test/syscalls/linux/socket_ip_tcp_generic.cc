@@ -55,6 +55,83 @@ constexpr int kPositiveTimeoutMs = 60 * 1000;
 // The amount of time to wait for something unexpected to not occur.
 constexpr int kNegativeTimeoutMs = 3 * 1000;
 
+TEST(TcpConnectTest, InspectBindAcrossRefusal) {
+  auto name = [](int fd) {
+    sockaddr_in a = {};
+    socklen_t n = sizeof(a);
+    EXPECT_THAT(getsockname(fd, AsSockAddr(&a), &n), SyscallSucceeds());
+    return a;
+  };
+  for (const int mode : {0, 1, 2, 3, 4}) {
+    auto server = ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET, SOCK_STREAM, 0));
+    sockaddr_in where = {};
+    where.sin_family = AF_INET;
+    where.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    ASSERT_THAT(bind(server.get(), AsSockAddr(&where), sizeof(where)),
+                SyscallSucceeds());
+    where = name(server.get());
+    auto client = ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET, SOCK_STREAM, 0));
+    sockaddr_in binding = {};
+    binding.sin_family = AF_INET;
+    binding.sin_addr.s_addr =
+        htonl(mode == 1 || mode == 3 ? INADDR_LOOPBACK : INADDR_ANY);
+    if (mode == 2 || mode == 3) {
+      auto choose = ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET, SOCK_STREAM, 0));
+      ASSERT_THAT(bind(choose.get(), AsSockAddr(&binding), sizeof(binding)),
+                  SyscallSucceeds());
+      binding.sin_port = name(choose.get()).sin_port;
+    }
+    if (mode != 0)
+      ASSERT_THAT(bind(client.get(), AsSockAddr(&binding), sizeof(binding)),
+                  SyscallSucceeds());
+    int yes = 1;
+    ASSERT_THAT(
+        setsockopt(client.get(), SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(yes)),
+        SyscallSucceeds());
+    const auto before = name(client.get());
+    ASSERT_THAT(
+        RetryEINTR(connect)(client.get(), AsSockAddr(&where), sizeof(where)),
+        SyscallFailsWithErrno(ECONNREFUSED));
+    const auto after = name(client.get());
+    int contender = -1;
+    if (before.sin_port != 0) {
+      auto other = ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET, SOCK_STREAM, 0));
+      auto wanted = before;
+      contender = bind(other.get(), AsSockAddr(&wanted), sizeof(wanted)) == 0
+                      ? 0
+                      : errno;
+    }
+    ASSERT_THAT(listen(server.get(), 1), SyscallSucceeds());
+    int retried =
+        RetryEINTR(connect)(client.get(), AsSockAddr(&where), sizeof(where));
+    int err = retried == 0 ? 0 : errno;
+    auto last = name(client.get());
+    int opt = 0;
+    socklen_t sz = sizeof(opt);
+    ASSERT_THAT(getsockopt(client.get(), SOL_SOCKET, SO_KEEPALIVE, &opt, &sz),
+                SyscallSucceeds());
+    int delivered = 0;
+    if (retried == 0) {
+      auto peer =
+          ASSERT_NO_ERRNO_AND_VALUE(Accept(server.get(), nullptr, nullptr));
+      ASSERT_THAT(RetryEINTR(send)(client.get(), "x", 1, MSG_NOSIGNAL),
+                  SyscallSucceedsWithValue(1));
+      char v;
+      ASSERT_THAT(RetryEINTR(read)(peer.get(), &v, 1),
+                  SyscallSucceedsWithValue(1));
+      ASSERT_EQ(v, 'x');
+      delivered = 1;
+    }
+    fprintf(stderr,
+            "BIND mode=%d before=%u,%u refused=%u,%u contender=%d retry=%d,%d "
+            "local=%u,%u keepalive=%d delivered=%d\n",
+            mode, ntohl(before.sin_addr.s_addr), ntohs(before.sin_port),
+            ntohl(after.sin_addr.s_addr), ntohs(after.sin_port), contender,
+            retried, err, ntohl(last.sin_addr.s_addr), ntohs(last.sin_port),
+            opt, delivered);
+  }
+}
+
 TEST_P(TCPSocketPairTest, TcpInfoSucceeds) {
   auto sockets = ASSERT_NO_ERRNO_AND_VALUE(NewSocketPair());
 
