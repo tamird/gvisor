@@ -546,7 +546,7 @@ TEST(SemaphoreTest, SemCtlGetPid) {
 }
 
 TEST(SemaphoreTest, SemCtlGetPidFork) {
-  AutoSem sem(semget(IPC_PRIVATE, 1, 0600 | IPC_CREAT));
+  AutoSem sem(semget(IPC_PRIVATE, 2, 0600 | IPC_CREAT));
   ASSERT_THAT(sem.get(), SyscallSucceeds());
 
   const pid_t child_pid = fork();
@@ -563,6 +563,15 @@ TEST(SemaphoreTest, SemCtlGetPidFork) {
               SyscallSucceedsWithValue(child_pid));
   EXPECT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0)
       << " status " << status;
+
+  // Waiting for zero records our PID on semaphore 1. Semaphore 0 still
+  // records the child that set its value.
+  struct sembuf wait_for_zero = {
+      .sem_num = 1, .sem_op = 0, .sem_flg = IPC_NOWAIT};
+  ASSERT_THAT(semop(sem.get(), &wait_for_zero, 1), SyscallSucceeds());
+  EXPECT_THAT(semctl(sem.get(), 1, GETPID), SyscallSucceedsWithValue(getpid()));
+  EXPECT_THAT(semctl(sem.get(), 0, GETPID),
+              SyscallSucceedsWithValue(child_pid));
 }
 
 TEST(SemaphoreTest, SemIpcSet) {
