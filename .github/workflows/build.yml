@@ -1,36 +1,69 @@
-name: Measure TCP flight accounting against a competing Linux sender
+name: Reconcile TCP sender progress in the original eight shared-path trials
 on:
   push:
-    branches: [qualification/tcp-shared-flight-accounting]
+    branches: [qualification/tcp-flight-accounting-report]
 permissions:
+  actions: read
   contents: read
 jobs:
-  compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-shared-flight-accounting'
+  replay:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-flight-accounting-report'
     runs-on: ubuntu-24.04
-    timeout-minutes: 70
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          fetch-depth: 30
-      - name: Build proxy and run matched transfers
-        run: bash test/benchmarks/tcp/current-shared-driver.sh
-      - name: Reconcile expected trials, receiver intervals and socket samples
-        if: always()
-        run: python3 test/benchmarks/tcp/current-shared-report.py
-      - name: Match each observed packet and recovery interval across the WAN
-        if: always()
-        run: python3 test/benchmarks/tcp/reorder_episodes.py "$RUNNER_TEMP/tcp-public" "$RUNNER_TEMP/tcp-public/episodes.json"
-      - name: Keep original exits, captures and paired decision criteria
-        if: always()
+      - name: Fetch and authenticate the original packet and exit records
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p "$RUNNER_TEMP/tcp-public"
-          cp test/benchmarks/tcp/competition-protocol.md "$RUNNER_TEMP/tcp-public/"
-          python3 test/benchmarks/tcp/competition-summary.py
-      - name: Publish allowlisted evidence
-        if: always()
+          gh api repos/tamird/gvisor/actions/artifacts/13077288295/zip > "$RUNNER_TEMP/original.zip"
+          echo "2d9f1940f6948de7822a2afaa9262350b99e8c5dcd383b089f6ec6d261dfaec6  $RUNNER_TEMP/original.zip" | sha256sum -c -
+      - name: Derive progress intervals from the recorded packets
+        run: python3 test/benchmarks/tcp/reorder_episodes.py "$RUNNER_TEMP/original.zip" "$RUNNER_TEMP/episodes.json"
+      - name: Preserve prior results and compare the stall with socket samples
+        shell: python
+        run: |
+          import json, os, zipfile
+          from datetime import datetime, timezone
+          from pathlib import Path
+          directory = Path(os.environ['RUNNER_TEMP'])
+          with zipfile.ZipFile(directory / 'original.zip') as bundle:
+              verdict = json.loads(bundle.read('verdict.json'))
+              original = json.loads(bundle.read('episodes.json'))
+          replay = json.loads((directory / 'episodes.json').read_bytes())
+          assert replay['harness'] == original['harness'] == '52276f9d4c40fb11c126911d9cd6314dad94f741'
+          assert replay['source'] == original['source'] == verdict['heads'][0]
+          assert verdict['driver']['status'] == 0 and not verdict['missing'] and not verdict['failures']
+          expected = {f'{pair}-{version}/measured/{cc}-netstack'
+                      for pair in ('a','b') for version in ('before','amended') for cc in ('reno','cubic')}
+          assert set(replay['cases']) == set(verdict['passed']) == expected
+          report = {}
+          for name, lanes in replay['cases'].items():
+              assert set(lanes) == {'netstack','linux'} and verdict['passed'][name]['exit'] == 0
+              report[name] = {side: data.pop('longest_data_gap') for side, data in lanes.items()}
+          assert replay['cases'] == original['cases']
+          cubic = report['b-before/measured/cubic-netstack']['netstack']
+          reno = report['b-before/measured/reno-netstack']['netstack']
+          assert 42.29 < cubic['duration_ns'] / 1e9 < 42.31 and cubic['retransmissions'] == 208, cubic
+          assert cubic['samples'] == 208 and cubic['socket_ranges']['cwnd'] == [5,5], cubic
+          assert cubic['socket_ranges']['out'] == [40,41] and cubic['socket_ranges']['queued'][0] > 0, cubic
+          assert 14.09 < reno['duration_ns'] / 1e9 < 14.12 and reno['retransmissions'] == 73, reno
+          assert all(report[name]['netstack']['duration_ns'] < 293_000_000 for name in expected if '-amended/' in name)
+          result = dict(sources=verdict['heads'], original_artifact=13077288295,
+                        report_source=os.environ['GITHUB_SHA'], expected=sorted(expected),
+                        executed=sorted(report), failures=[], missing=[], skipped=[], flows=report,
+                        execution_finished=verdict['driver']['finished'],
+                        replay_verified=datetime.now(timezone.utc).isoformat())
+          (directory / 'progress.json').write_text(json.dumps(result, indent=2) + '\n')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              print('| Trial | Longest interval without new gVisor data | Retransmissions |', file=summary)
+              print('| --- | ---: | ---: |', file=summary)
+              for name in sorted(report):
+                  gap = report[name]['netstack']
+                  print(f"| {name} | {gap['duration_ns'] / 1e9:.3f} s | {gap['retransmissions']} |", file=summary)
+      - name: Publish the compact derived result
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: tcp-shared-flight-accounting
-          path: ${{ runner.temp }}/tcp-public/
+          name: original-tcp-data-progress
+          path: ${{ runner.temp }}/progress.json
           if-no-files-found: error
