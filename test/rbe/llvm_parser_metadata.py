@@ -87,19 +87,67 @@ def cas(digest, kind):
     return json.loads(result.stdout)
 
 
-def input_file(root, path):
-    directory = cas(root, "Directory")
-    parts = Path(path).parts
-    assert len(parts) < 20 and all(p not in (".", "..") for p in parts)
-    for part in parts[:-1]:
-        matches = [d for d in directory.get("directories", []) if d["name"] == part]
-        if not matches:
-            return None
-        assert len(matches) == 1
-        directory = cas(matches[0]["digest"], "Directory")
-    files = [f for f in directory.get("files", []) if f["name"] == parts[-1]]
-    assert len(files) <= 1
-    return files[0] if files else None
+def parser_input(root, command):
+    # TestRunner passes a runfiles-relative executable to the wrapper. Its
+    # TEST_SRCDIR names the actual runfiles tree in the remote execution root.
+    env = {v["name"]: v["value"] for v in command.get("environmentVariables", [])}
+    relative = Path("tools/nvidia_driver_differ/driver_ast_parser")
+    candidates = []
+    if "TEST_SRCDIR" in env:
+        test_dir = Path(env["TEST_SRCDIR"])
+        assert not test_dir.is_absolute() and ".." not in test_dir.parts
+        candidates.append(test_dir / "_main" / relative)
+        working = Path(command.get("workingDirectory", ""))
+        if working.parts:
+            candidates.insert(0, working / candidates[0])
+        report["runfilesDirectory"] = str(test_dir)
+    candidates.append(relative)
+    cache = {}
+
+    def directory(digest):
+        if digest["hash"] not in cache:
+            cache[digest["hash"]] = cas(digest, "Directory")
+        return cache[digest["hash"]]
+
+    for candidate in candidates:
+        path = candidate
+        # A runfile can itself be a relative symlink to the source input.
+        for _ in range(16):
+            entry = directory(root)
+            for n, name in enumerate(path.parts):
+                link = next((s for s in entry.get("symlinks", []) if s["name"] == name), None)
+                if link is not None:
+                    path = Path(os.path.normpath(Path(*path.parts[:n]) / link["target"] / Path(*path.parts[n + 1:])))
+                    assert not path.is_absolute() and ".." not in path.parts
+                    break
+                if n == len(path.parts) - 1:
+                    file = next((f for f in entry.get("files", []) if f["name"] == name), None)
+                    if file is not None:
+                        return str(candidate), file
+                child = next((d for d in entry.get("directories", []) if d["name"] == name), None)
+                if child is None:
+                    report["missingAt"] = str(Path(*path.parts[:n + 1]))
+                    break
+                entry = directory(child["digest"])
+            if link is None:
+                break
+    # Bazel may map paths in a remote action. Recover the actual named input
+    # from that action's Merkle tree if the logical runfiles path was mapped.
+    pending = [(Path(), root)]
+    visited = set()
+    while pending:
+        prefix, digest = pending.pop()
+        if digest["hash"] in visited:
+            continue
+        visited.add(digest["hash"])
+        assert len(visited) <= 1500, "Original input tree exceeded the metadata bound"
+        entry = directory(digest)
+        for file in entry.get("files", []):
+            if file["name"] == relative.name and prefix.match("**/nvidia_driver_differ"):
+                return str(prefix / file["name"]), file
+        pending.extend((prefix / d["name"], d["digest"]) for d in entry.get("directories", []))
+    report["uniqueInputDirectories"] = len(visited)
+    raise AssertionError("Parser absent from original action input tree")
 
 
 def run():
@@ -168,17 +216,7 @@ def run():
     assert execution.get("exitCode", 0) == 0 and result["result"].get("exitCode", 0) == 0
     properties = {p["name"]: p["value"] for p in (action.get("platform") or command.get("platform", {})).get("properties", [])}
     assert all(properties.get(k) == v for k, v in PROPERTIES.items()), "Original worker properties differ"
-    path = "tools/nvidia_driver_differ/driver_ast_parser"
-    file = input_file(action["inputRootDigest"], path)
-    if file is None:
-        executable = next(a for a in command["arguments"] if a.endswith("/driver_ast_parser_test"))
-        for workspace in ("_main", "gvisor"):
-            candidate = executable + ".runfiles/" + workspace + "/" + path
-            file = input_file(action["inputRootDigest"], candidate)
-            if file is not None:
-                path = candidate
-                break
-    assert file is not None, "Original parser input path not retained"
+    path, file = parser_input(action["inputRootDigest"], command)
     assert file["digest"]["hash"] == BINARY["hash"] and int(file["digest"]["sizeBytes"]) == int(BINARY["sizeBytes"]), "Original parser input digest differs"
     metadata = result["result"].get("executionMetadata") or execution["executedActionMetadata"]
     worker = metadata.get("worker") or metadata.get("executorId")
