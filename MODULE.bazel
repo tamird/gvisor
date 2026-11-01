@@ -79,6 +79,29 @@ http_archive(
     ],
 )
 
+# Qualification backport of rules_pkg 1bf40ca861 to unmodified 1.0.1.
+single_version_override(
+    module_name = "rules_pkg",
+    patch_strip = 1,
+    patches = ["//tools:rules_pkg_python_launchers.patch"],
+)
+
+http_archive(
+    name = "protoc_check_static_python",
+    build_file = "//test/rbe/protoc_check:python.BUILD",
+    sha256 = "2fc493f8f14ff8bf743eb34934bf1edbac518b023e8aa72bc7c0006ee13495e4",
+    strip_prefix = "python/install",
+    urls = ["https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.11.18%2B20261026-x86_64-unknown-linux-musl-lto%2Bstatic-full.tar.zst"],
+)
+
+http_archive(
+    name = "protoc_check_static_python_arm64",
+    build_file = "//test/rbe/protoc_check:python.BUILD",
+    sha256 = "976cfd9b50e2fd37c21b74816f4372abc4db21ebaef4bdf3e1690dcb9d1c66c1",
+    strip_prefix = "python/install",
+    urls = ["https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.11.18%2B20261026-aarch64-unknown-linux-musl-lto%2Bstatic-full.tar.zst"],
+)
+
 ### Python
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = "3.11")
