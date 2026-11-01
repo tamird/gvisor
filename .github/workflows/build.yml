@@ -13,7 +13,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: carrier, persist-credentials: false, fetch-depth: 1}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: product, ref: e02abab8e7275cb32b4ec11d89230325b658b58c, persist-credentials: false, fetch-depth: 1}
+        with: {path: product, ref: 7dc8df3c4bb7da1bc04037fe9a2d641cb36cc5a4, persist-credentials: false, fetch-depth: 1}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: tamird/bazel-central-registry
+          path: registry
+          ref: e00baea8db3a686e45379b9096998a8cb95291c0
+          persist-credentials: false
+          fetch-depth: 1
       - name: Prepare private remote configuration and declared execution platform
         working-directory: carrier
         env:
@@ -40,11 +47,31 @@ jobs:
           fi
           bazel --bazelrc="$RUNNER_TEMP/sidecar.bazelrc" run //tools/actionlint -- "$PWD/.github/workflows/build.yml" > "$RUNNER_TEMP/actionlint.log" 2>&1 || { tail -20 "$RUNNER_TEMP/actionlint.log"; exit 1; }
           printf '%s\n' '{"status":"PASS","phase":"bootstrap","executed_targets":0}' > "$RUNNER_TEMP/package-evidence/bootstrap.json"
+      - name: Check the supplier revision
+        continue-on-error: true
+        working-directory: carrier
+        run: python3 test/rbe/empty_worker/make_revision.py checks
       - name: Analyze and build the original GNU plugin library
+        continue-on-error: true
         working-directory: product
         env:
-          PRODUCT: e02abab8e7275cb32b4ec11d89230325b658b58c
+          PRODUCT: 7dc8df3c4bb7da1bc04037fe9a2d641cb36cc5a4
+          REGISTRY: ${{ github.workspace }}/registry
         run: python3 "$RUNNER_TEMP/wildcard.py"
+      - name: Run the module's existing smoke on the populated Linux coordinator
+        continue-on-error: true
+        working-directory: product
+        run: python3 ../carrier/test/rbe/empty_worker/make_revision.py smoke
+      - name: Require all independent results
+        if: always()
+        run: |
+          python3 - <<'PYCODE'
+          import json, os
+          from pathlib import Path
+          folder = Path(os.environ["RUNNER_TEMP"]) / "package-evidence"
+          names = ["bootstrap.json", "supplier.json", "summary.json", "smoke.json"]
+          assert all((folder / name).exists() and json.loads((folder / name).read_text()).get("status") == "PASS" for name in names)
+          PYCODE
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:

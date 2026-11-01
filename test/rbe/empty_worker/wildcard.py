@@ -60,9 +60,8 @@ def diagnostics(file, folder):
             continue
         if re.search(r"api[-_]?key|authorization|credential|remote_header|bes_header|token", line, re.I):
             continue
-        line = re.sub(r"https?://[^\s]+", "[URL]", line)
-        line = re.sub(r"(?:[A-Za-z0-9_-]+\.)+[A-Za-z]{2,}:\d+", "[endpoint]", line)
-        errors.append(line[:1400])
+        kinds = ["no such package", "no such target", "no such repository", "checksum mismatch", "failed to build", "failed to fetch"]
+        errors.append(next((kind for kind in kinds if kind in line.lower()), "Bazel reported an error"))
         if len(errors) == 8:
             break
     (folder / "errors.txt").write_text("\n".join(errors) + "\n")
@@ -137,6 +136,7 @@ def collect(arch):
             "--host_platform="+plat,"--extra_execution_platforms="+plat,"--remote_accept_cached","--noremote_upload_local_results",
             "--jobs=400","--remote_download_outputs=minimal","--noremote_local_fallback","--spawn_strategy=remote","--keep_going","--color=no","--curses=no"]
     common.extend(baseline.get("extra_flags", []))
+    common.extend(["--registry=" + Path(os.environ["REGISTRY"]).as_uri(), "--registry=https://bcr.bazel.build"])
     census=None
     for phase in ("analysis","build"):
         bep=tmp/(arch+"-"+phase+".bep")
@@ -256,7 +256,8 @@ summary["status"] = "FAIL" if failed else "PASS" if summary["source_clean"] and 
 summary["coverage"] = {"requested_owner": scope, "test_cases_executed": 0,
                        "plugin_source": baseline["plugin_source"],
                        "compiler_integration_source": baseline["compiler_integration_source"],
-                       "execution_platform_file": "test/rbe/empty_worker/BUILD"}
+                       "execution_platform_file": "test/rbe/empty_worker/BUILD",
+                       "registry_source": baseline["registry_source"], "make_version": baseline["make_version"]}
 summary["verified_at"] = now()
 write(out / "summary.json", summary)
 print(summary["status"], flush=True)

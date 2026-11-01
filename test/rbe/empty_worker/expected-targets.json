@@ -9,9 +9,11 @@
     "--config=plugin-tldk",
     "--compilation_mode=opt"
   ],
-  "provenance": "Six plugin BUILD/patch/toolchain files and both archive declarations are byte-identical to public #15153 at 675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa; compiler/tool prerequisites are reused from f728497c0a91ca4a40cf6d29953a3ee963a0a1f9.",
+  "provenance": "Six plugin BUILD/patch/toolchain files and both archive declarations are byte-identical to public #15153 at 675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa; compiler/tool prerequisites are reused from f728497c0a91ca4a40cf6d29953a3ee963a0a1f9. Make uses the reviewed 4.4.1.bcr.4 registry revision (GNU source remains 4.4.1); its newer autoconf overlay is distinct from the old bcr.1 dependency.",
   "expected_count": 1,
   "required_target_name": "libpluginstack",
   "plugin_source": "675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa",
-  "compiler_integration_source": "f728497c0a91ca4a40cf6d29953a3ee963a0a1f9"
+  "compiler_integration_source": "f728497c0a91ca4a40cf6d29953a3ee963a0a1f9",
+  "registry_source": "e00baea8db3a686e45379b9096998a8cb95291c0",
+  "make_version": "4.4.1.bcr.4"
 }
