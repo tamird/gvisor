@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T13:56:22.287550+00:00",
+    "updatedAt": "2026-11-01T14:20:16.524617+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28,7 +28,7 @@
       "hermeticbuild/rules_rs",
       "bazel-contrib/rules_distroless"
     ],
-    "registryDate": "2026-11-01T13:56:22.287550+00:00"
+    "registryDate": "2026-11-01T14:20:16.524617+00:00"
   },
   "groups": [
     {
@@ -48455,7 +48455,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T13:47:22.903093+00:00",
+      "updatedAt": "2026-11-01T14:20:16.524617+00:00",
       "summary": "The graph codec is now the default. On a four-worker Nginx checkpoint, encoding took 2.25 ms instead of 12.71 ms and decoding took 8.99 ms instead of 17.75 ms. All four round-trip bugs tracked in #16715 are fixed. Increasing the UDP receive queue did not grow the index table. Smaller writer buffers and clearing fewer decoder slots did not speed up Nginx checkpoints. Separating callback payloads reduced allocated bytes without improving the time to Nginx’s first HTTP response.",
       "findings": [
         {
@@ -51451,9 +51451,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41262862646/artifacts/13065538468"
             }
           ]
+        },
+        {
+          "text": "Restoring 50,000 tmpfs files allocated 142.86 MB in loadKernel. Growing the callback slice accounted for 80.64 MB, all freed after load. The 39.43 MB allocated by reflect.New in readObjects remained live. An independent checkpoint of the same workload spent 620 of 3,100 sampled loadKernel CPU milliseconds growing that slice.",
+          "evidence": [
+            {
+              "label": "Heap profile and restored-file check",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41315406744/artifacts/13086853031"
+            },
+            {
+              "label": "CPU profile and restored-file check",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41314572602/artifacts/13087061592"
+            }
+          ]
         }
       ],
-      "nextStep": "The smaller descriptor and the frame-boundary correction are ready for contributor review. Submit the descriptor first, then the correction on the same decoder.",
+      "nextStep": "Compare the existing chunked storage with the growing callback slice on the same checkpoint. The descriptor simplification and frame-boundary correction are awaiting contributor review.",
       "evidence": [
         {
           "label": "16 paired decodes of the same checkpoint, both live restore checks and state suites",
@@ -60790,9 +60803,9 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-01T12:38:11.445994+00:00",
+      "updatedAt": "2026-11-01T14:20:16.524617+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "The shutdown fix is ready for contributor review. Finish the separate half-close polling checks and use the existing captures to explain the remaining CUBIC stalls.",
+      "nextStep": "Measure whether sending on the first two duplicate ACKs speeds up recovery from a loss near the end of a window. Separately, compare Linux and gVisor forwarding with TCP segmentation offload on the ingress link.",
       "findings": [
         {
           "text": "Using the existing local shutdown flags to skip an unnecessary receive-queue lock reduced the added cost of an established-socket RDHUP poll from 4.38 to 0.94 ns per call. With write interest too, it fell from 4.68 to 0.60 ns. Six IPv4/IPv6 syscall cases passed, including mandatory hangup with an empty interest mask.",
@@ -61303,6 +61316,19 @@
             {
               "label": "Three-packet comparison",
               "url": "https://github.com/tamird/gvisor/actions/runs/41276742967/artifacts/13071870710"
+            }
+          ]
+        },
+        {
+          "text": "With ten packets in flight, Linux sent one new packet on the first SACK, none when it was repeated, and one when the SACK covered another segment. Stock gVisor and the accounting change in #14101 waited for a cumulative ACK. All three respected a closed receive window.",
+          "evidence": [
+            {
+              "label": "Six packet traces",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41314813090/artifacts/13086772480"
+            },
+            {
+              "label": "TCP review guide",
+              "url": "https://github.com/google/gvisor/issues/16670"
             }
           ]
         }
