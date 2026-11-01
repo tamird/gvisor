@@ -1235,9 +1235,7 @@ func TestRACKWithWindowFull(t *testing.T) {
 	defer c.Cleanup()
 
 	e2e.SetStackSACKPermitted(t, c, true)
-	e2e.CreateConnectedWithSACKAndTS(c)
-
-	seq := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
+	peer := e2e.CreateConnectedWithSACKAndTS(c)
 	const numPkts = 10
 	data := make([]byte, numPkts*maxPayload)
 	for i := range data {
@@ -1265,7 +1263,14 @@ func TestRACKWithWindowFull(t *testing.T) {
 	end := start.Add(seqnum.Size(maxPayload))
 	dsackStart := c.IRS.Add(seqnum.Size(1 + (numPkts-1)*maxPayload))
 	dsackEnd := dsackStart.Add(seqnum.Size(maxPayload))
-	c.SendAckWithSACK(seq, 2*maxPayload, []header.SACKBlock{{dsackStart, dsackEnd}, {start, end}})
+	// Allow one repair at a time so a packet sent before the zero-window
+	// update cannot be mistaken for one sent after it.
+	peer.Flags = header.TCPFlagAck
+	peer.WndSize = maxPayload
+	peer.AckNum = c.IRS.Add(1 + 2*maxPayload)
+	options := [40]byte{header.TCPOptionNOP, header.TCPOptionNOP}
+	n := header.EncodeSACKBlocks([]header.SACKBlock{{dsackStart, dsackEnd}, {start, end}}, options[2:])
+	peer.SendPacket(nil, options[:2+n])
 
 	var info tcpip.TCPInfoOption
 	if err := c.EP.GetSockOpt(&info); err != nil {
@@ -1278,23 +1283,19 @@ func TestRACKWithWindowFull(t *testing.T) {
 	c.ReceiveAndCheckPacketWithOptions(data, 2*maxPayload, maxPayload, e2e.TSOptionSize)
 
 	// Send ACK for #2 packet.
-	c.SendAck(seq, 3*maxPayload)
+	peer.AckNum = peer.AckNum.Add(maxPayload)
+	peer.SendPacket(nil, nil)
 
 	// Expect retransmission of #3 packet.
 	c.ReceiveAndCheckPacketWithOptions(data, 3*maxPayload, maxPayload, e2e.TSOptionSize)
 
 	// Send ACK with zero window size.
-	c.SendPacket(nil, &context.Headers{
-		SrcPort: context.TestPort,
-		DstPort: c.Port,
-		Flags:   header.TCPFlagAck,
-		SeqNum:  seq,
-		AckNum:  c.IRS.Add(1 + 4*maxPayload),
-		RcvWnd:  0,
-	})
+	peer.AckNum = peer.AckNum.Add(maxPayload)
+	peer.WndSize = 0
+	peer.SendPacket(nil, nil)
 
 	// No packet should be received as the receive window size is zero.
-	c.CheckNoPacket("unexpected packet received after userTimeout has expired")
+	c.CheckNoPacket("retransmission after the peer closed its window")
 }
 
 func TestMain(m *testing.M) {
@@ -1305,4 +1306,102 @@ func TestMain(m *testing.M) {
 	time.Sleep(1 * time.Second)
 	refs.DoLeakCheck()
 	os.Exit(code)
+}
+
+// TestRACKRepairAboveHighestSACK leaves four repairs in a five-packet window.
+// A SACK below three of the repairs cannot tell the sender whether their
+// originals are still in flight; RACK already determined that they were lost.
+func TestRACKRepairAboveHighestSACK(t *testing.T) {
+	const warm = 8
+	const rtt = 100 * time.Millisecond
+	clock := faketime.NewManualClock()
+	states := make(chan tcp.TCPSenderState, 1)
+	c := context.NewWithOpts(t, context.Options{
+		MTU: mtu, EnableV4: true, Clock: clock,
+		Probe: func(s *tcp.TCPEndpointState) { states <- s.Sender },
+	})
+	defer c.Cleanup()
+	e2e.EnableCUBIC(t, c)
+	e2e.SetStackSACKPermitted(t, c, true)
+	e2e.CreateConnectedWithSACKAndTS(c)
+	first := c.IRS.Add(1 + warm*maxPayload)
+	write := func(data []byte) {
+		t.Helper()
+		if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
+			t.Fatalf("Write(%d) = (%d, %v)", len(data), n, err)
+		}
+	}
+	ack := func(n int, sacks ...header.SACKBlock) tcp.TCPSenderState {
+		t.Helper()
+		c.SendAckWithSACK(seqnum.Value(context.TestInitialSequenceNumber).Add(1), (warm+n)*maxPayload, sacks)
+		select {
+		case st := <-states:
+			if want := first.Add(seqnum.Size(n * maxPayload)); st.SndUna != want {
+				t.Fatalf("ACK %d: SND.UNA = %v, want %v", n, st.SndUna, want)
+			}
+			return st
+		case <-time.After(5 * time.Second):
+			t.Fatalf("sender did not process ACK %d", n)
+			return tcp.TCPSenderState{}
+		}
+	}
+	data := make([]byte, warm*maxPayload)
+	receive := func(packet int) {
+		t.Helper()
+		c.ReceiveAndCheckPacketWithOptions(data, (packet-1)*maxPayload, maxPayload, e2e.TSOptionSize)
+	}
+	write(data)
+	for n := 1; n <= warm; n++ {
+		receive(n)
+	}
+	clock.Advance(rtt)
+	cwnd := ack(0).SndCwnd
+	data = make([]byte, (warm+cwnd+12)*maxPayload)
+	write(data[warm*maxPayload:])
+	for n := 1; n <= cwnd; n++ {
+		receive(warm + n)
+	}
+
+	// The peer retains packets 4–6 and drops everything else through the
+	// timeout. In particular, no later SACK reports anything past packet 6.
+	block := header.SACKBlock{Start: first.Add(3 * maxPayload), End: first.Add(6 * maxPayload)}
+	clock.Advance(rtt)
+	ack(0, block)
+	timeouts := c.Stack().Stats().TCP.Timeouts
+	for elapsed := time.Duration(0); elapsed < 5*time.Second && timeouts.Value() == 0; elapsed += 10 * time.Millisecond {
+		for p := c.GetPacketNonBlocking(); p != nil; p = c.GetPacketNonBlocking() {
+			p.Release()
+		}
+		clock.Advance(10 * time.Millisecond)
+	}
+	if timeouts.Value() != 1 {
+		t.Fatal("the initial flight did not time out")
+	}
+	receive(warm + 1)
+	clock.Advance(rtt)
+	repairs := ack(1, block).SndCwnd
+	if repairs < 3 {
+		t.Fatalf("window of %d cannot reach the first unsacked tail packet", repairs)
+	}
+	last := 1
+	for i := 0; i < repairs; i++ {
+		last++
+		if last == 4 {
+			last = 7
+		}
+		receive(warm + last)
+	}
+	c.CheckNoPacketTimeout("first repair flight exceeded cwnd", 10*time.Millisecond)
+
+	// Only packet 2 has left the repair flight. Fill the available space;
+	// counting its neighbors twice stalls here, ignoring them oversends.
+	clock.Advance(rtt)
+	available := ack(2, block).SndCwnd - (repairs - 1)
+	if available < 1 || timeouts.Value() != 1 {
+		t.Fatalf("ACK 2: %d slots, %d timeouts", available, timeouts.Value())
+	}
+	for i := 1; i <= available; i++ {
+		receive(warm + last + i)
+	}
+	c.CheckNoPacketTimeout("second repair flight exceeded cwnd", 10*time.Millisecond)
 }
