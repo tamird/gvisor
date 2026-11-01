@@ -76,3 +76,15 @@ diff --git a/go/private/rules/binary_wrapper.sh b/go/private/rules/binary_wrappe
  # We do not use -a here as the cache drastically reduces the time spent
  # on the second go build invocation (roughly 50% faster).
  
+diff --git a/go/config/BUILD.bazel b/go/config/BUILD.bazel
+--- a/go/config/BUILD.bazel
++++ b/go/config/BUILD.bazel
+@@ -40,5 +40,8 @@
+ bool_flag(
+     name = "experimental_use_sh_toolchain",
+     build_setting_default = False,
++    # SDK builders run in execution configurations and need the same declared
++    # shell as the target configuration, including through nested transitions.
++    scope = "universal",
+     visibility = ["//visibility:public"],
+ )
