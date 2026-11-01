@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T20:25:10.080082+00:00",
+    "updatedAt": "2026-11-01T20:46:51.279434+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -48941,7 +48941,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T18:59:26.774280+00:00",
+      "updatedAt": "2026-11-01T20:46:51.279434+00:00",
       "summary": "A restore of 50,000 tmpfs files queued 150,890 callbacks. About a third came from inode after-load hooks, a third from converting dentry parents, and a third from directory maps waiting for their children.",
       "findings": [
         {
@@ -52064,6 +52064,19 @@
             {
               "label": "Four passing race shards, including 46 race-only registration cases",
               "url": "https://github.com/tamird/gvisor/actions/runs/41338894742/artifacts/13096287111"
+            }
+          ]
+        },
+        {
+          "text": "New checkpoints use the graph encoder by default. Load selects the decoder from the stored header, so existing legacy checkpoints remain readable. The graph issue roundup records both the default and the scope of each reproducer.",
+          "evidence": [
+            {
+              "label": "Default encoder and stream detection",
+              "url": "https://github.com/google/gvisor/blob/6e6276344/pkg/state/state.go#L92-L147"
+            },
+            {
+              "label": "Graph checkpoint findings",
+              "url": "https://github.com/google/gvisor/issues/16715"
             }
           ]
         }
@@ -58985,7 +58998,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T20:25:10.080082+00:00",
+      "updatedAt": "2026-11-01T20:46:51.279434+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -60585,9 +60598,18 @@
               "url": "https://github.com/google/gvisor/blob/aa767e4c4/tools/release.bzl#L13-L40"
             }
           ]
+        },
+        {
+          "text": "Bazel 9.3.1 compiled and linked the release prewarmer on both native tool-free workers with no temporary-directory override. The static binaries matched the optimized Bazel 8.8.1 outputs byte for byte and fit the 4 KiB limit (AMD64 1,576 bytes, ARM64 1,672 bytes).",
+          "evidence": [
+            {
+              "label": "Original actions and ELF comparisons",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41347614095/artifacts/13100242102"
+            }
+          ]
         }
       ],
-      "nextStep": "Prioritize the ordinary release and CI actions. The optional TLDK build selects two extra binaries and runs a dedicated ConnectToSelf integration test. Keep both consumers for future scratch qualification of the vendor-patched DPDK build.",
+      "nextStep": "Build all eight ordinary release outputs with worker-provided /tmp on AMD64 and ARM64, then start a guest with the resulting runsc. The prewarmer compile and link passed. Optional TLDK/DPDK remains separate.",
       "evidence": [
         {
           "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
@@ -60870,7 +60892,7 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T19:40:22.453604+00:00",
+      "updatedAt": "2026-11-01T20:46:51.279434+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
@@ -61018,9 +61040,22 @@
               "url": "https://github.com/tamird/gvisor/commit/a79d4bf1b"
             }
           ]
+        },
+        {
+          "text": "The same two kernel analyzer actions that were killed at 562 MiB finished in 26 seconds with a 2 GiB BuildBuddy allocation. They produced facts and findings for AMD64 and ARM64, using 926 and 916 MiB respectively. Future GNU qualification workers can run these analyses remotely.",
+          "evidence": [
+            {
+              "label": "Original failed attempts",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41341006771/artifacts/13096994117"
+            },
+            {
+              "label": "Uncached actions and output digests",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41347908441/artifacts/13099588299"
+            }
+          ]
         }
       ],
-      "nextStep": "The inline review on #15867 is ready for a contributor decision. #16795 is with maintainers. Two SysV GETPID analyzer targets are running on a larger coordinator after small workers exhausted memory.",
+      "nextStep": "The SysV GETPID fix and the inline review on #15867 are ready for contributor decisions. #16795 is with maintainers.",
       "evidence": [
         {
           "label": "Timekeeper updater: all four lock diagnostics verified",
