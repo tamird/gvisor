@@ -1,0 +1,23 @@
+# Let archive-only consumers use the original DPDK build outputs.
+# The ordinary SDK installation remains the default.
+
+diff --git a/dpdk/Makefile b/dpdk/Makefile
+--- a/dpdk/Makefile
++++ b/dpdk/Makefile
+@@ -22,6 +22,7 @@
+ DPDK_TUNE             ?= generic
+ DPDK_DEBUG            ?= n
+ DPDK_DESTDIR          ?= $(CURDIR)/install
++DPDK_MAKE_TARGET      ?= install
+ PACKETDRILL           ?= n
+ 
+ 
+@@ -251,7 +252,7 @@
+ config: $(B)/.config.ok
+ 
+ $(B)/.build.ok: $(DPDK_SOURCE_FILES) $(B)/.config.ok
+-	@$(MAKE) $(DPDK_MAKE_ARGS) install
++	@$(MAKE) $(DPDK_MAKE_ARGS) $(DPDK_MAKE_TARGET)
+ 	@cp $(I)/.config $(B)/.config
+ 	@touch $@
+ 

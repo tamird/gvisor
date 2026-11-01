@@ -1,0 +1,91 @@
+# Run Make-owned shell helpers with the selected shell, including helpers
+# evaluated while Make reads its generated configuration.
+
+diff --git a/mk/rte.sdkbuild.mk b/mk/rte.sdkbuild.mk
+--- a/mk/rte.sdkbuild.mk
++++ b/mk/rte.sdkbuild.mk
+@@ -35,7 +35,7 @@
+ 		$(RTE_OUTPUT)/lib \
+ 		$(RTE_OUTPUT)/hostlib $(RTE_OUTPUT)/kmod
+ 	@[ -d $(RTE_OUTPUT)/include ] || mkdir -p $(RTE_OUTPUT)/include
+-	@$(RTE_SDK)/buildtools/gen-config-h.sh $(RTE_OUTPUT)/.config \
++	@$(SHELL) $(RTE_SDK)/buildtools/gen-config-h.sh $(RTE_OUTPUT)/.config \
+ 		> $(RTE_OUTPUT)/include/rte_config.h
+ 	$(Q)$(MAKE) -f $(RTE_SDK)/GNUmakefile gcovclean
+ 	@echo Clean complete
+diff --git a/mk/rte.sdkconfig.mk b/mk/rte.sdkconfig.mk
+--- a/mk/rte.sdkconfig.mk
++++ b/mk/rte.sdkconfig.mk
+@@ -109,12 +109,12 @@
+ 
+ # generate a Makefile for this build directory
+ # use a relative path so it will continue to work even if we move the directory
+-SDK_RELPATH=$(shell $(RTE_SDK)/buildtools/relpath.sh $(abspath $(RTE_SRCDIR)) \
++SDK_RELPATH=$(shell $(SHELL) $(RTE_SDK)/buildtools/relpath.sh $(abspath $(RTE_SRCDIR)) \
+ 				$(abspath $(RTE_OUTPUT)))
+-OUTPUT_RELPATH=$(shell $(RTE_SDK)/buildtools/relpath.sh $(abspath $(RTE_OUTPUT)) \
++OUTPUT_RELPATH=$(shell $(SHELL) $(RTE_SDK)/buildtools/relpath.sh $(abspath $(RTE_OUTPUT)) \
+ 				$(abspath $(RTE_SRCDIR)))
+ $(RTE_OUTPUT)/Makefile: | $(RTE_OUTPUT)
+-	$(Q)$(RTE_SDK)/buildtools/gen-build-mk.sh $(SDK_RELPATH) > $@
++	$(Q)$(SHELL) $(RTE_SDK)/buildtools/gen-build-mk.sh $(SDK_RELPATH) > $@
+ 
+ # clean installed files, and generate a new config header file
+ # if NODOTCONF variable is defined, don't try to rebuild .config
+@@ -123,7 +123,7 @@
+ 		$(RTE_OUTPUT)/lib \
+ 		$(RTE_OUTPUT)/hostlib $(RTE_OUTPUT)/kmod $(RTE_OUTPUT)/build
+ 	$(Q)mkdir -p $(RTE_OUTPUT)/include
+-	$(Q)$(RTE_SDK)/buildtools/gen-config-h.sh $(RTE_OUTPUT)/.config \
++	$(Q)$(SHELL) $(RTE_SDK)/buildtools/gen-config-h.sh $(RTE_OUTPUT)/.config \
+ 		> $(RTE_OUTPUT)/include/rte_config.h
+ 
+ # generate the rte_config.h
+diff --git a/mk/rte.sdkinstall.mk b/mk/rte.sdkinstall.mk
+--- a/mk/rte.sdkinstall.mk
++++ b/mk/rte.sdkinstall.mk
+@@ -49,7 +49,7 @@
+ 
+ # Create the relative symbolic link $2 -> $1
+ # May be replaced with --relative option of ln from coreutils-8.16
+-rte_symlink = ln -snf $$($(RTE_SDK)/buildtools/relpath.sh $1 $(dir $2)) $2
++rte_symlink = ln -snf $$($(SHELL) $(RTE_SDK)/buildtools/relpath.sh $1 $(dir $2)) $2
+ 
+ .PHONY: pre_install
+ pre_install:
+diff --git a/mk/internal/rte.install-post.mk b/mk/internal/rte.install-post.mk
+--- a/mk/internal/rte.install-post.mk
++++ b/mk/internal/rte.install-post.mk
+@@ -31,7 +31,7 @@
+ $(addprefix $(RTE_OUTPUT)/$(1)/,$(notdir $(2))): $(2)
+ 	@echo "  SYMLINK-FILE $(addprefix $(1)/,$(notdir $(2)))"
+ 	@[ -d $(RTE_OUTPUT)/$(1) ] || mkdir -p $(RTE_OUTPUT)/$(1)
+-	$(Q)ln -nsf `$(RTE_SDK)/buildtools/relpath.sh $$(<) $(RTE_OUTPUT)/$(1)` \
++	$(Q)ln -nsf `$(SHELL) $(RTE_SDK)/buildtools/relpath.sh $$(<) $(RTE_OUTPUT)/$(1)` \
+ 		$(RTE_OUTPUT)/$(1)
+ endef
+ 
+diff --git a/mk/internal/rte.compile-pre.mk b/mk/internal/rte.compile-pre.mk
+--- a/mk/internal/rte.compile-pre.mk
++++ b/mk/internal/rte.compile-pre.mk
+@@ -56,7 +56,7 @@
+ C_TO_O_STR = $(subst ','\'',$(C_TO_O)) #'# fix syntax highlight
+ C_TO_O_DISP = $(if $(V),"$(C_TO_O_STR)","  CC $(@)")
+ endif
+-EXPERIMENTAL_CHECK = $(RTE_SDK)/buildtools/check-experimental-syms.sh
++EXPERIMENTAL_CHECK = $(SHELL) $(RTE_SDK)/buildtools/check-experimental-syms.sh
+ CHECK_EXPERIMENTAL = $(EXPERIMENTAL_CHECK) $(SRCDIR)/$(EXPORT_MAP) $@
+ 
+ PMDINFO_GEN = $(RTE_SDK_BIN)/app/dpdk-pmdinfogen $@ $@.pmd.c
+diff --git a/buildtools/Makefile b/buildtools/Makefile
+--- a/buildtools/Makefile
++++ b/buildtools/Makefile
+@@ -4,6 +4,8 @@
+ 
+ include $(RTE_SDK)/mk/rte.vars.mk
+ 
++ifeq ($(PMDINFO_GEN),)
+ DIRS-y += pmdinfogen
++endif
+ 
+ include $(RTE_SDK)/mk/rte.subdir.mk
