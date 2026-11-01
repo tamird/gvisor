@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T20:57:36.045285+00:00",
+    "updatedAt": "2026-11-01T21:03:30.269380+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -59045,7 +59045,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T20:46:51.279434+00:00",
+      "updatedAt": "2026-11-01T21:03:30.269380+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -60654,9 +60654,26 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41347614095/artifacts/13100242102"
             }
           ]
+        },
+        {
+          "text": "Bazel 9.3.1 built all eight optimized release executables on native AMD64 and ARM64 tool-free execution workers. The five production Go links and eight staging copies on each architecture ran uncached. Every staged digest matched. The staged AMD64 runsc started a systrap guest. The ARM64 check covered the build and staged executables. An Ubuntu coordinator fetched repositories and supplied the build stamp. The verdict was available 3.7 seconds after the last build finished, with no manual recovery.",
+          "evidence": [
+            {
+              "label": "Verified release bundle and guest result",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41348566398/artifacts/13100369243"
+            },
+            {
+              "label": "AMD64 release build",
+              "url": "https://app.buildbuddy.io/invocation/4495d144-d280-4d76-92e9-20d7d74a568d"
+            },
+            {
+              "label": "ARM64 release build",
+              "url": "https://app.buildbuddy.io/invocation/99f7b9d0-8d3d-45e0-ae96-6da4914558cd"
+            }
+          ]
         }
       ],
-      "nextStep": "Build all eight ordinary release outputs with worker-provided /tmp on AMD64 and ARM64, then start a guest with the resulting runsc. The prewarmer compile and link passed. Optional TLDK/DPDK remains separate.",
+      "nextStep": "Publish the approved GitHub release workflow after #16753 lands. That change builds //:release directly and uploads its eight outputs. Buildkite packaging and optional TLDK/DPDK have separate prerequisites.",
       "evidence": [
         {
           "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
