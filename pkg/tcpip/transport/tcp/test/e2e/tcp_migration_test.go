@@ -25,6 +25,7 @@ import (
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checker"
+	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/link/channel"
 	"gvisor.dev/gvisor/pkg/tcpip/network/arp"
@@ -633,5 +634,166 @@ func TestSaveAfterRestoreWithReplaceConfig(t *testing.T) {
 	}
 	if got := restoredStack2.CheckLocalAddress(preservedNICID, header.IPv6ProtocolNumber, preservedIPv6Addr.Address); got != preservedNICID {
 		t.Fatalf("restoredStack2.CheckLocalAddress(IPv6) = %d, want %d", got, preservedNICID)
+	}
+}
+
+func restoreRACKTraceStack(t *testing.T, c *testcontext.Context) (*stack.Stack, *channel.Endpoint) {
+	t.Helper()
+	var saved bytes.Buffer
+	if _, err := state.Save(t.Context(), &saved, c.Stack()); err != nil {
+		t.Fatal(err)
+	}
+	st := stack.New(stack.Options{
+		TransportProtocols: []stack.TransportProtocolFactory{tcp.NewProtocol},
+		NetworkProtocols:   []stack.NetworkProtocolFactory{ipv4.NewProtocol, ipv6.NewProtocol},
+	})
+	st.SetAllowLiveTCPMigration(true)
+	if _, err := state.Load(t.Context(), bytes.NewReader(saved.Bytes()), st); err != nil {
+		t.Fatal(err)
+	}
+	link := channel.New(100, 1500, "")
+	if err := st.CreateNIC(1, link); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.AddProtocolAddress(1, tcpip.ProtocolAddress{Protocol: ipv4.ProtocolNumber, AddressWithPrefix: testcontext.StackAddrWithPrefix}, stack.AddressProperties{}); err != nil {
+		t.Fatal(err)
+	}
+	st.SetRouteTable([]tcpip.Route{{Destination: header.IPv4EmptySubnet, NIC: 1}})
+	st.Restore()
+	return st, link
+}
+
+func TestRACKRestoreTrace(t *testing.T) {
+	for _, checkpoint := range []bool{false, true} {
+		name := "uninterrupted"
+		if checkpoint {
+			name = "restored"
+		}
+		t.Run(name, func(t *testing.T) {
+			const rtt = 100 * time.Millisecond
+			clock := faketime.NewManualClock()
+			states := make(chan tcp.TCPSenderState, 32)
+			c := testcontext.NewWithOpts(t, testcontext.Options{EnableV4: true, MTU: 1500, Clock: clock,
+				Probe: func(s *tcp.TCPEndpointState) { states <- s.Sender }})
+			defer c.Cleanup()
+			c.Stack().SetAllowLiveTCPMigration(true)
+			c.Stack().SetRemoveConf(true)
+			e2e.SetStackSACKPermitted(t, c, true)
+			e2e.SetStackTCPRecovery(t, c, int(tcpip.TCPRACKLossDetection))
+			c.CreateConnectedWithRawOptions(testcontext.TestInitialSequenceNumber, 30000, -1, []byte{header.TCPOptionSACKPermitted, 2, header.TCPOptionNOP, header.TCPOptionNOP})
+			c.EP.SocketOptions().SetDelayOption(false)
+			seq := seqnum.Value(testcontext.TestInitialSequenceNumber).Add(1)
+			base := c.IRS.Add(1)
+			send := func(value byte, offset int) {
+				t.Helper()
+				if n, err := c.EP.Write(bytes.NewReader([]byte{value}), tcpip.WriteOptions{}); n != 1 || err != nil {
+					t.Fatalf("write(%c)=%d,%v", value, n, err)
+				}
+				p := c.GetPacket()
+				defer p.Release()
+				h := header.TCP(header.IPv4(p.AsSlice()).Payload())
+				if h.SequenceNumber() != uint32(base.Add(seqnum.Size(offset))) || !bytes.Equal(h.Payload(), []byte{value}) {
+					t.Fatalf("sent seq %d data %x, want offset %d payload %c", h.SequenceNumber(), h.Payload(), offset, value)
+				}
+			}
+			await := func(end seqnum.Value) tcp.TCPSenderState {
+				t.Helper()
+				timer := time.NewTimer(5 * time.Second)
+				defer timer.Stop()
+				for {
+					select {
+					case s := <-states:
+						if s.RACKState.EndSequence == end {
+							return s
+						}
+					case <-timer.C:
+						t.Fatalf("missing ACK ending at %d", end)
+					}
+				}
+			}
+			send('W', 0)
+			clock.Advance(rtt)
+			c.SendAck(seq, 1)
+			await(base.Add(1))
+			for i, b := range []byte("ABCD") {
+				send(b, 1+i)
+			}
+			clock.Advance(rtt)
+			// A is absent. B and C arrived; the peer sends no more packets.
+			c.SendAckWithSACK(seq, 1, []header.SACKBlock{{Start: base.Add(2), End: base.Add(4)}})
+			s := await(base.Add(4))
+			if s.RACKState.RTT != rtt || s.SackedOut != 2 || s.RACKState.ReoWnd <= 0 {
+				t.Fatalf("RACK RTT %s window %s SACKed %d", s.RACKState.RTT, s.RACKState.ReoWnd, s.SackedOut)
+			}
+			wait := s.RACKState.ReoWnd + 2*c.Stack().ClockResolution()
+			half := wait / 2
+			clock.Advance(half)
+			if p := c.GetPacketNonBlocking(); p != nil {
+				p.Release()
+				t.Fatal("early repair before checkpoint")
+			}
+			read := func() string {
+				var seen []byte
+				for {
+					p := c.GetPacketNonBlocking()
+					if p == nil {
+						break
+					}
+					h := header.TCP(header.IPv4(p.AsSlice()).Payload())
+					for i, b := range h.Payload() {
+						if h.SequenceNumber()+uint32(i) != uint32(base.Add(seqnum.Size(b-'A'+1))) {
+							t.Fatalf("unexpected seq/payload %d/%q", h.SequenceNumber(), h.Payload())
+						}
+					}
+					seen = append(seen, h.Payload()...)
+					p.Release()
+				}
+				return string(seen)
+			}
+			if checkpoint {
+				st, link := restoreRACKTraceStack(t, c)
+				defer st.Destroy()
+				clock = st.Clock().(*faketime.ManualClock)
+				read = func() string {
+					var seen []byte
+					for {
+						p := link.Read()
+						if p == nil {
+							break
+						}
+						h := header.TCP(p.TransportHeader().Slice())
+						data := p.Data().AsRange().ToSlice()
+						for i, b := range data {
+							if h.SequenceNumber()+uint32(i) != uint32(base.Add(seqnum.Size(b-'A'+1))) {
+								t.Fatalf("restored seq/payload %d/%q", h.SequenceNumber(), data)
+							}
+						}
+						seen = append(seen, data...)
+						p.DecRef()
+					}
+					return string(seen)
+				}
+			}
+			clock.Advance(wait - half - time.Nanosecond)
+			if got := read(); got != "" {
+				t.Fatalf("repair before original expiry: %q", got)
+			}
+			clock.Advance(time.Nanosecond)
+			immediate := read()
+			first := immediate
+			delay := wait
+			for first == "" && delay < 2*time.Second {
+				clock.Advance(time.Millisecond)
+				delay += time.Millisecond
+				first = read()
+			}
+			if first == "" {
+				delay = -1
+			}
+			t.Logf("RACK_TRACE mode=%s sacked=BC allowance_ns=%d expiry_ns=%d at_expiry=%q first=%q first_ns=%d", name, s.RACKState.ReoWnd.Nanoseconds(), wait.Nanoseconds(), immediate, first, delay.Nanoseconds())
+			if immediate != "A" {
+				t.Errorf("at original expiry repaired %q, want just missing A", immediate)
+			}
+		})
 	}
 }
