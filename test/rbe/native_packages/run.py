@@ -102,7 +102,7 @@ def product_elf(bazel, common, work, execroot, arch):
         return {"status": "INCOMPLETE", "native_exit": result.returncode}
     files = [line for line in result.stdout.splitlines() if Path(line).name == "posix_error_test"]
     if len(files) != 1 or not (execroot / files[0]).is_file():
-        return {"status": "INCOMPLETE", "reason": "The original test executable was not produced"}
+        return {"status": "INCOMPLETE", "reason": "The original test executable was not materialized locally"}
     binary = execroot / files[0]
     data = elf(binary.read_bytes())
     data["target"] = TARGETS[0]
@@ -147,7 +147,9 @@ def qualify(arch, tmp, out, private, bazel):
               "--run_under=//test/rbe/native_glibc:loader " + " ".join(LOADER_ARGS[1:]),
               "--incompatible_use_native_posix_test_wrapper", "--nocache_test_results",
               "--nobuild_event_json_file_path_conversion", "--jobs=400",
-              "--remote_download_outputs=toplevel", "--noremote_upload_local_results",
+              "--remote_download_outputs=toplevel",
+              "--remote_download_regex=bazel-out/[^/]+/bin/test/util/posix_error_test$",
+              "--noremote_upload_local_results",
               "--noremote_local_fallback", "--spawn_strategy=remote", "--keep_going",
               "--color=no", "--curses=no"]
     extra = []
