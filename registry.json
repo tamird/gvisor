@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T21:37:29+00:00",
+    "updatedAt": "2026-11-01T21:47:22+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42614,6 +42614,36 @@
         "summary": "Open the standalone TCP timestamp detection fix?",
         "body": "In four packet cases, stock missed both delayed originals: one after timestamp wrap and one after a second timeout. The fix recognized both. Both senders ignored genuine retransmissions. The checks cover 87 passing TCP tests: 31 in the revised SACK suite and 56 in the unchanged transport and RACK suites. Both Nogo targets passed on AMD64 and ARM64."
       }
+    },
+    {
+      "id": "branch:pidfd-lock-contract",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/pidfd-lock-contract",
+      "head": "1bf9f3f36d3ae3b763049ccb0e2b3e80d4061e5b",
+      "title": "Check PIDFD task-set lock requirements",
+      "url": "https://github.com/tamird/gvisor/commit/1bf9f3f36",
+      "group": "analysis",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T21:47:22+00:00",
+      "summary": "PID lookup and PIDFD notifications share the TaskSet lock. Annotate the three entry points and fold the allocation helper into the guarded lookup so bypassing the lock is caught during analysis. Runtime locking is unchanged.",
+      "evidence": [
+        {
+          "label": "Both architecture analyzers, six missing-lock diagnostics, and all six Linux and gVisor syscall cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41353086095/artifacts/13102067904"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "1bf9f3f36d3ae3b763049ccb0e2b3e80d4061e5b",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/1bf9f3f36",
+        "title": "Check PIDFD task-set lock requirements",
+        "requestedAt": "2026-11-01T21:47:22+00:00",
+        "summary": "Open the PIDFD lock annotation PR?",
+        "body": "Dropping the lock at each of three callers triggers a diagnostic on both AMD64 and ARM64. All six existing PIDFD syscall tests passed on native AMD64 Linux and gVisor systrap. The positive analyzer checks passed on both architectures."
+      }
     }
   ],
   "edges": [
@@ -47966,7 +47996,7 @@
           ]
         },
         {
-          "text": "The sender traces contain a 32 KiB packetization pattern. In trials A and B, respectively, all 1,128 and 1,101 original 108-byte gVisor segments ended 32,768 sequence bytes after the preceding short original. Linux sent no short originals over the common intervals. With exactly 98 previously delivered data packets still between capture points, a gVisor pair lost its second packet 6/15 and 4/9 times following an ACK covering one full segment and a 108-byte tail, versus 2/85 and 5/64 following an ACK covering two full segments. The proxy reads in chunks of at most 32 KiB. The captures do not record individual write calls.",
+          "text": "The sender traces contain a 32 KiB packetization pattern. In trials A and B, respectively, all 1,128 and 1,101 original 108-byte gVisor segments ended 32,768 sequence bytes after the preceding short original. Linux sent no short originals over the common intervals. When 98 other data packets had crossed the first capture point and had yet to reach the second, a gVisor pair lost its second packet 6/15 and 4/9 times following an ACK covering one full segment and a 108-byte tail, versus 2/85 and 5/64 following an ACK covering two full segments. The proxy reads in chunks of at most 32 KiB. The captures do not record individual write calls.",
           "evidence": [
             {
               "label": "Original captures, sender statistics and test configuration",
