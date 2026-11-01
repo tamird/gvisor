@@ -529,6 +529,65 @@ func (e *endpoint) handleFragments(_ *stack.Route, networkMTU uint32, pkt *stack
 	}
 }
 
+// resegmentForwardedPacket splits a forwarded TCP segmentation offload
+// aggregate back into individual TCP packets that fit in networkMTU and
+// writes them with handler. handled is false if pkt is not an aggregate
+// that can be re-segmented to fit, in which case nothing was written and
+// the caller is responsible for the packet. If handled is true, it returns
+// the number of segments written and the number of segments that could not
+// be written due to the error returned.
+func (e *endpoint) resegmentForwardedPacket(networkMTU uint32, pkt *stack.PacketBuffer, handler func(*stack.PacketBuffer) tcpip.Error) (int, int, tcpip.Error, bool) {
+	if pkt.RXGSO.Type != stack.GSOTCPv4 || pkt.RXGSO.MSS == 0 {
+		return 0, 0, nil, false
+	}
+	networkHeader := header.IPv4(pkt.NetworkHeader().Slice())
+	if networkHeader.Protocol() != uint8(header.TCPProtocolNumber) {
+		return 0, 0, nil, false
+	}
+	ts, ok := ip.MakeTCPSegmenter(pkt, int(pkt.RXGSO.MSS), int(networkMTU), pkt.AvailableHeaderBytes()+len(networkHeader))
+	if !ok {
+		return 0, 0, nil, false
+	}
+	defer ts.Release()
+
+	srcAddr := networkHeader.SourceAddress()
+	dstAddr := networkHeader.DestinationAddress()
+	id := networkHeader.ID()
+	var n int
+	for i := 0; ; i++ {
+		segPkt, more := ts.BuildNextSegment()
+		segPkt.NetworkProtocolNumber = ProtocolNumber
+
+		segIPHeader := header.IPv4(segPkt.NetworkHeader().Push(len(networkHeader)))
+		if copied := copy(segIPHeader, networkHeader); copied != len(networkHeader) {
+			panic(fmt.Sprintf("wrong number of bytes copied into segIPHeader: got = %d, want = %d", copied, len(networkHeader)))
+		}
+		segIPHeader.SetTotalLength(uint16(segPkt.Size()))
+		// Linux's tcp_gso_segment() likewise gives each segment a
+		// consecutive ID.
+		segIPHeader.SetID(id + uint16(i))
+		segIPHeader.SetChecksum(0)
+		segIPHeader.SetChecksum(^segIPHeader.CalculateChecksum())
+
+		// The aggregate's checksum is not valid for the individual segments;
+		// compute each segment's from scratch.
+		tcpHdr := header.TCP(segPkt.TransportHeader().Slice())
+		xsum := header.PseudoHeaderChecksum(header.TCPProtocolNumber, srcAddr, dstAddr, uint16(segPkt.Size()-len(networkHeader)))
+		xsum = checksum.Combine(xsum, segPkt.Data().Checksum())
+		tcpHdr.SetChecksum(^tcpHdr.CalculateChecksum(xsum))
+
+		err := handler(segPkt)
+		segPkt.DecRef()
+		if err != nil {
+			return n, ts.RemainingSegmentCount() + 1, err, true
+		}
+		n++
+		if !more {
+			return n, 0, nil, true
+		}
+	}
+}
+
 // recalculateChecksum recalculates the transport checksum from the packet's
 // network header.
 func recalculateChecksum(pkt *stack.PacketBuffer) tcpip.Error {
@@ -698,6 +757,18 @@ func (e *endpoint) writePacketPostRouting(r *stack.Route, pkt *stack.PacketBuffe
 	if packetMustBeFragmented(pkt, networkMTU) {
 		h := header.IPv4(pkt.NetworkHeader().Slice())
 		if h.Flags()&header.IPv4FlagDontFragment != 0 && pkt.NetworkPacketInfo.IsForwardedPacket {
+			// The packet must not be fragmented. But if it is a segmentation
+			// offload aggregate, it does not represent a packet that was ever
+			// on a wire; the original sender's segments may well fit the MTU,
+			// in which case we re-segment instead of dropping, as Linux's
+			// ip_forward() does (see skb_gso_validate_network_len()).
+			if sent, remain, err, handled := e.resegmentForwardedPacket(networkMTU, pkt, func(segPkt *stack.PacketBuffer) tcpip.Error {
+				return e.nic.WritePacket(r, segPkt)
+			}); handled {
+				stats.PacketsSent.IncrementBy(uint64(sent))
+				stats.OutgoingPacketErrors.IncrementBy(uint64(remain))
+				return err
+			}
 			// TODO(gvisor.dev/issue/5919): Handle error condition in which DontFragment
 			// is set but the packet must be fragmented for the non-forwarding case.
 			return &tcpip.ErrMessageTooLong{}

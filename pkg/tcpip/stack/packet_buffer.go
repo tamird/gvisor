@@ -143,6 +143,14 @@ type PacketBuffer struct {
 	EgressRoute RouteInfo
 	GSOOptions  GSO
 
+	// RXGSO holds segmentation metadata for a packet that was received as a
+	// segmentation offload aggregate, as reported by the link endpoint (e.g.
+	// from the virtio-net header when the host performed GRO/TSO). Only Type
+	// and MSS are set. It allows a packet larger than the outgoing link's MTU
+	// to be re-segmented if it must be forwarded, mirroring Linux's handling
+	// of forwarded GSO skbs. It is not used when transmitting the packet.
+	RXGSO GSO
+
 	// snatDone indicates if the packet's source has been manipulated as per
 	// iptables NAT table.
 	snatDone bool
@@ -394,6 +402,7 @@ func (pk *PacketBuffer) Clone() *PacketBuffer {
 	newPk.Owner = pk.Owner
 	newPk.Mark = pk.Mark
 	newPk.GSOOptions = pk.GSOOptions
+	newPk.RXGSO = pk.RXGSO
 	newPk.EgressRoute = pk.EgressRoute
 	newPk.NetworkProtocolNumber = pk.NetworkProtocolNumber
 	newPk.dnatDone = pk.dnatDone
@@ -483,6 +492,7 @@ func (pk *PacketBuffer) DeepCopyForForwarding(reservedHeaderBytes int) *PacketBu
 	newPk.tuple = pk.tuple
 	newPk.Mark = pk.Mark
 	newPk.InputNICID = pk.InputNICID
+	newPk.RXGSO = pk.RXGSO
 
 	return newPk
 }

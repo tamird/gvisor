@@ -597,6 +597,68 @@ func TestIovecBufferSkipVnetHdr(t *testing.T) {
 	}
 }
 
+func TestIovecBufferRxGSO(t *testing.T) {
+	marshalVnetHdr := func(hdr virtioNetHdr) [virtioNetHdrSize]byte {
+		var out [virtioNetHdrSize]byte
+		copy(out[:], hdr.marshal())
+		return out
+	}
+	for _, test := range []struct {
+		desc         string
+		skipsVnetHdr bool
+		vnetHdr      virtioNetHdr
+		want         stack.GSO
+	}{
+		{
+			desc:         "no vnet header read",
+			skipsVnetHdr: false,
+			vnetHdr:      virtioNetHdr{gsoType: _VIRTIO_NET_HDR_GSO_TCPV4, gsoSize: 1434},
+			want:         stack.GSO{},
+		},
+		{
+			desc:         "not an aggregate",
+			skipsVnetHdr: true,
+			vnetHdr:      virtioNetHdr{},
+			want:         stack.GSO{},
+		},
+		{
+			desc:         "TCPv4 aggregate",
+			skipsVnetHdr: true,
+			vnetHdr:      virtioNetHdr{gsoType: _VIRTIO_NET_HDR_GSO_TCPV4, gsoSize: 1434},
+			want:         stack.GSO{Type: stack.GSOTCPv4, MSS: 1434},
+		},
+		{
+			desc:         "TCPv6 aggregate with ECN",
+			skipsVnetHdr: true,
+			vnetHdr:      virtioNetHdr{gsoType: _VIRTIO_NET_HDR_GSO_TCPV6 | _VIRTIO_NET_HDR_GSO_ECN, gsoSize: 1414},
+			want:         stack.GSO{Type: stack.GSOTCPv6, MSS: 1414},
+		},
+		{
+			desc:         "unknown type",
+			skipsVnetHdr: true,
+			vnetHdr:      virtioNetHdr{gsoType: 3 /* VIRTIO_NET_HDR_GSO_UDP */, gsoSize: 1434},
+			want:         stack.GSO{},
+		},
+		{
+			desc:         "zero size",
+			skipsVnetHdr: true,
+			vnetHdr:      virtioNetHdr{gsoType: _VIRTIO_NET_HDR_GSO_TCPV4},
+			want:         stack.GSO{},
+		},
+	} {
+		t.Run(test.desc, func(t *testing.T) {
+			b := newIovecBuffer([]int{128, 256}, test.skipsVnetHdr)
+			defer b.release()
+			b.nextIovecs()
+			// Pretend a read filled the vnet header.
+			b.vnetHdr = marshalVnetHdr(test.vnetHdr)
+			if got := b.rxGSO(); got != test.want {
+				t.Errorf("b.rxGSO() = %+v, want %+v", got, test.want)
+			}
+		})
+	}
+}
+
 // fakeNetworkDispatcher delivers packets to pkts.
 type fakeNetworkDispatcher struct {
 	pkts []*stack.PacketBuffer
@@ -778,6 +840,71 @@ func TestCloseReleasesStopFDs(t *testing.T) {
 		if after := countEventFDs(t); after != before {
 			t.Errorf("mode %d: eventfds before=%d after=%d, want equal", mode, before, after)
 		}
+	}
+}
+
+// TestDispatchVnetHdrGSO tests that the dispatchers preserve the GSO
+// metadata of packets the host hands over with a virtio-net header.
+func TestDispatchVnetHdrGSO(t *testing.T) {
+	for _, test := range []struct {
+		name          string
+		newDispatcher func(fd int, e *endpoint, opts *Options) (linkDispatcher, error)
+	}{
+		{
+			name:          "readVDispatcher",
+			newDispatcher: newReadVDispatcher,
+		},
+		{
+			name:          "recvMMsgDispatcher",
+			newDispatcher: newRecvMMsgDispatcher,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			// Create a socket pair to send/recv.
+			fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_DGRAM, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			vnetHdr := virtioNetHdr{
+				flags:   _VIRTIO_NET_HDR_F_NEEDS_CSUM,
+				gsoType: _VIRTIO_NET_HDR_GSO_TCPV4,
+				gsoSize: 1434,
+			}
+			netHdr := []byte{0x40, 0, 0, 0}
+			data := append(vnetHdr.marshal(), netHdr...)
+			if err := unix.Sendmsg(fds[1], data, nil, nil, 0); err != nil {
+				t.Fatal(err)
+			}
+
+			// Create and run dispatcher once.
+			sink := &fakeNetworkDispatcher{}
+			d, err := test.newDispatcher(fds[0], &endpoint{
+				gsoKind:    stack.HostGSOSupported,
+				dispatcher: sink,
+			}, &Options{ProcessorsPerChannel: 1})
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer d.release()
+			if ok, err := d.dispatch(); !ok || err != nil {
+				t.Fatalf("d.dispatch() = %v, %v", ok, err)
+			}
+
+			// Verify packet.
+			if got, want := len(sink.pkts), 1; got != want {
+				t.Fatalf("len(sink.pkts) = %d, want %d", got, want)
+			}
+			pkt := sink.pkts[0]
+			defer pkt.DecRef()
+			if got, want := pkt.RXGSO, (stack.GSO{Type: stack.GSOTCPv4, MSS: 1434}); got != want {
+				t.Errorf("pkt.RXGSO = %+v, want %+v", got, want)
+			}
+			// The virtio-net header must not be part of the packet contents.
+			if got, want := pkt.Data().Size(), len(netHdr); got != want {
+				t.Errorf("pkt.Data().Size() = %d, want %d", got, want)
+			}
+		})
 	}
 }
 

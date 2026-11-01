@@ -914,6 +914,61 @@ func recalculateChecksum(pkt *stack.PacketBuffer) tcpip.Error {
 	return nil
 }
 
+// resegmentForwardedPacket splits a forwarded TCP segmentation offload
+// aggregate back into individual TCP packets that fit in networkMTU and
+// writes them with handler. handled is false if pkt is not an aggregate
+// that can be re-segmented to fit, in which case nothing was written and
+// the caller is responsible for the packet. If handled is true, it returns
+// the number of segments written and the number of segments that could not
+// be written due to the error returned.
+func (e *endpoint) resegmentForwardedPacket(networkMTU uint32, pkt *stack.PacketBuffer, handler func(*stack.PacketBuffer) tcpip.Error) (int, int, tcpip.Error, bool) {
+	if pkt.RXGSO.Type != stack.GSOTCPv6 || pkt.RXGSO.MSS == 0 {
+		return 0, 0, nil, false
+	}
+	networkHeader := header.IPv6(pkt.NetworkHeader().Slice())
+	// Extension headers would have to be replicated into each segment with
+	// per-type handling; only re-segment packets without them.
+	if len(networkHeader) != header.IPv6MinimumSize || networkHeader.TransportProtocol() != header.TCPProtocolNumber {
+		return 0, 0, nil, false
+	}
+	ts, ok := ip.MakeTCPSegmenter(pkt, int(pkt.RXGSO.MSS), int(networkMTU), pkt.AvailableHeaderBytes()+len(networkHeader))
+	if !ok {
+		return 0, 0, nil, false
+	}
+	defer ts.Release()
+
+	srcAddr := networkHeader.SourceAddress()
+	dstAddr := networkHeader.DestinationAddress()
+	var n int
+	for {
+		segPkt, more := ts.BuildNextSegment()
+		segPkt.NetworkProtocolNumber = ProtocolNumber
+
+		segIPHeader := header.IPv6(segPkt.NetworkHeader().Push(len(networkHeader)))
+		if copied := copy(segIPHeader, networkHeader); copied != len(networkHeader) {
+			panic(fmt.Sprintf("wrong number of bytes copied into segIPHeader: got = %d, want = %d", copied, len(networkHeader)))
+		}
+		segIPHeader.SetPayloadLength(uint16(segPkt.Size() - len(networkHeader)))
+
+		// The aggregate's checksum is not valid for the individual segments;
+		// compute each segment's from scratch.
+		tcpHdr := header.TCP(segPkt.TransportHeader().Slice())
+		xsum := header.PseudoHeaderChecksum(header.TCPProtocolNumber, srcAddr, dstAddr, uint16(segPkt.Size()-len(networkHeader)))
+		xsum = checksum.Combine(xsum, segPkt.Data().Checksum())
+		tcpHdr.SetChecksum(^tcpHdr.CalculateChecksum(xsum))
+
+		err := handler(segPkt)
+		segPkt.DecRef()
+		if err != nil {
+			return n, ts.RemainingSegmentCount() + 1, err, true
+		}
+		n++
+		if !more {
+			return n, 0, nil, true
+		}
+	}
+}
+
 // WritePacket writes a packet to the given destination address and protocol.
 func (e *endpoint) WritePacket(r *stack.Route, params stack.NetworkHeaderParams, pkt *stack.PacketBuffer) tcpip.Error {
 	dstAddr := r.RemoteAddress()
@@ -1027,6 +1082,18 @@ func (e *endpoint) writePacket(r *stack.Route, pkt *stack.PacketBuffer, protocol
 
 	if packetMustBeFragmented(pkt, networkMTU) {
 		if pkt.NetworkPacketInfo.IsForwardedPacket {
+			// If the packet is a segmentation offload aggregate, it does not
+			// represent a packet that was ever on a wire; the original
+			// sender's segments may well fit the MTU, in which case we
+			// re-segment instead of dropping, as Linux's ip6_forward() does
+			// (see skb_gso_validate_network_len()).
+			if sent, remain, err, handled := e.resegmentForwardedPacket(networkMTU, pkt, func(segPkt *stack.PacketBuffer) tcpip.Error {
+				return e.nic.WritePacket(r, segPkt)
+			}); handled {
+				stats.PacketsSent.IncrementBy(uint64(sent))
+				stats.OutgoingPacketErrors.IncrementBy(uint64(remain))
+				return err
+			}
 			// As per RFC 2460, section 4.5:
 			//   Unlike IPv4, fragmentation in IPv6 is performed only by source nodes,
 			//   not by routers along a packet's delivery path.
