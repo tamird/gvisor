@@ -11,15 +11,16 @@ def observe(d):
     if not (d / "exit").exists():
         return {"verified": False}
     text=(d/"bazel.log").read_text(errors="replace")
-    middle=r"initial=(\d+) poll=(\d+) so=(\d+) after=(\d+) recv=(-?\d+) errno=(\d+) post=(\d+)"
-    rows={m[0]:dict(zip(("initial","poll","so_error","post_so_error","recv","errno","post_recv"), map(int,m[1:]))) for m in re.findall("ESTABLISHED_ICMP opt=([01]) "+middle, text)}
-    live=sorted(set(re.findall("ESTABLISHED_LIVE opt=([01])",text)))
+    pat=r"ESTAB_MSG opt=([01]) first=(true|false) poll=(\d+) so=(\d+) afterfirst=(\d+) n=(-?\d+) errno=(\d+) flags=(\d+) cbytes=(\d+) level=(\d+) type=(\d+) ee=(\d+) origin=(\d+) itype=(\d+) code=(\d+) again=(\d+) final=(\d+)"
+    fields="poll so_error after_first ret errno msg_flags control_bytes cmsg_level cmsg_type extended_errno origin icmp_type icmp_code next_errno final_poll".split()
+    rows={f"{m[0]}-{m[1]}":dict(zip(fields,map(int,m[2:]))) for m in re.findall(pat,text)}
+    live=sorted({f"{opt}-{first}" for opt,first in re.findall(r"ESTAB_MSG_LIVE opt=([01]) first=(true|false)",text)})
     be=str((d/"bep").read_text()) if (d/"bep").exists() else ""
     events=[json.loads(line) for line in be.splitlines() if line.startswith('{"')]
     inv=[x["started"]["uuid"] for x in events if "started" in x]
     summaries={x["id"]["testSummary"]["label"]:x["testSummary"]["overallStatus"] for x in events if "testSummary" in x}
     rc=int((d/"exit").read_text())
-    ok=rc==0 and len(inv)==1 and len(summaries)==1 and list(summaries.values())==["PASSED"] and set(rows)=={"0","1"} and live==["0","1"] and all(r["initial"]==0 and r["so_error"]==113 and r["post_recv"]==0 for r in rows.values())
+    ok=rc==0 and len(inv)==1 and len(summaries)==1 and list(summaries.values())==["PASSED"] and sorted(rows)==live==["0-false","0-true","1-false","1-true"] and all(r["next_errno"]==11 and r["final_poll"]==0 for r in rows.values()) and all(r["so_error"]==113 for k,r in rows.items() if k.startswith("0-") or k.endswith("-false"))
     return {"verified":ok,"exit":rc,"invocations":inv,"rows":rows,"continued":live,"summaries":summaries,"fixture_sha256":(d/"fixture").read_text().strip().split()[0],"start":(d/"start").read_text().strip(),"finish":(d/"finish").read_text().strip(),"diagnostics":[l[:300] for l in text.splitlines() if l.startswith(("ERROR:","FAIL:","[ RUN")) and not any(w in l.lower() for w in ("header","token","key","credential"))][:4]}
 
 
