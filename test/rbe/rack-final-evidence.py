@@ -95,6 +95,13 @@ if path := os.environ.get("ORIGINAL_VERDICT"):
     store()
     sys.exit(0)
 
+if os.environ.get("NOGO_ONLY"):
+    git("checkout", "--quiet", "--detach", product)
+    owners = [tcp + ":tcp_nogo", e2e + "tcp_rack_test_nogo", e2e + "tcp_test_nogo"]
+    baz("nogo", owners)
+    verify("nogo", nogo=True)
+    sys.exit(not records["nogo"]["complete"])
+
 git("checkout","--quiet","--detach",os.environ["CONTROL"])
 baz("control",[rack],"^(TestRACKRepairAboveHighestSACK|TestRACKWithWindowFull)$",expected=3)
 verify("control",["TestRACKWithWindowFull"],min_cases=2,late=[name])

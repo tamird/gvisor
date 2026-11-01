@@ -48,9 +48,11 @@ def baz(label, targets, filters="", mode="test", config="x86_64", race=False, ex
         flags += ["--strategy=TestRunner=remote","--test_sharding_strategy=disabled","--nocache_test_results",
                   "--test_output=all","--test_timeout=300","--test_env=GO_TEST_WRAP_TESTV=1","--test_arg=-test.v"]
         if filters: flags.append("--test_filter="+filters)
+    if label == "nogo": flags.append("--keep_going")
+    timeout = "35m" if label == "nogo" else "14m"
     start=now()
     with (d/"console").open("w") as log:
-        code=subprocess.run(["timeout","-k","30s","14m",*flags,*targets],stdout=log,stderr=subprocess.STDOUT).returncode
+        code=subprocess.run(["timeout","-k","30s",timeout,*flags,*targets],stdout=log,stderr=subprocess.STDOUT).returncode
     text=(d/"console").read_text(errors="replace")
     cases=re.findall(r"^\s*--- (PASS|FAIL|SKIP): (\S+) \(",text,re.M)
     events=[]
