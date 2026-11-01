@@ -37,6 +37,17 @@ jobs:
           printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
         } > "$RUNNER_TEMP/tcp.bazelrc"
+        python3 - <<'PYCODE'
+        import base64,json,os,re,urllib.request
+        try:
+            payload = {"invocationId":"289ce2b1-dec5-430e-9155-925df6b8b6f3", "minLines":20000}
+            req = urllib.request.Request("https://app.buildbuddy.io/rpc/BuildBuddyService/GetEventLogChunk",data=json.dumps(payload).encode(),headers={"Content-Type":"application/json","x-buildbuddy-api-key":os.environ["BUILDBUDDY_API_KEY"]})
+            with urllib.request.urlopen(req,timeout=30) as f: response=json.load(f)
+            lines = base64.b64decode(response["buffer"]).decode(errors="replace").splitlines()
+            print("Original compiler verdict:", [line[:400] for line in lines if re.search(r"posix_server.cc:[0-9]+.*(?:error:|fatal:)|fatal error: (?:Killed|compilation)",line) and len(line)<1000][:6])
+        except Exception as e:
+            print("Original compiler detail unavailable:",type(e).__name__)
+        PYCODE
         unset BUILDBUDDY_API_KEY
         docker pull --platform=linux/amd64 "$GNU"
         docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --sysctl net.ipv6.conf.lo.disable_ipv6=0 -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
@@ -74,7 +85,7 @@ jobs:
             done
           done
           case "$arm" in
-            linux|stock|netstack|prbase) git restore --source="$source" -- test/packetimpact/runner/defs.bzl test/packetimpact/tests/tcp_rack_test.go test/packetimpact/dut/posix_server.cc ;;
+            linux|stock|netstack|prbase) git restore --source="$source" -- test/packetimpact/runner/defs.bzl test/packetimpact/tests/tcp_rack_test.go pkg/tcpip/transport/tcp/protocol.go ;;
             *clock) git restore --source="$source" -- pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go ;;
           esac
         }

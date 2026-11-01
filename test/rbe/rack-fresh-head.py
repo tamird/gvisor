@@ -50,7 +50,7 @@ for arm in ("linux", "stock", "netstack", "prbase"):
         for case in ("open", "closed"):
             passed &= any(k.endswith("/" + case) and not v for k, v in named.items())
             passed &= len([s for s in trace if "CREDIT mode=" + case + " " in s]) == 1
-        note = [s.strip()[:520] for s in (text + "\n" + log).splitlines() if re.search(r"CREDIT mode=|tcp_rack_test.go:\d+|^ERROR:|^panic:|^--- FAIL|^FAIL:|^--- SKIP|failed to|disable RACK|check RACK|command returned|operation not permitted|read-only file system", s) and not re.search("token|authorization|api[_-]?key|bearer|remote[_-]?header|password",s,re.I)]
+        note = [s.strip()[:520] for s in (text + "\n" + log).splitlines() if re.search(r"CREDIT mode=|: error:|fatal error:|command not found|INFO: Elapsed time|tcp_rack_test.go:\d+|^ERROR:|^panic:|^--- FAIL|^FAIL:|^--- SKIP|failed to|disable RACK|check RACK|command returned|operation not permitted|read-only file system", s) and not re.search("token|authorization|api[_-]?key|bearer|remote[_-]?header|password",s,re.I)]
         results[label] = {"passed":passed, "actual":sorted(actual), "action":action, "summary":summary, "xml":len(cases), "skips":sum("skipped" in v for v in cases.values()), "named":named, "observations":trace, "diagnostics":note[-24:] if not passed or arm=="stock" else []}
     out[arm] = {"passed": all(r["passed"] for r in results.values()), "source":(d/"head").read_text().strip(), "exit":code, "targets":results, "invocations":re.findall(r"Invocation ID: ([\w-]+)", log)}
 record = {"fixture":hashlib.sha256((root/"rack-fresh-head.go.txt").read_bytes()).hexdigest(), "arms":out, "complete":all(r["passed"] for r in out.values())}

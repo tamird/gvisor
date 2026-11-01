@@ -16,12 +16,23 @@ func TestSACKCreditBeforeCumulativeACK(t *testing.T) {
 			n += header.EncodeMSSOption(1000, opts[n:])
 			n += header.EncodeNOP(opts[n:])
 			n += header.EncodeNOP(opts[n:])
-			conn.ConnectWithOptions(t, opts[:n])
+			conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn), Options: opts[:n]})
+			synack, err := conn.Expect(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn | header.TCPFlagAck)}, time.Second)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !header.ParseSynOptions(synack.Options, true).SACKPermitted {
+				t.Fatal("SACK not negotiated")
+			}
+			// Give Linux a real RTT before testing packet credit. Otherwise its
+			// independent TLP can send new data during an idle measurement.
+			time.Sleep(360 * time.Millisecond)
+			conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck)})
 			fd, _ := dut.Accept(t, listen)
 			defer dut.Close(t, fd)
 			before := dut.GetSockOptTCPInfo(t, fd)
 			mss, cwnd := 1000, int(before.SndCwnd)
-			if mss <= 0 || cwnd < 4 || cwnd > 20 || (cwnd+6)*mss >= int(wide) {
+			if before.SndMss != 0 && before.SndMss != uint32(mss) || cwnd < 4 || cwnd > 20 || (cwnd+6)*mss >= int(wide) {
 				t.Fatalf("unexpected mss=%d cwnd=%d", mss, cwnd)
 			}
 			base := *conn.RemoteSeqNum(t)
@@ -64,8 +75,8 @@ func TestSACKCreditBeforeCumulativeACK(t *testing.T) {
 				return packets
 			}
 			// No delivery/probe/recovery can be credited to the idle or duplicate gates.
-			const wait = 12 * time.Millisecond
-			idle := collect(wait)
+			const wait = 9 * time.Millisecond
+			idle := collect(210 * time.Millisecond)
 			var phases [][]int
 			var states []uint8
 			start := time.Now()
@@ -81,7 +92,7 @@ func TestSACKCreditBeforeCumulativeACK(t *testing.T) {
 			dt := time.Since(start)
 			conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(base.Add(seqnum.Size(cwnd * mss)))), WindowSize: &wide})
 			resume := collect(25 * time.Millisecond)
-			fmt.Printf("CREDIT mode=%s first=%d mss=%d idle=%v sack=%v repeat=%v extend=%v resume=%v states=%v elapsed_us=%d initial_rto_us=%d\n", tc.name, cwnd, mss, idle, phases[0], phases[1], phases[2], resume, states, dt.Microseconds(), before.RTO)
+			fmt.Printf("CREDIT mode=%s first=%d mss=%d idle=%v sack=%v repeat=%v extend=%v resume=%v states=%v elapsed_us=%d initial_rto_us=%d initial_rtt_us=%d\n", tc.name, cwnd, mss, idle, phases[0], phases[1], phases[2], resume, states, dt.Microseconds(), before.RTO, before.RTT)
 			if len(idle) != 0 || len(resume) == 0 || dt >= time.Duration(before.RTO)*time.Microsecond/2 {
 				t.Fatal("could not isolate sender credit or resume delivery before timeout")
 			}
