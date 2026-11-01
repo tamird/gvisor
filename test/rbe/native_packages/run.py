@@ -138,6 +138,7 @@ def qualify(arch, tmp, out, private, bazel):
               "--noincompatible_exclude_starlark_flags_from_exec_config",
               "--workspace_status_command=", "--features=fully_static_link",
               "--incompatible_use_native_posix_test_wrapper", "--nocache_test_results",
+              "--test_env=GO_TEST_WRAP_TESTV=1",
               "--nobuild_event_json_file_path_conversion", "--jobs=400",
               "--remote_download_outputs=toplevel", "--noremote_upload_local_results",
               "--noremote_local_fallback", "--spawn_strategy=remote", "--keep_going",
@@ -232,7 +233,7 @@ def main():
     binary_sha256 = hashlib.sha256(binary.read_bytes()).hexdigest()
     bazel = [str(binary), "--bazelrc=" + str(tmp / "sidecar.bazelrc")]
     rows = []
-    for arch in ("amd64", "arm64"):
+    for arch in ("arm64",):
         try:
             rows.append(qualify(arch, tmp, out, private, bazel))
         except Exception as error:

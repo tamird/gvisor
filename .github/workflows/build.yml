@@ -1,7 +1,7 @@
 name: Run original Go suites on native scratch workers
 on:
   push:
-    branches: [qualification/scratch-native-go-packages-scope]
+    branches: [qualification/scratch-native-go-packages-named]
 permissions:
   contents: read
   actions: read
@@ -41,7 +41,7 @@ jobs:
                     "member": "bazel-candidate", "member_sha256": hashlib.sha256((root / "bazel-candidate").read_bytes()).hexdigest()}
           (root / "native-package-evidence" / "bootstrap.json").write_text(json.dumps(result) + "\n")
           PY_BOOTSTRAP
-      - name: Test both packages on both native architectures
+      - name: Test both packages with named ARM64 results
         env:
           PRODUCT: 851d04fc2918adcaa60a78fd9fa7e766bc4fec68
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
