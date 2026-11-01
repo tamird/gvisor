@@ -144,7 +144,12 @@ func TestSackPermittedAccept(t *testing.T) {
 		{name: "cookie_no_timestamp", cookieEnabled: true, wndScale: -1, noTimestamp: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			for _, sackEnabled := range []bool{false, true} {
+			// Packetimpact covers the default stack setting for SYN cookies.
+			stackSACK := []bool{false}
+			if !tc.cookieEnabled {
+				stackSACK = append(stackSACK, true)
+			}
+			for _, sackEnabled := range stackSACK {
 				t.Run(fmt.Sprintf("sack=%t", sackEnabled), func(t *testing.T) {
 					c := context.New(t, e2e.DefaultMTU)
 					defer c.Cleanup()
