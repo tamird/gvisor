@@ -1,93 +1,50 @@
-name: Complete two semaphore analyzer owners
+name: Check the semaphore syscall fixture with the pinned formatter
 on:
   push:
-    branches: [qualification/semop-final-analysis]
+    branches: [qualification/semctl-format]
 permissions:
   contents: read
-  actions: read
 jobs:
-  qualify:
+  format:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 69
-    env:
-      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      SOURCE: 14a4e93a872bf6dd49893b6bd9a5f55517167e2b
-      REPORTER: fb60e127516defd6aab633f80be09a03022f0737
+    timeout-minutes: 6
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: carrier, persist-credentials: false, fetch-depth: 1}
-      - name: Prepare the existing result interpreter
-        working-directory: carrier
-        run: |
-          set -eu
-          mkdir -p "$RUNNER_TEMP/semop-owner-evidence"
-          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/semop-owner-evidence/verdict.json"
-          git fetch -q --no-tags --depth=1 origin "$REPORTER"
-          for module in qualification_report unit_matrix; do
-            git show "$REPORTER:test/rbe/$module.py" > "$RUNNER_TEMP/$module.py"
-          done
-          cp test/rbe/semop_owner_recovery.py "$RUNNER_TEMP/"
-          python3 -c 'import ast, sys; ast.parse(open(sys.argv[1]).read())' "$RUNNER_TEMP/semop_owner_recovery.py"
-      - name: Bind the four completed owners to the original artifact
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -eu
-          gh api repos/tamird/gvisor/actions/artifacts/13091282823/zip > "$RUNNER_TEMP/semop-prior.zip"
-          python3 "$RUNNER_TEMP/semop_owner_recovery.py" prior
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          path: product
-          ref: 14a4e93a872bf6dd49893b6bd9a5f55517167e2b
+          ref: 475bbaa0e3dde13c24d5e24c3fd8644eeaf932fe
           persist-credentials: false
           fetch-depth: 1
-      - name: Prepare the same GNU execution platform only for missing owners
-        working-directory: product
-        env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      - name: Run the source's formatter and retain its exact change
         run: |
           set -eu
-          umask 077
-          test "$(git rev-parse HEAD)" = "$SOURCE"
-          test -n "$BUILDBUDDY_API_KEY"
-          mkdir -p "$RUNNER_TEMP/gnu-platform"
-          printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
-          printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
-          {
-            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
-            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          } > "$RUNNER_TEMP/tcp.bazelrc"
-          unset BUILDBUDDY_API_KEY
-          timeout 180 docker pull --platform=linux/amd64 "$GNU"
-          docker run -d --cap-add SYS_ADMIN --security-opt seccomp=unconfined --name semop-compiler --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$PWD" "$GNU" -c 'sleep infinity'
-      - name: Run only owners missing original execution evidence
-        run: |
-          docker exec -e RUNNER_TEMP semop-compiler python3 "$RUNNER_TEMP/semop_owner_recovery.py" retry
-      - name: Preserve the original and independently verified completion
-        if: always()
-        run: python3 "$RUNNER_TEMP/semop_owner_recovery.py" finish
-      - name: Check the explicit artifact boundary
-        id: privacy
-        if: always()
-        env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: |
+          f=test/syscalls/linux/semaphore.cc
+          test "$(git rev-parse HEAD)" = 475bbaa0e3dde13c24d5e24c3fd8644eeaf932fe
+          mkdir "$RUNNER_TEMP/results"
+          cp "$f" "$RUNNER_TEMP/original.cc"
+          export LINT_CACHE_DIR="$RUNNER_TEMP/lint"
+          tools/lint.sh --fix clang-format
+          "$LINT_CACHE_DIR/clang-format-23.1.1" --version
+          "$LINT_CACHE_DIR/clang-format-23.1.1" --dry-run -Werror "$f"
+          git diff -- "$f" > "$RUNNER_TEMP/results/semaphore-format.patch"
           python3 - <<'PYCODE'
-          import os
-          from pathlib import Path
-          key = os.environ["BUILDBUDDY_API_KEY"].encode()
-          assert key
-          folder = Path(os.environ["RUNNER_TEMP"]) / "semop-owner-evidence"
-          for path in folder.iterdir():
-              assert path.is_file() and not path.is_symlink() and path.suffix in (".json", ".xml")
-              content = path.read_bytes()
-              assert key not in content and b"x-buildbuddy-api-key" not in content.lower()
+          import hashlib, json, os, pathlib, subprocess
+          root = pathlib.Path(os.environ["RUNNER_TEMP"])
+          before = (root / "original.cc").read_bytes()
+          after = pathlib.Path("test/syscalls/linux/semaphore.cc").read_bytes()
+          assert before.split() == after.split()
+          version = subprocess.check_output([root / "lint" / "clang-format-23.1.1", "--version"], text=True).strip()
+          assert "23.1.1" in version
+          (root / "results" / "receipt.json").write_text(json.dumps({
+              "source": "475bbaa0e3dde13c24d5e24c3fd8644eeaf932fe",
+              "version": version, "before": hashlib.sha256(before).hexdigest(),
+              "after": hashlib.sha256(after).hexdigest(), "postFormatViolations": 0,
+              "changed": before != after, "whitespaceOnly": True,
+          }, indent=2))
           PYCODE
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: always() && steps.privacy.outcome == 'success'
+        if: always()
         with:
-          name: semop-final-analysis
-          path: ${{ runner.temp }}/semop-owner-evidence
+          name: semctl-format
+          path: ${{runner.temp}}/results
           if-no-files-found: error
