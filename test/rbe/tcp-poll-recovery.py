@@ -54,6 +54,51 @@ def recover_original():
     (out/'original-go-logs.json').write_text(json.dumps({'invocation':iid, 'targets':rows},indent=2)+'\n')
 
 
+def first_errors():
+    ids = {
+        "arm-owners": "64a7ca56-2337-4619-873f-622b8aedcabf",
+        "arm-stdlib": "e6b69c62-6f00-4e61-911b-28607f80e7bb",
+        "msg-native": "9ffb29d8-726a-4041-bc65-4560cd68b9a3",
+        "msg-netstack": "ad50d4ea-cb9f-4192-8566-d750a2c94ef3",
+    }
+    errors = {}
+    for name, uuid in ids.items():
+        request = {"selector": {"invocation_id": uuid}}
+        kept = []
+        lines = 0
+        size = 0
+        for _ in range(15):
+            part = rpc("GetLog", request)
+            log = part["log"]["contents"]
+            size += len(log)
+            for line in log.splitlines():
+                # Never publish command lines, env, headers, URLs or tokens.
+                clean = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", line).strip()
+                if any(x in clean.lower() for x in ["bearer", "api-key", "credential", "header", "token=", "https:", "command line", "error executing", "--", "ghp_"]):
+                    continue
+                if re.search(r"(: error:|: fatal error:|(?:error|exception|fatal|panic):|no such file|exec format|failed to (?:load|parse|analyze|run)|cannot (?:read|open|find)|requires cgo|build cache is|not in std|not defined)", clean, re.I):
+                    clipped = clean[:420]
+                    if clipped not in kept and len(kept) < 12:
+                        kept.append(clipped)
+                lines += 1
+            page = part.get("nextPageToken",part.get("next_page_token"))
+            if not page:
+                break
+            request["page_token"] = page
+        errors[name] = {"invocation": uuid, "checked_lines": lines, "bytes": size, "diagnostics": kept}
+    (out/"prior-action-errors.json").write_text(json.dumps(errors,indent=2)+"\n")
+    for key, val in errors.items():
+        print(key, val["invocation"], *val["diagnostics"], sep="\n")
+
+
+def native_test_scope(name):
+    if name not in ("owners","analysis"):
+        raise ValueError("an explicit native TCP suite is required")
+    if os.uname().machine != "aarch64":
+        raise ValueError("ARM64 TestRunner must run on a native ARM64 host; a cross-build is not a test")
+    return owners if name == "owners" else lint
+
+
 def inspect(name, labels):
     d=out/name
     if not (d/'exit').is_file(): return {'verified':False,'missing':labels}
@@ -71,7 +116,7 @@ def inspect(name, labels):
         text=log.read_text(errors='replace')
         rows[label]={'digest':sha256(log.read_bytes()).hexdigest(),**go_counts(text)}
     rc=int((d/'exit').read_text())
-    ok=rc==0 and set(actual)==set(labels) and all(v=='PASSED' for v in actual.values())
+    ok=bool(labels) and rc==0 and set(actual)==set(labels) and all(v=='PASSED' for v in actual.values())
     if name=='owners': ok &= len(rows)==len(labels) and all(r['outcomes'].get('PASS',0)>0 and not r['failures'] for r in rows.values())
     detail=[s[:300] for s in (d/'log').read_text(errors='replace').splitlines() if s.startswith(('ERROR:','FAIL:','/bin/bash:')) and not any(x in s.lower() for x in ['token','header','credential','api-key'])][:6]
     return {'verified':ok,'source':source,'host_arch':os.uname().machine,'exit':rc,'start':(d/'start').read_text().strip(),'end':(d/'end').read_text().strip(),'invocations':inv,'target_status':actual,'missing':sorted(set(labels)-actual.keys()), 'individual_go_results':rows, 'first_diagnostics':detail}
@@ -79,8 +124,10 @@ def inspect(name, labels):
 
 if sys.argv[1]=='original':
     recover_original()
+elif sys.argv[1]=='prior-errors':
+    first_errors()
 elif sys.argv[1]=='labels':
-    print('\n'.join(owners if sys.argv[2]=='owners' else lint))
+    print('\n'.join(native_test_scope(sys.argv[2])))
 elif sys.argv[1]=='inspect':
     n=sys.argv[2];r=inspect(n,owners if n=='owners' else lint)
     (out/(n+'.json')).write_text(json.dumps(r,indent=2)+'\n')

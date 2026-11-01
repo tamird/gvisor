@@ -80,10 +80,10 @@ def inspect(name):
     else:
         owners=set(read(d/'labels','').splitlines())
         if name=='arm64-owners':
-            ok &= status==0 and all(completed.get(t) for t in owners)
+            ok = False  # A cross-build cannot qualify an ARM64 execution.
             row.update(build_only=True,missing=sorted(owners-{k for k,v in completed.items() if v}))
         else:
-            ok &= status==0 and set(actual)==owners and all(s=='PASSED' for s in actual.values()) and len(files)==len(owners) and counts['FAIL']==0
+            ok &= bool(owners) and status==0 and set(actual)==owners and all(s=='PASSED' for s in actual.values()) and len(files)==len(owners) and counts['FAIL']==0
             row.update(failures=asserts,missing=sorted(owners-actual.keys()),owner_xml=files)
         row.update(owners=sorted(owners))
     row.update(cases=dict(counts),skips=skips,targets=actual,verified=bool(ok),diagnostics=diag)

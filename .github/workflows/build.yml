@@ -1,4 +1,4 @@
-name: Recover native ARM64 TCP poll qualification
+name: Reconcile four original TCP qualification action errors
 on:
   push:
     branches: [qualification/tcp-poll-consumed-error]
@@ -15,56 +15,16 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-      - name: Replay the original target and socket results without repeating them
+      - name: Retrieve the four existing failures without another build
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/tcp-evidence"
-          cp test/rbe/tcp-poll-recovery.py "$RUNNER_TEMP/receipt.py"
-          python3 test/rbe/tcp-poll-result.py replay test/rbe/tcp-poll-original.json "$RUNNER_TEMP/tcp-evidence/socket-controls.json"
-          python3 "$RUNNER_TEMP/receipt.py" original
-      - name: Supply native GNU compiler tools and the cross tools the split analyzer selects
-        run: |
-          set -euo pipefail
-          test "$(uname -m)" = aarch64
-          git fetch --quiet --depth=1 https://github.com/tamird/gvisor.git "$SOURCE"
-          git checkout --quiet --detach "$SOURCE"
-          test "$(git rev-parse HEAD)" = "$SOURCE"
-          sudo apt-get -qq update
-          sudo apt-get -yq install --no-install-recommends g++ g++-x86-64-linux-gnu
-          x86_64-linux-gnu-gcc -dumpfullversion
-          aarch64-linux-gnu-gcc -dumpfullversion
-          command -v bazelisk
-      - name: Execute TCP owners and analyzers on the native ARM64 runner
-        env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: |
-          set -euo pipefail
-          export USE_BAZEL_VERSION
-          USE_BAZEL_VERSION=$(cat images/default/bazelversion)
-          rc="$RUNNER_TEMP/arm.bazelrc"
-          umask 077
-          trap 'rm -f "$rc"' EXIT
-          {
-            printf '%s\n' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --remote_cache_compression'
-            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          } > "$rc"
-          unset BUILDBUDDY_API_KEY
-          for name in owners analysis; do
-            d="$RUNNER_TEMP/tcp-evidence/$name"; mkdir -p "$d"
-            mapfile -t labels < <(python3 "$RUNNER_TEMP/receipt.py" labels "$name")
-            args=(); if [[ "$name" == owners ]]; then args+=(--test_arg=-test.v); fi
-            date -u +%FT%TZ > "$d/start"; code=0
-            timeout -k 25s 34m bazelisk --bazelrc="$rc" test --config=aarch64 --platforms=//tools/bazeldefs:linux_arm64 --spawn_strategy=local --strategy=TestRunner=local --jobs=4 --nocache_test_results --test_output=errors --test_sharding_strategy=disabled --keep_going --build_event_json_file="$d/bep" "${args[@]}" "${labels[@]}" > "$d/log" 2>&1 || code=$?
-            printf '%s\n' "$code" > "$d/exit"; date -u +%FT%TZ > "$d/end"
-            python3 "$RUNNER_TEMP/receipt.py" inspect "$name"
-          done
-          python3 "$RUNNER_TEMP/receipt.py" finish
+          python3 test/rbe/tcp-poll-recovery.py prior-errors
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: terminal-poll-recovery
+          name: original-action-errors
           path: ${{ runner.temp }}/tcp-evidence/*.json
           if-no-files-found: error
