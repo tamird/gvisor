@@ -48,6 +48,7 @@ def phase(name, args, expect_error=None, seconds=2400, cwd=None):
     log = T / (name + ".log")
     row = report["phases"][name] = {"start": now(), "invocation": uid, "source": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()}
     persist()
+    print(name, uid, row["start"], flush=True)
     cmd, *rest = args
     location = ["-w", str(cwd)] if cwd else []
     before = time.monotonic()
@@ -61,7 +62,7 @@ def phase(name, args, expect_error=None, seconds=2400, cwd=None):
         row["timeout"] = seconds
     text = log.read_text(errors="replace")
     row.update(finish=now(), seconds=round(time.monotonic()-before, 3))
-    row["errors"] = [line[:600] for line in text.splitlines() if re.search(r"ERROR:|Error in |error: |fatal error:", line)][-10:]
+    row["errors"] = [line[:600] for line in text.splitlines() if re.search(r"ERROR:|Error in |error: |FATAL:|fatal error:|server process|SIG(KILL|TERM)|server needs to be killed", line, re.I) and not re.search(r"header|api.key|credential", line, re.I)][-10:]
     row["work"] = [line for line in text.splitlines() if re.search(r" processes:| processes?:|Build completed|Analyzed target",line)][-5:]
     row["ok"] = (isinstance(row.get("exit"), int) and row["exit"] != 0 and bool(re.search(expect_error, text, re.I)) if expect_error else row.get("exit") == 0)
     persist()
@@ -157,31 +158,14 @@ def dirwatch():
 
 OUT.mkdir(exist_ok=True)
 persist()
+report["original"] = "https://github.com/tamird/gvisor/actions/runs/41327424761/artifacts/13091404793"
 try:
-    checkout(STOCK)
-    version = "8.8.1"
-    assert Path(".bazelversion").read_text().strip() == version
-    phase("stock-release-analysis", ["build", *options(), "--nobuild", RELEASE, HOSTARCH, PARSER])
-    if ARCH == "amd64":
-        independent("license-" + version + "-verify", licenses)
-    version = "9.3.1"
-    if ARCH == "amd64":
-        phase("stock-coral-control", ["query", "@crosstool//:toolchains"], r"(cc_toolchain|cc_common|CcToolchainConfigInfo).*(not defined|removed|undefined)")
-        phase("stock-llvm-control", ["query", DEMANGLE], r"(sh_binary|CcInfo|proto_library).*(not defined|removed|undefined)")
     checkout(PRODUCT)
+    version = "9.3.1"
     assert Path(".bazelversion").read_text().strip() == version
-    if ARCH == "amd64":
-        independent("dirwatch", dirwatch)
     phase("release-and-test", ["build", *options(), RELEASE, HOSTARCH], seconds=3600)
     if report["phases"]["release-and-test"]["ok"]:
         independent("release-artifacts", native_files)
-    path = phase("parser-analysis", ["cquery", *options(), "somepath(" + PARSER + "," + DEMANGLE + ")"])
-    report["phases"]["parser-analysis"]["ok"] &= PARSER in path and "//llvm:Demangle" in path
-    persist()
-    if ARCH == "amd64" and report["phases"]["parser-analysis"]["ok"]:
-        phase("parser-input", ["build", *options(), DEMANGLE])
-    if ARCH == "amd64":
-        independent("license-" + version + "-verify", licenses)
     report["complete"] = bool(report.get("outputs")) and all(row["ok"] for row in report["phases"].values())
 except Exception as err:
     report["collection_error"] = f"{type(err).__name__}: {str(err)[:500]}"

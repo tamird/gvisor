@@ -1,7 +1,7 @@
-name: Qualify Bazel 9 on both gVisor release architectures
+name: Recover the original ARM64 Bazel 9 release and native smoke
 on:
   push:
-    branches: [qualification/bazel-9-3-1]
+    branches: [qualification/bazel-9-3-1-arm-release]
 permissions:
   contents: read
 jobs:
@@ -9,7 +9,7 @@ jobs:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     strategy:
       fail-fast: false
-      matrix: {arch: [amd64, arm64]}
+      matrix: {arch: [arm64]}
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     env:
@@ -42,10 +42,34 @@ jobs:
           } > "$d/bb.rc"
           unset BUILDBUDDY_API_KEY
           docker pull --platform=linux/amd64 "$GNU"
-          docker run -d --name gnu --entrypoint /bin/bash --user root -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e "GIT_CONFIG_VALUE_0=$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+          docker run --init -d --name gnu --entrypoint /bin/bash --user root -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e "GIT_CONFIG_VALUE_0=$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
           for ver in 8.8.1 9.3.1; do [[ "$(docker exec gnu "$d/bazel-$ver" --version)" == "bazel $ver" ]]; done
       - name: Build the release and hostarch test with the pinned tools
         run: python3 "$RUNNER_TEMP/bazel9/qualify.py"
+      - name: Isolate the previous client transition using only bazel info
+        if: always()
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/bazel9"
+          mkdir -p "$d/client-control"
+          touch "$d/client-control/MODULE.bazel"
+          docker run -d --name bare --entrypoint /bin/bash --user root -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$d/client-control" "$GNU" -c 'sleep infinity'
+          for container in bare gnu; do
+            rc=0
+            for version in 8.8.1 9.3.1; do
+              log="$d/client-$container-$version.log"
+              docker exec -w "$d/client-control" "$container" "$d/bazel-$version" --ignore_all_rc_files info release >"$log" 2>&1 || rc=$?
+              grep -Eq "^release $version$|^FATAL: Attempted to kill stale server process" "$log"
+              echo "$container $version exit=$rc" >> "$d/records/client-transition.txt"
+              grep -E "^(release |FATAL: Attempted to kill stale server process)" "$log" >> "$d/records/client-transition.txt"
+            done
+            if [[ "$container" == bare ]]; then
+              [[ $rc -eq 36 ]]
+              grep -q "using SIGKILL, but it did not die in a timely fashion" "$log"
+            else
+              [[ $rc -eq 0 ]]
+            fi
+          done
       - name: Check receipt boundary
         id: privacy
         if: always()
@@ -63,7 +87,7 @@ jobs:
         if: always() && steps.privacy.outcome == 'success'
         with:
           name: build-${{ matrix.arch }}
-          path: ${{ runner.temp }}/bazel9/records/verdict.json
+          path: ${{ runner.temp }}/bazel9/records/
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
@@ -77,7 +101,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {arch: amd64, runner: ubuntu-24.04, machine: x86_64}
           - {arch: arm64, runner: ubuntu-24.04-arm, machine: aarch64}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 10
