@@ -23,10 +23,12 @@ CASES = {
     TARGETS[1]: ["FsUtilTest/RecursivelyCreateDirManualDelete", "FsUtilTest/RecursivelyCreateAndDeleteDir", "FsUtilTest/RecursivelyCreateAndDeletePartial"],
 }
 ABI = {
-    "qualified": "musl, selected by the supplier's existing target platforms",
+    "selected": "musl, selected by the supplier's existing target platforms",
     "gnu_control": {"run": 41297166023, "artifact": 13079933163, "metadata_artifact": 13080650694,
                     "cases_per_arch": 3, "scope": "Same PosixError source under explicitly declared GNU loader/runtime"},
     "limitation": "These utility tests do not qualify the general syscall suite's Linux/glibc behavior: musl can select different syscalls and libc behavior.",
+    "prior_musl_attempt": {"run": 41298935746, "artifact": 13079619632, "status": "FAIL",
+                           "executed_tests": 0, "cause": "cc_test selected shared C++ runtimes for the static musl link"},
     "supplier_static_contract": "https://github.com/hermeticbuild/hermetic-llvm/blob/39e71f939/README.md#musl",
     "supplier_gnu_contract": "https://github.com/hermeticbuild/hermetic-llvm/blob/39e71f939/runtimes/glibc/README.md",
 }
@@ -98,6 +100,144 @@ def native_actions(path, arch, tmp):
             "tests": tests, "failed_or_other": bad}
 
 
+
+def static_links(graph):
+    """Require both link actions to consume the supplier's static runtimes."""
+    fragments = {str(f["id"]): f for f in graph["pathFragments"]}
+    def path(fragment_id):
+        fragment = fragments[str(fragment_id)]
+        parent = fragment.get("parentId")
+        return (path(parent) + "/" if parent else "") + fragment["label"]
+    artifacts = {str(a["id"]): path(a["pathFragmentId"]) for a in graph["artifacts"]}
+    deps = {str(d["id"]): d for d in graph["depSetOfFiles"]}
+    targets = {str(t["id"]): t["label"] for t in graph["targets"]}
+    def input_paths(action):
+        seen, inputs = set(), set()
+        pending = list(action["inputDepSetIds"])
+        while pending:
+            key = str(pending.pop())
+            if key in seen:
+                continue
+            seen.add(key)
+            dep = deps[key]
+            inputs.update(artifacts[str(i)] for i in dep.get("directArtifactIds", []))
+            pending.extend(dep.get("transitiveDepSetIds", []))
+        return inputs
+    producers = {artifacts[str(output)]: action for action in graph["actions"] for output in action["outputIds"]}
+    links = []
+    for action in graph["actions"]:
+        if action["mnemonic"] != "CppLink":
+            continue
+        target = targets[str(action["targetId"])]
+        if target not in TARGETS:
+            continue
+        params = {p["execPath"]: p["arguments"] for p in action.get("paramFiles", [])}
+        args = [value for arg in action["arguments"]
+                for value in (params[arg[1:]] if arg.startswith("@") else [arg])]
+        inputs = input_paths(action)
+        archives = {}
+        for name in ("libcxx", "libcxxabi", "libunwind"):
+            selected = [arg for arg in args if "/" + name + "/" in arg and arg.endswith(".a") and arg in inputs]
+            if len(selected) != 1:
+                raise ValueError(target + ": link does not select one declared " + name)
+            archives[name] = selected[0]
+        search = [arg[2:] for arg in args if arg.startswith("-L") and len(arg) > 2]
+        search.extend(args[i + 1] for i, arg in enumerate(args[:-1]) if arg == "-L")
+        # This supplier declares the search directory as a tree artifact.
+        # Bind that tree to its own copy action and the real libc.a input.
+        directories = [name for name in search if name in inputs and name in producers
+                       and targets[str(producers[name]["targetId"])].endswith("//runtimes/musl:musl_library_search_directory")]
+        if len(directories) != 1:
+            raise ValueError(target + ": musl library search directory is not a declared, produced input")
+        libc = [name for name in input_paths(producers[directories[0]]) if Path(name).name == "libc.a"]
+        if len(libc) != 1:
+            raise ValueError(target + ": selected musl directory does not consume one libc.a")
+        archives["libc.a"] = libc[0]
+        static = [arg for arg in args if arg in ("-static", "-static-pie")]
+        shared = [arg for arg in args if re.search(r"\.so(?:\.[0-9]+)*$", arg)]
+        if not static or shared:
+            raise ValueError(target + ": link is not static or still selects a shared object")
+        links.append({"target": target, "action_key": action["actionKey"],
+                      "archives": archives, "libc_search_directory": directories[0], "static_options": static,
+                      "execution_platform": action["executionPlatform"]})
+    if collections.Counter(link["target"] for link in links) != collections.Counter(TARGETS):
+        raise ValueError("The graph does not have exactly one link action for each original test")
+    return {"status": "PASS", "links": links}
+
+
+
+def static_link_controls():
+    """Exercise the graph predicate before either remote compilation."""
+    paths = ["external/llvm/libcxx/liblibcxx.static.a", "external/llvm/libcxxabi/liblibcxxabi.static.a",
+             "external/llvm/libunwind/liblibunwind.static.a", "external/llvm/musl/musl_library_search_directory",
+             "external/llvm/musl/libc.a", "test/util/posix_error_test", "test/util/fs_util_test"]
+    fragments, ids = [], {}
+    artifacts = []
+    for index, value in enumerate(paths, 1):
+        parent, prefix = 0, ""
+        for part in value.split("/"):
+            prefix += "/" + part
+            if prefix not in ids:
+                ids[prefix] = len(ids) + 1
+                fragments.append({"id": ids[prefix], "label": part, "parentId": parent})
+            parent = ids[prefix]
+        artifacts.append({"id": index, "pathFragmentId": parent, "isTreeArtifact": index == 4})
+    args = ["-static", "-L" + paths[3], *paths[:3]]
+    graph = {"pathFragments": fragments, "artifacts": artifacts,
+             "targets": [{"id": i + 1, "label": target} for i, target in enumerate(TARGETS)]
+                        + [{"id": 3, "label": "@@llvm+//runtimes/musl:musl_library_search_directory"}],
+             "depSetOfFiles": [{"id": 1, "directArtifactIds": [1, 2, 3, 4]},
+                               {"id": 2, "directArtifactIds": [5]}],
+             "actions": [{"mnemonic": "CppLink", "targetId": i + 1, "actionKey": str(i),
+                          "arguments": ["clang", "@params"], "paramFiles": [{"execPath": "params", "arguments": list(args)}],
+                          "inputDepSetIds": [1], "outputIds": [i + 6], "executionPlatform": "//fixture:native"}
+                         for i in range(2)]
+                        + [{"mnemonic": "CopyToDirectory", "targetId": 3, "inputDepSetIds": [2], "outputIds": [4]}]}
+    static_links(graph)
+    for mutation in ("dynamic", "shared", "undeclared_archive", "missing_libc", "missing_owner"):
+        changed = json.loads(json.dumps(graph))
+        flags = changed["actions"][0]["paramFiles"][0]["arguments"]
+        if mutation == "dynamic":
+            flags.remove("-static")
+        elif mutation == "shared":
+            flags.append("external/llvm/libcxx/libc++.so.1")
+        elif mutation == "undeclared_archive":
+            changed["depSetOfFiles"][0]["directArtifactIds"].remove(1)
+        elif mutation == "missing_libc":
+            changed["depSetOfFiles"][1]["directArtifactIds"] = []
+        else:
+            changed["actions"].pop(1)
+        try:
+            static_links(changed)
+        except ValueError:
+            continue
+        raise ValueError("Static-link graph predicate accepts " + mutation)
+    return {"status": "PASS", "controls": 6}
+
+
+def link_graph(bazel, common, work):
+    """Analyze, but never execute, the same two target configurations."""
+    selected = "set(" + " ".join(TARGETS) + ")"
+    query = ('outputs(".*/(posix_error_test|fs_util_test|musl_library_search_directory)$", '
+             'deps(' + selected + '))')
+    raw = work / "link-graph.json"
+    started = now()
+    with raw.open("w") as output, (work / "link-graph.log").open("w") as log:
+        code = subprocess.run(["timeout", "--signal=INT", "--kill-after=25s", "12m",
+                               *bazel, "aquery", *common, "--output=jsonproto",
+                               "--include_artifacts", "--include_commandline", "--include_param_files", query],
+                              stdout=output, stderr=log).returncode
+    result = {"status": "INCOMPLETE", "native_exit": code, "started_at": started,
+              "execution_finished_at": now()}
+    if code == 0:
+        try:
+            result.update(static_links(json.loads(raw.read_text())))
+        except (KeyError, ValueError) as err:
+            result["reason"] = str(err)
+    result["verified_at"] = now()
+    return result
+
+
 def product_elf(bazel, common, work, execroot, arch):
     with (work / "output-query.log").open("w") as log:
         result = subprocess.run(["timeout", "--signal=INT", "--kill-after=25s", "8m",
@@ -136,7 +276,7 @@ def qualify(arch, tmp, out, private, bazel):
     row["execution_platform"] = platform
     common = ["--config=" + {"amd64": "x86_64", "arm64": "aarch64"}[arch],
               "--platforms=" + target_platform,
-              "--compilation_mode=fastbuild", "--host_platform=" + platform,
+              "--compilation_mode=fastbuild", "--dynamic_mode=off", "--host_platform=" + platform,
               "--extra_execution_platforms=" + platform,
               "--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
               "--extra_toolchains=//test/rbe/go_bootstrap:linux_" + arch + "_ash",
@@ -149,6 +289,10 @@ def qualify(arch, tmp, out, private, bazel):
               "--noremote_upload_local_results",
               "--noremote_local_fallback", "--spawn_strategy=remote", "--keep_going",
               "--color=no", "--curses=no"]
+    row["phases"]["static_link_graph"] = link_graph(bazel, common, work)
+    write(public / "receipt.json", row)
+    if row["phases"]["static_link_graph"]["status"] != "PASS":
+        return row
     extra = []
     for phase in ("analysis", "test"):
         raw = work / (phase + ".bep")
@@ -216,6 +360,7 @@ def main():
     out.mkdir(exist_ok=True)
     private = tmp / "native-package-private"
     private.mkdir(exist_ok=True)
+    write(out / "static-link-controls.json", static_link_controls())
     control = json.loads((tmp / "native-wrapper-control.json").read_text())
     actual = control["test_action"]
     targets = [actual["target"]]
