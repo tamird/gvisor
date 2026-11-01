@@ -1,0 +1,41 @@
+
+func TestFrameObservation(t *testing.T) {
+	saved := map[uint8]uint8{7: 11}
+	var buf bytes.Buffer
+	if !GraphEngineEnabled() {
+		t.Fatal("public Save is not using the graph engine")
+	}
+	if _, err := Save(t.Context(), &buf, &saved); err != nil {
+		t.Fatal(err)
+	}
+	all := buf.Bytes()
+	header, err := ReadHeaderMode(&wire.Reader{Reader: bytes.NewReader(all)})
+	if err != nil || !header.Graph || !bytes.HasSuffix(all, []byte{2, 7, 11}) {
+		t.Fatalf("header=%v err=%v bytes=%x", header, err, all)
+	}
+	raw := all[len(all)-int(header.Length):]
+	for _, size := range []byte{2, 1, 2} {
+		raw[len(raw)-3] = size
+		var got map[uint8]uint8
+		_, loadErr := Load(t.Context(), bytes.NewReader(all), &got)
+		var printed strings.Builder
+		printErr := PrintGraph(&printed, raw, 0, false)
+		outcome := func(err error) string {
+			if err == nil {
+				return "ok"
+			}
+			if strings.Contains(err.Error(), "state data truncated") {
+				return "truncated"
+			}
+			t.Fatalf("unexpected graph error: %v", err)
+			return ""
+		}
+		if loadErr == nil && !reflect.DeepEqual(got, saved) {
+			t.Fatalf("accepted %v, want %v", got, saved)
+		}
+		if printErr == nil && printed.Len() == 0 {
+			t.Fatal("printer returned no objects")
+		}
+		t.Logf("FRAME bytes=%v load=%s print=%s decoded=%v", raw[len(raw)-3:], outcome(loadErr), outcome(printErr), got)
+	}
+}
