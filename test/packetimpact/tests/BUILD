@@ -111,6 +111,16 @@ packetimpact_testbench(
 )
 
 packetimpact_testbench(
+    name = "tcp_duplicate_syn",
+    srcs = ["tcp_duplicate_syn_test.go"],
+    deps = [
+        "//pkg/tcpip/header",
+        "//test/packetimpact/testbench",
+        "@org_golang_x_sys//unix:go_default_library",
+    ],
+)
+
+packetimpact_testbench(
     name = "tcp_retransmits",
     srcs = ["tcp_retransmits_test.go"],
     deps = [
