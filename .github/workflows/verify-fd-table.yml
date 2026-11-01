@@ -1,7 +1,7 @@
 name: Qualify the FDTable writer contract
 on:
   push:
-    branches: [qualification/fd-table-contracts-nov1]
+    branches: [qualification/fd-table-arm-gnu-nov1]
 permissions:
   contents: read
 jobs:
@@ -14,9 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {"pr": "fd-table-positive", "sha": "5c792dd87213269723e419efcc83feaf90728ed9", "arch": "amd64", "cpu": "x86_64", "runner": "ubuntu-24.04", "image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a", "isolation": "firecracker"}
           - {"pr": "fd-table-positive", "sha": "5c792dd87213269723e419efcc83feaf90728ed9", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm", "image": "docker://mirror.gcr.io/library/gcc@sha256:66035d353338cb93b64f621393dc6fecde85258651ca454f0cf36ff2639b1352", "isolation": "oci"}
-          - {"pr": "fd-table-negative", "sha": "7e42854f555f8c9d56263038e48875a20f7cc9b7", "arch": "amd64", "cpu": "x86_64", "runner": "ubuntu-24.04", "image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a", "isolation": "firecracker"}
           - {"pr": "fd-table-negative", "sha": "7e42854f555f8c9d56263038e48875a20f7cc9b7", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm", "image": "docker://mirror.gcr.io/library/gcc@sha256:66035d353338cb93b64f621393dc6fecde85258651ca454f0cf36ff2639b1352", "isolation": "oci"}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -78,7 +76,7 @@ jobs:
               "build --inject_repository=catalog_platform=$platform" \
               'build --host_platform=@catalog_platform//:gnu' \
               'build --extra_execution_platforms=@catalog_platform//:gnu' \
-              "build --platforms=//tools/bazeldefs:linux_$ARCH"
+              "build --config=$CPU"
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$rc"
