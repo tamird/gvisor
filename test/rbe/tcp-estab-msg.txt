@@ -34,7 +34,7 @@ func TestEstablishedICMPPoll(t *testing.T) {
 				msgLayers := conn.CreateFrame(t, nil)
 				msgLayers[len(msgLayers)-1] = &testbench.ICMPv6{
 					Type: testbench.ICMPv6Type(header.ICMPv6DstUnreachable),
-					Code: testbench.ICMPv6Code(header.ICMPv6AddressUnreachable),
+					Code: testbench.ICMPv6Code(header.ICMPv6NetworkUnreachable),
 					Payload: quote,
 				}
 				conn.SendFrameStateless(t, msgLayers)
@@ -57,7 +57,7 @@ func TestEstablishedICMPPoll(t *testing.T) {
 					level,typ=c.Header.Level,c.Header.Type
 					if level!=unix.IPPROTO_IPV6 || typ!=unix.IPV6_RECVERR || len(c.Data)<16 {t.Fatalf("unexpected control level=%d type=%d len=%d",level,typ,len(c.Data))}
 					ee=binary.NativeEndian.Uint32(c.Data[:4]);origin,icmpType,icmpCode=c.Data[4],c.Data[5],c.Data[6]
-					if ee!=uint32(unix.EHOSTUNREACH) || origin!=3 || icmpType!=1 || icmpCode!=3 || msg.GetMsgFlags()&unix.MSG_ERRQUEUE==0 {t.Fatalf("wrong extended ICMP error: flags %#x errno/origin/type/code=%d/%d/%d/%d", msg.GetMsgFlags(),ee,origin,icmpType,icmpCode)}
+					if ee!=uint32(unix.ENETUNREACH) || origin!=3 || icmpType!=1 || icmpCode!=0 || msg.GetMsgFlags()&unix.MSG_ERRQUEUE==0 {t.Fatalf("wrong extended ICMP error: flags %#x errno/origin/type/code=%d/%d/%d/%d", msg.GetMsgFlags(),ee,origin,icmpType,icmpCode)}
 				}
 				if msgFirst {
 					afterFirst=pollerr(0)
