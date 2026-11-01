@@ -75,6 +75,14 @@ for arch,config in [('amd64','x86_64'),('arm64','aarch64')]:
                         for m in t:
                             if m.isfile(): vals[m.name]={'mtime':m.mtime,'sha256':hashlib.sha256(t.extractfile(m).read()).hexdigest()}
                 (out/(arch+'-'+f.name+'.json')).write_text(json.dumps(vals,indent=2))
+        if arch == "amd64" and arm['verdict']=='MATCH':
+            stage=tmp/"staged-python"
+            options=" ".join(["--config="+config,"--lockfile_mode=off","--host_platform="+platform,"--extra_execution_platforms="+platform,"--extra_toolchains="+runtime,"--modify_execution_info=^SandboxExecDist$=+no-remote-cache"])
+            argv=["make","DOCKER_BUILD=false","DOCKER_CLI_PATH=/bin/false","STARTUP_OPTIONS=--bazelrc="+str(tmp/'sidecar.bazelrc'),"BAZEL_OPTIONS="+options,"PYTHON_RELEASE_DEST="+str(stage),"RELEASE_NAME=release-20261029.2","artifacts-python"]
+            m=subprocess.run(["timeout","--signal=INT","--kill-after=15s","8m",*argv],stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
+            arm['make']={'args':argv,'native_exit':m.returncode,'invocations':re.findall(r'Invocation ID: ([0-9a-f-]{36})',m.stdout),'errors':[l[:450] for l in m.stdout.splitlines() if ('ERROR:' in l or 'Error ' in l or 'not found' in l) and not re.search(r'api.?key|authorization|credential|remote_header',l,re.I)][-8:]}
+            if stage.is_dir():arm['make']['files']={f.name:digest(f) for f in stage.iterdir()}
+            assert m.returncode==0 and arm['make'].get('files')==results['baseline'],arm['make']
     except Exception as exc:
         arm['verdict']='INCOMPLETE';arm['reason']=repr(exc)[:700]
     arm['finished']=now();save();print(arch,arm.get('native_exit'),arm['verdict'],arm.get('errors'),arm.get('reason'),flush=True)

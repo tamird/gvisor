@@ -38,8 +38,8 @@ jobs:
       - name: Build the two distributions on the AMD64 and ARM64 scratch executors
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-          PROOF: 7cfa6f9cbf2920874de6d611ca1a278b1471bb8d
-          PRODUCT: 9fdfeec6eec72081a859d408c558fbe2e554e604
+          PROOF: 9bcccb5e2a4313a01f0104d62166f42b43482b5f
+          PRODUCT: 8533dc779cb762ff39360e8d2d644202e2e32c74
         run: |
           set -eu
           umask 077
