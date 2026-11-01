@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T19:40:22.453604+00:00",
+    "updatedAt": "2026-11-01T20:02:19.223466+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -58943,7 +58943,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T19:40:22.453604+00:00",
+      "updatedAt": "2026-11-01T20:02:19.223466+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -60522,9 +60522,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41342843737/artifacts/13098301782"
             }
           ]
+        },
+        {
+          "text": "Declaring Bash for both foreign_cc wrappers and recursive GNU Make let libpluginstack generate its DPDK configuration. DPDK then launched buildtools/gen-config-h.sh directly. Its /bin/sh interpreter was absent, and the configuration recipe exited 127. Four helper scripts in the pinned Make rules are launched this way; only gen-config-h.sh was reached in this run.",
+          "evidence": [
+            {
+              "label": "Actual plugin action on the tool-free worker",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41343924425/artifacts/13097693706"
+            },
+            {
+              "label": "Original failing command and exit status",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41344636849/artifacts/13097844259"
+            }
+          ]
         }
       ],
-      "nextStep": "Use an isolated, writable temporary directory when qualifying these Go and LLVM actions. The next uncovered consumer is libpluginstack: check the actual Make target and identify the rule that still starts Bash.",
+      "nextStep": "The optional DPDK plugin still needs a way to launch its POSIX helpers with a declared shell. Review the four direct invocations together before rebuilding. The archive has not yet built on the tool-free worker.",
       "evidence": [
         {
           "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
@@ -61487,9 +61500,9 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-01T19:12:39.872383+00:00",
+      "updatedAt": "2026-11-01T20:02:19.223466+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "Review the AF_UNSPEC reconnect finding on #16793. The translated forwarding tests delivered the payload on all four configurations. If the original #14011 configuration becomes available, compare the sender’s ICMP capture with this working transfer.",
+      "nextStep": "For #15253, paired captures or GSO metadata from the reporter’s Kubernetes interfaces would show where the paths diverge. The #16793 reconnect review remains ready for a contributor decision.",
       "findings": [
         {
           "text": "Using the existing local shutdown flags to skip an unnecessary receive-queue lock reduced the added cost of an established-socket RDHUP poll from 4.38 to 0.94 ns per call. With write interest too, it fell from 4.68 to 0.60 ns. Six IPv4/IPv6 syscall cases passed, including mandatory hangup with an empty interest mask.",
@@ -62091,6 +62104,19 @@
             {
               "label": "TCP review guide",
               "url": "https://github.com/google/gvisor/issues/16670"
+            }
+          ]
+        },
+        {
+          "text": "The #15253 reporter saw faster downloads after turning off archive-side veth offload. On an ordinary Linux host bridge with the reported 1500/1486 MTUs, both settings delivered the same 1 MiB in 732 inner packets. Oversized frames still reached gVisor with offload off (19 versus 12 with it on). The run measured delivery and segmentation only.",
+          "evidence": [
+            {
+              "label": "Both host-peer settings and packet captures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41343096269/artifacts/13098322670"
+            },
+            {
+              "label": "Original Kubernetes report",
+              "url": "https://github.com/google/gvisor/issues/15253"
             }
           ]
         }
