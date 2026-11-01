@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T10:43:57.634606+00:00",
+    "updatedAt": "2026-11-01T11:08:57.252966+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -48115,9 +48115,18 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T10:43:57.634606+00:00",
+      "updatedAt": "2026-11-01T11:08:57.252966+00:00",
       "summary": "The graph codec is now the default. On a four-worker Nginx checkpoint, encoding took 2.25 ms instead of 12.71 ms and decoding took 8.99 ms instead of 17.75 ms. All four round-trip bugs tracked in #16715 are fixed. Increasing the UDP receive queue did not grow the index table. Smaller writer buffers and clearing fewer decoder slots did not speed up Nginx checkpoints. Separating callback payloads reduced allocated bytes without improving the time to Nginx’s first HTTP response.",
       "findings": [
+        {
+          "text": "Replacing the per-slot field-type cache saved 59 KB (0.04%) per Load. On a 50,000-file checkpoint, 16 paired samples per mode showed no timing gain in Save, Load with GC off, or Load with GC on. Both binaries restored all files in eight additional native pairs. Keep the existing cache.",
+          "evidence": [
+            {
+              "label": "Matched 50,000-file checkpoint and native restores",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41299110429/artifacts/13081320550"
+            }
+          ]
+        },
         {
           "text": "Indexing the existing segment boundaries removed the binary search without growing each graph object. EncodeStatefile took 7.31% less time and allocated 1.34% fewer bytes on the 50,000-file checkpoint. The one-byte/16 MiB-capacity case took 0.90% longer and allocated 98 extra bytes.",
           "evidence": [
@@ -51050,6 +51059,10 @@
       ],
       "nextStep": "The independent encoder and decoder changes are ready for contributor review. Check current graph-engine reviews and use the retained large-checkpoint profiles to identify any further end-to-end bottleneck. The Nginx quota sweep is complete on #16472.",
       "evidence": [
+        {
+          "label": "Matched 50,000-file checkpoint and native restores",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41299110429/artifacts/13081320550"
+        },
         {
           "label": "50,000 tmpfs files after real restore and 18 paired-phase observations on the same checkpoint",
           "url": "https://github.com/tamird/gvisor/actions/runs/41288508688/artifacts/13076561165"
@@ -57935,9 +57948,22 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T10:43:57.634606+00:00",
+      "updatedAt": "2026-11-01T11:08:57.252966+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The PosixError and FsUtil C++ binaries ran directly on empty AMD64 and ARM64 workers. All 12 named cases passed. With the musl platform and --dynamic_mode=off, both links on each architecture selected the static C++ runtimes and musl libc.a. All four ELF files had no interpreter or shared-library dependencies. The verified results arrived 2.53 and 2.45 seconds after the tests finished.",
+          "evidence": [
+            {
+              "label": "12 named cases, four native test actions and ELF inspections",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41299964910/artifacts/13081270206"
+            },
+            {
+              "label": "Original static link selected shared C++ runtime archives",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41298935746/artifacts/13079619632"
+            }
+          ]
+        },
         {
           "text": "All three C++ cases passed on both native scratch workers with a declared GNU loader and libc. The static link still failed before test execution. On AMD64 scratch, the Bash Nogo launcher exited 127, the native launcher passed, and removing the waiter mutex produced one checklocks diagnostic for each analyzed architecture.",
           "evidence": [
@@ -59339,8 +59365,16 @@
           ]
         }
       ],
-      "nextStep": "Qualify ordinary C++ test targets on scratch using the toolchain’s supported static musl configuration. Keep their libc ABI distinct from the GNU tests run with a declared loader. The native Nogo runner is ready for contributor review.",
+      "nextStep": "Build five existing GNU syscall binaries on empty workers for both architectures, covering fork, futexes, shared memory, TCP and UDP. Check the link inputs and the resulting ELF files. The standalone native Nogo runner is ready for contributor review.",
       "evidence": [
+        {
+          "label": "12 named cases, four native test actions and ELF inspections",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41299964910/artifacts/13081270206"
+        },
+        {
+          "label": "Original static link selected shared C++ runtime archives",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41298935746/artifacts/13079619632"
+        },
         {
           "label": "AMD64 state and TCP tests on scratch",
           "url": "https://github.com/tamird/gvisor/actions/runs/41294847293/artifacts/13078298087"
@@ -59602,9 +59636,22 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T14:56:41.741127+00:00",
+      "updatedAt": "2026-11-01T11:08:57.252966+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
+        {
+          "text": "A SysV semop on one semaphore records its caller as the last operator on every member of the set. The existing fork test now exercises a successful wait for zero on a different semaphore from the one its child changed. The Linux and gVisor comparison is running.",
+          "evidence": [
+            {
+              "label": "Fork-based syscall comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41300279594"
+            },
+            {
+              "label": "Proposed last-operator correction",
+              "url": "https://github.com/tamird/gvisor/commit/8d52ba8f4"
+            }
+          ]
+        },
         {
           "text": "The timekeeper starts and stops its update goroutine under its lifecycle mutex. Nogo accepted the normal callers on AMD64 and ARM64. Moving start in Resume and stop in Destroy just before locking produced both expected diagnostics on each architecture. These annotations enforce the existing protocol without changing the runtime code.",
           "evidence": [
