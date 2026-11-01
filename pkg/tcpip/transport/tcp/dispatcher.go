@@ -158,8 +158,8 @@ func handleConnecting(ep *Endpoint) {
 		return
 	}
 	cleanup := func() {
-		ep.mu.Unlock()
 		ep.drainClosingSegmentQueue()
+		ep.mu.Unlock()
 		ep.waiterQueue.Notify(waiter.EventHUp | waiter.EventErr | waiter.ReadableEvents | waiter.WritableEvents)
 	}
 	if !ep.EndpointState().connecting() {

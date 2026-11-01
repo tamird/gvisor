@@ -2502,6 +2502,37 @@ func (e *Endpoint) registerEndpoint(addr tcpip.FullAddress, netProto tcpip.Netwo
 // +checklocks:e.mu
 // +checklocksexclude:e.segmentQueue.mu
 func (e *Endpoint) connect(addr tcpip.FullAddress, handshake bool) tcpip.Error {
+	if h := e.h; e.EndpointState() == StateError && !e.closed && h != nil && h.active && e.snd == nil {
+		if !h.failureReported {
+			h.failureReported = true
+			if err := e.hardErrorLocked(); err != nil {
+				return err
+			}
+			return &tcpip.ErrConnectionAborted{}
+		}
+		// The previous active open has been unregistered. Finish retiring
+		// its input before restoring the socket's original binding.
+		e.drainClosingSegmentQueue()
+		id := stack.TransportEndpointID{LocalAddress: h.bindAddress}
+		if e.isPortReserved {
+			id.LocalPort = e.ID.LocalPort
+		}
+		e.ID = id
+		e.boundNICID = h.bindNIC
+		e.effectiveNetProtos = e.boundNetProtos
+		e.connectingAddress = tcpip.Address{}
+		e.isConnectNotified = false
+		e.SendTSOk = false
+		e.SACKPermitted = false
+		e.RecentTS = 0
+		e.h = nil
+		e.keepalive.timer.init(e.stack.Clock(), timerHandler(e, e.keepaliveTimerExpired))
+		if e.isPortReserved || id.LocalAddress != (tcpip.Address{}) {
+			e.setEndpointState(StateBound)
+		} else {
+			e.setEndpointState(StateInitial)
+		}
+	}
 	connectingAddr := addr.Addr
 
 	addr, netProto, err := e.checkV4MappedLocked(addr, false /* bind */)
@@ -2561,6 +2592,7 @@ func (e *Endpoint) connect(addr tcpip.FullAddress, handshake bool) tcpip.Error {
 	}
 	defer r.Release()
 
+	bindAddr, bindNIC := e.ID.LocalAddress, e.boundNICID
 	e.TransportEndpointInfo.ID.LocalAddress = r.LocalAddress()
 	e.TransportEndpointInfo.ID.RemoteAddress = r.RemoteAddress()
 	e.TransportEndpointInfo.ID.RemotePort = addr.Port
@@ -2621,6 +2653,7 @@ func (e *Endpoint) connect(addr tcpip.FullAddress, handshake bool) tcpip.Error {
 
 	// Start a new handshake.
 	h := e.newHandshake()
+	h.bindAddress, h.bindNIC = bindAddr, bindNIC
 	e.setEndpointState(StateSynSent)
 	h.start()
 	e.stack.Stats().TCP.ActiveConnectionOpenings.Increment()
@@ -2980,11 +3013,11 @@ func (e *Endpoint) GetLocalAddress() (tcpip.FullAddress, tcpip.Error) {
 	e.LockUser()
 	defer e.UnlockUser()
 
-	return tcpip.FullAddress{
-		Addr: e.TransportEndpointInfo.ID.LocalAddress,
-		Port: e.TransportEndpointInfo.ID.LocalPort,
-		NIC:  e.boundNICID,
-	}, nil
+	addr := e.ID.LocalAddress
+	if h := e.h; e.EndpointState() == StateError && h != nil && h.active && h.failureReported && e.snd == nil {
+		addr = h.bindAddress
+	}
+	return tcpip.FullAddress{Addr: addr, Port: e.ID.LocalPort, NIC: e.boundNICID}, nil
 }
 
 // GetRemoteAddress returns the address to which the endpoint is connected.
@@ -3081,8 +3114,8 @@ func (e *Endpoint) onICMPError(err tcpip.Error, transErr stack.TransportError, p
 		e.cleanupFailedOpenLocked()
 		e.hardError = err
 		e.setEndpointState(StateError)
-		e.mu.Unlock()
 		e.drainClosingSegmentQueue()
+		e.mu.Unlock()
 		e.waiterQueue.Notify(waiter.EventHUp | waiter.EventErr | waiter.ReadableEvents | waiter.WritableEvents)
 	}
 }

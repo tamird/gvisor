@@ -70,6 +70,12 @@ const (
 //
 // +stateify savable
 type handshake struct {
+	// Preserve the source restrictions for another active open on this
+	// socket. The route may have selected a different local address or NIC.
+	bindAddress     tcpip.Address
+	bindNIC         tcpip.NICID
+	failureReported bool
+
 	ep       *Endpoint
 	listenEP *Endpoint
 	state    handshakeState
@@ -617,7 +623,7 @@ func (h *handshake) retransmitHandlerLocked() tcpip.Error {
 	// to say an error (e.g) peer send RST or an ICMP error. Then just
 	// return. Any required cleanup should have been done when the RST/error
 	// was handled.
-	if !e.EndpointState().connecting() {
+	if e.h != h || !e.EndpointState().connecting() {
 		return nil
 	}
 
@@ -1478,9 +1484,6 @@ func (e *Endpoint) finWait2TimerExpired() {
 
 // +checklocks:e.mu
 func (e *Endpoint) handshakeFailed(err tcpip.Error) {
-	e.lastErrorMu.Lock()
-	e.lastError = err
-	e.lastErrorMu.Unlock()
 	// handshakeFailed is also called from startHandshake when a listener
 	// transitions out of Listen state by the time the SYN is processed. In
 	// such cases the handshake is never initialized and the newly created
