@@ -15,7 +15,7 @@ import sys
 import xml.etree.ElementTree as ET
 import zipfile
 
-SOURCE = "b70c334832ca2a1109a8b5e8cdc632b411174b6f"
+SOURCE = "c2f5f79dce24877679cede14b85666b7ca65c6de"
 TARGETS = {"//src:bazel", "//tools/test:posix_tw", "//tools/test:tw_test"}
 
 

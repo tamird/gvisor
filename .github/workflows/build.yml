@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: carrier, persist-credentials: false, fetch-depth: 6}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {repository: tamird/bazel, ref: b70c334832ca2a1109a8b5e8cdc632b411174b6f, path: supplier, persist-credentials: false, fetch-depth: 2}
+        with: {repository: tamird/bazel, ref: c2f5f79dce24877679cede14b85666b7ca65c6de, path: supplier, persist-credentials: false, fetch-depth: 2}
       - name: Prepare private remote configuration and evidence
         working-directory: carrier
         env:
@@ -70,7 +70,7 @@ jobs:
               return json.loads(path.read_text()) if path.exists() else {"status": "INCOMPLETE"}
           supplier, runtime = read("supplier.json"), read("summary.json")
           states = [supplier["status"], runtime["status"]]
-          identity = (supplier.get("source") == "b70c334832ca2a1109a8b5e8cdc632b411174b6f"
+          identity = (supplier.get("source") == "c2f5f79dce24877679cede14b85666b7ca65c6de"
                       and runtime.get("source") == "851d04fc2918adcaa60a78fd9fa7e766bc4fec68"
                       and supplier.get("binary_sha256") == runtime.get("native_bazel", {}).get("sha256"))
           status = "FAIL" if "FAIL" in states else "PASS" if states == ["PASS", "PASS"] and identity else "INCOMPLETE"
