@@ -24,10 +24,12 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -56,6 +58,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/state/statefile"
+	"gvisor.dev/gvisor/pkg/state/wire"
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/runsc/boot"
@@ -388,6 +391,32 @@ func checkpointNginx(ctx context.Context, b *testing.B, machine harness.Machine)
 	if err != nil {
 		b.Fatalf("failed to read state file: %v", err)
 	}
+	if _, live := os.LookupEnv("COLD_LIVE"); live {
+		// RestoreInTest documents the Docker containerd task-removal race. This
+		// control is outside the timing sample and cannot silently skip.
+		time.Sleep(2 * time.Second)
+		if err := container.Restore(ctx, name); err != nil {
+			b.Fatalf("Docker restore: %v", err)
+		}
+		if err := waitListening(ctx, container, 80); err != nil {
+			b.Fatal(err)
+		}
+		ip, err := container.FindIP(ctx, false)
+		if err != nil {
+			b.Fatal(err)
+		}
+		hc := http.Client{Transport: &http.Transport{Proxy: nil, DisableKeepAlives: true}, Timeout: 10 * time.Second}
+		resp, err := hc.Get("http://" + ip.String() + "/latin1k.txt")
+		if err != nil {
+			b.Fatal(err)
+		}
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil || resp.StatusCode != 200 || !bytes.Equal(body, make([]byte, 1024)) {
+			b.Fatalf("bad restored HTTP response %d %d %v", resp.StatusCode, len(body), err)
+		}
+		fmt.Printf("COLD-HTTP container=%s http=%d bytes=%d split=%t\n", container.ID(), resp.StatusCode, len(body), sizes[checkpointfiles.PagesMetadataFileName] > 0)
+	}
 	return stateFile, sizes, names, mounts
 }
 
@@ -705,4 +734,105 @@ func TestMain(m *testing.M) {
 	fdnotifier.Pause()
 	fdnotifier.Resume()
 	os.Exit(m.Run())
+}
+
+// BenchmarkStreamCapture creates the kernel once, before either measured binary runs.
+func BenchmarkStreamCapture(b *testing.B) {
+	if b.N != 1 || !testutil.IsCheckpointSupported() || dockerutil.Runtime() != "runsc" {
+		b.Fatal("requires one runsc checkpoint")
+	}
+	dir := os.Getenv("STREAM_DIR")
+	machine, err := harness.GetMachine()
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer machine.CleanUp()
+	data, _, names, mounts := checkpointNginx(context.Background(), b, machine)
+	spec, err := json.Marshal(checkpointSpec{Names: names, Mounts: mounts})
+	if err != nil {
+		b.Fatal(err)
+	}
+	for name, contents := range map[string][]byte{checkpointfiles.StateFileName: data, checkpointSpecName: spec} {
+		if err := os.WriteFile(filepath.Join(dir, name), contents, 0600); err != nil {
+			b.Fatal(err)
+		}
+	}
+	fmt.Printf("STREAM-CAPTURE bytes=%d digest=%x\n", len(data), sha256.Sum256(data))
+}
+
+// BenchmarkColdDecode decodes the original two state records once per process.
+func BenchmarkColdDecode(b *testing.B) {
+	if b.N != 1 || !state.GraphEngineEnabled() {
+		b.Fatal("one graph decode required")
+	}
+	data, _, names, mounts, err := readCheckpointDir(os.Getenv("STREAM_DIR"))
+	if err != nil {
+		b.Fatal(err)
+	}
+	sr, _, err := statefile.NewReader(io.NopCloser(bytes.NewReader(data)), nil)
+	if err != nil {
+		b.Fatal(err)
+	}
+	raw, err := io.ReadAll(sr)
+	if err != nil {
+		b.Fatal(err)
+	}
+	if err := sr.Close(); err != nil {
+		b.Fatal(err)
+	}
+	s := bytes.NewReader(raw)
+	for i := 0; i < 2; i++ {
+		head, err := state.ReadHeaderMode(&wire.Reader{Reader: s})
+		if err != nil || !head.Graph || head.Length > uint64(s.Len()) {
+			b.Fatalf("frame %d: %+v %v", i, head, err)
+		}
+		if _, err := s.Seek(int64(head.Length), io.SeekCurrent); err != nil {
+			b.Fatal(err)
+		}
+	}
+	r := bytes.NewReader(raw[:len(raw)-s.Len()])
+	digest := sha256.Sum256(data)
+	ctx, cleanup := withHostFDs(b, restoreContext(b, names, mounts), names)
+	defer cleanup()
+	sys, err := systrap.New(platform.Options{})
+	if err != nil {
+		b.Fatal(err)
+	}
+	var fs cpuid.FeatureSet
+	k := &kernel.Kernel{Platform: stubPlatform{sys}}
+	k.SetMemoryFile(pgalloc.MemoryFileFromContext(ctx))
+	var ids [2]any
+	var starts, objs [2]int
+	var count int
+	state.StudyColdGraph = func(root, ds any, before, cbs, used, newCap, newCbs int) {
+		if count >= 2 {
+			b.Fatal("too many Loads")
+		}
+		ids[count] = ds
+		starts[count] = before
+		objs[count] = used
+		count++
+	}
+	defer func() { state.StudyColdGraph = nil }()
+	var m0, m2 runtime.MemStats
+	runtime.ReadMemStats(&m0)
+	c0 := processCPU(b)
+	t0 := time.Now()
+	if _, err := state.Load(ctx, r, &fs); err != nil {
+		b.Fatal(err)
+	}
+	t1 := time.Now()
+	c1 := processCPU(b)
+	if _, err := state.Load(ctx, r, k); err != nil {
+		b.Fatal(err)
+	}
+	t2 := time.Now()
+	c2 := processCPU(b)
+	runtime.ReadMemStats(&m2)
+	runtime.KeepAlive(k)
+	runtime.KeepAlive(fs)
+	if r.Len() != 0 || count != 2 || starts[0] != 0 || objs[0] >= 20 || objs[1] < 1000 {
+		b.Fatalf("not a cold CPUID/kernel: remaining %d count %d starts %v sizes %v", r.Len(), count, starts, objs)
+	}
+	fmt.Printf("COLD-TRIAL pid=%d cpuidcap=%d kernelcap=%d small=%d large=%d reused=%t kernelwall=%d kernelcpu=%d bothwall=%d bothcpu=%d allocs=%d bytes=%d digest=%x\n", os.Getpid(), starts[0], starts[1], objs[0], objs[1], ids[0] == ids[1], t2.Sub(t1).Nanoseconds(), (c2 - c1).Nanoseconds(), t2.Sub(t0).Nanoseconds(), (c2 - c0).Nanoseconds(), m2.Mallocs-m0.Mallocs, m2.TotalAlloc-m0.TotalAlloc, digest)
 }
