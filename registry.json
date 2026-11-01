@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T09:12:10.782787+00:00",
+    "updatedAt": "2026-11-01T09:30:13.357522+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41289,11 +41289,11 @@
       "repo": "google/gvisor",
       "number": 16787,
       "ref": "linger-close-fin-acked",
-      "head": "c9c954f7e83660917f7c002728bfed64501840c5",
+      "head": "d2b869316104f8b9adc79045ca60274e2293defd",
       "title": "netstack: end a lingering close when the peer acknowledges the FIN",
       "url": "https://github.com/google/gvisor/pull/16787",
       "status": "open",
-      "updatedAt": "2026-11-01T05:08:12.703055+00:00",
+      "updatedAt": "2026-11-01T09:30:13.357522+00:00",
       "summary": "Aditya Merchant’s netstack PR wakes a lingering close when the peer acknowledges the FIN and skips the wait on process exit. It introduces the shared process-exit syscall fixture used by the host-network follow-up.",
       "evidence": [
         {
@@ -41660,6 +41660,70 @@
         "requestedAt": "2026-11-01T09:12:10.782787+00:00",
         "summary": "Open the terminal TCP socket-error PR after #16667 lands?",
         "body": "After a refused nonblocking connect, Linux reports a hangup after the program reads ECONNREFUSED from SO_ERROR. gVisor still reported POLLERR and claimed urgent data was available. The fix checks the pending socket error and extended error queue. Poll can do that without acquiring the endpoint mutex. The established-connection ICMP soft-error case from #6666 is tracked separately."
+      }
+    },
+    {
+      "id": "branch:tcp-established-icmp-errors",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/tcp-established-icmp-errors",
+      "head": "c5c3a66ceb0fa35736f3d26e3a8a29aae6446e91",
+      "title": "Check that an ICMP error quotes outstanding TCP data",
+      "url": "https://github.com/tamird/gvisor/commit/c5c3a66ce",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T09:30:13.357522+00:00",
+      "summary": "On an established socket with IP_RECVERR, Linux reports EHOSTUNREACH once for an outstanding segment and ignores a quote for data already acknowledged. Both sockets remain usable. gVisor reported the stale error and placed the quote in MSG_ERRQUEUE. The TCP receive worker can check the quoted sequence under the endpoint lock, including when a locally generated error arrives during a send.",
+      "evidence": [
+        {
+          "label": "Linux, stock and corrected gVisor on the same stale quote",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41291214587/artifacts/13077218354"
+        },
+        {
+          "label": "Final TCP suite and both architecture analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41291743859/artifacts/13077374128"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "c5c3a66ceb0fa35736f3d26e3a8a29aae6446e91",
+        "baseHead": "31698e51e22cdf8ba72fbc117edda9bbec5a8d3c",
+        "url": "https://github.com/tamird/gvisor/commit/c5c3a66ce",
+        "title": "Check that an ICMP error quotes outstanding TCP data",
+        "requestedAt": "2026-11-01T09:30:13.357522+00:00",
+        "summary": "Open after the socket-error readiness fix lands?",
+        "body": "On an established socket with IP_RECVERR, Linux reports EHOSTUNREACH once for an outstanding segment and ignores a quote for data already acknowledged. Both sockets remain usable. gVisor reported the stale error and placed the quote in MSG_ERRQUEUE. The TCP receive worker can check the quoted sequence under the endpoint lock, including when a locally generated error arrives during a send."
+      }
+    },
+    {
+      "id": "branch:icmpv6-address-unreachable",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/icmpv6-address-unreachable",
+      "head": "f9ff0e0876f3d1f9901bcca93be6aeeac5e61f94",
+      "title": "Return EHOSTUNREACH for an ICMPv6 address-unreachable error",
+      "url": "https://github.com/tamird/gvisor/commit/f9ff0e087",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T09:30:13.357522+00:00",
+      "summary": "When a router replied to an outgoing SYN with an ICMPv6 address-unreachable error, Linux returned EHOSTUNREACH and gVisor left connect waiting. Route the error through TCP’s existing host-unreachable handler. The network-unreachable control still returns ENETUNREACH.",
+      "evidence": [
+        {
+          "label": "Six packet cases on Linux, stock and corrected gVisor, plus AMD64 and ARM64 analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41292227786/artifacts/13078315246"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "f9ff0e0876f3d1f9901bcca93be6aeeac5e61f94",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/f9ff0e087",
+        "title": "Return EHOSTUNREACH for an ICMPv6 address-unreachable error",
+        "requestedAt": "2026-11-01T09:30:13.357522+00:00",
+        "summary": "Open as an independent PR?",
+        "body": "When a router replied to an outgoing SYN with an ICMPv6 address-unreachable error, Linux returned EHOSTUNREACH and gVisor left connect waiting. Route the error through TCP’s existing host-unreachable handler. The network-unreachable control still returns ENETUNREACH."
       }
     }
   ],
@@ -45091,6 +45155,13 @@
       "type": "depends_on",
       "reason": "Uses the checked lock ownership for hardError and lastError from #16667.",
       "evidence": "https://github.com/tamird/gvisor/commit/31698e51e"
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:tcp-consumed-socket-error",
+      "to": "branch:tcp-established-icmp-errors",
+      "reason": "Uses the corrected handling of pending socket errors when TCP reports readiness.",
+      "evidence": "https://github.com/tamird/gvisor/commit/c5c3a66ce"
     }
   ],
   "investigations": [
@@ -59999,12 +60070,25 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-01T09:08:32.894251+00:00",
+      "updatedAt": "2026-11-01T09:30:13.357522+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Compare competing Reno and CUBIC flows with the remaining two production changes from #15432, on the same sender and native worker. Finish the readiness and socket-error qualification and keep the review order in #16670 current.",
       "findings": [
         {
-          "text": "On an established TCP connection, Linux reported an ICMP error only while the quoted sequence was outstanding. The error was consumed once through SO_ERROR; the connected socket could continue exchanging data. On stock gVisor a stale quote produced EHOSTUNREACH. A correction that checks the sequence under the TCP endpoint mutex passed the same permanent packet test. The exercised IPv6 case is network-unreachable; address-unreachable dispatch is a separate question.",
+          "text": "On one shared 20 Mbit/s path, #15432 increased gVisor’s share in both Reno pairs. One CUBIC pair lost share and the other rose from below 1% to about 42%. The latter baseline retransmitted 208 times in 42.3 seconds without sending a new byte. All four amended trials went at most 292 ms without new data during the shared interval. In a separate short-ACK case the change sent nine packets into a five-packet congestion window.",
+          "evidence": [
+            {
+              "label": "Original eight trials, traces and verdict",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41291435255/artifacts/13077288295"
+            },
+            {
+              "label": "Reviewer guide and short-ACK evidence",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            }
+          ]
+        },
+        {
+          "text": "On an established socket with IP_RECVERR, Linux reports EHOSTUNREACH once for an outstanding segment and ignores a quote for data already acknowledged. Both sockets remain usable. gVisor reported the stale error and placed the quote in MSG_ERRQUEUE. The TCP receive worker can check the quoted sequence under the endpoint lock, including when a locally generated error arrives during a send.",
           "evidence": [
             {
               "label": "IPv4: both SO_ERROR and MSG_ERRQUEUE read orders, IP_RECVERR off/on",
@@ -60029,6 +60113,14 @@
             {
               "label": "Active/stale and socket-error control results",
               "url": "https://github.com/tamird/gvisor/blob/6e98ea623/test/rbe/tcp-quoted-error-worker-result.json"
+            },
+            {
+              "label": "Final contributor proposal",
+              "url": "https://github.com/tamird/gvisor/commit/c5c3a66ce"
+            },
+            {
+              "label": "Final TCP suite and both architecture analyzers",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41291743859/artifacts/13077374128"
             }
           ]
         },
