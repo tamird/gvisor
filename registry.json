@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T21:47:22+00:00",
+    "updatedAt": "2026-11-01T21:55:55+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42644,6 +42644,43 @@
         "summary": "Open the PIDFD lock annotation PR?",
         "body": "Dropping the lock at each of three callers triggers a diagnostic on both AMD64 and ARM64. All six existing PIDFD syscall tests passed on native AMD64 Linux and gVisor systrap. The positive analyzer checks passed on both architectures."
       }
+    },
+    {
+      "id": "branch:buildkite-native-nogo",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/buildkite-native-nogo",
+      "head": "e86e84eb839c0f691a227faa8e80406eb144f03c",
+      "title": "Run Buildkite Nogo tests without the builder",
+      "url": "https://github.com/tamird/gvisor/commit/e86e84eb8",
+      "group": "analysis",
+      "status": "Agent work",
+      "updatedAt": "2026-11-01T21:55:55+00:00",
+      "summary": "Both Buildkite jobs can launch Nogo directly with Bazelisk. The declared compiler built and analyzed the AMD64 and ARM64 vDSOs and systrap stubs on an AMD64 host without an installed cross compiler. A deliberate finding also reached Buildkite’s failed-log uploader. Full-repository execution still needs verification.",
+      "evidence": [
+        {
+          "label": "Both cross-architecture owners with the declared compiler",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41353882134/artifacts/13101954456"
+        },
+        {
+          "label": "Failed analyzer log uploaded from the host, missing cross-compiler control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41353178606/artifacts/13101943112"
+        },
+        {
+          "label": "Selected Nogo owners and deliberate analyzer failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41352375345/artifacts/13102300561"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "e86e84eb839c0f691a227faa8e80406eb144f03c",
+        "observedAt": "2026-11-01T21:55:55+00:00",
+        "disposition": "Selected native jobs verified",
+        "nextAction": "Check the full Buildkite target pattern on an ordinary host before requesting contributor review.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41353882134/artifacts/13101954456"
+        ]
+      }
     }
   ],
   "edges": [
@@ -46107,6 +46144,24 @@
       "evidence": [
         "https://github.com/bazelbuild/bazel/issues/30883"
       ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:buildkite-source-lint-native",
+      "to": "branch:buildkite-native-nogo",
+      "reason": "The native Buildkite steps use the shared Bazelisk hook.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/e86e84eb8"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:hermetic-compiler-review",
+      "to": "branch:buildkite-native-nogo",
+      "reason": "The vDSO and systrap analyzers compile both target architectures on the same Buildkite worker.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/actions/runs/41353882134/artifacts/13101954456"
+      ]
     }
   ],
   "investigations": [
@@ -46115,7 +46170,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-01T21:37:29+00:00",
+      "updatedAt": "2026-11-01T21:55:55+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -48003,9 +48058,18 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41304678019/artifacts/13082839573"
             }
           ]
+        },
+        {
+          "text": "A controlled TCP test queued two writes before reopening the receive window. With 108 bytes left from the first write and 32 KiB queued behind it, Linux sent 1,420 bytes and gVisor sent 108. Both sent 1,420 when the second write fit exactly (1,312 bytes), but adding one byte to that write made gVisor send 108 again. Both sent 108 when only FIN followed. All bytes and the final sequence numbers matched.",
+          "evidence": [
+            {
+              "label": "Native Linux and gVisor packet sizes, stream lengths and FINs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41353910821/artifacts/13102187282"
+            }
+          ]
         }
       ],
-      "nextStep": "Isolate packetization at the boundary between two writes. Prequeue data before reopening the receive window so a short segment cannot be explained by the application running out of data. Compare the on-wire segments to Linux and preserve the existing DNS message coalescing constraint.",
+      "nextStep": "Test whether filling the packet when the following write is already larger than one wire segment reduces short packets and changes delivered throughput. Keep the existing behavior for writes small enough to send intact. The WAN traces alone cannot show whether the next write was queued.",
       "evidence": [
         {
           "label": "Eight competing transfers with verified packet captures",
