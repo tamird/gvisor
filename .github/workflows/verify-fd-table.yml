@@ -1,7 +1,7 @@
 name: Qualify the FDTable writer contract
 on:
   push:
-    branches: [qualification/fd-table-arm-runtime-nov1]
+    branches: [qualification/fd-table-arm-native-nov1]
 permissions:
   contents: read
 jobs:
@@ -77,9 +77,7 @@ jobs:
               'build --host_platform=@catalog_platform//:gnu' \
               'build --extra_execution_platforms=@catalog_platform//:gnu' \
               "build --config=$CPU" \
-              "test --test_exec_properties=Arch=$ARCH" \
-              "test --test_exec_properties=workload-isolation-type=$ISOLATION" \
-              "test --test_exec_properties=container-image=$WORKER_IMAGE"
+              "test --strategy=TestRunner=local"
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$rc"

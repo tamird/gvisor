@@ -2,6 +2,7 @@
 from datetime import datetime, timezone
 import json
 import os
+import platform
 from pathlib import Path
 import re
 import subprocess
@@ -32,7 +33,9 @@ def save(name, value):
 
 r = {"pr": pr, "architecture": architecture, "source": source, "expected": owners, "required_cases": sorted(required), "status": "INCOMPLETE"}
 try:
-    r["worker_image"] = os.environ["WORKER_IMAGE"]
+    r["coordinator_architecture"] = platform.machine()
+    assert r["coordinator_architecture"] == "aarch64"
+    r["test_strategy"] = "local"
     r["build_worker_image"] = os.environ["BUILD_WORKER_IMAGE"]
     assert git("rev-parse", "HEAD").decode().strip() == source
     assert source == ("7e42854f555f8c9d56263038e48875a20f7cc9b7" if negative else "5c792dd87213269723e419efcc83feaf90728ed9")
@@ -72,7 +75,7 @@ try:
         if "testResult" not in event: continue
         row=event["testResult"]
         meta=row.get("executionInfo",{})
-        r["executions"].append({"owner":event["id"]["testResult"]["label"],"remote":meta.get("strategy")=="remote",
+        r["executions"].append({"owner":event["id"]["testResult"]["label"],"remote":meta.get("strategy")=="remote", "strategy":meta.get("strategy"),
                                 "cached":bool(row.get("cachedLocally") or meta.get("cachedRemotely"))})
     records=[]
     for f in m["reports"]:
@@ -83,7 +86,7 @@ try:
     r["cases"]=records
     found={(row["owner"],row["name"]) for row in records if row["result"]=="pass"}
     r["missing_required"]=sorted(required-found)
-    ran={e["owner"] for e in r["executions"] if e["remote"] and not e["cached"]}
+    ran={e["owner"] for e in r["executions"] if e["strategy"] == "local" and not e["cached"]}
     if negative:
         logs = "\n".join((d/f["path"]).read_text(errors="replace") for f in m["reports"] if f["name"] == "test.log")
         diagnostics = [line for line in logs.splitlines() if "checklocks" in line and "fd_table.go:" in line]
