@@ -177,7 +177,7 @@ def replay(name, original):
     args = command["arguments"]
     props = {item["name"]: item["value"] for item in
              (old.get("platform") or command["platform"])["properties"]}
-    env = {item["name"]: item["value"] for item in command.get("environmentVariables", [])}
+    env = {item["name"]: item.get("value", "") for item in command.get("environmentVariables", [])}
     paths = command.get("outputPaths") or command.get("outputFiles")
     assert not command.get("workingDirectory") and not command.get("outputDirectories") and len(paths) == 1
     assert not TEMP_NAMES.intersection(env) and props["Arch"] == "arm64" and props["workload-isolation-type"] == "oci"
@@ -224,10 +224,16 @@ def replay(name, original):
         row.update(output_digest=file["digest"], elf="AArch64 ELF64 relocatable")
     else:
         import base64
-        stderr = base64.b64decode(result.get("stderrRaw", ""))
-        if not stderr and result.get("stderrDigest"):
-            stderr = raw_blob(result["stderrDigest"])
-        assert row["remote_exit"] != 0 and MISSING.encode() in stderr and b"no such file or directory" in stderr.lower()
+        outputs = []
+        for stream in ("stderr", "stdout"):
+            raw = base64.b64decode(result.get(stream + "Raw", ""))
+            digest = result.get(stream + "Digest", {})
+            if not raw and int(digest.get("sizeBytes", 0)):
+                raw = raw_blob(digest)
+            outputs.append(raw)
+        assert row["remote_exit"] != 0 and any(
+            MISSING.encode() in raw and b"no such file or directory" in raw.lower() for raw in outputs
+        )
         row["diagnostic"] = "configured absent TMPDIR: no such file or directory"
     row.update(verified=True, verified_at=now())
     save(name + ".json", row)
@@ -256,5 +262,38 @@ def main():
     return 0 if all(value is True for value in checks.values()) else 1
 
 
+def missing_only():
+    import traceback
+    import zipfile
+
+    archive = Path(__file__).with_name("original-worker.zip")
+    original_hash = "5a1c9e15ff181aae86d4777c70b8c5b1e5ed05c19534d45c9395301aef27e480"
+    assert hashlib.sha256(archive.read_bytes()).hexdigest() == original_hash
+    OUT.mkdir(exist_ok=True)
+    with zipfile.ZipFile(archive) as original:
+        assert set(original.namelist()) == {"go.json", "image.json", "clang.json", "verdict.json"}
+        for name in original.namelist():
+            (OUT / ("original-verdict.json" if name == "verdict.json" else name)).write_bytes(original.read(name))
+    go = json.loads((OUT / "go.json").read_bytes())
+    clang = json.loads((OUT / "clang.json").read_bytes())
+    assert go["source"] == "5850173fce71dacda14cbcf178f9cc69c689806d"
+    assert go["verified"] and go["native_exit"] == 0 and clang["verified"] and clang["remote_exit"] == 0
+    assert go["events"]["invocation"] == "102c65bc-4577-4ed9-a955-f4f06ececcce"
+    selected, = [a for a in go["actions"] if a["label"] == "@@rules_go+//:stdlib" and a["mnemonic"] == "GoStdlibList"]
+    assert selected["digest"] == {"hash": "b23747b97ea69834a7ad2dc216c3ef33a3aa3faf31ba174d8ab63a958f5c47dd", "sizeBytes": "376"}
+    assert native(selected) and selected["runner"] == "remote" and not selected["cache"] and selected["exit"] == 0
+    row = {"verified": False, "original_archive": original_hash, "original_artifact": 13098220759,
+           "original_run": 41342268569, "started": now()}
+    try:
+        replay("missing", selected["digest"])
+        row["verified"] = True
+    except Exception as exc:
+        frame = traceback.extract_tb(exc.__traceback__)[-1]
+        row["error"] = {"class": type(exc).__name__, "line": frame.lineno, "function": frame.name}
+    row["verified_at"] = now()
+    save("verdict.json", row)
+    return 0 if row["verified"] else 1
+
+
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(missing_only() if sys.argv[1:] == ["--missing-only"] else main())

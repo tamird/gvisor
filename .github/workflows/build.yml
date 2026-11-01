@@ -1,14 +1,14 @@
 name: Build ordinary Go archives with a tool-free worker /tmp
 on:
   push:
-    branches: [qualification/go-stdlib-worker-tmp]
+    branches: [qualification/go-stdlib-worker-tmp-control]
 permissions:
   contents: read
 jobs:
   compare:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 7
     env:
       EXEC_CPU: amd64
       BB_ARCH: x86_64
@@ -17,35 +17,16 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {persist-credentials: false, fetch-depth: 5}
-      - name: Pin Bazel and the compact action log reader
+      - name: Pin the original action reader
         run: |
           set -eu
-          export USE_BAZEL_VERSION=9.3.1
-          echo "USE_BAZEL_VERSION=$USE_BAZEL_VERSION" >> "$GITHUB_ENV"
-          mkdir -p "$RUNNER_TEMP/bazelisk-bin"
-          curl -fsSL "https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-$EXEC_CPU" -o "$RUNNER_TEMP/bazelisk-bin/bazel"
-          echo "$BAZELISK_HASH  $RUNNER_TEMP/bazelisk-bin/bazel" | sha256sum -c -
-          chmod +x "$RUNNER_TEMP/bazelisk-bin/bazel"
-          echo "$RUNNER_TEMP/bazelisk-bin" >> "$GITHUB_PATH"
-          command -v objcopy nm jq
           curl -fsSL "https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-$BB_ARCH" -o "$RUNNER_TEMP/bb"
           echo "$BB_HASH  $RUNNER_TEMP/bb" | sha256sum -c -
-          chmod 0755 "$RUNNER_TEMP/bb"
-      - name: Verify all immutable worker layers
-        run: python3 test/rbe/go_stdlib_workdir/image_inventory.py
-      - name: Build and observe the native ARM64 actions
-        if: always() && !cancelled()
+          chmod 0500 "$RUNNER_TEMP/bb"
+      - name: Replay only the original stdlib listing with absent TMPDIR
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: |
-          set -eu
-          umask 077
-          {
-            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback'
-            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          } > "$RUNNER_TEMP/sidecar.bazelrc"
-          python3 test/rbe/go_stdlib_workdir/qualify.py
+        run: python3 test/rbe/go_stdlib_workdir/qualify.py --missing-only
       - name: Verify exactly the typed evidence files
         id: privacy
         if: always()
@@ -56,7 +37,7 @@ jobs:
           import os
           from pathlib import Path
           root = Path(os.environ["RUNNER_TEMP"]) / "go-temp-evidence"
-          allowed = {"image.json", "go.json", "missing.json", "clang.json", "verdict.json"}
+          allowed = {"image.json", "go.json", "missing.json", "clang.json", "original-verdict.json", "verdict.json"}
           paths = list(root.iterdir())
           assert paths and all(p.is_file() and not p.is_symlink() and p.name in allowed for p in paths)
           key = os.environ["ACCESS"].encode()
@@ -68,6 +49,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
-          name: tool-free-arm64-worker-tmp
+          name: reconciled-arm64-worker-tmp
           path: ${{ runner.temp }}/go-temp-evidence/*.json
           if-no-files-found: error
