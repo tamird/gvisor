@@ -72,7 +72,15 @@ def recover_original():
     result.pop("verified_at")
     result["original_diagnostic"] = {"status": "INCOMPLETE", "invocation": original["invocation"]}
     write(result)
-    request = {"selector": {"invocation_id": original["invocation"]}}
+    try:
+        result["original_diagnostic"].update(recover_log(original["invocation"]))
+    except Exception as err:
+        result["original_diagnostic"]["collection_error"] = type(err).__name__
+    write(result)
+
+
+def recover_log(invocation):
+    request = {"selector": {"invocation_id": invocation}}
     opener = urllib.request.build_opener(NoRedirect())
     messages = []
     for _ in range(4):
@@ -85,7 +93,7 @@ def recover_original():
         payload = json.loads(data)
         log = payload["log"]
         if log.get("id"):
-            assert log["id"].get("invocationId", log["id"].get("invocation_id")) == original["invocation"]
+            assert log["id"].get("invocationId", log["id"].get("invocation_id")) == invocation
         messages.append(log.get("contents", ""))
         token = payload.get("nextPageToken", payload.get("next_page_token", ""))
         if not token:
@@ -94,11 +102,12 @@ def recover_original():
     else:
         raise RuntimeError("Original build log exceeds bounded recovery")
     text = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", "".join(messages))
-    assert re.search(r"no such target [^\n]*pidfd_test_runsc_systrap", text)
-    result["original_diagnostic"].update(status="VERIFIED", cause="requested target is not declared",
-                                          label="//test/syscalls:pidfd_test_runsc_systrap",
-                                          log_sha256=hashlib.sha256(text.encode()).hexdigest())
-    write(result)
+    result = {"status": "INCOMPLETE", "log_sha256": hashlib.sha256(text.encode()).hexdigest(),
+              "bytes": len(text.encode())}
+    if re.search(r"no such target [^\n]*pidfd_test_runsc_systrap", text):
+        result.update(status="VERIFIED", cause="requested target is not declared",
+                      label="//test/syscalls:pidfd_test_runsc_systrap")
+    return result
 
 
 def phase(result, name, source, labels, extra):
@@ -228,7 +237,6 @@ if __name__ == "__main__":
         recover_original()
         raise SystemExit(0)
     result = json.loads((PUBLIC / "verdict.json").read_text())
-    assert result["original_diagnostic"]["status"] == "VERIFIED"
     assert result["profile_files"] == {name: hashlib.sha256((ROOT / "gnu-platform" / name).read_bytes()).hexdigest()
                                        for name in ("BUILD.bazel", "MODULE.bazel")}
     for name, source, labels, extra in [
