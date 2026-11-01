@@ -1,41 +1,75 @@
-"""Read actual named GTest assertions and preserve independent lane outcomes."""
+"""Reconcile all three syscall executions and the exact tested TCP owners."""
 from collections import Counter
+from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
+import re
 import sys
-import xml.etree.ElementTree as XML
+import xml.etree.ElementTree as ET
 
-root = Path(sys.argv[1])
-prefix = "AllInetTests/SimpleTcpSocketTest.NonBlockingConnectRefused/"
-expected = {f"{prefix}{i}" for i in range(2)}
-result = {}
-for name in ("poll-native","poll-stock"):
-    directory = root/name
-    status = int((directory/"exit").read_text()) if (directory/"exit").is_file() else None
-    assertions = {}
-    if (directory/"test.xml").is_file():
-        for case in XML.parse(directory/"test.xml").iter("testcase"):
-            test = case.get("classname","")+"."+case.get("name","")
-            failures = case.findall("failure")+case.findall("error")
-            assertions[test] = {
-                "status": "SKIP" if case.find("skipped") is not None or case.get("status")=="notrun"
-                          else "FAIL" if failures else "OK",
-                "details": [node.text or node.get("message","") for node in failures],
-            }
-    verified = set(assertions) == expected and status == 0 and all(a["status"] == "OK" for a in assertions.values())
-    import datetime, os, re
-    source=(directory/"source").read_text().strip()
-    verified &= source == os.environ["STOCK"]
-    log=(directory/"bazel.log").read_text(errors="replace") if (directory/"bazel.log").is_file() else ""
-    diagnostics=[s[:360] for line in log.splitlines() if (s:=line.strip()).startswith(("error:", "ERROR:", "Error:")) and not any(k in s.lower() for k in ("header", "key=", "token"))][:8]
-    now=datetime.datetime.now(datetime.timezone.utc).isoformat()
-    census={test:a["details"] for test,a in assertions.items()}
-    if name=="poll-stock":
-        verified=(source==os.environ["STOCK"] and set(assertions)==expected and status==3
-                  and all(a["status"]=="FAIL" and any("poll_fd.revents" in m for m in a["details"])
-                          and all("poll_fd.revents" in m or "second" in m for m in a["details"])
-                          for a in assertions.values()))
-    result[name]=dict(source=source,expected=sorted(expected),executed=sorted(assertions),outcomes=assertions,missing=sorted(expected-assertions.keys()),exit=status,verified=verified,completed=(directory/"end").read_text().strip(),verified_at=now,diagnostics=diagnostics,fixture=(directory/"fixture-sha256").read_text().split()[0],invocations=list(dict.fromkeys(re.findall(r"https://app.buildbuddy.io/invocation/([a-f0-9-]{36})",log))))
-result["verified"]=all(a["verified"] for a in result.values()) and len({a["fixture"] for a in result.values()})==1
-(root/"verdict.json").write_text(json.dumps(result,indent=2)+"\n")
-sys.exit(not result["verified"])
+root=Path(sys.argv[1])
+expected=['poll-native','poll-stock','poll-candidate','amd64-tests','amd64-nogo','arm64-nogo','arm64-owners']
+cases={'AllInetTests/SimpleTcpSocketTest.'+case+'/'+str(family) for case in ['NonBlockingConnectRefused','SynRcvdOnListenerShutdown'] for family in [0,1]}
+def read(p,fallback=None):
+    return p.read_text().strip() if p.is_file() else fallback
+def read_bep(p):
+    if p.exists():
+        for line in p.open():
+            try: yield json.loads(line)
+            except ValueError: continue
+def inspect(name):
+    d=root/name
+    if not (d/'exit').is_file(): return {'verified':False,'status':'missing'}
+    status=int(read(d/'exit'))
+    src=read(d/'source');ok=src==os.environ['STOCK' if name=='poll-stock' else 'CANDIDATE']
+    actual={}; completed={}; inv=[]; finished=None
+    for event in read_bep(d/'bep'):
+        if 'started' in event:inv.append(event['started']['uuid'])
+        if 'finished' in event:finished=event['finished']['exitCode']
+        if 'testSummary' in event:
+            actual[event['id']['testSummary']['label']]=event['testSummary']['overallStatus']
+        if 'completed' in event and 'targetCompleted' in event['id']:
+            completed[event['id']['targetCompleted']['label']]=event['completed'].get('success',False)
+    row=dict(source=src,exit=status,start=read(d/'start'),end=read(d/'end'),invocation=inv,finish=finished)
+    asserts={};skips=[]; counts=Counter(); files={}
+    for xml in d.glob('*.xml'):
+        try: xmlroot=ET.parse(xml)
+        except ET.ParseError: continue
+        n=0
+        for case in xmlroot.iter('testcase'):
+            n+=1
+            test=case.get('classname','')+'.'+case.get('name','')
+            fails=case.findall('failure')+case.findall('error')
+            state='SKIP' if case.find('skipped') is not None or case.get('status')=='notrun' else 'FAIL' if fails else 'OK'
+            counts[state]+=1
+            if state=='SKIP':skips.append(test)
+            if state=='FAIL' or name.startswith('poll-'):
+                msgs=[(node.text or node.get('message',''))[:1100] for node in fails[:2]]
+                asserts[test]=dict(status=state,examples=msgs)
+        files[xml.name]=n
+    log=read(d/'bazel.log','')
+    diag=[line[:450] for line in log.splitlines() if line.startswith(('ERROR:', 'Error:', 'error:', 'FAIL:')) and not any(k in line.lower() for k in ('--remote_header','--bes_header','credential','token','api-key'))][:6]
+    if name.startswith('poll-'):
+        expected_status='FAILED' if name=='poll-stock' else 'PASSED'; target=read(d/'target')
+        ok &= set(asserts)==cases and actual.get(target)==expected_status and status==(3 if name=='poll-stock' else 0)
+        if name=='poll-stock':
+            ok &= all(v['status']=='FAIL' and any('poll_fd.revents' in q or ('Expected:' in q and 'revents' in q) for q in v['examples']) for v in asserts.values())
+        else: ok &= all(v['status']=='OK' for v in asserts.values())
+        row.update(assertions=asserts,fixture=read(d/'fixture-sha256').split()[0],expected=sorted(cases),missing=sorted(cases-asserts.keys()))
+    else:
+        owners=set(read(d/'labels','').splitlines())
+        if name=='arm64-owners':
+            ok &= status==0 and all(completed.get(t) for t in owners)
+            row.update(build_only=True,missing=sorted(owners-{k for k,v in completed.items() if v}))
+        else:
+            ok &= status==0 and set(actual)==owners and all(s=='PASSED' for s in actual.values()) and len(files)==len(owners) and counts['FAIL']==0
+            row.update(failures=asserts,missing=sorted(owners-actual.keys()),owner_xml=files)
+        row.update(owners=sorted(owners))
+    row.update(cases=dict(counts),skips=skips,targets=actual,verified=bool(ok),diagnostics=diag)
+    return row
+results={n:inspect(n) for n in expected};forms={r['fixture'] for r in results.values() if 'fixture' in r}
+ok=all(r['verified'] for r in results.values()) and len(forms)==1
+report={'expected':expected,'completed':len([v for v in results.values() if 'exit' in v]),'verdict_at':datetime.now(timezone.utc).isoformat(),'verified':ok,'results':results}
+(root/'verdict.json').write_text(json.dumps(report,indent=2)+'\n')
+if len(sys.argv)==2: raise SystemExit(not ok)

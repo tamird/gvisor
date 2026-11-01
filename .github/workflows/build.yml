@@ -1,4 +1,4 @@
-name: Inspect TCP socket errors after a refused connection
+name: Verify TCP poll errors on Linux and gVisor
 on:
   push:
     branches: [qualification/tcp-poll-consumed-error]
@@ -11,6 +11,7 @@ jobs:
     timeout-minutes: 165
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      CANDIDATE: 7fb0cf64f8d7c099e9388cb61d6f3f87156286a1
       STOCK: aa767e4c43d011121271551fe24da501a56f729d
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -23,8 +24,7 @@ jobs:
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
         echo '{"verified":false,"reason":"qualification incomplete"}' > "$RUNNER_TEMP/records/verdict.json"
         cp test/rbe/tcp-poll-result.py "$RUNNER_TEMP/verify-tcp.py"
-        cp test/rbe/tcp-poll-sample.cc.inc "$RUNNER_TEMP/probe"
-        git fetch -q --depth=1 https://github.com/tamird/gvisor.git "$STOCK"
+        git fetch -q --depth=1 https://github.com/tamird/gvisor.git "$STOCK" "$CANDIDATE"
         printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
         printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
         umask 077
@@ -42,37 +42,60 @@ jobs:
     - name: Record each native and guest action independently
       run: |
         set -euo pipefail
-        git checkout --quiet --detach "$STOCK"
-        python3 - <<'PYFIX'
-        import os
-        from pathlib import Path
-        f=Path('test/syscalls/linux/tcp_socket.cc'); text=f.read_text()
-        start=text.index('TEST_P(SimpleTcpSocketTest, NonBlockingConnectRefused)')
-        at=text.index('  // Avoiding triggering save',start)
-        f.write_text(text[:at]+Path(os.environ['RUNNER_TEMP'],'probe').read_text()+text[at:])
-        PYFIX
-        for name in poll-native poll-stock; do
-          src=$STOCK
-          testname=tcp_socket_test
-          path=test/syscalls/linux/tcp_socket.cc
-          filter='AllInetTests/SimpleTcpSocketTest.NonBlockingConnectRefused/*'
+        path=test/syscalls/linux/tcp_socket.cc
+        filter='AllInetTests/SimpleTcpSocketTest.NonBlockingConnectRefused/*:AllInetTests/SimpleTcpSocketTest.SynRcvdOnListenerShutdown/*'
+        for name in poll-native poll-stock poll-candidate; do
+          src=$CANDIDATE
           executor=remote
           platform=runsc_ptrace
-          if [[ "$name" == *-native ]]; then executor=local; platform=native; fi
+          if [[ "$name" == poll-native ]]; then executor=local; platform=native; fi
+          if [[ "$name" == poll-stock ]]; then src=$STOCK; fi
           git checkout --quiet --detach "$src"
-          [[ "$(git rev-parse HEAD)" == "$src" ]]
+          test "$(git rev-parse HEAD)" = "$src"
+          git show "$CANDIDATE:$path" > "$path"
           d=$RUNNER_TEMP/records/$name; mkdir -p "$d"
           sha256sum "$path" > "$d/fixture-sha256"
-          target="//test/syscalls:${testname}_${platform}"
-          printf '%s\n' "$src" > "$d/source"; printf '%s\n' "$target" > "$d/target"
-          printf '%s\n' "$executor" > "$d/executor"; printf '%s\n' "$filter" > "$d/filter"
+          target="//test/syscalls:tcp_socket_test_$platform"
+          printf '%s\n' "$src" > "$d/source"
+          printf '%s\n' "$target" > "$d/target"
           date -u +%FT%TZ > "$d/start"
           rc=0
-          docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=64 --verbose_failures --strategy=TestRunner="$executor" --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_timeout=450 --test_sharding_strategy=disabled --test_env=GTEST_FILTER="$filter" "$target" > "$d/bazel.log" 2>&1 || rc=$?
+          timeout 1200 docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=64 --strategy=TestRunner="$executor" --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_timeout=450 --test_sharding_strategy=disabled --test_env=GTEST_FILTER="$filter" --build_event_json_file="$d/bep" "$target" > "$d/bazel.log" 2>&1 || rc=$?
           printf '%s\n' "$rc" > "$d/exit"; date -u +%FT%TZ > "$d/end"
-          for file in test.log test.xml; do
-            docker exec tcp-compiler cat "bazel-testlogs/test/syscalls/${target#*:}/$file" > "$d/$file" || rm -f "$d/$file"
-          done
+          docker exec tcp-compiler cat "bazel-testlogs/test/syscalls/${target#*:}/test.xml" > "$d/test.xml" || rm -f "$d/test.xml"
+          git restore --source="$src" -- "$path"
+          python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records" progress
+        done
+    - name: Run owning TCP suites and both architecture analyzers
+      run: |
+        set -euo pipefail
+        git checkout --quiet --detach "$CANDIDATE"
+        test "$(git rev-parse HEAD)" = "$CANDIDATE"
+        suites=(//pkg/tcpip/transport/tcp:tcp_test)
+        for testname in tcp_test dual_stack_test forwarder_test rcv_test sack_scoreboard_test tcp_timestamp_test tcp_rack_test tcp_acktiming_test tcp_sack_test tcp_noracedetector_test; do suites+=("//pkg/tcpip/transport/tcp/test/e2e:$testname"); done
+        lint=(//pkg/tcpip/transport/tcp:tcp_nogo //pkg/tcpip/transport/tcp/test/e2e:tcp_test_nogo)
+        for name in amd64-tests amd64-nogo arm64-nogo arm64-owners; do
+          cpu=x86_64; mode=test; labels=("${suites[@]}")
+          if [[ "$name" == arm64-* ]]; then cpu=aarch64; fi
+          if [[ "$name" == *-nogo ]]; then labels=("${lint[@]}"); fi
+          if [[ "$name" == arm64-owners ]]; then mode=build; fi
+          d=$RUNNER_TEMP/records/$name; mkdir -p "$d"
+          printf '%s\n' "$CANDIDATE" > "$d/source"
+          printf '%s\n' "${labels[@]}" > "$d/labels"
+          date -u +%FT%TZ > "$d/start"
+          options=(--config="$cpu" --jobs=96 --build_tag_filters= --test_tag_filters= --keep_going --remote_download_outputs=minimal --build_event_json_file="$d/bep")
+          if [[ "$mode" == test ]]; then options+=(--test_output=errors --test_sharding_strategy=disabled --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' '--remote_download_regex=.*[/]test[.]xml$'); fi
+          rc=0
+          timeout 1200 docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" "$mode" "${options[@]}" "${labels[@]}" > "$d/bazel.log" 2>&1 || rc=$?
+          printf '%s\n' "$rc" > "$d/exit"; date -u +%FT%TZ > "$d/end"
+          if [[ "$mode" == test ]]; then
+            for label in "${labels[@]}"; do
+              path=${label#//}; xml="bazel-testlogs/${path/:/\/}/test.xml"
+              key=${path//\//_}; key=${key//:/_}
+              docker exec tcp-compiler cat "$xml" > "$d/$key.xml" || rm -f "$d/$key.xml"
+            done
+          fi
+          python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records" progress
         done
     - name: Verify each actual socket assertion
       if: ${{ !cancelled() }}
@@ -80,6 +103,6 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: tcp-error-consumption
+        name: tcp-poll-final
         path: ${{ runner.temp }}/records/verdict.json
         if-no-files-found: error
