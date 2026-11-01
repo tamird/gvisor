@@ -1,35 +1,57 @@
-name: CI
-
-"on":
+name: Qualify source-built Buildkite runtime
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/buildkite-source-runtime-layout]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  install:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 42
+    env:
+      BASE: d30816db365b44801393af8fe721795897ab5a65
+      PRODUCT: d9a1a0ebd3f60c9be715cd8d24e3c0f1a8da8c3f
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Select the exact source and the native Bazel bootstrap
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD^^)" = "$BASE"
+          git diff --exit-code "$PRODUCT" HEAD -- . ':!.github/workflows/build.yml' ':!test/rbe/probe-source-runtime.py'
+          cp test/rbe/probe-source-runtime.py "$RUNNER_TEMP/probe.py"
+          git checkout --detach "$PRODUCT"
+          sed -n '/^install_bazel() {/,/^# If running in a container/{ /^# If running in a container/!p; }' .buildkite/hooks/pre-command > "$RUNNER_TEMP/bootstrap"
+          export BUILDKITE_PIPELINE_INSTALL_RUNTIME=true
+          source "$RUNNER_TEMP/bootstrap"
+          test -x "$BUILDKITE_BAZEL_DIRECTORY/bazel"
+          echo "$BUILDKITE_BAZEL_DIRECTORY" >> "$GITHUB_PATH"
+          echo USE_BAZEL_FALLBACK_VERSION=error: >> "$GITHUB_ENV"
+          mkdir "$RUNNER_TEMP/gnu"
+          touch "$RUNNER_TEMP/gnu/REPO.bazel"
+          cat > "$RUNNER_TEMP/gnu/BUILD" <<'BUILD'
+          platform(name="gnu", visibility=["//visibility:public"], constraint_values=["@platforms//os:linux","@platforms//cpu:x86_64"], exec_properties={"Arch":"amd64","OSFamily":"linux","container-image":"docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a","EstimatedMemory":"6GB","workload-isolation-type":"firecracker"})
+          BUILD
+          tar -C / -chf - bin/true lib/x86_64-linux-gnu/libc.so.6 lib64/ld-linux-x86-64.so.2 | docker import - hook-probe
+      - name: Compare the bare Make target with the directly built Bazel release
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          if test -f "$HOME/.bazelrc"; then cp -p "$HOME/.bazelrc" "$RUNNER_TEMP/initial.bazelrc"; fi
+          trap 'if test -f "$RUNNER_TEMP/initial.bazelrc"; then mv "$RUNNER_TEMP/initial.bazelrc" "$HOME/.bazelrc"; else rm -f "$HOME/.bazelrc"; fi' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --jobs=85' "build --inject_repository=hook_platform=$RUNNER_TEMP/gnu" 'build --host_platform=@hook_platform//:gnu' 'build --extra_execution_platforms=@hook_platform//:gnu'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } >> "$HOME/.bazelrc"
+          unset BUILDBUDDY_API_KEY
+          python3 "$RUNNER_TEMP/probe.py"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: source-runtime-verdict
+          path: ${{ runner.temp }}/source-verdict.json
+          if-no-files-found: warn
