@@ -1015,7 +1015,11 @@ func TestMain(m *testing.M) {
 
 func TestEifelWrapUndo(t *testing.T) {
 	for _, wrap := range []bool{false, true} {
-		for _, delivered := range []string{"original", "repair", "second-repair"} {
+		copies := []string{"original", "repair", "second-repair"}
+		if !wrap {
+			copies = append(copies, "late-original", "late-repair")
+		}
+		for _, delivered := range copies {
 			t.Run(fmt.Sprintf("wrap=%t/%s", wrap, delivered), func(t *testing.T) {
 				clock := faketime.NewManualClock()
 				c := context.NewWithOpts(t, context.Options{MTU: mtu, EnableV4: true, Clock: clock})
@@ -1038,7 +1042,13 @@ func TestEifelWrapUndo(t *testing.T) {
 				if rto < 10*time.Millisecond || rto > time.Minute {
 					t.Fatalf("unexpected starting RTO: %s", rto)
 				}
+				late := delivered == "late-original" || delivered == "late-repair"
 				start := uint32(1000)
+				if late {
+					// All observed timestamps, including both retransmissions, are
+					// in the upper half of the serial space. None wraps here.
+					start = 0xc0000000
+				}
 				if wrap {
 					start = ^uint32(0) - 5
 					if delivered == "second-repair" {
@@ -1079,9 +1089,15 @@ func TestEifelWrapUndo(t *testing.T) {
 				if delivered != "original" {
 					accepted = first
 				}
-				if delivered == "second-repair" {
+				if delivered == "second-repair" || late {
 					clock.Advance(info().RTO + time.Millisecond)
 					accepted = packet(0)
+					if late && !(start < first && first < accepted) {
+						t.Fatalf("first/second repair timestamps %d/%d, original %d", first, accepted, start)
+					}
+					if delivered == "late-original" {
+						accepted = original
+					}
 				}
 				if info().CcState != tcpip.RTORecovery || (first < original) != (wrap && delivered != "second-repair") || (accepted < first && delivered == "second-repair") != (wrap && delivered == "second-repair") {
 					t.Fatalf("invalid flight topology: original=%d first=%d accepted=%d, state=%v", original, first, accepted, info().CcState)
@@ -1108,8 +1124,12 @@ func TestEifelWrapUndo(t *testing.T) {
 				end := info()
 				n := c.Stack().Stats().TCP.SpuriousRTORecovery.Value()
 				t.Logf("EIFEL delivered=%s wrap=%t original=%d first=%d echo=%d next=%d spurious=%d cwnd=%d threshold=%d", delivered, wrap, original, first, accepted, next, n, end.SndCwnd, end.SndSsthresh)
-				wantUndo := delivered == "original"
-				if (n == 1) != wantUndo || (end.SndSsthresh == tcp.InitialCwnd) != wantUndo {
+				wantUndo := delivered == "original" || delivered == "late-original"
+				var wantCount uint64
+				if wantUndo {
+					wantCount = 1
+				}
+				if n != wantCount || (end.SndSsthresh == tcp.InitialCwnd) != wantUndo {
 					t.Errorf("detected %d spurious timeouts, exit threshold %d, want undo=%t", n, end.SndSsthresh, wantUndo)
 				}
 			})
