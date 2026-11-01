@@ -86,29 +86,12 @@ func (es *graphEncodeState) arrayChunks(obj int32, shift uintptr, out []chunk) [
 // newSegment returns the segment of out from start to its end, whose
 // references start at refs[refStart].
 func (es *graphEncodeState) newSegment(start int, refStart int32) segment {
-	seg := segment{start, len(es.out.b) - start}
-	if seg.len > 0 {
-		es.segRefs = append(es.segRefs, segmentRefs{off: start, ref: refStart})
-	}
-	return seg
+	return segment{off: start, len: len(es.out.b) - start, refStart: refStart, refEnd: int32(len(es.refs))}
 }
 
 // segmentRefs returns the targets referenced in seg.
 func (es *graphEncodeState) segmentRefs(seg segment) []int32 {
-	if seg.len == 0 {
-		return nil
-	}
-	i, found := slices.BinarySearchFunc(es.segRefs, seg.off, func(r segmentRefs, off int) int {
-		return cmp.Compare(r.off, off)
-	})
-	if !found {
-		Failf("internal error: no segment at %d", seg.off)
-	}
-	end := int32(len(es.refs))
-	if i+1 < len(es.segRefs) {
-		end = es.segRefs[i+1].ref
-	}
-	return es.refs[es.segRefs[i].ref:end]
+	return es.refs[seg.refStart:seg.refEnd]
 }
 
 // markRefs marks the targets refs in refMarks, and unmarks all others.

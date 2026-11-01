@@ -33,16 +33,10 @@ const (
 	objDone
 )
 
-// segment is a range of graphEncodeState.out.
+// segment is a range of graphEncodeState.out and its corresponding range of refs.
 type segment struct {
-	off, len int
-}
-
-// segmentRefs is the index in graphEncodeState.refs of the first target
-// referenced in the non-empty segment at off.
-type segmentRefs struct {
-	off int
-	ref int32
+	off, len         int
+	refStart, refEnd int32
 }
 
 // elemRange is a range of array elements [start, end).
@@ -93,14 +87,13 @@ type encObject struct {
 	parent    int32
 	parentOff uintptr
 
-	// seg is the encoding of single values and maps.
+	// seg encodes a single value, a map, or the inline chunk of an array.
 	seg segment
-	// cov and ch are the covered elements and the encoded chunk of arrays
-	// with a single range of each. Further ranges are in x.
-	cov    elemRange
-	ch     chunk
-	hasCov bool
-	hasCh  bool
+	// cov and ch are the covered and encoded element ranges of an array
+	// with a single range of each. Further ranges and chunks are in x.
+	cov, ch elemRange
+	hasCov  bool
+	hasCh   bool
 
 	// x holds the state of arrays and of objects that absorbed others.
 	x *objExtra
@@ -164,7 +157,7 @@ func (es *graphEncodeState) setCovered(o *encObject, rs []elemRange) {
 // valid until the next call.
 func (es *graphEncodeState) chunkList(o *encObject) []chunk {
 	if o.hasCh {
-		es.tmpChunk[0] = o.ch
+		es.tmpChunk[0] = chunk{elemRange: o.ch, seg: o.seg}
 		return es.tmpChunk[:]
 	}
 	if o.x == nil {
@@ -176,12 +169,12 @@ func (es *graphEncodeState) chunkList(o *encObject) []chunk {
 // addChunk adds an encoded chunk of the array o.
 func (es *graphEncodeState) addChunk(o *encObject, ch chunk) {
 	if !o.hasCh && (o.x == nil || o.x.chunks == nil) {
-		o.ch, o.hasCh = ch, true
+		o.ch, o.seg, o.hasCh = ch.elemRange, ch.seg, true
 		return
 	}
 	x := o.extra()
 	if o.hasCh {
-		x.chunks = append(x.chunks, o.ch)
+		x.chunks = append(x.chunks, chunk{elemRange: o.ch, seg: o.seg})
 		o.hasCh = false
 	}
 	x.chunks = append(x.chunks, ch)
@@ -276,11 +269,8 @@ type graphEncodeState struct {
 	splices              []splice
 	spliceLo, spliceSpan uintptr
 
-	// refs are the targets referenced in out, in order. segRefs indexes
-	// refs by the non-empty segments of out, which are created in order and
-	// cover it. They are kept outside of segments to keep encObject small.
+	// refs are the targets referenced in out, in order.
 	refs      []int32
-	segRefs   []segmentRefs
 	liveBits  []bool
 	liveQueue []int32
 	// refMarks marks targets with refStamp, for pruneUnreachable.
@@ -339,7 +329,6 @@ func newGraphEncodeState(ctx context.Context, root *typeInfo) *graphEncodeState 
 		blockEntries: make([]blockEntry, 0, targets),
 		queue:        make([]work, 0, targets),
 		refs:         make([]int32, 0, targets),
-		segRefs:      make([]segmentRefs, 0, targets),
 		traversals:   make(map[traversalKey]bool),
 		out:          encBuf{b: make([]byte, 0, max(bytes, 4<<10))},
 	}
@@ -437,7 +426,7 @@ func (es *graphEncodeState) release() {
 	if cap(es.out.b)+cap(es.final.b)+cap(es.binaryBuf) > maxPooledBytes ||
 		len(es.byAddr.slots)+len(es.blocks.slots) > maxPooledSlots ||
 		cap(es.blockEntries)+cap(es.queue) > maxPooledSlots ||
-		cap(es.refs)+cap(es.segRefs) > maxPooledSlots {
+		cap(es.refs) > maxPooledSlots {
 		return
 	}
 	es.ctx = nil
@@ -464,7 +453,6 @@ func (es *graphEncodeState) release() {
 	es.spliceLo = 0
 	es.spliceSpan = 0
 	es.refs = es.refs[:0]
-	es.segRefs = es.segRefs[:0]
 	es.refStamp = 0
 	es.refMarks = es.refMarks[:0]
 	es.liveBits = es.liveBits[:0]
