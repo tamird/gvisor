@@ -33,6 +33,7 @@ import (
 	"runtime"
 	"runtime/debug"
 	"runtime/metrics"
+	"runtime/pprof"
 	"strings"
 	"testing"
 	"time"
@@ -157,6 +158,22 @@ func BenchmarkCheckpointFile(b *testing.B) {
 				runtime.GC()
 				runtime.ReadMemStats(&after)
 				liveBytes += max(int64(after.HeapAlloc)-int64(before.HeapAlloc), 0)
+				if path := os.Getenv("CHECKPOINT_PROFILE_LIVE_HEAP"); path != "" {
+					// Keep the restored kernel live while sampled frees cross
+					// the two-GC delay of the Go memory profiler.
+					runtime.GC()
+					runtime.GC()
+					f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+					if err != nil {
+						b.Fatal(err)
+					}
+					if err := pprof.WriteHeapProfile(f); err != nil {
+						b.Fatal(err)
+					}
+					if err := f.Close(); err != nil {
+						b.Fatal(err)
+					}
+				}
 				runtime.KeepAlive(k)
 			}()
 		}
