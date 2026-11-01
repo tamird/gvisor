@@ -13,7 +13,8 @@ import xml.etree.ElementTree as ET
 SOURCE = "c53942792678277f0195068aa41ad17620dd9dd1"
 START = "2026-11-01T01:49:21Z"
 SYSCALLS_DONE = "2026-11-01T01:53:13Z"
-END = "2026-11-01T04:40:00Z"
+END = "2026-11-01T04:45:00Z"
+CONTAINER = "c06f86d4559c"
 PREFIX = "AllInetTests/TcpSocketTest."
 CASES = {f"{PREFIX}{n}/{i}" for n in ("NoLingerOnProcessExit", "AbortiveLingerOnExit") for i in range(2)}
 HOST = "https://app.buildbuddy.io"
@@ -58,19 +59,37 @@ def xml_verdict(data):
         raise ValueError("empty GTest XML")
     return cases
 
-def observe(lane, target):
-    begin = "2026-11-01T01:53:11Z" if lane == "analyzer" else START
-    end = END if lane == "analyzer" else SYSCALLS_DONE
-    try:
-        data=call("SearchInvocation",{"query":{"pattern":target,"updated_after":begin,"updated_before":end},"count":32},rpc=True)
-        matches=data.get("invocation",[])
-    except RuntimeError as e:
-        # The public API can still identify this SHA on installations that
-        # reserve the Web query for interactive accounts.
-        fetched=call("GetInvocation",{"selector":{"commit_sha":SOURCE}}).get("invocation",[])
-        matches=[inv for inv in fetched if target in inv.get("pattern","").split() and datetime.fromisoformat(begin) <= datetime.fromtimestamp(int(field(inv,"updated_at_usec"))/1e6,timezone.utc) < datetime.fromisoformat(end)]
-        if not matches:
-            return {"verified":False,"lookup":str(e),"sha_lookup_matches":0}
+def diag(iid):
+    classes=set(); labels=set(); reasons=[]; page=""
+    for _ in range(48):
+        d=call("GetLog", {"selector":{"invocation_id":iid}, "page_token":page})
+        for line in d.get("log",{}).get("contents","").splitlines():
+            line=re.sub(r"\x1b\[[0-9;]*m", "", line).strip()
+            critical = any(t in line.lower() for t in ("resource exhausted","resourceexhausted","out of memory","deadline exceeded","killed","failed:","timed out","cancelled","error:","no such target","could not"))
+            if not critical: continue
+            labels.update(re.findall(r"(?<!:)[/]{2}(?:pkg|runsc|test|tools)/[A-Za-z0-9_/.-]+:[A-Za-z0-9_.-]+",line))
+            if line in reasons or len(reasons)>=7 or any(t in line.lower() for t in ("header", "token", "key=", "auth", "secret", "password", "cmdline", "command line", "arguments:", "remote_cache", "argv", "env ")): continue
+            if any(t in line for t in ("'","\"","&&",";","@","/usr/bin"," /bin/")):
+                for k in ("no such target","no such package","resource exhausted","resourceexhausted","deadline exceeded","killed","out of memory","cancelled","no matching toolchains","missing input"):
+                    if k in line.lower(): classes.add(k)
+            else:
+                clean=re.sub(r"/(?:home|var|tmp|private)/[^\s,;]+","<path>",line)
+                reasons.append(clean[:220])
+        page=field(d,"next_page_token")
+        if not page: break
+    return dict(classes=sorted(classes),targets=sorted(labels)[:18],errors=reasons)
+
+def host_rows():
+    rows=call("SearchInvocation",{"query":{"host":CONTAINER,"updated_after":START,"updated_before":END},"count":64},rpc=True).get("invocation",[])
+    return rows
+
+def observe(lane, target, rows):
+    # All Bazel commands in job 124718905906 ran in this unique container.
+    # Its public creation timestamp and the enclosing step's source guards
+    # bind all of its invocations to the same detached checkout.
+    matches=[row for row in rows if target in (row.get("pattern",[]) if isinstance(row.get("pattern"),list) else [row.get("pattern")])]
+    if not matches:
+        return {"candidate_count":0,"verified":False}
     if len(matches)!=1:
         return {"candidate_count":len(matches),"verified":False}
     iid=get_id(matches[0])
@@ -81,8 +100,9 @@ def observe(lane, target):
     rev=ws.get("STABLE_VERSION","")
     stamp_ok = SOURCE[:12] in rev or field(inv,"commit_sha")==SOURCE
     exists = {"uuid":iid,"source_stamp_matches":stamp_ok,"created":stamp(field(inv,"created_at_usec")),"updated":stamp(field(inv,"updated_at_usec")),"status":field(inv,"invocation_status"),"success":inv.get("success",False),"verified":False}
-    if not stamp_ok:
-        return exists
+    exists["host_matches"] = inv.get("host")==CONTAINER
+    if not exists["host_matches"]: return exists
+    if not exists["success"]: exists["first_failure"]=diag(iid)
     if lane=="analyzer":
         tg=call("GetTarget",{"selector":{"invocation_id":iid,"label":target}}).get("target",[])
         exists["target_count"]=len(tg)
@@ -138,9 +158,11 @@ def observe(lane, target):
 
 def main():
     result={"action_run":41262656868,"source":SOURCE}
+    rows=host_rows()
+    result["host_target_inventory"]=[{"uuid":get_id(row),"target":row.get("pattern"),"started":stamp(field(row,"created_at_usec")),"updated":stamp(field(row,"updated_at_usec"))} for row in rows if str(row.get("pattern", "")).startswith(("//","['//"))]
     for key,target in TARGETS.items():
         try:
-            result[key]=observe(key,target)
+            result[key]=observe(key,target,rows)
         except (ValueError, RuntimeError, KeyError, OSError) as e:
             result[key]={"verified":False,"problem":str(e)[:100]}
     result["verified_at"]=datetime.now(timezone.utc).isoformat()
