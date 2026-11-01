@@ -1,4 +1,4 @@
-"""Run ordinary C++ utility tests with the supplier's static musl platforms."""
+"""Compare the ordinary GNU syscall entry point and its existing native launcher."""
 
 import collections
 import datetime
@@ -16,22 +16,14 @@ from static_build import elf
 
 
 SOURCE = os.environ["PRODUCT"]
+STOCK = "851d04fc2918adcaa60a78fd9fa7e766bc4fec68"
 IMAGE = "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"
-TARGETS = ["//test/util:posix_error_test", "//test/util:fs_util_test"]
-CASES = {
-    TARGETS[0]: ["PosixErrorTest/PosixError", "PosixErrorTest/PosixErrorOrPosixError", "PosixErrorTest/PosixErrorOrNullptr"],
-    TARGETS[1]: ["FsUtilTest/RecursivelyCreateDirManualDelete", "FsUtilTest/RecursivelyCreateAndDeleteDir", "FsUtilTest/RecursivelyCreateAndDeletePartial"],
-}
-ABI = {
-    "selected": "musl, selected by the supplier's existing target platforms",
-    "gnu_control": {"run": 41297166023, "artifact": 13079933163, "metadata_artifact": 13080650694,
-                    "cases_per_arch": 3, "scope": "Same PosixError source under explicitly declared GNU loader/runtime"},
-    "limitation": "These utility tests do not qualify the general syscall suite's Linux/glibc behavior: musl can select different syscalls and libc behavior.",
-    "prior_musl_attempt": {"run": 41298935746, "artifact": 13079619632, "status": "FAIL",
-                           "executed_tests": 0, "cause": "cc_test selected shared C++ runtimes for the static musl link"},
-    "supplier_static_contract": "https://github.com/hermeticbuild/hermetic-llvm/blob/39e71f939/README.md#musl",
-    "supplier_gnu_contract": "https://github.com/hermeticbuild/hermetic-llvm/blob/39e71f939/runtimes/glibc/README.md",
-}
+TARGETS = ["//test/syscalls:fork_test_native"]
+CASES = {TARGETS[0]: ["ForkTest/Simple", "ForkTest/Pipe", "ForkTest/SharedMapping"]}
+ABI = {"selected": "GNU target platform; musl only for execution tools",
+       "build_proof": {"run": 41300981826, "artifact": 13081601435},
+       "launcher_proposal": "8919cb68b11643114c1f28c1a756902a2958bda0",
+       "scope": "Ordinary native entry point, no run_under or target static-link override"}
 
 
 def now():
@@ -59,11 +51,11 @@ def original_tests(tests, targets, wrapper="compiled_posix_test_wrapper"):
     return True
 
 
-def native_actions(path, arch, tmp):
+def native_actions(path, arch, tmp, variant):
     """Reuse the qualified raw-spawn projection, retaining each test action."""
     # c37bd3473:test/rbe/empty_worker/wildcard.py; raw/expanded parity is
     # recorded in Actions 41282902598, artifact 13074631555.
-    projection = 'select(has("spawn")) | .spawn | {m:.mnemonic,l:.targetLabel,x:.args[0],t:(if .mnemonic == "TestRunner" then .args[1:] else null end),r:.runner,c:.cacheHit,s:.status,e:.exitCode,d:.digest,p:(.platform.properties // [])}'
+    projection = 'select(has("spawn")) | .spawn | {m:.mnemonic,l:.targetLabel,x:.args[0],t:(if .mnemonic == "TestRunner" then .args[1:] else null end),r:.runner,c:.cacheHit,s:.status,e:.exitCode,d:.digest,p:(.platform.properties // []),v:[.envVars[]? | select(.name == "GVISOR_SYSCALL_TEST_BINARY" or .name == "GVISOR_SYSCALL_TEST_RUNNER")]}'
     counts = collections.Counter()
     tests = []
     bad = []
@@ -87,196 +79,144 @@ def native_actions(path, arch, tmp):
                         "status": row["s"], "exit_code": row["e"], "digest": row["d"]}
                 if row["m"] == "TestRunner":
                     item["arguments"] = row["t"]
-                    item["test_binary"] = row["t"][-1] if row["t"] else ""
+                    item["runfile_environment"] = {value["name"]: value["value"] for value in row["v"]}
+                    item["test_binary"] = row["t"][0] if row["t"] else ""
                     tests.append(item)
-                if (not correct or runner not in ("remote", "remote cache hit") or row["s"] or row["e"]) and len(bad) < 30:
+                if (not correct or runner not in ("remote", "remote cache hit") or (row["m"] != "TestRunner" and (row["s"] or row["e"]))) and len(bad) < 30:
                     bad.append(item)
             projection_exit = projected.wait()
         decode_exit = decoder.wait()
-    valid_tests = (original_tests(tests, TARGETS, "posix_tw" if arch == "amd64" else "compiled_posix_test_wrapper")
-                   and all(test["arguments"] == [test["test_binary"]] for test in tests))
-    return {"status": "PASS" if counts["total"] and not bad and not decode_exit and not projection_exit and valid_tests else "FAIL",
-            "counts": dict(counts), "decoder_exits": [decode_exit, projection_exit],
-            "tests": tests, "failed_or_other": bad}
-
-
-
-def static_links(graph):
-    """Require both link actions to consume the supplier's static runtimes."""
-    fragments = {str(f["id"]): f for f in graph["pathFragments"]}
-    def path(fragment_id):
-        fragment = fragments[str(fragment_id)]
-        parent = fragment.get("parentId")
-        return (path(parent) + "/" if parent else "") + fragment["label"]
-    artifacts = {str(a["id"]): path(a["pathFragmentId"]) for a in graph["artifacts"]}
-    deps = {str(d["id"]): d for d in graph["depSetOfFiles"]}
-    targets = {str(t["id"]): t["label"] for t in graph["targets"]}
-    def input_paths(action):
-        seen, inputs = set(), set()
-        pending = list(action["inputDepSetIds"])
-        while pending:
-            key = str(pending.pop())
-            if key in seen:
-                continue
-            seen.add(key)
-            dep = deps[key]
-            inputs.update(artifacts[str(i)] for i in dep.get("directArtifactIds", []))
-            pending.extend(dep.get("transitiveDepSetIds", []))
-        return inputs
-    producers = {artifacts[str(output)]: action for action in graph["actions"] for output in action["outputIds"]}
-    links = []
-    for action in graph["actions"]:
-        if action["mnemonic"] != "CppLink":
-            continue
-        target = targets[str(action["targetId"])]
-        if target not in TARGETS:
-            continue
-        params = {p["execPath"]: p["arguments"] for p in action.get("paramFiles", [])}
-        args = [value for arg in action["arguments"]
-                for value in (params[arg[1:]] if arg.startswith("@") else [arg])]
-        inputs = input_paths(action)
-        archives = {}
-        for name in ("libcxx", "libcxxabi", "libunwind"):
-            selected = [arg for arg in args if "/" + name + "/" in arg and arg.endswith(".a") and arg in inputs]
-            if len(selected) != 1:
-                raise ValueError(target + ": link does not select one declared " + name)
-            archives[name] = selected[0]
-        search = [arg[2:] for arg in args if arg.startswith("-L") and len(arg) > 2]
-        search.extend(args[i + 1] for i, arg in enumerate(args[:-1]) if arg == "-L")
-        # This supplier declares the search directory as a tree artifact.
-        # Bind that tree to its own copy action and the real libc.a input.
-        directories = [name for name in search if name in inputs and name in producers
-                       and targets[str(producers[name]["targetId"])].endswith("//runtimes/musl:musl_library_search_directory")]
-        if len(directories) != 1:
-            raise ValueError(target + ": musl library search directory is not a declared, produced input")
-        libc = [name for name in input_paths(producers[directories[0]]) if Path(name).name == "libc.a"]
-        if len(libc) != 1:
-            raise ValueError(target + ": selected musl directory does not consume one libc.a")
-        archives["libc.a"] = libc[0]
-        static = [arg for arg in args if arg in ("-static", "-static-pie")]
-        shared = [arg for arg in args if re.search(r"\.so(?:\.[0-9]+)*$", arg)]
-        if not static or shared:
-            raise ValueError(target + ": link is not static or still selects a shared object")
-        links.append({"target": target, "action_key": action["actionKey"],
-                      "archives": archives, "libc_search_directory": directories[0], "static_options": static,
-                      "execution_platform": action["executionPlatform"]})
-    if collections.Counter(link["target"] for link in links) != collections.Counter(TARGETS):
-        raise ValueError("The graph does not have exactly one link action for each original test")
-    return {"status": "PASS", "links": links}
-
-
-
-def static_link_controls():
-    """Exercise the graph predicate before either remote compilation."""
-    paths = ["external/llvm/libcxx/liblibcxx.static.a", "external/llvm/libcxxabi/liblibcxxabi.static.a",
-             "external/llvm/libunwind/liblibunwind.static.a", "external/llvm/musl/musl_library_search_directory",
-             "external/llvm/musl/libc.a", "test/util/posix_error_test", "test/util/fs_util_test"]
-    fragments, ids = [], {}
-    artifacts = []
-    for index, value in enumerate(paths, 1):
-        parent, prefix = 0, ""
-        for part in value.split("/"):
-            prefix += "/" + part
-            if prefix not in ids:
-                ids[prefix] = len(ids) + 1
-                fragments.append({"id": ids[prefix], "label": part, "parentId": parent})
-            parent = ids[prefix]
-        artifacts.append({"id": index, "pathFragmentId": parent, "isTreeArtifact": index == 4})
-    args = ["-static", "-L" + paths[3], *paths[:3]]
-    graph = {"pathFragments": fragments, "artifacts": artifacts,
-             "targets": [{"id": i + 1, "label": target} for i, target in enumerate(TARGETS)]
-                        + [{"id": 3, "label": "@@llvm+//runtimes/musl:musl_library_search_directory"}],
-             "depSetOfFiles": [{"id": 1, "directArtifactIds": [1, 2, 3, 4]},
-                               {"id": 2, "directArtifactIds": [5]}],
-             "actions": [{"mnemonic": "CppLink", "targetId": i + 1, "actionKey": str(i),
-                          "arguments": ["clang", "@params"], "paramFiles": [{"execPath": "params", "arguments": list(args)}],
-                          "inputDepSetIds": [1], "outputIds": [i + 6], "executionPlatform": "//fixture:native"}
-                         for i in range(2)]
-                        + [{"mnemonic": "CopyToDirectory", "targetId": 3, "inputDepSetIds": [2], "outputIds": [4]}]}
-    static_links(graph)
-    for mutation in ("dynamic", "shared", "undeclared_archive", "missing_libc", "missing_owner"):
-        changed = json.loads(json.dumps(graph))
-        flags = changed["actions"][0]["paramFiles"][0]["arguments"]
-        if mutation == "dynamic":
-            flags.remove("-static")
-        elif mutation == "shared":
-            flags.append("external/llvm/libcxx/libc++.so.1")
-        elif mutation == "undeclared_archive":
-            changed["depSetOfFiles"][0]["directArtifactIds"].remove(1)
-        elif mutation == "missing_libc":
-            changed["depSetOfFiles"][1]["directArtifactIds"] = []
+    original = [test for test in tests if test["test_binary"] != "--generate-xml"]
+    auxiliary = [test for test in tests if test["test_binary"] == "--generate-xml"]
+    valid_tests = collections.Counter(test["target"] for test in original) == collections.Counter(TARGETS)
+    wrapper = "posix_tw" if arch == "amd64" else "compiled_posix_test_wrapper"
+    for test in original:
+        arguments = test["arguments"]
+        valid_tests &= (test["runner"] == "remote" and not test["cache_hit"]
+                        and Path(test["executable"]).name == wrapper
+                        and test["test_binary"] == "test/syscalls/fork_test_native")
+        if variant == "stock":
+            valid_tests &= arguments == ["test/syscalls/fork_test_native"]
         else:
-            changed["actions"].pop(1)
-        try:
-            static_links(changed)
-        except ValueError:
-            continue
-        raise ValueError("Static-link graph predicate accepts " + mutation)
-    return {"status": "PASS", "controls": 6}
+            valid_tests &= (arguments[1:2] == ["--syscall-test"] and "--platform=native" in arguments
+                            and test["runfile_environment"] == {
+                                "GVISOR_SYSCALL_TEST_BINARY": "test/syscalls/linux/fork_test",
+                                "GVISOR_SYSCALL_TEST_RUNNER": "test/runner/runner_/runner"})
+    return {"status": "PASS" if counts["total"] and not bad and not decode_exit and not projection_exit and valid_tests else "INCOMPLETE",
+            "counts": dict(counts), "decoder_exits": [decode_exit, projection_exit],
+            "tests": original, "xml_actions": auxiliary, "failed_or_other": bad}
 
 
-def link_graph(bazel, common, work):
-    """Analyze, but never execute, the same two target configurations."""
-    selected = "set(" + " ".join(TARGETS) + ")"
-    query = ('outputs(".*/(posix_error_test|fs_util_test|musl_library_search_directory)$", '
-             'deps(' + selected + '))')
-    raw = work / "link-graph.json"
-    started = now()
-    with raw.open("w") as output, (work / "link-graph.log").open("w") as log:
-        code = subprocess.run(["timeout", "--signal=INT", "--kill-after=25s", "12m",
-                               *bazel, "aquery", *common, "--output=jsonproto",
-                               "--include_artifacts", "--include_commandline", "--include_param_files", query],
-                              stdout=output, stderr=log).returncode
-    result = {"status": "INCOMPLETE", "native_exit": code, "started_at": started,
-              "execution_finished_at": now()}
-    if code == 0:
-        try:
-            result.update(static_links(json.loads(raw.read_text())))
-        except (KeyError, ValueError) as err:
-            result["reason"] = str(err)
-    result["verified_at"] = now()
-    return result
-
-
-def product_elf(bazel, common, work, execroot, arch):
+def product_files(bazel, common, work, execroot, arch, variant):
+    targets = [*TARGETS, "//test/syscalls/linux:fork_test"]
+    if variant != "stock":
+        targets.append("//test/runner/setup_container:setup_container")
     with (work / "output-query.log").open("w") as log:
         result = subprocess.run(["timeout", "--signal=INT", "--kill-after=25s", "8m",
-                                 *bazel, "cquery", *common, "--output=files", "set(" + " ".join(TARGETS) + ")"],
+                                 *bazel, "cquery", *common, "--output=files", "set(" + " ".join(targets) + ")"],
                                 stdout=subprocess.PIPE, stderr=log, text=True)
     if result.returncode:
         return {"status": "INCOMPLETE", "native_exit": result.returncode}
     outputs = {}
-    for target in TARGETS:
+    for target in targets:
         name = target.split(":")[1]
         files = [line for line in result.stdout.splitlines() if Path(line).name == name]
         if len(files) != 1 or not (execroot / files[0]).is_file():
             return {"status": "INCOMPLETE", "outputs": outputs,
-                    "reason": "The original test executable was not materialized locally", "target": target}
-        data = elf((execroot / files[0]).read_bytes())
-        data["status"] = "PASS" if (data["machine"] == {"amd64": 62, "arm64": 183}[arch]
-                                    and not data["interpreter"] and not data["needed"]) else "FAIL"
+                    "reason": "The original executable was not materialized locally", "target": target}
+        content = (execroot / files[0]).read_bytes()
+        data = {"path": files[0], "bytes": len(content), "sha256": hashlib.sha256(content).hexdigest()}
+        if variant == "stock" and target == TARGETS[0] and not content.startswith(b"#!/bin/bash\n"):
+            return {"status": "FAIL", "outputs": outputs, "reason": "Stock native target is not the expected Bash script"}
+        if content.startswith(b"#!"):
+            data.update(kind="script", interpreter=content.splitlines()[0].decode().removeprefix("#!"))
+            data["status"] = "PASS" if variant == "stock" and target == TARGETS[0] and data["interpreter"] == "/bin/bash" else "FAIL"
+        else:
+            data.update(kind="ELF", **elf(content))
+            data["status"] = "PASS" if data["machine"] == {"amd64": 62, "arm64": 183}[arch] else "FAIL"
         outputs[target] = data
+    if variant != "stock":
+        if outputs[TARGETS[0]]["sha256"] != outputs[targets[-1]]["sha256"]:
+            return {"status": "FAIL", "outputs": outputs, "reason": "The native launcher differs from setup_container"}
     return {"status": "PASS" if all(v["status"] == "PASS" for v in outputs.values()) else "FAIL", "outputs": outputs}
 
 
-def qualify(arch, tmp, out, private, bazel):
-    work = private / arch
+def failure_lines(reports):
+    lines = []
+    for path in reports.rglob("test.log"):
+        for line in path.read_text(errors="replace").splitlines():
+            if (re.search(r"execv[pel]*:|execv[pel]*\(|no such file|permission denied|exec format|cannot execute|fork/exec|^\[ *(RUN|FAILED|PASSED)", line, re.I)
+                    and not re.search(r"api.key|remote.header|bes.header|authorization|token=|credential", line, re.I)):
+                lines.append(line[:1200])
+    return lines[:30]
+
+
+def observation(row, verdict):
+    """Separate a qualified runtime from an evidenced failed exec boundary."""
+    if row["actions"]["status"] != "PASS" or row["original_files"]["status"] != "PASS":
+        return {"status": "INCOMPLETE", "cause": "Missing action or original executable evidence"}
+    if verdict["status"] == "PASS":
+        return {"status": "PASS", "cause": "All required syscall cases passed"}
+    originals = row["actions"]["tests"]
+    failed = verdict.get("executed", [])
+    matching_error = [line for line in row["original_log_diagnostics"]
+                      if re.fullmatch(r"ERROR: could not execute (?:.*/)?test/syscalls/fork_test_native: No such file or directory", line)]
+    if (verdict.get("native_exit") == 3 and verdict.get("bep_finish", {}).get("exitCode", {}).get("code") == 3
+            and len(originals) == 1 and originals[0]["exit_code"] == 127
+            and len(failed) == 1 and failed[0].get("owner", {}).get("label") == TARGETS[0]
+            and failed[0].get("status") == "FAILED" and matching_error):
+        return {"status": "PASS", "cause": "The native wrapper's exec of the original launcher returned ENOENT",
+                "diagnostic": matching_error,
+                "declared_interpreter": row["original_files"]["outputs"][TARGETS[0]]["interpreter"],
+                "inference": "The existing launcher and its interpreter declaration distinguish this boundary from later runner or namespace failures"}
+    return {"status": "INCOMPLETE", "cause": "Failure is preserved; the expected launch boundary is not established"}
+
+
+def observation_controls():
+    row = {"actions": {"status": "PASS", "tests": [{"exit_code": 127}]},
+           "original_files": {"status": "PASS", "outputs": {TARGETS[0]: {"interpreter": "/bin/bash"}}},
+           "original_log_diagnostics": ["ERROR: could not execute test/syscalls/fork_test_native: No such file or directory"]}
+    verdict = {"status": "FAIL", "native_exit": 3, "bep_finish": {"exitCode": {"code": 3}},
+               "executed": [{"owner": {"label": TARGETS[0]}, "status": "FAILED"}]}
+    if observation(row, verdict)["status"] != "PASS":
+        raise ValueError("The launch-failure predicate rejects its complete witness")
+    for mutation in ("no_action", "other_exit", "missing_log", "missing_attempt", "nonterminal", "no_file"):
+        changed, report = json.loads(json.dumps(row)), json.loads(json.dumps(verdict))
+        if mutation == "no_action":
+            changed["actions"]["tests"] = []
+        elif mutation == "other_exit":
+            changed["actions"]["tests"][0]["exit_code"] = 1
+        elif mutation == "missing_log":
+            changed["original_log_diagnostics"] = []
+        elif mutation == "missing_attempt":
+            report["executed"] = []
+        elif mutation == "nonterminal":
+            report["bep_finish"] = {}
+        else:
+            changed["original_files"]["status"] = "INCOMPLETE"
+        if observation(changed, report)["status"] != "INCOMPLETE":
+            raise ValueError("The launch-failure predicate accepts " + mutation)
+    return {"status": "PASS", "controls": 7}
+
+
+def qualify(arch, variant, source, tmp, out, private, bazel):
+    key = variant + "-" + arch
+    work = private / key
     work.mkdir()
-    public = out / arch
+    public = out / key
     public.mkdir()
-    row = {"source": SOURCE, "arch": arch, "targets": TARGETS, "required_cases": CASES, "libc": ABI, "phases": {}, "status": "INCOMPLETE"}
+    row = {"source": source, "variant": variant, "arch": arch, "targets": TARGETS, "required_cases": CASES, "libc": ABI, "phases": {}, "status": "INCOMPLETE"}
     write(public / "receipt.json", row)
-    (work / "commit").write_bytes(git("cat-file", "commit", SOURCE))
+    (work / "commit").write_bytes(git("cat-file", "commit", source))
     (work / "before").write_bytes(git("diff", "HEAD", "--"))
     (work / "expected.txt").write_text("\n".join(TARGETS) + "\n")
     write(work / "cases.json", CASES)
     platform = "//test/rbe/empty_worker:" + arch + "_musl"
-    target_platform = "@llvm//platforms:linux_" + {"amd64": "x86_64", "arm64": "aarch64"}[arch] + "_musl"
+    target_platform = "//tools/bazeldefs:linux_" + arch
     row["target_platform"] = target_platform
     row["execution_platform"] = platform
     common = ["--config=" + {"amd64": "x86_64", "arm64": "aarch64"}[arch],
-              "--platforms=" + target_platform,
-              "--compilation_mode=fastbuild", "--dynamic_mode=off", "--host_platform=" + platform,
+              "--compilation_mode=fastbuild", "--host_platform=" + platform,
               "--extra_execution_platforms=" + platform,
               "--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
               "--extra_toolchains=//test/rbe/go_bootstrap:linux_" + arch + "_ash",
@@ -285,14 +225,11 @@ def qualify(arch, tmp, out, private, bazel):
               "--incompatible_use_native_posix_test_wrapper", "--nocache_test_results",
               "--nobuild_event_json_file_path_conversion", "--jobs=400",
               "--remote_download_outputs=toplevel",
-              "--remote_download_regex=bazel-out/[^/]+/bin/test/util/(posix_error_test|fs_util_test)$",
+              "--remote_download_regex=bazel-out/[^/]+/bin/(test/syscalls/(fork_test_native|linux/fork_test)|test/runner/setup_container/setup_container)$",
+              "--remote_accept_cached", "--test_timeout=90", "--test_env=GTEST_FILTER=ForkTest.Simple:ForkTest.Pipe:ForkTest.SharedMapping",
               "--noremote_upload_local_results",
               "--noremote_local_fallback", "--spawn_strategy=remote", "--keep_going",
               "--color=no", "--curses=no"]
-    row["phases"]["static_link_graph"] = link_graph(bazel, common, work)
-    write(public / "receipt.json", row)
-    if row["phases"]["static_link_graph"]["status"] != "PASS":
-        return row
     extra = []
     for phase in ("analysis", "test"):
         raw = work / (phase + ".bep")
@@ -317,6 +254,9 @@ def qualify(arch, tmp, out, private, bazel):
             if preflight["status"] != "PASS":
                 return row
             extra = preflight["output_options"]
+            binaries = next(arg.split("=", 1)[1] for arg in common if arg.startswith("--remote_download_regex="))
+            extra = ["--remote_download_regex=(" + binaries + ")|(" + arg.split("=", 1)[1] + ")"
+                     if arg.startswith("--remote_download_regex=") else arg for arg in extra]
             continue
         (work / "arguments").write_text("\n".join(args) + "\n")
         (work / "native_exit").write_text(str(code))
@@ -326,7 +266,7 @@ def qualify(arch, tmp, out, private, bazel):
         sanitized = work / "sanitized.bep"
         capture = report.capture(raw, sanitized, execroot, work / "reports", False, (work / "analysis.bep",), "test")
         (work / "capture_exit").write_text(str(int(bool(capture["errors"]))))
-        context = {"expected_source": SOURCE, "commit_file": "commit", "source_before": "before",
+        context = {"expected_source": source, "commit_file": "commit", "source_before": "before",
                    "source_after": "after", "final_head": "head", "executed_arguments": "arguments",
                    "native_exit": "native_exit", "capture_exit": "capture_exit",
                    "execution_finished_at": finished, "command_kind": "test"}
@@ -339,17 +279,20 @@ def qualify(arch, tmp, out, private, bazel):
             destination = public / "xml" / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(xml, destination)
+        row["original_log_diagnostics"] = failure_lines(work / "reports")
         row["tests_status"] = verdict["status"]
         row["status"] = verdict["status"]
         # Preserve the test verdict before any independent worker-log decoding.
         write(public / "receipt.json", row)
-        row["actions"] = native_actions(work / "actions.compact", arch, tmp)
+        row["actions"] = native_actions(work / "actions.compact", arch, tmp, variant)
         # Runtime status is retained even if output inspection later fails.
         write(public / "receipt.json", row)
-        row["product_elf"] = product_elf(bazel, common, work, execroot, arch)
+        row["original_files"] = product_files(bazel, common, work, execroot, arch, variant)
         row["verified_at"] = now()
-        states = [verdict["status"], row["actions"]["status"], row["product_elf"]["status"]]
+        states = [verdict["status"], row["actions"]["status"], row["original_files"]["status"]]
         row["status"] = "FAIL" if "FAIL" in states else "PASS" if states == ["PASS"] * 3 else "INCOMPLETE"
+        row["observation"] = observation(row, verdict)
+        row["observation_status"] = row["observation"]["status"]
         write(public / "receipt.json", row)
     return row
 
@@ -360,7 +303,7 @@ def main():
     out.mkdir(exist_ok=True)
     private = tmp / "native-package-private"
     private.mkdir(exist_ok=True)
-    write(out / "static-link-controls.json", static_link_controls())
+    write(out / "observation-controls.json", observation_controls())
     control = json.loads((tmp / "native-wrapper-control.json").read_text())
     actual = control["test_action"]
     targets = [actual["target"]]
@@ -382,12 +325,16 @@ def main():
         return 1
     bazel = [str(binary), "--bazelrc=" + str(tmp / "sidecar.bazelrc")]
     rows = []
-    for arch in ("amd64", "arm64"):
+    for variant, source, arch in ((variant, source, arch) for variant, source in (("stock", STOCK), ("native_launcher", SOURCE)) for arch in ("amd64", "arm64")):
+        key = variant + "-" + arch
         try:
-            rows.append(qualify(arch, tmp, out, private, bazel))
+            subprocess.run(["git", "checkout", "--detach", source], check=True, stdout=subprocess.DEVNULL)
+            if git("rev-parse", "HEAD").decode().strip() != source or git("diff", "HEAD", "--").strip():
+                raise ValueError("The control source was not selected cleanly")
+            rows.append(qualify(arch, variant, source, tmp, out, private, bazel))
         except Exception as err:
             # Retain any already-written original result, including test failure.
-            path = out / arch / "receipt.json"
+            path = out / key / "receipt.json"
             row = json.loads(path.read_text()) if path.exists() else {"arch": arch, "status": "INCOMPLETE"}
             if row.get("phases", {}).get("test", {}).get("native_exit", 0):
                 row["status"] = "FAIL"
@@ -398,7 +345,8 @@ def main():
             write(path, row)
             rows.append(row)
     status = "FAIL" if any(row["status"] == "FAIL" for row in rows) else "PASS" if all(row["status"] == "PASS" for row in rows) else "INCOMPLETE"
-    summary = {"source": SOURCE, "status": status, "rows": rows, "libc": ABI, "verified_at": now(),
+    comparison_status = "PASS" if len(rows) == 4 and all(row.get("observation_status") == "PASS" for row in rows) else "INCOMPLETE"
+    summary = {"source": SOURCE, "stock_source": STOCK, "status": status, "observation_status": comparison_status, "rows": rows, "libc": ABI, "verified_at": now(),
                "native_bazel": {"supplier_source": "c2f5f79dce24877679cede14b85666b7ca65c6de",
                                 "member": "bazel-candidate",
                                 "sha256": binary_sha256,
@@ -406,7 +354,7 @@ def main():
                                 "wrapper_prerequisite": "https://github.com/bazelbuild/bazel/pull/30837",
                                 "prior_native_xml_proof": "https://github.com/tamird/gvisor/actions/runs/41071795282/artifacts/12986015991"}}
     write(out / "summary.json", summary)
-    return int(summary["status"] != "PASS")
+    return int(summary["observation_status"] != "PASS")
 
 
 if __name__ == "__main__":
