@@ -26,6 +26,7 @@ benchmark_test(
         "//pkg/sentry/state/checkpointfiles",
         "//pkg/sentry/vfs",
         "//pkg/state",
+        "//pkg/state/wire",
         "//pkg/state/statefile",
         "//pkg/test/dockerutil",
         "//pkg/test/testutil",

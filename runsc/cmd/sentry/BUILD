@@ -14,6 +14,8 @@ go_binary(
     visibility = ["//visibility:public"],
     x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"},
     deps = [
+        "//pkg/state",
+        "//pkg/log",
         "//runsc/cli/sentrycli",
         "//runsc/gvisorbinaries",
     ],
@@ -32,6 +34,8 @@ go_binary(
     ],
     x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"},
     deps = [
+        "//pkg/state",
+        "//pkg/log",
         "//runsc/cli/sentrycli",
         "//runsc/gvisorbinaries",
     ],
@@ -86,6 +90,8 @@ go_binary(
     deps = [
         "//pkg/sentry/socket/plugin/stack",
         "//runsc/cli",
+        "//pkg/state",
+        "//pkg/log",
         "//runsc/cli/sentrycli",
         "//runsc/cmd/sentry/sentrycmd",
         "//runsc/cmd/util",
@@ -100,6 +106,8 @@ deps_test(
     allowed = [
         "//runsc/autoplatform",
         "//runsc/cli",
+        "//pkg/state",
+        "//pkg/log",
         "//runsc/cli/sentrycli",
         "//runsc/cmd/nvproxy",
         "//runsc/cmd/sandboxsetup",

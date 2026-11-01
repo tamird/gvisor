@@ -411,9 +411,15 @@ func (gd *graphStructDecoder) afterLoadTo(l AfterLoader) {
 	}
 }
 
+var StudyColdGraph func(root, ds any, beforeObjs, beforeCbs, objs, capObjs, capCbs int)
+
 func loadGraph(ctx context.Context, r io.Reader, rootPtr any, length uint64, start int64) (Stats, error) {
 	ds := newGraphDecodeState(ctx)
 	defer ds.release()
+	if observe := StudyColdGraph; observe != nil {
+		objs, cbs := cap(ds.objs), cap(ds.cbs)
+		defer func() { observe(rootPtr, ds, objs, cbs, len(ds.objs), cap(ds.objs), cap(ds.cbs)) }()
+	}
 	ds.stats.used = true
 	ds.stats.enabled = collectStats.Load()
 	if length > maxStreamLength {
