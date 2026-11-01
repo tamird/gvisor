@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T00:05:24.396268+00:00",
+    "updatedAt": "2026-11-01T00:11:22.001774+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40903,6 +40903,44 @@
         "requestedAt": "2026-11-01T00:05:24.396268+00:00",
         "summary": "Review submission of this backport to bazelbuild/bazel’s release-8.9.0 branch. gVisor lint adoption remains separate.",
         "body": "When a watched directory disappears between builds, invalidate the\nrepository instead of requesting a directory listing for the missing\npath. Record the file type before the directory contents, and preserve\nthat order when checking the recorded inputs.\n\nInvalidate remote repository cache entries that predate this check.\nUse the 8.x DirTree constructor and its FileValue.Key test fixture."
+      }
+    },
+    {
+      "id": "branch:hermetic-llvm-link-wrapper-musl",
+      "type": "branch",
+      "group": "bazel",
+      "repo": "tamird/hermetic-llvm",
+      "ref": "fix/linux-link-wrapper-musl",
+      "head": "b44d0d90c064a84ae942a90812274b9bd9f6427a",
+      "url": "https://github.com/tamird/hermetic-llvm/commit/b44d0d90c",
+      "title": "Link the Linux link wrapper with musl",
+      "updatedAt": "2026-11-01T00:11:22.001774+00:00",
+      "status": "Contributor review requested",
+      "summary": "On a native ARM64 Linux worker without glibc, four vDSO objects compiled but the linker could not start its 12,208-byte wrapper: it needed the AArch64 glibc loader and three shared libraries. With the existing musl transition, the 67,560-byte wrapper needed neither an interpreter nor shared libraries. It linked both the ARM64 and x86 vDSOs, and Bazel produced the 336,470-byte runsc filter archive. The x86 vDSO was cross-linked on ARM64; no native x86 wrapper execution was tested.",
+      "evidence": [
+        {
+          "label": "Original worker: two vDSO links could not start the wrapper",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41254370730/artifacts/13062732350"
+        },
+        {
+          "label": "Native ARM64: original and corrected wrapper ELFs, both vDSO links and the filter archive",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41255028279/artifacts/13062876059"
+        },
+        {
+          "label": "Existing Linux musl transition, merged in hermetic-llvm #899",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/899"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "b44d0d90c064a84ae942a90812274b9bd9f6427a",
+        "baseHead": "fd2addebff08b29675ee266bc2766e475ce9263b",
+        "url": "https://github.com/tamird/hermetic-llvm/commit/b44d0d90c",
+        "title": "Link the Linux link wrapper with musl",
+        "requestedAt": "2026-11-01T00:11:22.001774+00:00",
+        "summary": "Review submitting this change to hermeticbuild/hermetic-llvm. The module map generator already supplies the transition on upstream main.",
+        "body": "Clang's link wrapper runs on the execution platform. On a Linux worker\nwithout a glibc loader, Bazel can compile the target objects but cannot\nstart the wrapper to link them.\n\nUse the existing per-CPU musl transition for the wrapper as well as the\nmodule map generator. The transitioned tool keeps its clang++ basename\nfor rustc's linker-flavor detection."
       }
     }
   ],
