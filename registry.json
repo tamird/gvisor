@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T00:30:22.013294+00:00",
+    "updatedAt": "2026-11-01T00:46:55.390628+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4567,8 +4567,8 @@
       "url": "https://github.com/tamird/gvisor/commit/0afd5b37e",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "The compiler revision on current master uses the upstream LLVM source repository and retains the current Go rules, Linux headers and libbpf. It needs the two syscall-test allocator exception specifications, not the full #15368 cleanup. The catalog gains llvm-project and with_cfg and drops llvm-raw. QEMU and LTP license mismatches also occur on the parent. The principal binaries and analyzers passed for both targets. A new remote AMD64 compile reproduced the 4,456,624-byte NVIDIA parser object. The NVIDIA driver parser linked on AMD64 (211,730,920 bytes) and ARM64 (224,953,640 bytes). Both ELF products matched the corresponding remote link digest. The ARM link reused one locally generated TableGen include. The original behavior test timed out while building its additional dependencies; no test case ran.",
-      "updatedAt": "2026-11-01T00:30:22.013294+00:00",
+      "summary": "The compiler revision on current master uses the upstream LLVM source repository and retains the current Go rules, Linux headers and libbpf. It needs the two syscall-test allocator exception specifications, not the full #15368 cleanup. The catalog gains llvm-project and with_cfg and drops llvm-raw. QEMU and LTP license mismatches also occur on the parent. The principal binaries and analyzers passed for both targets. A new remote AMD64 compile reproduced the 4,456,624-byte NVIDIA parser object. The NVIDIA driver parser linked on AMD64 (211,730,920 bytes) and ARM64 (224,953,640 bytes). Both ELF products matched the corresponding remote link digest. The ARM link reused one locally generated TableGen include. The original driver ABI TestParser executed on AMD64 and passed with exactly the previously verified ELF. The ARM64 link was verified; its parser behavior was not run.",
+      "updatedAt": "2026-11-01T00:46:55.390628+00:00",
       "head": "0afd5b37e31824e0299c44235ef4cb58af0358ce",
       "evidence": [
         {
@@ -4626,6 +4626,10 @@
         {
           "label": "Original AMD64 parser test recovery",
           "url": "https://github.com/tamird/gvisor/actions/runs/41256718712"
+        },
+        {
+          "label": "Original AMD64 TestParser passed in 0.10 s; parser SHA-256 matches the earlier link",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41256718712/artifacts/13063003838"
         }
       ],
       "refinement": {
@@ -4648,14 +4652,15 @@
         "owner": "Compiler integration",
         "sourceHead": "0afd5b37e31824e0299c44235ef4cb58af0358ce",
         "disposition": "Qualify current compiler",
-        "observedAt": "2026-11-01T00:30:22.013294+00:00",
-        "nextAction": "Run the original driver ABI behavior test on AMD64 using the two completed link receipts; preserve the independent outstanding licensing prerequisites.",
+        "observedAt": "2026-11-01T00:46:55.390628+00:00",
+        "nextAction": "Preserve the independent licensing prerequisites; the two linked parser targets and the AMD64 behavior test have finished.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
           "https://github.com/tamird/gvisor/actions/runs/41251844658/artifacts/13061732767",
           "https://github.com/tamird/gvisor/actions/runs/41253915451/artifacts/13062846601",
-          "https://github.com/tamird/gvisor/actions/runs/41256718712"
+          "https://github.com/tamird/gvisor/actions/runs/41256718712",
+          "https://github.com/tamird/gvisor/actions/runs/41256718712/artifacts/13063003838"
         ]
       }
     },
@@ -40981,29 +40986,30 @@
       "head": "50acb57aea9617940ea697d39d835063e1195fb9",
       "title": "Clear only used graph decoder entries",
       "url": "https://github.com/tamird/gvisor/commit/50acb57ae",
-      "updatedAt": "2026-11-01T00:30:22.013294+00:00",
-      "status": "Contributor review requested",
-      "summary": "Clear only the graph decoder entries used by the current load when returning its tables to the pool. In 16 alternating AMD64 pairs, repeatedly decoding the Nginx CPUID and kernel records cost 1.58% less CPU; decoding the small CPUID record immediately after the kernel cost 28.93% less. Allocations were unchanged. These measurements exclude file I/O and decompression.",
+      "updatedAt": "2026-11-01T00:46:55.390628+00:00",
+      "status": "Shelved research",
+      "summary": "Clearing fewer entries helped when a large graph decoder was reused for a small graph in the same process. Fresh-process results did not reproduce a restore benefit. Across 64 pairs, CPU for CPUID then kernel was 10.46→10.59 ms (p=.590), and the first kernel load was 6.990→6.611 ms (p=.279); wall time did not differ significantly. Three real restores used a different decoder for the small metadata and served the same 1,024-byte HTTP body. Retained as research; no submission proposed.",
       "evidence": [
         {
           "label": "Benchstat, 11,544 passing test and analyzer records, 85 skipped",
           "url": "https://github.com/tamird/gvisor/actions/runs/41254788649/artifacts/13063425831"
         },
         {
-          "label": "Separate single-restore applicability study",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41256814960"
+          "label": "64 fresh-process pairs and three live restores; no change in the served HTTP payload",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41256814960/artifacts/13064285013"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "50acb57aea9617940ea697d39d835063e1195fb9",
-        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
-        "url": "https://github.com/tamird/gvisor/commit/50acb57ae",
-        "title": "Clear only used graph decoder entries",
-        "requestedAt": "2026-11-01T00:30:22.013294+00:00",
-        "summary": "Review opening this independent gVisor change. The CPU comparison measures repeated in-process decoding.",
-        "body": "Each Load grows the decoder's tables as it reads the graph. When it\nreturns the decoder to the pool, it only needs to clear the entries it\nused. The unused tail was cleared by the load that last populated it.\nThis holds when a load fails partway through a table as well: the\nlength covers every entry written so far.\n\nFor a four-worker Nginx checkpoint, the kernel graph used 1,741 of\n2,389 reserved callback slots. The CPUID record needed two. Replaying\nthe two graphs on one AMD64 CPU produced the following benchstat\nresults [1]. GC was disabled to keep the decoder in the pool. These\nmeasurements cover graph decoding, excluding file I/O and decompression.\n\n                      │    stock    │          change           │\n                      │ cpu-sec/op  │ cpu-sec/op   vs base      │\n    small_after_kernel  7.349µ ± 0%   5.223µ ± 1%  -28.93% (p=0.000 n=16)\n    kernel_after_kernel 1.218m ± 1%   1.196m ± 1%   -1.80% (p=0.000 n=16)\n    cpuid_then_kernel   1.217m ± 2%   1.198m ± 1%   -1.58% (p=0.004 n=16)\n\n[1] https://github.com/tamird/gvisor/actions/runs/41254788649/artifacts/13063425831"
+      "inactive": true,
+      "followup": {
+        "disposition": "Shelved after the fresh-process and live restore controls",
+        "owner": "State investigation",
+        "sourceHead": "50acb57aea9617940ea697d39d835063e1195fb9",
+        "observedAt": "2026-11-01T00:46:55.390628+00:00",
+        "nextAction": "None. Preserve the repeated-decoding benchmark and the fresh-process controls together.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41254788649/artifacts/13063425831",
+          "https://github.com/tamird/gvisor/actions/runs/41256814960/artifacts/13064285013"
+        ]
       }
     }
   ],
@@ -56901,9 +56907,30 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T00:30:22.013294+00:00",
+      "updatedAt": "2026-11-01T00:46:55.390628+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The public //:release target at f906c5dd8 staged eight executables for each architecture in fastbuild. On the original trees five files staged and three C-sidecar genrules tried to run Bash on scratch. With #16506 and #16522, seven copy actions ran uncached and the shim copy was cached on each target. On native AMD64 and ARM64 Ubuntu hosts the same staged runsc and Sentry booted a systrap guest, which used the pinned BusyBox to read the source marker, report the expected architecture and exit 0. The smoke test reused those files after correcting rootfs traversal permissions. Repository fetching used a normal client; these are fastbuild results, not the official distribution flags.",
+          "evidence": [
+            {
+              "label": "Original AMD64 staging outcomes",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41256773361/artifacts/13063388732"
+            },
+            {
+              "label": "Original ARM64 staging outcomes",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41256773361/artifacts/13063926664"
+            },
+            {
+              "label": "AMD64 eight-file/native guest proof",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41258053150/artifacts/13064185445"
+            },
+            {
+              "label": "ARM64 eight-file/native guest proof",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41258053150/artifacts/13063488328"
+            }
+          ]
+        },
         {
           "text": "The full private CLI target on 162e8f5e6 linked uncached on separate AMD64 and ARM64 scratch Linux executors coordinated by GNU hosts. The original AMD64 (13,095,072 bytes) and ARM64 (12,255,392 bytes) ELF products matched the remote link digests, recovered without another build. This does not establish the complete public release fileset or a systrap boot.",
           "evidence": [
