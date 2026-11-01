@@ -186,6 +186,7 @@ go_library(
         "tcp_segment_refs.go",
         "timer.go",
     ],
+    imports = ["gvisor.dev/gvisor/pkg/tcpip/header"],
     visibility = ["//visibility:public"],
     deps = [
         "//pkg/atomicbitops",

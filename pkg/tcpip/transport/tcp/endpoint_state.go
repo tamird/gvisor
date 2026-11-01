@@ -184,7 +184,6 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 		e.keepalive.timer.init(s.Clock(), timerHandler(e, e.keepaliveTimerExpired))
 	}
 	if snd := e.snd; snd != nil {
-		snd.reorderTimer.init(s.Clock(), timerHandler(e, e.snd.rc.reorderTimerExpired))
 		snd.corkTimer.init(s.Clock(), timerHandler(e, e.snd.corkTimerExpired))
 	}
 	e.ops.InitHandler(e, e.stack, GetTCPSendBufferLimits, GetTCPReceiveBufferLimits)
@@ -247,9 +246,6 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 				))
 			}
 		}
-		// Reset the scoreboard to reinitialize the sack information as
-		// we do not restore SACK information.
-		e.scoreboard.Reset()
 		// Unregister the endpoint before registering again during Connect.
 		e.stack.UnregisterTransportEndpoint(e.effectiveNetProtos, header.TCPProtocolNumber, e.TransportEndpointInfo.ID, e, e.boundPortFlags, e.boundBindToDevice)
 		e.mu.Lock()
@@ -275,6 +271,7 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 		// The callbacks take e.mu and need the restored route. An overdue
 		// timer can run as soon as this endpoint is unlocked.
 		e.snd.resendTimer.restore(s.Clock(), timerHandler(e, e.snd.retransmitTimerExpired))
+		e.snd.reorderTimer.restore(s.Clock(), timerHandler(e, e.snd.rc.reorderTimerExpired))
 		e.snd.probeTimer.restore(s.Clock(), timerHandler(e, e.snd.probeTimerExpired))
 		if e.ops.GetCorkOption() {
 			// Rearm the timer if TCP_CORK is enabled which will
