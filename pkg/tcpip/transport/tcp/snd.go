@@ -180,7 +180,7 @@ type sender struct {
 
 	// reorderTimer is the timer used to retransmit the segments after RACK
 	// detects them as lost.
-	reorderTimer timer `state:"nosave"`
+	reorderTimer timer
 
 	// probeTimer is used to schedule PTO for RACK TLP algorithm.
 	probeTimer timer

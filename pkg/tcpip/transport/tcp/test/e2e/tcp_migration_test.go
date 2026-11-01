@@ -848,3 +848,86 @@ func TestRestoreSendTimer(t *testing.T) {
 		})
 	}
 }
+
+func TestRestoreRACKReorderWindow(t *testing.T) {
+	const rtt = 100 * time.Millisecond
+	clock := faketime.NewManualClock()
+	c := testcontext.NewWithOpts(t, testcontext.Options{EnableV4: true, MTU: 1500, Clock: clock})
+	defer c.Cleanup()
+	c.Stack().SetAllowLiveTCPMigration(true)
+	c.Stack().SetRemoveConf(true)
+	e2e.SetStackSACKPermitted(t, c, true)
+	e2e.SetStackTCPRecovery(t, c, int(tcpip.TCPRACKLossDetection))
+	c.CreateConnectedWithRawOptions(testcontext.TestInitialSequenceNumber, 30000, -1, []byte{header.TCPOptionSACKPermitted, 2, header.TCPOptionNOP, header.TCPOptionNOP})
+	c.EP.SocketOptions().SetDelayOption(false)
+	base := c.IRS.Add(1)
+	seq := seqnum.Value(testcontext.TestInitialSequenceNumber + 1)
+	send := func(b byte) {
+		t.Helper()
+		if n, err := c.EP.Write(bytes.NewReader([]byte{b}), tcpip.WriteOptions{}); n != 1 || err != nil {
+			t.Fatalf("Write(%c) = %d, %v", b, n, err)
+		}
+		p := c.GetPacket()
+		defer p.Release()
+		if got := header.TCP(header.IPv4(p.AsSlice()).Payload()).Payload(); !bytes.Equal(got, []byte{b}) {
+			t.Fatalf("sent %q, want %c", got, b)
+		}
+	}
+
+	// Establish the RTT, then report that B and C arrived without A.
+	send('W')
+	clock.Advance(rtt)
+	c.SendAck(seq, 1)
+	c.Stack().Pause() // Drain the ACK before advancing the manual clock.
+	c.Stack().Resume()
+	for _, b := range []byte("ABC") {
+		send(b)
+	}
+	clock.Advance(rtt)
+	c.SendAckWithSACK(seq, 1, []header.SACKBlock{{Start: base.Add(2), End: base.Add(4)}})
+	c.Stack().Pause()
+	c.Stack().Resume()
+
+	// Checkpoint halfway through RACK's initial minRTT/4 reordering
+	// window. The silent peer should get only A at the original deadline.
+	const remaining = rtt / 8
+	clock.Advance(remaining)
+	st, link := restoreGSORoute(t, c, 1500, stack.GSONotSupported)
+	defer st.Destroy()
+	restored := st.Clock().(*faketime.ManualClock)
+	restored.Advance(remaining - time.Nanosecond)
+	if p := link.Read(); p != nil {
+		p.DecRef()
+		t.Fatal("retransmitted before the reordering window expired")
+	}
+	restored.Advance(time.Nanosecond)
+	p := link.Read()
+	if p == nil {
+		t.Fatal("no retransmission when the reordering window expired")
+	}
+	defer p.DecRef()
+	if got := p.Data().AsRange().ToSlice(); !bytes.Equal(got, []byte{'A'}) {
+		t.Fatalf("retransmitted %q, want A", got)
+	}
+	if p := link.Read(); p != nil {
+		defer p.DecRef()
+		t.Fatalf("also retransmitted %q, already selectively acknowledged", p.Data().AsRange().ToSlice())
+	}
+
+	// Once A arrives, the peer can acknowledge through C. The next
+	// sequence number the sender uses to close must follow all three.
+	sendRestoredGSOAck(c, st, link, 4)
+	ep := st.FindTransportEndpoint(ipv4.ProtocolNumber, tcp.ProtocolNumber, c.EP.(*tcp.Endpoint).ID, 1).(tcpip.Endpoint)
+	if err := ep.Shutdown(tcpip.ShutdownWrite); err != nil {
+		t.Fatal(err)
+	}
+	fin := link.Read()
+	if fin == nil {
+		t.Fatal("no FIN after the cumulative ACK")
+	}
+	defer fin.DecRef()
+	h := header.TCP(fin.TransportHeader().Slice())
+	if h.Flags()&header.TCPFlagFin == 0 || h.SequenceNumber() != uint32(base.Add(4)) {
+		t.Fatalf("after cumulative ACK: flags %v, seq %d; want FIN at %d", h.Flags(), h.SequenceNumber(), base.Add(4))
+	}
+}
