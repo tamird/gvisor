@@ -111,8 +111,8 @@ try:
             def props(a):
                 return {p["name"]:p["value"] for p in a["platform"]["properties"]}
             if result["native_exit"]==0:
-                rows=[(a,o) for a in actions if a["mnemonic"]=="GoLink" and a["label"].startswith("//runsc:") for o in a["outputs"] if Path(o["path"]).name=="runsc"]
-                tool,product=next((a,o) for a,o in rows if o["path"].split("/")[1].startswith("aarch64-" if cpu=="arm64" else "k8-"))
+                outputs=[(a,o) for a in actions if a["mnemonic"]=="GoLink" and a["label"].startswith("//runsc:") for o in a["outputs"] if Path(o["path"]).name=="runsc"]
+                tool,product=next((a,o) for a,o in outputs if o["path"].split("/")[1].startswith("aarch64-" if cpu=="arm64" else "k8-"))
                 assert props(tool)["Arch"]==cpu and props(tool)["container-image"]==image
                 result["owner_action"]={k:tool.get(k) for k in ("label","runner","cacheHit","platform","action","executable")}
                 result["owner_output"]=product
