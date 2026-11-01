@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T04:31:22.639808+00:00",
+    "updatedAt": "2026-11-01T05:08:12.703055+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41259,6 +41259,68 @@
           "head": "d01551afde465a186992ecaf583f57cebbf98415"
         }
       }
+    },
+    {
+      "id": "pr:16787",
+      "type": "pr",
+      "group": "runtime",
+      "repo": "google/gvisor",
+      "number": 16787,
+      "ref": "linger-close-fin-acked",
+      "head": "c9c954f7e83660917f7c002728bfed64501840c5",
+      "title": "netstack: end a lingering close when the peer acknowledges the FIN",
+      "url": "https://github.com/google/gvisor/pull/16787",
+      "status": "open",
+      "updatedAt": "2026-11-01T05:08:12.703055+00:00",
+      "summary": "Aditya Merchant’s netstack PR wakes a lingering close when the peer acknowledges the FIN and skips the wait on process exit. It introduces the shared process-exit syscall fixture used by the host-network follow-up.",
+      "evidence": [
+        {
+          "label": "Upstream proposal and shared syscall fixture",
+          "url": "https://github.com/google/gvisor/pull/16787"
+        }
+      ]
+    },
+    {
+      "id": "branch:hostinet-exit-linger",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/hostinet-exit-linger",
+      "head": "c53942792678277f0195068aa41ad17620dd9dd1",
+      "title": "hostinet: skip the TCP linger wait on task exit",
+      "url": "https://github.com/tamird/gvisor/commit/c53942792",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T05:08:12.703055+00:00",
+      "summary": "With host networking, a guest process exiting while holding its last TCP socket can wait out a positive SO_LINGER timeout. The host sees a running Sentry thread closing the socket. Disable positive linger for that final close and preserve the peer reset requested by zero linger. All four IPv4/IPv6 cases passed on each of Linux, hostinet and netstack.",
+      "evidence": [
+        {
+          "label": "Original Linux, hostinet and netstack XML: 12 passed, zero skips",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41274137310/artifacts/13070531394"
+        },
+        {
+          "label": "AMD64 hostinet analyzer passed at c53942792",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41273907325/artifacts/13071471493"
+        },
+        {
+          "label": "IPv4 on native Linux, stock and corrected host networking",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41259985380/artifacts/13064459181"
+        },
+        {
+          "label": "IPv6 comparison of stock and corrected host networking",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41262136830/artifacts/13065543661"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "c53942792678277f0195068aa41ad17620dd9dd1",
+        "baseHead": "c9c954f7e83660917f7c002728bfed64501840c5",
+        "url": "https://github.com/tamird/gvisor/commit/c53942792",
+        "title": "hostinet: skip the TCP linger wait on task exit",
+        "requestedAt": "2026-11-01T05:08:12.703055+00:00",
+        "summary": "Open the host-network fix after #16787 lands with the shared process-exit syscall fixture?",
+        "body": "A guest exiting with the last reference to a TCP socket can wait out\nits entire SO_LINGER timeout. Linux skips that wait when the closing\ntask is exiting [1]. With host networking the sentry thread closes the\nsocket on the guest's behalf and the host sees a running task.\n\nDisable positive linger before the last host close on task exit. Keep\nzero linger enabled so a peer still receives the requested reset [2].\nThe process-exit syscall test checks both cases with host networking.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/af_inet.c#L426-L437\n[2]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp.c#L3095-L3101"
+      }
     }
   ],
   "edges": [
@@ -44644,6 +44706,17 @@
         "https://github.com/google/gvisor/pull/16180",
         "https://github.com/tamird/gvisor/commit/6d477a9ff",
         "https://github.com/tamird/gvisor/actions/runs/41262155428/artifacts/13065353930"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:16787",
+      "to": "branch:hostinet-exit-linger",
+      "reason": "The host-network fix extends the process-exit syscall fixture introduced by #16787.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16787",
+        "https://github.com/tamird/gvisor/commit/c53942792",
+        "https://github.com/tamird/gvisor/actions/runs/41274137310/artifacts/13070531394"
       ]
     }
   ],
