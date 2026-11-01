@@ -1,93 +1,35 @@
-name: Recover Make diagnostics and compare the released module
+name: Read original Make and compiler failures
 on:
   push:
     branches: [qualification/plugin-scratch]
 permissions:
   contents: read
 jobs:
-  qualify:
+  recover:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 75
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: carrier, persist-credentials: false, fetch-depth: 1}
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: product, ref: fb08aa735e8c6993fc4561702b5872c10bae541a, persist-credentials: false, fetch-depth: 2}
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          repository: tamird/bazel-central-registry
-          path: registry
-          ref: e00baea8db3a686e45379b9096998a8cb95291c0
-          persist-credentials: false
-          fetch-depth: 1
-      - name: Prepare private remote configuration and declared execution platform
-        working-directory: carrier
+        with: {persist-credentials: false, fetch-depth: 1}
+      - name: Read exact original invocations
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -eu
           umask 077
           mkdir -p "$RUNNER_TEMP/package-evidence"
-          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap","executed_targets":0}' > "$RUNNER_TEMP/package-evidence/bootstrap.json"
+          printf '%s\n' '{"status":"INCOMPLETE","executed_targets":0,"phase":"reader bootstrap"}' > "$RUNNER_TEMP/package-evidence/recovery.json"
           test -n "$BUILDBUDDY_API_KEY"
-          {
-            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --action_env=TMPDIR=.' 'build --host_action_env=TMPDIR=.'
-            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          } > "$RUNNER_TEMP/sidecar.bazelrc"
-          unset BUILDBUDDY_API_KEY
           curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
           echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod 0755 "$RUNNER_TEMP/bb"
-          cp test/rbe/empty_worker/{wildcard.py,expected-targets.json} "$RUNNER_TEMP/"
-          mkdir -p ../product/test/rbe/empty_worker
-          if [ ! -e ../product/test/rbe/empty_worker/BUILD ]; then
-            cp test/rbe/empty_worker/BUILD ../product/test/rbe/empty_worker/BUILD
-          fi
-          bazel --bazelrc="$RUNNER_TEMP/sidecar.bazelrc" run //tools/actionlint -- "$PWD/.github/workflows/build.yml" > "$RUNNER_TEMP/actionlint.log" 2>&1 || { tail -20 "$RUNNER_TEMP/actionlint.log"; exit 1; }
-          printf '%s\n' '{"status":"PASS","phase":"bootstrap","executed_targets":0}' > "$RUNNER_TEMP/package-evidence/bootstrap.json"
-      - name: Recover original compiler errors and exact formatting
-        continue-on-error: true
-        working-directory: carrier
-        env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 test/rbe/empty_worker/recover_make.py
-      - name: Compare the two released-module variants with the same declared compiler
-        continue-on-error: true
-        working-directory: product
-        run: |
-          set -u
-          mkdir -p test/rbe/make_control
-          cat > test/rbe/make_control/BUILD <<'EOF'
-          platform(
-              name = "populated",
-              parents = ["//test/rbe/empty_worker:amd64_musl"],
-              exec_properties = {"container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a"},
-              visibility = ["//visibility:public"],
-          )
-          EOF
-          for arm in before after; do
-            if [ "$arm" = before ]; then
-              git checkout --quiet --detach fb08aa735e8c6993fc4561702b5872c10bae541a
-            else
-              git checkout --quiet --detach 7dc8df3c4bb7da1bc04037fe9a2d641cb36cc5a4
-            fi
-            python3 ../carrier/test/rbe/empty_worker/make_revision.py smoke "$arm" || true
-          done
-      - name: Require all independent results
-        if: always()
-        run: |
-          python3 - <<'PYCODE'
-          import json, os
-          from pathlib import Path
-          folder = Path(os.environ["RUNNER_TEMP"]) / "package-evidence"
-          names = ["bootstrap.json", "recovery.json", "smoke-before.json", "smoke-after.json"]
-          assert all((folder / name).exists() and json.loads((folder / name).read_text()).get("status") == "PASS" for name in names)
-          PYCODE
+          python3 test/rbe/empty_worker/recover_make.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: make-control
-          path: ${{ runner.temp }}/package-evidence
+          name: make-original-errors
+          path: |
+            ${{ runner.temp }}/package-evidence/recovery.json
+            ${{ runner.temp }}/package-evidence/coordinator-lookup.json
           if-no-files-found: error
