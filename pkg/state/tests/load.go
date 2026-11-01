@@ -16,6 +16,7 @@ package tests
 
 import (
 	"context"
+	"sync/atomic"
 
 	"gvisor.dev/gvisor/pkg/state"
 )
@@ -32,6 +33,20 @@ type afterLoadStruct struct {
 
 func (a *afterLoadStruct) afterLoad(context.Context) {
 	a.v++
+}
+
+// +stateify savable
+type atomicParentRef struct {
+	// +stateify atomicptr
+	parent   atomic.Pointer[afterLoadStruct] `state:".(*afterLoadStruct)"`
+	alias    *afterLoadStruct
+	observed int `state:"nosave"`
+}
+
+func (a *atomicParentRef) afterLoad(context.Context) {
+	if p := a.parent.Load(); p != nil {
+		a.observed = p.v
+	}
 }
 
 // +stateify savable

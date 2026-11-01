@@ -91,7 +91,7 @@ type scanFunctions struct {
 	zerovalue func(name string)
 	normal    func(name string, typ ast.Expr)
 	wait      func(name string, typ ast.Expr)
-	value     func(name, typName string)
+	value     func(name, typName string, atomicPointer bool)
 }
 
 // scanFields scans the fields of a struct.
@@ -134,6 +134,22 @@ func scanField(name string, field *ast.Field, fn scanFunctions) {
 	// recursion with the given prefix. We don't pay attention to
 	// any tags on the top-level struct field.
 	tag := extractStateTag(field.Tag)
+	value := strings.HasPrefix(tag, ".(") && strings.HasSuffix(tag, ")")
+	// A conversion tag describes the saved type and is part of the graph
+	// fingerprint. The directive selects how to access the field without
+	// changing that type or the position of its value in the stream.
+	var atomicPointer bool
+	if field.Doc != nil {
+		for _, c := range field.Doc.List {
+			if c.Text == "// +stateify atomicptr" {
+				if !value {
+					fmt.Fprintf(os.Stderr, "%s: +stateify atomicptr requires a state conversion tag\n", name)
+					os.Exit(1)
+				}
+				atomicPointer = true
+			}
+		}
+	}
 	if anon, ok := field.Type.(*ast.StructType); ok && tag == "" {
 		scanFields(anon, fn)
 		return
@@ -159,10 +175,8 @@ func scanField(name string, field *ast.Field, fn scanFunctions) {
 		// Do nothing.
 
 	default:
-		if strings.HasPrefix(tag, ".(") && strings.HasSuffix(tag, ")") {
-			if fn.value != nil {
-				fn.value(name, tag[2:len(tag)-1])
-			}
+		if value && fn.value != nil {
+			fn.value(name, tag[2:len(tag)-1], atomicPointer)
 		}
 	}
 }
@@ -459,7 +473,7 @@ func main() {
 						fields[name] = fieldCount
 						fieldCount++
 					}
-					emitFieldValue := func(name string, _ string) {
+					emitFieldValue := func(name, _ string, _ bool) {
 						emitField(name, nil)
 					}
 					// typedField returns the method suffix and argument
@@ -475,11 +489,18 @@ func main() {
 						return predeclared[basic], fmt.Sprintf("(*%s)(&%s.%s)", basic, recv, name)
 					}
 					hasValues := false
-					emitLoadValue := func(name, typName string) {
+					emitLoadValue := func(name, typName string, atomicPointer bool) {
+						if atomicPointer {
+							fmt.Fprintf(outputFile, "\t%sLoadAtomicPointer(stateSourceObject, %d, &%s.%s)\n", statePrefix, fields[name], recv, name)
+							return
+						}
 						fmt.Fprintf(outputFile, "	stateSourceObject.LoadValueTo(%d, (*%s)(nil), %s)\n", fields[name], typName, recv)
 						hasValues = true
 					}
-					emitLoadValueCase := func(name, typName string) {
+					emitLoadValueCase := func(name, typName string, atomicPointer bool) {
+						if atomicPointer {
+							return
+						}
 						fmt.Fprintf(outputFile, "	case %d:\n", fields[name])
 						fmt.Fprintf(outputFile, "		%s.load%s(ctx, stateValue.(%s))\n", recv, camelCased(name), typName)
 					}
@@ -493,13 +514,26 @@ func main() {
 					emitLoadWait := func(name string, _ ast.Expr) {
 						fmt.Fprintf(outputFile, "	stateSourceObject.LoadWait(%d, &%s.%s)\n", fields[name], recv, name)
 					}
-					emitComputeValue := func(name, typName string) {
+					emitComputeValue := func(name, typName string, atomicPointer bool) {
+						if atomicPointer {
+							for _, prefix := range []string{"save", "load"} {
+								hook := prefix + camelCased(name)
+								if _, ok := simpleMethods[method{ts.Name.Name, hook}]; ok {
+									fmt.Fprintf(os.Stderr, "%s.%s: +stateify atomicptr conflicts with %s\n", ts.Name.Name, name, hook)
+									os.Exit(1)
+								}
+							}
+							fmt.Fprintf(outputFile, "\t%sValue := %s.%s.Load()\n", name, recv, name)
+							// The address check requires the saved type to match exactly.
+							fmt.Fprintf(outputFile, "\tvar _ *%s = &%sValue\n", typName, name)
+							return
+						}
 						// Keep an explicit typName ascription as a compile-time
 						// check against code generation bugs while avoiding S1021.
 						fmt.Fprintf(outputFile, "	%sValue := %s.save%s()\n", name, recv, camelCased(name))
 						fmt.Fprintf(outputFile, "	_ = (%s)(%sValue)\n", typName, name)
 					}
-					emitSaveValue := func(name, _ string) {
+					emitSaveValue := func(name, _ string, _ bool) {
 						fmt.Fprintf(outputFile, "	stateSinkObject.SaveValue(%d, %sValue)\n", fields[name], name)
 					}
 					emitSave := func(name string, typ ast.Expr, wait bool) {

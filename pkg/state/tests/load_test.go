@@ -47,6 +47,27 @@ func TestLoadHooks(t *testing.T) {
 	})
 }
 
+func TestAtomicPointerRestore(t *testing.T) {
+	runWithBothEngines(t, func(t *testing.T) {
+		src := atomicParentRef{alias: &afterLoadStruct{}}
+		src.parent.Store(src.alias)
+		var saved bytes.Buffer
+		if _, err := state.Save(t.Context(), &saved, &src); err != nil {
+			t.Fatal(err)
+		}
+		var dst atomicParentRef
+		if _, err := state.Load(t.Context(), &saved, &dst); err != nil {
+			t.Fatal(err)
+		}
+		if got, want := dst.parent.Load(), dst.alias; got == nil || got != want {
+			t.Fatalf("restored parent = %p, want alias %p", got, want)
+		}
+		if got, want := dst.observed, 1; got != want {
+			t.Errorf("value observed by AfterLoad = %d, want %d", got, want)
+		}
+	})
+}
+
 func TestCycles(t *testing.T) {
 	// cs is a single object cycle.
 	cs := cycleStruct{nil}

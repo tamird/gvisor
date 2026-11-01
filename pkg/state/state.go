@@ -293,6 +293,15 @@ func (s Source) LoadWait(slot int, objPtr any) {
 	s.internal.load(slot, reflect.ValueOf(objPtr), true, nil)
 }
 
+// LoadAtomicPointer restores a pointer saved by Sink.SaveValue. LoadWait
+// resolves the pointer immediately and keeps the containing object's AfterLoad
+// ordered after the referent's. Storing the address needs no callback.
+func LoadAtomicPointer[T any](s Source, slot int, dst *atomic.Pointer[T]) {
+	var p *T
+	s.LoadWait(slot, &p)
+	dst.Store(p)
+}
+
 // LoadValue loads the given object value from the map.
 //
 // See Sink.SaveValue for an example.
