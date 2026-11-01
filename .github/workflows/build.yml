@@ -1,80 +1,34 @@
-name: Recover semaphore owner results
+name: Recover original Make and semaphore evidence
 on:
   push:
-    branches: [qualification/semop-owner-recovery]
+    branches: [qualification/make-original-checks]
 permissions:
   contents: read
 jobs:
-  qualify:
+  recover:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 12
     env:
-      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      SOURCE: 14a4e93a872bf6dd49893b6bd9a5f55517167e2b
       REPORTER: fb60e127516defd6aab633f80be09a03022f0737
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: carrier, persist-credentials: false, fetch-depth: 1}
-      - name: Prepare the existing result interpreter
-        working-directory: carrier
+        with: {persist-credentials: false, fetch-depth: 1}
+      - name: Prepare the unchanged metadata reader
         run: |
           set -eu
-          mkdir -p "$RUNNER_TEMP/semop-owner-evidence"
-          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/semop-owner-evidence/verdict.json"
+          mkdir -p "$RUNNER_TEMP/original-metadata-evidence"
+          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/original-metadata-evidence/summary.json"
           git fetch -q --no-tags --depth=1 origin "$REPORTER"
           for module in qualification_report unit_matrix; do
             git show "$REPORTER:test/rbe/$module.py" > "$RUNNER_TEMP/$module.py"
           done
-          cp test/rbe/semop_owner_recovery.py "$RUNNER_TEMP/"
-          python3 -c 'import ast, sys; ast.parse(open(sys.argv[1]).read())' "$RUNNER_TEMP/semop_owner_recovery.py"
-      - name: Recover original target results
-        id: recovery
+          cp test/rbe/semop_owner_recovery.py test/rbe/original_metadata_recovery.py "$RUNNER_TEMP/"
+          python3 -c 'import ast, sys; ast.parse(open(sys.argv[1]).read())' "$RUNNER_TEMP/original_metadata_recovery.py"
+      - name: Read original invocations, logs and named results
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: |
-          set -eu
-          python3 "$RUNNER_TEMP/semop_owner_recovery.py" recover
-          if grep -q . "$RUNNER_TEMP/semop-missing.txt"; then
-            echo 'retry=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'retry=false' >> "$GITHUB_OUTPUT"
-          fi
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        if: steps.recovery.outputs.retry == 'true'
-        with:
-          path: product
-          ref: 14a4e93a872bf6dd49893b6bd9a5f55517167e2b
-          persist-credentials: false
-          fetch-depth: 1
-      - name: Prepare the same GNU execution platform only for missing owners
-        if: steps.recovery.outputs.retry == 'true'
-        working-directory: product
-        env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: |
-          set -eu
-          umask 077
-          test "$(git rev-parse HEAD)" = "$SOURCE"
-          test -n "$BUILDBUDDY_API_KEY"
-          mkdir -p "$RUNNER_TEMP/gnu-platform"
-          printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
-          printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
-          {
-            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
-            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          } > "$RUNNER_TEMP/tcp.bazelrc"
-          unset BUILDBUDDY_API_KEY
-          timeout 180 docker pull --platform=linux/amd64 "$GNU"
-          docker run -d --cap-add SYS_ADMIN --security-opt seccomp=unconfined --name semop-compiler --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$PWD" "$GNU" -c 'sleep infinity'
-      - name: Run only owners missing original execution evidence
-        if: steps.recovery.outputs.retry == 'true'
-        run: |
-          docker exec -e RUNNER_TEMP semop-compiler python3 "$RUNNER_TEMP/semop_owner_recovery.py" retry
-      - name: Preserve the original and independently verified completion
-        if: always()
-        run: python3 "$RUNNER_TEMP/semop_owner_recovery.py" finish
+        run: python3 "$RUNNER_TEMP/original_metadata_recovery.py"
       - name: Check the explicit artifact boundary
         id: privacy
         if: always()
@@ -86,7 +40,7 @@ jobs:
           from pathlib import Path
           key = os.environ["BUILDBUDDY_API_KEY"].encode()
           assert key
-          folder = Path(os.environ["RUNNER_TEMP"]) / "semop-owner-evidence"
+          folder = Path(os.environ["RUNNER_TEMP"]) / "original-metadata-evidence"
           for path in folder.iterdir():
               assert path.is_file() and not path.is_symlink() and path.suffix in (".json", ".xml")
               content = path.read_bytes()
@@ -95,6 +49,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
-          name: semop-owner-recovery
-          path: ${{ runner.temp }}/semop-owner-evidence
+          name: original-metadata-evidence
+          path: ${{ runner.temp }}/original-metadata-evidence
           if-no-files-found: error
