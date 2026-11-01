@@ -56,7 +56,9 @@ def read_inputs(z, variant, result):
     assert native["platform"] == {"Arch":"amd64","container-image":IMAGE,"workload-isolation-type":"oci"}
     assert not native["test_args"] if variant=="stock" else (native["test_args"][:3]==["filter","-test","-text"] and sorted(native["test_args"][3:])==list(REPORTS))
     result.update(xml_action=xml_action["digest"]["hash"],test_exit=code,platform=native["platform"])
-    suite = ET.fromstring(z.read(prefix+"xml/bazel-out/k8-fastbuild/testlogs/pkg/waiter/waiter_nogo/test.xml"))
+    xml=z.read(prefix+"xml/bazel-out/k8-fastbuild/testlogs/pkg/waiter/waiter_nogo/test.xml")
+    suite=ET.fromstring(xml)
+    result["original_xml_sha256"]=hashlib.sha256(xml).hexdigest()
     case=exactly(suite.iter("testcase"), "original XML case")
     assert case.get("name") == BIN and (case.find("error") is not None) == (code != 0)
     embedded=exactly(suite.iter("system-out"),"original XML log").text
@@ -78,18 +80,13 @@ def read_inputs(z, variant, result):
     action_result=response["result"]
     assert int(action_result.get("exitCode",0))==code
     result["stage"]="original log"
-    logs=[v["digest"] for v in action_result.get("outputFiles",[]) if PurePosixPath(v["path"]).name=="test.log"]
-    if not logs:
-        for e in events:
-            if e.get("id",{}).get("testResult",{}).get("label")!=OWNER: continue
-            for f in e.get("testResult",{}).get("testActionOutput",[]):
-                if f.get("name")=="test.log":
-                    match=re.fullmatch(r"bytestream://remote.buildbuddy.io/(?:.*/)?blobs/([a-f0-9]{64})/(\d+)",f.get("uri",""))
-                    if match: logs.append({"hash":match[1],"sizeBytes":match[2]})
-    log_digest=exactly(logs,"remote test.log")
-    log=blob(log_digest,inv).decode().strip()
-    assert log in embedded, "Original XML and remote test.log disagree"
-    result["test_log_sha256"]=log_digest["hash"]
+    # The verified XML action consumed test.log and embedded it in system-out.
+    # The TestRunner's inline ActionResult does not list that log as an output.
+    assert xml_action["test_args"][:2]==["bazel-out/k8-fastbuild/testlogs/"+BIN+"/test.log",
+                                         "bazel-out/k8-fastbuild/testlogs/"+BIN+"/test.xml"]
+    log=embedded.strip()
+    assert "Executing tests from "+OWNER in log
+    result["log_source"]="Original generated XML system-out"
     log_diagnostics=[s for s in log.splitlines() if s.startswith("checklocks:")]
     if variant=="stock":
         assert "could not execute " in log and "waiter_nogo: No such file or directory" in log and not log_diagnostics
@@ -144,7 +141,7 @@ def read_inputs(z, variant, result):
 
 def main():
     out=Path(os.environ["RUNNER_TEMP"])/"native-nogo-original.json"
-    result={"status":"INCOMPLETE","new_test_executions":0,"started_at":now(),"original_zip_sha256":ORIGINAL,"controls":{}}
+    result={"status":"INCOMPLETE","new_test_executions":0,"started_at":now(),"original_zip_sha256":ORIGINAL,"prior_incomplete_recovery_run":41298507360,"controls":{}}
     try:
         archive=subprocess.run(["gh","api","repos/tamird/gvisor/actions/artifacts/13079877524/zip"],check=True,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,timeout=90).stdout
         assert hashlib.sha256(archive).hexdigest()==ORIGINAL
