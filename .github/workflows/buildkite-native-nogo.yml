@@ -1,0 +1,58 @@
+name: Recover native Nogo log/host prerequisites
+on:
+  push:
+    branches: [qualification/buildkite-nogo-logs]
+permissions:
+  contents: read
+jobs:
+  native:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 61
+    env:
+      PRODUCT: 50ec1b410eb900629fe1c2bc977522cc95bd8098
+      DOCKER_BUILD: 'false'
+      DOCKER_HOST: unix:///nonexistent-gvisor-builder.sock
+      BUILDKITE_LABEL: ':golang: Nogo tests'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Exercise the native Buildkite commands and failure-log hook
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/nogo-receipts"
+          echo '{"verified":false,"reason":"qualification incomplete"}' > "$RUNNER_TEMP/nogo-receipts/verdict.json"
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          cp .github/qualification/native-nogo.py "$RUNNER_TEMP"
+          git checkout --quiet --detach "$PRODUCT"
+          test "$(uname -m)" = x86_64
+          # Exercise only the native install block, without the Buildkite
+          # agent's Docker daemon and machine-wide sysctl housekeeping.
+          sed -n '/^install_.*bazel() {$/,$p' .buildkite/hooks/pre-command > "$RUNNER_TEMP/nogo-setup.bash"
+          source "$RUNNER_TEMP/nogo-setup.bash"
+          test -n "$BUILDKITE_BAZEL_DIRECTORY"
+          test "$(bazel --version)" = "bazel $(cat .bazelversion)"
+          umask 077
+          {
+            echo 'build --jobs=4'
+            echo 'test --nocache_test_results'
+            # Keep the actual TestRunner and its test.log on the agent.
+            # Only action cache entries, if present, come from BuildBuddy.
+            if [[ -n "$BUILDBUDDY_API_KEY" ]]; then
+              echo 'build --remote_cache=grpcs://remote.buildbuddy.io'
+              echo 'build --noremote_upload_local_results'
+              printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            fi
+          } > "$RUNNER_TEMP/nogo-resources.bazelrc"
+          unset BUILDBUDDY_API_KEY
+          python3 "$RUNNER_TEMP/native-nogo.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: native-buildkite-nogo
+          path: ${{ runner.temp }}/nogo-receipts/
+          if-no-files-found: error
