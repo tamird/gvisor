@@ -83,6 +83,8 @@ type Set struct {
 
 	// sems holds all semaphores in the set. Its slice header is immutable after
 	// initialization; access to mutable fields of its elements requires mu.
+	//
+	// +checklocks:mu
 	sems []sem
 
 	// dead is set to true when the set is removed and can't be reached anymore.
@@ -93,9 +95,6 @@ type Set struct {
 }
 
 // sem represents a single semaphore from a set.
-//
-// Its fields are protected by the owning Set.mu. sem has no pointer to its
-// Set, so checklocks cannot infer that mutex from membership in Set.sems.
 //
 // +stateify savable
 type sem struct {
@@ -362,8 +361,10 @@ func (s *Set) Unlock() {
 }
 
 // findSem returns the semaphore at num, or nil if num is out of range.
-// It reads only the immutable slice header. Access to the returned semaphore's
-// mutable fields requires s.mu; sem has no link back to s for checklocks.
+// Keep the result within the caller's critical section. Checklocks verifies
+// access through Set.sems at lookup time.
+//
+// +checklocks:s.mu
 func (s *Set) findSem(num int32) *sem {
 	if num < 0 || int(num) >= s.Size() {
 		return nil
@@ -371,10 +372,9 @@ func (s *Set) findSem(num int32) *sem {
 	return &s.sems[num]
 }
 
-// Size returns the number of semaphores in the set. The slice header is
-// immutable, so Size does not require s.mu.
+// Size returns the number of semaphores in the set.
 func (s *Set) Size() int {
-	return len(s.sems)
+	return len(s.sems) // +checklocksforce: the slice length is fixed when the set is created.
 }
 
 // Set modifies attributes for a semaphore set. See semctl(IPC_SET).
@@ -457,7 +457,7 @@ func (s *Set) SetVal(ctx context.Context, num int32, val int16, creds *auth.Cred
 	sem.value = val
 	sem.pid = pid
 	s.changeTime = ktime.NowFromContext(ctx)
-	sem.wakeWaiters()
+	sem.wakeWaiters(s)
 	return nil
 }
 
@@ -492,7 +492,7 @@ func (s *Set) SetValAll(ctx context.Context, vals []uint16, creds *auth.Credenti
 		// TODO(gvisor.dev/issue/137): Clear undo entries in all processes.
 		sem.value = int16(val)
 		sem.pid = pid
-		sem.wakeWaiters()
+		sem.wakeWaiters(s)
 	}
 	s.changeTime = ktime.NowFromContext(ctx)
 	return nil
@@ -700,7 +700,7 @@ func (s *Set) executeOps(ctx context.Context, ops []linux.Sembuf, pid int32) (ch
 	// A multi-operation waiter may now hit an error before reaching the
 	// semaphore on which it blocked.
 	for i := range s.sems {
-		s.sems[i].wakeWaiters()
+		s.sems[i].wakeWaiters(s)
 	}
 	s.opTime = ktime.NowFromContext(ctx)
 	return nil, 0, nil
@@ -746,10 +746,10 @@ func abs(val int16) int16 {
 	return val
 }
 
-// wakeWaiters goes over all waiters and checks which of them can be notified.
+// wakeWaiters notifies this semaphore's waiters that can retry.
 //
-// Preconditions: The owning Set.mu must be held.
-func (s *sem) wakeWaiters() {
+// +checklocks:set.mu
+func (s *sem) wakeWaiters(set *Set) {
 	// Note that this will release all waiters waiting for 0 too.
 	for w := s.waiters.Front(); w != nil; {
 		if s.value < abs(w.value) {
