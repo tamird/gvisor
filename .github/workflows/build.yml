@@ -1,9 +1,10 @@
-name: Measure small-segment throughput with a slow reader
+name: Check where the bounded TCP receive queue rejects whole packets
 on:
   push:
-    branches: [qualification/paired-small-segment-pressure]
+    branches: [qualification/tcp-pressure-diagnostics]
 permissions:
   contents: read
+  actions: read
 jobs:
   compare:
     if: github.repository == 'tamird/gvisor'
@@ -37,67 +38,77 @@ jobs:
         docker run -d --name tcp-compiler --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
         docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
         docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
-    - name: Build both receivers with the identical test fixture
+    - name: Summarize the original uninstrumented timings
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
-        echo '{"status":"INCOMPLETE","stage":"building","expected":60}' > "$RUNNER_TEMP/records/verdict.json"
-        mkdir "$RUNNER_TEMP/paired-inputs"
-        for sha in "$REVIEWED" "$BOUNDED"; do
-          git fetch --quiet --no-tags --depth=2 https://github.com/tamird/gvisor.git "$sha"
-        done
-        test "$(git diff --name-only "$REVIEWED" "$BOUNDED")" = "$(printf '%s\n' pkg/tcpip/transport/tcp/segment_queue.go pkg/tcpip/transport/tcp/segment_queue_test.go)"
-        for name in reviewed bounded; do
-          sha=$REVIEWED; if [[ "$name" == bounded ]]; then sha=$BOUNDED; fi
-          git checkout --quiet --detach "$sha"
-          test "$(git rev-parse HEAD)" = "$sha"
-          target=//pkg/tcpip/transport/tcp/test/e2e:tcp_test
-          f=pkg/tcpip/transport/tcp/test/e2e/tcp_test.go
-          git diff --quiet "$REVIEWED" "$BOUNDED" -- "$f"
-          cat "$RUNNER_TEMP/fixture.inc" >> "$f"
-          sha256sum "$f" | cut -d" " -f1 > "$RUNNER_TEMP/records/$name.fixture"
-          bzl=(docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc")
-          "${bzl[@]}" build --config=x86_64 --jobs=100 --remote_download_outputs=toplevel "$target" > "$RUNNER_TEMP/$name.build" 2>&1 || { grep -E "^ERROR: .*" "$RUNNER_TEMP/$name.build" | grep -Eiv 'credential|token|api.key|remote.header|bes.header' | head -6 | cut -c1-600; exit 1; }
-          bin=$("${bzl[@]}" cquery --config=x86_64 --output=files "$target" | tail -1)
-          docker exec tcp-compiler cp "$bin" "$RUNNER_TEMP/paired-inputs/$name"
-          git restore -- "$f"
-        done
-        cmp "$RUNNER_TEMP/records/reviewed.fixture" "$RUNNER_TEMP/records/bounded.fixture"
+        gh api repos/tamird/gvisor/actions/artifacts/13073258813/zip > "$RUNNER_TEMP/original.zip"
+        echo 'cc2ca2ddd01984ff0bbe9ace2ce51e5bc7351f0acc38172295e0eb127d4b60b3  original.zip' | (cd "$RUNNER_TEMP"; sha256sum -c -)
+        unzip -p "$RUNNER_TEMP/original.zip" verdict.json > "$RUNNER_TEMP/original.json"
         python3 - <<'PY'
-        import hashlib,json,os,pathlib
-        dest=pathlib.Path(os.environ["RUNNER_TEMP"])/"paired-inputs"
-        out={name:{"source":os.environ[name.upper()],"executable":hashlib.sha256((dest/name).read_bytes()).hexdigest(),"fixture":(dest.parent/"records"/(name+".fixture")).read_text().strip()} for name in ("reviewed","bounded")}
-        (dest/"sources.json").write_text(json.dumps(out)+"\n")
+        from pathlib import Path
+        import json,os
+        p=Path(os.environ['RUNNER_TEMP']); v=json.loads((p/'original.json').read_text()); xs=v['samples']
+        assert v['status']=='PASS' and len(xs)==v['expected']==60
+        assert {n:s['source'] for n,s in v['sources'].items()}=={n:os.environ[n.upper()] for n in ['reviewed','bounded']}
+        assert {(x['name'],x['pair'],x['mss']) for x in xs}=={(n,pair,k) for n in ('reviewed','bounded') for pair in range(10) for k in (100,536,1448)}
+        for name in ('reviewed','bounded'):
+            text=[f"BenchmarkSlowReader/payload={x['mss']} 1 {x['ns']} ns/op" for x in xs if x['name']==name]
+            (p/'records'/(name+'.bench')).write_text('\n'.join(text)+'\n')
         PY
-        cp "$RUNNER_TEMP/samples.py" "$RUNNER_TEMP/paired-inputs/compare.py"
-        mkdir -p test/rbe; cp -r "$RUNNER_TEMP/paired-inputs" test/rbe/paired
-        cat > test/rbe/paired/BUILD <<'STAR'
-        load("@rules_python//python:defs.bzl", "py_test")
-        py_test(
-            name = "compare",
-            srcs = ["compare.py"],
-            data = ["reviewed", "bounded", "sources.json"],
-            size = "large",
-        )
-        STAR
-        echo '{"status":"INCOMPLETE","stage":"paired-run","expected":60}' > "$RUNNER_TEMP/records/verdict.json"
-        rc=0
-        docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=100 --nocache_test_results --test_timeout=1600 --remote_download_outputs=toplevel --test_output=errors //test/rbe/paired:compare > "$RUNNER_TEMP/measure.log" 2>&1 || rc=$?
-        outputs=bazel-testlogs/test/rbe/paired/compare/test.outputs
-        if docker exec tcp-compiler test -s "$outputs/outputs.zip"; then
-          docker exec tcp-compiler cat "$outputs/outputs.zip" > "$RUNNER_TEMP/records/samples.zip"
-          unzip -p "$RUNNER_TEMP/records/samples.zip" verdict.json > "$RUNNER_TEMP/records/verdict.json"
-        elif docker exec tcp-compiler test -s "$outputs/verdict.json"; then
-          docker exec tcp-compiler cp -R "$outputs/." "$RUNNER_TEMP/records"
-        else
-          docker exec tcp-compiler cat bazel-testlogs/test/rbe/paired/compare/test.log 2>/dev/null | tail -14 || true
-          grep -E "^ERROR: .*" "$RUNNER_TEMP/measure.log" | grep -Eiv 'credential|token|api.key|remote.header|bes.header' | head -5 | cut -c1-500 || true
-          exit 1
-        fi
-        jq '{status,expected,executed:(.samples|length),median_paired_time_ratio,failure}' "$RUNNER_TEMP/records/verdict.json"
-        test "$rc" = 0 && jq -e '.status == "PASS" and (.samples|length) == 60' "$RUNNER_TEMP/records/verdict.json"
+        git fetch -q --depth=1 https://github.com/tamird/gvisor.git 0cd3edb6cb054149a36d53c35a1055e851b145b5
+        git checkout -q --detach 0cd3edb6cb054149a36d53c35a1055e851b145b5
+        bzl=(docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc")
+        target=@org_golang_x_perf//cmd/benchstat
+        "${bzl[@]}" build --config=x86_64 -c opt --remote_download_outputs=toplevel "$target"
+        path=$("${bzl[@]}" cquery --config=x86_64 -c opt --output=files "$target" | tail -1)
+        docker exec --workdir "$RUNNER_TEMP/records" tcp-compiler "$GITHUB_WORKSPACE/$path" reviewed=reviewed.bench bounded=bounded.bench > "$RUNNER_TEMP/records/benchstat.txt"
+        grep 'n=10' "$RUNNER_TEMP/records/benchstat.txt"
+    - name: Count whole-queue refusals independently of the timings
+      run: |
+        set -euo pipefail
+        git fetch --quiet --no-tags --depth=1 https://github.com/tamird/gvisor.git "$BOUNDED"
+        git checkout --quiet --detach "$BOUNDED"
+        test "$(git rev-parse HEAD)" = "$BOUNDED"
+        python3 - <<'PY'
+        from pathlib import Path
+        import os
+        queue=Path('pkg/tcpip/transport/tcp/segment_queue.go')
+        source=queue.read_text()
+        anchor='if !q.emptyLocked() && over > q.ep.ops.GetSendBufferSize() {'
+        assert source.count(anchor)==1
+        source=source.replace('import "gvisor.dev/gvisor/pkg/tcpip/header"', 'import "sync/atomic"\nimport "gvisor.dev/gvisor/pkg/tcpip/header"\n\nvar QualificationWholeRefusals atomic.Uint64')
+        queue.write_text(source.replace(anchor,anchor+'\n\t\tQualificationWholeRefusals.Add(1)'))
+        fixture=Path(os.environ['RUNNER_TEMP'],'fixture.inc').read_text()
+        fixture=fixture.replace('start := time.Now()', 'beforeRefusals := tcp.QualificationWholeRefusals.Load()\n\t\t\tstart := time.Now()')
+        fixture=fixture.replace('drops := c.EP.Stats()', 't.Logf("CAP payload=%d refused=%d", mss, tcp.QualificationWholeRefusals.Load()-beforeRefusals)\n\t\t\tdrops := c.EP.Stats()')
+        with Path('pkg/tcpip/transport/tcp/test/e2e/tcp_test.go').open('a') as out:
+            out.write(fixture)
+        PY
+        bzl=(docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc")
+        target=//pkg/tcpip/transport/tcp/test/e2e:tcp_test
+        "${bzl[@]}" test --config=x86_64 --jobs=100 --test_sharding_strategy=disabled --test_arg=-test.run=^TestBurstGoodput$ --test_arg=-test.v --test_arg=-test.count=10 --test_timeout=1400 --nocache_test_results --remote_download_outputs=toplevel --test_output=errors "$target"
+        docker exec tcp-compiler cat bazel-testlogs/pkg/tcpip/transport/tcp/test/e2e/tcp_test/test.log > "$RUNNER_TEMP/counter.log"
+        python3 - <<'PY'
+        from pathlib import Path
+        import json,os,re
+        p=Path(os.environ['RUNNER_TEMP']); log=(p/'counter.log').read_text()
+        raw=re.findall(r'CAP payload=(\d+) refused=(\d+)',log)
+        drops=re.findall(r'GOODPUT mss=(\d+) bytes=(\d+) ns=\d+ dropped=(\d+)',log)
+        assert len(drops)==len(raw)==30 and log.count('--- PASS: TestBurstGoodput/')==30
+        rows=[]
+        for (k,full),(size,amount,total) in zip(raw,drops):
+            assert size==k and int(amount)==1048575 and int(full)<=int(total)
+            rows.append({'payload':int(k),'cap_refusals':int(full),'total_discards':int(total)})
+        assert all(sum(r['payload']==k for r in rows)==10 for k in [100,536,1448])
+        verdict={'status':'PASS','source':os.environ['BOUNDED'],'timings_artifact':13073258813,'expected':30,'executed':len(rows),'rows':rows}
+        (p/'records'/'cap-diagnostics.json').write_text(json.dumps(verdict,indent=2)+'\n')
+        print({k:sum(r['cap_refusals'] for r in rows if r['payload']==k) for k in (100,536,1448)})
+        PY
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: paired-small-segment-goodput
+        name: pressure-benchstat-and-queue-cap
         path: ${{ runner.temp }}/records
         if-no-files-found: error
