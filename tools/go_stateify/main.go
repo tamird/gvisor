@@ -296,6 +296,9 @@ func main() {
 	emitRegisterStruct := func(name string) {
 		initCalls = append(initCalls, fmt.Sprintf("%sRegisterStruct((*%s)(nil))", statePrefix, name))
 	}
+	emitRegisterAfterLoad := func(name string) {
+		initCalls = append(initCalls, fmt.Sprintf("%sRegisterAfterLoad((*%s)(nil))", statePrefix, name))
+	}
 	emitRegisterIdent := func(name, base string) {
 		initCalls = append(initCalls, fmt.Sprintf("%sRegisterIdent((*%s)(nil), (*%s)(nil))", statePrefix, name, base))
 	}
@@ -613,7 +616,9 @@ func main() {
 
 					// Add to our registration.
 					switch {
-					case generateSaverLoader && !hasBeforeSave && !hasAfterLoad:
+					case generateSaverLoader && hasAfterLoad:
+						emitRegisterAfterLoad(ts.Name.Name)
+					case generateSaverLoader && !hasBeforeSave:
 						emitRegisterNoHooks(ts.Name.Name)
 					case generateSaverLoader:
 						emitRegisterStruct(ts.Name.Name)

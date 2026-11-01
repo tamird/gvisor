@@ -59,6 +59,7 @@ type typeInfo struct {
 	needsExact   bool      // contains or points to non-empty interfaces or maps
 	partial      bool      // decode may leave unsaved memory untouched
 	hooks        bool      // StateLoad may run non-generated code
+	hasLoadHook  bool      // decoding this value always queues an AfterLoadTo call
 	structKind   structKind
 	methodItab   unsafe.Pointer // itab of StructType or binaryObject for *typ
 	name         string
@@ -297,6 +298,12 @@ func (b *typeInfoBuilder) get(t reflect.Type) *typeInfo {
 			}
 			ti.slots = newSlots(len(fields))
 			ti.hooks = !ti.registered || !isNoHooks(t)
+			if base, ok := identBases[t]; ok {
+				ti.hasLoadHook = b.get(base).hasLoadHook
+			} else {
+				r := registeredStructs[t]
+				ti.hasLoadHook = r.afterLoad || (r.noHooks && b.inlineLoadHook(t, fields))
+			}
 			if !ti.hooks && b.plainFields(t) {
 				// The StateSave and StateLoad methods only save and load
 				// the fields, which are all plain data.
@@ -323,6 +330,28 @@ func (b *typeInfoBuilder) get(t reflect.Type) *typeInfo {
 		Failf("unexpected reflect.Kind: %v (%v)", ti.kind, t)
 	}
 	return ti
+}
+
+// inlineLoadHook reports whether a saved field with its original Go type
+// always queues a hook. Converted fields, unnamed flattened fields and arrays
+// do not establish this guarantee.
+//
+// +checklocks:typeInfosMu
+func (b *typeInfoBuilder) inlineLoadHook(t reflect.Type, fields []string) bool {
+	for _, name := range fields {
+		f, ok := t.FieldByName(name)
+		if !ok || f.Type.Kind() != reflect.Struct {
+			continue
+		}
+		tag := f.Tag.Get("state")
+		if tag != "" && tag != "wait" {
+			continue
+		}
+		if b.get(f.Type).hasLoadHook {
+			return true
+		}
+	}
+	return false
 }
 
 // plainFields returns true if all fields of the struct t are saved plain data

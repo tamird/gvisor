@@ -75,7 +75,7 @@ var registerCycleTestTypes = sync.OnceFunc(func() {
 	Register((*cycleTestNode)(nil))
 	Register((*cycleStemNode)(nil))
 	Register((*cycleCollectionNode)(nil))
-	Register((*cbOrderNode)(nil))
+	RegisterAfterLoad((*cbOrderNode)(nil))
 	fingerprint.Store(0)
 })
 

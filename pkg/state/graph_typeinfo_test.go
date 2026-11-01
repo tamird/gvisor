@@ -471,10 +471,10 @@ func TestUnregisteredZeroFieldSaverLoader(t *testing.T) {
 func TestSchemaFingerprintCompleteness(t *testing.T) {
 	withTempReg := func(name string, typ reflect.Type, noHooks bool, fn func()) {
 		prev, hadPrev := globalTypeDatabase[name]
-		prevNH := noHooksTypes[typ]
+		prevRegistration, hadRegistration := registeredStructs[typ]
 		globalTypeDatabase[name] = typ
 		if noHooks {
-			noHooksTypes[typ] = true
+			registeredStructs[typ] = structRegistration{noHooks: true}
 		}
 		fingerprint.Store(0)
 		defer func() {
@@ -483,8 +483,10 @@ func TestSchemaFingerprintCompleteness(t *testing.T) {
 			} else {
 				delete(globalTypeDatabase, name)
 			}
-			if !prevNH {
-				delete(noHooksTypes, typ)
+			if hadRegistration {
+				registeredStructs[typ] = prevRegistration
+			} else {
+				delete(registeredStructs, typ)
 			}
 			fingerprint.Store(0)
 		}()
@@ -693,5 +695,36 @@ func TestGraphIndirectInexactTypesRoundTrip(t *testing.T) {
 	}
 	if loaded.zeroArrPtrPtr == nil || *loaded.zeroArrPtrPtr == nil {
 		t.Errorf("loaded.zeroArrPtrPtr = %v, want non-nil", loaded.zeroArrPtrPtr)
+	}
+}
+
+func TestInlineLoadHook(t *testing.T) {
+	registerCycleTestTypes()
+	typeInfosMu.Lock()
+	defer typeInfosMu.Unlock()
+	var b typeInfoBuilder
+	if got, want := b.get(reflect.TypeFor[cbOrderNode]()).hasLoadHook, true; got != want {
+		t.Fatalf("registered load hook = %t, want %t", got, want)
+	}
+	for _, tc := range []struct {
+		typ    reflect.Type
+		fields []string
+		want   bool
+	}{
+		{reflect.TypeFor[struct{ cbOrderNode }](), []string{"cbOrderNode"}, true},
+		// The promoted StateAfterLoad method does not establish that the
+		// embedded field is loaded.
+		{reflect.TypeFor[struct{ cbOrderNode }](), nil, false},
+		{reflect.TypeFor[struct {
+			cbOrderNode `state:"nosave"`
+		}](), []string{"cbOrderNode"}, false},
+		{reflect.TypeFor[struct {
+			cbOrderNode `state:".(int)"`
+		}](), []string{"cbOrderNode"}, false},
+		{reflect.TypeFor[struct{ nodes [2]cbOrderNode }](), []string{"nodes"}, false},
+	} {
+		if got, want := b.inlineLoadHook(tc.typ, tc.fields), tc.want; got != want {
+			t.Errorf("inlineLoadHook(%v, %v) = %t, want %t", tc.typ, tc.fields, got, want)
+		}
 	}
 }
