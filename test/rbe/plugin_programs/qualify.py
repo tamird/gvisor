@@ -12,7 +12,7 @@ OUT = TMP / "plugin-evidence"
 TARGET = "@libpluginstack//:libpluginstack"
 OWNER = "@@+_repo_rules+libpluginstack//:libpluginstack"
 NATIVE = "docker://gcr.io/distroless/static-debian13@sha256:d03c145fad326bff275ec4106475ed8310426caf709decd9f8cbc494af59bc18"
-BASE = "4fd5a2d964498b7afefd0d4ee858d4d362e7ea6a"
+BASE = "4a8aea885c34e252efc006fe596ed9a3df6fa6ed"
 CONFIG = "@@+_repo_rules+libpluginstack//:pmd_config"
 HELPER = "@@+_repo_rules+plugin_dpdk//:pmdinfogen"
 COMPILER_IMAGE = "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"
@@ -76,6 +76,10 @@ def main():
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     r = {"source": head, "base": BASE, "target": TARGET, "old_invocation": "9125942b-1fc2-42df-b235-6dee4e0ae37a",
          "old_action": OLD, "old_launch": "/bin/bash", "old_exit": 1, "worker": NATIVE,
+         "previous_analysis_failure": {
+             "invocation": "d2d7b470-a4a5-47ec-ab0e-79c4f3486bf4",
+             "artifact": 13106028221, "exit": 1, "processes": 0,
+             "cause": "kwargs unpacking is forbidden in BUILD files"},
          "previous_helper_failure": {"invocation": "f9a06f1c-cc5f-4b9c-b518-128f1505231b",
                                      "action": "28ae53bea672c865eada319c9fb0c64f84085a01d2779651eb8fa3191be9c5de/376",
                                      "exit": 2, "helper": "gen-config-h.sh"},

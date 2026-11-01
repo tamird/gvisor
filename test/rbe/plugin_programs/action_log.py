@@ -3,9 +3,10 @@
 import base64
 import hashlib
 import json
+import os
 import re
 
-from cas_inputs import blob, rpc
+from cas_inputs import blob, fetch, rpc
 from qualify import CONFIG, HELPER, OUT, OWNER, diagnostics, now
 
 
@@ -23,6 +24,54 @@ def project(data):
     }
 
 
+def context(text):
+    lines = text.splitlines()
+    errors = [i for i, line in enumerate(lines) if re.search(r"^(?:ERROR:|Error in |Error:|Traceback)", line)]
+    assert errors, "No original analysis error"
+    selected = set()
+    # Preserve the first cause's complete short traceback as well as every
+    # subsequent error/frame. Truncation is explicit and never counts as a
+    # recovered causal diagnostic.
+    for index in errors:
+        selected.update(range(max(0, index - 1), min(len(lines), index + 25)))
+    selected.update(i for i, line in enumerate(lines) if re.search(r"(?:[.]bzl|BUILD(?:[.]bazel)?)(?:\"|:|,)", line))
+    assert len(selected) <= 100, "Original context exceeds bound"
+    result = []
+    for index in sorted(selected):
+        line = lines[index]
+        if re.search(r"authorization|api[-_]?key|remote_header|bes_header|bearer |password|credential", line, re.I):
+            line = "[credential-bearing line omitted]"
+        else:
+            line = re.sub(r"https?://[^\s]+", "<url>", line)
+            line = re.sub(r"/home/runner/[A-Za-z0-9_+./-]*?/external/", "external/", line)
+            line = line.replace(os.environ.get("BUILDBUDDY_API_KEY", "not-a-key"), "[redacted]")
+        assert len(line) < 1200, "Original line exceeds bound"
+        result.append({"line": index + 1, "text": line})
+    return result
+
+
+def original_log(invocation):
+    chunks = []
+    request = {"selector": {"invocation_id": invocation}}
+    for _ in range(12):
+        response = json.loads(fetch("api/v1/GetLog", request))
+        log = response["log"]
+        identity = log.get("id", {})
+        if identity:
+            assert identity.get("invocationId", identity.get("invocation_id")) == invocation
+        chunks.append(log.get("contents", ""))
+        assert sum(len(c) for c in chunks) < 4 * 1024 * 1024
+        token = response.get("nextPageToken", response.get("next_page_token", ""))
+        if not token:
+            break
+        request["page_token"] = token
+    else:
+        raise ValueError("Incomplete original log")
+    text = "".join(chunks)
+    return {"sha256": hashlib.sha256(text.encode()).hexdigest(), "bytes": len(text.encode()),
+            "causal_context": context(text)}
+
+
 def main():
     path = OUT / "result.json"
     if not path.exists():
@@ -35,7 +84,14 @@ def main():
         invocation = record["invocation"]
         selected = [a for a in record.get("actions", []) if a.get("exitCode") or
                     (a["targetLabel"] == OWNER and a["mnemonic"] == "CcMakeMakeRule")]
-        assert 0 < len(selected) <= 6
+        assert len(selected) <= 6
+        if record.get("build_exit"):
+            try:
+                observation["build_log"] = original_log(invocation)
+                observation["status"] = "RECOVERED_LOGS"
+            except Exception as exc:
+                observation["build_log_error"] = type(exc).__name__
+            path.write_text(json.dumps(record, indent=2) + "\n")
         for witness in selected:
             digest = witness["digest"]
             matches = rpc("GetExecution", {
@@ -58,7 +114,8 @@ def main():
                         base64.b64decode(result.get(stream + "Raw", ""), validate=True))
                 item["streams"][stream] = project(data)
             path.write_text(json.dumps(record, indent=2) + "\n")
-        observation["status"] = "RECOVERED"
+        if selected:
+            observation["status"] = "RECOVERED_ACTION_OUTPUT"
     except Exception as exc:
         # Retrieval cannot replace an original terminal failure or suppress its
         # evidence. A successful build's ELF/archive checks remain independent.
