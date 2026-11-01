@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T07:28:41.807219+00:00",
+    "updatedAt": "2026-11-01T07:48:29.705288+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4621,7 +4621,7 @@
         },
         {
           "label": "Standalone source migration, independent of compiler selection",
-          "url": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb"
+          "url": "https://github.com/tamird/gvisor/commit/17d37fc9a"
         },
         {
           "label": "Compiler on the two-target prerequisite; reviewed compiler and SPDX changes preserved",
@@ -6252,8 +6252,8 @@
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T02:01:19.983938+00:00",
-      "summary": "The contributor-approved adaptation is published at 89a248f12. It converts the two newly merged address tests to netip. Exact-source remote validation passed 620 Go cases and five owning Nogo targets checking AMD64 and ARM64, with all six required cases present and no skips or missing results. GitHub confirms the published head is mergeable; existing reviewer requests and the original benchstat evidence remain. No contributor decision is pending.\n\nEarlier source-specific history:\n\nThe contributor-approved NDP restore amendment is published on PR #15730 at 26f04aa7a. The rebase preserves the patch and message across all 167 files; GitHub confirms MERGEABLE and both prior review threads remain resolved. Earlier runtime and analyzer evidence below applies to e7990b3b3. Current checks and review requests are shown in the live provider snapshot. Both existing inline threads remain resolved. Current checks and review signals are shown from the live GitHub snapshot. The restored benchstat tables remain in the PR description with their original source and measurement limits. The historical changes-requested review is not a new unresolved request, and no new exact-head maintainer approval is claimed.\n\nSeparate native ARM64 runtime qualification of exact e7990b3b3 passed all three selected Go owners (state tests, tcpip and stack), with ten fresh remote attempts, 11,261 positive case records and all 18 required NDP, Job and netip owner/case pairs. There were no flakes, failed, skipped or missing records. Actual aarch64 worker logs and remote action metadata establish the execution architecture. Verification completed 16.23 seconds after the last native test. The earlier both-architecture analyzer result remains separate and was not rerun. The initial preparation attempt failed before runtime execution; its result remains preserved.\n\nEarlier AMD64 standalone qualification of exact e7990b3b30 passed six owners and 13 uncached remote attempts, with 11,264 test and analyzer records and all 18 required NDP, Job and netip owner/case pairs. There were no failed, skipped or missing records. Go runtime coverage is AMD64; owning analyzers passed for AMD64 and ARM64. This is not a standalone ARM64 runtime claim. The authenticated result followed native completion by 6.84 seconds.\n\nThe earlier ec60c79035 integration result remains separate: it includes merged #15318 and passed 1,205 positive records with 46 required owner/case pairs. Its NDP code and tests match the amendment, but pkg/state and stack/config differ from the standalone public-source stack.\n\nEarlier conflict-detection record:\n\nThe 22:00 intake recorded UNKNOWN at 21:59:12 against the old 7bffefa9 base and retained a 21:49:40 MERGEABLE observation. Its bounded follow-up received HTTP 502 on both the initial read and the existing retry, so the primary UNKNOWN result was preserved. The next completed intake observed CONFLICTING at 22:22:06. It did not miss a visible CONFLICTING result at 22:00; the exact GitHub recomputation time is unknown.\n\nHistorical source-specific evidence:\n\nThe reviewed checksum conflict composition is published at dfeae7ce92 and was verified mergeable against GitHub base 3f738cc1a9. All 166 topic paths decompose as the prior netip patch plus landed #16095; the affected tests preserve the tcpip protocol-number import. Five genuinely remote uncached owners passed 1,478 XML records, including fourteen required checksum cases and explicit both-CPU analyzer results. The authenticated result followed native completion by 3.501309 seconds. Existing review requests and prior approval provenance are unchanged.\n\nThe separate current-source export qualification also passes: six uncached remote ExportedGoBuild actions cover Darwin/ARM64, Windows/AMD64, FreeBSD/AMD64, OpenBSD/AMD64, Linux/MIPS and Linux/AMD64 with cgo. Ten AMD64/ARM64 compiler actions and six copied outputs are joined through GoPath to the exact exported archive; all seven final outputs, SDK and proxy witnesses are authenticated. This is cross-compilation evidence, with no target-OS runtime claim. A retained-only parser correction accounts for the shared trailing BEP flag; the original projection failure and two earlier native preparation/compiler failures remain preserved. Native completion to automatic verification took 120.790073 seconds, with no workload replay.\n\nPreserved earlier record:\n\nThe current public c8ac4368 head conflicts with actual master 291de749 after the IPv6 forwarded-checksum fix landed as #16095. Independent Git merge testing distinguishes that pair from the older provider base 97dad50c, which still merges cleanly. The owner has composed dfeae7ce locally: all 166 topic paths remain, 164 changed-line streams are identical, and the two test streams adapt only the landed checksum cases to netip while retaining the required tcpip import. Owning remote checks and publication are pending; no new public amendment or reviewer notification is claimed.\n\nPreserved earlier record:\n\nThe contributor-approved route conflict repair is published at c8ac4368c9. GitHub verified it mergeable against master 97dad50c33. It preserves landed family/type/gateway validation and destination padding, and checks the netip address conversion result. Independent review confirms the other 165 changed-line streams are unchanged and the final guard preserves reachable behavior. Eight qualification phases, eleven uncached owners and 660 positive XML records passed, including nineteen exact route/multicast cases in each Linux/directfs/shared mode. Current-head public checks are running. Both historical review threads remain resolved, and the existing maintainer review requests are pending; no prior approval was invalidated, no reminder was eligible and no public comment was added.\n\nThe separate many-connection cohort is complete: 16 balanced before/after pairs on one AMD64 worker, with two warmups excluded, 192 measured observations and all requested 4/16/64 streams sending positive post-omit bytes. None of the six bandwidth comparisons is statistically significant (n=16); this is not proof of equivalence or a source-wide performance claim. Secondary fixed-duration Download16 wall time changed +0.10% (p=.032), distinct from throughput. Exact raw JSON, source-matched binaries/runtime, actual benchmark rows and cleanup were independently verified. One metric-order reporting correction reused the same native results; the original projection failure remains retained and no workload was replayed. \n\nThe separate original profile run timed out decoding six before-side profiles and remains FAIL. The completed recovery captures one fresh profile for each of the six cases per arm on the same coordinator for the original product pair 3e49ba7e9b → ba4c528f72 and decodes all 12 fresh profiles plus the six historical-before profiles separately. It does not repeat the 16-pair throughput cohort. Each fresh profile contains only 2–14 inclusive findEndpointLocked samples out of 3,504–5,203 total, at 10 ms per CPU sample. Counts move in both directions and include selection/locking, so they do not establish lower endpoint lookup cost.\n\nProfiles span the asynchronous hook lifetime, including setup/warmup/teardown; Upload profiles the sandbox client and Download the sandbox server, without native-peer CPU. Exact source/default-output/copied/installed SHA-256 joins identify the sentries; GNU IDs are absent and the Go note is the literal redacted, so no unique build-ID match is claimed. One empty-stack sample remains unattributed in the corrected denominator; its initial projection failure and the original native timeout are preserved. All 27 native phases passed under the declared contract, including two accepted analysis exits; two uncached owners produced 12 positive benchmark rows and 18 decoded profile outputs, with zero XML test cases. Independent retained peer a549bbe7 confirms these joins and 10.165970 seconds from last native finish to authenticated consumer.\n\nEarlier delivered head 21b2d0c82f was verified mergeable before the new route-validation change landed. The final refinement applies the exact public goimports correction to three import blocks; import sets and executable source are unchanged. Actual public make lint now passes goimports, clang-format, cpplint, buildifier and spelling. The earlier failed lint run remains recorded; the focused formatter had selected only the rebase file. All 11 focused correctness/analyzer owners and 633 positive XML records remain applicable, including ten exact IPv4/IPv6 multicast cases each on Linux and gVisor directfs/shared. The separate timed feasibility pilot passes six cases per source version with positive post-omit bytes on all requested 4/16/64 streams and clean runtime restoration. One sample per case supplies no comparative performance conclusion. Generate status follows the current provider snapshot. Existing maintainer review requests remain pending; no approval was invalidated or duplicate alert posted.\n\nEarlier delivery evidence:\n\nReviewed equivalent rebase published; preserve existing review feedback and dependent delivery holds. Exact head 05114008b6 is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe requested post-#16046 rebase is published at 6e612931c9f7 on master 077ee528716d, which contains 82aa7f55a. The code-specific integration was independently reviewed and remotely validated across 26 selected targets, with 29,508 positive records and no skips. The existing maintainer re-review and dependency holds remain.\n\nPreserved earlier source record:\n\nThe October 21 03:52 snapshot confirms no unanswered author amendment: current 0e7c1aaff6 has successful checks and both review threads resolved. The aggregate CHANGES_REQUESTED is the October 13 review on c10df898; its two inline issues were addressed and the contributor requested another look after the preparatory fixtures landed. Maintainer re-review of the published current revision remains pending, so the approved children remain held until this PR lands.\n\nThe published mechanical rebase is at 0e7c1aaff6de on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe remaining CHANGES_REQUESTED state is the historical October 13 review on c10df898. Both inline issues were fixed in the delivered series and are resolved; the current head is 15a46f6871e7957989c770ee4544a7c975933f18. After both preparatory fixture PRs landed, the contributor already requested another look on October 18. No held source amendment or new author action is identified; maintainer re-review remains pending.\n\nThe netip migration is delivered at 15a46f687, rebased onto a89c378f2 after the OUTPUT DNAT change landed upstream. The adaptation preserves destination-based rerouting and packet-header checksum recalculation, converts the four new prefix-address accesses, and keeps the removed IPv6 route fixture deleted. Independent source review passes. The focused check on this exact public head passes all three selected test owners: 23 XML entries, including 20 leaf cases and three parent entries, with no skips or failures. Original reports and source/compiler/link inputs are verified. This uses the public GNU configuration on the remote Linux coordinator, not the full netip suite or canonical RBE qualification. The first capture attempt failed before Bazel because it expected a tracked lockfile absent from the public branch; the corrected attempt retains its generated lockfile and unchanged tracked source. Current public checks pass. Zach’s historical changes-requested review and the existing reviewer requests remain; the two prior inline threads are resolved.\n\nEarlier delivery record:\n\nThe netip migration is delivered at 8e81b4794, rebased onto 68f179406. The only conflict adaptation preserves upstream extraction of the Sentry RPC network types and applies the unchanged netip route converter through the new free function; both source reviews pass. GitHub reported this delivered head conflicting again at 18:04 UTC, so another source reconciliation is required before it is ready to merge. Eleven current-head checks pass and generate is still running. Zach’s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No previous approval was invalidated.\n\nEarlier delivery context:\n\nThe upstream conflict is resolved in delivered head 6a2ed6562, a single commit on a0c9c3477. The rebase changes only the already-merged prefix fixture adaptation; the final executable fixture lines and reviewed invalid-address guards are preserved. The obsolete claim about the already-merged mask fixture was removed from the commit message and PR description; the source tree is unchanged from 39b9cc707 and the benchmark tables remain. GitHub reports the current head mergeable. Zach’s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No prior approval was invalidated.\n\nEarlier delivery context:\n\nThe approved netip guards are delivered in PR #15730, then rebased to 50b6766a6 after the IPv6 fixture cleanup landed as #15770. The final guard and fixture bodies are unchanged; the description removes only the obsolete claim that this PR fixes the old malformed fixture. Both earlier inline replies and resolutions remain recorded. GitHub reported that head mergeable. Zach’s earlier changes-requested review remains; no new approval or reviewer request is claimed.\n\nEarlier source and qualification record:\n\nThe contributor-approved migration is delivered as PR #15730 after codec #15476 landed. The source-preserving rebase is a104e0bb553; then c10df898b36 adds only the canonical Gazelle deletion of an unused test dependency. The earlier Gazelle failure remains historical. Current GitHub checks and maintainer feedback are shown from the API snapshot.\n\nIndependent qualification covers 30 native unit owners and 842 analyzer owners across the original run and its affected continuation. Two fork-only test fixtures needed netip API adaptation; the original build failures and separate package-download interruption remain recorded. This does not repeat the earlier SA1019 qualification or establish full public-CI coverage.\n\nThe PR description now includes the original per-runner throughput benchstat tables, with 30 samples per version and operation. Host effects differ and do not establish a general throughput gain. Historical microbenchmarks retain the adverse address-copy and map-lookup costs. The description edit changed no code or commit.",
+      "updatedAt": "2026-11-01T07:48:29.705288+00:00",
+      "summary": "The published head is 6c48739a9. GitHub reports it is mergeable and lists three requested reviewers. The focused restore test passed 96 times on each revision after one unexplained suite failure.\n\nEarlier source-specific history:\n\nThe contributor-approved adaptation was published at 89a248f12. It converts the two newly merged address tests to netip. Exact-source remote validation passed 620 Go cases and five owning Nogo targets checking AMD64 and ARM64, with all six required cases present and no skips or missing results.\n\nThe contributor-approved NDP restore amendment is published on PR #15730 at 26f04aa7a. The rebase preserves the patch and message across all 167 files; GitHub confirms MERGEABLE and both prior review threads remain resolved. Earlier runtime and analyzer evidence below applies to e7990b3b3. Current checks and review requests are shown in the live provider snapshot. Both existing inline threads remain resolved. Current checks and review signals are shown from the live GitHub snapshot. The restored benchstat tables remain in the PR description with their original source and measurement limits. The historical changes-requested review is not a new unresolved request, and no new exact-head maintainer approval is claimed.\n\nSeparate native ARM64 runtime qualification of exact e7990b3b3 passed all three selected Go owners (state tests, tcpip and stack), with ten fresh remote attempts, 11,261 positive case records and all 18 required NDP, Job and netip owner/case pairs. There were no flakes, failed, skipped or missing records. Actual aarch64 worker logs and remote action metadata establish the execution architecture. Verification completed 16.23 seconds after the last native test. The earlier both-architecture analyzer result remains separate and was not rerun. The initial preparation attempt failed before runtime execution; its result remains preserved.\n\nEarlier AMD64 standalone qualification of exact e7990b3b30 passed six owners and 13 uncached remote attempts, with 11,264 test and analyzer records and all 18 required NDP, Job and netip owner/case pairs. There were no failed, skipped or missing records. Go runtime coverage is AMD64; owning analyzers passed for AMD64 and ARM64. This is not a standalone ARM64 runtime claim. The authenticated result followed native completion by 6.84 seconds.\n\nThe earlier ec60c79035 integration result remains separate: it includes merged #15318 and passed 1,205 positive records with 46 required owner/case pairs. Its NDP code and tests match the amendment, but pkg/state and stack/config differ from the standalone public-source stack.\n\nEarlier conflict-detection record:\n\nThe 22:00 intake recorded UNKNOWN at 21:59:12 against the old 7bffefa9 base and retained a 21:49:40 MERGEABLE observation. Its bounded follow-up received HTTP 502 on both the initial read and the existing retry, so the primary UNKNOWN result was preserved. The next completed intake observed CONFLICTING at 22:22:06. It did not miss a visible CONFLICTING result at 22:00; the exact GitHub recomputation time is unknown.\n\nHistorical source-specific evidence:\n\nThe reviewed checksum conflict composition is published at dfeae7ce92 and was verified mergeable against GitHub base 3f738cc1a9. All 166 topic paths decompose as the prior netip patch plus landed #16095; the affected tests preserve the tcpip protocol-number import. Five genuinely remote uncached owners passed 1,478 XML records, including fourteen required checksum cases and explicit both-CPU analyzer results. The authenticated result followed native completion by 3.501309 seconds. Existing review requests and prior approval provenance are unchanged.\n\nThe separate current-source export qualification also passes: six uncached remote ExportedGoBuild actions cover Darwin/ARM64, Windows/AMD64, FreeBSD/AMD64, OpenBSD/AMD64, Linux/MIPS and Linux/AMD64 with cgo. Ten AMD64/ARM64 compiler actions and six copied outputs are joined through GoPath to the exact exported archive; all seven final outputs, SDK and proxy witnesses are authenticated. This is cross-compilation evidence, with no target-OS runtime claim. A retained-only parser correction accounts for the shared trailing BEP flag; the original projection failure and two earlier native preparation/compiler failures remain preserved. Native completion to automatic verification took 120.790073 seconds, with no workload replay.\n\nPreserved earlier record:\n\nThe current public c8ac4368 head conflicts with actual master 291de749 after the IPv6 forwarded-checksum fix landed as #16095. Independent Git merge testing distinguishes that pair from the older provider base 97dad50c, which still merges cleanly. The owner has composed dfeae7ce locally: all 166 topic paths remain, 164 changed-line streams are identical, and the two test streams adapt only the landed checksum cases to netip while retaining the required tcpip import. Owning remote checks and publication are pending; no new public amendment or reviewer notification is claimed.\n\nPreserved earlier record:\n\nThe contributor-approved route conflict repair is published at c8ac4368c9. GitHub verified it mergeable against master 97dad50c33. It preserves landed family/type/gateway validation and destination padding, and checks the netip address conversion result. Independent review confirms the other 165 changed-line streams are unchanged and the final guard preserves reachable behavior. Eight qualification phases, eleven uncached owners and 660 positive XML records passed, including nineteen exact route/multicast cases in each Linux/directfs/shared mode. Current-head public checks are running. Both historical review threads remain resolved, and the existing maintainer review requests are pending; no prior approval was invalidated, no reminder was eligible and no public comment was added.\n\nThe separate many-connection cohort is complete: 16 balanced before/after pairs on one AMD64 worker, with two warmups excluded, 192 measured observations and all requested 4/16/64 streams sending positive post-omit bytes. None of the six bandwidth comparisons is statistically significant (n=16); this is not proof of equivalence or a source-wide performance claim. Secondary fixed-duration Download16 wall time changed +0.10% (p=.032), distinct from throughput. Exact raw JSON, source-matched binaries/runtime, actual benchmark rows and cleanup were independently verified. One metric-order reporting correction reused the same native results; the original projection failure remains retained and no workload was replayed. \n\nThe separate original profile run timed out decoding six before-side profiles and remains FAIL. The completed recovery captures one fresh profile for each of the six cases per arm on the same coordinator for the original product pair 3e49ba7e9b → ba4c528f72 and decodes all 12 fresh profiles plus the six historical-before profiles separately. It does not repeat the 16-pair throughput cohort. Each fresh profile contains only 2–14 inclusive findEndpointLocked samples out of 3,504–5,203 total, at 10 ms per CPU sample. Counts move in both directions and include selection/locking, so they do not establish lower endpoint lookup cost.\n\nProfiles span the asynchronous hook lifetime, including setup/warmup/teardown; Upload profiles the sandbox client and Download the sandbox server, without native-peer CPU. Exact source/default-output/copied/installed SHA-256 joins identify the sentries; GNU IDs are absent and the Go note is the literal redacted, so no unique build-ID match is claimed. One empty-stack sample remains unattributed in the corrected denominator; its initial projection failure and the original native timeout are preserved. All 27 native phases passed under the declared contract, including two accepted analysis exits; two uncached owners produced 12 positive benchmark rows and 18 decoded profile outputs, with zero XML test cases. Independent retained peer a549bbe7 confirms these joins and 10.165970 seconds from last native finish to authenticated consumer.\n\nEarlier delivered head 21b2d0c82f was verified mergeable before the new route-validation change landed. The final refinement applies the exact public goimports correction to three import blocks; import sets and executable source are unchanged. Actual public make lint now passes goimports, clang-format, cpplint, buildifier and spelling. The earlier failed lint run remains recorded; the focused formatter had selected only the rebase file. All 11 focused correctness/analyzer owners and 633 positive XML records remain applicable, including ten exact IPv4/IPv6 multicast cases each on Linux and gVisor directfs/shared. The separate timed feasibility pilot passes six cases per source version with positive post-omit bytes on all requested 4/16/64 streams and clean runtime restoration. One sample per case supplies no comparative performance conclusion. Generate status follows the current provider snapshot. Existing maintainer review requests remain pending; no approval was invalidated or duplicate alert posted.\n\nEarlier delivery evidence:\n\nReviewed equivalent rebase published; preserve existing review feedback and dependent delivery holds. Exact head 05114008b6 is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nThe requested post-#16046 rebase is published at 6e612931c9f7 on master 077ee528716d, which contains 82aa7f55a. The code-specific integration was independently reviewed and remotely validated across 26 selected targets, with 29,508 positive records and no skips. The existing maintainer re-review and dependency holds remain.\n\nPreserved earlier source record:\n\nThe October 21 03:52 snapshot confirms no unanswered author amendment: current 0e7c1aaff6 has successful checks and both review threads resolved. The aggregate CHANGES_REQUESTED is the October 13 review on c10df898; its two inline issues were addressed and the contributor requested another look after the preparatory fixtures landed. Maintainer re-review of the published current revision remains pending, so the approved children remain held until this PR lands.\n\nThe published mechanical rebase is at 0e7c1aaff6de on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe remaining CHANGES_REQUESTED state is the historical October 13 review on c10df898. Both inline issues were fixed in the delivered series and are resolved; the current head is 15a46f6871e7957989c770ee4544a7c975933f18. After both preparatory fixture PRs landed, the contributor already requested another look on October 18. No held source amendment or new author action is identified; maintainer re-review remains pending.\n\nThe netip migration is delivered at 15a46f687, rebased onto a89c378f2 after the OUTPUT DNAT change landed upstream. The adaptation preserves destination-based rerouting and packet-header checksum recalculation, converts the four new prefix-address accesses, and keeps the removed IPv6 route fixture deleted. Independent source review passes. The focused check on this exact public head passes all three selected test owners: 23 XML entries, including 20 leaf cases and three parent entries, with no skips or failures. Original reports and source/compiler/link inputs are verified. This uses the public GNU configuration on the remote Linux coordinator, not the full netip suite or canonical RBE qualification. The first capture attempt failed before Bazel because it expected a tracked lockfile absent from the public branch; the corrected attempt retains its generated lockfile and unchanged tracked source. Current public checks pass. Zach’s historical changes-requested review and the existing reviewer requests remain; the two prior inline threads are resolved.\n\nEarlier delivery record:\n\nThe netip migration is delivered at 8e81b4794, rebased onto 68f179406. The only conflict adaptation preserves upstream extraction of the Sentry RPC network types and applies the unchanged netip route converter through the new free function; both source reviews pass. GitHub reported this delivered head conflicting again at 18:04 UTC, so another source reconciliation is required before it is ready to merge. Eleven current-head checks pass and generate is still running. Zach’s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No previous approval was invalidated.\n\nEarlier delivery context:\n\nThe upstream conflict is resolved in delivered head 6a2ed6562, a single commit on a0c9c3477. The rebase changes only the already-merged prefix fixture adaptation; the final executable fixture lines and reviewed invalid-address guards are preserved. The obsolete claim about the already-merged mask fixture was removed from the commit message and PR description; the source tree is unchanged from 39b9cc707 and the benchmark tables remain. GitHub reports the current head mergeable. Zach’s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No prior approval was invalidated.\n\nEarlier delivery context:\n\nThe approved netip guards are delivered in PR #15730, then rebased to 50b6766a6 after the IPv6 fixture cleanup landed as #15770. The final guard and fixture bodies are unchanged; the description removes only the obsolete claim that this PR fixes the old malformed fixture. Both earlier inline replies and resolutions remain recorded. GitHub reported that head mergeable. Zach’s earlier changes-requested review remains; no new approval or reviewer request is claimed.\n\nEarlier source and qualification record:\n\nThe contributor-approved migration is delivered as PR #15730 after codec #15476 landed. The source-preserving rebase is a104e0bb553; then c10df898b36 adds only the canonical Gazelle deletion of an unused test dependency. The earlier Gazelle failure remains historical. Current GitHub checks and maintainer feedback are shown from the API snapshot.\n\nIndependent qualification covers 30 native unit owners and 842 analyzer owners across the original run and its affected continuation. Two fork-only test fixtures needed netip API adaptation; the original build failures and separate package-download interruption remain recorded. This does not repeat the earlier SA1019 qualification or establish full public-CI coverage.\n\nThe PR description now includes the original per-runner throughput benchstat tables, with 30 samples per version and operation. Host effects differ and do not establish a general throughput gain. Historical microbenchmarks retain the adverse address-copy and map-lookup costs. The description edit changed no code or commit.",
       "followup": {
         "owner": "root",
         "disposition": "Conflict resolved; maintainer reviews requested",
@@ -10878,7 +10878,7 @@
         },
         {
           "label": "Published post-16046 rebase",
-          "url": "https://github.com/tamird/gvisor/commit/1258537f7870ff8882318a40ce26634782b41dc7"
+          "url": "https://github.com/tamird/gvisor/commit/1258537f7"
         }
       ],
       "followup": {
@@ -11927,7 +11927,7 @@
       "head": "4094323ff5a37d180f904fb030b4ccce2d1435dd",
       "title": "Share native Go images between Make and Bazel",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/4094323ff5a37d180f904fb030b4ccce2d1435dd",
+      "url": "https://github.com/tamird/gvisor/commit/4094323ff",
       "status": "Superseded by independent Ollama and profiling image proposals",
       "updatedAt": "2026-10-31T02:57:39.242289+00:00",
       "summary": "The Ollama and profile helper images can each use an official base. Both standalone replacements have passed their runtime checks; see their proposal rows. Review the older shared APT base only for remaining consumers that actually depend on it.\n\nOriginal proposal:\nThe contributor explicitly approved the complete reviewed range 5ac1aa8e95..4094323ff5 for upstream delivery after its image and license prerequisites. The modernized rules_img/grouped-layout proposal preserves the approved lean package choices and both Go sources. Both-architecture archive checks, actual AMD64 Make/runtime tests and the complete 244-entry canonical catalog are independently accepted. The catalog has 46 APT entries; the two libcrypt manual records and existing classifier policy remain explicit prerequisites. Final 409 adds only the exact generated catalog to the qualified image/policy source. No fresh ARM runtime or same-head replay is claimed. No contributor decision is pending.\n\nRetained original proposal and qualification:\n\nThe complete lean-image proposal is contributor-approved, with the requested package explanations and platform-guard clarification delivered at 62b68fd8b. The shared base no longer has an unnecessary Linux guard; its two Go leaves retain their explained platform constraints. Dependency versions and qualified image/license inputs are unchanged. The proposal preserves the shared CA/minimal-filesystem base, selected GNU rm/mkdir/chmod runtime, all 46 helper APT records and 40 helper-specific policy exceptions. Package/image and AMD64 runtime evidence are closed; ARM64 contents were inspected without an ARM runtime claim. The canonical audit at 532973a84 passes all 1,994 entries, retaining ten fetch-error entries and 25 manual artifacts. The standalone proposal has 242 catalog entries; no new 242-entry Verify by its older module-only checker is claimed. Only the existing Ollama and APT landing prerequisites remain before opening the upstream PR. Earlier revision feedback is historical; no contributor decision is pending.",
@@ -11937,16 +11937,16 @@
         "sourceHead": "4094323ff5a37d180f904fb030b4ccce2d1435dd",
         "nextAction": "Deliver the approved range 5ac1aa8e95..4094323ff5 after APT license enumeration, classifier/policy #15146 and manual-artifact validation #16051 land. The grouped image prerequisite #16376 has merged. Do not repeat contributor review unless the source changes substantively.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/24c8f3c9ca888a1ac94798308a7d7c45e2064069",
-          "https://github.com/tamird/gvisor/commit/624a360f322f816c7d3be5c971ec2e8381c4b40b",
-          "https://github.com/tamird/gvisor/commit/49df6b1791ad254ebbea802c5476b85674e2fd0d",
+          "https://github.com/tamird/gvisor/commit/24c8f3c9c",
+          "https://github.com/tamird/gvisor/commit/624a360f3",
+          "https://github.com/tamird/gvisor/commit/49df6b179",
           "https://app.buildbuddy.io/invocation/cd5cc330-041b-42ab-b72f-b2fe5aa80b97",
-          "https://github.com/tamird/gvisor/commit/8a9cc17982f663ac56f356c85373e0d168d55d70",
-          "https://github.com/tamird/gvisor/commit/532973a8413353482e7d4e4498192916a5b49a52",
+          "https://github.com/tamird/gvisor/commit/8a9cc1798",
+          "https://github.com/tamird/gvisor/commit/532973a84",
           "https://app.buildbuddy.io/invocation/94f4fb93-e3f9-4d7b-b011-4588c06ad8f3",
-          "https://github.com/tamird/gvisor/commit/a8a75954ed3dccb1d82ef25ddf6b64813615f351",
-          "https://github.com/tamird/gvisor/commit/62b68fd8b397112f4d4de7964a488801d20b73ae",
-          "https://github.com/tamird/gvisor/commit/cc4f7cacbcfe668c03cc887aff385fa91d8265e3"
+          "https://github.com/tamird/gvisor/commit/a8a75954e",
+          "https://github.com/tamird/gvisor/commit/62b68fd8b",
+          "https://github.com/tamird/gvisor/commit/cc4f7cacb"
         ],
         "observedAt": "2026-10-28T03:01:55.211624+00:00"
       },
@@ -11962,11 +11962,11 @@
       "evidence": [
         {
           "label": "Approved final source and description",
-          "url": "https://github.com/tamird/gvisor/commit/4094323ff5a37d180f904fb030b4ccce2d1435dd"
+          "url": "https://github.com/tamird/gvisor/commit/4094323ff"
         },
         {
           "label": "Exact contributor-approved range",
-          "url": "https://github.com/tamird/gvisor/compare/5ac1aa8e95f98b7499c2bbe828a230f35e39a2be...4094323ff5a37d180f904fb030b4ccce2d1435dd"
+          "url": "https://github.com/tamird/gvisor/compare/5ac1aa8e9...4094323ff"
         },
         {
           "label": "Canonical complete catalog Verify",
@@ -20507,7 +20507,7 @@
         },
         {
           "label": "Qualified preparation-reporting correction",
-          "url": "https://github.com/tamird/gvisor/commit/9fab2a3456aa646d2b9ea2a4b6e9700640ba7bb9"
+          "url": "https://github.com/tamird/gvisor/commit/9fab2a345"
         },
         {
           "label": "Same-source build after pinned endpoint recovery",
@@ -20547,7 +20547,7 @@
         },
         {
           "label": "Published procps package correction",
-          "url": "https://github.com/tamird/gvisor/commit/6bee555dad8d7b78a44057ca92827d0f0e18b7de"
+          "url": "https://github.com/tamird/gvisor/commit/6bee555da"
         },
         {
           "label": "Preserved old-image control bootstrap failure",
@@ -20559,7 +20559,7 @@
         },
         {
           "label": "Reviewed procps license-policy recovery",
-          "url": "https://github.com/tamird/gvisor/commit/373b21bddbdf3882e3294d9281f7177416412ad8"
+          "url": "https://github.com/tamird/gvisor/commit/373b21bdd"
         },
         {
           "label": "Original-image nested-runtime control passed",
@@ -20575,7 +20575,7 @@
         },
         {
           "label": "Reviewed opt-in diagnostic source",
-          "url": "https://github.com/tamird/gvisor/commit/08cf4ab642c7ed01f4d64b252af7f50e7816b3ef"
+          "url": "https://github.com/tamird/gvisor/commit/08cf4ab64"
         },
         {
           "label": "Same-worker old/new traced and untraced comparison",
@@ -20587,7 +20587,7 @@
         },
         {
           "label": "Prepared runtime selection correction",
-          "url": "https://github.com/tamird/gvisor/commit/e420aa027deff407e967f5733d54bfb4cc1d8300"
+          "url": "https://github.com/tamird/gvisor/commit/e420aa027"
         },
         {
           "label": "Same-worker trace comparison with exact prepared runtime",
@@ -20607,7 +20607,7 @@
         },
         {
           "label": "Published corrected namespace layout",
-          "url": "https://github.com/tamird/gvisor/commit/00c011bec29077521f731f8d1dd8107afec04eeb"
+          "url": "https://github.com/tamird/gvisor/commit/00c011bec"
         },
         {
           "label": "Exact failed image archive layout proof",
@@ -20623,15 +20623,15 @@
         },
         {
           "label": "Final reviewed-source proposal",
-          "url": "https://github.com/tamird/gvisor/commit/e894c877c55083015c4f212aa236a3de176e474c"
+          "url": "https://github.com/tamird/gvisor/commit/e894c877c"
         },
         {
           "label": "Final isolated change over native-Go foundation",
-          "url": "https://github.com/tamird/gvisor/compare/4094323ff5a37d180f904fb030b4ccce2d1435dd...e894c877c55083015c4f212aa236a3de176e474c"
+          "url": "https://github.com/tamird/gvisor/compare/4094323ff...e894c877c"
         },
         {
           "label": "Approved message-only amendment; tested tree unchanged",
-          "url": "https://github.com/tamird/gvisor/commit/b6308c182377932007a10c08b7bb075737ea9141"
+          "url": "https://github.com/tamird/gvisor/commit/b6308c182"
         },
         {
           "label": "Separate approved cgroup fixture delivered",
@@ -20917,16 +20917,16 @@
         "evidence": [
           "https://github.com/tamird/gvisor/compare/309a60834...1d9470464",
           "https://github.com/tamird/gvisor/actions/runs/41157407720/artifacts/13025208355",
-          "https://github.com/tamird/gvisor/commit/7fc0ec3ee46139b3aa307cd08364377c1d688295",
+          "https://github.com/tamird/gvisor/commit/7fc0ec3ee",
           "https://registry.bazel.build/modules/iperf",
           "https://app.buildbuddy.io/invocation/e909bd36-8976-4a72-89f9-911de26dfc33",
           "https://app.buildbuddy.io/invocation/85a083fe-21bc-462f-ac0c-702fb065344e",
-          "https://github.com/tamird/gvisor/commit/1b8618835f8e146c92380834c5c1eee4bba66544",
+          "https://github.com/tamird/gvisor/commit/1b8618835",
           "https://app.buildbuddy.io/invocation/b9372053-859b-4a72-9f7b-12a884ca72be",
-          "https://github.com/tamird/gvisor/commit/ccd0b3b9fe5dd225cfc3aeff8a95c71c0a1d071f",
-          "https://github.com/tamird/gvisor/commit/2fe6d9b0913fb53484b078f8630ef8db1e7081ee",
+          "https://github.com/tamird/gvisor/commit/ccd0b3b9f",
+          "https://github.com/tamird/gvisor/commit/2fe6d9b09",
           "https://app.buildbuddy.io/invocation/267acaba-6e3a-4394-8280-c3d3c1d3bc45",
-          "https://github.com/tamird/gvisor/commit/309a60834cbe1e7c02f7763f98548b51a16d49ab"
+          "https://github.com/tamird/gvisor/commit/309a60834"
         ],
         "reviewedHead": "51d411a3ff1211e342c0ee977c0492b9037e79d1"
       },
@@ -20973,7 +20973,7 @@
         },
         {
           "label": "Current published implementation",
-          "url": "https://github.com/tamird/gvisor/commit/97d0c0b052d62605d105c56b264e2ba94f11cf35"
+          "url": "https://github.com/tamird/gvisor/commit/97d0c0b05"
         },
         {
           "label": "Preserved pinned-package runtime failure",
@@ -20981,11 +20981,11 @@
         },
         {
           "label": "Policy-order correction on unchanged image source",
-          "url": "https://github.com/tamird/gvisor/commit/13830a48512a4bb6e104ad798f1dfa2744d4ad33"
+          "url": "https://github.com/tamird/gvisor/commit/13830a485"
         },
         {
           "label": "Final contributor-review commit",
-          "url": "https://github.com/tamird/gvisor/commit/7fc0ec3ee46139b3aa307cd08364377c1d688295"
+          "url": "https://github.com/tamird/gvisor/commit/7fc0ec3ee"
         },
         {
           "label": "Accepted actual runtime qualification",
@@ -20993,7 +20993,7 @@
         },
         {
           "label": "Published BCR iperf3 revision",
-          "url": "https://github.com/tamird/gvisor/commit/6c4fcc182f5bbe9a3fe6bb58fb9387748adb2315"
+          "url": "https://github.com/tamird/gvisor/commit/6c4fcc182"
         },
         {
           "label": "Accepted BCR image/runtime qualification",
@@ -21001,11 +21001,11 @@
         },
         {
           "label": "Independent source extraction on approved native-Go foundation",
-          "url": "https://github.com/tamird/gvisor/commit/ccd0b3b9fe5dd225cfc3aeff8a95c71c0a1d071f"
+          "url": "https://github.com/tamird/gvisor/commit/ccd0b3b9f"
         },
         {
           "label": "Final independent BCR contributor proposal",
-          "url": "https://github.com/tamird/gvisor/commit/2fe6d9b0913fb53484b078f8630ef8db1e7081ee"
+          "url": "https://github.com/tamird/gvisor/commit/2fe6d9b09"
         },
         {
           "label": "Full reduced-graph Fetch and Verify passed",
@@ -21013,7 +21013,7 @@
         },
         {
           "label": "Approved proposal with requested static-link explanation",
-          "url": "https://github.com/tamird/gvisor/commit/309a60834cbe1e7c02f7763f98548b51a16d49ab"
+          "url": "https://github.com/tamird/gvisor/commit/309a60834"
         }
       ],
       "refinement": {
@@ -21129,7 +21129,7 @@
         },
         {
           "label": "Current source",
-          "url": "https://github.com/tamird/gvisor/commit/ad60b31646f983e3626d28229ecf7a6e845e52a6"
+          "url": "https://github.com/tamird/gvisor/commit/ad60b3164"
         },
         {
           "label": "Current owning qualification",
@@ -21137,7 +21137,7 @@
         },
         {
           "label": "Current packaging source",
-          "url": "https://github.com/tamird/gvisor/commit/41b64d63a1e494e1bd2bcc9aa97a34d52c05a9b0"
+          "url": "https://github.com/tamird/gvisor/commit/41b64d63a"
         },
         {
           "label": "Full runtime PASS",
@@ -21149,7 +21149,7 @@
         },
         {
           "label": "Final qualified proposal",
-          "url": "https://github.com/tamird/gvisor/commit/8ba703d3a19c7c3f80bc5b82814b283cac69023c"
+          "url": "https://github.com/tamird/gvisor/commit/8ba703d3a"
         },
         {
           "label": "Exact packaging cleanup PASS",
@@ -21157,7 +21157,7 @@
         },
         {
           "label": "Approved comment refinement",
-          "url": "https://github.com/tamird/gvisor/commit/f258c589bea8fff7c4ef4163241227252b7299bc"
+          "url": "https://github.com/tamird/gvisor/commit/f258c589b"
         }
       ],
       "settledReviews": [
@@ -22004,11 +22004,11 @@
       "links": [
         {
           "label": "Shared prerequisite source",
-          "url": "https://github.com/tamird/gvisor/commit/87e9a842f2c13a1b71ec7d18aad6564c9d758f66"
+          "url": "https://github.com/tamird/gvisor/commit/87e9a842f"
         },
         {
           "label": "Change over native Go foundation",
-          "url": "https://github.com/tamird/gvisor/compare/4094323ff5a37d180f904fb030b4ccce2d1435dd...87e9a842f2c13a1b71ec7d18aad6564c9d758f66"
+          "url": "https://github.com/tamird/gvisor/compare/4094323ff...87e9a842f"
         },
         {
           "label": "Ordinary GNU Make qualification",
@@ -22418,11 +22418,11 @@
         "nextAction": "Deliver the approved source after its other recorded prerequisites actually land. The #16097 basic foundation is already satisfied by #16307; do not wait on the closed source or repeat the contributor decision. Preserve the recorded source-specific qualification limits. Replace the local notice patch once a BCR rules_rs version includes the public library_notice target.",
         "evidence": [
           "https://github.com/hermeticbuild/rules_rs/pull/333",
-          "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6",
+          "https://github.com/tamird/gvisor/commit/6941cf2a1",
           "https://app.buildbuddy.io/invocation/fd61f5bb-1e98-44dd-ac12-315ca955a579",
           "https://app.buildbuddy.io/invocation/0d808aae-c2c6-436c-b08d-6385ef7c66ce",
           "https://app.buildbuddy.io/invocation/ca822a49-8ce3-4c78-93b8-6ee032b7fa87",
-          "https://github.com/tamird/gvisor/commit/c82e52cb777a7fb520d5ad37573fdf3bbe112f26",
+          "https://github.com/tamird/gvisor/commit/c82e52cb7",
           "https://github.com/hermeticbuild/rules_rs/issues/312"
         ]
       },
@@ -22437,11 +22437,11 @@
         },
         {
           "label": "Final rules_rs revision",
-          "url": "https://github.com/tamird/gvisor/commit/6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6"
+          "url": "https://github.com/tamird/gvisor/commit/6941cf2a1"
         },
         {
           "label": "Previous proposal refinement",
-          "url": "https://github.com/tamird/gvisor/compare/91631569d80f8affb32f39757de44e2513efab9c...6941cf2a1abad3dfe1d7a8a941160f48f5d32dc6"
+          "url": "https://github.com/tamird/gvisor/compare/91631569d...6941cf2a1"
         },
         {
           "label": "Runtime and configured host-toolchain checks",
@@ -22457,11 +22457,11 @@
         },
         {
           "label": "Protobuf release refinement under validation",
-          "url": "https://github.com/tamird/gvisor/commit/b820dfec7b84a1080afbffb19f5615dc8df459ee"
+          "url": "https://github.com/tamird/gvisor/commit/b820dfec7"
         },
         {
           "label": "Final qualified source",
-          "url": "https://github.com/tamird/gvisor/commit/6a38390bf36512b773254ef75cd36180c635b1f2"
+          "url": "https://github.com/tamird/gvisor/commit/6a38390bf"
         },
         {
           "label": "Final generated-code and exact image output comparison",
@@ -23071,7 +23071,7 @@
       "ref": "review/rules-img-source-profile-helper",
       "head": "1ef50322e5d32e72176c4e8e5afaa0a0796be84b",
       "title": "Build profiling utilities from source",
-      "url": "https://github.com/tamird/gvisor/commit/1ef50322e5d32e72176c4e8e5afaa0a0796be84b",
+      "url": "https://github.com/tamird/gvisor/commit/1ef50322e",
       "group": "bazel",
       "status": "Superseded",
       "updatedAt": "2026-10-31T14:29:35.288450+00:00",
@@ -23105,7 +23105,7 @@
         },
         {
           "label": "Earlier source proposal",
-          "url": "https://github.com/tamird/gvisor/commit/fda0e4f7ca952259c8b5eab335e5e12194d0bdea"
+          "url": "https://github.com/tamird/gvisor/commit/fda0e4f7c"
         }
       ]
     },
@@ -23807,7 +23807,7 @@
       "evidence": [
         {
           "label": "Agent-owned window-scaling product",
-          "url": "https://github.com/tamird/gvisor/commit/888d2415fee5f8e197e78c7365cbc09da8a2fc89"
+          "url": "https://github.com/tamird/gvisor/commit/888d2415f"
         },
         {
           "label": "Corrected before-only Linux/netstack controls; native FAIL",
@@ -26746,8 +26746,8 @@
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "Delivered amendment on PR #15730",
-      "updatedAt": "2026-10-25T23:43:21.952687+00:00",
-      "summary": "The contributor-approved NDP restore amendment is published on PR #15730 at exact e7990b3b30, on master 2716ac2841. The current PR and fork heads agree, and GitHub reports MERGEABLE. Both existing inline threads remain resolved. Current checks and review signals are shown from the live GitHub snapshot. The restored benchstat tables remain in the PR description with their original source and measurement limits. The historical changes-requested review is not a new unresolved request, and no new exact-head maintainer approval is claimed.\n\nStandalone qualification of exact e7990b3b30 passed six owners and 13 uncached remote attempts, with 11,264 test and analyzer records and all 18 required NDP, Job and netip owner/case pairs. There were no failed, skipped or missing records. Go runtime coverage is AMD64; owning analyzers passed for AMD64 and ARM64. This is not a standalone ARM64 runtime claim. The authenticated result followed native completion by 6.84 seconds.\n\nThe earlier ec60c79035 integration result remains separate: it includes merged #15318 and passed 1,205 positive records with 46 required owner/case pairs. Its NDP code and tests match the amendment, but pkg/state and stack/config differ from the standalone public-source stack.",
+      "updatedAt": "2026-11-01T07:48:29.705288+00:00",
+      "summary": "This NDP restore revision was published on #15730 at e7990b3b3. Subsequent changes moved the PR to 6c48739a9. The qualification below applies to the original amendment.\n\nStandalone qualification of exact e7990b3b30 passed six owners and 13 uncached remote attempts, with 11,264 test and analyzer records and all 18 required NDP, Job and netip owner/case pairs. There were no failed, skipped or missing records. Go runtime coverage is AMD64; owning analyzers passed for AMD64 and ARM64. This is not a standalone ARM64 runtime claim. The authenticated result followed native completion by 6.84 seconds.\n\nThe earlier ec60c79035 integration result remains separate: it includes merged #15318 and passed 1,205 positive records with 46 required owner/case pairs. Its NDP code and tests match the amendment, but pkg/state and stack/config differ from the standalone public-source stack.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "e7990b3b307ca62f23dbf51ff305ed0ddfaf077e",
@@ -26756,7 +26756,7 @@
         "nextAction": "Follow current-head public checks, matching imports and maintainer review through the existing intake. Contributor approval is settled; preserve the exact-source qualification limits and resolved historical threads without another decision or notification.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15730",
-          "https://github.com/tamird/gvisor/commit/e7990b3b307ca62f23dbf51ff305ed0ddfaf077e",
+          "https://github.com/tamird/gvisor/commit/e7990b3b3",
           "https://app.buildbuddy.io/invocation/f2ea5ec4-7b18-4f89-9fdb-832715906fff",
           "https://app.buildbuddy.io/invocation/b0a6cf9f-be96-4a9b-8f4e-ea8b63d4273b",
           "https://app.buildbuddy.io/invocation/8f7c8f72-dc0b-43ea-b0f6-89b0f9aa77e2"
@@ -26781,11 +26781,11 @@
         },
         {
           "label": "Contributor-approved amendment published as exact #15730 head",
-          "url": "https://github.com/tamird/gvisor/commit/e7990b3b307ca62f23dbf51ff305ed0ddfaf077e"
+          "url": "https://github.com/tamird/gvisor/commit/e7990b3b3"
         },
         {
           "label": "Complete proposed change against current master",
-          "url": "https://github.com/tamird/gvisor/compare/2716ac28412eb75180818a5ea14b0e2026c26459...e7990b3b307ca62f23dbf51ff305ed0ddfaf077e"
+          "url": "https://github.com/tamird/gvisor/compare/2716ac284...e7990b3b3"
         },
         {
           "label": "Related current-fork NDP qualification; not the standalone amendment",
@@ -26793,7 +26793,7 @@
         },
         {
           "label": "Exact qualified current fork ec60c79035",
-          "url": "https://github.com/tamird/gvisor/commit/ec60c7903509617455e9df8319f4d38cb34406d8"
+          "url": "https://github.com/tamird/gvisor/commit/ec60c7903"
         }
       ],
       "inactive": true
@@ -33568,7 +33568,7 @@
       "ref": "research/ci-bazel-release",
       "head": "a5afdee618840c9211d989c775afda8280be484b",
       "title": "Build the GitHub release without the Docker builder",
-      "url": "https://github.com/tamird/gvisor/commit/a5afdee618840c9211d989c775afda8280be484b",
+      "url": "https://github.com/tamird/gvisor/commit/a5afdee61",
       "group": "release",
       "status": "Contributor approved; waiting for prerequisites",
       "updatedAt": "2026-10-31T12:01:55.716021+00:00",
@@ -34062,7 +34062,7 @@
       "repo": "tamird/gvisor",
       "ref": "research/clang-format-shared",
       "title": "Use the declared LLVM formatter for C and C++ lint",
-      "url": "https://github.com/tamird/gvisor/commit/3cd9523a5b5a94d16df9b4f6383316e5591ac56a",
+      "url": "https://github.com/tamird/gvisor/commit/3cd9523a5",
       "head": "3cd9523a5b5a94d16df9b4f6383316e5591ac56a",
       "group": "analysis",
       "updatedAt": "2026-11-01T00:05:24.396268+00:00",
@@ -37983,9 +37983,13 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T19:51:53.969+00:00",
-      "summary": "The resize and wrong-cgroup-path findings are ready for one inline review. A sandbox started at 2 GiB and lowered to 200 MiB used a 1,023 MiB Go limit and was OOM-killed. Reading the current limit let both restores finish. The ancestor-limit boot review remains a separate decision.",
+      "updatedAt": "2026-11-01T07:48:29.705288+00:00",
+      "summary": "Both restores on 5068ecb10 ran at a 200 MiB kernel limit. Starting at 200 MiB selected a 99.93 MiB Go limit and succeeded. Shrinking from 2 GiB selected 1,023 MiB and the kernel OOM-killed the Sentry. The pending review also identifies the cgroup directory reads in the fixture. The ancestor limit at boot is a separate finding.",
       "evidence": [
+        {
+          "label": "Both restore cases on 5068ecb10, with actual limits and OOM counters",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41285846799/artifacts/13075252336"
+        },
         {
           "label": "Restore after resize: OOM and matched control",
           "url": "https://github.com/tamird/gvisor/actions/runs/41235041675/artifacts/13055480274"
@@ -38058,22 +38062,22 @@
       "contributorReview": {
         "status": "pending",
         "kind": "review",
-        "head": "874db9fce52716e00f0acb2ab0bd8bc893afbe8c",
-        "url": "https://github.com/google/gvisor/pull/16735/files#diff-90e781a80cf5f39deaf2f50f0040406c0b5237af8a8db5ce25a9ad4017091fb3R271",
+        "head": "5068ecb10e0ca383cc00791cc4a655b7a90a626f",
+        "url": "https://github.com/google/gvisor/pull/16735/files#diff-90e781a80cf5f39deaf2f50f0040406c0b5237af8a8db5ce25a9ad4017091fb3R274",
         "title": "Post the restore OOM and test-counter review",
         "summary": "Post the two inline findings? A resized sandbox was OOM-killed at restore; the test reads a cgroup directory instead of memory.events. Reading the live bound let both 200 MiB restores complete.",
-        "body": "On the call to gccontrol.Suspend in SuspendGCForRestore:\n\n@parth-opensrc, this uses the limit from sandbox creation. If the user lowers the limit before restore, the kernel enforces the new value but GC still budgets against the old one.\n\nI saved the existing 50,000-file workload under 2 GiB in both cases and restored it with memory.max at 200 MiB. Creating the restore sandbox at 200 MiB gave Go a 99 MiB limit and restore succeeded. Creating it at 2 GiB and lowering it with Container.Update before Restore gave Go a 1,023 MiB limit. The restore RPC returned EOF and memory.events recorded one OOM kill, versus zero in the control. The [test output and cgroup counters](https://github.com/tamird/gvisor/actions/runs/41235041675/artifacts/13055480274) are from the same run.\n\n[Reading the limit when the host sends Restore](https://github.com/tamird/gvisor/commit/07696b6af) let [both restores finish](https://github.com/tamird/gvisor/actions/runs/41235711507/artifacts/13055496610) with a Go limit of about 99 MiB and no OOM kills. Could Restore use that current bound? Checkpoint uses the same cached value. If the host cannot supply a current bound, keeping ordinary GC enabled would avoid suspending it against a limit that may no longer exist.\n\nPosted by Codex on behalf of @tamird.\n\nOn the read of memory.events in the restore test:\n\n@parth-opensrc, on cgroup v2, MakePath takes a controller name and returns the cgroup directory regardless of that argument [1]. Both Stat calls here therefore succeed as long as the directory exists, even if memory.swap.max is missing. The failure diagnostic later tries to ReadFile the directory, too, so it drops the OOM counters when restore fails.\n\nCould these use filepath.Join(probe.MakePath(\"\"), \"memory.max\") (and similarly for memory.swap.max and memory.events)? That makes the optional swap check and the OOM report inspect the intended files. If skipping systems without the memory controller is required, Install can itself fail before these checks.\n\nThere is a second reason to read those counters on failure: with the 200 MiB cap applied during fixture setup, the [sentry was OOM-killed during Save](https://github.com/tamird/gvisor/actions/runs/41235498081/artifacts/13055292180) before this test reached Restore. The same happened with ordinary GC; on this worker the proposed policy declined to suspend anyway. Giving only the checkpoint writer 2 GiB let the restore assertion run against a real 200 MiB cap.\n\n[1]: https://github.com/google/gvisor/blob/874db9fce/runsc/cgroup/cgroup_v2.go#L436\n\nPosted by Codex on behalf of @tamird."
+        "body": "On the call to gccontrol.Suspend in SuspendGCForRestore:\n\n@parth-opensrc, this uses the limit from sandbox creation. If the user lowers the limit before restore, the kernel enforces the new value but GC still budgets against the old one.\n\nI saved the existing 50,000-file workload under 2 GiB in both cases and restored it with memory.max at 200 MiB. Creating the restore sandbox at 200 MiB gave Go a 99.93 MiB limit and restore succeeded. Creating it at 2 GiB and lowering it with Container.Update before Restore gave Go a 1,023 MiB limit. The restore RPC returned EOF and memory.events recorded one OOM kill, versus zero in the control. The [test output and cgroup counters](https://github.com/tamird/gvisor/actions/runs/41285846799/artifacts/13075252336) are from the same run.\n\nOn the earlier revision, [reading the limit when the host sends Restore](https://github.com/tamird/gvisor/commit/07696b6af) let [both restores finish](https://github.com/tamird/gvisor/actions/runs/41235711507/artifacts/13055496610) with a Go limit of about 99 MiB and no OOM kills. Could Restore use that current bound? Checkpoint uses the same cached value. If the host cannot supply a current bound, keeping ordinary GC enabled would avoid suspending it against a limit that may no longer exist.\n\nPosted by Codex on behalf of @tamird.\n\nOn the read of memory.events in the restore test:\n\n@parth-opensrc, on cgroup v2, MakePath takes a controller name and returns the cgroup directory regardless of that argument [1]. Both Stat calls here therefore succeed as long as the directory exists, even if memory.swap.max is missing. The failure diagnostic later tries to ReadFile the directory, too, so it drops the OOM counters when restore fails.\n\nCould these use filepath.Join(probe.MakePath(\"\"), \"memory.max\") (and similarly for memory.swap.max and memory.events)? That makes the optional swap check and the OOM report inspect the intended files. If skipping systems without the memory controller is required, Install can itself fail before these checks.\n\nThere is a second reason to read those counters on failure: with the 200 MiB cap applied during fixture setup, the [sentry was OOM-killed during Save](https://github.com/tamird/gvisor/actions/runs/41235498081/artifacts/13055292180) before this test reached Restore. The same happened with ordinary GC; on this worker the proposed policy declined to suspend anyway. Giving only the checkpoint writer 2 GiB let the restore assertion run against a real 200 MiB cap.\n\n[1]: https://github.com/google/gvisor/blob/5068ecb10/runsc/cgroup/cgroup_v2.go#L436\n\nPosted by Codex on behalf of @tamird."
       },
-      "head": "874db9fce52716e00f0acb2ab0bd8bc893afbe8c",
+      "head": "5068ecb10e0ca383cc00791cc4a655b7a90a626f",
       "additionalReviews": [
         {
           "status": "pending",
           "kind": "review",
-          "head": "874db9fce52716e00f0acb2ab0bd8bc893afbe8c",
+          "head": "5068ecb10e0ca383cc00791cc4a655b7a90a626f",
           "url": "https://github.com/google/gvisor/pull/16735/files#diff-4a63c582bfe39ff0651f5f25907be2de2f9702f6df1e6f2748ef495ab507c4e6R367",
           "title": "Post the nested memory.max boot review",
           "summary": "With a 512 MiB parent and a 2 GiB child, boot set Go’s soft limit to 1 GiB; using the tighter cgroup limit set it to 256 MiB. A 256 MiB child gave 128 MiB either way. This draft asks about the boot calculation only.",
-          "body": "@parth-opensrc, `b.totalMem` can be larger than the cgroup limit Linux enforces. On this head I set a parent’s `memory.max` to 512 MiB and its child’s to 2 GiB. The [cgroup reader](https://github.com/google/gvisor/blob/874db9fce/runsc/cgroup/cgroup_v2.go#L413) returned 2 GiB, and `Suspend` set Go’s soft memory limit to 1 GiB. It did the same with two unlimited levels below the 512 MiB parent. A 256 MiB child correctly got a 128 MiB Go limit.\n\nCould we land [#16767](https://github.com/google/gvisor/pull/16767) before relying on this value to suspend GC? It fixes the shared cgroup reader. Taking the smallest visible limit gave the first two cases a 256 MiB Go limit and left the control unchanged. [Results from a real cgroup-v2 hierarchy](https://github.com/tamird/gvisor/actions/runs/41166214724/artifacts/13029347885). These measure the limit passed to Go; no workload was driven to OOM.\n\nPosted by Codex on behalf of @tamird."
+          "body": "@parth-opensrc, `b.totalMem` can be larger than the cgroup limit Linux enforces. On the earlier revision I set a parent’s `memory.max` to 512 MiB and its child’s to 2 GiB. The [cgroup reader](https://github.com/google/gvisor/blob/5068ecb10/runsc/cgroup/cgroup_v2.go#L413) returned 2 GiB, and `Suspend` set Go’s soft memory limit to 1 GiB. It did the same with two unlimited levels below the 512 MiB parent. A 256 MiB child correctly got a 128 MiB Go limit.\n\nCould we land [#16767](https://github.com/google/gvisor/pull/16767) before relying on this value to suspend GC? It fixes the shared cgroup reader. Taking the smallest visible limit gave the first two cases a 256 MiB Go limit and left the control unchanged. [Results from a real cgroup-v2 hierarchy](https://github.com/tamird/gvisor/actions/runs/41166214724/artifacts/13029347885). These measure the limit passed to Go; no workload was driven to OOM.\n\nPosted by Codex on behalf of @tamird."
         }
       ]
     },
@@ -38309,17 +38313,17 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/declared-jekyll-site",
-      "head": "6719095ebbd170eefb875c446f6a93a5fe6cf7b9",
+      "head": "2d59e8489625bcc700c22ed572d4160ffff0a1fd",
       "title": "Render the gVisor website without its Jekyll builder",
       "group": "bazel",
       "status": "Agent work",
       "url": "https://github.com/tamird/gvisor/tree/research/declared-jekyll-site",
-      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
+      "updatedAt": "2026-11-01T07:48:29.705288+00:00",
       "summary": "Bazel builds the website without a Docker daemon. Dropping the inline-SVG plugin and its optimizer preserved all 278 published files byte for byte; neither gem was installed in the selected SDK. Disabling Autoprefixer changed css/main.css, so it stays. The serving-image check also covered the hard-linked logo.",
       "followup": {
         "owner": "root",
-        "sourceHead": "6719095ebbd170eefb875c446f6a93a5fe6cf7b9",
-        "observedAt": "2026-10-31T00:17:49.384556+00:00",
+        "sourceHead": "2d59e8489625bcc700c22ed572d4160ffff0a1fd",
+        "observedAt": "2026-11-01T07:48:29.705288+00:00",
         "disposition": "Source notices verified; waiting for build prerequisites",
         "nextAction": "Wait for the first BCR rules_img release containing #811 and the declared Buildkite Bazelisk bootstrap. The five Ruby gems and tar.bzl are verified. The pinned build SDK's component notices are recorded separately; the catalog does not enumerate OCI inputs. The Go docs and server still require GNU tools.",
         "evidence": [
@@ -38335,12 +38339,10 @@
       },
       "refinement": {
         "before": {
-          "base": "70cb23c0de3c8d1295054663b50717546fbbc7a7",
-          "head": "8503225c7c07e0d7ab95846250e6c0ce044abfd4"
+          "head": "6719095ebbd170eefb875c446f6a93a5fe6cf7b9"
         },
         "after": {
-          "base": "70cb23c0de3c8d1295054663b50717546fbbc7a7",
-          "head": "7b81fd10a5af9729d8d6953c41df562bfb25e71c"
+          "head": "2d59e8489625bcc700c22ed572d4160ffff0a1fd"
         }
       },
       "evidence": [
@@ -38924,6 +38926,10 @@
         {
           "label": "Original build results, including the query that returned no actions",
           "url": "https://github.com/tamird/gvisor/actions/runs/41157482164/artifacts/13025534182"
+        },
+        {
+          "label": "Registry revisions that introduced the current generated header rule",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/commit/7ad3b207d"
         }
       ],
       "contributorReview": {
@@ -39204,6 +39210,10 @@
         {
           "label": "Six remote execution actions",
           "url": "https://app.buildbuddy.io/invocation/1e1073a2-cec9-446e-a45d-2d7c5c0ed88d"
+        },
+        {
+          "label": "The earlier removal of coreutils kept the shell action",
+          "url": "https://github.com/protocolbuffers/protobuf/commit/c64743979"
         }
       ],
       "contributorReview": {
@@ -39597,22 +39607,26 @@
       "type": "branch",
       "repo": "tamird/hermetic-llvm",
       "ref": "review/linux-unwind-link-libraries",
-      "head": "321ef8af9d59c2cce56e5f777bd1d7fc4859aac9",
+      "head": "3db00c1cf3d2b880429f5571311006e123d3e7d6",
       "title": "Link Linux libunwind’s system libraries only when the C++ runtimes are enabled",
-      "url": "https://github.com/tamird/hermetic-llvm/commit/321ef8af9",
+      "url": "https://github.com/tamird/hermetic-llvm/commit/3db00c1cf",
       "group": "bazel",
       "status": "Contributor review requested",
       "summary": "Send the LLVM change upstream. Stock could not link a freestanding executable because it requested libpthread.a and libdl.a. The existing runtime opt-out now drops those two libraries and keeps the libc search path. The hosted C++ test still passes, and the GNU and musl bootstrap links still include both libraries.",
-      "updatedAt": "2026-10-31T08:36:42.408674+00:00",
+      "updatedAt": "2026-11-01T07:48:29.705288+00:00",
       "refinement": {
         "before": {
-          "head": "83245b9576c00597846d36b1d25be8edb10d7d8e"
+          "head": "321ef8af9d59c2cce56e5f777bd1d7fc4859aac9"
         },
         "after": {
-          "head": "321ef8af9d59c2cce56e5f777bd1d7fc4859aac9"
+          "head": "3db00c1cf3d2b880429f5571311006e123d3e7d6"
         }
       },
       "evidence": [
+        {
+          "label": "Why explicit libraries still need the search path",
+          "url": "https://github.com/tamird/hermetic-llvm/compare/321ef8af9...3db00c1cf"
+        },
         {
           "label": "Review the change against current LLVM main",
           "url": "https://github.com/tamird/hermetic-llvm/compare/fd2addebf...321ef8af9"
@@ -39633,8 +39647,8 @@
       "contributorReview": {
         "kind": "proposal",
         "status": "pending",
-        "head": "321ef8af9d59c2cce56e5f777bd1d7fc4859aac9",
-        "url": "https://github.com/tamird/hermetic-llvm/commit/321ef8af9",
+        "head": "3db00c1cf3d2b880429f5571311006e123d3e7d6",
+        "url": "https://github.com/tamird/hermetic-llvm/commit/3db00c1cf",
         "title": "Link Linux libunwind’s system libraries only when the C++ runtimes are enabled",
         "summary": "Send the LLVM change upstream. Stock could not link a freestanding executable because it requested libpthread.a and libdl.a. The existing runtime opt-out now drops those two libraries and keeps the libc search path. The hosted C++ test still passes, and the GNU and musl bootstrap links still include both libraries."
       }
@@ -40726,6 +40740,10 @@
         {
           "label": "gRPC contribution policy",
           "url": "https://github.com/grpc/grpc/blob/df3dd4dcb/CONTRIBUTING.md#generative-ai-policy"
+        },
+        {
+          "label": "The wrapper packages a universal plugin for Objective-C distribution",
+          "url": "https://github.com/grpc/grpc/commit/9a6bcd4c2"
         }
       ],
       "humanAction": {
@@ -40958,7 +40976,7 @@
         },
         {
           "label": "Original fix on Bazel main",
-          "url": "https://github.com/bazelbuild/bazel/commit/6a3de202fe689c677b0c0bea8d76755e22bc21de"
+          "url": "https://github.com/bazelbuild/bazel/commit/6a3de202f"
         }
       ],
       "contributorReview": {
@@ -40970,7 +40988,7 @@
         "title": "Backport directory-watch invalidation to Bazel 8.9",
         "requestedAt": "2026-11-01T00:05:24.396268+00:00",
         "summary": "Review submission of this backport to bazelbuild/bazel’s release-8.9.0 branch. gVisor lint adoption remains separate.",
-        "body": "When a watched directory disappears between builds, invalidate the\nrepository instead of requesting a directory listing for the missing\npath. Record the file type before the directory contents, and preserve\nthat order when checking the recorded inputs.\n\nInvalidate remote repository cache entries that predate this check.\nUse the 8.x DirTree constructor and its FileValue.Key test fixture."
+        "body": "Backport 6a3de202f from Bazel main to 8.9.\n\nWhen a watched directory disappears between builds, invalidate the\nrepository instead of requesting a directory listing for the missing\npath. Record the file type before the directory contents, and preserve\nthat order when checking the recorded inputs.\n\nInvalidate remote repository cache entries that predate this check.\nUse the 8.x DirTree constructor and its FileValue.Key test fixture."
       }
     },
     {
@@ -40997,6 +41015,10 @@
         {
           "label": "Existing Linux musl transition, merged in hermetic-llvm #899",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/899"
+        },
+        {
+          "label": "The module map generator uses the same per-CPU transition",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/eb198127b"
         }
       ],
       "contributorReview": {
@@ -41008,7 +41030,7 @@
         "title": "Link the Linux link wrapper with musl",
         "requestedAt": "2026-11-01T00:11:22.001774+00:00",
         "summary": "Review submitting this change to hermeticbuild/hermetic-llvm. The module map generator already supplies the transition on upstream main.",
-        "body": "Clang's link wrapper runs on the execution platform. On a Linux worker\nwithout a glibc loader, Bazel can compile the target objects but cannot\nstart the wrapper to link them.\n\nUse the existing per-CPU musl transition for the wrapper as well as the\nmodule map generator. The transitioned tool keeps its clang++ basename\nfor rustc's linker-flavor detection."
+        "body": "Clang's link wrapper runs on the execution platform. On a Linux worker\nwithout a glibc loader, Bazel can compile the target objects but cannot\nstart the wrapper to link them.\n\nUse the existing per-CPU musl transition for the wrapper. The module map\ngenerator uses the same transition (eb198127b). The transitioned tool keeps its clang++ basename\nfor rustc's linker-flavor detection."
       }
     },
     {
@@ -41464,13 +41486,17 @@
       "group": "bazel",
       "repo": "tamird/hermetic-llvm",
       "ref": "proposal/instrumentor-template",
-      "head": "bdd158a6b8ddecb97fd226e416dcf1440b3595fb",
-      "url": "https://github.com/tamird/hermetic-llvm/commit/bdd158a6b",
+      "head": "21a5215f89afe39a50bfab5f5ff10a75fffa614a",
+      "url": "https://github.com/tamird/hermetic-llvm/commit/21a5215f8",
       "title": "Generate the LLVM instrumentor header without a shell",
-      "updatedAt": "2026-11-01T06:33:17.043911+00:00",
+      "updatedAt": "2026-11-01T07:48:29.705288+00:00",
       "status": "Contributor review requested",
       "summary": "LLVM 23 embeds a runtime helper in a C++ string using a shell and cat. Bazel can use LLVM’s CMake template for the same header. The resulting AMD64 and ARM64 archives contained the same 9,899 bytes and terminating NUL. Editing the helper in a local checkout with the amended overlay regenerated the header.",
       "evidence": [
+        {
+          "label": "Purpose of the overlay patch and the LLVM source it adapts",
+          "url": "https://github.com/tamird/hermetic-llvm/compare/bdd158a6b...21a5215f8"
+        },
         {
           "label": "Supplier Bazel 9 run with both architectures and a local source edit",
           "url": "https://github.com/tamird/gvisor/actions/runs/41280686305/artifacts/13073123265"
@@ -41484,12 +41510,20 @@
         "status": "pending",
         "kind": "proposal",
         "baseHead": "fd2addebff08b29675ee266bc2766e475ce9263b",
-        "head": "bdd158a6b8ddecb97fd226e416dcf1440b3595fb",
-        "url": "https://github.com/tamird/hermetic-llvm/commit/bdd158a6b",
+        "head": "21a5215f89afe39a50bfab5f5ff10a75fffa614a",
+        "url": "https://github.com/tamird/hermetic-llvm/commit/21a5215f8",
         "title": "Generate the LLVM instrumentor header without a shell",
         "requestedAt": "2026-11-01T06:33:17.043911+00:00",
         "summary": "Review submitting the LLVM 23 overlay correction to hermeticbuild/hermetic-llvm.",
         "body": "LLVM's Bazel rule uses printf, cat, and echo to embed the instrumentor\nruntime source in a C++ string. Building the IPO library therefore\nrequires a shell and cat on the execution platform.\n\nExpose the helper text to LLVM 23's overlay and expand the template that\nCMake and GN use for the same header. Bazel can then generate it without\nrunning another program. Read the resolved source path so edits in a\nlocal LLVM checkout regenerate the header."
+      },
+      "refinement": {
+        "before": {
+          "head": "bdd158a6b8ddecb97fd226e416dcf1440b3595fb"
+        },
+        "after": {
+          "head": "21a5215f89afe39a50bfab5f5ff10a75fffa614a"
+        }
       }
     },
     {
@@ -57599,9 +57633,18 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T07:28:41.807219+00:00",
+      "updatedAt": "2026-11-01T07:48:29.705288+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "On both native architectures, 309 of the 311 applicable //runsc/... targets built on empty workers, including all four required runsc binaries. The remaining two depend on the secfuzz generator, which invokes /bin/bash. The 75 labels removed since the Ubuntu inventory were intermediate generated-source targets. This was a build, so the run did not execute the Go suites.",
+          "evidence": [
+            {
+              "label": "Both architectures, including the two original owner failures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41280610640/artifacts/13075550613"
+            }
+          ]
+        },
         {
           "text": "Bazel built 189 of 190 //tools/... targets on each empty worker. The same license-checker test referenced a deleted constant on both. Applying its existing fixture correction built the remaining target on AMD64 and ARM64; both corrected test functions also ran on AMD64. This accounts for 190 of 190 targets per architecture across the two revisions. The full verdicts were available 5.86 and 5.38 seconds after Bazel finished, compared with about 317 seconds for the earlier package runs. Both verifier implementations agreed on 32 sampled actions per architecture. No manual log collection was needed.",
           "evidence": [
@@ -59770,7 +59813,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-01T07:13:51.137754+00:00",
+      "updatedAt": "2026-11-01T07:48:29.705288+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Retain the minimum-RTT safeguard. Prioritize reproducible recovery defects and review changes to SACK, probe timing and receive-queue pressure.",
       "findings": [
@@ -60011,11 +60054,15 @@
           ]
         },
         {
-          "text": "For an idle reader, coalescing on #15433 made all 3,000 seven-byte replies available before the first read, matching Linux. Stock, #15325 and #15325 with the ACK-queue cap each queued 1,414 bytes on IPv4 and 1,372 on IPv6 within five seconds. The test verified all 21,000 payload bytes on both passing implementations. This distinguishes the idle-reader stall from the ACK-queue memory problem.",
+          "text": "Before the first read, Linux and #15433 queued all 21,000 bytes from 3,000 seven-byte writes. Stock, #15325 and #15325 with the ACK-queue cap each queued 1,414 bytes on IPv4 and 1,372 on IPv6 within five seconds. Linux, #15433 alone and both PRs together also queued and delivered two full bursts when the application drained the socket between bursts.",
           "evidence": [
             {
               "label": "Same syscall test on Linux and four gVisor implementations",
               "url": "https://github.com/tamird/gvisor/actions/runs/41283134522/artifacts/13074338127"
+            },
+            {
+              "label": "Two bursts on the same socket with and without the proposed receive-window change",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41284957133/artifacts/13074911066"
             },
             {
               "label": "Maintainer review order",
@@ -60217,8 +60264,8 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
-      "lastReviewedAt": "2026-10-31T00:00:00.000000+00:00",
+      "updatedAt": "2026-11-01T07:48:29.705288+00:00",
+      "lastReviewedAt": "2026-11-01T07:30:08.951901+00:00",
       "summary": "The project owner checks a new review decision against other open, unpublished and recently landed work. This is agent work; an approved source normally gets a follow-up rather than an amendment.",
       "findings": [
         {
@@ -60278,6 +60325,35 @@
             {
               "label": "CORK syscall coverage",
               "url": "https://github.com/google/gvisor/pull/16671"
+            }
+          ]
+        },
+        {
+          "text": "The November 1 review covered 106 changed entries representing 104 source revisions. It found a shared Linux/gVisor packet test missing from the merged SYN-cookie change, and corrected two LLVM explanations, an unwrapped Jekyll message and stale revision labels on #15730. The unstamped checkpoint reader already had 32 paired startup measurements. The changed Parth GC head still reproduces the restore OOM after a cgroup resize. Historical supplier and imported PRs keep their heads.",
+          "evidence": [
+            {
+              "label": "Restored search-path rationale",
+              "url": "https://github.com/tamird/hermetic-llvm/commit/3db00c1cf"
+            },
+            {
+              "label": "LLVM patch purpose and source",
+              "url": "https://github.com/tamird/hermetic-llvm/commit/21a5215f8"
+            },
+            {
+              "label": "Jekyll notice record",
+              "url": "https://github.com/tamird/gvisor/commit/2d59e8489"
+            },
+            {
+              "label": "Prior unstamped startup comparison, 64 executions",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41173948272/artifacts/13031802684"
+            },
+            {
+              "label": "Resize comparison on the updated GC proposal",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41285846799/artifacts/13075252336"
+            },
+            {
+              "label": "SYN cookie behavior and existing Go test coverage",
+              "url": "https://github.com/google/gvisor/pull/16336"
             }
           ]
         }
