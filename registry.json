@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T17:58:13.420713+00:00",
+    "updatedAt": "2026-11-01T18:04:18.442080+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34616,7 +34616,7 @@
         "status": "pending",
         "kind": "amendment",
         "head": "045a3f7a506c109eab8beb396e5b3af37776a2df",
-        "baseHead": "375b2c57032fa910447d4b81217fde2171303a9b",
+        "baseHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
         "url": "https://github.com/tamird/gvisor/commit/045a3f7a5",
         "title": "Run Buildifier and cpplint on declared repository inputs",
         "requestedAt": "2026-11-01T17:58:13.420713+00:00",
@@ -48835,7 +48835,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T17:27:38.345053+00:00",
+      "updatedAt": "2026-11-01T18:04:18.442080+00:00",
       "summary": "A restore of 50,000 tmpfs files queued 150,890 callbacks. About a third came from inode after-load hooks, a third from converting dentry parents, and a third from directory maps waiting for their children.",
       "findings": [
         {
@@ -51920,7 +51920,7 @@
           ]
         },
         {
-          "text": "The restore queued 50,079 inode hooks, 50,075 dentry parent conversions, and 50,075 directory-map waits. The prototype reserves one callback slot for each exact object whose generated loader is known to queue a hook, including an embedded hook. The checkpoint format and callback order are unchanged.",
+          "text": "The 50,000-file restore queued 50,079 inode hooks, 50,075 dentry parent conversions, and 50,075 directory-map waits. A prototype reserved 50,289 callback slots using generated loader information. Across eight paired runs, median restore fell from 230 to 208 ms. Across 16 decode pairs, peak heap fell from 114.4 to 96.1 MiB and retained heap from 63.88 to 62.03 MiB.",
           "evidence": [
             {
               "label": "Callback counts from all 50,000 restored files",
@@ -51932,12 +51932,12 @@
             },
             {
               "label": "Matched comparison with startup and heap controls",
-              "url": "https://github.com/tamird/gvisor/actions/runs/41331466842"
+              "url": "https://github.com/tamird/gvisor/actions/runs/41331466842/artifacts/13094456718"
             }
           ]
         }
       ],
-      "nextStep": "Compare the generated loaders’ reservation with the existing decoder on the same checkpoint. Measure time to the first guest command, peak and retained heap, warmed small maps, and fresh runsc startup.",
+      "nextStep": "Qualify the smaller registration API on the same workload. Only loaders that unconditionally schedule an after-load hook need a new registration call.",
       "evidence": [
         {
           "label": "16 paired decodes of the same checkpoint, both live restore checks and state suites",
