@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T13:00:21.229939+00:00",
+    "updatedAt": "2026-11-01T13:08:56.341814+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28,7 +28,7 @@
       "hermeticbuild/rules_rs",
       "bazel-contrib/rules_distroless"
     ],
-    "registryDate": "2026-11-01T13:00:21.229939+00:00"
+    "registryDate": "2026-11-01T13:08:56.341814+00:00"
   },
   "groups": [
     {
@@ -41882,6 +41882,40 @@
         "requestedAt": "2026-11-01T12:38:11.445994+00:00",
         "summary": "Open the standalone TCP shutdown fix?",
         "body": "All 36 syscall cases passed on Linux and corrected gVisor. Stock gVisor failed all 12 SHUT_RDWR cases. The final source also passes 405 packet tests and both owning analyzers on AMD64 and ARM64."
+      }
+    },
+    {
+      "id": "branch:tcp-rack-fresh-timeout-head",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/tcp-rack-fresh-timeout-head",
+      "head": "c7976270813d5218a847539dd94f749c7cb4dfd5",
+      "title": "Keep RACK from repeating a fresh timeout repair",
+      "url": "https://github.com/tamird/gvisor/commit/c79762708",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T13:08:56.341814+00:00",
+      "summary": "After a timeout retransmitted the first missing segment, a new SACK for later data made RACK send that segment again. The same packet exchange on Linux continued with the later losses.",
+      "evidence": [
+        {
+          "label": "Linux, stock and fixed packet traces, 101 package cases and both analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41308452751/artifacts/13084512434"
+        },
+        {
+          "label": "How this change relates to #16081 and other TCP recovery changes",
+          "url": "https://github.com/google/gvisor/issues/16670"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "c7976270813d5218a847539dd94f749c7cb4dfd5",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/c79762708",
+        "title": "Keep RACK from repeating a fresh timeout repair",
+        "requestedAt": "2026-11-01T13:08:56.341814+00:00",
+        "summary": "Open the standalone RACK recovery fix?",
+        "body": "Only a segment marked lost by RACK is retransmitted on entry to RACK recovery. The controls still retransmit the first segment for a genuine loss and for three duplicate ACKs."
       }
     }
   ],
