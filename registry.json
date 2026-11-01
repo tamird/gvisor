@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T14:20:16.524617+00:00",
+    "updatedAt": "2026-11-01T14:26:02.402974+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28,7 +28,7 @@
       "hermeticbuild/rules_rs",
       "bazel-contrib/rules_distroless"
     ],
-    "registryDate": "2026-11-01T14:20:16.524617+00:00"
+    "registryDate": "2026-11-01T14:26:02.402974+00:00"
   },
   "groups": [
     {
@@ -42077,6 +42077,44 @@
         "summary": "Open this TCP readiness fix after its unread-data prerequisite lands?",
         "body": "All six IPv4/IPv6 syscall cases pass. In twelve paired benchmark samples, reporting read-hangup readiness added 0.94 ns to an established-socket poll; writable plus read-hangup added 0.60 ns. The earlier proposed fix added 4.36 and 4.68 ns respectively in a separate comparison. Removing the cached field changes the checkpoint schema."
       }
+    },
+    {
+      "id": "pr:hermeticbuild/hermetic-llvm:768",
+      "type": "pr",
+      "repo": "hermeticbuild/hermetic-llvm",
+      "number": 768,
+      "ref": "glibc-static",
+      "head": "6f070847add9ac9bf0d19c96dee873e84f9594d9",
+      "title": "Build static glibc",
+      "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/768",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-01T14:26:02.402974+00:00",
+      "summary": "The supplier proposal provides a static glibc for downstream C++ binaries. Its assembly compilation needs a writable temporary directory on scratch workers.",
+      "evidence": [
+        {
+          "label": "Two-line proposed correction",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/a7ce65dc2"
+        },
+        {
+          "label": "Failure before the correction",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41308187475/artifacts/13084852008"
+        },
+        {
+          "label": "Both native scratch workers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41314071876/artifacts/13087500690"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "head": "6f070847add9ac9bf0d19c96dee873e84f9594d9",
+        "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/768",
+        "title": "Send the scratch compiler fix to the static glibc author",
+        "requestedAt": "2026-11-01T14:26:02.402974+00:00",
+        "summary": "Reply to the supplier proposal with the two-line fix and the native AMD64 and ARM64 results.",
+        "body": "@geligeli, Clang uses a temporary file while preprocessing glibc assembly. On a scratch executor without /tmp, the GlibcStaticCompile action [failed on both AMD64 and ARM64](https://github.com/tamird/gvisor/actions/runs/41308187475/artifacts/13084852008). Could you set TMPDIR to out.dirname in that action? Bazel creates the output directory before starting Clang. With [those two lines](https://github.com/tamird/hermetic-llvm/commit/a7ce65dc2), [all six fork syscall cases ran on scratch](https://github.com/tamird/gvisor/actions/runs/41314071876/artifacts/13087500690).\n\nPosted by Codex on behalf of @tamird."
+      }
     }
   ],
   "edges": [
@@ -58383,7 +58421,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T13:56:22.287550+00:00",
+      "updatedAt": "2026-11-01T14:26:02.402974+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -59864,9 +59902,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41276530370/artifacts/13070498799"
             }
           ]
+        },
+        {
+          "text": "All six fork syscall cases ran on native AMD64 and ARM64 scratch workers using Bazel’s default test toolchain. The test execution platforms carry the target’s static GNU constraints, while the C++ link actions run on musl execution platforms. The verified verdict was ready 51 seconds after the last test, with no manual recovery.",
+          "evidence": [
+            {
+              "label": "Both architectures, action platforms and verdict timing",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41314071876/artifacts/13087500690"
+            },
+            {
+              "label": "Static glibc supplier proposal",
+              "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/768"
+            }
+          ]
         }
       ],
-      "nextStep": "Separate the supplier changes needed for static glibc and Bazel test toolchain selection from the validation fixture. Check whether the supported Bazel toolchains already express this target and execution platform combination.",
+      "nextStep": "Offer the action-local compiler temporary directory to the static glibc author. Continue qualifying the ordinary build on scratch while the supplier proposal is in draft.",
       "evidence": [
         {
           "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
