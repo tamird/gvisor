@@ -45933,7 +45933,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-01T12:38:11.445994+00:00",
+      "updatedAt": "2026-11-01T19:12:39.872383+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -47773,9 +47773,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41003061729"
             }
           ]
+        },
+        {
+          "text": "In two CUBIC transfers on a 100-packet bottleneck, the second packet in a close pair alone was lost 24 times for gVisor and 11 times for Linux. All 35 pairs began with 98–99 matched data packets between the capture points. Linux sent its pairs closer together (median 2 µs versus 6 µs).",
+          "evidence": [
+            {
+              "label": "Eight transfers and the original packet captures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41304678019/artifacts/13082839573"
+            },
+            {
+              "label": "TCP review guide",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            }
+          ]
         }
       ],
-      "nextStep": "Use the existing packet captures to identify what the sender and receiver were doing during the remaining CUBIC stalls.",
+      "nextStep": "Replay a pair of packets at a full queue and move it across one packet departure. Check the fate of both the pair and the competing flow.",
       "evidence": [
         {
           "label": "Eight competing transfers with verified packet captures",
@@ -60730,7 +60743,7 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T16:10:03.057491+00:00",
+      "updatedAt": "2026-11-01T19:12:39.872383+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
@@ -60867,7 +60880,7 @@
           ]
         }
       ],
-      "nextStep": "The semop membership fix and the wait-list lock annotation are ready for contributor review. Test GETPID from the writer’s own, parent and sibling PID namespaces, and preserve the writer’s PID after reap. The shared registry fix is ready for contributor review.",
+      "nextStep": "Check whether #15867 detects a slice predicate that releases or exchanges its caller’s mutex. The SysV registry annotations are upstream for review in #16795. The semaphore wait-list annotation and semop PID fix await contributor review. The namespace-aware GETPID candidate still lacks two analyzer results.",
       "evidence": [
         {
           "label": "Timekeeper updater: all four lock diagnostics verified",
@@ -61397,9 +61410,9 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-01T16:33:36.019669+00:00",
+      "updatedAt": "2026-11-01T19:12:39.872383+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "Check SNAT and capture ICMP at the external sender to distinguish the reporter’s observed behavior.",
+      "nextStep": "Review the AF_UNSPEC reconnect finding on #16793. The translated forwarding tests delivered the payload on all four configurations. If the original #14011 configuration becomes available, compare the sender’s ICMP capture with this working transfer.",
       "findings": [
         {
           "text": "Using the existing local shutdown flags to skip an unnecessary receive-queue lock reduced the added cost of an established-socket RDHUP poll from 4.38 to 0.94 ns per call. With write interest too, it fell from 4.68 to 0.60 ns. Six IPv4/IPv6 syscall cases passed, including mandatory hangup with an empty interest mask.",
@@ -61990,6 +62003,19 @@
               "url": "https://github.com/google/gvisor/issues/16670"
             }
           ]
+        },
+        {
+          "text": "With source NAT enabled, the external TCP sender received 46 ICMP replies advertising MTU 1,466 from stock gVisor. The proposed splitter delivered the same 1 MiB without ICMP. All four transfers completed; the reporter’s indefinite stall remains unexplained.",
+          "evidence": [
+            {
+              "label": "Original Linux, stock and corrected transfers",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41327195729/artifacts/13091174657"
+            },
+            {
+              "label": "TCP review guide",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            }
+          ]
         }
       ],
       "evidence": [
@@ -62418,9 +62444,9 @@
       "title": "Upgrade gVisor to Bazel 9",
       "status": "active",
       "owner": "Build tools",
-      "updatedAt": "2026-11-01T16:40:29.174810+00:00",
+      "updatedAt": "2026-11-01T19:12:39.872383+00:00",
       "summary": "Move the shared Docker and Bazelisk pin from 8.8.1 to 9.3.1. Fix compatibility in the current compiler setup so the upgrade can land independently of hermetic-llvm.",
-      "nextStep": "Qualify the reviewed compatibility changes on the current GNU compiler, including both architectures, the LLVM consumer, dependency checks and directory removal/recreation.",
+      "nextStep": "The Bazel 9.3.1 proposal is ready for contributor review. After approval, open the PR on the current GNU toolchain.",
       "findings": [
         {
           "text": "Bazel 9.3 includes the fix for the directory-deletion regression. Two previous compatibility commits are candidates for the Coral toolchain and the pinned LLVM source. The earlier gRPC and C++ dependency work was already handled.",
@@ -62432,6 +62458,23 @@
             {
               "label": "LLVM loads",
               "url": "https://github.com/tamird/gvisor/commit/93efd0694"
+            }
+          ]
+        },
+        {
+          "text": "Bazel 9.3.1 built the release binaries and started runsc on native AMD64 and ARM64 with the current Coral toolchain. The upgrade can land independently of the hermetic LLVM migration.",
+          "evidence": [
+            {
+              "label": "Upgrade and two compatibility patches",
+              "url": "https://github.com/tamird/gvisor/commit/375b2c570"
+            },
+            {
+              "label": "Native AMD64 runsc",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41332521937/artifacts/13093849188"
+            },
+            {
+              "label": "Native ARM64 runsc",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41332521937/artifacts/13093609892"
             }
           ]
         }
