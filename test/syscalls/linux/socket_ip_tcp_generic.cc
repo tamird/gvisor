@@ -55,6 +55,200 @@ constexpr int kPositiveTimeoutMs = 60 * 1000;
 // The amount of time to wait for something unexpected to not occur.
 constexpr int kNegativeTimeoutMs = 3 * 1000;
 
+TEST_P(TCPSocketPairTest, OutputQueueSurvivesReset) {
+  auto sockets = ASSERT_NO_ERRNO_AND_VALUE(NewSocketPair());
+  const int writer = sockets->first_fd();
+  const int peer = sockets->second_fd();
+  constexpr int kReceiveSize = 8192;
+  constexpr int kSendSize = 1024 * 1024;
+  ASSERT_THAT(setsockopt(peer, SOL_SOCKET, SO_RCVBUF, &kReceiveSize,
+                         sizeof(kReceiveSize)),
+              SyscallSucceeds());
+  ASSERT_THAT(
+      setsockopt(writer, SOL_SOCKET, SO_SNDBUF, &kSendSize, sizeof(kSendSize)),
+      SyscallSucceeds());
+
+  // Leave more data queued than the peer can acknowledge, followed by FIN.
+  std::vector<char> data(256 * 1024);
+  const ssize_t sent =
+      RetryEINTR(send)(writer, data.data(), data.size(), MSG_DONTWAIT);
+  ASSERT_GT(sent, kReceiveSize);
+  ASSERT_THAT(shutdown(writer, SHUT_WR), SyscallSucceeds());
+  int unread = 0, pending = 0;
+  const auto deadline = absl::Now() + absl::Seconds(5);
+  do {
+    ASSERT_THAT(ioctl(peer, FIONREAD, &unread), SyscallSucceeds());
+    ASSERT_THAT(ioctl(writer, TIOCOUTQ, &pending), SyscallSucceeds());
+    if (unread > 0 && pending > 1 && unread + pending == sent + 1) break;
+    absl::SleepFor(absl::Milliseconds(1));
+  } while (absl::Now() < deadline);
+  ASSERT_GT(unread, 0);
+  ASSERT_GT(pending, 1);
+  ASSERT_EQ(unread + pending, sent + 1);
+
+  const struct linger abort = {1, 0};
+  ASSERT_THAT(setsockopt(peer, SOL_SOCKET, SO_LINGER, &abort, sizeof(abort)),
+              SyscallSucceeds());
+  ASSERT_THAT(close(sockets->release_second_fd()), SyscallSucceeds());
+  struct pollfd pfd = {writer, POLLERR, 0};
+  ASSERT_THAT(RetryEINTR(poll)(&pfd, 1, kPositiveTimeoutMs),
+              SyscallSucceedsWithValue(1));
+  ASSERT_NE(pfd.revents & POLLERR, 0);
+  int after = 0;
+  ASSERT_THAT(ioctl(writer, TIOCOUTQ, &after), SyscallSucceeds());
+  // More data may have been acknowledged before the RST arrived.
+  EXPECT_GT(after, 1);
+  EXPECT_LE(after, pending);
+}
+
+TEST(TcpOutputQueueTest, ObserveDisconnectAndReuse) {
+  auto report = [](int arm, const char* phase, int fd, int rc) {
+    const int err = rc < 0 ? errno : 0;
+    int out = -1;
+    const int q = ioctl(fd, TIOCOUTQ, &out);
+    fprintf(stderr, "LIFE arm=%d phase=%s op=%d errno=%d q=%d qerrno=%d\n", arm,
+            phase, rc, err, out, q < 0 ? errno : 0);
+  };
+  for (const int arm : {0, 1, 2}) {
+    auto server = ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET, SOCK_STREAM, 0));
+    auto client = ASSERT_NO_ERRNO_AND_VALUE(
+        Socket(AF_INET, SOCK_STREAM | (arm == 1 ? SOCK_NONBLOCK : 0), 0));
+    struct sockaddr_in addr = {};
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    ASSERT_THAT(bind(server.get(), AsSockAddr(&addr), sizeof(addr)),
+                SyscallSucceeds());
+    socklen_t len = sizeof(addr);
+    ASSERT_THAT(getsockname(server.get(), AsSockAddr(&addr), &len),
+                SyscallSucceeds());
+    if (arm == 2) {
+      struct sockaddr unspec = {};
+      unspec.sa_family = AF_UNSPEC;
+      report(arm, "disconnect1", client.get(),
+             connect(client.get(), &unspec, sizeof(unspec)));
+      report(arm, "disconnect2", client.get(),
+             connect(client.get(), &unspec, sizeof(unspec)));
+    } else {
+      ASSERT_THAT(RetryEINTR(connect)(client.get(), AsSockAddr(&addr), len),
+                  SyscallFailsWithErrno(arm ? EINPROGRESS : ECONNREFUSED));
+      struct pollfd refused = {client.get(), POLLERR | POLLHUP, 0};
+      ASSERT_THAT(RetryEINTR(poll)(&refused, 1, kPositiveTimeoutMs),
+                  SyscallSucceedsWithValue(1));
+      report(arm, "refused", client.get(), 0);
+      int err = 0;
+      socklen_t errlen = sizeof(err);
+      ASSERT_THAT(getsockopt(client.get(), SOL_SOCKET, SO_ERROR, &err, &errlen),
+                  SyscallSucceeds());
+      ASSERT_EQ(err, arm ? ECONNREFUSED : 0);
+      report(arm, "cleared", client.get(), 0);
+    }
+    ASSERT_THAT(listen(server.get(), 1), SyscallSucceeds());
+    int rc = RetryEINTR(connect)(client.get(), AsSockAddr(&addr), len);
+    int err = rc < 0 ? errno : 0;
+    report(arm, "reconnect1", client.get(), rc);
+    if (arm == 1 && rc < 0 && err != EINPROGRESS) {
+      rc = RetryEINTR(connect)(client.get(), AsSockAddr(&addr), len);
+      err = rc < 0 ? errno : 0;
+      report(arm, "reconnect2", client.get(), rc);
+    }
+    if (rc == 0 || err == EINPROGRESS) {
+      struct pollfd listening = {server.get(), POLLIN, 0};
+      ASSERT_THAT(RetryEINTR(poll)(&listening, 1, kPositiveTimeoutMs),
+                  SyscallSucceedsWithValue(1));
+      auto peer =
+          ASSERT_NO_ERRNO_AND_VALUE(Accept(server.get(), nullptr, nullptr));
+      ASSERT_THAT(RetryEINTR(send)(client.get(), "x", 1, MSG_NOSIGNAL),
+                  SyscallSucceedsWithValue(1));
+      char byte;
+      ASSERT_THAT(RetryEINTR(read)(peer.get(), &byte, 1),
+                  SyscallSucceedsWithValue(1));
+      ASSERT_EQ(byte, 'x');
+      fprintf(stderr, "LIFE arm=%d delivered=1\n", arm);
+    } else {
+      fprintf(stderr, "LIFE arm=%d delivered=0\n", arm);
+    }
+  }
+}
+
+TEST_P(TCPSocketPairTest, OutputQueueThroughFinAndReset) {
+  for (const int path : {0, 1, 2}) {
+    const bool peer_sent_fin = path == 1;
+    const bool reset = path == 2;
+    SCOPED_TRACE(path);
+    auto sockets = ASSERT_NO_ERRNO_AND_VALUE(NewSocketPair());
+    const int writer = sockets->first_fd();
+    const int peer = sockets->second_fd();
+    constexpr int small = 8192;
+    constexpr int large = 1024 * 1024;
+    ASSERT_THAT(setsockopt(peer, SOL_SOCKET, SO_RCVBUF, &small, sizeof(small)),
+                SyscallSucceeds());
+    ASSERT_THAT(setsockopt(writer, SOL_SOCKET, SO_SNDBUF, &large, sizeof(large)),
+                SyscallSucceeds());
+    if (peer_sent_fin) {
+      ASSERT_THAT(shutdown(peer, SHUT_WR), SyscallSucceeds());
+      struct pollfd readable = {writer, POLLIN, 0};
+      ASSERT_THAT(RetryEINTR(poll)(&readable, 1, kPositiveTimeoutMs),
+                  SyscallSucceedsWithValue(1));
+      char c;
+      ASSERT_THAT(RetryEINTR(read)(writer, &c, 1), SyscallSucceedsWithValue(0));
+    }
+
+    std::vector<char> data(256 * 1024, 'q');
+    const ssize_t sent =
+        RetryEINTR(send)(writer, data.data(), data.size(), MSG_DONTWAIT);
+    ASSERT_GT(sent, small);
+    int unread = 0, queued = 0;
+    auto await_queue = [&](int fin) {
+      const auto deadline = absl::Now() + absl::Seconds(5);
+      do {
+        ASSERT_THAT(ioctl(peer, FIONREAD, &unread), SyscallSucceeds());
+        ASSERT_THAT(ioctl(writer, TIOCOUTQ, &queued), SyscallSucceeds());
+        if (unread > 0 && queued > fin && queued + unread == sent + fin) return;
+        absl::SleepFor(absl::Milliseconds(1));
+      } while (absl::Now() < deadline);
+      FAIL() << "sent " << sent << ", unread " << unread << ", queued " << queued;
+    };
+    ASSERT_NO_FATAL_FAILURE(await_queue(0));
+    ASSERT_THAT(shutdown(writer, SHUT_WR), SyscallSucceeds());
+    ASSERT_NO_FATAL_FAILURE(await_queue(1));
+    const int after_fin = queued;
+
+    if (reset) {
+      const struct linger drop = {1, 0};
+      ASSERT_THAT(setsockopt(peer, SOL_SOCKET, SO_LINGER, &drop, sizeof(drop)),
+                  SyscallSucceeds());
+      ASSERT_THAT(close(sockets->release_second_fd()), SyscallSucceeds());
+      struct pollfd failed = {writer, POLLERR, 0};
+      ASSERT_THAT(RetryEINTR(poll)(&failed, 1, kPositiveTimeoutMs),
+                  SyscallSucceedsWithValue(1));
+      ASSERT_NE(failed.revents & POLLERR, 0);
+      ASSERT_THAT(ioctl(writer, TIOCOUTQ, &queued), SyscallSucceeds());
+      EXPECT_EQ(queued, after_fin);
+    } else {
+      ssize_t received = 0;
+      for (;;) {
+        struct pollfd readable = {peer, POLLIN, 0};
+        ASSERT_THAT(RetryEINTR(poll)(&readable, 1, kPositiveTimeoutMs),
+                    SyscallSucceedsWithValue(1));
+        const ssize_t n = RetryEINTR(read)(peer, data.data(), data.size());
+        ASSERT_GE(n, 0);
+        if (n == 0) break;
+        received += n;
+      }
+      ASSERT_EQ(received, sent);
+      const auto deadline = absl::Now() + absl::Seconds(5);
+      do {
+        ASSERT_THAT(ioctl(writer, TIOCOUTQ, &queued), SyscallSucceeds());
+        if (queued == 0) break;
+        absl::SleepFor(absl::Milliseconds(1));
+      } while (absl::Now() < deadline);
+      EXPECT_EQ(queued, 0);
+    }
+    fprintf(stderr, "OUTQ path=%d sent=%zd unread_before=%d after_fin=%d final=%d\n",
+            path, sent, unread, after_fin, queued);
+  }
+}
+
 TEST_P(TCPSocketPairTest, TcpInfoSucceeds) {
   auto sockets = ASSERT_NO_ERRNO_AND_VALUE(NewSocketPair());
 
