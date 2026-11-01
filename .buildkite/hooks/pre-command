@@ -80,6 +80,31 @@ if [ -d "/tmp/${RUNTIME}/" ]; then
   sudo rm -rf "/tmp/${RUNTIME}/"
 fi
 
+# Use the same Bazel version for native jobs and their failure cleanup.
+install_bazel() {
+  local dir="$1" bazelisk
+  if bazelisk="$(command -v bazelisk)"; then
+    ln -s -- "$bazelisk" "$dir/bazel"
+  else
+    GOBIN="$dir" go install github.com/bazelbuild/bazelisk@v1.30.0 &&
+      mv -- "$dir/bazelisk" "$dir/bazel"
+  fi
+}
+
+if [[ "${DOCKER_BUILD:-}" == false ||
+      ( "${BUILDKITE_PIPELINE_INSTALL_RUNTIME:-}" == true && -z "${STAGED_BINARIES:-}" ) ]]; then
+  BUILDKITE_BAZEL_DIRECTORY="$(mktemp -d)"
+  if ! install_bazel "$BUILDKITE_BAZEL_DIRECTORY"; then
+    rm -f -- "$BUILDKITE_BAZEL_DIRECTORY"/{bazel,bazelisk}
+    rmdir -- "$BUILDKITE_BAZEL_DIRECTORY"
+    exit 1
+  fi
+  export BUILDKITE_BAZEL_DIRECTORY
+  export PATH="$BUILDKITE_BAZEL_DIRECTORY:$PATH"
+  unset USE_BAZEL_VERSION
+  export USE_BAZEL_FALLBACK_VERSION=error:
+fi
+
 # If running in a container, set the reload command appropriately.
 if [[ -x /tmp/buildkite-reload-host-docker/reload ]]; then
   export DOCKER_RELOAD_COMMAND='/tmp/buildkite-reload-host-docker/reload'
@@ -98,13 +123,13 @@ if [[ "${BUILDKITE_PIPELINE_INSTALL_RUNTIME:-}" == "true" ]]; then
     gcloud storage cat "$STAGED_BINARIES" \
       | tar -C "$BUILDKITE_STAGED_BINARIES_DIRECTORY" -zxvf -
     chmod -R +x "$BUILDKITE_STAGED_BINARIES_DIRECTORY"
-    sudo "$BUILDKITE_STAGED_BINARIES_DIRECTORY/runsc" install \
-      --experimental=true --runtime="${RUNTIME}" \
-      -- "${RUNTIME_ARGS:-}"
+    runsc="$BUILDKITE_STAGED_BINARIES_DIRECTORY/runsc"
   else
-    make sudo TARGETS=//runsc:runsc \
-      ARGS="install --experimental=true --runtime=${RUNTIME} -- ${RUNTIME_ARGS:-}"
+    bazel build --config="$(uname -m)" --remote_download_outputs=toplevel //:release
+    runsc=bazel-bin/release/runsc
   fi
+  read -r -a runtime_args <<< "${RUNTIME_ARGS:-}"
+  sudo "$runsc" install --experimental=true --runtime="$RUNTIME" -- "${runtime_args[@]}"
   if [[ "$HAD_EXPERIMENTAL" != true ]]; then
     # WARNING: We may be running in a container when this command executes.
     # This only makes sense if Docker's `live-restore` feature is enabled.
@@ -186,28 +211,4 @@ if [[ "${BUILDKITE_COMMAND:-}" =~ "pipeline upload" ]]; then
     echo "Skipping GPU tests"
     pipeline_add_env SKIP_GPU_TESTS 1
   fi
-fi
-
-# Use the same Bazel version for native jobs and their failure cleanup.
-install_bazel() {
-  local dir="$1" bazelisk
-  if bazelisk="$(command -v bazelisk)"; then
-    ln -s -- "$bazelisk" "$dir/bazel"
-  else
-    GOBIN="$dir" go install github.com/bazelbuild/bazelisk@v1.30.0 &&
-      mv -- "$dir/bazelisk" "$dir/bazel"
-  fi
-}
-
-if [[ "${DOCKER_BUILD:-}" == false ]]; then
-  BUILDKITE_BAZEL_DIRECTORY="$(mktemp -d)"
-  if ! install_bazel "$BUILDKITE_BAZEL_DIRECTORY"; then
-    rm -f -- "$BUILDKITE_BAZEL_DIRECTORY"/{bazel,bazelisk}
-    rmdir -- "$BUILDKITE_BAZEL_DIRECTORY"
-    exit 1
-  fi
-  export BUILDKITE_BAZEL_DIRECTORY
-  export PATH="$BUILDKITE_BAZEL_DIRECTORY:$PATH"
-  unset USE_BAZEL_VERSION
-  export USE_BAZEL_FALLBACK_VERSION=error:
 fi
