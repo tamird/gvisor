@@ -977,3 +977,8 @@ single_version_override(
     patch_strip = 1,
     patches = ["//test/rbe/empty_worker:grpc-native.patch"],
 )
+
+# Supply real GNU runtime libraries when running tests on an empty worker.
+qualification_glibc = use_repo_rule("//test/rbe/native_glibc:repositories.bzl", "glibc_repository")
+qualification_glibc(name = "qualification_glibc_amd64", arch = "amd64")
+qualification_glibc(name = "qualification_glibc_arm64", arch = "arm64")
