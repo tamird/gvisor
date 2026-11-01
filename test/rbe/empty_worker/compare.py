@@ -92,14 +92,14 @@ import sys
 race_label = "//runsc:runsc-race"
 install = tmp/"make-runtime"
 mode = sys.argv[1]
-if mode != "build":
+if mode != "original":
     results=json.loads((out/"result.json").read_text())
 mode_target = ["--compilation_mode=fastbuild",
                "--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
                "--extra_toolchains=//test/rbe/go_bootstrap:linux_amd64_ash"]
 try:
     assert platform.machine()=="x86_64"
-    if mode=="build":
+    if mode=="original":
         # Inspect the original generated tools whose execve returned ENOENT.
         class NoRedirect(HTTPRedirectHandler):
             def redirect_request(self,*args):return None
@@ -111,11 +111,13 @@ try:
             req=Request(url,headers={"x-buildbuddy-api-key":os.environ["BUILDBUDDY_API_KEY"]})
             with build_opener(NoRedirect).open(req,timeout=90) as stream,obj.open("wb") as output:shutil.copyfileobj(stream,output)
             assert elf(obj)["sha256"]==h and obj.stat().st_size==n
-            lines=run("readelf","-lWd",str(obj)).splitlines()
+            lines=subprocess.check_output(["readelf","-lWd",str(obj)],text=True,env={"PATH":os.environ["PATH"]}).splitlines()
             interp=[l.strip() for l in lines if "Requesting program interpreter" in l]
             assert len(interp)==1, (label,interp)
             old_tools[label]={"sha256":h,"bytes":n,"interpreter":interp[0],"needed":[l.strip() for l in lines if "(NEEDED)" in l]}
         results["original_generator_elf"]=old_tools;save()
+    elif mode=="build":
+        assert "BUILDBUDDY_API_KEY" not in os.environ
         pl="//test/rbe/empty_worker:amd64"
         labels=set({'//tools/go_marshal:go_marshal': {'hash': 'b672c44ed337e59f52ce202588aba1a122ed185c036f2f24916e9d0516db68f8', 'sizeBytes': '3632136'}, '//tools/go_stateify:stateify': {'hash': '667ac09b09de48db6c8652a869368c6fb048db52918ff67b2d173ee779c2dfcc', 'sizeBytes': '7851976'}, '//tools/go_generics/go_merge:go_merge': {'hash': '98f4a260d8216a47f6d3f3b86d6258c186a5174478b6ea4f1ce1cd26af73f910', 'sizeBytes': '3221352'}, '//tools/nogo:nogo': {'hash': '68fc90a5ac05dcb7cf30d5949b4794b25040d24debf315e2521f66acef43db4b', 'sizeBytes': '13959144'}})|{"//tools/go_generics:go_generics"}
         for candidate in ['70909b2ac428cde38872b0c0180cdbb3ce587673','d842707a168b1d45dd759edf231c83113ff521fd']:
