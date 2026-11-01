@@ -34,7 +34,7 @@ RECEIPT["plan"] = {
     "order": PERMUTATIONS * 2,
     "workload": {"files": 100000, "depth": 100, "file_bytes": 0, "engine": "wire", "platform": "systrap", "memory_bytes": 2 << 30, "sandbox_cpu_quota": "max", "idle_seconds": 2},
     "stop": "12 complete triplets after one warmup per arm, or first setup/functional failure; no timing outlier exclusions",
-    "memory_scope": "lifetime waitid ru_maxrss; separate pre-save VmRSS/VmHWM and sampled save-through-exit RSS",
+    "memory_scope": "waitid high-water includes reaped descendants; proc VmRSS/VmHWM are approximate; sampled save-through-exit Sentry RSS may miss short peaks",
     "scope": "save only; every archive restored and 100000 files verified; not the published C4/COS environment or HTTP readiness",
 }
 
@@ -127,7 +127,9 @@ def observe(arm, number):
     assert all(row[key] == value for key, value in record["measured"][0].items())
     assert row["files_verified"] == 100000 and row["memory_limit"] == 2 << 30
     assert row["checkpoint_exit_ns"] >= row["checkpoint_ns"] > 0
-    assert row["lifetime_maxrss"] >= max(row["before_hwm"], row["observed_save_exit_rss"])
+    # Linux accounts proc RSS asynchronously; it need not be <= waitid maxrss.
+    # Keep the original counters independent instead of imposing an ordering.
+    assert all(isinstance(row[key], int) and row[key] > 0 for key in ("lifetime_maxrss", "before_hwm", "before_rss", "observed_save_exit_rss"))
     assert row["samples"] > 0 and row["coordinator_cpus"] > 0 and row["direct_child"] is True
     ceiling = float(row["coordinator_cpus"])
     for value in row["cpu_quotas"]:
