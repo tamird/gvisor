@@ -26,6 +26,7 @@ ABI = {"selected": "static glibc 2.44 on both native scratch execution architect
        "supplier_base": "llvm 0.8.24",
        "supplier_delta": "First four proposal commits, excluding unrelated libstdc++, plus action-local compiler temporary files",
        "prior_static_GNU_attempt": {"run": 41308187475, "artifact": 13084852008, "status": "FAIL", "executed_cases": 0},
+       "prior_test_platform_attempt": {"run": 41310064493, "artifact": 13085665548, "status": "FAIL", "executed_cases": 0, "static_ELFs": "PASS"},
        "GNU_boundary_proof": {"run": 41302038018, "artifact": 13082191714},
        "launcher_proposal": "8919cb68b11643114c1f28c1a756902a2958bda0",
        "scope": "Ordinary native entry point and proposed GNU static platform, no run_under or per-target change",
@@ -358,12 +359,14 @@ def qualify(arch, variant, source, tmp, out, private, bazel):
     target_platform = "@llvm//platforms:linux_" + {"amd64": "x86_64", "arm64": "aarch64"}[arch] + "_glibc_static"
     row["target_platform"] = target_platform
     row["execution_platform"] = platform
+    row["test_toolchain"] = "//test/rbe/empty_worker:static_glibc_" + arch + "_test"
     common = ["--config=" + {"amd64": "x86_64", "arm64": "aarch64"}[arch],
               "--platforms=" + target_platform, "--dynamic_mode=off",
               "--compilation_mode=fastbuild", "--host_platform=" + platform,
               "--extra_execution_platforms=" + platform,
               "--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
               "--extra_toolchains=//test/rbe/go_bootstrap:linux_" + arch + "_ash",
+              "--extra_toolchains=//test/rbe/empty_worker:static_glibc_" + arch + "_test",
               "--noincompatible_exclude_starlark_flags_from_exec_config",
               "--workspace_status_command=", "--host_features=fully_static_link",
               "--incompatible_use_native_posix_test_wrapper", "--nocache_test_results",
