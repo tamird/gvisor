@@ -178,15 +178,21 @@ def replay(name, original):
     props = {item["name"]: item["value"] for item in
              (old.get("platform") or command["platform"])["properties"]}
     env = {item["name"]: item.get("value", "") for item in command.get("environmentVariables", [])}
-    paths = command.get("outputPaths") or command.get("outputFiles")
-    assert not command.get("workingDirectory") and not command.get("outputDirectories") and len(paths) == 1
+    paths = command.get("outputPaths") or sorted(command.get("outputFiles", []) + command.get("outputDirectories", []))
+    names = {Path(path).name for path in paths}
+    save(name + ".json", {"verified": False, "original_action": original, "input_root": root,
+                          "command_digest": old["commandDigest"], "outputs": paths,
+                          "uses_working_directory": bool(command.get("workingDirectory"))})
+    assert not command.get("workingDirectory")
     assert not TEMP_NAMES.intersection(env) and props["Arch"] == "arm64" and props["workload-isolation-type"] == "oci"
     if name == "clang":
         assert props["container-image"].endswith("c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef")
-        assert args[0].endswith("/bin/clang") and any(arg.endswith(".S") for arg in args) and paths[0].endswith(".o")
+        assert len(paths) == 1 and args[0].endswith("/bin/clang") and any(arg.endswith(".S") for arg in args) and paths[0].endswith(".o")
         props.update({"container-image": IMAGE, "recycle-runner": "false"})
     else:
-        assert "stdliblist" in args and props["container-image"] == IMAGE and paths[0].endswith("/stdlib.pkg.json")
+        assert "stdliblist" in args and props["container-image"] == IMAGE
+        assert names == {"stdlib.pkg.json", "gocache"} and len(paths) == 2
+        assert set(paths) == {args[args.index("-out") + 1], args[args.index("-cache") + 1]}
         env["TMPDIR"] = MISSING
 
     invocation = str(uuid.uuid4())
@@ -197,9 +203,9 @@ def replay(name, original):
                "--output=id", "--response_json_file=" + str(response), "--remote_timeout=2m",
                *["--exec_properties=" + k + "=" + v for k, v in sorted(props.items())],
                *["--action_env=" + k + "=" + v for k, v in sorted(env.items())],
-               "--output_path=" + paths[0], "--", *args]
+               *["--output_path=" + path for path in paths], "--", *args]
     row = {"verified": False, "original_action": original, "command_digest": old["commandDigest"],
-           "input_root": root, "invocation": invocation, "executable": args[0], "output": paths[0],
+           "input_root": root, "invocation": invocation, "executable": args[0], "outputs": paths,
            "architecture": "arm64", "image": IMAGE, "tmpdir": env.get("TMPDIR"), "started": now()}
     save(name + ".json", row)
     # bb's execution ID and raw RPC responses stay private to the coordinator.
