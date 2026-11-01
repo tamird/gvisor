@@ -209,6 +209,7 @@ func (ds *graphDecodeState) runCallbacks() {
 			}
 			for c := o.cbHead; c >= 0; c = ds.cbs[c].next {
 				cb := &ds.cbs[c]
+				ds.runCallback(cb)
 				if cb.waiter >= 0 {
 					w := &ds.ods[cb.waiter]
 					w.blockedBy--
@@ -217,9 +218,7 @@ func (ds *graphDecodeState) runCallbacks() {
 					} else if w.blockedBy < 0 {
 						Failf("object %d has negative blockedBy: %d", cb.waiter, w.blockedBy)
 					}
-					continue
 				}
-				ds.runCallback(cb)
 			}
 			if ds.stats.enabled && o.cbHead >= 0 && ds.objs[cur].ti != nil {
 				ds.stats.done()
