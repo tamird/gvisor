@@ -199,6 +199,52 @@ func BenchmarkDecoding(b *testing.B) {
 	}
 }
 
+// BenchmarkCallbackPoolBoundary repeats the original same-pointee slice workload.
+// Each subprocess selects one size and warms its own decoder pool before timing.
+func BenchmarkCallbackPoolBoundary(b *testing.B) {
+	for _, elements := range []int{1024, 8191, 8192} {
+		b.Run(fmt.Sprint(elements), func(b *testing.B) {
+			v := buildSliceObject(elements)
+			var encoded bytes.Buffer
+			if _, err := state.Save(b.Context(), &encoded, v); err != nil {
+				b.Fatal(err)
+			}
+			var r bytes.Reader
+			load := func() {
+				r.Reset(encoded.Bytes())
+				if _, err := state.Load(b.Context(), &r, v); err != nil {
+					b.Fatal(err)
+				}
+			}
+			const warmups = 4
+			var releases, puts int
+			state.CallbackPoolStudy = func(records, _ int, put bool) {
+				if got, want := records, elements+1; got != want {
+					b.Fatalf("decoder used %d callbacks with %d elements, want %d", got, elements, want)
+				}
+				releases++
+				if put {
+					puts++
+				}
+			}
+			b.Cleanup(func() { state.CallbackPoolStudy = nil })
+			for i := 0; i < warmups; i++ {
+				load()
+			}
+			state.CallbackPoolStudy = nil
+			if releases != warmups {
+				b.Fatalf("observed %d decoder releases, want %d", releases, warmups)
+			}
+			b.ReportAllocs()
+			for b.Loop() {
+				load()
+			}
+			b.ReportMetric(float64(elements+1), "callbacks")
+			b.ReportMetric(float64(puts), "warm-pool-puts")
+		})
+	}
+}
+
 // benchGraphNodes is the number of nodes of the graphs of BenchmarkGraph.
 const benchGraphNodes = 20000
 
