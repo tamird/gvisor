@@ -41371,9 +41371,9 @@
       "title": "Install the complete runsc release for Buildkite source jobs",
       "url": "https://github.com/tamird/gvisor/commit/e7e0d5319",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-11-01T05:45:25.342700+00:00",
-      "summary": "Docker registered a CLI that had no Sentry next to it. The bare CLI exited 127 on its first container. The same executable with its sidecars ran successfully. The standalone change stages the existing release on master.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T05:54:35.795804+00:00",
+      "summary": "The source hook registered a bare runsc. Docker accepted it, then the first container exited 127 because gvisor_sentry was missing. Staging the same release used by the project’s GitHub build put the Sentry beside the CLI. The default Docker-backed Make build installed it and ran a guest.",
       "evidence": [
         {
           "label": "Identical CLI, bare versus full release layout",
@@ -41384,10 +41384,19 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41276530370/artifacts/13070498799"
         },
         {
-          "label": "Default Docker-backed builder on the standalone hook",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41278102889"
+          "label": "Docker-backed source build, six sidecars, registration and guest execution",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41278102889/artifacts/13072501920"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "e7e0d5319eb716c82471abf477c3acff9d63e9ca",
+        "title": "Install the complete runsc release for Buildkite source jobs",
+        "url": "https://github.com/tamird/gvisor/commit/e7e0d5319",
+        "body": "Open this independent change on master. The current Make target stages all six sidecars for the runtime. Archive jobs use the same installation path. Native Bazel adoption can proceed separately.",
+        "requestedAt": "2026-11-01T05:54:35.795804+00:00"
+      }
     }
   ],
   "edges": [
@@ -57453,9 +57462,13 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T05:38:35.366027+00:00",
+      "updatedAt": "2026-11-01T05:54:35.795804+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "Building //pkg/... on empty workers found 1,487 top-level labels on each architecture. AMD64 built 1,466. ARM64 built 1,464 and skipped two incompatible slimvm targets. Twenty-one failed on each: 18 host-layout generator/test targets, two gRPC service targets and the NVIDIA parity test’s LLVM parser. The bundled receipts recorded no local spawn. The last build finished at 05:45:09.805 UTC and the verified verdict arrived at 05:47:27.836 (138 s); no manual reconstruction was needed.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41276314920/artifacts/13072650316"
+        },
         {
           "text": "The Buildkite AMD64 race smoke originally failed 216 executions on the empty worker. Four source-generation and analysis tools required the missing ELF loader. With race selected on the launcher target, the empty worker linked an 18,195,680-byte race binary. A native unprivileged guest ran that binary with the seven previously built release files; its development stamps differed. Separately, the ordinary GNU Make recipe built and staged all eight files from 8c6ed7a88, and the Sentry confirmed the same stamp before the rootless guest exited successfully. The GNU recovery reused cached outputs and ran the Linux ABI analyzer locally. The final proposal also makes the developer shortcut issue the exact Bazel command used to build that launcher.",
           "evidence": [
@@ -58688,6 +58701,10 @@
       ],
       "nextStep": "Follow the Debian layer change in rules_distroless #293. Keep the Jekyll renderer queued for the upstream rules_img release. Prepare the development-checkpoint identity fix for review on its rules_go prerequisite. Qualify the release change with the current graph default and on ARM64 before moving the broader build change to review. The ARM64 eventfd case reached the ordinary TestRunner; use that qualified path for the next relevant syscall coverage. Check whether the approved release changes also replace the Buildkite artifact commands and smoke-test the already built optimized binaries on native Linux.",
       "evidence": [
+        {
+          "label": "Full original package build on both empty workers, all successes, skips and the 21 failures per architecture",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41276314920/artifacts/13072650316"
+        },
         {
           "label": "Three cold native compiles and links per architecture, with ELF and digest checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/41181782834/artifacts/13035731072"
