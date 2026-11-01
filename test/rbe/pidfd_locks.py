@@ -86,7 +86,7 @@ def recover_original():
         log = payload["log"]
         if log.get("id"):
             assert log["id"].get("invocationId", log["id"].get("invocation_id")) == original["invocation"]
-        messages.append(log["contents"])
+        messages.append(log.get("contents", ""))
         token = payload.get("nextPageToken", payload.get("next_page_token", ""))
         if not token:
             break
