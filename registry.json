@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T17:36:49.836627+00:00",
+    "updatedAt": "2026-11-01T17:42:13.998320+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42156,7 +42156,7 @@
       "url": "https://github.com/tamird/gvisor/tree/proposal/network-pcap-setup",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T17:36:49.836627+00:00",
+      "updatedAt": "2026-11-01T17:42:13.998320+00:00",
       "summary": "FD-based and XDP backends now hand their endpoints to one NIC setup path. The first successfully constructed external endpoint opens the shared capture; later interfaces append their packets.",
       "evidence": [
         {
@@ -42182,6 +42182,10 @@
         {
           "label": "Original boot analyzer action failed in its proc dependency",
           "url": "https://github.com/tamird/gvisor/actions/runs/41328544063/artifacts/13093327461"
+        },
+        {
+          "label": "Boot analyzer passed, including AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41332409416/artifacts/13093962996"
         }
       ],
       "refinement": {
@@ -42200,8 +42204,8 @@
         "url": "https://github.com/tamird/gvisor/commit/28cfe8fb8",
         "title": "Configure packet capture once across external interfaces",
         "requestedAt": "2026-11-01T17:36:49.836627+00:00",
-        "summary": "Open the revised PR after the boot analyzer passes?",
-        "body": "The RPC separates optional files from link descriptors up front. Both backends use addExternalNIC, which opens the capture on its first interface and wraps each endpoint there. One- and two-interface guests started and wrote a single PCAP header with traffic on every interface. Three route tests also fail on the parent and pass with #15866. Physical XDP was not exercised. A remote analysis action failed before boot_nogo ran; the Linux coordinator is recovering that check."
+        "summary": "Open the qualified packet-capture refactor?",
+        "body": "The RPC separates optional files from link descriptors up front. Both backends use addExternalNIC, which opens the capture on its first interface and wraps each endpoint there. One- and two-interface guests started and wrote a single PCAP header with traffic on every interface. Three route tests also fail on the parent and pass with #15866. Physical XDP was not exercised. The boot analyzer passed for AMD64 and ARM64 on the exact product. BuildBuddy reported resource exhaustion for the earlier remote attempts on its procfs dependency."
       }
     },
     {
@@ -42351,7 +42355,7 @@
       "group": "bazel",
       "status": "Agent work",
       "summary": "The existing Docker builder and Bazelisk read the same pin. The change makes the archived Coral toolchain and pinned LLVM source load the rules Bazel 9 externalized, and directs Mac developers to the shared pin. The current fork commit is in remote qualification.",
-      "updatedAt": "2026-11-01T17:27:38.345053+00:00",
+      "updatedAt": "2026-11-01T17:42:13.998320+00:00",
       "evidence": [
         {
           "label": "Upgrade commit",
@@ -42368,6 +42372,10 @@
         {
           "label": "ARM64 release build with an init process for the Bazel server",
           "url": "https://github.com/tamird/gvisor/actions/runs/41328055309"
+        },
+        {
+          "label": "AMD64 and ARM64 release builds with analysis on Linux coordinators",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41332521937"
         }
       ]
     },
