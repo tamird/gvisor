@@ -55,6 +55,52 @@ constexpr int kPositiveTimeoutMs = 60 * 1000;
 // The amount of time to wait for something unexpected to not occur.
 constexpr int kNegativeTimeoutMs = 3 * 1000;
 
+TEST_P(TCPSocketPairTest, OutputQueueSurvivesReset) {
+  auto sockets = ASSERT_NO_ERRNO_AND_VALUE(NewSocketPair());
+  const int writer = sockets->first_fd();
+  const int peer = sockets->second_fd();
+  constexpr int kReceiveSize = 8192;
+  constexpr int kSendSize = 1024 * 1024;
+  ASSERT_THAT(setsockopt(peer, SOL_SOCKET, SO_RCVBUF, &kReceiveSize,
+                         sizeof(kReceiveSize)),
+              SyscallSucceeds());
+  ASSERT_THAT(
+      setsockopt(writer, SOL_SOCKET, SO_SNDBUF, &kSendSize, sizeof(kSendSize)),
+      SyscallSucceeds());
+
+  // Leave more data queued than the peer can acknowledge, followed by FIN.
+  std::vector<char> data(256 * 1024);
+  const ssize_t sent =
+      RetryEINTR(send)(writer, data.data(), data.size(), MSG_DONTWAIT);
+  ASSERT_GT(sent, kReceiveSize);
+  ASSERT_THAT(shutdown(writer, SHUT_WR), SyscallSucceeds());
+  int unread = 0, pending = 0;
+  const auto deadline = absl::Now() + absl::Seconds(5);
+  do {
+    ASSERT_THAT(ioctl(peer, FIONREAD, &unread), SyscallSucceeds());
+    ASSERT_THAT(ioctl(writer, TIOCOUTQ, &pending), SyscallSucceeds());
+    if (unread > 0 && pending > 1 && unread + pending == sent + 1) break;
+    absl::SleepFor(absl::Milliseconds(1));
+  } while (absl::Now() < deadline);
+  ASSERT_GT(unread, 0);
+  ASSERT_GT(pending, 1);
+  ASSERT_EQ(unread + pending, sent + 1);
+
+  const struct linger abort = {1, 0};
+  ASSERT_THAT(setsockopt(peer, SOL_SOCKET, SO_LINGER, &abort, sizeof(abort)),
+              SyscallSucceeds());
+  ASSERT_THAT(close(sockets->release_second_fd()), SyscallSucceeds());
+  struct pollfd pfd = {writer, POLLERR, 0};
+  ASSERT_THAT(RetryEINTR(poll)(&pfd, 1, kPositiveTimeoutMs),
+              SyscallSucceedsWithValue(1));
+  ASSERT_NE(pfd.revents & POLLERR, 0);
+  int after = 0;
+  ASSERT_THAT(ioctl(writer, TIOCOUTQ, &after), SyscallSucceeds());
+  // More data may have been acknowledged before the RST arrived.
+  EXPECT_GT(after, 1);
+  EXPECT_LE(after, pending);
+}
+
 TEST_P(TCPSocketPairTest, TcpInfoSucceeds) {
   auto sockets = ASSERT_NO_ERRNO_AND_VALUE(NewSocketPair());
 

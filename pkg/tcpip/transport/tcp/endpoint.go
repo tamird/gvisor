@@ -1672,6 +1672,7 @@ func (e *Endpoint) queueSegment(p tcpip.Payloader, opts tcpip.WriteOptions) (*se
 	size := int(buf.Size())
 	s := newOutgoingSegment(e.TransportEndpointInfo.ID, e.stack.Clock(), buf, e.ops.GetMark())
 	e.sndQueueInfo.SndBufUsed += size
+	e.snd.writeSeq.UpdateForward(seqnum.Size(size))
 	e.snd.writeList.PushBack(s)
 
 	return s, size, nil
@@ -2174,6 +2175,24 @@ func (e *Endpoint) GetSockOptInt(opt tcpip.SockOptInt) (int, tcpip.Error) {
 		e.UnlockUser()
 		return int(v), nil
 
+	case tcpip.SendQueueSizeOption:
+		e.LockUser()
+		defer e.UnlockUser()
+		switch state := e.EndpointState(); {
+		case state == StateListen:
+			return -1, &tcpip.ErrInvalidEndpointState{}
+		case state.connecting():
+			return 0, nil
+		case e.snd != nil:
+			return int(e.snd.SndUna.Size(e.snd.writeSeq)), nil
+		case state == StateError:
+			// A failed active open has no sender. Its sequence space
+			// depends on disconnect, which TCP does not yet implement.
+			return -1, &tcpip.ErrUnknownProtocolOption{}
+		default:
+			return 0, nil
+		}
+
 	case tcpip.ReceiveQueueSizeOption:
 		return e.readyReceiveSize()
 
@@ -2675,6 +2694,7 @@ func (e *Endpoint) shutdownLocked(flags tcpip.ShutdownFlags) tcpip.Error {
 			// not yet transmitted when the write queue is blocked.
 			s := newOutgoingSegment(e.TransportEndpointInfo.ID, e.stack.Clock(), buffer.Buffer{}, e.ops.GetMark())
 			e.snd.writeList.PushBack(s)
+			e.snd.writeSeq++ // FIN occupies one sequence number.
 			e.updateConnDirectionState(connDirectionStateSndClosed)
 			switch e.EndpointState() {
 			case StateCloseWait:
