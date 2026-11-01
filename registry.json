@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T11:45:39.922159+00:00",
+    "updatedAt": "2026-11-01T12:07:17.521390+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -45299,9 +45299,22 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-10-30T04:40:42.488176+00:00",
+      "updatedAt": "2026-11-01T12:07:17.521390+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
+        {
+          "text": "The corrected flight accounting passed all three owning TCP analyzers on AMD64 and ARM64. The control has the same partial-write fix. Eight competing transfers are comparing the accounting change on a 20 Mbps link with 100 ms RTT and a 100-packet queue.",
+          "evidence": [
+            {
+              "label": "Three analyzer targets on both architectures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41300569376/artifacts/13083025759"
+            },
+            {
+              "label": "Eight WAN trials and paired controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41304678019"
+            }
+          ]
+        },
         {
           "text": "gVisor with #15634 received less than 44% of the common-interval bytes in all 16 mixed-stack trials against Linux. Eight same-stack controls ranged from 41% to 60% for the first lane. Increasing the queue to 256 packets did not close the gap. The cause remains open.",
           "evidence": [
@@ -47132,8 +47145,16 @@
           ]
         }
       ],
-      "nextStep": "Compare #16081 and #16495 after a second timeout. For a locally refused first write, distinguish retrying unsent data, probing the peer’s window and retransmitting data already in flight. Qualify those transitions before proposing the change upstream.",
+      "nextStep": "Compare the share of delivered bytes and the longest interval without new data for each matched pair. Update #16670 when those results are known.",
       "evidence": [
+        {
+          "label": "Three analyzer targets on both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41300569376/artifacts/13083025759"
+        },
+        {
+          "label": "Eight WAN trials and paired controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41304678019"
+        },
         {
           "label": "Linux TCP_INFO vs stock and experimental gVisor through RFC 6675 recovery",
           "url": "https://github.com/tamird/gvisor/actions/runs/40993662609/artifacts/12949958196"
@@ -48184,7 +48205,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T11:20:26.968180+00:00",
+      "updatedAt": "2026-11-01T12:07:17.521390+00:00",
       "summary": "The graph codec is now the default. On a four-worker Nginx checkpoint, encoding took 2.25 ms instead of 12.71 ms and decoding took 8.99 ms instead of 17.75 ms. All four round-trip bugs tracked in #16715 are fixed. Increasing the UDP receive queue did not grow the index table. Smaller writer buffers and clearing fewer decoder slots did not speed up Nginx checkpoints. Separating callback payloads reduced allocated bytes without improving the time to Nginx’s first HTTP response.",
       "findings": [
         {
@@ -51143,8 +51164,12 @@
           ]
         }
       ],
-      "nextStep": "The encoder and decoder proposals are ready for contributor review. Use complete checkpoint profiles to choose the next experiment. The per-slot cache and shared allocation investigations are concluded.",
+      "nextStep": "Measure whether restoring the tmpfs parent pointer directly helps a 50,000-file checkpoint. Check both codecs, peer-file identity and paired full restores.",
       "evidence": [
+        {
+          "label": "Paired tmpfs parent-pointer experiment",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41304195898"
+        },
         {
           "label": "Matched 50,000-file checkpoint and native restores",
           "url": "https://github.com/tamird/gvisor/actions/runs/41299110429/artifacts/13081320550"
@@ -57221,9 +57246,9 @@
       "title": "Select the BuildBuddy guest kernel explicitly",
       "status": "active",
       "owner": "Hostinet (Codex)",
-      "updatedAt": "2026-10-19T14:19:12.443712+00:00",
+      "updatedAt": "2026-11-01T12:07:17.521390+00:00",
       "summary": "The guest-kernel selector is delivered as upstream BuildBuddy PR #13858 at 8c704d5324518b02f430a3f5f0f9388549c65eab. Exact source, title/body, open state and mergeability were verified after publication. Four owning Linux test targets pass four attempts and all 143 named cases, plus lint; independent compact review found no gaps, skips or errors. This validates kernel selection, snapshot/cache metadata and runner-pool behavior without booting a Firecracker VM. Automatic verification took 4.071730 seconds after the final lint command; the 223.823871-second interval from test completion includes lint, and final owner reconciliation took 305.001800 seconds. Prior fixture failures remain retained, and deployed-worker runtime support remains separate.",
-      "nextStep": "Follow upstream review and current-head checks for #13858; any deployed-worker or actual VM qualification remains separate.",
+      "nextStep": "Check generic VM snapshot selection and background rebuilding against the requested kernel on current BuildBuddy master. BuildBuddy maintainers are deciding which kernel-selection API and support policy to offer.",
       "evidence": [
         {
           "label": "Existing kernel selection request",
@@ -58034,9 +58059,18 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T11:45:39.922159+00:00",
+      "updatedAt": "2026-11-01T12:07:17.521390+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The ordinary fork syscall target ran Simple, Pipe and SharedMapping on empty native AMD64 and ARM64 workers using the static musl toolchain and native launcher. All six cases ran. The default GNU launcher still requires its dynamic loader. The full verdicts arrived 8.24 and 4.42 seconds after execution, with no manual recovery.",
+          "evidence": [
+            {
+              "label": "Original TestRunner actions, ELF inspection and six syscall cases",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41303505464/artifacts/13083255957"
+            }
+          ]
+        },
         {
           "text": "On empty native AMD64 and ARM64 workers the stock fork syscall test could not start Bash. Replacing the Bash launcher exposed the next missing input: the native GNU launcher needs the glibc dynamic loader. All four test actions returned 127 before any of the three required fork cases ran.",
           "evidence": [
@@ -59469,8 +59503,12 @@
           ]
         }
       ],
-      "nextStep": "Exercise the native syscall entry point with the supported static musl configuration. Identify the GNU runtime files that a dynamic test action must declare.",
+      "nextStep": "Run additional native syscall suites with the static toolchain. For default GNU targets, make the runtime loader and shared libraries available through the declared toolchain.",
       "evidence": [
+        {
+          "label": "Original TestRunner actions, ELF inspection and six syscall cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41303505464/artifacts/13083255957"
+        },
         {
           "label": "12 named cases, four native test actions and ELF inspections",
           "url": "https://github.com/tamird/gvisor/actions/runs/41299964910/artifacts/13081270206"
@@ -60394,10 +60432,19 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-01T11:45:39.922159+00:00",
+      "updatedAt": "2026-11-01T12:07:17.521390+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "After the functional, race and analyzer checks, compare the matched accounting implementations in eight competing Reno/CUBIC transfers and update the reviewer guide.",
+      "nextStep": "Finish the TCP package and analyzer checks for half-close polling. Measure competing Reno and CUBIC transfers before updating the throughput findings in #16670.",
       "findings": [
+        {
+          "text": "Using the existing local shutdown flags to skip an unnecessary receive-queue lock reduced the added cost of an established-socket RDHUP poll from 4.38 to 0.94 ns per call. With write interest too, it fell from 4.68 to 0.60 ns. Six IPv4/IPv6 syscall cases passed, including mandatory hangup with an empty interest mask.",
+          "evidence": [
+            {
+              "label": "Twelve alternating pairs for five poll masks, six syscall cases and rejected pre-connect shutdown",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41304005091/artifacts/13083155959"
+            }
+          ]
+        },
         {
           "text": "A read shutdown with unread data should leave FIN-WAIT-1 intact until close. Linux and corrected gVisor passed 36 syscall cases; stock failed 12. A separate fix to report half-close in poll took the established-socket EPOLLRDHUP-only check from a median 4.08 to 8.46 ns in 12 paired runs. The two changes can be reviewed separately.",
           "evidence": [
@@ -60903,6 +60950,10 @@
         }
       ],
       "evidence": [
+        {
+          "label": "Twelve alternating pairs for five poll masks, six syscall cases and rejected pre-connect shutdown",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41304005091/artifacts/13083155959"
+        },
         {
           "label": "IPv6 network-unreachable follows the existing dispatch path and reproduces the TCP error-queue difference",
           "url": "https://github.com/tamird/gvisor/actions/runs/41288587364/artifacts/13075614629"
