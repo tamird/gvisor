@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T01:20:55.517590+00:00",
+    "updatedAt": "2026-11-01T01:23:49.375840+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -56907,9 +56907,34 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T00:46:55.390628+00:00",
+      "updatedAt": "2026-11-01T01:23:49.375840+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "Buildkite’s optimized binary release has three formats per architecture. On AMD64 and ARM64, the Debian package, bzip2 tarball and Zstandard tarball contained the same eight executable files byte for byte. Both Debian packages included the containerd config and a version from a local fixture tag. The first Zstandard actions could not start the compiler-produced compressor because the scratch images lacked the GNU loader. Declaring musl on each execution platform produced a static compressor. Only Zstandard was rebuilt; the original Debian results and bzip2 bytes were verified. Bazel fetched repositories and stamped the build on the Ubuntu clients.",
+          "evidence": [
+            {
+              "label": "Public release flags",
+              "url": "https://github.com/google/gvisor/blob/aa767e4c4/.buildkite/release.yaml#L51-L58"
+            },
+            {
+              "label": "Three distributed packages",
+              "url": "https://github.com/google/gvisor/blob/aa767e4c4/Makefile#L986-L990"
+            },
+            {
+              "label": "Scratch execution platform declarations",
+              "url": "https://github.com/tamird/gvisor/commit/21fd3304c"
+            },
+            {
+              "label": "AMD64 original and corrected packages",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41259928894/artifacts/13064517705"
+            },
+            {
+              "label": "ARM64 original and corrected packages",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41259928894/artifacts/13065375680"
+            }
+          ]
+        },
         {
           "text": "The public //:release target at f906c5dd8 staged eight executables for each architecture in fastbuild. On the original trees five files staged and three C-sidecar genrules tried to run Bash on scratch. With #16506 and #16522, seven copy actions ran uncached and the shim copy was cached on each target. On native AMD64 and ARM64 Ubuntu hosts the same staged runsc and Sentry booted a systrap guest, which used the pinned BusyBox to read the source marker, report the expected architecture and exit 0. The smoke test reused those files after correcting rootfs traversal permissions. Repository fetching used a normal client; these are fastbuild results, not the official distribution flags.",
           "evidence": [
@@ -58077,7 +58102,7 @@
           ]
         }
       ],
-      "nextStep": "Follow the Debian layer change in rules_distroless #293. Keep the Jekyll renderer queued for the upstream rules_img release. Prepare the development-checkpoint identity fix for review on its rules_go prerequisite. Qualify the release change with the current graph default and on ARM64 before moving the broader build change to review. The ARM64 eventfd case reached the ordinary TestRunner; use that qualified path for the next relevant syscall coverage. Apply the existing shell-free stateify and declared Protobuf-validator changes to the same ARM64 sysmsg library; its Go archive is still unverified on scratch.",
+      "nextStep": "Follow the Debian layer change in rules_distroless #293. Keep the Jekyll renderer queued for the upstream rules_img release. Prepare the development-checkpoint identity fix for review on its rules_go prerequisite. Qualify the release change with the current graph default and on ARM64 before moving the broader build change to review. The ARM64 eventfd case reached the ordinary TestRunner; use that qualified path for the next relevant syscall coverage. Check whether the approved release changes also replace the Buildkite artifact commands and smoke-test the already built optimized binaries on native Linux.",
       "evidence": [
         {
           "label": "Three cold native compiles and links per architecture, with ELF and digest checks",
