@@ -399,7 +399,8 @@ type TCPSndBufState struct {
 	// SndBufSize is the size of the socket send buffer.
 	SndBufSize int
 
-	// SndBufUsed is the number of bytes held in the socket send buffer.
+	// SndBufUsed counts queued data and FIN until cumulatively acknowledged.
+	// A reset discards the packets but does not acknowledge them.
 	SndBufUsed int
 
 	// SndClosed indicates that the endpoint has been closed for sends.

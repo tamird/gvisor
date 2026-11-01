@@ -286,6 +286,8 @@ func (r *receiver) consumeSegment(s *segment, segSeq seqnum.Value, segLen seqnum
 		case StateClosing:
 			r.ep.setEndpointState(StateTimeWait)
 		case StateLastAck:
+			// Closing here bypasses the sender's normal ACK processing.
+			r.ep.updateSndBufferUsage(int(r.ep.snd.SndUna.Size(s.ackNumber)))
 			r.ep.transitionToStateCloseLocked()
 		}
 	}

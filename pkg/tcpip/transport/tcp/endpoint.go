@@ -1032,7 +1032,6 @@ func (e *Endpoint) purgeWriteQueue() {
 			e.snd.writeList.Remove(s)
 			s.DecRef()
 		}
-		e.sndQueueInfo.SndBufUsed = 0
 		e.sndQueueInfo.SndClosed = true
 		e.snd.SndNxt = e.snd.SndUna
 	}
@@ -2174,6 +2173,22 @@ func (e *Endpoint) GetSockOptInt(opt tcpip.SockOptInt) (int, tcpip.Error) {
 		e.UnlockUser()
 		return int(v), nil
 
+	case tcpip.SendQueueSizeOption:
+		e.LockUser()
+		defer e.UnlockUser()
+		switch state := e.EndpointState(); {
+		case state == StateListen:
+			return 0, &tcpip.ErrInvalidEndpointState{}
+		case state.connecting():
+			return 0, nil
+		case state == StateError && e.snd == nil && e.h != nil && e.h.active:
+			// The failed active open still has an unacknowledged SYN.
+			return 1, nil
+		}
+		e.sndQueueInfo.sndQueueMu.Lock()
+		defer e.sndQueueInfo.sndQueueMu.Unlock()
+		return e.sndQueueInfo.SndBufUsed, nil
+
 	case tcpip.ReceiveQueueSizeOption:
 		return e.readyReceiveSize()
 
@@ -2675,6 +2690,7 @@ func (e *Endpoint) shutdownLocked(flags tcpip.ShutdownFlags) tcpip.Error {
 			// not yet transmitted when the write queue is blocked.
 			s := newOutgoingSegment(e.TransportEndpointInfo.ID, e.stack.Clock(), buffer.Buffer{}, e.ops.GetMark())
 			e.snd.writeList.PushBack(s)
+			e.sndQueueInfo.SndBufUsed++ // FIN occupies one sequence number.
 			e.updateConnDirectionState(connDirectionStateSndClosed)
 			switch e.EndpointState() {
 			case StateCloseWait:
