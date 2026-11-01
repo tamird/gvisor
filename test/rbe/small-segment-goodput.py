@@ -49,11 +49,10 @@ try:
         output = [f"BenchmarkReceivePressure/MSS={r['mss']} 1 {r['ns']} ns/op {r['dropped']} queue-rejects/op {r['silence']} timeouts/op"
                   for r in samples if r["name"] == name]
         (out / f"{name}.bench").write_text("\n".join(output) + "\n")
+    times = {(r["mss"], r["pair"], r["name"]): r["ns"] for r in samples}
     result["median_paired_time_ratio"] = {
-        mss: statistics.median(
-            [r["ns"] for r in samples if r["mss"] == mss and r["name"] == "bounded"][i]
-            / [r["ns"] for r in samples if r["mss"] == mss and r["name"] == "reviewed"][i]
-            for i in range(10)) for mss in sizes
+        size: statistics.median(times[size, pair, "bounded"] / times[size, pair, "reviewed"]
+                                for pair in range(10)) for size in sizes
     }
     result["status"] = "PASS"
 except Exception as err:

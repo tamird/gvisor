@@ -7,7 +7,7 @@ func TestBurstGoodput(t *testing.T) {
 			c := context.New(t, e2e.DefaultMTU)
 			defer c.Cleanup()
 			c.CreateConnectedWithRawOptions(context.TestInitialSequenceNumber, 30000, 32<<10, []byte{
-				header.TCPOptionWS, 1, header.TCPOptionNOP, header.TCPOptionNOP,
+				header.TCPOptionWS, header.TCPOptionWSLength, 0, header.TCPOptionNOP,
 			})
 			// Use the 4 KiB send budget from the control-backlog reproducer
 			// while leaving the receive buffer at the benchmark’s 64 KiB.
@@ -21,12 +21,15 @@ func TestBurstGoodput(t *testing.T) {
 			received.Grow(size)
 			read := func() {
 				for {
-					_, err := c.EP.Read(&received, tcpip.ReadOptions{})
+					result, err := c.EP.Read(&received, tcpip.ReadOptions{})
 					if _, ok := err.(*tcpip.ErrWouldBlock); ok {
 						return
 					}
 					if err != nil {
 						t.Fatalf("Read: %s", err)
+					}
+					if result.Count == 0 {
+						t.Fatal("successful read made no progress")
 					}
 				}
 			}

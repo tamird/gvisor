@@ -5,7 +5,7 @@ on:
 permissions:
   contents: read
 jobs:
-  syscalls:
+  compare:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
     timeout-minutes: 165
@@ -34,10 +34,9 @@ jobs:
         } > "$RUNNER_TEMP/tcp.bazelrc"
         unset BUILDBUDDY_API_KEY
         docker pull --platform=linux/amd64 "$GNU"
-        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --sysctl net.ipv6.conf.lo.disable_ipv6=0 -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
         docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
         docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
-        docker exec tcp-compiler python3 -c 'import socket; s=socket.socket(socket.AF_INET6); s.bind(("::1",0)); print(s.getsockname())' > "$RUNNER_TEMP/records/native-ipv6"
     - name: Build both receivers with the identical test fixture
       run: |
         set -euo pipefail
