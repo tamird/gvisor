@@ -7,9 +7,12 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 import traceback
+import urllib.request
 import uuid
 import xml.etree.ElementTree as ET
+import zipfile
 
 from image_execution import execution_records
 import qualification_report as reporter
@@ -22,7 +25,7 @@ FIXED = os.environ["FIXED"]
 NEGATIVE = os.environ["NEGATIVE"]
 KERNEL = "//pkg/sentry/kernel:kernel_nogo"
 ANALYZERS = [KERNEL, "//pkg/sentry/kernel:kernel_test_nogo"]
-SYSCALLS = ["//test/syscalls:pidfd_test_native", "//test/syscalls:pidfd_test_runsc_systrap"]
+SYSCALLS = ["//test/syscalls:pidfd_test_native", "//test/syscalls:pidfd_test_runsc_systrap_directfs"]
 CASES = ["OpenPidfdSelfSucceeds", "Poll", "Epoll", "PidfdThreadLeaderDelayedNotification",
          "PidfdThreadSubthreadNotification", "PidfdThreadExecRevival"]
 METHODS = ["pidStructFromTIDLocked", "notifyPIDFDsLocked", "notifyPIDFDsOnDeathLocked"]
@@ -42,6 +45,60 @@ def write(result):
 
 def git(*args):
     return subprocess.check_output(["git", "-c", "safe.directory=" + str(Path.cwd()), *args])
+
+
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, request, fp, code, msg, headers, newurl):
+        return None
+
+
+def recover_original():
+    data = (ROOT / "pidfd-original.zip").read_bytes()
+    digest = hashlib.sha256(data).hexdigest()
+    assert digest == "3c785c885cfa6febc5b18fd5629b3b943cd66b38554706ba772526ec557ff3a2"
+    with zipfile.ZipFile(ROOT / "pidfd-original.zip") as archive:
+        assert archive.namelist() == ["verdict.json"]
+        result = json.loads(archive.read("verdict.json"))
+    assert result["status"] == "FAIL"
+    for name, source in [("negative", NEGATIVE), ("analyzers", FIXED)]:
+        original = result["phases"][name]
+        assert original["source"] == source and original["verified"]
+    original = result["phases"].pop("syscalls")
+    assert original["source"] == FIXED and original["native_exit"] == 1
+    assert not original["verified"] and not original["qualification"]["case_counts"]
+    assert original["invocation"] == "6ca7a933-7b25-49ba-be94-9eab6636949c"
+    result.update(status="INCOMPLETE", original_syscall_attempt=original,
+                  prior_artifact={"id": 13101663301, "sha256": digest})
+    result.pop("verified_at")
+    result["original_diagnostic"] = {"status": "INCOMPLETE", "invocation": original["invocation"]}
+    write(result)
+    request = {"selector": {"invocation_id": original["invocation"]}}
+    opener = urllib.request.build_opener(NoRedirect())
+    messages = []
+    for _ in range(4):
+        req = urllib.request.Request("https://app.buildbuddy.io/api/v1/GetLog", data=json.dumps(request).encode(),
+                                     headers={"Content-Type": "application/json",
+                                              "x-buildbuddy-api-key": os.environ["BUILDBUDDY_API_KEY"]})
+        with opener.open(req, timeout=30) as response:
+            data = response.read(1024 * 1024 + 1)
+        assert len(data) <= 1024 * 1024
+        payload = json.loads(data)
+        log = payload["log"]
+        if log.get("id"):
+            assert log["id"].get("invocationId", log["id"].get("invocation_id")) == original["invocation"]
+        messages.append(log["contents"])
+        token = payload.get("nextPageToken", payload.get("next_page_token", ""))
+        if not token:
+            break
+        request["page_token"] = token
+    else:
+        raise RuntimeError("Original build log exceeds bounded recovery")
+    text = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", "".join(messages))
+    assert re.search(r"no such target [^\n]*pidfd_test_runsc_systrap", text)
+    result["original_diagnostic"].update(status="VERIFIED", cause="requested target is not declared",
+                                          label="//test/syscalls:pidfd_test_runsc_systrap",
+                                          log_sha256=hashlib.sha256(text.encode()).hexdigest())
+    write(result)
 
 
 def phase(result, name, source, labels, extra):
@@ -167,13 +224,14 @@ def phase(result, name, source, labels, extra):
 
 
 if __name__ == "__main__":
-    result = {"status": "INCOMPLETE", "phases": {}, "profile": "0ee70efe6d52576b8f173b40ad6b7ac117da3b72",
-              "profile_files": {name: hashlib.sha256((ROOT / "gnu-platform" / name).read_bytes()).hexdigest()
-                                for name in ("BUILD.bazel", "MODULE.bazel")}}
-    write(result)
+    if sys.argv[1:] == ["recover"]:
+        recover_original()
+        raise SystemExit(0)
+    result = json.loads((PUBLIC / "verdict.json").read_text())
+    assert result["original_diagnostic"]["status"] == "VERIFIED"
+    assert result["profile_files"] == {name: hashlib.sha256((ROOT / "gnu-platform" / name).read_bytes()).hexdigest()
+                                       for name in ("BUILD.bazel", "MODULE.bazel")}
     for name, source, labels, extra in [
-        ("negative", NEGATIVE, [KERNEL], []),
-        ("analyzers", FIXED, ANALYZERS, []),
         ("syscalls", FIXED, SYSCALLS, ["--test_env=GTEST_FILTER=" + ":".join("PidfdTest." + case for case in CASES)]),
     ]:
         try:

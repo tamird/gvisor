@@ -1,14 +1,15 @@
-name: Qualify PIDFD lock contracts
+name: Complete PIDFD syscall qualification
 on:
   push:
-    branches: [qualification/pidfd-lock-contract]
+    branches: [qualification/pidfd-lock-syscalls]
 permissions:
   contents: read
+  actions: read
 jobs:
   qualify:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 85
+    timeout-minutes: 35
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
       FIXED: 1bf9f3f36d3ae3b763049ccb0e2b3e80d4061e5b
@@ -31,6 +32,13 @@ jobs:
           git show "$READER:test/rbe/image_execution.py" > "$RUNNER_TEMP/image_execution.py"
           cp test/rbe/pidfd_locks.py "$RUNNER_TEMP/"
           cp -R test/rbe/gnu_platform "$RUNNER_TEMP/gnu-platform"
+      - name: Retain completed analyzers and diagnose the original target failure
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          gh api repos/tamird/gvisor/actions/artifacts/13101663301/zip > "$RUNNER_TEMP/pidfd-original.zip"
+          python3 "$RUNNER_TEMP/pidfd_locks.py" recover
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           path: product
@@ -55,7 +63,7 @@ jobs:
           unset BUILDBUDDY_API_KEY
           timeout 180 docker pull --platform=linux/amd64 "$GNU"
           docker run -d --name gnu-profile --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$PWD" "$GNU" -c 'sleep infinity'
-      - name: Check missing-lock rejection, owning analyzers and PIDFD syscalls
+      - name: Run only the two previously unexecuted syscall owners
         run: docker exec -e RUNNER_TEMP -e GNU -e FIXED -e NEGATIVE gnu-profile python3 "$RUNNER_TEMP/pidfd_locks.py"
       - name: Check the explicit artifact boundary
         id: privacy
