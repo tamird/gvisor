@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T01:33:29.729737+00:00",
+    "updatedAt": "2026-11-01T01:51:20.575751+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41045,6 +41045,36 @@
         "summary": "Review the standalone, three-line correction for upstream submission. It has no prerequisite.",
         "body": "A failed handshake stores the same error twice. After connect reports\nECONNREFUSED, SO_ERROR returns it again. A nonblocking socket can read\nthe same refusal twice through SO_ERROR.\n\nRecord the handshake failure only in the terminal error consumed by\nconnect, read, write, and SO_ERROR. Leave separately reported soft\nerrors alone."
       }
+    },
+    {
+      "id": "branch:tcp-retain-fixed-source-port",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/tcp-retain-fixed-source-port",
+      "head": "6d477a9ff29aa36c805d06b74086403339acd716",
+      "title": "Keep an explicitly bound TCP source port after refusal",
+      "url": "https://github.com/tamird/gvisor/commit/6d477a9ff",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T01:51:20.575751+00:00",
+      "summary": "An IPv4 connect refusal lets another socket claim a still-open descriptor’s fixed local port. Preserve the existing reservation until close. Both wildcard/loopback fixed ports and port-zero controls agreed with Linux. Dual-stack family selection and reconnect are separate.",
+      "evidence": [
+        {
+          "label": "Same source on native Linux, exact #16180 and corrected netstack; two failing fixed-port comparisons on #16180, port-zero and final-close controls passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41262155428/artifacts/13065353930"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "6d477a9ff29aa36c805d06b74086403339acd716",
+        "baseHead": "48e209b56058f40e422daa3d5308d5c18a29a1ae",
+        "url": "https://github.com/tamird/gvisor/commit/6d477a9ff",
+        "title": "Keep an explicitly bound TCP source port after refusal",
+        "requestedAt": "2026-11-01T01:51:20.575751+00:00",
+        "summary": "Review this isolated socket ownership correction for submission after #16180 lands.",
+        "body": "A competing socket can bind a caller-selected source port after an\nIPv4 connect reports ECONNREFUSED, while the refused socket is still\nopen. Linux keeps that port until the socket closes. A port selected\nby bind with port zero remains available to other sockets.\n\nRemember whether bind requested a nonzero port. On a failed active\nopen, keep the reservation already owned by the descriptor while\nunregistering its failed connection. Final close releases the port.\n\nThe same syscall test checks wildcard and loopback addresses with\nfixed and dynamically allocated ports. On #16180 the competing bind\nsucceeded for both fixed ports; on Linux and the correction it\nreturned EADDRINUSE until close. Both port-zero controls passed.\n\nThis follows #16180's reservation-key correction. It does not change\nwhich family a dual-stack wildcard connect releases, or implement\nreuse of the refused socket for a new connection."
+      }
     }
   ],
   "edges": [
@@ -44419,6 +44449,17 @@
       "reason": "The runsc wildcard includes coverage; the coverage transition must also compose with the static Go musl transition.",
       "evidence": [
         "https://github.com/tamird/gvisor/actions/runs/41252118749/artifacts/13063861013"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:tcp-retain-fixed-source-port",
+      "to": "pr:16180",
+      "reason": "Uses the original reservation address and protocol list from #16180 to preserve and later release the correct fixed port.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16180",
+        "https://github.com/tamird/gvisor/commit/6d477a9ff",
+        "https://github.com/tamird/gvisor/actions/runs/41262155428/artifacts/13065353930"
       ]
     }
   ],
