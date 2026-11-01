@@ -88,10 +88,11 @@ func extractStateTag(tag *ast.BasicLit) string {
 
 // scanFunctions is a set of functions passed to scanFields.
 type scanFunctions struct {
-	zerovalue func(name string)
-	normal    func(name string, typ ast.Expr)
-	wait      func(name string, typ ast.Expr)
-	value     func(name, typName string)
+	zerovalue     func(name string)
+	normal        func(name string, typ ast.Expr)
+	wait          func(name string, typ ast.Expr)
+	value         func(name, typName string)
+	atomicPointer func(name string, typ ast.Expr)
 }
 
 // scanFields scans the fields of a struct.
@@ -153,6 +154,11 @@ func scanField(name string, field *ast.Field, fn scanFunctions) {
 	case "wait":
 		if fn.wait != nil {
 			fn.wait(name, field.Type)
+		}
+
+	case "atomicptr":
+		if fn.atomicPointer != nil {
+			fn.atomicPointer(name, field.Type)
 		}
 
 	case "manual", "nosave", "ignore":
@@ -522,9 +528,10 @@ func main() {
 					fmt.Fprintf(outputFile, "func (%s *%s) StateFields() []string {\n", recv, ts.Name.Name)
 					fmt.Fprintf(outputFile, "	return []string{\n")
 					scanFields(x, scanFunctions{
-						normal: emitField,
-						wait:   emitField,
-						value:  emitFieldValue,
+						normal:        emitField,
+						wait:          emitField,
+						value:         emitFieldValue,
+						atomicPointer: emitField,
 					})
 					fmt.Fprintf(outputFile, "	}\n")
 					fmt.Fprintf(outputFile, "}\n\n")
@@ -557,12 +564,20 @@ func main() {
 						fmt.Fprintf(outputFile, "func (%s *%s) StateSave(stateSinkObject %sSink) {\n", recv, ts.Name.Name, statePrefix)
 						fmt.Fprintf(outputFile, "	%s.beforeSave()\n", recv)
 						scanFields(x, scanFunctions{zerovalue: emitZeroCheck})
-						scanFields(x, scanFunctions{value: emitComputeValue})
+						scanFields(x, scanFunctions{
+							value: emitComputeValue,
+							atomicPointer: func(name string, _ ast.Expr) {
+								fmt.Fprintf(outputFile, "\t%sValue := %s.%s.Load()\n", name, recv, name)
+							},
+						})
 						scanFields(x, scanFunctions{
 							normal: func(name string, typ ast.Expr) { emitSave(name, typ, false) },
 							wait:   func(name string, typ ast.Expr) { emitSave(name, typ, true) },
 						})
-						scanFields(x, scanFunctions{value: emitSaveValue})
+						scanFields(x, scanFunctions{
+							value:         emitSaveValue,
+							atomicPointer: func(name string, _ ast.Expr) { emitSaveValue(name, "") },
+						})
 						fmt.Fprintf(outputFile, "}\n\n")
 					}
 
@@ -583,7 +598,12 @@ func main() {
 						fmt.Fprintf(outputFile, "// +checklocksignore\n")
 						fmt.Fprintf(outputFile, "func (%s *%s) StateLoad(ctx context.Context, stateSourceObject %sSource) {\n", recv, ts.Name.Name, statePrefix)
 						scanFields(x, scanFunctions{normal: emitLoad, wait: emitLoadWait})
-						scanFields(x, scanFunctions{value: emitLoadValue})
+						scanFields(x, scanFunctions{
+							value: emitLoadValue,
+							atomicPointer: func(name string, _ ast.Expr) {
+								fmt.Fprintf(outputFile, "\t%sLoadAtomicPointer(stateSourceObject, %d, &%s.%s)\n", statePrefix, fields[name], recv, name)
+							},
+						})
 						if hasAfterLoad {
 							// The call to afterLoad is made conditionally, because when
 							// AfterLoad is called, the object encodes a dependency on

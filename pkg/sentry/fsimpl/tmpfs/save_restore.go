@@ -51,16 +51,6 @@ func (fs *filesystem) loadMf(ctx goContext.Context, resourceID checkpoint.Resour
 	fs.mf = mf
 }
 
-// saveParent is called by stateify.
-func (d *dentry) saveParent() *dentry {
-	return d.parent.Load()
-}
-
-// loadParent is called by stateify.
-func (d *dentry) loadParent(_ goContext.Context, parent *dentry) {
-	d.parent.Store(parent)
-}
-
 // saveAccessACL is called by stateify.
 func (i *inode) saveAccessACL() *vfs.PosixACL {
 	return i.accessACL.Load()
