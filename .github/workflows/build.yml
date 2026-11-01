@@ -1,35 +1,48 @@
-name: CI
-
-"on":
+name: Qualify rebased BuildBuddy VFS routing
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/buildbuddy-vfs-routing]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  qualification:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: harness, persist-credentials: false}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: tamird/buildbuddy
+          ref: 8441f4beeb18129b5cfd4416b714f2684d10ea97
+          fetch-depth: 2
+          path: buildbuddy
+          persist-credentials: false
+      - name: Qualify three affected race suites and the scheduling client
+        working-directory: buildbuddy
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=$RUNNER_TEMP/vfs-records
+          mkdir -p "$out"
+          test "$(git rev-parse HEAD)" = 8441f4beeb18129b5cfd4416b714f2684d10ea97
+          test "$(git rev-parse HEAD^)" = acaf608b95780c2b0681b0205182c38bf5b6237d
+          git cat-file commit HEAD > "$out/commit_file"
+          git status --porcelain --untracked-files=no > "$out/source_before"
+          owners=(//enterprise/server/remote_execution/execution_server:execution_server_test //enterprise/server/remote_execution/executorplatform:executorplatform_test //enterprise/server/scheduling/scheduler_server:scheduler_server_test)
+          printf '%s\n' "${owners[@]}" > "$out/targets"
+          args=(test --config=untrusted-ci --config=race --nocache_test_results --remote_download_outputs=toplevel --build_event_json_file="$out/raw.jsonl" --build_event_json_file_path_conversion=false "${owners[@]}" //enterprise/server/scheduling/scheduler_client:scheduler_client)
+          printf '%s\n' "${args[@]}" > "$out/executed_arguments"
+          rc=0; bazelisk "${args[@]}" || rc=$?
+          printf '%s\n' "$rc" > "$out/native_exit"
+          date -u '+%Y-%m-%dT%H:%M:%S.%3N+00:00' > "$out/finished"
+          git rev-parse HEAD > "$out/final_head"
+          git status --porcelain --untracked-files=no > "$out/source_after"
+          python3 -B ../harness/test/rbe/buildbuddy-routing-verdict.py "$out" 8441f4beeb18129b5cfd4416b714f2684d10ea97 || exit "${rc/#0/1}"
+          exit "$rc"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: vfs-routing-verdict
+          path: ${{ runner.temp }}/vfs-records/verdict.json
+          if-no-files-found: error
