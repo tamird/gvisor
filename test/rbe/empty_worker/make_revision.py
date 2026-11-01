@@ -13,7 +13,7 @@ workspace = Path(os.environ["GITHUB_WORKSPACE"])
 tmp = Path(os.environ["RUNNER_TEMP"])
 out = tmp / "package-evidence"
 registry = workspace / "registry"
-revision = "e00baea8db3a686e45379b9096998a8cb95291c0"
+revision = "f8f5f201805db9b0c27571f7630cb8a37f3a78d6"
 product = "7dc8df3c4bb7da1bc04037fe9a2d641cb36cc5a4"
 mode = sys.argv[1]
 arm = sys.argv[2] if len(sys.argv) > 2 else "after"
@@ -22,7 +22,7 @@ if arm == "before":
     product = "fb08aa735e8c6993fc4561702b5872c10bae541a"
 os.environ["PRODUCT"] = product
 import wildcard
-image = "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a"
+image = wildcard.image
 dest = out / ("supplier.json" if mode == "checks" else "smoke-" + arm + ".json")
 row = {"status": "INCOMPLETE", "registry_source": revision, "product": product,
        "mode": mode, "phases": {}, "executed_cases": []}
@@ -80,8 +80,8 @@ try:
         bep = tmp / "make-smoke.bep"
         target = "@@make+//tests:make_smoke_test"
         flags = ["--config=x86_64", "--config=plugin-tldk", "--compilation_mode=opt",
-                 "--host_platform=//test/rbe/make_control:populated",
-                 "--extra_execution_platforms=//test/rbe/make_control:populated",
+                 "--host_platform=//test/rbe/empty_worker:amd64_musl",
+                 "--extra_execution_platforms=//test/rbe/empty_worker:amd64_musl",
                  "--registry=" + registry.as_uri(), "--registry=https://bcr.bazel.build",
                  "--jobs=400", "--strategy=TestRunner=local", "--nocache_test_results",
                  "--remote_download_outputs=all", "--build_event_json_file=" + str(bep)]
