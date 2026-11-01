@@ -62,7 +62,7 @@ jobs:
           target="//test/packetimpact/tests:tcp_connect_icmp_error_${arm}_test"
           sha256sum test/packetimpact/tests/tcp_connect_icmp_error_test.go > "$d/fixture"
           date -u +%FT%TZ > "$d/start"; rc=0
-          timeout 2100 docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --platforms=//tools/bazeldefs:linux_amd64 --jobs=32 --build_tag_filters= --test_tag_filters= --strategy=TestRunner=remote --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel --test_output=all --test_timeout=300 --test_sharding_strategy=disabled --build_event_json_file="$d/bep" "$target" > "$d/bazel.log" 2>&1 || rc=$?
+          timeout 2100 docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --platforms=//tools/bazeldefs:linux_amd64 --jobs=32 --local_resources=cpu=1 '--strategy_regexp=^Compiling test/packetimpact/(dut/posix_server[.]cc|proto/.*[.]cc)=local' --build_tag_filters= --test_tag_filters= --strategy=TestRunner=remote --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel --test_output=all --test_timeout=300 --test_sharding_strategy=disabled --build_event_json_file="$d/bep" "$target" > "$d/bazel.log" 2>&1 || rc=$?
           printf '%s\n' "$rc" > "$d/exit"; date -u +%FT%TZ > "$d/finish"
           python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records" progress
         done
