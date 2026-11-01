@@ -51,21 +51,22 @@ func (q *segmentQueue) empty() bool {
 //
 // +checklocksexclude:q.mu
 func (q *segmentQueue) enqueue(s *segment) bool {
-	bufSz := q.ep.ops.GetReceiveBufferSize()
-	used := q.ep.receiveMemUsed()
-
 	q.mu.Lock()
 	defer q.mu.Unlock()
+	if q.frozen {
+		return false
+	}
 
-	// Allow zero sized segments (ACK/FIN/RSTs etc even if the segment queue
-	// is currently full).
-	allow := (used <= int(bufSz) || s.payloadSize() == 0) && !q.frozen
-
-	if !allow && !q.frozen {
-		// The receive buffer is full. Drop the payload but queue the
-		// segment so that it is acknowledged (RFC 9293 section 3.10.7.4),
-		// as Linux does when tcp_data_queue drops for memory. A zero
-		// sized segment is admitted regardless of memory.
+	over := int64(q.ep.receiveMemUsed()) - q.ep.ops.GetReceiveBufferSize()
+	// Reserve room for ACKs when unread data fills the receive buffer.
+	// Shrinking the buffers below current usage must still allow a packet
+	// through an empty backlog, or the peer cannot acknowledge our sends.
+	if !q.emptyLocked() && over > q.ep.ops.GetSendBufferSize() {
+		return false
+	}
+	if over > 0 && s.payloadSize() != 0 {
+		// Drop the payload but retain its headers so the receiver sends an
+		// ACK with the current receive window (RFC 9293 section 3.10.7.4).
 		// Handshake completion can requeue an already-owned segment. Release
 		// its old charge before replacing the payload; setOwner below will
 		// account for the compact packet.
@@ -85,17 +86,12 @@ func (q *segmentQueue) enqueue(s *segment) bool {
 		s.dataMemSize = s.pkt.MemSize()
 		s.dataDropped = true
 		oldPkt.DecRef()
-		allow = true
 	}
 
-	if allow {
-		s.IncRef()
-		q.list.PushBack(s)
-		// Set the owner now that the endpoint owns the segment.
-		s.setOwner(q.ep, recvQ)
-	}
-
-	return allow
+	s.IncRef()
+	q.list.PushBack(s)
+	s.setOwner(q.ep, recvQ)
+	return true
 }
 
 // dequeue removes and returns the next segment from queue, if one exists.
