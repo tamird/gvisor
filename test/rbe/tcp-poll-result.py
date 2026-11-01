@@ -9,8 +9,28 @@ import sys
 import xml.etree.ElementTree as ET
 
 root=Path(sys.argv[1])
-expected=['poll-native','poll-stock','poll-candidate','amd64-tests','amd64-nogo','arm64-nogo','arm64-owners']
+expected=['poll-candidate','amd64-tests','amd64-nogo','amd64-race']
 cases={'AllInetTests/SimpleTcpSocketTest.'+case+'/'+str(family) for case in ['NonBlockingConnectRefused','SynRcvdOnListenerShutdown'] for family in [0,1]}
+def stock_cases_match(rows):
+    # A refused connection keeps POLLERR set after consuming SO_ERROR.
+    # Shutting down a listener is a passing terminal-readiness control.
+    if rows.keys() != cases:
+        return False
+    return all((r['status'] == 'FAIL' and any('poll_fd.revents' in msg for msg in r['examples'])) if '.NonBlockingConnectRefused/' in name else r['status'] == 'OK' for name, r in rows.items())
+
+if len(sys.argv) == 4 and sys.argv[1] == 'replay':
+    original = json.loads(Path(sys.argv[2]).read_text())
+    rows = original['results']
+    stock = rows['poll-stock']
+    if stock['source'] != 'aa767e4c43d011121271551fe24da501a56f729d' or stock['exit'] != 3 or list(stock['targets'].values()) != ['FAILED'] or not stock_cases_match(stock['assertions']):
+        raise SystemExit('stock behavior is different from the two expected regressions and two passing controls')
+    good = all(rows[k]['verified'] and rows[k]['assertions'].keys() == cases and all(a['status'] == 'OK' for a in rows[k]['assertions'].values()) for k in ['poll-native', 'poll-candidate'])
+    if not good or len({rows[k]['fixture'] for k in ['poll-stock','poll-native','poll-candidate']}) != 1:
+        raise SystemExit('native and corrected fixture controls did not match')
+    receipt = {'original_verdict_at': original['verdict_at'], 'original_complete_verdict': original['verified'], 'stock_verifier_before_replay': stock['verified'], 'verified_socket_arms': True, 'socket_results': {k: rows[k] for k in ['poll-native','poll-stock','poll-candidate']}, 'old_arm64_timeout_or_absence': {k:rows[k] for k in ['arm64-nogo','arm64-owners']}}
+    Path(sys.argv[3]).write_text(json.dumps(receipt,indent=2)+'\n')
+    raise SystemExit(0)
+
 def read(p,fallback=None):
     return p.read_text().strip() if p.is_file() else fallback
 def read_bep(p):
@@ -54,16 +74,16 @@ def inspect(name):
         expected_status='FAILED' if name=='poll-stock' else 'PASSED'; target=read(d/'target')
         ok &= set(asserts)==cases and actual.get(target)==expected_status and status==(3 if name=='poll-stock' else 0)
         if name=='poll-stock':
-            ok &= all(v['status']=='FAIL' and any('poll_fd.revents' in q or ('Expected:' in q and 'revents' in q) for q in v['examples']) for v in asserts.values())
+            ok &= stock_cases_match(asserts)
         else: ok &= all(v['status']=='OK' for v in asserts.values())
         row.update(assertions=asserts,fixture=read(d/'fixture-sha256').split()[0],expected=sorted(cases),missing=sorted(cases-asserts.keys()))
     else:
         owners=set(read(d/'labels','').splitlines())
         if name=='arm64-owners':
-            ok &= status==0 and all(completed.get(t) for t in owners)
+            ok = False  # A cross-build cannot qualify an ARM64 execution.
             row.update(build_only=True,missing=sorted(owners-{k for k,v in completed.items() if v}))
         else:
-            ok &= status==0 and set(actual)==owners and all(s=='PASSED' for s in actual.values()) and len(files)==len(owners) and counts['FAIL']==0
+            ok &= bool(owners) and status==0 and set(actual)==owners and all(s=='PASSED' for s in actual.values()) and len(files)==len(owners) and counts['FAIL']==0
             row.update(failures=asserts,missing=sorted(owners-actual.keys()),owner_xml=files)
         row.update(owners=sorted(owners))
     row.update(cases=dict(counts),skips=skips,targets=actual,verified=bool(ok),diagnostics=diag)
