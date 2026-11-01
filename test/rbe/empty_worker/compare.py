@@ -62,7 +62,7 @@ def source(ref):
 def rows(log):
     if not log.exists(): return []
     # Keep the argv, result, platform and output digests for relevant actions only.
-    jq = r'''select(((.targetLabel // "")|test("^//:release$|^//vdso:|^//runsc/(fdparking|prewarmer|procumounter):")) or .mnemonic=="GoLink" or .mnemonic=="PrecompileSeccomp" or .mnemonic=="ProtocAuthenticityCheck" or .mnemonic=="GoToolchainBinaryBuild" or ((.exitCode // 0)!=0) or ((.status // "")!="")) | {label:.targetLabel,mnemonic,runner,cacheHit,exitCode,status,action:.digest,platform:.platform,executable:.commandArgs[0],outputs:[.actualOutputs[]? | {path,digest}],argv:(if ((.targetLabel//"")|contains("systrap/sysmsg")) and (.mnemonic=="CppLink" or .mnemonic=="CppCompile" or .mnemonic=="Genrule") then .commandArgs else [] end)}'''
+    jq = r'''select(((.targetLabel // "")|test("^//debian:|^//tools/zstd:|^//tools/bazeldefs:version$|^//shim:config$|^//:release$|^//vdso:|^//runsc/(fdparking|prewarmer|procumounter):")) or .mnemonic=="GoLink" or .mnemonic=="PrecompileSeccomp" or .mnemonic=="ProtocAuthenticityCheck" or .mnemonic=="GoToolchainBinaryBuild" or ((.exitCode // 0)!=0) or ((.status // "")!="")) | {label:.targetLabel,mnemonic,runner,cacheHit,exitCode,status,action:.digest,platform:.platform,executable:.commandArgs[0],outputs:[.actualOutputs[]? | {path,digest}],argv:(if ((.targetLabel//"")|contains("systrap/sysmsg")) and (.mnemonic=="CppLink" or .mnemonic=="CppCompile" or .mnemonic=="Genrule") then .commandArgs else [] end)}'''
     with subprocess.Popen([str(tmp/"bb"),"print","--compact_execution_log="+str(log)],stdout=subprocess.PIPE) as decode:
         raw = subprocess.check_output(["jq","-c",jq],stdin=decode.stdout)
         decode.stdout.close()
@@ -105,82 +105,111 @@ def elf(path):
         assert head[:6]==b"\x7fELF\x02\x01" and int.from_bytes(head[18:20],"little")==machine
         stream.seek(0)
         return {"sha256":hashlib.file_digest(stream,"sha256").hexdigest(),"bytes":path.stat().st_size,"elf_machine":machine}
-def smoke(install,busybox):
-    bundle=tmp/"guest-bundle"; fs=bundle/"rootfs"; fs.mkdir(parents=True)
-    (fs/"proc").mkdir()
-    shutil.copy2(busybox,fs/"busybox")
-    (fs/"busybox").chmod(0o755)
-    expected="release-"+cpu+"-"+results["corrected"][:9]
-    (fs/"probe").write_text(expected)
-    # The runner owns these files. Guest uid 0 has no DAC override in this spec.
-    for child in (fs,fs/"proc"): child.chmod(0o755)
-    (fs/"probe").chmod(0o644)
-    process={"terminal":False,"user":{"uid":0,"gid":0},"cwd":"/",
-             "args":["/busybox","sh","-ec",'/busybox cat /probe; printf "\\n"; /busybox uname -m'],"env":["PATH=/"]}
-    spec={"ociVersion":"1.0.2","root":{"path":"rootfs"},"process":process,
-          "mounts":[{"type":"proc","source":"proc","destination":"/proc"}],
-          "linux":{"namespaces":[{"type":n} for n in ("pid","mount","uts","ipc","network")]}}
-    (bundle/"config.json").write_text(json.dumps(spec))
-    state=tmp/"oci-state";state.mkdir()
-    apparmor=Path("/proc/sys/kernel/apparmor_restrict_unprivileged_userns")
-    if apparmor.exists() and apparmor.read_text().strip()!="0":
-        subprocess.run(["sudo","sysctl","-w","kernel.apparmor_restrict_unprivileged_userns=0"],check=True)
-    args=["sudo","-n","--",str(install/"runsc"),"--root="+str(state),"--platform=systrap","--network=none",
-          "--overlay2=none","--host-settings=ignore","--ignore-cgroups"]
-    cid="scratch-release"
-    sub=results["native_smoke"]={"privileged_host":platform.platform(),"started":now(),"guest":guest,
-        "elf":elf(fs/"busybox"),"read_from_guest":expected,"runsc_flags":args[4:],"sidecar_source":"adjacent gvisor-bin from //:release"}
-    save()
-    try:
-        proc=subprocess.run(["timeout","--kill-after=5","90",*args,"run","--bundle="+str(bundle),cid],
-                            stdin=subprocess.DEVNULL,capture_output=True,text=True)
-        sub.update(exit=proc.returncode,stdout=proc.stdout[:1000],stderr=proc.stderr[-5000:],finished=now())
-        assert proc.returncode==0 and proc.stdout.splitlines()==[expected,machine_name], "guest did not emit both expected outputs"
-        sub["verdict"]="GUEST_EXECUTED"
-    finally:
-        subprocess.run(["timeout","20",*args,"delete","--force",cid],capture_output=True)
-        save()
+def inspect_tar(mode, fileobj, debian=False):
+    binaries = {}
+    modes = {}
+    names = []
+    with tarfile.open(fileobj=fileobj, mode=mode) as archive:
+        for member in archive:
+            name = member.name.removeprefix("./").lstrip("/")
+            if not member.isfile():
+                continue
+            names.append(name)
+            payload = name.removeprefix("usr/bin/") if debian else name
+            if payload not in files:
+                continue
+            assert payload not in binaries, payload
+            stream = archive.extractfile(member)
+            header = stream.read(24)
+            assert header[:6] == b"\x7fELF\x02\x01" and int.from_bytes(header[18:20],"little") == machine, payload
+            digest = hashlib.sha256(header)
+            for block in iter(lambda: stream.read(1024*1024), b""):
+                digest.update(block)
+            binaries[payload] = {"sha256":digest.hexdigest(),"bytes":member.size,"elf_machine":machine}
+            modes[payload] = member.mode
+            assert member.mode & 0o111, payload
+    assert set(binaries) == files, (names, sorted(files-set(binaries)))
+    if debian:
+        assert "etc/containerd/runsc.toml" in names, names
+    return binaries, modes, names
+
+def inspect_package(work, path, kind):
+    details = {"path":str(path.relative_to(work)),"bytes":path.stat().st_size}
+    with path.open("rb") as archive:
+        details["sha256"] = hashlib.file_digest(archive,"sha256").hexdigest()
+        if kind=="bz2":
+            contents = inspect_tar("r|bz2",archive)
+        else:
+            if kind=="deb":
+                details["package"] = run("dpkg-deb","-f",path,"Package")
+                details["architecture"] = run("dpkg-deb","-f",path,"Architecture")
+                details["version"] = run("dpkg-deb","-f",path,"Version")
+                assert (details["package"],details["architecture"],details["version"]) == ("runsc",cpu,version),details
+                argv=["dpkg-deb","--fsys-tarfile",path]
+            else:
+                argv=["zstd","-q","-d","-c",path]
+            with subprocess.Popen(argv,stdout=subprocess.PIPE) as proc:
+                contents = inspect_tar("r|",proc.stdout,debian=kind=="deb")
+                while proc.stdout.read(1024*1024):
+                    pass
+                assert proc.wait()==0
+    details["binaries"],details["modes"],details["regular_member_names"] = contents
+    return details
+
 try:
-    assert platform.machine()==machine_name
-    assert run("git","rev-parse","HEAD^")==os.environ["CORRECTED"]
+    assert platform.machine() == machine_name
+    assert run("git","rev-parse","HEAD^") == os.environ["CORRECTED"]
     source(os.environ["CORRECTED"])
-    results.update(cpu=cpu,mode="fastbuild",public_target="//:release",declared_staging="679ce6be6e12e3d5d896b96294be4dd59473537f",
-                   sidecar_proposal="e482579e11a4e098f069bdeb4c66677b36bc93ff",original_release_run=41256773361,original_worker_controls={"arm64":13061034514,"amd64":13056457271},private_cli_evidence=13063272315)
-    opts=["--compilation_mode=fastbuild","--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
-          "--extra_toolchains=//test/rbe/go_bootstrap:linux_"+cpu+"_ash"]
-    result,actions=invoke(cpu,cpu,["//:release",guest],opts)
-    failed=[a for a in actions if a.get("exitCode") or a.get("status")]
-    result["failed_actions"]=[{k:a.get(k) for k in ("label","mnemonic","executable","runner","exitCode","status","action","platform")} for a in failed]
+    version = "20991231.0"
+    tag = "release-"+version
+    subprocess.run(["git","tag",tag,"HEAD"],check=True)
+    assert run("tools/workspace_status.sh") == "STABLE_VERSION "+tag
+    targets = {"deb":"//debian:debian","bz2":"//debian:gvisor-release-tar-bz2","zstd":"//debian:gvisor-release-tar-zstd"}
+    results.update(cpu=cpu,mode="opt",scoped_producer=".buildkite/release.yaml / Makefile artifacts/%",
+                   fixture_local_tag=tag,runtime_source="f906c5dd8",earlier_fastbuild=41257521162,
+                   worker_controls={"arm64":13061034514,"amd64":13056457271},archive_writer_backport="407a3c7c4c",
+                   version_writer="316da5996",changelog_writer="8311c4cdb")
+    py_tool="//test/rbe/protoc_check:static_python"+("_arm64" if cpu=="arm64" else "")
+    opts=["--compilation_mode=opt","--lockfile_mode=off","--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
+          "--extra_toolchains=//test/rbe/go_bootstrap:linux_"+cpu+"_ash,"+py_tool,
+          "--action_env=PATH=/usr/bin:/bin","--modify_execution_info=^(PackageTar|MakeDeb)$=+no-remote-cache"]
+    r, actions = invoke(cpu,cpu,list(targets.values()),opts)
+    failed = [a for a in actions if a.get("exitCode") or a.get("status")]
+    r["failed_actions"]=[{k:a.get(k) for k in ("label","mnemonic","runner","exitCode","status","executable","outputs","platform")} for a in failed]
     save()
-    if result["native_exit"]!=0:
-        results["verdict"]="BUILD_FAILED";raise SystemExit(1)
-    stage=[(a,o) for a in actions if a["label"]=="//:release" for o in a["outputs"] if "/bin/release/" in o["path"]]
-    if {o["path"].split("/bin/release/",1)[1] for a,o in stage}!=files:
-        raise ValueError("public release staging outputs were missing from the compact log: "+str([o["path"] for a,o in stage]))
-    execroot=Path(run("bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"info","execution_root"))
-    install=tmp/"native-release";install.mkdir()
-    result["artifacts"]={}
-    for a,o in stage:
-        rel=o["path"].split("/bin/release/",1)[1]
-        p=execroot/o["path"]
-        info=elf(p)
-        assert info["sha256"]==o["digest"]["hash"] and info["bytes"]==int(o["digest"]["sizeBytes"])
-        props={item["name"]:item["value"] for item in a["platform"]["properties"]}
-        assert props.get("Arch")==cpu and props.get("container-image")==image
-        dest=install/rel;dest.parent.mkdir(exist_ok=True);shutil.copy2(p,dest)
-        assert os.access(dest,os.X_OK)
-        result["artifacts"][rel]=dict(**info,mnemonic=a["mnemonic"],runner=a.get("runner"),cache_hit=a.get("cacheHit",False),action=a["action"],worker=props)
-    result["verdict"]="EIGHT_RELEASE_ELFS_VERIFIED";save()
-    # Fetch Bazel's actual declared source file, not a client system utility.
-    cquery=run("bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"cquery","--output=files",guest)
-    paths=[execroot/line for line in cquery.splitlines() if line.endswith("/payload/usr/bin/busybox")]
-    if len(paths)!=1: raise ValueError("expected one BusyBox source path; got "+repr(cquery[:350]))
-    smoke(install,paths[0])
-    results["verdict"]="RELEASE_FILES_AND_NATIVE_GUEST_VERIFIED"
-except Exception as exc:
-    results["error"]=type(exc).__name__+": "+str(exc)[:400]
-    results["verdict"]="INCOMPLETE"
-finally:
-    results["verified"]=now();save()
-    print(cpu,results.get("verdict"),results.get("error"),flush=True)
-sys.exit(results["verdict"]!="RELEASE_FILES_AND_NATIVE_GUEST_VERIFIED")
+    work=Path(run("bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"info","execution_root"))
+    r["packages"]={}
+    missing=[]
+    problems=[]
+    endings={"deb":".deb","bz2":".tar.bz2","zstd":".tar.zstd"}
+    for name,label in targets.items():
+        possible=[(a,o) for a in actions if a.get("label")==label for o in a.get("outputs",[]) if o.get("path","").endswith(endings[name])]
+        if len(possible)!=1:
+            missing.append({"label":label,"matched_outputs":[o for a,o in possible]})
+            continue
+        a,o=possible[0]
+        try:
+            p=work/o["path"]
+            pkg=inspect_package(work,p,name)
+            pkg.update(producer={k:a.get(k) for k in ("action","runner","cacheHit","mnemonic","platform","executable")})
+            assert pkg["sha256"]==o["digest"]["hash"] and pkg["bytes"]==int(o["digest"]["sizeBytes"]),label
+            assert "-opt/" in o["path"],o
+            props={v["name"]:v["value"] for v in a["platform"]["properties"]}
+            assert (props.get("Arch"),props.get("container-image"))==(cpu,image),props
+            assert a["runner"]=="remote" and not a.get("cacheHit"), a
+            r["packages"][name]=pkg
+        except Exception as exc:
+            problems.append({"label":label,"failure":repr(exc)})
+        save()
+    r["missing_outputs"]=missing
+    r["verification_errors"]=problems
+    if r["native_exit"] or failed or missing or problems:
+        results["verdict"]="INCOMPLETE";save();raise SystemExit(1)
+    assert all(p["binaries"]==r["packages"]["deb"]["binaries"] for p in r["packages"].values())
+    results["verdict"]="THREE_OPT_DISTRIBUTIONS_SAME_EIGHT_ELFS"
+    results["complete"]=now()
+    save()
+except BaseException as exc:
+    results["exception"]=repr(exc)
+    save()
+    raise
