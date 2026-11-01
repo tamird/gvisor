@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T21:23:09+00:00",
+    "updatedAt": "2026-11-01T21:37:29+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10618,8 +10618,8 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/f76d229c0",
       "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-30T01:33:59.333384+00:00",
-      "summary": "Primitive-array storage improved the Nginx checkpoint fixture on one AMD64 worker: decode 17.19→16.12 ms (−6.19%), encode 14.56→13.64 ms (−6.30%), and allocated bytes fell 9.26% and 13.29%, respectively. The sixteen paired AB/BA runs measured these two stages.",
+      "updatedAt": "2026-11-01T21:29:32+00:00",
+      "summary": "These array buffers serve the wire codec. The Nginx measurements below apply to wire-format checkpoints.\n\nPrimitive-array storage improved the Nginx checkpoint fixture on one AMD64 worker: decode 17.19→16.12 ms (−6.19%), encode 14.56→13.64 ms (−6.30%), and allocated bytes fell 9.26% and 13.29%, respectively. The sixteen paired AB/BA runs measured these two stages.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "f76d229c04d56c4a800f0e3561d36e75410f91a1",
@@ -11020,8 +11020,8 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/7b4e8579e089e89a237fdd22cd0f5e83658d3776",
       "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-26T22:23:56.114433+00:00",
-      "summary": "The contributor approved the reference-array stage 7b4e8579e after independent source review. It follows typed primitive arrays and will open after that prerequisite lands. The exact final pkg/state tree passed nine normal owners (10,931 positive records) and three race owners (10,969 positives, two existing eager-validation skips that pass normally), with no failures or missing records. Selected AMD64 container checkpoint/resume, DirectFS pipe-save and Docker checkpoint/resume coverage passed. The fresh twenty-leaf comparison establishes 1,024 fewer allocations in state slice and both adoption cases; separate-worker timing variation does not establish a latency improvement.\n\nHistorical superseded implementation:\n\nThis abandoned parallel proposal is preserved as investigation history. Its source-specific findings feed the single current destination-driven redesign; there is no separate implementation or contributor decision.\n\nHistorical findings:\n\nThe unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.\n\nThe independent master-based proposal captures addressable pointer arrays in one owned reference slice while retaining the existing graph resolver and wire format. Fourteen-owner compatibility and the eight-owner final refinement are closed, with baseline/candidate byte and digest equality. The balanced twelve-block three-arm comparison reports Slice Save time -28.30%, allocated bytes -18.43%, and allocations 1,067 to 43 versus master. UDP timing is nonsignificant; Map Load is -2.05% without a decoder-cause claim. State/UDP executables grow 4,096/8,192 bytes; observed UDP initialization is unchanged. Three final-code kernel restores pass, with the baseline reused from a separate invocation; this is compatibility only. The earlier significant UDP regression remains a separate cohort. No upstream PR exists.",
+      "updatedAt": "2026-11-01T21:29:32+00:00",
+      "summary": "These reference arrays serve the wire codec. New runsc checkpoints use the graph representation by default.\n\nThe contributor approved the reference-array stage 7b4e8579e after independent source review. It follows typed primitive arrays and will open after that prerequisite lands. The exact final pkg/state tree passed nine normal owners (10,931 positive records) and three race owners (10,969 positives, two existing eager-validation skips that pass normally), with no failures or missing records. Selected AMD64 container checkpoint/resume, DirectFS pipe-save and Docker checkpoint/resume coverage passed. The fresh twenty-leaf comparison establishes 1,024 fewer allocations in state slice and both adoption cases; separate-worker timing variation does not establish a latency improvement.\n\nHistorical superseded implementation:\n\nThis abandoned parallel proposal is preserved as investigation history. Its source-specific findings feed the single current destination-driven redesign; there is no separate implementation or contributor decision.\n\nHistorical findings:\n\nThe unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.\n\nThe independent master-based proposal captures addressable pointer arrays in one owned reference slice while retaining the existing graph resolver and wire format. Fourteen-owner compatibility and the eight-owner final refinement are closed, with baseline/candidate byte and digest equality. The balanced twelve-block three-arm comparison reports Slice Save time -28.30%, allocated bytes -18.43%, and allocations 1,067 to 43 versus master. UDP timing is nonsignificant; Map Load is -2.05% without a decoder-cause claim. State/UDP executables grow 4,096/8,192 bytes; observed UDP initialization is unchanged. Three final-code kernel restores pass, with the baseline reused from a separate invocation; this is compatibility only. The earlier significant UDP regression remains a separate cohort. No upstream PR exists.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "7b4e8579e089e89a237fdd22cd0f5e83658d3776",
@@ -21740,8 +21740,8 @@
       "url": "https://github.com/tamird/gvisor/commit/6a5814d55aa2c2cefc256644c11de8598944c095",
       "group": "runtime",
       "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-22T10:26:32.101647+00:00",
-      "summary": "Contributor approved exact6a5814 for opening after the array-storage prerequisite.\n\nPreserved qualification record:\n\nThe destination-kind correction was reviewed and approved, conditional on the homogeneous-array prerequisite. It rejects incompatible empty or zero wire values in the existing decoder and passes normal and race checks. The final direct-assertion version has no detected timing difference in the fixed sixteen-pair, 136-child array-to-kind comparison: graph Load +0.31% (p=.210), UDP Load -0.22% (p=.270), with unchanged allocation counts and wire format. The graph test binary grows 4,096 bytes; UDP is unchanged. The earlier generic-helper regression and compiler evidence remain preserved; no speed or startup claim is made.",
+      "updatedAt": "2026-11-01T21:29:32+00:00",
+      "summary": "This corrects destination validation when restoring a wire-format checkpoint, including older checkpoints. Graph restores use a separate decoder.\n\nContributor approved exact6a5814 for opening after the array-storage prerequisite.\n\nPreserved qualification record:\n\nThe destination-kind correction was reviewed and approved, conditional on the homogeneous-array prerequisite. It rejects incompatible empty or zero wire values in the existing decoder and passes normal and race checks. The final direct-assertion version has no detected timing difference in the fixed sixteen-pair, 136-child array-to-kind comparison: graph Load +0.31% (p=.210), UDP Load -0.22% (p=.270), with unchanged allocation counts and wire format. The graph test binary grows 4,096 bytes; UDP is unchanged. The earlier generic-helper regression and compiler evidence remain preserved; no speed or startup claim is made.",
       "links": [
         {
           "label": "Complete proposed change",
@@ -22261,8 +22261,8 @@
       "url": "https://github.com/tamird/gvisor/commit/15f2d7624e84c8d879d25b746da0f2c2517db962",
       "group": "runtime",
       "status": "Contributor approved; waiting for state prerequisites",
-      "updatedAt": "2026-10-22T20:18:13.441878+00:00",
-      "summary": "Contributor approval is complete, including the requested changed UDP Save benchstat row in the commit and description. The final message-only amendment preserves the measured source. In the fixed production comparison, UDP Save improves 3.97% (489.5 to 470.1 microseconds); graph Save/Load and UDP Load have no detected timing difference. Allocation counts, wire data and binary sizes are unchanged; exact allocated bytes are not claimed.\n\nOpen after the existing array-storage and destination-kind prerequisites land.",
+      "updatedAt": "2026-11-01T21:29:32+00:00",
+      "summary": "This changes Save only when the caller selects the wire encoder. The UDP queue benchmark below measured that encoder.\n\nContributor approval is complete, including the requested changed UDP Save benchstat row in the commit and description. The final message-only amendment preserves the measured source. In the fixed production comparison, UDP Save improves 3.97% (489.5 to 470.1 microseconds); graph Save/Load and UDP Load have no detected timing difference. Allocation counts, wire data and binary sizes are unchanged; exact allocated bytes are not claimed.\n\nOpen after the existing array-storage and destination-kind prerequisites land.",
       "followup": {
         "owner": "node_tls_sni",
         "sourceHead": "15f2d7624e84c8d879d25b746da0f2c2517db962",
@@ -22290,8 +22290,8 @@
       "url": "https://github.com/tamird/gvisor/commit/b9797d128902a3966efa681c432d2f7a7be36962",
       "group": "runtime",
       "status": "Contributor approved; waiting for decoder prerequisites",
-      "updatedAt": "2026-10-22T20:51:29.370222+00:00",
-      "summary": "Contributor approved this decoder simplification for opening after its existing prerequisites. It removes four net production lines by registering dependencies while decoding, preserving dependency ordering and validation. Normal and race checks pass. The fixed production comparison detects no timing change in graph Save/Load or UDP Save/Load; allocation counts and wire data are unchanged. The measured graph executable is 4,096 bytes smaller; the UDP executable is unchanged. No speedup is claimed.\n\nThis is a sibling of the approved encoder change. Opening also requires the existing array-storage and destination-kind prerequisites.",
+      "updatedAt": "2026-11-01T21:29:32+00:00",
+      "summary": "This simplifies dependency tracking when restoring a wire-format checkpoint. Graph restores schedule their own callbacks.\n\nContributor approved this decoder simplification for opening after its existing prerequisites. It removes four net production lines by registering dependencies while decoding, preserving dependency ordering and validation. Normal and race checks pass. The fixed production comparison detects no timing change in graph Save/Load or UDP Save/Load; allocation counts and wire data are unchanged. The measured graph executable is 4,096 bytes smaller; the UDP executable is unchanged. No speedup is claimed.\n\nThis is a sibling of the approved encoder change. Opening also requires the existing array-storage and destination-kind prerequisites.",
       "followup": {
         "owner": "node_tls_sni",
         "sourceHead": "b9797d128902a3966efa681c432d2f7a7be36962",
@@ -42329,8 +42329,8 @@
       "url": "https://github.com/tamird/gvisor/tree/proposal/state-grow-callback-table",
       "group": "runtime",
       "status": "Superseded",
-      "summary": "The tuning experiment measured callback-table copy costs on a 50,000-file restore. The next design should reserve storage from information available to callback registration and avoid an arbitrary size threshold.",
-      "updatedAt": "2026-11-01T16:43:48.546844+00:00",
+      "summary": "The registration API was tried on 16 native restores of a 50,000-file checkpoint. It reduced allocated bytes by 5.47% and peak heap by 3.58%, but increased retained heap by 1.55%. Restore time was 230.3 ms on stock and 236.4 ms with reservation (p=0.13). Both the table-growth experiment and the reservation proposal are on hold.",
+      "updatedAt": "2026-11-01T21:29:32+00:00",
       "evidence": [
         {
           "label": "Implementation and benchstat",
@@ -42339,6 +42339,10 @@
         {
           "label": "Native restores, boundary cases and integration checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/41323238175/artifacts/13090878783"
+        },
+        {
+          "label": "Registration API, paired restores and heap measurements",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41335098309/artifacts/13095863118"
         }
       ],
       "inactive": true
@@ -46081,7 +46085,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-01T19:40:22.453604+00:00",
+      "updatedAt": "2026-11-01T21:37:29+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -47947,9 +47951,31 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41304678019/artifacts/13082839573"
             }
           ]
+        },
+        {
+          "text": "With a 20 Mbit/s, 100 ms shared path and a 100-packet queue, gVisor entered recovery 12 versus 6 times in one trial and 11 versus 8 in the other. Opposite senders started first. Both kept about 70% of the previous congestion window after losing data. In the trial with overlapping exit windows, the median difference in window gain after 256 MSS of cumulatively acknowledged data was zero across six matched pairs. The ACK crossing arrived later at gVisor in every pair (median 26.7 ms). Exit windows did not overlap in the second trial.",
+          "evidence": [
+            {
+              "label": "Original sender measurements and two-sided packet captures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41304678019/artifacts/13082839573"
+            },
+            {
+              "label": "How the socket sampler recorded window size, recovery state and bytes acknowledged",
+              "url": "https://github.com/tamird/gvisor/blob/392e96e68/test/benchmarks/tcp/observation.go#L27-L95"
+            }
+          ]
+        },
+        {
+          "text": "The sender traces contain a 32 KiB packetization pattern. In trials A and B, respectively, all 1,128 and 1,101 original 108-byte gVisor segments ended 32,768 sequence bytes after the preceding short original. Linux sent no short originals over the common intervals. With exactly 98 previously delivered data packets still between capture points, a gVisor pair lost its second packet 6/15 and 4/9 times following an ACK covering one full segment and a 108-byte tail, versus 2/85 and 5/64 following an ACK covering two full segments. The proxy reads in chunks of at most 32 KiB. The captures do not record individual write calls.",
+          "evidence": [
+            {
+              "label": "Original captures, sender statistics and test configuration",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41304678019/artifacts/13082839573"
+            }
+          ]
         }
       ],
-      "nextStep": "In the two live CUBIC trials, gVisor had a smaller mean window even when both senders were backlogged and outside recovery (69 vs 86 segments and 67 vs 99). Use those loss and window histories to pick a sender change before rerunning the competition.",
+      "nextStep": "Isolate packetization at the boundary between two writes. Prequeue data before reopening the receive window so a short segment cannot be explained by the application running out of data. Compare the on-wire segments to Linux and preserve the existing DNS message coalescing constraint.",
       "evidence": [
         {
           "label": "Eight competing transfers with verified packet captures",
@@ -49013,7 +49039,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T20:57:36.045285+00:00",
+      "updatedAt": "2026-11-01T21:29:32+00:00",
       "summary": "A restore of 50,000 tmpfs files queued 150,890 callbacks. About a third came from inode after-load hooks, a third from converting dentry parents, and a third from directory maps waiting for their children.",
       "findings": [
         {
@@ -52158,6 +52184,19 @@
             {
               "label": "Six benchmark observations on the same checkpoint",
               "url": "https://github.com/tamird/gvisor/actions/runs/41348084998/artifacts/13099864337"
+            }
+          ]
+        },
+        {
+          "text": "Five approved wire-codec changes apply to primitive arrays, reference arrays, destination validation, zero elision and decoded dependencies. Their speed and allocation measurements concern wire-format checkpoints. The default graph codec takes separate Save and Load paths. The destination validation remains relevant when restoring older checkpoints.",
+          "evidence": [
+            {
+              "label": "Checkpoint engine selection and format detection",
+              "url": "https://github.com/google/gvisor/blob/aa767e4c4/pkg/state/state.go#L92-L152"
+            },
+            {
+              "label": "Default runsc checkpoint format",
+              "url": "https://github.com/google/gvisor/blob/aa767e4c4/runsc/config/flags.go#L195"
             }
           ]
         }
