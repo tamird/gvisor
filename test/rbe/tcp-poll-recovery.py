@@ -63,6 +63,8 @@ def first_errors():
     }
     errors = {}
     for name, uuid in ids.items():
+        if not name.startswith("arm-"): continue
+        after = 0
         request = {"selector": {"invocation_id": uuid}, "page_token": "0000"}
         kept = []
         lines = 0
@@ -74,9 +76,13 @@ def first_errors():
             for line in log.splitlines():
                 # Never publish command lines, env, headers, URLs or tokens.
                 clean = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", line).strip()
-                if any(x in clean.lower() for x in ["bearer", "api-key", "credential", "header", "token=", "https:", "command line", "error executing", "--", "ghp_"]):
+                if "error executing GoStandardLibraryAnalysis" in clean:
+                    after = 9
+                if any(x in clean.lower() for x in ["bearer", "api-key", "credential", "header", "token=", "https:", "command line", "command (from target", "--", "ghp_"]):
                     continue
-                if re.search(r"(: error:|: fatal error:|(?:error|exception|fatal|panic):|no such file|exec format|failed to (?:load|parse|analyze|run)|cannot (?:read|open|find)|requires cgo|build cache is|not in std|not defined)", clean, re.I):
+                near = after > 0 and 0 < len(clean) < 600 and not clean.startswith(("INFO:", "ERROR:", "Use ", "Target ", "//", "bazel", "(", "[")) and not re.search(r'(?:[A-Za-z0-9_+=/-]{50,})', clean)
+                if after > 0: after -= 1
+                if near or re.search(r"(: error:|: fatal error:|(?:error|exception|fatal|panic):|no such file|exec format|failed to (?:load|parse|analyze|run)|cannot (?:read|open|find)|requires cgo|build cache is|not in std|not defined)", clean, re.I):
                     clipped = clean[:420]
                     if clipped not in kept and len(kept) < 12:
                         kept.append(clipped)
@@ -118,7 +124,7 @@ def inspect(name, labels):
     rc=int((d/'exit').read_text())
     ok=bool(labels) and rc==0 and set(actual)==set(labels) and all(v=='PASSED' for v in actual.values())
     if name=='owners': ok &= len(rows)==len(labels) and all(r['outcomes'].get('PASS',0)>0 and not r['failures'] for r in rows.values())
-    detail=[s[:300] for s in (d/'log').read_text(errors='replace').splitlines() if s.startswith(('ERROR:','FAIL:','/bin/bash:')) and not any(x in s.lower() for x in ['token','header','credential','api-key'])][:6]
+    detail=[s[:300] for s in (d/'log').read_text(errors='replace').splitlines() if (s.startswith(('ERROR:','FAIL:','/bin/bash:')) or ': error:' in s or ': fatal error:' in s or 'exec format' in s.lower() or 'cannot execute' in s.lower()) and not any(x in s.lower() for x in ['token','header','credential','api-key'])][:6]
     return {'verified':ok,'source':source,'host_arch':os.uname().machine,'exit':rc,'start':(d/'start').read_text().strip(),'end':(d/'end').read_text().strip(),'invocations':inv,'target_status':actual,'missing':sorted(set(labels)-actual.keys()), 'individual_go_results':rows, 'first_diagnostics':detail}
 
 
