@@ -57,8 +57,11 @@ single_version_override(
 )
 
 # Drop the backport when the llvm module includes kernel_headers.configure.
-single_version_override(
+archive_override(
     module_name = "llvm",
+    urls = ["https://github.com/tamird/hermetic-llvm/archive/11ce0016d9cf92a1927b0303973095a5fe80addd.tar.gz"],
+    sha256 = "cb00dfa1505e4014d290e9fa09bd93b16d2e32b21f2dd2833f44bd60a5dbf22a",
+    strip_prefix = "hermetic-llvm-11ce0016d9cf92a1927b0303973095a5fe80addd",
     patch_strip = 1,
     patches = ["//tools:llvm-linux-header-default.patch", "//tools:qualification-module-map-musl.patch", "//tools:qualification-linux-libraries.patch", "//test/rbe/empty_worker:link-wrapper-musl.patch", "//test/rbe/llvm_scratch:instrumentor-template.patch"],
 )
