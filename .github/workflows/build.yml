@@ -1,4 +1,4 @@
-name: Compare the original stdbool configure probe
+name: Qualify direct compiler launch on scratch
 on:
   push:
     branches: [qualification/plugin-scratch]
@@ -8,7 +8,7 @@ jobs:
   qualify:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: carrier, persist-credentials: false, fetch-depth: 1}
@@ -21,6 +21,13 @@ jobs:
           ref: f8f5f201805db9b0c27571f7630cb8a37f3a78d6
           persist-credentials: false
           fetch-depth: 1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: tamird/rules_cc_autoconf
+          path: supplier
+          ref: b0b4b6c173c4312c14f3c5a427e9e3cb7271143c
+          persist-credentials: false
+          fetch-depth: 2
       - name: Prepare private remote configuration and declared execution platform
         working-directory: carrier
         env:
@@ -47,7 +54,7 @@ jobs:
           fi
           bazel --bazelrc="$RUNNER_TEMP/sidecar.bazelrc" run //tools/actionlint -- "$PWD/.github/workflows/build.yml" > "$RUNNER_TEMP/actionlint.log" 2>&1 || { tail -20 "$RUNNER_TEMP/actionlint.log"; exit 1; }
           printf '%s\n' '{"status":"PASS","phase":"bootstrap","executed_targets":0}' > "$RUNNER_TEMP/package-evidence/bootstrap.json"
-      - name: Compare the unchanged configure target
+      - name: Compare same-version configure behavior and run supplier regressions
         working-directory: product
         run: |
           set -eu
@@ -77,6 +84,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: configure-probe
+          name: direct-compiler-launch
           path: ${{ runner.temp }}/package-evidence
           if-no-files-found: error

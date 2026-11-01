@@ -95,6 +95,7 @@ def stats(log, arch, folder, expected_image=image, expected_isolation="oci", own
     examples = {}
     bad=[]
     owner_actions=[]
+    owners = {owner_label} if isinstance(owner_label, str) else set(owner_label or [])
     # All fields in this projection are on the compact spawn itself.
     # Retain every spawn but avoid reconstructing its transitive inputs.
     filt=projection(True)
@@ -108,7 +109,7 @@ def stats(log, arch, folder, expected_image=image, expected_isolation="oci", own
                 props={p["name"]:p["value"] for p in row["p"]}
                 environment={k:props.get(k) for k in ("Arch","container-image","workload-isolation-type")}
                 seen = props.get("Arch")==arch and props.get("container-image")==expected_image and props.get("workload-isolation-type")==expected_isolation
-                if owner_label is not None and row["l"] == owner_label:
+                if row["l"] in owners:
                     owner_actions.append(dict({key: row[key] for key in ("m", "l", "x", "r", "c", "s", "e", "d")}, platform=environment))
                 runner=row["r"] or "unknown"
                 key=(row["m"],runner,bool(row["c"]),seen,row["x"] or "")
