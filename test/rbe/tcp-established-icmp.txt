@@ -1,0 +1,46 @@
+
+func TestEstablishedICMPPoll(t *testing.T) {
+	for _, opt := range []struct {
+		name string
+		value int32
+	}{{"disabled", 0}, {"enabled", 1}} {
+		t.Run(opt.name, func(t *testing.T) {
+			dut := testbench.NewDUT(t)
+			listener, port := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1)
+			defer dut.Close(t, listener)
+			conn := dut.Net.NewTCPIPv4(t, testbench.TCP{DstPort: &port}, testbench.TCP{SrcPort: &port})
+			defer conn.Close(t)
+			conn.Connect(t)
+			fd, _ := dut.Accept(t, listener)
+			defer dut.Close(t, fd)
+			dut.SetSockOptInt(t, fd, unix.SOL_IP, unix.IP_RECVERR, opt.value)
+			pollerr := func(wait time.Duration) int16 {
+				fds := dut.Poll(t, []unix.PollFd{{Fd: fd, Events: unix.POLLERR}}, wait)
+				if len(fds) == 0 { return 0 }
+				return fds[0].Revents
+			}
+			before := pollerr(0)
+			dut.Send(t, fd, []byte("quote me"), 0)
+			frame, err := conn.ExpectData(t, &testbench.TCP{}, &testbench.Payload{Bytes: []byte("quote me")}, time.Second)
+			if err != nil { t.Fatalf("waiting for TCP segment to quote: %v", err) }
+			tcp := frame[len(frame)-2].(*testbench.TCP)
+			sendICMPError(t, &conn, tcp)
+
+			signals := pollerr(time.Second)
+			soError := dut.GetSockOptInt(t, fd, unix.SOL_SOCKET, unix.SO_ERROR)
+			after := pollerr(0)
+			n, _, recvErr := dut.RecvWithErrno(context.Background(), t, fd, 128, unix.MSG_ERRQUEUE | unix.MSG_DONTWAIT)
+			post := pollerr(0)
+			t.Logf("ESTABLISHED_ICMP opt=%d initial=%d poll=%d so=%d after=%d recv=%d errno=%d post=%d", opt.value, before, signals, soError, after, n, recvErr, post)
+			if before != 0 || soError != int32(unix.EHOSTUNREACH) {
+				t.Errorf("did not isolate a fresh ICMP error: initial %v, SO_ERROR %d", before, soError)
+			}
+			conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck)})
+			dut.Send(t, fd, []byte("still connected"), 0)
+			if _, err := conn.ExpectData(t, &testbench.TCP{}, &testbench.Payload{Bytes: []byte("still connected")}, 2*time.Second); err != nil {
+				t.Fatalf("connection did not carry data after the ICMP: %v", err)
+			}
+			t.Logf("ESTABLISHED_LIVE opt=%d", opt.value)
+		})
+	}
+}
