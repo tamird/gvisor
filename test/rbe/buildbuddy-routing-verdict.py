@@ -5,6 +5,10 @@ import json,sys,xml.etree.ElementTree as ET
 import qualification_report as qr
 
 out=Path(sys.argv[1]);source=sys.argv[2];events=out/"events.jsonl"
+# A Bazel failure before BEP initialization still needs a verdict.
+if not (out/"raw.jsonl").is_file():
+ qr.write_json(out/"verdict.json", {"source":source,"confirmed_pass":False,"native_exit":(out/"native_exit").read_text().strip(),"missing":(out/"targets").read_text().splitlines(),"error":"Bazel did not initialize its event stream"})
+ sys.exit(1)
 captured=qr.capture(out/"raw.jsonl",events,Path("bazel-out"),out/"reports")
 (out/"capture_exit").write_text("1" if captured["errors"] else "0")
 keys=("commit_file","source_before","source_after","final_head","executed_arguments","native_exit","capture_exit")

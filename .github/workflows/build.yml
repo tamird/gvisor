@@ -1,7 +1,7 @@
 name: Qualify rebased BuildBuddy VFS routing
 on:
   push:
-    branches: [qualification/buildbuddy-vfs-routing]
+    branches: [qualification/buildbuddy-vfs-routing-recovery]
 permissions:
   contents: read
 jobs:
@@ -18,6 +18,15 @@ jobs:
           fetch-depth: 2
           path: buildbuddy
           persist-credentials: false
+      - name: Prepare the Bazel client for the authorized RBE endpoint
+        env:
+          RBE_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          test -n "$RBE_KEY"
+          printf 'common --remote_header=x-buildbuddy-api-key=%s\ncommon --bes_header=x-buildbuddy-api-key=%s\n' "$RBE_KEY" "$RBE_KEY" > "$RUNNER_TEMP/rbe.bazelrc"
+          python3 -B harness/test/rbe/qualification_report.py --help >/dev/null
       - name: Qualify three affected race suites and the scheduling client
         working-directory: buildbuddy
         shell: bash
@@ -33,7 +42,7 @@ jobs:
           printf '%s\n' "${owners[@]}" > "$out/targets"
           args=(test --config=untrusted-ci --config=race --nocache_test_results --remote_download_outputs=toplevel --build_event_json_file="$out/raw.jsonl" --build_event_json_file_path_conversion=false "${owners[@]}" //enterprise/server/scheduling/scheduler_client:scheduler_client)
           printf '%s\n' "${args[@]}" > "$out/executed_arguments"
-          rc=0; bazelisk "${args[@]}" || rc=$?
+          rc=0; bazelisk --bazelrc="$RUNNER_TEMP/rbe.bazelrc" "${args[@]}" || rc=$?
           printf '%s\n' "$rc" > "$out/native_exit"
           date -u '+%Y-%m-%dT%H:%M:%S.%3N+00:00' > "$out/finished"
           git rev-parse HEAD > "$out/final_head"
