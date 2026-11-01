@@ -1,4 +1,4 @@
-"""Qualify the ordinary native syscall entry point on static-musl targets."""
+"""Qualify the ordinary native syscall entry point on the proposed source-built static-glibc platforms."""
 
 import collections
 import datetime
@@ -20,11 +20,15 @@ IMAGE = "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a
 TARGETS = ["//test/syscalls:fork_test_native"]
 CASES = {TARGETS[0]: ["ForkTest/Simple", "ForkTest/Pipe", "ForkTest/SharedMapping"]}
 LINK_TARGETS = ["//test/syscalls/linux:fork_test", "//test/runner/setup_container:setup_container"]
-ABI = {"selected": "musl target libc on both native scratch execution architectures",
+ABI = {"selected": "static glibc 2.44 on both native scratch execution architectures",
+       "supplier_proposal": "https://github.com/hermeticbuild/hermetic-llvm/pull/768",
+       "supplier_source": "11ce0016d9cf92a1927b0303973095a5fe80addd",
+       "supplier_base": "llvm 0.8.24",
+       "supplier_delta": "Unmodified first four proposal commits, excluding unrelated libstdc++",
        "GNU_boundary_proof": {"run": 41302038018, "artifact": 13082191714},
        "launcher_proposal": "8919cb68b11643114c1f28c1a756902a2958bda0",
-       "scope": "Ordinary native entry point and supported musl platform, no run_under or per-target change",
-       "limitation": "These musl syscall results do not qualify glibc behavior or the default GNU target"}
+       "scope": "Ordinary native entry point and proposed GNU static platform, no run_under or per-target change",
+       "limitation": "Static glibc 2.44 is distinct from the default dynamic GNU target. These cases do not qualify dlopen, external NSS modules, or locale data"}
 
 
 def now():
@@ -60,6 +64,7 @@ def native_actions(path, arch, tmp):
     counts = collections.Counter()
     tests = []
     bad = []
+    glibc_actions = collections.Counter()
     with subprocess.Popen([str(tmp / "bb"), "print", "--raw", "--compact_execution_log=" + str(path)],
                           stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) as decoder:
         with subprocess.Popen(["jq", "-c", projection], stdin=decoder.stdout,
@@ -75,6 +80,8 @@ def native_actions(path, arch, tmp):
                 counts["off_platform"] += not correct
                 counts["local"] += not row["c"] and runner != "remote"
                 counts["failed"] += bool(row["s"] or row["e"])
+                if row["m"].startswith("GlibcStatic"):
+                    glibc_actions[row["m"] + (":cached" if row["c"] else ":" + runner)] += 1
                 item = {"target": row["l"], "mnemonic": row["m"], "executable": row["x"],
                         "runner": runner, "cache_hit": bool(row["c"]), "platform": platform,
                         "status": row["s"], "exit_code": row["e"], "digest": row["d"]}
@@ -101,7 +108,7 @@ def native_actions(path, arch, tmp):
                             "GVISOR_SYSCALL_TEST_BINARY": "test/syscalls/linux/fork_test",
                             "GVISOR_SYSCALL_TEST_RUNNER": "test/runner/runner_/runner"})
     return {"status": "PASS" if counts["total"] and not counts["failed"] and not bad and not decode_exit and not projection_exit and valid_tests else "INCOMPLETE",
-            "counts": dict(counts), "decoder_exits": [decode_exit, projection_exit],
+            "counts": dict(counts), "glibc_actions": dict(glibc_actions), "decoder_exits": [decode_exit, projection_exit],
             "tests": original, "xml_actions": auxiliary, "failed_or_other": bad}
 
 
@@ -183,22 +190,53 @@ def static_links(graph):
             archives[name] = selected[0]
         search = [arg[2:] for arg in args if arg.startswith("-L") and len(arg) > 2]
         search.extend(args[i + 1] for i, arg in enumerate(args[:-1]) if arg == "-L")
-        # This supplier declares the search directory as a tree artifact.
-        # Bind that tree to its own copy action and the real libc.a input.
+        # Both search trees must contain the proposed source-built runtimes,
+        # rather than just the existing shared stubs or libc_nonshared.a.
         directories = [name for name in search if name in inputs and name in producers
-                       and targets[str(producers[name]["targetId"])].endswith("//runtimes/musl:musl_library_search_directory")]
+                       and targets[str(producers[name]["targetId"])].endswith("//runtimes/glibc:glibc_library_search_directory")]
         if len(directories) != 1:
-            raise ValueError(target + ": musl library search directory is not a declared, produced input")
-        libc = [name for name in input_paths(producers[directories[0]]) if Path(name).name == "libc.a"]
-        if len(libc) != 1:
-            raise ValueError(target + ": selected musl directory does not consume one libc.a")
-        archives["libc.a"] = libc[0]
+            raise ValueError(target + ": GNU library search directory is not a declared, produced input")
+        source_archives = {}
+        for name in ("libc.a", "libm.a"):
+            selected = [value for value in input_paths(producers[directories[0]]) if Path(value).name == name]
+            if len(selected) != 1 or selected[0] not in producers:
+                raise ValueError(target + ": selected GNU directory does not consume one produced " + name)
+            producer = producers[selected[0]]
+            owner = targets[str(producer["targetId"])]
+            if (producer["mnemonic"] != "GlibcStaticArchive"
+                    or not re.search(r"//3rd_party/libc/glibc/static:glibc_static_(x86_64|aarch64)$", owner)):
+                raise ValueError(target + ": " + name + " is not the proposed source-built GNU archive")
+            objects = [value for value in input_paths(producer)
+                       if "/3rd_party/libc/glibc/static/" in value and value.endswith(".o")]
+            if not objects:
+                raise ValueError(target + ": " + name + " has no declared glibc objects")
+            archives[name] = selected[0]
+            source_archives[name] = {"owner": owner, "object_count": len(objects)}
+        if len({value["owner"] for value in source_archives.values()}) != 1:
+            raise ValueError(target + ": libc and libm have different source producers")
+        prefixes = [arg[2:] for arg in args if arg.startswith("-B") and len(arg) > 2]
+        crt_directories = [name for name in prefixes if name in inputs and name in producers
+                           and targets[str(producers[name]["targetId"])].endswith("//runtimes:crt_objects_directory_linux")]
+        if len(crt_directories) != 1:
+            raise ValueError(target + ": static startup directory is not declared")
+        startup = {}
+        for name in ("crt1.o", "rcrt1.o", "crti.o", "crtn.o"):
+            selected = [value for value in input_paths(producers[crt_directories[0]]) if Path(value).name == name]
+            if len(selected) != 1 or selected[0] not in producers:
+                raise ValueError(target + ": missing source-built startup file " + name)
+            producer = producers[selected[0]]
+            if (producer["mnemonic"] != "GlibcStaticCrt"
+                    or targets[str(producer["targetId"])] != source_archives["libc.a"]["owner"]):
+                raise ValueError(target + ": startup file has a different libc producer")
+            startup[name] = selected[0]
         static = [arg for arg in args if arg in ("-static", "-static-pie")]
         shared = [arg for arg in args if re.search(r"\.so(?:\.[0-9]+)*$", arg)]
         if not static or shared:
             raise ValueError(target + ": link is not static or still selects a shared object")
         links.append({"target": target, "action_key": action["actionKey"],
                       "archives": archives, "libc_search_directory": directories[0], "static_options": static,
+                      "source_archives": source_archives, "startup_files": startup,
+                      "crt_search_directory": crt_directories[0],
                       "execution_platform": action["executionPlatform"]})
     if collections.Counter(link["target"] for link in links) != collections.Counter(LINK_TARGETS):
         raise ValueError("The graph does not have exactly one link action for each original test")
@@ -207,11 +245,13 @@ def static_links(graph):
 
 def static_link_controls():
     """Exercise the graph predicate before either remote compilation."""
+    base = "external/llvm/3rd_party/libc/glibc/static/glibc_static_x86_64/"
     paths = ["external/llvm/libcxx/liblibcxx.static.a", "external/llvm/libcxxabi/liblibcxxabi.static.a",
-             "external/llvm/libunwind/liblibunwind.static.a", "external/llvm/musl/musl_library_search_directory",
-             "external/llvm/musl/libc.a", "test/syscalls/linux/fork_test", "test/runner/setup_container/setup_container"]
-    fragments, ids = [], {}
-    artifacts = []
+             "external/llvm/libunwind/liblibunwind.static.a", "external/llvm/glibc_library_search_directory",
+             "external/llvm/crt_objects_directory_linux", base + "lib/libc.a", base + "lib/libm.a",
+             *[base + "crt/" + name for name in ("crt1.o", "rcrt1.o", "crti.o", "crtn.o")],
+             base + "c.o", base + "m.o", "test/syscalls/linux/fork_test", "test/runner/setup_container/setup_container"]
+    fragments, ids, artifacts = [], {}, []
     for index, value in enumerate(paths, 1):
         parent, prefix = 0, ""
         for part in value.split("/"):
@@ -220,20 +260,32 @@ def static_link_controls():
                 ids[prefix] = len(ids) + 1
                 fragments.append({"id": ids[prefix], "label": part, "parentId": parent})
             parent = ids[prefix]
-        artifacts.append({"id": index, "pathFragmentId": parent, "isTreeArtifact": index == 4})
-    args = ["-static", "-L" + paths[3], *paths[:3]]
+        artifacts.append({"id": index, "pathFragmentId": parent, "isTreeArtifact": index in (4, 5)})
+    args = ["-static", "-L" + paths[3], "-B" + paths[4], *paths[:3]]
     graph = {"pathFragments": fragments, "artifacts": artifacts,
              "targets": [{"id": i + 1, "label": target} for i, target in enumerate(LINK_TARGETS)]
-                        + [{"id": 3, "label": "@@llvm+//runtimes/musl:musl_library_search_directory"}],
-             "depSetOfFiles": [{"id": 1, "directArtifactIds": [1, 2, 3, 4]},
-                               {"id": 2, "directArtifactIds": [5]}],
+                        + [{"id": 3, "label": "@@llvm+//runtimes/glibc:glibc_library_search_directory"},
+                           {"id": 4, "label": "@@llvm+//runtimes:crt_objects_directory_linux"},
+                           {"id": 5, "label": "@@llvm+//3rd_party/libc/glibc/static:glibc_static_x86_64"}],
+             "depSetOfFiles": [{"id": 1, "directArtifactIds": [1, 2, 3, 4, 5]},
+                               {"id": 2, "directArtifactIds": [6, 7]},
+                               {"id": 3, "directArtifactIds": [8, 9, 10, 11]},
+                               {"id": 4, "directArtifactIds": [12]},
+                               {"id": 5, "directArtifactIds": [13]}],
              "actions": [{"mnemonic": "CppLink", "targetId": i + 1, "actionKey": str(i),
                           "arguments": ["clang", "@params"], "paramFiles": [{"execPath": "params", "arguments": list(args)}],
-                          "inputDepSetIds": [1], "outputIds": [i + 6], "executionPlatform": "//fixture:native"}
+                          "inputDepSetIds": [1], "outputIds": [i + 14], "executionPlatform": "//fixture:native"}
                          for i in range(2)]
-                        + [{"mnemonic": "CopyToDirectory", "targetId": 3, "inputDepSetIds": [2], "outputIds": [4]}]}
+                        + [{"mnemonic": "CopyToDirectory", "targetId": 3, "inputDepSetIds": [2], "outputIds": [4]},
+                           {"mnemonic": "CopyToDirectory", "targetId": 4, "inputDepSetIds": [3], "outputIds": [5]},
+                           {"mnemonic": "GlibcStaticArchive", "targetId": 5, "inputDepSetIds": [4], "outputIds": [6]},
+                           {"mnemonic": "GlibcStaticArchive", "targetId": 5, "inputDepSetIds": [5], "outputIds": [7]}]
+                        + [{"mnemonic": "GlibcStaticCrt", "targetId": 5, "inputDepSetIds": [4], "outputIds": [i]}
+                           for i in (8, 9, 10, 11)]}
     static_links(graph)
-    for mutation in ("dynamic", "shared", "undeclared_archive", "missing_libc", "missing_owner"):
+    mutations = ("dynamic", "shared", "undeclared_archive", "missing_libc", "missing_owner",
+                 "uncompiled_libc", "empty_libc", "wrong_crt")
+    for mutation in mutations:
         changed = json.loads(json.dumps(graph))
         flags = changed["actions"][0]["paramFiles"][0]["arguments"]
         if mutation == "dynamic":
@@ -243,7 +295,13 @@ def static_link_controls():
         elif mutation == "undeclared_archive":
             changed["depSetOfFiles"][0]["directArtifactIds"].remove(1)
         elif mutation == "missing_libc":
-            changed["depSetOfFiles"][1]["directArtifactIds"] = []
+            changed["depSetOfFiles"][1]["directArtifactIds"] = [7]
+        elif mutation == "uncompiled_libc":
+            changed["actions"][4]["mnemonic"] = "Symlink"
+        elif mutation == "empty_libc":
+            changed["depSetOfFiles"][3]["directArtifactIds"] = []
+        elif mutation == "wrong_crt":
+            changed["actions"][6]["mnemonic"] = "Symlink"
         else:
             changed["actions"].pop(1)
         try:
@@ -251,13 +309,13 @@ def static_link_controls():
         except ValueError:
             continue
         raise ValueError("Static-link graph predicate accepts " + mutation)
-    return {"status": "PASS", "controls": 6}
+    return {"status": "PASS", "controls": 1 + len(mutations)}
 
 
 def link_graph(bazel, common, work):
     """Analyze, but never execute, the two normal C++ inputs of the syscall entry point."""
     selected = "set(" + " ".join(LINK_TARGETS) + ")"
-    query = ('outputs(".*/(fork_test|setup_container|musl_library_search_directory)$", '
+    query = ('outputs(".*/(fork_test|setup_container|glibc_library_search_directory|crt_objects_directory_linux|libc[.]a|libm[.]a|r?crt1[.]o|crti[.]o|crtn[.]o)$", '
              'deps(' + selected + '))')
     raw = work / "link-graph.json"
     started = now()
@@ -268,6 +326,12 @@ def link_graph(bazel, common, work):
                               stdout=output, stderr=log).returncode
     result = {"status": "INCOMPLETE", "native_exit": code, "started_at": started,
               "execution_finished_at": now()}
+    log_text = (work / "link-graph.log").read_text(errors="replace")
+    result["invocation_ids"] = sorted(set(re.findall(r"https://app\.buildbuddy\.io/invocation/([0-9a-f-]{36})", log_text)))
+    if code:
+        result["diagnostic_lines"] = [line[:1200] for line in log_text.splitlines()
+                                      if re.search(r"^ERROR:|Error in |Traceback|no such file", line)
+                                      and not re.search(r"api.key|remote.header|bes.header|authorization|credential|token=", line, re.I)][:12]
     if code == 0:
         try:
             result.update(static_links(json.loads(raw.read_text())))
@@ -290,7 +354,7 @@ def qualify(arch, variant, source, tmp, out, private, bazel):
     (work / "expected.txt").write_text("\n".join(TARGETS) + "\n")
     write(work / "cases.json", CASES)
     platform = "//test/rbe/empty_worker:" + arch + "_musl"
-    target_platform = "@llvm//platforms:linux_" + {"amd64": "x86_64", "arm64": "aarch64"}[arch] + "_musl"
+    target_platform = "@llvm//platforms:linux_" + {"amd64": "x86_64", "arm64": "aarch64"}[arch] + "_glibc_static"
     row["target_platform"] = target_platform
     row["execution_platform"] = platform
     common = ["--config=" + {"amd64": "x86_64", "arm64": "aarch64"}[arch],
