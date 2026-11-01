@@ -1,0 +1,50 @@
+diff --git a/private/llvm_project_common.bzl b/private/llvm_project_common.bzl
+--- a/private/llvm_project_common.bzl
++++ b/private/llvm_project_common.bzl
+@@ -49,6 +49,9 @@
+     for key, value in settings.items():
+         content += '{} = "{}"\n'.format(key, value)
+         dictionary += '    "{}": "{}",\n'.format(key, value)
++    helper = rctx.path("llvm/include/llvm/Transforms/IPO/InstrumentorRuntimeHelper.h")
++    if helper.exists:
++        content += "LLVM_INSTRUMENTOR_RUNTIME_HELPER = {}\n".format(repr(rctx.read(helper.realpath)))
+     rctx.file("vars.bzl", content + dictionary + "}\n", executable = False)
+ 
+ def _write_llvm_targets(rctx):
+diff --git a/extensions/llvm.bzl b/extensions/llvm.bzl
+--- a/extensions/llvm.bzl
++++ b/extensions/llvm.bzl
+@@ -85,6 +85,7 @@
+     "//3rd_party/llvm-project/x.x/patches:clangd-multicall.patch",
+     "//3rd_party/llvm-project/22.x/patches:bundle_resources_no_python.patch",
+     "//3rd_party/llvm-project/x.x/patches:no_rules_python.patch",
++    "//3rd_party/llvm-project/23.x/patches:instrumentor-template.patch",
+     "//3rd_party/llvm-project/x.x/patches:llvm-extra.patch",
+     "//3rd_party/llvm-project/x.x/patches:llvm-cov-multicall.patch",
+     "//3rd_party/llvm-project/x.x/patches:thinlto-roundtrip-before-codegen.patch",
+diff --git a/3rd_party/llvm-project/23.x/patches/instrumentor-template.patch b/3rd_party/llvm-project/23.x/patches/instrumentor-template.patch
+new file mode 100644
+--- /dev/null
++++ b/3rd_party/llvm-project/23.x/patches/instrumentor-template.patch
+@@ -0,0 +1,21 @@
++diff --git a/llvm/BUILD.bazel b/llvm/BUILD.bazel
++--- a/llvm/BUILD.bazel
+++++ b/llvm/BUILD.bazel
++@@ -12,2 +12,3 @@
++ load("//mlir:tblgen.bzl", "gentbl_cc_library", "gentbl_filegroup", "td_library")
+++load("//:vars.bzl", "LLVM_INSTRUMENTOR_RUNTIME_HELPER")
++ load(":binary_alias.bzl", "binary_alias")
++@@ -2135,7 +2136,9 @@
++ 
++-genrule(
+++expand_template(
++     name = "instrumentor_variables_gen",
++-    srcs = ["include/llvm/Transforms/IPO/InstrumentorRuntimeHelper.h"],
++-    outs = ["include/llvm/Transforms/IPO/InstrumentorVariables.inc"],
++-    cmd = "printf 'constexpr char InstrumentorRuntimeHelper[] = R\"(' > $@ && cat $(SRCS) >> $@ && echo ')\";' >> $@",
+++    out = "include/llvm/Transforms/IPO/InstrumentorVariables.inc",
+++    substitutions = {
+++        "@LLVM_INSTRUMENTOR_RUNTIME_HELPER@": LLVM_INSTRUMENTOR_RUNTIME_HELPER,
+++    },
+++    template = "include/llvm/Transforms/IPO/InstrumentorVariables.inc.in",
++ )
