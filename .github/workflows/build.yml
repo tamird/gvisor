@@ -1,35 +1,106 @@
-name: CI
-
-"on":
+name: Verify SYN-cookie accounting on a failed packet output
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-info-cookie-output]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    env:
+      CONTROL: bf8dfac0543779a574b1e8fd12505871aa79b21e
+      PRIOR: aadc9a50dd777cda2b0d70009582f617f6df1e75
+      FIXED: f605c7cf46d93fa44855292dd663df325e4d1d6b
+      PRODUCT: bc9ffcc0dab81dacb713ea60879fa5bde6e31689
+      FIXTURE: pkg/tcpip/transport/tcp/test/e2e/tcp_test.go
+      OWNER: //pkg/tcpip/transport/tcp/test/e2e:tcp_test
+      NOGO: //pkg/tcpip/transport/tcp:tcp_nogo
+      CASE: TestGeneratedCookieWithFailedOutput
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 5, persist-credentials: false}
+    - name: Check the refused SYN-ACK and the final TCP analyzer
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -euo pipefail
+        profile=0ee70efe6d52576b8f173b40ad6b7ac117da3b72
+        reporter=599cb05aecfb107e07f81b8591a009cb12d6ffa7
+        git fetch -q --no-tags --depth=2 origin "$PRIOR" "$profile" "$reporter"
+        test "$(git rev-parse HEAD^)" = "$CONTROL"
+        test "$(git rev-parse "$CONTROL^")" = "$FIXED"
+        test "$(git rev-parse "$FIXED^")" = "$PRODUCT"
+        test "$(git rev-parse "$PRODUCT^")" = aa767e4c43d011121271551fe24da501a56f729d
+        test "$(git diff --name-only "$PRIOR" "$CONTROL")" = "$FIXTURE"
+        test "$(git diff --name-only "$PRODUCT" "$FIXED")" = "$FIXTURE"
+        test "$(git diff --name-only "$PRIOR" "$PRODUCT")" = pkg/tcpip/transport/tcp/accept.go
+        test "$(git rev-parse "$CONTROL:$FIXTURE")" = "$(git rev-parse "$FIXED:$FIXTURE")"
+        mkdir -p "$RUNNER_TEMP/proof" "$RUNNER_TEMP/gnu-platform"
+        echo '{"verdict":"INCOMPLETE"}' > "$RUNNER_TEMP/proof/verdict.json"
+        cp test/rbe/tcp_cookie_output.py "$RUNNER_TEMP/"
+        for file in BUILD.bazel MODULE.bazel; do
+          git show "$profile:test/rbe/gnu_platform/$file" > "$RUNNER_TEMP/gnu-platform/$file"
+        done
+        for mod in qualification_report unit_matrix; do
+          git show "$reporter:test/rbe/$mod.py" > "$RUNNER_TEMP/$mod.py"
+        done
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --init --name tcp-compiler --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        for arm in prior fixed analyzer; do
+          owner=$OWNER; limit=14m; filter=("--test_filter=^${CASE}$")
+          case $arm in
+            prior) src=$CONTROL ;;
+            fixed) src=$FIXED ;;
+            analyzer) src=$PRODUCT; owner=$NOGO; limit=28m; filter=() ;;
+          esac
+          git checkout --quiet --detach "$src"
+          git diff --quiet HEAD --
+          d=$RUNNER_TEMP/$arm; mkdir "$d"
+          git rev-parse HEAD > "$d/source"
+          git rev-parse "HEAD:$FIXTURE" > "$d/fixture"
+          date -u +%FT%T.%3NZ > "$d/start"
+          rc=0
+          timeout -k 10s "$limit" docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=48 --strategy=TestRunner=remote --nocache_test_results --test_sharding_strategy=disabled --test_output=errors --test_timeout=240 --test_env=GO_TEST_WRAP_TESTV=1 "${filter[@]}" --build_event_json_file="$d/bep" "$owner" > "$d/build.log" 2>&1 || rc=$?
+          printf '%s\n' "$rc" > "$d/exit"
+          date -u +%FT%T.%3NZ > "$d/finish"
+          path=${owner#//}; path=${path/:/\/}
+          for f in xml log; do
+            docker exec tcp-compiler cat "bazel-testlogs/$path/test.$f" > "$RUNNER_TEMP/proof/$arm.$f" || true
+          done
+          git diff --quiet HEAD --
+        done
+        python3 -B "$RUNNER_TEMP/tcp_cookie_output.py"
+    - name: Check the original artifact allowlist
+      id: privacy
+      if: always()
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        python3 - <<'PY'
+        import os
+        from pathlib import Path
+        root = Path(os.environ["RUNNER_TEMP"]) / "proof"
+        key = os.environ["BUILDBUDDY_API_KEY"].encode()
+        files = list(root.iterdir())
+        assert key and files and {f.name for f in files} <= {"verdict.json"} | {arm + suffix for arm in ("prior", "fixed", "analyzer") for suffix in (".xml", ".log")}
+        for f in files:
+            assert f.is_file() and not f.is_symlink()
+            body = f.read_bytes()
+            assert key not in body and b"x-buildbuddy-api-key" not in body.lower()
+        PY
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.privacy.outcome == 'success'
       with:
-          name: runsc
-          path: bin/
+        name: tcp-cookie-output
+        path: ${{ runner.temp }}/proof/
+        if-no-files-found: error
