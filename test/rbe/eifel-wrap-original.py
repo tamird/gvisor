@@ -13,7 +13,7 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 
 key = os.environ["BUILDBUDDY_API_KEY"]
 out = {}
-for uid in ("37c798e1-6236-44f7-bbca-4dc21db0e55d", "143f059f-767f-4d64-bc2c-9027601c8961"):
+for uid in ("12f3907e-fa03-4326-a915-a2f11846ad3c", "9d422a70-59a7-4259-9a7f-f62f737f39f8"):
     request = urllib.request.Request("https://app.buildbuddy.io/rpc/BuildBuddyService/GetEventLogChunk",
         data=json.dumps({"invocationId": uid, "minLines": 500}).encode(),
         headers={"Content-Type":"application/json","x-buildbuddy-api-key":key},method="POST")
@@ -26,7 +26,7 @@ for uid in ("37c798e1-6236-44f7-bbca-4dc21db0e55d", "143f059f-767f-4d64-bc2c-902
     for line in log.splitlines():
         line = re.sub(r"\x1b\[[0-9;]*[a-zA-Z]", "", line)
         if any(x in line.lower() for x in ("x-buildbuddy", "api_key", "api-key", "authorization", "--", "bearer", "credential", "token=", "secret", "command line of", "environment")): continue
-        if line.startswith(("ERROR:", "WARNING:", "RPC status", "Error", "  * ", "Caused by:", "           Traceback", " * Traceback")) or any(x in line.lower() for x in ("module resolution","yanked","no such package","pkix","handshakeexception","not found","visibility","no repository visible","registry","resolution failed","certificate","repository mapping","bzlmod","failed to load","unsupported option","unrecognized option")):
+        if line.startswith(("ERROR:", "WARNING:", "RPC status", "Error", "  * ", "Caused by:", "           Traceback", " * Traceback")) or any(x in line.lower() for x in ("exec format", "external error", "exit code", "failed to start", "rpc error", "remote execution", "runc run", "invalid argument", "module resolution","yanked","no such package","pkix","handshakeexception","not found","visibility","no repository visible","registry","resolution failed","certificate","repository mapping","bzlmod","failed to load","unsupported option","unrecognized option")):
             lines.append(line[:700])
     assert key and key not in json.dumps(lines)
     out[uid]={"bytes":len(log), "diagnostic":lines[-30:]}

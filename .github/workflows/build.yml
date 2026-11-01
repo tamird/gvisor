@@ -8,14 +8,15 @@ jobs:
   syscalls:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 47
+    timeout-minutes: 54
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      SERIAL: 385c7126ae4a7f31b4f1ca45d6fba49945a28cb6
-      REVIEW: d3d6262cc176d6dfe02131e58f032cdc85c87665
+      SERIAL: f6a760096dbb5003ee408e784b1c4c015519100f
+      EPISODE: 1c3a16f772aae1386fe0baa10940257957e6d3c8
+      REVIEW: 47d4d443c0801c2cc6981ccebec8901f4ca758d1
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 8, persist-credentials: false}
+      with: {fetch-depth: 13, persist-credentials: false}
     - name: Prepare the pinned compiler coordinator and RBE workers
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -24,8 +25,10 @@ jobs:
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
         echo '{"verified":false,"reason":"qualification incomplete"}' > "$RUNNER_TEMP/records/verdict.json"
         cp test/rbe/eifel-wrap-receipt.py "$RUNNER_TEMP/"
-        test "$(git rev-parse "$REVIEW^")" = "1af4ae880239496a8470baaa16f34b131d4fe045"
+        test "$(git rev-parse "$REVIEW^^")" = "1af4ae880239496a8470baaa16f34b131d4fe045"
         test "$(git rev-parse "$SERIAL^")" = "$REVIEW"
+        test "$(git rev-parse "$EPISODE^")" = "$SERIAL"
+        python3 test/rbe/eifel-wrap-original.py
         test "$(git diff --name-only "$REVIEW" "$SERIAL")" = "pkg/tcpip/transport/tcp/snd.go"
         printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
         printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
@@ -47,24 +50,38 @@ jobs:
         grep -Fx 'bazel 8.3.1' "$RUNNER_TEMP/records/source-bazel"
         docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
         docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
-    - name: Run only the six transport traces on each sender
+    - name: Run the eight matched transport observations on all three senders
       run: |
         set -euo pipefail
-        for arm in review serial; do
-          case "$arm" in review) source="$REVIEW";; serial) source="$SERIAL";; esac
+        for arm in review serial episode; do
+          case "$arm" in review) source="$REVIEW";; serial) source="$SERIAL";; episode) source="$EPISODE";; esac
           d="$RUNNER_TEMP/records/$arm"; mkdir "$d"
           git checkout --quiet --detach "$source"
           git rev-parse HEAD > "$d/head"; test "$(cat "$d/head")" = "$source"
+          # This old rule emits an executable shell program without a shebang.
+          # Name the interpreter to make the generated command executable on RBE.
+          python3 - <<'PYRULE'
+        from pathlib import Path
+        p = Path("tools/bazeldefs/go.bzl")
+        data = p.read_text()
+        old = 'content = "PATH=$PWD/{} exec {} {} > {}".format('
+        assert data.count(old) == 1
+        p.write_text(data.replace(old, 'content = "#!/bin/sh\\nPATH=$PWD/{} exec {} {} > {}".format('))
+        PYRULE
+          test "$(git diff --name-only)" = tools/bazeldefs/go.bzl
+          git hash-object tools/bazeldefs/go.bzl > "$d/launcher-rule-blob"
           uuid="$(cat /proc/sys/kernel/random/uuid)"; printf '%s\n' "$uuid" > "$d/uuid"
           code=0
-          timeout -k 10 19m docker exec tcp-compiler "$RUNNER_TEMP/bazel-8.3.1" --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --invocation_id="$uuid" --jobs=32 --strategy=TestRunner=remote --nocache_test_results --test_output=errors --test_env=GO_TEST_WRAP_TESTV=1 --test_arg=-test.v --test_timeout=150 --test_filter='^TestEifelWrapUndo$' --build_event_json_file="$RUNNER_TEMP/$arm.bep" //pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test > "$RUNNER_TEMP/$arm.log" 2>&1 || code=$?
+          timeout -k 10 15m docker exec tcp-compiler "$RUNNER_TEMP/bazel-8.3.1" --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --invocation_id="$uuid" --jobs=32 --strategy=TestRunner=remote --nocache_test_results --test_output=errors --test_env=GO_TEST_WRAP_TESTV=1 --test_arg=-test.v --test_timeout=150 --test_filter='^TestEifelWrapUndo$' --build_event_json_file="$RUNNER_TEMP/$arm.bep" //pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test > "$RUNNER_TEMP/$arm.log" 2>&1 || code=$?
           printf '%s\n' "$code" > "$d/exit"
           jq -r 'select(.id.testResult.label == "//pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test") | .testResult.status' "$RUNNER_TEMP/$arm.bep" > "$d/status" || true
           for file in test.log test.xml; do
+            if ! test -s "$d/status"; then : > "$d/$file"; continue; fi
             docker exec tcp-compiler cat "bazel-testlogs/pkg/tcpip/transport/tcp/test/e2e/tcp_sack_test/$file" > "$d/$file" || true
           done
           grep -E 'tcp_sack_test.go:[0-9]+:|panic: test timed out|^--- (FAIL|PASS):' "$d/test.log" > "$d/sanitized.txt" || true
           grep -E 'tcp_sack_test.go:[0-9]+:|No matching tests|compilation failed|^ERROR:|^Error:' "$RUNNER_TEMP/$arm.log" | grep -viE -- '--|header|api.key|authorization|bearer|secret|credential|token=' | cut -c 1-400 | head -35 >> "$d/sanitized.txt" || true
+          git restore --worktree -- tools/bazeldefs/go.bzl
         done
     - name: Reconcile the original packet and test results
       if: always()
@@ -74,6 +91,8 @@ jobs:
       with:
         name: eifel-original-clock-wrap
         path: |
+          ${{ runner.temp }}/original-resolution.json
+          ${{ runner.temp }}/records/*/launcher-rule-blob
           ${{ runner.temp }}/records/image-bazel
           ${{ runner.temp }}/records/source-bazel
           ${{ runner.temp }}/records/verdict.json
