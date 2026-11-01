@@ -41491,6 +41491,40 @@
         "summary": "Review submitting the LLVM 23 overlay correction to hermeticbuild/hermetic-llvm.",
         "body": "LLVM's Bazel rule uses printf, cat, and echo to embed the instrumentor\nruntime source in a C++ string. Building the IPO library therefore\nrequires a shell and cat on the execution platform.\n\nExpose the helper text to LLVM 23's overlay and expand the template that\nCMake and GN use for the same header. Bazel can then generate it without\nrunning another program. Read the resolved source path so edits in a\nlocal LLVM checkout regenerate the header."
       }
+    },
+    {
+      "id": "branch:gazelle-native-repo-env",
+      "type": "branch",
+      "group": "bazel",
+      "repo": "tamird/gvisor",
+      "ref": "research/gazelle-native-repo-env",
+      "head": "faf0f078942123f153391b4d430786a7841269e0",
+      "url": "https://github.com/tamird/gvisor/commit/faf0f0789",
+      "title": "Let Gazelle fetch Go repositories without a host env executable",
+      "updatedAt": "2026-11-01T06:51:56.536223+00:00",
+      "status": "Contributor review requested",
+      "summary": "Gazelle cannot fetch a Go module on a Linux client without the env program. Bazel 8 and later can remove environment variables directly.",
+      "evidence": [
+        {
+          "label": "Four native ARM64 release-analysis controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41282085987/artifacts/13074171050"
+        },
+        {
+          "label": "195 Gazelle tests on the proposed change",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41010713755/artifacts/12957887307"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "title": "Open an issue with Bazel Gazelle about the host env dependency",
+        "head": "faf0f078942123f153391b4d430786a7841269e0",
+        "baseHead": "6b575b681f2a05257f04e98c02e83b92c1fb766f",
+        "url": "https://github.com/tamird/gvisor/commit/faf0f0789",
+        "requestedAt": "2026-11-01T06:51:56.536223+00:00",
+        "summary": "Gazelle asks contributors to discuss changes before submitting a PR. The proposed issue includes the reproduction and tested solution.",
+        "body": "On a Linux client with Bazel and the declared Go SDK, fetching `golang.org/x/sys` fails if the client has no `env` executable. Gazelle’s `list_repository_tools_srcs` reports `\"execvp(env, ...)\": No such file or directory` before it can start its Go command. [Adding only `/usr/bin/env` made the same query succeed.](https://github.com/tamird/gvisor/actions/runs/41008048899/artifacts/12956413035)\n\nWould you accept using [Bazel’s native environment removal](https://github.com/bazelbuild/bazel/commit/21a12c72d) in `env_execute` on Bazel 8 and later? It would preserve Gazelle’s Unix behavior: pass the caller’s explicit values (including an empty string), inherit only `TMP` and `TMPDIR` when not set explicitly, and drop the rest. Bazel 7 would keep using `env -i`; Windows would keep its existing behavior.\n\n[On a native ARM64 client](https://github.com/tamird/gvisor/actions/runs/41282085987/artifacts/13074171050), the same error blocked analysis of gVisor’s release. Applying only the Gazelle change to that failing configuration let Bazel analyze the full target.\n\nI have a [candidate based on Gazelle master](https://github.com/tamird/gvisor/commit/faf0f0789). [All 195 supplier tests passed](https://github.com/tamird/gvisor/actions/runs/41010713755/artifacts/12957887307), and [a child process on Bazel 7, 8 and 9](https://github.com/tamird/gvisor/actions/runs/41009162092/artifacts/12957245536) verified the environment it actually received.\n\nPrepared with Codex on behalf of @tamird."
+      }
     }
   ],
   "edges": [
@@ -57565,9 +57599,22 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T06:19:59.433516+00:00",
+      "updatedAt": "2026-11-01T06:51:56.536223+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "From empty caches, a Linux client with Bazel, runtime libraries, network and CA certificates could analyze //:release on AMD64 and native ARM64 after two dependency changes. Without uname, bazel_lib 3.2.2 tried to resolve a nonexistent archive toolchain. On ARM64, updating bazel_lib alone exposed Gazelle’s dependency on the env executable. Updating both analyzed 424,022 configured targets on ARM64 and 421,743 on AMD64. These were analysis-only runs.",
+          "evidence": [
+            {
+              "label": "Four native ARM64 release-analysis controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41282085987/artifacts/13074171050"
+            },
+            {
+              "label": "Cold AMD64 release analysis",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41281676014/artifacts/13073378646"
+            }
+          ]
+        },
         {
           "text": "Both gRPC service libraries now build on each scratch architecture with musl selected only for execution tools. The five host executables per architecture have no ELF interpreter or shared dependencies. The target C++ compilations still use GNU, and both architectures generated identical service sources. Separately, the LLVM change built and ran both TableGen programs, preserved all 9,899 embedded helper bytes and picked up a local source edit without a clean build. These targeted checks cover the earlier failure sites. The complete package wildcard and the NVIDIA parity test still need the combined source.",
           "evidence": [
