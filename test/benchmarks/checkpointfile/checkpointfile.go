@@ -583,12 +583,17 @@ func cpuTime(b *testing.B, fn func() error) time.Duration {
 	b.Helper()
 	runtime.GC()
 	gcPercent := debug.SetGCPercent(-1)
+	var before, after runtime.MemStats
+	runtime.ReadMemStats(&before)
+	limit := debug.SetMemoryLimit(-1)
 	cpu0 := processCPU(b)
 	b.StartTimer()
 	err := fn()
 	b.StopTimer()
 	cpu1 := processCPU(b)
+	runtime.ReadMemStats(&after)
 	debug.SetGCPercent(gcPercent)
+	b.Logf("GC-OBSERVATION limit=%d completed=%d forced=%d pause-ns=%d heap-before=%d heap-after=%d", limit, after.NumGC-before.NumGC, after.NumForcedGC-before.NumForcedGC, after.PauseTotalNs-before.PauseTotalNs, before.HeapAlloc, after.HeapAlloc)
 	if err != nil {
 		b.Fatal(err)
 	}
