@@ -376,10 +376,12 @@ type Endpoint struct {
 	protocol    *protocol
 	waiterQueue *waiter.Queue `state:"wait"`
 
-	// hardError is reported by poll and consumed by socket I/O or SO_ERROR
-	// after a connection fails.
+	// hardError is reported by poll and consumed by socket I/O or SO_ERROR.
+	// Poll reads it with lastErrorMu; the TCP I/O paths already hold mu.
 	//
+	// +checklocks:mu
 	// +checklocks:lastErrorMu
+	// +checklocksreadany
 	hardError tcpip.Error
 
 	lastErrorMu lastErrorMutex `state:"nosave"`
@@ -952,16 +954,6 @@ func (e *Endpoint) Readiness(mask waiter.EventMask) waiter.EventMask {
 
 	case StateClose, StateError, StateTimeWait:
 		result = mask & (waiter.ReadableEvents | waiter.WritableEvents | waiter.EventHUp | waiter.EventRdHUp)
-		if mask&waiter.EventErr != 0 {
-			// SO_ERROR consumes the pending hard error. A queued extended
-			// error remains pollable until recvmsg(MSG_ERRQUEUE) consumes it.
-			e.lastErrorMu.Lock()
-			hasError := e.hardError != nil
-			e.lastErrorMu.Unlock()
-			if hasError || e.SocketOptions().PeekErr() != nil {
-				result |= waiter.EventErr
-			}
-		}
 
 	case StateListen:
 		// Check if there's anything in the accepted queue.
@@ -997,6 +989,17 @@ func (e *Endpoint) Readiness(mask waiter.EventMask) waiter.EventMask {
 				e.updateConnDirectionState(connDirectionStateRcvClosed)
 			}
 			e.rcvQueueMu.Unlock()
+		}
+	}
+
+	if mask&waiter.EventErr != 0 {
+		// SO_ERROR or socket I/O consumes a pending hard error. A queued
+		// extended error remains pollable until recvmsg(MSG_ERRQUEUE).
+		e.lastErrorMu.Lock()
+		hasError := e.hardError != nil
+		e.lastErrorMu.Unlock()
+		if hasError || e.SocketOptions().PeekErr() != nil {
+			result |= waiter.EventErr
 		}
 	}
 
@@ -1405,6 +1408,9 @@ func (e *Endpoint) setHardErrorLocked(err tcpip.Error) {
 
 // +checklocks:e.mu
 func (e *Endpoint) hardErrorLocked() tcpip.Error {
+	if e.hardError == nil {
+		return nil
+	}
 	e.lastErrorMu.Lock()
 	defer e.lastErrorMu.Unlock()
 	err := e.hardError
@@ -1550,11 +1556,14 @@ func (e *Endpoint) checkReadLocked() tcpip.Error {
 	// would cause the state to become StateError so we should allow the
 	// reads to proceed before returning a ECONNRESET.
 	bufUsed := e.RcvBufUsed
-	if s := e.EndpointState(); !s.connected() && s != StateClose && bufUsed == 0 {
+	s := e.EndpointState()
+	if bufUsed == 0 && (s.connected() || s == StateError) {
+		if err := e.hardErrorLocked(); err != nil {
+			return err
+		}
+	}
+	if !s.connected() && s != StateClose && bufUsed == 0 {
 		if s == StateError {
-			if err := e.hardErrorLocked(); err != nil {
-				return err
-			}
 			return &tcpip.ErrClosedForReceive{}
 		}
 		e.stats.ReadErrors.NotConnected.Increment()
@@ -1579,11 +1588,14 @@ func (e *Endpoint) checkReadLocked() tcpip.Error {
 // +checklocks:e.sndQueueInfo.sndQueueMu
 func (e *Endpoint) isEndpointWritableLocked() (int, tcpip.Error) {
 	// The endpoint cannot be written to if it's not connected.
-	switch s := e.EndpointState(); {
-	case s == StateError:
+	s := e.EndpointState()
+	if s.connected() || s == StateError {
 		if err := e.hardErrorLocked(); err != nil {
 			return 0, err
 		}
+	}
+	switch {
+	case s == StateError:
 		return 0, &tcpip.ErrClosedForSend{}
 	case !s.connecting() && !s.connected():
 		return 0, &tcpip.ErrClosedForSend{}
@@ -3024,11 +3036,6 @@ func (e *Endpoint) enqueueSegment(s *segment) bool {
 }
 
 func (e *Endpoint) onICMPError(err tcpip.Error, transErr stack.TransportError, pkt *stack.PacketBuffer) {
-	// Update last error first.
-	e.lastErrorMu.Lock()
-	e.lastError = err
-	e.lastErrorMu.Unlock()
-
 	var recvErr bool
 	switch pkt.NetworkProtocolNumber {
 	case header.IPv4ProtocolNumber:
@@ -3038,6 +3045,32 @@ func (e *Endpoint) onICMPError(err tcpip.Error, transErr stack.TransportError, p
 	default:
 		panic(fmt.Sprintf("unhandled network protocol number = %d", pkt.NetworkProtocolNumber))
 	}
+
+	if state := e.EndpointState(); state.connected() {
+		if state == StateTimeWait || e.protocol.dispatcher.isClosed() {
+			return
+		}
+		// A local link can deliver the error synchronously while TCP
+		// holds mu sending the packet. Let the receive worker check the
+		// quoted sequence alongside the ACKs for this connection.
+		h, ok := pkt.Data().PullUp(8)
+		if !ok {
+			return
+		}
+		s := newSegment()
+		s.sequenceNumber = seqnum.Value(header.TCP(h).SequenceNumber())
+		s.quotedError = err
+		s.reportError = recvErr && !e.isOwnedByUser()
+		s.pkt = pkt.Clone()
+		s.dataMemSize = pkt.MemSize()
+		defer s.DecRef()
+		e.protocol.dispatcher.queueSegment(e, e.ID, s)
+		return
+	}
+
+	e.lastErrorMu.Lock()
+	e.lastError = err
+	e.lastErrorMu.Unlock()
 
 	if recvErr {
 		e.SocketOptions().QueueErr(&tcpip.SockError{

@@ -104,3 +104,53 @@ func TestTCPConnectICMPError(t *testing.T) {
 		t.Fatalf("expected RST, %s", err)
 	}
 }
+
+// TestTCPEstablishedICMPError checks that an ICMP error applies to the data
+// it quotes. Reporting such an error does not abort the connection.
+func TestTCPEstablishedICMPError(t *testing.T) {
+	dut := testbench.NewDUT(t)
+	listener, port := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1)
+	defer dut.Close(t, listener)
+	conn := dut.Net.NewTCPIPv4(t, testbench.TCP{DstPort: &port}, testbench.TCP{SrcPort: &port})
+	defer conn.Close(t)
+	conn.Connect(t)
+	fd, _ := dut.Accept(t, listener)
+	defer dut.Close(t, fd)
+	dut.SetSockOptInt(t, fd, unix.SOL_IP, unix.IP_RECVERR, 1)
+
+	send := func(data string) *testbench.TCP {
+		t.Helper()
+		payload := &testbench.Payload{Bytes: []byte(data)}
+		dut.Send(t, fd, payload.Bytes, 0)
+		frame, err := conn.ExpectData(t, &testbench.TCP{}, payload, time.Second)
+		if err != nil {
+			t.Fatalf("waiting for %q: %v", data, err)
+		}
+		return frame[len(frame)-2].(*testbench.TCP)
+	}
+	// Reading the byte confirms the DUT has processed the ACK it carried.
+	ack := func(next *uint32) {
+		t.Helper()
+		conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: next}, &testbench.Payload{Bytes: []byte("a")})
+		if got := string(dut.Recv(t, fd, 1, unix.MSG_WAITALL)); got != "a" {
+			t.Fatalf("read %q from ACK, want a", got)
+		}
+	}
+
+	old := send("old")
+	ack(nil)
+	live := send("live")
+	sendICMPError(t, &conn, old)
+	ack(live.SeqNum) // Keep the second write outstanding.
+	if got := unix.Errno(dut.GetSockOptInt(t, fd, unix.SOL_SOCKET, unix.SO_ERROR)); got != 0 {
+		t.Fatalf("SO_ERROR for acknowledged data: %v", got)
+	}
+
+	sendICMPError(t, &conn, live)
+	dut.PollOne(t, fd, unix.POLLERR, time.Second)
+	if got := unix.Errno(dut.GetSockOptInt(t, fd, unix.SOL_SOCKET, unix.SO_ERROR)); got != unix.EHOSTUNREACH {
+		t.Fatalf("SO_ERROR for outstanding data = %v, want EHOSTUNREACH", got)
+	}
+	ack(nil)
+	send("after error")
+}

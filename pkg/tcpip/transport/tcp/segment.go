@@ -55,15 +55,20 @@ type segment struct {
 	segmentEntry
 	segmentRefs
 
-	ep     *Endpoint
-	qFlags queueFlags
-	id     stack.TransportEndpointID `state:"manual"`
+	ep *Endpoint
+	id stack.TransportEndpointID `state:"manual"`
 
 	pkt *stack.PacketBuffer
+
+	// quotedError is set when ICMP quotes one of our outbound TCP segments.
+	// Its sequenceNumber belongs to our send queue, not to the peer.
+	quotedError tcpip.Error
 
 	sequenceNumber seqnum.Value
 	ackNumber      seqnum.Value
 	flags          header.TCPFlags
+	qFlags         queueFlags
+	reportError    bool
 	window         seqnum.Size
 	// csum is only populated for received segments.
 	csum uint16
@@ -82,14 +87,14 @@ type segment struct {
 	// acked indicates if the segment has already been SACKed.
 	acked bool
 
+	// lost indicates if the segment is marked as lost by RACK.
+	lost bool
+
 	// dataMemSize is the memory used by pkt initially. The value is used for
 	// memory accounting in the receive buffer instead of pkt.MemSize() because
 	// packet contents can be modified, so relying on the computed memory size
 	// to "free" reserved bytes could leak memory in the receiver.
 	dataMemSize int
-
-	// lost indicates if the segment is marked as lost by RACK.
-	lost bool
 }
 
 func newIncomingSegment(id stack.TransportEndpointID, clock tcpip.Clock, pkt *stack.PacketBuffer) (*segment, error) {

@@ -1195,8 +1195,32 @@ func (e *Endpoint) drainClosingSegmentQueue() {
 			break
 		}
 
-		e.tryDeliverSegmentFromClosedEndpoint(s)
+		if s.quotedError == nil {
+			e.tryDeliverSegmentFromClosedEndpoint(s)
+		}
 		s.DecRef()
+	}
+}
+
+// handleQuotedError processes an ICMP quotation for a connected socket.
+// Linux ignores errors for data outside [SND.UNA, SND.NXT]. An error on the
+// active flight does not terminate the connection or enqueue its quotation.
+// See tcp_v4_err and tcp_v6_err in net/ipv4/tcp_ipv4.c and net/ipv6/tcp_ipv6.c.
+//
+// +checklocks:e.mu
+func (e *Endpoint) handleQuotedError(s *segment) {
+	if s.sequenceNumber.LessThan(e.snd.SndUna) || e.snd.SndNxt.LessThan(s.sequenceNumber) {
+		return
+	}
+	e.lastErrorMu.Lock()
+	if s.reportError {
+		e.hardError = s.quotedError
+	} else {
+		e.lastError = s.quotedError
+	}
+	e.lastErrorMu.Unlock()
+	if s.reportError {
+		e.waiterQueue.Notify(waiter.EventErr | waiter.ReadableEvents | waiter.WritableEvents)
 	}
 }
 
@@ -1264,6 +1288,7 @@ func (e *Endpoint) handleReset(s *segment) (ok bool, err tcpip.Error) {
 // +checklocksexclude:e.snd.rtt.rttMutex
 func (e *Endpoint) handleSegmentsLocked() tcpip.Error {
 	sndUna := e.snd.SndUna
+	receivedSegment := false
 	for i := 0; i < maxSegmentsPerWake; i++ {
 		if state := e.EndpointState(); state.closed() || state == StateTimeWait || state == StateError {
 			return nil
@@ -1272,6 +1297,12 @@ func (e *Endpoint) handleSegmentsLocked() tcpip.Error {
 		if s == nil {
 			break
 		}
+		if s.quotedError != nil {
+			e.handleQuotedError(s)
+			s.DecRef()
+			continue
+		}
+		receivedSegment = true
 		cont, err := e.handleSegmentLocked(s)
 		s.DecRef()
 		if err != nil {
@@ -1280,6 +1311,10 @@ func (e *Endpoint) handleSegmentsLocked() tcpip.Error {
 		if !cont {
 			return nil
 		}
+	}
+
+	if !receivedSegment {
+		return nil
 	}
 
 	// The remote ACK-ing at least 1 byte is an indication that we have a
@@ -1502,6 +1537,10 @@ func (e *Endpoint) handleTimeWaitSegments() (extendTimeWait bool, reuseTW func()
 		s := e.segmentQueue.dequeue()
 		if s == nil {
 			break
+		}
+		if s.quotedError != nil {
+			s.DecRef()
+			continue
 		}
 		extTW, newSyn := e.rcv.handleTimeWaitSegment(s)
 		if newSyn {
