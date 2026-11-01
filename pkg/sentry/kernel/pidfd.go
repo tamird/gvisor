@@ -449,3 +449,11 @@ func ObservedTIDsForPIDFD(vfsfd *vfs.FileDescription, t *Task) ([]int32, error) 
 	}
 	return nspids, nil
 }
+
+// PIDFDLockControl deliberately calls the guarded helpers without their lock.
+// This function is only analyzed by the fork qualification.
+func PIDFDLockControl(t *Task) {
+	_, _ = t.pidStructFromTIDLocked(0, false)
+	t.notifyPIDFDsLocked()
+	t.notifyPIDFDsOnDeathLocked()
+}
