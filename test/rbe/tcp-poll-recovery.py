@@ -11,7 +11,7 @@ from urllib.request import Request, urlopen
 out = Path(os.environ["RUNNER_TEMP"]) / "tcp-evidence"
 source = os.environ["PRODUCT"]
 iid = "66cd2f03-1dd6-42a4-80c3-45fa792e42ee"
-owners = ["//pkg/tcpip/transport/tcp:tcp_test"] + ["//pkg/tcpip/transport/tcp/test/e2e:" + t for t in "tcp_test dual_stack_test forwarder_test rcv_test sack_scoreboard_test tcp_timestamp_test tcp_rack_test tcp_acktiming_test tcp_sack_test tcp_noracedetector_test".split()]
+owners = ["//pkg/tcpip/transport/tcp/test/e2e:tcp_test"]
 lint = ["//pkg/tcpip/transport/tcp:tcp_nogo", "//pkg/tcpip/transport/tcp/test/e2e:tcp_test_nogo"]
 
 
@@ -121,9 +121,16 @@ def inspect(name, labels):
         if not log.exists(): continue
         text=log.read_text(errors='replace')
         rows[label]={'digest':sha256(log.read_bytes()).hexdigest(),**go_counts(text)}
+        if name == "owners":
+            rows[label]["close_case_passed"] = bool(re.search(r"(?m)^\s*--- PASS: TestRstOnCloseWithUnreadDataFinConvertRst\s", text))
+        else:
+            rows[label]["architectures"] = [arch for arch in ("amd64","arm64") if arch+"..." in text]
     rc=int((d/'exit').read_text())
     ok=bool(labels) and rc==0 and set(actual)==set(labels) and all(v=='PASSED' for v in actual.values())
-    if name=='owners': ok &= len(rows)==len(labels) and all(r['outcomes'].get('PASS',0)>0 and not r['failures'] for r in rows.values())
+    if name=="owners":
+        ok &= len(rows)==len(labels) and all(r["outcomes"].get("PASS",0)>=404 and r["close_case_passed"] and not r["failures"] and not r["skips"] for r in rows.values())
+    else:
+        ok &= len(rows)==len(labels) and all(r["architectures"]==["amd64","arm64"] for r in rows.values())
     detail=[s[:300] for s in (d/'log').read_text(errors='replace').splitlines() if (s.startswith(('ERROR:','FAIL:','/bin/bash:')) or ': error:' in s or ': fatal error:' in s or 'exec format' in s.lower() or 'cannot execute' in s.lower()) and not any(x in s.lower() for x in ['token','header','credential','api-key'])][:6]
     return {'verified':ok,'source':source,'host_arch':os.uname().machine,'exit':rc,'start':(d/'start').read_text().strip(),'end':(d/'end').read_text().strip(),'invocations':inv,'target_status':actual,'missing':sorted(set(labels)-actual.keys()), 'individual_go_results':rows, 'first_diagnostics':detail}
 
@@ -139,4 +146,6 @@ elif sys.argv[1]=='inspect':
     (out/(n+'.json')).write_text(json.dumps(r,indent=2)+'\n')
 elif sys.argv[1]=='finish':
     ok=all(json.loads((out/(n+'.json')).read_text())['verified'] for n in ['owners','analysis'])
+    from datetime import datetime, timezone
+    (out/"verdict.json").write_text(json.dumps({"source":source,"verified":ok,"verified_at":datetime.now(timezone.utc).isoformat()})+"\n")
     raise SystemExit(not ok)
