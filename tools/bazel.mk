@@ -119,14 +119,11 @@ STARTUP_OPTIONS    :=
 BAZEL_OPTIONS      ?=
 BAZEL_REMOTE_CACHE ?=
 BAZEL              := bazel $(STARTUP_OPTIONS)
-BASE_OPTIONS       := --color=no --curses=no $(BAZEL_REMOTE_CACHE)
-BAZEL_TEST_OUTPUT  ?= errors
-TEST_OPTIONS       += $(BASE_OPTIONS) \
-  --sandbox_add_mount_pair=/tmp \
-  --test_output=$(BAZEL_TEST_OUTPUT) \
-  --keep_going \
-  --verbose_failures=true \
-  --build_event_json_file=.build_events.json
+BASE_OPTIONS       := --config=ci $(BAZEL_REMOTE_CACHE)
+TEST_OPTIONS       += $(BASE_OPTIONS) --sandbox_add_mount_pair=/tmp
+ifdef BAZEL_TEST_OUTPUT
+TEST_OPTIONS       += --test_output=$(BAZEL_TEST_OUTPUT)
+endif
 
 # Basic options.
 UID := $(shell id -u ${USER})
