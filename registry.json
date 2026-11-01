@@ -59687,7 +59687,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-01T05:38:35.366027+00:00",
+      "updatedAt": "2026-11-01T06:49:35.306610+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Retain the minimum-RTT safeguard. Prioritize reproducible recovery defects and review changes to SACK, probe timing and receive-queue pressure.",
       "findings": [
@@ -59928,7 +59928,7 @@
           ]
         },
         {
-          "text": "With dequeue paused on #15325, 257 repeated 4 KiB packets charged 165,492 bytes to an endpoint with a 4,096-byte receive budget. The charge returned to zero when drained. This exposed the cost of retaining each rejected packet header; it does not negate the reported improvements in small-segment throughput.",
+          "text": "With dequeue paused on #15325, 257 repeated packets charged 165,492 bytes to a 4,096-byte receive budget. A cap on queued ACK work admitted seven (8,492 bytes). Ten paired AMD64 trials transferred and verified 1 MiB at each of three payload sizes. At 536 bytes the median time was 337 ms for #15325 and 334 ms with the cap. The timings varied too much to establish a throughput difference at any size. In separate instrumented runs, the cap rejected 35–187 whole packets per transfer at 100 bytes and none at 536 or 1,448 bytes. The general drop counter includes discarded payload even when its header stays queued.",
           "evidence": [
             {
               "label": "Exact-source queue measurement",
@@ -59937,6 +59937,18 @@
             {
               "label": "Reproducer on the author’s head",
               "url": "https://github.com/tamird/gvisor/commit/1343dc381c63c720ab2d12f24371d04a959acfbe"
+            },
+            {
+              "label": "Bounded queue and ten wire regressions",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41258310134/artifacts/13064937701"
+            },
+            {
+              "label": "60 verified transfers on uninstrumented sources",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41281153087/artifacts/13073258813"
+            },
+            {
+              "label": "Benchstat and 30 separate queue-cap observations",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41281891350/artifacts/13073745999"
             }
           ]
         },
