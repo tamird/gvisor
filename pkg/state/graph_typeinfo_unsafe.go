@@ -66,16 +66,8 @@ type typeInfo struct {
 	sliceType    atomic.Pointer[reflect.Type]
 	// hintBytes and hintTargets record the size of the last graph with this root type.
 	hintBytes, hintTargets atomic.Int32
-	valSlot, ptrSlot       slotEntry
-	// slots caches field types saved/loaded by SaverLoader methods, by slot.
-	slots []atomic.Pointer[slotEntry]
-}
-
-// slotEntry is the cached type of a struct field slot.
-type slotEntry struct {
-	rtype unsafe.Pointer
-	ti    *typeInfo
-	ptr   bool
+	// slots caches the argument types passed to SaverLoader methods by slot.
+	slots []atomic.Pointer[typeInfo]
 }
 
 const itabTypeOffset = unsafe.Sizeof(unsafe.Pointer(nil)) // +checkoffset internal/abi ITab.Type
@@ -90,7 +82,7 @@ var (
 	typeInfos     map[unsafe.Pointer]*typeInfo // +checklocks:typeInfosMu
 	typeInfoCount int32                        // +checklocks:typeInfosMu
 	typeInfoSlab  []typeInfo                   // +checklocks:typeInfosMu
-	slotsSlab     []atomic.Pointer[slotEntry]  // +checklocks:typeInfosMu
+	slotsSlab     []atomic.Pointer[typeInfo]   // +checklocks:typeInfosMu
 )
 
 // typeInfoSlabSize is the number of typeInfos per allocation.
@@ -129,12 +121,12 @@ func typeInfoOf(t reflect.Type) *typeInfo {
 // newSlots returns n slot cache entries.
 //
 // +checklocks:typeInfosMu
-func newSlots(n int) []atomic.Pointer[slotEntry] {
+func newSlots(n int) []atomic.Pointer[typeInfo] {
 	if n > typeInfoSlabSize {
-		return make([]atomic.Pointer[slotEntry], n)
+		return make([]atomic.Pointer[typeInfo], n)
 	}
 	if len(slotsSlab) < n {
-		slotsSlab = make([]atomic.Pointer[slotEntry], 4*typeInfoSlabSize)
+		slotsSlab = make([]atomic.Pointer[typeInfo], 4*typeInfoSlabSize)
 	}
 	slots := slotsSlab[:n:n]
 	slotsSlab = slotsSlab[n:]
@@ -226,7 +218,6 @@ func (b *typeInfoBuilder) get(t reflect.Type) *typeInfo {
 	ti.kind = t.Kind()
 	ti.size = t.Size()
 	ti.alignMask = uintptr(t.Align() - 1)
-	ti.valSlot = slotEntry{rtype: rtype, ti: ti}
 	typeInfoCount++
 	b.pending = append(b.pending, ti)
 	ti.direct = isDirect(t)
@@ -266,7 +257,6 @@ func (b *typeInfoBuilder) get(t reflect.Type) *typeInfo {
 	case reflect.Pointer:
 		ti.elem = b.get(t.Elem())
 		ti.needsExact = ti.elem.needsExact
-		ti.ptrSlot = slotEntry{rtype: rtype, ti: ti.elem, ptr: true}
 	case reflect.Slice:
 		ti.elem = b.get(t.Elem())
 		ti.needsExact = ti.elem.needsExact
@@ -373,26 +363,26 @@ func (b *typeInfoBuilder) plainFields(t reflect.Type) bool {
 // runtime type passed to a Sink or Source method. If ptr is true, rt is a
 // pointer to the field.
 func (st *typeInfo) slotType(slot int, rt unsafe.Pointer, ptr bool) *typeInfo {
+	var ti *typeInfo
 	if uint(slot) < uint(len(st.slots)) {
-		if e := st.slots[slot].Load(); e != nil && e.rtype == rt && e.ptr == ptr {
-			return e.ti
+		ti = st.slots[slot].Load()
+	}
+	if ti == nil || ti.rtype != rt {
+		if rt == nil {
+			Failf("nil value saved in slot %d of %v", slot, st.typ)
+		}
+		ti = typeInfoForRtype(rt)
+		if uint(slot) < uint(len(st.slots)) {
+			st.slots[slot].Store(ti)
 		}
 	}
-	if rt == nil {
-		Failf("nil value saved in slot %d of %v", slot, st.typ)
-	}
-	ti := typeInfoForRtype(rt)
-	e := &ti.valSlot
 	if ptr {
 		if ti.kind != reflect.Pointer {
 			Failf("non-pointer %v passed for slot %d of %v", ti.typ, slot, st.typ)
 		}
-		e = &ti.ptrSlot
+		return ti.elem
 	}
-	if uint(slot) < uint(len(st.slots)) {
-		st.slots[slot].Store(e)
-	}
-	return e.ti
+	return ti
 }
 
 // makeAny returns an interface holding the value of type ti at p.

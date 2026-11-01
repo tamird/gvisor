@@ -695,3 +695,19 @@ func TestGraphIndirectInexactTypesRoundTrip(t *testing.T) {
 		t.Errorf("loaded.zeroArrPtrPtr = %v, want non-nil", loaded.zeroArrPtrPtr)
 	}
 }
+
+// Save receives a pointer to its field, while SaveValue receives the value
+// itself. The same argument type can therefore describe different field types.
+func TestSlotTypePointerAndValue(t *testing.T) {
+	st := typeInfoOf(reflect.TypeFor[testPrintHolder]())
+	ptr := typeInfoOf(reflect.TypeFor[*int]())
+	for _, indirect := range []bool{true, false, true} {
+		want := ptr
+		if indirect {
+			want = ptr.elem
+		}
+		if got := st.slotType(0, ptr.rtype, indirect); got != want {
+			t.Errorf("slotType(*int, %t) = %v, want %v", indirect, got.typ, want.typ)
+		}
+	}
+}
