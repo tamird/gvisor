@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T09:56:23.404885+00:00",
+    "updatedAt": "2026-11-01T10:24:40.857533+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41725,6 +41725,36 @@
         "summary": "Open as an independent PR?",
         "body": "When a router replied to an outgoing SYN with an ICMPv6 address-unreachable error, Linux returned EHOSTUNREACH and gVisor left connect waiting. Route the error through TCP’s existing host-unreachable handler. The network-unreachable control still returns ENETUNREACH."
       }
+    },
+    {
+      "id": "branch:state-graph-segment-boundaries",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/state-graph-segment-boundaries",
+      "head": "d7f75a4d80d375c20efa602d0ea0c0869b2ecdf7",
+      "title": "Index graph payloads and their references by segment",
+      "url": "https://github.com/tamird/gvisor/commit/d7f75a4d8",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T10:24:40.857533+00:00",
+      "summary": "Two consecutive segment boundaries identify an encoded object’s bytes and outgoing references. Keeping the segment index removes a byte-offset search and 10 net lines from the encoder.",
+      "evidence": [
+        {
+          "label": "16 paired checkpoint encodes, 288 small-graph observations, and native restore",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41295867669/artifacts/13080066286"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "d7f75a4d80d375c20efa602d0ea0c0869b2ecdf7",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/d7f75a4d8",
+        "title": "Index graph payloads and their references by segment",
+        "requestedAt": "2026-11-01T10:24:40.857533+00:00",
+        "summary": "Open the standalone graph encoder PR?",
+        "body": "Across 16 alternating AMD64 pairs, encoding the same 50,000-file checkpoint to a counting writer took 155.6 ms instead of 167.9 ms and allocated 172.9 MiB instead of 175.3 MiB. A one-byte slice with 16 MiB capacity took 0.90% longer and allocated 98 more bytes. A live restore with the candidate read all 50,000 files. The commit includes benchstat."
+      }
     }
   ],
   "edges": [
@@ -48055,9 +48085,22 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T09:45:10.907293+00:00",
+      "updatedAt": "2026-11-01T10:24:40.857533+00:00",
       "summary": "The graph codec is now the default. On a four-worker Nginx checkpoint, encoding took 2.25 ms instead of 12.71 ms and decoding took 8.99 ms instead of 17.75 ms. All four round-trip bugs tracked in #16715 are fixed. Increasing the UDP receive queue did not grow the index table. Smaller writer buffers and clearing fewer decoder slots did not speed up Nginx checkpoints. Separating callback payloads reduced allocated bytes without improving the time to Nginx’s first HTTP response.",
       "findings": [
+        {
+          "text": "Indexing the existing segment boundaries removed the binary search without growing each graph object. EncodeStatefile took 7.31% less time and allocated 1.34% fewer bytes on the 50,000-file checkpoint. The one-byte/16 MiB-capacity case took 0.90% longer and allocated 98 extra bytes.",
+          "evidence": [
+            {
+              "label": "16 paired checkpoint encodes, 288 small-graph observations, and native restore",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41295867669/artifacts/13080066286"
+            },
+            {
+              "label": "Separate live restore on stock and the first index implementation",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41294550715/artifacts/13078828127"
+            }
+          ]
+        },
         {
           "text": "Held two Save experiments. Storing reference bounds in every segment made a 50,000-file checkpoint encode 11.43% faster with 6.31% fewer allocated bytes, but increased first-Save allocations by 22.55% on a 1,024-node pointer chain. Sharing storage with the inline array chunk cut that penalty to 10.82%; the warm chain still took 4.09% longer. The second experiment stopped after the small-graph comparison. Its full-kernel performance was not measured.",
           "evidence": [
@@ -50975,7 +51018,7 @@
           ]
         }
       ],
-      "nextStep": "The callback optimization is ready for contributor review. For Save, test whether an index into the existing segment table can remove the binary search while keeping small objects compact. Check small and sparse graphs before repeating the 50,000-file comparison.",
+      "nextStep": "The independent encoder and decoder changes are ready for contributor review. Measure live Nginx checkpoint restore under CPU quotas for the reader proposal.",
       "evidence": [
         {
           "label": "50,000 tmpfs files after real restore and 18 paired-phase observations on the same checkpoint",
@@ -57862,9 +57905,26 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T09:56:23.404885+00:00",
+      "updatedAt": "2026-11-01T10:24:40.857533+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The first C++ test failed to link on both native scratch workers. The pinned GNU sysroot supplies glibc link-time stubs. Its fully static link lacked the requested archives, and neither worker executed a C++ test. The Bazel wrapper rebase separately passed all 14 tw_test and 44 Java test cases.",
+          "evidence": [
+            {
+              "label": "Original AMD64 and ARM64 link failures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41295495964/artifacts/13079118642"
+            },
+            {
+              "label": "Native-wrapper C++ unit cases on its supplier build platform",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41295810319/artifacts/13079466368"
+            },
+            {
+              "label": "Recovered Java owner on its declared execution platform",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41296539519/artifacts/13079397546"
+            }
+          ]
+        },
         {
           "text": "On native AMD64 and ARM64 workers with a scratch root, 67 state tests and 42 TCP tests executed per architecture, with no skips or missing results. The AMD64 Bazel distribution includes the static test wrapper. Its verified result was available 0.610 seconds after execution finished, without manual result collection.",
           "evidence": [
@@ -59228,7 +59288,7 @@
           ]
         }
       ],
-      "nextStep": "Run the existing C++ posix_error_test on both scratch architectures. Check the test executable and its runtime dependencies against the same worker environment. Rebase the supplier wrapper change onto current Bazel.",
+      "nextStep": "Run the original C++ test under a declared GNU loader on both scratch workers. Track fully static GNU linking separately. Check a native Nogo test on the same shell-free worker.",
       "evidence": [
         {
           "label": "AMD64 state and TCP tests on scratch",
@@ -60128,10 +60188,23 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-01T09:45:10.907293+00:00",
+      "updatedAt": "2026-11-01T10:24:40.857533+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "Compare competing Reno and CUBIC flows with the remaining two production changes from #15432, on the same sender and native worker. Finish the readiness and socket-error qualification and keep the review order in #16670 current.",
+      "nextStep": "After the functional, race and analyzer checks, compare the matched accounting implementations in eight competing Reno/CUBIC transfers and update the reviewer guide.",
       "findings": [
+        {
+          "text": "When the local link rejected the first packet and later accepted its repair, the old accounting sent 16 segments with room for 15. The correction sent 15. Separately, both sources had already queued five packets before the test closed the receive window; neither sent another during the following second.",
+          "evidence": [
+            {
+              "label": "Saturated socket and partial-accept controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41295299635/artifacts/13078764608"
+            },
+            {
+              "label": "Receive-window wire history and one-MSS positive control",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41295611085/artifacts/13079176473"
+            }
+          ]
+        },
         {
           "text": "A second ACK left four repairs in a five-packet congestion window. The measured #15432 integration sent two packets; the earlier fork correction counted three lost originals alongside their repairs and sent none. Keeping RACK’s original-loss decision sent one. The candidate is being checked for partially accepted GSO transmissions and for a rejected first send.",
           "evidence": [
