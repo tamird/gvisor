@@ -1,0 +1,99 @@
+func TestRACKOriginalAndRepairFlight(t *testing.T) {
+	const rtt = 100 * time.Millisecond
+	clock := faketime.NewManualClock()
+	states := make(chan tcp.TCPSenderState, 32)
+	c := context.NewWithOpts(t, context.Options{
+		MTU: mtu, EnableV4: true, Clock: clock,
+		Probe: func(s *tcp.TCPEndpointState) { states <- s.Sender },
+	})
+	defer c.Cleanup()
+	e2e.EnableCUBIC(t, c)
+	e2e.SetStackSACKPermitted(t, c, true)
+	e2e.CreateConnectedWithSACKAndTS(c)
+	write := func(n int) {
+		t.Helper()
+		if got, err := c.EP.Write(bytes.NewReader(make([]byte, n)), tcpip.WriteOptions{}); err != nil || got != int64(n) {
+			t.Fatalf("Write(%d) = (%d, %v)", n, got, err)
+		}
+	}
+	const warm = 8
+	seq := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
+	first := c.IRS.Add(1 + warm*maxPayload)
+	var elapsed time.Duration
+	advance := func(d time.Duration) { clock.Advance(d); elapsed += d }
+	ack := func(packets int, blocks []header.SACKBlock) tcp.TCPSenderState {
+		t.Helper()
+		c.SendAckWithSACK(seq, (warm+packets)*maxPayload, blocks)
+		select {
+		case st := <-states:
+			if want := first.Add(seqnum.Size(packets*maxPayload)); st.SndUna != want {
+				t.Fatalf("sender SndUna = %v, want %v", st.SndUna, want)
+			}
+			return st
+		case <-time.After(5*time.Second):
+			t.Fatal("ACK was not processed")
+			return tcp.TCPSenderState{}
+		}
+	}
+	write(warm * maxPayload)
+	for i := 0; i < warm; i++ {
+		c.ReceiveAndCheckPacketWithOptions(make([]byte, warm*maxPayload), i*maxPayload, maxPayload, e2e.TSOptionSize)
+	}
+	advance(rtt)
+	st := ack(0, nil)
+	if st.RTTState.SRTT <= 0 { t.Fatal("no positive trained RTT") }
+
+	// The test context emits one MSS per packet. Read complete egress while
+	// the manual clock stays frozen, without consuming any sender timeout.
+	read := func() []int {
+		t.Helper()
+		var tx []int
+		for {
+			p := c.GetPacketWithTimeout(50*time.Millisecond)
+			if p == nil { return tx }
+			h := header.TCP(header.IPv4(p.AsSlice()).Payload())
+			n := len(h.Payload())
+			offset := uint32(h.SequenceNumber()) - uint32(first)
+			p.Release()
+			if n == 0 { continue }
+			if n != maxPayload || offset%maxPayload != 0 { t.Fatalf("unexpected egress offset %d, bytes %d", offset, n) }
+			tx = append(tx, int(offset)/maxPayload+1)
+		}
+	}
+	write((st.SndCwnd+12)*maxPayload)
+	initial := read()
+	if len(initial)<10 { t.Fatalf("only %d original packets: %v",len(initial),initial) }
+	for i,n := range initial { if n!=i+1 {t.Fatalf("original sequence %v",initial)} }
+	t.Logf("PIPE initial=%v queued_more=12 srtt=%s", initial,st.RTTState.SRTT)
+	// Originals 4--6 arrive, leaving at least four unsacked originals above
+	// the highest SACK as well as holes below it. Hold all subsequent
+	// repairs until a real RTO retransmits packet 1.
+	block := header.SACKBlock{Start:first.Add(3*maxPayload), End:first.Add(6*maxPayload)}
+	advance(rtt)
+	st=ack(0,[]header.SACKBlock{block})
+	early:=read()
+	t.Logf("PIPE before_timeout t=%s sacked=%d out=%d cwnd=%d repairs=%v",elapsed,st.SackedOut,st.Outstanding,st.SndCwnd,early)
+	if st.SackedOut!=3 {t.Fatalf("pre-timeout credited %d, want three high originals", st.SackedOut)}
+	timeoutCount:=func() uint64{return c.Stack().Stats().TCP.Timeouts.Value()}
+	// Advance in small increments and leave the clock frozen at the first
+	// real timeout. Discard earlier PTO probes with the early repairs.
+	var afterRTO []int
+	for i:=0; i<500 && timeoutCount()==0; i++ {
+		advance(10*time.Millisecond)
+		if timeoutCount()!=0 { afterRTO=read() } else {
+			for p:=c.GetPacketNonBlocking();p!=nil;p=c.GetPacketNonBlocking(){p.Release()}
+		}
+	}
+	if timeoutCount()!=1 || len(afterRTO)==0 || afterRTO[0]!=1 {t.Fatalf("first timeout = %d, emitted %v",timeoutCount(),afterRTO)}
+	t.Logf("PIPE first_timeout t=%s packets=%v",elapsed,afterRTO)
+    for _,n := range []int{1,2} {
+        advance(rtt)
+        earlier:=read()
+        t.Logf("COPY before_ack=%d absolute=%d extra_packets=%v",n,uint32(first.Add(seqnum.Size(n*maxPayload))),earlier)
+        if len(earlier) != 0 {t.Fatalf("a timer sent before ACK %d: %v",n,earlier)}
+        st=ack(n,[]header.SACKBlock{block})
+        tx:=read()
+        t.Logf("COPY ack=%d absolute=%d t=%s timeouts=%d active=%t cwnd=%d out=%d sacked=%d high_rxt=%d tx=%v",n,uint32(first.Add(seqnum.Size(n*maxPayload))),elapsed,timeoutCount(),st.FastRecovery.Active,st.SndCwnd,st.Outstanding,st.SackedOut,int32(st.FastRecovery.HighRxt-first),tx)
+        if n==1 && (fmt.Sprint(tx)!="[2 3 7 8 9]" || st.SndCwnd!=5){t.Fatalf("unexpected first repair flight, cwnd=%d tx=%v",st.SndCwnd,tx)}
+    }
+}
