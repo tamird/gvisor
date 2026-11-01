@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library")
+load("//tools:defs.bzl", "expand_template", "go_library")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -27,25 +27,18 @@ go_library(
     ],
 )
 
-genrule(
+expand_template(
     name = "secfuzz_covermeup",
-    srcs = ["secfuzz_covermeup.tmpl.go"],
-    outs = ["secfuzz_covermeup.go"],
-    cmd = (
-        "  while IFS= read -r line; do" +
-        "    if echo \"$$line\" | grep -q 'GENERATED_LINES_INSERTED_HERE_THIS_IS_A_LOAD_BEARING_COMMENT'; then" +
-        "      while IFS= read -r i; do" +
-        "        echo -e \"\\\\tcase $$(( $$i + 1 )):\";" +
-        "        echo -e \"\\\\t\\\\tif covered[$$i] {\";" +
-        "        echo -e \"\\\\t\\\\t\\\\tfuzzee.coverage[$$i].Store(true)\";" +
-        "        echo -e \"\\\\t\\\\t}\";" +
-        "        echo -e \"\\\\t\\\\tfallthrough\";" +
-        "      done < <(awk 'BEGIN{for (i = 4095; i >= 1; i --) print i}');" +
-        "    else" +
-        "      echo \"$$line\";" +
-        "    fi;" +
-        "  done" +
-        "  < $(location :secfuzz_covermeup.tmpl.go)" +
-        "  > $@"
-    ),
+    out = "secfuzz_covermeup.go",
+    substitutions = {
+        "\t// GENERATED_LINES_INSERTED_HERE_THIS_IS_A_LOAD_BEARING_COMMENT": "\n".join([
+            """\tcase {count}:
+\t\tif covered[{index}] {{
+\t\t\tfuzzee.coverage[{index}].Store(true)
+\t\t}}
+\t\tfallthrough""".format(count = i + 1, index = i)
+            for i in range(4095, 0, -1)
+        ]),
+    },
+    template = "secfuzz_covermeup.tmpl.go",
 )
