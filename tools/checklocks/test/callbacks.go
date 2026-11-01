@@ -46,7 +46,7 @@ func (e *callbackEntries) indexAnyLocked(keys []string) int {
 // the caller can rely on its lock only if each invocation preserves it.
 func (e *callbackEntries) releaseInPredicate(keys []string) {
 	e.mu.Lock()
-	slices.ContainsFunc(keys, func(string) bool { // +checklocksfail=callback changes held locks
+	slices.ContainsFunc(keys, func(string) bool {
 		e.mu.Unlock()
 		return true
 	})
@@ -56,7 +56,7 @@ func (e *callbackEntries) releaseInPredicate(keys []string) {
 
 func (e *callbackEntries) switchLocksInPredicate(other *callbackEntries, keys []string) {
 	e.mu.Lock()
-	slices.ContainsFunc(keys, func(string) bool { // +checklocksfail=callback changes held locks
+	slices.ContainsFunc(keys, func(string) bool {
 		e.mu.Unlock()
 		other.mu.Lock()
 		return true
