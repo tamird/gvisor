@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T13:49:13.599008+00:00",
+    "updatedAt": "2026-11-01T13:56:22.287550+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28,7 +28,7 @@
       "hermeticbuild/rules_rs",
       "bazel-contrib/rules_distroless"
     ],
-    "registryDate": "2026-11-01T13:49:13.599008+00:00"
+    "registryDate": "2026-11-01T13:56:22.287550+00:00"
   },
   "groups": [
     {
@@ -42031,6 +42031,52 @@
         "summary": "Open the framing fix after the descriptor change lands?",
         "body": "Stock Load and Print both accept a checkpoint truncated after the map key. Both reject the same malformed checkpoint with this fix. Eight records passed, including valid map decoding and the 4,096-entry nested-map control."
       }
+    },
+    {
+      "id": "branch:tcp-report-read-hangups",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/tcp-report-read-hangups",
+      "head": "1b4eaf08e996c4741c8114a33b683b6312fe59ed",
+      "title": "Report TCP read hangups when a stream closes",
+      "url": "https://github.com/tamird/gvisor/commit/1b4eaf08e",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T13:56:22.287550+00:00",
+      "summary": "An application watching only for EPOLLRDHUP could miss a peer FIN. Local read shutdown could appear open until another poll refreshed a cached flag. The fix uses the receive queue’s closed state and reports POLLHUP once both directions have closed, even when the interest mask is zero.",
+      "refinement": {
+        "before": {
+          "head": "c1432a1ad4e21d58cb50b456e9605417ae0d3ff4"
+        },
+        "after": {
+          "head": "1b4eaf08e996c4741c8114a33b683b6312fe59ed"
+        }
+      },
+      "evidence": [
+        {
+          "label": "Linux and stock gVisor on the same syscall cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41288718074/artifacts/13076651174"
+        },
+        {
+          "label": "Six corrected syscall cases and twelve paired readiness benchmarks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41304005091/artifacts/13083155959"
+        },
+        {
+          "label": "559 TCP cases, analyzer checks on both architectures and checkpoint schema controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41305019589/artifacts/13085858051"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "1b4eaf08e996c4741c8114a33b683b6312fe59ed",
+        "baseHead": "254c8ddfcc97180f83ba6454db22afb6235b5df3",
+        "url": "https://github.com/tamird/gvisor/commit/1b4eaf08e",
+        "title": "Report TCP read hangups when a stream closes",
+        "requestedAt": "2026-11-01T13:56:22.287550+00:00",
+        "summary": "Open this TCP readiness fix after its unread-data prerequisite lands?",
+        "body": "All six IPv4/IPv6 syscall cases pass. In twelve paired benchmark samples, reporting read-hangup readiness added 0.94 ns to an established-socket poll; writable plus read-hangup added 0.60 ns. The earlier proposed fix added 4.36 and 4.68 ns respectively in a separate comparison. Removing the cached field changes the checkpoint schema."
+      }
     }
   ],
   "edges": [
@@ -45485,6 +45531,15 @@
       "reason": "The frame reader uses the consolidated payload type to decide when to defer each object.",
       "evidence": [
         "https://github.com/tamird/gvisor/compare/00b4278b9...70a5246a5"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:tcp-shutdown-keeps-unread-data",
+      "to": "branch:tcp-report-read-hangups",
+      "reason": "The unread-data change preserves the queued byte needed to observe POLLHUP after both directions shut down.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/compare/254c8ddfc...1b4eaf08e"
       ]
     }
   ],
@@ -58315,9 +58370,18 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T13:34:54.530558+00:00",
+      "updatedAt": "2026-11-01T13:56:22.287550+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The ordinary Bazel syscall TestRunner executed static glibc 2.44 binaries on native AMD64 and ARM64 scratch workers. Each ran ForkTest.Simple, Pipe and SharedMapping, six cases total with no failures or skips. Both original TestRunner actions executed remotely, and both reused their previously verified static binaries. The full verdict followed the last execution by 36.756 seconds.",
+          "evidence": [
+            {
+              "label": "Six runtime cases, execution platforms and ELF dependencies",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41312235714/artifacts/13085862397"
+            }
+          ]
+        },
         {
           "text": "Both native scratch architectures built static GNU test and launcher binaries using the source-built glibc. No tests executed because the default Bazel test toolchain did not match the target constraints. The independent syscall-source portability fix passed the default GNU build, both musl architectures, and fork-helper execution on both libcs.",
           "evidence": [
@@ -59789,7 +59853,7 @@
           ]
         }
       ],
-      "nextStep": "Verify that the Bazel test toolchain can run the source-built static GNU launcher and fixture on each native scratch worker.",
+      "nextStep": "Separate the supplier changes needed for static glibc and Bazel test toolchain selection from the validation fixture. Check whether the supported Bazel toolchains already express this target and execution platform combination.",
       "evidence": [
         {
           "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
