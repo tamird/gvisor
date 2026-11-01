@@ -1,0 +1,49 @@
+{
+  "scope": "//runsc/boot/filter:all",
+  "expected": {
+    "amd64": [
+      "//runsc/boot/filter:filter",
+      "//runsc/boot/filter:filter_bench_test_nogo",
+      "//runsc/boot/filter:filter_fuzz_test",
+      "//runsc/boot/filter:filter_fuzz_test_nogo",
+      "//runsc/boot/filter:filter_nogo",
+      "//runsc/boot/filter:filter_precompiled",
+      "//runsc/boot/filter:filter_precompiled_gen",
+      "//runsc/boot/filter:filter_precompiled_gen_bin",
+      "//runsc/boot/filter:filter_precompiled_gen_dynamic_bin",
+      "//runsc/boot/filter:filter_precompiled_gen_dynamic_bin_nogo",
+      "//runsc/boot/filter:filter_precompiled_gen_stubbed",
+      "//runsc/boot/filter:filter_precompiled_gen_stubbed_bin",
+      "//runsc/boot/filter:filter_precompiled_gen_stubbed_bin_nogo",
+      "//runsc/boot/filter:filter_state_autogen"
+    ],
+    "arm64": [
+      "//runsc/boot/filter:filter",
+      "//runsc/boot/filter:filter_bench_test_nogo",
+      "//runsc/boot/filter:filter_fuzz_test",
+      "//runsc/boot/filter:filter_fuzz_test_nogo",
+      "//runsc/boot/filter:filter_nogo",
+      "//runsc/boot/filter:filter_precompiled",
+      "//runsc/boot/filter:filter_precompiled_gen",
+      "//runsc/boot/filter:filter_precompiled_gen_bin",
+      "//runsc/boot/filter:filter_precompiled_gen_dynamic_bin",
+      "//runsc/boot/filter:filter_precompiled_gen_dynamic_bin_nogo",
+      "//runsc/boot/filter:filter_precompiled_gen_stubbed",
+      "//runsc/boot/filter:filter_precompiled_gen_stubbed_bin",
+      "//runsc/boot/filter:filter_precompiled_gen_stubbed_bin_nogo",
+      "//runsc/boot/filter:filter_state_autogen"
+    ]
+  },
+  "skipped": {
+    "amd64": [],
+    "arm64": []
+  },
+  "extra_flags": [
+    "--build_tag_filters=-network_plugins"
+  ],
+  "provenance": {
+    "source": "09bf3b1cb20dac883fe3556b49626324fa74f80f",
+    "artifact": "https://github.com/tamird/gvisor/actions/runs/41280610640/artifacts/13075550613",
+    "status": "309/311 successful per architecture; these owners include the two observed failures"
+  }
+}

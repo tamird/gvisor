@@ -1,0 +1,92 @@
+{
+  "row": {
+    "arch": "amd64",
+    "phases": {
+      "analysis": {
+        "started": "2026-11-01T07:55:36.498819+00:00",
+        "finished": "2026-11-01T07:57:34.660085+00:00",
+        "exit": 0,
+        "invocation": "8ac2b4c7-e5d8-4ad7-ab2c-2ce2f42c529b",
+        "finish": {
+          "overallSuccess": true,
+          "exitCode": {
+            "name": "SUCCESS"
+          },
+          "finishTime": "2026-11-01T07:57:33.629Z"
+        },
+        "expanded": 14,
+        "expanded_sha256": "bc9396439eef7ca7e31ba5c4f4e0532a80f61d7d179bf81c0de527b75861c31f",
+        "configured": 14,
+        "added_vs_baseline": [],
+        "removed_vs_baseline": [],
+        "bep_parsed_at": "2026-11-01T07:57:34.662911+00:00",
+        "verified_at": "2026-11-01T07:57:34.663116+00:00"
+      },
+      "build": {
+        "started": "2026-11-01T07:57:34.663427+00:00",
+        "finished": "2026-11-01T07:59:00.709377+00:00",
+        "exit": 0,
+        "invocation": "d8f4e7ca-ec60-4ddd-941e-446f828daa0f",
+        "finish": {
+          "overallSuccess": true,
+          "exitCode": {
+            "name": "SUCCESS"
+          },
+          "finishTime": "2026-11-01T07:58:59.174Z"
+        },
+        "expanded": 14,
+        "expanded_sha256": "bc9396439eef7ca7e31ba5c4f4e0532a80f61d7d179bf81c0de527b75861c31f",
+        "configured": 14,
+        "added_vs_baseline": [],
+        "removed_vs_baseline": [],
+        "skipped_labels": [],
+        "agree_analysis": true,
+        "successful": 14,
+        "missing_configured": [],
+        "missing_completion": [],
+        "dispositions": {
+          "built": 14
+        },
+        "without_configuration": [],
+        "bep_parsed_at": "2026-11-01T07:59:00.711522+00:00",
+        "compact_bytes": 3881142,
+        "projection_started": "2026-11-01T07:59:00.711825+00:00",
+        "actions": {
+          "available": true,
+          "decoder_exits": [
+            0,
+            0
+          ],
+          "total": 8859,
+          "observed_platform": 8859,
+          "remote": 15,
+          "cached_on_platform": 8844,
+          "off_platform": 0,
+          "local_runs": 0
+        },
+        "projection_finished": "2026-11-01T07:59:04.349477+00:00",
+        "verified_at": "2026-11-01T07:59:04.349808+00:00"
+      }
+    },
+    "successful_observation": false,
+    "verified_at": "2026-11-01T07:59:17.109452+00:00"
+  },
+  "expected": [
+    "//runsc/boot/filter:filter",
+    "//runsc/boot/filter:filter_bench_test_nogo",
+    "//runsc/boot/filter:filter_fuzz_test",
+    "//runsc/boot/filter:filter_fuzz_test_nogo",
+    "//runsc/boot/filter:filter_nogo",
+    "//runsc/boot/filter:filter_precompiled",
+    "//runsc/boot/filter:filter_precompiled_gen",
+    "//runsc/boot/filter:filter_precompiled_gen_bin",
+    "//runsc/boot/filter:filter_precompiled_gen_dynamic_bin",
+    "//runsc/boot/filter:filter_precompiled_gen_dynamic_bin_nogo",
+    "//runsc/boot/filter:filter_precompiled_gen_stubbed",
+    "//runsc/boot/filter:filter_precompiled_gen_stubbed_bin",
+    "//runsc/boot/filter:filter_precompiled_gen_stubbed_bin_nogo",
+    "//runsc/boot/filter:filter_state_autogen"
+  ],
+  "skips": [],
+  "original_artifact": "https://github.com/tamird/gvisor/actions/runs/41286671141/artifacts/13075642170"
+}
