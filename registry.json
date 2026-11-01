@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T14:56:10.653236+00:00",
+    "updatedAt": "2026-11-01T15:14:31.620607+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28,7 +28,7 @@
       "hermeticbuild/rules_rs",
       "bazel-contrib/rules_distroless"
     ],
-    "registryDate": "2026-11-01T14:56:10.653236+00:00"
+    "registryDate": "2026-11-01T15:14:31.620607+00:00"
   },
   "groups": [
     {
@@ -42115,6 +42115,40 @@
         "summary": "Reply to the supplier proposal with the two-line fix and the native AMD64 and ARM64 results.",
         "body": "@geligeli, Clang uses a temporary file while preprocessing glibc assembly. On a scratch executor without /tmp, the GlibcStaticCompile action [failed on both AMD64 and ARM64](https://github.com/tamird/gvisor/actions/runs/41308187475/artifacts/13084852008). Could you set TMPDIR to out.dirname in that action? Bazel creates the output directory before starting Clang. With [those two lines](https://github.com/tamird/hermetic-llvm/commit/a7ce65dc2), [all six fork syscall cases ran on scratch](https://github.com/tamird/gvisor/actions/runs/41314071876/artifacts/13087500690).\n\nPosted by Codex on behalf of @tamird."
       }
+    },
+    {
+      "id": "branch:tcp-limited-transmit-credit",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-limited-transmit-credit",
+      "head": "8db1aab3331f2abf3f089051fb1cb64a9f024865",
+      "title": "Send new TCP data on the first two duplicate ACKs",
+      "url": "https://github.com/tamird/gvisor/commit/8db1aab33",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T15:14:31.620607+00:00",
+      "summary": "With two packets outstanding and the first lost, stock gVisor waited for a 200 ms timeout. Linux sent more queued data and repaired the loss at 59 ms. Limited Transmit let gVisor repair it at 63 ms while respecting the receive window.",
+      "evidence": [
+        {
+          "label": "Two-segment loss on Linux and stock gVisor",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41316159753/artifacts/13087489300"
+        },
+        {
+          "label": "Final packet test, 444 TCP/SACK cases and both architecture analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41318777225/artifacts/13089025818"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "8db1aab3331f2abf3f089051fb1cb64a9f024865",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/8db1aab33",
+        "title": "Send new TCP data on the first two duplicate ACKs",
+        "requestedAt": "2026-11-01T15:14:31.620607+00:00",
+        "summary": "Open the independent Limited Transmit PR?",
+        "body": "The packet test passes on Linux and the fix and fails on stock. Repeated SACKs and a closed receive window send no extra data. All 444 TCP and SACK cases and both analyzers passed."
+      }
     }
   ],
   "edges": [
@@ -60880,9 +60914,9 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-01T14:56:10.653236+00:00",
+      "updatedAt": "2026-11-01T15:14:31.620607+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "Diagnose the two failing TCP suites before advancing the Limited Transmit prototype. Separately, compare Linux and gVisor forwarding with segmentation offload on the ingress link.",
+      "nextStep": "Await contributor review of Limited Transmit. Recover the forwarded-GSO comparison: its 55-minute coordinator deadline expired with no recorded transfers or BuildBuddy invocation ID.",
       "findings": [
         {
           "text": "Using the existing local shutdown flags to skip an unnecessary receive-queue lock reduced the added cost of an established-socket RDHUP poll from 4.38 to 0.94 ns per call. With write interest too, it fell from 4.68 to 0.60 ns. Six IPv4/IPv6 syscall cases passed, including mandatory hangup with an empty interest mask.",
@@ -61410,15 +61444,15 @@
           ]
         },
         {
-          "text": "With two segments in flight and the first missing, Linux sent two queued segments and retransmitted the hole after 59 ms. Stock gVisor sent neither and retransmitted at 209 ms against a 200 ms timeout. A prototype retransmitted at 71 ms. Two package suites failed on the prototype, so the wire result alone does not qualify it.",
+          "text": "With two segments in flight and the first lost, Linux repaired the hole after 59 ms. Stock gVisor sent no new data and retransmitted at 209 ms. The proposed Limited Transmit change repaired it at 63 ms. The shared packet test passed on Linux and the fix and failed on stock. Both TCP suites now check the two new sends before the head retransmission.",
           "evidence": [
             {
-              "label": "Small-flight and receive-window controls",
+              "label": "Two-segment loss on Linux and stock gVisor",
               "url": "https://github.com/tamird/gvisor/actions/runs/41316159753/artifacts/13087489300"
             },
             {
-              "label": "Reviewer guide",
-              "url": "https://github.com/google/gvisor/issues/16670"
+              "label": "Final packet test, 444 TCP/SACK cases and both architecture analyzers",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41318777225/artifacts/13089025818"
             }
           ]
         }
