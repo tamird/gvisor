@@ -1,35 +1,79 @@
-name: CI
-
-"on":
+name: Verify TCP shutdown readiness owners and checkpoint schema
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-shutdown-readiness-owners]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  owners:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      PRODUCT: 78178215248c7f8e5438581fb934586131a807d4
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 5, persist-credentials: false}
+    - name: Prepare the pinned compiler coordinator and RBE workers
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/gnu-platform"
+        mkdir -p "$RUNNER_TEMP/tcp-evidence"
+        echo '{"verified":false,"reason":"qualification incomplete"}' > "$RUNNER_TEMP/tcp-evidence/verdict.json"
+        cp test/rbe/tcp-readiness-owners.py "$RUNNER_TEMP/receipt.py"
+        cp -R test/rbe/readiness_schema "$RUNNER_TEMP/schema"
+        git fetch -q --depth=2 https://github.com/tamird/gvisor.git "$PRODUCT"
+        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --sysctl net.ipv6.conf.lo.disable_ipv6=0 -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+    - name: Run exact-source owners, architecture analyzers and registered-schema boundary
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        git checkout --quiet --detach "$PRODUCT"
+        parent=$(git rev-parse HEAD^)
+        [[ "$parent" == "254c8ddfcc97180f83ba6454db22afb6235b5df3" ]]
+        for phase in owners analysis parent-schema product-schema; do
+          [[ "$phase" != parent-schema ]] || git checkout --quiet --detach "$parent"
+          if [[ "$phase" == product-schema ]]; then
+            git checkout --quiet --detach "$PRODUCT"
+            if [[ ! -s "$RUNNER_TEMP/tcp-evidence/parent.stream" ]]; then continue; fi
+          fi
+          src=$(git rev-parse HEAD)
+          [[ "$src" == "$PRODUCT" || ( "$phase" == parent-schema && "$src" == "$parent" ) ]]
+          flags=()
+          if [[ "$phase" != analysis ]]; then flags+=(--test_arg=-test.v); fi
+          if [[ "$phase" == *-schema ]]; then
+            mkdir -p test/rbe/readiness_schema
+            cp "$RUNNER_TEMP/schema/"* test/rbe/readiness_schema/
+            if [[ "$phase" == product-schema ]]; then
+              flags+=("--test_env=PARENT_STREAM=$(cat "$RUNNER_TEMP/tcp-evidence/parent.stream")")
+            fi
+          fi
+          git diff --quiet HEAD
+          d="$RUNNER_TEMP/tcp-evidence/$phase"; mkdir -p "$d"
+          printf '%s\n' "$src" > "$d/source"
+          python3 "$RUNNER_TEMP/receipt.py" labels "$phase" > "$d/labels"
+          mapfile -t labels < "$d/labels"; (( ${#labels[@]} > 0 ))
+          date -u +%FT%T.%3NZ > "$d/start"; code=0
+          docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=64 --keep_going --build_tag_filters= --test_tag_filters= --strategy=TestRunner=remote --noremote_local_fallback --nocache_test_results '--modify_execution_info=^TestRunner$=+no-remote-cache' --test_output=errors --test_sharding_strategy=disabled --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --build_event_json_file="$d/bep" "${flags[@]}" "${labels[@]}" > "$d/log" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$d/exit"; date -u +%FT%T.%3NZ > "$d/end"
+          docker exec -e PRODUCT="$PRODUCT" -e RUNNER_TEMP="$RUNNER_TEMP" tcp-compiler python3 "$RUNNER_TEMP/receipt.py" inspect "$phase"
+        done
+        python3 "$RUNNER_TEMP/receipt.py" finish
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: tcp-shutdown-readiness-owners
+        path: ${{ runner.temp }}/tcp-evidence/*.json
+        if-no-files-found: error
