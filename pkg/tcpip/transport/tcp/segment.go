@@ -64,7 +64,12 @@ type segment struct {
 	sequenceNumber seqnum.Value
 	ackNumber      seqnum.Value
 	flags          header.TCPFlags
-	window         seqnum.Size
+	// A quoted ICMP error shares the connection's input queue with ACKs. Its
+	// sequenceNumber belongs to our outbound packet, not to the peer.
+	// quotedError is one plus the TransportErrorKind, or zero for ordinary TCP.
+	quotedError uint8
+	reportError bool
+	window      seqnum.Size
 	// csum is only populated for received segments.
 	csum uint16
 	// csumValid is true if the csum in the received segment is valid.

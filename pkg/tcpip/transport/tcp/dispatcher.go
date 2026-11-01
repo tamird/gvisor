@@ -497,6 +497,10 @@ func (d *dispatcher) queuePacket(stackEP stack.TransportEndpoint, id stack.Trans
 		ep.stack.Stats().TCP.ResetsReceived.Increment()
 	}
 
+	d.queueSegment(ep, id, s)
+}
+
+func (d *dispatcher) queueSegment(ep *Endpoint, id stack.TransportEndpointID, s *segment) {
 	if !ep.enqueueSegment(s) {
 		return
 	}
