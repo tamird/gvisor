@@ -53,6 +53,12 @@ run_bazel build --config=x86_64 -c opt --jobs=32 --remote_download_outputs=tople
 mkdir -p "$RUNNER_TEMP/phase-results"
 docker exec tcp-compiler python3 -B "$RUNNER_TEMP/identify.py" "$RUNNER_TEMP" stock "$STOCK" "$(cat "$d/exit")"
 
+name=candidate-tests
+record "$PRODUCT"
+run_bazel test "${common[@]}" --keep_going --test_arg=-test.v //pkg/state:state_test //pkg/state/tests:tests_test //pkg/state:state_nogo
+test_artifacts pkg/state/state_test unit
+test_artifacts pkg/state/tests/tests_test suite
+test_artifacts pkg/state/state_nogo analyzer
   name=nginx
   record "$GITHUB_SHA"
   install -m 755 "$RUNNER_TEMP/stock.bin" test/rbe/window_nginx/stock.bin

@@ -9,7 +9,7 @@ from qualification_report import xml_cases
 
 def main(root: Path) -> None:
     roots = {k:os.environ[k] for k in ("BASE","PRODUCT","STOCK","CANDIDATE","GITHUB_SHA")}
-    checkouts = {"stock-build":("STOCK",[]),"nginx":("GITHUB_SHA",["nginx"])}
+    checkouts = {"stock-build":("STOCK",[]),"candidate-tests":("PRODUCT",["unit","suite","analyzer"]),"nginx":("GITHUB_SHA",["nginx"])}
     verdict = {"sources":roots,"arms":{},"wires":{},"rows":[],"peers":[],"failures":[]}
     errors = verdict["failures"]
     def guard(ok, why):
