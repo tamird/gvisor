@@ -24,10 +24,12 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -352,6 +354,10 @@ func checkpointNginx(ctx context.Context, b *testing.B, machine harness.Machine)
 		b.Fatalf("failed to read the container's spec: %v", err)
 	}
 
+	ip, err := container.FindIP(ctx, false)
+	if err != nil {
+		b.Fatal(err)
+	}
 	const name = "checkpointfile"
 	if err := container.Checkpoint(ctx, name); err != nil {
 		b.Fatalf("failed to checkpoint container: %v", err)
@@ -388,6 +394,63 @@ func checkpointNginx(ctx context.Context, b *testing.B, machine harness.Machine)
 	if err != nil {
 		b.Fatalf("failed to read state file: %v", err)
 	}
+	// Docker may still be removing the old task. Keep that delay outside measurement.
+	time.Sleep(2 * time.Second)
+	start := time.Now()
+	if err := container.Restore(ctx, name); err != nil {
+		b.Fatalf("restore: %v", err)
+	}
+	restored := time.Since(start)
+	hc := http.Client{Transport: &http.Transport{Proxy: nil, DisableKeepAlives: true}, Timeout: 300 * time.Millisecond}
+	var ready time.Duration
+	for time.Since(start) < restored+10*time.Second {
+		resp, err := hc.Get("http://" + ip.String() + "/latin1k.txt")
+		if err != nil {
+			time.Sleep(time.Millisecond)
+			continue
+		}
+		data, err := io.ReadAll(resp.Body)
+		cerr := resp.Body.Close()
+		if err != nil || cerr != nil || resp.StatusCode != 200 || !bytes.Equal(data, make([]byte, 1024)) {
+			b.Fatalf("unexpected HTTP %v, body=%d, read=%v close=%v", resp.StatusCode, len(data), err, cerr)
+		}
+		ready = time.Since(start)
+		break
+	}
+	if ready == 0 {
+		b.Fatalf("did not serve restored body at %s", ip)
+	}
+	info2, err := cli.ContainerInspect(ctx, container.ID())
+	if err != nil {
+		b.Fatal(err)
+	}
+	pid := info2.State.Pid
+	if pid < 1 {
+		b.Fatalf("invalid restored PID: %d", pid)
+	}
+	var hwm int64
+	sum := "unknown"
+	proc := fmt.Sprintf("/proc/%d/", pid)
+	if info, err := os.ReadFile(proc + "status"); err == nil {
+		for _, line := range strings.Split(string(info), "\n") {
+			if strings.HasPrefix(line, "VmHWM:") {
+				var kb int64
+				var units string
+				if n, err := fmt.Sscanf(line, "VmHWM: %d %s", &kb, &units); n == 2 && err == nil && units == "kB" {
+					hwm = kb * 1024
+				}
+				break
+			}
+		}
+	}
+	if f, err := os.Open(proc + "exe"); err == nil {
+		h := sha256.New()
+		if n, err := io.Copy(h, f); err == nil && n > 0 {
+			sum = fmt.Sprintf("%x", h.Sum(nil))
+		}
+		f.Close()
+	}
+	fmt.Printf("SERVICE-TRIAL id=%s workers=%d state=%d pagesMeta=%d http=200 body=1024 restore=%d ready=%d pid=%d highwater=%d exe=%s\n", container.ID(), workers, len(stateFile), sizes[checkpointfiles.PagesMetadataFileName], restored.Nanoseconds(), ready.Nanoseconds(), pid, hwm, sum)
 	return stateFile, sizes, names, mounts
 }
 
@@ -705,4 +768,16 @@ func TestMain(m *testing.M) {
 	fdnotifier.Pause()
 	fdnotifier.Resume()
 	os.Exit(m.Run())
+}
+
+func BenchmarkLiveService(b *testing.B) {
+	if b.N != 1 || !testutil.IsCheckpointSupported() || dockerutil.Runtime() != "runsc" {
+		b.Fatal("requires one real runsc checkpoint")
+	}
+	machine, err := harness.GetMachine()
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer machine.CleanUp()
+	checkpointNginx(context.Background(), b, machine)
 }
