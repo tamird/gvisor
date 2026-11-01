@@ -36,13 +36,13 @@ def git(*args):
     return subprocess.check_output(["git", *args])
 
 
-def original_tests(tests, targets):
+def original_tests(tests, targets, wrapper="compiled_posix_test_wrapper"):
     if collections.Counter(t["target"] for t in tests) != collections.Counter(targets):
         return False
     for test in tests:
         package, name = test["target"].removeprefix("//").split(":")
         if (test["runner"] != "remote" or test["cache_hit"] or test["status"] or test["exit_code"]
-                or Path(test["executable"]).name != "compiled_posix_test_wrapper"
+                or Path(test["executable"]).name != wrapper
                 or not test["test_binary"].startswith(package + "/")
                 or Path(test["test_binary"]).name != name):
             return False
@@ -82,7 +82,7 @@ def native_actions(path, arch, tmp):
                     bad.append(item)
             projection_exit = projected.wait()
         decode_exit = decoder.wait()
-    valid_tests = original_tests(tests, TARGETS)
+    valid_tests = original_tests(tests, TARGETS, "posix_tw" if arch == "amd64" else "compiled_posix_test_wrapper")
     return {"status": "PASS" if counts["total"] and not bad and not decode_exit and not projection_exit and valid_tests else "FAIL",
             "counts": dict(counts), "decoder_exits": [decode_exit, projection_exit],
             "tests": tests, "failed_or_other": bad}
@@ -233,7 +233,7 @@ def main():
     binary_sha256 = hashlib.sha256(binary.read_bytes()).hexdigest()
     bazel = [str(binary), "--bazelrc=" + str(tmp / "sidecar.bazelrc")]
     rows = []
-    for arch in ("arm64",):
+    for arch in ("amd64",):
         try:
             rows.append(qualify(arch, tmp, out, private, bazel))
         except Exception as error:
@@ -250,10 +250,10 @@ def main():
             rows.append(row)
     status = "FAIL" if any(row["status"] == "FAIL" for row in rows) else "PASS" if all(row["status"] == "PASS" for row in rows) else "INCOMPLETE"
     summary = {"source": SOURCE, "status": status, "rows": rows, "verified_at": now(),
-               "native_bazel": {"artifact_id": 12982133352,
+               "native_bazel": {"supplier_source": "b70c334832ca2a1109a8b5e8cdc632b411174b6f",
                                 "member": "bazel-candidate",
                                 "sha256": binary_sha256,
-                                "identity": "Named member of the verified original artifact ZIP",
+                                "identity": "Canonical supplier build; static embedded ELF verified in supplier.json",
                                 "wrapper_prerequisite": "https://github.com/bazelbuild/bazel/pull/30837",
                                 "prior_native_xml_proof": "https://github.com/tamird/gvisor/actions/runs/41071795282/artifacts/12986015991"}}
     write(out / "summary.json", summary)
