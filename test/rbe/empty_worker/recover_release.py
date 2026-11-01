@@ -17,25 +17,27 @@ tmp=Path(os.environ['RUNNER_TEMP'])
 out=tmp/'release-smoke-result';out.mkdir(exist_ok=True)
 cpu=os.environ['EXEC_CPU']
 mode=sys.argv[1]
-expected_digest={'amd64':'6816edf95d04ce79be784828c275893af60f260867fe22f9b0f39cfbe42046c8','arm64':'11127279c072b2fa196b0482a3847586bb63250f2f498d80e1202e8c9be92a2f'}[cpu]
-original=tmp/'original.zip'
+expected_digest={"amd64":"81f97e2c4715343f5839544e62436a8105597e2edf1a8a29249ad3367b3efcb9","arm64":"55a406b910ab4aa47ee21ad2bef3c0d7448ab53aff5d399685f9e40a1a76c6d2"}[cpu]
+original=tmp/"original.zip"
 assert hashlib.sha256(original.read_bytes()).hexdigest()==expected_digest
 with zipfile.ZipFile(original) as z:
-    previous=json.loads(z.read('result.json'))
-assert previous["corrected"]=="f906c5dd87aeffc3a6f5cec8275b6102a278ea0a"
-build=previous[cpu]; source=build['source']
-assert build["native_exit"]==0 and build['verdict']=='EIGHT_RELEASE_ELFS_VERIFIED'
-assert previous["native_smoke"]["exit"]==128 and "failed to load /busybox: permission denied" in previous["native_smoke"]["stderr"]
-machine,machine_name={'amd64':(62,'x86_64'),'arm64':(183,'aarch64')}[cpu]
-inv,=build['invocations']
+    previous=json.loads(z.read("result.json"))
+assert previous["verdict"]=="THREE_OPT_DISTRIBUTIONS_SAME_EIGHT_ELFS"
+build=previous[cpu]
+source=build["source"]
+assert source=="21fd3304cb0d31b5cca02c0f3bc75d0c5a53df30" and build["native_exit"]==0
+archive=build["packages"]["zstd"]
+guest = {'amd64': {'elf': {'sha256': 'dbac288c29ba568459550a2da9e7ae0ded6b1fc728ee9fad3044c44e62d6ac14', 'bytes': 2124608, 'elf_machine': 62}, 'label': '@bootstrap_busybox//:payload/usr/bin/busybox', 'invocation': '3d7a4854-928e-4216-9bbb-b0862de1e133'}, 'arm64': {'elf': {'sha256': '52151e7f322f926b64049cdaa1410dc3ea6485525e0624b05813791c219ae933', 'bytes': 1914704, 'elf_machine': 183}, 'label': '@bootstrap_busybox_arm64//:payload/usr/bin/busybox', 'invocation': 'f211b47b-c357-46ec-9ddc-dafa9dd96e08'}}[cpu]
+guest_entry = guest["elf"]
+machine,machine_name={"amd64":(62,"x86_64"),"arm64":(183,"aarch64")}[cpu]
+inv,=build["invocations"]
 def now():
     return datetime.now(timezone.utc).isoformat()
 def save():
     (out/'result.json').write_text(json.dumps(results,indent=2)+'\n')
-results=json.loads((out/'result.json').read_text()) if mode=='guest' else dict(corrected=source,cpu=cpu,original_artifact_sha256=expected_digest,original_build=build,original_guest=previous['native_smoke'],started=now())
-install=tmp/'exact-release'
-busybox=tmp/'original-busybox'
-guest=previous['native_smoke']['guest']
+results=json.loads((out/"result.json").read_text()) if mode=="guest" else dict(corrected=source,cpu=cpu,mode="opt",original_artifact_sha256=expected_digest,invocation=inv,archive_sha256=archive["sha256"],archive_bytes=archive["bytes"],started=now())
+install=tmp/"exact-release"
+busybox=tmp/"original-busybox"
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self,req,fp,code,msg,headers,newurl):
         return None
@@ -46,8 +48,8 @@ def recover(path,entry):
     req=Request(url,headers={'x-buildbuddy-api-key':os.environ['BUILDBUDDY_API_KEY']})
     with build_opener(NoRedirect).open(req,timeout=80) as stream, path.open('wb') as destination:
         shutil.copyfileobj(stream,destination)
-    check=elf(path)
-    assert check['sha256']==h and check['bytes']==n
+    with path.open("rb") as stream:
+        assert path.stat().st_size==n and hashlib.file_digest(stream,"sha256").hexdigest()==h
     path.chmod(0o755)
 def elf(path):
     with path.open("rb") as stream:
@@ -78,8 +80,8 @@ def smoke(install,busybox):
     args=["sudo","-n","--",str(install/"runsc"),"--root="+str(state),"--platform=systrap","--network=none",
           "--overlay2=none","--host-settings=ignore","--ignore-cgroups"]
     cid="scratch-release"
-    sub=results["native_smoke"]={"privileged_host":platform.platform(),"started":now(),"guest":guest,
-        "elf":elf(fs/"busybox"),"read_from_guest":expected,"runsc_flags":args[4:],"sidecar_source":"adjacent gvisor-bin from //:release"}
+    sub=results["native_smoke"]={"privileged_host":platform.platform(),"started":now(),"guest":guest["label"],
+        "elf":elf(fs/"busybox"),"read_from_guest":expected,"runsc_flags":args[4:],"sidecar_source":"adjacent gvisor-bin extracted from //debian:gvisor-release-tar-zstd"}
     save()
     try:
         proc=subprocess.run(["timeout","--kill-after=5","90",*args,"run","--bundle="+str(bundle),cid],
@@ -93,14 +95,28 @@ def smoke(install,busybox):
 
 try:
     assert platform.machine()==machine_name
-    assert set(build["artifacts"])=={"runsc","containerd-shim-runsc-v1","gvisor-bin/gvisor_sentry","gvisor-bin/checkpointgofer","gvisor-bin/runsc-metric-server","gvisor-bin/gvisor-sentry-prewarmer","gvisor-bin/runsc-fd-parking","gvisor-bin/gvisor-proc-umounter"}
+    assert set(archive["binaries"])=={"runsc","containerd-shim-runsc-v1","gvisor-bin/gvisor_sentry","gvisor-bin/checkpointgofer","gvisor-bin/runsc-metric-server","gvisor-bin/gvisor-sentry-prewarmer","gvisor-bin/runsc-fd-parking","gvisor-bin/gvisor-proc-umounter"}
     if mode=="fetch":
         install.mkdir()
+        packed=tmp/"gvisor.tar.zstd"
+        recover(packed,archive)
+        import tarfile
         recovered={}
-        for name,entry in build["artifacts"].items():
-            path=install/name;path.parent.mkdir(exist_ok=True)
-            recover(path,entry);recovered[name]=elf(path)
-        guest_entry=previous["native_smoke"]["elf"]
+        with subprocess.Popen(["zstd","-q","-d","-c",packed],stdout=subprocess.PIPE) as proc:
+            with tarfile.open(fileobj=proc.stdout,mode="r|") as tar:
+                for member in tar:
+                    if not member.isfile(): continue
+                    name=member.name.removeprefix("./")
+                    assert name in archive["binaries"] and name not in recovered,name
+                    dest=install/name
+                    dest.parent.mkdir(exist_ok=True)
+                    with dest.open("wb") as dst: shutil.copyfileobj(tar.extractfile(member),dst)
+                    dest.chmod(member.mode)
+                    recovered[name]=elf(dest)
+                while proc.stdout.read(1024*1024): pass
+            assert proc.wait()==0
+        assert recovered==archive["binaries"]
+        inv=guest["invocation"]
         try:
             recover(busybox,guest_entry)
             guest_provenance="original CAS"
