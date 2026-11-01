@@ -1995,6 +1995,32 @@ function scheduleRefresh() {
     refreshTimer = setTimeout(() => refresh(true), delay);
   }
 }
+async function readSnapshot(base) {
+  const options = { cache: "no-cache", credentials: "omit", signal: AbortSignal.timeout(10000) };
+  const [registryResponse, snapshotResponse] = await Promise.all([
+    fetch(base + "registry.json", options), fetch(base + "github-status.json", options),
+  ]);
+  if (!registryResponse.ok) throw new Error(`Registry returned ${registryResponse.status}`);
+  if (!snapshotResponse.ok) throw new Error(`Snapshot returned ${snapshotResponse.status}`);
+  const [nextRegistry, snapshot] = await Promise.all([registryResponse.json(), snapshotResponse.json()]);
+  validateRegistry(nextRegistry);
+  if (nextRegistry.meta.repo !== registry.meta.repo || nextRegistry.meta.owner !== registry.meta.owner) throw new Error("Registry repository changed");
+  validateSnapshot(snapshot, nextRegistry);
+  return [nextRegistry, snapshot];
+}
+async function publishedSnapshot() {
+  // A failed Pages deployment can leave the site serving an old review queue.
+  // GitHub publishes the data files as soon as their commit reaches gh-pages.
+  if (globalThis.location?.hostname === "tamird.github.io") {
+    try {
+      return await readSnapshot("https://raw.githubusercontent.com/tamird/gvisor/refs/heads/gh-pages/");
+    } catch (error) {
+      if (model.checkedAt) throw error;
+      // On the first visit the deployed pair can still provide an offline snapshot.
+    }
+  }
+  return readSnapshot("");
+}
 async function refresh(force = false) {
   if (refreshing || (force && Date.now() - lastAttempt < 10000)) return;
   let cached;
@@ -2006,18 +2032,7 @@ async function refresh(force = false) {
   refreshing = true; lastAttempt = Date.now(); $("refresh").disabled = true;
   setFreshness("Loading published GitHub snapshot…");
   try {
-    // An open tab can outlive a deployment. Reload both data files and validate
-    // their shared revision before replacing the current registry or snapshot.
-    const options = { cache: "no-cache", credentials: "omit", signal: AbortSignal.timeout(10000) };
-    const [registryResponse, snapshotResponse] = await Promise.all([
-      fetch("registry.json", options), fetch("github-status.json", options),
-    ]);
-    if (!registryResponse.ok) throw new Error(`Registry returned ${registryResponse.status}`);
-    if (!snapshotResponse.ok) throw new Error(`Snapshot returned ${snapshotResponse.status}`);
-    const [nextRegistry, snapshot] = await Promise.all([registryResponse.json(), snapshotResponse.json()]);
-    validateRegistry(nextRegistry);
-    if (nextRegistry.meta.repo !== registry.meta.repo || nextRegistry.meta.owner !== registry.meta.owner) throw new Error("Registry repository changed");
-    validateSnapshot(snapshot, nextRegistry);
+    const [nextRegistry, snapshot] = await publishedSnapshot();
     applyLive(snapshot, nextRegistry);
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(snapshot)); } catch { /* Storage is optional. */ }
   } catch (error) {

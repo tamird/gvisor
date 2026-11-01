@@ -67,6 +67,32 @@ test('a visible tab refreshes once when due and retains its view if the snapshot
   assert.equal(timer, null);
 });
 
+test('the deployed dashboard reads new decisions even if Pages still serves the old registry', async () => {
+  const context = client();
+  context.location = { hostname: 'tamird.github.io' };
+  context.AbortSignal = AbortSignal;
+  const older = { ...context.registryInput, nodes: [], edges: [], groups: [] };
+  const head = 'a'.repeat(40), url = 'https://github.com/tamird/gvisor/commit/' + head.slice(0, 9);
+  const newer = { ...older, meta: { ...older.meta, updatedAt: '2026-10-13T00:00:00Z' },
+    nodes: [{ id: 'branch:proposal', type: 'branch', repo: 'tamird/gvisor', title: 'New proposal', head, url,
+      contributorReview: { status: 'pending', head, url } }] };
+  let branchSnapshot = { ...context.snapshotInput, registryDate: newer.meta.updatedAt };
+  vm.runInContext('model = {}', context);
+  context.fetch = async url => {
+    const fromBranch = url.startsWith('https://raw.githubusercontent.com/tamird/gvisor/refs/heads/gh-pages/');
+    const value = url.endsWith('registry.json') ? (fromBranch ? newer : older) :
+      (fromBranch ? branchSnapshot : context.snapshotInput);
+    return { ok: true, json: async () => value };
+  };
+  const read = () => vm.runInContext('publishedSnapshot()', context);
+  assert.equal((await read())[0].nodes[0].contributorReview.head, head);
+  // A branch update can reach the two URLs at different times.
+  branchSnapshot = context.snapshotInput;
+  assert.equal((await read())[0], older);
+  vm.runInContext('model.checkedAt = snapshotInput.checkedAt', context);
+  await assert.rejects(read(), /registry/i);
+});
+
 test('every open snapshot PR shares its import decision with the periodic planner', () => {
   const context = client();
   const registry = JSON.parse(readFileSync(new URL('./registry.json', import.meta.url)));

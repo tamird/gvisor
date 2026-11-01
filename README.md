@@ -14,7 +14,10 @@ there is no package install, bundler, database, or authentication in the browser
 
 Edit [`registry.json`](registry.json) when a dependency, pending branch, or
 qualification blocker changes, update `meta.updatedAt`, and push this branch.
-Pages republishes it automatically. The registry is both the dependency source
+The dashboard reads the registry and its matching GitHub snapshot from this branch,
+so review decisions can reach an open tab while Pages is deploying. The copy
+bundled with the site is available when GitHub cannot serve the branch.
+The registry is both the dependency source
 and an offline snapshot; keep source links and the distinction between observed
 facts and unresolved causes in every relationship.
 
