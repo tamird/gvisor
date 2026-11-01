@@ -227,7 +227,9 @@ func (ds *graphDecodeState) runCallbacks() {
 			}
 			for c := o.cbHead; c >= 0; c = ds.cbs[c].next {
 				cb := &ds.cbs[c]
-				ds.runCallback(cb)
+				if cb.waiter < 0 {
+					ds.runCallback(cb)
+				}
 				if cb.waiter >= 0 {
 					w := &ds.ods[cb.waiter]
 					w.blockedBy--
