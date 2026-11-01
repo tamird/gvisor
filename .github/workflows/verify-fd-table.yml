@@ -14,8 +14,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {"pr": "fd-table-positive", "sha": "5c792dd87213269723e419efcc83feaf90728ed9", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm", "image": "docker://mirror.gcr.io/library/gcc@sha256:66035d353338cb93b64f621393dc6fecde85258651ca454f0cf36ff2639b1352", "isolation": "oci"}
-          - {"pr": "fd-table-negative", "sha": "7e42854f555f8c9d56263038e48875a20f7cc9b7", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm", "image": "docker://mirror.gcr.io/library/gcc@sha256:66035d353338cb93b64f621393dc6fecde85258651ca454f0cf36ff2639b1352", "isolation": "oci"}
+          - {"pr": "fd-table-positive", "sha": "5c792dd87213269723e419efcc83feaf90728ed9", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm", "image": "docker://mirror.gcr.io/library/buildpack-deps@sha256:db73e309a26ddb362c11c0ee35b3d957c3a8fd2ef6a9d6c2cc76438fae2c0988", "isolation": "oci"}
+          - {"pr": "fd-table-negative", "sha": "7e42854f555f8c9d56263038e48875a20f7cc9b7", "arch": "arm64", "cpu": "aarch64", "runner": "ubuntu-24.04-arm", "image": "docker://mirror.gcr.io/library/buildpack-deps@sha256:db73e309a26ddb362c11c0ee35b3d957c3a8fd2ef6a9d6c2cc76438fae2c0988", "isolation": "oci"}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
