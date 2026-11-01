@@ -1,35 +1,68 @@
-name: CI
-
-"on":
+name: Compare three restore readers on a listening Nginx across CPU quotas
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/listening-nginx-reader-quotas]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  quota:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/listening-nginx-reader-quotas'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      NGINX: us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/nginx_x86_64@sha256:31c649d512cced4f7dd414fd05cfa9bb7416ee37575caeba46cc1e9b56aef163
+      SOURCE: d3066814d48a526561ab14dd6cd9c820182a79cf
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 2
+        persist-credentials: false
+    - name: Verify the release sources and export the pinned Nginx root filesystem
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD^)" = "$SOURCE"
+        git diff --exit-code "$SOURCE" HEAD -- pkg runsc
+        mkdir -p "$RUNNER_TEMP/nginx-public" "$RUNNER_TEMP/gnu-platform"
+        docker pull --platform=linux/amd64 "$NGINX"
+        test "$(docker image inspect --format '{{.Id}}' "$NGINX")" = sha256:5f9e05caa37420ad50b7ccf873ea117fcbd8cff24b3fcb689cb904bcab624cf5
+        id=$(docker create "$NGINX")
+        docker export -o test/rbe/nginx_quota/nginx.tar "$id"
+        docker rm "$id"
+        tar tf test/rbe/nginx_quota/nginx.tar > "$RUNNER_TEMP/nginx-files"
+        grep -Fx usr/bin/curl "$RUNNER_TEMP/nginx-files"
+        printf 'module(name="quota_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
+    - name: Reuse all eight binary digests from the 108 verified restore trials
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: python3 test/rbe/nginx_quota/prepare-inputs.py
+    - name: Submit the native Nginx quota comparison
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail
+        umask 077
+        cfg="$RUNNER_TEMP/quota.bazelrc"
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=quota_gnu=$RUNNER_TEMP/gnu-platform" 'build --host_platform=@quota_gnu//:gnu' 'build --extra_execution_platforms=@quota_gnu//:gnu' 'build --platforms=//tools/bazeldefs:linux_amd64' 'test --strategy=TestRunner=remote'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$cfg"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run --rm --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" test/rbe/nginx_quota/coordinator.sh "$RUNNER_TEMP"
+    - name: Retain a typed setup verdict if the original action could not start
+      if: always()
+      run: |
+        d="$RUNNER_TEMP/nginx-public"
+        mkdir -p "$d"
+        if [[ ! -s "$d/quota-summary.json" ]]; then
+          printf '{"result":"INCOMPLETE","expected":216,"qualified":0,"reason":"See coordinator receipt or failed setup step"}\n' > "$d/quota-summary.json"
+        fi
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: always()
+      with:
+        name: verified-nginx-quota-readers
+        path: ${{ runner.temp }}/nginx-public
+        if-no-files-found: error

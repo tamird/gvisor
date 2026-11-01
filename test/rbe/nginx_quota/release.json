@@ -1,0 +1,42 @@
+{
+  "release/containerd-shim-runsc-v1": {
+    "uri": "bytestream://remote.buildbuddy.io/blobs/b6885a92cd36ad7a1f8c603930c63164731240408ac9614517260ca542331074/24048829",
+    "digest": "b6885a92cd36ad7a1f8c603930c63164731240408ac9614517260ca542331074",
+    "length": "24048829"
+  },
+  "release/runsc": {
+    "uri": "bytestream://remote.buildbuddy.io/blobs/b089fb0bc2c5c2a4d313b26d0bcca9ac2ca73f86660f2f9774b6012d60b1a5e1/18817802",
+    "digest": "b089fb0bc2c5c2a4d313b26d0bcca9ac2ca73f86660f2f9774b6012d60b1a5e1",
+    "length": "18817802"
+  },
+  "release/gvisor-bin/checkpointgofer": {
+    "uri": "bytestream://remote.buildbuddy.io/blobs/7ae82debebb3a59dc321117ac41b8c231a2b1161c727f7a431abd9a6235b1fec/48480470",
+    "digest": "7ae82debebb3a59dc321117ac41b8c231a2b1161c727f7a431abd9a6235b1fec",
+    "length": "48480470"
+  },
+  "release/gvisor-bin/runsc-metric-server": {
+    "uri": "bytestream://remote.buildbuddy.io/blobs/31660b94213061fe84a0eace95ef34ef7c577b8b123fe9402e3e57feba345d1a/21142215",
+    "digest": "31660b94213061fe84a0eace95ef34ef7c577b8b123fe9402e3e57feba345d1a",
+    "length": "21142215"
+  },
+  "release/gvisor-bin/runsc-fd-parking": {
+    "uri": "bytestream://remote.buildbuddy.io/blobs/03af90d07ea466c10ecc3e3ba839b2a59540959dd3286aea3886917cba850c11/1320",
+    "digest": "03af90d07ea466c10ecc3e3ba839b2a59540959dd3286aea3886917cba850c11",
+    "length": "1320"
+  },
+  "release/gvisor-bin/gvisor-sentry-prewarmer": {
+    "uri": "bytestream://remote.buildbuddy.io/blobs/46d5c028723ac5fbe40b863f95100f15a00d2aa0cd39c69d892500a988c930bd/1416",
+    "digest": "46d5c028723ac5fbe40b863f95100f15a00d2aa0cd39c69d892500a988c930bd",
+    "length": "1416"
+  },
+  "release/gvisor-bin/gvisor-proc-umounter": {
+    "uri": "bytestream://remote.buildbuddy.io/blobs/b3bbbaef5ddc62084e5febd19d3acca14f3d42b2a25d8552fb40def699467019/1280",
+    "digest": "b3bbbaef5ddc62084e5febd19d3acca14f3d42b2a25d8552fb40def699467019",
+    "length": "1280"
+  },
+  "release/gvisor-bin/gvisor_sentry": {
+    "uri": "bytestream://remote.buildbuddy.io/blobs/aaf808fbd989065e4aa90ddc7e9149357911a93c93772af75f1b8059a2225dc3/53799883",
+    "digest": "aaf808fbd989065e4aa90ddc7e9149357911a93c93772af75f1b8059a2225dc3",
+    "length": "53799883"
+  }
+}
