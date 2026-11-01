@@ -2994,7 +2994,15 @@ func TestCheckpointDestinationCapacity(t *testing.T) {
 			if err := conf.Overlay2.Set("all:dir=" + makeTempDir(t, "capacity-filestore")); err != nil {
 				t.Fatal(err)
 			}
-			spec.Mounts = append(spec.Mounts, specs.Mount{Destination: "/mnt", Type: "bind", Source: lower, Options: []string{"bind", "rw"}})
+			// The guest writes only to /mnt. The default test mount would
+			// recursively bind the whole Bazel temporary directory, which
+			// also contains the runtime directories for this sandbox.
+			spec.Mounts = []specs.Mount{{
+				Destination: "/mnt",
+				Type:        "bind",
+				Source:      lower,
+				Options:     []string{"bind", "rw"},
+			}}
 			_, bundle, clean, err := testutil.SetupContainer(spec, conf)
 			if err != nil {
 				t.Fatal(err)
