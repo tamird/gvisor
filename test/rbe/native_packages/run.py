@@ -1,4 +1,4 @@
-"""Run the original C++ PosixError suite on both native scratch platforms."""
+"""Run ordinary C++ utility tests with the supplier's static musl platforms."""
 
 import collections
 import datetime
@@ -17,13 +17,19 @@ from static_build import elf
 
 SOURCE = os.environ["PRODUCT"]
 IMAGE = "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"
-TARGETS = ["//test/util:posix_error_test"]
-LOADER_ARGS = ["test/rbe/native_glibc/loader", "--inhibit-cache", "--library-path", "test/rbe/native_glibc/lib"]
-LOADER_DIGESTS = {
-    "amd64": "41daf7836f7fce21a40ca63a00c5caf21b05a35a76ccc075d86f1716212cdf01",
-    "arm64": "1f4fe51e11324b5bcc01ef1fd3859b5dd344ec16a8674d74ce618ef65016fbaf",
+TARGETS = ["//test/util:posix_error_test", "//test/util:fs_util_test"]
+CASES = {
+    TARGETS[0]: ["PosixErrorTest/PosixError", "PosixErrorTest/PosixErrorOrPosixError", "PosixErrorTest/PosixErrorOrNullptr"],
+    TARGETS[1]: ["FsUtilTest/RecursivelyCreateDirManualDelete", "FsUtilTest/RecursivelyCreateAndDeleteDir", "FsUtilTest/RecursivelyCreateAndDeletePartial"],
 }
-CASES = {TARGETS[0]: ["PosixErrorTest/PosixError", "PosixErrorTest/PosixErrorOrPosixError", "PosixErrorTest/PosixErrorOrNullptr"]}
+ABI = {
+    "qualified": "musl, selected by the supplier's existing target platforms",
+    "gnu_control": {"run": 41297166023, "artifact": 13079933163, "metadata_artifact": 13080650694,
+                    "cases_per_arch": 3, "scope": "Same PosixError source under explicitly declared GNU loader/runtime"},
+    "limitation": "These utility tests do not qualify the general syscall suite's Linux/glibc behavior: musl can select different syscalls and libc behavior.",
+    "supplier_static_contract": "https://github.com/hermeticbuild/hermetic-llvm/blob/39e71f939/README.md#musl",
+    "supplier_gnu_contract": "https://github.com/hermeticbuild/hermetic-llvm/blob/39e71f939/runtimes/glibc/README.md",
+}
 
 
 def now():
@@ -38,13 +44,11 @@ def git(*args):
     return subprocess.check_output(["git", *args])
 
 
-def original_tests(tests, targets, wrapper="compiled_posix_test_wrapper", *, run_under=False):
+def original_tests(tests, targets, wrapper="compiled_posix_test_wrapper"):
     if collections.Counter(t["target"] for t in tests) != collections.Counter(targets):
         return False
     for test in tests:
         package, name = test["target"].removeprefix("//").split(":")
-        if run_under and test.get("arguments") != [*LOADER_ARGS, test["test_binary"]]:
-            return False
         if (test["runner"] != "remote" or test["cache_hit"] or test["status"] or test["exit_code"]
                 or Path(test["executable"]).name != wrapper
                 or not test["test_binary"].startswith(package + "/")
@@ -87,7 +91,8 @@ def native_actions(path, arch, tmp):
                     bad.append(item)
             projection_exit = projected.wait()
         decode_exit = decoder.wait()
-    valid_tests = original_tests(tests, TARGETS, "posix_tw" if arch == "amd64" else "compiled_posix_test_wrapper", run_under=True)
+    valid_tests = (original_tests(tests, TARGETS, "posix_tw" if arch == "amd64" else "compiled_posix_test_wrapper")
+                   and all(test["arguments"] == [test["test_binary"]] for test in tests))
     return {"status": "PASS" if counts["total"] and not bad and not decode_exit and not projection_exit and valid_tests else "FAIL",
             "counts": dict(counts), "decoder_exits": [decode_exit, projection_exit],
             "tests": tests, "failed_or_other": bad}
@@ -96,33 +101,22 @@ def native_actions(path, arch, tmp):
 def product_elf(bazel, common, work, execroot, arch):
     with (work / "output-query.log").open("w") as log:
         result = subprocess.run(["timeout", "--signal=INT", "--kill-after=25s", "8m",
-                                 *bazel, "cquery", *common, "--output=files", "set(" + TARGETS[0] + " @qualification_glibc_" + arch + "//:libraries)"],
+                                 *bazel, "cquery", *common, "--output=files", "set(" + " ".join(TARGETS) + ")"],
                                 stdout=subprocess.PIPE, stderr=log, text=True)
     if result.returncode:
         return {"status": "INCOMPLETE", "native_exit": result.returncode}
-    files = [line for line in result.stdout.splitlines() if Path(line).name == "posix_error_test"]
-    if len(files) != 1 or not (execroot / files[0]).is_file():
-        return {"status": "INCOMPLETE", "reason": "The original test executable was not materialized locally"}
-    binary = execroot / files[0]
-    data = elf(binary.read_bytes())
-    data["target"] = TARGETS[0]
-    # Inspect the declared source artifacts, independent of local runfiles materialization.
-    libraries = [execroot / path for path in result.stdout.splitlines() if path not in files]
-    loader_name = {"amd64": "ld-linux-x86-64.so.2", "arm64": "ld-linux-aarch64.so.1"}[arch]
-    loaders = [path for path in libraries if path.name == loader_name]
-    if len(loaders) != 1:
-        return {"status": "INCOMPLETE", "reason": "The declared GNU loader was not found"}
-    loader = elf(loaders[0].read_bytes())
-    data["declared_loader"] = loader
-    data["runtime_files"] = [{"name": path.name, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
-                             for path in sorted(libraries)]
-    data["status"] = "PASS" if (data["machine"] == {"amd64": 62, "arm64": 183}[arch]
-                                and len(data["interpreter"]) == 1
-                                and Path(data["interpreter"][0]).name == loader_name
-                                and "libc.so.6" in data["needed"]
-                                and loader["sha256"] == LOADER_DIGESTS[arch]
-                                and not loader["interpreter"] and not loader["needed"]) else "FAIL"
-    return data
+    outputs = {}
+    for target in TARGETS:
+        name = target.split(":")[1]
+        files = [line for line in result.stdout.splitlines() if Path(line).name == name]
+        if len(files) != 1 or not (execroot / files[0]).is_file():
+            return {"status": "INCOMPLETE", "outputs": outputs,
+                    "reason": "The original test executable was not materialized locally", "target": target}
+        data = elf((execroot / files[0]).read_bytes())
+        data["status"] = "PASS" if (data["machine"] == {"amd64": 62, "arm64": 183}[arch]
+                                    and not data["interpreter"] and not data["needed"]) else "FAIL"
+        outputs[target] = data
+    return {"status": "PASS" if all(v["status"] == "PASS" for v in outputs.values()) else "FAIL", "outputs": outputs}
 
 
 def qualify(arch, tmp, out, private, bazel):
@@ -130,25 +124,28 @@ def qualify(arch, tmp, out, private, bazel):
     work.mkdir()
     public = out / arch
     public.mkdir()
-    row = {"source": SOURCE, "arch": arch, "targets": TARGETS, "required_cases": CASES, "phases": {}, "status": "INCOMPLETE"}
+    row = {"source": SOURCE, "arch": arch, "targets": TARGETS, "required_cases": CASES, "libc": ABI, "phases": {}, "status": "INCOMPLETE"}
     write(public / "receipt.json", row)
     (work / "commit").write_bytes(git("cat-file", "commit", SOURCE))
     (work / "before").write_bytes(git("diff", "HEAD", "--"))
     (work / "expected.txt").write_text("\n".join(TARGETS) + "\n")
     write(work / "cases.json", CASES)
     platform = "//test/rbe/empty_worker:" + arch + "_musl"
+    target_platform = "@llvm//platforms:linux_" + {"amd64": "x86_64", "arm64": "aarch64"}[arch] + "_musl"
+    row["target_platform"] = target_platform
+    row["execution_platform"] = platform
     common = ["--config=" + {"amd64": "x86_64", "arm64": "aarch64"}[arch],
+              "--platforms=" + target_platform,
               "--compilation_mode=fastbuild", "--host_platform=" + platform,
               "--extra_execution_platforms=" + platform,
               "--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
               "--extra_toolchains=//test/rbe/go_bootstrap:linux_" + arch + "_ash",
               "--noincompatible_exclude_starlark_flags_from_exec_config",
               "--workspace_status_command=", "--host_features=fully_static_link",
-              "--run_under=//test/rbe/native_glibc:loader " + " ".join(LOADER_ARGS[1:]),
               "--incompatible_use_native_posix_test_wrapper", "--nocache_test_results",
               "--nobuild_event_json_file_path_conversion", "--jobs=400",
               "--remote_download_outputs=toplevel",
-              "--remote_download_regex=bazel-out/[^/]+/bin/test/util/posix_error_test$",
+              "--remote_download_regex=bazel-out/[^/]+/bin/test/util/(posix_error_test|fs_util_test)$",
               "--noremote_upload_local_results",
               "--noremote_local_fallback", "--spawn_strategy=remote", "--keep_going",
               "--color=no", "--curses=no"]
@@ -226,16 +223,7 @@ def main():
         raise ValueError("The verifier rejects the retained successful native TestRunner")
     if original_tests([dict(actual, executable="external/bazel_tools/tools/test/test-setup.sh")], targets):
         raise ValueError("The verifier accepts a shell TestRunner as native")
-    wrapped = dict(actual, arguments=[*LOADER_ARGS, actual["test_binary"]])
-    if not original_tests([wrapped], targets, run_under=True):
-        raise ValueError("The verifier rejects the declared-loader command shape")
-    for index in range(len(LOADER_ARGS) + 1):
-        wrong = dict(wrapped, arguments=[*wrapped["arguments"]])
-        wrong["arguments"][index] = "incorrect"
-        if original_tests([wrong], targets, run_under=True):
-            raise ValueError("The verifier accepts an incorrect loader or original binary argument")
-    write(out / "wrapper-control.json", {"status": "PASS", "provenance": control["provenance"],
-                                        "loader_shape_positive": 1, "loader_shape_negative": 5})
+    write(out / "wrapper-control.json", {"status": "PASS", "provenance": control["provenance"]})
     try:
         subprocess.run(["git", "checkout", "--detach", SOURCE], check=True, stdout=subprocess.DEVNULL)
         if git("rev-parse", "HEAD").decode().strip() != SOURCE or git("diff", "HEAD", "--").strip():
@@ -265,7 +253,7 @@ def main():
             write(path, row)
             rows.append(row)
     status = "FAIL" if any(row["status"] == "FAIL" for row in rows) else "PASS" if all(row["status"] == "PASS" for row in rows) else "INCOMPLETE"
-    summary = {"source": SOURCE, "status": status, "rows": rows, "verified_at": now(),
+    summary = {"source": SOURCE, "status": status, "rows": rows, "libc": ABI, "verified_at": now(),
                "native_bazel": {"supplier_source": "c2f5f79dce24877679cede14b85666b7ca65c6de",
                                 "member": "bazel-candidate",
                                 "sha256": binary_sha256,
