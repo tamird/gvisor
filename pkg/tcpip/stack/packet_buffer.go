@@ -1088,10 +1088,7 @@ func UpdateHeaders(n header.Network, t header.Transport, updateSRCFields, fullCh
 	}
 }
 
-// CalculateTransportChecksum calculates the transport-layer checksum of the
-// packet.
-// TODO: b/521901282 - Verify with GSO.
-func (pk *PacketBuffer) CalculateTransportChecksum() {
+func (pk *PacketBuffer) checksumHeaders() (header.Network, header.Transport) {
 	netHdr, transHdr, isICMPError, ok := pk.GetHeaders()
 	if isICMPError {
 		// Skip ICMP errors because GetHeaders() returns inner headers, but pk.Data()
@@ -1100,12 +1097,12 @@ func (pk *PacketBuffer) CalculateTransportChecksum() {
 		// Inner headers are already incrementally updated by NAT if needed.
 		// This aligns with Linux, which also relies on incremental updates for
 		// inner headers and does not perform full recalculation from scratch.
-		return
+		return nil, nil
 	}
 	if !ok {
 		// Try to parse headers from Data if not set (e.g., forwarded packet).
 		if pk.NetworkProtocolNumber == 0 {
-			return
+			return nil, nil
 		}
 		netHdr = pk.Network()
 		transProto := netHdr.TransportProtocol()
@@ -1116,30 +1113,42 @@ func (pk *PacketBuffer) CalculateTransportChecksum() {
 			// Peek at minimum TCP header to find data offset (which includes options).
 			b, ok := pk.Data().PullUp(header.TCPMinimumSize)
 			if !ok {
-				return
+				return nil, nil
 			}
 			tcp := header.TCP(b)
 			headerSize = int(tcp.DataOffset())
 			if headerSize < header.TCPMinimumSize {
-				return
+				return nil, nil
 			}
 		case header.UDPProtocolNumber:
 			headerSize = header.UDPMinimumSize
 		default:
-			return
+			return nil, nil
 		}
 
 		// Consume the transport header.
 		if _, ok := pk.TransportHeader().Consume(headerSize); !ok {
-			return
+			return nil, nil
 		}
 		pk.TransportProtocolNumber = transProto
 
 		// Refresh headers.
 		netHdr, transHdr, isICMPError, ok = pk.GetHeaders()
 		if !ok || isICMPError {
-			return
+			return nil, nil
 		}
+	}
+
+	return netHdr, transHdr
+}
+
+// CalculateTransportChecksum calculates the transport-layer checksum of the
+// packet.
+// TODO: b/521901282 - Verify with GSO.
+func (pk *PacketBuffer) CalculateTransportChecksum() {
+	netHdr, transHdr := pk.checksumHeaders()
+	if transHdr == nil {
+		return
 	}
 
 	// The IPv6 base header may identify an extension header. Use the matched

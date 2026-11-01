@@ -65,22 +65,22 @@ func (v VirtioNetHeader) GSOType() uint8 {
 
 // HdrLen returns the "hdrLen" field of the virtio net header.
 func (v VirtioNetHeader) HdrLen() uint16 {
-	return binary.BigEndian.Uint16(v[hdrLen:])
+	return binary.LittleEndian.Uint16(v[hdrLen:])
 }
 
 // GSOSize returns the "gsoSize" field of the virtio net header.
 func (v VirtioNetHeader) GSOSize() uint16 {
-	return binary.BigEndian.Uint16(v[gsoSize:])
+	return binary.LittleEndian.Uint16(v[gsoSize:])
 }
 
 // CSumStart returns the "csumStart" field of the virtio net header.
 func (v VirtioNetHeader) CSumStart() uint16 {
-	return binary.BigEndian.Uint16(v[csumStart:])
+	return binary.LittleEndian.Uint16(v[csumStart:])
 }
 
 // CSumOffset returns the "csumOffset" field of the virtio net header.
 func (v VirtioNetHeader) CSumOffset() uint16 {
-	return binary.BigEndian.Uint16(v[csumOffset:])
+	return binary.LittleEndian.Uint16(v[csumOffset:])
 }
 
 // Encode encodes all the fields of the virtio net header.

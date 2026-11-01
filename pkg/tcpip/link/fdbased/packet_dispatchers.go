@@ -22,6 +22,7 @@ import (
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/rawfile"
 	"gvisor.dev/gvisor/pkg/tcpip"
+	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/link/stopfd"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"gvisor.dev/gvisor/pkg/tcpip/stack/gro"
@@ -42,15 +43,17 @@ type iovecBuffer struct {
 	// iovecs are initialized with base pointers/len of the corresponding
 	// entries in the views defined above, except when GSO is enabled
 	// (skipsVnetHdr) then the first iovec points to a buffer for the vnet header
-	// which is stripped before the views are passed up the stack for further
-	// processing.
+	// which is kept separately from the Ethernet frame.
 	iovecs []unix.Iovec `state:"nosave"`
 
 	// sizes is an array of buffer sizes for the underlying views. sizes is
 	// immutable.
 	sizes []int
 
-	// skipsVnetHdr is true if virtioNetHdr is to skipped.
+	// vnetHdr contains only the current read's packet-socket metadata.
+	vnetHdr [virtioNetHdrSize]byte `state:"nosave"`
+
+	// skipsVnetHdr separates the host virtio header from the packet payload.
 	skipsVnetHdr bool
 
 	// pulledIndex is the index of the last []byte buffer pulled from the
@@ -76,11 +79,7 @@ func newIovecBuffer(sizes []int, skipsVnetHdr bool) *iovecBuffer {
 func (b *iovecBuffer) nextIovecs() []unix.Iovec {
 	vnetHdrOff := 0
 	if b.skipsVnetHdr {
-		var vnetHdr [virtioNetHdrSize]byte
-		// The kernel adds virtioNetHdr before each packet, but
-		// we don't use it, so we allocate a buffer for it,
-		// add it in iovecs but don't add it in a view.
-		b.iovecs[0] = unix.Iovec{Base: &vnetHdr[0]}
+		b.iovecs[0] = unix.Iovec{Base: &b.vnetHdr[0]}
 		b.iovecs[0].SetLen(virtioNetHdrSize)
 		vnetHdrOff++
 	}
@@ -145,6 +144,30 @@ func (b *iovecBuffer) release() {
 	}
 }
 
+// setReceiveGSO records the host's segmentation boundary. Wire packets larger
+// than the MTU are not necessarily aggregates; only the packet socket knows
+// which packets came from a TCP segmentation offload.
+func setReceiveGSO(pkt *stack.PacketBuffer, data []byte, linkHdrSize int) {
+	v := header.VirtioNetHeader(data)
+	if v.Flags()&_VIRTIO_NET_HDR_F_NEEDS_CSUM == 0 || v.GSOSize() == 0 || v.CSumOffset() != header.TCPChecksumOffset {
+		return
+	}
+	var typ stack.GSOType
+	switch v.GSOType() {
+	case _VIRTIO_NET_HDR_GSO_TCPV4:
+		typ = stack.GSOTCPv4
+	case _VIRTIO_NET_HDR_GSO_TCPV6:
+		typ = stack.GSOTCPv6
+	default:
+		return
+	}
+	start := int(v.CSumStart()) - linkHdrSize
+	if start <= 0 {
+		return
+	}
+	pkt.GSOOptions = stack.GSO{Type: typ, MSS: v.GSOSize(), L3HdrLen: uint16(start), CsumOffset: v.CSumOffset(), NeedsCsum: true}
+}
+
 // readVDispatcher uses readv() system call to read inbound packets and
 // dispatches them.
 //
@@ -207,6 +230,9 @@ func (d *readVDispatcher) dispatch() (bool, tcpip.Error) {
 	d.e.mu.RUnlock()
 	if !d.e.parseInboundHeader(pkt, addr) {
 		return true, nil
+	}
+	if d.buf.skipsVnetHdr {
+		setReceiveGSO(pkt, d.buf.vnetHdr[:], d.e.hdrSize)
 	}
 	d.mgr.queuePacket(pkt, d.e.hdrSize > 0)
 	d.mgr.wakeReady()
@@ -329,6 +355,9 @@ func (d *recvMMsgDispatcher) dispatch() (bool, tcpip.Error) {
 
 		if d.e.parseInboundHeader(pkt, addr) {
 			pkt.RXChecksumValidated = d.e.caps&stack.CapabilityRXChecksumOffload != 0
+			if d.bufs[k].skipsVnetHdr {
+				setReceiveGSO(pkt, d.bufs[k].vnetHdr[:], d.e.hdrSize)
+			}
 			d.mgr.queuePacket(pkt, d.e.hdrSize > 0)
 		}
 	}
