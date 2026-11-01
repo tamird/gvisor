@@ -1,35 +1,52 @@
-name: CI
-
-"on":
+name: Report the retained TCP readiness benchmark with benchstat
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-readiness-benchstat]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  report:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@v5
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=runsc DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@v4
-      with:
-          name: runsc
-          path: bin/runsc
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify the original twelve-pair readiness inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/readiness-bench"
+          mkdir -p "$out"
+          gh api repos/tamird/gvisor/actions/artifacts/13083155959/zip > "$RUNNER_TEMP/original.zip"
+          echo "c98ca2aef2a0d96d9beda5d1ffb1bb5c4800e71d080599ea7a2517ccd8863c8c  $RUNNER_TEMP/original.zip" | sha256sum -c -
+          cd "$out"
+          for arm in stock fixed; do
+            unzip -p "$RUNNER_TEMP/original.zip" "tcp-evidence/$arm.bench" > "$arm.bench"
+          done
+          echo "ce950f43042755b35850392bc159b59b7fdea7d7c619c5527cbd2b18250a6ff1  stock.bench" | sha256sum -c -
+          echo "254260926e6082c4a8e2aa443534cec5b730fd9dfa7dbe704d888e36b5a1f7c1  fixed.bench" | sha256sum -c -
+      - name: Run the project’s pinned x/perf analyzer
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/readiness-bench"
+          test "$(git rev-parse HEAD^)" = 2b51abee8530385431b7225198fdd5cd65e78696
+          git checkout -q --detach 2b51abee8530385431b7225198fdd5cd65e78696
+          tgt=@org_golang_x_perf//cmd/benchstat
+          bazel build -c opt --config=x86_64 --jobs=4 "$tgt"
+          bazel cquery --config=x86_64 -c opt --output=files "$tgt" > "$RUNNER_TEMP/executables"
+          mapfile -t tools < <(while IFS= read -r f; do if test -f "$f" && test -x "$f"; then echo "$f"; fi; done < "$RUNNER_TEMP/executables")
+          test "${#tools[@]}" = 1
+          exe="$PWD/${tools[0]}"
+          sha256sum "$exe" >"$out/tool-sha256"
+          (cd "$out"; "$exe" stock.bench fixed.bench | tee benchstat.txt)
+          test "$(grep -c '^EstablishedReadiness/' "$out/benchstat.txt")" -eq 5
+          echo 'v0.0.0-20260929162123-406019bb8b68' >"$out/benchstat-version"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: tcp-readiness-benchstat
+          path: ${{ runner.temp }}/readiness-bench
