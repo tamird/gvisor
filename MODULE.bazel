@@ -975,3 +975,13 @@ single_version_override(
     patch_strip = 1,
     patches = ["//test/rbe/empty_worker:grpc-native.patch"],
 )
+
+# Only the optional TLDK Make action selects these programs.
+plugin_programs = use_repo_rule("//test/rbe/plugin_programs:repository.bzl", "plugin_programs")
+plugin_programs(name = "plugin_programs", busybox = "@bootstrap_busybox//:payload/usr/bin/busybox")
+
+single_version_override(
+    module_name = "rules_foreign_cc",
+    patch_strip = 1,
+    patches = ["//test/rbe/plugin_programs:framework.patch"],
+)

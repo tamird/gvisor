@@ -25,6 +25,7 @@ make(
     # DPDK takes tools and flags as command-line variables. Capture the
     # foreign_cc environment before its recursive makefiles redefine them.
     args = [
+        "'SHELL:=$(FOREIGN_CC_SHELL)'",
         "'CC:=$(CC)'",
         "'CPP:=$(CC) -E'",
         "'AR:=$(AR)'",
@@ -39,14 +40,21 @@ make(
         "DPDK_MACHINE=ivb",
         "EXTRA_CFLAGS='-g -O3 -fPIC -fno-omit-frame-pointer -DLOOK_ASIDE_BACKEND -Wno-error'",
     ],
+    build_shell = "@plugin_programs//:bin/bash",
     build_data = [
+        "@plugin_programs//:utilities",
         "@plugin_dpdk//:Makefile",
         "@plugin_dpdk//:sources",
     ],
     env = {
+        "TMPDIR": "/tmp",
         "DPDK_MAKEFILE": "$(execpath @plugin_dpdk//:Makefile)",
         "OBJDUMP": "$(PLUGIN_OBJDUMP)",
         "RTE_TARGET": "x86_64-native-linuxapp-$(C_COMPILER)",
+    },
+    exec_properties = {
+        "container-image": "docker://gcr.io/distroless/static-debian13@sha256:d03c145fad326bff275ec4106475ed8310426caf709decd9f8cbc494af59bc18",
+        "recycle-runner": "false",
     },
     exec_compatible_with = [
         "@platforms//cpu:x86_64",

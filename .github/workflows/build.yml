@@ -1,64 +1,80 @@
-name: Build the public release on scratch and start its native Sentry
+name: Run the original GNU plugin Make target with declared shell programs
 on:
   push:
-    branches: [qualification/package-empty-worker-arm64]
+    branches: [qualification/plugin-declared-programs]
 permissions:
   contents: read
 jobs:
-  compare:
+  plugin:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - {cpu: arm64, os: ubuntu-24.04-arm, bb: arm64, bb_sha: 5e8586e88d169395c2119a4143aa4d86d9b53d7abab3520acc735473f2bd2a90, bazelisk_sha: bb608519a440d45d10304eb684a73a2b6bb7699c5b0e5434361661b25f113a5d}
-          - {cpu: amd64, os: ubuntu-24.04, bb: x86_64, bb_sha: bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224, bazelisk_sha: e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76}
-    runs-on: ${{ matrix.os }}
-    env:
-      EXEC_CPU: ${{ matrix.cpu }}
-      BB_ARCH: ${{ matrix.bb }}
-      BB_HASH: ${{ matrix.bb_sha }}
-      BAZELISK_HASH: ${{ matrix.bazelisk_sha }}
-    timeout-minutes: 58
+    runs-on: ubuntu-24.04
+    timeout-minutes: 44
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 5}
-      - name: Pin Bazel and the compact action log reader
-        run: |
-          set -eu
-          export USE_BAZEL_VERSION=$(cat images/default/bazelversion)
-          echo "USE_BAZEL_VERSION=$USE_BAZEL_VERSION" >> "$GITHUB_ENV"
-          mkdir -p "$RUNNER_TEMP/bazelisk-bin"
-          curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-$EXEC_CPU -o "$RUNNER_TEMP/bazelisk-bin/bazel"
-          echo "$BAZELISK_HASH  $RUNNER_TEMP/bazelisk-bin/bazel" | sha256sum -c -
-          chmod +x "$RUNNER_TEMP/bazelisk-bin/bazel"
-          echo "$RUNNER_TEMP/bazelisk-bin" >> "$GITHUB_PATH"
-          command -v objcopy nm jq
-          curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-$BB_ARCH -o "$RUNNER_TEMP/bb"
-          echo "$BB_HASH  $RUNNER_TEMP/bb" | sha256sum -c -
-          chmod 0755 "$RUNNER_TEMP/bb"
-      - name: Build the real release layout and run its Sentry on native Linux
+        with: {path: product, fetch-depth: 2, persist-credentials: false}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: tamird/bazel-central-registry
+          path: registry
+          ref: f8f5f201805db9b0c27571f7630cb8a37f3a78d6
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: tamird/rules_cc_autoconf
+          path: supplier
+          ref: b0b4b6c173c4312c14f3c5a427e9e3cb7271143c
+          persist-credentials: false
+      - name: Pin prerequisites and inventory the native image
+        working-directory: product
         env:
-          BASE: ddf4c56a5ae1a1e539ec5989649930c97c26e593
-          ORIGINAL: ec550a48a00e04396c21617a152224096bf93af2
-          CORRECTED: 5e4eeb4b21ca1a7e8e4dd12b26c6b546b0b8e6e6
-          AMD64_CONTROL: 17927b34de218b8c26b5feb834856d7d49259444
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -eu
-          test -n "$BUILDBUDDY_API_KEY"
           umask 077
+          mkdir -p "$RUNNER_TEMP/plugin-evidence"
+          echo '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/plugin-evidence/result.json"
+          test -n "$BUILDBUDDY_API_KEY"
+          test "$(git -C ../registry rev-parse HEAD)" = f8f5f201805db9b0c27571f7630cb8a37f3a78d6
+          test "$(git -C ../supplier rev-parse HEAD)" = b0b4b6c173c4312c14f3c5a427e9e3cb7271143c
           {
-            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --action_env=TMPDIR=.' 'build --host_action_env=TMPDIR=.'
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/'
+            # Preserve original non-plugin dependency cache keys. The target
+            # itself selects TMPDIR=/tmp inside its declared build environment.
+            printf '%s\n' 'build --action_env=TMPDIR=.' 'build --host_action_env=TMPDIR=.'
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --override_module=rules_cc_autoconf=%s/supplier\n' "$GITHUB_WORKSPACE"
           } > "$RUNNER_TEMP/sidecar.bazelrc"
           unset BUILDBUDDY_API_KEY
-          cp test/rbe/empty_worker/compare.py "$RUNNER_TEMP/package-compare.py"
-          python3 "$RUNNER_TEMP/package-compare.py"
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+          curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
+          echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
+          chmod 0755 "$RUNNER_TEMP/bb"
+          python3 test/rbe/plugin_programs/image_inventory.py
+      - name: Build only the original plugin target and verify its action
+        working-directory: product
+        run: python3 test/rbe/plugin_programs/qualify.py
+      - name: Check the typed evidence boundary
+        id: privacy
         if: always()
+        env:
+          KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          folder = Path(os.environ["RUNNER_TEMP"]) / "plugin-evidence"
+          files = list(folder.iterdir())
+          assert {f.name for f in files} in ({"result.json"}, {"result.json", "image.json"})
+          for f in files:
+              assert f.is_file() and not f.is_symlink() and f.stat().st_size < 100000
+              data = f.read_bytes()
+              json.loads(data)
+              assert os.environ["KEY"] and os.environ["KEY"].encode() not in data
+              assert all(marker not in data.lower() for marker in (b"authorization:", b"bearer ", b"x-buildbuddy-api-key"))
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.privacy.outcome == 'success'
         with:
-          name: scratch-release-${{ matrix.cpu }}
-          path: ${{ runner.temp }}/package-evidence
+          name: original-plugin-declared-programs
+          path: ${{ runner.temp }}/plugin-evidence/*.json
           if-no-files-found: error

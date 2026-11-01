@@ -1,0 +1,65 @@
+--- a/foreign_cc/private/framework.bzl
++++ b/foreign_cc/private/framework.bzl
+@@ -91,6 +91,7 @@
+ # description dict. See cmake.bzl as an example.
+ #
+ CC_EXTERNAL_RULE_ATTRIBUTES = {
++    "build_shell": attr.label(allow_single_file = True, cfg = "exec"),
+     "additional_inputs": attr.label_list(
+         doc = (
+             "__deprecated__: Please use the `build_data` attribute."
+@@ -399,6 +400,12 @@
+ 
+     env_snippet.extend(["export {}=\"{}\"".format(key, escape_dquote_bash(val)) for key, val in env.items()])
+ 
++    shell = getattr(ctx.file, "build_shell", None)
++    if shell:
++        env_snippet.extend([
++            "export FOREIGN_CC_SHELL=\"$$EXT_BUILD_ROOT$$/{}\"".format(shell.path),
++            "export PATH=\"$$EXT_BUILD_ROOT$$/{}:$$PATH$$\"".format(shell.dirname),
++        ])
+     return env_snippet
+ 
+ def _use_short_paths(ctx):
+@@ -606,7 +613,13 @@
+ 
+     resource_set, env = get_resource_env_vars(ctx.attr)
+ 
+-    ctx.actions.run_shell(
++    shell = ctx.file.build_shell
++    action = ctx.actions.run if shell else ctx.actions.run_shell
++    invocation = {
++        "arguments": [wrapped_outputs.wrapper_script_file.path],
++        "executable": shell,
++    } if shell else {"command": wrapped_outputs.wrapper_script_file.path}
++    action(
+         mnemonic = "Cc" + attrs.configure_name.capitalize() + "MakeRule",
+         inputs = depset(inputs.declared_inputs),
+         outputs = rule_outputs + [wrapped_outputs.log_file],
+@@ -618,7 +631,6 @@
+             cc_toolchain.all_files.to_list() +
+             tool_runfiles +
+             [data[DefaultInfo].files_to_run for data in data_dependencies],
+-        command = wrapped_outputs.wrapper_script_file.path,
+         execution_requirements = execution_requirements,
+         use_default_shell_env = True,
+         progress_message = "Foreign Cc - {configure_name}: Building {lib_name}".format(
+@@ -627,6 +639,7 @@
+         ),
+         resource_set = resource_set,
+         env = env,
++        **invocation
+     )
+ 
+     # Gather runfiles transitively as per the documentation in:
+@@ -758,7 +771,9 @@
+         "export BUILD_LOG=\"{}\"".format(build_log_file.path),
+         # sometimes the log file is not created, we do not want our script to fail because of this
+         "##touch## \"$$BUILD_LOG$$\"",
+-        "##redirect_out_err## \"$$BUILD_SCRIPT$$\" \"$$BUILD_LOG$$\"",
++        ('"$$FOREIGN_CC_SHELL$$" "$$BUILD_SCRIPT$$" &> "$$BUILD_LOG$$"'
++         if getattr(ctx.file, "build_shell", None)
++         else "##redirect_out_err## \"$$BUILD_SCRIPT$$\" \"$$BUILD_LOG$$\""),
+     ]
+     build_command = "\n".join([
+         shebang(ctx),
