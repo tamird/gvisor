@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T16:59:39.784864+00:00",
+    "updatedAt": "2026-11-01T17:27:38.345053+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42156,7 +42156,7 @@
       "url": "https://github.com/tamird/gvisor/tree/proposal/network-pcap-setup",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-11-01T16:27:35.574350+00:00",
+      "updatedAt": "2026-11-01T17:27:38.345053+00:00",
       "summary": "FD-based and XDP backends now hand their endpoints to one NIC setup path. The first successfully constructed external endpoint opens the shared capture; later interfaces append their packets.",
       "evidence": [
         {
@@ -42174,6 +42174,10 @@
         {
           "label": "One- and two-interface runtime captures",
           "url": "https://github.com/tamird/gvisor/actions/runs/41322736747/artifacts/13089828658"
+        },
+        {
+          "label": "Three netlink cases fail on the parent and pass with #15866",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41329357634/artifacts/13093005036"
         }
       ],
       "refinement": {
@@ -42332,7 +42336,7 @@
       "group": "bazel",
       "status": "Agent work",
       "summary": "The existing Docker builder and Bazelisk read the same pin. The change makes the archived Coral toolchain and pinned LLVM source load the rules Bazel 9 externalized, and directs Mac developers to the shared pin. The current fork commit is in remote qualification.",
-      "updatedAt": "2026-11-01T16:40:29.174810+00:00",
+      "updatedAt": "2026-11-01T17:27:38.345053+00:00",
       "evidence": [
         {
           "label": "Upgrade commit",
@@ -42345,6 +42349,10 @@
         {
           "label": "Upstream directory-watching fix",
           "url": "https://github.com/bazelbuild/bazel/issues/30883"
+        },
+        {
+          "label": "ARM64 release build with an init process for the Bazel server",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41328055309"
         }
       ]
     },
@@ -48758,8 +48766,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T16:43:48.546844+00:00",
-      "summary": "Callback storage accounted for most temporary allocation while restoring 50,000 tmpfs files. Chunked storage brought up the guest 34 ms sooner but slowed small map and slice loads. A separate four-worker Nginx checkpoint encoded in 2.25 ms and decoded in 8.99 ms with the default graph codec, compared with 12.71 ms and 17.75 ms with the legacy codec.",
+      "updatedAt": "2026-11-01T17:27:38.345053+00:00",
+      "summary": "A restore of 50,000 tmpfs files queued 150,890 callbacks. About a third came from inode after-load hooks, a third from converting dentry parents, and a third from directory maps waiting for their children.",
       "findings": [
         {
           "text": "A map whose payload ends immediately after its key could consume a value from outside that payload. Load and PrintGraph now bound eager and deferred reads by the object’s length prefix.",
@@ -51841,9 +51849,26 @@
               "url": "https://github.com/google/gvisor/issues/14229"
             }
           ]
+        },
+        {
+          "text": "The restore queued 50,079 inode hooks, 50,075 dentry parent conversions, and 50,075 directory-map waits. The prototype reserves one callback slot for each exact object whose generated loader is known to queue a hook, including an embedded hook. The checkpoint format and callback order are unchanged.",
+          "evidence": [
+            {
+              "label": "Callback counts from all 50,000 restored files",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41329255858/artifacts/13092843079"
+            },
+            {
+              "label": "Generated hook registration",
+              "url": "https://github.com/tamird/gvisor/commit/3472c3190"
+            },
+            {
+              "label": "Matched comparison with startup and heap controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41331466842"
+            }
+          ]
         }
       ],
-      "nextStep": "Trace which callback counts the registration API can know before allocating. Compare demand-based preallocation with stock, including small warmed maps, retained heap, and first-command latency after a 50,000-file restore.",
+      "nextStep": "Compare the generated loaders’ reservation with the existing decoder on the same checkpoint. Measure time to the first guest command, peak and retained heap, warmed small maps, and fresh runsc startup.",
       "evidence": [
         {
           "label": "16 paired decodes of the same checkpoint, both live restore checks and state suites",
