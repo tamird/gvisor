@@ -1,6 +1,5 @@
-"""Run two original Go suites through the qualified native Bazel test wrapper."""
+"""Run the original C++ PosixError suite on both native scratch platforms."""
 
-import ast
 import collections
 import datetime
 import hashlib
@@ -13,15 +12,13 @@ import subprocess
 import sys
 
 import qualification_report as report
+from static_build import elf
 
 
 SOURCE = os.environ["PRODUCT"]
 IMAGE = "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"
-TARGETS = ["//pkg/state:state_test", "//pkg/tcpip/transport/tcp:tcp_test"]
-CASES = {
-    TARGETS[0]: ["state/TestBinaryErrors", "state/TestGraphCallbackOrder", "state/TestGraphDeferredObjectDecode"],
-    TARGETS[1]: ["tcp/TestCubicRecoveryDiscardsACKCredit", "tcp/TestRACKInitialDeliverySequence", "tcp/TestRenoCongestionAvoidanceConsumesACKCredit"],
-}
+TARGETS = ["//test/util:posix_error_test"]
+CASES = {TARGETS[0]: ["PosixErrorTest/PosixError", "PosixErrorTest/PosixErrorOrPosixError", "PosixErrorTest/PosixErrorOrNullptr"]}
 
 
 def now():
@@ -88,34 +85,21 @@ def native_actions(path, arch, tmp):
             "tests": tests, "failed_or_other": bad}
 
 
-def bootstrap_graph(arch, common, bazel, work):
-    """Record only the SDK shell setting and selected bootstrap executable."""
-    values = work / "bootstrap-settings.txt"
-    expression = 'str(target.label) + "\\t" + str([v for k, v in build_options(target).items() if str(k).endswith(":experimental_use_sh_toolchain")])'
-    commands = [
-        ("cquery", 'filter("go_sdk.*//:builder", deps(//pkg/state:state_test))',
-         ["--output=starlark", "--starlark:expr=" + expression], values),
-        ("aquery", 'mnemonic("GoToolchainBinaryBuild", deps(//pkg/state:state_test))',
-         ["--output=jsonproto"], work / "bootstrap-actions.json"),
-    ]
-    for command, query, flags, output in commands:
-        with output.open("w") as stdout, (work / (command + ".log")).open("w") as stderr:
-            code = subprocess.run(["timeout", "--signal=INT", "--kill-after=25s", "8m",
-                                   *bazel, command, *common, *flags, query],
-                                  stdout=stdout, stderr=stderr).returncode
-        if code:
-            return {"status": "INCOMPLETE", "command": command, "native_exit": code}
-    settings = []
-    for line in values.read_text().splitlines():
-        label, value = line.split("\t", 1)
-        settings.append({"target": label, "values": ast.literal_eval(value)})
-    data = json.loads((work / "bootstrap-actions.json").read_text())
-    targets = {str(target["id"]): target["label"] for target in data.get("targets", [])}
-    actions = [{"target": targets[str(action["targetId"])], "executable": action["arguments"][0]}
-               for action in data.get("actions", []) if action.get("mnemonic") == "GoToolchainBinaryBuild"]
-    declared = bool(settings and actions) and all(row["values"] == [True] for row in settings)
-    declared = declared and all(row["executable"].endswith("/test/rbe/go_bootstrap/ash") for row in actions)
-    return {"status": "PASS" if declared else "INCOMPLETE", "arch": arch, "settings": settings, "actions": actions}
+def product_elf(bazel, common, work, execroot, arch):
+    with (work / "output-query.log").open("w") as log:
+        result = subprocess.run(["timeout", "--signal=INT", "--kill-after=25s", "8m",
+                                 *bazel, "cquery", *common, "--output=files", TARGETS[0]],
+                                stdout=subprocess.PIPE, stderr=log, text=True)
+    if result.returncode:
+        return {"status": "INCOMPLETE", "native_exit": result.returncode}
+    files = [line for line in result.stdout.splitlines() if Path(line).name == "posix_error_test"]
+    if len(files) != 1:
+        return {"status": "INCOMPLETE", "matching_output_count": len(files)}
+    data = elf((execroot / files[0]).read_bytes())
+    data["target"] = TARGETS[0]
+    data["status"] = "PASS" if (data["machine"] == {"amd64": 62, "arm64": 183}[arch]
+                                and not data["interpreter"] and not data["needed_offsets"]) else "FAIL"
+    return data
 
 
 def qualify(arch, tmp, out, private, bazel):
@@ -138,23 +122,10 @@ def qualify(arch, tmp, out, private, bazel):
               "--noincompatible_exclude_starlark_flags_from_exec_config",
               "--workspace_status_command=", "--features=fully_static_link",
               "--incompatible_use_native_posix_test_wrapper", "--nocache_test_results",
-              "--test_env=GO_TEST_WRAP_TESTV=1",
               "--nobuild_event_json_file_path_conversion", "--jobs=400",
               "--remote_download_outputs=toplevel", "--noremote_upload_local_results",
               "--noremote_local_fallback", "--spawn_strategy=remote", "--keep_going",
               "--color=no", "--curses=no"]
-    subprocess.run(["git", "checkout", "--detach", "3b0984fd648505717a8cf4bf8f99e0fc1cb69548"], check=True, stdout=subprocess.DEVNULL)
-    control = work / "original-graph"
-    control.mkdir()
-    row["original_bootstrap"] = bootstrap_graph(arch, common, bazel, control)
-    write(public / "receipt.json", row)
-    subprocess.run(["git", "checkout", "--detach", SOURCE], check=True, stdout=subprocess.DEVNULL)
-    candidate = work / "candidate-graph"
-    candidate.mkdir()
-    row["candidate_bootstrap"] = bootstrap_graph(arch, common, bazel, candidate)
-    write(public / "receipt.json", row)
-    if row["candidate_bootstrap"]["status"] != "PASS":
-        return row
     extra = []
     for phase in ("analysis", "test"):
         raw = work / (phase + ".bep")
@@ -196,18 +167,22 @@ def qualify(arch, tmp, out, private, bazel):
         verdict = report.verdict(sanitized, report.manifest_path(sanitized), work / "context.json",
                                  work / "expected.txt", (work / "analysis.bep",), case_manifest=work / "cases.json")
         write(public / "tests.json", verdict)
-        row["tests_status"] = verdict["status"]
-        row["status"] = verdict["status"]
-        # Preserve the test verdict before any independent worker-log decoding.
-        write(public / "receipt.json", row)
-        row["actions"] = native_actions(work / "actions.compact", arch, tmp)
-        row["verified_at"] = now()
-        row["status"] = "PASS" if verdict["status"] == row["actions"]["status"] == "PASS" else "FAIL"
         for xml in (work / "reports").rglob("test.xml"):
             relative = xml.relative_to(work / "reports")
             destination = public / "xml" / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(xml, destination)
+        row["tests_status"] = verdict["status"]
+        row["status"] = verdict["status"]
+        # Preserve the test verdict before any independent worker-log decoding.
+        write(public / "receipt.json", row)
+        row["actions"] = native_actions(work / "actions.compact", arch, tmp)
+        # Runtime status is retained even if output inspection later fails.
+        write(public / "receipt.json", row)
+        row["product_elf"] = product_elf(bazel, common, work, execroot, arch)
+        row["verified_at"] = now()
+        states = [verdict["status"], row["actions"]["status"], row["product_elf"]["status"]]
+        row["status"] = "FAIL" if "FAIL" in states else "PASS" if states == ["PASS"] * 3 else "INCOMPLETE"
         write(public / "receipt.json", row)
     return row
 
@@ -239,10 +214,10 @@ def main():
         return 1
     bazel = [str(binary), "--bazelrc=" + str(tmp / "sidecar.bazelrc")]
     rows = []
-    for arch in ("amd64",):
+    for arch in ("amd64", "arm64"):
         try:
             rows.append(qualify(arch, tmp, out, private, bazel))
-        except Exception as error:
+        except Exception as err:
             # Retain any already-written original result, including test failure.
             path = out / arch / "receipt.json"
             row = json.loads(path.read_text()) if path.exists() else {"arch": arch, "status": "INCOMPLETE"}
@@ -250,7 +225,7 @@ def main():
                 row["status"] = "FAIL"
             elif row.get("status") != "FAIL":
                 row["status"] = "INCOMPLETE"
-            row["collection_error"] = type(error).__name__ + ": " + str(error)[:1400]
+            row["collection_error"] = type(err).__name__ + ": " + str(err)[:1400]
             row["verified_at"] = now()
             write(path, row)
             rows.append(row)
