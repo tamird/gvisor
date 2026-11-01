@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T23:42:59.271439+00:00",
+    "updatedAt": "2026-10-31T23:59:01.089227+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40834,6 +40834,36 @@
         "summary": "Open the peer-window test after #16784 and the handshake fixture land?",
         "body": "Fill a listener's SYN queue, then offer a window of 16 with a shift of\nthree. With timestamps, the server can send 128 bytes before its next\nACK; without timestamps it must stop at 16. In both cases a queued byte\nmust wait for the ACK that reopens the window.\n\nShare the existing handshake test's queue-boundary detection. Keep the\nmanual clock and listener-buffer resize checks in the endpoint test;\nthe packet test covers the peer's send window on Linux and gVisor."
       }
+    },
+    {
+      "id": "branch:tcp-receive-memory-width",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/tcp-receive-memory-width",
+      "head": "fb022c9ac24524fabade7a33d603bab8dbf607d2",
+      "title": "Keep TCP receive memory charges above 2 GiB representable",
+      "url": "https://github.com/tamird/gvisor/commit/fb022c9ac",
+      "updatedAt": "2026-10-31T23:59:01.089227+00:00",
+      "status": "Contributor review requested",
+      "summary": "When a one-byte payload fits in the last byte of a receive buffer, its headers and bookkeeping can take the charge above MaxInt32. The old signed counter wrapped, reported 4,294,966,720 bytes free and accepted another payload. The correction reported zero, refused that payload, and recovered exactly one byte after release.",
+      "evidence": [
+        {
+          "label": "Original and fixed queue boundary; AMD64 TCP unit tests and both owning analyzers, 45/45 records",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41254453359/artifacts/13061998440"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "fb022c9ac24524fabade7a33d603bab8dbf607d2",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/fb022c9ac",
+        "title": "Keep TCP receive memory charges above 2 GiB representable",
+        "requestedAt": "2026-10-31T23:59:01.089227+00:00",
+        "summary": "Review the independent receive-memory correction for upstream submission. It has no prerequisite.",
+        "body": "A segment may fit in the last byte of a receive buffer while its\nheaders and bookkeeping take the memory charge past MaxInt32. The\nsigned 32-bit counter then wraps: TCP reports free receive space and\ncontinues accepting data into a full queue.\n\nUse a 64-bit charge for both queue admission and available space. The\nregression leaves a byte of headroom and enqueues a one-byte segment,\nso it crosses the limit without allocating a two-GiB buffer."
+      }
     }
   ],
   "edges": [
@@ -58702,12 +58732,12 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-10-31T23:41:31.085407+00:00",
+      "updatedAt": "2026-10-31T23:59:01.089227+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Retain the minimum-RTT safeguard. Prioritize reproducible recovery defects and review changes to SACK, probe timing and receive-queue pressure.",
       "findings": [
         {
-          "text": "With a 4 KiB receive budget and the worker paused, master admitted 257 pure ACKs and charged 161,396 bytes. The prototype admitted 14 and charged 8,792 bytes. All 36 duplex cases transferred 1 MiB in reverse, reached EOF and preserved unread data. Linux passed 12/12; stock and prototype each failed 12/12 only at the final TIOCOUTQ check (ENOPROTOOPT). With a portable EAGAIN check, Linux, stock and prototype each passed 12/12, with no skips or missing cases.",
+          "text": "With a 4 KiB receive budget and the worker paused, master admitted 257 pure ACKs and charged 161,396 bytes. The prototype admitted 14 and charged 8,792 bytes. All 36 duplex cases transferred 1 MiB in reverse, reached EOF and preserved unread data. Linux passed 12/12; stock and prototype each failed 12/12 only at the final TIOCOUTQ check (ENOPROTOOPT). With a portable EAGAIN check, Linux, stock and prototype each passed 12/12, with no skips or missing cases. In a separate 64 MiB throughput fixture, 12 paired measurements compared zero and 100 µs batching with CUBIC RACK on and off. No slowdown was detected; only 100 µs batching with RACK off reduced time (−2.86%, p=.005).",
           "evidence": [
             {
               "label": "Original queue measurements",
@@ -58724,6 +58754,23 @@
             {
               "label": "36 complete cases with the portable EAGAIN control",
               "url": "https://github.com/tamird/gvisor/actions/runs/41252897231/artifacts/13061931934"
+            },
+            {
+              "label": "64 MiB paired throughput comparison in four settings",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41253178508/artifacts/13061718262"
+            }
+          ]
+        },
+        {
+          "text": "Receive accounting also overflowed when a modeled prior charge left the actual TCP queue just below MaxInt32. The prototype comparison reported 4,294,966,668 bytes free before correction and zero afterward. The independently packaged repair used a separate fixture: stock reported 4,294,966,720 bytes free and accepted another payload; the repair refused it, and releasing the prior charge restored exactly one byte of headroom.",
+          "evidence": [
+            {
+              "label": "Queue accounting comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41253700196/artifacts/13062052345"
+            },
+            {
+              "label": "Standalone range correction and owning checks",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41254453359/artifacts/13061998440"
             }
           ]
         },
