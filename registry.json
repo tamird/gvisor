@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T16:40:29.174810+00:00",
+    "updatedAt": "2026-11-01T16:43:48.546844+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42282,9 +42282,9 @@
       "title": "Grow large checkpoint callback tables in fewer steps",
       "url": "https://github.com/tamird/gvisor/tree/proposal/state-grow-callback-table",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "summary": "Eight paired 50,000-file restores reached their first guest command in 153.6 ms versus 163.9 ms. The decoder copied fewer large tables; the retained heap grew by 2.30 MiB, and some warmed map cases took 2–3.5% longer.",
-      "updatedAt": "2026-11-01T16:27:35.574350+00:00",
+      "status": "Superseded",
+      "summary": "The tuning experiment measured callback-table copy costs on a 50,000-file restore. The next design should reserve storage from information available to callback registration and avoid an arbitrary size threshold.",
+      "updatedAt": "2026-11-01T16:43:48.546844+00:00",
       "evidence": [
         {
           "label": "Implementation and benchstat",
@@ -42295,17 +42295,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41323238175/artifacts/13090878783"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "b511f04a71139a2dd8dfafb1a968a2590a2dc6f9",
-        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
-        "url": "https://github.com/tamird/gvisor/commit/b511f04a7",
-        "title": "Grow large checkpoint callback tables in fewer steps",
-        "requestedAt": "2026-11-01T16:27:35.574350+00:00",
-        "summary": "Open the callback-table optimization with its measured memory and latency tradeoff?",
-        "body": "Eight paired 50,000-file restores reached their first guest command in 153.6 ms versus 163.9 ms. The decoder copied fewer large tables; the retained heap grew by 2.30 MiB, and some warmed map cases took 2–3.5% longer."
-      }
+      "inactive": true
     },
     {
       "id": "pr:16795",
@@ -48734,7 +48724,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T16:33:36.019669+00:00",
+      "updatedAt": "2026-11-01T16:43:48.546844+00:00",
       "summary": "Callback storage accounted for most temporary allocation while restoring 50,000 tmpfs files. Chunked storage brought up the guest 34 ms sooner but slowed small map and slice loads. A separate four-worker Nginx checkpoint encoded in 2.25 ms and decoded in 8.99 ms with the default graph codec, compared with 12.71 ms and 17.75 ms with the legacy codec.",
       "findings": [
         {
@@ -51819,7 +51809,7 @@
           ]
         }
       ],
-      "nextStep": "Compare the reporter’s exact runsc version, flags and orchestration if available. Review the measured callback-table latency and retained heap.",
+      "nextStep": "Trace which callback counts the registration API can know before allocating. Compare demand-based preallocation with stock, including small warmed maps, retained heap, and first-command latency after a 50,000-file restore.",
       "evidence": [
         {
           "label": "16 paired decodes of the same checkpoint, both live restore checks and state suites",
