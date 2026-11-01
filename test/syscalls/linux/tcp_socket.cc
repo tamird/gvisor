@@ -14,6 +14,8 @@
 
 #include <fcntl.h>
 
+#include <cstdio>
+
 #ifdef __linux__
 #include <linux/capability.h>
 #include <linux/filter.h>
@@ -49,6 +51,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "test/util/file_descriptor.h"
@@ -2883,6 +2886,97 @@ TEST_P(SimpleTcpSocketTest, SetUnsupportedPMTUDISC) {
   set = IP_PMTUDISC_OMIT;
   EXPECT_THAT(setsockopt(fd, IPPROTO_IP, IP_MTU_DISCOVER, &set, length),
               SyscallSucceeds());
+}
+
+// A receiver that is not reading must queue everything the peer sends within
+// the advertised window, however small the segments are.
+TEST_P(SimpleTcpSocketTest, TwoSmallWriteBurstsWithoutReads) {
+  const DisableSave ds;  // Too many syscalls.
+  constexpr absl::string_view kMsg = "+PONG\r\n";
+  constexpr int kMsgLen = kMsg.size();
+  constexpr int kWrites = 3000;
+  constexpr int kTotal = kWrites * kMsgLen;
+  // Large enough to advertise a window for all kTotal bytes, small enough that
+  // kWrites segments overflow it if each is charged its full overhead.
+  constexpr int kRcvBuf = 64 << 10;
+  constexpr absl::Duration kQueueTimeout = absl::Seconds(5);
+
+  FileDescriptor listener =
+      ASSERT_NO_ERRNO_AND_VALUE(Socket(GetParam(), SOCK_STREAM, IPPROTO_TCP));
+  sockaddr_storage addr =
+      ASSERT_NO_ERRNO_AND_VALUE(InetLoopbackAddrZeroPort(GetParam()));
+  socklen_t addrlen = sizeof(addr);
+  ASSERT_THAT(bind(listener.get(), AsSockAddr(&addr), addrlen),
+              SyscallSucceeds());
+  ASSERT_THAT(listen(listener.get(), 1), SyscallSucceeds());
+  ASSERT_THAT(getsockname(listener.get(), AsSockAddr(&addr), &addrlen),
+              SyscallSucceeds());
+
+  FileDescriptor client =
+      ASSERT_NO_ERRNO_AND_VALUE(Socket(GetParam(), SOCK_STREAM, IPPROTO_TCP));
+  ASSERT_THAT(setsockopt(client.get(), SOL_SOCKET, SO_RCVBUF, &kRcvBuf,
+                         sizeof(kRcvBuf)),
+              SyscallSucceeds());
+  ASSERT_THAT(RetryEINTR(connect)(client.get(), AsSockAddr(&addr), addrlen),
+              SyscallSucceeds());
+  FileDescriptor server =
+      ASSERT_NO_ERRNO_AND_VALUE(Accept(listener.get(), nullptr, nullptr));
+  constexpr int kOne = 1;
+  ASSERT_THAT(
+      setsockopt(server.get(), IPPROTO_TCP, TCP_NODELAY, &kOne, sizeof(kOne)),
+      SyscallSucceeds());
+
+  const timeval read_timeout = {.tv_sec = 10, .tv_usec = 0};
+  ASSERT_THAT(setsockopt(client.get(), SOL_SOCKET, SO_RCVTIMEO, &read_timeout,
+                         sizeof(read_timeout)), SyscallSucceeds());
+  int rcvbuf = 0;
+  socklen_t optlen = sizeof(rcvbuf);
+  ASSERT_THAT(getsockopt(client.get(), SOL_SOCKET, SO_RCVBUF, &rcvbuf, &optlen),
+              SyscallSucceeds());
+  RecordProperty("receive_buffer", rcvbuf);
+  for (int burst = 1; burst <= 2; ++burst) {
+    const absl::string_view msg = burst == 1 ? kMsg : "+PING\r\n";
+    for (int i = 0; i < kWrites; ++i) {
+      ASSERT_THAT(RetryEINTR(write)(server.get(), msg.data(), kMsgLen),
+                  SyscallSucceedsWithValue(kMsgLen));
+    }
+
+    int queued = 0;
+    const absl::Time deadline = absl::Now() + kQueueTimeout;
+    for (;;) {
+      ASSERT_THAT(ioctl(client.get(), FIONREAD, &queued), SyscallSucceeds());
+      if (queued == kTotal || absl::Now() >= deadline) {
+        break;
+      }
+      absl::SleepFor(absl::Milliseconds(5));
+    }
+    RecordProperty(absl::StrCat("burst", burst, "_queued"), queued);
+    // Also drain a burst that missed the queue deadline, so the next burst is
+    // offered from the same application boundary in all three arms.
+    std::vector<char> received(kTotal);
+    int received_len = 0;
+    const absl::Time drain_deadline = absl::Now() + absl::Seconds(10);
+    while (received_len < kTotal) {
+      ASSERT_LT(absl::Now(), drain_deadline);
+      int n;
+      ASSERT_THAT(n = RetryEINTR(read)(client.get(), received.data() + received_len,
+                                      kTotal - received_len), SyscallSucceeds());
+      ASSERT_GT(n, 0);
+      received_len += n;
+    }
+    for (int i = 0; i < kWrites; ++i) {
+      ASSERT_EQ(absl::string_view(received.data() + i * kMsgLen, kMsgLen), msg)
+          << "burst " << burst << " message " << i;
+    }
+    int remaining = -1;
+    ASSERT_THAT(ioctl(client.get(), FIONREAD, &remaining), SyscallSucceeds());
+    ASSERT_EQ(remaining, 0);
+    RecordProperty(absl::StrCat("burst", burst, "_drained"), received_len);
+    RecordProperty(absl::StrCat("burst", burst, "_remaining"), remaining);
+    std::fprintf(stderr, "TCP-SMALL-BURST family=%d burst=%d rcvbuf=%d "
+                 "queued=%d drained=%d remaining=%d\n", GetParam(), burst,
+                 rcvbuf, queued, received_len, remaining);
+  }
 }
 
 INSTANTIATE_TEST_SUITE_P(AllInetTests, SimpleTcpSocketTest,
