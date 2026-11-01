@@ -84,14 +84,56 @@ if path := os.environ.get("ORIGINAL_VERDICT"):
     row = records["nogo"]
     request = {"selector": {"invocation_id": row["invocations"][0]}}
     messages = []
+    phases = []
     while True:
         obj = rpc("GetLog", request)
-        messages.extend(diagnostics(obj.get("log", {}).get("contents", "")))
+        contents = obj.get("log", {}).get("contents", "")
+        messages.extend(diagnostics(contents))
+        for line in contents.splitlines():
+            line = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", line)
+            if any(k in line.lower() for k in ("key=", "token", "authorization", "bearer", "header", "secret")):
+                continue
+            phase = re.search(r"(Computing main repo mapping|Analyzing|Loading|Fetching|Checking cached actions|Analyzed|Building|Starting local Bazel server|ERROR:|WARNING:|INFO:)", line)
+            counts = re.findall(r"([0-9][0-9,]* (?:packages loaded|targets configured|processes|actions running)|\[[0-9, ]+ / [0-9,]+\])", line)
+            labels = re.findall(r"(?:@@?[a-zA-Z0-9_+.~-]+)?//[a-zA-Z0-9_/.+~-]*:[a-zA-Z0-9_/.+~-]+", line)
+            mnemonics = re.findall(r"(?:Analyzing|Compiling|Generating|Building|Testing|Checking|Linking|Fetching repository|Downloading) [@a-zA-Z_/.0-9:+~-]+", line)
+            kinds = re.findall(r"(?:Connection refused|timed out|Not Found|not found|Resource [Ee]xhausted|RESOURCE_EXHAUSTED|HTTP [45][0-9][0-9]|No space left on device|No such file or directory|Connection reset|Operation cancelled|unavailable|[0-9]+s remote|still waiting)", line, re.I)
+            if phase or counts or kinds:
+                crumb = [phase[1] if phase else "", *counts, *labels[:3], *mnemonics[:3], *kinds[:3]]
+                if not phases or phases[-1] != crumb:
+                    phases.append(crumb)
         next_page = obj.get("nextPageToken", obj.get("next_page_token"))
         if not next_page:
             break
         request["pageToken"] = next_page
     row["invocationDiagnostics"] = list(dict.fromkeys(messages))[:35]
+    row["progress"] = phases[:4] + phases[-55:]
+    row["execution"] = {}
+    for label in [None, *row["targets"]]:
+        lookup = {"invocationId":row["invocations"][0]}
+        if label:
+            lookup["targetLabel"] = label
+        conn = HTTPSConnection("app.buildbuddy.io", timeout=25)
+        try:
+            conn.request("POST","/rpc/BuildBuddyService/GetExecution",json.dumps({"executionLookup":lookup}),{"Content-Type":"application/json","x-buildbuddy-api-key":key})
+            with conn.getresponse() as resp:
+                if resp.status != 200:
+                    item = {"httpStatus":resp.status}
+                else:
+                    raw = resp.read(48 << 20)
+                    if len(raw) == 48 << 20:
+                        item = {"largerThan48MiB":True}
+                    else:
+                        executions = json.loads(raw).get("execution",[])
+                        groups = Counter((str(x.get("stage")), x.get("actionMnemonic",""), int(x.get("status",{}).get("code",0)), int(x.get("exitCode",0))) for x in executions)
+                        incomplete = Counter((x.get("targetLabel",""), x.get("actionMnemonic",""), x.get("stage")) for x in executions if str(x.get("stage")) not in ("4","COMPLETED") or x.get("status",{}).get("code",0) or x.get("exitCode",0))
+                        item={"count":len(executions),"groups":groups.most_common(35),"unfinishedOrFailed":incomplete.most_common(30)}
+        except (OSError,ValueError) as err:
+            item = {"readError":type(err).__name__}
+        finally:
+            conn.close()
+        row["execution"][label or "all"]=item
+        store()
     store()
     sys.exit(0)
 

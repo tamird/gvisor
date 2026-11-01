@@ -1,14 +1,14 @@
 {
-  "source": "c84fa4154331407fc2f16278ff94a87e05c0c501",
+  "source": "b0d2148f41d2d35577b5fe759192f71947cc87fd",
   "parent": "bc87c0ee4bef70580104e832095bc89a93029440",
   "records": {
     "nogo": {
-      "start": "2026-11-01T10:11:30.641633+00:00",
-      "end": "2026-11-01T10:25:30.645586+00:00",
+      "start": "2026-11-01T10:30:06.320520+00:00",
+      "end": "2026-11-01T11:05:06.326718+00:00",
       "code": 124,
       "expected": 0,
       "invocations": [
-        "3e19e7ff-ed71-43e7-952c-ad665c5cb283"
+        "82473ce5-2b11-4717-8fa6-833f9767970f"
       ],
       "targets": [
         "//pkg/tcpip/transport/tcp:tcp_nogo",
@@ -17,11 +17,10 @@
       ],
       "missing": [
         "//pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test_nogo",
-        "//pkg/tcpip/transport/tcp/test/e2e:tcp_test_nogo"
+        "//pkg/tcpip/transport/tcp/test/e2e:tcp_test_nogo",
+        "//pkg/tcpip/transport/tcp:tcp_nogo"
       ],
-      "statuses": {
-        "//pkg/tcpip/transport/tcp:tcp_nogo": "FAILED"
-      },
+      "statuses": {},
       "count": {
         "PASS": 0,
         "FAIL": 0,
@@ -31,10 +30,14 @@
       "failed": [],
       "selected": [],
       "observations": [],
-      "errors": [
-        "FAIL: //pkg/tcpip/transport/tcp:tcp_nogo (Exit 1) (see /root/.cache/bazel/_bazel_root/000ef9ee90a3e625fcf1f4edcfe0fd56/execroot/_main/bazel-out/k8-fastbuild/testlogs/pkg/tcpip/transport/tcp/tcp_nogo/test.log)"
-      ],
-      "complete": false
+      "errors": [],
+      "complete": false,
+      "originals": {},
+      "goOriginals": {
+        "PASS": 0,
+        "FAIL": 0,
+        "SKIP": 0
+      }
     }
   }
 }
