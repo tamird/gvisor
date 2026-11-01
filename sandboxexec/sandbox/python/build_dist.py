@@ -14,8 +14,10 @@
 
 """Build the SandboxExec source distribution and a wheel from that source."""
 
+import json
 import os
 from pathlib import Path
+import re
 import shutil
 import sys
 import tarfile
@@ -40,7 +42,14 @@ def main():
             shutil.copyfile(source, target)
         text = project.read_text()
         if version:
-            text = text.replace('version = "0.1.0"', f'version = "{version}"')
+            text, count = re.subn(
+                r'^version = "[^"]*"$',
+                lambda match: "version = " + json.dumps(version),
+                text,
+                flags=re.MULTILINE,
+            )
+            if count != 1:
+                raise ValueError("expected exactly one version in pyproject.toml")
         (stage / project.name).write_text(text)
         os.chdir(stage)
         sdist = buildapi.build_sdist(str(output))

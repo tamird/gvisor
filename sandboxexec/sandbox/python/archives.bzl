@@ -20,7 +20,9 @@ def _release_archives_impl(ctx):
     runtime = ctx.toolchains["@rules_python//python:toolchain_type"].py3_runtime
     dist = ctx.actions.declare_directory(ctx.label.name)
     args = ctx.actions.args()
-    args.add_all(["-B", ctx.file._builder, ctx.file._backend, ctx.file.project, dist, ctx.attr._version[BuildSettingInfo].value])
+    args.add_all(["-I", "-B", ctx.file._builder, ctx.file._backend, ctx.file.project])
+    args.add(dist.path)
+    args.add(ctx.attr._version[BuildSettingInfo].value)
     args.add_all(ctx.files.srcs)
     ctx.actions.run(
         executable = runtime.interpreter,
