@@ -1,18 +1,17 @@
-name: Check RACK repair selection on Linux and gVisor
+name: Replay a pending SACK across the TCP retransmission deadline
 on:
   push:
-    branches: [qualification/tcp-rack-fresh-head-fix]
+    branches: [qualification/tcp-rack-pending-sack]
 permissions:
   contents: read
 jobs:
   syscalls:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 85
+    timeout-minutes: 32
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      PRODUCT: c7976270813d5218a847539dd94f749c7cb4dfd5
-      MASTER: aa767e4c43d011121271551fe24da501a56f729d
+      MEASURED: b0d2148f41d2d35577b5fe759192f71947cc87fd
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with: {fetch-depth: 5, persist-credentials: false}
@@ -23,11 +22,8 @@ jobs:
         set -euo pipefail
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
         echo '{"verified":false,"reason":"qualification incomplete"}' > "$RUNNER_TEMP/records/verdict.json"
-        cp test/rbe/rack-fresh-head.py test/rbe/rack-fresh-head.go.txt "$RUNNER_TEMP/"
-        git fetch -q --depth=2 https://github.com/tamird/gvisor.git "$PRODUCT" "$MASTER" 7d8e856ba30ef0271690d13d2ddb1c07111a558a
-        git diff 7d8e856ba^ 7d8e856ba -- test/packetimpact/runner/defs.bzl > "$RUNNER_TEMP/exec.patch"
-        git show "$PRODUCT:test/packetimpact/tests/tcp_rack_test.go" > "$RUNNER_TEMP/packet.go"
-        test "$(git rev-parse "$PRODUCT^")" = "$MASTER"
+        cp test/rbe/rack-pending-sack.py test/rbe/rack-pending-sack.go.txt "$RUNNER_TEMP/"
+        git fetch --quiet --depth=1 https://github.com/tamird/gvisor.git "$MEASURED"
         printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
         printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
         umask 077
@@ -41,53 +37,32 @@ jobs:
         docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --sysctl net.ipv6.conf.lo.disable_ipv6=0 -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
         docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
         docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
-    - name: Check the same wire sequence on Linux, stock gVisor and the correction
+    - name: Isolate ACK processing before and after the timeout
       run: |
         set -euo pipefail
-        runarm() {
-          arm=$1; source=$2; target=$3; filter=$4; limit=$5
+        git checkout --quiet --detach "$MEASURED"
+        [[ "$(git rev-parse HEAD)" == "$MEASURED" ]]
+        cat "$RUNNER_TEMP/rack-pending-sack.go.txt" >> pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go
+        label=//pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test
+        for arm in measured select; do
           d="$RUNNER_TEMP/records/$arm"; mkdir -p "$d"
-          git checkout --quiet --detach "$source"
-          [[ "$(git rev-parse HEAD)" == "$source" ]]
-          printf '%s\n' "$source" > "$d/head"
-          opts=()
-          case "$arm" in
-            linux|stock|netstack)
-              cp "$RUNNER_TEMP/packet.go" test/packetimpact/tests/tcp_rack_test.go
-              git apply "$RUNNER_TEMP/exec.patch" ;;
-            *clock)
-              cat "$RUNNER_TEMP/rack-fresh-head.go.txt" >> pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go
-              opts+=(--test_arg=-test.v) ;;
-          esac
-          if [[ -n "$filter" ]]; then opts+=("--test_filter=$filter"); fi
-          read -r -a labels <<< "$target"
+          if [[ "$arm" == select ]]; then
+            python3 "$RUNNER_TEMP/rack-pending-sack.py" select
+          fi
+          git diff --numstat -- pkg/tcpip/transport/tcp/snd.go pkg/tcpip/transport/tcp/rack.go > "$d/selector"
           code=0
-          timeout --kill-after=10s "$limit" docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=48 --strategy=TestRunner=remote --nocache_test_results --keep_going --test_sharding_strategy=disabled --test_output=errors --test_timeout=400 --test_env=GO_TEST_WRAP_TESTV=1 --build_event_json_file="$RUNNER_TEMP/$arm.bep" "${opts[@]}" "${labels[@]}" > "$d/log" 2>&1 || code=$?
+          timeout -k 10s 10m docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=48 --strategy=TestRunner=remote --nocache_test_results --test_sharding_strategy=disabled --test_output=errors --test_timeout=100 --test_env=GO_TEST_WRAP_TESTV=1 --test_arg=-test.v --test_filter='^TestRACKPendingSACK$' --build_event_json_file="$RUNNER_TEMP/$arm.bep" "$label" > "$d/buildlog" 2>&1 || code=$?
           printf '%s\n' "$code" > "$d/exit"
-          printf '%s\n' "${labels[@]}" > "$d/labels"
-          for label in "${labels[@]}"; do
-            path=${label#//}; key=${label##*:}; mkdir -p "$d/$key"
-            for file in test.log test.xml; do
-              docker exec tcp-compiler cat "bazel-testlogs/${path/:/\/}/$file" > "$d/$key/$file" || true
-            done
+          for file in test.log test.xml; do
+            docker exec tcp-compiler cat "bazel-testlogs/pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test/$file" > "$d/$file" || true
           done
-          case "$arm" in
-            linux|stock|netstack) git restore --source="$source" -- test/packetimpact/runner/defs.bzl test/packetimpact/tests/tcp_rack_test.go ;;
-            *clock) git restore --source="$source" -- pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go ;;
-          esac
-        }
-        runarm master-clock "$MASTER" //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test '^TestRACKFreshHead$' 7m
-        runarm fixed-clock "$PRODUCT" //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test '^TestRACKFreshHead$' 7m
-        runarm linux "$PRODUCT" //test/packetimpact/tests:tcp_rack_native_test '^TestRACKFreshTimeoutRetransmission$' 12m
-        runarm stock "$MASTER" //test/packetimpact/tests:tcp_rack_netstack_test '^TestRACKFreshTimeoutRetransmission$' 12m
-        runarm netstack "$PRODUCT" //test/packetimpact/tests:tcp_rack_netstack_test '^TestRACKFreshTimeoutRetransmission$' 12m
-        runarm owners "$PRODUCT" '//pkg/tcpip/transport/tcp:tcp_test //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test //pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test //pkg/tcpip/transport/tcp:tcp_nogo' '' 20m
-    - name: Verify the original packet and owner results
+        done
+    - name: Verify each named execution and retain observations
       if: always()
-      run: python3 "$RUNNER_TEMP/rack-fresh-head.py"
+      run: python3 "$RUNNER_TEMP/rack-pending-sack.py" report
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: rack-fresh-head-correction
+        name: rack-pending-sack
         path: ${{ runner.temp }}/records/verdict.json
         if-no-files-found: error

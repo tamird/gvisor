@@ -1,0 +1,170 @@
+
+// TestRACKPendingSACK brackets loss recovery around an ACK that has reached
+// the stack but has not yet been processed by TCP's dispatcher.
+func TestRACKPendingSACK(t *testing.T) {
+	var boundary time.Duration
+	for _, schedule := range []string{"time-only", "hold-repeat", "hold-extend", "process-extend"} {
+		t.Run(schedule, func(t *testing.T) {
+			const warm = 8
+			const rtt = 100 * time.Millisecond
+			clk := faketime.NewManualClock()
+			states := make(chan tcp.TCPSenderState, 8)
+			c := context.NewWithOpts(t, context.Options{MTU: mtu, EnableV4: true, Clock: clk, Probe: func(s *tcp.TCPEndpointState) { states <- s.Sender }})
+			defer c.Cleanup()
+			e2e.EnableCUBIC(t, c)
+			e2e.SetStackSACKPermitted(t, c, true)
+			e2e.CreateConnectedWithSACKAndTS(c)
+			first := c.IRS.Add(1 + warm*maxPayload)
+			type packet struct {
+				at   int
+				echo uint32
+			}
+			var lastSentStamp uint32
+			decode := func(v *buffer.View) packet {
+				defer v.Release()
+				h := header.TCP(header.IPv4(v.AsSlice()).Payload())
+				opts := header.ParseTCPOptions(h.Options())
+				if !opts.TS || len(h.Payload()) != maxPayload {
+					t.Fatalf("TCP packet has TS=%v size=%d", opts.TS, len(h.Payload()))
+				}
+				lastSentStamp = opts.TSVal
+				return packet{int(int32(h.SequenceNumber()-uint32(first))) / maxPayload, opts.TSEcr}
+			}
+			drain := func() []packet {
+				var q []packet
+				for v := c.GetPacketNonBlocking(); v != nil; v = c.GetPacketNonBlocking() {
+					q = append(q, decode(v))
+				}
+				return q
+			}
+			send := func(start, count int) {
+				t.Helper()
+				data := make([]byte, count*maxPayload)
+				if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || int(n) != len(data) {
+					t.Fatalf("Write=%d,%v", n, err)
+				}
+				for i := 0; i < count; i++ {
+					if p := decode(c.GetPacket()); p.at != start+i {
+						t.Fatalf("initial send=%v want %d", p, start+i)
+					}
+				}
+			}
+			await := func() tcp.TCPSenderState {
+				t.Helper()
+				select {
+				case st := <-states:
+					if st.SndUna != first {
+						t.Fatalf("UNA=%d want %d", st.SndUna, first)
+					}
+					return st
+				case <-time.After(3 * time.Second):
+					t.Fatal("TCP did not process the queued ACK")
+				}
+				return tcp.TCPSenderState{}
+			}
+			ack := func(ts, echo uint32, blocks ...header.SACKBlock) {
+				var opts [40]byte
+				n := header.EncodeNOP(opts[:])
+				n += header.EncodeNOP(opts[n:])
+				n += header.EncodeTSOption(ts, echo, opts[n:])
+				if len(blocks) > 0 {
+					n += header.EncodeNOP(opts[n:])
+					n += header.EncodeNOP(opts[n:])
+					n += header.EncodeSACKBlocks(blocks, opts[n:])
+				}
+				c.SendPacket(nil, &context.Headers{SrcPort: context.TestPort, DstPort: c.Port, Flags: header.TCPFlagAck, SeqNum: seqnum.Value(context.TestInitialSequenceNumber).Add(1), AckNum: first, RcvWnd: 30000, TCPOpts: opts[:n]})
+			}
+			block := func(i, j int) header.SACKBlock {
+				return header.SACKBlock{Start: first.Add(seqnum.Size(i * maxPayload)), End: first.Add(seqnum.Size(j * maxPayload))}
+			}
+			send(-warm, warm)
+			clk.Advance(rtt)
+			ack(10001, lastSentStamp)
+			await()
+			send(0, 3)
+			clk.Advance(5 * time.Millisecond)
+			send(3, 9)
+			flightStamp := lastSentStamp
+			clk.Advance(rtt)
+			old := []header.SACKBlock{block(10, 12), block(7, 9), block(3, 6)}
+			ack(10002, flightStamp, old...)
+			prior := await()
+			early := drain()
+			if !prior.FastRecovery.Active || len(early) == 0 || early[0].at != 0 || prior.SackedOut != 7 {
+				t.Fatalf("initial recovery=%v SACKed=%d copies=%v", prior.FastRecovery.Active, prior.SackedOut, early)
+			}
+			clk.Advance(5 * time.Millisecond)
+			send(12, 2)
+			start := clk.NowMonotonic()
+			final := append([]header.SACKBlock(nil), old...)
+			if schedule != "hold-repeat" {
+				final[0] = block(10, 13)
+			}
+			stats := c.Stack().Stats().TCP
+			p := c.Stack().TransportProtocolInstance(tcp.ProtocolNumber)
+			paused := false
+			defer func() {
+				if paused {
+					p.Resume()
+				}
+			}()
+			var immediately, after []packet
+			var st tcp.TCPSenderState
+			if schedule != "time-only" {
+				if boundary < 3*time.Millisecond {
+					t.Fatal("no calibrated deadline")
+				}
+				clk.Advance(boundary - 2*time.Millisecond)
+				if stats.Timeouts.Value() != 0 {
+					t.Fatal("missed pre-timeout boundary")
+				}
+				_ = drain()
+				if schedule != "process-extend" {
+					p.Pause()
+					paused = true
+				}
+				ack(10003, flightStamp, final...)
+				if !paused {
+					st = await()
+					immediately = drain()
+				} else {
+					select {
+					case <-states:
+						t.Fatal("paused dispatcher processed ACK")
+					default:
+					}
+				}
+			}
+			for i := 0; stats.Timeouts.Value() == 0 && i < 8000; i++ {
+				_ = drain()
+				clk.Advance(time.Millisecond)
+			}
+			since := clk.NowMonotonic().Sub(start)
+			copies := drain()
+			wantEcho := uint32(10002)
+			if schedule == "process-extend" {
+				wantEcho = 10003
+			}
+			if stats.Timeouts.Value() != 1 || len(copies) != 1 || copies[0] != (packet{0, wantEcho}) {
+				t.Fatalf("RTO at %v: copies=%v want [{0 %d}]; prior=%v", since, copies, wantEcho, immediately)
+			}
+			if schedule == "time-only" {
+				boundary = since
+			}
+			fast := stats.FastRetransmit.Value()
+			clk.Advance(100 * time.Microsecond)
+			if paused {
+				p.Resume()
+				paused = false
+				st = await()
+			}
+			after = drain()
+			for _, pkt := range after {
+				if pkt.echo != 10003 {
+					t.Fatalf("new echo missing: %v", after)
+				}
+			}
+			t.Logf("ORDER %s before=%v timer=%v next=%v fast=%d sacked=%d initial=%d rto_after_us=%d", schedule, immediately, copies, after, stats.FastRetransmit.Value()-fast, st.SackedOut, prior.SackedOut, since.Microseconds())
+		})
+	}
+}
