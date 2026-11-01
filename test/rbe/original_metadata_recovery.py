@@ -107,7 +107,9 @@ def original_progress(uid):
     for _ in range(5):
         row = api.request("GetLog", body)
         log = row.get("log", {})
-        assert api.identifier(log) == uid
+        # GetLog binds the selector but its server does not fill Log.id.
+        if log.get("id"):
+            assert api.identifier(log) == uid
         chunks.append(log.get("contents", ""))
         token = api.value(row, "nextPageToken", "next_page_token")
         if not token:
@@ -178,6 +180,25 @@ def semaphore(kind, host, earliest, latest):
 
 
 def main():
+    if sys.argv[1:] == ["progress"]:
+        statuses = {}
+        for name, uid in (
+            ("semaphore-original", "9e62355a-23f1-4cda-8b49-3371cbf5e9eb"),
+            ("semaphore-retry", "2565546b-e2c3-43d7-b70c-e342086ad2e8"),
+        ):
+            result = {"status": "INCOMPLETE", "invocation": uid, "source": api.SOURCE,
+                      "identity_artifact": 13091393658, "new_test_invocations": 0}
+            try:
+                result["progress"] = original_progress(uid)
+                if result["progress"]["complete"] and result["progress"]["bytes"]:
+                    result["status"] = "RECOVERED_LOGS"
+            except Exception as err:
+                result["collection_error_type"] = type(err).__name__
+            result["verified_at"] = api.now()
+            api.write(OUT / (name + "-progress.json"), result)
+            statuses[name] = result["status"]
+        api.write(OUT / "summary.json", {"scope": "Original progress only; completed Make and case receipts unchanged", "statuses": statuses, "new_test_invocations": 0})
+        return any(status != "RECOVERED_LOGS" for status in statuses.values())
     make = make_checks()
     original = semaphore("semaphore-original", "d92c44459829", "2026-11-01T13:08:52", "2026-11-01T16:00:00")
     retry = semaphore("semaphore-retry", "3030218f065c", "2026-11-01T16:08:45", "2026-11-01T16:35:00")

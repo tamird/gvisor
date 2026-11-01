@@ -1,4 +1,4 @@
-name: Recover original Make and semaphore evidence
+name: Recover original semaphore progress
 on:
   push:
     branches: [qualification/make-original-checks]
@@ -25,10 +25,10 @@ jobs:
           done
           cp test/rbe/semop_owner_recovery.py test/rbe/original_metadata_recovery.py "$RUNNER_TEMP/"
           python3 -c 'import ast, sys; ast.parse(open(sys.argv[1]).read())' "$RUNNER_TEMP/original_metadata_recovery.py"
-      - name: Read original invocations, logs and named results
+      - name: Read only the two identified original invocation logs
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 "$RUNNER_TEMP/original_metadata_recovery.py"
+        run: python3 "$RUNNER_TEMP/original_metadata_recovery.py" progress
       - name: Check the explicit artifact boundary
         id: privacy
         if: always()
