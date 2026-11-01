@@ -110,6 +110,16 @@ use_repo(llvm_zlib, "llvm_zlib")
 ### Repo rules
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 
+# Build backend for the SandboxExec release; its source installs use the same
+# backend through pyproject.toml.
+http_file(
+    name = "sandboxexec_flit_core",
+    dev_dependency = True,
+    downloaded_file_path = "flit_core-3.12.0-py3-none-any.whl",
+    sha256 = "e7a0304069ea895172e3c7bb703292e992c5d1555dd1233ab7b5621b5b69e62c",
+    urls = ["https://files.pythonhosted.org/packages/f2/65/b6ba90634c984a4fcc02c7e3afe523fef500c4980fec67cc27536ee50acf/flit_core-3.12.0-py3-none-any.whl"],
+)
+
 new_local_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:local.bzl", "new_local_repository")
 
 new_local_repository(
