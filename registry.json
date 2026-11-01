@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-10-31T23:59:01.089227+00:00",
+    "updatedAt": "2026-11-01T00:05:24.396268+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34016,7 +34016,7 @@
       "url": "https://github.com/tamird/gvisor/commit/3cd9523a5b5a94d16df9b4f6383316e5591ac56a",
       "head": "3cd9523a5b5a94d16df9b4f6383316e5591ac56a",
       "group": "analysis",
-      "updatedAt": "2026-10-31T23:41:31.085407+00:00",
+      "updatedAt": "2026-11-01T00:05:24.396268+00:00",
       "status": "Agent work",
       "summary": "Use the declared LLVM formatter in shared C and C++ lint targets. The earlier formatter matched the wheel across 485 files. Nine workspace and compatibility controls passed. Deleting a source directory broke discovery on both Bazel 8.8.1 and released 8.8.2 (Bazel #30883); Bazel 9.3 contains the fix.",
       "evidence": [
@@ -34052,13 +34052,14 @@
       "followup": {
         "owner": "root",
         "sourceHead": "3cd9523a5b5a94d16df9b4f6383316e5591ac56a",
-        "observedAt": "2026-10-31T23:41:31.085407+00:00",
+        "observedAt": "2026-11-01T00:05:24.396268+00:00",
         "disposition": "Agent work",
-        "nextAction": "Use source discovery compatible with supported Bazel 8 or qualify a backport of the Bazel 9.3 fix, then repeat the directory-deletion control.",
+        "nextAction": "Wait for a compatible Bazel release containing the verified directory-watch backport, or qualify a different source-discovery method, before submission.",
         "evidence": [
           "https://github.com/tamird/gvisor/blob/gh-pages/lint-design.md",
           "https://github.com/tamird/gvisor/actions/runs/41252957874/artifacts/13062141950",
-          "https://github.com/bazelbuild/bazel/issues/30883"
+          "https://github.com/bazelbuild/bazel/issues/30883",
+          "https://github.com/tamird/gvisor/actions/runs/41253749549/artifacts/13062399500"
         ]
       }
     },
@@ -34524,13 +34525,13 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-10-31T23:41:31.085407+00:00",
+      "updatedAt": "2026-11-01T00:05:24.396268+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "observedAt": "2026-10-31T23:41:31.085407+00:00",
+        "observedAt": "2026-11-01T00:05:24.396268+00:00",
         "disposition": "Agent work",
-        "nextAction": "Use source discovery compatible with supported Bazel 8 or qualify a backport of the Bazel 9.3 fix, then repeat the directory-deletion control.",
+        "nextAction": "Wait for a compatible Bazel release containing the verified directory-watch backport, or qualify a different source-discovery method, before submission.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/1d96ea04c",
           "https://github.com/tamird/gvisor/actions/runs/41219788380/artifacts/13050030547",
@@ -34538,7 +34539,8 @@
           "https://github.com/tamird/gvisor/actions/runs/41218704000/artifacts/13048449141",
           "https://github.com/tamird/gvisor/actions/runs/41217794897/artifacts/13047923822",
           "https://github.com/tamird/gvisor/actions/runs/41252957874/artifacts/13062141950",
-          "https://github.com/bazelbuild/bazel/issues/30883"
+          "https://github.com/bazelbuild/bazel/issues/30883",
+          "https://github.com/tamird/gvisor/actions/runs/41253749549/artifacts/13062399500"
         ]
       },
       "refinement": {
@@ -40864,6 +40866,44 @@
         "summary": "Review the independent receive-memory correction for upstream submission. It has no prerequisite.",
         "body": "A segment may fit in the last byte of a receive buffer while its\nheaders and bookkeeping take the memory charge past MaxInt32. The\nsigned 32-bit counter then wraps: TCP reports free receive space and\ncontinues accepting data into a full queue.\n\nUse a 64-bit charge for both queue admission and available space. The\nregression leaves a byte of headroom and enqueues a one-byte segment,\nso it crosses the limit without allocating a two-GiB buffer."
       }
+    },
+    {
+      "id": "branch:bazel-8-dirwatch",
+      "type": "branch",
+      "group": "bazel",
+      "repo": "tamird/bazel",
+      "ref": "proposal/bazel-8-dirwatch",
+      "head": "4536e0533ea9be6ad8b3123a7026e6a8012f3205",
+      "title": "Backport directory-watch invalidation to Bazel 8.9",
+      "url": "https://github.com/tamird/bazel/commit/4536e0533",
+      "updatedAt": "2026-11-01T00:05:24.396268+00:00",
+      "status": "Contributor review requested",
+      "summary": "Removing a previously watched source directory could make the next Bazel build fail while trying to list it. Backport the existing upstream fix to release-8.9.0: record its type before listing it, and invalidate cached repository inputs made under the former rule.",
+      "evidence": [
+        {
+          "label": "37 Java tests, four shell cases and the actual gVisor remove/recreate controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41253749549/artifacts/13062399500"
+        },
+        {
+          "label": "Upstream Bazel directory invalidation issue",
+          "url": "https://github.com/bazelbuild/bazel/issues/30883"
+        },
+        {
+          "label": "Original fix on Bazel main",
+          "url": "https://github.com/bazelbuild/bazel/commit/6a3de202fe689c677b0c0bea8d76755e22bc21de"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "4536e0533ea9be6ad8b3123a7026e6a8012f3205",
+        "baseHead": "3bfdf3b354ae822628647997e43015744a7acda6",
+        "url": "https://github.com/tamird/bazel/commit/4536e0533",
+        "title": "Backport directory-watch invalidation to Bazel 8.9",
+        "requestedAt": "2026-11-01T00:05:24.396268+00:00",
+        "summary": "Review submission of this backport to bazelbuild/bazel’s release-8.9.0 branch. gVisor lint adoption remains separate.",
+        "body": "When a watched directory disappears between builds, invalidate the\nrepository instead of requesting a directory listing for the missing\npath. Record the file type before the directory contents, and preserve\nthat order when checking the recorded inputs.\n\nInvalidate remote repository cache entries that predate this check.\nUse the 8.x DirTree constructor and its FileValue.Key test fixture."
+      }
     }
   ],
   "edges": [
@@ -44211,6 +44251,16 @@
       "type": "depends_on",
       "reason": "Both packet tests share the check for when the listener begins using SYN cookies.",
       "evidence": "https://github.com/tamird/gvisor/commit/52c3ca860"
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:bazel-8-dirwatch",
+      "to": "pr:16663",
+      "reason": "The proposed gVisor lint source inventory needs a compatible Bazel release containing this directory-deletion fix. A fork backport alone does not satisfy the prerequisite.",
+      "evidence": [
+        "https://github.com/bazelbuild/bazel/issues/30883",
+        "https://github.com/tamird/gvisor/actions/runs/41253749549/artifacts/13062399500"
+      ]
     }
   ],
   "investigations": [
