@@ -1,4 +1,4 @@
-"""Run the original C++ PosixError suite on both native scratch platforms."""
+"""Check the original and native Nogo test on an AMD64 scratch executor."""
 
 import collections
 import datetime
@@ -12,13 +12,12 @@ import subprocess
 import sys
 
 import qualification_report as report
-from static_build import elf
 
 
 SOURCE = os.environ["PRODUCT"]
 IMAGE = "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"
-TARGETS = ["//test/util:posix_error_test"]
-CASES = {TARGETS[0]: ["PosixErrorTest/PosixError", "PosixErrorTest/PosixErrorOrPosixError", "PosixErrorTest/PosixErrorOrNullptr"]}
+VARIANT = os.environ["VARIANT"]
+TARGETS = ["//pkg/waiter:waiter_nogo"]
 
 
 def now():
@@ -50,7 +49,7 @@ def native_actions(path, arch, tmp):
     """Reuse the qualified raw-spawn projection, retaining each test action."""
     # c37bd3473:test/rbe/empty_worker/wildcard.py; raw/expanded parity is
     # recorded in Actions 41282902598, artifact 13074631555.
-    projection = 'select(has("spawn")) | .spawn | {m:.mnemonic,l:.targetLabel,x:.args[0],t:(if .mnemonic == "TestRunner" then .args[1] else null end),r:.runner,c:.cacheHit,s:.status,e:.exitCode,d:.digest,p:(.platform.properties // [])}'
+    projection = 'select(has("spawn")) | .spawn | {m:.mnemonic,l:.targetLabel,x:.args[0],t:(if .mnemonic == "TestRunner" then .args[1:] else [] end),r:.runner,c:.cacheHit,s:.status,e:.exitCode,d:.digest,p:(.platform.properties // [])}'
     counts = collections.Counter()
     tests = []
     bad = []
@@ -73,7 +72,8 @@ def native_actions(path, arch, tmp):
                         "runner": runner, "cache_hit": bool(row["c"]), "platform": platform,
                         "status": row["s"], "exit_code": row["e"], "digest": row["d"]}
                 if row["m"] == "TestRunner":
-                    item["test_binary"] = row["t"]
+                    item["test_binary"] = row["t"][0]
+                    item["test_args"] = row["t"][1:]
                     tests.append(item)
                 if (not correct or runner not in ("remote", "remote cache hit") or row["s"] or row["e"]) and len(bad) < 30:
                     bad.append(item)
@@ -85,21 +85,61 @@ def native_actions(path, arch, tmp):
             "tests": tests, "failed_or_other": bad}
 
 
-def product_elf(bazel, common, work, execroot, arch):
+def output_evidence(bazel, common, work, execroot):
     with (work / "output-query.log").open("w") as log:
-        result = subprocess.run(["timeout", "--signal=INT", "--kill-after=25s", "8m",
-                                 *bazel, "cquery", *common, "--output=files", TARGETS[0]],
-                                stdout=subprocess.PIPE, stderr=log, text=True)
+        result = subprocess.run([*bazel, "cquery", *common, "--output_groups=default",
+                                 "--output=files", TARGETS[0]], stdout=subprocess.PIPE,
+                                stderr=log, text=True, timeout=240)
     if result.returncode:
-        return {"status": "INCOMPLETE", "native_exit": result.returncode}
-    files = [line for line in result.stdout.splitlines() if Path(line).name == "posix_error_test"]
+        raise ValueError("cquery did not return the test executable")
+    files = [line for line in result.stdout.splitlines() if Path(line).name == "waiter_nogo"]
     if len(files) != 1:
-        return {"status": "INCOMPLETE", "matching_output_count": len(files)}
-    data = elf((execroot / files[0]).read_bytes())
-    data["target"] = TARGETS[0]
-    data["status"] = "PASS" if (data["machine"] == {"amd64": 62, "arm64": 183}[arch]
-                                and not data["interpreter"] and not data["needed_offsets"]) else "FAIL"
-    return data
+        raise ValueError(f"Expected one test executable, found {files}")
+    binary = execroot / files[0]
+    with binary.open("rb") as f:
+        header = f.read(16)
+    kind = "bash" if header.startswith(b"#!/bin/bash\n") else "elf" if header.startswith(b"\x7fELF") else "other"
+    outputs = {}
+    for arch in ("amd64", "arm64"):
+        path = binary.with_name(binary.name + "." + arch + ".findings")
+        raw = path.read_bytes()
+        entries = json.loads(raw) or []
+        relevant = [entry for entry in entries if entry["Category"] == "checklocks"
+                    and entry["GOARCH"] == arch and entry["Position"]["Filename"].endswith("waiter.go")]
+        outputs[arch] = {"sha256": hashlib.sha256(raw).hexdigest(), "count": len(entries),
+                         "waiter_lock_findings": relevant}
+    return {"test_executable": kind, "reports": outputs}
+
+
+def accepted_observation(row, code, text, capture):
+    actions = row["actions"]
+    observed = actions["tests"]
+    if len(observed) != 1 or capture["errors"]:
+        return False
+    action = observed[0]
+    original = original_tests([dict(action, status="", exit_code=0)], TARGETS, "posix_tw")
+    counts = actions["counts"]
+    if (not original or counts.get("local") or counts.get("off_platform")
+            or any(actions["decoder_exits"])):
+        return False
+    outputs = row["outputs"]["reports"]
+    kind = row["outputs"]["test_executable"]
+    if VARIANT != "stock" and (action["test_args"][:3] != ["filter", "-test", "-text"]
+                               or sorted(action["test_args"][3:]) != ["nogo.amd64.findings", "nogo.arm64.findings"]):
+        return False
+    if VARIANT == "clean":
+        return (not code and row["tests_status"] == "PASS" and actions["status"] == "PASS"
+                and kind == "elf" and all(not v["count"] for v in outputs.values())
+                and "PASS" in text.splitlines())
+    if not (code == 3 and (action["exit_code"] or action["status"])
+            and counts.get("failed") == 1 and row["tests_status"] == "FAIL"):
+        return False
+    if VARIANT == "stock":
+        return (kind == "bash" and all(not v["count"] for v in outputs.values())
+                and re.search(r"no such file|not found|ENOENT", text, re.I) is not None)
+    return (kind == "elf" and "checklocks" in text
+            and all(v["count"] == len(v["waiter_lock_findings"]) > 0 and arch in text
+                    for arch, v in outputs.items()))
 
 
 def qualify(arch, tmp, out, private, bazel):
@@ -107,12 +147,11 @@ def qualify(arch, tmp, out, private, bazel):
     work.mkdir()
     public = out / arch
     public.mkdir()
-    row = {"source": SOURCE, "arch": arch, "targets": TARGETS, "required_cases": CASES, "phases": {}, "status": "INCOMPLETE"}
+    row = {"source": SOURCE, "arch": arch, "targets": TARGETS, "experiment": VARIANT, "phases": {}, "status": "INCOMPLETE"}
     write(public / "receipt.json", row)
     (work / "commit").write_bytes(git("cat-file", "commit", SOURCE))
     (work / "before").write_bytes(git("diff", "HEAD", "--"))
     (work / "expected.txt").write_text("\n".join(TARGETS) + "\n")
-    write(work / "cases.json", CASES)
     platform = "//test/rbe/empty_worker:" + arch + "_musl"
     common = ["--config=" + {"amd64": "x86_64", "arm64": "aarch64"}[arch],
               "--compilation_mode=fastbuild", "--host_platform=" + platform,
@@ -120,7 +159,8 @@ def qualify(arch, tmp, out, private, bazel):
               "--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
               "--extra_toolchains=//test/rbe/go_bootstrap:linux_" + arch + "_ash",
               "--noincompatible_exclude_starlark_flags_from_exec_config",
-              "--workspace_status_command=", "--features=fully_static_link",
+              "--workspace_status_command=", "--features=fully_static_link", "--build_tag_filters=",
+              "--aspects=//tools/nogo:defs.bzl%nogo_aspect_tricorder", "--output_groups=+tricorder",
               "--incompatible_use_native_posix_test_wrapper", "--nocache_test_results",
               "--nobuild_event_json_file_path_conversion", "--jobs=400",
               "--remote_download_outputs=toplevel", "--noremote_upload_local_results",
@@ -145,7 +185,7 @@ def qualify(arch, tmp, out, private, bazel):
                                 "invocation_ids": invocation_ids, "diagnostic_lines": diagnostics if code else []}
         write(public / "receipt.json", row)
         if phase == "analysis":
-            preflight = report.preflight(raw, code, "test", work / "cases.json")
+            preflight = report.preflight(raw, code, "test")
             write(public / "analysis.json", preflight)
             if preflight["status"] != "PASS":
                 return row
@@ -165,7 +205,7 @@ def qualify(arch, tmp, out, private, bazel):
                    "execution_finished_at": finished, "command_kind": "test"}
         write(work / "context.json", context)
         verdict = report.verdict(sanitized, report.manifest_path(sanitized), work / "context.json",
-                                 work / "expected.txt", (work / "analysis.bep",), case_manifest=work / "cases.json")
+                                 work / "expected.txt", (work / "analysis.bep",))
         write(public / "tests.json", verdict)
         for xml in (work / "reports").rglob("test.xml"):
             relative = xml.relative_to(work / "reports")
@@ -179,19 +219,23 @@ def qualify(arch, tmp, out, private, bazel):
         row["actions"] = native_actions(work / "actions.compact", arch, tmp)
         # Runtime status is retained even if output inspection later fails.
         write(public / "receipt.json", row)
-        row["product_elf"] = product_elf(bazel, common, work, execroot, arch)
+        row["outputs"] = output_evidence(bazel, common, work, execroot)
+        logs = list((work / "reports").rglob("test.log"))
+        text = "\n".join(path.read_text(errors="replace") for path in logs)
+        row["test_log"] = [line[:1200] for line in text.splitlines()
+                           if re.search(r"PASS|checklocks|ENOENT|not found|no such file", line, re.I)
+                           and not re.search(r"header|token|api.key|authorization", line, re.I)][:30]
         row["verified_at"] = now()
-        states = [verdict["status"], row["actions"]["status"], row["product_elf"]["status"]]
-        row["status"] = "FAIL" if "FAIL" in states else "PASS" if states == ["PASS"] * 3 else "INCOMPLETE"
+        row["status"] = "PASS" if accepted_observation(row, code, text, capture) else "FAIL"
         write(public / "receipt.json", row)
     return row
 
 
 def main():
     tmp = Path(os.environ["RUNNER_TEMP"])
-    out = tmp / "native-package-evidence"
+    out = tmp / "native-package-evidence" / VARIANT
     out.mkdir(exist_ok=True)
-    private = tmp / "native-package-private"
+    private = tmp / ("native-package-private-" + VARIANT)
     private.mkdir(exist_ok=True)
     control = json.loads((tmp / "native-wrapper-control.json").read_text())
     actual = control["test_action"]
@@ -214,7 +258,7 @@ def main():
         return 1
     bazel = [str(binary), "--bazelrc=" + str(tmp / "sidecar.bazelrc")]
     rows = []
-    for arch in ("amd64", "arm64"):
+    for arch in ("amd64",):
         try:
             rows.append(qualify(arch, tmp, out, private, bazel))
         except Exception as err:
