@@ -69,12 +69,20 @@ func TestSynCookieSACK(t *testing.T) {
 			t.Cleanup(func() { dut.Close(t, fd) })
 
 			first := *conn.LocalSeqNum(t)
+			observed := 0
 			expectACK := func(offset uint32, wantBlocks ...header.SACKBlock) {
 				t.Helper()
 				got, err := conn.Expect(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(first) + offset)}, time.Second)
 				if err != nil {
 					t.Fatalf("waiting for ACK at offset %d: %v", offset, err)
 				}
+				observed++
+				blocks := header.ParseTCPOptions(got.Options).SACKBlocks
+				var ranges []string
+				for _, block := range blocks {
+					ranges = append(ranges, fmt.Sprintf("%d-%d", uint32(block.Start)-uint32(first), uint32(block.End)-uint32(first)))
+				}
+				fmt.Printf("COOKIE_SACK case=%s step=%d ack=%d blocks=%v\n", tc.name, observed, *got.AckNum-uint32(first), ranges)
 				if diff := cmp.Diff(wantBlocks, header.ParseTCPOptions(got.Options).SACKBlocks); diff != "" {
 					t.Fatalf("SACK blocks at ACK offset %d differ (-want +got):\n%s", offset, diff)
 				}
