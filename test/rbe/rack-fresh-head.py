@@ -7,7 +7,7 @@ from pathlib import Path
 import re
 from xml.etree import ElementTree as ET
 
-inv = "8351c413-99b1-450e-8f84-65516c391059"
+inv = "39af48e4-8496-45a0-a701-c4b4f06d6193"
 prefix = "//test/rbe/forward_gso:"
 key = os.environ["BUILDBUDDY_API_KEY"]
 dest = Path(os.environ["RUNNER_TEMP"]) / "verdict.json"
@@ -75,7 +75,12 @@ try:
                         text=err.get("message","")+"\n"+"\n".join(err.itertext())
                         rec["failures"][name]=relevant(text.splitlines())
         if "test.log" in raw:
-            rec["diagnostics"] = relevant(raw["test.log"].decode(errors="replace").splitlines())
+            # Child stderr precedes the Python harness's JSON report. Do
+            # not export the raw report or command arguments.
+            before = raw["test.log"].decode(errors="replace").split("\n{",1)[0]
+            safe = [line.strip()[:2000] for line in before.splitlines()
+                    if line.strip() and not re.search(r"authorization|credential|token|api.key|password|bearer|(?:bes|remote).header|PosixPath\(|^exec ", line,re.I)]
+            rec["startup"] = safe[:40]
     out["complete"] = all(x.get("failures") for x in out["owners"].values())
 finally:
     dest.write_text(json.dumps(out,indent=2).replace(key,"[redacted]")+"\n")
