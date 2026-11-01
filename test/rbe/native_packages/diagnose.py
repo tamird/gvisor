@@ -29,6 +29,8 @@ def rpc(method, payload):
 
 
 EXPECTED = {"//src:bazel", "//tools/test:posix_tw", "//tools/test:tw_test"}
+STARTED = datetime.datetime.fromisoformat("2026-11-01T09:05:12.264276+00:00").timestamp()
+SOURCES = {"b70c334832ca2a1109a8b5e8cdc632b411174b6f", "326721f4fd556e72000849a4053b1afaaec4f3d1"}
 FINISHED = datetime.datetime.fromisoformat("2026-11-01T09:07:23.269961+00:00").timestamp()
 result = {"status": "INCOMPLETE", "original_run": 41291507672, "new_executions": 0}
 try:
@@ -37,6 +39,9 @@ try:
     if response.get("nextPageToken"):
         raise ValueError("The bounded invocation search is incomplete")
     candidates = [i for i in response.get("invocation", []) if set(i.get("pattern", [])) == EXPECTED]
+    result["search_count"] = len(response.get("invocation", []))
+    result["exact_pattern_count"] = len(candidates)
+    result["matching_command_receipts"] = []
     selected = []
     for candidate in candidates:
         identifier = candidate["invocationId"]
@@ -45,8 +50,6 @@ try:
         if len(exact) != 1:
             raise ValueError("Ambiguous invocation identity")
         invocation = exact[0]
-        if invocation.get("commitSha") and invocation["commitSha"] != "b70c334832ca2a1109a8b5e8cdc632b411174b6f":
-            continue
         events = [event.get("buildEvent", {}) for event in invocation.get("event", [])]
         finishes = [event["finished"] for event in events if "finished" in event]
         if len(finishes) != 1:
@@ -54,7 +57,13 @@ try:
         finish = finishes[0]
         milliseconds = finish.get("finishTimeMillis")
         seconds = int(milliseconds) / 1000 if milliseconds is not None else datetime.datetime.fromisoformat(finish["finishTime"]).timestamp()
-        if FINISHED - 5 <= seconds <= FINISHED and finish.get("exitCode", {}).get("code", 0) == 34:
+        source = invocation.get("commitSha")
+        result["matching_command_receipts"].append({
+            "source_expected": source in SOURCES if source else None,
+            "finish_seconds": seconds, "exit_code": finish.get("exitCode", {}).get("code", 0)})
+        if source and source not in SOURCES:
+            continue
+        if STARTED <= seconds <= FINISHED and finish.get("exitCode", {}).get("code", 0) == 34:
             selected.append((identifier, invocation, seconds))
     if len(selected) != 1:
         raise ValueError("Expected one original command with its terminal time and exit34")
@@ -78,6 +87,7 @@ try:
         line = re.sub(r"\b[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_./-]+)+(?:@sha256:[a-f0-9]+|:[A-Za-z0-9_.-]+)", "[IMAGE]", line)
         line = re.sub(r"\S+@\S+", "[USERINFO]", line)
         line = re.sub(r"\b(?:[A-Za-z0-9_-]+\.)+[A-Za-z0-9_-]+:\d+\b", "[ENDPOINT]", line)
+        line = re.sub(r"\b(?:[A-Za-z0-9_-]+\.)+(?:com|io|net|org|internal|local|dev|cloud|app|build)\b", "[HOST]", line)
         line = re.sub(r"\bGR[A-Za-z0-9]+\b", "[GROUP]", line)
         line = re.sub(r"(?i)\b(worker|executor|host)(?:_id)?[=:]\s*[^,\s]+", r"\1=[REDACTED]", line)
         lines.append(line[:1000])
