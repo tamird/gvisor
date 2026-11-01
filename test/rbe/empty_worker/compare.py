@@ -62,7 +62,7 @@ def source(ref):
 def rows(log):
     if not log.exists(): return []
     # Keep the argv, result, platform and output digests for relevant actions only.
-    jq = r'''select(((.targetLabel // "")|test("^//vdso:|^//runsc:|^//runsc/boot/filter:filter$")) or .mnemonic=="PrecompileSeccomp" or .mnemonic=="ProtocAuthenticityCheck" or .mnemonic=="GoToolchainBinaryBuild" or ((.exitCode // 0)!=0) or ((.status // "")!="")) | {label:.targetLabel,mnemonic,runner,cacheHit,exitCode,status,action:.digest,platform:.platform,executable:.commandArgs[0],outputs:[.actualOutputs[]? | {path,digest}],argv:(if ((.targetLabel//"")|contains("systrap/sysmsg")) and (.mnemonic=="CppLink" or .mnemonic=="CppCompile" or .mnemonic=="Genrule") then .commandArgs else [] end)}'''
+    jq = r'''select(((.targetLabel // "")|test("^//:release$|^//vdso:")) or .mnemonic=="GoLink" or .mnemonic=="PrecompileSeccomp" or .mnemonic=="ProtocAuthenticityCheck" or .mnemonic=="GoToolchainBinaryBuild" or ((.exitCode // 0)!=0) or ((.status // "")!="")) | {label:.targetLabel,mnemonic,runner,cacheHit,exitCode,status,action:.digest,platform:.platform,executable:.commandArgs[0],outputs:[.actualOutputs[]? | {path,digest}],argv:(if ((.targetLabel//"")|contains("systrap/sysmsg")) and (.mnemonic=="CppLink" or .mnemonic=="CppCompile" or .mnemonic=="Genrule") then .commandArgs else [] end)}'''
     with subprocess.Popen([str(tmp/"bb"),"print","--compact_execution_log="+str(log)],stdout=subprocess.PIPE) as decode:
         raw = subprocess.check_output(["jq","-c",jq],stdin=decode.stdout)
         decode.stdout.close()
@@ -75,7 +75,7 @@ def invoke(kind,arch,targets,options=()):
     cmd=["bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"build","--config="+("aarch64" if arch=="arm64" else "x86_64"),"--keep_going","--jobs=40","--remote_accept_cached","--noremote_upload_local_results","--remote_download_outputs=toplevel","--spawn_strategy=remote","--noremote_local_fallback","--host_platform="+plat,"--extra_execution_platforms="+plat,"--execution_log_compact_file="+str(log),"--build_event_json_file="+str(bep),"--nobuild_event_json_file_path_conversion","--color=no","--curses=no",*options,*targets]
     start=now()
     with txt.open("w") as stream:
-        status=subprocess.run(["timeout","--signal=INT","--kill-after=25s","31m",*cmd],stdout=stream,stderr=subprocess.STDOUT).returncode
+        status=subprocess.run(["timeout","--signal=INT","--kill-after=25s","45m",*cmd],stdout=stream,stderr=subprocess.STDOUT).returncode
     finished=now()
     original=txt.read_text(errors="replace")
     messages=[l.strip()[:1300] for l in original.splitlines() if re.search(r"ERROR:|Traceback|Error in|in fail|No such file|could not start|failed to start|not found|undefined symbol|unable to find|permission denied|unrecognized option|Invocation ID:",l,re.I) and not re.search(r"api.key|authorization|credential",l,re.I)]
@@ -94,52 +94,90 @@ def invoke(kind,arch,targets,options=()):
     r["actions"]=[{k:a.get(k) for k in ("label","mnemonic","runner","cacheHit","exitCode","status","executable")} for a in actions]
     print(kind,status,r["invocations"],messages[-5:],flush=True);save()
     return r,actions
+cpu=os.environ["EXEC_CPU"]
+machine,machine_name,repo={"arm64":(183,"aarch64","@bootstrap_busybox_arm64"),"amd64":(62,"x86_64","@bootstrap_busybox")}[cpu]
+guest=repo+"//:payload/usr/bin/busybox"
+files={"runsc", "containerd-shim-runsc-v1", "gvisor-bin/gvisor_sentry", "gvisor-bin/checkpointgofer",
+       "gvisor-bin/runsc-metric-server", "gvisor-bin/runsc-fd-parking","gvisor-bin/gvisor-sentry-prewarmer","gvisor-bin/gvisor-proc-umounter"}
+def elf(path):
+    with path.open("rb") as stream:
+        head=stream.read(24)
+        assert head[:6]==b"\x7fELF\x02\x01" and int.from_bytes(head[18:20],"little")==machine
+        stream.seek(0)
+        return {"sha256":hashlib.file_digest(stream,"sha256").hexdigest(),"bytes":path.stat().st_size,"elf_machine":machine}
+def smoke(install,busybox):
+    bundle=tmp/"guest-bundle"; fs=bundle/"rootfs"; fs.mkdir(parents=True)
+    (fs/"proc").mkdir()
+    shutil.copy2(busybox,fs/"busybox")
+    (fs/"busybox").chmod(0o755)
+    expected="release-"+cpu+"-"+results["corrected"][:9]
+    (fs/"probe").write_text(expected)
+    process={"terminal":False,"user":{"uid":0,"gid":0},"cwd":"/",
+             "args":["/busybox","sh","-ec",'/busybox cat /probe; printf "\\n"; /busybox uname -m'],"env":["PATH=/"]}
+    spec={"ociVersion":"1.0.2","root":{"path":"rootfs"},"process":process,
+          "mounts":[{"type":"proc","source":"proc","destination":"/proc"}],
+          "linux":{"namespaces":[{"type":n} for n in ("pid","mount","uts","ipc","network")]}}
+    (bundle/"config.json").write_text(json.dumps(spec))
+    state=tmp/"oci-state";state.mkdir()
+    apparmor=Path("/proc/sys/kernel/apparmor_restrict_unprivileged_userns")
+    if apparmor.exists() and apparmor.read_text().strip()!="0":
+        subprocess.run(["sudo","sysctl","-w","kernel.apparmor_restrict_unprivileged_userns=0"],check=True)
+    args=["sudo","-n","--",str(install/"runsc"),"--root="+str(state),"--platform=systrap","--network=none",
+          "--overlay2=none","--host-settings=ignore","--ignore-cgroups"]
+    cid="scratch-release"
+    sub=results["native_smoke"]={"privileged_host":platform.platform(),"started":now(),"guest":guest,
+        "elf":elf(fs/"busybox"),"read_from_guest":expected,"runsc_flags":args[4:],"sidecar_source":"adjacent gvisor-bin from //:release"}
+    save()
+    try:
+        proc=subprocess.run(["timeout","--kill-after=5","90",*args,"run","--bundle="+str(bundle),cid],
+                            stdin=subprocess.DEVNULL,capture_output=True,text=True)
+        sub.update(exit=proc.returncode,stdout=proc.stdout[:1000],stderr=proc.stderr[-5000:],finished=now())
+        assert proc.returncode==0 and proc.stdout.splitlines()==[expected,machine_name], "guest did not emit both expected outputs"
+        sub["verdict"]="GUEST_EXECUTED"
+    finally:
+        subprocess.run(["timeout","20",*args,"delete","--force",cid],capture_output=True)
+        save()
 try:
-    assert platform.machine()=="aarch64"
+    assert platform.machine()==machine_name
     assert run("git","rev-parse","HEAD^")==os.environ["CORRECTED"]
     source(os.environ["CORRECTED"])
-    results["original_controls"]={"amd64":13056457271,"arm64":13061034514,
-                                  "arm64_filter":13062876059}
-    target="//runsc:runsc"
-    for cpu,machine in (("arm64",183),("amd64",62)):
-        try:
-            opts=["--compilation_mode=fastbuild","--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
-                  "--extra_toolchains=//test/rbe/go_bootstrap:linux_"+cpu+"_ash"]
-            result,actions=invoke(cpu,cpu,[target],opts)
-            failed=[a for a in actions if a.get("exitCode") or a.get("status")]
-            result["failed_actions"]=[{k:a.get(k) for k in ("label","mnemonic","executable","runner","exitCode","status","action")} for a in failed]
-            def props(a):
-                return {p["name"]:p["value"] for p in a["platform"]["properties"]}
-            if result["native_exit"]==0:
-                outputs=[(a,o) for a in actions if a["mnemonic"]=="GoLink" and a["label"].startswith("//runsc:") for o in a["outputs"] if Path(o["path"]).name=="runsc"]
-                tool,product=next((a,o) for a,o in outputs if o["path"].split("/")[1].startswith("aarch64-" if cpu=="arm64" else "k8-"))
-                assert props(tool)["Arch"]==cpu and props(tool)["container-image"]==image
-                result["owner_action"]={k:tool.get(k) for k in ("label","runner","cacheHit","platform","action","executable")}
-                result["owner_output"]=product
-                save()
-                exec_root=Path(run("bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"info","execution_root"))
-                assert exec_root.is_absolute()
-                file=exec_root/product["path"]
-                with file.open("rb") as stream:
-                    head=stream.read(24)
-                    assert head[:6]==b"\x7fELF\x02\x01" and int.from_bytes(head[18:20],"little")==machine
-                    stream.seek(0)
-                    digest=hashlib.file_digest(stream,"sha256").hexdigest()
-                assert file.stat().st_size==int(product["digest"]["sizeBytes"]) and digest==product["digest"]["hash"]
-                result.update(verdict="RUNSC_BUILT",bytes=file.stat().st_size,sha256=digest,elf_machine=machine)
-            elif any(x.get("runner")=="remote" and x.get("platform") and props(x).get("Arch")==cpu and props(x).get("container-image")==image for x in failed):
-                result["verdict"]="MEASURED_WORKER_FAILURE"
-            else:
-                result["verdict"]="NO_WORKER_WITNESS"
-        except Exception as err:
-            results.setdefault(cpu,{})["verification_error"]=repr(err)[:600]
-            results[cpu]["verdict"]="INCOMPLETE"
-        finally:
-            save()
-    results["verdict"]="ALL_ARMS_OBSERVED" if all(results[cpu]["verdict"] in ("RUNSC_BUILT","MEASURED_WORKER_FAILURE") for cpu in ("arm64","amd64")) else "INCOMPLETE"
-except Exception as err:
-    results["error"]=repr(err);results["verdict"]="INCOMPLETE"
+    results.update(cpu=cpu,mode="fastbuild",public_target="//:release",declared_staging="679ce6be6e12e3d5d896b96294be4dd59473537f",
+                   original_worker_controls={"arm64":13061034514,"amd64":13056457271},private_cli_evidence=13063272315)
+    opts=["--compilation_mode=fastbuild","--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
+          "--extra_toolchains=//test/rbe/go_bootstrap:linux_"+cpu+"_ash"]
+    result,actions=invoke(cpu,cpu,["//:release",guest],opts)
+    failed=[a for a in actions if a.get("exitCode") or a.get("status")]
+    result["failed_actions"]=[{k:a.get(k) for k in ("label","mnemonic","executable","runner","exitCode","status","action","platform")} for a in failed]
+    save()
+    if result["native_exit"]!=0:
+        results["verdict"]="BUILD_FAILED";raise SystemExit(1)
+    stage=[(a,o) for a in actions if a["label"]=="//:release" for o in a["outputs"] if "/bin/release/" in o["path"]]
+    if {o["path"].split("/bin/release/",1)[1] for a,o in stage}!=files:
+        raise ValueError("public release staging outputs were missing from the compact log: "+str([o["path"] for a,o in stage]))
+    execroot=Path(run("bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"info","execution_root"))
+    install=tmp/"native-release";install.mkdir()
+    result["artifacts"]={}
+    for a,o in stage:
+        rel=o["path"].split("/bin/release/",1)[1]
+        p=execroot/o["path"]
+        info=elf(p)
+        assert info["sha256"]==o["digest"]["hash"] and info["bytes"]==int(o["digest"]["sizeBytes"])
+        props={item["name"]:item["value"] for item in a["platform"]["properties"]}
+        assert props.get("Arch")==cpu and props.get("container-image")==image
+        dest=install/rel;dest.parent.mkdir(exist_ok=True);shutil.copy2(p,dest)
+        assert os.access(dest,os.X_OK)
+        result["artifacts"][rel]=dict(**info,mnemonic=a["mnemonic"],runner=a.get("runner"),cache_hit=a.get("cacheHit",False),action=a["action"],worker=props)
+    result["verdict"]="EIGHT_RELEASE_ELFS_VERIFIED";save()
+    # Fetch Bazel's actual declared source file, not a client system utility.
+    cquery=run("bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"cquery","--output=files",guest)
+    paths=[execroot/line for line in cquery.splitlines() if line.endswith("/payload/usr/bin/busybox")]
+    if len(paths)!=1: raise ValueError("expected one BusyBox source path; got "+repr(cquery[:350]))
+    smoke(install,paths[0])
+    results["verdict"]="RELEASE_FILES_AND_NATIVE_GUEST_VERIFIED"
+except Exception as exc:
+    results["error"]=type(exc).__name__+": "+str(exc)[:400]
+    results["verdict"]="INCOMPLETE"
 finally:
     results["verified"]=now();save()
-    print(results["verdict"],[(cpu,results.get(cpu,{}).get("verdict")) for cpu in ("arm64","amd64")],flush=True)
-sys.exit(results["verdict"]!="ALL_ARMS_OBSERVED")
+    print(cpu,results.get("verdict"),results.get("error"),flush=True)
+sys.exit(results["verdict"]!="RELEASE_FILES_AND_NATIVE_GUEST_VERIFIED")
