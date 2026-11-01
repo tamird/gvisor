@@ -38,3 +38,9 @@ platform(
     },
     visibility = ["//visibility:public"],
 )
+
+exports_files([
+    "cares-allow-symlinks.patch",
+    "grpc-native.patch",
+    "protobuf-stage1-direct.patch",
+])

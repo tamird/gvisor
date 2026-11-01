@@ -959,5 +959,21 @@ archive_override(
 single_version_override(
     module_name = "protobuf",
     patch_strip = 1,
-    patches = ["//test/rbe/empty_worker:protoc-declared-shell.patch"],
+    patches = [
+        "//test/rbe/empty_worker:protoc-declared-shell.patch",
+        "//test/rbe/empty_worker:protobuf-stage1-direct.patch",
+    ],
+)
+
+# Use the established header and execution-plugin changes on the pinned versions.
+single_version_override(
+    module_name = "c-ares",
+    patch_strip = 1,
+    patches = ["//test/rbe/empty_worker:cares-allow-symlinks.patch"],
+)
+
+single_version_override(
+    module_name = "grpc",
+    patch_strip = 1,
+    patches = ["//test/rbe/empty_worker:grpc-native.patch"],
 )

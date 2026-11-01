@@ -1,0 +1,11 @@
+--- a/bazel/cc_grpc_library.bzl
++++ b/bazel/cc_grpc_library.bzl
+@@ -106,7 +106,7 @@
+         generate_cc(
+             name = codegen_grpc_target,
+             srcs = proto_targets,
+-            plugin = Label("//src/compiler:grpc_cpp_plugin"),
++            plugin = Label("//src/compiler:grpc_cpp_plugin_native"),
+             well_known_protos = well_known_protos,
+             generate_mocks = generate_mocks,
+             allow_deprecated = allow_deprecated,
