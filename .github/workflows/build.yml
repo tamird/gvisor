@@ -1,35 +1,38 @@
-name: CI
-
-"on":
+name: Verify the joined race coverage and musl actions
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/go-coverage-musl-actions]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  packages:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      PRODUCT: 022894f6b57bac7ed55c741ea07a3611dc256da9
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 3, persist-credentials: false}
+    - name: Select the exact source and Buildkite Bazelisk hook
+      shell: bash
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        test "$(git rev-parse HEAD^)" = "$PRODUCT"
+        cp .github/qualification/package-build/coverage-actions.py "$RUNNER_TEMP/check.py"
+        git checkout --detach "$PRODUCT"
+        export DOCKER_BUILD=false
+        sed -n '/^install_bazel() {/,$p' .buildkite/hooks/pre-command > "$RUNNER_TEMP/native-bazel"
+        source "$RUNNER_TEMP/native-bazel"
+        test -x "$BUILDKITE_BAZEL_DIRECTORY/bazel"
+        echo "$BUILDKITE_BAZEL_DIRECTORY" >> "$GITHUB_PATH"
+        echo "USE_BAZEL_FALLBACK_VERSION=error:" >> "$GITHUB_ENV"
+        test -s .bazelversion
+    - name: Inspect the AMD64 and ARM64 action graphs
+      run: python3 -B "$RUNNER_TEMP/check.py"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: coverage-action-receipt
+        path: ${{ runner.temp }}/coverage-actions.json
+        if-no-files-found: error
