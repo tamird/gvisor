@@ -1,7 +1,7 @@
 name: Compare pending TCP socket errors and both IP error queues
 on:
   push:
-    branches: [qualification/tcp-established-icmp-recvmsg]
+    branches: [qualification/tcp-stale-icmp-quote]
 permissions:
   contents: read
 jobs:
@@ -54,7 +54,7 @@ jobs:
         python3 - <<'PYFIX'
         from pathlib import Path
         import os
-        p=Path('test/packetimpact/runner/main.go');s=p.read_text();assert s.count('^TestListenerReusesReceiveBuffer$')==1;p.write_text(s.replace('^TestListenerReusesReceiveBuffer$', '^Test(EstablishedICMP(Poll|Data)[46]|TCPConnectICMPError)$'))
+        p=Path('test/packetimpact/runner/main.go');s=p.read_text();assert s.count('^TestListenerReusesReceiveBuffer$')==1;p.write_text(s.replace('^TestListenerReusesReceiveBuffer$', '^TestEstablishedICMPStaleQuote$'))
         p=Path('test/packetimpact/tests/tcp_connect_icmp_error_test.go');s=p.read_text();assert s.count('import (')==1;p.write_text(s.replace('import (','import (\n\t"context"\n\t"encoding/binary"\n\t"fmt"')+(Path(os.environ['RUNNER_TEMP'])/'fixture.txt').read_text())
         PYFIX
         for arm in native netstack; do
@@ -70,6 +70,6 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: established-icmp-prototype
+        name: stale-icmp-quote
         path: ${{ runner.temp }}/records/verdict.json
         if-no-files-found: error

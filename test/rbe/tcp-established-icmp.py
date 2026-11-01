@@ -13,24 +13,18 @@ def observe(path):
     events = [json.loads(line) for line in (path / "bep").read_text().splitlines()] if (path / "bep").exists() else []
     inv = [e["started"]["uuid"] for e in events if "started" in e]
     summaries = {e["id"]["testSummary"]["label"]: e["testSummary"]["overallStatus"] for e in events if "testSummary" in e}
-    msg = {}
-    for row in re.findall(r"ESTAB_MSG family=(\d) opt=([01]) first=(true|false) poll=(\d+) so=(\d+) afterfirst=(\d+) n=(-?\d+) errno=(\d+) flags=(\d+) cbytes=(\d+) level=\d+ type=\d+ ee=\d+ origin=\d+ itype=\d+ code=\d+ again=(\d+) final=(\d+)", text):
-        msg["-".join(row[:3])] = list(map(int, row[3:]))
-    io = {"-".join(r[:2]): list(map(int, r[2:])) for r in re.findall(r"ICMP_IO family=(\d) op=(read|write) before=(\d+) n=(-?\d+) errno=(\d+) after=(\d+) so=(\d+)", text)}
-    expected = {}
-    expected_io = {}
-    for family, err in [(4, 113), (6, 101)]:
-        for opt in [0, 1]:
-            for msgfirst in ["true", "false"]:
-                expected[f"{family}-{opt}-{msgfirst}"] = [8*opt, err, 8*opt*(msgfirst=="true"), -1, 11, 0, 0, 11, 0]
-        for op in ["read", "write"]:
-            expected_io[f"{family}-{op}"] = [8, -1, err, 0, 0]
-    mlive = sorted({"-".join(m) for m in re.findall(r"ESTAB_MSG_LIVE family=(\d) opt=([01]) first=(true|false)", text)})
-    ilive = sorted({"-".join(m) for m in re.findall(r"ICMP_IO_LIVE family=(\d) op=(read|write)", text)})
+    pattern = r"STALE_ICMP ack_barrier=true seq_delta=3 stale_poll=(\d+) stale_so=(\d+) live_poll=(\d+) live_so=(\d+) new_data=true"
+    rows = sorted(set(re.findall(pattern, text)))
+    exp = ("0", "0", "8", "113") if path.name == "native" else ("8", "113", "8", "113")
     rc = int((path / "exit").read_text())
-    terminal = "--- PASS: TestTCPConnectICMPError" in text
-    ok = not rc and msg == expected and io == expected_io and mlive == sorted(expected) and ilive == sorted(expected_io) and terminal and len(inv) == len(summaries) == 1 and set(summaries.values()) == {"PASSED"}
-    return {"verified": ok, "exit": rc, "invocations": inv, "summaries": summaries, "pending_socket_error": msg, "io_error": io, "continued_msg": mlive, "continued_io": ilive, "terminal": terminal, "fixture": (path / "fixture").read_text().split()[0], "start": (path / "start").read_text().strip(), "finish": (path / "finish").read_text().strip(), "diagnostics": [l[:380] for l in text.splitlines() if ("pending error not returned" in l or l.startswith(("ERROR:", "FAIL:", "--- FAIL:")) or "defined and not used" in l or "undefined:" in l) and not any(w in l.lower() for w in ("token", "credential", "remote_header", "bes_header"))][:8]}
+    inv = []
+    summaries = {}
+    for line in (path / "bep").read_text().splitlines():
+        event = json.loads(line)
+        if "started" in event: inv.append(event["started"]["uuid"])
+        if "testSummary" in event: summaries[event["id"]["testSummary"]["label"]] = event["testSummary"]["overallStatus"]
+    ok = rows == [exp] and rc == 0 and list(summaries.values()) == ["PASSED"]
+    return {"verified": ok, "exit": rc, "invocations": inv, "summaries": summaries, "rows": rows, "expected": exp, "fixture": (path / "fixture").read_text().split()[0], "start": (path / "start").read_text().strip(), "finish": (path / "finish").read_text().strip(), "diagnostics": [l[:300] for l in text.splitlines() if l.startswith(("ERROR:", "FAIL:", "--- FAIL:")) or "undefined:" in l][:6]}
 
 
 if __name__ == "__main__":
