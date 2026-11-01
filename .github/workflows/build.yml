@@ -1,17 +1,17 @@
-name: Check RACK repair selection on Linux and gVisor
+name: Observe TCP credit before a cumulative ACK
 on:
   push:
-    branches: [qualification/tcp-rack-fresh-head-fix]
+    branches: [qualification/tcp-sack-before-cumack]
 permissions:
   contents: read
 jobs:
   syscalls:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 85
+    timeout-minutes: 72
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      PRODUCT: c7976270813d5218a847539dd94f749c7cb4dfd5
+      PRODUCT: df000e6d7a2ca32aea30416c12cf257c79806c50
       MASTER: aa767e4c43d011121271551fe24da501a56f729d
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -23,11 +23,12 @@ jobs:
         set -euo pipefail
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
         echo '{"verified":false,"reason":"qualification incomplete"}' > "$RUNNER_TEMP/records/verdict.json"
-        cp test/rbe/rack-fresh-head.py test/rbe/rack-fresh-head.go.txt "$RUNNER_TEMP/"
-        git fetch -q --depth=2 https://github.com/tamird/gvisor.git "$PRODUCT" "$MASTER" 7d8e856ba30ef0271690d13d2ddb1c07111a558a
+        cp test/rbe/rack-fresh-head.py test/rbe/rack-fresh-head-config.py test/rbe/rack-fresh-head.go.txt "$RUNNER_TEMP/"
+        git fetch -q --depth=2 https://github.com/google/gvisor.git refs/pull/14101/head
+        git fetch -q --depth=2 https://github.com/tamird/gvisor.git "$MASTER" 7d8e856ba30ef0271690d13d2ddb1c07111a558a
         git diff 7d8e856ba^ 7d8e856ba -- test/packetimpact/runner/defs.bzl > "$RUNNER_TEMP/exec.patch"
-        git show "$PRODUCT:test/packetimpact/tests/tcp_rack_test.go" > "$RUNNER_TEMP/packet.go"
-        test "$(git rev-parse "$PRODUCT^")" = "$MASTER"
+
+        test "$(git rev-parse "$PRODUCT^")" = 35769a56f4fb4f533774ba59ca5e8521acd3e1a4
         printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
         printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
         umask 077
@@ -41,19 +42,20 @@ jobs:
         docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --sysctl net.ipv6.conf.lo.disable_ipv6=0 -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
         docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
         docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
-    - name: Check the same wire sequence on Linux, stock gVisor and the correction
+    - name: Check the same SACK sequence on Linux, stock gVisor, and the PR with its parent
       run: |
         set -euo pipefail
         runarm() {
-          arm=$1; source=$2; target=$3; filter=$4; limit=$5
+          arm=$1; source=$(git rev-parse --verify "$2^{commit}"); target=$3; filter=$4; limit=$5
           d="$RUNNER_TEMP/records/$arm"; mkdir -p "$d"
           git checkout --quiet --detach "$source"
           [[ "$(git rev-parse HEAD)" == "$source" ]]
           printf '%s\n' "$source" > "$d/head"
           opts=()
           case "$arm" in
-            linux|stock|netstack)
-              cp "$RUNNER_TEMP/packet.go" test/packetimpact/tests/tcp_rack_test.go
+            linux|stock|netstack|prbase)
+              python3 "$RUNNER_TEMP/rack-fresh-head-config.py"
+              cat "$RUNNER_TEMP/rack-fresh-head.go.txt" >> test/packetimpact/tests/tcp_rack_test.go
               git apply "$RUNNER_TEMP/exec.patch" ;;
             *clock)
               cat "$RUNNER_TEMP/rack-fresh-head.go.txt" >> pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go
@@ -72,22 +74,20 @@ jobs:
             done
           done
           case "$arm" in
-            linux|stock|netstack) git restore --source="$source" -- test/packetimpact/runner/defs.bzl test/packetimpact/tests/tcp_rack_test.go ;;
+            linux|stock|netstack|prbase) git restore --source="$source" -- test/packetimpact/runner/defs.bzl test/packetimpact/tests/tcp_rack_test.go test/packetimpact/dut/posix_server.cc ;;
             *clock) git restore --source="$source" -- pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go ;;
           esac
         }
-        runarm master-clock "$MASTER" //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test '^TestRACKFreshHead$' 7m
-        runarm fixed-clock "$PRODUCT" //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test '^TestRACKFreshHead$' 7m
-        runarm linux "$PRODUCT" //test/packetimpact/tests:tcp_rack_native_test '^TestRACKFreshTimeoutRetransmission$' 12m
-        runarm stock "$MASTER" //test/packetimpact/tests:tcp_rack_netstack_test '^TestRACKFreshTimeoutRetransmission$' 12m
-        runarm netstack "$PRODUCT" //test/packetimpact/tests:tcp_rack_netstack_test '^TestRACKFreshTimeoutRetransmission$' 12m
-        runarm owners "$PRODUCT" '//pkg/tcpip/transport/tcp:tcp_test //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test //pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test //pkg/tcpip/transport/tcp:tcp_nogo' '' 20m
+        runarm linux "$MASTER" //test/packetimpact/tests:tcp_rack_native_test '^TestSACKCreditBeforeCumulativeACK$' 12m
+        runarm stock "$MASTER" //test/packetimpact/tests:tcp_rack_netstack_test '^TestSACKCreditBeforeCumulativeACK$' 15m
+        runarm netstack "$PRODUCT" //test/packetimpact/tests:tcp_rack_netstack_test '^TestSACKCreditBeforeCumulativeACK$' 16m
+        runarm prbase "$PRODUCT^" //test/packetimpact/tests:tcp_rack_netstack_test '^TestSACKCreditBeforeCumulativeACK$' 10m
     - name: Verify the original packet and owner results
       if: always()
       run: python3 "$RUNNER_TEMP/rack-fresh-head.py"
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: rack-fresh-head-correction
+        name: tcp-sack-before-cumack
         path: ${{ runner.temp }}/records/verdict.json
         if-no-files-found: error

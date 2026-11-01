@@ -1,130 +1,105 @@
 
-// TestRACKFreshHead asks whether a SACK implicating old data behind SND.UNA
-// can cause a second transmission of a head that an RTO just retransmitted.
-func TestRACKFreshHead(t *testing.T) {
-	for _, schedule := range []string{"head-lost", "fresh-new-sack", "fresh-repeat-sack", "fresh-reorder-timer", "classic-dupack"} {
-		t.Run(schedule, func(t *testing.T) {
-			const warm = 8
-			const rtt = 100 * time.Millisecond
-			clk := faketime.NewManualClock()
-			states := make(chan tcp.TCPSenderState, 4)
-			c := context.NewWithOpts(t, context.Options{
-				MTU: mtu, EnableV4: true, Clock: clk,
-				Probe: func(s *tcp.TCPEndpointState) { states <- s.Sender },
-			})
-			defer c.Cleanup()
-			e2e.EnableCUBIC(t, c)
-			e2e.SetStackSACKPermitted(t, c, true)
-			e2e.CreateConnectedWithSACKAndTS(c)
-			first := c.IRS.Add(1 + warm*maxPayload)
-			ack := func(blocks ...header.SACKBlock) tcp.TCPSenderState {
-				t.Helper()
-				c.SendAckWithSACK(seqnum.Value(context.TestInitialSequenceNumber).Add(1), warm*maxPayload, blocks)
-				select {
-				case st := <-states:
-					if st.SndUna != first {
-						t.Fatalf("SND.UNA = %d, want %d", st.SndUna, first)
-					}
-					return st
-				case <-time.After(5 * time.Second):
-					t.Fatal("ACK not processed")
-					return tcp.TCPSenderState{}
+func TestSACKCreditBeforeCumulativeACK(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		window uint16
+	}{{"open", 65535}, {"closed", 0}} {
+		t.Run(tc.name, func(t *testing.T) {
+			dut := testbench.NewDUT(t)
+			listen, port := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1)
+			defer dut.Close(t, listen)
+			wide := uint16(65535)
+			conn := dut.Net.NewTCPIPv4(t, testbench.TCP{DstPort: &port, WindowSize: &wide}, testbench.TCP{SrcPort: &port})
+			defer conn.Close(t)
+			opts := make([]byte, 40)
+			n := header.EncodeSACKPermittedOption(opts)
+			n += header.EncodeMSSOption(1000, opts[n:])
+			n += header.EncodeNOP(opts[n:])
+			n += header.EncodeNOP(opts[n:])
+			conn.ConnectWithOptions(t, opts[:n])
+			fd, _ := dut.Accept(t, listen)
+			defer dut.Close(t, fd)
+			before := dut.GetSockOptTCPInfo(t, fd)
+			mss, cwnd := 1000, int(before.SndCwnd)
+			if mss <= 0 || cwnd < 4 || cwnd > 20 || (cwnd+6)*mss >= int(wide) {
+				t.Fatalf("unexpected mss=%d cwnd=%d", mss, cwnd)
+			}
+			base := *conn.RemoteSeqNum(t)
+			data := make([]byte, (cwnd+6)*mss)
+			if got := dut.Send(t, fd, data, 0); int(got) != len(data) {
+				t.Fatalf("queued %d of %d", got, len(data))
+			}
+			for i := 0; i < cwnd; i++ {
+				sn := uint32(base.Add(seqnum.Size(i * mss)))
+				if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: &sn}, &testbench.Payload{Bytes: data[:mss]}, time.Second); err != nil {
+					t.Fatalf("initial packet %d: %v", i, err)
 				}
 			}
-			write := func(count int) {
-				t.Helper()
-				data := make([]byte, count*maxPayload)
-				if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || int(n) != len(data) {
-					t.Fatalf("Write = %d, %v", n, err)
+			// An unsatisfiable match returns all arrivals, including repairs of older bytes.
+			collect := func(wait time.Duration) []int {
+				var packets []int
+				frames, hit := conn.ListenForFrame(t, testbench.Layers{nil, nil, &testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn | header.TCPFlagRst)}}, wait)
+				if hit {
+					t.Fatal("unexpected SYN|RST")
 				}
-			}
-			offset := func(p *buffer.View) int {
-				t.Helper()
-				defer p.Release()
-				ip := header.IPv4(p.AsSlice())
-				h := header.TCP(ip.Payload())
-				if got := len(h.Payload()); got != maxPayload {
-					t.Fatalf("payload length = %d, want %d", got, maxPayload)
-				}
-				return int(int32(h.SequenceNumber() - uint32(first)))
-			}
-			drain := func() []int {
-				var got []int
-				for p := c.GetPacketNonBlocking(); p != nil; p = c.GetPacketNonBlocking() {
-					got = append(got, offset(p))
-				}
-				return got
-			}
-			expectFlight := func(begin, count int) {
-				t.Helper()
-				for i := begin; i < begin+count; i++ {
-					if got := offset(c.GetPacket()); got != i*maxPayload {
-						t.Fatalf("wire offset = %d, want %d", got, i*maxPayload)
-					}
-				}
-			}
-			write(warm)
-			expectFlight(-warm, warm)
-			clk.Advance(rtt)
-			ack()
-			write(3) // A–C: A is the first unacknowledged packet.
-			expectFlight(0, 3)
-			clk.Advance(5 * time.Millisecond)
-			write(4) // D–G went out later; seeing D–F can mark A–C lost.
-			expectFlight(3, 4)
-			b := header.SACKBlock{Start: first.Add(3*maxPayload), End: first.Add(6*maxPayload)}
-			stats := c.Stack().Stats().TCP
-			clk.Advance(rtt)
-			if schedule == "fresh-repeat-sack" {
-				ack(b)
-				t.Logf("BEFORE_RTO repairs=%v", drain())
-			}
-			var headAt tcpip.MonotonicTime
-			if schedule != "head-lost" && schedule != "classic-dupack" {
-				for i := 0; i < 600 && stats.Timeouts.Value() == 0; i++ {
-					_ = drain()
-					clk.Advance(10 * time.Millisecond)
-				}
-				if stats.Timeouts.Value() != 1 {
-					t.Fatal("RTO did not fire exactly once")
-				}
-				headAt = clk.NowMonotonic()
-				expectFlight(0, 1)
-				if extra := drain(); len(extra) != 0 {
-					t.Fatalf("extra packets alongside timeout repair: %v", extra)
-				}
-				clk.Advance(100 * time.Microsecond)
-			}
-			if schedule == "fresh-reorder-timer" {
-				b.End = b.Start.Add(maxPayload)
-			}
-			if schedule == "classic-dupack" {
-				b.Start = first.Add(maxPayload)
-				for i := 1; i <= 2; i++ {
-					b.End = b.Start.Add(seqnum.Size(i * maxPayload))
-					ack(b)
-					if got := drain(); len(got) != 0 {
-						t.Fatalf("before duplicate ACK 3, repairs = %v", got)
+				for _, frame := range frames {
+					for i, l := range frame {
+						h, ok := l.(*testbench.TCP)
+						if !ok || *h.SrcPort != port || len(frame) <= i+1 {
+							continue
+						}
+						p, ok := frame[i+1].(*testbench.Payload)
+						if !ok || len(p.Bytes) == 0 {
+							continue
+						}
+						off := uint32(*h.SeqNum) - uint32(base)
+						if len(p.Bytes)%mss != 0 || off%uint32(mss) != 0 || off >= uint32(len(data)) {
+							t.Fatalf("invalid frame offset=%d bytes=%d", off, len(p.Bytes))
+						}
+						for j := 0; j < len(p.Bytes)/mss; j++ {
+							packets = append(packets, int(off)/mss+j)
+						}
 					}
 				}
-				b.End = b.Start.Add(3 * maxPayload)
+				return packets
 			}
-			fastBefore := stats.FastRetransmit.Value()
-			st := ack(b)
-			replies := drain()
-			if schedule == "fresh-reorder-timer" {
-				t.Logf("TIMER immediate=%v reo=%s rtt=%s", replies, st.RACKState.ReoWnd, st.RACKState.RTT)
-				if len(replies) != 0 || st.RACKState.ReoWnd <= 0 {
-					t.Fatalf("timer arm needs a delayed decision: immediate=%v reo=%s", replies, st.RACKState.ReoWnd)
+			// No delivery/probe/recovery can be credited to the idle or duplicate gates.
+			const wait = 12 * time.Millisecond
+			idle := collect(wait)
+			var phases [][]int
+			var states []uint8
+			start := time.Now()
+			for _, end := range []int{2, 2, 3} {
+				b := make([]byte, 40)
+				n := header.EncodeNOP(b)
+				n += header.EncodeNOP(b[n:])
+				n += header.EncodeSACKBlocks([]header.SACKBlock{{Start: base.Add(seqnum.Size(mss)), End: base.Add(seqnum.Size(end * mss))}}, b[n:])
+				conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(base)), WindowSize: &tc.window, Options: b[:n]})
+				phases = append(phases, collect(wait))
+				states = append(states, dut.GetSockOptTCPInfo(t, fd).CaState)
+			}
+			dt := time.Since(start)
+			conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(base.Add(seqnum.Size(cwnd * mss)))), WindowSize: &wide})
+			resume := collect(25 * time.Millisecond)
+			fmt.Printf("CREDIT mode=%s first=%d mss=%d idle=%v sack=%v repeat=%v extend=%v resume=%v states=%v elapsed_us=%d initial_rto_us=%d\n", tc.name, cwnd, mss, idle, phases[0], phases[1], phases[2], resume, states, dt.Microseconds(), before.RTO)
+			if len(idle) != 0 || len(resume) == 0 || dt >= time.Duration(before.RTO)*time.Microsecond/2 {
+				t.Fatal("could not isolate sender credit or resume delivery before timeout")
+			}
+			for _, s := range states {
+				if s != linux.TCP_CA_Open && s != linux.TCP_CA_Disorder {
+					t.Errorf("entered recovery: %d", s)
 				}
-				clk.Advance(st.RACKState.ReoWnd + time.Millisecond)
-				replies = drain()
 			}
-			if (schedule == "head-lost" || schedule == "classic-dupack") && (len(replies) == 0 || replies[0] != 0) {
-				t.Fatalf("head still outstanding but no head repair: %v", replies)
+			for _, p := range phases {
+				for _, i := range p {
+					if i < cwnd {
+						t.Errorf("unexpected repair %d before cumulative ACK", i)
+					}
+				}
 			}
-			t.Logf("WIRE schedule=%s timeouts=%d ack_offset=0 sack=[%d,%d) us_after_RTO=%d replies=%v cwnd=%d out=%d recovery=%v sacked=%d fast_retransmit_delta=%d",
-				schedule, stats.Timeouts.Value(), int(b.Start-first), int(b.End-first), clk.NowMonotonic().Sub(headAt).Microseconds(), replies, st.SndCwnd, st.Outstanding, st.FastRecovery.Active, st.SackedOut, stats.FastRetransmit.Value()-fastBefore)
+			if len(phases[1]) != 0 || (tc.window == 0 && (len(phases[0]) != 0 || len(phases[2]) != 0)) {
+				t.Errorf("repeat or closed window admitted data")
+			}
 		})
 	}
 }
