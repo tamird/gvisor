@@ -26,7 +26,7 @@ _MAKE_ARGS = [
     "'CC:=$(CC)'",
     "'CPP:=$(CC) -E'",
     "'AR:=$(AR)'",
-    "'LD:=$(LD)'",
+    "'LD:=$(if $(filter /%,$(PLUGIN_LD)),$(PLUGIN_LD),$(EXT_BUILD_ROOT)/$(PLUGIN_LD))'",
     "'OBJDUMP:=$(if $(filter /%,$(OBJDUMP)),$(OBJDUMP),$(EXT_BUILD_ROOT)/$(OBJDUMP))'",
     "'TOOLCHAIN_CFLAGS:=$(CFLAGS)'",
     "'TOOLCHAIN_LDFLAGS:=$(LDFLAGS)'",
@@ -48,6 +48,7 @@ _ENV = {
     "TMPDIR": "/tmp",
     "DPDK_MAKEFILE": "$(execpath @plugin_dpdk//:Makefile)",
     "OBJDUMP": "$(PLUGIN_OBJDUMP)",
+    "PLUGIN_LD": "$(PLUGIN_LD)",
     "RTE_TARGET": "x86_64-native-linuxapp-$(C_COMPILER)",
 }
 

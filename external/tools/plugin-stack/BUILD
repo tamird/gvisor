@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "bzl_library")
+load("//tools:defs.bzl", "bzl_library", "cc_linker")
 load(":toolchain.bzl", "plugin_toolchain")
 
 package(
@@ -22,5 +22,9 @@ plugin_toolchain(
         "@platforms//cpu:x86_64",
         "@platforms//os:linux",
     ],
+    # The selected LLVM toolchain exposes these as declared tools rather than
+    # legacy CcToolchainInfo paths.
+    linker = cc_linker,
+    objdump = "@llvm//tools:llvm-objdump",
     visibility = ["//visibility:public"],
 )
