@@ -2987,6 +2987,9 @@ func TestCheckpointDestinationCapacity(t *testing.T) {
 			lower := makeTempDir(t, "capacity-lower")
 			spec, conf := sleepSpecConf(t)
 			conf.Platform = "systrap"
+			// Stage the read-only root on the gofer's private mount. The
+			// host has open writers on the coordinator's root mount.
+			conf.TestOnlyAllowRunAsCurrentUserWithoutChroot = false
 			conf.Debug, conf.Strace, conf.LogPackets = false, false, false
 			if err := conf.Overlay2.Set("all:dir=" + makeTempDir(t, "capacity-filestore")); err != nil {
 				t.Fatal(err)
