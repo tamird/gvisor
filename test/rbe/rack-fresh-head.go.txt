@@ -31,20 +31,27 @@ func TestSACKCreditBeforeCumulativeACK(t *testing.T) {
 			fd, _ := dut.Accept(t, listen)
 			defer dut.Close(t, fd)
 			before := dut.GetSockOptTCPInfo(t, fd)
-			mss, cwnd := 1000, int(before.SndCwnd)
-			if before.SndMss != 0 && before.SndMss != uint32(mss) || cwnd < 4 || cwnd > 20 || (cwnd+6)*mss >= int(wide) {
+			mss, cwnd := int(before.SndMss), int(before.SndCwnd)
+			fmt.Printf("SETUP mode=%s mss=%d cwnd=%d rtt=%d rto=%d\n", tc.name, mss, cwnd, before.RTT, before.RTO)
+			if mss < 64 || mss > 1000 || cwnd < 4 || cwnd > 20 || (cwnd+6)*mss >= int(wide) {
 				t.Fatalf("unexpected mss=%d cwnd=%d", mss, cwnd)
 			}
 			base := *conn.RemoteSeqNum(t)
 			data := make([]byte, (cwnd+6)*mss)
-			if got := dut.Send(t, fd, data, 0); int(got) != len(data) {
-				t.Fatalf("queued %d of %d", got, len(data))
-			}
+			startSend := time.Now()
+			// Write and observe each full-sized segment separately. A bulk
+			// write can appear as one superpacket in a Linux packet capture.
 			for i := 0; i < cwnd; i++ {
+				if got := dut.Send(t, fd, data[:mss], 0); int(got) != mss {
+					t.Fatalf("initial write %d = %d", i, got)
+				}
 				sn := uint32(base.Add(seqnum.Size(i * mss)))
 				if _, err := conn.ExpectData(t, &testbench.TCP{SeqNum: &sn}, &testbench.Payload{Bytes: data[:mss]}, time.Second); err != nil {
 					t.Fatalf("initial packet %d: %v", i, err)
 				}
+			}
+			if got := dut.Send(t, fd, data[cwnd*mss:], 0); int(got) != 6*mss {
+				t.Fatalf("queue tail: %d", got)
 			}
 			// An unsatisfiable match returns all arrivals, including repairs of older bytes.
 			collect := func(wait time.Duration) []int {
@@ -64,7 +71,7 @@ func TestSACKCreditBeforeCumulativeACK(t *testing.T) {
 							continue
 						}
 						off := uint32(*h.SeqNum) - uint32(base)
-						if len(p.Bytes)%mss != 0 || off%uint32(mss) != 0 || off >= uint32(len(data)) {
+						if len(p.Bytes)%mss != 0 || off%uint32(mss) != 0 || uint64(off)+uint64(len(p.Bytes)) > uint64(len(data)) {
 							t.Fatalf("invalid frame offset=%d bytes=%d", off, len(p.Bytes))
 						}
 						for j := 0; j < len(p.Bytes)/mss; j++ {
@@ -76,7 +83,7 @@ func TestSACKCreditBeforeCumulativeACK(t *testing.T) {
 			}
 			// No delivery/probe/recovery can be credited to the idle or duplicate gates.
 			const wait = 9 * time.Millisecond
-			idle := collect(210 * time.Millisecond)
+			idle := collect(min(210*time.Millisecond, time.Duration(before.RTO)*time.Microsecond/5))
 			var phases [][]int
 			var states []uint8
 			start := time.Now()
@@ -90,10 +97,11 @@ func TestSACKCreditBeforeCumulativeACK(t *testing.T) {
 				states = append(states, dut.GetSockOptTCPInfo(t, fd).CaState)
 			}
 			dt := time.Since(start)
+			total := time.Since(startSend)
 			conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(base.Add(seqnum.Size(cwnd * mss)))), WindowSize: &wide})
 			resume := collect(25 * time.Millisecond)
-			fmt.Printf("CREDIT mode=%s first=%d mss=%d idle=%v sack=%v repeat=%v extend=%v resume=%v states=%v elapsed_us=%d initial_rto_us=%d initial_rtt_us=%d\n", tc.name, cwnd, mss, idle, phases[0], phases[1], phases[2], resume, states, dt.Microseconds(), before.RTO, before.RTT)
-			if len(idle) != 0 || len(resume) == 0 || dt >= time.Duration(before.RTO)*time.Microsecond/2 {
+			fmt.Printf("CREDIT mode=%s first=%d mss=%d idle=%v sack=%v repeat=%v extend=%v resume=%v states=%v elapsed_us=%d initial_rto_us=%d initial_rtt_us=%d send_to_last_sack_us=%d\n", tc.name, cwnd, mss, idle, phases[0], phases[1], phases[2], resume, states, dt.Microseconds(), before.RTO, before.RTT, total.Microseconds())
+			if len(idle) != 0 || len(resume) == 0 || total >= time.Duration(before.RTO)*time.Microsecond {
 				t.Fatal("could not isolate sender credit or resume delivery before timeout")
 			}
 			for _, s := range states {

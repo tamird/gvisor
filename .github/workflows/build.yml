@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 72
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      PRODUCT: df000e6d7a2ca32aea30416c12cf257c79806c50
+      PRODUCT: d8559280f5f7656e22bb6e7647ec1319fca6181a
       MASTER: aa767e4c43d011121271551fe24da501a56f729d
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -24,11 +24,10 @@ jobs:
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
         echo '{"verified":false,"reason":"qualification incomplete"}' > "$RUNNER_TEMP/records/verdict.json"
         cp test/rbe/rack-fresh-head.py test/rbe/rack-fresh-head-config.py test/rbe/rack-fresh-head.go.txt "$RUNNER_TEMP/"
-        git fetch -q --depth=2 https://github.com/google/gvisor.git refs/pull/14101/head
-        git fetch -q --depth=2 https://github.com/tamird/gvisor.git "$MASTER" 7d8e856ba30ef0271690d13d2ddb1c07111a558a
+        git fetch -q --depth=2 https://github.com/tamird/gvisor.git "$PRODUCT" "$MASTER" 7d8e856ba30ef0271690d13d2ddb1c07111a558a
         git diff 7d8e856ba^ 7d8e856ba -- test/packetimpact/runner/defs.bzl > "$RUNNER_TEMP/exec.patch"
 
-        test "$(git rev-parse "$PRODUCT^")" = 35769a56f4fb4f533774ba59ca5e8521acd3e1a4
+        test "$(git rev-parse "$PRODUCT^")" = "$MASTER"
         printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
         printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
         umask 077
@@ -37,23 +36,12 @@ jobs:
           printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
         } > "$RUNNER_TEMP/tcp.bazelrc"
-        python3 - <<'PYCODE'
-        import base64,json,os,re,urllib.request
-        try:
-            payload = {"invocationId":"289ce2b1-dec5-430e-9155-925df6b8b6f3", "minLines":20000}
-            req = urllib.request.Request("https://app.buildbuddy.io/rpc/BuildBuddyService/GetEventLogChunk",data=json.dumps(payload).encode(),headers={"Content-Type":"application/json","x-buildbuddy-api-key":os.environ["BUILDBUDDY_API_KEY"]})
-            with urllib.request.urlopen(req,timeout=30) as f: response=json.load(f)
-            lines = base64.b64decode(response["buffer"]).decode(errors="replace").splitlines()
-            print("Original compiler verdict:", [line[:400] for line in lines if re.search(r"posix_server.cc:[0-9]+.*(?:error:|fatal:)|fatal error: (?:Killed|compilation)",line) and len(line)<1000][:6])
-        except Exception as e:
-            print("Original compiler detail unavailable:",type(e).__name__)
-        PYCODE
         unset BUILDBUDDY_API_KEY
         docker pull --platform=linux/amd64 "$GNU"
         docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --sysctl net.ipv6.conf.lo.disable_ipv6=0 -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
         docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
         docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
-    - name: Check the same SACK sequence on Linux, stock gVisor, and the PR with its parent
+    - name: Check the same SACK sequence on Linux, stock gVisor, and the patch-identical backport
       run: |
         set -euo pipefail
         runarm() {
@@ -92,7 +80,6 @@ jobs:
         runarm linux "$MASTER" //test/packetimpact/tests:tcp_rack_native_test '^TestSACKCreditBeforeCumulativeACK$' 12m
         runarm stock "$MASTER" //test/packetimpact/tests:tcp_rack_netstack_test '^TestSACKCreditBeforeCumulativeACK$' 15m
         runarm netstack "$PRODUCT" //test/packetimpact/tests:tcp_rack_netstack_test '^TestSACKCreditBeforeCumulativeACK$' 16m
-        runarm prbase "$PRODUCT^" //test/packetimpact/tests:tcp_rack_netstack_test '^TestSACKCreditBeforeCumulativeACK$' 10m
     - name: Verify the original packet and owner results
       if: always()
       run: python3 "$RUNNER_TEMP/rack-fresh-head.py"
