@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T18:04:18.442080+00:00",
+    "updatedAt": "2026-11-01T18:14:27.339843+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4590,7 +4590,7 @@
       "group": "bazel",
       "status": "Agent work",
       "summary": "The compiler revision on current master uses the upstream LLVM source repository and retains the current Go rules, Linux headers and libbpf. It needs the two syscall-test allocator exception specifications, not the full #15368 cleanup. The catalog gains llvm-project and with_cfg and drops llvm-raw. QEMU and LTP license mismatches also occur on the parent. The principal binaries and analyzers passed for both targets. A new remote AMD64 compile reproduced the 4,456,624-byte NVIDIA parser object. The NVIDIA driver parser linked on AMD64 (211,730,920 bytes) and ARM64 (224,953,640 bytes). Both ELF products matched the corresponding remote link digest. The ARM link reused one locally generated TableGen include. The original driver ABI TestParser passed on AMD64 and native ARM64, one test each with no skips. The ARM64 case took 0.070 s; its uncached remote attempt finished on 2026-11-01 at 02:48:45.697 UTC. The original producer emitted an INCOMPLETE verdict 39.21 s later because it selected the wrong execution-log output. A read-only recovery confirmed the original XML, log, architecture and remote execution. Its verdict remains INCOMPLETE because the parser input was not found at the checked action-input paths; the per-action binary digest remains unverified. Neither reporting failure is a failed TestParser case.",
-      "updatedAt": "2026-11-01T03:06:28.845307+00:00",
+      "updatedAt": "2026-11-01T18:14:27.339843+00:00",
       "head": "0afd5b37e31824e0299c44235ef4cb58af0358ce",
       "evidence": [
         {
@@ -4682,8 +4682,8 @@
         "owner": "Compiler integration",
         "sourceHead": "0afd5b37e31824e0299c44235ef4cb58af0358ce",
         "disposition": "Qualify current compiler",
-        "observedAt": "2026-11-01T03:06:28.845307+00:00",
-        "nextAction": "Parser behavior has passed on both architectures. The remaining reporting task is to locate the ARM64 parser in the original action input tree; no test rerun is needed. Preserve the independent licensing prerequisites for compiler integration.",
+        "observedAt": "2026-11-01T18:14:27.339843+00:00",
+        "nextAction": "Parser behavior has passed on both architectures. The remaining reporting task is to locate the ARM64 parser in the original action input tree; no test rerun is needed. Preserve the independent licensing prerequisites for compiler integration. When integrating on Bazel 9, remove tools/crosstool-bazel9.patch and tools/llvm-bazel9.patch with their consumers. Keep the independent Linux-header patch. To retain #15940’s AArch64/X86 restriction, use a supplier release containing 17f6a3008. Registry releases through 0.8.26 select nine backends. Recheck the selected backends and the NVIDIA parser under Bazel 9.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
@@ -4692,7 +4692,11 @@
           "https://github.com/tamird/gvisor/actions/runs/41256718712",
           "https://github.com/tamird/gvisor/actions/runs/41256718712/artifacts/13063003838",
           "https://github.com/tamird/gvisor/actions/runs/41265512208/artifacts/13067164785",
-          "https://github.com/tamird/gvisor/actions/runs/41267526547/artifacts/13067558079"
+          "https://github.com/tamird/gvisor/actions/runs/41267526547/artifacts/13067558079",
+          "https://github.com/tamird/gvisor/commit/375b2c570",
+          "https://github.com/google/gvisor/pull/15940",
+          "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a3008",
+          "https://bcr.bazel.build/modules/llvm/0.8.26/MODULE.bazel"
         ]
       }
     },
