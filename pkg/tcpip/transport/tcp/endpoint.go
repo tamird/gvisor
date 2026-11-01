@@ -947,8 +947,17 @@ func (e *Endpoint) Readiness(mask waiter.EventMask) waiter.EventMask {
 		// Ready for nothing.
 
 	case StateClose, StateError, StateTimeWait:
-		// Ready for anything.
-		result = mask
+		result = mask & (waiter.ReadableEvents | waiter.WritableEvents | waiter.EventHUp | waiter.EventRdHUp)
+		if mask&waiter.EventErr != 0 {
+			// SO_ERROR consumes the pending hard error. A queued extended
+			// error remains pollable until recvmsg(MSG_ERRQUEUE) consumes it.
+			e.LockUser()
+			hasError := e.hardError != nil
+			e.UnlockUser()
+			if hasError || e.SocketOptions().PeekErr() != nil {
+				result |= waiter.EventErr
+			}
+		}
 
 	case StateListen:
 		// Check if there's anything in the accepted queue.
