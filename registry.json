@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T00:46:55.390628+00:00",
+    "updatedAt": "2026-11-01T01:20:55.517590+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -58937,10 +58937,27 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-10-31T23:59:01.089227+00:00",
+      "updatedAt": "2026-11-01T01:20:55.517590+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Retain the minimum-RTT safeguard. Prioritize reproducible recovery defects and review changes to SACK, probe timing and receive-queue pressure.",
       "findings": [
+        {
+          "text": "After a refused TCP connect, Linux reused the same descriptor to deliver a byte in all three retry sequences. Netstack delivered none. Linux returned a pending asynchronous refusal once through SO_ERROR; netstack returned it twice. Two AF_UNSPEC disconnects on a fresh Linux socket advanced TIOCOUTQ from zero to 2 and then 4. Netstack rejected both disconnects. A separate change reports unsent data, unacknowledged data and FIN after establishment, including outstanding bytes after reset. Its 24 shared syscall cases passed on Linux and the candidate and failed on stock. It does not implement refused connections.",
+          "evidence": [
+            {
+              "label": "Blocking and asynchronous refusal, two SO_ERROR reads, AF_UNSPEC and real data on retry",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41260249522/artifacts/13064279759"
+            },
+            {
+              "label": "Native, stock and candidate: established FIN/reset cases and refusal",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41259672464/artifacts/13065260154"
+            },
+            {
+              "label": "Established-socket proposal (separate from reconnect)",
+              "url": "https://github.com/tamird/gvisor/commit/00dac87c8"
+            }
+          ]
+        },
         {
           "text": "With a 4 KiB receive budget and the worker paused, master admitted 257 pure ACKs and charged 161,396 bytes. The prototype admitted 14 and charged 8,792 bytes. All 36 duplex cases transferred 1 MiB in reverse, reached EOF and preserved unread data. Linux passed 12/12; stock and prototype each failed 12/12 only at the final TIOCOUTQ check (ENOPROTOOPT). With a portable EAGAIN check, Linux, stock and prototype each passed 12/12, with no skips or missing cases. In a separate 64 MiB throughput fixture, 12 paired measurements compared zero and 100 µs batching with CUBIC RACK on and off. No slowdown was detected; only 100 µs batching with RACK off reduced time (−2.86%, p=.005).",
           "evidence": [
