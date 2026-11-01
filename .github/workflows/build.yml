@@ -1,4 +1,4 @@
-name: Qualify the declared plugin build on scratch
+name: Recover Make diagnostics and compare the released module
 on:
   push:
     branches: [qualification/plugin-scratch]
@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: carrier, persist-credentials: false, fetch-depth: 1}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: product, ref: 7dc8df3c4bb7da1bc04037fe9a2d641cb36cc5a4, persist-credentials: false, fetch-depth: 1}
+        with: {path: product, ref: fb08aa735e8c6993fc4561702b5872c10bae541a, persist-credentials: false, fetch-depth: 2}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: tamird/bazel-central-registry
@@ -47,21 +47,34 @@ jobs:
           fi
           bazel --bazelrc="$RUNNER_TEMP/sidecar.bazelrc" run //tools/actionlint -- "$PWD/.github/workflows/build.yml" > "$RUNNER_TEMP/actionlint.log" 2>&1 || { tail -20 "$RUNNER_TEMP/actionlint.log"; exit 1; }
           printf '%s\n' '{"status":"PASS","phase":"bootstrap","executed_targets":0}' > "$RUNNER_TEMP/package-evidence/bootstrap.json"
-      - name: Check the supplier revision
+      - name: Recover original compiler errors and exact formatting
         continue-on-error: true
         working-directory: carrier
-        run: python3 test/rbe/empty_worker/make_revision.py checks
-      - name: Analyze and build the original GNU plugin library
-        continue-on-error: true
-        working-directory: product
         env:
-          PRODUCT: 7dc8df3c4bb7da1bc04037fe9a2d641cb36cc5a4
-          REGISTRY: ${{ github.workspace }}/registry
-        run: python3 "$RUNNER_TEMP/wildcard.py"
-      - name: Run the module's existing smoke on the populated Linux coordinator
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 test/rbe/empty_worker/recover_make.py
+      - name: Compare the two released-module variants with the same declared compiler
         continue-on-error: true
         working-directory: product
-        run: python3 ../carrier/test/rbe/empty_worker/make_revision.py smoke
+        run: |
+          set -u
+          mkdir -p test/rbe/make_control
+          cat > test/rbe/make_control/BUILD <<'EOF'
+          platform(
+              name = "populated",
+              parents = ["//test/rbe/empty_worker:amd64_musl"],
+              exec_properties = {"container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a"},
+              visibility = ["//visibility:public"],
+          )
+          EOF
+          for arm in before after; do
+            if [ "$arm" = before ]; then
+              git checkout --quiet --detach fb08aa735e8c6993fc4561702b5872c10bae541a
+            else
+              git checkout --quiet --detach 7dc8df3c4bb7da1bc04037fe9a2d641cb36cc5a4
+            fi
+            python3 ../carrier/test/rbe/empty_worker/make_revision.py smoke "$arm" || true
+          done
       - name: Require all independent results
         if: always()
         run: |
@@ -69,12 +82,12 @@ jobs:
           import json, os
           from pathlib import Path
           folder = Path(os.environ["RUNNER_TEMP"]) / "package-evidence"
-          names = ["bootstrap.json", "supplier.json", "summary.json", "smoke.json"]
+          names = ["bootstrap.json", "recovery.json", "smoke-before.json", "smoke-after.json"]
           assert all((folder / name).exists() and json.loads((folder / name).read_text()).get("status") == "PASS" for name in names)
           PYCODE
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: plugin-scratch
+          name: make-control
           path: ${{ runner.temp }}/package-evidence
           if-no-files-found: error

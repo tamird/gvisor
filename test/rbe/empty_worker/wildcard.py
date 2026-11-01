@@ -90,7 +90,7 @@ def sample_projection(log, raw):
         proc.wait()
     return sample, time.monotonic()-started
 
-def stats(log, arch, folder):
+def stats(log, arch, folder, expected_image=image):
     full = collections.Counter()
     examples = {}
     bad=[]
@@ -106,7 +106,7 @@ def stats(log, arch, folder):
                 row=json.loads(line)
                 props={p["name"]:p["value"] for p in row["p"]}
                 environment={k:props.get(k) for k in ("Arch","container-image","workload-isolation-type")}
-                seen = props.get("Arch")==arch and props.get("container-image")==image and props.get("workload-isolation-type")=="oci"
+                seen = props.get("Arch")==arch and props.get("container-image")==expected_image and props.get("workload-isolation-type")=="oci"
                 runner=row["r"] or "unknown"
                 key=(row["m"],runner,bool(row["c"]),seen,row["x"] or "")
                 full[key]+=1
@@ -233,32 +233,37 @@ def verdict(row, expected, skips):
         and not stats["off_platform"] and not stats["local_runs"]
     )
 
-summary = {"source": source, "scope": scope, "known_dispositions": baseline["provenance"],
-           "image": image, "worker_reference": {"amd64": 13056457271, "arm64": 13061034514},
-           "client": "Ubuntu AMD64 handles fetching and analysis; only action environments are checked here.",
-           "architectures": {}}
-subprocess.run(["git","checkout","--detach",source],check=True)
-assert subprocess.check_output(["git","rev-parse","HEAD"],text=True).strip() == source
-for arch in ("amd64",):
-    try:
-        row = collect(arch)
-        expected = old.get(arch) or json.loads((out/arch/"expected.json").read_text())
-        row["successful_observation"] = verdict(row, expected, baseline["skipped"][arch])
-        row["verified_at"] = now()
-        summary["architectures"][arch] = row
-    except Exception as error:
-        summary["architectures"][arch] = {"error": repr(error)[:1400]}
+def main():
+    summary = {"source": source, "scope": scope, "known_dispositions": baseline["provenance"],
+               "image": image, "worker_reference": {"amd64": 13056457271, "arm64": 13061034514},
+               "client": "Ubuntu AMD64 handles fetching and analysis; only action environments are checked here.",
+               "architectures": {}}
+    subprocess.run(["git","checkout","--detach",source],check=True)
+    assert subprocess.check_output(["git","rev-parse","HEAD"],text=True).strip() == source
+    for arch in ("amd64",):
+        try:
+            row = collect(arch)
+            expected = old.get(arch) or json.loads((out/arch/"expected.json").read_text())
+            row["successful_observation"] = verdict(row, expected, baseline["skipped"][arch])
+            row["verified_at"] = now()
+            summary["architectures"][arch] = row
+        except Exception as error:
+            summary["architectures"][arch] = {"error": repr(error)[:1400]}
+        write(out / "summary.json", summary)
+    summary["execution_platform_file_sha256"] = hashlib.sha256(Path("test/rbe/empty_worker/BUILD").read_bytes()).hexdigest()
+    summary["source_clean"] = subprocess.run(["git","diff","--quiet",source,"--"]).returncode == 0
+    failed = any(v.get("phases", {}).get("build", {}).get("exit", 0) != 0 for v in summary["architectures"].values())
+    summary["status"] = "FAIL" if failed else "PASS" if summary["source_clean"] and all(v.get("successful_observation") for v in summary["architectures"].values()) else "INCOMPLETE"
+    summary["coverage"] = {"requested_owner": scope, "test_cases_executed": 0,
+                           "plugin_source": baseline["plugin_source"],
+                           "compiler_integration_source": baseline["compiler_integration_source"],
+                           "execution_platform_file": "test/rbe/empty_worker/BUILD",
+                           "registry_source": baseline["registry_source"], "make_version": baseline["make_version"]}
+    summary["verified_at"] = now()
     write(out / "summary.json", summary)
-summary["execution_platform_file_sha256"] = hashlib.sha256(Path("test/rbe/empty_worker/BUILD").read_bytes()).hexdigest()
-summary["source_clean"] = subprocess.run(["git","diff","--quiet",source,"--"]).returncode == 0
-failed = any(v.get("phases", {}).get("build", {}).get("exit", 0) != 0 for v in summary["architectures"].values())
-summary["status"] = "FAIL" if failed else "PASS" if summary["source_clean"] and all(v.get("successful_observation") for v in summary["architectures"].values()) else "INCOMPLETE"
-summary["coverage"] = {"requested_owner": scope, "test_cases_executed": 0,
-                       "plugin_source": baseline["plugin_source"],
-                       "compiler_integration_source": baseline["compiler_integration_source"],
-                       "execution_platform_file": "test/rbe/empty_worker/BUILD",
-                       "registry_source": baseline["registry_source"], "make_version": baseline["make_version"]}
-summary["verified_at"] = now()
-write(out / "summary.json", summary)
-print(summary["status"], flush=True)
-sys.exit(summary["status"] != "PASS")
+    print(summary["status"], flush=True)
+    return summary["status"] != "PASS"
+
+
+if __name__ == "__main__":
+    sys.exit(main())

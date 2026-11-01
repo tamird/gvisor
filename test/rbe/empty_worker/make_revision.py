@@ -16,7 +16,14 @@ registry = workspace / "registry"
 revision = "e00baea8db3a686e45379b9096998a8cb95291c0"
 product = "7dc8df3c4bb7da1bc04037fe9a2d641cb36cc5a4"
 mode = sys.argv[1]
-dest = out / ("supplier.json" if mode == "checks" else "smoke.json")
+arm = sys.argv[2] if len(sys.argv) > 2 else "after"
+assert arm in ("before", "after")
+if arm == "before":
+    product = "fb08aa735e8c6993fc4561702b5872c10bae541a"
+os.environ["PRODUCT"] = product
+import wildcard
+image = "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a"
+dest = out / ("supplier.json" if mode == "checks" else "smoke-" + arm + ".json")
 row = {"status": "INCOMPLETE", "registry_source": revision, "product": product,
        "mode": mode, "phases": {}, "executed_cases": []}
 
@@ -73,12 +80,22 @@ try:
         bep = tmp / "make-smoke.bep"
         target = "@@make+//tests:make_smoke_test"
         flags = ["--config=x86_64", "--config=plugin-tldk", "--compilation_mode=opt",
-                 "--host_platform=//test/rbe/empty_worker:amd64_musl",
-                 "--extra_execution_platforms=//test/rbe/empty_worker:amd64_musl",
+                 "--host_platform=//test/rbe/make_control:populated",
+                 "--extra_execution_platforms=//test/rbe/make_control:populated",
                  "--registry=" + registry.as_uri(), "--registry=https://bcr.bazel.build",
                  "--jobs=400", "--strategy=TestRunner=local", "--nocache_test_results",
                  "--remote_download_outputs=all", "--build_event_json_file=" + str(bep)]
-        rc = invoke("smoke", [*bazel, "test", *flags, target], cwd)
+        compact = tmp / ("make-" + arm + ".compact")
+        flags.append("--execution_log_compact_file=" + str(compact))
+        rc = invoke("smoke-" + arm, [*bazel, "test", *flags, target], cwd)
+        actions_dir = out / ("make-" + arm)
+        actions_dir.mkdir(exist_ok=True)
+        row["action_counts"] = wildcard.stats(compact, "amd64", actions_dir, image)
+        groups = json.loads((actions_dir / "actions.json").read_text())["groups"]
+        build_groups = [g for g in groups if g["mnemonic"] != "TestRunner"]
+        row["remote_builds"] = bool(build_groups) and all(g["correct_platform"] and g["runner"] in ("remote", "remote cache hit") for g in build_groups)
+        row["compiler_tools"] = sorted({g["tool"] for g in build_groups if g["mnemonic"] == "CppCompile"})
+        row["executor_image"] = image
         row["execution"] = "Unchanged module smoke on the populated Ubuntu coordinator; builds use remote execution. Not a scratch runtime claim."
         results = []
         if bep.exists():
@@ -105,7 +122,7 @@ try:
         row["executed_cases"] = names
         expected = ["version", "hello", "substref", "functions", "fail_propagation", "parallel"]
         assert names == expected and re.search(r"^6/6 tests passed$", text, re.M)
-        row["status"] = "PASS" if rc == 0 and result.get("status") == "PASSED" and not row["cached_locally"] and not row["execution_info"]["cachedRemotely"] else "FAIL"
+        row["status"] = "PASS" if rc == 0 and row["remote_builds"] and row["action_counts"]["decoder_exits"] == [0, 0] and result.get("status") == "PASSED" and not row["cached_locally"] and not row["execution_info"]["cachedRemotely"] else "FAIL"
 except Exception as err:
     row["collection_error_type"] = type(err).__name__
     if any(p.get("exit", 0) != 0 for p in row["phases"].values()):
