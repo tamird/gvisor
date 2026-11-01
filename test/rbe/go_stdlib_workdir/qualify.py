@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import zipfile
 
 TMP = Path(os.environ["RUNNER_TEMP"])
 OUT = TMP / "go-temp-evidence"
@@ -90,7 +91,47 @@ def native(row):
     return (props.get("Arch") == "arm64" and props.get("OSFamily") == "linux"
             and props.get("container-image") == IMAGE and props.get("workload-isolation-type") == "oci")
 
-def run(phase, source, version):
+def verify(row, prior=None):
+    selected = [a for a in row["actions"] if (a["label"].endswith("//:stdlib") or a["label"] in [PACKAGE, ROOT])]
+    expected = [a for a in selected if a["mnemonic"] in EXPECTED]
+    no_environment = all(native(a) and a["env"].get("GOOS") == "linux" and a["env"].get("GOARCH") == "arm64"
+                         and not set(a["env"]).intersection(("TMP", "TEMP", "TMPDIR", "GOTMPDIR"))
+                         for a in expected)
+    needed = {"GoStdlib", "GoStdlibList"}
+    if row["phase"] == "stock" and row["native_exit"] != 0:
+        row["observed"] = "failure creating a Go temporary directory"
+        row["verified"] = (row["native_exit"] != 0 and row["events"].get("exit_code", 0) != 0 and no_environment
+            and any(re.search("/tmp.*no such file or directory", line, re.I) for line in row["diagnostics"])
+            and any(a["mnemonic"] in needed and a["exit"] and a["runner"] == "remote" and not a["cache"] for a in expected))
+    else:
+        row["observed"] = "completed with no global temporary-directory setting"
+        matched = {a["mnemonic"] for a in expected if a["runner"] == "remote" and not a["cache"] and not a["exit"]
+                   and any(Path(f["path"]).name == EXPECTED[a["mnemonic"]] and f["digest"].get("hash")
+                           and int(f["digest"].get("sizeBytes", 0)) > 0 for f in a["files"])}
+        root_lines = row["root"]
+        probe_bytes = ("\n".join(root_lines) + "\n").encode()
+        root_sha = hashlib.sha256(probe_bytes).hexdigest()
+        root_matches = False
+        for observation in [row, prior]:
+            if not observation or observation["version"] != row["version"] or not observation["events"]["targets"].get(ROOT):
+                continue
+            for a in observation["actions"]:
+                if a["label"] != ROOT or a["mnemonic"] != "ObserveWorkerRoot" or not native(a) or a["exit"]:
+                    continue
+                if any(f["digest"]["hash"] == root_sha and int(f["digest"]["sizeBytes"]) == len(probe_bytes)
+                       for f in a["files"] if Path(f["path"]).name == "root.txt"):
+                    row["root_origin"] = {"invocation": observation["events"]["invocation"], "action": a["digest"],
+                                          "sha256": root_sha, "bytes": len(probe_bytes)}
+                    root_matches = True
+                    break
+            if root_matches:
+                break
+        row["verified"] = (row["native_exit"] == 0 and row["events"].get("exit_code") == 0 and no_environment
+            and all(row["events"]["targets"].get(t) for t in TARGETS) and set(EXPECTED) == matched
+            and root_matches and "machine aarch64" in root_lines and "root /hello" in root_lines
+            and "root /tmp" not in root_lines and "exec /bin/sh no 127" in root_lines)
+
+def run(phase, source, version, prior=None):
     subprocess.run(["git", "checkout", "-q", "--detach", source], check=True)
     assert subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() == source
     fixture = Path("test/rbe/go_stdlib_workdir")
@@ -125,32 +166,9 @@ def run(phase, source, version):
     try:
         row["events"] = original_events(bep)
         row["actions"] = actions(compact)
-        selected = [a for a in row["actions"] if (a["label"].endswith("//:stdlib") or a["label"] in [PACKAGE, ROOT])]
-        expected = [a for a in selected if a["mnemonic"] in EXPECTED]
-        no_environment = all(native(a) and a["env"].get("GOOS") == "linux" and a["env"].get("GOARCH") == "arm64"
-                             and not set(a["env"]).intersection(("TMP", "TEMP", "TMPDIR", "GOTMPDIR"))
-                             for a in expected)
-        needed = {"GoStdlib", "GoStdlibList"}
-        if phase == "stock" and row["native_exit"] != 0:
-            row["observed"] = "failure creating a Go temporary directory"
-            row["verified"] = (row["native_exit"] != 0 and row["events"].get("exit_code", 0) != 0 and no_environment
-                and any(re.search("/tmp.*no such file or directory", line, re.I) for line in diag)
-                and any(a["mnemonic"] in needed and a["exit"] and a["runner"] == "remote" and not a["cache"] for a in expected))
-        else:
-            row["observed"] = "completed with no global temporary-directory setting"
-            matched = {a["mnemonic"] for a in expected if a["runner"] == "remote" and not a["cache"] and not a["exit"]
-                       and any(Path(f["path"]).name == EXPECTED[a["mnemonic"]] and f["digest"].get("hash")
-                               and int(f["digest"].get("sizeBytes", 0)) > 0 for f in a["files"])}
-            root_file = Path("bazel-bin/test/rbe/empty_worker/root.txt").read_bytes()
-            root_lines = root_file.decode().splitlines()
-            row["root"] = root_lines
-            root_sha = hashlib.sha256(root_file).hexdigest()
-            root_matches = any(a["mnemonic"] == "ObserveWorkerRoot" and native(a) and not a["exit"] and
-                               any(f["digest"]["hash"] == root_sha for f in a["files"]) for a in selected)
-            row["verified"] = (row["native_exit"] == 0 and row["events"].get("exit_code") == 0 and no_environment
-                and all(row["events"]["targets"].get(t) for t in TARGETS) and set(EXPECTED) == matched
-                and root_matches and "machine aarch64" in root_lines and "root /hello" in root_lines
-                and "root /tmp" not in root_lines and "exec /bin/sh no 127" in root_lines)
+        if row["native_exit"] == 0:
+            row["root"] = Path("bazel-bin/test/rbe/empty_worker/root.txt").read_text().splitlines()
+        verify(row, prior)
     except (KeyError, OSError, ValueError, subprocess.SubprocessError) as err:
         row["collection_error"] = type(err).__name__
     row["source_after"] = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
@@ -175,11 +193,29 @@ def main():
             # Preserve a release-specific analysis failure; exercise the original
             # 8.8.1 setup only if 9.3.1 did not reach a qualifying Go action.
             continue
-        fixed = run("fixed", FIXED, version)
+        fixed = run("fixed", FIXED, version, stock)
         verified = stock["verified"] and fixed["verified"]
         save("verdict.json", {"verified": verified, "bazel": version, "stock": stock["source"], "fixed": fixed["source"], "at": now()})
         return 0 if verified else 1
     return 1
 
+def reconcile(archive, sha256):
+    assert hashlib.sha256(archive.read_bytes()).hexdigest() == sha256
+    with zipfile.ZipFile(archive) as z:
+        assert set(z.namelist()) == {"9.3.1-stock.json", "9.3.1-fixed.json", "verdict.json"}
+        stock = json.loads(z.read("9.3.1-stock.json"))
+        fixed = json.loads(z.read("9.3.1-fixed.json"))
+        original_verdict = json.loads(z.read("verdict.json"))
+    for row, source, name, prior in [(stock, STOCK, "stock", None), (fixed, FIXED, "fixed", stock)]:
+        assert row["source"] == row["source_after"] == source and row["tracked_clean"]
+        assert row["phase"] == name and row["version"] == "9.3.1"
+        verify(row, prior)
+    return {"verified": stock["verified"] and fixed["verified"], "archive_sha256": sha256,
+            "original_verdict": original_verdict, "stock": stock, "fixed": fixed, "reconciled_at": now()}
+
 if __name__ == "__main__":
+    if len(sys.argv) == 4 and sys.argv[1] == "--original":
+        result = reconcile(Path(sys.argv[2]), sys.argv[3])
+        print(json.dumps(result, indent=2))
+        sys.exit(0 if result["verified"] else 1)
     sys.exit(main())
