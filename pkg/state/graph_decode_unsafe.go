@@ -16,7 +16,11 @@ package state
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"os"
 	"reflect"
+	"runtime"
 	"slices"
 	"sync"
 	"unsafe"
@@ -72,8 +76,10 @@ type graphObjectDecodeState struct {
 
 // graphDecodeState is the state of Load.
 type graphDecodeState struct {
-	ctx context.Context
-	in  decBuf
+	census  map[callbackCensusKey]int
+	batches map[callbackBatchKey]int
+	ctx     context.Context
+	in      decBuf
 
 	types []*typeInfo
 	// typeNames are the names of named types, which may not be registered.
@@ -144,6 +150,7 @@ const (
 // release returns ds to graphDecodeStatePool. Tables are cleared, so that they do
 // not keep loaded objects alive.
 func (ds *graphDecodeState) release() {
+	ds.reportCallbackCensus()
 	if cap(ds.objs) > maxPooledBytes/64 || cap(ds.targets) > maxPooledBytes/8 || cap(ds.cbs) > maxPooledBytes/64 {
 		return
 	}
@@ -415,6 +422,13 @@ func (cb *decodeCallback) user() bool {
 }
 
 func (ds *graphDecodeState) appendCallback(head, tail *int32, cb decodeCallback) {
+	if callbackCensusEnabled {
+		pc, _, _, ok := runtime.Caller(2)
+		if !ok {
+			panic("missing callback producer")
+		}
+		ds.countCallback(runtime.FuncForPC(pc).Name(), cb)
+	}
 	if cb.waiter < 0 || cb.user() {
 		ds.hooks++
 		ds.deferred++
@@ -469,4 +483,93 @@ func (ds *graphDecodeState) wait(waiter, obj int32, cb decodeCallback) {
 	o := &ds.ods[obj]
 	cb.waiter = waiter
 	ds.appendCallback(&o.waitHead, &o.waitTail, cb)
+}
+
+// The following instrumentation is confined to the qualification fixture.
+var callbackCensusEnabled = os.Getenv("STATE_CALLBACK_CENSUS") == "1"
+
+type callbackCensusKey struct {
+	Origin  string
+	Kind    string
+	Type    string
+	Slot    int
+	Waiting bool
+}
+
+type callbackBatchKey struct {
+	Origin       string
+	Type         string
+	Elements     int
+	Dependencies int
+}
+
+func (ds *graphDecodeState) countCallback(origin string, cb decodeCallback) {
+	if ds.census == nil {
+		ds.census = make(map[callbackCensusKey]int)
+	}
+	key := callbackCensusKey{Origin: origin, Waiting: cb.waiter >= 0}
+	switch {
+	case cb.valueLoader != nil:
+		key.Kind, key.Type, key.Slot = "value", reflect.TypeOf(cb.valueLoader).String(), cb.slot
+	case cb.afterLoader != nil:
+		key.Kind, key.Type = "after", reflect.TypeOf(cb.afterLoader).String()
+	case cb.fn != nil:
+		key.Kind = "function"
+	default:
+		key.Kind = "dependency"
+		o := &ds.objs[cb.waiter]
+		ti := o.ti
+		if o.exact != nil {
+			ti = o.exact
+		}
+		if o.mapType != nil {
+			ti = o.mapType
+		}
+		if ti != nil {
+			key.Type = ti.typ.String()
+		}
+	}
+	ds.census[key]++
+}
+
+func (ds *graphDecodeState) countCallbackBatch(origin string, ti *typeInfo, elements, dependencies int) {
+	if !callbackCensusEnabled {
+		return
+	}
+	if ds.batches == nil {
+		ds.batches = make(map[callbackBatchKey]int)
+	}
+	ds.batches[callbackBatchKey{origin, ti.typ.String(), elements, dependencies}]++
+}
+
+func (ds *graphDecodeState) reportCallbackCensus() {
+	if !callbackCensusEnabled {
+		return
+	}
+	type callbackRow struct {
+		callbackCensusKey
+		Count int
+	}
+	type batchRow struct {
+		callbackBatchKey
+		Count int
+	}
+	var callbacks []callbackRow
+	var batches []batchRow
+	for key, count := range ds.census {
+		callbacks = append(callbacks, callbackRow{key, count})
+	}
+	for key, count := range ds.batches {
+		batches = append(batches, batchRow{key, count})
+	}
+	row := struct {
+		Callbacks                           []callbackRow
+		Batches                             []batchRow
+		Records, Capacity, Objects, Targets int
+	}{callbacks, batches, len(ds.cbs), cap(ds.cbs), len(ds.objs), len(ds.targets)}
+	data, err := json.Marshal(row)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Fprintf(os.Stderr, "STATE-CALLBACK-CENSUS %s\n", data)
 }

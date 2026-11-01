@@ -401,15 +401,19 @@ func (ds *graphDecodeState) decodeElems(elem *typeInfo, p unsafe.Pointer, n uint
 		ds.in.raw(p, elem.size*n)
 		return
 	}
+	queued := 0
 	esz := elem.size
 	for i := uintptr(0); i < n; i++ {
 		ds.lastRef = -1
 		ds.decodeValue(elem, add(p, i*esz))
 		if ds.lastRef >= 0 {
+			before := len(ds.cbs)
 			ds.wait(ds.cur, ds.lastRef, decodeCallback{waiter: -1})
+			queued += len(ds.cbs) - before
 		}
 	}
 	ds.lastRef = -1
+	ds.countCallbackBatch("array", elem, int(n), queued)
 }
 
 // decodeInterface decodes an interface value.
@@ -516,6 +520,7 @@ func (ds *graphDecodeState) decodeMap(ti *typeInfo, m unsafe.Pointer, n int) {
 	// Callbacks and the StateLoad methods of structs with hooks may retain
 	// the addresses of keys and values. Entries get fresh storage after
 	// those run; other entries reuse the storage of the previous entry.
+	queued := 0
 	fresh := true
 	for i := 0; i < n; i++ {
 		if fresh {
@@ -535,12 +540,16 @@ func (ds *graphDecodeState) decodeMap(ti *typeInfo, m unsafe.Pointer, n int) {
 		ds.lastRef = -1
 		ds.decodeValue(kt, kp)
 		if ds.lastRef >= 0 {
+			before := len(ds.cbs)
 			ds.wait(ds.cur, ds.lastRef, decodeCallback{waiter: -1})
+			queued += len(ds.cbs) - before
 		}
 		ds.lastRef = -1
 		ds.decodeValue(et, ep)
 		if ds.lastRef >= 0 {
+			before := len(ds.cbs)
 			ds.wait(ds.cur, ds.lastRef, decodeCallback{waiter: -1})
+			queued += len(ds.cbs) - before
 		}
 		if !ds.noCallbacks && ds.deferred != deferred {
 			ds.deferMapSetIndex(ti.typ, m, k, e)
@@ -550,6 +559,7 @@ func (ds *graphDecodeState) decodeMap(ti *typeInfo, m unsafe.Pointer, n int) {
 		fresh = ds.hooks != hooks
 	}
 	ds.lastRef = -1
+	ds.countCallbackBatch("map", ti, n, queued)
 }
 
 // deferMapSetIndex inserts (k, e) into m once queued callbacks on ds.cur have
