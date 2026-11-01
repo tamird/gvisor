@@ -457,7 +457,7 @@ func (s *Set) SetVal(ctx context.Context, num int32, val int16, creds *auth.Cred
 	sem.value = val
 	sem.pid = pid
 	s.changeTime = ktime.NowFromContext(ctx)
-	sem.wakeWaiters()
+	s.wakeWaiters(int(num))
 	return nil
 }
 
@@ -492,7 +492,7 @@ func (s *Set) SetValAll(ctx context.Context, vals []uint16, creds *auth.Credenti
 		// TODO(gvisor.dev/issue/137): Clear undo entries in all processes.
 		sem.value = int16(val)
 		sem.pid = pid
-		sem.wakeWaiters()
+		s.wakeWaiters(i)
 	}
 	s.changeTime = ktime.NowFromContext(ctx)
 	return nil
@@ -700,7 +700,7 @@ func (s *Set) executeOps(ctx context.Context, ops []linux.Sembuf, pid int32) (ch
 	// A multi-operation waiter may now hit an error before reaching the
 	// semaphore on which it blocked.
 	for i := range s.sems {
-		s.sems[i].wakeWaiters()
+		s.wakeWaiters(i)
 	}
 	s.opTime = ktime.NowFromContext(ctx)
 	return nil, 0, nil
@@ -746,10 +746,11 @@ func abs(val int16) int16 {
 	return val
 }
 
-// wakeWaiters goes over all waiters and checks which of them can be notified.
+// wakeWaiters notifies waiters that can retry on semaphore num.
 //
-// Preconditions: The owning Set.mu must be held.
-func (s *sem) wakeWaiters() {
+// +checklocks:set.mu
+func (set *Set) wakeWaiters(num int) {
+	s := &set.sems[num]
 	// Note that this will release all waiters waiting for 0 too.
 	for w := s.waiters.Front(); w != nil; {
 		if s.value < abs(w.value) {
