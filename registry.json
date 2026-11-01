@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T10:37:33.302070+00:00",
+    "updatedAt": "2026-11-01T10:43:57.634606+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41755,6 +41755,36 @@
         "summary": "Open the standalone graph encoder PR?",
         "body": "Across 16 alternating AMD64 pairs, encoding the same 50,000-file checkpoint to a counting writer took 155.6 ms instead of 167.9 ms and allocated 172.9 MiB instead of 175.3 MiB. A one-byte slice with 16 MiB capacity took 0.90% longer and allocated 98 more bytes. A live restore with the candidate read all 50,000 files. The commit includes benchstat."
       }
+    },
+    {
+      "id": "branch:native-nogo-test-runner",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/nogo-native-test-runner",
+      "head": "25115956066576e83f5543c275d57b59d6578ed0",
+      "title": "Run Nogo tests with the analyzer executable",
+      "url": "https://github.com/tamird/gvisor/commit/251159560",
+      "group": "analysis",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T10:43:57.634606+00:00",
+      "summary": "The shell launcher could not start on a scratch worker. Bazel can run the analyzer directly with the two filtered reports. Tricorder still receives each architecture’s report.",
+      "evidence": [
+        {
+          "label": "Original scratch TestRunner inputs, logs, and checklocks findings",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41298618219/artifacts/13080411787"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "25115956066576e83f5543c275d57b59d6578ed0",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/251159560",
+        "title": "Run Nogo tests with the analyzer executable",
+        "requestedAt": "2026-11-01T10:43:57.634606+00:00",
+        "summary": "Open the standalone Nogo test runner PR?",
+        "body": "With both reports clean, the Bash launcher exited 127 on an AMD64 scratch worker and the native analyzer passed. Removing the waiter mutex made the same analyzer fail and identify the unguarded access for AMD64 and ARM64. The test reuses the existing analyzer binary. The standalone edits match the tested integration edits."
+      }
     }
   ],
   "edges": [
@@ -48085,7 +48115,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T10:24:40.857533+00:00",
+      "updatedAt": "2026-11-01T10:43:57.634606+00:00",
       "summary": "The graph codec is now the default. On a four-worker Nginx checkpoint, encoding took 2.25 ms instead of 12.71 ms and decoding took 8.99 ms instead of 17.75 ms. All four round-trip bugs tracked in #16715 are fixed. Increasing the UDP receive queue did not grow the index table. Smaller writer buffers and clearing fewer decoder slots did not speed up Nginx checkpoints. Separating callback payloads reduced allocated bytes without improving the time to Nginx’s first HTTP response.",
       "findings": [
         {
@@ -51018,7 +51048,7 @@
           ]
         }
       ],
-      "nextStep": "The independent encoder and decoder changes are ready for contributor review. Measure live Nginx checkpoint restore under CPU quotas for the reader proposal.",
+      "nextStep": "The independent encoder and decoder changes are ready for contributor review. Check current graph-engine reviews and use the retained large-checkpoint profiles to identify any further end-to-end bottleneck. The Nginx quota sweep is complete on #16472.",
       "evidence": [
         {
           "label": "50,000 tmpfs files after real restore and 18 paired-phase observations on the same checkpoint",
@@ -57905,7 +57935,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T10:37:33.302070+00:00",
+      "updatedAt": "2026-11-01T10:43:57.634606+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -57918,6 +57948,14 @@
             {
               "label": "Original Nogo tests and per-architecture diagnostics",
               "url": "https://github.com/tamird/gvisor/actions/runs/41297822356/artifacts/13079877524"
+            },
+            {
+              "label": "Authenticated C++ ELF, loader, and libc from both original actions",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41298461201/artifacts/13080650694"
+            },
+            {
+              "label": "Original scratch TestRunner inputs, logs, and checklocks findings",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41298618219/artifacts/13080411787"
             }
           ]
         },
@@ -59301,7 +59339,7 @@
           ]
         }
       ],
-      "nextStep": "Recover the C++ executable and Nogo inputs from their original remote actions to complete the binary and findings checks. The GNU toolchain still needs a static runtime for fully static C++ tests.",
+      "nextStep": "Qualify ordinary C++ test targets on scratch using the toolchain’s supported static musl configuration. Keep their libc ABI distinct from the GNU tests run with a declared loader. The native Nogo runner is ready for contributor review.",
       "evidence": [
         {
           "label": "AMD64 state and TCP tests on scratch",
