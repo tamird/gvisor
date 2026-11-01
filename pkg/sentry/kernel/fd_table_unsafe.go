@@ -29,7 +29,7 @@ type descriptorBucketSlice []descriptorBucketAtomicPtr
 //
 // All objects are updated atomically.
 type descriptorTable struct {
-	// Changes to the slice itself requiring holding FDTable.mu.
+	// Changes to the slice itself require holding FDTable.mu.
 	slice descriptorBucketSliceAtomicPtr `state:".(map[int32]*descriptor)"`
 }
 
@@ -40,13 +40,13 @@ type descriptorTable struct {
 func (f *FDTable) initNoLeakCheck() {
 	var slice descriptorBucketSlice // Empty slice.
 	f.slice.Store(&slice)
+	f.fdBitmap = bitmap.New(uint32(math.MaxUint16)) // +checklocksignore: f is not yet published.
 }
 
 // init initializes the table with leak checking.
 func (f *FDTable) init() {
 	f.initNoLeakCheck()
 	f.InitRefs()
-	f.fdBitmap = bitmap.New(uint32(math.MaxUint16))
 }
 
 const (
@@ -91,9 +91,9 @@ func (f *FDTable) CurrentMaxFDs() int {
 // Clearing an entry does not allocate table storage.
 // If set replaces an existing file description that is different from `file`,
 // it returns it with the FDTable's reference transferred to the caller, which
-// must call f.drop on the returned file after unlocking f.mu.
+// must release that reference after unlocking f.mu.
 //
-// Precondition: mu must be held.
+// +checklocks:f.mu
 func (f *FDTable) set(fd int32, file *vfs.FileDescription, flags FDFlags) *vfs.FileDescription {
 	slicePtr := f.slice.Load()
 
