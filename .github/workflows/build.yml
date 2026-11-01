@@ -1,35 +1,117 @@
-name: CI
-
-"on":
+name: Qualify Bazel 9 on both gVisor release architectures
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/bazel-9-3-1]
+permissions:
+  contents: read
 jobs:
   build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
+    strategy:
+      fail-fast: false
+      matrix: {arch: [amd64, arm64]}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      ARCH: ${{ matrix.arch }}
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 5, persist-credentials: false}
+      - name: Prepare released clients and the existing GNU execution platform
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/bazel9"
+          mkdir -p "$d/records" "$d/platform"
+          cp test/rbe/bazel9/{qualify.py,lint_sources.bzl} "$d"
+          printf '%s\n' '{"complete":false,"phase":"bootstrap"}' > "$d/records/verdict.json"
+          for ver in 8.8.1 9.3.1; do
+            curl --retry 3 -fsSL "https://releases.bazel.build/$ver/release/bazel-$ver-linux-x86_64" -o "$d/bazel-$ver"
+          done
+          (cd "$d"; printf '%s\n' '5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160  bazel-8.8.1' '7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel-9.3.1' | sha256sum -c -)
+          chmod +x "$d"/bazel-*
+          printf 'module(name="tcp_gnu")\n' > "$d/platform/MODULE.bazel"
+          printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$d/platform/BUILD"
+          umask 077
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$d/platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$d/bb.rc"
+          unset BUILDBUDDY_API_KEY
+          docker pull --platform=linux/amd64 "$GNU"
+          docker run -d --name gnu --entrypoint /bin/bash --user root -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e "GIT_CONFIG_VALUE_0=$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+          for ver in 8.8.1 9.3.1; do [[ "$(docker exec gnu "$d/bazel-$ver" --version)" == "bazel $ver" ]]; done
+      - name: Build the release and hostarch test with the pinned tools
+        run: python3 "$RUNNER_TEMP/bazel9/qualify.py"
+      - name: Check receipt boundary
+        id: privacy
+        if: always()
+        env:
+          BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          key = os.environ["BB_KEY"].encode()
+          report = (Path(os.environ["RUNNER_TEMP"]) / "bazel9/records/verdict.json").read_bytes()
+          assert key and key not in report and b'x-buildbuddy-api-key' not in report.lower()
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.privacy.outcome == 'success'
+        with:
+          name: build-${{ matrix.arch }}
+          path: ${{ runner.temp }}/bazel9/records/verdict.json
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.privacy.outcome == 'success'
+        with:
+          name: native-${{ matrix.arch }}
+          path: ${{ runner.temp }}/bazel9/native.tgz
+          if-no-files-found: warn
+  native:
+    needs: build
+    if: always() && github.repository == 'tamird/gvisor' && github.run_attempt == 1
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {arch: amd64, runner: ubuntu-24.04, machine: x86_64}
+          - {arch: arm64, runner: ubuntu-24.04-arm, machine: aarch64}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: native-${{ matrix.arch }}
+          path: ${{ runner.temp }}/bundle
+      - name: Check the linked runtime and hostarch suite on the native CPU
+        env:
+          MACHINE: ${{ matrix.machine }}
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/bundle"
+          cd "$d"
+          tar -xzf native.tgz
+          mkdir -p "$RUNNER_TEMP/observations"
+          report="$RUNNER_TEMP/observations"
+          uname -m | tee "$report/machine"
+          [[ "$(cat "$report/machine")" == "$MACHINE" ]]
+          sha256sum --check SHA256SUMS | tee "$report/verified-files"
+          ./hostarch_test -test.v > "$report/hostarch.log" 2>&1
+          grep -q '^--- PASS: TestEndianString' "$report/hostarch.log"
+          grep -qx PASS "$report/hostarch.log"
+          if [[ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+          # The regular Buildkite smoke options from Makefile's smoke-tests.
+          rc=0
+          timeout 120 ./runsc --alsologtostderr --network none --debug --TESTONLY-unsafe-nonroot=true --rootless 'do' true > "$RUNNER_TEMP/runsc-smoke.log" 2>&1 || rc=$?
+          echo "$rc" > "$report/runsc-exit"
+          if [[ "$rc" != 0 ]]; then grep -Ei '(error|failed|panic)' "$RUNNER_TEMP/runsc-smoke.log" | tail -8 | cut -c1-700 > "$report/runsc-errors" || true; fi
+          exit "$rc"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: native-observations-${{ matrix.arch }}
+          path: ${{ runner.temp }}/observations
+          if-no-files-found: warn
