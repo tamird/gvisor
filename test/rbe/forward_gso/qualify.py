@@ -38,7 +38,7 @@ if phase == "native-owners":
     budget = "18m"
 elif phase == "boot":
     labels = ["//runsc/boot:boot_nogo"]
-    budget = "43m"
+    budget = "74m"
 else:
     raise ValueError(phase)
 invocation = str(uuid.uuid4())
@@ -108,8 +108,8 @@ def progress() -> None:
 save()
 print(f"{phase}: https://app.buildbuddy.io/invocation/{invocation} (budget {budget})", flush=True)
 args = ["docker", "exec", "tcp-compiler", "timeout", "--signal=INT", "--kill-after=20s", budget, "bazel",
-        "--bazelrc=" + str(temp/"tcp.bazelrc"), command, "--config=x86_64", "--jobs=80",
-        "--strategy_regexp=^Analyzing.(@@)?//pkg/abi/linux:linux$=local",
+        "--bazelrc=" + str(temp/"tcp.bazelrc"), command, "--config=x86_64", "--jobs=8",
+        "--strategy=GoStaticAnalysis=local", "--strategy=GoStandardLibraryAnalysis=local",
         "--remote_download_outputs=toplevel", "--invocation_id=" + invocation, "--build_event_json_file=" + str(bep),
         "--build_metadata=REPO_URL=https://github.com/tamird/gvisor", "--build_metadata=COMMIT_SHA=" + os.environ["GITHUB_SHA"]]
 if phase == "native-owners":
@@ -127,7 +127,9 @@ with log.open("wb") as f, subprocess.Popen([*args, *labels], stdout=f, stderr=su
 progress()
 record.update(exit=rc, finished=now(), result="failed")
 with log.open(errors="replace") as f:
-    record["diagnostics"] = [s.strip()[:400] for s in f if interesting.search(s) and not secrets.search(s)][-20:]
+    lines = f.read().splitlines()
+    record["diagnostics"] = [s.strip()[:400] for s in lines if interesting.search(s) and not secrets.search(s)][-25:]
+    record["remoteStatus"] = [term for term in ("deadline exceeded", "resource exhausted", "remote execution failure", "out of memory", "killed", "unavailable", "no space left", "no registered executors", "no available executors") if any(term in s.lower() for s in lines)]
 save()
 owner_cases = {}
 failures = {}
@@ -148,14 +150,18 @@ for label in labels:
                        if re.search(r"network_test.go:[0-9]+:|gvisor2pcap_test.go:[0-9]+:|^FAIL:|^--- FAIL", line)
                        and not secrets.search(line)][:20]
     owner_cases[label] = checks
+    if phase == "boot":
+        record["architectureMarkers"] = [arch for arch in ("amd64", "arm64") if re.search(arch + r"\.\.\.", output)]
+
 wanted = {network: network_tests, converter: ("TestGvisor2PCAP",)} if phase == "native-owners" else {}
 missing = {label: sorted(set(names) - set(c.split("/")[0] for c in owner_cases[label])) for label, names in wanted.items()}
 record.update(xml=owner_cases, missingCases=missing, testDiagnostics=failures)
 ok = (set(completions) == set(labels) and all(completions.values()) and all(owner_cases.values())
       and not any(missing.values()) and all(not faults for cases in owner_cases.values() for faults in cases.values())
       and results == summaries == ["PASSED"] * len(labels))
-record["result"] = "verified" if rc == 0 and ok else "failed"
+record["result"] = "verified" if rc == 0 and ok and record.get("architectureMarkers") == ["amd64", "arm64"] else "failed"
 record["verifiedAt"] = now()
 save()
+(records / "verdict.json").write_text(json.dumps({"verified": record["result"] == "verified","source":record["product"], "invocation":invocation},indent=2))
 print(json.dumps(record, indent=2))
 sys.exit(record["result"] != "verified")
