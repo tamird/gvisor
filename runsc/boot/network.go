@@ -96,9 +96,9 @@ func (n *Network) CreateLinksAndRoutes(args *sentryapi.CreateLinksAndRoutesArgs,
 	if len(args.FDBasedLinks) > 0 && len(args.XDPLinks) > 0 {
 		return fmt.Errorf("received both fdbased and XDP links, but only one can be used at a time")
 	}
-	wantFDs := 0
+	linkFDs := 0
 	for _, l := range args.FDBasedLinks {
-		wantFDs += l.NumChannels
+		linkFDs += l.NumChannels
 	}
 	for _, link := range args.XDPLinks {
 		// We have to keep several FDs alive when the sentry is
@@ -106,13 +106,14 @@ func (n *Network) CreateLinksAndRoutes(args *sentryapi.CreateLinksAndRoutesArgs,
 		// the AF_XDP socket itself.
 		switch v := link.Bind; v {
 		case sentryapi.BindSentry:
-			wantFDs += 4
+			linkFDs += 4
 		case sentryapi.BindRunsc:
-			wantFDs++
+			linkFDs++
 		default:
 			return fmt.Errorf("unknown bind value: %d", v)
 		}
 	}
+	wantFDs := linkFDs
 	if args.PCAP {
 		wantFDs++
 	}
@@ -121,6 +122,33 @@ func (n *Network) CreateLinksAndRoutes(args *sentryapi.CreateLinksAndRoutesArgs,
 	}
 	if got := len(args.FilePayload.Files); got != wantFDs {
 		return fmt.Errorf("args.FilePayload.Files has %d FDs but we need %d entries based on FDBasedLinks, XDPLinks, and PCAP", got, wantFDs)
+	}
+
+	// The caller passes all link FDs first, followed by the optional PCAP
+	// file and NAT table. All captured links write to the same PCAP stream.
+	extraFiles := args.FilePayload.Files[linkFDs:]
+	var capture *sniffer.PCAP
+	logLink := func(ep stack.LinkEndpoint) (stack.LinkEndpoint, error) {
+		if !args.PCAP {
+			if args.LogPackets {
+				return sniffer.New(ep), nil
+			}
+			return ep, nil
+		}
+		if capture == nil {
+			fd, err := unix.Dup(int(extraFiles[0].Fd()))
+			if err != nil {
+				return nil, fmt.Errorf("failed to dup pcap FD: %v", err)
+			}
+			file := os.NewFile(uintptr(fd), "pcap-file")
+			const packetTruncateSize = 4096
+			capture, err = sniffer.NewPCAP(file, packetTruncateSize)
+			if err != nil {
+				file.Close()
+				return nil, fmt.Errorf("failed to create PCAP logger: %v", err)
+			}
+		}
+		return capture.Wrap(ep), nil
 	}
 
 	nicids := make(map[string]tcpip.NICID)
@@ -210,19 +238,9 @@ func (n *Network) CreateLinksAndRoutes(args *sentryapi.CreateLinksAndRoutesArgs,
 			}
 
 			// Setup packet logging if requested.
-			if args.PCAP {
-				newFD, err := unix.Dup(int(args.FilePayload.Files[fdOffset].Fd()))
-				if err != nil {
-					return fmt.Errorf("failed to dup pcap FD: %v", err)
-				}
-				const packetTruncateSize = 4096
-				linkEP, err = sniffer.NewWithWriter(linkEP, os.NewFile(uintptr(newFD), "pcap-file"), packetTruncateSize)
-				if err != nil {
-					return fmt.Errorf("failed to create PCAP logger: %v", err)
-				}
-				fdOffset++
-			} else if args.LogPackets {
-				linkEP = sniffer.New(linkEP)
+			linkEP, err = logLink(linkEP)
+			if err != nil {
+				return err
 			}
 
 			var qDisc stack.QueueingDiscipline
@@ -311,19 +329,12 @@ func (n *Network) CreateLinksAndRoutes(args *sentryapi.CreateLinksAndRoutesArgs,
 			return err
 		}
 
-		if args.PCAP {
-			newFD, err := unix.Dup(int(args.FilePayload.Files[fdOffset].Fd()))
-			if err != nil {
-				return fmt.Errorf("failed to dup pcap FD: %v", err)
-			}
-			const packetTruncateSize = 4096
-			linkEP, err = sniffer.NewWithWriter(linkEP, os.NewFile(uintptr(newFD), "pcap-file"), packetTruncateSize)
-			if err != nil {
-				return fmt.Errorf("failed to create PCAP logger: %v", err)
-			}
-			fdOffset++
-		} else if args.LogPackets {
-			linkEP = sniffer.New(linkEP)
+		linkEP, err = logLink(linkEP)
+
+		if err != nil {
+
+			return err
+
 		}
 
 		var qDisc stack.QueueingDiscipline
@@ -396,7 +407,7 @@ func (n *Network) CreateLinksAndRoutes(args *sentryapi.CreateLinksAndRoutesArgs,
 	// Set NAT table rules if necessary.
 	if args.NATBlob {
 		log.Infof("Replacing NAT table")
-		iptReplaceBlob, err := io.ReadAll(args.FilePayload.Files[fdOffset])
+		iptReplaceBlob, err := io.ReadAll(extraFiles[len(extraFiles)-1])
 		if err != nil {
 			return fmt.Errorf("failed to read iptables blob: %v", err)
 		}
