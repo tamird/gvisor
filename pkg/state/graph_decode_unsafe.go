@@ -141,12 +141,23 @@ const (
 	maxDecodeTotalBytes  = 4 << 30 // 4 GiB total allocated object bytes per Load
 )
 
+// CallbackPoolStudy observes pool admission during untimed benchmark warmup.
+var CallbackPoolStudy func(callbacks, capacity int, poolPut bool)
+
+func (ds *graphDecodeState) observeCallbackPool(put bool) {
+	if f := CallbackPoolStudy; f != nil {
+		f(len(ds.cbs), cap(ds.cbs), put)
+	}
+}
+
 // release returns ds to graphDecodeStatePool. Tables are cleared, so that they do
 // not keep loaded objects alive.
 func (ds *graphDecodeState) release() {
 	if cap(ds.objs) > maxPooledBytes/64 || cap(ds.targets) > maxPooledBytes/8 || cap(ds.cbs) > maxPooledBytes/64 {
+		ds.observeCallbackPool(false)
 		return
 	}
+	ds.observeCallbackPool(true)
 	clear(ds.types[:cap(ds.types)])
 	clear(ds.typeNames[:cap(ds.typeNames)])
 	clear(ds.objs[:cap(ds.objs)])
