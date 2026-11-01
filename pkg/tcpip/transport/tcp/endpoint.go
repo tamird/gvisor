@@ -3047,23 +3047,24 @@ func (e *Endpoint) onICMPError(err tcpip.Error, transErr stack.TransportError, p
 	}
 
 	if state := e.EndpointState(); state.connected() {
-		if state != StateTimeWait {
-			// A local link can deliver the error synchronously while TCP
-			// holds mu sending the packet. Let the receive worker check the
-			// quoted sequence alongside the ACKs for this connection.
-			h, ok := pkt.Data().PullUp(8)
-			if !ok {
-				return
-			}
-			s := newSegment()
-			s.sequenceNumber = seqnum.Value(header.TCP(h).SequenceNumber())
-			s.quotedError = uint8(transErr.Kind()) + 1
-			s.reportError = recvErr && !e.isOwnedByUser()
-			s.pkt = pkt.Clone()
-			s.dataMemSize = pkt.MemSize()
-			defer s.DecRef()
-			e.protocol.dispatcher.queueSegment(e, e.ID, s)
+		if state == StateTimeWait || e.protocol.dispatcher.isClosed() {
+			return
 		}
+		// A local link can deliver the error synchronously while TCP
+		// holds mu sending the packet. Let the receive worker check the
+		// quoted sequence alongside the ACKs for this connection.
+		h, ok := pkt.Data().PullUp(8)
+		if !ok {
+			return
+		}
+		s := newSegment()
+		s.sequenceNumber = seqnum.Value(header.TCP(h).SequenceNumber())
+		s.quotedError = err
+		s.reportError = recvErr && !e.isOwnedByUser()
+		s.pkt = pkt.Clone()
+		s.dataMemSize = pkt.MemSize()
+		defer s.DecRef()
+		e.protocol.dispatcher.queueSegment(e, e.ID, s)
 		return
 	}
 
@@ -3132,34 +3133,24 @@ func (e *Endpoint) HandleError(transErr stack.TransportError, pkt *stack.PacketB
 		}
 	}
 
-	if kind := transErr.Kind(); kind == stack.PacketTooBigTransportError {
-		handlePacketTooBig(transErr.Info())
-	} else if err := tcpError(kind); err != nil {
-		e.onICMPError(err, transErr, pkt)
-	}
-}
-
-// tcpError maps the network's description of an unreachable destination to
-// the error returned by the TCP socket.
-func tcpError(kind stack.TransportErrorKind) tcpip.Error {
 	// TODO(gvisor.dev/issues/5270): Handle all transport errors.
-	switch kind {
+	switch transErr.Kind() {
+	case stack.PacketTooBigTransportError:
+		handlePacketTooBig(transErr.Info())
 	case stack.DestinationHostUnreachableTransportError:
-		return &tcpip.ErrHostUnreachable{}
+		e.onICMPError(&tcpip.ErrHostUnreachable{}, transErr, pkt)
 	case stack.DestinationNetworkUnreachableTransportError:
-		return &tcpip.ErrNetworkUnreachable{}
+		e.onICMPError(&tcpip.ErrNetworkUnreachable{}, transErr, pkt)
 	case stack.DestinationPortUnreachableTransportError:
-		return &tcpip.ErrConnectionRefused{}
+		e.onICMPError(&tcpip.ErrConnectionRefused{}, transErr, pkt)
 	case stack.DestinationProtoUnreachableTransportError:
-		return &tcpip.ErrUnknownProtocolOption{}
+		e.onICMPError(&tcpip.ErrUnknownProtocolOption{}, transErr, pkt)
 	case stack.SourceRouteFailedTransportError:
-		return &tcpip.ErrNotSupported{}
+		e.onICMPError(&tcpip.ErrNotSupported{}, transErr, pkt)
 	case stack.SourceHostIsolatedTransportError:
-		return &tcpip.ErrNoNet{}
+		e.onICMPError(&tcpip.ErrNoNet{}, transErr, pkt)
 	case stack.DestinationHostDownTransportError:
-		return &tcpip.ErrHostDown{}
-	default:
-		return nil
+		e.onICMPError(&tcpip.ErrHostDown{}, transErr, pkt)
 	}
 }
 

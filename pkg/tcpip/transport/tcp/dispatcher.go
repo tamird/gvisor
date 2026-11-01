@@ -459,6 +459,12 @@ func (d *dispatcher) wait() {
 	d.wg.Wait()
 }
 
+func (d *dispatcher) isClosed() bool {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return d.closed
+}
+
 // queuePacket queues an incoming packet to the matching tcp endpoint and
 // also queues the endpoint to a processor queue for processing.
 //
@@ -467,11 +473,7 @@ func (d *dispatcher) wait() {
 // cannot name these locks through stackEP's interface type and the indexed
 // processor selection.
 func (d *dispatcher) queuePacket(stackEP stack.TransportEndpoint, id stack.TransportEndpointID, clock tcpip.Clock, pkt *stack.PacketBuffer) {
-	d.mu.Lock()
-	closed := d.closed
-	d.mu.Unlock()
-
-	if closed {
+	if d.isClosed() {
 		return
 	}
 

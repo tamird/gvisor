@@ -1195,7 +1195,7 @@ func (e *Endpoint) drainClosingSegmentQueue() {
 			break
 		}
 
-		if s.quotedError == 0 {
+		if s.quotedError == nil {
 			e.tryDeliverSegmentFromClosedEndpoint(s)
 		}
 		s.DecRef()
@@ -1212,12 +1212,11 @@ func (e *Endpoint) handleQuotedError(s *segment) {
 	if s.sequenceNumber.LessThan(e.snd.SndUna) || e.snd.SndNxt.LessThan(s.sequenceNumber) {
 		return
 	}
-	err := tcpError(stack.TransportErrorKind(s.quotedError - 1))
 	e.lastErrorMu.Lock()
 	if s.reportError {
-		e.hardError = err
+		e.hardError = s.quotedError
 	} else {
-		e.lastError = err
+		e.lastError = s.quotedError
 	}
 	e.lastErrorMu.Unlock()
 	if s.reportError {
@@ -1298,7 +1297,7 @@ func (e *Endpoint) handleSegmentsLocked() tcpip.Error {
 		if s == nil {
 			break
 		}
-		if s.quotedError != 0 {
+		if s.quotedError != nil {
 			e.handleQuotedError(s)
 			s.DecRef()
 			continue
@@ -1539,7 +1538,7 @@ func (e *Endpoint) handleTimeWaitSegments() (extendTimeWait bool, reuseTW func()
 		if s == nil {
 			break
 		}
-		if s.quotedError != 0 {
+		if s.quotedError != nil {
 			s.DecRef()
 			continue
 		}
