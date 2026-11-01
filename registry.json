@@ -41321,6 +41321,73 @@
         "summary": "Open the host-network fix after #16787 lands with the shared process-exit syscall fixture?",
         "body": "A guest exiting with the last reference to a TCP socket can wait out\nits entire SO_LINGER timeout. Linux skips that wait when the closing\ntask is exiting [1]. With host networking the sentry thread closes the\nsocket on the guest's behalf and the host sees a running task.\n\nDisable positive linger before the last host close on task exit. Keep\nzero linger enabled so a peer still receives the requested reset [2].\nThe process-exit syscall test checks both cases with host networking.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/af_inet.c#L426-L437\n[2]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp.c#L3095-L3101"
       }
+    },
+    {
+      "id": "branch:rack-checkpoint-recovery",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/rack-checkpoint-recovery",
+      "head": "a2ded528ade0f76a5c9754ed12555cab08bd2973",
+      "title": "Preserve RACK loss detection across TCP restore",
+      "url": "https://github.com/tamird/gvisor/commit/a2ded528a",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T05:45:25.342700+00:00",
+      "summary": "A peer that acknowledged B and C still needs A. Restore the original RACK deadline and the SACK ranges so the sender repairs only A without another ACK.",
+      "evidence": [
+        {
+          "label": "Stock stayed silent for two seconds",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41276276691/artifacts/13071304034"
+        },
+        {
+          "label": "Deadline-only sent A and B; preserving ranges sent A",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41276742967/artifacts/13071870710"
+        },
+        {
+          "label": "Final packet regression including FIN",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41277581808/artifacts/13072410041"
+        },
+        {
+          "label": "Package, race and Nogo checks on identical production code",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41277203889/artifacts/13072231481"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "a2ded528ade0f76a5c9754ed12555cab08bd2973",
+        "url": "https://github.com/tamird/gvisor/commit/a2ded528a",
+        "title": "Preserve RACK loss detection across TCP restore",
+        "body": "Open after the ordinary TCP send-timer prerequisite lands. The final packet test checks that A is retransmitted at 25 ms and that the peer can acknowledge the transfer through close.",
+        "requestedAt": "2026-11-01T05:45:25.342700+00:00"
+      }
+    },
+    {
+      "id": "branch:buildkite-source-release-staging",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/buildkite-source-release-staging",
+      "head": "e7e0d5319eb716c82471abf477c3acff9d63e9ca",
+      "title": "Install the complete runsc release for Buildkite source jobs",
+      "url": "https://github.com/tamird/gvisor/commit/e7e0d5319",
+      "group": "bazel",
+      "status": "Agent work",
+      "updatedAt": "2026-11-01T05:45:25.342700+00:00",
+      "summary": "Docker registered a CLI that had no Sentry next to it. The bare CLI exited 127 on its first container. The same executable with its sidecars ran successfully. The standalone change stages the existing release on master.",
+      "evidence": [
+        {
+          "label": "Identical CLI, bare versus full release layout",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41276936602/artifacts/13071652881"
+        },
+        {
+          "label": "Staged default, one flag and two flags",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41276530370/artifacts/13070498799"
+        },
+        {
+          "label": "Default Docker-backed builder on the standalone hook",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41278102889"
+        }
+      ]
     }
   ],
   "edges": [
@@ -44717,6 +44784,16 @@
         "https://github.com/google/gvisor/pull/16787",
         "https://github.com/tamird/gvisor/commit/c53942792",
         "https://github.com/tamird/gvisor/actions/runs/41274137310/artifacts/13070531394"
+      ]
+    },
+    {
+      "from": "branch:tcp-restore-send-deadlines",
+      "to": "branch:rack-checkpoint-recovery",
+      "type": "depends_on",
+      "reason": "The reordering timer reuses the saved deadline and is armed when the restored route is ready.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/12bdd02c2",
+        "https://github.com/tamird/gvisor/commit/a2ded528a"
       ]
     }
   ],
