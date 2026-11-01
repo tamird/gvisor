@@ -15,6 +15,7 @@
 package tcp_connect_icmp_error_test
 
 import (
+	"context"
 	"flag"
 	"testing"
 	"time"
@@ -102,5 +103,62 @@ func TestTCPConnectICMPError(t *testing.T) {
 	// transitioned to CLOSED because of handshake error.
 	if _, err := conn.Expect(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagRst)}, time.Second); err != nil {
 		t.Fatalf("expected RST, %s", err)
+	}
+}
+
+// TestTCPRefusedOpenICMPGeneration quotes a SYN on the original four-tuple
+// after making a second active open. The old and new SYNs differ in sequence.
+func TestTCPRefusedOpenICMPGeneration(t *testing.T) {
+	dut := testbench.NewDUT(t)
+	choose, port := dut.CreateBoundSocket(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, dut.Net.RemoteIPv4)
+	dut.Close(t, choose)
+	fd := dut.Socket(t, unix.AF_INET, unix.SOCK_STREAM|unix.SOCK_NONBLOCK, unix.IPPROTO_TCP)
+	defer dut.Close(t, fd)
+	local := unix.SockaddrInet4{Port: int(port)}
+	copy(local.Addr[:], dut.Net.RemoteIPv4)
+	dut.Bind(t, fd, &local)
+	peerPort := uint16(9001)
+	peer := unix.SockaddrInet4{Port: int(peerPort)}
+	copy(peer.Addr[:], dut.Net.LocalIPv4)
+	openWire := func() testbench.TCPIPv4 {
+		return dut.Net.NewTCPIPv4(t, testbench.TCP{SrcPort: &peerPort, DstPort: &port}, testbench.TCP{SrcPort: &port, DstPort: &peerPort})
+	}
+	getSYN := func(conn *testbench.TCPIPv4) *testbench.TCP {
+		t.Helper()
+		got, err := conn.Expect(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn)}, time.Second)
+		if err != nil || got == nil || got.SeqNum == nil {
+			t.Fatalf("SYN not received on selected four-tuple: %v", err)
+		}
+		return got
+	}
+	first := openWire()
+	dut.Connect(t, fd, &peer)
+	old := getSYN(&first)
+	first.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck | header.TCPFlagRst)})
+	dut.PollOne(t, fd, unix.POLLERR, time.Second)
+	if _, err := dut.ConnectWithErrno(context.Background(), t, fd, &peer); err != unix.ECONNREFUSED {
+		t.Fatalf("connect did not return the first SYN's refusal: %v", err)
+	}
+	first.Close(t)
+	second := openWire()
+	defer second.Close(t)
+	dut.Connect(t, fd, &peer)
+	current := getSYN(&second)
+	if *old.SeqNum == *current.SeqNum {
+		t.Fatal("old and new SYN have the same sequence")
+	}
+	sendICMPError(t, &second, old)
+	events := dut.Poll(t, []unix.PollFd{{Fd: fd, Events: unix.POLLERR | unix.POLLHUP}}, 200*time.Millisecond)
+	staleErr := dut.GetSockOptInt(t, fd, unix.SOL_SOCKET, unix.SO_ERROR)
+	t.Logf("SYN_QUOTE same_tuple=true different_sequence=true stale_ready=%d stale_errno=%d", len(events), staleErr)
+	if len(events) != 0 || staleErr != 0 {
+		t.Fatalf("retired SYN aborted the new active open")
+	}
+	sendICMPError(t, &second, current)
+	dut.PollOne(t, fd, unix.POLLERR, time.Second)
+	genuine := dut.GetSockOptInt(t, fd, unix.SOL_SOCKET, unix.SO_ERROR)
+	t.Logf("SYN_QUOTE current_errno=%d", genuine)
+	if unix.Errno(genuine) != unix.EHOSTUNREACH {
+		t.Fatalf("current SYN did not report its ICMP error: %d", genuine)
 	}
 }
