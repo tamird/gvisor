@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T16:33:36.019669+00:00",
+    "updatedAt": "2026-11-01T16:40:29.174810+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42330,6 +42330,33 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41323263703/artifacts/13090538239"
         }
       ]
+    },
+    {
+      "id": "branch:bazel-9-3-1",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/bazel-9-3-1",
+      "head": "542eadd05f05f309cc0d2344ac4b07e967a67fd1",
+      "title": "Build gVisor with Bazel 9.3.1",
+      "url": "https://github.com/tamird/gvisor/commit/542eadd05",
+      "group": "bazel",
+      "status": "Agent work",
+      "summary": "The existing Docker builder and Bazelisk read the same pin. The change makes the archived Coral toolchain and pinned LLVM source load the rules Bazel 9 externalized, and directs Mac developers to the shared pin. The current fork commit is in remote qualification.",
+      "updatedAt": "2026-11-01T16:40:29.174810+00:00",
+      "evidence": [
+        {
+          "label": "Upgrade commit",
+          "url": "https://github.com/tamird/gvisor/commit/542eadd05"
+        },
+        {
+          "label": "AMD64/ARM64 qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41327424761"
+        },
+        {
+          "label": "Upstream directory-watching fix",
+          "url": "https://github.com/bazelbuild/bazel/issues/30883"
+        }
+      ]
     }
   ],
   "edges": [
@@ -45783,6 +45810,15 @@
       "reason": "The unread-data change preserves the queued byte needed to observe POLLHUP after both directions shut down.",
       "evidence": [
         "https://github.com/tamird/gvisor/compare/254c8ddfc...1b4eaf08e"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:bazel-9-3-1",
+      "to": "pr:16663",
+      "reason": "Source inventory for the repo-wide lint check needs the directory-deletion fix that shipped in Bazel 9.3.",
+      "evidence": [
+        "https://github.com/bazelbuild/bazel/issues/30883"
       ]
     }
   ],
@@ -62235,9 +62271,9 @@
       "title": "Upgrade gVisor to Bazel 9",
       "status": "active",
       "owner": "Build tools",
-      "updatedAt": "2026-11-01T16:33:36.019669+00:00",
+      "updatedAt": "2026-11-01T16:40:29.174810+00:00",
       "summary": "Move the shared Docker and Bazelisk pin from 8.8.1 to 9.3.1. Fix compatibility in the current compiler setup so the upgrade can land independently of hermetic-llvm.",
-      "nextStep": "Run the normal build and analysis on both architectures and the existing directory-invalidation regression, then submit the smallest working upgrade for review.",
+      "nextStep": "Qualify the reviewed compatibility changes on the current GNU compiler, including both architectures, the LLVM consumer, dependency checks and directory removal/recreation.",
       "findings": [
         {
           "text": "Bazel 9.3 includes the fix for the directory-deletion regression. Two previous compatibility commits are candidates for the Coral toolchain and the pinned LLVM source. The earlier gRPC and C++ dependency work was already handled.",
@@ -62254,6 +62290,14 @@
         }
       ],
       "evidence": [
+        {
+          "label": "Upgrade commit",
+          "url": "https://github.com/tamird/gvisor/commit/542eadd05"
+        },
+        {
+          "label": "AMD64/ARM64 qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41327424761"
+        },
         {
           "label": "Bazel 9.3.1 release",
           "url": "https://github.com/bazelbuild/bazel/releases/tag/9.3.1"
