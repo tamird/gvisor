@@ -16,10 +16,15 @@
 package main
 
 import (
+	"gvisor.dev/gvisor/pkg/log"
+	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/runsc/cli/sentrycli"
 	"gvisor.dev/gvisor/runsc/gvisorbinaries"
 )
 
 func main() {
+	state.StudyColdGraph = func(root, ds any, beforeObjs, beforeCbs, objs, capObjs, capCbs int) {
+		log.Infof("COLD-RESTORE-POOL root=%T decoder=%p before=%d bcbs=%d used=%d cap=%d ccbs=%d", root, ds, beforeObjs, beforeCbs, objs, capObjs, capCbs)
+	}
 	sentrycli.Main(&gvisorbinaries.GvisorSentry)
 }
