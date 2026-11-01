@@ -1,0 +1,22 @@
+[
+  "//pkg/abi/attestation:attestation_hostlayout_test",
+  "//pkg/abi/attestation:attestation_hostlayout_test_gen",
+  "//pkg/abi/gasket:gasket_hostlayout_test",
+  "//pkg/abi/gasket:gasket_hostlayout_test_gen",
+  "//pkg/abi/ib:ib_hostlayout_test",
+  "//pkg/abi/ib:ib_hostlayout_test_gen",
+  "//pkg/abi/linux/errno:errno_hostlayout_test",
+  "//pkg/abi/linux/errno:errno_hostlayout_test_gen",
+  "//pkg/abi/linux:linux_hostlayout_test",
+  "//pkg/abi/linux:linux_hostlayout_test_gen",
+  "//pkg/abi/nvgpu:nvgpu_hostlayout_test",
+  "//pkg/abi/nvgpu:nvgpu_hostlayout_test_gen",
+  "//pkg/abi/sentry:sentry_hostlayout_test",
+  "//pkg/abi/sentry:sentry_hostlayout_test_gen",
+  "//pkg/abi/tpu:tpu_hostlayout_test",
+  "//pkg/abi/tpu:tpu_hostlayout_test_gen",
+  "//pkg/abi:abi_hostlayout_test",
+  "//pkg/abi:abi_hostlayout_test_gen",
+  "//pkg/shim/v1/taskserver:_task_server_cc_grpc_proto_grpc_codegen",
+  "//pkg/shim/v1/taskserver:task_server_cc_grpc_proto"
+]
