@@ -137,6 +137,7 @@ def inspect_package(work, path, kind):
     details = {"path":str(path.relative_to(work)),"bytes":path.stat().st_size}
     with path.open("rb") as archive:
         details["sha256"] = hashlib.file_digest(archive,"sha256").hexdigest()
+        archive.seek(0)
         if kind=="bz2":
             contents = inspect_tar("r|bz2",archive)
         else:
@@ -156,58 +157,128 @@ def inspect_package(work, path, kind):
     details["binaries"],details["modes"],details["regular_member_names"] = contents
     return details
 
-try:
-    assert platform.machine() == machine_name
-    assert run("git","rev-parse","HEAD^") == os.environ["CORRECTED"]
-    source(os.environ["CORRECTED"])
-    version = "20991231.0"
-    tag = "release-"+version
-    subprocess.run(["git","tag",tag,"HEAD"],check=True)
-    assert run("tools/workspace_status.sh") == "STABLE_VERSION "+tag
-    targets = {"deb":"//debian:debian","bz2":"//debian:gvisor-release-tar-bz2","zstd":"//debian:gvisor-release-tar-zstd"}
-    results.update(cpu=cpu,mode="opt",scoped_producer=".buildkite/release.yaml / Makefile artifacts/%",
-                   fixture_local_tag=tag,runtime_source="f906c5dd8",earlier_fastbuild=41257521162,
-                   worker_controls={"arm64":13061034514,"amd64":13056457271},archive_writer_backport="407a3c7c4c",
-                   version_writer="316da5996",changelog_writer="8311c4cdb")
+from urllib.parse import urlencode
+from urllib.request import HTTPRedirectHandler, build_opener
+import zipfile
+
+version = "20991231.0"
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self,req,fp,code,msg,headers,newurl):
+        return None
+
+def get_output(work, invocation, output):
+    path=work/Path(output["path"]).name
+    digest=output["digest"]
+    size=int(digest.get("sizeBytes",0))
+    uri="bytestream://remote.buildbuddy.io/blobs/"+digest["hash"]+"/"+str(size)
+    url="https://app.buildbuddy.io/file/download?"+urlencode({"bytestream_url":uri,"invocation_id":invocation,"filename":path.name})
+    req=Request(url,headers={"x-buildbuddy-api-key":os.environ["BUILDBUDDY_API_KEY"]})
+    with build_opener(NoRedirect).open(req,timeout=120) as src,path.open("wb") as dest:
+        shutil.copyfileobj(src,dest)
+    with path.open("rb") as stream:
+        assert path.stat().st_size==size and hashlib.file_digest(stream,"sha256").hexdigest()==digest["hash"]
+    return path
+
+def compressor(path):
+    desc=elf(path)
+    headers=run("readelf","-W","-l",path)
+    dynamic=run("readelf","-W","-d",path)
+    desc["interpreters"]=re.findall(r"\[Requesting program interpreter: (.*?)\]",headers)
+    desc["needed"]=re.findall(r"\(NEEDED\).*?\[(.*?)\]",dynamic)
+    return desc
+
+def save_report(name,info):
+    (out/(name+".json")).write_text(json.dumps(info,indent=2)+"\n")
+
+def writer(actions, label, mnemonic, ext):
+    items=[(a,o) for a in actions if a["label"]==label and a["mnemonic"]==mnemonic for o in a["outputs"] if o["path"].endswith(ext)]
+    assert len(items)==1,(label,items)
+    a,o=items[0]
+    assert not a.get("exitCode") and not a.get("status"),a
+    props={v["name"]:v["value"] for v in a["platform"]["properties"]}
+    assert props.get("Arch")==cpu and props.get("container-image")==image,props
+    return a,o
+
+def get_old():
+    path=tmp/"original.zip"
+    expected={"amd64":"f5d6c356ff1a7037072d1f94402deaaa337811e6c808460bd9da4fa8c95983f8","arm64":"34ed5c2d69af36c83b463b37f4369279a543efced5aaff2ac8221b73419851f7"}[cpu]
+    assert sha(path.read_bytes())==expected
+    with zipfile.ZipFile(path) as z:
+        build=json.loads(z.read("result.json"))[cpu]
+        actions=json.loads(z.read(cpu+"/actions.json"))
+    original=build["source"]
+    assert original=="2dd42c8895f0de061285704a46b8de3cdaa6a1b4" and build["native_exit"]==1
+    assert [a["label"] for a in build["failed_actions"]]==["//debian:gvisor-release-tar-zstd"]
+    inv,=build["invocations"]
+    directory=tmp/"original-product";directory.mkdir(exist_ok=True)
+    rec={"source":original,"invocation":inv,"original_qualification_sha256":expected,"debian":build["packages"]["deb"],"read_started":now()}
+    try:
+        _,o=writer(actions,"//tools/zstd:compressor","CppLink","/compressor")
+        rec["compressor"]=compressor(get_output(directory,inv,o))
+        save_report("originals",rec)
+        assert rec["compressor"]["interpreters"] and rec["compressor"]["needed"],rec["compressor"]
+        a,o=writer(actions,"//debian:gvisor-release-tar-bz2","PackageTar",".tar.bz2")
+        rec["bzip2"]=inspect_package(directory,get_output(directory,inv,o),"bz2")
+        assert rec["bzip2"]["binaries"]==rec["debian"]["binaries"]
+        rec["succeeded"]=True
+    finally:
+        rec["read_finished"]=now()
+        save_report("originals",rec)
+
+def get_new_compressor():
+    r=json.loads((out/"result.json").read_text())[cpu]
+    actions=json.loads((out/cpu/"actions.json").read_text())
+    _,o=writer(actions,"//tools/zstd:compressor","CppLink","/compressor")
+    d=tmp/"new-compressor";d.mkdir(exist_ok=True)
+    inv,=r["invocations"]
+    c=compressor(get_output(d,inv,o))
+    save_report("corrected-compressor",{"source":r["source"],"invocation":inv,**c})
+    assert c["interpreters"]==[] and c["needed"]==[],c
+
+def packages(kind, names):
+    expected={"deb":("//debian:debian","MakeDeb",".deb"),"bz2":("//debian:gvisor-release-tar-bz2","PackageTar",".tar.bz2"),"zstd":("//debian:gvisor-release-tar-zstd","PackageTar",".tar.zstd")}
     py_tool="//test/rbe/protoc_check:static_python"+("_arm64" if cpu=="arm64" else "")
-    opts=["--compilation_mode=opt","--lockfile_mode=off","--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
-          "--extra_toolchains=//test/rbe/go_bootstrap:linux_"+cpu+"_ash,"+py_tool,
-          "--action_env=PATH=/usr/bin:/bin","--modify_execution_info=^(PackageTar|MakeDeb)$=+no-remote-cache"]
-    r, actions = invoke(cpu,cpu,list(targets.values()),opts)
-    failed = [a for a in actions if a.get("exitCode") or a.get("status")]
-    r["failed_actions"]=[{k:a.get(k) for k in ("label","mnemonic","runner","exitCode","status","executable","outputs","platform")} for a in failed]
-    save()
+    opts=["--compilation_mode=opt","--lockfile_mode=off","--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain","--extra_toolchains=//test/rbe/go_bootstrap:linux_"+cpu+"_ash,"+py_tool,"--action_env=PATH=/usr/bin:/bin","--modify_execution_info=^(PackageTar|MakeDeb)$=+no-remote-cache"]
+    r,actions=invoke(kind,cpu,[expected[k][0] for k in names],opts)
+    if r["native_exit"]:
+        results["verdict"]="PACKAGE_BUILD_FAILED";save();raise SystemExit(r["native_exit"])
     work=Path(run("bazel","--bazelrc="+str(tmp/"sidecar.bazelrc"),"info","execution_root"))
     r["packages"]={}
-    missing=[]
-    problems=[]
-    endings={"deb":".deb","bz2":".tar.bz2","zstd":".tar.zstd"}
-    for name,label in targets.items():
-        possible=[(a,o) for a in actions if a.get("label")==label for o in a.get("outputs",[]) if o.get("path","").endswith(endings[name])]
-        if len(possible)!=1:
-            missing.append({"label":label,"matched_outputs":[o for a,o in possible]})
-            continue
-        a,o=possible[0]
-        try:
-            p=work/o["path"]
-            pkg=inspect_package(work,p,name)
-            pkg.update(producer={k:a.get(k) for k in ("action","runner","cacheHit","mnemonic","platform","executable")})
-            assert pkg["sha256"]==o["digest"]["hash"] and pkg["bytes"]==int(o["digest"]["sizeBytes"]),label
-            assert "-opt/" in o["path"],o
-            props={v["name"]:v["value"] for v in a["platform"]["properties"]}
-            assert (props.get("Arch"),props.get("container-image"))==(cpu,image),props
-            assert a["runner"]=="remote" and not a.get("cacheHit"), a
-            r["packages"][name]=pkg
-        except Exception as exc:
-            problems.append({"label":label,"failure":repr(exc)})
-        save()
-    r["missing_outputs"]=missing
-    r["verification_errors"]=problems
-    if r["native_exit"] or failed or missing or problems:
-        results["verdict"]="INCOMPLETE";save();raise SystemExit(1)
-    assert all(p["binaries"]==r["packages"]["deb"]["binaries"] for p in r["packages"].values())
+    for k in names:
+        a,o=writer(actions,*expected[k])
+        info=inspect_package(work,work/o["path"],k)
+        assert info["sha256"]==o["digest"]["hash"] and info["bytes"]==int(o["digest"]["sizeBytes"])
+        assert a.get("runner")=="remote" and not a.get("cacheHit") and "-opt/" in o["path"],a
+        info["producer"]={key:a.get(key) for key in ("action","runner","cacheHit","mnemonic","platform","executable")}
+        r["packages"][k]=info;save()
+    return r["packages"]
+
+mode = sys.argv[1]
+if mode=="originals":
+    get_old();raise SystemExit
+if mode=="inspect-compressor":
+    get_new_compressor();raise SystemExit
+try:
+    assert platform.machine()==machine_name
+    assert run("git","rev-parse","HEAD^")==os.environ["CORRECTED"]
+    source(os.environ["CORRECTED"])
+    assert run("git","diff","--name-only","HEAD^","HEAD")=="test/rbe/empty_worker/BUILD"
+    subprocess.run(["git","tag","release-"+version,"HEAD"],check=True)
+    assert run("tools/workspace_status.sh")=="STABLE_VERSION release-"+version
+    results.update(cpu=cpu,mode="opt",fixture_local_tag="release-"+version,control=41258616758,repair="Only Linux scratch execution platforms declare @llvm//constraints/libc:musl; target platforms unchanged")
+    new=packages(cpu,["zstd"])["zstd"]
+    old=json.loads((out/"originals.json").read_text())
+    assert old["succeeded"] and old["debian"]["binaries"]==old["bzip2"]["binaries"]
+    keys=sorted(k for k,v in new["binaries"].items() if old["debian"]["binaries"].get(k)!=v)
+    results["payload_changes_vs_previous_execution_platform"]=keys
+    save()
+    if keys:
+        # Only if changing exec configuration changed the release ELFs, compare
+        # the remaining two formats against precisely these same eight bytes.
+        rest=packages("remaining-formats",["deb","bz2"])
+        assert all(v["binaries"]==new["binaries"] for v in rest.values())
     results["verdict"]="THREE_OPT_DISTRIBUTIONS_SAME_EIGHT_ELFS"
-    results["complete"]=now()
+    results["finished"]=now()
     save()
 except BaseException as exc:
     results["exception"]=repr(exc)
