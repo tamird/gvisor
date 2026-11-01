@@ -43,6 +43,16 @@ build:plugin-tldk --@io_bazel_rules_go//go/config:pure=false --define=plugin_tld
 # by default for all tests.
 build --build_tag_filters=-nogo
 
+# Keep CI output readable and record test results in the build event file.
+common:ci --color=no --curses=no
+test:ci --test_output=errors --keep_going --verbose_failures --build_event_json_file=.build_events.json
+
+# Buildkite's post-command hook uploads failed logs by local filename, even
+# when the Bazel client uses a remote cache.
+test:buildkite --config=ci --nobuild_event_json_file_path_conversion
+
+test:nogo --test_tag_filters=nogo --build_tests_only
+
 # Select the ordinary syscall tests used by public CI.
 test:syscalls-amd64 --test_tag_filters=-allsave,-runsc_slimvm
 test:syscalls-arm64 --test_tag_filters=-allsave,runsc_ptrace,runsc_systrap
