@@ -110,6 +110,7 @@ func (s *TCPSegmenter) BuildNextSegment() (*stack.PacketBuffer, bool) {
 
 	segPkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 		ReserveHeaderBytes: s.reserve + len(s.hdr),
+		IsForwardedPacket:  true,
 		Mark:               s.mark,
 	})
 	copied := segPkt.Data().ReadFrom(&s.payload, s.mss)
