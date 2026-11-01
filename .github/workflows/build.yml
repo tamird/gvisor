@@ -1,7 +1,7 @@
-name: Check corrected TCP half-close readiness and owning packages
+name: Compare TCP close and shutdown with unread data
 on:
   push:
-    branches: [qualification/tcp-half-close-readiness]
+    branches: [qualification/tcp-unread-shutdown]
 permissions:
   contents: read
 jobs:
@@ -11,9 +11,10 @@ jobs:
     timeout-minutes: 165
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      PRODUCT: a1e35227cb7311746ea882df00a63f59e00b76bd
+      PRODUCT: 3ce5b6d5afe962d2a126751a0eec6dca8c003a64
+      STOCK: 8c1ea263274f1461be1582c41b7f1510f099c87c
       TEST_ARCH: x86_64
-      FIXTURE_SHA256: cbaf61324919c034ba8952cbb9d6b7c41c5c3a6a0c411ca38e1bb35210a932ef
+      FIXTURE_SHA256: dd1c4e2698dee64b70d2e933b1495c3f3d9afc54eddc709061d8d8fa4295c493
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with: {fetch-depth: 5, persist-credentials: false}
@@ -27,7 +28,7 @@ jobs:
         cp test/rbe/tcp-poll-result.py "$RUNNER_TEMP/verify-tcp.py"
         cp test/rbe/tcp-poll-recovery.py "$RUNNER_TEMP/receipt.py"
         mkdir -p "$RUNNER_TEMP/tcp-evidence"
-        git fetch -q --depth=1 https://github.com/tamird/gvisor.git "$PRODUCT"
+        git fetch -q --depth=1 https://github.com/tamird/gvisor.git "$STOCK" "$PRODUCT"
         printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
         printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
         umask 077
@@ -46,11 +47,12 @@ jobs:
       run: |
         set -euo pipefail
         git checkout --quiet --detach "$PRODUCT"
-        for name in poll-fixed; do
-          src=$PRODUCT
-          testname=tcp_socket_test
-          path=test/syscalls/linux/tcp_socket.cc
-          filter='AllInetTests/TcpSocketTest.HalfCloseReadiness*:AllInetTests/TcpSocketTest.PollAfterShutdown/*'
+        for name in poll-native poll-stock poll-fixed; do
+          src=$STOCK
+          if [[ "$name" == poll-fixed ]]; then src=$PRODUCT; fi
+          testname=socket_ip_tcp_generic_loopback_test
+          path=test/syscalls/linux/socket_ip_tcp_generic.cc
+          filter='AllTCPSockets/TCPSocketPairTest.FINSentOnShutdownWithUnreadData/*:AllTCPSockets/TCPSocketPairTest.RSTSentOnCloseWithUnreadData*'
           executor=remote
           platform=runsc_ptrace
           if [[ "$name" == *-native ]]; then executor=local; platform=native; fi
@@ -91,7 +93,7 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: tcp-half-close-readiness
+        name: tcp-unread-shutdown
         path: |
           ${{ runner.temp }}/records/verdict.json
           ${{ runner.temp }}/tcp-evidence/*.json

@@ -6,10 +6,10 @@ import sys
 import xml.etree.ElementTree as XML
 
 root = Path(sys.argv[1])
-expected = {f"AllInetTests/TcpSocketTest.HalfCloseReadiness{side}/{i}" for side in ("Local", "Peer") for i in range(2)}
+tests = ("FINSentOnShutdownWithUnreadData", "RSTSentOnCloseWithUnreadData", "RSTSentOnCloseWithUnreadDataAllowsReadBuffered")
+expected = {f"AllTCPSockets/TCPSocketPairTest.{test}/{i}" for test in tests for i in range(12)}
 result = {}
-expected |= {f"AllInetTests/TcpSocketTest.PollAfterShutdown/{i}" for i in range(2)}
-for name in ("poll-fixed",):
+for name in ("poll-native", "poll-stock", "poll-fixed"):
     directory = root/name
     status = int((directory/"exit").read_text()) if (directory/"exit").is_file() else None
     assertions = {}
@@ -25,7 +25,14 @@ for name in ("poll-fixed",):
     verified = set(assertions) == expected and status == 0 and all(a["status"] == "OK" for a in assertions.values())
     import datetime, os, re
     source=(directory/"source").read_text().strip()
-    verified &= (source == os.environ["PRODUCT"] and (directory/"fixture-sha256").read_text().split()[0] == os.environ["FIXTURE_SHA256"])
+    if name == "poll-stock":
+        failed = {test for test, case in assertions.items() if case["status"] == "FAIL"}
+        verified = (set(assertions) == expected and status == 3
+                    and failed == {test for test in expected if ".FINSentOnShutdown" in test}
+                    and all(case["status"] in ("OK", "FAIL") for case in assertions.values())
+                    and all(any("reset by peer" in msg.lower() or "ECONNRESET" in msg
+                                for msg in assertions[test]["details"]) for test in failed))
+    verified &= (source == os.environ["PRODUCT" if name == "poll-fixed" else "STOCK"] and (directory/"fixture-sha256").read_text().split()[0] == os.environ["FIXTURE_SHA256"])
     log=(directory/"bazel.log").read_text(errors="replace") if (directory/"bazel.log").is_file() else ""
     diagnostics=[s[:360] for line in log.splitlines() if (s:=line.strip()).startswith(("error:", "ERROR:", "Error:")) and not any(k in s.lower() for k in ("header", "key=", "token"))][:8]
     now=datetime.datetime.now(datetime.timezone.utc).isoformat()
