@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T02:03:58.422526+00:00",
+    "updatedAt": "2026-11-01T02:17:14.051007+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41095,6 +41095,56 @@
         "summary": "Review this isolated socket ownership correction for submission after #16180 lands.",
         "body": "A competing socket can bind a caller-selected source port after an\nIPv4 connect reports ECONNREFUSED, while the refused socket is still\nopen. Linux keeps that port until the socket closes. A port selected\nby bind with port zero remains available to other sockets.\n\nRemember whether bind requested a nonzero port. On a failed active\nopen, keep the reservation already owned by the descriptor while\nunregistering its failed connection. Final close releases the port.\n\nThe same syscall test checks wildcard and loopback addresses with\nfixed and dynamically allocated ports. On #16180 the competing bind\nsucceeded for both fixed ports; on Linux and the correction it\nreturned EADDRINUSE until close. Both port-zero controls passed.\n\nThis follows #16180's reservation-key correction. It does not change\nwhich family a dual-stack wildcard connect releases, or implement\nreuse of the refused socket for a new connection."
       }
+    },
+    {
+      "id": "branch:tcp-finwait2-open-restore",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-finwait2-open-restore",
+      "head": "6efbfd233e2911e1d9236400a60bc17386403b0c",
+      "title": "Keep half-closed TCP sockets readable across restore",
+      "url": "https://github.com/tamird/gvisor/commit/6efbfd233",
+      "updatedAt": "2026-11-01T02:17:14.051007+00:00",
+      "status": "Contributor review requested",
+      "summary": "After shutdown(SHUT_WR), a TCP socket in FIN-WAIT-2 can still read. With TCP_LINGER2=-1, stock gVisor returned EOF after restore on both IPv4 and IPv6. Linux, stock gVisor without restore, and corrected gVisor after restore all received the peer’s byte. The TCP analyzer passed.",
+      "evidence": [
+        {
+          "label": "Four-arm manifest, per-case XML and actual restore traces",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41263937756/artifacts/13066102392"
+        },
+        {
+          "label": "Native Linux, IPv4 and IPv6",
+          "url": "https://app.buildbuddy.io/invocation/724fb3d3-1739-48a9-a6e1-36a8fb11a29d"
+        },
+        {
+          "label": "Stock gVisor without restore, IPv4 and IPv6",
+          "url": "https://app.buildbuddy.io/invocation/ca2cdb61-bed7-4321-a458-d1080e68c582"
+        },
+        {
+          "label": "Stock gVisor after restore, both reads returned EOF",
+          "url": "https://app.buildbuddy.io/invocation/2540a4e1-82f1-402d-80da-397e240d086c"
+        },
+        {
+          "label": "Corrected gVisor after restore, both reads returned the peer’s byte",
+          "url": "https://app.buildbuddy.io/invocation/2dbda469-e789-4b16-9863-a50008ddd56d"
+        },
+        {
+          "label": "Original Linux and TCP analyzer results; guest labels corrected in the recovery",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41263476960/artifacts/13066400852"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "6efbfd233e2911e1d9236400a60bc17386403b0c",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/6efbfd233",
+        "title": "Keep half-closed TCP sockets readable across restore",
+        "requestedAt": "2026-11-01T02:17:14.051007+00:00",
+        "summary": "Open the standalone FIN-WAIT-2 restore fix upstream? It has no prerequisite.",
+        "body": "After shutdown(SHUT_WR), a socket in FIN-WAIT-2 can still receive\ndata. Restore armed the orphan timeout even while a descriptor was\nopen. With TCP_LINGER2 set to -1, that timer could close the socket\nas soon as it was restored.\n\nUse the same closed-endpoint check when restoring the timer, receiving\nthe FIN acknowledgment, and closing a socket already in FIN-WAIT-2.\nExercise the open read side before and after a checkpoint."
+      }
     }
   ],
   "edges": [
@@ -44473,8 +44523,8 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:tcp-retain-fixed-source-port",
-      "to": "pr:16180",
+      "from": "pr:16180",
+      "to": "branch:tcp-retain-fixed-source-port",
       "reason": "Uses the original reservation address and protocol list from #16180 to preserve and later release the correct fixed port.",
       "evidence": [
         "https://github.com/google/gvisor/pull/16180",
