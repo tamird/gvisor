@@ -62,7 +62,7 @@ def source(ref):
 def rows(log):
     if not log.exists(): return []
     # Keep the argv, result, platform and output digests for relevant actions only.
-    jq = r'''select(((.targetLabel // "")|test("^//:release$|^//vdso:")) or .mnemonic=="GoLink" or .mnemonic=="PrecompileSeccomp" or .mnemonic=="ProtocAuthenticityCheck" or .mnemonic=="GoToolchainBinaryBuild" or ((.exitCode // 0)!=0) or ((.status // "")!="")) | {label:.targetLabel,mnemonic,runner,cacheHit,exitCode,status,action:.digest,platform:.platform,executable:.commandArgs[0],outputs:[.actualOutputs[]? | {path,digest}],argv:(if ((.targetLabel//"")|contains("systrap/sysmsg")) and (.mnemonic=="CppLink" or .mnemonic=="CppCompile" or .mnemonic=="Genrule") then .commandArgs else [] end)}'''
+    jq = r'''select(((.targetLabel // "")|test("^//:release$|^//vdso:|^//runsc/(fdparking|prewarmer|procumounter):")) or .mnemonic=="GoLink" or .mnemonic=="PrecompileSeccomp" or .mnemonic=="ProtocAuthenticityCheck" or .mnemonic=="GoToolchainBinaryBuild" or ((.exitCode // 0)!=0) or ((.status // "")!="")) | {label:.targetLabel,mnemonic,runner,cacheHit,exitCode,status,action:.digest,platform:.platform,executable:.commandArgs[0],outputs:[.actualOutputs[]? | {path,digest}],argv:(if ((.targetLabel//"")|contains("systrap/sysmsg")) and (.mnemonic=="CppLink" or .mnemonic=="CppCompile" or .mnemonic=="Genrule") then .commandArgs else [] end)}'''
     with subprocess.Popen([str(tmp/"bb"),"print","--compact_execution_log="+str(log)],stdout=subprocess.PIPE) as decode:
         raw = subprocess.check_output(["jq","-c",jq],stdin=decode.stdout)
         decode.stdout.close()
@@ -142,7 +142,7 @@ try:
     assert run("git","rev-parse","HEAD^")==os.environ["CORRECTED"]
     source(os.environ["CORRECTED"])
     results.update(cpu=cpu,mode="fastbuild",public_target="//:release",declared_staging="679ce6be6e12e3d5d896b96294be4dd59473537f",
-                   original_worker_controls={"arm64":13061034514,"amd64":13056457271},private_cli_evidence=13063272315)
+                   sidecar_proposal="e482579e11a4e098f069bdeb4c66677b36bc93ff",original_release_run=41256773361,original_worker_controls={"arm64":13061034514,"amd64":13056457271},private_cli_evidence=13063272315)
     opts=["--compilation_mode=fastbuild","--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
           "--extra_toolchains=//test/rbe/go_bootstrap:linux_"+cpu+"_ash"]
     result,actions=invoke(cpu,cpu,["//:release",guest],opts)

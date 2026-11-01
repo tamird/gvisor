@@ -41,7 +41,7 @@ jobs:
         env:
           BASE: ddf4c56a5ae1a1e539ec5989649930c97c26e593
           ORIGINAL: ec550a48a00e04396c21617a152224096bf93af2
-          CORRECTED: 5e4eeb4b21ca1a7e8e4dd12b26c6b546b0b8e6e6
+          CORRECTED: f906c5dd87aeffc3a6f5cec8275b6102a278ea0a
           AMD64_CONTROL: 17927b34de218b8c26b5feb834856d7d49259444
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
@@ -59,6 +59,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: scratch-release-${{ matrix.cpu }}
+          name: complete-release-${{ matrix.cpu }}
           path: ${{ runner.temp }}/package-evidence
           if-no-files-found: error
