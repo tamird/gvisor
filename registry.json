@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T11:08:57.252966+00:00",
+    "updatedAt": "2026-11-01T11:23:51.999036+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41785,6 +41785,36 @@
         "summary": "Open the standalone Nogo test runner PR?",
         "body": "With both reports clean, the Bash launcher exited 127 on an AMD64 scratch worker and the native analyzer passed. Removing the waiter mutex made the same analyzer fail and identify the unguarded access for AMD64 and ARM64. The test reuses the existing analyzer binary. The standalone edits match the tested integration edits."
       }
+    },
+    {
+      "id": "branch:semop-last-pid",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/semop-last-pid",
+      "head": "c4231067d198ea1b38bd629b7c87a5426f44b2c8",
+      "title": "Preserve the last operator of untouched SysV semaphores",
+      "url": "https://github.com/tamird/gvisor/commit/c4231067d",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T11:23:51.999036+00:00",
+      "summary": "A successful operation on semaphore 1 overwrote the last operator of semaphore 0. Linux leaves an untouched member’s PID at zero. Update the members named in the vector and keep waking waiters across the set.",
+      "evidence": [
+        {
+          "label": "Linux, stock and corrected gVisor syscall XML and analyzer result",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41301068076/artifacts/13081482611"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "c4231067d198ea1b38bd629b7c87a5426f44b2c8",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/c4231067d",
+        "title": "Preserve the last operator of untouched SysV semaphores",
+        "requestedAt": "2026-11-01T11:23:51.999036+00:00",
+        "summary": "Open the independent semaphore last-operator fix?",
+        "body": "An operation on semaphore 1 changed GETPID on untouched semaphore 0 from zero to one on stock gVisor. Linux and corrected gVisor passed all six syscall cases. The semaphore analyzer passed. Retaining the PID of a reaped writer is a separate issue."
+      }
     }
   ],
   "edges": [
@@ -48115,9 +48145,26 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T11:08:57.252966+00:00",
+      "updatedAt": "2026-11-01T11:20:26.968180+00:00",
       "summary": "The graph codec is now the default. On a four-worker Nginx checkpoint, encoding took 2.25 ms instead of 12.71 ms and decoding took 8.99 ms instead of 17.75 ms. All four round-trip bugs tracked in #16715 are fixed. Increasing the UDP receive queue did not grow the index table. Smaller writer buffers and clearing fewer decoder slots did not speed up Nginx checkpoints. Separating callback payloads reduced allocated bytes without improving the time to Nginx’s first HTTP response.",
       "findings": [
+        {
+          "text": "The graph reader resolves each registered type once. In the 50,000-file profile with GC enabled, allocation accounted for 150 of the 170 sampled milliseconds in readObjects. A generated new(T) still allocates once per object. Allocating many restored dentries together would let a surviving file keep deleted neighbors and their metadata alive. Keep independent allocation for objects whose lifetimes can diverge.",
+          "evidence": [
+            {
+              "label": "Full-checkpoint CPU profiles and native restore measurements",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41289006099/artifacts/13076482536"
+            },
+            {
+              "label": "Graph reader allocation loop",
+              "url": "https://github.com/google/gvisor/blob/aa767e4c4/pkg/state/graph_decode_unsafe.go#L269-L380"
+            },
+            {
+              "label": "tmpfs dentries and their inode references",
+              "url": "https://github.com/google/gvisor/blob/aa767e4c4/pkg/sentry/fsimpl/tmpfs/tmpfs.go#L551-L590"
+            }
+          ]
+        },
         {
           "text": "Replacing the per-slot field-type cache saved 59 KB (0.04%) per Load. On a 50,000-file checkpoint, 16 paired samples per mode showed no timing gain in Save, Load with GC off, or Load with GC on. Both binaries restored all files in eight additional native pairs. Keep the existing cache.",
           "evidence": [
@@ -51057,7 +51104,7 @@
           ]
         }
       ],
-      "nextStep": "The independent encoder and decoder changes are ready for contributor review. Check current graph-engine reviews and use the retained large-checkpoint profiles to identify any further end-to-end bottleneck. The Nginx quota sweep is complete on #16472.",
+      "nextStep": "The encoder and decoder proposals are ready for contributor review. Use complete checkpoint profiles to choose the next experiment. The per-slot cache and shared allocation investigations are concluded.",
       "evidence": [
         {
           "label": "Matched 50,000-file checkpoint and native restores",
@@ -57948,9 +57995,18 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T11:08:57.252966+00:00",
+      "updatedAt": "2026-11-01T11:20:26.968180+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The normal GNU builds of five existing syscall binaries (fork, futex, shared memory, TCP and UDP) passed on native AMD64 and ARM64 scratch workers. Each architecture ran 103 fresh compilations and five fresh links. All ten binaries use the GNU dynamic loader. The bundled verdicts took 2.98 and 2.54 seconds after the builds finished.",
+          "evidence": [
+            {
+              "label": "Compiler actions, linker inputs and ELF inspections for both architectures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41300981826/artifacts/13081601435"
+            }
+          ]
+        },
         {
           "text": "The PosixError and FsUtil C++ binaries ran directly on empty AMD64 and ARM64 workers. All 12 named cases passed. With the musl platform and --dynamic_mode=off, both links on each architecture selected the static C++ runtimes and musl libc.a. All four ELF files had no interpreter or shared-library dependencies. The verified results arrived 2.53 and 2.45 seconds after the tests finished.",
           "evidence": [
@@ -59365,7 +59421,7 @@
           ]
         }
       ],
-      "nextStep": "Build five existing GNU syscall binaries on empty workers for both architectures, covering fork, futexes, shared memory, TCP and UDP. Check the link inputs and the resulting ELF files. The standalone native Nogo runner is ready for contributor review.",
+      "nextStep": "Run an ordinary native syscall test with its declared GNU runtime on a scratch worker. The standalone native Nogo runner is ready for contributor review.",
       "evidence": [
         {
           "label": "12 named cases, four native test actions and ELF inspections",
@@ -59636,19 +59692,23 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T11:08:57.252966+00:00",
+      "updatedAt": "2026-11-01T11:23:51.999036+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
-          "text": "A SysV semop on one semaphore records its caller as the last operator on every member of the set. The existing fork test now exercises a successful wait for zero on a different semaphore from the one its child changed. The Linux and gVisor comparison is running.",
+          "text": "A successful semop on semaphore 1 overwrote GETPID on untouched semaphore 0. Stock returned PID 1. Linux and corrected gVisor returned zero and passed all six cases. A separate test found that gVisor loses the writer’s PID after the writer is reaped because GETPID looks up a live thread group. Linux retains the PID.",
           "evidence": [
             {
-              "label": "Fork-based syscall comparison",
-              "url": "https://github.com/tamird/gvisor/actions/runs/41300279594"
+              "label": "Original comparison after the child was reaped",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41300279594/artifacts/13081740258"
             },
             {
-              "label": "Proposed last-operator correction",
-              "url": "https://github.com/tamird/gvisor/commit/8d52ba8f4"
+              "label": "Linux semaphore PID lookup",
+              "url": "https://github.com/torvalds/linux/blob/adc218676/ipc/sem.c#L1548-L1549"
+            },
+            {
+              "label": "Linux, stock and corrected gVisor on the same six syscall cases",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41301068076/artifacts/13081482611"
             }
           ]
         },
@@ -59756,7 +59816,7 @@
           ]
         }
       ],
-      "nextStep": "Review the three timekeeper annotations together. Follow the overlay close and cache-lock changes through upstream review.",
+      "nextStep": "The semop membership correction is ready for contributor review. Investigate preserving the writer’s PID after reap separately and check whether Nogo can enforce the semaphore wait-list lock.",
       "evidence": [
         {
           "label": "Timekeeper updater: all four lock diagnostics verified",
