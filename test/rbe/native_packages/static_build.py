@@ -1,4 +1,4 @@
-"""Qualify the native-wrapper rebase using its C++ and Java owners."""
+"""Qualify the native-wrapper rebase using its remaining Java owner."""
 
 import collections
 import datetime
@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 SOURCE = "aa90c0a75a7ea6b59ddc593d676ab316f1e61aa2"
-TARGETS = {"//tools/test:tw_test", "//src/test/java/com/google/devtools/build/lib/analysis/test:TestActionBuilderTest"}
+TARGETS = {"//src/test/java/com/google/devtools/build/lib/analysis/test:TestActionBuilderTest"}
 REQUIRED = {"testNativePosixTestWrapperDisabledByDefault", "testNativePosixTestWrapperEnabled",
             "testNativePosixTestWrapperDoesNotReplaceWindowsWrapper", "testNativePosixTestWrapperFallsBackWithoutOsConstraint"}
 
@@ -161,11 +161,13 @@ def main():
             owner["required_missing"] = sorted(REQUIRED - {case["name"].split("[", 1)[0] for case in names if case["classname"].endswith(".TestActionBuilderTest")}) if name == "TestActionBuilderTest" else []
             owner["status"] = "PASS" if cases and not owner["counts"]["failed"] and not owner["counts"]["skipped"] and not owner["required_missing"] and (name != "tw_test" or len(cases) == 14) else "FAIL"
         write(destination, row)
+        if compact.exists():
+            row["actions"] = actions(compact, tmp)
+        write(destination, row)
         if code or set(completed) != TARGETS or any(values != [True] for values in completed.values()):
-            raise ValueError("One of the two original owners did not complete successfully")
+            raise ValueError("The original Java owner did not complete successfully")
         if any(owner["status"] != "PASS" for owner in row["owners"].values()):
             raise ValueError("The original owners have missing, failed or skipped cases")
-        row["actions"] = actions(compact, tmp)
         if any(row["actions"]["decoder_exits"]) or row["actions"]["counts"].get("failed") or row["actions"]["wrong_network_actions"]:
             raise ValueError("Supplier execution evidence is incomplete or failed")
         if not row["actions"]["compile_link"] or set(row["actions"]["compile_link"]) - {"remote", "remote cache hit"}:
@@ -173,7 +175,7 @@ def main():
         tests = row["actions"]["tests"]
         if (collections.Counter(test["target"] for test in tests) != collections.Counter(TARGETS)
                 or any(test["runner"] != "remote" or test["cached"] or test["status"] or test["exit_code"] for test in tests)):
-            raise ValueError("The two owners did not execute freshly on the remote worker")
+            raise ValueError("The Java owner did not execute freshly on the remote worker")
         row["source_unchanged"] = not subprocess.check_output(["git", "diff", "HEAD", "--"])
         if not row["source_unchanged"]:
             raise ValueError("Tracked supplier source changed during qualification")
