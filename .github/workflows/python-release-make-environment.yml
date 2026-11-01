@@ -1,0 +1,26 @@
+name: Compare the native Buildkite Python release Make plan
+on:
+  push:
+    branches: [qualification/buildkite-python-make-environment]
+permissions:
+  contents: read
+jobs:
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Compare both declared release commands with GNU Make
+        run: |
+          cp .github/qualification/python-release-make-environment.py "$RUNNER_TEMP/plan.py"
+          /usr/bin/python3 "$RUNNER_TEMP/plan.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: python-release-make-plan
+          path: |
+            ${{ runner.temp }}/python-release-make-plan.json
+            ${{ runner.temp }}/matched-make-plan.txt
+          if-no-files-found: error
