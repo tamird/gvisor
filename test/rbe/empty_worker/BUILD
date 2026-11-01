@@ -58,3 +58,28 @@ platform(
     parents = [":arm64"],
     visibility = ["//visibility:public"],
 )
+
+# Static glibc tests need the same Linux CPU ABI, but not the worker's libc.
+# The execution platform can therefore keep using musl for its build tools.
+[
+    toolchain(
+        name = "static_glibc_%s_test" % arch,
+        exec_compatible_with = [
+            "@platforms//cpu:" + cpu,
+            "@platforms//os:linux",
+        ],
+        target_compatible_with = [
+            "@llvm//constraints/glibc_linkage:static",
+            "@llvm//constraints/libc:gnu.2.44",
+            "@platforms//cpu:" + cpu,
+            "@platforms//os:linux",
+        ],
+        toolchain = "@bazel_tools//tools/test:empty_toolchain",
+        toolchain_type = "@bazel_tools//tools/test:default_test_toolchain_type",
+        visibility = ["//visibility:public"],
+    )
+    for arch, cpu in [
+        ("amd64", "x86_64"),
+        ("arm64", "aarch64"),
+    ]
+]
