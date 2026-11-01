@@ -1,35 +1,169 @@
-name: CI
-
-"on":
-  push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+name: Check the semaphore waiter wakeup lock
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/semaphore-waiter-lock-recheck'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 5
+        persist-credentials: false
+    - name: Preserve the original suite and analyzer results
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        archive="$RUNNER_TEMP/original-41301790494.zip"
+        gh api repos/tamird/gvisor/actions/artifacts/13081203436/zip > "$archive"
+        echo "dcd0c695baed698ac08db99806c80e60bd54805198dba728582472bd67dfa00e  $archive" | sha256sum -c -
+        mkdir -p "$RUNNER_TEMP/replay-public/original"
+        unzip -q "$archive" -d "$RUNNER_TEMP/replay-public/original"
+    - name: Check both analyzer arms on the corrected source
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+        test "$(git rev-parse HEAD^1)" = "e26ae54a25a99f65acecc851206a305043841ae5"
+        mkdir -p "$RUNNER_TEMP/checker"
+        for file in qualify.sh unit_matrix.py qualification_report.py verify_waiter_lock.py; do
+          cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
+        done
+        python3 -m py_compile "$RUNNER_TEMP/checker/"*.py
+        mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
+        GNU=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+        platform=$RUNNER_TEMP/fifo_platform
+        printf '%s\n' 'module(name="tcp_gnu")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<'BUILD'
+        platform(
+            name = "gnu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {
+                "Arch": "amd64",
+                "OSFamily": "linux",
+                "workload-isolation-type": "firecracker",
+                "EstimatedMemory": "4GB",
+                "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+            },
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        rc=$RUNNER_TEMP/fifo.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
+            'build --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
+            'build --remote_accept_cached' \
+            "build --inject_repository=tcp_gnu=$platform" \
+            'build --host_platform=@tcp_gnu//:gnu' \
+            'build --extra_execution_platforms=@tcp_gnu//:gnu' \
+            'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        printf '%s\n' 'build:rbe --spawn_strategy=remote' >> "$rc"
+        # Configure Bazel's host toolchain against the same compiler and libc
+        # available to build actions. Tests still select the Firecracker image
+        # with iptables through their target's execution properties.
+        export TCP_BAZEL_ROOT="$HOME/.cache/bazel/_bazel_runner"
+        mkdir -p "$TCP_BAZEL_ROOT"
+        docker pull --platform linux/amd64 "$GNU"
+        docker run -d --name tcp-gnu --entrypoint /bin/bash --user "$(id -u):$(id -g)" \
+          -e "HOME=$HOME" -e "USER=$USER" -v "$HOME/.cache/bazel:$HOME/.cache/bazel" \
+          -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" \
+          -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec tcp-gnu x86_64-linux-gnu-gcc -dumpfullversion
+        docker exec tcp-gnu aarch64-linux-gnu-gcc -dumpfullversion
+        docker exec tcp-gnu bazel --version
+        export FIFO_RC=$rc
+        mkdir -p "$RUNNER_TEMP/fifo-bin"
+        cat > "$RUNNER_TEMP/fifo-bin/bazel" <<'SH'
+        #!/bin/sh
+        case "$1" in
+          test)
+            # Capture the actual argv and Bazel exit, independent of the qualifier's exit.
+            printf '%s\n' "$@" > "$TCP_EVIDENCE/executed_arguments"
+            status=0
+            docker exec tcp-gnu bazel --output_user_root="$TCP_BAZEL_ROOT" --bazelrc="$FIFO_RC" "$@" || status=$?
+            printf '%s\n' "$status" > "$TCP_EVIDENCE/native_exit"
+            date -u '+%Y-%m-%dT%H:%M:%S.%3N+00:00' > "$TCP_EVIDENCE/finished"
+            exit "$status"
+            ;;
+        esac
+        exec docker exec tcp-gnu bazel --output_user_root="$TCP_BAZEL_ROOT" --bazelrc="$FIFO_RC" "$@"
+        SH
+        chmod +x "$RUNNER_TEMP/fifo-bin/bazel"
+        export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
+        overall=0
+        mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
+        for arm in fixed negative; do
+          case $arm in
+            negative) source=e26ae54a25a99f65acecc851206a305043841ae5; parent=b68f40e4e358798ba034116cdb4c8194bb1c7c07 ;;
+            fixed) source=b68f40e4e358798ba034116cdb4c8194bb1c7c07; parent=c4231067d198ea1b38bd629b7c87a5426f44b2c8 ;;
+          esac
+          if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
+            git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
+          fi
+          git checkout --quiet --detach "$source"
+          test "$(git rev-parse HEAD)" = "$source"
+          test "$(git cat-file commit HEAD | awk 'NF == 0 {exit} $1 == "parent" {print $2}')" = "$parent"
+          export TCP_EVIDENCE="$RUNNER_TEMP/replay-private/$arm"
+          mkdir -p "$TCP_EVIDENCE" test/rbe
+          cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
+          git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_before"
+          test ! -s "$TCP_EVIDENCE/source_before"
+          git cat-file commit HEAD > "$TCP_EVIDENCE/commit_file"
+          raw="$RUNNER_TEMP/replay-private/$arm.raw.jsonl"
+          code=0
+          opts=()
+          labels=(//pkg/sentry/kernel/semaphore:semaphore_nogo)
+          selection=()
+          for target in "${labels[@]}"; do selection+=("--test-target=$target"); done
+          bash test/rbe/qualify.sh --arch=amd64 "${selection[@]}" "${opts[@]}" \
+            "--bazel-option=--build_event_json_file=$raw" --bazel-option=--build_event_json_file_path_conversion=false \
+            --bazel-option=--test_sharding_strategy=disabled --bazel-option=--cache_test_results=no \
+            --bazel-option=--remote_download_outputs=toplevel '--bazel-option=--remote_download_regex=.*[/]test[.](log|xml)$' test || code=$?
+          printf '%s\n' "$code" > "$TCP_EVIDENCE/runner_exit"
+          git rev-parse HEAD > "$TCP_EVIDENCE/final_head"
+          git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
+          python3 -B "$RUNNER_TEMP/checker/verify_waiter_lock.py" "$TCP_EVIDENCE" "$arm" "$source" "${labels[*]}" "$raw" "$RUNNER_TEMP/replay-public" || overall=1
+        done
+        python3 - "$RUNNER_TEMP/replay-public" <<'PYRESULT'
+        import json, sys
+        from pathlib import Path
+        root = Path(sys.argv[1])
+        arms = ["negative", "fixed"]
+        verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
+        missing = [a for a in arms if a not in verdicts]
+        result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["verified"] for v in verdicts.values()) else "FAIL"}
+        (root / "summary.json").write_text(json.dumps(result, indent=2) + "\n")
+        original = json.loads((root/"original/fixed.json").read_text())
+        expected_cases = {"TestBasic", "TestWaitForZero", "TestNoWait", "TestUnregister"}
+        assert len(original["observed"]["cases"]) == 4 and set(original["observed"]["cases"]) == expected_cases
+        assert original["case_counts"] == {"passed": 4, "failed": 1, "skipped": 0}
+        assert original["invocation"] == "91e36979-e267-43a7-8e3e-1af30960253e"
+        print(result)
+        sys.exit(result["status"] != "PASS")
+        PYRESULT
+        exit "$overall"
+    - name: Save only the typed results
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: semaphore-waiter-lock-final
+        path: ${{ runner.temp }}/replay-public/
+        if-no-files-found: error
