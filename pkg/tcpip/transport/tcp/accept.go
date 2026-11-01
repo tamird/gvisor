@@ -669,7 +669,6 @@ func (e *Endpoint) handleListenSegment(ctx *listenContext, s *segment) tcpip.Err
 			// Like Linux's cookie_timestamp_decode(), recover SACK from
 			// TSEcr. The cookie does not authenticate it: the peer can
 			// request SACK here just as in its SYN, subject to the stack setting.
-			rcvdSynOptions.SACKPermitted = s.parsedOptions.TSEcr&cookieTimestampSACK != 0
 		}
 
 		n, err := ctx.createConnectingEndpoint(s, rcvdSynOptions, &waiter.Queue{})
