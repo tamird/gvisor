@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T21:55:55+00:00",
+    "updatedAt": "2026-11-01T22:24:10+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4589,8 +4589,8 @@
       "url": "https://github.com/tamird/gvisor/commit/0afd5b37e",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "The compiler revision on current master uses the upstream LLVM source repository and retains the current Go rules, Linux headers and libbpf. It needs the two syscall-test allocator exception specifications, not the full #15368 cleanup. The catalog gains llvm-project and with_cfg and drops llvm-raw. QEMU and LTP license mismatches also occur on the parent. The principal binaries and analyzers passed for both targets. A new remote AMD64 compile reproduced the 4,456,624-byte NVIDIA parser object. The NVIDIA driver parser linked on AMD64 (211,730,920 bytes) and ARM64 (224,953,640 bytes). Both ELF products matched the corresponding remote link digest. The ARM link reused one locally generated TableGen include. The original driver ABI TestParser passed on AMD64 and native ARM64, one test each with no skips. The ARM64 case took 0.070 s; its uncached remote attempt finished on 2026-11-01 at 02:48:45.697 UTC. The original producer emitted an INCOMPLETE verdict 39.21 s later because it selected the wrong execution-log output. A read-only recovery confirmed the original XML, log, architecture and remote execution. Its verdict remains INCOMPLETE because the parser input was not found at the checked action-input paths; the per-action binary digest remains unverified. Neither reporting failure is a failed TestParser case.",
-      "updatedAt": "2026-11-01T18:14:27.339843+00:00",
+      "summary": "The compiler revision on current master uses the upstream LLVM source repository and retains the current Go rules, Linux headers and libbpf. It needs the two syscall-test allocator exception specifications, not the full #15368 cleanup. The catalog gains llvm-project and with_cfg and drops llvm-raw. QEMU and LTP license mismatches also occur on the parent. The principal binaries and analyzers passed for both targets. A new remote AMD64 compile reproduced the 4,456,624-byte NVIDIA parser object. The NVIDIA driver parser linked on AMD64 (211,730,920 bytes) and ARM64 (224,953,640 bytes). Both ELF products matched the corresponding remote link digest. The ARM link reused one locally generated TableGen include. The original driver ABI TestParser passed on AMD64 and native ARM64, one test each with no skips. The original uncached ARM64 action supplied the exact 224,953,640-byte linked ELF through its test runfiles. The digest was recovered from its retained input tree. A full-repository query also found that the relocated syscallbench target passes an attribute removed by this compiler change.",
+      "updatedAt": "2026-11-01T22:24:10+00:00",
       "head": "0afd5b37e31824e0299c44235ef4cb58af0358ce",
       "evidence": [
         {
@@ -4682,8 +4682,8 @@
         "owner": "Compiler integration",
         "sourceHead": "0afd5b37e31824e0299c44235ef4cb58af0358ce",
         "disposition": "Qualify current compiler",
-        "observedAt": "2026-11-01T18:14:27.339843+00:00",
-        "nextAction": "Parser behavior has passed on both architectures. The remaining reporting task is to locate the ARM64 parser in the original action input tree; no test rerun is needed. Preserve the independent licensing prerequisites for compiler integration. When integrating on Bazel 9, remove tools/crosstool-bazel9.patch and tools/llvm-bazel9.patch with their consumers. Keep the independent Linux-header patch. To retain #15940’s AArch64/X86 restriction, use a supplier release containing 17f6a3008. Registry releases through 0.8.26 select nine backends. Recheck the selected backends and the NVIDIA parser under Bazel 9.",
+        "observedAt": "2026-11-01T22:22:07+00:00",
+        "nextAction": "Fix syscallbench on its current BUILD path and verify both target architectures. Removing the obsolete attribute restores full package loading, but the default GNU sysroot cannot statically link its libc dependencies. With the declared musl sysroot the AMD64 binary has no interpreter or dynamic dependencies and runs all ten syscalls. Preserve the independent licensing prerequisites for compiler integration. When integrating on Bazel 9, remove tools/crosstool-bazel9.patch and tools/llvm-bazel9.patch with their consumers. Keep the independent Linux-header patch. To retain #15940’s AArch64/X86 restriction, use a supplier release containing 17f6a3008. Registry releases through 0.8.26 select nine backends. Recheck the selected backends and the NVIDIA parser under Bazel 9.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
@@ -4696,7 +4696,9 @@
           "https://github.com/tamird/gvisor/commit/375b2c570",
           "https://github.com/google/gvisor/pull/15940",
           "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a3008",
-          "https://bcr.bazel.build/modules/llvm/0.8.26/MODULE.bazel"
+          "https://bcr.bazel.build/modules/llvm/0.8.26/MODULE.bazel",
+          "https://github.com/tamird/gvisor/actions/runs/41356396814/artifacts/13103082090",
+          "https://github.com/tamird/gvisor/actions/runs/41356215600/artifacts/13103158395"
         ]
       }
     },
@@ -38008,8 +38010,8 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-01T08:05:34.708942+00:00",
-      "summary": "Both restores on 5068ecb10 ran at a 200 MiB kernel limit. Starting at 200 MiB selected a 99.93 MiB Go limit and succeeded. Shrinking from 2 GiB selected 1,023 MiB and the kernel OOM-killed the Sentry. The pending review also identifies the cgroup directory reads in the fixture. The ancestor limit at boot is a separate finding.",
+      "updatedAt": "2026-11-01T22:24:10+00:00",
+      "summary": "Both restores on 5068ecb10 ran at a 200 MiB kernel limit. Starting at 200 MiB selected a 99.93 MiB Go limit and succeeded. Shrinking from 2 GiB selected 1,023 MiB and the kernel OOM-killed the Sentry. The pending review also identifies the cgroup directory reads in the fixture. The ancestor limit at boot is a separate finding. A separate three-way save comparison is running on the PR parent, the earlier save policy rebased to that parent, and the proposed policy. It verifies each restored 100,000-file archive.",
       "evidence": [
         {
           "label": "Both restore cases on 5068ecb10, with actual limits and OOM counters",
@@ -42650,13 +42652,13 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/buildkite-native-nogo",
-      "head": "e86e84eb839c0f691a227faa8e80406eb144f03c",
+      "head": "6aa894aa1bce04a655c7064f15c9a7f43ac77c2d",
       "title": "Run Buildkite Nogo tests without the builder",
       "url": "https://github.com/tamird/gvisor/commit/e86e84eb8",
       "group": "analysis",
       "status": "Agent work",
-      "updatedAt": "2026-11-01T21:55:55+00:00",
-      "summary": "Both Buildkite jobs can launch Nogo directly with Bazelisk. The declared compiler built and analyzed the AMD64 and ARM64 vDSOs and systrap stubs on an AMD64 host without an installed cross compiler. A deliberate finding also reached Buildkite’s failed-log uploader. Full-repository execution still needs verification.",
+      "updatedAt": "2026-11-01T22:24:10+00:00",
+      "summary": "Both Buildkite jobs can launch Nogo directly with Bazelisk. The declared compiler built and analyzed the AMD64 and ARM64 vDSOs and systrap stubs on an AMD64 host without an installed cross compiler. A deliberate finding also reached Buildkite’s failed-log uploader. Full-repository execution still needs verification. The revised job retains Buildkite’s existing debug symbols. The full target pattern exposed a compiler integration defect in the syscallbench BUILD file.",
       "evidence": [
         {
           "label": "Both cross-architecture owners with the declared compiler",
@@ -42673,12 +42675,14 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "e86e84eb839c0f691a227faa8e80406eb144f03c",
-        "observedAt": "2026-11-01T21:55:55+00:00",
+        "sourceHead": "6aa894aa1bce04a655c7064f15c9a7f43ac77c2d",
+        "observedAt": "2026-11-01T22:22:07+00:00",
         "disposition": "Selected native jobs verified",
-        "nextAction": "Check the full Buildkite target pattern on an ordinary host before requesting contributor review.",
+        "nextAction": "Verify both full Buildkite job selections after the compiler integration fixes syscallbench. The focused ELF checks passed. The latest action-graph verifier could not identify the requested root labels.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41353882134/artifacts/13101954456"
+          "https://github.com/tamird/gvisor/actions/runs/41353882134/artifacts/13101954456",
+          "https://github.com/tamird/gvisor/actions/runs/41355123970",
+          "https://github.com/tamird/gvisor/actions/runs/41356215600/artifacts/13103158395"
         ]
       }
     }
@@ -46170,7 +46174,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-01T21:55:55+00:00",
+      "updatedAt": "2026-11-01T22:24:10+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -48067,9 +48071,26 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41353910821/artifacts/13102187282"
             }
           ]
+        },
+        {
+          "text": "When the next queued write was larger than a full segment, borrowing bytes from it removed the 108-byte originals in all six WAN comparisons. Stock sent 547–1,156 in each run. gVisor receiver goodput changed by +2.46, +1.32 and −0.84 Mbit/s when gVisor started first, and by +3.02, +1.60 and −2.35 Mbit/s when Linux started first. The forward queue dropped fewer packets in all three gVisor-first pairs and more in all three Linux-first pairs. The change stays experimental.",
+          "evidence": [
+            {
+              "label": "Linux, stock and experimental packet traces including FIN and socket marks",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41354764086/artifacts/13102278368"
+            },
+            {
+              "label": "Six native/gVisor WAN pairs with both launch orders",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41355300500/artifacts/13103826157"
+            },
+            {
+              "label": "Review guide and priorities",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            }
+          ]
         }
       ],
-      "nextStep": "Test whether filling the packet when the following write is already larger than one wire segment reduces short packets and changes delivered throughput. Keep the existing behavior for writes small enough to send intact. The WAN traces alone cannot show whether the next write was queued.",
+      "nextStep": "Examine the two goodput reversals in the retained transfers. Compare both senders’ delivery and loss recovery over the same interval before deciding whether to pursue the packetization change.",
       "evidence": [
         {
           "label": "Eight competing transfers with verified packet captures",
