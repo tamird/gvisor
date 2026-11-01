@@ -1,7 +1,7 @@
-name: Check ICMP quote applicability and TCP error lock analysis
+name: Check the quoted TCP error and segment footprint
 on:
   push:
-    branches: [qualification/tcp-quoted-error-packet]
+    branches: [qualification/tcp-quoted-socket-error]
 permissions:
   contents: read
 jobs:
@@ -12,7 +12,7 @@ jobs:
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
       PACKET: 1dd6ebc0115dcf69806034f43e757ac92ad76612
-      CANDIDATE: a24cc45c8744fb0c1abf4a14a0da9ae31f779eab
+      CANDIDATE: 99504c38e1d016b0f5fd17ff419ac0b1c47e0406
       TERMINAL: ec72fa020b00d78a5c983f9296852930001d87d6
       STOCK: aa767e4c43d011121271551fe24da501a56f729d
     steps:
@@ -41,46 +41,57 @@ jobs:
         docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
         docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
         docker exec tcp-compiler python3 -c 'import socket; s=socket.socket(socket.AF_INET6); s.bind(("::1",0)); print(s.getsockname())' > "$RUNNER_TEMP/records/native-ipv6"
-    - name: Run the permanent packet test on Linux, stock and the correction
+    - name: Exercise the final queue in the packet test and owning TCP suite
       run: |
-        set -euo pipefail
-        for arm in native stock fixed; do
-          source=$CANDIDATE; target=//test/packetimpact/tests:tcp_connect_icmp_error_netstack_test
-          if [ "$arm" = native ]; then target=//test/packetimpact/tests:tcp_connect_icmp_error_native_test; fi
-          if [ "$arm" = stock ]; then source=$STOCK; fi
-          git checkout --quiet --detach "$source"
-          test "$(git rev-parse HEAD)" = "$source"
-          git restore --source="$CANDIDATE" -- test/packetimpact/tests/tcp_connect_icmp_error_test.go
-          git restore --source="$PACKET" -- test/packetimpact/runner/defs.bzl test/packetimpact/runner/main.go
-          python3 - <<'PYFIX'
+        set -eu
+        git checkout --quiet --detach "$CANDIDATE"
+        test "$(git rev-parse HEAD)" = "$CANDIDATE"
+        git restore --source="$PACKET" -- test/packetimpact/runner/defs.bzl test/packetimpact/runner/main.go
+        python3 - <<'PYFIX'
         from pathlib import Path
         p=Path('test/packetimpact/runner/main.go')
-        s=p.read_text()
-        assert s.count('^TestListenerReusesReceiveBuffer$') == 1
-        p.write_text(s.replace('^TestListenerReusesReceiveBuffer$', '^TestTCPEstablishedICMPError$'))
+        src=p.read_text()
+        assert src.count('^TestListenerReusesReceiveBuffer$') == 1
+        p.write_text(src.replace('^TestListenerReusesReceiveBuffer$', '^TestTCPEstablishedICMPError$'))
         PYFIX
-          d=$RUNNER_TEMP/records/$arm; mkdir -p "$d"
-          sha256sum test/packetimpact/tests/tcp_connect_icmp_error_test.go > "$d/fixture"
-          date -u +%FT%TZ > "$d/start"; rc=0
-          timeout -k 15s 12m docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --platforms=//tools/bazeldefs:linux_amd64 --jobs=32 --local_resources=cpu=1 '--strategy_regexp=^Compiling test/packetimpact/(dut/posix_server[.]cc|proto/.*[.]cc)=local' '--strategy_regexp=^Linking test/packetimpact/dut/posix_server=local' --build_tag_filters= --test_tag_filters= --strategy=TestRunner=remote --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel --test_output=all --test_timeout=180 --test_sharding_strategy=disabled --build_event_json_file="$d/bep" "$target" > "$d/bazel.log" 2>&1 || rc=$?
-          printf '%s\n' "$rc" > "$d/exit"; date -u +%FT%TZ > "$d/finish"
-          git restore --source=HEAD -- test/packetimpact/runner/defs.bzl test/packetimpact/runner/main.go test/packetimpact/tests/tcp_connect_icmp_error_test.go
-          python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records" progress
-        done
-    - name: Analyze the terminal-lock source for ARM64 using the GNU coordinator for the Linux ABI action
+        d=$RUNNER_TEMP/records/fixed; mkdir -p "$d"
+        sha256sum test/packetimpact/tests/tcp_connect_icmp_error_test.go > "$d/fixture"
+        date -u +%FT%TZ > "$d/start"; rc=0
+        timeout -k 15s 23m docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --keep_going --config=x86_64 --platforms=//tools/bazeldefs:linux_amd64 --jobs=32 --local_resources=cpu=1 '--strategy_regexp=^Compiling test/packetimpact/(dut/posix_server[.]cc|proto/.*[.]cc)=local' '--strategy_regexp=^Linking test/packetimpact/dut/posix_server=local' '--strategy_regexp=^Analyzing.(@@)?//pkg/abi/linux:linux$=local' --build_tag_filters= --test_tag_filters= --strategy=TestRunner=remote --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel --test_output=all --test_timeout=360 --test_sharding_strategy=disabled --build_event_json_file="$d/bep" //test/packetimpact/tests:tcp_connect_icmp_error_netstack_test //pkg/tcpip/transport/tcp:tcp_test //pkg/tcpip/transport/tcp:tcp_nogo > "$d/bazel.log" 2>&1 || rc=$?
+        printf '%s\n' "$rc" > "$d/exit"; date -u +%FT%TZ > "$d/finish"
+        python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records" progress
+    - name: Compare the Go compiler's actual segment footprint with stock on each architecture
       if: always()
       run: |
         set -eu
-        git checkout --quiet --detach "$TERMINAL"
-        test "$(git rev-parse HEAD)" = "$TERMINAL"
-        d=$RUNNER_TEMP/records/arm-analysis; mkdir -p "$d"
-        date -u +%FT%TZ > "$d/start"; rc=0
-        timeout -k 20s 16m docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" build --config=aarch64 --platforms=//tools/bazeldefs:linux_arm64 --jobs=32 --remote_download_outputs=toplevel '--strategy_regexp=^Analyzing.(@@)?//pkg/abi/linux:linux$=local' --build_event_json_file="$d/bep" //pkg/tcpip/transport/tcp:tcp_nogo //pkg/tcpip/transport/tcp/test/e2e:tcp_test_nogo > "$d/bazel.log" 2>&1 || rc=$?
-        printf '%s\n' "$rc" > "$d/exit"; date -u +%FT%TZ > "$d/finish"
+        test "$(git rev-parse HEAD)" = "$CANDIDATE"
+        git show "$STOCK":pkg/tcpip/transport/tcp/segment.go > "$RUNNER_TEMP/original.go"
+        python3 - <<'PYLAYOUT'
+        from pathlib import Path
+        import os
+        d=Path("pkg/tcpip/transport/tcp")
+        old=(Path(os.environ["RUNNER_TEMP"])/"original.go").read_text()
+        start=old.index("type segment struct {")
+        end=old.index("\n}", start)+2
+        old=old[start:end].replace("type segment struct {","type originalSegmentLayout struct {",1)
+        with (d/"segment.go").open("a") as src:
+            src.write("\n"+old+"\n")
+        with (d/"segment_unsafe.go").open("a") as src:
+            src.write("\nconst originalSize = int(unsafe.Sizeof(originalSegmentLayout{}))\nvar _ [originalSize - segSize]byte\nvar _ [segSize - originalSize]byte\n")
+        PYLAYOUT
+        for arch in amd64 arm64; do
+          config=x86_64; [ "$arch" != arm64 ] || config=aarch64
+          d=$RUNNER_TEMP/records/layout-$arch; mkdir -p "$d"; rc=0
+          sha256sum "$RUNNER_TEMP/original.go" pkg/tcpip/transport/tcp/segment{,_unsafe}.go > "$d/inputs"
+          date -u +%FT%TZ > "$d/start"
+          timeout -k 15s 15m docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" build --config="$config" --platforms="//tools/bazeldefs:linux_$arch" --jobs=32 --build_event_json_file="$d/bep" //pkg/tcpip/transport/tcp:tcp > "$d/bazel.log" 2>&1 || rc=$?
+          printf '%s\n' "$rc" > "$d/exit"; date -u +%FT%TZ > "$d/finish"
+          python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records" progress
+        done
         python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records"
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: permanent-icmp-and-terminal-analysis
+        name: typed-icmp-packet-and-segment-layout
         path: ${{ runner.temp }}/records/verdict.json
         if-no-files-found: error

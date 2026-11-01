@@ -1,44 +1,46 @@
-"""Require each original native/stock/fixed packet outcome and both ARM analyzers."""
+"""Verify the ordinary packet test, TCP package, analyzer and layout proofs."""
 import json
 import os
 from pathlib import Path
+import re
 import sys
 
 
 def arm(path):
     if not (path / "exit").is_file():
         return {"verified": False, "reason": "missing"}
-    events = [json.loads(line) for line in (path / "bep").read_text().splitlines()] if (path / "bep").is_file() else []
+    bep = path / "bep"
+    events = [json.loads(line) for line in bep.read_text().splitlines()] if bep.is_file() else []
     invocations = [e["started"]["uuid"] for e in events if "started" in e]
+    complete = {e["id"]["targetCompleted"]["label"] for e in events if "targetCompleted" in e["id"] and e.get("completed", {}).get("success")}
     rc = int((path / "exit").read_text())
-    text = (path / "bazel.log").read_text(errors="replace")
-    evidence = {key: (path / key).read_text().strip() for key in ("start", "finish")}
-    if path.name == "arm-analysis":
-        labels = {"//pkg/tcpip/transport/tcp:tcp_nogo", "//pkg/tcpip/transport/tcp/test/e2e:tcp_test_nogo"}
-        complete = {e["id"]["targetCompleted"]["label"] for e in events if e.get("completed", {}).get("success") and "targetCompleted" in e.get("id", {})}
-        evidence["completed"] = sorted(labels & complete)
-        ok = rc == 0 and labels <= complete
-    else:
-        label = "//test/packetimpact/tests:tcp_connect_icmp_error_" + ("native" if path.name == "native" else "netstack") + "_test"
+    log = (path / "bazel.log").read_text(errors="replace")
+    info = {k: (path / k).read_text().strip() for k in ("start", "finish")}
+    if path.name == "fixed":
+        packet = "//test/packetimpact/tests:tcp_connect_icmp_error_netstack_test"
+        tcp = "//pkg/tcpip/transport/tcp:tcp_test"
+        nogo = "//pkg/tcpip/transport/tcp:tcp_nogo"
         summaries = {e["id"]["testSummary"]["label"]: e["testSummary"]["overallStatus"] for e in events if "testSummary" in e}
-        original_failure = "SO_ERROR for acknowledged data: no route to host" in text
-        passed = "--- PASS: TestTCPEstablishedICMPError" in text
-        evidence.update(fixture=(path / "fixture").read_text().split()[0], summaries=summaries, stale_error=original_failure, case_passed=passed)
-        if path.name == "stock":
-            ok = rc != 0 and summaries == {label: "FAILED"} and original_failure and not passed
-        else:
-            ok = rc == 0 and summaries == {label: "PASSED"} and passed and not original_failure
-    evidence.update(exit=rc, verified=ok and len(invocations)==1, invocations=invocations)
-    evidence["diagnostics"] = [line[:320] for line in text.splitlines() if ("SO_ERROR for " in line or line.startswith(("ERROR:", "--- FAIL:", "FAIL:"))) and not any(x in line.lower() for x in ("credential", "token", "remote_header", "bes_header"))][:8]
-    return evidence
+        permanent = "--- PASS: TestTCPEstablishedICMPError" in log
+        passed = len(re.findall(r"(?m)^\s*--- PASS: ", log))
+        info.update(fixture=(path / "fixture").read_text().split()[0], summaries=summaries, nogo=nogo in complete, packet_case=permanent, passed_rows=passed, skipped_rows=len(re.findall(r"(?m)^\s*--- SKIP: ", log)))
+        executions = {e["id"]["testResult"]["label"] for e in events if "testResult" in e["id"] and e.get("testResult", {}).get("status")=="PASSED" and not e["testResult"].get("cachedLocally") and not e["testResult"].get("executionInfo", {}).get("cachedRemotely")}
+        info["executed_tests"] = sorted(executions)
+        valid = permanent and {packet,tcp} <= executions and nogo in complete and summaries.get(packet)=="PASSED" and summaries.get(tcp)=="PASSED" and set(summaries.values())=={"PASSED"}
+    else:
+        inputs = [line.split()[0] for line in (path / "inputs").read_text().splitlines()]
+        info.update(inputs=inputs, compiler_target="//pkg/tcpip/transport/tcp:tcp" in complete)
+        valid = len(inputs)==3 and info["compiler_target"]
+    info.update(exit=rc, invocations=invocations, verified=rc==0 and len(invocations)==1 and valid)
+    info["diagnostics"]=[line[:480] for line in log.splitlines() if line.startswith(("ERROR:", "--- FAIL:", "FAIL:")) and not any(x in line.lower() for x in ("token", "credential", "header"))][:8]
+    return info
 
 
 if __name__ == "__main__":
-    root = Path(sys.argv[1])
-    rows = {stage: arm(root / stage) for stage in ("native", "stock", "fixed", "arm-analysis")}
-    product = all(rows[s]["verified"] for s in ("native", "stock", "fixed")) and len({rows[s].get("fixture") for s in ("native", "stock", "fixed")}) == 1
-    ok = product and rows["arm-analysis"]["verified"]
-    report = {"verified":ok, "packets_verified":product, "candidate":os.environ["CANDIDATE"], "terminal_analysis_source":os.environ["TERMINAL"], "arms":rows}
-    (root / "verdict.json").write_text(json.dumps(report,indent=2)+"\n")
+    root=Path(sys.argv[1])
+    arms={name: arm(root/name) for name in ("fixed","layout-amd64","layout-arm64")}
+    ok=all(r["verified"] for r in arms.values()) and arms["layout-amd64"].get("inputs")==arms["layout-arm64"].get("inputs")
+    report={"verified":ok, "candidate":os.environ["CANDIDATE"], "baseline_layout":os.environ["STOCK"], "arms":arms}
+    (root/"verdict.json").write_text(json.dumps(report,indent=2)+"\n")
     if len(sys.argv)==2:
         raise SystemExit(not ok)
