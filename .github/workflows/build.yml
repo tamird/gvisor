@@ -1,12 +1,13 @@
 name: Check post-accept SACK in real TCP cookie handshakes
 on:
   push:
-    branches: [qualification/tcp-cookie-accepted-sack]
+    branches: [qualification/tcp-cookie-accepted-sack-unit]
 permissions:
   contents: read
+  actions: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-cookie-accepted-sack'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-cookie-accepted-sack-unit'
     runs-on: ubuntu-24.04
     timeout-minutes: 130
     steps:
@@ -15,7 +16,22 @@ jobs:
       with:
         fetch-depth: 5
         persist-credentials: false
-    - name: Check Linux and gVisor ACK ranges and the missing cookie decoding control
+    - name: Keep the three original wire results and skipped Go owner
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        dir="$RUNNER_TEMP/replay-public"
+        archive="$RUNNER_TEMP/original.zip"
+        mkdir -p "$dir"
+        gh api repos/tamird/gvisor/actions/artifacts/13075198886/zip > "$archive"
+        echo "f2bd8ebe4eebc8247215fdb25a9296ed6c018723b96fcff1faa243f8b8714e35  $archive" | sha256sum --check
+        for arm in native netstack mutant; do
+          unzip -p "$archive" "$arm.json" > "$dir/$arm.json"
+        done
+        unzip -p "$archive" unit.json > "$dir/unit-wrong-owner.json"
+        unzip -p "$archive" summary.json > "$dir/original-summary.json"
+    - name: Run the five named Go controls on their declaring target
       timeout-minutes: 115
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -26,7 +42,7 @@ jobs:
         # before GitHub stops the step and uploads the completed measurements.
         packet_deadline=$((SECONDS + 110 * 60))
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "37caa4229dc834f531caa8e2cec240b2f5d280bb"
+        test "$(git rev-parse HEAD^1)" = "aa1b3daebea56d2f86230732484df78379f242ac"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -105,7 +121,7 @@ jobs:
         export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in native netstack mutant unit; do
+        for arm in unit; do
           case $arm in
             native|netstack) source=933d20aa96ad2d4865cc23a7938773c4958ae909; parent=858aa5b72f7172309231b6352886973414c28f44 ;;
             mutant) source=e0d02899b916e64955ad1a9403e07ff1415ededd; parent=933d20aa96ad2d4865cc23a7938773c4958ae909 ;;
@@ -126,7 +142,7 @@ jobs:
           code=0
           opts=()
           case $arm in
-            unit) labels=(//pkg/tcpip/transport/tcp/test/e2e:tcp_test); opts+=(--test-filter=TestSackPermittedAccept) ;;
+            unit) labels=(//pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test); opts+=(--test-filter=TestSackPermittedAccept) ;;
             mutant) labels=(//test/packetimpact/tests:tcp_syncookie_netstack_test) ;;
             *) labels=("//test/packetimpact/tests:tcp_syncookie_${arm}_test") ;;
           esac
@@ -171,6 +187,6 @@ jobs:
       timeout-minutes: 5
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: cookie-accepted-sack-verdicts
+        name: cookie-accepted-sack-complete
         path: ${{ runner.temp }}/replay-public/
         if-no-files-found: error
