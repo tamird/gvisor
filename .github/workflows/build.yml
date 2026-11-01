@@ -1,22 +1,51 @@
-name: Recover original state check diagnostics
+name: Complete the original state race owner with sharding
 on:
   push:
-    branches: [qualification/state-reservation-check-diagnostics]
+    branches: [qualification/state-reservation-race-shards]
 permissions:
   contents: read
 jobs:
-  original:
+  race:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 8
+    timeout-minutes: 20
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      PRODUCT: 255bc204e6d5304fb4816605c2b32aaf1b311000
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 1, persist-credentials: false}
-    - name: Read only the two completed invocations
+      with: {fetch-depth: 16, persist-credentials: false}
+    - name: Preserve the driver and retrieve the complete original case census
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: python3 test/rbe/state_checks_original.py
-    - name: Check the public artifact boundary
+      run: |
+        cp test/rbe/state_race_shards.py "$RUNNER_TEMP/state_race_shards.py"
+        python3 "$RUNNER_TEMP/state_race_shards.py" expected
+    - name: Prepare the same declared GNU execution environment
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
+        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --privileged --cgroupns=host -v /sys/fs/cgroup:/sys/fs/cgroup:rw -v /var/run/docker.sock:/var/run/docker.sock -v "$(command -v docker):/usr/local/bin/docker:ro" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
+        docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
+
+    - name: Run only the missing race owner on the exact product source
+      run: |
+        git checkout --detach "$PRODUCT"
+        docker exec -e RUNNER_TEMP="$RUNNER_TEMP" tcp-compiler python3 "$RUNNER_TEMP/state_race_shards.py" run
+    - name: Check the exact public artifact boundary
       id: safe
       if: always()
       env:
@@ -24,10 +53,11 @@ jobs:
       run: |
         python3 - <<'PYTHON'
         import os, pathlib
-        root = pathlib.Path(os.environ["RUNNER_TEMP"]) / "state-original-checks"
+        root = pathlib.Path(os.environ["RUNNER_TEMP"]) / "state-race-shards/evidence"
         key = os.environ["CHECK_KEY"].encode()
+        allowed = {"expected.json", "verdict.json", *(f"shard-{i}.xml" for i in range(4))}
         assert root.is_dir() and key
-        assert {p.name for p in root.iterdir()} <= {"race.json", "arm-analyzers.json"}
+        assert {p.name for p in root.iterdir()} <= allowed
         for p in root.iterdir():
             assert p.is_file() and not p.is_symlink()
             data = p.read_bytes()
@@ -36,8 +66,12 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: ${{ always() && steps.safe.outcome == 'success' }}
       with:
-        name: state-original-checks
+        name: state-race-shards
         path: |
-          ${{ runner.temp }}/state-original-checks/race.json
-          ${{ runner.temp }}/state-original-checks/arm-analyzers.json
+          ${{ runner.temp }}/state-race-shards/evidence/expected.json
+          ${{ runner.temp }}/state-race-shards/evidence/verdict.json
+          ${{ runner.temp }}/state-race-shards/evidence/shard-0.xml
+          ${{ runner.temp }}/state-race-shards/evidence/shard-1.xml
+          ${{ runner.temp }}/state-race-shards/evidence/shard-2.xml
+          ${{ runner.temp }}/state-race-shards/evidence/shard-3.xml
         if-no-files-found: error
