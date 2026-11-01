@@ -5,11 +5,38 @@ import os
 from pathlib import Path
 import re
 
+
 from cas_inputs import fetch
 from qualify import diagnostics, now
 
 INVOCATION = "d2d7b470-a4a5-47ec-ab0e-79c4f3486bf4"
 OUT = Path(os.environ["RUNNER_TEMP"]) / "plugin-evidence"
+
+
+def context(text):
+    lines = text.splitlines()
+    errors = [i for i, line in enumerate(lines) if re.search(r"^(?:ERROR:|Error in |Error:|Traceback)", line)]
+    assert errors, "No original analysis error"
+    selected = set()
+    # Preserve the first cause's complete short traceback as well as every
+    # subsequent error/frame. Truncation is explicit and never counts as a
+    # recovered causal diagnostic.
+    for index in errors:
+        selected.update(range(max(0, index - 1), min(len(lines), index + 25)))
+    selected.update(i for i, line in enumerate(lines) if re.search(r"(?:[.]bzl|BUILD(?:[.]bazel)?)(?:\"|:|,)", line))
+    assert len(selected) <= 100, "Original context exceeds bound"
+    result = []
+    for index in sorted(selected):
+        line = lines[index]
+        if re.search(r"authorization|api[-_]?key|remote_header|bes_header|bearer |password|credential", line, re.I):
+            line = "[credential-bearing line omitted]"
+        else:
+            line = re.sub(r"https?://[^\s]+", "<url>", line)
+            line = re.sub(r"/home/runner/[A-Za-z0-9_+./-]*?/external/", "external/", line)
+            line = line.replace(os.environ.get("BUILDBUDDY_API_KEY", "not-a-key"), "[redacted]")
+        assert len(line) < 1200, "Original line exceeds bound"
+        result.append({"line": index + 1, "text": line})
+    return result
 
 
 def main():
@@ -44,8 +71,8 @@ def main():
         missing = re.findall(r"no such target '([A-Za-z0-9_+/:.@-]{1,250})'", text)
         record.update(diagnostics(text))
         record.update(log_sha256=hashlib.sha256(text.encode()).hexdigest(), log_bytes=len(text.encode()),
-                      missing_targets=sorted(set(missing)))
-        assert missing
+                      missing_targets=sorted(set(missing)), causal_context=context(text))
+        assert record["causal_context"]
         record["status"] = "RECOVERED"
     except Exception as exc:
         record["error"] = type(exc).__name__
