@@ -36,6 +36,7 @@ def save(name, value):
 r = {"pr": pr, "architecture": architecture, "source": source, "expected": owners, "required_cases": sorted(required), "status": "INCOMPLETE"}
 try:
     r["worker_image"] = os.environ["WORKER_IMAGE"]
+    r["coordinator_gcc"] = subprocess.check_output(["gcc", "-dumpfullversion"], text=True).strip()
     assert git("rev-parse", "HEAD").decode().strip() == source
     assert source == ("675aba61ab84f6bd0820ebe529a32e36d3543d1e" if negative else "0b5f595ec509fb3a3e9f8724b216a520b4536625")
     r["tree"] = git("rev-parse", "HEAD^{tree}").decode().strip()

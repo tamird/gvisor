@@ -1,7 +1,7 @@
 name: Qualify dup2 and dup3 close semantics
 on:
   push:
-    branches: [qualification/fd-dup-close-nov1]
+    branches: [qualification/fd-dup-close-gnu-nov1]
 permissions:
   contents: read
 jobs:
@@ -58,7 +58,7 @@ jobs:
           USE_BAZEL_VERSION=$(cat images/default/bazelversion)
           rc=$RUNNER_TEMP/catalog.bazelrc
           umask 077
-          trap 'rm -f "$rc"' EXIT
+          trap 'docker rm -f fd-compiler >/dev/null 2>&1; rm -f "$rc"' EXIT
           {
             printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
               'build --remote_cache=grpcs://remote.buildbuddy.io' \
@@ -69,18 +69,25 @@ jobs:
               "build --inject_repository=catalog_platform=$platform" \
               'build --host_platform=@catalog_platform//:gnu' \
               'build --extra_execution_platforms=@catalog_platform//:gnu' \
-              "build --platforms=//tools/bazeldefs:linux_$ARCH"
+              "build --config=$CPU"
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$rc"
           unset BUILDBUDDY_API_KEY
+          image=${WORKER_IMAGE#docker://}
+          docker pull --platform=linux/amd64 "$image"
+          docker run -d --name fd-compiler --entrypoint /bin/bash --user root \
+            -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" \
+            -w "$PWD" "$image" -c 'sleep infinity'
           git fetch --no-tags origin 675aba61ab84f6bd0820ebe529a32e36d3543d1e
           result=0
           for phase in before fixed; do
             sha=675aba61ab84f6bd0820ebe529a32e36d3543d1e
             if [[ "$phase" = fixed ]]; then sha=$SHA; fi
             git checkout --quiet --detach "$sha"
-            python3 -B ../carrier/test/rbe/qualify_fd_dup.py "fd-dup-$phase" "$ARCH" "$sha" "$rc" "$RUNNER_TEMP/dup-$phase" || result=1
+            docker exec -e WORKER_IMAGE -e USE_BAZEL_VERSION \
+              -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$PWD" \
+              fd-compiler python3 -B ../carrier/test/rbe/qualify_fd_dup.py "fd-dup-$phase" "$ARCH" "$sha" "$rc" "$RUNNER_TEMP/dup-$phase" || result=1
           done
           exit "$result"
       - if: always()
