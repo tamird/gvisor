@@ -90,10 +90,11 @@ def sample_projection(log, raw):
         proc.wait()
     return sample, time.monotonic()-started
 
-def stats(log, arch, folder, expected_image=image):
+def stats(log, arch, folder, expected_image=image, expected_isolation="oci", owner_label=None):
     full = collections.Counter()
     examples = {}
     bad=[]
+    owner_actions=[]
     # All fields in this projection are on the compact spawn itself.
     # Retain every spawn but avoid reconstructing its transitive inputs.
     filt=projection(True)
@@ -106,7 +107,9 @@ def stats(log, arch, folder, expected_image=image):
                 row=json.loads(line)
                 props={p["name"]:p["value"] for p in row["p"]}
                 environment={k:props.get(k) for k in ("Arch","container-image","workload-isolation-type")}
-                seen = props.get("Arch")==arch and props.get("container-image")==expected_image and props.get("workload-isolation-type")=="oci"
+                seen = props.get("Arch")==arch and props.get("container-image")==expected_image and props.get("workload-isolation-type")==expected_isolation
+                if owner_label is not None and row["l"] == owner_label:
+                    owner_actions.append(dict({key: row[key] for key in ("m", "l", "x", "r", "c", "s", "e", "d")}, platform=environment))
                 runner=row["r"] or "unknown"
                 key=(row["m"],runner,bool(row["c"]),seen,row["x"] or "")
                 full[key]+=1
@@ -116,7 +119,7 @@ def stats(log, arch, folder, expected_image=image):
                     if len(bad)<160: bad.append(dict(sample,executable=row["x"],runner=runner,platform=environment))
             jq_rc=lines.wait()
         reader_rc=decode.wait()
-    write(folder/"actions.json",{"groups":[dict(mnemonic=m,runner=r,cache_hit=c,correct_platform=ok,tool=x,count=n,example=examples[(m,r,c,ok,x)]) for (m,r,c,ok,x),n in full.items()], "failed_or_other":bad})
+    write(folder/"actions.json",{"groups":[dict(mnemonic=m,runner=r,cache_hit=c,correct_platform=ok,tool=x,count=n,example=examples[(m,r,c,ok,x)]) for (m,r,c,ok,x),n in full.items()], "failed_or_other":bad,"owner_actions":owner_actions})
     total=sum(full.values())
     return {"available":True,"decoder_exits":[reader_rc,jq_rc],"total":total,
             "observed_platform":sum(n for (m,r,c,ok,x),n in full.items() if ok),
