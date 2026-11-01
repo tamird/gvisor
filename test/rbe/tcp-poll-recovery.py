@@ -63,13 +63,13 @@ def first_errors():
     }
     errors = {}
     for name, uuid in ids.items():
-        request = {"selector": {"invocation_id": uuid}}
+        request = {"selector": {"invocation_id": uuid}, "page_token": "0000"}
         kept = []
         lines = 0
         size = 0
         for _ in range(15):
             part = rpc("GetLog", request)
-            log = part["log"]["contents"]
+            log = part.get("log", {}).get("contents", "")
             size += len(log)
             for line in log.splitlines():
                 # Never publish command lines, env, headers, URLs or tokens.
