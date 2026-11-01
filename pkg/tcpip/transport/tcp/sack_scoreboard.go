@@ -15,6 +15,7 @@
 package tcp
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -54,7 +55,20 @@ type SACKScoreboard struct {
 	smss      uint16
 	maxSACKED seqnum.Value
 	sacked    seqnum.Size                     `state:"nosave"`
-	ranges    *btree.BTreeG[header.SACKBlock] `state:"nosave"`
+	ranges    *btree.BTreeG[header.SACKBlock] `state:".([]header.SACKBlock)"`
+}
+
+func (s *SACKScoreboard) saveRanges() []header.SACKBlock {
+	blocks := make([]header.SACKBlock, 0, s.ranges.Len())
+	s.ranges.Ascend(func(block header.SACKBlock) bool { blocks = append(blocks, block); return true })
+	return blocks
+}
+
+func (s *SACKScoreboard) loadRanges(_ context.Context, blocks []header.SACKBlock) {
+	s.Reset()
+	for _, block := range blocks {
+		s.Insert(block)
+	}
 }
 
 // NewSACKScoreboard returns a new SACK Scoreboard.

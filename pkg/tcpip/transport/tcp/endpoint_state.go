@@ -246,9 +246,6 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 				))
 			}
 		}
-		// Reset the scoreboard to reinitialize the sack information as
-		// we do not restore SACK information.
-		e.scoreboard.Reset()
 		// Unregister the endpoint before registering again during Connect.
 		e.stack.UnregisterTransportEndpoint(e.effectiveNetProtos, header.TCPProtocolNumber, e.TransportEndpointInfo.ID, e, e.boundPortFlags, e.boundBindToDevice)
 		e.mu.Lock()
