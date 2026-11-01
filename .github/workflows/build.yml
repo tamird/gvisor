@@ -1,113 +1,100 @@
-name: Qualify direct compiler launch on scratch
+name: Recover semaphore owner results
 on:
   push:
-    branches: [qualification/plugin-scratch]
+    branches: [qualification/semop-owner-recovery]
 permissions:
   contents: read
-  actions: read
 jobs:
   qualify:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 35
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      SOURCE: 14a4e93a872bf6dd49893b6bd9a5f55517167e2b
+      REPORTER: fb60e127516defd6aab633f80be09a03022f0737
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: carrier, persist-credentials: false, fetch-depth: 1}
+      - name: Prepare the existing result interpreter
+        working-directory: carrier
+        run: |
+          set -eu
+          mkdir -p "$RUNNER_TEMP/semop-owner-evidence"
+          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/semop-owner-evidence/verdict.json"
+          git fetch -q --no-tags --depth=1 origin "$REPORTER"
+          for module in qualification_report unit_matrix; do
+            git show "$REPORTER:test/rbe/$module.py" > "$RUNNER_TEMP/$module.py"
+          done
+          cp test/rbe/semop_owner_recovery.py "$RUNNER_TEMP/"
+          python3 -c 'import ast, sys; ast.parse(open(sys.argv[1]).read())' "$RUNNER_TEMP/semop_owner_recovery.py"
+      - name: Recover original target results
+        id: recovery
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          python3 "$RUNNER_TEMP/semop_owner_recovery.py" recover
+          if grep -q . "$RUNNER_TEMP/semop-missing.txt"; then
+            echo 'retry=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'retry=false' >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: product, ref: 7dc8df3c4bb7da1bc04037fe9a2d641cb36cc5a4, persist-credentials: false, fetch-depth: 2}
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        if: steps.recovery.outputs.retry == 'true'
         with:
-          repository: tamird/bazel-central-registry
-          path: registry
-          ref: f8f5f201805db9b0c27571f7630cb8a37f3a78d6
+          path: product
+          ref: 14a4e93a872bf6dd49893b6bd9a5f55517167e2b
           persist-credentials: false
           fetch-depth: 1
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          repository: tamird/rules_cc_autoconf
-          path: supplier
-          ref: b0b4b6c173c4312c14f3c5a427e9e3cb7271143c
-          persist-credentials: false
-          fetch-depth: 2
-      - name: Prepare private remote configuration and declared execution platform
-        working-directory: carrier
+      - name: Prepare the same GNU execution platform only for missing owners
+        if: steps.recovery.outputs.retry == 'true'
+        working-directory: product
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -eu
           umask 077
-          mkdir -p "$RUNNER_TEMP/package-evidence"
-          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap","executed_targets":0}' > "$RUNNER_TEMP/package-evidence/bootstrap.json"
+          test "$(git rev-parse HEAD)" = "$SOURCE"
           test -n "$BUILDBUDDY_API_KEY"
+          mkdir -p "$RUNNER_TEMP/gnu-platform"
+          printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+          printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
           {
-            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --action_env=TMPDIR=.' 'build --host_action_env=TMPDIR=.'
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          } > "$RUNNER_TEMP/sidecar.bazelrc"
+          } > "$RUNNER_TEMP/tcp.bazelrc"
           unset BUILDBUDDY_API_KEY
-          curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
-          echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
-          chmod 0755 "$RUNNER_TEMP/bb"
-          cp test/rbe/empty_worker/{wildcard.py,expected-targets.json} "$RUNNER_TEMP/"
-          mkdir -p ../product/test/rbe/empty_worker
-          if [ ! -e ../product/test/rbe/empty_worker/BUILD ]; then
-            cp test/rbe/empty_worker/BUILD ../product/test/rbe/empty_worker/BUILD
-          fi
-          bazel --bazelrc="$RUNNER_TEMP/sidecar.bazelrc" run //tools/actionlint -- "$PWD/.github/workflows/build.yml" > "$RUNNER_TEMP/actionlint.log" 2>&1 || { tail -20 "$RUNNER_TEMP/actionlint.log"; exit 1; }
-          printf '%s\n' '{"status":"PASS","phase":"bootstrap","executed_targets":0}' > "$RUNNER_TEMP/package-evidence/bootstrap.json"
-      - name: Retrieve original probe evidence and command diagnostic
+          timeout 180 docker pull --platform=linux/amd64 "$GNU"
+          docker run -d --cap-add SYS_ADMIN --security-opt seccomp=unconfined --name semop-compiler --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$PWD" "$GNU" -c 'sleep infinity'
+      - name: Run only owners missing original execution evidence
+        if: steps.recovery.outputs.retry == 'true'
+        run: |
+          docker exec -e RUNNER_TEMP semop-compiler python3 "$RUNNER_TEMP/semop_owner_recovery.py" retry
+      - name: Preserve the original and independently verified completion
+        if: always()
+        run: python3 "$RUNNER_TEMP/semop_owner_recovery.py" finish
+      - name: Check the explicit artifact boundary
+        id: privacy
+        if: always()
         env:
-          GH_TOKEN: ${{ github.token }}
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
-          set -eu
-          gh api repos/tamird/gvisor/actions/artifacts/13090111207/zip > "$RUNNER_TEMP/original.zip"
           python3 - <<'PYCODE'
-          import hashlib, json, os, re, subprocess
+          import os
           from pathlib import Path
-          root = Path(os.environ["RUNNER_TEMP"])
-          invocation = "7b34ba6d-72ee-4e40-be44-a826ab9ad203"
-          path = root / "original-diagnostic.private"
-          with path.open("w") as stream:
-              try:
-                  code = subprocess.run([str(root / "bb"), "view", invocation, "--errors"], stdout=stream, stderr=stream, timeout=120).returncode
-              except subprocess.TimeoutExpired:
-                  code = 124
-          content = path.read_text(errors="replace")
-          match = re.search(r"No context of type TestActionContext registered for requested value 'remote', available identifiers are: \[[a-z, ]+\]", content)
-          row = {"invocation": invocation, "read_exit": code, "status": "RECOVERED" if match and code == 0 else "INCOMPLETE", "diagnostic": match.group() if match else None, "bytes": len(content.encode()), "sha256": hashlib.sha256(content.encode()).hexdigest()}
-          (root / "package-evidence/original-unit-diagnostic.json").write_text(json.dumps(row, indent=2) + "\n")
-          PYCODE
-      - name: Finish supplier regressions without repeating the successful probes
-        working-directory: product
-        run: |
-          set -eu
-          mkdir -p test/rbe/make_control
-          cat > test/rbe/make_control/BUILD <<'EOF'
-          platform(
-              name = "populated",
-              parents = ["//test/rbe/empty_worker:amd64_musl"],
-              exec_properties = {
-                  "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
-                  "workload-isolation-type": "firecracker",
-              },
-              visibility = ["//visibility:public"],
-          )
-          EOF
-          python3 ../carrier/test/rbe/empty_worker/configure_probe.py --finish
-      - name: Require all independent results
-        if: always()
-        run: |
-          python3 - <<'PYCODE'
-          import json, os
-          from pathlib import Path
-          folder = Path(os.environ["RUNNER_TEMP"]) / "package-evidence"
-          names = ["bootstrap.json", "configure-probe.json"]
-          assert all((folder / name).exists() and json.loads((folder / name).read_text()).get("status") == "PASS" for name in names)
+          key = os.environ["BUILDBUDDY_API_KEY"].encode()
+          assert key
+          folder = Path(os.environ["RUNNER_TEMP"]) / "semop-owner-evidence"
+          for path in folder.iterdir():
+              assert path.is_file() and not path.is_symlink() and path.suffix in (".json", ".xml")
+              content = path.read_bytes()
+              assert key not in content and b"x-buildbuddy-api-key" not in content.lower()
           PYCODE
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: always()
+        if: always() && steps.privacy.outcome == 'success'
         with:
-          name: direct-compiler-launch
-          path: ${{ runner.temp }}/package-evidence
+          name: semop-owner-recovery
+          path: ${{ runner.temp }}/semop-owner-evidence
           if-no-files-found: error
