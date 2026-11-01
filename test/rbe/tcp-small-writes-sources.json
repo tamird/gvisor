@@ -1,0 +1,46 @@
+{
+  "native": {
+    "source": "0173951725eb8601cd63a78e6244d57046fcb5fb",
+    "base": "aa767e4c43d011121271551fe24da501a56f729d",
+    "patches": [],
+    "tree": "7c035f2748f93b45064ddde5d6cc9afeedf1f1df",
+    "fixture_blob": "b47651a6c44c93c693a0bbc6fe23557e835001df",
+    "tcp_blobs": {
+      "pkg/tcpip/transport/tcp/endpoint.go": "834892691e192182eb23e2c747486213719ffb3f",
+      "pkg/tcpip/transport/tcp/rcv.go": "e6bb214f8f2c5767517aa6175bf61c13d114900f",
+      "pkg/tcpip/transport/tcp/segment.go": "dee7cbd905c30f5c8c909da9148a59872aa8b564",
+      "pkg/tcpip/transport/tcp/segment_queue.go": "4ec56b6a6b83b28c4847b11ff39707b9b1eaae26"
+    }
+  },
+  "coalesced": {
+    "source": "887e01ae1ef3f8cdf989bcb83691253bed66d5bf",
+    "base": "aa767e4c43d011121271551fe24da501a56f729d",
+    "patches": [
+      "3498766a36a892aacc7bfa6ffec6e2a9f6c1276f"
+    ],
+    "tree": "10e50e4129714add49e1a2a5c1734853c6dd78d9",
+    "fixture_blob": "b47651a6c44c93c693a0bbc6fe23557e835001df",
+    "tcp_blobs": {
+      "pkg/tcpip/transport/tcp/endpoint.go": "028406d38d7c1ea7c9ddc256d59d2a16dd958caf",
+      "pkg/tcpip/transport/tcp/rcv.go": "e6bb214f8f2c5767517aa6175bf61c13d114900f",
+      "pkg/tcpip/transport/tcp/segment.go": "dee7cbd905c30f5c8c909da9148a59872aa8b564",
+      "pkg/tcpip/transport/tcp/segment_queue.go": "4ec56b6a6b83b28c4847b11ff39707b9b1eaae26"
+    }
+  },
+  "combined": {
+    "source": "eb21b318c0713d0a1768a50a79a0dd029001111b",
+    "base": "aa767e4c43d011121271551fe24da501a56f729d",
+    "patches": [
+      "3cd9a5d970293241934d039506f43ad55384c7fe",
+      "3498766a36a892aacc7bfa6ffec6e2a9f6c1276f"
+    ],
+    "tree": "5dc511dd4985c21db5f14168158fe16ad53f39d3",
+    "fixture_blob": "b47651a6c44c93c693a0bbc6fe23557e835001df",
+    "tcp_blobs": {
+      "pkg/tcpip/transport/tcp/endpoint.go": "f948452f383c8a3f59e3df3de5744153e7523188",
+      "pkg/tcpip/transport/tcp/rcv.go": "a1fd2ef9c73600fe73358fa8e6cb92ce1e5db846",
+      "pkg/tcpip/transport/tcp/segment.go": "6a718974179d298444009948cabe8eb21afec6c7",
+      "pkg/tcpip/transport/tcp/segment_queue.go": "f20501fb16840dc5eee6c84536177d9fc5711ce2"
+    }
+  }
+}
