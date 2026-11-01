@@ -1,5 +1,4 @@
-"""Collect only the two syscall observations and TCP continuity per system."""
-import hashlib
+"""Check both IP families, both consumers of SO_ERROR and live data transfer."""
 import json
 import os
 from pathlib import Path
@@ -7,27 +6,37 @@ import re
 import sys
 
 
-def observe(d):
-    if not (d / "exit").exists():
+def observe(path):
+    if not (path / "exit").exists():
         return {"verified": False}
-    text=(d/"bazel.log").read_text(errors="replace")
-    pat=r"ESTAB_MSG opt=([01]) first=(true|false) poll=(\d+) so=(\d+) afterfirst=(\d+) n=(-?\d+) errno=(\d+) flags=(\d+) cbytes=(\d+) level=(\d+) type=(\d+) ee=(\d+) origin=(\d+) itype=(\d+) code=(\d+) again=(\d+) final=(\d+)"
-    fields="poll so_error after_first ret errno msg_flags control_bytes cmsg_level cmsg_type extended_errno origin icmp_type icmp_code next_errno final_poll".split()
-    rows={f"{m[0]}-{m[1]}":dict(zip(fields,map(int,m[2:]))) for m in re.findall(pat,text)}
-    live=sorted({f"{opt}-{first}" for opt,first in re.findall(r"ESTAB_MSG_LIVE opt=([01]) first=(true|false)",text)})
-    be=str((d/"bep").read_text()) if (d/"bep").exists() else ""
-    events=[json.loads(line) for line in be.splitlines() if line.startswith('{"')]
-    inv=[x["started"]["uuid"] for x in events if "started" in x]
-    summaries={x["id"]["testSummary"]["label"]:x["testSummary"]["overallStatus"] for x in events if "testSummary" in x}
-    rc=int((d/"exit").read_text())
-    ok=rc==0 and len(inv)==1 and len(summaries)==1 and list(summaries.values())==["PASSED"] and sorted(rows)==live==["0-false","0-true","1-false","1-true"] and all(r["next_errno"]==11 and r["final_poll"]==0 for r in rows.values()) and all(r["so_error"]==101 for k,r in rows.items() if k.startswith("0-") or k.endswith("-false"))
-    return {"verified":ok,"exit":rc,"invocations":inv,"rows":rows,"continued":live,"summaries":summaries,"fixture_sha256":(d/"fixture").read_text().strip().split()[0],"start":(d/"start").read_text().strip(),"finish":(d/"finish").read_text().strip(),"diagnostics":[l[:300] for l in text.splitlines() if (l.startswith(("ERROR:","FAIL:","[ RUN")) or ": error:" in l or ": fatal error:" in l or "unexpected control" in l or "wrong extended" in l) and not any(w in l.lower() for w in ("header","token","key","credential"))][:4]}
+    text = (path / "bazel.log").read_text(errors="replace")
+    events = [json.loads(line) for line in (path / "bep").read_text().splitlines()] if (path / "bep").exists() else []
+    inv = [e["started"]["uuid"] for e in events if "started" in e]
+    summaries = {e["id"]["testSummary"]["label"]: e["testSummary"]["overallStatus"] for e in events if "testSummary" in e}
+    msg = {}
+    for row in re.findall(r"ESTAB_MSG family=(\d) opt=([01]) first=(true|false) poll=(\d+) so=(\d+) afterfirst=(\d+) n=(-?\d+) errno=(\d+) flags=(\d+) cbytes=(\d+) level=\d+ type=\d+ ee=\d+ origin=\d+ itype=\d+ code=\d+ again=(\d+) final=(\d+)", text):
+        msg["-".join(row[:3])] = list(map(int, row[3:]))
+    io = {"-".join(r[:2]): list(map(int, r[2:])) for r in re.findall(r"ICMP_IO family=(\d) op=(read|write) before=(\d+) n=(-?\d+) errno=(\d+) after=(\d+) so=(\d+)", text)}
+    expected = {}
+    expected_io = {}
+    for family, err in [(4, 113), (6, 101)]:
+        for opt in [0, 1]:
+            for msgfirst in ["true", "false"]:
+                expected[f"{family}-{opt}-{msgfirst}"] = [8*opt, err, 8*opt*(msgfirst=="true"), -1, 11, 0, 0, 11, 0]
+        for op in ["read", "write"]:
+            expected_io[f"{family}-{op}"] = [8, -1, err, 0, 0]
+    mlive = sorted({"-".join(m) for m in re.findall(r"ESTAB_MSG_LIVE family=(\d) opt=([01]) first=(true|false)", text)})
+    ilive = sorted({"-".join(m) for m in re.findall(r"ICMP_IO_LIVE family=(\d) op=(read|write)", text)})
+    rc = int((path / "exit").read_text())
+    terminal = "--- PASS: TestTCPConnectICMPError" in text
+    ok = not rc and msg == expected and io == expected_io and mlive == sorted(expected) and ilive == sorted(expected_io) and terminal and len(inv) == len(summaries) == 1 and set(summaries.values()) == {"PASSED"}
+    return {"verified": ok, "exit": rc, "invocations": inv, "summaries": summaries, "pending_socket_error": msg, "io_error": io, "continued_msg": mlive, "continued_io": ilive, "terminal": terminal, "fixture": (path / "fixture").read_text().split()[0], "start": (path / "start").read_text().strip(), "finish": (path / "finish").read_text().strip(), "diagnostics": [l[:380] for l in text.splitlines() if ("pending error not returned" in l or l.startswith(("ERROR:", "FAIL:", "--- FAIL:")) or "defined and not used" in l or "undefined:" in l) and not any(w in l.lower() for w in ("token", "credential", "remote_header", "bes_header"))][:8]}
 
 
-if __name__=="__main__":
-    root=Path(sys.argv[1])
-    rows={arm:observe(root/arm) for arm in ["native","netstack"]}
-    ok=all(r["verified"] for r in rows.values()) and len({r.get("fixture_sha256") for r in rows.values()})==1
-    (root/"verdict.json").write_text(json.dumps({"verified":ok,"source":os.environ["STOCK"],"network":"IPv6","icmp_code":"network unreachable","arms":rows},indent=2)+"\n")
-    if len(sys.argv)==2:
-        raise SystemExit(not ok)
+if __name__ == "__main__":
+    root = Path(sys.argv[1])
+    arms = {name: observe(root / name) for name in ["native", "netstack"]}
+    good = all(v["verified"] for v in arms.values()) and len({v.get("fixture") for v in arms.values()}) == 1
+    (root / "verdict.json").write_text(json.dumps({"verified": good, "source": os.environ["CANDIDATE"], "arms": arms}, indent=2)+"\n")
+    if len(sys.argv) == 2:
+        raise SystemExit(not good)
