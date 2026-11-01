@@ -1,17 +1,17 @@
 name: Observe TCP Limited Transmit and loss recovery
 on:
   push:
-    branches: [qualification/tcp-limited-transmit]
+    branches: [qualification/tcp-limited-transmit-final]
 permissions:
   contents: read
 jobs:
   syscalls:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 78
+    timeout-minutes: 120
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      PRODUCT: 78c1a89127d3f8ad0c412cbb9315d9a9d812837d
+      PRODUCT: 8db1aab3331f2abf3f089051fb1cb64a9f024865
       MASTER: aa767e4c43d011121271551fe24da501a56f729d
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -28,6 +28,8 @@ jobs:
         git diff 7d8e856ba^ 7d8e856ba -- test/packetimpact/runner/defs.bzl > "$RUNNER_TEMP/exec.patch"
 
         test "$(git rev-parse "$PRODUCT^")" = "$MASTER"
+        git diff "$MASTER" "$PRODUCT" -- test/packetimpact/tests/tcp_retransmits_test.go > "$RUNNER_TEMP/permanent.patch"
+        test -s "$RUNNER_TEMP/permanent.patch"
         printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
         printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
         umask 077
@@ -56,6 +58,12 @@ jobs:
               python3 "$RUNNER_TEMP/rack-fresh-head-config.py" "$arm"
               cat "$RUNNER_TEMP/rack-fresh-head.go.txt" >> test/packetimpact/tests/tcp_rack_test.go
               git apply "$RUNNER_TEMP/exec.patch" ;;
+            permanent_linux|permanent_stock|permanent_fixed|late_fixed|late_mutant)
+              if [[ "$source" == "$MASTER" ]]; then git apply "$RUNNER_TEMP/permanent.patch"; fi
+              if [[ "$arm" == late_* ]]; then python3 "$RUNNER_TEMP/rack-fresh-head-config.py" "$arm"; fi
+              git apply "$RUNNER_TEMP/exec.patch" ;;
+            analyzer)
+              opts+=('--strategy_regexp=^Analyzing.(@@)?//pkg/abi/linux:linux$=local' --test_arg=-test.v --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$') ;;
             *clock)
               cat "$RUNNER_TEMP/rack-fresh-head.go.txt" >> pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go
               opts+=(--test_arg=-test.v) ;;
@@ -74,14 +82,19 @@ jobs:
           done
           case "$arm" in
             linux|stock|netstack|rack) git restore --source="$source" -- test/packetimpact/runner/defs.bzl test/packetimpact/tests/tcp_rack_test.go pkg/tcpip/transport/tcp/protocol.go ;;
+            permanent_*|late_*) git restore --source="$source" -- test/packetimpact/runner/defs.bzl test/packetimpact/tests/tcp_retransmits_test.go pkg/tcpip/transport/tcp/snd.go ;;
             *clock) git restore --source="$source" -- pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go ;;
           esac
         }
-        runarm linux "$MASTER" //test/packetimpact/tests:tcp_rack_native_test '^TestLimitedTransmitRecovery$' 12m
-        runarm netstack "$PRODUCT" //test/packetimpact/tests:tcp_rack_netstack_test '^(TestLimitedTransmitRecovery|TestSACKCreditBeforeCumulativeACK)$' 14m
-        runarm stock "$MASTER" //test/packetimpact/tests:tcp_rack_netstack_test '^TestLimitedTransmitRecovery$' 12m
-        runarm rack "$PRODUCT" //test/packetimpact/tests:tcp_rack_netstack_test '^TestSACKCreditBeforeCumulativeACK$' 14m
-        runarm owners "$PRODUCT" '//pkg/tcpip/transport/tcp:tcp_test //pkg/tcpip/transport/tcp/test/e2e:tcp_test //pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test //pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test //pkg/tcpip/transport/tcp:tcp_nogo' '' 18m
+        runarm permanent_linux "$MASTER" //test/packetimpact/tests:tcp_retransmits_native_test '^TestLimitedTransmit$' 8m
+        runarm permanent_fixed "$PRODUCT" //test/packetimpact/tests:tcp_retransmits_netstack_test '^TestLimitedTransmit$' 9m
+        runarm permanent_stock "$MASTER" //test/packetimpact/tests:tcp_retransmits_netstack_test '^TestLimitedTransmit$' 8m
+        runarm late_fixed "$PRODUCT" //test/packetimpact/tests:tcp_retransmits_netstack_test '^TestLimitedTransmit$' 6m
+        runarm late_mutant "$PRODUCT" //test/packetimpact/tests:tcp_retransmits_netstack_test '^TestLimitedTransmit$' 6m
+        runarm netstack "$PRODUCT" //test/packetimpact/tests:tcp_rack_netstack_test '^(TestLimitedTransmitRecovery|TestSACKCreditBeforeCumulativeACK)$' 12m
+        runarm rack "$PRODUCT" //test/packetimpact/tests:tcp_rack_netstack_test '^TestSACKCreditBeforeCumulativeACK$' 8m
+        runarm owners "$PRODUCT" '//pkg/tcpip/transport/tcp/test/e2e:tcp_test //pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test' '' 14m
+        runarm analyzer "$PRODUCT" '//pkg/tcpip/transport/tcp:tcp_nogo' '' 44m
     - name: Verify the original packet and owner results
       if: always()
       run: python3 "$RUNNER_TEMP/rack-fresh-head.py"
