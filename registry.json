@@ -57531,9 +57531,22 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T06:03:00.137286+00:00",
+      "updatedAt": "2026-11-01T06:19:59.433516+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "Both gRPC service libraries now build on each scratch architecture with musl selected only for execution tools. The five host executables per architecture have no ELF interpreter or shared dependencies. The target C++ compilations still use GNU, and both architectures generated identical service sources. Separately, the LLVM change built and ran both TableGen programs, preserved all 9,899 embedded helper bytes and picked up a local source edit without a clean build. These targeted checks cover the earlier failure sites. The complete package wildcard and the NVIDIA parity test still need the combined source.",
+          "evidence": [
+            {
+              "label": "Service owners, generated files, five static tools and target compile settings on each architecture",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41279334055/artifacts/13073021819"
+            },
+            {
+              "label": "LLVM generation, C++ consumers and local source invalidation",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41279721263/artifacts/13071944389"
+            }
+          ]
+        },
         {
           "text": "The targeted follow-up built all 18 host-layout owners and both supporting c-ares headers on each empty worker. Across the unchanged and corrected targets, AMD64 now has 1,484 successes out of 1,487. ARM64 has 1,482 plus two explicitly incompatible slimvm targets. The two service targets need four host executables with dynamic loader dependencies. The remaining NVIDIA parity target also invokes Bash in LLVM’s instrumentor header generator. Targeted work continues on these three; a final same-source sweep is pending.",
           "url": "https://github.com/tamird/gvisor/actions/runs/41278670429/artifacts/13072880293"
