@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T22:36:52+00:00",
+    "updatedAt": "2026-11-01T23:13:12+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2030,10 +2030,22 @@
       "url": "https://github.com/tamird/gvisor/commit/b5bd72431",
       "group": "release",
       "status": "Agent work",
-      "summary": "The large Bazel release action at b5bd72431 and the wheel scanner amendment at d67495aac are withheld after contributor feedback. The existing setuptools release produced identical file contents across workers, but gzip and tar metadata differed. No catalog amendment is needed for the backend-only experiment. The native uv_build backend requires Python 3.8 or newer, which excludes the package’s supported Python 3.7 source installs.\n\nWith Flit 3.12 and a fixed SOURCE_DATE_EPOCH, both existing release frontends produced byte-identical wheel and source archives on one Linux worker. Each installed offline on actual CPython 3.7.17 with stock-equivalent modules and README. License-Expression preserves Apache-2.0, replacing the legacy License field and classifier. The old setuptools-generated files drop out of the source archive. The overall comparison failed on two other checks. uv left two lockfiles in the stock temporary directory, and Hatchling included a parent .gitignore symlink that uv rejected in this Bazel fixture. The original cross-worker results remain below.\n\nOn feab64aff Bazel calls Flit’s two public build hooks with one pinned build dependency. AMD64 and ARM64 scratch actions produced the wheel and source archive previously installed offline on CPython 3.7.17. Make staged the same bytes with Docker disabled. The default registered Python and standalone license check passed. The wheel has three license paths containing two distinct texts, both cataloged. The versioned Buildkite producer still needs the Make change that respects its environment, or an explicit DOCKER_BUILD=false.",
-      "updatedAt": "2026-10-31T08:10:45.007273+00:00",
+      "summary": "The large Bazel release action at b5bd72431 and the wheel scanner amendment at d67495aac are withheld after contributor feedback. The existing setuptools release produced identical file contents across workers, but gzip and tar metadata differed. No catalog amendment is needed for the backend-only experiment. The native uv_build backend requires Python 3.8 or newer, which excludes the package’s supported Python 3.7 source installs.\n\nWith Flit 3.12 and a fixed SOURCE_DATE_EPOCH, both existing release frontends produced byte-identical wheel and source archives on one Linux worker. Each installed offline on actual CPython 3.7.17 with stock-equivalent modules and README. License-Expression preserves Apache-2.0, replacing the legacy License field and classifier. The old setuptools-generated files drop out of the source archive. The overall comparison failed on two other checks. uv left two lockfiles in the stock temporary directory, and Hatchling included a parent .gitignore symlink that uv rejected in this Bazel fixture. The original cross-worker results remain below.\n\nOn feab64aff Bazel calls Flit’s two public build hooks with one pinned build dependency. AMD64 and ARM64 scratch actions produced the wheel and source archive previously installed offline on CPython 3.7.17. Make staged the same bytes with Docker disabled. The default registered Python and standalone license check passed. The wheel has three license paths containing two distinct texts, both cataloged. The versioned Buildkite command at 11013b7d6 ran without Docker and staged the same wheel and source archive. The original caller tried Docker 13 times and failed before creating either file. The comparison supplied a fixed version and registry reply. With the Buildkite Bazelisk prerequisite, the plain make artifacts-python command takes DOCKER_BUILD=false from the job environment. GNU Make selected the same build and copy commands as the tested explicit override.",
+      "updatedAt": "2026-11-01T23:12:46+00:00",
       "head": "b5bd72431940ce903fe7521e2498811d8420f750",
       "evidence": [
+        {
+          "label": "Identical package prerequisites and commands with the Buildkite job environment",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41360910802/artifacts/13105620292"
+        },
+        {
+          "label": "Python Buildkite caller on the combined source",
+          "url": "https://github.com/tamird/gvisor/commit/11013b7d6"
+        },
+        {
+          "label": "Original failure and matching versioned wheel and source archive",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41359642500/artifacts/13104458912"
+        },
         {
           "label": "Original artifact: license paths and distinct contents",
           "url": "https://github.com/tamird/gvisor/blob/fbad82d90/test/rbe/empty_worker/flit-notices.json"
@@ -2155,13 +2167,16 @@
         "owner": "release_owner",
         "disposition": "Contributor requested a smaller design",
         "sourceHead": "b5bd72431940ce903fe7521e2498811d8420f750",
-        "observedAt": "2026-10-30T16:55:14.197497+00:00",
-        "nextAction": "Keep the large release action and scanner amendment off review, preserve the #15114 hold, and keep #16766’s staging fix independent. The Flit comparison supports a small packaging change. A builder-free Bazel action selecting and invoking the frontend remains unqualified.",
+        "observedAt": "2026-11-01T23:12:46+00:00",
+        "nextAction": "Keep the larger proposal and scanner amendment on hold. Fold the Buildkite caller into whichever lands second, the Flit producer or release archive staging. The staging change can proceed independently.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b5bd72431",
           "https://github.com/tamird/gvisor/compare/e9289d0a2...d67495aac",
           "https://github.com/tamird/gvisor/actions/runs/41090172899/artifacts/12993841762",
-          "https://github.com/tamird/gvisor/actions/runs/41086533339/artifacts/12991837566"
+          "https://github.com/tamird/gvisor/actions/runs/41086533339/artifacts/12991837566",
+          "https://github.com/tamird/gvisor/commit/11013b7d6",
+          "https://github.com/tamird/gvisor/actions/runs/41359642500/artifacts/13104458912",
+          "https://github.com/tamird/gvisor/actions/runs/41360910802/artifacts/13105620292"
         ]
       },
       "contributorChangesRequested": {
@@ -35160,9 +35175,21 @@
       "url": "https://github.com/tamird/gvisor/commit/d58d385a8",
       "group": "release",
       "status": "Contributor review requested",
-      "updatedAt": "2026-10-31T10:28:33.920382+00:00",
+      "updatedAt": "2026-11-01T23:12:46+00:00",
       "summary": "One Bazel target stages two Debian packages and four tarballs for AMD64 and ARM64. All six were built and signed on the compiler-free worker using ebceb0d81. Its nine staging source files match 2c0b9071a. The revised source changes only the two Buildkite job definitions. With Bazel absent, both old job environments exited 127 and both revised environments launched Bazel 8.8.1 through the approved bootstrap. The real Python Make recipe expanded to its existing Docker builder in a dry run.",
       "evidence": [
+        {
+          "label": "Identical package prerequisites and commands with the Buildkite job environment",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41360910802/artifacts/13105620292"
+        },
+        {
+          "label": "Python Buildkite caller on the combined source",
+          "url": "https://github.com/tamird/gvisor/commit/11013b7d6"
+        },
+        {
+          "label": "Original failure and matching versioned wheel and source archive",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41359642500/artifacts/13104458912"
+        },
         {
           "label": "Complete staging change on the version prerequisite",
           "url": "https://github.com/tamird/gvisor/compare/a303ec933...d58d385a8"
@@ -35265,16 +35292,19 @@
       "followup": {
         "owner": "Build and release",
         "disposition": "Contributor review requested",
-        "observedAt": "2026-10-31T10:28:33.920382+00:00",
+        "observedAt": "2026-11-01T23:12:46+00:00",
         "sourceHead": "d58d385a80301b9b65f05614dbc437e970afd8e3",
-        "nextAction": "Review the staging change for submission after the source-export version change a303ec933, the Buildkite Bazelisk hook eafcb8392 and the declared LLVM compiler bcb5de5b2 land. The Python release step keeps its separate Docker command. The earlier archive evidence and the missing-ARM64-input rejection still apply.",
+        "nextAction": "Review the staging change for submission after the source-export version change a303ec933, the Buildkite Bazelisk hook eafcb8392 and the declared LLVM compiler bcb5de5b2 land. Keep the Python release on Docker until the Flit producer lands. If Flit lands first, use its native Make target when rebasing staging. If staging lands first, switch that caller with Flit. The earlier archive evidence and the missing-ARM64-input rejection still apply.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/a303ec933...d58d385a8",
           "https://github.com/tamird/gvisor/compare/2c0b9071a..d58d385a8",
           "https://github.com/tamird/gvisor/actions/runs/41192639560/artifacts/13039296853",
           "https://github.com/tamird/gvisor/actions/runs/41179358011/artifacts/13035026611",
           "https://github.com/tamird/gvisor/actions/runs/41181562756/artifacts/13035475625",
-          "https://github.com/tamird/gvisor/actions/runs/41175683641/artifacts/13033387866"
+          "https://github.com/tamird/gvisor/actions/runs/41175683641/artifacts/13033387866",
+          "https://github.com/tamird/gvisor/commit/11013b7d6",
+          "https://github.com/tamird/gvisor/actions/runs/41359642500/artifacts/13104458912",
+          "https://github.com/tamird/gvisor/actions/runs/41360910802/artifacts/13105620292"
         ]
       },
       "contributorReview": {
@@ -38019,9 +38049,13 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-01T22:24:10+00:00",
-      "summary": "Both restores on 5068ecb10 ran at a 200 MiB kernel limit. Starting at 200 MiB selected a 99.93 MiB Go limit and succeeded. Shrinking from 2 GiB selected 1,023 MiB and the kernel OOM-killed the Sentry. The pending review also identifies the cgroup directory reads in the fixture. The ancestor limit at boot is a separate finding. A separate three-way save comparison is running on the PR parent, the earlier save policy rebased to that parent, and the proposed policy. It verifies each restored 100,000-file archive.",
+      "updatedAt": "2026-11-01T23:13:12+00:00",
+      "summary": "Both restores on 5068ecb10 ran at a 200 MiB kernel limit. Starting at 200 MiB selected a 99.93 MiB Go limit and succeeded. Shrinking from 2 GiB selected 1,023 MiB and the kernel OOM-killed the Sentry. The pending review also identifies the cgroup directory reads in the fixture. The ancestor limit at boot is a separate finding. On a 4-vCPU worker with a 2 GiB limit, the proposed GC policy reduced median save time from 2.011 s to 1.817 s and increased peak sampled Sentry RSS during save through exit from 630.9 MiB to 735.4 MiB. The earlier #16152 policy took 1.968 s and used 650.1 MiB. The comparison used 12 balanced triplets. All 39 archives, including three warmups, restored all 100,000 files.",
       "evidence": [
+        {
+          "label": "Matched save time and sampled memory for all three GC policies",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41359437246/artifacts/13105345948"
+        },
         {
           "label": "Both restore cases on 5068ecb10, with actual limits and OOM counters",
           "url": "https://github.com/tamird/gvisor/actions/runs/41285846799/artifacts/13075252336"
@@ -46188,7 +46222,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-01T22:36:52+00:00",
+      "updatedAt": "2026-11-01T23:13:12+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -48112,8 +48146,12 @@
           ]
         }
       ],
-      "nextStep": "Prioritize the oldest-repair deadline in #16624. In the largest reversal the peer received three copies of that repair, two sent only 16.6 ms after the first. The captures omit the endpoint timeout counter and handler order. Existing deterministic tests already separate the deadline and post-timeout SACK paths.",
+      "nextStep": "Prioritize the oldest-repair deadline in #16624. In the largest reversal the peer received three copies of that repair, two sent only 16.6 ms after the first. The captures omit the endpoint timeout counter and handler order. Existing deterministic tests already separate the deadline and post-timeout SACK paths. The TCP_INFO syscall always returned zero for the lifetime retransmission count. Compare the corrected field against captured packets on a losing connection and on both sides of a retried handshake.",
       "evidence": [
+        {
+          "label": "TCP_INFO retransmission count on Linux, stock gVisor and the candidate",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41360715303"
+        },
         {
           "label": "Eight competing transfers with verified packet captures",
           "url": "https://github.com/tamird/gvisor/actions/runs/41304678019/artifacts/13082839573"
