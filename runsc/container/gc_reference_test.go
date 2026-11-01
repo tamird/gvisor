@@ -194,10 +194,11 @@ func TestGCReferenceSave(t *testing.T) {
 		t.Fatal(err)
 	}
 	boot := make(map[string]string)
-	for _, arg := range strings.Split(string(command), "\x00") {
-		key, value, ok := strings.Cut(arg, "=")
-		if ok && (key == "--total-memory" || key == "--cpu-num" || key == "--lifecycle-cpu-num") {
-			boot[key] = value
+	argv := strings.Split(string(command), "\x00")
+	for i := 0; i+1 < len(argv); i++ {
+		switch argv[i] {
+		case "--total-memory", "--cpu-num", "--lifecycle-cpu-num":
+			boot[argv[i]] = argv[i+1]
 		}
 	}
 	if boot["--total-memory"] != strconv.FormatInt(memoryLimit, 10) {
