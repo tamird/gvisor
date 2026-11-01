@@ -6,8 +6,7 @@ import sys
 import xml.etree.ElementTree as XML
 
 root = Path(sys.argv[1])
-tests = ("FINSentOnShutdownWithUnreadData", "RSTSentOnCloseWithUnreadData", "RSTSentOnCloseWithUnreadDataAllowsReadBuffered")
-expected = {f"AllTCPSockets/TCPSocketPairTest.{test}/{i}" for test in tests for i in range(12)}
+expected = {f"AllInetTests/TcpSocketTest.HalfCloseReadinessLocal/{i}" for i in range(2)}
 result = {}
 for name in ("poll-native", "poll-stock", "poll-fixed"):
     directory = root/name
@@ -28,11 +27,11 @@ for name in ("poll-native", "poll-stock", "poll-fixed"):
     if name == "poll-stock":
         failed = {test for test, case in assertions.items() if case["status"] == "FAIL"}
         verified = (set(assertions) == expected and status == 3
-                    and failed == {test for test in expected if ".FINSentOnShutdown" in test}
-                    and all(case["status"] in ("OK", "FAIL") for case in assertions.values())
-                    and all(any("reset by peer" in msg.lower() or "ECONNRESET" in msg
+                    and failed == expected
+                    and all(any("event.events" in msg or "epoll_wait" in msg
+                                or "pfd.revents" in msg
                                 for msg in assertions[test]["details"]) for test in failed))
-    verified &= (source == os.environ["PRODUCT" if name == "poll-fixed" else "STOCK"] and (directory/"fixture-sha256").read_text().split()[0] == os.environ["FIXTURE_SHA256"])
+    verified &= (source == os.environ["STOCK" if name == "poll-stock" else "PRODUCT"] and (directory/"fixture-sha256").read_text().split()[0] == os.environ["FIXTURE_SHA256"])
     log=(directory/"bazel.log").read_text(errors="replace") if (directory/"bazel.log").is_file() else ""
     diagnostics=[s[:360] for line in log.splitlines() if (s:=line.strip()).startswith(("error:", "ERROR:", "Error:")) and not any(k in s.lower() for k in ("header", "key=", "token"))][:8]
     now=datetime.datetime.now(datetime.timezone.utc).isoformat()
