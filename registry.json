@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T23:13:12+00:00",
+    "updatedAt": "2026-11-01T23:29:04+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -216,6 +216,10 @@
         {
           "label": "Published context-only conflict repair",
           "url": "https://github.com/tamird/gvisor/commit/afd34241a1b7e38e196e5d173632f658b7e5defc"
+        },
+        {
+          "label": "Rebasing the classifier over QEMU leaves three test references to the removed GPL matcher",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41361846557/artifacts/13105677187"
         }
       ],
       "ciRecovery": {
@@ -42733,6 +42737,44 @@
           "https://github.com/tamird/gvisor/actions/runs/41357065776/artifacts/13104181385"
         ]
       }
+    },
+    {
+      "id": "branch:tcp-info-total-retrans",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/tcp-info-total-retrans",
+      "head": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689",
+      "title": "Report retransmitted segments in TCP_INFO",
+      "url": "https://github.com/tamird/gvisor/commit/bc9ffcc0d",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T23:29:04+00:00",
+      "summary": "Expose the socket’s lifetime retransmission count to applications diagnosing packet loss.",
+      "evidence": [
+        {
+          "label": "Linux, stock gVisor and corrected gVisor on the same three socket traces",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41360715303/artifacts/13105296962"
+        },
+        {
+          "label": "Count the three TCP segments carried in two retransmission batches",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41361087857/artifacts/13104972344"
+        },
+        {
+          "label": "SYN-cookie accounting when the link refuses the SYN-ACK, and final TCP analyzer",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41361977602/artifacts/13106036446"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/bc9ffcc0d",
+        "title": "Report retransmitted segments in TCP_INFO",
+        "requestedAt": "2026-11-01T23:29:04+00:00",
+        "summary": "Open a standalone PR for the TCP_INFO fix?",
+        "body": "After five data retransmissions, stock gVisor still reported zero through getsockopt. It also reported zero on both the connecting and accepted sockets after a handshake retry. Linux and the correction reported 5, 1 and 1 respectively. The listener stayed at zero. Retransmitted batches count by TCP segment. The final amendment preserves the SYN-cookie counter when output fails."
+      }
     }
   ],
   "edges": [
@@ -46222,7 +46264,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-01T23:13:12+00:00",
+      "updatedAt": "2026-11-01T23:29:04+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -48144,9 +48186,18 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41310394454/artifacts/13084279388"
             }
           ]
+        },
+        {
+          "text": "Applications using TCP_INFO saw zero even after five data retransmissions. After a handshake retry they also saw zero on the connecting and accepted sockets. Linux and the proposed fix reported 5, 1 and 1, while the listener stayed at zero.",
+          "evidence": [
+            {
+              "label": "Native Linux, stock and corrected socket results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41360715303/artifacts/13105296962"
+            }
+          ]
         }
       ],
-      "nextStep": "Prioritize the oldest-repair deadline in #16624. In the largest reversal the peer received three copies of that repair, two sent only 16.6 ms after the first. The captures omit the endpoint timeout counter and handler order. Existing deterministic tests already separate the deadline and post-timeout SACK paths. The TCP_INFO syscall always returned zero for the lifetime retransmission count. Compare the corrected field against captured packets on a losing connection and on both sides of a retried handshake.",
+      "nextStep": "Prioritize the oldest-repair deadline in #16624. In the largest reversal the peer received three copies of that repair, two sent only 16.6 ms after the first. The captures omit the endpoint timeout counter and handler order. Existing deterministic tests already separate the deadline and post-timeout SACK paths. Check how Linux and gVisor respond to a repeated SYN before the handshake timer fires.",
       "evidence": [
         {
           "label": "TCP_INFO retransmission count on Linux, stock gVisor and the candidate",
