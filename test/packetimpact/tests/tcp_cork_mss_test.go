@@ -15,7 +15,9 @@
 package tcp_cork_mss_test
 
 import (
+	"bytes"
 	"flag"
+	"fmt"
 	"testing"
 	"time"
 
@@ -80,4 +82,100 @@ func TestTCPCorkMSS(t *testing.T) {
 		t.Fatalf("expected payload was not received: %s", err)
 	}
 	conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck)})
+}
+
+// TestQueuedWriteBoundary observes the first segment at the tail of a queued
+// 32 KiB write. Accepting each application write behind a closed window keeps
+// scheduling of the application separate from the sender's packetization.
+func TestQueuedWriteBoundary(t *testing.T) {
+	const mss, first, tail = 1420, 32 << 10, 108
+	for _, tc := range []struct {
+		name string
+		next int
+	}{
+		{"Large", first},
+		{"Fits", mss - tail},
+		{"Straddles", mss - tail + 1},
+		{"Fin", 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dut := testbench.NewDUT(t)
+			listener, port := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1)
+			defer dut.Close(t, listener)
+			conn := dut.Net.NewTCPIPv4(t, testbench.TCP{DstPort: &port, WindowSize: testbench.Uint16(0)}, testbench.TCP{SrcPort: &port})
+			defer conn.Close(t)
+			opt := make([]byte, header.TCPOptionMSSLength)
+			header.EncodeMSSOption(mss, opt)
+			conn.ConnectWithOptions(t, opt)
+			fd, _ := dut.Accept(t, listener)
+			defer dut.Close(t, fd)
+			dut.SetSockOptInt(t, fd, unix.SOL_SOCKET, unix.SO_SNDBUF, 256<<10)
+			dut.SetSockOptInt(t, fd, unix.IPPROTO_TCP, unix.TCP_NODELAY, 1)
+			if n, c := dut.GetSockOptInt(t, fd, unix.IPPROTO_TCP, unix.TCP_NODELAY), dut.GetSockOptInt(t, fd, unix.IPPROTO_TCP, unix.TCP_CORK); n != 1 || c != 0 {
+				t.Fatalf("NODELAY=%d CORK=%d, want 1 and 0", n, c)
+			}
+
+			a, b := bytes.Repeat([]byte{'a'}, first), bytes.Repeat([]byte{'b'}, tc.next)
+			if got := dut.Send(t, fd, a, 0); int(got) != len(a) {
+				t.Fatalf("first write accepted %d of %d bytes", got, len(a))
+			}
+			if tc.next != 0 {
+				if got := dut.Send(t, fd, b, 0); int(got) != len(b) {
+					t.Fatalf("second write accepted %d of %d bytes", got, len(b))
+				}
+			} else {
+				dut.Shutdown(t, fd, unix.SHUT_WR)
+			}
+			want := append(a, b...)
+			ack := func() {
+				conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), WindowSize: testbench.Uint16(mss)})
+			}
+			ack()
+			seen, prefixPackets, boundary := 0, 0, 0
+			for {
+				// Match the next in-sequence packet even when its only content is FIN.
+				layers, err := conn.ExpectData(t, &testbench.TCP{}, nil, 2*time.Second)
+				if err != nil {
+					t.Fatalf("at byte %d of %d: %v", seen, len(want), err)
+				}
+				tcp := layers[2].(*testbench.TCP)
+				fin := *tcp.Flags&header.TCPFlagFin != 0
+				var data []byte
+				if len(layers) > 3 {
+					data = layers[3].(*testbench.Payload).Bytes
+				}
+				if len(data) > mss || seen+len(data) > len(want) || !bytes.Equal(data, want[seen:seen+len(data)]) {
+					t.Fatalf("unexpected payload of %d bytes at offset %d", len(data), seen)
+				}
+				if len(data) != 0 {
+					switch {
+					case seen < first-tail:
+						if len(data) != mss {
+							t.Fatalf("prefix packet at %d had %d bytes, want %d", seen, len(data), mss)
+						}
+						prefixPackets++
+					case seen == first-tail:
+						boundary = len(data)
+						fmt.Printf("QUEUED_BOUNDARY name=%s first=%d second=%d prefix=%d prefix_packets=%d window=%d first_payload=%d\n",
+							tc.name, first, tc.next, seen, prefixPackets, mss, boundary)
+					}
+					seen += len(data)
+					if tc.next != 0 && seen == len(want) {
+						dut.Shutdown(t, fd, unix.SHUT_WR)
+					}
+				}
+				if fin {
+					if seen != len(want) || prefixPackets != 23 || boundary == 0 {
+						t.Fatalf("FIN at %d, want %d, prefix=%d boundary=%d", seen, len(want), prefixPackets, boundary)
+					}
+					ack()
+					fmt.Printf("QUEUED_FIN name=%s bytes=%d\n", tc.name, seen)
+					break
+				}
+				if len(data) != 0 {
+					ack()
+				}
+			}
+		})
+	}
 }
