@@ -1,0 +1,20 @@
+{
+  "provenance": {
+    "artifact": "https://github.com/tamird/gvisor/actions/runs/41071795282/artifacts/12986015991",
+    "download_sha256": "4290d6107b5b8669955e765d91bbbf1827e76bc4c735554f76ea49eefd5d8f91",
+    "member": "eventfd.json/native/owner_spawns",
+    "action_digest": {
+      "hash": "c5c40a0e84f09b6a95aa13b2afe6eab9df183ab73745c750412bf5471ebb53f1",
+      "sizeBytes": "356"
+    }
+  },
+  "test_action": {
+    "target": "//pkg/sentry/fsimpl/eventfd:eventfd_test",
+    "runner": "remote",
+    "cache_hit": false,
+    "status": "",
+    "exit_code": 0,
+    "executable": "bazel-out/rbe_linux_arm64-opt-exec/bin/external/bazel_tools/tools/test/compiled_posix_test_wrapper",
+    "test_binary": "pkg/sentry/fsimpl/eventfd/eventfd_test_/eventfd_test"
+  }
+}

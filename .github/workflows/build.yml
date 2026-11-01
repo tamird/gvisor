@@ -1,48 +1,49 @@
-name: Build the public release on scratch and start its native Sentry
+name: Run original Go suites on native scratch workers
 on:
   push:
-    branches: [qualification/package-empty-worker-arm64]
+    branches: [qualification/scratch-native-go-packages-scope]
 permissions:
   contents: read
+  actions: read
 jobs:
   compare:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - {cpu: arm64, os: ubuntu-24.04-arm, bb: arm64, bb_sha: 5e8586e88d169395c2119a4143aa4d86d9b53d7abab3520acc735473f2bd2a90, bazelisk_sha: bb608519a440d45d10304eb684a73a2b6bb7699c5b0e5434361661b25f113a5d}
-          - {cpu: amd64, os: ubuntu-24.04, bb: x86_64, bb_sha: bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224, bazelisk_sha: e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76}
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 155
     env:
-      EXEC_CPU: ${{ matrix.cpu }}
-      BB_ARCH: ${{ matrix.bb }}
-      BB_HASH: ${{ matrix.bb_sha }}
-      BAZELISK_HASH: ${{ matrix.bazelisk_sha }}
-    timeout-minutes: 58
+      BB_ARCH: x86_64
+      BB_HASH: bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {persist-credentials: false, fetch-depth: 5}
-      - name: Pin Bazel and the compact action log reader
+      - name: Restore the qualified native Bazel executable and log reader
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -eu
-          export USE_BAZEL_VERSION=$(cat images/default/bazelversion)
-          echo "USE_BAZEL_VERSION=$USE_BAZEL_VERSION" >> "$GITHUB_ENV"
-          mkdir -p "$RUNNER_TEMP/bazelisk-bin"
-          curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-$EXEC_CPU -o "$RUNNER_TEMP/bazelisk-bin/bazel"
-          echo "$BAZELISK_HASH  $RUNNER_TEMP/bazelisk-bin/bazel" | sha256sum -c -
-          chmod +x "$RUNNER_TEMP/bazelisk-bin/bazel"
-          echo "$RUNNER_TEMP/bazelisk-bin" >> "$GITHUB_PATH"
+          mkdir -p "$RUNNER_TEMP/native-package-evidence"
+          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap","executed_targets":0}' > "$RUNNER_TEMP/native-package-evidence/bootstrap.json"
+          gh api repos/tamird/gvisor/actions/artifacts/12982133352/zip > "$RUNNER_TEMP/native-bazel.zip"
+          echo "c2889f822f8948b2982b903abb96b3498ce1136b1a5c9d60b3f61bb09f082701  $RUNNER_TEMP/native-bazel.zip" | sha256sum -c -
+          unzip -p "$RUNNER_TEMP/native-bazel.zip" bazel-candidate > "$RUNNER_TEMP/bazel-candidate"
+          sha256sum "$RUNNER_TEMP/bazel-candidate"
+          chmod 0755 "$RUNNER_TEMP/bazel-candidate"
           command -v objcopy nm jq
           curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-$BB_ARCH -o "$RUNNER_TEMP/bb"
           echo "$BB_HASH  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod 0755 "$RUNNER_TEMP/bb"
-      - name: Build the real release layout and run its Sentry on native Linux
+          python3 - <<'PY_BOOTSTRAP'
+          import hashlib, json, os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"])
+          result = {"status": "PASS", "phase": "bootstrap", "artifact_id": 12982133352,
+                    "archive_sha256": hashlib.sha256((root / "native-bazel.zip").read_bytes()).hexdigest(),
+                    "member": "bazel-candidate", "member_sha256": hashlib.sha256((root / "bazel-candidate").read_bytes()).hexdigest()}
+          (root / "native-package-evidence" / "bootstrap.json").write_text(json.dumps(result) + "\n")
+          PY_BOOTSTRAP
+      - name: Test both packages on both native architectures
         env:
-          BASE: ddf4c56a5ae1a1e539ec5989649930c97c26e593
-          ORIGINAL: ec550a48a00e04396c21617a152224096bf93af2
-          CORRECTED: 5e4eeb4b21ca1a7e8e4dd12b26c6b546b0b8e6e6
-          AMD64_CONTROL: 17927b34de218b8c26b5feb834856d7d49259444
+          PRODUCT: 851d04fc2918adcaa60a78fd9fa7e766bc4fec68
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -eu
@@ -54,11 +55,12 @@ jobs:
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$RUNNER_TEMP/sidecar.bazelrc"
           unset BUILDBUDDY_API_KEY
-          cp test/rbe/empty_worker/compare.py "$RUNNER_TEMP/package-compare.py"
-          python3 "$RUNNER_TEMP/package-compare.py"
+          cp test/rbe/{qualification_report.py,unit_matrix.py} "$RUNNER_TEMP/"
+          cp test/rbe/native_packages/{run.py,native-wrapper-control.json} "$RUNNER_TEMP/"
+          python3 "$RUNNER_TEMP/run.py"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: scratch-release-${{ matrix.cpu }}
-          path: ${{ runner.temp }}/package-evidence
+          name: native-scratch-go-packages
+          path: ${{ runner.temp }}/native-package-evidence
           if-no-files-found: error
