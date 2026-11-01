@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T10:24:40.857533+00:00",
+    "updatedAt": "2026-11-01T10:37:33.302070+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39664,16 +39664,16 @@
       "url": "https://github.com/google/gvisor/pull/16472",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T09:14:33.369481+00:00",
-      "summary": "On one four-CPU worker, buffering cut cold kernel load by 41% in matched rounds; WILLNEED cut it by 3%. With files warm, the buffered restore command was 2.2% slower in paired rounds. The Nginx quota sweep remains open.",
+      "updatedAt": "2026-11-01T10:37:33.302070+00:00",
+      "summary": "Buffering reduced cold kernel load for the 12.2 MiB checkpoint. Across 72 paired comparisons on small Nginx checkpoints, buffering reached the first verified HTTP response sooner in 33 pairs. All 216 restores served the expected bytes.",
       "contributorReview": {
         "kind": "review",
         "status": "pending",
         "head": "63d3761ddffe329a13d142d91dd61cceeec76fcd",
         "url": "https://github.com/google/gvisor/pull/16472#issuecomment-6431225649",
-        "title": "Post the cold and warm restore measurements on #16472",
-        "summary": "On one four-CPU worker, buffering cut cold kernel load by 41% in matched rounds; WILLNEED cut it by 3%. With files warm, the buffered restore command was 2.2% slower in paired rounds. The Nginx quota sweep remains open.",
-        "body": "@EtiennePerot, @milantracy: I tried `POSIX_FADV_WILLNEED` on the local\nstate file with the existing reader. On a cold checkpoint it saved about\n3% of kernel load time in paired rounds; buffering saved 41%. Here are\nthe cold rows from [benchstat][1] (milliseconds, 18 restores per column):\n\n```\n             │    direct    │               advice                │                buffer                │\n             │ kernel-ms/op │ kernel-ms/op  vs base               │ kernel-ms/op  vs base                │\nRestore/cold     777.3 ± 4%     751.0 ± 3%       ~ (p=0.091 n=18)     450.5 ± 3%  -42.04% (p=0.000 n=18)\n\n             │   direct   │              advice               │               buffer               │\n             │ cli-ms/op  │ cli-ms/op   vs base               │ cli-ms/op   vs base                │\nRestore/cold   809.4 ± 4%   784.1 ± 2%       ~ (p=0.091 n=18)   489.2 ± 3%  -39.56% (p=0.000 n=18)\n```\n\nWith all three input files **warm**, benchstat didn't distinguish the\nreaders. Comparing buffered with direct *within each round*, though,\nthe restore command was slower in 15 of 18 rounds: median +2.2%\n(95% interval +0.3% to +5.0%). The kernel-load difference was less\nclear: +1.3% (−0.6% to +4.9%). This is consistent with the hot CLI\nregression in the PR; it doesn't establish a hot kernel-load regression.\n\nThe [108 restores][2] used the [same executable][3] on one 4-vCPU\nLinux worker, in balanced order, with a 12.2 MiB state file and a\n513 MiB pages file. CLI time ends when the background restore command\nreturns. Memory and pipe contents were checked afterward. This wasn't a\nlistening Nginx checkpoint or a CPU-quota sweep, so the measurements\ndon't pick a buffer count for those configurations.\n\nPosted on behalf of @tamird.\n\n[1]: https://tamird.github.io/gvisor/restore-readers-benchstat.txt\n[2]: https://github.com/tamird/gvisor/actions/runs/41186223756/artifacts/13037505941\n[3]: https://github.com/tamird/gvisor/commit/d3066814d"
+        "title": "Post the checkpoint and Nginx restore measurements on #16472",
+        "summary": "Buffering reduced cold kernel load for the 12.2 MiB checkpoint. Across 72 paired comparisons on small Nginx checkpoints, buffering reached the first verified HTTP response sooner in 33 pairs. All 216 restores served the expected bytes.",
+        "body": "@EtiennePerot, @milantracy: I tried `POSIX_FADV_WILLNEED` on the local\nstate file with the existing reader. On a cold checkpoint it saved about\n3% of kernel load time in paired rounds; buffering saved 41%. Here are\nthe cold rows from [benchstat][1] (milliseconds, 18 restores per column):\n\n```\n             │    direct    │               advice                │                buffer                │\n             │ kernel-ms/op │ kernel-ms/op  vs base               │ kernel-ms/op  vs base                │\nRestore/cold     777.3 ± 4%     751.0 ± 3%       ~ (p=0.091 n=18)     450.5 ± 3%  -42.04% (p=0.000 n=18)\n\n             │   direct   │              advice               │               buffer               │\n             │ cli-ms/op  │ cli-ms/op   vs base               │ cli-ms/op   vs base                │\nRestore/cold   809.4 ± 4%   784.1 ± 2%       ~ (p=0.091 n=18)   489.2 ± 3%  -39.56% (p=0.000 n=18)\n```\n\nWith all three input files **warm**, benchstat didn't distinguish the\nreaders. Comparing buffered with direct *within each round*, though,\nthe restore command was slower in 15 of 18 rounds: median +2.2%\n(95% interval +0.3% to +5.0%). The kernel-load difference was less\nclear: +1.3% (−0.6% to +4.9%). This is consistent with the hot CLI\nregression in the PR; it doesn't establish a hot kernel-load regression.\n\nThe [108 restores][2] used the [same executable][3] on one 4-vCPU\nLinux worker, in balanced order, with a 12.2 MiB state file and a\n513 MiB pages file. CLI time ends when the background restore command\nreturns. Memory and pipe contents were checked afterward.\n\nI also tried the six requested OCI quotas on a listening four-worker\nNginx. Each quota had its own checkpoint, and all three readers restored\nthe same bytes within each quota. Here are the medians of the six\npaired percentage changes for buffering versus direct reads. HTTP\ntime runs from starting restore through the first verified 1 KiB\nresponse to a guest `curl` launched with `runsc exec`.\n\n| Application CPU quota | Cold kernel load | Cold first HTTP | Warm first HTTP |\n|---|---:|---:|---:|\n| 0.25 | +0.2% | +7.9% | +3.0% |\n| 1 | −2.2% | +0.2% | −0.4% |\n| 2 | −3.4% | +1.3% | +0.4% |\n| 4 | −8.8% | −1.1% | +0.7% |\n| 16 | −9.4% | −1.4% | −3.0% |\n| Uncapped (19 CPUs) | −9.7% | −1.0% | −0.7% |\n\nBuffering shortened cold kernel load in all six pairs at both 4 and\n16 CPUs. It reached the first HTTP response sooner in three and four\nof those pairs, respectively. Across the 72 pairs, buffering reached\nHTTP sooner in 33 and WILLNEED in 36. At 0.25 CPU, five of six cold\nbuffered restores reached HTTP later. Individual differences ranged\nfrom −19% to +20%. All 216 restores served the expected bytes on the\nfirst request and on a subsequent 16-request burst. [Quota results][4]\n\nThe Nginx state files were only 301–343 kB. The buffered reader used\ntwo 512 KiB chunks, so the whole state file fit in its first data read.\nThis sweep cannot choose a queue depth for larger files. It used the\ndefault creation and lifecycle CPU policies. The background reader\nuses the application CPU count, and the test verified each sandbox’s\napplication quota after restore. [Reader sizing][5] · [CPU policies][6]\n\nPosted on behalf of @tamird.\n\n[1]: https://tamird.github.io/gvisor/restore-readers-benchstat.txt\n[2]: https://github.com/tamird/gvisor/actions/runs/41186223756/artifacts/13037505941\n[3]: https://github.com/tamird/gvisor/commit/d3066814d\n[4]: https://github.com/tamird/gvisor/actions/runs/41297735728/artifacts/13080207857\n[5]: https://github.com/google/gvisor/blob/63d3761dd/runsc/boot/controller.go#L402-L407\n[6]: https://github.com/google/gvisor/blob/63d3761dd/runsc/config/config.go#L1574-L1577"
       },
       "evidence": [
         {
@@ -57905,9 +57905,22 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T10:24:40.857533+00:00",
+      "updatedAt": "2026-11-01T10:37:33.302070+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "All three C++ cases passed on both native scratch workers with a declared GNU loader and libc. The static link still failed before test execution. On AMD64 scratch, the Bash Nogo launcher exited 127, the native launcher passed, and removing the waiter mutex produced one checklocks diagnostic for each analyzed architecture.",
+          "evidence": [
+            {
+              "label": "C++ tests on AMD64 and ARM64",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41297166023/artifacts/13079933163"
+            },
+            {
+              "label": "Original Nogo tests and per-architecture diagnostics",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41297822356/artifacts/13079877524"
+            }
+          ]
+        },
         {
           "text": "The first C++ test failed to link on both native scratch workers. The pinned GNU sysroot supplies glibc link-time stubs. Its fully static link lacked the requested archives, and neither worker executed a C++ test. The Bazel wrapper rebase separately passed all 14 tw_test and 44 Java test cases.",
           "evidence": [
@@ -59288,7 +59301,7 @@
           ]
         }
       ],
-      "nextStep": "Run the original C++ test under a declared GNU loader on both scratch workers. Track fully static GNU linking separately. Check a native Nogo test on the same shell-free worker.",
+      "nextStep": "Recover the C++ executable and Nogo inputs from their original remote actions to complete the binary and findings checks. The GNU toolchain still needs a static runtime for fully static C++ tests.",
       "evidence": [
         {
           "label": "AMD64 state and TCP tests on scratch",
