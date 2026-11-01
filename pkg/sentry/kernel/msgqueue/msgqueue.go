@@ -667,3 +667,11 @@ func (q *Queue) Destroy() {
 func (q *Queue) ID() ipc.ID {
 	return q.obj.ID
 }
+
+// Retain the registry pointer while locked and use it after unlocking.
+func unguardedCount(r *Registry) int {
+	r.mu.Lock()
+	reg := r.reg
+	r.mu.Unlock()
+	return reg.ObjectCount()
+}
