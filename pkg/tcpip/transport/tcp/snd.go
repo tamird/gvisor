@@ -112,6 +112,11 @@ type sender struct {
 
 	ep *Endpoint
 
+	// writeSeq is the sequence number after the last byte or FIN queued by
+	// the application. Unlike SndNxt, it includes data not yet transmitted.
+	// +checklocks:ep.mu
+	writeSeq seqnum.Value
+
 	// finSent is set when the FIN segment is actually transmitted.
 	// The endpoint may be in FIN_WAIT1/LAST_ACK while the FIN is still
 	// queued behind blocked data; finSent guards closing ACK completions.
@@ -290,6 +295,7 @@ func initSender(ep *Endpoint, iss, irs seqnum.Value, sndWnd seqnum.Size, mss uin
 			},
 			RTO: 1 * time.Second,
 		},
+		writeSeq:        iss + 1,
 		smallSegmentEnd: iss + 1,
 		gso:             ep.gso.Type != stack.GSONone,
 		writeList: protectedWriteList{
