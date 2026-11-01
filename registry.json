@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T09:30:13.357522+00:00",
+    "updatedAt": "2026-11-01T09:45:10.907293+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -48055,9 +48055,26 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T09:09:12.149661+00:00",
+      "updatedAt": "2026-11-01T09:45:10.907293+00:00",
       "summary": "The graph codec is now the default. On a four-worker Nginx checkpoint, encoding took 2.25 ms instead of 12.71 ms and decoding took 8.99 ms instead of 17.75 ms. All four round-trip bugs tracked in #16715 are fixed. Increasing the UDP receive queue did not grow the index table. Smaller writer buffers and clearing fewer decoder slots did not speed up Nginx checkpoints. Separating callback payloads reduced allocated bytes without improving the time to Nginx’s first HTTP response.",
       "findings": [
+        {
+          "text": "Held two Save experiments. Storing reference bounds in every segment made a 50,000-file checkpoint encode 11.43% faster with 6.31% fewer allocated bytes, but increased first-Save allocations by 22.55% on a 1,024-node pointer chain. Sharing storage with the inline array chunk cut that penalty to 10.82%; the warm chain still took 4.09% longer. The second experiment stopped after the small-graph comparison. Its full-kernel performance was not measured.",
+          "evidence": [
+            {
+              "label": "Original 50,000-file pairs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41292100562/artifacts/13077818919"
+            },
+            {
+              "label": "First representation, small and sparse fixtures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41293386273/artifacts/13078716419"
+            },
+            {
+              "label": "Shared storage, 288 small-fixture observations",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41294002860/artifacts/13078301997"
+            }
+          ]
+        },
         {
           "text": "An actual Sentry checkpoint of 50,000 empty tmpfs files contained 7,302,517 bytes of kernel objects and 135,168 bytes of pages. Checkpoint took 167 ms. Starting a fresh sandbox, restoring it and running /bin/true took 154 ms; the restored guest listed every file. Six single-CPU benchmark samples gave median Encode and Decode times of 141 and 103 ms. Decode with GC took 163 ms, with three collections. With GC enabled, 360 ms of 1.58 s of sampled loadKernel CPU went through callback execution. The largest of those paths (220 ms) restored the parent pointer of a tmpfs directory entry. Combining the callback and its waiting object removed 15.7 MiB of allocations per graph decode. In 16 matched pairs the same 50,000-file checkpoint decoded in 203.5 ms instead of 215.0 ms with GC. Eight native restore pairs verified all files and did not establish faster guest readiness.",
           "evidence": [
@@ -50958,7 +50975,7 @@
           ]
         }
       ],
-      "nextStep": "Review the callback change. On the save side, determine whether the measured binary-search cost in segment-reference resolution can be removed in the existing writer.",
+      "nextStep": "The callback optimization is ready for contributor review. For Save, test whether an index into the existing segment table can remove the binary search while keeping small objects compact. Check small and sparse graphs before repeating the 50,000-file comparison.",
       "evidence": [
         {
           "label": "50,000 tmpfs files after real restore and 18 paired-phase observations on the same checkpoint",
@@ -57845,7 +57862,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T09:08:32.894251+00:00",
+      "updatedAt": "2026-11-01T09:45:10.907293+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -59194,7 +59211,7 @@
           ]
         }
       ],
-      "nextStep": "Run Bazel’s embedded Linux wrapper on glibc and qualify the two AMD64 owners on the same scratch image. All 109 ARM64 cases have executed.",
+      "nextStep": "Qualify the embedded Linux wrapper in the supplier distribution, then run the two AMD64 test owners on scratch. The first supplier build was rejected by the executor for dockerNetwork=standard; a subsequent platform exposed an Xcode stub action forced local on Linux. The corrected supplier build is in progress. All 109 ARM64 cases executed.",
       "evidence": [
         {
           "label": "Both scratch architectures: 14 affected targets rebuilt, including the two original failures",
@@ -59423,6 +59440,18 @@
         {
           "label": "Full Jekyll site, proof and serving-image comparison",
           "url": "https://github.com/tamird/gvisor/actions/runs/41107304093"
+        },
+        {
+          "label": "Original executor diagnostic for the unqualified supplier build",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41292566651/artifacts/13076919811"
+        },
+        {
+          "label": "Linux Xcode stub action forced local",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41293303154/artifacts/13078530736"
+        },
+        {
+          "label": "Supplier build with the Linux stub locality corrected",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41293756340"
         }
       ],
       "group": "rbe"
@@ -60070,10 +60099,23 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-01T09:30:13.357522+00:00",
+      "updatedAt": "2026-11-01T09:45:10.907293+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Compare competing Reno and CUBIC flows with the remaining two production changes from #15432, on the same sender and native worker. Finish the readiness and socket-error qualification and keep the review order in #16670 current.",
       "findings": [
+        {
+          "text": "A second ACK left four repairs in a five-packet congestion window. The measured #15432 integration sent two packets; the earlier fork correction counted three lost originals alongside their repairs and sent none. Keeping RACK’s original-loss decision sent one. The candidate is being checked for partially accepted GSO transmissions and for a rejected first send.",
+          "evidence": [
+            {
+              "label": "Three comparable packet sequences, including flight contributions",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41293329239/artifacts/13078292053"
+            },
+            {
+              "label": "Reviewer guide",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            }
+          ]
+        },
         {
           "text": "On one shared 20 Mbit/s path, #15432 increased gVisor’s share in both Reno pairs. One CUBIC pair lost share and the other rose from below 1% to about 42%. The latter baseline retransmitted 208 times in 42.3 seconds without sending a new byte. All four amended trials went at most 292 ms without new data during the shared interval. In a separate short-ACK case the change sent nine packets into a five-packet congestion window.",
           "evidence": [
@@ -60084,6 +60126,10 @@
             {
               "label": "Reviewer guide and short-ACK evidence",
               "url": "https://github.com/google/gvisor/issues/16670"
+            },
+            {
+              "label": "Eight sender progress intervals derived from the original packet bundle",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41293897324/artifacts/13078038272"
             }
           ]
         },
