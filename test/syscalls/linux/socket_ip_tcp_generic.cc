@@ -101,6 +101,82 @@ TEST_P(TCPSocketPairTest, OutputQueueSurvivesReset) {
   EXPECT_LE(after, pending);
 }
 
+TEST(TcpOutputQueueTest, ObserveDisconnectAndReuse) {
+  auto report = [](int arm, const char* phase, int fd, int rc) {
+    const int err = rc < 0 ? errno : 0;
+    int out = -1;
+    const int q = ioctl(fd, TIOCOUTQ, &out);
+    fprintf(stderr, "LIFE arm=%d phase=%s op=%d errno=%d q=%d qerrno=%d\n", arm,
+            phase, rc, err, out, q < 0 ? errno : 0);
+  };
+  for (const int arm : {0, 1, 2, 3}) {
+    auto server = ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET, SOCK_STREAM, 0));
+    auto client = ASSERT_NO_ERRNO_AND_VALUE(
+        Socket(AF_INET, SOCK_STREAM | (arm % 2 ? SOCK_NONBLOCK : 0), 0));
+    struct sockaddr_in addr = {};
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    ASSERT_THAT(bind(server.get(), AsSockAddr(&addr), sizeof(addr)),
+                SyscallSucceeds());
+    socklen_t len = sizeof(addr);
+    ASSERT_THAT(getsockname(server.get(), AsSockAddr(&addr), &len),
+                SyscallSucceeds());
+    if (arm == 2) {
+      struct sockaddr unspec = {};
+      unspec.sa_family = AF_UNSPEC;
+      report(arm, "disconnect1", client.get(),
+             connect(client.get(), &unspec, sizeof(unspec)));
+      report(arm, "disconnect2", client.get(),
+             connect(client.get(), &unspec, sizeof(unspec)));
+    } else {
+      ASSERT_THAT(RetryEINTR(connect)(client.get(), AsSockAddr(&addr), len),
+                  SyscallFailsWithErrno(arm % 2 ? EINPROGRESS : ECONNREFUSED));
+      struct pollfd refused = {client.get(), POLLERR | POLLHUP, 0};
+      ASSERT_THAT(RetryEINTR(poll)(&refused, 1, kPositiveTimeoutMs),
+                  SyscallSucceedsWithValue(1));
+      report(arm, "refused", client.get(), 0);
+      // SO_ERROR consumes Linux's one pending error. Observe exactly what
+      // the guest returns, including a second read after it was consumed.
+      if (arm != 3) {
+        for (int i = 0; i < 2; ++i) {
+          int err = 0;
+          socklen_t errlen = sizeof(err);
+          ASSERT_THAT(
+              getsockopt(client.get(), SOL_SOCKET, SO_ERROR, &err, &errlen),
+              SyscallSucceeds());
+          fprintf(stderr, "LIFE arm=%d error_read=%d value=%d\n", arm, i, err);
+        }
+      }
+      report(arm, "cleared", client.get(), 0);
+    }
+    ASSERT_THAT(listen(server.get(), 1), SyscallSucceeds());
+    int rc = RetryEINTR(connect)(client.get(), AsSockAddr(&addr), len);
+    int err = rc < 0 ? errno : 0;
+    report(arm, "reconnect1", client.get(), rc);
+    if (arm % 2 && rc < 0 && err != EINPROGRESS) {
+      rc = RetryEINTR(connect)(client.get(), AsSockAddr(&addr), len);
+      err = rc < 0 ? errno : 0;
+      report(arm, "reconnect2", client.get(), rc);
+    }
+    if (rc == 0 || err == EINPROGRESS) {
+      struct pollfd listening = {server.get(), POLLIN, 0};
+      ASSERT_THAT(RetryEINTR(poll)(&listening, 1, kPositiveTimeoutMs),
+                  SyscallSucceedsWithValue(1));
+      auto peer =
+          ASSERT_NO_ERRNO_AND_VALUE(Accept(server.get(), nullptr, nullptr));
+      ASSERT_THAT(RetryEINTR(send)(client.get(), "x", 1, MSG_NOSIGNAL),
+                  SyscallSucceedsWithValue(1));
+      char byte;
+      ASSERT_THAT(RetryEINTR(read)(peer.get(), &byte, 1),
+                  SyscallSucceedsWithValue(1));
+      ASSERT_EQ(byte, 'x');
+      fprintf(stderr, "LIFE arm=%d delivered=1\n", arm);
+    } else {
+      fprintf(stderr, "LIFE arm=%d delivered=0\n", arm);
+    }
+  }
+}
+
 TEST_P(TCPSocketPairTest, TcpInfoSucceeds) {
   auto sockets = ASSERT_NO_ERRNO_AND_VALUE(NewSocketPair());
 
