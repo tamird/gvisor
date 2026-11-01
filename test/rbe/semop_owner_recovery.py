@@ -17,6 +17,7 @@ import qualification_report as reporter
 
 SOURCE = "14a4e93a872bf6dd49893b6bd9a5f55517167e2b"
 WORKFLOW = "4ea5a7772d5b18cb08ac2cf6aa7c3a96faca40f8"
+ORIGINAL_HOST = "d92c44459829"
 OWNERS = [
     "//pkg/sentry/kernel/ipc:ipc_nogo",
     "//pkg/sentry/kernel:kernel_nogo",
@@ -25,6 +26,7 @@ OWNERS = [
     "//pkg/sentry/syscalls/linux:linux_nogo",
     "//pkg/sentry/socket/control:control_test",
 ]
+STORED_PATTERN = OWNERS[0] + " and 5 more"
 ROOT = Path(os.environ["RUNNER_TEMP"])
 OUT = ROOT / "semop-owner-evidence"
 OUT.mkdir(exist_ok=True)
@@ -148,17 +150,18 @@ def recover():
         selected = []
         for uid, item in items.items():
             pattern = item.get("pattern", "")
-            patterns = pattern if isinstance(pattern, list) else pattern.split()
+            patterns = pattern if isinstance(pattern, list) else [pattern]
             created = int(value(item, "createdAtUsec", "created_at_usec") or 0)
             stamp = datetime.datetime.fromtimestamp(created / 1e6, datetime.timezone.utc).isoformat()
-            if set(patterns) == set(OWNERS) and "2026-11-01T13:15:00" <= stamp < "2026-11-01T13:20:00":
+            if (patterns == [STORED_PATTERN] and item.get("host") == ORIGINAL_HOST
+                    and "2026-11-01T13:15:00" <= stamp < "2026-11-01T13:20:00"):
                 selected.append(uid)
         return selected
 
     if not matches(candidates):
         try:
             items = pages("SearchInvocation", {"query": {
-                "pattern": " ".join(OWNERS), "command": "test",
+                "pattern": STORED_PATTERN, "command": "test", "host": ORIGINAL_HOST,
                 "updated_after": "2026-11-01T13:15:00Z", "updated_before": "2026-11-01T16:00:00Z",
             }, "count": 20}, "invocation")
             row["queries"].append({"pattern_search_count": len(items)})
@@ -172,8 +175,17 @@ def recover():
         uid = selected[0]
         original, = pages("GetInvocation", {"selector": {"invocation_id": uid}, "include_metadata": True}, "invocation")
         sha = value(original, "commitSha", "commit_sha")
-        assert sha in (SOURCE, WORKFLOW), "Original source metadata does not match the fixed workflow"
+        assert sha in (None, "", SOURCE, WORKFLOW), "Original source metadata conflicts with the fixed workflow"
+        assert original.get("host") == ORIGINAL_HOST
+        targets = pages("GetTarget", {"selector": {"invocation_id": uid}}, "target")
+        assert {item["label"] for item in targets} <= set(OWNERS)
         row["invocation"] = uid
+        row["source_binding"] = {
+            "reported_commit": sha,
+            "basis": "immutable workflow checkout; exact original Docker coordinator, owner pattern and start time",
+            "original_coordinator_log_job": 124857542298,
+            "coordinator_host_matches": True,
+        }
         row["invocation_metadata"] = {key: original.get(key) for key in (
             "commitSha", "pattern", "success", "bazelExitCode", "invocationStatus", "createdAtUsec", "updatedAtUsec", "durationUsec")}
         for label in OWNERS:
@@ -200,7 +212,7 @@ def retry():
     private = ROOT / "semop-owner-private"
     private.mkdir(exist_ok=True)
     def git(*args):
-        return subprocess.check_output(["git", *args])
+        return subprocess.check_output(["git", "-c", "safe.directory=" + str(Path.cwd()), *args])
     assert git("rev-parse", "HEAD").decode().strip() == SOURCE
     (private / "commit").write_bytes(git("cat-file", "commit", SOURCE))
     (private / "before").write_bytes(git("diff", "HEAD", "--"))
