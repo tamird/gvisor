@@ -1009,9 +1009,11 @@ release-artifacts: ## Build the release archives for both architectures with REL
 	$(call build_release_artifacts,--config=release_version --embed_label="$$GVISOR_RELEASE_LABEL")
 .PHONY: release-artifacts
 
-artifacts-python: ensure-bazel-server ## Builds Python SandboxExec wheels.
+artifacts-python: ensure-bazel-server ## Builds Python SandboxExec distributions into $(PYTHON_RELEASE_DEST).
 	@mkdir -p "$(PYTHON_RELEASE_DEST)"
-	@$(call wrapper,tools/make_python_release.sh build "$(PYTHON_RELEASE_DEST)" "$(RELEASE_NAME)")
+	@set -e; \
+	python_release_version=$$($(call wrapper,tools/make_python_release.sh version "$(RELEASE_NAME)")); \
+	$(call build_paths,--//sandboxexec/sandbox/python:dist_version="$$python_release_version" //sandboxexec/sandbox/python:dist,cp -f "$$0"/*.whl "$$0"/*.tar.gz "$(PYTHON_RELEASE_DEST)/")
 .PHONY: artifacts-python
 
 # Name the required files explicitly: a missing architecture or archive must
