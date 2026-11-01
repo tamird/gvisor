@@ -1,4 +1,4 @@
-"""Qualify the embedded Linux wrapper before the original scratch Go tests."""
+"""Qualify the native-wrapper rebase using its C++ and Java owners."""
 
 import collections
 import datetime
@@ -15,8 +15,10 @@ import sys
 import xml.etree.ElementTree as ET
 import zipfile
 
-SOURCE = "c2f5f79dce24877679cede14b85666b7ca65c6de"
-TARGETS = {"//src:bazel", "//tools/test:posix_tw", "//tools/test:tw_test"}
+SOURCE = "aa90c0a75a7ea6b59ddc593d676ab316f1e61aa2"
+TARGETS = {"//tools/test:tw_test", "//src/test/java/com/google/devtools/build/lib/analysis/test:TestActionBuilderTest"}
+REQUIRED = {"testNativePosixTestWrapperDisabledByDefault", "testNativePosixTestWrapperEnabled",
+            "testNativePosixTestWrapperDoesNotReplaceWindowsWrapper", "testNativePosixTestWrapperFallsBackWithoutOsConstraint"}
 
 
 def now():
@@ -51,7 +53,8 @@ def actions(log, tmp):
     heavy_cached = 0
     wrong_network = 0
     platforms = set()
-    projection = 'select(has("spawn")) | .spawn | {m:.mnemonic,r:.runner,c:.cacheHit,s:.status,e:.exitCode,p:(.platform.properties // [])}'
+    tests = []
+    projection = 'select(has("spawn")) | .spawn | {m:.mnemonic,l:.targetLabel,d:.digest,r:.runner,c:.cacheHit,s:.status,e:.exitCode,p:(.platform.properties // [])}'
     with subprocess.Popen([str(tmp / "bb"), "print", "--raw", "--compact_execution_log=" + str(log)],
                           stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) as decoder:
         with subprocess.Popen(["jq", "-c", projection], stdin=decoder.stdout,
@@ -60,6 +63,9 @@ def actions(log, tmp):
             for line in projected.stdout:
                 row = json.loads(line)
                 runner = row["r"] or "unknown"
+                if row["m"] == "TestRunner":
+                    tests.append({"target": row["l"], "digest": row["d"], "runner": runner,
+                                  "cached": bool(row["c"]), "status": row["s"], "exit_code": row["e"]})
                 counts[runner] += 1
                 counts["failed"] += bool(row["s"] or row["e"])
                 if row["m"] in ("CppCompile", "CppLink", "Javac"):
@@ -71,7 +77,7 @@ def actions(log, tmp):
                 platforms.add(tuple((k, props.get(k)) for k in ("container-image", "Arch", "OSFamily", "dockerNetwork")))
             projected_exit = projected.wait()
         decoder_exit = decoder.wait()
-    return {"counts": dict(counts), "wrong_network_actions": wrong_network, "compile_link": dict(heavy), "compile_link_cached_actions": heavy_cached, "platforms": [dict(p) for p in platforms],
+    return {"tests": tests, "counts": dict(counts), "wrong_network_actions": wrong_network, "compile_link": dict(heavy), "compile_link_cached_actions": heavy_cached, "platforms": [dict(p) for p in platforms],
             "decoder_exits": [decoder_exit, projected_exit]}
 
 
@@ -93,7 +99,7 @@ def main():
         command = ["bazel", "--bazelrc=" + str(tmp / "supplier.bazelrc"), "test", "--config=buildbuddy",
                    "--host_platform=//qualification_platform:buildbuddy",
                    "--extra_execution_platforms=//qualification_platform:buildbuddy",
-                   "--jobs=400", "--embed_label=10.0.0-pre.xml-candidate", "--lockfile_mode=error",
+                   "--jobs=400", "--lockfile_mode=error",
                    "--nocache_test_results", "--build_event_json_file=" + str(bep),
                    "--nobuild_event_json_file_path_conversion", "--execution_log_compact_file=" + str(compact),
                    *sorted(TARGETS)]
@@ -134,56 +140,46 @@ def main():
                     completed.setdefault(label, []).append(event.get("completed", {}).get("success", False))
         row["completed"] = completed
         write(destination, row)
+        row["owners"] = {}
+        for target in sorted(TARGETS):
+            package, name = target.removeprefix("//").split(":")
+            path = Path("bazel-testlogs") / package / name / "test.xml"
+            owner = {"status": "INCOMPLETE", "counts": {"passed": 0, "failed": 0, "skipped": 0}}
+            row["owners"][target] = owner
+            if not path.exists():
+                continue
+            xml = path.read_bytes()
+            (public / (name + ".xml")).write_bytes(xml)
+            cases = ET.fromstring(xml).findall(".//testcase")
+            names = []
+            for case in cases:
+                names.append({"classname": case.get("classname"), "name": case.get("name")})
+                kind = ("failed" if case.find("failure") is not None or case.find("error") is not None else
+                        "skipped" if case.find("skipped") is not None or case.get("status") == "notrun" or case.get("result") == "suppressed" else "passed")
+                owner["counts"][kind] += 1
+            owner["cases"] = names
+            owner["required_missing"] = sorted(REQUIRED - {case["name"].split("[", 1)[0] for case in names if case["classname"].endswith(".TestActionBuilderTest")}) if name == "TestActionBuilderTest" else []
+            owner["status"] = "PASS" if cases and not owner["counts"]["failed"] and not owner["counts"]["skipped"] and not owner["required_missing"] and (name != "tw_test" or len(cases) == 14) else "FAIL"
+        write(destination, row)
         if code or set(completed) != TARGETS or any(values != [True] for values in completed.values()):
-            raise ValueError("Supplier build or owning test did not complete successfully")
-        xml = Path("bazel-testlogs/tools/test/tw_test/test.xml").read_bytes()
-        root = ET.fromstring(xml)
-        cases = root.findall(".//testcase")
-        counts = {"passed": 0, "failed": 0, "skipped": 0}
-        for case in cases:
-            if case.find("failure") is not None or case.find("error") is not None:
-                counts["failed"] += 1
-            elif case.find("skipped") is not None or case.get("status") == "notrun" or case.get("result") == "suppressed":
-                counts["skipped"] += 1
-            else:
-                counts["passed"] += 1
-        row["owner_cases"] = counts
-        write(destination, row)
-        if not cases or row["owner_cases"]["failed"] or row["owner_cases"]["skipped"]:
-            raise ValueError("The wrapper owner has missing, failed or skipped cases")
-        (public / "supplier-owner.xml").write_bytes(xml)
-        candidate = tmp / "bazel-candidate"
-        shutil.copy2("bazel-bin/src/bazel", candidate)
-        data = candidate.read_bytes()
-        with zipfile.ZipFile(io.BytesIO(data)) as archive:
-            embedded = archive.read("embedded_tools/tools/test/posix_tw")
-        row["binary_sha256"] = hashlib.sha256(data).hexdigest()
-        row["wrapper"] = elf(embedded)
-        write(destination, row)
-        if row["wrapper"]["machine"] != 62 or row["wrapper"]["interpreter"] or row["wrapper"]["needed_offsets"]:
-            row["status"] = "FAIL"
-            raise ValueError("Embedded AMD64 wrapper still has dynamic runtime dependencies")
+            raise ValueError("One of the two original owners did not complete successfully")
+        if any(owner["status"] != "PASS" for owner in row["owners"].values()):
+            raise ValueError("The original owners have missing, failed or skipped cases")
         row["actions"] = actions(compact, tmp)
         if any(row["actions"]["decoder_exits"]) or row["actions"]["counts"].get("failed") or row["actions"]["wrong_network_actions"]:
             raise ValueError("Supplier execution evidence is incomplete or failed")
         if not row["actions"]["compile_link"] or set(row["actions"]["compile_link"]) - {"remote", "remote cache hit"}:
             raise ValueError("Supplier compilation or linkage ran outside RBE")
-        started = now()
-        with (private / "glibc.log").open("w") as stream:
-            code = subprocess.run(["python3", str(tmp / "glibc_probe.py"), "candidate", str(candidate)],
-                                  stdout=stream, stderr=subprocess.STDOUT).returncode
-        row["phases"]["glibc_control"] = {"started_at": started, "execution_finished_at": now(), "native_exit": code}
-        row["status"] = "FAIL" if code else "INCOMPLETE"
-        write(destination, row)
-        if code:
-            raise ValueError("The established glibc native-wrapper integration control failed")
-        row["glibc"] = json.loads((tmp / "native-xml-results/candidate-cases.json").read_text())
+        tests = row["actions"]["tests"]
+        if (collections.Counter(test["target"] for test in tests) != collections.Counter(TARGETS)
+                or any(test["runner"] != "remote" or test["cached"] or test["status"] or test["exit_code"] for test in tests)):
+            raise ValueError("The two owners did not execute freshly on the remote worker")
         row["source_unchanged"] = not subprocess.check_output(["git", "diff", "HEAD", "--"])
         if not row["source_unchanged"]:
             raise ValueError("Tracked supplier source changed during qualification")
         row["status"] = "PASS"
-    except Exception as error:
-        row["collection_error"] = type(error).__name__ + ": " + str(error)[:500]
+    except Exception as err:
+        row["collection_error"] = type(err).__name__ + ": " + str(err)[:500]
     row["verified_at"] = now()
     write(destination, row)
     print(json.dumps({"status": row["status"], "phases": row["phases"]}))
