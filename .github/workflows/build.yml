@@ -1,49 +1,42 @@
-name: Complete the last semaphore analyzer owner
+name: Qualify the shared GNU analyzer worker profile
 on:
   push:
-    branches: [qualification/semop-linux-owner]
+    branches: [qualification/gnu-analysis-profile]
 permissions:
   contents: read
-  actions: read
 jobs:
   qualify:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 69
+    timeout-minutes: 30
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
       SOURCE: 14a4e93a872bf6dd49893b6bd9a5f55517167e2b
       REPORTER: fb60e127516defd6aab633f80be09a03022f0737
+      READER: 029a8365b981b8aee96e6dad1ecf22328ca6c6de
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: carrier, persist-credentials: false, fetch-depth: 1}
-      - name: Prepare the existing result interpreter
+      - name: Preserve the shared profile and existing result readers
         working-directory: carrier
         run: |
           set -eu
-          mkdir -p "$RUNNER_TEMP/semop-owner-evidence"
-          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/semop-owner-evidence/verdict.json"
-          git fetch -q --no-tags --depth=1 origin "$REPORTER"
+          mkdir -p "$RUNNER_TEMP/gnu-profile-evidence"
+          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/gnu-profile-evidence/verdict.json"
+          git fetch -q --no-tags --depth=1 origin "$REPORTER" "$READER"
           for module in qualification_report unit_matrix; do
             git show "$REPORTER:test/rbe/$module.py" > "$RUNNER_TEMP/$module.py"
           done
-          cp test/rbe/semop_owner_recovery.py "$RUNNER_TEMP/"
+          git show "$READER:test/rbe/image_execution.py" > "$RUNNER_TEMP/image_execution.py"
+          cp test/rbe/gnu_profile_check.py "$RUNNER_TEMP/"
           cp -R test/rbe/gnu_platform "$RUNNER_TEMP/gnu-platform"
-          python3 -c 'import ast, sys; ast.parse(open(sys.argv[1]).read())' "$RUNNER_TEMP/semop_owner_recovery.py"
-      - name: Bind the five completed owners to their original receipts
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -eu
-          gh api repos/tamird/gvisor/actions/artifacts/13099715950/zip > "$RUNNER_TEMP/semop-prior.zip"
-          python3 "$RUNNER_TEMP/semop_owner_recovery.py" prior
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           path: product
           ref: 14a4e93a872bf6dd49893b6bd9a5f55517167e2b
           persist-credentials: false
           fetch-depth: 1
-      - name: Prepare the same GNU execution platform only for missing owners
+      - name: Use the shared GNU execution platform
         working-directory: product
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -56,16 +49,12 @@ jobs:
             printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          } > "$RUNNER_TEMP/tcp.bazelrc"
+          } > "$RUNNER_TEMP/gnu.bazelrc"
           unset BUILDBUDDY_API_KEY
           timeout 180 docker pull --platform=linux/amd64 "$GNU"
-          docker run -d --cap-add SYS_ADMIN --security-opt seccomp=unconfined --name semop-compiler --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$PWD" "$GNU" -c 'sleep infinity'
-      - name: Run only owners missing original execution evidence
-        run: |
-          docker exec -e RUNNER_TEMP semop-compiler python3 "$RUNNER_TEMP/semop_owner_recovery.py" retry
-      - name: Preserve the original and independently verified completion
-        if: always()
-        run: python3 "$RUNNER_TEMP/semop_owner_recovery.py" finish
+          docker run -d --name gnu-profile --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$PWD" "$GNU" -c 'sleep infinity'
+      - name: Query the platform and execute one analyzer owner
+        run: docker exec -e RUNNER_TEMP -e GNU gnu-profile python3 "$RUNNER_TEMP/gnu_profile_check.py"
       - name: Check the explicit artifact boundary
         id: privacy
         if: always()
@@ -77,15 +66,16 @@ jobs:
           from pathlib import Path
           key = os.environ["BUILDBUDDY_API_KEY"].encode()
           assert key
-          folder = Path(os.environ["RUNNER_TEMP"]) / "semop-owner-evidence"
-          for path in folder.iterdir():
-              assert path.is_file() and not path.is_symlink() and path.suffix in (".json", ".xml")
-              content = path.read_bytes()
-              assert key not in content and b"x-buildbuddy-api-key" not in content.lower()
+          folder = Path(os.environ["RUNNER_TEMP"]) / "gnu-profile-evidence"
+          assert {path.name for path in folder.iterdir()} == {"verdict.json"}
+          path = folder / "verdict.json"
+          assert path.is_file() and not path.is_symlink()
+          content = path.read_bytes()
+          assert key not in content and b"x-buildbuddy-api-key" not in content.lower()
           PYCODE
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
-          name: semop-linux-owner
-          path: ${{ runner.temp }}/semop-owner-evidence
+          name: gnu-profile
+          path: ${{ runner.temp }}/gnu-profile-evidence/verdict.json
           if-no-files-found: error
