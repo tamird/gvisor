@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T23:29:04+00:00",
+    "updatedAt": "2026-11-01T23:42:59+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -220,6 +220,10 @@
         {
           "label": "Rebasing the classifier over QEMU leaves three test references to the removed GPL matcher",
           "url": "https://github.com/tamird/gvisor/actions/runs/41361846557/artifacts/13105677187"
+        },
+        {
+          "label": "The rebased fixture passed all 41 package cases. The missing Nogo target ran on both architectures in the compiler integration.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41362557174/artifacts/13105094040"
         }
       ],
       "ciRecovery": {
@@ -46264,7 +46268,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-01T23:29:04+00:00",
+      "updatedAt": "2026-11-01T23:42:59+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -48195,9 +48199,31 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41360715303/artifacts/13105296962"
             }
           ]
+        },
+        {
+          "text": "In Linux-first pair 3, the same oldest segment was retransmitted twice 16.609 ms after its preceding repair. The final two copies were 10 µs apart. With no advancing ACK, the SACK count dropped from 123 packets to 23 and the congestion window from 119 to 5. The sender code identifies a timeout followed by RACK re-entry. The capture cannot distinguish the ACK handler from the reordering timer as the trigger for re-entry.",
+          "evidence": [
+            {
+              "label": "Original captures and sender state, Linux-first pair 3",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41355300500/artifacts/13103826157"
+            },
+            {
+              "label": "Review order for the timeout and immediate retransmission",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            }
+          ]
+        },
+        {
+          "text": "When a client repeated its SYN before timeout, Linux answered with another SYN-ACK and stock gVisor answered with a bare ACK. Both accepted the connection. Linux counted one retransmission on the accepted socket, and both listeners stayed at zero.",
+          "evidence": [
+            {
+              "label": "Linux and gVisor, with and without a repeated SYN",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41362026193/artifacts/13106345311"
+            }
+          ]
         }
       ],
-      "nextStep": "Prioritize the oldest-repair deadline in #16624. In the largest reversal the peer received three copies of that repair, two sent only 16.6 ms after the first. The captures omit the endpoint timeout counter and handler order. Existing deterministic tests already separate the deadline and post-timeout SACK paths. Check how Linux and gVisor respond to a repeated SYN before the handshake timer fires.",
+      "nextStep": "Compare #16624’s oldest-packet deadline and the queued-SACK correction for the loss trace in Linux-first pair 3. Separately, repair the passive handshake response when a client repeats its original SYN before timeout.",
       "evidence": [
         {
           "label": "TCP_INFO retransmission count on Linux, stock gVisor and the candidate",
