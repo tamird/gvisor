@@ -144,7 +144,7 @@ type Socket struct {
 	fd int `state:"nosave"`
 
 	// recvClosed indicates that the socket has been shutdown for reading
-	// (SHUT_RD or SHUT_RDWR).
+	// (SHUT_RD or SHUT_RDWR). RecvMsg uses it only for non-stream sockets.
 	//
 	// +checkatomic
 	recvClosed atomicbitops.Bool
@@ -683,8 +683,18 @@ func (s *Socket) RecvMsg(t *kernel.Task, dst usermem.IOSequence, flags int, have
 			if n != 0 {
 				panic(fmt.Sprintf("CopyOutFrom: got (%d, %v), wanted (0, %v)", n, err, err))
 			}
-			// Are we closed for reading? No sense in trying to read if so.
-			if s.recvClosed.Load() {
+			// Is a non-stream socket closed for reading? No sense in waiting if
+			// so. Its host socket returns EAGAIN with nothing queued, where a
+			// blocking recv on Linux returns 0, so read once more for anything
+			// still queued, then return 0. A stream socket needs no such case:
+			// its host socket returns 0 itself, and also tracks
+			// connect(AF_UNSPEC) clearing the shutdown, which recvClosed does
+			// not.
+			if s.stype != linux.SOCK_STREAM && s.recvClosed.Load() {
+				n, err = copyToDst()
+				if linuxerr.Equals(linuxerr.ErrWouldBlock, err) {
+					err = nil
+				}
 				break
 			}
 			if ch != nil {
