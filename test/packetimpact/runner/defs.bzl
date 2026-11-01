@@ -214,6 +214,9 @@ ALL_TESTS = [
         name = "tcp_zero_window_probe_usertimeout",
     ),
     PacketimpactTestInfo(
+        name = "tcp_duplicate_syn",
+    ),
+    PacketimpactTestInfo(
         name = "tcp_retransmits",
     ),
     PacketimpactTestInfo(
