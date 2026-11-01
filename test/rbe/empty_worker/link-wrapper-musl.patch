@@ -1,0 +1,40 @@
+--- a/tools/internal/BUILD.bazel
++++ b/tools/internal/BUILD.bazel
+@@ -13,18 +13,22 @@
+     srcs = ["module_map_generator.c"],
+ )
+ 
+-# The generator runs on the execution platform before Clang can consume the
+-# module map. Linux workers need not provide a glibc loader.
++# Linux workers need not provide a glibc loader for tools that run Clang
++# or generate its inputs.
+ _LINUX_CPUS = [cpu for os, cpu in SUPPORTED_EXECS if os == "linux"]
+ 
+ [
+     platform_transition_binary(
+-        name = "module-map-generator-" + cpu,
+-        binary = ":native/module-map-generator",
++        name = name + "-" + cpu,
++        binary = binary,
+         target_compatible_with = ["@platforms//os:linux", "@platforms//cpu:" + cpu],
+         target_platform = "//platforms:linux_{}_musl".format(cpu),
+     )
+     for cpu in _LINUX_CPUS
++    for name, binary in [
++        ("module-map-generator", ":native/module-map-generator"),
++        ("link-wrapper", ":link-wrapper-clang++"),
++    ]
+ ]
+ 
+ alias(
+@@ -53,6 +57,9 @@
+ 
+ alias(
+     name = "link-wrapper",
+-    actual = ":link-wrapper-clang++",
++    actual = select({
++        "//platforms/config:linux_" + cpu: ":link-wrapper-" + cpu
++        for cpu in _LINUX_CPUS
++    } | {"//conditions:default": ":link-wrapper-clang++"}),
+     visibility = ["//visibility:public"],
+ )
