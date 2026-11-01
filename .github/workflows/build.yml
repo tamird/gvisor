@@ -1,35 +1,37 @@
-name: CI
-
-"on":
+name: Inspect four original race and coverage ELFs
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/go-coverage-linked-elf]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  verify:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Get the source-matched build receipt and pinned CAS reader
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 022894f6b57bac7ed55c741ea07a3611dc256da9
+          gh api repos/tamird/gvisor/actions/artifacts/13063861013/zip > "$RUNNER_TEMP/original.zip"
+          echo "43133be1e6887b7b8613741b80a500cd198d7b46805388af04728b7152d0ecc1  $RUNNER_TEMP/original.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/original.zip" -d "$RUNNER_TEMP/original"
+          curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
+          echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
+          chmod 0755 "$RUNNER_TEMP/bb"
+      - name: Inspect remote links, Go coverage tables and original executable bytes
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -B .github/qualification/package-build/coverage-elf.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: original-coverage-elf
+          path: ${{ runner.temp }}/coverage-linked.json
+          if-no-files-found: error
