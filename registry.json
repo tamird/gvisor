@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T07:12:21.056431+00:00",
+    "updatedAt": "2026-11-01T07:28:41.807219+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -57599,9 +57599,22 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T07:10:33.324919+00:00",
+      "updatedAt": "2026-11-01T07:28:41.807219+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "Bazel built 189 of 190 //tools/... targets on each empty worker. The same license-checker test referenced a deleted constant on both. Applying its existing fixture correction built the remaining target on AMD64 and ARM64; both corrected test functions also ran on AMD64. This accounts for 190 of 190 targets per architecture across the two revisions. The full verdicts were available 5.86 and 5.38 seconds after Bazel finished, compared with about 317 seconds for the earlier package runs. Both verifier implementations agreed on 32 sampled actions per architecture. No manual log collection was needed.",
+          "evidence": [
+            {
+              "label": "Both original tool builds and reporting times",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41282902598/artifacts/13074631555"
+            },
+            {
+              "label": "Two targeted scratch builds and the AMD64 test cases",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41284312384/artifacts/13074895121"
+            }
+          ]
+        },
         {
           "text": "On empty workers, the combined source built all 1,487 //pkg/... targets on AMD64 and all 1,485 compatible targets on ARM64. Bazel skipped two incompatible slimvm targets on ARM64. All 21 earlier failures now build, including the NVIDIA parity-test binary. The receipts account for 26,409 actions, including cache hits, all on the specified scratch platforms. This was a build; none of the test binaries ran. Repository fetching used Ubuntu.",
           "evidence": [
@@ -58889,7 +58902,7 @@
           ]
         }
       ],
-      "nextStep": "Check the full runsc and tools target lists on both scratch worker architectures. Compare the tools verifier’s reporting delay with the full package run. Finish the empty-client fetch work with Gazelle and bazel_lib, and follow the upstream LLVM, Debian-layer and Jekyll dependencies. The release pipeline still needs native smoke tests for the optimized binaries.",
+      "nextStep": "Check all runsc targets on both scratch worker architectures, then execute the state and TCP package tests there with named case results. Finish the empty-client fetch work with Gazelle and bazel_lib and follow the upstream LLVM, Debian-layer and Jekyll dependencies. The release pipeline still needs native smoke tests for its optimized binaries.",
       "evidence": [
         {
           "label": "18 recovered host-layout targets and four gRPC host ELF interpreters on AMD64/ARM64",
