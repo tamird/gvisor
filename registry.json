@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T09:09:12.149661+00:00",
+    "updatedAt": "2026-11-01T09:12:10.782787+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41627,6 +41627,40 @@
         "summary": "Open the graph-reader optimization as a standalone PR?",
         "body": "The reader queued two adjacent records for a callback and a waiting object. One record can deliver the loaded value and then release the waiter. On a 50,000-file tmpfs checkpoint this saved 15.7 MiB per decode and reduced decode time by 5.3% with GC enabled. All 16 fresh guest restores verified every file. The native end-to-end comparison did not establish faster guest readiness."
       }
+    },
+    {
+      "id": "branch:tcp-consumed-socket-error",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/tcp-terminal-poll-after-socket-error",
+      "head": "31698e51e22cdf8ba72fbc117edda9bbec5a8d3c",
+      "title": "Clear TCP poll errors after the socket error is consumed",
+      "url": "https://github.com/tamird/gvisor/commit/31698e51e",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T09:12:10.782787+00:00",
+      "summary": "After a refused nonblocking connect, Linux reports a hangup after the program reads ECONNREFUSED from SO_ERROR. gVisor still reported POLLERR and claimed urgent data was available. The fix checks the pending socket error and extended error queue. Poll can do that without acquiring the endpoint mutex. The established-connection ICMP soft-error case from #6666 is tracked separately.",
+      "evidence": [
+        {
+          "label": "Four socket cases, 11 TCP suites, race checks and both analyzer targets",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41289554960/artifacts/13077348405"
+        },
+        {
+          "label": "Earlier ARM64 package results on the preceding lock implementation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41287543512/artifacts/13077550587"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "31698e51e22cdf8ba72fbc117edda9bbec5a8d3c",
+        "baseHead": "9940ecdc2dd3651121dd468889cc094f0ec84247",
+        "url": "https://github.com/tamird/gvisor/commit/31698e51e",
+        "title": "Clear TCP poll errors after the socket error is consumed",
+        "requestedAt": "2026-11-01T09:12:10.782787+00:00",
+        "summary": "Open the terminal TCP socket-error PR after #16667 lands?",
+        "body": "After a refused nonblocking connect, Linux reports a hangup after the program reads ECONNREFUSED from SO_ERROR. gVisor still reported POLLERR and claimed urgent data was available. The fix checks the pending socket error and extended error queue. Poll can do that without acquiring the endpoint mutex. The established-connection ICMP soft-error case from #6666 is tracked separately."
+      }
     }
   ],
   "edges": [
@@ -45050,6 +45084,13 @@
       "type": "depends_on",
       "reason": "The packet test must identify when the listener first uses a SYN cookie.",
       "evidence": "https://github.com/tamird/gvisor/commit/858aa5b72"
+    },
+    {
+      "from": "pr:16667",
+      "to": "branch:tcp-consumed-socket-error",
+      "type": "depends_on",
+      "reason": "Uses the checked lock ownership for hardError and lastError from #16667.",
+      "evidence": "https://github.com/tamird/gvisor/commit/31698e51e"
     }
   ],
   "investigations": [
