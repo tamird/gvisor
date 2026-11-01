@@ -62,7 +62,7 @@ func (q *segmentQueue) enqueue(s *segment) bool {
 		// The peer must be able to ACK data sent in the other direction.
 		// If the application shrank its buffers below current usage, let
 		// one control packet through an otherwise empty backlog.
-		if over > q.ep.ops.GetSendBufferSize() {
+		if !q.emptyLocked() && over > q.ep.ops.GetSendBufferSize() {
 			return false
 		}
 	}
