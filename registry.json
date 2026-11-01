@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T17:48:17.215162+00:00",
+    "updatedAt": "2026-11-01T17:58:13.420713+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34488,7 +34488,7 @@
       "title": "Use the registered Buildifier binary for source lint",
       "url": "https://github.com/google/gvisor/pull/16663",
       "group": "analysis",
-      "summary": "Run the pinned Buildifier through Bazel and use its own diff and fix modes on the repository’s tracked inputs. The builder image no longer downloads Buildifier. The proposed amendment is being revised: nine workspace and compatibility controls passed. Deleting a source directory broke discovery on both Bazel 8.8.1 and released 8.8.2 (Bazel #30883); Bazel 9.3 contains the fix. The direct Bazel 9 upgrade now supplies the fix, replacing the proposed 8.x backport.",
+      "summary": "The proposed amendment moves Buildifier and cpplint out of the shell lint driver. A shared Bazel inventory picks up new files in any package. On 9.3.1 both checks also handle removal and recreation of a source directory.",
       "evidence": [
         {
           "label": "All 614 tracked files, seven damaged-file diffs and repairs, malformed-input behavior, and CLI identity",
@@ -34573,16 +34573,24 @@
         {
           "label": "Bazel invalidation bug and upstream fix",
           "url": "https://github.com/bazelbuild/bazel/issues/30883"
+        },
+        {
+          "label": "Bazel 9 check and live directory removal and recreation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41333723965/artifacts/13093369770"
+        },
+        {
+          "label": "Combined amendment on the Bazel 9 upgrade",
+          "url": "https://github.com/tamird/gvisor/commit/045a3f7a5"
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-01T16:33:36.019669+00:00",
+      "updatedAt": "2026-11-01T17:58:13.420713+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "observedAt": "2026-11-01T00:05:24.396268+00:00",
-        "disposition": "Agent work",
-        "nextAction": "Wait for a compatible Bazel release containing the verified directory-watch backport, or qualify a different source-discovery method, before submission.",
+        "observedAt": "2026-11-01T17:58:13.420713+00:00",
+        "disposition": "Contributor review requested",
+        "nextAction": "Contributor can review the combined amendment now. Publish it after the shared Bazel 9 upgrade lands.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/1d96ea04c",
           "https://github.com/tamird/gvisor/actions/runs/41219788380/artifacts/13050030547",
@@ -34600,9 +34608,20 @@
           "base": "ac7b4e0fdc7dc4674453438e5e15fc069895620c"
         },
         "after": {
-          "head": "1d96ea04c417f23fd7d90abb453e93163aa83c1a",
-          "base": "aa767e4c43d011121271551fe24da501a56f729d"
+          "head": "045a3f7a506c109eab8beb396e5b3af37776a2df",
+          "base": "375b2c57032fa910447d4b81217fde2171303a9b"
         }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "045a3f7a506c109eab8beb396e5b3af37776a2df",
+        "baseHead": "375b2c57032fa910447d4b81217fde2171303a9b",
+        "url": "https://github.com/tamird/gvisor/commit/045a3f7a5",
+        "title": "Run Buildifier and cpplint on declared repository inputs",
+        "requestedAt": "2026-11-01T17:58:13.420713+00:00",
+        "summary": "Publish this amendment to #16663 after Bazel 9 lands?",
+        "body": "Both tools run through //tools/lint:check with declared inputs and tools. Their dev dependencies stay out of a consuming module. Bazel 9.3.1 checked 620 Buildifier files and 485 C/C++ files. Both checks saw new files after their directory was deleted and recreated without restarting the server. This resolves the last failure on the previous proposal."
       }
     },
     {
