@@ -33,6 +33,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdio>
 #include <cstdint>
 #include <cstring>
 #include <ctime>
@@ -222,6 +223,57 @@ void TcpSocketTest::SetUp() {
   // Accept the connection.
   accepted_ =
       ASSERT_NO_ERRNO_AND_VALUE(Accept(listener_.get(), nullptr, nullptr));
+}
+
+// Compare a failed initial shutdown with an explicit disconnect that clears
+// Linux's shutdown state. The peer stays open throughout each empty read.
+TEST_P(TcpSocketTest, ReadAfterInitialShutdown) {
+  const DisableSave disable_save;
+  sockaddr_storage addr = {};
+  socklen_t addrlen = sizeof(addr);
+  ASSERT_THAT(getsockname(listener_.get(), AsSockAddr(&addr), &addrlen),
+              SyscallSucceeds());
+  for (int mode = 0; mode < 3; ++mode) {
+    auto client =
+        ASSERT_NO_ERRNO_AND_VALUE(Socket(GetParam(), SOCK_STREAM, IPPROTO_TCP));
+    if (mode != 0) {
+      ASSERT_THAT(shutdown(client.get(), SHUT_RD), SyscallFailsWithErrno(ENOTCONN));
+    }
+    if (mode == 2) {
+      sockaddr unspec = {};
+      unspec.sa_family = AF_UNSPEC;
+      ASSERT_THAT(connect(client.get(), &unspec, sizeof(unspec)), SyscallSucceeds());
+    }
+    ASSERT_THAT(RetryEINTR(connect)(client.get(), AsSockAddr(&addr), addrlen),
+                SyscallSucceeds());
+    auto peer = ASSERT_NO_ERRNO_AND_VALUE(Accept(listener_.get(), nullptr, nullptr));
+    timeval timeout = {};
+    timeout.tv_usec = 150000;
+    ASSERT_THAT(setsockopt(client.get(), SOL_SOCKET, SO_RCVTIMEO, &timeout,
+                           sizeof(timeout)), SyscallSucceeds());
+    char byte = 0;
+    auto before = absl::Now();
+    auto n = RetryEINTR(recv)(client.get(), &byte, 1, 0);
+    int err = n < 0 ? errno : 0;
+    auto elapsed = absl::ToInt64Microseconds(absl::Now() - before);
+    ASSERT_TRUE(n == 0 || (n == -1 && err == EAGAIN));
+    const char sent = 'x';
+    ASSERT_THAT(send(peer.get(), &sent, 1, 0), SyscallSucceedsWithValue(1));
+    int available = 0;
+    auto deadline = absl::Now() + absl::Seconds(2);
+    do {
+      ASSERT_THAT(ioctl(client.get(), FIONREAD, &available), SyscallSucceeds());
+      if (available != 0) break;
+      absl::SleepFor(absl::Milliseconds(1));
+    } while (absl::Now() < deadline);
+    ASSERT_EQ(available, 1);
+    ASSERT_THAT(RetryEINTR(recv)(client.get(), &byte, 1, 0),
+                SyscallSucceedsWithValue(1));
+    ASSERT_EQ(byte, sent);
+    std::fprintf(stderr, "HOSTREAD family=%d mode=%d initial=%d errno=%d us=%lld byte=%d\n",
+                 GetParam(), mode, static_cast<int>(n), err,
+                 static_cast<long long>(elapsed), static_cast<int>(byte));
+  }
 }
 
 TEST_P(TcpSocketTest, ConnectedAcceptedPeerAndLocalAreReciprocals) {
