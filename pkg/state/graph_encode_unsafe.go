@@ -356,8 +356,8 @@ func setHints(root *typeInfo, bytes, targets int) {
 }
 
 // chunkedShift is the log2 of the number of elements (1024) per slab in
-// chunked[T]. It sizes the encoder's internal metadata slabs (objs and targets)
-// and is unrelated to blockShift (which buckets target virtual addresses).
+// chunked[T]. The encoder stores objects and targets in slabs, and the decoder
+// stores callbacks. blockShift separately buckets target virtual addresses.
 // 1024 elements (~128 KiB for encObject, ~48 KiB for encTarget) amortizes slab
 // allocations on large checkpoints while letting chunks[0] grow incrementally
 // for small graphs.

@@ -81,7 +81,7 @@ type graphDecodeState struct {
 	typeNames []string
 	objs      []decObject
 	ods       []graphObjectDecodeState
-	cbs       []decodeCallback
+	cbs       chunked[decodeCallback]
 	targets   []unsafe.Pointer
 	// targetObjs are the objects of targets, or -1.
 	targetObjs []int32
@@ -145,20 +145,20 @@ const (
 // release returns ds to graphDecodeStatePool. Tables are cleared, so that they do
 // not keep loaded objects alive.
 func (ds *graphDecodeState) release() {
-	if cap(ds.objs) > maxPooledBytes/64 || cap(ds.targets) > maxPooledBytes/8 || cap(ds.cbs) > maxPooledBytes/64 {
+	if cap(ds.objs) > maxPooledBytes/64 || cap(ds.targets) > maxPooledBytes/8 || ds.cbs.n > maxPooledBytes/64 {
 		return
 	}
 	clear(ds.types[:cap(ds.types)])
 	clear(ds.typeNames[:cap(ds.typeNames)])
 	clear(ds.objs[:cap(ds.objs)])
-	clear(ds.cbs[:cap(ds.cbs)])
+	ds.cbs.reset()
 	clear(ds.targets[:cap(ds.targets)])
 	*ds = graphDecodeState{
 		types:      ds.types[:0],
 		typeNames:  ds.typeNames[:0],
 		objs:       ds.objs[:0],
 		ods:        ds.ods[:0],
-		cbs:        ds.cbs[:0],
+		cbs:        ds.cbs,
 		targets:    ds.targets[:0],
 		targetObjs: ds.targetObjs[:0],
 		leaves:     ds.leaves[:0],
@@ -424,12 +424,12 @@ func (ds *graphDecodeState) appendCallback(head, tail *int32, cb decodeCallback)
 		ds.deferred++
 	}
 	cb.next = -1
-	ds.cbs = append(ds.cbs, cb)
-	i := int32(len(ds.cbs) - 1)
+	i := int32(ds.cbs.n)
+	*ds.cbs.add() = cb
 	if *tail < 0 {
 		*head = i
 	} else {
-		ds.cbs[*tail].next = i
+		ds.cbs.at(int(*tail)).next = i
 	}
 	*tail = i
 }
