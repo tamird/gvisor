@@ -38,6 +38,15 @@ def project(data):
 
 
 def main():
+    # The earlier Make consumer's original 454-byte stdout exercises the
+    # same authenticated blob reader before inspecting the DPDK failure.
+    control = {"hash": "0ccf3724c232b6b9400e92503f9a817a6a236bc5a2dfc984b35aeec18867b2ec",
+               "sizeBytes": "454"}
+    previous = blob(digest=control, invocation="57ccdecd-07cf-4034-8ff6-298bce8a8031")
+    assert re.findall(rb"^\[PASS\] (\w+)\s*$", previous, re.M) == [
+        b"version", b"hello", b"substref", b"functions", b"fail_propagation", b"parallel"]
+    row["known_original_read"] = control
+    save()
     # First prefer the exact action's two streams, with the original digest.
     try:
         matches = rpc("GetExecution", {"executionLookup": {"invocationId": INV, "actionDigestHash": ACTION},
@@ -51,7 +60,7 @@ def main():
         for stream in ["stdout", "stderr"]:
             digest = result.get(stream + "Digest", {})
             if int(digest.get("sizeBytes", 0)) > 0:
-                data = blob(INV, digest)
+                data = blob(digest=digest, invocation=INV)
             else:
                 data = base64.b64decode(result.get(stream + "Raw", ""), validate=True)
             row["streams"][stream] = project(data)
@@ -65,8 +74,11 @@ def main():
         for _ in range(24):
             response = json.loads(fetch("api/v1/GetLog", body))
             log = response["log"]
-            ids = log["id"]
-            assert ids.get("invocationId", ids.get("invocation_id")) == INV
+            # GetLog authenticates the requested UUID but currently returns
+            # only log.contents. Reject an identifier if it contradicts the request.
+            ids = log.get("id", {})
+            if ids:
+                assert ids.get("invocationId", ids.get("invocation_id")) == INV
             chunks.append(log.get("contents", ""))
             token = response.get("nextPageToken", response.get("next_page_token", ""))
             if not token:
