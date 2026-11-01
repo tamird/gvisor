@@ -1,7 +1,7 @@
-name: Compare pending TCP socket errors and both IP error queues
+name: Check ICMP quote applicability and TCP error lock analysis
 on:
   push:
-    branches: [qualification/tcp-stale-icmp-quote]
+    branches: [qualification/tcp-quoted-error-packet]
 permissions:
   contents: read
 jobs:
@@ -12,7 +12,8 @@ jobs:
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
       PACKET: 1dd6ebc0115dcf69806034f43e757ac92ad76612
-      CANDIDATE: e2e69ae5ec362c78efd40240b0b19abe064e5a68
+      CANDIDATE: a24cc45c8744fb0c1abf4a14a0da9ae31f779eab
+      TERMINAL: ec72fa020b00d78a5c983f9296852930001d87d6
       STOCK: aa767e4c43d011121271551fe24da501a56f729d
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -25,9 +26,7 @@ jobs:
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
         echo '{"verified":false,"reason":"qualification incomplete"}' > "$RUNNER_TEMP/records/verdict.json"
         cp test/rbe/tcp-established-icmp.py "$RUNNER_TEMP/verify-tcp.py"
-        cp test/rbe/tcp-estab-msg.txt "$RUNNER_TEMP/fixture.txt"
-        cp test/rbe/tcp-estab-msg-dut.py "$RUNNER_TEMP/recvmsg-fixture.py"
-        git fetch -q --depth=1 https://github.com/tamird/gvisor.git "$STOCK" "$PACKET" "$CANDIDATE"
+        git fetch -q --depth=1 https://github.com/tamird/gvisor.git "$STOCK" "$PACKET" "$CANDIDATE" "$TERMINAL"
         printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
         printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
         umask 077
@@ -42,34 +41,46 @@ jobs:
         docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
         docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
         docker exec tcp-compiler python3 -c 'import socket; s=socket.socket(socket.AF_INET6); s.bind(("::1",0)); print(s.getsockname())' > "$RUNNER_TEMP/records/native-ipv6"
-    - name: Observe one live socket with and without IP_RECVERR on each system
+    - name: Run the permanent packet test on Linux, stock and the correction
       run: |
         set -euo pipefail
-        git checkout --quiet --detach "$CANDIDATE"
-        test "$(git rev-parse HEAD)" = "$CANDIDATE"
-        # These two fork-only runner files provision the same privileged
-        # packet guest that has run this exact native/netstack test pair.
-        git restore --source="$PACKET" -- test/packetimpact/runner/defs.bzl test/packetimpact/runner/main.go
-        python3 "$RUNNER_TEMP/recvmsg-fixture.py"
-        python3 - <<'PYFIX'
+        for arm in native stock fixed; do
+          source=$CANDIDATE; target=//test/packetimpact/tests:tcp_connect_icmp_error_netstack_test
+          if [ "$arm" = native ]; then target=//test/packetimpact/tests:tcp_connect_icmp_error_native_test; fi
+          if [ "$arm" = stock ]; then source=$STOCK; fi
+          git checkout --quiet --detach "$source"
+          test "$(git rev-parse HEAD)" = "$source"
+          git restore --source="$CANDIDATE" -- test/packetimpact/tests/tcp_connect_icmp_error_test.go
+          git restore --source="$PACKET" -- test/packetimpact/runner/defs.bzl test/packetimpact/runner/main.go
+          python3 - <<'PYFIX'
         from pathlib import Path
-        import os
-        p=Path('test/packetimpact/runner/main.go');s=p.read_text();assert s.count('^TestListenerReusesReceiveBuffer$')==1;p.write_text(s.replace('^TestListenerReusesReceiveBuffer$', '^TestEstablishedICMPStaleQuote$'))
-        p=Path('test/packetimpact/tests/tcp_connect_icmp_error_test.go');s=p.read_text();assert s.count('import (')==1;p.write_text(s.replace('import (','import (\n\t"context"\n\t"encoding/binary"\n\t"fmt"')+(Path(os.environ['RUNNER_TEMP'])/'fixture.txt').read_text())
+        p=Path('test/packetimpact/runner/main.go')
+        s=p.read_text()
+        assert s.count('^TestListenerReusesReceiveBuffer$') == 1
+        p.write_text(s.replace('^TestListenerReusesReceiveBuffer$', '^TestTCPEstablishedICMPError$'))
         PYFIX
-        for arm in native netstack; do
           d=$RUNNER_TEMP/records/$arm; mkdir -p "$d"
-          target="//test/packetimpact/tests:tcp_connect_icmp_error_${arm}_test"
           sha256sum test/packetimpact/tests/tcp_connect_icmp_error_test.go > "$d/fixture"
           date -u +%FT%TZ > "$d/start"; rc=0
-          timeout 2100 docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --platforms=//tools/bazeldefs:linux_amd64 --jobs=32 --local_resources=cpu=1 '--strategy_regexp=^Compiling test/packetimpact/(dut/posix_server[.]cc|proto/.*[.]cc)=local' '--strategy_regexp=^Linking test/packetimpact/dut/posix_server=local' --build_tag_filters= --test_tag_filters= --strategy=TestRunner=remote --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel --test_output=all --test_timeout=300 --test_sharding_strategy=disabled --build_event_json_file="$d/bep" "$target" > "$d/bazel.log" 2>&1 || rc=$?
+          timeout -k 15s 12m docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --platforms=//tools/bazeldefs:linux_amd64 --jobs=32 --local_resources=cpu=1 '--strategy_regexp=^Compiling test/packetimpact/(dut/posix_server[.]cc|proto/.*[.]cc)=local' '--strategy_regexp=^Linking test/packetimpact/dut/posix_server=local' --build_tag_filters= --test_tag_filters= --strategy=TestRunner=remote --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel --test_output=all --test_timeout=180 --test_sharding_strategy=disabled --build_event_json_file="$d/bep" "$target" > "$d/bazel.log" 2>&1 || rc=$?
           printf '%s\n' "$rc" > "$d/exit"; date -u +%FT%TZ > "$d/finish"
+          git restore --source=HEAD -- test/packetimpact/runner/defs.bzl test/packetimpact/runner/main.go test/packetimpact/tests/tcp_connect_icmp_error_test.go
           python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records" progress
         done
+    - name: Analyze the terminal-lock source for ARM64 using the GNU coordinator for the Linux ABI action
+      if: always()
+      run: |
+        set -eu
+        git checkout --quiet --detach "$TERMINAL"
+        test "$(git rev-parse HEAD)" = "$TERMINAL"
+        d=$RUNNER_TEMP/records/arm-analysis; mkdir -p "$d"
+        date -u +%FT%TZ > "$d/start"; rc=0
+        timeout -k 20s 16m docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" build --config=aarch64 --platforms=//tools/bazeldefs:linux_arm64 --jobs=32 --remote_download_outputs=toplevel '--strategy_regexp=^Analyzing.(@@)?//pkg/abi/linux:linux$=local' --build_event_json_file="$d/bep" //pkg/tcpip/transport/tcp:tcp_nogo //pkg/tcpip/transport/tcp/test/e2e:tcp_test_nogo > "$d/bazel.log" 2>&1 || rc=$?
+        printf '%s\n' "$rc" > "$d/exit"; date -u +%FT%TZ > "$d/finish"
         python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records"
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: stale-icmp-quote
+        name: permanent-icmp-and-terminal-analysis
         path: ${{ runner.temp }}/records/verdict.json
         if-no-files-found: error
