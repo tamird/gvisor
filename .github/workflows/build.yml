@@ -1,7 +1,7 @@
-name: Run ordinary native musl syscall cases on scratch
+name: Run epoll, futex and SysV shared-memory syscall cases on scratch
 on:
   push:
-    branches: [qualification/syscall-musl-runtime]
+    branches: [qualification/syscall-musl-runtime-breadth]
 permissions:
   contents: read
   actions: read
@@ -90,7 +90,7 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: native-musl-syscall-runtime
+          name: native-musl-syscall-breadth
           path: |
             ${{ runner.temp }}/native-package-evidence
           if-no-files-found: error

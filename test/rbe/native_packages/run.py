@@ -17,14 +17,26 @@ from static_build import elf
 
 SOURCE = os.environ["PRODUCT"]
 IMAGE = "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"
-TARGETS = ["//test/syscalls:fork_test_native"]
-CASES = {TARGETS[0]: ["ForkTest/Simple", "ForkTest/Pipe", "ForkTest/SharedMapping"]}
-LINK_TARGETS = ["//test/syscalls/linux:fork_test", "//test/runner/setup_container:setup_container"]
+CASES = {
+    "//test/syscalls:epoll_test_native": ["EpollTest/EdgeTriggered", "EpollTest/Oneshot", "EpollTest/WaitThenUnblock"],
+    "//test/syscalls:futex_test_native": ["PrivateFutexTest/WakeOp0Set", "RobustFutexTest/BasicSetGet", "SharedFutexTest/WakeInterprocessSharedAnon"],
+    "//test/syscalls:shm_test_native": ["ShmTest/AttachDetach", "ShmTest/DetachedSegmentsPersist", "ShmTest/RemovedSegmentsAreDestroyed"],
+}
+TARGETS = list(CASES)
+BINARIES = {target: "//test/syscalls/linux:" + target.split(":")[1].removesuffix("_native") for target in TARGETS}
+NATIVE_LAUNCHER = "//test/runner/setup_container:setup_container"
+LINK_TARGETS = [*BINARIES.values(), NATIVE_LAUNCHER]
+
+
 ABI = {"selected": "musl target libc on both native scratch execution architectures",
        "GNU_boundary_proof": {"run": 41302038018, "artifact": 13082191714},
        "launcher_proposal": "8919cb68b11643114c1f28c1a756902a2958bda0",
        "scope": "Ordinary native entry point and supported musl platform, no run_under or per-target change",
        "limitation": "These musl syscall results do not qualify glibc behavior or the default GNU target"}
+
+
+def executable(label):
+    return label.removeprefix("//").replace(":", "/")
 
 
 def now():
@@ -89,16 +101,17 @@ def native_actions(path, arch, tmp):
         decode_exit = decoder.wait()
     original = [test for test in tests if test["test_binary"] != "--generate-xml"]
     auxiliary = [test for test in tests if test["test_binary"] == "--generate-xml"]
-    valid_tests = collections.Counter(test["target"] for test in original) == collections.Counter(TARGETS)
     wrapper = "posix_tw" if arch == "amd64" else "compiled_posix_test_wrapper"
+    valid_tests = original_tests(original, TARGETS, wrapper=wrapper)
     for test in original:
+        target = test["target"]
+        if target not in BINARIES:
+            continue
         arguments = test["arguments"]
-        valid_tests &= (test["runner"] == "remote" and not test["cache_hit"]
-                        and Path(test["executable"]).name == wrapper
-                        and test["test_binary"] == "test/syscalls/fork_test_native")
-        valid_tests &= (arguments[1:2] == ["--syscall-test"] and "--platform=native" in arguments
+        valid_tests &= (test["test_binary"] == executable(target)
+                        and arguments[1:2] == ["--syscall-test"] and "--platform=native" in arguments
                         and test["runfile_environment"] == {
-                            "GVISOR_SYSCALL_TEST_BINARY": "test/syscalls/linux/fork_test",
+                            "GVISOR_SYSCALL_TEST_BINARY": executable(BINARIES[target]),
                             "GVISOR_SYSCALL_TEST_RUNNER": "test/runner/runner_/runner"})
     return {"status": "PASS" if counts["total"] and not counts["failed"] and not bad and not decode_exit and not projection_exit and valid_tests else "INCOMPLETE",
             "counts": dict(counts), "decoder_exits": [decode_exit, projection_exit],
@@ -126,7 +139,7 @@ def product_files(bazel, common, work, execroot, arch):
         data["status"] = "PASS" if (data["machine"] == {"amd64": 62, "arm64": 183}[arch]
                                     and not data["interpreter"] and not data["needed"]) else "FAIL"
         outputs[target] = data
-    if outputs[TARGETS[0]]["sha256"] != outputs[targets[-1]]["sha256"]:
+    if any(outputs[target]["sha256"] != outputs[NATIVE_LAUNCHER]["sha256"] for target in TARGETS):
         return {"status": "FAIL", "outputs": outputs, "reason": "The native launcher differs from setup_container"}
     return {"status": "PASS" if all(v["status"] == "PASS" for v in outputs.values()) else "FAIL", "outputs": outputs}
 
@@ -141,8 +154,8 @@ def failure_lines(reports):
     return lines[:30]
 
 
-def static_links(graph):
-    """Require both link actions to consume the supplier's static runtimes."""
+def static_links(graph, expected):
+    """Require the selected link actions to consume the supplier's static runtimes."""
     fragments = {str(f["id"]): f for f in graph["pathFragments"]}
     def path(fragment_id):
         fragment = fragments[str(fragment_id)]
@@ -169,7 +182,7 @@ def static_links(graph):
         if action["mnemonic"] != "CppLink":
             continue
         target = targets[str(action["targetId"])]
-        if target not in LINK_TARGETS:
+        if target not in expected:
             continue
         params = {p["execPath"]: p["arguments"] for p in action.get("paramFiles", [])}
         args = [value for arg in action["arguments"]
@@ -200,13 +213,14 @@ def static_links(graph):
         links.append({"target": target, "action_key": action["actionKey"],
                       "archives": archives, "libc_search_directory": directories[0], "static_options": static,
                       "execution_platform": action["executionPlatform"]})
-    if collections.Counter(link["target"] for link in links) != collections.Counter(LINK_TARGETS):
+    if collections.Counter(link["target"] for link in links) != collections.Counter(expected):
         raise ValueError("The graph does not have exactly one link action for each original test")
     return {"status": "PASS", "links": links}
 
 
 def static_link_controls():
     """Exercise the graph predicate before either remote compilation."""
+    expected = ["//test/syscalls/linux:fork_test", NATIVE_LAUNCHER]
     paths = ["external/llvm/libcxx/liblibcxx.static.a", "external/llvm/libcxxabi/liblibcxxabi.static.a",
              "external/llvm/libunwind/liblibunwind.static.a", "external/llvm/musl/musl_library_search_directory",
              "external/llvm/musl/libc.a", "test/syscalls/linux/fork_test", "test/runner/setup_container/setup_container"]
@@ -223,7 +237,7 @@ def static_link_controls():
         artifacts.append({"id": index, "pathFragmentId": parent, "isTreeArtifact": index == 4})
     args = ["-static", "-L" + paths[3], *paths[:3]]
     graph = {"pathFragments": fragments, "artifacts": artifacts,
-             "targets": [{"id": i + 1, "label": target} for i, target in enumerate(LINK_TARGETS)]
+             "targets": [{"id": i + 1, "label": target} for i, target in enumerate(expected)]
                         + [{"id": 3, "label": "@@llvm+//runtimes/musl:musl_library_search_directory"}],
              "depSetOfFiles": [{"id": 1, "directArtifactIds": [1, 2, 3, 4]},
                                {"id": 2, "directArtifactIds": [5]}],
@@ -232,7 +246,7 @@ def static_link_controls():
                           "inputDepSetIds": [1], "outputIds": [i + 6], "executionPlatform": "//fixture:native"}
                          for i in range(2)]
                         + [{"mnemonic": "CopyToDirectory", "targetId": 3, "inputDepSetIds": [2], "outputIds": [4]}]}
-    static_links(graph)
+    static_links(graph, expected)
     for mutation in ("dynamic", "shared", "undeclared_archive", "missing_libc", "missing_owner"):
         changed = json.loads(json.dumps(graph))
         flags = changed["actions"][0]["paramFiles"][0]["arguments"]
@@ -247,7 +261,7 @@ def static_link_controls():
         else:
             changed["actions"].pop(1)
         try:
-            static_links(changed)
+            static_links(changed, expected)
         except ValueError:
             continue
         raise ValueError("Static-link graph predicate accepts " + mutation)
@@ -255,10 +269,10 @@ def static_link_controls():
 
 
 def link_graph(bazel, common, work):
-    """Analyze, but never execute, the two normal C++ inputs of the syscall entry point."""
+    """Check the selected syscall binaries and their common launcher."""
     selected = "set(" + " ".join(LINK_TARGETS) + ")"
-    query = ('outputs(".*/(fork_test|setup_container|musl_library_search_directory)$", '
-             'deps(' + selected + '))')
+    names = [target.split(":")[1] for target in LINK_TARGETS] + ["musl_library_search_directory"]
+    query = 'outputs(".*/(' + "|".join(names) + ')$", deps(' + selected + '))'
     raw = work / "link-graph.json"
     started = now()
     with raw.open("w") as output, (work / "link-graph.log").open("w") as log:
@@ -270,7 +284,7 @@ def link_graph(bazel, common, work):
               "execution_finished_at": now()}
     if code == 0:
         try:
-            result.update(static_links(json.loads(raw.read_text())))
+            result.update(static_links(json.loads(raw.read_text()), LINK_TARGETS))
         except (KeyError, ValueError) as err:
             result["reason"] = str(err)
     result["verified_at"] = now()
@@ -293,6 +307,8 @@ def qualify(arch, variant, source, tmp, out, private, bazel):
     target_platform = "@llvm//platforms:linux_" + {"amd64": "x86_64", "arm64": "aarch64"}[arch] + "_musl"
     row["target_platform"] = target_platform
     row["execution_platform"] = platform
+    outputs = [re.escape(executable(target)) for target in [*TARGETS, *LINK_TARGETS]]
+    selectors = [case.replace("/", ".", 1) for cases in CASES.values() for case in cases]
     common = ["--config=" + {"amd64": "x86_64", "arm64": "aarch64"}[arch],
               "--platforms=" + target_platform, "--dynamic_mode=off",
               "--compilation_mode=fastbuild", "--host_platform=" + platform,
@@ -304,8 +320,9 @@ def qualify(arch, variant, source, tmp, out, private, bazel):
               "--incompatible_use_native_posix_test_wrapper", "--nocache_test_results",
               "--nobuild_event_json_file_path_conversion", "--jobs=400",
               "--remote_download_outputs=toplevel",
-              "--remote_download_regex=bazel-out/[^/]+/bin/(test/syscalls/(fork_test_native|linux/fork_test)|test/runner/setup_container/setup_container)$",
-              "--remote_accept_cached", "--test_timeout=90", "--test_env=GTEST_FILTER=ForkTest.Simple:ForkTest.Pipe:ForkTest.SharedMapping",
+              "--remote_download_regex=bazel-out/[^/]+/bin/(" + "|".join(outputs) + ")$",
+              "--remote_accept_cached", "--test_timeout=90", "--test_env=GTEST_FILTER=" + ":".join(selectors),
+              "--test_sharding_strategy=disabled",
               "--noremote_upload_local_results",
               "--noremote_local_fallback", "--spawn_strategy=remote", "--keep_going",
               "--color=no", "--curses=no"]
