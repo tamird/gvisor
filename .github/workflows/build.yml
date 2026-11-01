@@ -1,7 +1,7 @@
-name: Run SysV shared-memory syscall cases on scratch
+name: Run the fork-and-exec parent-death call on native GNU and musl
 on:
   push:
-    branches: [qualification/syscall-musl-shm-headers]
+    branches: [qualification/helper-parent-death-libcs]
 permissions:
   contents: read
   actions: read
@@ -16,6 +16,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {ref: 2f98c6da4fd3823ddf42d79efee4767290fd4ee3, path: product, persist-credentials: false, fetch-depth: 1}
       - name: Prepare private remote configuration and evidence
+        id: prepare
         working-directory: carrier
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -59,7 +60,53 @@ jobs:
           unset GH_TOKEN
           bazel --bazelrc="$RUNNER_TEMP/sidecar.bazelrc" run //tools/actionlint -- "$PWD/.github/workflows/build.yml" > "$RUNNER_TEMP/actionlint.log" 2>&1 || { tail -30 "$RUNNER_TEMP/actionlint.log"; exit 1; }
           printf '%s\n' '{"status":"PASS","phase":"bootstrap","executed_targets":0}' > "$RUNNER_TEMP/native-package-evidence/bootstrap.json"
-      - name: Run ordinary musl syscall cases on both scratch architectures
+      - name: Run ExitAllThreads with the original GNU compiler and Linux TestRunner
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        working-directory: carrier
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+          GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          PRODUCT: 154269d6f7268496ae9583afe929ca5eb0c37cf8
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/shm-gnu"
+          mkdir -p "$w/public" "$w/bin" "$w/platform"
+          cp test/rbe/native_packages/check_gnu_case.py "$w/check.py"
+          git fetch --quiet --depth=1 https://github.com/tamird/gvisor.git "$PRODUCT"
+          git checkout -q --detach "$PRODUCT"
+          test "$(git rev-parse 'HEAD^{tree}')" = e1d4f1b96f4b5072e57080cbe816df2eeda55665
+          for f in test/util/multiprocess_util.cc test/syscalls/linux/exit.cc; do
+            test "$(git rev-parse "HEAD:$f")" = "$(git -C ../product rev-parse "HEAD:$f")"
+          done
+          printf 'module(name="tcp_gnu")\n' > "$w/platform/MODULE.bazel"
+          printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$w/platform/BUILD"
+          umask 077
+          {
+            printf '%s\n' 'build --config=x86_64' 'build --jobs=64' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$w/platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$w/gnu.bazelrc"
+          unset BUILDBUDDY_API_KEY
+          if [[ $(cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns 2>/dev/null) == 1 ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+          docker pull --platform=linux/amd64 "$GNU"
+          docker run -d --name shm-gnu --entrypoint /bin/bash --user root --cap-add=SYS_ADMIN --cap-add=SYS_PTRACE --security-opt apparmor=unconfined --env PRODUCT --env "WORK=$w" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$PWD" "$GNU" -c 'sleep infinity'
+          docker exec shm-gnu unshare -Urnm sh -ec 'mount -t tmpfs tmpfs /mnt'
+          docker exec shm-gnu sh -ec 'uname -srm; getconf GNU_LIBC_VERSION; gcc -dumpfullversion' > "$w/public/coordinator.txt"
+          actual=$(docker exec shm-gnu sh -ec 'command -v bazel')
+          printf '#!/bin/sh\nexec "%s" --bazelrc="%s" "$@"\n' "$actual" "$w/gnu.bazelrc" > "$w/bin/bazel"
+          chmod 755 "$w/bin/bazel"
+          set -euo pipefail
+          w="$RUNNER_TEMP/shm-gnu"
+          filter=ExitTest.ExitAllThreads
+          rc=0
+          docker exec shm-gnu "$w/bin/bazel" test --strategy=TestRunner=local --nocache_test_results --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=errors --test_timeout=300 --test_sharding_strategy=disabled --test_env="GTEST_FILTER=$filter" --build_event_json_file="$w/events" //test/syscalls:exit_test_native > "$w/syscalls.log" 2>&1 || rc=$?
+          printf '%s\n' "$rc" > "$w/syscalls.exit"
+          verify=0; docker exec shm-gnu python3 "$w/check.py" "$w" || verify=$?
+          mkdir -p "$RUNNER_TEMP/native-package-evidence/gnu"
+          cp "$w/public/"* "$RUNNER_TEMP/native-package-evidence/gnu/"
+          exit "$verify"
+      - name: Run ExitAllThreads on the native AMD64 scratch worker with musl
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
         working-directory: product
         env:
           PRODUCT: 2f98c6da4fd3823ddf42d79efee4767290fd4ee3
@@ -76,13 +123,18 @@ jobs:
               path = root / name
               return json.loads(path.read_text()) if path.exists() else {"status": "INCOMPLETE"}
           supplier, runtime = read("supplier.json"), read("summary.json")
-          states = [supplier["status"], runtime["status"]]
+          gnu = read("gnu/syscalls.json")
+          gnu_ok = gnu.get("verified") is True and gnu.get("source") == "154269d6f7268496ae9583afe929ca5eb0c37cf8"
+          gnu_failed = (gnu.get("exit", 0) != 0 or gnu.get("bazel_exit", 0) != 0
+                        or any(c.get("failed") for c in gnu.get("cases", [])))
+          gnu_status = "PASS" if gnu_ok else "FAIL" if gnu_failed else "INCOMPLETE"
+          states = [supplier["status"], runtime["status"], gnu_status]
           identity = (supplier.get("source") == "c2f5f79dce24877679cede14b85666b7ca65c6de"
                       and runtime.get("source") == "2f98c6da4fd3823ddf42d79efee4767290fd4ee3"
                       and supplier.get("binary_sha256") == runtime.get("native_bazel", {}).get("sha256"))
-          status = "FAIL" if "FAIL" in states else "PASS" if states == ["PASS", "PASS"] and identity else "INCOMPLETE"
+          status = "FAIL" if "FAIL" in states else "PASS" if states == ["PASS", "PASS", "PASS"] and identity else "INCOMPLETE"
           result = {"status": status, "supplier_status": states[0], "runtime_status": runtime["status"], "observation_status": states[1],
-                    "source_and_binary_identity": identity, "verified_at": datetime.datetime.now(datetime.timezone.utc).isoformat()}
+                    "gnu_status": states[2], "source_and_binary_identity": identity, "verified_at": datetime.datetime.now(datetime.timezone.utc).isoformat()}
           (root / "result.json").write_text(json.dumps(result, indent=2) + "\n")
           print(json.dumps(result))
           raise SystemExit(status != "PASS")
@@ -90,7 +142,7 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: native-musl-shm-interfaces
+          name: native-gnu-musl-fork-exec
           path: |
             ${{ runner.temp }}/native-package-evidence
           if-no-files-found: error

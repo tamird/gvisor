@@ -17,21 +17,14 @@ from static_build import elf
 
 SOURCE = os.environ["PRODUCT"]
 IMAGE = "docker://mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef"
-CASES = {
-    "//test/syscalls:shm_test_native": [
-        "ShmTest/AttachDetach",
-        "ShmTest/DetachedSegmentsPersist",
-        "ShmTest/RemovedSegmentsAreDestroyed",
-        "ShmDeathTest/SegmentNotAccessibleAfterDetach",
-    ],
-}
+CASES = {"//test/syscalls:exit_test_native": ["ExitTest/ExitAllThreads"]}
 TARGETS = list(CASES)
 BINARIES = {target: "//test/syscalls/linux:" + target.split(":")[1].removesuffix("_native") for target in TARGETS}
 NATIVE_LAUNCHER = "//test/runner/setup_container:setup_container"
 LINK_TARGETS = [*BINARIES.values(), NATIVE_LAUNCHER]
 
 
-ABI = {"selected": "musl target libc on both native scratch execution architectures",
+ABI = {"selected": "musl target libc on the native AMD64 scratch execution architecture",
        "GNU_boundary_proof": {"run": 41302038018, "artifact": 13082191714},
        "launcher_proposal": "8919cb68b11643114c1f28c1a756902a2958bda0",
        "scope": "Ordinary native entry point and supported musl platform, no run_under or per-target change",
@@ -426,7 +419,7 @@ def main():
         return 1
     bazel = [str(binary), "--bazelrc=" + str(tmp / "sidecar.bazelrc")]
     rows = []
-    for arch in ("amd64", "arm64"):
+    for arch in ("amd64",):
         variant, source = "native_launcher", SOURCE
         key = variant + "-" + arch
         try:
