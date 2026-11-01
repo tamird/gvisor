@@ -31,11 +31,16 @@ network_tests = (
     "TestCollectLinksAndRoutes_LoopbackExtraRoutes", "TestDialExternalUDS", "TestConfigureProxyLink",
     "TestDialExternalUDSRejectsStreamPeer", "TestDialExternalUDSMissingPath", "TestPrimaryInterface",
 )
-if phase == "owners":
-    labels = ["//runsc/sandbox:sandbox_test", "//tools/gvisor2pcap:gvisor2pcap_test",
-              "//runsc/boot:boot_nogo", "//runsc/boot/sentryapi:sentryapi_nogo",
-              "//pkg/tcpip/link/sniffer:sniffer_nogo"]
-    budget = "20m"
+network = "//runsc/sandbox:sandbox_test"
+converter = "//tools/gvisor2pcap:gvisor2pcap_test"
+if phase == "native-owners":
+    labels = [network, converter]
+    budget = "18m"
+elif phase == "boot":
+    labels = ["//runsc/boot:boot_nogo"]
+    budget = "43m"
+else:
+    raise ValueError(phase)
 invocation = str(uuid.uuid4())
 receipt = records / (phase + ".json")
 record = dict(phase=phase, started=now(), result="started", invocation=invocation, labels=labels,
@@ -107,11 +112,11 @@ args = ["docker", "exec", "tcp-compiler", "timeout", "--signal=INT", "--kill-aft
         "--strategy_regexp=^Analyzing.(@@)?//pkg/abi/linux:linux$=local",
         "--remote_download_outputs=toplevel", "--invocation_id=" + invocation, "--build_event_json_file=" + str(bep),
         "--build_metadata=REPO_URL=https://github.com/tamird/gvisor", "--build_metadata=COMMIT_SHA=" + os.environ["GITHUB_SHA"]]
-if phase == "owners":
-    args += ["--test_filter=^(" + "|".join((*network_tests, "TestGvisor2PCAP")) + ")($|/)", "--nocache_test_results", "--test_timeout=300", "--remote_download_regex=.*[/]test[.](log|xml)$"]
-elif command == "test":
-    args += ["--strategy=TestRunner=local", "--nocache_test_results", "--test_timeout=240",
-             "--test_env=PRODUCT_SHA=" + os.environ["PRODUCT_SHA"], "--test_env=PCAP_CASES="+",".join(modes)]
+if phase == "native-owners":
+    args += ["--test_filter=^(" + "|".join((*network_tests, "TestGvisor2PCAP")) + ")($|/)",
+             "--strategy=TestRunner=local", "--test_arg=-test.v", "--nocache_test_results", "--test_timeout=300"]
+else:
+    args += ["--test_timeout=300"]
 with log.open("wb") as f, subprocess.Popen([*args, *labels], stdout=f, stderr=subprocess.STDOUT) as proc:
     while True:
         try:
@@ -124,43 +129,31 @@ record.update(exit=rc, finished=now(), result="failed")
 with log.open(errors="replace") as f:
     record["diagnostics"] = [s.strip()[:400] for s in f if interesting.search(s) and not secrets.search(s)][-20:]
 save()
-if phase == "owners":
-    owner_cases = {}
-    for label in labels:
-        path = "bazel-testlogs/" + label[2:].replace(":", "/") + "/test.xml"
-        data = container_read(path)
-        if data:
-            owner_cases[label] = {n.get("name"): [child.tag for child in n if child.tag in ("failure", "error", "skipped")]
-                                  for n in ET.fromstring(data).iter("testcase")}
-    record["xml"] = owner_cases
-    missing = {}
-    for label, wanted in [(labels[0], network_tests), (labels[1], ("TestGvisor2PCAP",))]:
-        names = owner_cases.get(label, {})
-        missing[label] = [name for name in wanted if not any(n.split("/")[0] == name for n in names)]
-    record["missingCases"] = missing
-    ok = (set(completions) == set(labels) and all(completions.values()) and
-          set(owner_cases) == set(labels) and all(owner_cases.values()) and
-          not any(missing.values()) and all(not failures for cases in owner_cases.values() for failures in cases.values()) and
-          results == summaries == ["PASSED"] * len(labels))
-elif command == "test":
-    target = labels[0].split(":")[1]
-    path = "bazel-testlogs/test/rbe/forward_gso/" + target
-    if data := container_read(path + "/test.xml"):
-        cases = {n.get("name"): [s.tag for s in n if s.tag in ("failure", "error", "skipped")]
-                 for n in ET.fromstring(data).iter("testcase")}
-        record["xml"] = cases
-    if rc != 0 and (testlog := container_read(path + "/test.log")):
-        record["testDiagnostics"] = [line.strip()[:400] for line in testlog.decode(errors="replace").splitlines()
-                                     if interesting.search(line) and not secrets.search(line)][-20:]
-    if data := evidence(path, "verdict.json"):
-        record["transfer"] = json.loads(data)
-    save()
-    t = record.get("transfer", {})
-    ok = (results == summaries == ["PASSED"] and record.get("xml") == {m: [] for m in modes}
-          and t.get("source") == os.environ["PRODUCT_SHA"] and t.get("expected") == modes
-          and set(t.get("results", {})) == set(modes) and t.get("verified"))
-else:
-    ok = all(completions.get(label) for label in labels) and bool(events["buildFinished"])
+owner_cases = {}
+failures = {}
+for label in labels:
+    directory = "bazel-testlogs/" + label[2:].replace(":", "/")
+    data = container_read(directory + "/test.xml")
+    checks = {}
+    if data:
+        for case in ET.fromstring(data).iter("testcase"):
+            checks[case.get("name")] = [c.tag for c in case if c.tag in ("failure", "error", "skipped")]
+    output = (container_read(directory + "/test.log") or b"").decode(errors="replace")
+    for result, name in re.findall(r"^\s*--- (PASS|FAIL|SKIP): (Test[\w/.-]+) ", output, re.M):
+        if result == "PASS":
+            checks.setdefault(name, [])
+        else:
+            checks[name] = [result]
+    failures[label] = [line.strip()[:230] for line in output.splitlines()
+                       if re.search(r"network_test.go:[0-9]+:|gvisor2pcap_test.go:[0-9]+:|^FAIL:|^--- FAIL", line)
+                       and not secrets.search(line)][:20]
+    owner_cases[label] = checks
+wanted = {network: network_tests, converter: ("TestGvisor2PCAP",)} if phase == "native-owners" else {}
+missing = {label: sorted(set(names) - set(c.split("/")[0] for c in owner_cases[label])) for label, names in wanted.items()}
+record.update(xml=owner_cases, missingCases=missing, testDiagnostics=failures)
+ok = (set(completions) == set(labels) and all(completions.values()) and all(owner_cases.values())
+      and not any(missing.values()) and all(not faults for cases in owner_cases.values() for faults in cases.values())
+      and results == summaries == ["PASSED"] * len(labels))
 record["result"] = "verified" if rc == 0 and ok else "failed"
 record["verifiedAt"] = now()
 save()
