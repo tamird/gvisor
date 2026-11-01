@@ -1,0 +1,57 @@
+"""Run sixteen order-balanced, fresh-process pairs on a single frozen file."""
+from pathlib import Path
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+
+root=Path(sys.argv[1])
+capture=root/"capture"
+out=root/"records"
+cpu=min(os.sched_getaffinity(0))
+env=dict(os.environ,GOMAXPROCS="1",GO_TEST_WRAP="0")
+env.pop("XML_OUTPUT_FILE",None)
+def freeze():
+    return {name:hashlib.sha256((capture/name).read_bytes()).hexdigest() for name in ("checkpoint.img","pages.img","pages_meta.img","spec.json")}
+digests=freeze()
+rows=[]
+modes=["DecodeGC","DecodeStatefile"]
+for i in range(16):
+    for mode in modes[::(1 if (i//2)%2==0 else -1)]:
+        for arm in (("stock","fixed") if i%2==0 else ("fixed","stock")):
+            args=["taskset","-c",str(cpu),str(root/arm),"-checkpoint-dir="+str(capture),"-test.cpu=1","-test.run=^$","-test.bench=^BenchmarkCheckpointFile$/^"+mode+"$","-test.benchtime=1x","-test.benchmem"]
+            p=subprocess.run(args,env=env,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=120)
+            if p.returncode or not re.search(r"^PASS$",p.stdout,re.M):
+                raise RuntimeError(p.stdout[-1300:])
+            line,=[x for x in p.stdout.splitlines() if re.match("^BenchmarkCheckpointFile/"+mode+r"(-\d+)?\s",x)]
+            name,n,*v=line.split()
+            metrics={k:float(n) for n,k in zip(v[::2],v[1::2])}
+            assert n=="1" and all(metrics.get(k,0)>0 for k in ("ns/op","cpu-ns","B/op","allocs/op")),line
+            if mode=="DecodeStatefile":assert metrics["state-file-B"]==(capture/"checkpoint.img").stat().st_size,line
+            rows.append({"pair":i,"arm":arm,"mode":mode,"line":line,"metrics":metrics})
+            (out/"paired-bench.json").write_text(json.dumps(rows,indent=2)+"\n")
+assert len(rows)==64 and freeze()==digests
+(out/"bench-finished.json").write_text(json.dumps({"cpu":cpu,"rows":64,"source_hashes":digests,"end":time.time_ns()})+"\n")
+
+# Each ordinary state load reuses the decoder pool in the same process. Keep
+# these controls separate from the fresh-process whole-kernel samples above.
+small = []
+modes = {"ptr", "map", "slice"}
+for i in range(16):
+    for arm in (("stock", "fixed") if i % 2 == 0 else ("fixed", "stock")):
+        args = ["taskset", "-c", str(cpu), str(root / (arm + "-small")), "-test.cpu=1", "-test.run=^$",
+                "-test.bench=^BenchmarkDecoding$/^(ptr|map|slice)$/^state$", "-test.benchtime=32x", "-test.benchmem"]
+        p = subprocess.run(args, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=120)
+        assert p.returncode == 0 and re.search(r"^PASS$", p.stdout, re.M), p.stdout[-1400:]
+        lines = [line for line in p.stdout.splitlines() if line.startswith("BenchmarkDecoding/")]
+        assert {line.split()[0].split("/")[1] for line in lines} == modes and len(lines) == 3, lines
+        for line in lines:
+            fields = line.split()
+            assert fields[1] == "32" and {"ns/op", "B/op", "allocs/op"} <= set(fields[3::2]), line
+            small.append({"arm": arm, "pair": i, "line": line})
+        (out / "small-pairs.json").write_text(json.dumps(small, indent=2) + "\n")
+assert len(small) == 96
+(out / "small-finished.json").write_text(json.dumps({"rows": len(small), "cpu": cpu, "end": time.time_ns()}) + "\n")
