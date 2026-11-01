@@ -1,0 +1,326 @@
+{
+  "amd64": [
+    {
+      "id": {
+        "targetCompleted": {
+          "label": "//runsc:runsc_coverage",
+          "configuration": {
+            "id": "3822f7feb1f9a6e95959077465e2ec343f0db17e8b638caa54bae739c3c8c091"
+          }
+        }
+      },
+      "completed": {
+        "success": true,
+        "outputGroup": [
+          {
+            "name": "default",
+            "fileSets": [
+              {
+                "id": "444"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": {
+        "targetCompleted": {
+          "label": "//runsc/cmd/sentry:gvisor_sentry_coverage",
+          "configuration": {
+            "id": "3822f7feb1f9a6e95959077465e2ec343f0db17e8b638caa54bae739c3c8c091"
+          }
+        }
+      },
+      "completed": {
+        "success": true,
+        "outputGroup": [
+          {
+            "name": "default",
+            "fileSets": [
+              {
+                "id": "455"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": {
+        "targetCompleted": {
+          "label": "//runsc:runsc_race_coverage",
+          "configuration": {
+            "id": "3822f7feb1f9a6e95959077465e2ec343f0db17e8b638caa54bae739c3c8c091"
+          }
+        }
+      },
+      "completed": {
+        "success": true,
+        "outputGroup": [
+          {
+            "name": "default",
+            "fileSets": [
+              {
+                "id": "456"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": {
+        "targetCompleted": {
+          "label": "//runsc/cmd/sentry:gvisor_sentry_race_coverage",
+          "configuration": {
+            "id": "3822f7feb1f9a6e95959077465e2ec343f0db17e8b638caa54bae739c3c8c091"
+          }
+        }
+      },
+      "completed": {
+        "success": true,
+        "outputGroup": [
+          {
+            "name": "default",
+            "fileSets": [
+              {
+                "id": "458"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": {
+        "namedSet": {
+          "id": "455"
+        }
+      },
+      "namedSetOfFiles": {
+        "files": [
+          {
+            "name": "runsc/cmd/sentry/gvisor_sentry_cov",
+            "digest": "d6e3e81a45f2d49e81719940c64158556a9e9978e1a68253497e29a7d2be3a79",
+            "length": "45895840"
+          }
+        ],
+        "fileSets": []
+      }
+    },
+    {
+      "id": {
+        "namedSet": {
+          "id": "444"
+        }
+      },
+      "namedSetOfFiles": {
+        "files": [
+          {
+            "name": "runsc/runsc_cov",
+            "digest": "6d4e2b6c553febbad62280d137572e98165e699f43536960c478d744b60c0815",
+            "length": "15503520"
+          }
+        ],
+        "fileSets": []
+      }
+    },
+    {
+      "id": {
+        "namedSet": {
+          "id": "456"
+        }
+      },
+      "namedSetOfFiles": {
+        "files": [
+          {
+            "name": "runsc/runsc_race_cov",
+            "digest": "734f356209e2d57d3cb32a22b0b23b1c2e38c45f359bc776a1584863b927771d",
+            "length": "20872704"
+          }
+        ],
+        "fileSets": []
+      }
+    },
+    {
+      "id": {
+        "namedSet": {
+          "id": "458"
+        }
+      },
+      "namedSetOfFiles": {
+        "files": [
+          {
+            "name": "runsc/cmd/sentry/gvisor_sentry_race_cov",
+            "digest": "1bee72e482de83a717cca508a913bfbb2712508ea50c6cdb319872b8ddae73dd",
+            "length": "59570528"
+          }
+        ],
+        "fileSets": []
+      }
+    }
+  ],
+  "arm64": [
+    {
+      "id": {
+        "targetCompleted": {
+          "label": "//runsc:runsc_coverage",
+          "configuration": {
+            "id": "cec4e6c6e3558d61b8fd56c4d240988c7fd67d4b1618c672d13f29c37452c038"
+          }
+        }
+      },
+      "completed": {
+        "success": true,
+        "outputGroup": [
+          {
+            "name": "default",
+            "fileSets": [
+              {
+                "id": "452"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": {
+        "targetCompleted": {
+          "label": "//runsc/cmd/sentry:gvisor_sentry_coverage",
+          "configuration": {
+            "id": "cec4e6c6e3558d61b8fd56c4d240988c7fd67d4b1618c672d13f29c37452c038"
+          }
+        }
+      },
+      "completed": {
+        "success": true,
+        "outputGroup": [
+          {
+            "name": "default",
+            "fileSets": [
+              {
+                "id": "459"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": {
+        "targetCompleted": {
+          "label": "//runsc:runsc_race_coverage",
+          "configuration": {
+            "id": "cec4e6c6e3558d61b8fd56c4d240988c7fd67d4b1618c672d13f29c37452c038"
+          }
+        }
+      },
+      "completed": {
+        "success": true,
+        "outputGroup": [
+          {
+            "name": "default",
+            "fileSets": [
+              {
+                "id": "460"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": {
+        "targetCompleted": {
+          "label": "//runsc/cmd/sentry:gvisor_sentry_race_coverage",
+          "configuration": {
+            "id": "cec4e6c6e3558d61b8fd56c4d240988c7fd67d4b1618c672d13f29c37452c038"
+          }
+        }
+      },
+      "completed": {
+        "success": true,
+        "outputGroup": [
+          {
+            "name": "default",
+            "fileSets": [
+              {
+                "id": "461"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": {
+        "namedSet": {
+          "id": "460"
+        }
+      },
+      "namedSetOfFiles": {
+        "files": [
+          {
+            "name": "runsc/runsc_race_cov",
+            "digest": "488e4f7e0d59927c34d38535f63352adb500499d379505d239a388b05f3b0bc8",
+            "length": "18480344"
+          }
+        ],
+        "fileSets": []
+      }
+    },
+    {
+      "id": {
+        "namedSet": {
+          "id": "452"
+        }
+      },
+      "namedSetOfFiles": {
+        "files": [
+          {
+            "name": "runsc/runsc_cov",
+            "digest": "d9213fe7f4324f3cdf65907fe2a576550894ee38eb7b7569d5c439c520d71afd",
+            "length": "16122016"
+          }
+        ],
+        "fileSets": []
+      }
+    },
+    {
+      "id": {
+        "namedSet": {
+          "id": "459"
+        }
+      },
+      "namedSetOfFiles": {
+        "files": [
+          {
+            "name": "runsc/cmd/sentry/gvisor_sentry_cov",
+            "digest": "af7c44e464996388bd784d460ac288ad612878fb663d969babede8526689ef0b",
+            "length": "52953248"
+          }
+        ],
+        "fileSets": []
+      }
+    },
+    {
+      "id": {
+        "namedSet": {
+          "id": "461"
+        }
+      },
+      "namedSetOfFiles": {
+        "files": [
+          {
+            "name": "runsc/cmd/sentry/gvisor_sentry_race_cov",
+            "digest": "421fec454a5ee8aecce12ce408c65ce8ec8ecc5bf56414a767b147fe92c9c081",
+            "length": "52857368"
+          }
+        ],
+        "fileSets": []
+      }
+    }
+  ]
+}
