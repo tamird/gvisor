@@ -57376,7 +57376,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T04:31:22.639808+00:00",
+      "updatedAt": "2026-11-01T05:38:35.366027+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -58598,6 +58598,15 @@
               "url": "https://github.com/tamird/gvisor/blob/9c9a39762/test/rbe/grpc-native-codegen/result.json"
             }
           ]
+        },
+        {
+          "text": "Buildkite passed Docker an empty runtime argument when installing a staged release with default settings. Docker created a shell wrapper for that empty argument. Passing an empty argument list avoided the wrapper, and passing two configured flags separately preserved both. All six Docker containers started.",
+          "evidence": [
+            {
+              "label": "Docker registrations and guest results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41276530370/artifacts/13070498799"
+            }
+          ]
         }
       ],
       "nextStep": "Follow the Debian layer change in rules_distroless #293. Keep the Jekyll renderer queued for the upstream rules_img release. Prepare the development-checkpoint identity fix for review on its rules_go prerequisite. Qualify the release change with the current graph default and on ARM64 before moving the broader build change to review. The ARM64 eventfd case reached the ordinary TestRunner; use that qualified path for the next relevant syscall coverage. Check whether the approved release changes also replace the Buildkite artifact commands and smoke-test the already built optimized binaries on native Linux.",
@@ -59460,7 +59469,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-01T01:20:55.517590+00:00",
+      "updatedAt": "2026-11-01T05:38:35.366027+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Retain the minimum-RTT safeguard. Prioritize reproducible recovery defects and review changes to SACK, probe timing and receive-queue pressure.",
       "findings": [
@@ -59808,6 +59817,23 @@
             {
               "label": "Sender, RACK and SACK package checks",
               "url": "https://github.com/tamird/gvisor/actions/runs/41206675129"
+            }
+          ]
+        },
+        {
+          "text": "A restored RACK sender missed its 25 ms repair deadline. Restoring the timer alone retransmitted A and B, even though the peer had already acknowledged B. Keeping the timer and the acknowledged ranges retransmitted only A at the original deadline.",
+          "evidence": [
+            {
+              "label": "Maintainer review guide",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            },
+            {
+              "label": "Uninterrupted, stock restore and ordinary-timer controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41276276691/artifacts/13071304034"
+            },
+            {
+              "label": "Three-packet comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41276742967/artifacts/13071870710"
             }
           ]
         }
