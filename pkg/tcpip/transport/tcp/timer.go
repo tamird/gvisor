@@ -52,10 +52,12 @@ const (
 // of timers, whenever a timer is enabled or disabled, and may make a syscall.
 //
 // This struct is thread-compatible.
+//
+// +stateify savable
 type timer struct {
 	state timerState
 
-	clock tcpip.Clock
+	clock tcpip.Clock `state:"nosave"`
 
 	// target is the expiration time of the current timer. It is only
 	// meaningful in the enabled state.
@@ -63,13 +65,13 @@ type timer struct {
 
 	// clockTarget is the expiration time of the clock timer. It is
 	// meaningful in the enabled and orphaned states.
-	clockTarget tcpip.MonotonicTime
+	clockTarget tcpip.MonotonicTime `state:"nosave"`
 
 	// timer is the clock timer used to wait on.
-	timer tcpip.Timer
+	timer tcpip.Timer `state:"nosave"`
 
 	// callback is the function that's called when the timer expires.
-	callback func()
+	callback func() `state:"nosave"`
 }
 
 // init initializes the timer. Once it expires the function callback
@@ -78,6 +80,18 @@ func (t *timer) init(clock tcpip.Clock, f func()) {
 	t.state = timerStateDisabled
 	t.clock = clock
 	t.callback = f
+}
+
+// restore binds the saved timer to its destination clock. Only the logical
+// deadline survives a checkpoint; an orphaned clock wakeup has no work to do.
+func (t *timer) restore(clock tcpip.Clock, f func()) {
+	enabled := t.enabled()
+	t.init(clock, f)
+	if enabled {
+		t.state = timerStateEnabled
+		t.clockTarget = t.target
+		t.resetOrStart(t.target.Sub(clock.NowMonotonic()))
+	}
 }
 
 // cleanup frees all resources associated with the timer.
