@@ -19618,18 +19618,18 @@
       "repo": "buildbuddy-io/buildbuddy",
       "number": 13882,
       "ref": "require-vfs-capability",
-      "head": "38701c9e42ad373cb9335b58c0fe6eb4c6da1c6e",
+      "head": "8441f4beeb18129b5cfd4416b714f2684d10ea97",
       "title": "Route explicit VFS requests to capable executors",
       "group": "buildbuddy",
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13882",
       "status": "open",
-      "summary": "Signed standalone38701c9e4 is delivered as13882. Executors advertise enabled Linux VFS support; explicit VFS tasks require that capability during placement, reservations, stealing and registration. Executor advertisement must precede scheduler rollout; existing executor overrides remain for mixed rollout. Three uncached race suites passed249 XML records/all12 required cases; the client build and all five canonical lint tools passed. Original validation wrapper failures remain preserved, with one local canonical-label reconciliation and no runtime replay. This repairs the source-level routing gap without establishing the deployed cause of provider issue13877 or a fleet/mount result. The19:41 source snapshot explicitly reports Check requires approving review on all three Darwin checks; the other13 contexts are queued. This is a maintainer approval gate, not an observed source or authentication defect.\n\nSigned standalone38701c9e4 is delivered as13882. Executors advertise enabled Linux VFS support; explicit VFS tasks require that capability during placement, reservations, stealing and registration. Executor advertisement must precede scheduler rollout; existing executor overrides remain for mixed rollout. Three uncached race suites passed249 XML records/all12 required cases; the client build and all five canonical lint tools passed. Original validation wrapper failures remain preserved, with one local canonical-label reconciliation and no runtime replay. This repairs the source-level routing gap without establishing the deployed cause of provider issue13877 or a fleet/mount result.",
+      "summary": "Route tasks that explicitly request the virtual filesystem to Linux executors that advertise support. Deploy the executor advertisement before scheduler enforcement. The rebased change passes all 260 race-test cases, including all 11 VFS routing cases, and builds the scheduling client.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "38701c9e42ad373cb9335b58c0fe6eb4c6da1c6e",
-        "observedAt": "2026-10-20T19:41:02.969972+00:00",
-        "disposition": "Maintainer review/approval gate; other public checks queued",
-        "nextAction": "Await maintainer approval and follow the exact current checks in the existing sweep. No source repair, automatic-trigger claim, retry or outreach.",
+        "sourceHead": "8441f4beeb18129b5cfd4416b714f2684d10ea97",
+        "observedAt": "2026-11-01T01:46:22.467465+00:00",
+        "disposition": "Awaiting maintainer review",
+        "nextAction": "Respond to maintainer feedback and follow checks on the rebased head.",
         "evidence": [
           "https://github.com/buildbuddy-io/buildbuddy/pull/13882"
         ]
@@ -19638,6 +19638,10 @@
         {
           "label": "Published VFS capability routing",
           "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13882"
+        },
+        {
+          "label": "Rebased scheduler, dispatch and executor race suites",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41261291664/artifacts/13064829449"
         },
         {
           "label": "Original race/client validation; preserved wrapper failure",
@@ -19652,7 +19656,7 @@
           "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13877"
         }
       ],
-      "updatedAt": "2026-10-20T19:44:06.989318+00:00"
+      "updatedAt": "2026-11-01T01:46:22.467465+00:00"
     },
     {
       "id": "pr:16076",
