@@ -1,14 +1,14 @@
-name: Qualify LLVM generation on two native scratch workers
+name: Qualify the LLVM supplier instrumentor header
 on:
   push:
-    branches: [qualification/scratch-llvm-native-generators]
+    branches: [qualification/scratch-llvm-instrumentor-supplier]
 permissions:
   contents: read
 jobs:
   compare:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 105
+    timeout-minutes: 60
     env:
       EXEC_CPU: amd64
       BB_ARCH: x86_64
@@ -17,10 +17,16 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {persist-credentials: false, fetch-depth: 5}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: tamird/hermetic-llvm
+          ref: bdd158a6b8ddecb97fd226e416dcf1440b3595fb
+          path: supplier
+          persist-credentials: false
       - name: Pin Bazel and the compact action log reader
         run: |
           set -eu
-          export USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          export USE_BAZEL_VERSION=$(cat supplier/.bazelversion)
           echo "USE_BAZEL_VERSION=$USE_BAZEL_VERSION" >> "$GITHUB_ENV"
           mkdir -p "$RUNNER_TEMP/bazelisk-bin"
           curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-$EXEC_CPU -o "$RUNNER_TEMP/bazelisk-bin/bazel"
@@ -31,9 +37,9 @@ jobs:
           curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-$BB_ARCH -o "$RUNNER_TEMP/bb"
           echo "$BB_HASH  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod 0755 "$RUNNER_TEMP/bb"
-      - name: Compare generated instrumentor data and TableGen executables
+      - name: Check the upstream-based supplier and editing a local LLVM checkout
         env:
-          PRODUCT: 0778925d618b8162c9274e875d1aad4db5096d19
+          PRODUCT: bdd158a6b8ddecb97fd226e416dcf1440b3595fb
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -eu
@@ -45,10 +51,10 @@ jobs:
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$RUNNER_TEMP/sidecar.bazelrc"
           unset BUILDBUDDY_API_KEY
-          python3 test/rbe/llvm_scratch/verify.py
+          python3 test/rbe/llvm_scratch/verify-supplier.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: llvm-scratch-verdicts
+          name: llvm-supplier-verdict
           path: ${{ runner.temp }}/package-evidence
           if-no-files-found: error
