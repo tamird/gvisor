@@ -17,6 +17,7 @@ package state
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"reflect"
@@ -634,6 +635,31 @@ func TestGraphDeferredObjectDecode(t *testing.T) {
 			t.Fatalf("loadGraph = %v, want substring %q", err, want)
 		}
 	})
+}
+
+// TestGraphMapPayloadLength checks that a map cannot read its value from
+// bytes beyond the end of its payload.
+func TestGraphMapPayloadLength(t *testing.T) {
+	saved := map[uint8]uint8{7: 11}
+	var buf bytes.Buffer
+	if _, err := saveGraph(t.Context(), &buf, &saved); err != nil {
+		t.Fatal(err)
+	}
+	// The final object is the map. Its payload has a one-byte key and value.
+	frame := []byte{2, 7, 11}
+	data := buf.Bytes()
+	if !bytes.HasSuffix(data, frame) {
+		t.Fatalf("checkpoint %x does not end in map frame %x", data, frame)
+	}
+	var loaded map[uint8]uint8
+	if _, err := Load(t.Context(), bytes.NewReader(data), &loaded); err != nil || !reflect.DeepEqual(loaded, saved) {
+		t.Fatalf("load complete map = %v, %v; want %v, nil", loaded, err, saved)
+	}
+	data[len(data)-len(frame)] = 1
+	loaded = nil
+	if _, err := Load(t.Context(), bytes.NewReader(data), &loaded); !errors.Is(err, errTruncated{}) {
+		t.Fatalf("load one-byte map payload = %v, %v; want truncation", loaded, err)
+	}
 }
 
 // TestGraphLoadNilRoot checks that Load rejects a nil root cleanly.

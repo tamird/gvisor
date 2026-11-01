@@ -324,7 +324,7 @@ func (ds *graphDecodeState) mapRef(ti *typeInfo, v uint64) unsafe.Pointer {
 	if o.decodeType == nil {
 		o.decodeType = ti
 		// Limit the size hint of invalid streams by their length.
-		hint := min(int(o.size), len(ds.in.b))
+		hint := min(int(o.size), ds.graphLen)
 		o.base = reflect.MakeMapWithSize(ti.typ, hint).UnsafePointer()
 	} else if o.decodeType != ti && (o.decodeType.key != ti.key || o.decodeType.elem != ti.elem) {
 		Failf("map is both %v and %v", o.decodeType.typ, ti.typ)
