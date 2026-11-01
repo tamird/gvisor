@@ -2,7 +2,7 @@
 // TestRACKFreshHead asks whether a SACK implicating old data behind SND.UNA
 // can cause a second transmission of a head that an RTO just retransmitted.
 func TestRACKFreshHead(t *testing.T) {
-	for _, schedule := range []string{"head-lost", "fresh-new-sack", "fresh-repeat-sack"} {
+	for _, schedule := range []string{"head-lost", "fresh-new-sack", "fresh-repeat-sack", "fresh-reorder-timer", "classic-dupack"} {
 		t.Run(schedule, func(t *testing.T) {
 			const warm = 8
 			const rtt = 100 * time.Millisecond
@@ -80,7 +80,7 @@ func TestRACKFreshHead(t *testing.T) {
 				t.Logf("BEFORE_RTO repairs=%v", drain())
 			}
 			var headAt tcpip.MonotonicTime
-			if schedule != "head-lost" {
+			if schedule != "head-lost" && schedule != "classic-dupack" {
 				for i := 0; i < 600 && stats.Timeouts.Value() == 0; i++ {
 					_ = drain()
 					clk.Advance(10 * time.Millisecond)
@@ -95,14 +95,36 @@ func TestRACKFreshHead(t *testing.T) {
 				}
 				clk.Advance(100 * time.Microsecond)
 			}
+			if schedule == "fresh-reorder-timer" {
+				b.End = b.Start.Add(maxPayload)
+			}
+			if schedule == "classic-dupack" {
+				b.Start = first.Add(maxPayload)
+				for i := 1; i <= 2; i++ {
+					b.End = b.Start.Add(seqnum.Size(i * maxPayload))
+					ack(b)
+					if got := drain(); len(got) != 0 {
+						t.Fatalf("before duplicate ACK 3, repairs = %v", got)
+					}
+				}
+				b.End = b.Start.Add(3 * maxPayload)
+			}
 			fastBefore := stats.FastRetransmit.Value()
 			st := ack(b)
 			replies := drain()
-			if schedule == "head-lost" && (len(replies) == 0 || replies[0] != 0) {
+			if schedule == "fresh-reorder-timer" {
+				t.Logf("TIMER immediate=%v reo=%s rtt=%s", replies, st.RACKState.ReoWnd, st.RACKState.RTT)
+				if len(replies) != 0 || st.RACKState.ReoWnd <= 0 {
+					t.Fatalf("timer arm needs a delayed decision: immediate=%v reo=%s", replies, st.RACKState.ReoWnd)
+				}
+				clk.Advance(st.RACKState.ReoWnd + time.Millisecond)
+				replies = drain()
+			}
+			if (schedule == "head-lost" || schedule == "classic-dupack") && (len(replies) == 0 || replies[0] != 0) {
 				t.Fatalf("head still outstanding but no head repair: %v", replies)
 			}
 			t.Logf("WIRE schedule=%s timeouts=%d ack_offset=0 sack=[%d,%d) us_after_RTO=%d replies=%v cwnd=%d out=%d recovery=%v sacked=%d fast_retransmit_delta=%d",
-				schedule, stats.Timeouts.Value(), 3*maxPayload, 6*maxPayload, clk.NowMonotonic().Sub(headAt).Microseconds(), replies, st.SndCwnd, st.Outstanding, st.FastRecovery.Active, st.SackedOut, stats.FastRetransmit.Value()-fastBefore)
+				schedule, stats.Timeouts.Value(), int(b.Start-first), int(b.End-first), clk.NowMonotonic().Sub(headAt).Microseconds(), replies, st.SndCwnd, st.Outstanding, st.FastRecovery.Active, st.SackedOut, stats.FastRetransmit.Value()-fastBefore)
 		})
 	}
 }
