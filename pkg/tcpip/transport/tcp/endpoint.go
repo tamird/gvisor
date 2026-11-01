@@ -3064,6 +3064,24 @@ func (e *Endpoint) enqueueSegment(s *segment) bool {
 }
 
 func (e *Endpoint) onICMPError(err tcpip.Error, transErr stack.TransportError, pkt *stack.PacketBuffer) {
+	connecting := e.EndpointState().connecting()
+	if connecting {
+		e.mu.Lock()
+		// ICMP quotes at least the first eight transport bytes, including
+		// the sequence number. Ignore reports outside this handshake's
+		// send window before publishing an error or retiring its tuple.
+		prefix, ok := pkt.Data().PullUp(8)
+		if !ok || !e.EndpointState().connecting() || e.h == nil {
+			e.mu.Unlock()
+			return
+		}
+		seq := seqnum.Value(header.TCP(prefix).SequenceNumber())
+		if seq != e.h.iss && seq != e.h.iss+1 {
+			e.mu.Unlock()
+			return
+		}
+	}
+
 	// Update last error first.
 	e.lastErrorMu.Lock()
 	e.lastError = err
@@ -3100,8 +3118,7 @@ func (e *Endpoint) onICMPError(err tcpip.Error, transErr stack.TransportError, p
 		})
 	}
 
-	if e.EndpointState().connecting() {
-		e.mu.Lock()
+	if connecting {
 		if e.h != nil && e.h.listenEP != nil {
 			lEP := e.h.listenEP
 			// Remove from listening endpoints pending list.
