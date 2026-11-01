@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T00:11:22.001774+00:00",
+    "updatedAt": "2026-11-01T00:30:22.013294+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4567,8 +4567,8 @@
       "url": "https://github.com/tamird/gvisor/commit/0afd5b37e",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "The compiler revision on current master uses the upstream LLVM source repository and retains the current Go rules, Linux headers and libbpf. It needs the two syscall-test allocator exception specifications, not the full #15368 cleanup. The catalog gains llvm-project and with_cfg and drops llvm-raw. QEMU and LTP license mismatches also occur on the parent. The principal binaries and analyzers passed for both targets. A new remote AMD64 compile reproduced the 4,456,624-byte NVIDIA parser object. The linked parser is still unqualified on both architectures.",
-      "updatedAt": "2026-10-31T23:41:31.085407+00:00",
+      "summary": "The compiler revision on current master uses the upstream LLVM source repository and retains the current Go rules, Linux headers and libbpf. It needs the two syscall-test allocator exception specifications, not the full #15368 cleanup. The catalog gains llvm-project and with_cfg and drops llvm-raw. QEMU and LTP license mismatches also occur on the parent. The principal binaries and analyzers passed for both targets. A new remote AMD64 compile reproduced the 4,456,624-byte NVIDIA parser object. The NVIDIA driver parser linked on AMD64 (211,730,920 bytes) and ARM64 (224,953,640 bytes). Both ELF products matched the corresponding remote link digest. The ARM link reused one locally generated TableGen include. The original behavior test timed out while building its additional dependencies; no test case ran.",
+      "updatedAt": "2026-11-01T00:30:22.013294+00:00",
       "head": "0afd5b37e31824e0299c44235ef4cb58af0358ce",
       "evidence": [
         {
@@ -4618,6 +4618,14 @@
         {
           "label": "Scoped memory request: identical parser object, 82 supplier sources selected; AMD64 link still blocked",
           "url": "https://github.com/tamird/gvisor/actions/runs/41251844658/artifacts/13061732767"
+        },
+        {
+          "label": "Both parser links and original ELF hashes; bounded AMD64 behavior build timed out",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41253915451/artifacts/13062846601"
+        },
+        {
+          "label": "Original AMD64 parser test recovery",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41256718712"
         }
       ],
       "refinement": {
@@ -4640,12 +4648,14 @@
         "owner": "Compiler integration",
         "sourceHead": "0afd5b37e31824e0299c44235ef4cb58af0358ce",
         "disposition": "Qualify current compiler",
-        "observedAt": "2026-10-31T23:41:31.085407+00:00",
-        "nextAction": "Recover the Clang ASTWriterDecl.cpp compile that returned Unavailable during the AMD64 link request, then verify both linked parser executables. Keep the independent licensing prerequisites.",
+        "observedAt": "2026-11-01T00:30:22.013294+00:00",
+        "nextAction": "Run the original driver ABI behavior test on AMD64 using the two completed link receipts; preserve the independent outstanding licensing prerequisites.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
-          "https://github.com/tamird/gvisor/actions/runs/41251844658/artifacts/13061732767"
+          "https://github.com/tamird/gvisor/actions/runs/41251844658/artifacts/13061732767",
+          "https://github.com/tamird/gvisor/actions/runs/41253915451/artifacts/13062846601",
+          "https://github.com/tamird/gvisor/actions/runs/41256718712"
         ]
       }
     },
@@ -40599,14 +40609,14 @@
       "id": "branch:buildkite-native-packages",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/buildkite-native-packages",
-      "head": "15f6eb9c55cadfccf64e50408a42ad5fb1d49da9",
+      "ref": "proposal/buildkite-native-packages",
+      "head": "d30816db365b44801393af8fe721795897ab5a65",
       "title": "Build pkg and runsc directly with Bazel on Buildkite",
-      "url": "https://github.com/tamird/gvisor/tree/review/buildkite-native-packages",
+      "url": "https://github.com/tamird/gvisor/commit/d30816db3",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-10-31T19:51:53.969+00:00",
-      "summary": "Both pkg builds passed on plain Ubuntu (AMD64 and ARM64). Both runsc builds stopped at the cgroup test’s local tag. The approved source in #16496 removes that tag; the runsc-only job is checking both architectures with that repair.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T00:30:22.013294+00:00",
+      "summary": "Build //pkg/... and //runsc/... with Bazelisk on the Buildkite agent, passing each job’s architecture and excluding the network plugin only for runsc. The two architecture-specific pkg wildcards built 1,948 and 1,946 targets; the two runsc wildcards built 389 each after composing the cgroup, coverage and musl prerequisites.",
       "evidence": [
         {
           "label": "Two passing pkg builds and the blocked runsc builds",
@@ -40627,8 +40637,27 @@
         {
           "label": "Four-arm comparison on a plain Ubuntu executor",
           "url": "https://github.com/tamird/gvisor/actions/runs/41231932306"
+        },
+        {
+          "label": "Final configured pkg and runsc workflow source",
+          "url": "https://github.com/tamird/gvisor/commit/d30816db3"
+        },
+        {
+          "label": "389 runsc targets on each architecture with the reviewed prerequisites",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41252118749/artifacts/13063861013"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "d30816db365b44801393af8fe721795897ab5a65",
+        "baseHead": "eafcb8392effca7769ef6e220d24feaadb3bdf17",
+        "url": "https://github.com/tamird/gvisor/commit/d30816db3",
+        "title": "Build pkg and runsc directly with Bazel on Buildkite",
+        "requestedAt": "2026-11-01T00:30:22.013294+00:00",
+        "summary": "Open after the native Bazelisk hook, declared LLVM/static toolchain, corrected #16496 cgroup fixture, #16507 coverage changes and composed coverage/musl transition land.",
+        "body": "The compile jobs start a Docker builder and query the output paths of\nevery target. The jobs only need to know whether the builds succeeded.\nUse Bazelisk on the agent and build for the architecture of each job.\nKeep the network plugin exclusion scoped to runsc.\n\nOpen after the native Bazelisk hook, declared LLVM/static toolchain, corrected #16496 cgroup fixture, #16507 coverage changes and composed coverage/musl transition land."
+      }
     },
     {
       "id": "branch:grpc-native-codegen",
@@ -40941,6 +40970,40 @@
         "requestedAt": "2026-11-01T00:11:22.001774+00:00",
         "summary": "Review submitting this change to hermeticbuild/hermetic-llvm. The module map generator already supplies the transition on upstream main.",
         "body": "Clang's link wrapper runs on the execution platform. On a Linux worker\nwithout a glibc loader, Bazel can compile the target objects but cannot\nstart the wrapper to link them.\n\nUse the existing per-CPU musl transition for the wrapper as well as the\nmodule map generator. The transitioned tool keeps its clang++ basename\nfor rustc's linker-flavor detection."
+      }
+    },
+    {
+      "id": "branch:state-decoder-used-tables",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/state-decoder-used-tables",
+      "head": "50acb57aea9617940ea697d39d835063e1195fb9",
+      "title": "Clear only used graph decoder entries",
+      "url": "https://github.com/tamird/gvisor/commit/50acb57ae",
+      "updatedAt": "2026-11-01T00:30:22.013294+00:00",
+      "status": "Contributor review requested",
+      "summary": "Clear only the graph decoder entries used by the current load when returning its tables to the pool. In 16 alternating AMD64 pairs, repeatedly decoding the Nginx CPUID and kernel records cost 1.58% less CPU; decoding the small CPUID record immediately after the kernel cost 28.93% less. Allocations were unchanged. These measurements exclude file I/O and decompression.",
+      "evidence": [
+        {
+          "label": "Benchstat, 11,544 passing test and analyzer records, 85 skipped",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41254788649/artifacts/13063425831"
+        },
+        {
+          "label": "Separate single-restore applicability study",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41256814960"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "50acb57aea9617940ea697d39d835063e1195fb9",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/50acb57ae",
+        "title": "Clear only used graph decoder entries",
+        "requestedAt": "2026-11-01T00:30:22.013294+00:00",
+        "summary": "Review opening this independent gVisor change. The CPU comparison measures repeated in-process decoding.",
+        "body": "Each Load grows the decoder's tables as it reads the graph. When it\nreturns the decoder to the pool, it only needs to clear the entries it\nused. The unused tail was cleared by the load that last populated it.\nThis holds when a load fails partway through a table as well: the\nlength covers every entry written so far.\n\nFor a four-worker Nginx checkpoint, the kernel graph used 1,741 of\n2,389 reserved callback slots. The CPUID record needed two. Replaying\nthe two graphs on one AMD64 CPU produced the following benchstat\nresults [1]. GC was disabled to keep the decoder in the pool. These\nmeasurements cover graph decoding, excluding file I/O and decompression.\n\n                      │    stock    │          change           │\n                      │ cpu-sec/op  │ cpu-sec/op   vs base      │\n    small_after_kernel  7.349µ ± 0%   5.223µ ± 1%  -28.93% (p=0.000 n=16)\n    kernel_after_kernel 1.218m ± 1%   1.196m ± 1%   -1.80% (p=0.000 n=16)\n    cpuid_then_kernel   1.217m ± 2%   1.198m ± 1%   -1.58% (p=0.004 n=16)\n\n[1] https://github.com/tamird/gvisor/actions/runs/41254788649/artifacts/13063425831"
       }
     }
   ],
@@ -44298,6 +44361,24 @@
       "evidence": [
         "https://github.com/bazelbuild/bazel/issues/30883",
         "https://github.com/tamird/gvisor/actions/runs/41253749549/artifacts/13062399500"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:16496",
+      "to": "branch:buildkite-native-packages",
+      "reason": "The runsc wildcard requires the corrected cgroup fixture.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/actions/runs/41252118749/artifacts/13063861013"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:16507",
+      "to": "branch:buildkite-native-packages",
+      "reason": "The runsc wildcard includes coverage; the coverage transition must also compose with the static Go musl transition.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/actions/runs/41252118749/artifacts/13063861013"
       ]
     }
   ],
@@ -56820,9 +56901,18 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T23:42:59.271439+00:00",
+      "updatedAt": "2026-11-01T00:30:22.013294+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "The full private CLI target on 162e8f5e6 linked uncached on separate AMD64 and ARM64 scratch Linux executors coordinated by GNU hosts. The original AMD64 (13,095,072 bytes) and ARM64 (12,255,392 bytes) ELF products matched the remote link digests, recovered without another build. This does not establish the complete public release fileset or a systrap boot.",
+          "evidence": [
+            {
+              "label": "Original two CLI links and both ELF products",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41256510238/artifacts/13063272315"
+            }
+          ]
+        },
         {
           "text": "The same native ARM64 scratch worker then built //pkg/sentry/platform/systrap/sysmsg:sysmsg on 060d9517a. All 90 stateify actions, the declared Protobuf shell and the Go package compiler ran uncached. The compiler recorded sysmsg.a (391,998 bytes) and Bazel exited 0. The first verifier could not reread its local archive path. Authenticated retrieval later verified the original SHA-256 and size of both sysmsg.a (391,998 bytes) and sysmsg.x (141,856 bytes), without rebuilding.",
           "evidence": [
