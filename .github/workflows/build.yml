@@ -1,35 +1,145 @@
-name: CI
-
-"on":
+name: Check bounded ingress on the small-segment TCP PR
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-15325-bounded-acks]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-15325-bounded-acks'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@v5
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=runsc DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@v4
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/runsc
+        fetch-depth: 5
+        persist-credentials: false
+    - name: Measure control admission, buffer shrink and drain
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+        test "$(git rev-parse HEAD^1)" = "f7516c0a84b831711db70e388fbf6886ae55a7ec"
+        mkdir -p "$RUNNER_TEMP/checker"
+        for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
+          cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
+        done
+        python3 -m py_compile "$RUNNER_TEMP/checker/"*.py
+        mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
+        platform=$RUNNER_TEMP/fifo_platform
+        printf '%s\n' 'module(name="fifo_platform")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<'BUILD'
+        platform(
+            name = "ubuntu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {
+                "Arch": "amd64",
+                "OSFamily": "linux",
+                "workload-isolation-type": "oci",
+                "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+            },
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat .bazelversion 2>/dev/null || cat images/default/bazelversion)
+        rc=$RUNNER_TEMP/fifo.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
+            'build --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
+            'build --remote_accept_cached' \
+            "build --inject_repository=fifo_platform=$platform" \
+            'build --host_platform=@fifo_platform//:ubuntu' \
+            'build --extra_execution_platforms=@fifo_platform//:ubuntu' \
+            'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        printf '%s\n' 'build:rbe --spawn_strategy=remote' >> "$rc"
+        export FIFO_RC=$rc
+        mkdir -p "$RUNNER_TEMP/fifo-bin"
+        cat > "$RUNNER_TEMP/fifo-bin/bazel" <<'SH'
+        #!/bin/sh
+        case "$1" in
+          test)
+            # Capture the actual argv and Bazel exit, independent of the qualifier's exit.
+            printf '%s\n' "$@" > "$TCP_EVIDENCE/executed_arguments"
+            status=0
+            bazelisk --bazelrc="$FIFO_RC" "$@" || status=$?
+            printf '%s\n' "$status" > "$TCP_EVIDENCE/native_exit"
+            date -u '+%Y-%m-%dT%H:%M:%S.%3N+00:00' > "$TCP_EVIDENCE/finished"
+            exit "$status"
+            ;;
+        esac
+        exec bazelisk --bazelrc="$FIFO_RC" "$@"
+        SH
+        chmod +x "$RUNNER_TEMP/fifo-bin/bazel"
+        export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
+        overall=0
+        mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
+        for arm in prototype correction prototype-wire correction-wire; do
+          label=//pkg/tcpip/transport/tcp:tcp_test
+          filter='Test(ReceiveQueueOverBudget|SegmentQueueDropped)'
+          if [[ $arm == *-wire ]]; then
+            label=//pkg/tcpip/transport/tcp/test/e2e:tcp_test
+            filter='TestSmallSegment'
+          fi
+          case $arm in
+            prototype*) source=edf86dbe4b26e810b18766ac346c06185926e361; parent=3cd9a5d970293241934d039506f43ad55384c7fe ;;
+            correction*) source=54c46f4a64beab2932e314bd2122a9cd2b7dd670; parent=edf86dbe4b26e810b18766ac346c06185926e361 ;;
+          esac
+          if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
+            git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
+          fi
+          git checkout --quiet --detach "$source"
+          test "$(git rev-parse HEAD)" = "$source"
+          test "$(git rev-parse HEAD^)" = "$parent"
+          git diff --quiet edf86dbe4b26e810b18766ac346c06185926e361 "$source" -- . ':(exclude)pkg/tcpip/transport/tcp/segment_queue.go'
+          export TCP_EVIDENCE="$RUNNER_TEMP/replay-private/$arm"
+          mkdir -p "$TCP_EVIDENCE" test/rbe
+          cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
+          git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_before"
+          test ! -s "$TCP_EVIDENCE/source_before"
+          git cat-file commit HEAD > "$TCP_EVIDENCE/commit_file"
+          raw="$RUNNER_TEMP/replay-private/$arm.raw.jsonl"
+          code=0
+          bash test/rbe/qualify.sh --arch=amd64 "--test-target=$label" \
+            "--bazel-option=--build_event_json_file=$raw" --bazel-option=--build_event_json_file_path_conversion=false \
+            --bazel-option=--test_arg=-test.v "--bazel-option=--test_filter=$filter" --bazel-option=--test_sharding_strategy=disabled --bazel-option=--cache_test_results=no \
+            --bazel-option=--remote_download_outputs=toplevel test || code=$?
+          printf '%s\n' "$code" > "$TCP_EVIDENCE/runner_exit"
+          git rev-parse HEAD > "$TCP_EVIDENCE/final_head"
+          git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
+          python3 -B "$RUNNER_TEMP/checker/tcp_long_replay.py" "$TCP_EVIDENCE" "$arm" "$source" "$label" "$raw" "$RUNNER_TEMP/replay-public" || overall=1
+          # If the common target cannot compile, repeating three builds cannot add measurements.
+          if [[ $arm == prototype && ! -s "$raw" ]]; then break; fi
+          if [[ $arm == prototype && $code != 0 ]] && ! grep -q '"testResult":' "$raw"; then break; fi
+        done
+        python3 - "$RUNNER_TEMP/replay-public" <<'PYRESULT'
+        import json, sys
+        from pathlib import Path
+        root = Path(sys.argv[1])
+        arms = ["prototype","correction","prototype-wire","correction-wire"]
+        verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
+        missing = [a for a in arms if a not in verdicts]
+        result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["status"] == "PASS" for v in verdicts.values()) else "FAIL"}
+        (root / "summary.json").write_text(json.dumps(result, indent=2) + "\n")
+        print(result)
+        sys.exit(result["status"] != "PASS")
+        PYRESULT
+        exit "$overall"
+    - name: Save only the typed results
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: small-segment-ack-verdict
+        path: ${{ runner.temp }}/replay-public/*.json
+        if-no-files-found: error
