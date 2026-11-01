@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T13:08:56.341814+00:00",
+    "updatedAt": "2026-11-01T13:34:54.530558+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28,7 +28,7 @@
       "hermeticbuild/rules_rs",
       "bazel-contrib/rules_distroless"
     ],
-    "registryDate": "2026-11-01T13:08:56.341814+00:00"
+    "registryDate": "2026-11-01T13:34:54.530558+00:00"
   },
   "groups": [
     {
@@ -41894,7 +41894,7 @@
       "url": "https://github.com/tamird/gvisor/commit/c79762708",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T13:08:56.341814+00:00",
+      "updatedAt": "2026-11-01T13:34:54.530558+00:00",
       "summary": "After a timeout retransmitted the first missing segment, a new SACK for later data made RACK send that segment again. The same packet exchange on Linux continued with the later losses.",
       "evidence": [
         {
@@ -41904,6 +41904,14 @@
         {
           "label": "How this change relates to #16081 and other TCP recovery changes",
           "url": "https://github.com/google/gvisor/issues/16670"
+        },
+        {
+          "label": "Queued SACK replay on the measured sender and the two-line head fix",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41310394454/artifacts/13084279388"
+        },
+        {
+          "label": "Independent timing comparison with #16624 and its ACK-withheld control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41311309196/artifacts/13085019861"
         }
       ],
       "contributorReview": {
@@ -41916,6 +41924,44 @@
         "requestedAt": "2026-11-01T13:08:56.341814+00:00",
         "summary": "Open the standalone RACK recovery fix?",
         "body": "Only a segment marked lost by RACK is retransmitted on entry to RACK recovery. The controls still retransmit the first segment for a genuine loss and for three duplicate ACKs."
+      }
+    },
+    {
+      "id": "branch:syscall-libc-interfaces",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/syscall-libc-interfaces",
+      "head": "154269d6f7268496ae9583afe929ca5eb0c37cf8",
+      "title": "Build the shared-memory syscall tests with musl",
+      "url": "https://github.com/tamird/gvisor/commit/154269d6f",
+      "group": "tests",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-01T13:34:54.530558+00:00",
+      "summary": "The shared-memory test used a glibc-only wait-status macro and its fork helper included conflicting prctl headers on musl. The four-line fix checks for SIGSEGV and invokes the Linux prctl syscall with the kernel header.",
+      "evidence": [
+        {
+          "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41308244805/artifacts/13083684908"
+        },
+        {
+          "label": "Default GNU test results and two include checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41309732905/artifacts/13084418100"
+        },
+        {
+          "label": "Fork-and-exec helper executed with GNU and musl",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41310847516/artifacts/13084659468"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "154269d6f7268496ae9583afe929ca5eb0c37cf8",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/154269d6f",
+        "title": "Build the shared-memory syscall tests with musl",
+        "requestedAt": "2026-11-01T13:34:54.530558+00:00",
+        "summary": "Open the independent shared-memory test portability PR?",
+        "body": "Four shared-memory cases ran under default GNU and on both native musl architectures. The ExitAllThreads test also executed the changed fork helper on native GNU and musl."
       }
     }
   ],
@@ -48277,7 +48323,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T13:00:21.229939+00:00",
+      "updatedAt": "2026-11-01T13:34:54.530558+00:00",
       "summary": "The graph codec is now the default. On a four-worker Nginx checkpoint, encoding took 2.25 ms instead of 12.71 ms and decoding took 8.99 ms instead of 17.75 ms. All four round-trip bugs tracked in #16715 are fixed. Increasing the UDP receive queue did not grow the index table. Smaller writer buffers and clearing fewer decoder slots did not speed up Nginx checkpoints. Separating callback payloads reduced allocated bytes without improving the time to Nginx’s first HTTP response.",
       "findings": [
         {
@@ -51249,8 +51295,12 @@
           ]
         }
       ],
-      "nextStep": "Set aside the atomic parent-field change. Use the large checkpoint to measure changes that reduce object allocation during decode.",
+      "nextStep": "Compare one resolved payload type per graph object on the same 50,000-file checkpoint. Both state suites passed, including the graph printer; the paired benchmark is running.",
       "evidence": [
+        {
+          "label": "Graph object sizing and checkpoint benchmark",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41310990566"
+        },
         {
           "label": "Checkpoint compatibility and 96 same-file measurements",
           "url": "https://github.com/tamird/gvisor/actions/runs/41306699646/artifacts/13083254674"
@@ -58162,9 +58212,26 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T13:00:21.229939+00:00",
+      "updatedAt": "2026-11-01T13:34:54.530558+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "Both native scratch architectures built static GNU test and launcher binaries using the source-built glibc. No tests executed because the default Bazel test toolchain did not match the target constraints. The independent syscall-source portability fix passed the default GNU build, both musl architectures, and fork-helper execution on both libcs.",
+          "evidence": [
+            {
+              "label": "Static ELF and action receipts, with all six missing test cases recorded",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41310064493/artifacts/13085665548"
+            },
+            {
+              "label": "Default GNU test results and two include checks",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41309732905/artifacts/13084418100"
+            },
+            {
+              "label": "Fork-and-exec helper executed with GNU and musl",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41310847516/artifacts/13084659468"
+            }
+          ]
+        },
         {
           "text": "On each native scratch worker, three epoll, three futex and four shared-memory cases passed. Building the shared-memory test exposed a glibc-only wait-status macro and conflicting prctl headers. The fourth shared-memory case verifies that accessing the segment after detach raises SIGSEGV. The bundled verdict was available 3.16 seconds after execution finished.",
           "evidence": [
@@ -59619,7 +59686,7 @@
           ]
         }
       ],
-      "nextStep": "Check the two shared-memory source changes under the default GNU toolchain and its include checker. Separately, test the supplier’s static glibc toolchain on native scratch workers.",
+      "nextStep": "Verify that the Bazel test toolchain can run the source-built static GNU launcher and fixture on each native scratch worker.",
       "evidence": [
         {
           "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
