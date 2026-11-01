@@ -1,35 +1,198 @@
-name: CI
-
-"on":
+name: Observe queued TCP writes at one MSS of available window
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-wire-write-budget]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-wire-write-budget'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 130
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      timeout-minutes: 5
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 4
+        persist-credentials: false
+    - name: Compare original Linux and netstack packets at the 32 KiB boundary
+      timeout-minutes: 115
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        # Bound Bazel separately: the verifier needs its exit status and reports
+        # before GitHub stops the step and uploads the completed measurements.
+        packet_deadline=$((SECONDS + 110 * 60))
+        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+        test "$(git rev-parse HEAD^1)" = "837775007fb1c2d661554a33035b0dff25c9afc0"
+        test "$(git rev-parse HEAD~3)" = aa767e4c43d011121271551fe24da501a56f729d
+        stock=3f57ffb676d2a4b97605f84a93b398c3b6899500
+        git fetch --no-tags --depth=2 origin "$stock"
+        test "$(git rev-parse "$stock^")" = aa767e4c43d011121271551fe24da501a56f729d
+        test "$(git diff --name-only "$stock" HEAD^)" = pkg/tcpip/transport/tcp/snd.go
+        mkdir -p "$RUNNER_TEMP/checker"
+        harness=ede9e61466662234221bcf24a59ce51201aadc5d
+        git fetch --no-tags --depth=1 origin "$harness"
+        for file in qualify.sh unit_matrix.py qualification_report.py; do
+          git show "$harness:test/rbe/$file" > "$RUNNER_TEMP/checker/$file"
+        done
+        cp test/rbe/tcp_long_replay.py "$RUNNER_TEMP/checker/"
+        python3 -m py_compile "$RUNNER_TEMP/checker/"*.py
+        mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
+        GNU=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+        platform=$RUNNER_TEMP/fifo_platform
+        printf '%s\n' 'module(name="tcp_gnu")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<'BUILD'
+        platform(
+            name = "gnu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {
+                "Arch": "amd64",
+                "OSFamily": "linux",
+                "workload-isolation-type": "firecracker",
+                "EstimatedMemory": "4GB",
+                "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+            },
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        rc=$RUNNER_TEMP/fifo.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
+            'build --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
+            'build --remote_accept_cached' \
+            "build --inject_repository=tcp_gnu=$platform" \
+            'build --host_platform=@tcp_gnu//:gnu' \
+            'build --extra_execution_platforms=@tcp_gnu//:gnu' \
+            'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        printf '%s\n' 'build:rbe --spawn_strategy=remote' >> "$rc"
+        # Configure Bazel's host toolchain against the same compiler and libc
+        # available to build actions. Tests still select the Firecracker image
+        # with iptables through their target's execution properties.
+        export TCP_BAZEL_ROOT="$HOME/.cache/bazel/_bazel_runner"
+        mkdir -p "$TCP_BAZEL_ROOT"
+        docker pull --platform linux/amd64 "$GNU"
+        docker run -d --init --name tcp-gnu --entrypoint /bin/bash --user "$(id -u):$(id -g)" \
+          -e "HOME=$HOME" -e "USER=$USER" -v "$HOME/.cache/bazel:$HOME/.cache/bazel" \
+          -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" \
+          -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec tcp-gnu x86_64-linux-gnu-gcc -dumpfullversion
+        docker exec tcp-gnu aarch64-linux-gnu-gcc -dumpfullversion
+        docker exec tcp-gnu bazel --version
+        export FIFO_RC=$rc
+        mkdir -p "$RUNNER_TEMP/fifo-bin"
+        cat > "$RUNNER_TEMP/fifo-bin/bazel" <<'SH'
+        #!/bin/sh
+        case "$1" in
+          test)
+            # Capture the actual argv and Bazel exit, independent of the qualifier's exit.
+            printf '%s\n' "$@" > "$TCP_EVIDENCE/executed_arguments"
+            status=0
+            docker exec tcp-gnu timeout --kill-after=15s "${TCP_PACKET_SECONDS}s" bazel --output_user_root="$TCP_BAZEL_ROOT" --bazelrc="$FIFO_RC" "$@" || status=$?
+            printf '%s\n' "$status" > "$TCP_EVIDENCE/native_exit"
+            date -u '+%Y-%m-%dT%H:%M:%S.%3N+00:00' > "$TCP_EVIDENCE/finished"
+            exit "$status"
+            ;;
+        esac
+        exec docker exec tcp-gnu bazel --output_user_root="$TCP_BAZEL_ROOT" --bazelrc="$FIFO_RC" "$@"
+        SH
+        chmod +x "$RUNNER_TEMP/fifo-bin/bazel"
+        export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
+        overall=0
+        mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
+        for arm in native stock candidate; do
+          source=837775007fb1c2d661554a33035b0dff25c9afc0
+          parent=6e2e53e83a5d96b846b6b05158e596d3b16f0141
+          dut=netstack
+          if [[ "$arm" != candidate ]]; then source=$stock; parent=aa767e4c43d011121271551fe24da501a56f729d; fi
+          if [[ "$arm" == native ]]; then dut=native; fi
+          (( SECONDS < packet_deadline )) || break
+          git checkout --quiet --detach "$source"
+          test "$(git rev-parse HEAD)" = "$source"
+          test "$(git rev-parse HEAD^)" = "$parent"
+          export TCP_EVIDENCE="$RUNNER_TEMP/replay-private/$arm"
+          mkdir -p "$TCP_EVIDENCE" test/rbe
+          cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
+          git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_before"
+          test ! -s "$TCP_EVIDENCE/source_before"
+          git cat-file commit HEAD > "$TCP_EVIDENCE/commit_file"
+          raw="$RUNNER_TEMP/replay-private/$arm.raw.jsonl"
+          code=0
+          opts=()
+          labels=("//test/packetimpact/tests:tcp_cork_mss_${dut}_test")
+          selection=()
+          for target in "${labels[@]}"; do selection+=("--test-target=$target"); done
+          TCP_PACKET_SECONDS=$((packet_deadline - SECONDS))
+          (( TCP_PACKET_SECONDS > 0 )) || break
+          export TCP_PACKET_SECONDS
+          bash test/rbe/qualify.sh --arch=amd64 "${selection[@]}" "${opts[@]}" \
+            "--bazel-option=--build_event_json_file=$raw" --bazel-option=--build_event_json_file_path_conversion=false \
+            --bazel-option=--test_sharding_strategy=disabled --bazel-option=--cache_test_results=no \
+            --bazel-option=--jobs=32 --bazel-option=--remote_download_outputs=toplevel test || code=$?
+          printf '%s\n' "$code" > "$TCP_EVIDENCE/runner_exit"
+          git rev-parse HEAD > "$TCP_EVIDENCE/final_head"
+          git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
+          python3 -B "$RUNNER_TEMP/checker/tcp_long_replay.py" "$TCP_EVIDENCE" "$arm" "$source" "${labels[*]}" "$raw" "$RUNNER_TEMP/replay-public" || overall=1
+        done
+        exit "$overall"
+    - name: Record completed and missing packet targets
+      if: always()
+      timeout-minutes: 2
+      shell: bash
+      run: |
+        python3 - "$RUNNER_TEMP/replay-public" <<'PYRESULT'
+        import json, sys
+        from pathlib import Path
+        root = Path(sys.argv[1])
+        root.mkdir(parents=True, exist_ok=True)
+        arms = ["native","stock","candidate"]
+        verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
+        missing = [a for a in arms if a not in verdicts]
+        failed = [arm for arm, verdict in verdicts.items() if not verdict["verified"]]
+        status = "FAIL" if failed else "INCOMPLETE" if missing else "PASS"
+        executed = [arm for arm, verdict in verdicts.items() if verdict.get("executed") or any(verdict.get("case_counts", {}).values())]
+        result = {"expected":arms,"executed":executed,"reported":list(verdicts),"failed":failed,"missing":missing,"status":status}
+        (root / "summary.json").write_text(json.dumps(result, indent=2) + "\n")
+        print(result)
+        sys.exit(result["status"] != "PASS")
+        PYRESULT
+    - name: Verify the artifact boundary
+      id: privacy
+      if: always()
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PYSAFE'
+        import os
+        from pathlib import Path
+        root = Path(os.environ["RUNNER_TEMP"]) / "replay-public"
+        files = list(root.iterdir())
+        allowed = {name+"."+ext for name in ("native","stock","candidate") for ext in ("json","xml")} | {"summary.json"}
+        assert files and {p.name for p in files} <= allowed
+        secret = os.environ["BUILDBUDDY_API_KEY"].encode()
+        for p in files:
+            assert p.is_file() and not p.is_symlink()
+            data = p.read_bytes()
+            assert secret and secret not in data and b"x-buildbuddy-api-key" not in data.lower()
+        PYSAFE
+    - name: Save only the typed results
+      if: always() && steps.privacy.outcome == 'success'
+      timeout-minutes: 5
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: queued-write-packet-evidence
+        path: ${{ runner.temp }}/replay-public/
+        if-no-files-found: error
