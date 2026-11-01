@@ -715,7 +715,7 @@ func TestRACKRestoreTrace(t *testing.T) {
 			clock.Advance(rtt)
 			c.SendAck(seq, 1)
 			await(base.Add(1))
-			for i, b := range []byte("ABCD") {
+			for i, b := range []byte("ABC") {
 				send(b, 1+i)
 			}
 			clock.Advance(rtt)
