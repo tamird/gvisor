@@ -1,12 +1,12 @@
-name: Check window scaling through real TCP cookie handshakes
+name: Check post-accept SACK in real TCP cookie handshakes
 on:
   push:
-    branches: [qualification/tcp-cookie-window-packets]
+    branches: [qualification/tcp-cookie-accepted-sack]
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-cookie-window-packets'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-cookie-accepted-sack'
     runs-on: ubuntu-24.04
     timeout-minutes: 130
     steps:
@@ -15,7 +15,7 @@ jobs:
       with:
         fetch-depth: 5
         persist-credentials: false
-    - name: Check the Go clock test and both TCP packet suites
+    - name: Check Linux and gVisor ACK ranges and the missing cookie decoding control
       timeout-minutes: 115
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -26,7 +26,7 @@ jobs:
         # before GitHub stops the step and uploads the completed measurements.
         packet_deadline=$((SECONDS + 110 * 60))
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "ede9e61466662234221bcf24a59ce51201aadc5d"
+        test "$(git rev-parse HEAD^1)" = "37caa4229dc834f531caa8e2cec240b2f5d280bb"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -105,10 +105,11 @@ jobs:
         export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in native netstack clock; do
+        for arm in native netstack mutant unit; do
           case $arm in
-            native|netstack) source=7d8e856ba30ef0271690d13d2ddb1c07111a558a; parent=52c3ca8600e7b1e0bf7b3e40932e65387925fad6 ;;
-            clock) source=52c3ca8600e7b1e0bf7b3e40932e65387925fad6; parent=6316929fac62357ded49788855298576264fe4f6 ;;
+            native|netstack) source=933d20aa96ad2d4865cc23a7938773c4958ae909; parent=858aa5b72f7172309231b6352886973414c28f44 ;;
+            mutant) source=e0d02899b916e64955ad1a9403e07ff1415ededd; parent=933d20aa96ad2d4865cc23a7938773c4958ae909 ;;
+            unit) source=858aa5b72f7172309231b6352886973414c28f44; parent=e62e48e9a8ba9523323071f011c1390b7873852f ;;
           esac
           (( SECONDS < packet_deadline )) || break
           git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
@@ -125,7 +126,8 @@ jobs:
           code=0
           opts=()
           case $arm in
-            clock) labels=(//pkg/tcpip/transport/tcp/test/e2e:tcp_test); opts+=(--test-filter=TestTimestampSynCookies) ;;
+            unit) labels=(//pkg/tcpip/transport/tcp/test/e2e:tcp_test); opts+=(--test-filter=TestSackPermittedAccept) ;;
+            mutant) labels=(//test/packetimpact/tests:tcp_syncookie_netstack_test) ;;
             *) labels=("//test/packetimpact/tests:tcp_syncookie_${arm}_test") ;;
           esac
           selection=()
@@ -153,7 +155,7 @@ jobs:
         from pathlib import Path
         root = Path(sys.argv[1])
         root.mkdir(parents=True, exist_ok=True)
-        arms = ["native","netstack","clock"]
+        arms = ["native","netstack","mutant","unit"]
         verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
         missing = [a for a in arms if a not in verdicts]
         failed = [arm for arm, verdict in verdicts.items() if not verdict["verified"]]
@@ -169,6 +171,6 @@ jobs:
       timeout-minutes: 5
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: cookie-window-packet-verdicts
-        path: ${{ runner.temp }}/replay-public/*.json
+        name: cookie-accepted-sack-verdicts
+        path: ${{ runner.temp }}/replay-public/
         if-no-files-found: error

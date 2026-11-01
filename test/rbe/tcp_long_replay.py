@@ -27,19 +27,49 @@ if verdict["errors"] or verdict["missing"] or set(labels) != set(verdict["expect
 if len(results) != len(labels) or any(item.get("cachedLocally") or item.get("executionInfo", {}).get("cachedRemotely") or item.get("executionInfo", {}).get("strategy") != "remote" for item in results):
     why.append("expected one uncached remote original per target")
 runner_exit = int((out/"runner_exit").read_text())
-if verdict["status"] != "PASS" or runner_exit != 0 or verdict["case_counts"].get("passed", 0) == 0:
-    why.append("package did not pass or no cases were executed")
-names = []
-for item in captured["reports"]:
-    if item["name"] == "test.xml":
-        names.extend(case.get("name", "") for case in ElementTree.parse(out / item["path"]).iter("testcase"))
-expected_cases = ("TestTimestampSynCookies",) if arm == "clock" else ("TestSynCookieWindowScale/timestamps=false", "TestSynCookieWindowScale/timestamps=true")
-observations = sorted({name for name in names if name.endswith(expected_cases)})
-for case in expected_cases:
-    if not any(n.endswith(case) for n in observations):
-        why.append("missing case: " + case + "; XML names: " + str(names))
-if arm != "clock" and verdict["case_counts"] != {"passed": 34, "failed": 0, "skipped": 0}:
-    why.append("expected both complete packet tests (34 cases, zero skips)")
+import re
+from collections import Counter
+
+case_records = {}
+for report in captured['reports']:
+    if report['name'] == 'test.xml':
+        for case in ElementTree.parse(out / report['path']).iter('testcase'):
+            name = case.get('name')
+            if name in case_records:
+                why.append('duplicate original case ' + name)
+            case_records[name] = ('SKIP' if case.find('skipped') is not None else 'FAIL' if case.find('failure') is not None or case.find('error') is not None else 'PASS')
+observations = {}
+if arm == 'unit':
+    required = ['ordinary/sack=true','ordinary/sack=false','cookie/sack=false','cookie_no_peer_sack/sack=false','cookie_no_timestamp/sack=false']
+    for name in required:
+        if case_records.get('TestSackPermittedAccept/'+name) != 'PASS':
+            why.append('missing retained Go control: '+name)
+else:
+    expected = []
+    for case in ('sack_and_timestamps','no_timestamps','no_peer_sack'):
+        intentional_failure = arm == 'mutant' and case == 'sack_and_timestamps'
+        desired = 'FAIL' if intentional_failure else 'PASS'
+        if case_records.get('TestSynCookieSACK/'+case) != desired:
+            why.append('wrong original status '+case+': '+str(case_records))
+        expected.extend([(case,'1','1',''),(case,'2','1','2-3' if case == 'sack_and_timestamps' and not intentional_failure else '')])
+        if not intentional_failure:
+            expected.append((case,'3','3',''))
+    rows = re.findall(r'COOKIE_SACK case=(\w+) step=(\d+) ack=(\d+) blocks=\[([0-9 ,\-]*)\]',logs)
+    if Counter(rows)!=Counter(expected):
+        why.append('wire ACK/SACK observations differ from expected')
+    observations = dict(packets=rows,named_cases=case_records)
+if arm=='mutant':
+    failures={n for n,s in case_records.items() if s=='FAIL'}
+    if verdict['status']!='FAIL' or int(verdict['native_exit'])!=3 or runner_exit==0 or 'SACK blocks at ACK offset 1 differ' not in logs or not failures or not failures.issubset({'TestSynCookieSACK/sack_and_timestamps','TestSynCookieSACK'}):
+        why.append('the original failure did not isolate the post-accept SACK block: '+str(failures))
+else:
+    if verdict['status']!='PASS' or runner_exit or not case_records:
+        why.append('target did not pass or has no original cases')
+if 'SKIP' in case_records.values():
+    why.append('unexpected original skip')
+if arm=='unit':
+    observations=dict(named_cases=case_records)
+
 verdict.update(arm=arm, invocation=next(r["started"]["uuid"] for r in records if "started" in r),
                observed=observations, verified=not why, verification_errors=why)
 reporting.write_json(proof / (arm + ".json"), verdict)
