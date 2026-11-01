@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T21:03:30.269380+00:00",
+    "updatedAt": "2026-11-01T21:14:06.082065+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -60956,7 +60956,7 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T20:46:51.279434+00:00",
+      "updatedAt": "2026-11-01T21:14:06.082065+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
@@ -61106,7 +61106,7 @@
           ]
         },
         {
-          "text": "The same two kernel analyzer actions that were killed at 562 MiB finished in 26 seconds with a 2 GiB BuildBuddy allocation. They produced facts and findings for AMD64 and ARM64, using 926 and 916 MiB respectively. Future GNU qualification workers can run these analyses remotely.",
+          "text": "Two kernel analyzer actions were killed after each reached 562 MiB. Their enforced memory limits were not recorded. Replaying both actions uncached with a 2 GiB allocation produced AMD64 and ARM64 facts and findings in 26 seconds, using 926 and 916 MiB respectively. The shared GNU qualification worker now requests that allocation. A normal waiter_nogo test ran both architecture analyzers, both filters and the test on that worker. Its verified verdict arrived 7.2 seconds after Bazel finished.",
           "evidence": [
             {
               "label": "Original failed attempts",
@@ -61115,6 +61115,14 @@
             {
               "label": "Uncached actions and output digests",
               "url": "https://github.com/tamird/gvisor/actions/runs/41347908441/artifacts/13099588299"
+            },
+            {
+              "label": "GNU qualification worker",
+              "url": "https://github.com/tamird/gvisor/commit/0ee70efe6"
+            },
+            {
+              "label": "Normal analyzer test on the shared worker",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41349697013/artifacts/13100777899"
             }
           ]
         }
