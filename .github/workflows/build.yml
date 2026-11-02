@@ -1,19 +1,18 @@
-name: Complete PIDFD syscall qualification
+name: Verify shared memory removal publication
 on:
   push:
-    branches: [qualification/pidfd-lock-syscalls]
+    branches: [qualification/shm-removal-publication]
 permissions:
   contents: read
-  actions: read
 jobs:
   qualify:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 95
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      FIXED: 1bf9f3f36d3ae3b763049ccb0e2b3e80d4061e5b
-      NEGATIVE: 1e17cfdd7480d4ab098d92ab4edf33dfb32bc19e
+      FIXED: 166e166261dd9140cfaac183445b2377b3be4f20
+      NEGATIVE: 3078ecfd48010d70020ace440165cf9e6363a4fc
       REPORTER: fb60e127516defd6aab633f80be09a03022f0737
       READER: 029a8365b981b8aee96e6dad1ecf22328ca6c6de
     steps:
@@ -23,26 +22,19 @@ jobs:
         working-directory: carrier
         run: |
           set -eu
-          mkdir -p "$RUNNER_TEMP/pidfd-lock-evidence"
-          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/pidfd-lock-evidence/verdict.json"
+          mkdir -p "$RUNNER_TEMP/shm-evidence"
+          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/shm-evidence/verdict.json"
           git fetch -q --no-tags --depth=1 origin "$REPORTER" "$READER"
           for module in qualification_report unit_matrix; do
             git show "$REPORTER:test/rbe/$module.py" > "$RUNNER_TEMP/$module.py"
           done
           git show "$READER:test/rbe/image_execution.py" > "$RUNNER_TEMP/image_execution.py"
-          cp test/rbe/pidfd_locks.py "$RUNNER_TEMP/"
+          cp test/rbe/shm_removal.py "$RUNNER_TEMP/"
           cp -R test/rbe/gnu_platform "$RUNNER_TEMP/gnu-platform"
-      - name: Retain completed analyzers and diagnose the original target failure
-        env:
-          GH_TOKEN: ${{ github.token }}
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: |
-          gh api repos/tamird/gvisor/actions/artifacts/13101663301/zip > "$RUNNER_TEMP/pidfd-original.zip"
-          python3 "$RUNNER_TEMP/pidfd_locks.py" recover
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           path: product
-          ref: 1bf9f3f36d3ae3b763049ccb0e2b3e80d4061e5b
+          ref: 166e166261dd9140cfaac183445b2377b3be4f20
           persist-credentials: false
           fetch-depth: 1
       - name: Use the shared GNU execution platform
@@ -53,7 +45,8 @@ jobs:
           set -eu
           umask 077
           test "$(git rev-parse HEAD)" = "$FIXED"
-          git fetch -q --no-tags --depth=1 origin "$NEGATIVE"
+          git fetch -q --no-tags --depth=2 origin "$NEGATIVE" 0010e1dfdf3778136f099ddc71b846fdde7dd67a 4ebf1e2536f05750fd0f8567b81841c9bf167c37
+          git fetch -q --no-tags --depth=2 origin "$FIXED"
           test -n "$BUILDBUDDY_API_KEY"
           {
             printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
@@ -62,9 +55,9 @@ jobs:
           } > "$RUNNER_TEMP/gnu.bazelrc"
           unset BUILDBUDDY_API_KEY
           timeout 180 docker pull --platform=linux/amd64 "$GNU"
-          docker run -d --name gnu-profile --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$PWD" "$GNU" -c 'sleep infinity'
-      - name: Run only the two previously unexecuted syscall owners
-        run: docker exec -e RUNNER_TEMP -e GNU -e FIXED -e NEGATIVE gnu-profile python3 "$RUNNER_TEMP/pidfd_locks.py"
+          docker run --init -d --name gnu-profile --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$PWD" "$GNU" -c 'sleep infinity'
+      - name: Compare the forced interleaving, guard mutation and real shmctl calls
+        run: docker exec -e RUNNER_TEMP -e GNU -e FIXED -e NEGATIVE gnu-profile python3 "$RUNNER_TEMP/shm_removal.py"
       - name: Check the explicit artifact boundary
         id: privacy
         if: always()
@@ -76,16 +69,20 @@ jobs:
           from pathlib import Path
           key = os.environ["BUILDBUDDY_API_KEY"].encode()
           assert key
-          folder = Path(os.environ["RUNNER_TEMP"]) / "pidfd-lock-evidence"
-          assert {path.name for path in folder.iterdir()} == {"verdict.json"}
-          path = folder / "verdict.json"
-          assert path.is_file() and not path.is_symlink()
-          content = path.read_bytes()
-          assert key not in content and b"x-buildbuddy-api-key" not in content.lower()
+          folder = Path(os.environ["RUNNER_TEMP"]) / "shm-evidence"
+          required = {"verdict.json"}
+          allowed = required | {f"{arm}-{i}-test.{suffix}"
+                                for arm in ("stock-contention", "fixed-contention", "guard", "negative-guard", "syscalls", "stock-repeated")
+                                for i in range(2 if arm == "syscalls" else 1) for suffix in ("log", "xml")}
+          assert required <= {p.name for p in folder.iterdir()} <= allowed
+          for path in folder.iterdir():
+              assert path.is_file() and not path.is_symlink()
+              content = path.read_bytes()
+              assert key not in content and b"x-buildbuddy-api-key" not in content.lower()
           PYCODE
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
-          name: pidfd-lock-contract
-          path: ${{ runner.temp }}/pidfd-lock-evidence/verdict.json
+          name: shm-removal-publication
+          path: ${{ runner.temp }}/shm-evidence/
           if-no-files-found: error
