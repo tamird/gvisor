@@ -42,6 +42,11 @@ def save() -> None:
     for key, value in os.environ.items():
         if ("TOKEN" in key or "SECRET" in key or "API_KEY" in key) and len(value) >= 12:
             assert value.encode() not in data, f"Secret in report: {key}"
+    rc = TMP / "images.bazelrc"
+    if rc.exists():
+        for line in rc.read_text().splitlines():
+            if "x-buildbuddy-api-key=" in line:
+                assert line.split("x-buildbuddy-api-key=", 1)[1].encode() not in data
     assert b"x-buildbuddy-api-key" not in data and b"Bearer " not in data
     (PUBLIC / "result.json").write_bytes(data)
 
@@ -54,10 +59,13 @@ def run(name: str, args: list[str], row: dict) -> subprocess.CompletedProcess:
     ids = re.findall(r"https://app.buildbuddy.io/invocation/([a-f0-9-]{36})", p.stdout)
     item["invocations"] = sorted(set(ids))
     if p.returncode:
-        item["diagnostics"] = [line[:700] for line in p.stdout.splitlines()
-                               if line.startswith(("ERROR:", "FAIL:", "licensecheck:"))
-                               and not any(word in line.lower() for word in
-                                           ("authorization", "token", "api-key", "https://"))][:12]
+        lines = p.stdout.splitlines()
+        first = next((i for i, line in enumerate(lines)
+                      if line.startswith(("ERROR:", "FAIL:", "licensecheck:"))), len(lines))
+        item["diagnostics"] = [line[:1200] for line in lines[first:first + 60]
+                               if not any(word in line.lower() for word in
+                                          ("authorization", "x-buildbuddy-api-key", "bearer "))]
+        item["diagnostics_bounded"] = first + 60 < len(lines)
     save()
     return p
 
@@ -131,6 +139,12 @@ def prerequisite(row: dict) -> None:
     path = Path("MODULE.bazel")
     text = path.read_text()
     row["product_module_sha256"] = sha(text.encode())
+    text = text.replace("image_apt.sources_list(\n", "image_apt.sources_list(\n    gpg_keys = [\"@integration_ubuntu_archive_keys//file\"],\n", 1)
+    text += '\n# Qualification-only signed-source input for the newer supplier.\n'
+    text += 'http_file(\n    name = "integration_ubuntu_archive_keys",\n'
+    text += '    urls = ["https://archive.ubuntu.com/ubuntu/project/ubuntu-archive-keyring.gpg"],\n'
+    text += '    sha256 = "80a36b0a6de2f69f49d2df75ef473ccde121e9e190b9ea01d20a4f63778d5c31",\n'
+    text += '    downloaded_file_path = "ubuntu-archive-keyring.gpg",\n)\n'
     text += '\n# Qualification-only pending installed-package inventory repair (#294).\n'
     text += 'archive_override(\n    module_name = "rules_distroless",\n'
     text += '    urls = ["https://github.com/tamird/rules_distroless/archive/' + SUPPLIER + '.tar.gz"],\n'
@@ -186,6 +200,24 @@ def prior_catalog(row: dict) -> None:
     row["reused"] = True
 
 
+def signature_boundary(row: dict) -> None:
+    path = TMP / "unsigned-source.zip"
+    assert sha(path.read_bytes()) == "23c8eae6cb45e16abf1fd2394d3bff1e2adbb28fcedfd131adb31aef6aec1d60"
+    with zipfile.ZipFile(path) as z:
+        assert z.namelist() == ["result.json"]
+        old = json.loads(z.read("result.json"))
+    assert old["product"] == PRODUCT and old["carrier"] == "57e3c2f75eaff71bc47ca4edc237feede2d3a5fd"
+    assert old["status"] == "FAIL" and "runtime_not_run" in old
+    assert old["preflight_original"] == RESULT["preflight_original"]
+    command = old["phases"]["resolve"]["commands"][-1]
+    assert command["exit"] == 48
+    assert any("rules_distroless+/apt/extensions.bzl:302:21" in line for line in command["diagnostics"])
+    RESULT["unsigned_source_original"] = old
+    row["artifact"] = "https://github.com/tamird/gvisor/actions/runs/41527211267/artifacts/13180457046"
+    row["archive_sha256"] = sha(path.read_bytes())
+    row["source_diagnosis"] = "The pinned supplier fails here when neither gpg_keys nor allow_unsigned is specified."
+
+
 def resolve(row: dict) -> None:
     assert RESULT["phases"]["prerequisite"]["status"] == "PASS"
     target = "@integration_test_packages//:flat"
@@ -205,6 +237,14 @@ def resolve(row: dict) -> None:
     actual = {name: sha((supplier / name).read_bytes()) for name in expected}
     assert actual == expected, "Resolved supplier source mismatch"
     row["source_sha256"] = actual
+    key = one("archive-key", "@integration_ubuntu_archive_keys//file", [], row)
+    assert sha(key.read_bytes()) == "80a36b0a6de2f69f49d2df75ef473ccde121e9e190b9ea01d20a4f63778d5c31"
+    row["signature_key"] = {
+        "url": "https://archive.ubuntu.com/ubuntu/project/ubuntu-archive-keyring.gpg",
+        "sha256": sha(key.read_bytes()), "size": key.stat().st_size,
+        "scope": "qualification-only newer-supplier signed-source prerequisite",
+    }
+    row["signed_metadata_required"] = True
 
 
 def inventory(cpu: str, flags: list[str], data: bytes, row: dict) -> None:
@@ -361,6 +401,7 @@ if sys.argv[1:] == ["--preflight"]:
     RESULT["started"] = now()
     phase("original", original)
     phase("catalog", prior_catalog)
+    phase("signature_boundary", signature_boundary)
     phase("prerequisite", prerequisite)
     phase("resolve", resolve)
     RESULT["status"] = "PREFLIGHT_PASS" if all(r["status"] == "PASS" for r in RESULT["phases"].values()) else "PREFLIGHT_FAIL"

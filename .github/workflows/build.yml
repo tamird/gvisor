@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: 6
+          fetch-depth: 7
       - name: Configure the pinned Linux execution platform
         id: setup
         env:
@@ -68,6 +68,7 @@ jobs:
         run: |
           gh api repos/tamird/gvisor/actions/artifacts/13178134790/zip > "$RUNNER_TEMP/original-integration.zip" || true
           gh api repos/tamird/gvisor/actions/artifacts/13180640411/zip > "$RUNNER_TEMP/prior-preflight.zip" || true
+          gh api repos/tamird/gvisor/actions/artifacts/13180457046/zip > "$RUNNER_TEMP/unsigned-source.zip" || true
       - name: Resolve the actual apt consumer and retain the complete catalog audit
         id: preflight
         if: always() && steps.setup.outcome == 'success'
