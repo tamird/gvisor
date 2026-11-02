@@ -1,35 +1,35 @@
-name: CI
-
-"on":
+name: Observe procfs watches across native cache reclaim
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/kernfs-watched-native-reclaim]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  observe:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/kernfs-watched-native-reclaim'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 2
+        persist-credentials: false
+    - name: Bind observation to a dedicated native VM
+      env:
+        HOSTED: ${{ runner.environment }}
+      run: |
+        set -euo pipefail
+        [[ "$HOSTED" == github-hosted && "$RUNNER_OS" == Linux && "$RUNNER_ARCH" == X64 ]]
+        [[ ! -e /.dockerenv && $(systemd-detect-virt --vm) != none ]]
+        test "$(git rev-parse HEAD^)" = 918aefd5f3771a161013fb72873d8aa19196e1bc
+        printf '{"verified":false,"reason":"observation not completed"}\n' > "$RUNNER_TEMP/reclaim.json"
+    - name: Observe the unchanged watched path and an unwatched fdinfo sibling
+      env:
+        KERNFS_HOSTED: ${{ runner.environment }}
+      run: bazel run //test/rbe/kernfs_reclaim:observe -- "$RUNNER_TEMP/reclaim.json"
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: always()
+      with:
+        name: kernfs-native-reclaim
+        path: ${{ runner.temp }}/reclaim.json
+        if-no-files-found: error
