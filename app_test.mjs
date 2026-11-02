@@ -535,6 +535,39 @@ test('settling either of two reviews on one PR leaves the other pending', () => 
   assert.equal(vm.runInContext('contributorDecision(nodeInput)', context), null);
 });
 
+test('settled outgoing publications are normal links without drafts or new decisions', () => {
+  const context = client(), node = attentionNode(16834);
+  const urls = ['https://github.com/bazel-contrib/bazel-gazelle/issues/2499',
+    node.url + '#issuecomment-123', node.url + '#pullrequestreview-456'];
+  node.evidence = [{ label: 'Gazelle upstream issue #2499', url: urls[0] },
+    { label: 'Different publication', url: node.url + '#issuecomment-999' }];
+  node.settledReviews = ['issue', 'reply', 'review'].map((kind, index) => ({
+    kind, head: node.github.head, body: 'Historical draft must stay hidden', outcome: 'approved', postedURL: urls[index],
+  }));
+  node.settledReviews.push(
+    { kind: 'issue', outcome: 'approved', url: 'https://github.com/owner/repo/issues/new' },
+    { kind: 'reply', postedURL: 'javascript:alert(1)' },
+    { kind: 'review', postedURL: 'not a URL' },
+    { kind: 'amendment', postedURL: node.url },
+    { kind: 'constructor', postedURL: node.url },
+  );
+  const createElement = tag => ({ tag, children: [], append(...children) { this.children.push(...children); } });
+  context.document = { createElement };
+  context.parentInput = createElement('section'); context.nodeInput = node;
+  vm.runInContext('appendSettledPublications(parentInput, nodeInput)', context);
+  assert.deepEqual(context.parentInput.children.map(child => [child.tag, child.textContent, child.href]),
+    ['Issue filed · Gazelle upstream issue #2499', 'Reply posted', 'Review posted']
+      .map((label, index) => ['a', label + ' ↗', urls[index]]));
+  for (const child of context.parentInput.children) {
+    assert.equal(child.className, 'relation-source');
+    assert.equal(child.target, '_blank');
+    assert.equal(child.rel, 'noopener noreferrer');
+    assert.deepEqual(child.children, []);
+  }
+  assert.equal(vm.runInContext('pendingDecisions(nodeInput).length', context), 0);
+  assert.ok(!idsFor(node).some(id => ['post-review', 'post-reply'].includes(id)));
+});
+
 test('mixed cards expose each current decision once and refresh only stale drafts', () => {
   const node = attentionNode(16735);
   node.github.headOwner = 'parth-opensrc';
