@@ -1,14 +1,14 @@
 name: Check gRPC plugin publication on Linux and macOS
 on:
   push:
-    branches: [qualification/grpc-plugin-copy]
+    branches: [qualification/grpc-plugin-file]
 permissions:
   contents: read
 jobs:
   linux:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 145
+    timeout-minutes: 190
     env:
       USE_BAZEL_VERSION: 8.8.1
       CC: /usr/bin/gcc
@@ -16,11 +16,11 @@ jobs:
       MINIMAL: mirror.gcr.io/library/hello-world@sha256:c567b231f65614688711a75f31518a064258a51d442117a3e771a3a8fdba78ef
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 6, persist-credentials: false}
+      with: {fetch-depth: 10, persist-credentials: false}
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
         repository: tamird/grpc
-        ref: 88ac70ff98fec233528eab6658e4b0945c9f062e
+        ref: d38eb8b2ef2131b5baeaa45e9ab274e7f523bfb6
         path: supplier
         persist-credentials: false
         fetch-depth: 2
@@ -47,7 +47,7 @@ jobs:
         test -n "$BUILDBUDDY_API_KEY"
         {
           printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=local' 'build --noremote_local_fallback'
-          printf '%s\n' "build --inject_repository=grpc_workers=$RUNNER_TEMP/grpc-workers" 'build --extra_execution_platforms=@grpc_workers//:gnu,@grpc_workers//:scratch' 'build --host_platform=@grpc_workers//:gnu'
+          printf '%s\n' "build --inject_repository=grpc_workers=$RUNNER_TEMP/grpc-workers" 'build --extra_execution_platforms=@grpc_workers//:scratch' 'build --host_platform=@grpc_workers//:scratch'
           printf '%s\n' 'build --strategy=Action=remote' 'build --strategy=Genrule=remote' 'build --noremote_upload_local_results'
           printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
@@ -61,8 +61,26 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: grpc-plugin-copy-linux
+        name: grpc-plugin-file-linux
         path: ${{ runner.temp }}/linux-receipt.json
+        if-no-files-found: error
+    - name: Install project generator Python dependencies
+      if: ${{ !cancelled() }}
+      run: |
+        python3 -m venv --system-site-packages "$RUNNER_TEMP/grpc-buildgen-env"
+        "$RUNNER_TEMP/grpc-buildgen-env/bin/pip" install Mako PyYAML
+    - name: Compare canonical Python and C++ generators and render CMake
+      if: ${{ !cancelled() }}
+      env:
+        USE_BAZEL_VERSION: 8.7.0
+      run: |
+        export PATH="$RUNNER_TEMP/grpc-buildgen-env/bin:$PATH"
+        python3 test/rbe/grpc-native-codegen/copy.py metadata
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: grpc-plugin-file-metadata
+        path: ${{ runner.temp }}/metadata-receipt.json
         if-no-files-found: error
   darwin:
     if: github.repository == 'tamird/gvisor'
@@ -74,7 +92,7 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
         repository: tamird/grpc
-        ref: 88ac70ff98fec233528eab6658e4b0945c9f062e
+        ref: d38eb8b2ef2131b5baeaa45e9ab274e7f523bfb6
         path: supplier
         persist-credentials: false
         fetch-depth: 2
@@ -83,28 +101,6 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: grpc-plugin-copy-darwin
+        name: grpc-plugin-file-darwin
         path: ${{ runner.temp }}/darwin-receipt.json
-        if-no-files-found: error
-  metadata:
-    if: github.repository == 'tamird/gvisor'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 115
-    steps:
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {persist-credentials: false}
-    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with:
-        repository: tamird/grpc
-        ref: 88ac70ff98fec233528eab6658e4b0945c9f062e
-        path: supplier
-        persist-credentials: false
-        fetch-depth: 2
-    - name: Compare the complete generated build manifests
-      run: python3 test/rbe/grpc-native-codegen/copy.py metadata
-    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      if: always()
-      with:
-        name: grpc-plugin-copy-metadata
-        path: ${{ runner.temp }}/metadata-receipt.json
         if-no-files-found: error
