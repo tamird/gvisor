@@ -1,35 +1,64 @@
-name: CI
-
-"on":
+name: Execute the assembled source release on its native CPU
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/buildkite-direct-source-smoke]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  smoke:
+    if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {host: ubuntu-24.04, machine: x86_64}
+          - {host: ubuntu-24.04-arm, machine: aarch64}
+    runs-on: ${{ matrix.host }}
+    timeout-minutes: 146
+    env:
+      SOURCE: e6d065c8af225f320d93235a596d3457e5d7cd13
+      PROPOSAL: ec41d0045a4fa0ed1ee5320f1fc3f4ff609cf79f
+      MACHINE: ${{ matrix.machine }}
+      DOCKER_BUILD: "false"
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Select the source commit and retain an explicit incomplete result
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/direct-smoke"
+          mkdir -p "$d/records"
+          printf '{"source":"%s","carrier":"%s","architecture":"%s","expected":["release"%s]}\n' "$SOURCE" "$GITHUB_SHA" "$MACHINE" "$(if [[ "$MACHINE" == x86_64 ]]; then echo ',"release-race"'; fi)" > "$d/records/expected.json"
+          cp test/rbe/direct-release-smoke.py "$d/"
+          [[ "$(git rev-parse HEAD^)" == "$SOURCE" ]]
+          git checkout --detach "$SOURCE"
+          git diff --quiet
+          [[ "$(uname -m)" == "$MACHINE" && "$(id -u)" != 0 ]]
+          git diff --exit-code "$SOURCE" -- .buildkite tools/release.bzl tools/show_paths.bzl
+          if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+          unshare -Ur true
+          if ! /usr/bin/python3 -c 'import yaml'; then sudo apt-get update -qq && sudo apt-get install -y python3-yaml; fi
+      - name: Configure only the shared action cache on the native client
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?}"
+          {
+            printf '%s\n' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --remote_download_outputs=toplevel'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$RUNNER_TEMP/direct-smoke/cache.rc"
+      - name: Use the Buildkite Bazelisk setup and run the actual source smoke commands
+        run: |
+          set -euo pipefail
+          source <(sed -n '/^install_lint_bazel() {$/,$p' .buildkite/hooks/pre-command)
+          [[ "$(command -v bazel)" == "$BUILDKITE_BAZEL_DIRECTORY/bazel" ]]
+          df -h . | tail -1
+          timeout --kill-after=20s 131m /usr/bin/python3 "$RUNNER_TEMP/direct-smoke/direct-release-smoke.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: direct-release-smoke-${{ matrix.machine }}
+          path: ${{ runner.temp }}/direct-smoke/records/
+          if-no-files-found: error
