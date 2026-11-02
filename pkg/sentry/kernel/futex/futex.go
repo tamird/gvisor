@@ -322,11 +322,14 @@ func (b *bucket) requeueLocked(t Target, to *bucket, key, nkey *Key, n int) int 
 
 		requeued := w
 		w = w.Next() // Next iteration.
-		b.waiters.Remove(requeued)
 		requeued.key.release(t)
 		requeued.key = nkey.clone()
-		to.waiters.PushBack(requeued)
-		requeued.bucket.Store(to)
+		// Moving a waiter to the tail of the same list can visit it again.
+		if b != to {
+			b.waiters.Remove(requeued)
+			to.waiters.PushBack(requeued)
+			requeued.bucket.Store(to)
+		}
 		done++
 	}
 	return done
@@ -546,7 +549,7 @@ func (m *Manager) doRequeue(t Target, addr, naddr hostarch.Addr, private bool, c
 	done := b1.wakeLocked(&k1, ^uint32(0), nwake) // +checklocksignore
 
 	// Requeue the number required.
-	b1.requeueLocked(t, b2, &k1, &k2, nreq) // +checklocksignore
+	done += b1.requeueLocked(t, b2, &k1, &k2, nreq) // +checklocksignore
 
 	return done, nil
 }

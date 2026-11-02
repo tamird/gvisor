@@ -17,6 +17,7 @@
 #include <linux/futex.h>
 #include <linux/types.h>
 #include <pthread.h>
+#include <sched.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/mman.h>
@@ -34,15 +35,18 @@
 #include <ctime>
 #include <iterator>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "absl/memory/memory.h"
+#include "absl/strings/str_cat.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "test/util/cleanup.h"
 #include "test/util/file_descriptor.h"
+#include "test/util/fs_util.h"
 #include "test/util/logging.h"
 #include "test/util/memory_util.h"
 #include "test/util/posix_error.h"
@@ -246,6 +250,53 @@ TEST_P(PrivateAndSharedFutexTest, Wait_ZeroBitset) {
   std::atomic<int> a(1);
   EXPECT_THAT(futex_wait_bitset(IsPrivate(), &a, a, 0),
               SyscallFailsWithErrno(EINVAL));
+}
+
+TEST_P(PrivateAndSharedFutexTest, RequeueCountsWaiters) {
+  const bool priv = IsPrivate();
+  const int flags = PrivateFlag();
+  std::atomic<int> src = 0, dst = 0;
+  std::atomic<pid_t> tids[] = {0, 0};
+  const auto timeout = absl::ToTimespec(absl::Seconds(10));
+  auto wait = [&](int i) {
+    tids[i].store(gettid());
+    const int ret = RetryEINTR(syscall)(SYS_futex, &src, FUTEX_WAIT | flags, 0,
+                                        &timeout);
+    EXPECT_THAT(ret, SyscallSucceeds());
+  };
+  ScopedThread first([&] { wait(0); });
+  ScopedThread second([&] { wait(1); });
+
+  // Once a waiter publishes its TID, its only blocking call is FUTEX_WAIT.
+  // Observe both waits before asking how many entries the kernel moved.
+  const absl::Time deadline = absl::Now() + absl::Seconds(5);
+  for (const auto& waiter : tids) {
+    bool sleeping = false;
+    while (!sleeping && absl::Now() < deadline) {
+      if (int tid = waiter.load(); tid != 0) {
+        auto contents =
+            GetContents(absl::StrCat("/proc/self/task/", tid, "/stat"));
+        if (contents.ok()) {
+          const std::string& stat = contents.ValueOrDie();
+          const size_t end = stat.rfind(')');
+          sleeping = end != std::string::npos && end + 2 < stat.size() &&
+                     stat[end + 2] == 'S';
+        }
+      }
+      sched_yield();
+    }
+    ASSERT_TRUE(sleeping);
+  }
+
+  // Requeueing onto the original word must count each waiter only once.
+  EXPECT_THAT(syscall(SYS_futex, &src, FUTEX_REQUEUE | flags, 0, 7, &src),
+              SyscallSucceedsWithValue(2));
+  // Both the waiter that wakes and the waiter that moves are counted.
+  EXPECT_THAT(
+      syscall(SYS_futex, &src, FUTEX_CMP_REQUEUE | flags, 1, 7, &dst, 0),
+      SyscallSucceedsWithValue(2));
+  EXPECT_THAT(futex_wake(priv, &src, 2), SyscallSucceedsWithValue(0));
+  EXPECT_THAT(futex_wake(priv, &dst, 2), SyscallSucceedsWithValue(1));
 }
 
 TEST_P(PrivateAndSharedFutexTest, Wake1) {
