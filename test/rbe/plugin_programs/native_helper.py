@@ -9,6 +9,7 @@ import subprocess
 import sys
 import traceback
 
+from action_log import context
 from qualify import CONFIG, HELPER, NATIVE, OUT, OWNER, TARGET, TMP, audit, diagnostics, inspect_outputs, now, save
 
 PRODUCT = "f1db6919e4b42d8491826aaeaeaf18d2d4b78748"
@@ -29,12 +30,14 @@ def build(r, control=False):
              original={"invocation": ORIGINAL, "run": 41406257977, "artifact": 13123707083, "archive": OLD_ARCHIVE},
              arm="host-shell" if control else "declared-shell")
     save(r)
-    assert r["source"] == os.environ["GITHUB_SHA"] and git("rev-parse", "HEAD^") == PRODUCT
-    assert git("rev-parse", "HEAD^^") == BASE
+    assert r["source"] == os.environ["GITHUB_SHA"] and git("rev-parse", "HEAD~3") == PRODUCT
+    assert git("rev-parse", "HEAD~4") == BASE
     assert set(git("diff", "--name-only", BASE, PRODUCT).splitlines()) == {
         "MODULE.bazel", "external/tools/plugin-stack/plugin-stack.BUILD", "test/rbe/plugin_programs/framework.patch"}
     assert set(git("diff", "--name-only", PRODUCT, "HEAD").splitlines()) == {
-        ".github/workflows/build.yml", "test/rbe/plugin_programs/native_helper.py"}
+        ".github/workflows/build.yml", "test/rbe/plugin_programs/native_helper.py",
+        "test/rbe/plugin_programs/preflight_recovery.py", "test/rbe/plugin_programs/action_log.py",
+        "test/rbe/empty_worker/repository.bzl"}
     assert git("diff", "--name-only", "HEAD") == ("external/tools/plugin-stack/plugin-stack.BUILD" if control else "")
     r["consumer_sha256"] = sha256(Path("external/tools/plugin-stack/plugin-stack.BUILD").read_bytes()).hexdigest()
     assert json.loads((OUT / "image.json").read_text())["manifest"] == NATIVE.split("@")[1]
@@ -47,9 +50,21 @@ def build(r, control=False):
              "--jobs=400", "--color=no", "--curses=no", "--registry=" + (Path(os.environ["GITHUB_WORKSPACE"]) / "registry").as_uri(),
              "--registry=https://bcr.bazel.build"]
     query = TARGET + ' + filter(":(pmd_config|pmdinfogen)$", deps(' + TARGET + '))'
-    p = subprocess.run([*bazel, "cquery", *flags, "--output=label", query], text=True, capture_output=True, timeout=420)
+    query_bep = TMP / (r["arm"] + ".query.bep")
+    p = subprocess.run([*bazel, "cquery", *flags, "--build_event_json_file=" + str(query_bep), "--output=label", query], text=True, capture_output=True, timeout=420)
     selected = [s.split()[0] for s in p.stdout.splitlines() if s.startswith(("@", "//"))]
     r["preflight"] = {"exit": p.returncode, "selected": selected, **diagnostics(p.stderr)}
+    save(r)
+    if query_bep.exists():
+        for line in query_bep.read_text().splitlines():
+            event = json.loads(line)
+            if "started" in event:
+                r["preflight"]["invocation"] = r["invocation"] = event["started"]["uuid"]
+    if p.returncode:
+        r["status"] = "FAIL"
+        r["preflight"]["stderr_sha256"] = sha256(p.stderr.encode()).hexdigest()
+        save(r)
+        r["preflight"]["causal_context"] = context(p.stderr)
     save(r)
     assert p.returncode == 0 and len(selected) == 1 and selected[0] in (TARGET, OWNER)
     bep = TMP / (r["arm"] + ".bep")
@@ -225,7 +240,7 @@ if __name__ == "__main__":
                 except Exception as exc:
                     failure(r, key, exc)
         passed = r.get("proof", {}).get("verified") and r.get("launch", {}).get("verified") and r.get("control", {}).get("build_verified")
-        r.update(status="PASS" if passed else ("FAIL" if r.get("build_exit") else "INCOMPLETE"), verdict_time=now())
+        r.update(status="PASS" if passed else ("FAIL" if r.get("build_exit") or r.get("preflight", {}).get("exit") else "INCOMPLETE"), verdict_time=now())
         save(r)
         raise SystemExit(0 if passed else 1)
     path = Path("external/tools/plugin-stack/plugin-stack.BUILD")

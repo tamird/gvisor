@@ -6,7 +6,9 @@ _SHA256 = {
 
 def _archive_impl(ctx):
     ctx.download_and_extract(
-        url = "https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/b/busybox/busybox-static_1.36.1-6ubuntu3.1_{}.deb".format(ctx.attr.cpu),
+        url = (["https://archive.ubuntu.com/ubuntu/pool/main/b/busybox/busybox-static_1.36.1-6ubuntu3.1_amd64.deb"] if ctx.attr.cpu == "amd64" else []) + [
+            "https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/b/busybox/busybox-static_1.36.1-6ubuntu3.1_{}.deb".format(ctx.attr.cpu),
+        ],
         sha256 = _SHA256[ctx.attr.cpu],
         type = "deb",
     )

@@ -6,7 +6,6 @@ import json
 import os
 import re
 
-from cas_inputs import blob, fetch, rpc
 from qualify import CONFIG, HELPER, OUT, OWNER, diagnostics, now
 
 
@@ -52,6 +51,7 @@ def context(text):
 
 
 def original_log(invocation):
+    from cas_inputs import fetch
     chunks = []
     request = {"selector": {"invocation_id": invocation}}
     for _ in range(12):
@@ -74,6 +74,7 @@ def original_log(invocation):
 
 
 def main():
+    from cas_inputs import blob, rpc
     path = OUT / "result.json"
     if not path.exists():
         return 0
@@ -86,7 +87,7 @@ def main():
         selected = [a for a in record.get("actions", []) if a.get("exitCode") or
                     (a["targetLabel"] == OWNER and a["mnemonic"] == "CcMakeMakeRule" and not a.get("cacheHit"))]
         assert len(selected) <= 6
-        if record.get("build_exit"):
+        if record.get("build_exit") or record.get("preflight", {}).get("exit"):
             try:
                 observation["build_log"] = original_log(invocation)
                 observation["status"] = "RECOVERED_LOGS"
