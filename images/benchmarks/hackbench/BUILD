@@ -8,13 +8,13 @@ package(
     licenses = ["notice"],
 )
 
-# Keep the rt-tests version and command-line behavior used by the benchmark.
+# Match the version reported by the pinned rt-tests source.
 cc_binary(
     name = "hackbench",
     srcs = ["@rt_tests//:src/hackbench/hackbench.c"],
     copts = ["-O2"],
     defines = [
-        "VERSION=2.2",
+        "VERSION=2.11",
         "_GNU_SOURCE",
     ],
     linkopts = ["-lrt"],
