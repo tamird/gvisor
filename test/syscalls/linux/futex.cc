@@ -98,6 +98,28 @@ int futex_wait(bool priv, std::atomic<int>* uaddr, int val,
   }
 }
 
+// The waiter must publish its TID immediately before entering FUTEX_WAIT,
+// which is then the only blocking call that can put it to sleep.
+bool WaitUntilFutexWait(const std::atomic<pid_t>& waiter_tid,
+                        absl::Time deadline) {
+  while (absl::Now() < deadline) {
+    if (pid_t tid = waiter_tid.load(); tid != 0) {
+      auto contents =
+          GetContents(absl::StrCat("/proc/self/task/", tid, "/stat"));
+      if (contents.ok()) {
+        const std::string& stat = contents.ValueOrDie();
+        const size_t end = stat.rfind(')');
+        if (end != std::string::npos && end + 2 < stat.size() &&
+            stat[end + 2] == 'S') {
+          return true;
+        }
+      }
+    }
+    sched_yield();
+  }
+  return false;
+}
+
 int futex_wait_bitset(bool priv, std::atomic<int>* uaddr, int val, int bitset,
                       absl::Time deadline = absl::InfiniteFuture()) {
   int op = FUTEX_WAIT_BITSET | FUTEX_CLOCK_REALTIME;
@@ -250,6 +272,34 @@ TEST_P(PrivateAndSharedFutexTest, Wait_ZeroBitset) {
   std::atomic<int> a(1);
   EXPECT_THAT(futex_wait_bitset(IsPrivate(), &a, a, 0),
               SyscallFailsWithErrno(EINVAL));
+}
+
+TEST_P(PrivateAndSharedFutexTest, RequeueCountsWaiters) {
+  const bool priv = IsPrivate();
+  const int flags = PrivateFlag();
+  std::atomic<int> src = 0, dst = 0;
+  std::atomic<pid_t> tids[] = {0, 0};
+  auto wait = [&](int i) {
+    tids[i].store(gettid());
+    const int ret = futex_wait(priv, &src, 0, absl::Seconds(10));
+    EXPECT_THAT(ret, SyscallSucceeds());
+  };
+  ScopedThread first([&] { wait(0); });
+  ScopedThread second([&] { wait(1); });
+
+  const absl::Time deadline = absl::Now() + absl::Seconds(5);
+  for (const auto& tid : tids) {
+    ASSERT_TRUE(WaitUntilFutexWait(tid, deadline));
+  }
+  // Requeueing onto the original word must count each waiter only once.
+  EXPECT_THAT(syscall(SYS_futex, &src, FUTEX_REQUEUE | flags, 0, 7, &src),
+              SyscallSucceedsWithValue(2));
+  // Both the waiter that wakes and the waiter that moves are counted.
+  EXPECT_THAT(
+      syscall(SYS_futex, &src, FUTEX_CMP_REQUEUE | flags, 1, 7, &dst, 0),
+      SyscallSucceedsWithValue(2));
+  EXPECT_THAT(futex_wake(priv, &src, 2), SyscallSucceedsWithValue(0));
+  EXPECT_THAT(futex_wake(priv, &dst, 2), SyscallSucceedsWithValue(1));
 }
 
 TEST_P(PrivateAndSharedFutexTest, Wake1) {
@@ -831,25 +881,7 @@ TEST_P(PrivateAndSharedFutexTest, PIWithOrdinaryWaiter) {
                 SyscallSucceedsWithValue(0));
   });
 
-  // An ordinary wait does not set FUTEX_WAITERS. After publishing its TID,
-  // the thread can only sleep in FUTEX_WAIT.
-  bool sleeping = false;
-  const absl::Time deadline = absl::Now() + absl::Seconds(5);
-  while (!sleeping && absl::Now() < deadline) {
-    const pid_t tid = waiter_tid.load();
-    if (tid != 0) {
-      auto contents =
-          GetContents(absl::StrCat("/proc/self/task/", tid, "/stat"));
-      if (contents.ok()) {
-        const std::string& stat = contents.ValueOrDie();
-        const size_t end = stat.rfind(')');
-        sleeping = end != std::string::npos && end + 2 < stat.size() &&
-                   stat[end + 2] == 'S';
-      }
-    }
-    sched_yield();
-  }
-  EXPECT_TRUE(sleeping);
+  EXPECT_TRUE(WaitUntilFutexWait(waiter_tid, absl::Now() + absl::Seconds(5)));
   EXPECT_THAT(syscall(SYS_futex, &word, FUTEX_REQUEUE | flags, 0, 1, &word),
               SyscallSucceeds());
   ScopedThread([&] {
