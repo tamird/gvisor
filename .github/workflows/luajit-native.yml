@@ -1,0 +1,52 @@
+name: Qualify LuaJIT native supplier configurations
+on:
+  push:
+    branches: [qualification/luajit-native-matrix]
+permissions: {contents: read}
+jobs:
+  native:
+    if: github.repository == 'tamird/gvisor'
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15-intel, macos-15, windows-2022]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 50
+    env:
+      NATIVE_RUNNER: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with: {persist-credentials: false}
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: tamird/bazel-central-registry
+          ref: b71adb61cb76def6e12e54b5deb73c1d910f71b5
+          path: supplier
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with: {python-version: '3.12'}
+      - name: Build the existing targets and execute the native CLI
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python test/rbe/luajit-native.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: luajit-native-${{ matrix.runner }}
+          path: ${{ runner.temp }}/luajit-public/result.json
+          if-no-files-found: error
+  summary:
+    if: always()
+    needs: native
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with: {persist-credentials: false}
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          pattern: luajit-native-*
+          path: native-results
+      - name: Report the actual exits from every native host
+        if: always()
+        run: python3 test/rbe/luajit-native.py summary
