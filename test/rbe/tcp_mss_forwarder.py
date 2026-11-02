@@ -1,6 +1,7 @@
 """One fixed Linux reverse-transfer discriminator; no production change."""
 
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -10,6 +11,8 @@ import subprocess
 import sys
 import time
 import uuid
+import urllib.request
+import zipfile
 
 BASE = "918aefd5f3771a161013fb72873d8aa19196e1bc"
 FIXTURE = "b7bb7cc69936f81262603a7c6825f6ccd089b240"
@@ -46,6 +49,61 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def diagnostic(text):
+    """Retain the first compiler/analysis error and bounded causal context."""
+    lines = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", text).splitlines()
+    first = next((i for i, line in enumerate(lines) if re.search(r"ERROR:|error:|compilepkg:", line)), None)
+    result = []
+    for line in lines[first:first + 36] if first is not None else []:
+        if re.search(r"authorization|x-buildbuddy|(?:remote|bes)_header|credential|password|token\s*[:=]|https?://", line, re.I):
+            continue
+        key = os.environ.get("BUILDBUDDY_API_KEY", "")
+        if key and key in line:
+            continue
+        result.append(line[:1000])
+    return {"sha256": hashlib.sha256(text.encode()).hexdigest(), "first_error_context": result}
+
+
+def recover():
+    """Read only the failed original invocation; do not invoke Bazel."""
+    PUBLIC.mkdir(parents=True, exist_ok=True)
+    original = Path(os.environ["ORIGINAL_ZIP"]).read_bytes()
+    require(hashlib.sha256(original).hexdigest() == "43eec03cfacc4d9b360c648ad1e0f6f3af2391b4c630654b83cc7e90882cdfdb", "original archive")
+    with zipfile.ZipFile(io.BytesIO(original)) as archive:
+        require(archive.namelist() == ["build.json"], "original members")
+        row = json.loads(archive.read("build.json"))
+    require(row["source"] == command(["git", "rev-parse", "HEAD^"]) == "a25479282117f3dfecd541b45b2bd545c6088d93", "original source")
+    require(row["invocation"] == "90fcac0d-1f13-4127-8d7b-04f472997e4d" and row["exit"] == 1, "original failure")
+    require(row["fixture"] == FIXTURE and row["production"] == BASE, "original product")
+    row.update(verdict="FAIL", original_verdict=row["verdict"], recovery="INCOMPLETE", original_archive_sha256=hashlib.sha256(original).hexdigest())
+    put(PUBLIC / "build.json", row)
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, *args, **kwargs):
+            return None
+    payload = {"selector": {"invocation_id": row["invocation"]}}
+    chunks = []
+    for _ in range(4):
+        req = urllib.request.Request("https://app.buildbuddy.io/api/v1/GetLog", data=json.dumps(payload).encode(), headers={"Content-Type": "application/json", "x-buildbuddy-api-key": os.environ["BUILDBUDDY_API_KEY"]})
+        with urllib.request.build_opener(NoRedirect()).open(req, timeout=40) as response:
+            body = response.read((2 << 20) + 1)
+        require(len(body) <= 2 << 20, "log response bound")
+        page = json.loads(body)
+        # The supported API may omit id; reject a contradictory one.
+        ids = page["log"].get("id", {})
+        if ids:
+            require(ids.get("invocationId", ids.get("invocation_id")) == row["invocation"], "log identity")
+        chunks.append(page["log"].get("contents", ""))
+        token = page.get("nextPageToken", page.get("next_page_token", ""))
+        if not token:
+            break
+        payload["page_token"] = token
+    row.update(diagnostics=diagnostic("".join(chunks)), log_complete=not token, recovered_at_unix=time.time())
+    put(PUBLIC / "build.json", row)
+    require(row["diagnostics"]["first_error_context"], "no original error projected")
+    row["recovery"] = "RECOVERED" if not token else "PARTIAL"
+    put(PUBLIC / "build.json", row)
+
+
 def build():
     PRIVATE.mkdir(parents=True, exist_ok=True)
     PUBLIC.mkdir(exist_ok=True)
@@ -59,6 +117,8 @@ def build():
     with (PRIVATE / "build.log").open("w") as log:
         p = subprocess.run(bazel + ["run", *flags, f"--script_path={PRIVATE / 'start'}", "//test/benchmarks/tcp:tcp_benchmark"], stdout=log, stderr=subprocess.STDOUT, timeout=1800)
     row.update(exit=p.returncode, command_start_unix=start, command_finish_unix=time.time())
+    if p.returncode:
+        row.update(verdict="FAIL", diagnostics=diagnostic((PRIVATE / "build.log").read_text()))
     put(PUBLIC / "build.json", row)
     require(p.returncode == 0, "build failed; original log retained on runner")
     events = [json.loads(line) for line in bep.read_text().splitlines()]
@@ -226,4 +286,4 @@ def scan():
 
 
 if __name__ == "__main__":
-    {"build": build, "run": run, "scan": scan}[sys.argv[1]]()
+    {"build": build, "run": run, "scan": scan, "recover": recover}[sys.argv[1]]()
