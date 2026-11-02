@@ -1,35 +1,54 @@
-name: CI
-
-"on":
+name: Goimports supplier diff
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/goimports-supplier-diff]
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  supplier:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
     permissions:
       contents: read
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          path: carrier
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: tamird/tools
+          ref: d140e4d63b51cb5053d57cde308379069b5a6436
+          path: supplier
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
+        with:
+          go-version: 1.27.3
+          cache: false
+      - name: Normal supplier owners and actual CLI
+        working-directory: supplier
+        run: python3 ../carrier/test/rbe/goimports_diff.py
+      - name: Bound public artifact
+        id: privacy
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          d = Path(os.environ['RUNNER_TEMP']) / 'goimports-diff-result'
+          assert [p.name for p in d.iterdir()] == ['goimports-diff.json']
+          p = d / 'goimports-diff.json'
+          assert p.is_file() and not p.is_symlink()
+          data = p.read_bytes()
+          json.loads(data)
+          for k, v in os.environ.items():
+              if any(s in k.upper() for s in ('TOKEN', 'SECRET', 'PASSWORD', 'KEY')) and len(v) > 12:
+                  assert v.encode() not in data
+          assert b'authorization:' not in data.lower()
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.privacy.outcome == 'success'
+        with:
+          name: goimports-supplier-diff
+          path: ${{ runner.temp }}/goimports-diff-result/goimports-diff.json
+          if-no-files-found: error
