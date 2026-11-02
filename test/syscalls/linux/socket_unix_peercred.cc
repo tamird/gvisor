@@ -110,6 +110,46 @@ TEST_P(UnixSocketPeerCredTest, PeerCredAfterListen) {
   AssertCredSetTo(peerCreds, getpid(), getuid(), getgid());
 }
 
+TEST(UnixListenerPeerCred, RelistenUpdatesOnlyNewConnections) {
+  auto addr = ASSERT_NO_ERRNO_AND_VALUE(UniqueUnixAddr(true, AF_UNIX));
+  auto listener = ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_UNIX, SOCK_STREAM, 0));
+  ASSERT_THAT(bind(listener.get(), AsSockAddr(&addr), sizeof(addr)),
+              SyscallSucceeds());
+  ASSERT_THAT(listen(listener.get(), 4), SyscallSucceeds());
+  auto first = ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_UNIX, SOCK_STREAM, 0));
+  ASSERT_THAT(connect(first.get(), AsSockAddr(&addr), sizeof(addr)),
+              SyscallSucceeds());
+
+  // The child inherits the listener. Its successful listen changes the
+  // credentials that subsequent clients will see.
+  const pid_t child = fork();
+  ASSERT_GE(child, 0);
+  if (child == 0) {
+    TEST_PCHECK(listen(listener.get(), 4) == 0);
+    // Reconnecting an inherited client must not replace its peer.
+    TEST_PCHECK(connect(first.get(), AsSockAddr(&addr), sizeof(addr)) == -1 &&
+                errno == EISCONN);
+    _exit(0);
+  }
+  int status;
+  ASSERT_THAT(waitpid(child, &status, 0), SyscallSucceedsWithValue(child));
+  ASSERT_EQ(status, 0);
+
+  // Both clients connected from the parent but saw different listen calls.
+  auto second = ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_UNIX, SOCK_STREAM, 0));
+  ASSERT_THAT(connect(second.get(), AsSockAddr(&addr), sizeof(addr)),
+              SyscallSucceeds());
+  const auto check_peer = [](int fd, pid_t pid) {
+    struct ucred cred;
+    socklen_t len = sizeof(cred);
+    ASSERT_THAT(getsockopt(fd, SOL_SOCKET, SO_PEERCRED, &cred, &len),
+                SyscallSucceeds());
+    AssertCredSetTo(cred, pid, geteuid(), getegid());
+  };
+  check_peer(first.get(), getpid());
+  check_peer(second.get(), child);
+}
+
 TEST_P(UnixSocketPeerCredTest, AfterConnectClientPeerCred) {
   if (GetParam().type != SOCK_STREAM) {
     GTEST_SKIP() << "Test requires SOCK_STREAM";
