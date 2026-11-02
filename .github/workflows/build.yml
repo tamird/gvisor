@@ -1,35 +1,123 @@
-name: CI
-
-"on":
+name: Check TCP idle restart after reverse-only traffic
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-idle-reverse-wire]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      MASTER: aa767e4c43d011121271551fe24da501a56f729d
+      CONTROL: 5645f4ed42b1e4b5e83b2a79a7ecf213b7e78bd9
+      PRODUCT: 125d9e95e1cae50cf5e050c5ffd9096ba86b1945
+      FIXTURE: test/packetimpact/tests/tcp_retransmits_test.go
+      PROPS: test/packetimpact/runner/defs.bzl
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 6, persist-credentials: false}
+    - name: Prepare the existing GNU coordinator and Firecracker worker
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -euo pipefail
+        test "$(git rev-parse HEAD^)" = "$PRODUCT"
+        test "$(git rev-parse "$PRODUCT^")" = "$CONTROL"
+        test "$(git rev-parse "$CONTROL^")" = "$MASTER"
+        test "$(git diff --name-only "$MASTER" "$CONTROL")" = "$FIXTURE"
+        test "$(git diff --name-only "$CONTROL" "$PRODUCT")" = pkg/tcpip/transport/tcp/snd.go
+        test "$(git rev-parse "$CONTROL:$FIXTURE")" = "$(git rev-parse "$PRODUCT:$FIXTURE")"
+        proof=$RUNNER_TEMP/proof
+        mkdir -p "$proof" "$RUNNER_TEMP/records" "$RUNNER_TEMP/platform"
+        printf '{"verdict":"INCOMPLETE","executed":[]}\n' > "$proof/verdict.json"
+        cp test/rbe/tcp_idle_wire.py "$RUNNER_TEMP/"
+        props=7d8e856ba30ef0271690d13d2ddb1c07111a558a
+        reporter=599cb05aecfb107e07f81b8591a009cb12d6ffa7
+        profile=0ee70efe6d52576b8f173b40ad6b7ac117da3b72
+        git fetch -q --no-tags --depth=2 origin "$props" "$reporter" "$profile"
+        for file in BUILD.bazel MODULE.bazel; do
+          git show "$profile:test/rbe/gnu_platform/$file" > "$RUNNER_TEMP/platform/$file"
+        done
+        git diff "$props^" "$props" -- "$PROPS" > "$RUNNER_TEMP/exec.patch"
+        git show "$reporter:test/rbe/qualification_report.py" > "$RUNNER_TEMP/qualification_report.py"
+        git show "$reporter:test/rbe/unit_matrix.py" > "$RUNNER_TEMP/unit_matrix.py"
+        git show "$PRODUCT:$FIXTURE" > "$RUNNER_TEMP/fixture.go"
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --init --name tcp-compiler --entrypoint /bin/bash --user root --sysctl net.ipv6.conf.lo.disable_ipv6=0 -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/gcc"
+    - name: Run the same packet and TCP_INFO assertions on three senders
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        runarm() {
+          arm=$1; source=$2; limit=$3; shift 3
+          d=$RUNNER_TEMP/records/$arm; mkdir -p "$d"
+          git checkout --quiet --detach "$source"
+          test "$(git rev-parse HEAD)" = "$source"
+          git diff --quiet HEAD --
+          cmp "$RUNNER_TEMP/fixture.go" "$FIXTURE"
+          opts=()
+          if [[ $arm != owners ]]; then
+            opts+=('--test_filter=^TestIdleRestart$')
+            git apply "$RUNNER_TEMP/exec.patch"
+          fi
+          printf '%s\n' "$source" > "$d/source"
+          printf '%s\n' "$@" > "$d/labels"
+          date -u +%FT%T.%3NZ > "$d/start"
+          rc=0
+          timeout -k 10s "$limit" docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=48 --strategy=TestRunner=remote --nocache_test_results --keep_going --test_sharding_strategy=disabled --test_output=errors --test_timeout=400 --test_env=GO_TEST_WRAP_TESTV=1 --build_event_json_file="$d/bep" "${opts[@]}" "$@" > "$d/build.log" 2>&1 || rc=$?
+          printf '%s\n' "$rc" > "$d/exit"
+          date -u +%FT%T.%3NZ > "$d/finish"
+          for label in "$@"; do
+            key=${label##*:}; path=${label#//}; path=${path/:/\/}
+            mkdir -p "$d/$key"
+            for file in test.log test.xml; do
+              docker exec tcp-compiler cat "bazel-testlogs/$path/$file" > "$d/$key/$file" || true
+            done
+          done
+          git restore --source=HEAD -- "$PROPS"
+          git diff --quiet HEAD --
+        }
+        native=//test/packetimpact/tests:tcp_retransmits_native_test
+        netstack=//test/packetimpact/tests:tcp_retransmits_netstack_test
+        runarm native "$PRODUCT" 15m "$native"
+        runarm stock "$CONTROL" 15m "$netstack"
+        runarm fixed "$PRODUCT" 15m "$netstack"
+        runarm owners "$PRODUCT" 22m //pkg/tcpip/transport/tcp/test/e2e:tcp_acktiming_test //pkg/tcpip/transport/tcp:tcp_nogo
+    - name: Check original invocations, wire cases and detailed reports
+      if: always()
+      run: python3 -B "$RUNNER_TEMP/tcp_idle_wire.py"
+    - name: Verify the original report allowlist
+      if: always()
+      id: privacy
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PYSAFE'
+        import os
+        from pathlib import Path
+        proof = Path(os.environ["RUNNER_TEMP"]) / "proof"
+        key = os.environ["BUILDBUDDY_API_KEY"].encode()
+        names = {"verdict.json"} | {arm + suffix for arm in ("native", "stock", "fixed") for suffix in (".xml", ".log")}
+        files = list(proof.iterdir())
+        assert key and files and {p.name for p in files} <= names
+        for p in files:
+            assert p.is_file() and not p.is_symlink()
+            data = p.read_bytes()
+            assert key not in data and b"x-buildbuddy-api-key" not in data.lower()
+        PYSAFE
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.privacy.outcome == 'success'
       with:
-          name: runsc
-          path: bin/
+        name: tcp-idle-wire
+        path: ${{ runner.temp }}/proof/
+        if-no-files-found: error
