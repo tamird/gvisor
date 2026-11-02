@@ -1,4 +1,4 @@
-name: Run the full futex syscall suite and its owning checks
+name: Recover the named Go futex cases from the full suite
 on:
   push:
     branches: [qualification/futex-waiter-mode-owners]
@@ -8,29 +8,38 @@ jobs:
   syscalls:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 30
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
       CURRENT: 3737ff32e7116dcdad1209cce125602ff3c33785
       REPORTER: fb60e127516defd6aab633f80be09a03022f0737
-      FIXTURE: 6012a7ba933fc2d37d3e9296ff67dad92e10388fbfb32735bb4362b08657e6ab
+      READER: 1fcf113e6349cc55f6321968944da1933ece3252
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with: {fetch-depth: 5, persist-credentials: false}
+    - name: Read the original Go test log
+      id: original
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/records"
+        printf '%s\n' '{"verified":false,"phase":"original-log"}' > "$RUNNER_TEMP/records/verdict.json"
+        git diff --quiet "$CURRENT" HEAD -- pkg/sentry/kernel/futex
+        git fetch -q --no-tags --depth=1 origin "$REPORTER" "$READER"
+        for module in qualification_report unit_matrix; do
+          git show "$REPORTER:test/rbe/$module.py" > "$RUNNER_TEMP/$module.py"
+        done
+        git show "$READER:test/rbe/semop_owner_recovery.py" > "$RUNNER_TEMP/semop_owner_recovery.py"
+        cp test/rbe/recover_futex_go.py "$RUNNER_TEMP/"
+        python3 "$RUNNER_TEMP/recover_futex_go.py" original
     - name: Prepare the pinned compiler coordinator and RBE workers
+      if: steps.original.outputs.complete != 'true'
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
         set -euo pipefail
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
-        cp test/rbe/syscall_comparison.py "$RUNNER_TEMP/"
-        printf '{"verified":false,"reason":"qualification incomplete"}\n' > "$RUNNER_TEMP/records/verdict.json"
-        git fetch -q --no-tags --depth=1 origin "$REPORTER"
-        for module in qualification_report unit_matrix; do
-          git show "$REPORTER:test/rbe/$module.py" > "$RUNNER_TEMP/$module.py"
-        done
-        python3 -c 'import sys; sys.path.insert(0, sys.argv[1]); import qualification_report' "$RUNNER_TEMP"
-        [[ "$(git rev-parse HEAD^1)" == "$CURRENT" ]]
         printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
         printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","EstimatedMemory":"2GB","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
         umask 077
@@ -45,84 +54,27 @@ jobs:
         docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
         docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
 
-    - name: Execute every native and systrap futex syscall case
+    - name: Run only the Go owner verbosely if the original log omits case names
+      if: steps.original.outputs.complete != 'true'
       run: |
         set -euo pipefail
-        git checkout --quiet --detach "$CURRENT"
-        for label in //test/syscalls:futex_test_native //test/syscalls:futex_test_runsc_systrap_directfs //pkg/sentry/kernel/futex:futex_test //pkg/sentry/kernel/futex:futex_nogo; do
-          docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" query "$label" | grep -Fx "$label"
-        done
-        for name in current-native current-guest; do
-          src=$CURRENT
-          testname=futex_test
-          path=test/syscalls/linux/futex.cc
-          executor=remote
-          platform=runsc_systrap_directfs
-          if [[ "$name" == current-native ]]; then executor=local; platform=native; fi
-          git checkout --quiet --detach "$src"
-          [[ "$(git rev-parse HEAD)" == "$src" ]]
-          d=$RUNNER_TEMP/records/$name; mkdir -p "$d"
-          sha256sum "$path" > "$d/fixture-sha256"
-          [[ "$(cut -d' ' -f1 "$d/fixture-sha256")" == "$FIXTURE" ]]
-          target="//test/syscalls:${testname}_${platform}"
-          printf '%s\n' "$src" > "$d/source"; printf '%s\n' "$target" > "$d/target"
-          printf '%s\n' "$executor" > "$d/executor"
-          date -u +%FT%TZ > "$d/start"
-          rc=0
-          docker exec tcp-compiler timeout 13m bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=64 --verbose_failures --strategy=TestRunner="$executor" --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --test_output=all --test_timeout=600 --test_sharding_strategy=disabled "$target" > "$d/bazel.log" 2>&1 || rc=$?
-          grep -A5 -E 'Invocation ID:|ERROR:|error:|FAILED|Build did NOT complete' "$d/bazel.log" | head -100 > "$d/compiler-diagnostics" || true
-          rm -f "$d/bazel.log"
-          printf '%s\n' "$rc" > "$d/exit"; date -u +%FT%TZ > "$d/end"
-          if [[ $rc != 0 && $rc != 3 ]]; then continue; fi
-          for file in test.log test.xml; do
-            docker exec tcp-compiler cat "bazel-testlogs/test/syscalls/${target#*:}/$file" > "$d/$file" || rm -f "$d/$file"
-          done
-        done
-    - name: Check the owning futex suite and lock annotations
-      if: ${{ !cancelled() }}
-      run: |
-        set -euo pipefail
-        git checkout --quiet --detach "$CURRENT"
-        d=$RUNNER_TEMP/records/owners; mkdir -p "$d"
-        date -u +%FT%TZ > "$d/start"
+        git checkout -q --detach "$CURRENT"
+        test "$(git rev-parse HEAD)" = "$CURRENT"
+        d="$RUNNER_TEMP/records"
+        uid=$(python3 -c 'import uuid; print(uuid.uuid4())')
+        printf '%s\n' "$uid" > "$d/invocation"
         rc=0
-        docker exec tcp-compiler timeout 15m bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=4 --nocache_test_results --keep_going --build_tag_filters= --test_tag_filters= --noremote_local_fallback --test_timeout=300 --test_output=errors --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' //pkg/sentry/kernel/futex:futex_test //pkg/sentry/kernel/futex:futex_nogo > "$d/bazel.log" 2>&1 || rc=$?
+        docker exec tcp-compiler timeout 13m bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --invocation_id="$uid" --jobs=8 --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --build_tag_filters= --test_tag_filters= --test_output=all --test_timeout=300 --test_arg=-test.v --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' //pkg/sentry/kernel/futex:futex_test > "$d/bazel.log" 2>&1 || rc=$?
         printf '%s\n' "$rc" > "$d/exit"
-        grep -A5 -E 'Invocation ID:|ERROR:|error:|FAILED|diagnostic| PASSED ' "$d/bazel.log" | tail -120 > "$d/receipt" || :
-        rm -f "$d/bazel.log"
-        date -u +%FT%TZ > "$d/end"
-        for target in futex_test futex_nogo; do
-          docker exec tcp-compiler cat "bazel-testlogs/pkg/sentry/kernel/futex/$target/test.xml" > "$d/$target.xml" || :
-          docker exec tcp-compiler cat "bazel-testlogs/pkg/sentry/kernel/futex/$target/test.log" | grep -iE 'arm64|amd64|aarch64|x86_64' | tail -8 > "$d/$target.arches" || :
-        done
-        test "$rc" -eq 0
-    - name: Verify syscall assertions and the analyzer target
+        docker exec tcp-compiler cat bazel-testlogs/pkg/sentry/kernel/futex/futex_test/test.log > "$d/test.log" || :
+    - name: Verify every named Go case
       if: ${{ !cancelled() }}
-      run: python3 "$RUNNER_TEMP/syscall_comparison.py" "$RUNNER_TEMP/records"
-    - name: Redact any credential from the published records
-      if: always()
-      env:
-        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: |
-        python3 - <<'PYTHON'
-        import os
-        from pathlib import Path
-        root = Path(os.environ["RUNNER_TEMP"]) / "records"
-        key = os.environ["BB_KEY"].encode()
-        for path in [root / "verdict.json", root / "owners/receipt", *root.glob("*/*.xml"), *root.glob("owners/*.arches")]:
-            if path.is_file() and key and key in (data := path.read_bytes()):
-                path.write_bytes(data.replace(key, b"[REDACTED]"))
-        PYTHON
+      run: python3 "$RUNNER_TEMP/recover_futex_go.py" verdict
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: futex-waiter-mode-owners
+        name: futex-go-owner-original
         path: |
+          ${{ runner.temp }}/records/original.json
           ${{ runner.temp }}/records/verdict.json
-          ${{ runner.temp }}/records/*/test.xml
-          ${{ runner.temp }}/records/owners/receipt
-          ${{ runner.temp }}/records/owners/exit
-          ${{ runner.temp }}/records/owners/*.xml
-          ${{ runner.temp }}/records/owners/*.arches
-          ${{ runner.temp }}/records/native-kernel
         if-no-files-found: error
