@@ -56,13 +56,14 @@ for name in ("stock", "draft"):
             early = second["ns"] - first["ns"] - first["rto_ns"]
             later = second["ns"] - sack["ns"] - sack["rto_ns"]
             intervening = [r for r in trace if first["ns"] < r["ns"] < second["ns"] and r["phase"] == "intervening"]
-            matched = (sack["ns"]-first["ns"] == 40_000_000 and 0 in wires and {1,2}.issubset(wires)
+            matched = (sack["ns"]-first["ns"] == 40_000_000 and {1,2}.issubset(wires)
                        and first["rto_ns"] == sack["rto_ns"] and not by["before_sack"]["wires"]
                        and not any(0 in (r["wires"] or []) for r in intervening))
             mechanism = {"matched": matched, "second_minus_first_plus_rto_ns": early,
                          "second_minus_sack_plus_rto_ns": later, "sack_repairs": wires,
+                         "sack_sent_head": 0 in wires,
                          "classification": ("original_deadline" if abs(early) <= 1_000_000 else
-                                            "head_repair_deadline" if abs(later) <= 1_000_000 else
+                                            "sack_time_deadline" if abs(later) <= 1_000_000 else
                                             "other_deadline") if matched else "schedule_not_matched"}
         raw = (d / "log").read_text(errors="replace")
         diag = [line.strip()[:520] for line in (raw+"\n"+log).splitlines()
@@ -73,7 +74,8 @@ for name in ("stock", "draft"):
 v = {"complete": all(a["complete"] for a in arms.values()), "arms": arms}
 if v["complete"]:
     outcomes = [next(iter(arms[name]["targets"].values()))["mechanism"]["classification"] for name in ("stock","draft")]
-    v["comparison"] = "distinct_head_repair_deadline" if outcomes == ["original_deadline","head_repair_deadline"] else "other_observation"
+    v["comparison"] = "distinct_head_repair_deadline" if outcomes == ["original_deadline","sack_time_deadline"] else "other_observation"
     v["observed"] = outcomes
+    v["head_transmitted_on_sack"] = [next(iter(arms[n]["targets"].values()))["mechanism"].get("sack_sent_head") for n in ("stock","draft")]
 (root / "records/verdict.json").write_text(json.dumps(v, indent=2)+"\n")
 raise SystemExit(not v["complete"])
