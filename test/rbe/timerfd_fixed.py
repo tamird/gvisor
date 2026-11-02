@@ -210,7 +210,29 @@ if __name__ == "__main__":
             "original_sha256": "c9dc633fb516ee6e43254090ecc9c659af72f9127ba97ee9057d65b111956aae",
             "status": "INCOMPLETE", "phases": {}}
     assert git("rev-parse", "HEAD^").decode().strip() == BASE
-    for name, labels in (("save", SAVE), ("normal", NORMAL), ("nogo", NOGO)):
+    data["previous_fixed"] = {
+        "run": 41468613780, "artifact": 13154833930,
+        "sha256": "75eeb1385710eb7d9c55b13353d23fc1e4ec80e6a06b4ff637a71ab073091fe3",
+        "uuid": "183b8979-8d04-4124-90e2-9f1272f34470",
+        "status": "FAIL", "missing": SAVE,
+    }
+    prior = ROOT / "timer-prior-log.json"
+    if prior.is_file() and prior.stat().st_size <= 4 << 20:
+        try:
+            log = json.loads(prior.read_bytes())["log"]
+            identity = log.get("id", {})
+            if identity:
+                assert identity.get("invocationId", identity.get("invocation_id")) == data["previous_fixed"]["uuid"]
+            lines = [line for line in log.get("contents", "").splitlines()
+                     if "protoc-35.1-linux-x86_64.zip" in line]
+            data["previous_fixed"]["fetch_diagnostic"] = {
+                "mentions_release": bool(lines),
+                "http": sorted(set(re.findall(r"(?i)(?:response code|HTTP(?:/\S+)?)[: ]+(4\d\d|5\d\d)\b", "\n".join(lines)))),
+                "timeout": any("timed out" in line.lower() for line in lines),
+            }
+        except (AssertionError, KeyError, OSError, ValueError):
+            data["previous_fixed"]["fetch_diagnostic"] = "unavailable"
+    for name, labels in (("save", SAVE),):
         try:
             phase(data, name, labels)
         except Exception as err:
@@ -218,7 +240,7 @@ if __name__ == "__main__":
         data["phases"][name]["verified_at"] = now()
         save(data)
     statuses = [p["status"] for p in data["phases"].values()]
-    data["status"] = "PASS" if statuses == ["PASS"] * 3 else "FAIL" if "FAIL" in statuses else "INCOMPLETE"
+    data["status"] = "PASS" if statuses == ["PASS"] else "FAIL" if "FAIL" in statuses else "INCOMPLETE"
     data["verified_at"] = now()
     save(data)
     raise SystemExit(data["status"] != "PASS")

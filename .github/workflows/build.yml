@@ -1,7 +1,7 @@
 name: Check a timerfd owned by queued SCM_RIGHTS across restore
 on:
   push:
-    branches: [qualification/timerfd-rights-fixed]
+    branches: [qualification/timerfd-rights-fixed-checkpoints]
 permissions:
   contents: read
 jobs:
@@ -18,14 +18,15 @@ jobs:
       PROFILE: 0ee70efe6d52576b8f173b40ad6b7ac117da3b72
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 3}
+        with: {persist-credentials: false, fetch-depth: 4}
       - name: Use the qualified GNU action platform and original test report reader
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -eu
-          test "$(git rev-parse HEAD^)" = "$FIXTURE"
-          test "$(git rev-parse HEAD^^)" = "$BASE"
+          test "$(git rev-parse HEAD^)" = 8847e918e7291707d6793d26fabb70b838d35c9f
+          test "$(git rev-parse HEAD^^)" = "$FIXTURE"
+          test "$(git rev-parse HEAD^^^)" = "$BASE"
           umask 077
           mkdir -p "$RUNNER_TEMP/timer-public" "$RUNNER_TEMP/gnu-platform"
           printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/timer-public/verdict.json"
@@ -41,10 +42,28 @@ jobs:
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$RUNNER_TEMP/gnu.bazelrc"
+          curl -fsS --connect-timeout 10 --max-time 30 \
+            -H 'Content-Type: application/json' -H "x-buildbuddy-api-key: $BUILDBUDDY_API_KEY" \
+            --data '{"selector":{"invocation_id":"183b8979-8d04-4124-90e2-9f1272f34470"}}' \
+            https://app.buildbuddy.io/api/v1/GetLog -o "$RUNNER_TEMP/timer-prior-log.json" || :
           unset BUILDBUDDY_API_KEY
+          # Supply the identical public release file to Bazel's ordinary checked download.
+          distdir="$RUNNER_TEMP/protoc-dist"
+          mkdir "$distdir"
+          asset=protoc-35.1-linux-x86_64.zip
+          expected=6930ebf62bd4ea607b98fff052596c6ee564b9835b4ce172c75a3f53ae9d91b7
+          for url in "https://github.com/protocolbuffers/protobuf/releases/download/v35.1/$asset" https://api.github.com/repos/protocolbuffers/protobuf/releases/assets/445060247; do
+            if curl -fsSL --retry 2 --retry-all-errors --connect-timeout 10 --max-time 90 \
+               -H 'Accept: application/octet-stream' "$url" -o "$distdir/download" &&
+               echo "$expected  $distdir/download" | sha256sum -c -; then
+              mv "$distdir/download" "$distdir/$asset"
+              printf 'common --distdir=%s\n' "$distdir" >> "$RUNNER_TEMP/gnu.bazelrc"
+              break
+            fi
+          done
           docker pull --platform=linux/amd64 "$GNU"
           docker run -d --init --name timerfd-gnu --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
-      - name: Verify Linux, systrap, both checkpoint paths and owning analyzers
+      - name: Run only the two previously unexecuted checkpoint owners
         run: docker exec -e GNU -e RUNNER_TEMP -e FIXTURE -e BASE timerfd-gnu python3 "$RUNNER_TEMP/timerfd_fixed.py"
       - name: Check the typed evidence boundary
         id: safe
@@ -66,6 +85,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.safe.outcome == 'success'
         with:
-          name: timerfd-rights-fixed
+          name: timerfd-rights-fixed-checkpoints
           path: ${{ runner.temp }}/timer-public/verdict.json
           if-no-files-found: error
