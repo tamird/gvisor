@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T07:06:48+00:00",
+    "updatedAt": "2026-11-02T07:14:50+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -46996,7 +46996,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-02T07:06:48+00:00",
+      "updatedAt": "2026-11-02T07:14:50+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -49023,9 +49023,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41400998891/artifacts/13121981713"
             }
           ]
+        },
+        {
+          "text": "The first timeout retransmitted A. When the peer SACKed D–F 40 ms later, both versions retransmitted A, B, C and G. With no intervening ACK, the parent retried A 5.960 seconds after that copy. PR #16624 gave it the full six seconds. Both connections delivered new data after the cumulative ACK. This single packet schedule distinguishes the retransmission deadline from RACK’s decision to send A again.",
+          "evidence": [
+            {
+              "label": "The two packet traces and source identities",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41404511820/artifacts/13122398969"
+            },
+            {
+              "label": "The published timeout fix",
+              "url": "https://github.com/google/gvisor/pull/16624"
+            }
+          ]
         }
       ],
-      "nextStep": "For #16624, retain an older hole at timeout and check what a fresh SACK of a later transmission does to its repair and retransmission deadline.",
+      "nextStep": "The reviewer guide distinguishes #16624’s timeout from the RACK repair decision. The fresh-SACK amendment to #16495 awaits contributor review.",
       "evidence": [
         {
           "label": "TCP_INFO retransmission count on Linux, stock gVisor and the candidate",
@@ -63838,7 +63851,7 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-02T07:06:48+00:00",
+      "updatedAt": "2026-11-02T07:14:50+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independently runnable Bazel checks and an explicit format command. The combined target ran Buildifier, cpplint, clang-format, spelling and Go formatting on remote workers.",
       "findings": [
@@ -63994,8 +64007,20 @@
           ]
         },
         {
-          "text": "The containerd/cgroups v3 generator renames exported fields after generating Go from its two proto files. With development dependencies ignored, letting Gazelle select the shipped Go files restored both cgroups packages and the 16,556,192-byte containerd shim. During startup, this shim read its executable eight times. The stock build, which applied gVisor’s protobuf patch, made zero such reads. Two external consumers still failed on C++ toolchain paths when building protoc.",
+          "text": "containerd/cgroups rewrites generated Go field names in all ten published v3 releases. A three-line Gazelle default selects the shipped Go sources and keeps both protobuf descriptor targets. The shim linked, started, and read its executable eight times. The stock gVisor build applies a protobuf patch and makes zero such reads. Building protoc in the external consumer still fails on C++ header paths.",
           "evidence": [
+            {
+              "label": "Both descriptor actions and the real shim startup",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41404466409/artifacts/13121904786"
+            },
+            {
+              "label": "Gazelle uses the same directive for Kubernetes",
+              "url": "https://github.com/bazel-contrib/bazel-gazelle/pull/1701"
+            },
+            {
+              "label": "The three-line change",
+              "url": "https://github.com/tamird/gvisor/blob/8206a3e1c/test/rbe/gazelle-cgroups-go-proto.patch"
+            },
             {
               "label": "Both cgroups compiles, shim link and eight startup reads with the Gazelle default",
               "url": "https://github.com/tamird/gvisor/actions/runs/41403591637/artifacts/13122681614"
@@ -64040,7 +64065,7 @@
           ]
         }
       ],
-      "nextStep": "Coordinate the hunk correction and goimports submission. For the shim, qualify a Gazelle default that selects the distributed Go sources and also keeps both language-neutral proto targets.",
+      "nextStep": "The goimports change needs the upstream hunk correction. Preparing the independent containerd change for Gazelle needs a Gazelle checkout and fork. The protobuf startup behavior is being investigated separately.",
       "evidence": [
         {
           "label": "Gazelle: qualified proposal",
