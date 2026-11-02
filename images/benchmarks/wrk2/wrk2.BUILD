@@ -26,7 +26,7 @@ run_binary(
     ],
     # -b loads jit.bcsave, the only external Lua module needed to emit C.
     env = {"LUA_PATH": "$(execpath @luajit//:src/jit/bcsave.lua)"},
-    tool = "@luajit//:luajit_cli",
+    tool = "@luajit//:bin/luajit",
 )
 
 cc_library(
