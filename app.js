@@ -1467,6 +1467,14 @@ function appendRangeDiff(parent, edge, nodes) {
     description: `Published ${oldHead.slice(0, 9)} → proposed ${newHead.slice(0, 9)} · snapshot ${date(pr.checkedAt)}`,
   });
 }
+function appendSettledPublications(parent, node) {
+  const labels = { issue: "Issue filed", reply: "Reply posted", review: "Review posted" };
+  for (const decision of node.settledReviews || []) {
+    const url = safeURL(decision.postedURL);
+    if (Object.hasOwn(labels, decision.kind) && url)
+      parent.append(link(labels[decision.kind] + " ↗", url, "relation-source"));
+  }
+}
 function drawDetails() {
   if (view === "investigations") { $("details").replaceChildren(); $("details").hidden = true; return; }
   const details = $("details"), nodes = nodeMap(), node = nodes.get(selected); details.replaceChildren(); details.hidden = !node;
@@ -1494,6 +1502,7 @@ function drawDetails() {
     } else section.append(link(decision.kind === "review" ? "Open original PR ↗" : decision.kind === "reply" ? "Open original discussion ↗" : "Open proposed commit ↗", decision.url));
     details.append(section);
   }
+  appendSettledPublications(details, node);
   const action = humanAction(node);
   if (action) {
     const section = element("section", "detail-section human-action");
