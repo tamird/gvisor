@@ -1,35 +1,150 @@
-name: CI
-
-"on":
+name: Verify the shared Go helper image recipe
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/shared-go-helper-images]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  images:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 70
+    env:
+      SOURCE: cea9b0192347cc0ec34ef72f51915ecdf07774c3
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 12
+      - name: Configure the pinned Linux execution platform
+        id: setup
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          echo "Coordinator $(gcc -dumpfullversion), worker GCC 11"
+          test "$(gcc -dumpversion | cut -d. -f1)" = 11
+          if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+          unshare --user --map-root-user true
+          mkdir -p "$RUNNER_TEMP/gnu"
+          GNU=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          printf 'module(name="epoll_gnu")\n' > "$RUNNER_TEMP/gnu/MODULE.bazel"
+          printf 'platform(name="gnu", constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"], exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"}, visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu/BUILD"
+          test -n "$BUILDBUDDY_API_KEY"
+          rc=$RUNNER_TEMP/images.bazelrc
+          umask 077
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=linux-sandbox' "build --inject_repository=epoll_gnu=$RUNNER_TEMP/gnu" 'build --host_platform=@epoll_gnu//:gnu' 'build --extra_execution_platforms=@epoll_gnu//:gnu'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          cat >> "$rc" <<'RC'
+          build --jobs=8
+          build --strategy=GoStdlib=linux-sandbox
+          build --strategy=GoStdlibList=linux-sandbox
+          build --strategy=GoStandardLibraryAnalysis=linux-sandbox
+          build --strategy=GoStaticAnalysis=linux-sandbox
+          build --modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache
+          build --noremote_upload_local_results
+          build --remote_download_outputs=toplevel
+          build --noshow_progress
+          RC
+          for name in clean-layers.sh verify-image-runtime-files.py clean-layer-expectations.json; do
+            git show "$GITHUB_SHA:test/rbe/$name" > "$RUNNER_TEMP/$name"
+          done
+          test "$(git rev-parse "$GITHUB_SHA^")" = "$SOURCE"
+          git fetch --quiet --no-tags --depth=1 origin a859c3ac9ee743d5c84164099be277080951a274 5bb68f84cd0f4fc9d2838fd8399b4cffdf0cb8a1 bcc567c6c701c9c99e74993bb3769eb9f070bc3b
+          cat > "$RUNNER_TEMP/privileged-fixture" <<'WRAPPER'
+          #!/usr/bin/env bash
+          set -u
+          uid=$(id -u)
+          gid=$(id -g)
+          rc=0
+          sudo -nE "$@" || rc=$?
+          if [[ -f "${XML_OUTPUT_FILE:-}" ]]; then sudo -n chown "$uid:$gid" "$XML_OUTPUT_FILE"; fi
+          exit "$rc"
+          WRAPPER
+          chmod 0755 "$RUNNER_TEMP/privileged-fixture"
+      - name: Read the three original output digests per image
+        if: steps.setup.outcome == 'success'
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          for arch in x86_64 aarch64; do
+            for image in profile ollama hey; do
+              key=$image-$arch
+              mkdir -p "$RUNNER_TEMP/$key-before"
+              python3 "$RUNNER_TEMP/verify-image-runtime-files.py" producer "$RUNNER_TEMP/clean-layer-expectations.json" "$key" "$RUNNER_TEMP/$key-before/digests.json" || echo "Will use exact-source cache-only lookup for $key"
+            done
+          done
+      - name: Enable the Linux ARM64 binfmt interpreter
+        id: qemu
+        run: |
+          if [[ ! -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ]]; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends qemu-user-static binfmt-support
+            sudo update-binfmts --enable qemu-aarch64
+          fi
+          grep -Fx enabled /proc/sys/fs/binfmt_misc/qemu-aarch64
+          grep -E '^flags:.*F' /proc/sys/fs/binfmt_misc/qemu-aarch64
+      - name: Build, compare, load and exercise the three AMD64 images
+        id: x86
+        if: always() && steps.setup.outcome == 'success'
+        run: bash "$RUNNER_TEMP/clean-layers.sh" x86_64
+      - name: Build, compare, load and exercise the three ARM64 images
+        id: arm
+        if: always() && steps.setup.outcome == 'success' && steps.qemu.outcome == 'success'
+        run: bash "$RUNNER_TEMP/clean-layers.sh" aarch64
+      - name: Collect bounded results and verify all six named outcomes
+        id: collect
+        if: always()
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PYTHON'
+          from pathlib import Path
+          import json, os, re
+          from datetime import datetime, timezone
+          root = Path(os.environ["RUNNER_TEMP"])
+          out = root / "image-evidence"
+          out.mkdir()
+          token = os.environ["BUILDBUDDY_API_KEY"]
+          assert token
+          results = {}
+          for arch in ("x86_64", "aarch64"):
+              d = root / ("oci-clean-" + arch)
+              outcomes = {}
+              if (d / "status").is_file():
+                  for line in (d / "status").read_text().splitlines():
+                      name, status = line.split()
+                      assert name in ("hey", "profile", "ollama") and name not in outcomes
+                      outcomes[name] = int(status)
+              results[arch] = outcomes
+              if not d.is_dir():
+                  continue
+              for p in list(d.glob("*.json")) + list(d.glob("*-test.xml")) + list(d.glob("*-loaded")):
+                  blob = p.read_bytes()
+                  assert len(blob) < 1_000_000 and token.encode() not in blob and b"remote_header=" not in blob
+                  (out / (arch + "-" + p.name)).write_bytes(blob)
+              for image in outcomes:
+                  log = d / (image + ".log")
+                  lines = []
+                  for line in log.read_text(errors="replace").splitlines():
+                      if re.match(r"^(INFO: Invocation ID:|ERROR:|Error:|AssertionError|[A-Za-z]+Error:|make:|--- (FAIL|PASS|SKIP):|    --- (FAIL|PASS|SKIP):)", line):
+                          if len(line) <= 700 and token not in line and not re.search(r"(?i)authorization|api[-_]?key|remote_header|bes_header|bearer ", line):
+                              lines.append(line)
+                  (out / (arch + "-" + image + "-diagnostics.txt")).write_text("\n".join(lines[-35:]) + "\n")
+          ok = all(results.get(a) == {"profile": 0, "ollama": 0, "hey": 0} for a in ("x86_64", "aarch64"))
+          (out / "verdict.json").write_text(json.dumps({"results": results, "verified": ok, "source": os.environ["SOURCE"], "carrier": os.environ["GITHUB_SHA"], "verdict_utc": datetime.now(timezone.utc).isoformat()}, indent=2) + "\n")
+          PYTHON
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.collect.outcome == 'success'
+        with:
+          name: executable-image-results
+          path: ${{ runner.temp }}/image-evidence
+          if-no-files-found: error
+      - name: Check the typed verdict
+        if: always() && steps.collect.outcome == 'success'
+        run: python3 -c 'import json,os; assert json.load(open(os.environ["RUNNER_TEMP"] + "/image-evidence/verdict.json"))["verified"]'
+      - name: Remove the remote action credential
+        if: always()
+        run: rm -f "$RUNNER_TEMP/images.bazelrc"

@@ -1,0 +1,158 @@
+{
+  "profile-x86_64": {
+    "architecture": "amd64",
+    "runtime_config": {
+      "User": "",
+      "Cmd": [
+        "/bin/bash"
+      ],
+      "Entrypoint": null,
+      "WorkingDir": "",
+      "Env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      ]
+    },
+    "files": {
+      "usr/bin/profilehelper": "f5a7e25f02b72d665ca7f7b26c41c8978712fd19867524a02ebf12b0b8cf4fd2"
+    },
+    "base_layers": [
+      {
+        "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "digest": "sha256:0626d3cc316c9fea3d4891e2ec19b8f371fe22ffb915622f6072a2ee2ca9017f",
+        "size": 29752488
+      }
+    ],
+    "source": "a859c3ac9ee743d5c84164099be277080951a274",
+    "invocation": "5f7b6aaf-e0c9-4718-bd05-04871dde0129",
+    "layer": "sha256:a712d36f64d8ac02abfb59d795def93326a81be3417516b1826a698d9b9d6e4c",
+    "compressed_bytes": 30908426
+  },
+  "ollama-x86_64": {
+    "architecture": "amd64",
+    "runtime_config": {
+      "User": "",
+      "Cmd": [
+        "/usr/bin/httpclient"
+      ],
+      "Entrypoint": null,
+      "WorkingDir": "/",
+      "Env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      ]
+    },
+    "files": {
+      "usr/bin/httpclient": "95a9fe10f9c2289d6157e980e13e60e5e36fd1aec10f62a9dfd174cf1e911702"
+    },
+    "base_layers": [
+      {
+        "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "digest": "sha256:7b229517ed222597277036d94892173207d01a731ab3a88eeb1de2e963a2c788",
+        "size": 3853109
+      }
+    ],
+    "source": "5bb68f84cd0f4fc9d2838fd8399b4cffdf0cb8a1",
+    "invocation": "082af04d-8ea2-463f-91de-112332da783a",
+    "layer": "sha256:61cd56d5f2a4b2a8571673cd27ff63cca3de77cfb47125e8e2e0fa11a0c033bb",
+    "compressed_bytes": 7109447
+  },
+  "hey-x86_64": {
+    "architecture": "amd64",
+    "runtime_config": {
+      "User": "",
+      "Cmd": [
+        "/bin/hey"
+      ],
+      "Entrypoint": null,
+      "WorkingDir": "",
+      "Env": [
+        "PATH=/bin"
+      ]
+    },
+    "files": {
+      "bin/hey": "8c7b348ec4b6cef4871db874899977c1e16cfb5ce4d6262b9cafde6544541837"
+    },
+    "base_layers": [],
+    "source": "bcc567c6c701c9c99e74993bb3769eb9f070bc3b",
+    "invocation": "bff2383a-6c22-4b04-a479-916ce36d4248",
+    "layer": "sha256:46359eca64423ef10afff4a45ef395b10b67a3541b003de441a5e9882a59d996",
+    "compressed_bytes": 4132542
+  },
+  "profile-aarch64": {
+    "architecture": "arm64",
+    "runtime_config": {
+      "User": "",
+      "Cmd": [
+        "/bin/bash"
+      ],
+      "Entrypoint": null,
+      "WorkingDir": "",
+      "Env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      ]
+    },
+    "files": {
+      "usr/bin/profilehelper": "8e1383e2494cae12d3a0a7d2733cb80e0271033af79a1558aa640ed46e389cc7"
+    },
+    "base_layers": [
+      {
+        "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "digest": "sha256:771eed73ee82c7916df197c0fd7ef3ac4eedcb9a6318b10d2652948c6c4ca08f",
+        "size": 27684607
+      }
+    ],
+    "source": "a859c3ac9ee743d5c84164099be277080951a274",
+    "invocation": "20c1bf48-132e-4fb2-a26a-09916dd88744",
+    "layer": "sha256:2f2d6d3030d8e25ba0b7fb32f4d6cccaad51225d05f8e0d4ae06caa700061536",
+    "compressed_bytes": 28730418
+  },
+  "ollama-aarch64": {
+    "architecture": "arm64",
+    "runtime_config": {
+      "User": "",
+      "Cmd": [
+        "/usr/bin/httpclient"
+      ],
+      "Entrypoint": null,
+      "WorkingDir": "/",
+      "Env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      ]
+    },
+    "files": {
+      "usr/bin/httpclient": "537a51043dd3877b9924ff9e1bc1cea67a0610aa40bff8254ed4ace240a8610b"
+    },
+    "base_layers": [
+      {
+        "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+        "digest": "sha256:d3531b7a4f217bdc3426c57bcff84c170f086f456a39689d4a615c6d026c4be0",
+        "size": 4190488
+      }
+    ],
+    "source": "5bb68f84cd0f4fc9d2838fd8399b4cffdf0cb8a1",
+    "invocation": "37a69389-773f-4b73-99a7-de960e4b4d92",
+    "layer": "sha256:9f12d384d3446890f70c688d41e4735f0c77c28b57ae1ccf147567227925119d",
+    "compressed_bytes": 7101373
+  },
+  "hey-aarch64": {
+    "architecture": "arm64",
+    "runtime_config": {
+      "User": "",
+      "Cmd": [
+        "/bin/hey"
+      ],
+      "Entrypoint": null,
+      "WorkingDir": "",
+      "Env": [
+        "PATH=/bin"
+      ]
+    },
+    "files": {
+      "bin/hey": "06ffd888ca1b5ddbf9ca76817275cd726b65bed0a131e280b250fd7665ecb051"
+    },
+    "base_layers": [],
+    "source": "bcc567c6c701c9c99e74993bb3769eb9f070bc3b",
+    "invocation": "92b69a02-8c34-4275-907f-4dfa44470989",
+    "layer": "sha256:d160a7c47170b3f0a9748e878a1e1117b0e6d05b47e504b51b623e9da0cbae49",
+    "compressed_bytes": 3699869
+  }
+}
