@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T01:19:00+00:00",
+    "updatedAt": "2026-11-02T01:32:49+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -59498,9 +59498,26 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-02T01:19:00+00:00",
+      "updatedAt": "2026-11-02T01:32:49+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "Both AMD64 musl plugin executables linked statically. The original DPDK archive was used in both links. TestDumpStack passed on the native runner. TestConnectToSelf used the plugin Sentry to connect to the same container. Both named cases ran without skips. This build disabled DPDK’s VFIO backend; it has no result for traffic through a VFIO device. The original named XMLs were recovered without rerunning either test. The final collection job failed its separate exact-timing check. The named socket verdict became available 7m30s–7m35s after execution, bounded by the recorded start and finish of its Bazel command. Four manual repairs were needed across the build and collection steps.",
+          "evidence": [
+            {
+              "label": "Original archive and static executables",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41369923086/artifacts/13108819013"
+            },
+            {
+              "label": "Plugin initialization and original runtime executions",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41371970540/artifacts/13109108628"
+            },
+            {
+              "label": "Both original named cases and the timing gap",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41372717578/artifacts/13109817821"
+            }
+          ]
+        },
         {
           "text": "The ordinary Bazel syscall TestRunner executed static glibc 2.44 binaries on native AMD64 and ARM64 scratch workers. Each ran ForkTest.Simple, Pipe and SharedMapping, six cases total with no failures or skips. Both original TestRunner actions executed remotely, and both reused their previously verified static binaries. The full verdict followed the last execution by 36.756 seconds.",
           "evidence": [
@@ -61177,7 +61194,7 @@
           ]
         }
       ],
-      "nextStep": "Check which existing musl adaptations the production plugin needs, including whether they preserve VFIO support, then qualify the link and socket workload. The approved native GitHub release workflow is waiting for #16753.",
+      "nextStep": "Build the musl plugin with its VFIO backend enabled using declared Linux UAPI headers. Check the effective configuration and linked driver symbols, then test external traffic on a worker with a suitable device. The approved native GitHub release workflow awaits #16753.",
       "evidence": [
         {
           "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
