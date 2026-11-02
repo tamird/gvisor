@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T06:15:03+00:00",
+    "updatedAt": "2026-11-02T06:33:17+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34174,6 +34174,10 @@
       "summary": "The repository spelling action checked 3,329 declared files on a remote worker. A typo in a new Bazel package failed with its path and suggestion, and a request to edit sources in place failed before the file changed. The wheel contains GPL program code and CC-BY-SA dictionaries.",
       "evidence": [
         {
+          "label": "All six Bazel lint actions and the goimports executable recovered from its scratch worker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41399910347/artifacts/13120089067"
+        },
+        {
           "label": "Buildifier only reordered the output attribute and wrapped the source groups after qualification",
           "url": "https://github.com/tamird/gvisor/compare/46b096d63..c28bb7409"
         },
@@ -34195,7 +34199,7 @@
         }
       ],
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T06:15:03+00:00",
+      "updatedAt": "2026-11-02T06:33:17+00:00",
       "refinement": {
         "before": {
           "head": "73eda260e0388b7f6a32ba84fe167e8dbbaa5d88"
@@ -42553,7 +42557,7 @@
       "group": "bazel",
       "status": "Contributor review requested",
       "summary": "Upgrade the shared Bazel pin to 9.3.1. Two compatibility patches keep gVisor’s existing Coral compiler and LLVM parser. The upgrade includes the directory-watch fix needed by the lint migration.",
-      "updatedAt": "2026-11-02T04:29:14+00:00",
+      "updatedAt": "2026-11-02T06:33:17+00:00",
       "evidence": [
         {
           "label": "Final upgrade commit",
@@ -42590,6 +42594,10 @@
         {
           "label": "Native AMD64 NVIDIA ABI parser test",
           "url": "https://github.com/tamird/gvisor/actions/runs/41368654125/artifacts/13108397749"
+        },
+        {
+          "label": "The same downstream waiter target on Bazel 8.8.1 and 9.3.1, and with root-owned Gazelle overrides",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41398089026/artifacts/13120208022"
         }
       ],
       "refinement": {
@@ -43341,6 +43349,29 @@
         "summary": "Open the plugin-job change once the Bazelisk hook and GNU plugin build land?",
         "body": "The identical command built a static AMD64 runsc with libpluginstack.a and its plugin_preinitstack symbol, then ran its version command. Only the cross-compiler for ARM64 changes. This job checks compilation; device-backed traffic runs separately."
       }
+    },
+    {
+      "id": "branch:goimports-bazel-action",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/goimports-bazel-action",
+      "head": "80c4e21583bedbc99d1ff253fe02612df4e6e21d",
+      "title": "Run the Go formatting check as a Bazel action",
+      "url": "https://github.com/tamird/gvisor/commit/80c4e2158",
+      "group": "analysis",
+      "status": "Agent work",
+      "updatedAt": "2026-11-02T06:33:17+00:00",
+      "summary": "The Bazel check passed on 2,685 Go files. It currently lists files needing changes. The existing check prints a unified diff, so investigate using goimports’s in-process diff library before requesting review.",
+      "evidence": [
+        {
+          "label": "All six Bazel lint actions and the goimports executable recovered from its scratch worker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41399910347/artifacts/13120089067"
+        },
+        {
+          "label": "Formatting, syntax, filename and golden-file controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41398915499/artifacts/13120871828"
+        }
+      ]
     }
   ],
   "edges": [
@@ -46873,6 +46904,15 @@
       "type": "depends_on",
       "reason": "The shared hook supplies Bazelisk when DOCKER_BUILD is false.",
       "evidence": "https://github.com/tamird/gvisor/actions/runs/41395191771/artifacts/13119417233"
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:declared-codespell",
+      "to": "branch:goimports-bazel-action",
+      "reason": "The spelling change supplies the shared Go source inventory used by the check and formatter.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/80c4e2158"
+      ]
     }
   ],
   "investigations": [
@@ -46881,7 +46921,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-02T06:15:03+00:00",
+      "updatedAt": "2026-11-02T06:33:17+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -48878,13 +48918,26 @@
           "text": "In two additional gVisor-first on/off pairs, all four senders first reduced the congestion window from 265 packets to 188. One RACK-on sender then went 44.2 seconds without new data. After its last new packet, the trace recorded 111 retransmission timeouts and 110 entries into RACK recovery on ACKs. Its receiver got 1.15 MB versus 37.36 MB with RACK off. The other RACK-on sender recovered after a 4.48-second gap. No window reduction came from confirming a tail loss probe.",
           "evidence": [
             {
-              "label": "Recovery decisions matched to raw ACKs and SACK ranges in four CUBIC transfers",
-              "url": "https://github.com/tamird/gvisor/blob/d37c2665b/test/benchmarks/tcp/recovery-events-receipt.json"
+              "label": "Shared-link sender decisions and controlled packet replay",
+              "url": "https://github.com/tamird/gvisor/blob/4f4caad29/test/benchmarks/tcp/recovery-events-receipt.json"
+            }
+          ]
+        },
+        {
+          "text": "All 111 timeouts in the stalled shared-link transfer interrupted recovery. After 107, an advancing ACK put the sender back in RACK recovery. Replaying that transition with 500 new bytes queued, #16495 retransmitted two segments on the partial ACK and sent the new bytes after one repair ACK at 10 ms. Its parent retransmitted one and needed three repair ACKs at 30 ms. Both sent the new data before the last old byte was acknowledged.",
+          "evidence": [
+            {
+              "label": "Controlled partial-ACK trace on #16495 and its parent",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41399340430/artifacts/13120793878"
+            },
+            {
+              "label": "Shared-link sender decisions and controlled packet replay",
+              "url": "https://github.com/tamird/gvisor/blob/4f4caad29/test/benchmarks/tcp/recovery-events-receipt.json"
             }
           ]
         }
       ],
-      "nextStep": "Replay the first timeout and following ACK from the stalled shared-link transfer to determine why recovery repeatedly allowed repairs but no new data. For #16624, retain an older hole at timeout and check whether a newly acknowledged later transmission triggers its repair.",
+      "nextStep": "Compare stock and #16495 alone on the shared link with RACK enabled and sender tracing disabled. Check whether stock reproduces the interval without new data and what changes on the candidate. For #16624, retain an older hole at timeout and check whether a newly acknowledged later transmission triggers its repair.",
       "evidence": [
         {
           "label": "TCP_INFO retransmission count on Linux, stock gVisor and the candidate",
@@ -49333,6 +49386,14 @@
         {
           "label": "Recovery decisions matched to raw ACKs and SACK ranges in four CUBIC transfers",
           "url": "https://github.com/tamird/gvisor/blob/d37c2665b/test/benchmarks/tcp/recovery-events-receipt.json"
+        },
+        {
+          "label": "Controlled partial-ACK trace on #16495 and its parent",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41399340430/artifacts/13120793878"
+        },
+        {
+          "label": "Shared-link sender decisions and controlled packet replay",
+          "url": "https://github.com/tamird/gvisor/blob/4f4caad29/test/benchmarks/tcp/recovery-events-receipt.json"
         }
       ],
       "comparisons": [
@@ -63685,9 +63746,9 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-10-31T16:37:26.194794+00:00",
+      "updatedAt": "2026-11-02T06:33:17+00:00",
       "group": "analysis",
-      "summary": "Replace tools/lint.sh with independent Bazel checks and one explicit format command. Hold the Buildifier and cpplint proposals until their shared inputs, worker executables and downstream module boundaries are qualified.",
+      "summary": "Replace tools/lint.sh with independently runnable Bazel checks and an explicit format command. The combined target ran Buildifier, cpplint, clang-format, spelling and Go formatting on remote workers.",
       "findings": [
         {
           "text": "Gazelle checks the 218 selected packages with declared inputs and no host tools. All 16 direct checks passed: a stale rule prints a diff, a malformed BUILD file prints its parse error, and an unexpected exit status still fails the build. An external project built a gVisor resource. Its Go library and full root wildcard hit the same existing Go module override on both revisions. With those overrides masked for diagnosis, the rules-only root wildcard (:all) omitted Gazelle; explicitly selecting it entered toolchain setup.",
@@ -63817,9 +63878,31 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41219788380/artifacts/13050030547"
             }
           ]
+        },
+        {
+          "text": "All six actions in the combined target executed remotely. The Go formatter received 2,685 source files and left the generator golden untouched. On a scratch worker its recovered executable had no dynamic interpreter or shared-library dependencies. The separate Python report check ran on a GNU worker.",
+          "evidence": [
+            {
+              "label": "All six Bazel lint actions and the goimports executable recovered from its scratch worker",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41399910347/artifacts/13120089067"
+            },
+            {
+              "label": "Formatting, syntax, filename and golden-file controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41398915499/artifacts/13120871828"
+            }
+          ]
+        },
+        {
+          "text": "An external Bazel root building gVisor’s waiter package failed on stock 8.8.1 and on the 9.3.1 upgrade with the same Gazelle error. Separating gVisor’s root-only overrides let the ordinary consumer compile the package. A consuming root that explicitly adopted the policy reproduced the same archive. This check does not establish whether the ordinary consumer can build and run the containerd shim.",
+          "evidence": [
+            {
+              "label": "The same downstream waiter target on Bazel 8.8.1 and 9.3.1, and with root-owned Gazelle overrides",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41398089026/artifacts/13120208022"
+            }
+          ]
         }
       ],
-      "nextStep": "Review the two-tool implementation on #16663. Qualify remaining lints separately. Downstream builds also need existing Gazelle repository overrides supplied by the consuming root.",
+      "nextStep": "Preserve goimports unified diffs without an undeclared diff program. Separately, check which protobuf and containerd behavior a consuming Bazel root must explicitly adopt. The downstream Gazelle rejection occurs on both Bazel 8 and Bazel 9.",
       "evidence": [
         {
           "label": "Gazelle: qualified proposal",
