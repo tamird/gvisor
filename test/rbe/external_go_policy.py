@@ -71,8 +71,14 @@ def diagnoses(log):
 
 def details(log):
     lines = []
+    context = 0
     for line in log.splitlines():
-        if not re.search(r"error:|error in fail:|fatal:|failed:|not found|no such |cannot |could not |unable to ", line, re.I):
+        line = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", line)
+        if re.search(r"error\b|fatal\b|failed\b|not found|no such |cannot |could not |unable to ", line, re.I):
+            context = 3
+        elif context:
+            context -= 1
+        else:
             continue
         if re.search(r"key[=:]|api[-_]key|--(?:remote|bes)_header(?:=|\s)|token|password|secret|credential|auth|bearer|cookie|[?&][a-z]+=|/bin/bash -c", line, re.I):
             continue
