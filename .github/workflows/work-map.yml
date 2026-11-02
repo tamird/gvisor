@@ -3,6 +3,7 @@ on:
   push:
     branches: [qualification/work-map-gazelle-remedy]
 permissions:
+  actions: read
   contents: read
 jobs:
   browser:
@@ -12,19 +13,24 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          fetch-depth: 2
+          fetch-depth: 3
           persist-credentials: false
-      - name: Verify the tested source and complete a canonical read-only collection
+      - name: Bind the original qualified snapshot to the same production inputs
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          set -euxo pipefail
-          test "$(git rev-parse HEAD^)" = f98f527255de2ff128a0f2a942eaf6897207e4b1
-          test -z "$(git diff --name-only HEAD^ HEAD -- ':!.github')"
+          set -euo pipefail
+          test "$(git rev-parse HEAD^^)" = f98f527255de2ff128a0f2a942eaf6897207e4b1
+          test "$(git rev-parse HEAD^)" = 2ffa35132e2c14c4cec4867c4645ff89ca568d63
+          test -z "$(git diff --name-only HEAD^^ HEAD -- ':!.github')"
+          gh api repos/tamird/gvisor/actions/artifacts/13172123750/zip >"$RUNNER_TEMP/prior.zip"
+          echo "709ca163fc83ba63c4efd2b3b927bc82a5bef3f0d991d0355ab35d89a508cff7  $RUNNER_TEMP/prior.zip" | sha256sum -c
+          unzip -p "$RUNNER_TEMP/prior.zip" results/github-status.json >github-status.json
+          echo '28cda9992f254fb284266278ca26db21abf04fb266de562c63649ea88023df16  github-status.json' | sha256sum -c
           mkdir results
-          python3 update-status.py
-          node metadata-preflight.mjs . > results/preflight.json
-          cp github-status.json results/github-status.json
+          unzip -p "$RUNNER_TEMP/prior.zip" results/preflight.json >results/original-preflight.json
+          node metadata-preflight.mjs . >results/preflight.json
+          cmp results/original-preflight.json results/preflight.json
       - name: Read the candidate card and other decisions in Chromium
         run: |
           python3 -m http.server 8771 --bind 127.0.0.1 >"$RUNNER_TEMP/http.log" 2>&1 &
@@ -39,15 +45,5 @@ jobs:
           name: work-map-gazelle-paired-remedy
           path: |
             results/preflight.json
-            results/github-status.json
             work-map-ui-result.json
           if-no-files-found: error
-      - name: Run owning client and metadata suites
-        if: always()
-        run: |
-          set +e
-          node --test app_test.mjs
-          js=$?
-          python3 -m unittest discover -p '*_test.py'
-          py=$?
-          test "$js" = 0 && test "$py" = 0

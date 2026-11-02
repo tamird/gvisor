@@ -92,8 +92,10 @@ try {
   assert.deepEqual(live.keys.sort(), ['body','title']);
   const snapshot=JSON.parse(await readFile('github-status.json'));
   assert.equal(live.registryAt,snapshot.registryDate); assert.equal(live.checkedAt,snapshot.checkedAt);
-  const pending=JSON.parse(await readFile('registry.json')).nodes.filter(n=>n.contributorReview?.status==='pending' && n.id!=='pr:16834');
-  for (const n of pending) {
+  result.firstCardVerifiedAt = new Date().toISOString();
+  await writeFile('work-map-ui-result.json', JSON.stringify(result));
+  const pendingCards=JSON.parse(await readFile('registry.json')).nodes.filter(n=>n.contributorReview?.status==='pending' && n.id!=='pr:16834');
+  for (const n of pendingCards) {
     await send('Page.navigate', {url:origin+'?view=table#'+encodeURIComponent(n.id)});
     await until(()=>evaluate("selected === "+JSON.stringify(n.id)+" && !document.getElementById('details').hidden"));
     const observed=await evaluate(`(() => {
