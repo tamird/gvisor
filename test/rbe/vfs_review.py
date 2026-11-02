@@ -23,16 +23,24 @@ def main():
                                 out / "targets.txt", ())
     targets = set((out / "targets.txt").read_text().splitlines())
     cases = {}
+    restore_count = 0
     for row in captured["reports"]:
+        label = row["identity"]["label"]
+        if row["name"] == "test.log" and label.endswith("_save"):
+            with (out / row["path"]).open("rb") as log:
+                restore_count += sum(b"Executing:" in line and b" restore " in line and b"--image-path" in line for line in log)
         if row["name"] != "test.xml":
             continue
-        label = row["identity"]["label"]
-        case_name = ("FifoTest.HangupDependsOnWhenReaderOpened" if ":fifo_test_" in label
-                     else "FcntlLockTest.TestOFDGetLkReturnsNegPID")
-        actual = [f"{c.get('classname')}.{c.get('name')}" for c in
-                  ET.parse(out / row["path"]).iter("testcase")]
-        if actual != [case_name] or label in cases:
-            verdict["errors"].append(f"{label}: expected {case_name}; got {actual}")
+        xml = ET.parse(out / row["path"])
+        actual = [f"{c.get('classname')}.{c.get('name')}" for c in xml.iter("testcase")]
+        if label == "//pkg/sentry/fsimpl/lock:lock_test":
+            match = any(c.get("name") == "TestFileLocksFirstUse" for c in xml.iter("testcase"))
+        elif ":fifo_test_" in label:
+            match = actual == ["FifoTest.HangupDependsOnWhenReaderOpened"]
+        else:
+            match = sorted(actual) == ["FcntlLockTest.GetLockWithMixedReaders", "FcntlLockTest.TestOFDGetLkReturnsNegPID"]
+        if not match or label in cases:
+            verdict["errors"].append(f"{label}: wrong or repeated named results: {actual}")
         cases[label] = actual
     attempts = []
     for line in events.read_text().splitlines():
@@ -47,8 +55,12 @@ def main():
         info = result.get("executionInfo", {})
         if result.get("cachedLocally") or info.get("cachedRemotely") or info.get("strategy") != "remote":
             verdict["errors"].append(f"{label}: expected uncached remote execution")
-    if set(cases) != targets or sorted(attempts) != sorted(targets) or len(targets) != 6:
-        verdict["errors"].append("expected six distinct syscall results and XML reports")
+    locking = "//pkg/sentry/fsimpl/lock:lock_test" in targets
+    if set(cases) != targets or sorted(attempts) != sorted(targets) or len(targets) != (5 if locking else 3):
+        verdict["errors"].append("missing or duplicate result or XML")
+    if locking and restore_count == 0:
+        verdict["errors"].append("no actual restore invocation in the forced-save test log")
+    verdict["restore_count"] = restore_count
     verdict["cases_by_target"] = cases
     verdict["runner_exit"] = int((out / "runner_exit").read_text())
     if verdict["status"] == "PASS" and (verdict["runner_exit"] or verdict["errors"] or verdict["skips"]):
