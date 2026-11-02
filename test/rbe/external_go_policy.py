@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+from zipfile import ZipFile
 
 from check import events
 
@@ -104,8 +105,10 @@ def build(name, sha, version, work):
     save()
     bep, spawns = AREA / (name + ".bep"), AREA / (name + ".spawns")
     args = [*client(version), "build", "--jobs=24",
-            "--inject_repository=tcp_gnu=" + str(AREA / "platform"),
-            "--host_platform=@tcp_gnu//:gnu", "--extra_execution_platforms=@tcp_gnu//:gnu",
+            "--remote_default_exec_properties=Arch=amd64", "--remote_default_exec_properties=OSFamily=linux",
+            "--remote_default_exec_properties=EstimatedMemory=2GB",
+            "--remote_default_exec_properties=workload-isolation-type=firecracker",
+            "--remote_default_exec_properties=container-image=docker://" + os.environ["GNU"],
             "--remote_download_outputs=toplevel", "--build_event_json_file=" + str(bep),
             "--execution_log_json_file=" + str(spawns), "//:use_waiter"]
     p = subprocess.run(args, cwd=work, capture_output=True, text=True, errors="replace")
@@ -159,38 +162,26 @@ def build(name, sha, version, work):
     return row
 
 
-def policies(name, cwd):
-    selected = {}
-    RESULT["policies"][name] = selected
-    for label in (PROTO, SHIM_DEP):
-        p = subprocess.run([*client("9.3.1"), "query", "--output=location", label], cwd=cwd,
-                           text=True, capture_output=True)
-        row = {"exit": p.returncode, "diagnostics": diagnoses(p.stderr), "safe_error_lines": details(p.stderr) if p.returncode else []}
-        selected[label] = row
-        save()
-        if p.returncode:
-            continue
-        locations = re.findall(r"^(.+?):[0-9]+:[0-9]+: ", p.stdout, re.M)
-        if len(locations) != 1:
-            continue
-        path = Path(locations[0])
-        if not path.is_absolute():
-            output_base = subprocess.check_output([*client("9.3.1"), "info", "output_base"], cwd=cwd,
-                                                  text=True, stderr=subprocess.DEVNULL).strip()
-            path = next((base / path for base in (cwd, Path(output_base)) if (base / path).is_file()), path)
-        if label == PROTO:
-            path = path.with_name("rand.go")
-            suffix = "/internal/detrand/rand.go"
-        else:
-            suffix = "/pkg/protobuf/types/" + path.name
-        if not path.is_file() or not str(path).endswith(suffix):
-            continue
-        data = path.read_bytes()
-        row.update(file=path.name, sha256=sha256(data).hexdigest(), size=len(data))
-        if label == PROTO:
-            row.update(reads_executable=b"os.Executable()" in data, opens_binary=b"os.Open(" in data)
-        save()
-    return selected
+def original_policy():
+    archive = AREA / "original.zip"
+    digest = sha256(archive.read_bytes()).hexdigest()
+    assert digest == "c1226e0a4e0fc4d8320dc8c831fa0fd88e1807243d6d2da3c1a010f4013dcef8"
+    with ZipFile(archive) as z:
+        assert z.namelist() == ["external-go.json"]
+        original = json.loads(z.read("external-go.json"))
+    assert original["verdict"] == "INCOMPLETE"
+    for name, source in (("master", MASTER), ("upgrade", UPGRADE), ("split", SPLIT), ("adopting", SPLIT)):
+        row = original["builds"][name]
+        assert row["source"] == source and row["exit"] and not row["waiter_actions"]
+        assert any("No repository visible as '@platforms' from repository" in s for s in row["safe_error_lines"])
+    root, adopted = (original["policies"][key] for key in ("gvisor_root", "adopting"))
+    assert root[PROTO] == adopted[PROTO] and root[PROTO]["sha256"] == PATCHED
+    assert not root[PROTO]["reads_executable"] and not root[PROTO]["opens_binary"]
+    assert root[SHIM_DEP] == adopted[SHIM_DEP] and root[SHIM_DEP]["file"] == "BUILD.bazel"
+    assert root[SHIM_DEP]["sha256"] == "bb91276848ddf5377501f5ea045a7094ddcd5af1460310c8007986cac5bf5876"
+    RESULT.update(original={"run": 41397610786, "artifact": 13119828475, "sha256": digest,
+                            "verdict": original["verdict"]}, policies=original["policies"])
+    save()
 
 
 def close_server(version, work):
@@ -199,7 +190,9 @@ def close_server(version, work):
 
 
 def main():
-    assert git("rev-parse", "HEAD^") == SPLIT and git("rev-parse", SPLIT + "^") == UPGRADE
+    original_policy()
+    assert git("rev-parse", "HEAD^") == "f95fd151120faa38be862f8d1f2ab5887761139d"
+    assert git("rev-parse", "HEAD^^") == SPLIT and git("rev-parse", SPLIT + "^") == UPGRADE
     assert git("rev-parse", UPGRADE + "^") == MASTER
     assert git("diff", "--name-only", UPGRADE, SPLIT) == "MODULE.bazel"
     assert not git("diff", MASTER, SPLIT, "--", "go.mod", "go.sum", "pkg/waiter",
@@ -215,21 +208,12 @@ def main():
         work = AREA / name
         manifest(work, tags if name == "adopting" else None)
         build(name, sha, version, work)
-        if name == "adopting":
-            policies(name, work)
         close_server(version, work)
-    select(UPGRADE)
-    root = policies("gvisor_root", SOURCE)
-    select(SPLIT)
-    adopted = RESULT["policies"]["adopting"]
     checks = {
         "inherited": all(RESULT["builds"][n]["provider_rejected_gvisor"] and RESULT["builds"][n]["exit"] and
                          RESULT["builds"][n]["forbidden_tags"] == ["go_deps.gazelle_override"] for n in ("master", "upgrade")),
         "ordinary_split_build": RESULT["builds"]["split"]["status"] == "PASS",
         "adopting_build": RESULT["builds"]["adopting"]["status"] == "PASS",
-        "protobuf_patch": root[PROTO].get("sha256") == PATCHED == adopted[PROTO].get("sha256"),
-        "shim_go_target": root[SHIM_DEP].get("file") in ("BUILD.bazel", "BUILD") and
-                          root[SHIM_DEP].get("sha256") == adopted[SHIM_DEP].get("sha256"),
     }
     RESULT.update(checks=checks, finished=now(), verdict="PASS" if all(checks.values()) else "INCOMPLETE")
     save()
