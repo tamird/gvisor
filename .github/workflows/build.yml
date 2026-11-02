@@ -22,7 +22,7 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "7e660c42af1f5180ee947c9d1a77b779fa86de4a"
+        test "$(git rev-parse HEAD^1)" = "ba0d2cf39f48e8a357dfd6a9199b1c5881049edf"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -53,7 +53,7 @@ jobs:
         # builtin headers that execute the actions on remote workers.
         image=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
         mkdir -p "$RUNNER_TEMP/gnu-home"
-        docker run -d --name gnu-coordinator --entrypoint /bin/sleep \
+        docker run --init -d --name gnu-coordinator --entrypoint /bin/sleep \
           --user "$(id -u):$(id -g)" -e HOME="$RUNNER_TEMP/gnu-home" -e USE_BAZEL_VERSION \
           -e USER="$(id -un)" -v /etc/passwd:/etc/passwd:ro -v /etc/group:/etc/group:ro \
           -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" \
@@ -70,7 +70,7 @@ jobs:
         fi
         test "$(docker exec gnu-coordinator /usr/local/bin/bazel --version)" = "bazel $USE_BAZEL_VERSION"
         test "$(docker exec gnu-coordinator id -un)" = "$(id -un)"
-        output_base=$(docker exec gnu-coordinator /usr/local/bin/bazel --ignore_all_rc_files info output_base)
+        output_base=$(docker exec gnu-coordinator /usr/local/bin/bazel --batch --ignore_all_rc_files info output_base)
         test -d "$output_base" && test -w "$output_base"
         rc=$RUNNER_TEMP/fifo.bazelrc
         umask 077
