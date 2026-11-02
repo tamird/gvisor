@@ -161,6 +161,17 @@ print(json.dumps(result))
     return json.loads(subprocess.check_output(["sudo", "python3", "-c", code], text=True))
 
 
+def install_runtime(install, release, runsc, sentry):
+    # Select the final source before copy2 preserves a read-only output mode.
+    sources = {**release, "runsc": runsc, "gvisor_sentry_plugin_stack": sentry}
+    (install / "gvisor-bin").mkdir(parents=True, exist_ok=True)
+    for name, path in sources.items():
+        destination = install / (name if name in ("runsc", "containerd-shim-runsc-v1") else "gvisor-bin/" + name)
+        assert not destination.exists()
+        shutil.copy2(path, destination)
+    return sources
+
+
 def test_case(r, key, bazel, flags, target, name, extra=()):
     row = r[key] = {"status": "INCOMPLETE", "target": target, "expected": name, "started": now()}
     bep = TMP / (key + ".bep")
@@ -323,12 +334,7 @@ def main():
             r.update(phase="host-devices", runtime_status="BLOCKED", vhost_traffic="not exercised")
             return 1
         install = TMP / "plugin-installed"
-        (install / "gvisor-bin").mkdir(parents=True, exist_ok=True)
-        for name, path in by_target["//:release"].items():
-            destination = install / (name if name in ("runsc", "containerd-shim-runsc-v1") else "gvisor-bin/" + name)
-            shutil.copy2(path, destination)
-        shutil.copy2(runsc, install / "runsc")
-        shutil.copy2(sentry, install / "gvisor-bin/gvisor_sentry_plugin_stack")
+        install_runtime(install, by_target["//:release"], runsc, sentry)
         assert elf(install / "runsc") == {k: v for k, v in r["binaries"][RUNSC].items() if k not in ("link", "output_path")}
         assert elf(install / "gvisor-bin/gvisor_sentry_plugin_stack") == {k: v for k, v in r["binaries"][SENTRY].items() if k not in ("link", "output_path")}
         private_logs = TMP / "plugin-runtime-logs"

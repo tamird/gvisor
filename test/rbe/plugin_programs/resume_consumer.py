@@ -1,4 +1,4 @@
-"""Recover the original built bytes, then run only the two missing cases."""
+"""Recover the original built bytes, then run only the missing VFIO-on socket case."""
 
 import hashlib
 import json
@@ -11,16 +11,16 @@ import traceback
 import zipfile
 
 from cas_inputs import blob, fetch, rpc
-from consumer import BACKTRACE, IMAGE, PRODUCT, RUNSC, RUNTIME, SENTRY, TEST, devices, elf, test_case
+from consumer import IMAGE, PRODUCT, RUNSC, RUNTIME, SENTRY, TEST, devices, elf, install_runtime, test_case
 from qualify import OUT, TMP, now, save
 
-ORIGINAL = "ac716cf3-de03-44be-97c0-05927b5ca766"
-SOURCE = "f917114d928c7b73b3899fdd4492d2120029cf62"
-ARCHIVE = "2b9b8ab8ea5c58fcd2b16863ccd78efc78c104843a31da3e1fe72329629aeac7"
+ORIGINAL = "d2c2f184-a6b4-4528-92a0-c2309546d07d"
+TEST_LINK_ORIGINAL = "ac716cf3-de03-44be-97c0-05927b5ca766"
+SOURCE = "a4a858875a238017693c183b02001c721051f1f4"
+ARCHIVE = "9ae503cfa1ad493a54223c313554970d5db303911af9dbcd07df886ae2522cae"
 LINKS = {
-    RUNSC: "ba79427ff0fcd0f7c20041dd6e81a61cd012c9c2236ab3b9a7c4a5d4d422312a",
-    SENTRY: "1179972531ee4885f282e8d36c0dd24e04305d5b2146bb2f9e1a2f73d28fd6c2",
-    BACKTRACE: "677f10d6f9fcd747cf391e2a2f2a5158bb0268ecf6abee1aafbbd8c7244efc55",
+    RUNSC: "f6cfe50accb4b961cf685500c002cdec6edf554190100ef12095b112b51d24c3",
+    SENTRY: "c36e625b09924efeedc9ae42d13e722f115b26b91e3c5654d6b7940c39c141eb",
     TEST: "b185831eb5e3ac1acc5f36d4c9c0f254f1ce6fd51e2bd6fd93455f557870d048",
 }
 
@@ -31,8 +31,9 @@ def error(exc):
 
 def write_original(digest, path):
     path.parent.mkdir(parents=True, exist_ok=True)
+    assert not path.exists()
     path.write_bytes(blob(digest, ORIGINAL))
-    path.chmod(0o755)
+    path.chmod(0o555)
     # The Go integration test and ordinary sidecars run on populated Ubuntu;
     # only the actual static owners have a no-loader/no-library contract.
     header = subprocess.check_output(["readelf", "-h", path], text=True)
@@ -52,7 +53,7 @@ def preflight_roles(r):
     checks = {}
     for owner in LINKS:
         actual = rows[owner]["file"]
-        static = owner in (RUNSC, SENTRY, BACKTRACE)
+        static = owner in (RUNSC, SENTRY)
         checks[owner] = {"native_amd64": actual["machine"] == "x86_64", "requires_static": static,
                          "is_static": actual["interpreter"] is None and not actual["needed"]}
     for name, actual in r["recovery"]["sidecars"].items():
@@ -62,14 +63,22 @@ def preflight_roles(r):
     save(r)
     assert all(c["native_amd64"] and (not c["requires_static"] or c["is_static"]) for c in checks.values())
     # These are the exact prior producer's two static-deliverable observations.
-    assert all(rows[o]["file"] == {k: v for k, v in r["binaries"][o].items() if k != "link"} for o in (RUNSC, SENTRY))
+    assert all(rows[o]["file"] == {k: v for k, v in r["binaries"][o].items() if k not in ("link", "output_path")} for o in (RUNSC, SENTRY))
 
 
 def link_output(r, owner, path):
     link, = [a for a in r["actions"] if a["mnemonic"] == "GoLink" and a["digest"]["hash"] == LINKS[owner]]
     assert link["targetLabel"] in (owner, owner + "_/" + owner.rsplit(":", 1)[1])
-    assert not link["exitCode"] and link["runner"] == "remote" and not link["cacheHit"]
-    rows = rpc("GetExecution", {"executionLookup": {"invocationId": ORIGINAL, "actionDigestHash": LINKS[owner]},
+    assert not link["exitCode"] and not link["status"]
+    # This unchanged test action was reused from the original qualified build;
+    # only the two deliverables linked freshly in the VFIO-on invocation.
+    if owner == TEST:
+        assert link["runner"] == "remote cache hit" and link["cacheHit"]
+        invocation = TEST_LINK_ORIGINAL
+    else:
+        assert link["runner"] == "remote" and not link["cacheHit"]
+        invocation = ORIGINAL
+    rows = rpc("GetExecution", {"executionLookup": {"invocationId": invocation, "actionDigestHash": LINKS[owner]},
                                 "inlineExecuteResponse": True}).get("execution", [])
     execution, = [e for e in rows if e.get("actionDigest", {}).get("hash") == LINKS[owner]
                   and str(e["actionDigest"]["sizeBytes"]) == str(link["digest"]["sizeBytes"])]
@@ -82,7 +91,7 @@ def link_output(r, owner, path):
     actual = write_original(output["digest"], path)
     if owner in (RUNSC, SENTRY):
         r["binaries"][owner]["link"] = link
-    return {"action": link["digest"], "output": output["path"], "file": actual, "fresh_original_link": True}
+    return {"action": link["digest"], "output": output["path"], "file": actual, "link_invocation": invocation, "producer_cache_hit": bool(link["cacheHit"])}
 
 
 def walk(value):
@@ -140,35 +149,46 @@ def recover():
         (OUT / "image.json").write_bytes(z.read("image.json"))
     assert r["source"] == SOURCE and r["product"] == PRODUCT and r["invocation"] == ORIGINAL
     assert r["status"] == "INCOMPLETE" and r["build_exit"] == 0 and r["build_status"] == "PASS"
-    assert r["tests_executed"] == 0 and "socket" not in r and "backtrace" not in r
-    r["original_collection"] = {"run": 41369923086, "artifact": 13108819013, "sha256": ARCHIVE,
-                                "status": r["status"], "tests_executed": 0, "error": r.pop("collection_error"),
-                                "verdict_time": r["verdict_time"], "consumer_inputs": r.pop("consumer_inputs")}
+    assert r["tests_executed"] == r["passed"] == 1 and r["failed"] == r["skipped"] == 0
+    assert r["compiler_preflight"]["status"] == r["consumer_inputs"]["status"] == "PASS"
+    assert r["backtrace"]["status"] == "PASS" and r["backtrace"]["cases"] == [
+        {"class": "backtrace_test", "name": "TestDumpStack", "status": "PASS"}]
+    assert "socket" not in r and r["collection_error"]["type"] == "PermissionError"
+    r["original_collection"] = {"run": 41376238963, "artifact": 13111068733, "sha256": ARCHIVE,
+                                "status": r["status"], "tests_executed": 1, "error": r.pop("collection_error"),
+                                "verdict_time": r["verdict_time"], "backtrace": r["backtrace"]}
     r["recovery"] = {"carrier": os.environ["GITHUB_SHA"], "started": now(), "status": "INCOMPLETE", "outputs": {}}
-    r["prior_replay"] = {"run": 41371493256, "artifact": 13109144077,
-                         "sha256": "3e3b9f9136a8d05f9a1359fa71af76fe4e4ba019217fc8fd22ba4f518b6731e4",
-                         "status": "INCOMPLETE", "tests_executed": 0,
-                         "cause": "static-deliverable check incorrectly applied to ordinary GNU integration_test"}
-    r["manual_interventions"] = ["correct source-file label for queue.h", "recover original outputs after reporting-path failure",
-                                 "restrict static ELF requirement to actual static owners"]
+    r["manual_interventions"] = ["select final runtime sources before preserving read-only output modes"]
     save(r)
     try:
         assert subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() == os.environ["GITHUB_SHA"]
         assert subprocess.run(["git", "diff", "--quiet", SOURCE, "HEAD", "--", ".", ":(exclude)test/rbe", ":(exclude).github/workflows/build.yml"]).returncode == 0
+        staged = TMP / "original-executables"
         install = TMP / "plugin-installed"
         pkg = Path("test/rbe/plugin_programs/reused")
-        destinations = {RUNSC: install / "runsc", SENTRY: install / "gvisor-bin/gvisor_sentry_plugin_stack",
-                        BACKTRACE: pkg / "exact_backtrace", TEST: pkg / "exact_socket"}
+        destinations = {RUNSC: staged / "runsc", SENTRY: staged / "gvisor-bin/gvisor_sentry_plugin_stack",
+                        TEST: pkg / "exact_socket"}
         for owner, path in destinations.items():
             r["recovery"]["recovering_owner"] = owner
             save(r)
             r["recovery"]["outputs"][owner] = link_output(r, owner, path)
             save(r)
         del r["recovery"]["recovering_owner"]
-        sidecars(r, install)
+        sidecars(r, staged)
         preflight_roles(r)
+        release = {name: staged / "gvisor-bin" / name for name in r["recovery"]["sidecars"]}
+        # Exercise the duplicate runsc slot with the actual read-only binary:
+        # it must be copied once even when also present in the release map.
+        release["runsc"] = destinations[RUNSC]
+        sources = install_runtime(install, release, destinations[RUNSC], destinations[SENTRY])
+        modes = {}
+        for name, source in sources.items():
+            target = install / (name if name == "runsc" else "gvisor-bin/" + name)
+            assert source.stat().st_mode & 0o777 == target.stat().st_mode & 0o777 == 0o555
+            assert hashlib.sha256(source.read_bytes()).digest() == hashlib.sha256(target.read_bytes()).digest()
+            modes[name] = "0555"
+        r["recovery"]["readonly_install"] = {"status": "PASS", "modes": modes, "copied_once_per_final_name": True}
         (pkg / "BUILD").write_text('load("@bazel_skylib//rules:native_binary.bzl", "native_test")\n\n'
-                                  'native_test(name = "backtrace", src = "exact_backtrace", size = "large", local = True)\n'
                                   'native_test(name = "socket", src = "exact_socket", size = "large", local = True)\n')
         r["recovery"].update(status="PASS", finished=now(), product_rebuilds=0)
     except Exception as exc:
@@ -185,7 +205,6 @@ def tests():
              "--spawn_strategy=remote", "--noremote_local_fallback", "--remote_download_outputs=toplevel",
              "--test_env=GO_TEST_WRAP=1", "--color=no", "--curses=no",
              "--registry=" + (Path(os.environ["GITHUB_WORKSPACE"]) / "registry").as_uri(), "--registry=https://bcr.bazel.build"]
-    test_case(r, "backtrace", bazel, flags, "//test/rbe/plugin_programs/reused:backtrace", "TestDumpStack")
     try:
         r["devices"] = devices()
         save(r)
@@ -226,6 +245,7 @@ def tests():
             r["status"] = "PASS"
     except Exception as exc:
         r["runtime_error"] = error(exc)
+    r["followup_tests_executed"] = sum(c["status"] != "SKIP" for c in r.get("socket", {}).get("cases", []))
     r["verdict_time"] = now()
     save(r)
     return r["status"] == "PASS"
