@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T20:50:10.024463+00:00",
+    "updatedAt": "2026-11-02T21:01:12.442264+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40969,14 +40969,22 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "checkpoint-page-write-error",
-      "head": "04c66b4d86260991e49c97c7461a04f5f479c823",
+      "head": "adf0d6a67589ad4587ea0c906818b77e40cb089b",
       "title": "Preserve checkpoint write errors across memory files",
-      "url": "https://github.com/tamird/gvisor/tree/checkpoint-page-write-error",
+      "url": "https://github.com/tamird/gvisor/commit/adf0d6a67",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
-      "summary": "When the pages file fills up, registering another memory file can hide ENOSPC behind an invalid checkpoint-gofer handle. The corrected kernel preserved ENOSPC. All 69 package cases, the same 69 with the race detector, the kernel case and both Nogo targets passed. The two original failures and all six reports are in the combined receipt.",
+      "status": "Published as #16869",
+      "updatedAt": "2026-11-02T21:01:12.442264+00:00",
+      "summary": "When the pages file fills up, registering another memory file can hide ENOSPC behind an invalid checkpoint-gofer handle. The rebased fix keeps ENOSPC. All 69 package cases, all 69 race cases and both analyzers passed on the published source, with no missing or skipped cases.",
       "evidence": [
+        {
+          "label": "Published checkpoint error fix",
+          "url": "https://github.com/google/gvisor/pull/16869"
+        },
+        {
+          "label": "Rebased source: package, race and both analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41521971926/artifacts/13178816898"
+        },
         {
           "label": "Writer source and permanent regression",
           "url": "https://github.com/tamird/gvisor/commit/04c66b4d8"
@@ -41004,13 +41012,22 @@
       ],
       "followup": {
         "owner": "Workstream owner",
-        "sourceHead": "04c66b4d86260991e49c97c7461a04f5f479c823",
-        "observedAt": "2026-11-02T20:50:09.856350+00:00",
-        "disposition": "Approved; rebase complete.",
-        "nextAction": "Qualify adf0d6a67 on the checkpoint package, with race detection and both analyzers, then publish.",
+        "sourceHead": "adf0d6a67589ad4587ea0c906818b77e40cb089b",
+        "observedAt": "2026-11-02T21:01:12.442264+00:00",
+        "disposition": "Approved repair published as #16869",
+        "nextAction": "Follow the published pull request.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41521971926"
+          "https://github.com/google/gvisor/pull/16869",
+          "https://github.com/tamird/gvisor/actions/runs/41521971926/artifacts/13178816898"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "04c66b4d86260991e49c97c7461a04f5f479c823"
+        },
+        "after": {
+          "head": "adf0d6a67589ad4587ea0c906818b77e40cb089b"
+        }
       }
     },
     {
