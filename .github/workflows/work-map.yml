@@ -1,27 +1,22 @@
-name: Check deployed work-map assets
+name: Smoke the deployed work-map decision queues
 on:
   push:
-    branches: [qualification/work-map-review-kinds]
+    branches: [qualification/work-map-live-decisions]
 permissions:
   contents: read
 jobs:
-  client:
+  browser:
     runs-on: ubuntu-24.04
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
-      - name: Check client behavior and the exact data pair
-        run: |
-          node --test app_test.mjs
-          python3 -m unittest discover -p '*_test.py'
-          node metadata-preflight.mjs .
-          python3 - <<'PY'
-          from html.parser import HTMLParser
-          from pathlib import Path
-          class Scripts(HTMLParser):
-              def handle_starttag(self, tag, attrs):
-                  if tag == "script":
-                      scripts.append(dict(attrs).get("src"))
-          scripts = []
-          Scripts().feed(Path("index.html").read_text())
-          assert "app.js?v=20261102-decision-queues" in scripts, scripts
-          PY
+      - name: Read the deployed tracker in Chromium
+        run: node --experimental-websocket .github/qualification/work-map-ui.mjs
+      - name: Publish the bounded browser observations
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-map-live-decisions
+          path: work-map-ui-result.json
+          if-no-files-found: error
+          retention-days: 14
