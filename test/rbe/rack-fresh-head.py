@@ -1,78 +1,66 @@
-"""Check named packet executions and preserve distinct baseline/corrected observations."""
+"""Preserve each actual loss response, including an incomplete or stalled arm."""
 import hashlib
 import json
 import os
-import re
-import xml.etree.ElementTree as ET
 from pathlib import Path
+import re
+import time
+from xml.etree import ElementTree
 
 root = Path(os.environ["RUNNER_TEMP"])
-out = {}
-for arm in ("master-clock", "fixed-clock", "linux", "stock", "netstack", "owners"):
-    d = root / "records" / arm
-    if not (d / "exit").exists():
-        out[arm] = {"passed": False, "reason": "not completed"}
-        continue
-    code = int((d / "exit").read_text())
-    log = (d / "log").read_text(errors="replace")
-    bep = root / (arm + ".bep")
+folder = root / "records"
+fixture = hashlib.sha256((root/"packet.go").read_bytes()).hexdigest()
+verdict = {"carrier": (folder/"carrier").read_text().strip(), "fixture": fixture, "arms": {}}
+for arm in ("linux", "stock", "select"):
+    d = folder/arm
+    entry = {"passed": False}
+    verdict["arms"][arm] = entry
+    for name in ("started", "finished", "invocation", "head", "fixture", "exit"):
+        if (d/name).is_file():
+            entry[name] = (d/name).read_text().strip()
+    target = "tcp_rack_native_test" if arm == "linux" else "tcp_rack_netstack_test"
+    label = "//test/packetimpact/tests:"+target
+    try:
+        dest = d/target
+        log = (dest/"test.log").read_text(errors="replace")
+        cases = {c.get("name", ""):[e.tag for e in c if e.tag in ("error","failure","skipped")]
+                 for c in ElementTree.parse(dest/"test.xml").iter("testcase")}
+        named = [v for k,v in cases.items() if k.endswith("TestRACKLostTimeoutRepair")]
+    except (OSError, ElementTree.ParseError, ValueError):
+        log, named = (dest/"test.log").read_text(errors="replace") if (dest/"test.log").exists() else "", []
+    entry["named"] = named
+    entry["trace"] = [m.group(0).strip() for m in re.finditer(r"LATE_(?:DUT|INFO|WIRE|ACK|COMPLETE|BEFORE_TIMEOUT) [a-zA-Z0-9_=. /+\[\]-]+", log)]
+    entry["diagnostics"] = [l.strip()[:450] for l in log.splitlines() if re.search(r"tcp_rack_test.go:\d+:|^--- FAIL|^panic:", l)
+                            and not re.search(r"https?://|(?i:api[_-]?key|header|token|secret|bearer)", l)][-12:]
+    if not entry["trace"] and (d/"log").is_file():
+        entry["bazel"] = [l.strip()[:400] for l in (d/"log").read_text(errors="replace").splitlines()
+                          if re.search(r"(^ERROR:|undefined:|does not exist|cannot use|not declared)", l)
+                          and not re.search(r"https?://|grpc|(?i:api[_-]?key|header|token|secret|bearer)", l)][-10:]
     events = []
-    if bep.exists():
-        with bep.open() as f:
-            for line in f:
-                try:
-                    events.append(json.loads(line))
-                except ValueError:
-                    continue
-    results = {}
-    for label in (d / "labels").read_text().splitlines():
-        actual = {label}
-        for e in events:
-            target = e["id"].get("targetCompleted", {}).get("label")
-            if target == label:
-                for child in e.get("children", []):
-                    for k in ("targetCompleted", "testSummary", "testResult"):
-                        if "label" in child.get(k, {}):
-                            actual.add(child[k]["label"])
-        action = [e["testResult"].get("status") for e in events if e["id"].get("testResult", {}).get("label") in actual]
-        summary = [e["testSummary"].get("overallStatus") for e in events if e["id"].get("testSummary", {}).get("label") in actual]
-        dest = d / label.split(":")[1]
-        text = (dest / "test.log").read_text(errors="replace")
-        cases = {}
-        try:
-            for case in ET.parse(dest / "test.xml").iter("testcase"):
-                cases[case.get("name", "")] = [c.tag for c in case if c.tag in ("failure", "error", "skipped")]
-        except (OSError, ET.ParseError):
-            pass
-        want = "FAILED" if arm == "stock" else "PASSED"
-        passed = set(action) == set(summary) == {want} and (code != 0 if arm == "stock" else code == 0)
-        named = {k: v for k, v in cases.items() if "Fresh" in k}
-        trace = [s.strip() for s in text.splitlines() if "WIRE schedule=" in s or "TIMER immediate=" in s]
-        if arm.endswith("clock"):
-            for case in ("head-lost", "classic-dupack", "fresh-new-sack", "fresh-repeat-sack", "fresh-reorder-timer"):
-                line = [s for s in trace if "WIRE schedule=" + case + " " in s]
-                passed &= any(k.endswith("/" + case) and not v for k, v in named.items()) and len(line) == 1
-                if line:
-                    m = re.search(r"replies=\[([\d ]*)\]", line[0])
-                    replies = m[1].split() if m else None
-                    want_head = case in ("head-lost", "classic-dupack") or case != "fresh-repeat-sack" and arm == "master-clock"
-                    passed &= replies is not None and (("0" in replies) == want_head)
-                    if case == "fresh-new-sack":
-                        passed &= "10" in (replies or [])
-                    if case == "fresh-repeat-sack":
-                        passed &= replies == []
-        elif arm == "owners":
-            passed &= bool(cases) and not any(v for v in cases.values() if "error" in v or "failure" in v)
-            if label.endswith("_nogo"):
-                passed &= "amd64" in text and "arm64" in text
-        else:
-            match = [v for k,v in named.items() if k.endswith("TestRACKFreshTimeoutRetransmission")]
-            passed &= len(match) == 1 and ("failure" in match[0] if arm == "stock" else not match[0])
-            if arm == "stock":
-                passed &= "SACK of later segments retransmitted the freshly repaired head" in text
-        note = [s.strip()[:520] for s in (text + "\n" + log).splitlines() if re.search(r"tcp_rack_test.go:\d+|^ERROR:|^panic:|^--- FAIL|^FAIL:|^--- SKIP", s) and not re.search("token|authorization|api[_-]?key|bearer|remote[_-]?header|password",s,re.I)]
-        results[label] = {"passed":passed, "actual":sorted(actual), "action":action, "summary":summary, "xml":len(cases), "skips":sum("skipped" in v for v in cases.values()), "named":named, "observations":trace, "diagnostics":note[-24:] if not passed or arm=="stock" else []}
-    out[arm] = {"passed": all(r["passed"] for r in results.values()), "source":(d/"head").read_text().strip(), "exit":code, "targets":results, "invocations":re.findall(r"Invocation ID: ([\w-]+)", log)}
-record = {"fixture":hashlib.sha256((root/"rack-fresh-head.go.txt").read_bytes()).hexdigest(), "arms":out, "complete":all(r["passed"] for r in out.values())}
-(root/"records/verdict.json").write_text(json.dumps(record,indent=2)+"\n")
-raise SystemExit(not record["complete"])
+    if (root/(arm+".bep")).is_file():
+        for line in (root/(arm+".bep")).read_text().splitlines():
+            try:
+                events.append(json.loads(line))
+            except ValueError:
+                continue
+    actual = {label}
+    for e in events:
+        if e["id"].get("targetCompleted", {}).get("label") == label:
+            actual.update(child[k]["label"] for child in e.get("children",[]) for k in ("targetCompleted","testSummary","testResult") if "label" in child.get(k,{}))
+    attempts = [{"status":v["status"],"cached":bool(v.get("cachedLocally") or v.get("executionInfo",{}).get("cachedRemotely")),
+                 "strategy":v.get("executionInfo",{}).get("strategy")}
+                for e in events if "testResult" in e and e["id"]["testResult"].get("label") in actual for v in [e["testResult"]]]
+    summaries = [e["testSummary"]["overallStatus"] for e in events if "testSummary" in e and e["id"]["testSummary"].get("label") in actual]
+    entry.update(attempts=attempts, summaries=summaries)
+    trace = entry["trace"]
+    expected_native = "true" if arm == "linux" else "false"
+    native = any(f"LATE_DUT native={expected_native} kernel=" in l for l in trace)
+    returned = any(re.search(r"LATE_WIRE phase=(sack_to_half_rto|no_more_peer_input) goal=0 matched=true ", l) for l in trace)
+    positive = all(any("LATE_INFO phase="+phase+" " in l for l in trace) for phase in ("first_timeout","head_returned","half_rto"))
+    entry["passed"] = bool(entry.get("exit") == "0" and entry.get("fixture") == fixture and entry.get("head") ==
+                           os.environ["MASTER" if arm == "stock" else "PRODUCT"] and named == [[]] and summaries == ["PASSED"] and
+                           len(attempts) == 1 and attempts[0]["status"] == "PASSED" and not attempts[0]["cached"] and native and returned and
+                           positive and any("LATE_COMPLETE segments=7 fresh=1" in l for l in trace))
+verdict.update(complete=all(r["passed"] for r in verdict["arms"].values()), verified_unix=time.time())
+(folder/"verdict.json").write_text(json.dumps(verdict,indent=2)+"\n")
+raise SystemExit(not verdict["complete"])
