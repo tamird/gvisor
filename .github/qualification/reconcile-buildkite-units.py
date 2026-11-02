@@ -103,9 +103,9 @@ def execution(phase, labels, name, selected=None):
     verdict = report.verdict(phase / "events.jsonl", phase / "events.jsonl.manifest.json", phase / "context.json",
                              expected, test_tag_filters=FILTERS)
     report.write_json(OUT / (name + ".json"), verdict)
-    actual = {row["owner"]["label"]: row["owner"]["configuration"] for row in verdict["executed"]}
+    actual = {(row["owner"]["label"], row["owner"]["configuration"]) for row in verdict["executed"]}
     if selected is not None:
-        assert actual.items() <= {(label, target.configuration) for label, target in selected.items()}
+        assert actual <= {(label, target.configuration) for label, target in selected.items()}
     invalid = [row for row in verdict["executed"] if row["cached_locally"] or row["attempt"] != 1 or row["run"] != 1 or
                row["execution_info"].get("cachedRemotely") or
                row["execution_info"].get("strategy") not in ("local", "linux-sandbox", "processwrapper-sandbox")]
@@ -148,8 +148,16 @@ def rejection_controls(phase):
     return ["wrong source rejected", "missing source rejected", "missing owner rejected"]
 
 
-def build_coverage(phase, selection):
+def build_coverage(phase, selection, analysis):
     expected = {(label, aspect, config) for label, aspect, _, _, config in selection}
+    skipped = set()
+    for line in (analysis / "events.jsonl").read_text().splitlines():
+        event = json.loads(line)
+        if event.get("aborted", {}).get("reason") == "SKIPPED":
+            owner = event["id"]["targetCompleted"]
+            skipped.add((owner["label"], owner.get("aspect", ""), owner["configuration"]["id"]))
+    assert skipped <= expected
+    expected -= skipped
     completed = {}
     for line in (phase / "events.jsonl").read_text().splitlines():
         event = json.loads(line)
@@ -159,7 +167,7 @@ def build_coverage(phase, selection):
             assert key not in completed
             completed[key] = event["completed"].get("success", False)
     assert not completed.keys() - expected
-    value = dict(expected=sorted(expected), completed=sorted(completed.items()), missing=sorted(expected - completed.keys()),
+    value = dict(expected=sorted(expected), analysis_skipped=sorted(skipped), completed=sorted(completed.items()), missing=sorted(expected - completed.keys()),
                  failed=sorted(key for key, success in completed.items() if not success))
     report.write_json(OUT / "arm64-build-roots.json", value)
     return value
@@ -210,6 +218,7 @@ def main():
                                 selected if arch == "arm64" else None)
             row.update(native_exit=runtime["native_exit"], test_status=runtime["status"],
                        test_attempts=len(runtime["executed"]), case_counts=runtime["case_counts"], missing=runtime["missing"],
+                       failures=runtime["failures"],
                        coverage_gaps={key: runtime[key] for key in ("zero_case_owners", "all_skipped_owners")},
                        execution_finished_at=runtime["execution_finished_at"])
             if arch == "arm64":
@@ -217,8 +226,9 @@ def main():
                 assert set(row["configurations"]) == {target.configuration for target in selected.values()}
                 assert all(config["cpu"] == "aarch64" for config in row["configurations"].values())
                 assert configured(root / "full") == observed[0]["configured"]
-                build = build_coverage(root / "full", observed[0]["configured"])
-                row["build_coverage"] = {key: build[key] for key in ("missing", "failed")}
+                build = build_coverage(root / "full", observed[0]["configured"], root / "analysis")
+                row["build_coverage"] = {key: build[key] for key in ("missing", "failed", "analysis_skipped")}
+                row["build_coverage"].update(expected=len(build["expected"]), completed=len(build["completed"]))
                 if runtime["native_exit"] == 0:
                     assert not build["missing"] and not build["failed"]
                 row["functional_coverage"] = ("COMPLETE" if runtime["status"] == "PASS" and

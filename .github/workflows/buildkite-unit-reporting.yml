@@ -17,8 +17,8 @@ jobs:
       AMD64_SHA256: b247ccca19bdb5f7b8a6f26d065661ed2d6de782aa080b5bcc64bc86fcd62757
       AMD64_CARRIER: c54d06430546113f648dcb3dac18a26ce2efbdbd
       ARM64_RUN: '41497682946'
-      ARM64_ARTIFACT: pending
-      ARM64_SHA256: pending
+      ARM64_ARTIFACT: '13172754926'
+      ARM64_SHA256: 86d33c83e313e972944e9af9adfb4dcaf4d40da5196fd76492c29f31cf8717e3
       ARM64_CARRIER: ea96012d1c799a775b8781834f9a69a6ffbf583a
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
