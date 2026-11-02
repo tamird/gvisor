@@ -1,35 +1,142 @@
-name: CI
-
-"on":
+name: Compare deferred graph decoding after one ordinary sweep
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/state-first-sweep-comparison]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      CURRENT: ${{ github.sha }}
+      BASE: 70a5246a5c87b1f6dcadef0e9bc580d8842e7238
+      PRODUCT: 7a789f600e587803dd7e08ae0fb5ed6f3b3aa010
+      STOCK: 2108060ec0905c4aa58d9e28b3c117fb392c7254
+      FIXED: 19b66bcf4c338c78912585ee1a6efc7a08391b15
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 8, persist-credentials: false}
+    - name: Prepare the pinned compiler coordinator and RBE workers
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
+        [[ "$(git rev-parse HEAD)" == "$CURRENT" ]]
+        test "$(git rev-parse HEAD^)" = "$FIXED"
+        test "$(git rev-parse "$FIXED^2")" = "$STOCK"
+        test "$(git rev-parse "$STOCK^")" = "$BASE"
+        test "$(git rev-parse HEAD~2)" = "$PRODUCT"
+        test "$(git rev-parse HEAD~3)" = "$BASE"
+        git diff --exit-code "$BASE" "$STOCK" -- . ':!runsc/container/BUILD' ':!runsc/container/container_save_restore_test.go' ':!pkg/state/graph_decode_callbacks_test.go'
+        git diff --exit-code "$PRODUCT" "$FIXED" -- . ':!runsc/container/BUILD' ':!runsc/container/container_save_restore_test.go' ':!pkg/state/graph_decode_callbacks_test.go'
+        git diff --exit-code "$STOCK" "$FIXED" -- runsc/container/BUILD runsc/container/container_save_restore_test.go pkg/state/graph_decode_callbacks_test.go
+        before=$(git diff -U0 "$BASE" "$PRODUCT" | git patch-id --stable)
+        after=$(git diff -U0 "$STOCK" "$FIXED" | git patch-id --stable)
+        test -n "$before" && test "$before" = "$after"
+        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root --privileged --cgroupns=host -v /sys/fs/cgroup:/sys/fs/cgroup:rw -v /var/run/docker.sock:/var/run/docker.sock -v "$(command -v docker):/usr/local/bin/docker:ro" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/coordinator-gcc"
+        docker exec tcp-compiler uname -a > "$RUNNER_TEMP/records/native-kernel"
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+    - name: Preserve comparison driver outside the selected trees
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        mkdir -p "$RUNNER_TEMP/pair/records"
+        cp test/rbe/tmpfs_profile/pair-{run,bench}.py "$RUNNER_TEMP/pair/"
+    - name: Compare traversal and first errors with the retained original observations
+      id: order
+      run: python3 "$RUNNER_TEMP/pair/pair-run.py" order
+    - name: Run the two ordinary graph suites and printer checks
+      id: positive
+      if: ${{ !cancelled() && steps.order.outcome == 'success' }}
+      run: python3 "$RUNNER_TEMP/pair/pair-run.py" positive
+    - name: Run the two suites with the race detector
+      id: race
+      if: ${{ !cancelled() && steps.order.outcome == 'success' }}
+      run: python3 "$RUNNER_TEMP/pair/pair-run.py" race
+    - name: Build both whole-checkpoint and state benchmark executables
+      id: compiled
+      if: ${{ !cancelled() && steps.order.outcome == 'success' && steps.positive.outcome == 'success' }}
+      run: python3 "$RUNNER_TEMP/pair/pair-run.py" prepare
+    - name: Compare the seeded and unseeded chains
+      id: chains
+      if: ${{ !cancelled() && steps.compiled.outcome == 'success' }}
+      run: python3 "$RUNNER_TEMP/pair/pair-run.py" chain
+    - name: Compare the three warm graph controls
+      id: small
+      if: ${{ !cancelled() && steps.compiled.outcome == 'success' }}
+      run: python3 "$RUNNER_TEMP/pair/pair-run.py" small
+    - name: Compare native systrap restores and verify all 50,000 files
+      id: live
+      if: ${{ !cancelled() && steps.chains.outcome == 'success' && steps.small.outcome == 'success' }}
+      timeout-minutes: 36
+      run: python3 "$RUNNER_TEMP/pair/pair-run.py" native
+    - name: Compare sixteen paired GC-on and GC-off loads on one frozen checkpoint
+      id: bench
+      if: ${{ !cancelled() && steps.live.outcome == 'success' }}
+      run: python3 "$RUNNER_TEMP/pair/pair-run.py" benchmark
+    - name: Count first-sweep and indexed rows on the same frozen kernel outside timing
+      id: corpus
+      if: ${{ !cancelled() && steps.bench.outcome == 'success' }}
+      run: python3 "$RUNNER_TEMP/pair/pair-run.py" corpus
+    - name: Compare elapsed time, CPU and allocations with pinned benchstat
+      id: comparison
+      if: ${{ !cancelled() && steps.bench.outcome == 'success' }}
+      run: python3 "$RUNNER_TEMP/pair/pair-run.py" stats
+    - name: Record the qualification verdict
+      if: always()
+      env:
+        STEP_RESULTS: ${{ toJSON(steps) }}
+      run: |
+        python3 - <<'PYTHON'
+        import json, os, pathlib, time
+        folder = pathlib.Path(os.environ["RUNNER_TEMP"]) / "pair" / "records"
+        folder.mkdir(parents=True, exist_ok=True)
+        phases = json.loads(os.environ["STEP_RESULTS"])
+        expected = ["order", "positive", "race", "compiled", "chains", "small", "live", "bench", "corpus", "comparison"]
+        outcomes = {key: phases.get(key, {}).get("outcome", "missing") for key in expected}
+        required = ["fixed-race-suites.json", "baseline-order-source.json", "fixed-order.json", "chain-bench.json", "fixed-suites.json", "source.json", "bench-finished.json", "benchstat.txt", "small-finished.json", "corpus.json", "live-07-stock.json", "live-07-fixed.json"]
+        missing = [name for name in required if not (folder / name).is_file()]
+        passed = all(status == "success" for status in outcomes.values()) and not missing
+        small_path = folder / "small-gate.json"
+        slowdowns = {k: v for k, v in json.loads(small_path.read_text()).items() if v["material"]} if small_path.is_file() else None
+        verdict = {"pass": passed, "material_small_slowdown": slowdowns, "baseline": os.environ["BASE"], "candidate": os.environ["PRODUCT"], "phases": outcomes, "missing": missing, "verifiedAtNs": time.time_ns()}
+        (folder / "verdict.json").write_text(json.dumps(verdict, indent=2) + "\n")
+        print(verdict)
+        raise SystemExit(0 if passed else 1)
+        PYTHON
+    - name: Validate the public artifact boundary
+      id: artifact_safe
+      if: always()
+      env:
+        CHECK_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PYTHON'
+        import os, pathlib
+        directory = pathlib.Path(os.environ["RUNNER_TEMP"]) / "pair" / "records"
+        key = os.environ["CHECK_KEY"].encode()
+        assert directory.is_dir() and key
+        for path in directory.iterdir():
+            assert path.is_file() and not path.is_symlink()
+            assert path.suffix in {".json", ".xml", ".bench"} or path.name == "benchstat.txt", path.name
+            data = path.read_bytes()
+            assert key not in data and not any(token in data.lower() for token in (b"x-buildbuddy-api-key=", b"authorization: bearer ", b"x-amz-credential=")), path.name
+        PYTHON
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: ${{ always() && steps.artifact_safe.outcome == 'success' }}
       with:
-          name: runsc
-          path: bin/
+        name: state-deferred-first-sweep
+        path: ${{ runner.temp }}/pair/records/
+        if-no-files-found: error
