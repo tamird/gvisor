@@ -1,0 +1,70 @@
+name: Verify the qualified review decisions
+on:
+  push:
+    branches: [qualification/work-map-pending-7389dfbcb]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the live UI and the curated pair
+        id: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 7389dfbcbf3cc26e4a1dbe12fd7fccf5fcbbf0a2
+          test "$(git rev-parse HEAD^^)" = f7e8f6231d952162488fbfaf3e1ecccc7dc5d962
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          test "$(git diff --name-only HEAD^^ HEAD^)" = "$(printf '%s\n' github-status.json registry.json)"
+          sha256sum -c <<'INPUTS'
+          e5d01ececbb039823104599713efd9082379b42e00b724e4580a0ffedf37230a  app.js
+          6f9c0ad152b89eebcd7a046600dc592a53c51c7aded39d62d06ae32dd54f725b  registry.json
+          f9278064ae3fb8c5121ff7dab1c8d088c294fa4c0b5f717af9802f2ffc8bf8da  github-status.json
+          INPUTS
+          mkdir results
+      - name: Check the canonical metadata pair
+        id: metadata
+        if: always() && steps.source.outcome == 'success'
+        run: |
+          node metadata-preflight.mjs . > results/preflight.json
+          python3 - <<'PYTHON'
+          import json,subprocess
+          from pathlib import Path
+          from work_states import record_states
+          old=json.loads(subprocess.check_output(['git','show','HEAD^^:github-status.json']));s=json.loads(Path('github-status.json').read_bytes());r=json.loads(Path('registry.json').read_bytes())
+          normalized=record_states(s['prs'],r,old,s['checkedAt'])
+          for k,h in {}.items():
+              assert k not in normalized and old['workStates'].pop(k)['contributor-review']['scope']==h
+          for k in ['pr:15972']:
+              assert 'contributor-review' not in old['workStates'].get(k,{}) and normalized[k]['contributor-review']==s['workStates'][k]['contributor-review']
+              old['workStates'].setdefault(k,{})['contributor-review']=normalized[k]['contributor-review']
+          actual={p['url']:p for p in s['prs']}
+          nd={n['id']:n for n in r['nodes']}
+          p=nd['pr:15972'];d=p['contributorReview'];assert p['head']==d['head']==actual[p['url']]['head'] and d['kind']=='reply' and d['url'].endswith('4445336673') and all(x in d['body'] for x in ('20 ms','50 ms','114f689c8','13184662456')) and p['settledReviews'][-1]['head'].startswith('8147e9ad3')
+          for num,k,h in [(15562,'pr:15562','cf6828177'),(16596,'pr:16596','e1a3e3de2'),(16665,'pr:16665','5c7696351'),(16713,'pr:16713','d125b1fbc'),(16718,'pr:16718','1f4905b21'),(16875,'branch:ipv6-multicast-socket-options','972a7152f')]:
+              n=nd[k]; source=actual['https://github.com/google/gvisor/pull/'+str(num)];assert source['head']==n['head'] and n['head'].startswith(h) and n['settledReviews'][-1]['head']==n['head'] and n['settledReviews'][-1]['outcome']=='approved' and n.get('contributorReview',{}).get('kind')!='amendment'
+              if num==16596:
+                  assert n['contributorReview']['kind']=='reply' and n['contributorReview']['url'].endswith('4447247458') and '13184470515' in n['contributorReview']['body'] and n['contributorReview']['head']==n['head'] and s['workStates'][k]['contributor-review']['scope']==n['head']
+              else:assert 'contributorReview' not in n and 'contributor-review' not in s['workStates'].get(k,{})
+          for num,oldh in [(16596,'1eb1f6b45'),(16665,'0aa163b78')]:
+              n=nd['pr:'+str(num)];p=n['reapproval'];assert p['head']==n['head'] and p['approvedHead'].startswith(oldh) and p['kind']=='content-amendment' and p['method']=='reviewed-source-diff'
+          graph=nd['branch:state-graph-print-errors'];assert 'contributorReview' not in graph and graph['status']=='Agent work' and {d['head'][:9] for d in graph['settledReviews'] if d['outcome']=='needs-work'}>={'57b52c547','38316d084'}
+          from urllib.parse import urlsplit,parse_qs
+          gn=nd['branch:grpc-native-codegen'];ga=gn['humanAction'];q=parse_qs(urlsplit(ga['url']).query)
+          assert gn['head']==ga['head']=='b056f09306c64c8166339d94b61ac6c1b3b2ba51' and gn['title']==ga['title']=='[bazel] Replace the protoc plugin copy with a symlink' and q=={'expand':['1'],'title':[ga['title']],'body':[ga['body']]} and ga['body'].startswith('grpc_proto_plugin runs cp') and not any(x in ga['body'].lower() for x in ('generator','zip','test','macos'))
+          assert nd['pr:15019']['evidence'][-1]['url'].endswith('6583440607') and 'declines' in nd['pr:15019']['summary'] and actual['https://github.com/google/gvisor/pull/15019']['head'].startswith('ed8a800c0')
+          old['registryDate']=r['meta']['updatedAt'];assert old==s
+          PYTHON
+      - name: Publish the bounded verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pending-proposals-preflight
+          path: results/preflight.json
+          if-no-files-found: error
