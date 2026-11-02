@@ -52,3 +52,23 @@ func (e *callbackEntries) temporarilyReleaseInPredicate(keys []string) {
 	delete(e.entries, "")
 	e.mu.Unlock()
 }
+
+// +checklocksrelease:globalMu
+func unlockBeforeYield(yield func(int) bool) {
+	globalMu.Unlock()
+	if yield(2) {
+		yield(1)
+	}
+}
+
+// +checklocksrelease:globalMu
+func testSortedFunc(order int) []int {
+	// SortedFunc collects the entire sequence before it calls the comparator.
+	// Checklocks cannot infer the iterator's unlock through SortedFunc.
+	return slices.SortedFunc(unlockBeforeYield, func(a, b int) int { // +checklocksfail=return with unexpected locks held
+		if otherStruct.guardedField1 == order { // +checklocksfail=invalid field access
+			return b - a
+		}
+		return a - b
+	})
+}
