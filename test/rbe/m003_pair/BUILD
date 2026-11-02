@@ -24,12 +24,16 @@ py_test(
     name = "comparison",
     srcs = ["run.py"],
     args = [
-        "$(rootpath :stock)",
+        "$(rootpath :select)",
         "$(rootpath :ranges.json)",
+        "$(rootpath :stock-wire.json)",
+        "$(rootpath :stock-events.json)",
     ],
     data = [
         "ranges.json",
-        "stock",
+        "select",
+        "stock-wire.json",
+        "stock-events.json",
     ],
     main = "run.py",
 )

@@ -146,7 +146,7 @@ def discriminator(data, obs):
                                             and a[2]["seconds"] < rto["At"] and rto["At"]-repaired["At"] < repaired["RTO"]-.015),
         "real_peer_sacked_only_after_rto": bool(rto and 3 in a and donor_ack and a[3]["seconds"] < donor_ack["seconds"]
                                                 and rel(donor_ack["ack"]) == head[0] and .280 <= donor_ack["seconds"]-anchor < .365
-                                                and one_original(hole, donor_ack["seconds"]) and one_original(donor, donor_ack["seconds"])),
+                                                and one_original(donor, donor_ack["seconds"])),
         "clean_head_at_rack_entry_for_that_sack": bool(entry and not entry["Lost"]),
         "same_detector_marked_older_hole": bool(mark and clean),
         "head_sent_once_more_by_this_entry": False,
@@ -158,11 +158,57 @@ def discriminator(data, obs):
             and not any(s["Kind"] == "rto" and rto and rto["At"] < s["At"] <= when for s in signals)
             and not any(donor_ack and donor_ack["seconds"] < p["seconds"] <= when for p in rev)
             and not any(rto and rto["At"] < p["seconds"] <= when and head[1] <= rel(p["ack"]) <= 524289 for p in rev))
+    # Follow the same detector call until the next observed peer packet or
+    # loss/timer event. A missing head copy alone does not prove a repair.
+    window = {"start_ms": None, "end_ms": None, "end_cause": None, "marked": [], "repaired": [],
+              "head_copies": [], "head_successful_sends": [], "uninterrupted": False}
+    if donor_ack and entry:
+        causes = [(p["seconds"], "next peer packet") for p in rev if p["seconds"] > donor_ack["seconds"]]
+        causes.extend((s["At"], s["Kind"]) for s in signals if s["At"] > entry["At"]
+                      and (s["Kind"] in ("rto", "rack-timer", "rack-ack", "rack-ack-new-sack") or
+                           s["Kind"] == "rack-loss" and s["Stamp"] != entry["Stamp"]))
+        if causes:
+            end, cause = min(causes)
+            begin = entry["At"]
+            window.update(start_ms=1000*(begin-anchor), end_ms=1000*(end-anchor), end_cause=cause,
+                          uninterrupted=bool(3 in a and a[3]["seconds"] < donor_ack["seconds"] < begin < end
+                              and not any(a[3]["seconds"] < p["seconds"] < begin for p in fwd if span(p)==head)
+                              and not any(rto and rto["At"] < s["At"] < begin and s["Kind"]=="rto" for s in signals)))
+            marks = []
+            for sig in signals:
+                if sig["Kind"] != "rack-loss" or sig["Stamp"] != entry["Stamp"] or sig["At"] > begin:
+                    continue
+                h = sig["Hole"]
+                region = (rel(h["Start"]), rel(h["End"]))
+                if (region[0] >= head[1] and region[0] < region[1] and h["Count"] == 1 and not h["AlreadyLost"]
+                        and rel(h["LatestEnd"]) == donor[1] and h["HeadAge"] < h["LatestAge"] < h["HoleAge"]
+                        and h["HoleAge"] > h["RTT"] + h["Reo"] + h["Precision"] and one_original(region, begin)):
+                    marks.append(region)
+            window["marked"] = marks
+            window["repaired"] = [{"range": span(p), "copy": p["copy"], "ms": 1000*(p["seconds"]-anchor)}
+                                  for p in fwd if span(p) in marks and begin <= p["seconds"] < end and p["copy"] == 2 and not p["dropped"]]
+            window["head_copies"] = [p["copy"] for p in fwd if span(p)==head and begin <= p["seconds"] < end]
+            window["head_successful_sends"] = [1000*(s["At"]-anchor) for s in signals if s["Kind"]=="head-repair" and begin <= s["At"] < end]
+            # The next peer transmit precedes its arrival at the sender. Inspect the
+            # head beyond it, through a subsequent sender loss decision (or the last
+            # packet of the complete transfer when the sender made none).
+            decisions = [(s["At"], s["Kind"]) for s in signals if s["At"] > begin and
+                         (s["Kind"] in ("rto", "rack-timer", "rack-ack", "rack-ack-new-sack") or
+                          s["Kind"] == "rack-loss" and s["Stamp"] != entry["Stamp"])]
+            stop, why = min(decisions) if decisions else (max(p["seconds"] for p in data["events"]), "last recorded packet")
+            window["sender_boundary_ms"], window["sender_boundary"] = 1000*(stop-anchor), why
+            window["later_head_before_sender_boundary"] = [p["copy"] for p in fwd if span(p)==head and begin <= p["seconds"] < stop]
+            window["later_head_sends_before_sender_boundary"] = [1000*(s["At"]-anchor) for s in signals
+                                                                if s["Kind"]=="head-repair" and begin <= s["At"] < stop]
+    progress = first(p for p in rev if p["seconds"] >= anchor and head[1] <= rel(p["ack"]) <= 524289)
+    window["first_peer_ack_covering_head_ms"] = None if progress is None else 1000*(progress["seconds"]-anchor)
+    window["head_transmits_through_first_peer_progress"] = [{"copy": p["copy"], "ms": 1000*(p["seconds"]-anchor)}
+        for p in fwd if span(p)==head and progress is not None and p["seconds"] <= progress["seconds"]]
     stamp = lambda e,key: None if e is None else round(1000*(e[key]-anchor),3)
     context = all(passed for name, passed in gates.items() if name != "head_sent_once_more_by_this_entry")
     outcome = ("observed_extra_head" if all(gates.values()) else
                "no_qualifying_extra_head_observed" if context else "intended_context_not_established")
-    return {"outcome": outcome, "activation": all(gates.values()), "gates": gates,
+    return {"window": window, "outcome": outcome, "activation": all(gates.values()), "gates": gates,
             "missing": [name for name,passed in gates.items() if not passed],
             "first_head_repair_ms": stamp(repaired,"At"), "timeout_ms": stamp(rto,"At"),
             "donor_ack_ms": stamp(donor_ack,"seconds"), "donor_ack_blocks": blocks(donor_ack.get("sack")) if donor_ack else [],
@@ -171,10 +217,15 @@ def discriminator(data, obs):
 
 
 def main():
-    binary, frozen = map(Path, sys.argv[1:])
+    binary, frozen, stock_wire, stock_events = map(Path, sys.argv[1:])
     ranges = json.loads(frozen.read_text())
-    assert binary.name == "stock" and len(ranges) == 8 and ranges[0] == {"Offset": 117504, "Length": 1200}
-    label = "held-genuine-hole"
+    assert binary.name == "select" and len(ranges) == 8 and ranges[0] == {"Offset": 117504, "Length": 1200}
+    original = json.loads(stock_wire.read_text())
+    original_events = json.loads(stock_events.read_text())
+    previous = discriminator(original, original_events)
+    assert previous["activation"] and previous["window"]["head_copies"] == [4] and previous["window"]["head_successful_sends"] and previous["window"]["repaired"]
+    assert original["expected_bytes"] == original["received_bytes"] == 524288 and original["integrity_ok"] and original["complete"]
+    label = "held-selected-hole"
     row = observe(binary, "held", label, ranges)
     out = OUT / (label+".json")
     detail = {}
@@ -183,7 +234,23 @@ def main():
     except (OSError, ValueError, KeyError, TypeError) as error:
         detail = {"incomplete": type(error).__name__}
     verified = bool("gates" in detail and row.get("valid") and row.get("complete") and row.get("integrity") and row.get("received_bytes") == 524288)
-    write(OUT / "comparison.json", {"verified": verified, "rows": [row], "observation": detail,
+    matched = bool(verified and row["ranges"] == original_events["Seen"] and row["received_bytes"] == original["received_bytes"])
+    result = "intended_context_not_established"
+    if matched:
+        g, w = detail["gates"], detail["window"]
+        common = {tuple(p["range"]) for p in w["repaired"]} & {tuple(p["range"]) for p in previous["window"]["repaired"]}
+        core = all(g[k] for k in ("first_head_repair_observed", "oldest_repair_then_early_rto",
+                                   "real_peer_sacked_only_after_rto", "clean_head_at_rack_entry_for_that_sack"))
+        if core and w["uninterrupted"] and w["marked"]:
+            if w["head_copies"] or w["head_successful_sends"]:
+                result = "head_repaired_again"
+            elif w["later_head_before_sender_boundary"] or w["later_head_sends_before_sender_boundary"]:
+                result = "head_after_peer_emission_before_next_sender_observation"
+            elif common:
+                result = "marked_hole_repaired_without_repeating_head"
+            else:
+                result = "no_common_marked_hole_repair_observed"
+    write(OUT / "comparison.json", {"verified": verified, "rows": [row], "observation": detail, "stock": previous, "selectionOutcome": result, "matchedPayloadAndRanges": matched,
                                     "baseline_series": BASE, "original": "614754a1f", "transfers": 1})
     assert verified, row.get("error", "incomplete or invalid transfer")
 
