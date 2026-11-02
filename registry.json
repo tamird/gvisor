@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T08:21:11+00:00",
+    "updatedAt": "2026-11-02T08:31:43+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -25728,8 +25728,8 @@
           "url": "https://github.com/tamird/gvisor/compare/83ab4392c284f6804ef13dc0efe5291d688bdca5...7859018167653b4fb3f762878cba599c4d1ec5c7"
         },
         {
-          "label": "Paired packet fixture",
-          "url": "https://github.com/tamird/gvisor/commit/9073385cd68f98e340665aad5619aace4e3b638d"
+          "label": "gVisor pre-ACK flight count with a manual clock",
+          "url": "https://github.com/tamird/gvisor/blob/9073385cd/pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go#L1550-L1562"
         },
         {
           "label": "Unfiltered AMD64 TCP/RACK/Nogo",
@@ -34200,7 +34200,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41396075493/artifacts/13119622419"
         },
         {
-          "label": "All five checks ran without Docker; tracked typo failed, untracked typo ignored; 223 license records passed",
+          "label": "Earlier Git-based selector and 223-record license audit",
           "url": "https://github.com/tamird/gvisor/actions/runs/40841175298"
         },
         {
@@ -63826,10 +63826,23 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-11-02T01:19:00+00:00",
-      "lastReviewedAt": "2026-11-02T01:19:00+00:00",
+      "updatedAt": "2026-11-02T08:31:43+00:00",
+      "lastReviewedAt": "2026-11-02T08:31:43+00:00",
       "summary": "The project owner checks a new review decision against other open, unpublished and recently landed work. This is agent work; an approved source normally gets a follow-up rather than an amendment.",
       "findings": [
+        {
+          "text": "Reviewed the 27 records changed after the November 2 full sweep. The current codespell action catches a typo in a new, untracked package. The older RACK pre-ACK flight count was measured on gVisor with a manual clock. When preparing the musl plugin, Sentry race smoke and futex requeue proposals for publication, rewrap their 73–74-column commit-message lines.",
+          "evidence": [
+            {
+              "label": "Current codespell selection and controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41395141116/artifacts/13119196338"
+            },
+            {
+              "label": "gVisor pre-ACK flight count with a manual clock",
+              "url": "https://github.com/tamird/gvisor/blob/9073385cd/pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go#L1550-L1562"
+            }
+          ]
+        },
         {
           "text": "The first pass covered all 102 open gVisor PR heads, plus 54 other available proposal heads in the gVisor checkout. A LisaFS fixture conflated an unset environment variable with an explicitly empty one. Buildifier, cpplint, clang-format and codespell need to distinguish declared checks from host-shell selection.",
           "evidence": [
