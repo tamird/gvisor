@@ -182,7 +182,11 @@ def main():
     flags = [word for word in stanza.split() if word.startswith("--test_tag_filters=")]
     assert flags == ["--test_tag_filters=" + ",".join(FILTERS)]
     assert "--config=unit" in next(line for line in rc.splitlines() if line.startswith("test:buildkite-unit ")).split()
-    assert sum("--test_tag_filters=" in line for line in rc.splitlines() if not line.lstrip().startswith("#")) == 1
+    # Nogo and syscall configs have independent filters; only check this chain.
+    active = {scope + suffix for scope in ("common", "build", "test")
+              for suffix in ("", ":ci", ":buildkite", ":unit", ":buildkite-unit")}
+    assert sum("--test_tag_filters=" in line for line in rc.splitlines()
+               if line.split() and line.split()[0] in active) == 1
     result["source_test_filter_stanza"] = stanza
     selections = {}
     for arch in ("amd64", "arm64"):
