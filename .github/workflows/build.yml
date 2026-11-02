@@ -1,35 +1,90 @@
-name: CI
-
-"on":
+name: Verify the reconciled plugin license catalog
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/plugin-musl-license]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  qualify:
+    if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      PRODUCT: 603b1231738582ca6559d2a5e098598669842c3c
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: carrier, persist-credentials: false, fetch-depth: 1}
+      - name: Preserve the verified GNU profile and reporter
+        working-directory: carrier
+        run: |
+          set -eu
+          umask 077
+          mkdir -p "$RUNNER_TEMP/plugin-license-evidence" "$RUNNER_TEMP/gnu-platform"
+          echo '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/plugin-license-evidence/result.json"
+          git fetch -q --no-tags --depth=1 origin 725f2cb41ccb7cc4446f74c1594de1dfe6592f6d
+          for name in BUILD.bazel MODULE.bazel; do
+            git show "725f2cb41ccb7cc4446f74c1594de1dfe6592f6d:test/rbe/gnu_platform/$name" > "$RUNNER_TEMP/gnu-platform/$name"
+          done
+          cp test/rbe/plugin_license.py "$RUNNER_TEMP/"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          path: product
+          ref: 603b1231738582ca6559d2a5e098598669842c3c
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Prepare the existing GNU remote route
+        working-directory: product
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          test "$(git rev-parse HEAD)" = "$PRODUCT"
+          test -n "$BUILDBUDDY_API_KEY"
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$RUNNER_TEMP/gnu.bazelrc"
+          timeout 180 docker pull --platform=linux/amd64 "$GNU"
+          docker run -d --name gnu-profile --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$PWD" "$GNU" -c 'sleep infinity'
+      - name: Run the canonical current-source license verification
+        working-directory: product
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: docker exec -e RUNNER_TEMP -e BUILDBUDDY_API_KEY -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$PWD" gnu-profile python3 -B "$RUNNER_TEMP/plugin_license.py"
+      - name: Check the exact publication boundary
+        id: privacy
+        if: always()
+        env:
+          KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PYTHON'
+          import json, os
+          from pathlib import Path
+          folder = Path(os.environ["RUNNER_TEMP"]) / "plugin-license-evidence"
+          files = list(folder.iterdir())
+          assert {f.name for f in files} == {"result.json"}
+          f, = files
+          assert f.is_file() and not f.is_symlink() and f.stat().st_size < 100000
+          data = f.read_bytes()
+          json.loads(data)
+          assert os.environ["KEY"] and os.environ["KEY"].encode() not in data
+          assert all(m not in data.lower() for m in (b"authorization:", b"bearer ", b"x-buildbuddy-api-key"))
+          PYTHON
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.privacy.outcome == 'success'
+        with:
+          name: plugin-license-current
+          path: ${{ runner.temp }}/plugin-license-evidence/result.json
+          if-no-files-found: error
+      - name: Require the complete result
+        if: always()
+        run: |
+          python3 - <<'PYTHON'
+          import json, os
+          from pathlib import Path
+          r = json.loads((Path(os.environ["RUNNER_TEMP"]) / "plugin-license-evidence/result.json").read_text())
+          assert r["status"] == "PASS", r["status"]
+          PYTHON
