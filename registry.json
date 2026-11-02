@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T04:11:55+00:00",
+    "updatedAt": "2026-11-02T04:16:13+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27569,14 +27569,14 @@
       "url": "https://github.com/tamird/gvisor/commit/603b12317",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T04:06:49+00:00",
+      "updatedAt": "2026-11-02T04:16:13+00:00",
       "summary": "On native AMD64 the musl plugin linked with all three VFIO functions and passed TestDumpStack on the revised kernel headers. The public revision adds the purpose and source of the TLDK patch. GNU coverage used the same compatibility changes. PCI packet traffic still needs a vhost device.",
       "followup": {
         "owner": "arm64_results",
         "sourceHead": "603b1231738582ca6559d2a5e098598669842c3c",
-        "observedAt": "2026-11-02T04:06:49+00:00",
+        "observedAt": "2026-11-02T04:16:13+00:00",
         "disposition": "Rebased on the current GNU DPDK change",
-        "nextAction": "Run the standalone license checker on the added queue.h record before requesting contributor review.",
+        "nextAction": "Check whether a supplier implementation of execinfo would shrink the DPDK patch. Both native musl validation and the full license check passed.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41384852262",
           "https://github.com/google/gvisor/pull/15153"
@@ -27586,6 +27586,10 @@
         {
           "label": "Native musl archive, linked VFIO functions and TestDumpStack",
           "url": "https://github.com/tamird/gvisor/actions/runs/41384852262/artifacts/13115137890"
+        },
+        {
+          "label": "Canonical license verification for all 224 dependencies, including the BSD queue header",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41386612459/artifacts/13115383915"
         },
         {
           "label": "Original archive → link → executed ELF, three symbols and named test verified for both libcs",
@@ -27657,7 +27661,7 @@
           "head": "92c5bed67c8cac88959b0a4cb64e0b52f92b2ec9"
         },
         "after": {
-          "head": "b0713e2bcf6ccde362401912ae80d17a4e1738b5"
+          "head": "603b1231738582ca6559d2a5e098598669842c3c"
         }
       }
     },
@@ -43136,12 +43140,16 @@
       "url": "https://github.com/tamird/gvisor/commit/3582b3adc",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T04:11:55+00:00",
+      "updatedAt": "2026-11-02T04:16:13+00:00",
       "summary": "A queue that holds its own copy of a pointer lets the shared decoder reuse one scratch cell. On a 50,000-file checkpoint this cut total allocations 32.3% and allocated bytes 0.28%. Eight paired guest restores showed no detectable latency change.",
       "evidence": [
         {
           "label": "Restore benchmarks, guest timings, callback counts and state/race suites",
           "url": "https://github.com/tamird/gvisor/actions/runs/41383319719/artifacts/13115730116"
+        },
+        {
+          "label": "Aliasing regression caught early reuse of storage for queued indirect values",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41386901111/artifacts/13116300183"
         }
       ],
       "contributorReview": {
@@ -43152,7 +43160,7 @@
         "url": "https://github.com/tamird/gvisor/commit/3582b3adc",
         "title": "Reuse scratch storage for checkpoint conversions",
         "requestedAt": "2026-11-02T04:11:55+00:00",
-        "summary": "Open the independent decoder PR after the queued-value lifetime control passes?",
+        "summary": "Open the independent decoder PR? The queued-value lifetime control passed.",
         "body": "The change removes one net implementation line and preserves callback ordering and the existing API. On a 50,000-file checkpoint, dentry parent conversions needed one temporary pointer cell allocation, down from 50,075. The full restore comparison measured an allocation reduction without a clear latency change."
       }
     }
