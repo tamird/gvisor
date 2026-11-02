@@ -1356,7 +1356,7 @@ func TestInterruptedRTOWithQueuedData(t *testing.T) {
 		deliver(drain(fmt.Sprintf("timer_%d", i)))
 		p := prefix()
 		if p == acked {
-			break
+			continue
 		}
 		ack(p, p < 6*mss)
 		deliver(drain(fmt.Sprintf("repair_ack_%d", i)))
