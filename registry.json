@@ -43040,9 +43040,17 @@
       "url": "https://github.com/tamird/gvisor/commit/ec41d0045",
       "title": "Run the Buildkite smoke guests directly with Bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T03:36:08+00:00",
-      "summary": "The native ARM64 check resolved the eight-file release. Before guest execution, Nogo found Go’s test-only crypto/internal/sysrand/internal/seccomp package in the built standard library. A previous sandboxed standard-library build omitted it on both target architectures. The owner is checking how this specific output was produced and integrating #16506’s declared copy actions.",
+      "updatedAt": "2026-11-02T03:37:17+00:00",
+      "summary": "All five Buildkite job definitions selected the intended targets, and all three release layouts contained eight files. None of the three guests started. Nogo found test-only Go packages in the built standard library that rules_go excludes from its declared sources: internal/testpty on ordinary AMD64, internal/obscuretestdata on race AMD64, and crypto/internal/sysrand/internal/seccomp on ARM64. A previous sandboxed GoStdlib control omitted the extra packages. The owner is tracing the producing action and integrating #16506’s declared staging tool.",
       "evidence": [
+        {
+          "label": "Original native AMD64 ordinary and race failures before guest execution",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41383306954/artifacts/13114088832"
+        },
+        {
+          "label": "Earlier ordinary placement produced packages excluded from the SDK inputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40959238526/artifacts/12934507848"
+        },
         {
           "label": "Native architecture jobs",
           "url": "https://github.com/tamird/gvisor/actions/runs/41383306954"
