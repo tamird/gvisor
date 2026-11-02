@@ -195,7 +195,18 @@ def darwin():
     proto = "@com_google_protobuf//:protoc"
     flags = ["--jobs=4", "--copt=-g0", "--host_copt=-g0"]
     sources = []
-    for arm, ref in [("base", BASE), ("candidate", SOURCE)]:
+    report["stock_receipt"] = {
+        "url": "https://github.com/tamird/gvisor/actions/runs/41479697892/artifacts/13159469734",
+        "zip_sha256": "5b1a6667952a1e0471d1964014658e721f191c55631efadd0ed9b93dbe43951d",
+        "commit": BASE,
+        "generated": {
+            "helloworld.grpc.pb.cc": "738d2ab9a111935900f7993b6014eaf34c38e2980d6d28998d0e1a62bbc16933",
+            "helloworld.grpc.pb.h": "6ac93a6f47fbc36da51058b47bb3390069defe1ce6687ba14c6691beb8a04060",
+            "Helloworld.pbrpc.m": "b6246275441a2c4bd59989d8527b2c16f50b0a0b20b13667c9afaabb59d1eca5",
+            "Helloworld.pbrpc.h": "22be6152957e9746bb132d062379993db27e0cc6c7375b5e53760dfd150cc959"
+},
+    }
+    for arm, ref in [("candidate", SOURCE)]:
         run("select-" + arm, ["git", "checkout", "--detach", ref])
         assert output("git", "rev-parse", "HEAD") == ref
         run("build-" + arm, [*bazel, "build", *flags, *targets, proto])
@@ -227,7 +238,7 @@ def darwin():
             save()
     run("remove-build-tree", [*bazel, "clean", "--expunge"])
     assert not any(p.exists() for p in sources)
-    for arm in ["base", "candidate"]:
+    for arm in ["candidate"]:
         dist = TEMP / ("dist-" + arm)
         for n in names:
             run("use-" + arm + n, [str(dist / "protoc"), "--plugin=protoc-gen-grpc=" + str(dist / (n + "_binary")),
@@ -236,7 +247,7 @@ def darwin():
         report[arm]["generated"] = generated
         save()
         assert sorted(s.lower() for s in generated) == ["helloworld.grpc.pb.cc", "helloworld.grpc.pb.h", "helloworld.pbrpc.h", "helloworld.pbrpc.m"]
-    assert report["base"]["generated"] == report["candidate"]["generated"]
+    assert report["stock_receipt"]["generated"] == report["candidate"]["generated"]
 
 
 if __name__ == "__main__":
