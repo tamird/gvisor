@@ -202,20 +202,20 @@ def prior_catalog(row: dict) -> None:
 
 def signature_boundary(row: dict) -> None:
     path = TMP / "unsigned-source.zip"
-    assert sha(path.read_bytes()) == "91f3a7d87ae4297a84b6199c40a0fc6e494cfe48c5740a6565a11c5d7d5fa208"
+    assert sha(path.read_bytes()) == "9b5ac49e0c24d90ca7d6c486171f06bafe297a6706c900b47ee25e8d9bde31a7"
     with zipfile.ZipFile(path) as z:
         assert z.namelist() == ["result.json"]
         old = json.loads(z.read("result.json"))
-    assert old["product"] == PRODUCT and old["carrier"] == "86900f73cb0fe776c7c81f46c9be53538dc522d2"
+    assert old["product"] == PRODUCT and old["carrier"] == "42bcb04e1a6573efc3e34bb8cc72cab4374b4860"
     assert old["status"] == "FAIL" and "runtime_not_run" in old
     assert old["preflight_original"] == RESULT["preflight_original"]
-    command = old["phases"]["resolve"]["commands"][-1]
-    assert command["exit"] == 48
-    assert any("rules_distroless+/apt/private/pgp.bzl:137:36" in line for line in command["diagnostics"])
+    command = old["phases"]["resolve"]["commands"][0]
+    assert command["exit"] == 0 and command["command"][-1] == "@integration_test_packages//:flat"
+    assert len(old["phases"]["resolve"]["source_sha256"]) == 3
     RESULT["unsigned_source_original"] = old
-    row["artifact"] = "https://github.com/tamird/gvisor/actions/runs/41530160380/artifacts/13182031189"
+    row["artifact"] = "https://github.com/tamird/gvisor/actions/runs/41530612327/artifacts/13181587506"
     row["archive_sha256"] = sha(path.read_bytes())
-    row["source_diagnosis"] = "The module-context key path needs the exported source-file label, not the http_file filegroup."
+    row["source_diagnosis"] = "Signed package analysis and supplier hashes passed; the extra key identity reader assumed execution-root symlinks after analysis only."
 
 
 def resolve(row: dict) -> None:
@@ -237,7 +237,18 @@ def resolve(row: dict) -> None:
     actual = {name: sha((supplier / name).read_bytes()) for name in expected}
     assert actual == expected, "Resolved supplier source mismatch"
     row["source_sha256"] = actual
-    key = one("archive-key", "@integration_ubuntu_archive_keys//file", [], row)
+
+
+def key_identity(row: dict) -> None:
+    assert RESULT["phases"]["resolve"]["status"] == "PASS"
+    text = checked("key-root", BZ + ["info", "output_base"], row)
+    roots = [Path(line) for line in text.splitlines() if line.startswith("/")]
+    assert len(roots) == 1, roots
+    text = checked("archive-key", BZ + ["cquery", "--output=files", "@integration_ubuntu_archive_keys//file"], row)
+    paths = [Path(line) for line in text.splitlines() if line.startswith("external/")]
+    assert len(paths) == 1, paths
+    key = roots[0] / paths[0]
+    assert key.is_file(), str(key)
     assert sha(key.read_bytes()) == "80a36b0a6de2f69f49d2df75ef473ccde121e9e190b9ea01d20a4f63778d5c31"
     row["signature_key"] = {
         "url": "https://archive.ubuntu.com/ubuntu/project/ubuntu-archive-keyring.gpg",
@@ -404,6 +415,7 @@ if sys.argv[1:] == ["--preflight"]:
     phase("signature_boundary", signature_boundary)
     phase("prerequisite", prerequisite)
     phase("resolve", resolve)
+    phase("key_identity", key_identity)
     RESULT["status"] = "PREFLIGHT_PASS" if all(r["status"] == "PASS" for r in RESULT["phases"].values()) else "PREFLIGHT_FAIL"
     RESULT["preflight_finished"] = now()
 else:
