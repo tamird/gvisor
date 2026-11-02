@@ -12,28 +12,62 @@ finish() {
 trap finish EXIT
 [[ "$(git rev-parse HEAD)" == "$GITHUB_SHA" ]]
 source=aa767e4c43d011121271551fe24da501a56f729d
-[[ "$(git rev-parse HEAD^)" == "$source" ]]
-git diff --exit-code "$source" -- pkg runsc tools .bazelrc MODULE.bazel
-printf '%s\n' "$source" "$GITHUB_SHA" > "$out/production.txt"
+stock=86f288a421f0b672e161c8af570fb6bfce858be9
+draft=c87655c01d4b39092dee5082087144211d819640
+pr=b7d9ced514fd9ea5d4159b36b42ae16a22dbe634
+amend=37a0b35bf58d9d85632d4a27adb8032ac05a17d3
+supplier=5fd5532c13b7e4a17477430fe0ce2f5dc18b599f
+original=6489fd4c9dc4d093c3adcc7d4412867da2e89a62
+[[ "$(git rev-parse HEAD^)" == "$amend" && "$(git rev-parse "$amend^")" == "$draft" && "$(git rev-parse "$draft^")" == "$stock" ]]
+[[ "$(git rev-parse "$stock^")" == "$original" && "$(git rev-parse "$original^")" == "$source" ]]
+git diff --quiet "$source" "$stock" -- . ':(exclude)test/benchmarks/tcp' ':(exclude).github/workflows/build.yml'
+git diff --quiet "$stock" "$draft" -- . ':(exclude)pkg/tcpip/transport/tcp/rack.go' ':(exclude)pkg/tcpip/transport/tcp/snd.go' ':(exclude)pkg/tcpip/transport/tcp/state.go'
+git diff --quiet "$draft" "$amend" -- . ':(exclude)pkg/tcpip/transport/tcp/rack.go' ':(exclude)pkg/tcpip/transport/tcp/snd.go'
+git diff --quiet "$amend" "$GITHUB_SHA" -- . ':(exclude)test/benchmarks/tcp/current-shared-driver.sh' ':(exclude)test/benchmarks/tcp/current-shared-report.py' ':(exclude)test/benchmarks/tcp/flight_capture.py' ':(exclude).github/workflows/build.yml'
+git fetch --quiet --no-tags --depth=3 https://github.com/tamird/gvisor.git "$supplier"
+[[ "$(git rev-parse "$supplier^")" == "$pr" ]]
+files=(pkg/tcpip/transport/tcp/{rack,snd,state}.go)
+upstream_patch=$(git diff "$pr^" "$pr" -- "${files[@]}" | git patch-id --stable | cut -d' ' -f1)
+local_patch=$(git diff "$stock" "$draft" -- "${files[@]}" | git patch-id --stable | cut -d' ' -f1)
+[[ "$upstream_patch" == "$local_patch" && "$local_patch" == "3129cabb8d29deb5571ff0d96765d6d6fdc24f49" ]]
+amend_files=(pkg/tcpip/transport/tcp/{rack,snd}.go)
+fork_patch=$(git diff "$pr" "$supplier" -- "${amend_files[@]}" | git patch-id --stable | cut -d' ' -f1)
+amend_patch=$(git diff "$draft" "$amend" | git patch-id --stable | cut -d' ' -f1)
+[[ "$fork_patch" == "$amend_patch" && "$amend_patch" == "8b3eb17d52abb98a2a2c63c261bbfcde2f4824cc" ]]
 sudo -n apt-get update -qq
 sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tshark tcpdump iproute2 iperf3 ethtool bc kmod jq iputils-ping
 sudo -n modprobe sch_netem
 uname -a > "$out/worker.txt"
 phase=build
 mkdir -p "$RUNNER_TEMP/tcp-public"
-printf '%s\n' "$source" "$GITHUB_SHA" > "$RUNNER_TEMP/tcp-public/source-heads"
-printf "%s %s\n" "$source" "$(git rev-parse "$source:pkg/tcpip/transport/tcp")" > "$RUNNER_TEMP/tcp-public/sender-trees"
-bazel run --jobs=5 --script_path="$RUNNER_TEMP/start-tcp-trial" //test/benchmarks/tcp:tcp_benchmark
-helpers="$RUNNER_TEMP/tcp-benchmark-helpers/shared"
-mkdir -p "$helpers"
-for tool in tcp_proxy nsjoin; do
-  paths=$(bazel cquery --output=files "//test/benchmarks/tcp:$tool")
-  mapfile -t outputs <<< "$paths"
-  (("${#outputs[@]}" == 1))
-  test -x "${outputs[0]}"
-  cp "${outputs[0]}" "$helpers/$tool"
-  sha256sum "$helpers/$tool" >> "$RUNNER_TEMP/tcp-public/helpers.sha256"
+public="$RUNNER_TEMP/tcp-public"
+printf '%s\n' "$source" "$stock" "$draft" "$amend" "$pr" "$supplier" "$GITHUB_SHA" > "$public/source-heads"
+printf '%s %s\n' "$pr" "$upstream_patch" "$draft" "$local_patch" "$supplier" "$fork_patch" "$amend" "$amend_patch" > "$public/patch-id"
+for variant in stock draft amend; do
+  ref=${!variant}
+  git checkout --quiet --detach "$ref"
+  [[ "$(git rev-parse HEAD)" == "$ref" ]]
+  git diff --quiet HEAD
+  helpers="$RUNNER_TEMP/tcp-benchmark-helpers/$variant"
+  mkdir -p "$helpers"
+  bazel build --jobs=5 //test/benchmarks/tcp:{tcp_proxy,nsjoin}
+  for tool in tcp_proxy nsjoin; do
+    paths=$(bazel cquery --output=files "//test/benchmarks/tcp:$tool")
+    mapfile -t outputs <<< "$paths"
+    (( "${#outputs[@]}" == 1 ))
+    cp "${outputs[0]}" "$helpers/$tool"
+    test -x "$helpers/$tool"
+  done
+  cp "$RUNNER_TEMP/tcp-benchmark-helpers/stock/tcp_proxy" "$helpers/tcp_native_proxy"
+  sha256sum "$helpers"/{tcp_proxy,tcp_native_proxy,nsjoin} >> "$public/helpers.sha256"
+  printf '%s %s %s\n' "$variant" "$ref" "$(git rev-parse HEAD:pkg/tcpip/transport/tcp)" >> "$public/sender-trees"
 done
+base_helpers="$RUNNER_TEMP/tcp-benchmark-helpers"
+cmp "$base_helpers/draft/tcp_native_proxy" "$base_helpers/amend/tcp_native_proxy"
+cmp "$base_helpers/draft/nsjoin" "$base_helpers/amend/nsjoin"
+if cmp -s "$base_helpers/draft/tcp_proxy" "$base_helpers/amend/tcp_proxy"; then exit 1; fi
+git checkout --quiet --detach "$GITHUB_SHA"
+bazel run --jobs=5 --script_path="$RUNNER_TEMP/start-tcp-trial" //test/benchmarks/tcp:tcp_benchmark
 cp "$out/worker.txt" "$RUNNER_TEMP/tcp-public/worker.txt"
 run_pair() {
   local dir=$1 duration=$2 limit=$3 mode=$4 flag=$5 cc=$6 other=$7
@@ -47,27 +81,14 @@ run_pair() {
 }
 phase=trials
 status=0
-python3 - "$RUNNER_TEMP/tcp-public/schedule.txt" <<'PYTHON'
-import sys
-from pathlib import Path
-
-rows = []
-for i in range(3):
-    for first in (("primary", "secondary") if i % 2 == 0 else ("secondary", "primary")):
-        variants = ("on", "off") if (i + (first == "secondary")) % 2 == 0 else ("off", "on")
-        for variant in variants:
-            rows.append(f"{first}{i + 1}-{variant} cubic {first}")
-assert len(set(rows)) == 12
-Path(sys.argv[1]).write_text("\n".join(rows) + "\n")
-PYTHON
+printf '%s\n' 'primary1-draft cubic primary' 'primary1-amend cubic primary' 'primary2-amend cubic primary' 'primary2-draft cubic primary' > "$public/schedule.txt"
 while read -r arm cc first; do
   variant=${arm#*-}
-  dir="$out/$arm/measured/$cc-netstack"
+  dir="$out/$arm/plain/$cc-netstack"
   mkdir -p "$dir"
   date -u +%FT%TZ > "$dir/start"
-  recovery=--rack
-  [[ "$variant" == on ]] || recovery=--no-rack
-  if ! run_pair "$dir" 45 110 measured --client "$cc" linux --helpers "$helpers" "$recovery"; then
+  helpers="$RUNNER_TEMP/tcp-benchmark-helpers/$variant"
+  if ! run_pair "$dir" 45 110 plain --client "$cc" linux --helpers "$helpers" --rack; then
     tail -10 "$dir/stdout" "$dir/stderr"
     status=1
   fi

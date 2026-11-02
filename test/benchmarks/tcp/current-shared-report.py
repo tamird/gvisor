@@ -4,7 +4,6 @@ import json
 import os
 import re
 from pathlib import Path
-from statistics import median
 import subprocess
 from flight_capture import capture
 from datetime import datetime, timezone
@@ -49,8 +48,8 @@ def trial(root, mode, case):
         values = re.findall(rf"net\.ipv4\.{setting} = (\d+)", features)
         assert values == ["1"] * 3, (setting, values)
     variant = root.name.split("-", 1)[1]
-    recovery = 1 if variant == "on" else 0
-    assert variant in ("on", "off"), variant
+    recovery = 1
+    assert variant in ("draft","amend") and mode=="plain", (variant,mode)
     config = (results/"primary/stderr.txt").read_text()
     assert f"WANCONFIG recovery={recovery} send=4194304 receive=4194304" in config
     assert f" rack={str(bool(recovery)).lower()} " in config
@@ -59,10 +58,10 @@ def trial(root, mode, case):
     assert [p["phase"] for p in ping_phases] == ["probe-launch","flows-begin","flows-end","probe-stop"]
     def hashes(lines):
         return {Path(path).name: sha for line in lines if len(fields := line.split()) == 2
-                for sha, path in [fields] if len(sha) == 64 and Path(path).name in ("tcp_proxy", "nsjoin")}
+                for sha, path in [fields] if len(sha) == 64 and Path(path).name in ("tcp_proxy", "tcp_native_proxy", "nsjoin")}
     expected = hashes(line for line in (destination / "helpers.sha256").read_text().splitlines()
-                      if "/shared/" in line)
-    assert set(expected) == {"tcp_proxy", "nsjoin"}
+                      if f"/{variant}/" in line)
+    assert set(expected) == {"tcp_proxy","tcp_native_proxy","nsjoin"}
     assert hashes((results / "settings.txt").read_text().splitlines()) == expected
     sides = []
     for side, stack in [("primary",primary), ("secondary","linux" if primary=="netstack" else "netstack")]:
@@ -71,7 +70,14 @@ def trial(root, mode, case):
             assert (p/f"{key}-exit.txt").read_text().strip() == "0", key
         assert f"congestion_control={cc}" in (p/"flow-settings.txt").read_text()
         assert f"client={stack} " in (p/"flow-settings.txt").read_text()
-        assert f"-observation={mode}" in (p/"flow-settings.txt").read_text()
+        cmds = (p/"flow-settings.txt").read_text().splitlines()
+        client_cmd = next(line for line in cmds if line.startswith("client_command:"))
+        server_cmd = next(line for line in cmds if line.startswith("server_command:"))
+        assert f"-observation={mode}" in client_cmd
+        assert f"/{variant}/tcp_native_proxy " in server_cmd
+        assert f"/{variant}/" + ("tcp_proxy " if stack=="netstack" else "tcp_native_proxy ") in client_cmd
+        log = (p/"stderr.txt").read_text()
+        assert "WANSAMPLE " not in log and "WANLOSS " not in log
         j = read_json(p/"receiver.json")
         assert "error" not in j and j["start"]["test_start"]["num_streams"] == 1
         end = j["end"]["sum_received"]
@@ -91,7 +97,6 @@ def trial(root, mode, case):
     B=min(s[2]+s[4] for s in sides)-1
     assert B-A>35
     rates={}
-    sockets={}
     complete_rates={}
     for p,stack,lo,hi,dur,intervals,residual in sides:
         received = read_json(p / "receiver.json")["end"]["sum_received"]
@@ -106,72 +111,57 @@ def trial(root, mode, case):
         lower=sum(i["bytes"] for i in intervals if lo+i["start"]>=A and hi+i["end"]<=B)
         upper=sum(i["bytes"] for i in intervals if hi+i["end"]>A and lo+i["start"]<B)
         rates[stack]=[max(0,lower+min(residual,0))*8/(B-A)/1e6,(upper+max(residual,0))*8/(B-A)/1e6]
-        rows=[json.loads(l.split("WANSAMPLE ",1)[1]) for l in (p/"stderr.txt").read_text().splitlines() if "WANSAMPLE " in l]
-        if mode != "measured":
-            assert not rows
-            continue
-        by={}
-        for s in rows:
-            if s["stack"]==stack and A<=s["ns"]/1e9<=B:
-                by.setdefault(s["port"],[]).append(s)
-        def acked(r):
-            if len(r)<2: return 0
-            if stack=="netstack": return (r[-1]["una"]-r[0]["una"]) % 2**32
-            return r[-1]["acked"]-r[0]["acked"]
-        samples=sorted(by.values(), key=acked, reverse=True)
-        assert samples, "no WAN socket samples"
-        r=samples[0]; n=len(r); progress=acked(r)
-        assert n>=20 and progress>1e5 and all(acked(other)<progress*.05 for other in samples[1:]), (stack,n,progress)
-        state=dict(samples=n,bytes_acked_during_samples=progress,cwnd_packets_median=median(v["cwnd"] for v in r),window_bytes_median=median(v["wnd"] for v in r),rtt_us_median=median(v["rtt_us"] for v in r),window_zero_samples=sum(v["wnd"]==0 for v in r),observed_ns=[r[0]["ns"],r[-1]["ns"]],max_sample_gap_seconds=max(b["ns"]-a["ns"] for a,b in zip(r,r[1:]))/1e9)
-        if stack=="netstack":
-            assert all(v["bufsize"] == 4194304 and v["sack_negotiated"] and v["timestamps_negotiated"] for v in r)
-            state["send_buffer_bytes"] = 4194304
-            state["local_recovery_option"] = recovery
-            state.update(peer_headroom_at_most_one_MSS=sum(v["wnd"]-v["seq_flight"]<=v["mss"] for v in r),outstanding_at_or_above_cwnd=sum(v["out"]>=v["cwnd"] for v in r),buffered_beyond_seq_flight=sum(v["queued"]>v["seq_flight"] for v in r),recovery_samples=sum(v["recovery"] for v in r))
-        else:
-            assert all(v["sndbuf"] == v["rcvbuf"] == 4194304 and v["cc"] == "cubic" and v["tcp_options"] & 3 == 3 for v in r)
-            state["send_buffer_bytes"] = state["receive_buffer_bytes"] = 4194304
-            state["negotiated_timestamps_sack"] = True
-            for key in ("rwnd_us","sndbuf_us","busy_us","retrans"):
-                state[key+"_delta"]=r[-1][key]-r[0][key]
-            state["unsent_at_least_one_MSS"]=sum(v["notsent"]>=v["mss"] for v in r)
-        sockets[stack]=state
-        # Exact samples, limited to the experiment's synthetic, active flow.
-        dest=public/f"{mode}-{case}-{stack}-samples.jsonl"
-        full_flow = [v for v in rows if v["stack"] == stack and v["port"] == r[0]["port"]]
-        dest.write_text("".join(json.dumps(v)+"\n" for v in full_flow))
     g,l=rates["netstack"],rates["linux"]
-    return dict(overlap_seconds=B-A, local_netstack_recovery=recovery,receiver_rates=complete_rates,mbps_bounds=rates,netstack_share_bounds=[g[0]/(g[0]+l[1]),g[1]/(g[1]+l[0])],sockets=sockets)
+    native = re.findall(r"WANCONFIG_NATIVE port=(\d+) peer=44001 send=4194304 receive=4194304 cc=cubic", (results/"secondary/stderr.txt").read_text())
+    assert native, "no native socket configuration"
+    for side in ("primary","secondary"):
+        (public/f"{side}-flow-settings.txt").write_bytes((results/side/"flow-settings.txt").read_bytes())
+    return dict(native_config_ports=[int(x) for x in native],helper_sha256=expected,overlap_seconds=B-A, local_netstack_recovery=recovery,receiver_rates=complete_rates,mbps_bounds=rates,netstack_share_bounds=[g[0]/(g[0]+l[1]),g[1]/(g[1]+l[0])])
 
 root=Path(os.environ["RUNNER_TEMP"])/"qualification/current-shared"
 destination=Path(os.environ["RUNNER_TEMP"])/"tcp-public"
 destination.mkdir(exist_ok=True)
 heads=(destination/"source-heads").read_text().splitlines() if (destination/"source-heads").exists() else []
 verdict={"heads":heads,"baseline":heads[0] if heads else None,"harness":os.environ["GITHUB_SHA"],"passed":{},"failures":{},"missing":[]}
-expected=[(f"{first}{pair}-{arm}", "cubic") for pair in range(1,4) for first in ("primary","secondary") for arm in ("on","off")]
+expected=[(f"primary{pair}-{arm}", "cubic") for pair in (1,2) for arm in ("draft","amend")]
 for arm,cc in expected:
     experiment=cc+"-netstack"
-    name=arm+"/measured/"+experiment
+    name=arm+"/plain/"+experiment
     folder=root/name
     if not (folder/"exit.txt").exists():
         verdict["missing"].append(name)
         continue
     public=destination/arm
     public.mkdir(exist_ok=True)
+    for side in ("primary","secondary"):
+        for fn in ("receiver.json","flow-phases.tsv","flow-settings.txt","iperf-attempts.tsv","flow-exit.txt"):
+            src=folder/"results"/side/fn
+            if src.is_file():
+                (public/(side+"-"+fn)).write_bytes(src.read_bytes())
+        log=folder/"results"/side/"stderr.txt"
+        if log.is_file():
+            cfg=[line for line in log.read_text(errors="replace").splitlines() if "WANCONFIG" in line or " rack=" in line]
+            (public/(side+"-socket-config.txt")).write_text("\n".join(cfg)+"\n")
+    for fn in ("qdisc-before.txt","qdisc-after.txt","interface-features.txt","settings.txt","client.1-capture.txt","client2.1-capture.txt","server.1-capture.txt"):
+        src=folder/"results"/fn
+        if src.is_file():
+            (public/fn).write_bytes(src.read_bytes())
     try:
-        d=trial(root/arm,"measured",experiment)
-        d["wire"]=capture(folder/"results",public,"measured-"+experiment)
+        wire=capture(folder/"results",public,"plain-"+experiment)
+        d=trial(root/arm,"plain",experiment)
+        d["wire"]=wire
+        assert d["wire"]["linux"]["client_port"] in d["native_config_ports"]
         d["start"]=(folder/"start").read_text().strip()
         d["end"]=(folder/"finish").read_text().strip()
         d["exit"]=int((folder/"exit.txt").read_text().strip())
         for p in ("qdisc-before.txt","qdisc-after.txt","interface-features.txt"):
             (public/(cc+"-"+p)).write_bytes((folder/"results"/p).read_bytes())
-        ordered = sorted(d["wire"], key=lambda stack: d["wire"][stack]["first_original_seconds"])
-        first_data = [d["wire"][stack]["first_original_seconds"] for stack in ordered]
+        ordered = sorted(d["wire"], key=lambda stack: d["wire"][stack]["first_full_seconds"])
+        first_data = [d["wire"][stack]["first_full_seconds"] for stack in ordered]
         d["first_data_order"] = ordered
         d["first_data_gap_s"] = first_data[1] - first_data[0]
         want = "netstack" if arm.startswith("primary") else "linux"
-        d["order_verified"] = ordered[0] == want
+        d["order_verified"] = ordered[0] == want and first_data[0] < first_data[1]
         qdisc = {}
         for phase in ("before","after"):
             content = (folder / "results" / f"qdisc-{phase}.txt").read_text()
@@ -183,11 +173,35 @@ for arm,cc in expected:
         d["whole_transfer_jain_fairness"] = (g+l)**2/(2*(g*g+l*l))
         d["qdisc_drops"] = {dev:qdisc["after",dev]-qdisc["before",dev] for dev in ("wan.0","wan.1")}
         verdict["passed"][name]=d
-    except (AssertionError,KeyError,ValueError,IndexError,OSError,subprocess.SubprocessError) as exc:
+    except (AssertionError,KeyError,StopIteration,ValueError,IndexError,OSError,subprocess.SubprocessError) as exc:
         verdict["failures"][name]={"reason":repr(exc),"diagnostics":diagnostics(folder)}
 verdict["driver"]=read_json(root/"completion.json") if (root/"completion.json").exists() else None
-verdict["scope"] = "Current master, same proxy binary; only gVisor RACK changes. Linux CUBIC is the common competitor. Six paired trials, three per first sender; no production recommendation."
-verdict["status"]="pass" if len(verdict["passed"])==len(expected) and verdict["driver"] and verdict["driver"]["status"]==0 and all(t["order_verified"] for t in verdict["passed"].values()) else "incomplete"
+verdict["scope"] = "Two gVisor-first published-draft/amendment pairs, trial orders reversed. Both CUBIC, RACK enabled, no periodic sender sample and no recovery hooks. One unchanged native proxy executable."
+verdict["severe_boundary"] = "Netstack receiver below 1 Mbit/s with at least 30 seconds between original payloads or at the end of the common 45-second packet horizon."
+verdict["schedule"]=(destination/"schedule.txt").read_text().splitlines() if (destination/"schedule.txt").exists() else []
+# These hashes came from the previous native hosted run, artifact 13121981713.
+prior={"tcp_native_proxy":"aa92205934ae134193ce088db34a69c349e3bd10d434fd48ce669eeaa091ee4a",
+       "tcp_proxy":"13a2a140109c3eb4061df82683f759d14e728600d0b104233537603b8fa17bca",
+       "nsjoin":"d46d96b518d676de45f1f2359c77ae05993394b5a1d8b332ca76d317aa664926"}
+verdict["prior_binary_match"]={n:{k:r["helper_sha256"][k]==v for k,v in prior.items() if k!="tcp_proxy" or "-draft/" in n} for n,r in verdict["passed"].items()}
+verdict["pairs"]={}
+for pair in (1,2):
+    names=[f"primary{pair}-{variant}/plain/cubic-netstack" for variant in ("draft","amend")]
+    if not all(n in verdict["passed"] for n in names):
+        continue
+    results={}
+    for key,n in zip(("draft","amend"),names):
+        r=verdict["passed"][n]
+        w=r["wire"]["netstack"]
+        results[key]=dict(bytes=r["receiver_rates"]["netstack"]["bytes"],mbps=r["receiver_rates"]["netstack"]["mbps"],
+                          linux_bytes=r["receiver_rates"]["linux"]["bytes"],original_bytes=w["original_bytes"],
+                          interior_gap_s=w["interior_gap_s"],terminal_gap_s=w["terminal_gap_s"],horizon_s=w["horizon_s"],
+                          severe=(r["receiver_rates"]["netstack"]["mbps"]<1 and max(w["interior_gap_s"],w["terminal_gap_s"])>=30))
+    verdict["pairs"][str(pair)]=results
+planned=[line.split()[0]+"/plain/cubic-netstack" for line in verdict["schedule"]]
+actual=sorted(verdict["passed"],key=lambda n:verdict["passed"][n]["start"])
+verdict["actual_start_order"]=actual
+verdict["status"]="pass" if actual==planned and len(verdict["passed"])==len(expected) and verdict["driver"] and verdict["driver"]["status"]==0 and all(t["order_verified"] for t in verdict["passed"].values()) and verdict["schedule"]==["primary1-draft cubic primary","primary1-amend cubic primary","primary2-amend cubic primary","primary2-draft cubic primary"] and all(s["wire"]["netstack"]["horizon_s"]>40 for s in verdict["passed"].values()) else "incomplete"
 verdict["verified_at"] = datetime.now(timezone.utc).isoformat()
 (destination/"verdict.json").write_text(json.dumps(verdict,indent=2)+"\n")
 if verdict["status"]!="pass":raise SystemExit(1)
