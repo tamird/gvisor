@@ -17,6 +17,8 @@ package test
 import (
 	"slices"
 	"sync"
+
+	"gvisor.dev/gvisor/tools/checklocks/test/crosspkg"
 )
 
 // callbackEntries exercises lock checking through synchronous slice callbacks.
@@ -74,4 +76,35 @@ func (e *callbackEntries) temporarilyReleaseInPredicate(keys []string) {
 	})
 	delete(e.entries, "")
 	e.mu.Unlock()
+}
+
+// +checklocks:e.mu
+func (e *callbackEntries) importedForward(key string) bool {
+	return crosspkg.Forward(key, func(k string) bool {
+		_, found := e.entries[k]
+		return found
+	})
+}
+
+// +checklocks:e.mu
+func (e *callbackEntries) importedEscape() func(string) bool {
+	return crosspkg.Keep(func(k string) bool {
+		_, found := e.entries[k] // +checklocksfail=invalid field access
+		return found
+	})
+}
+
+// +checklocksrelease:globalMu
+func releaseBeforeYield(yield func(int) bool) {
+	globalMu.Unlock()
+	if yield(2) {
+		yield(1)
+	}
+}
+
+// +checklocks:globalMu
+func collectedBeforeSorting(bias int) {
+	slices.SortedFunc(releaseBeforeYield, func(a, b int) int {
+		return a - b + bias + otherStruct.guardedField1 // +checklocksfail=invalid field access
+	})
 }

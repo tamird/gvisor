@@ -177,3 +177,12 @@ func RequirePrivateStruct() {}
 // ExcludePrivateStruct requires the private struct's mutex not to be held.
 // +checklocksexclude:privateFieldStruct.mu
 func ExcludePrivateStruct() {}
+
+// Borrow calls the predicate directly in this package.
+func Borrow[T any](v T, f func(T) bool) bool { return f(v) }
+
+// Forward borrows through a user-defined generic function in the same package.
+func Forward[T any](v T, f func(T) bool) bool { return Borrow(v, f) }
+
+// Keep exposes a predicate to its caller instead of invoking it.
+func Keep[T any](f func(T) bool) func(T) bool { return f }
