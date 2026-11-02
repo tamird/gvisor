@@ -15,6 +15,7 @@
 package state
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"io"
@@ -97,6 +98,26 @@ func encodeRawGraph(t *testing.T, root any) []byte {
 		t.Fatalf("ReadFull: %v", err)
 	}
 	return raw
+}
+
+func TestPrintGraphWriteError(t *testing.T) {
+	raw := encodeRawGraph(t, new(int))
+	r, w := io.Pipe()
+	r.Close()
+	for _, asHTML := range []bool{false, true} {
+		if err := PrintGraph(w, raw, 0, asHTML); err != io.ErrClosedPipe {
+			t.Errorf("PrintGraph(html=%v) = %v, want closed pipe", asHTML, err)
+		}
+
+		// The caller's buffer can accept the whole dump before it reaches the pipe.
+		buffered := bufio.NewWriter(w)
+		if err := PrintGraph(buffered, raw, 0, asHTML); err != nil {
+			t.Errorf("PrintGraph to buffered pipe (html=%v): %v", asHTML, err)
+		}
+		if err := buffered.Flush(); err != io.ErrClosedPipe {
+			t.Errorf("Flush after PrintGraph(html=%v) = %v, want closed pipe", asHTML, err)
+		}
+	}
 }
 
 func TestPrintGraphSliceNotation(t *testing.T) {

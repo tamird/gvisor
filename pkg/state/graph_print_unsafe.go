@@ -15,6 +15,7 @@
 package state
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"html"
@@ -32,13 +33,17 @@ import (
 // by the binary that saved them. Objects are decoded without running their
 // load callbacks.
 func PrintGraph(w io.Writer, data []byte, graph uint64, asHTML bool) error {
-	return safely(func() {
-		printGraph(w, data, int(graph), asHTML)
-	})
+	var outputErr error
+	if err := safely(func() {
+		outputErr = printGraph(w, data, int(graph), asHTML)
+	}); err != nil {
+		return err
+	}
+	return outputErr
 }
 
 // printGraph prints a single object graph.
-func printGraph(w io.Writer, data []byte, graph int, asHTML bool) {
+func printGraph(dst io.Writer, data []byte, graph int, asHTML bool) error {
 	ds := graphDecodeState{ctx: context.Background(), in: decBuf{b: data}, noCallbacks: true}
 	d := &ds.in
 	if magic := d.uint32(); magic != streamMagic {
@@ -67,15 +72,19 @@ func printGraph(w io.Writer, data []byte, graph int, asHTML bool) {
 		Failf("%d bytes of trailing data", len(d.b)-d.pos)
 	}
 
-	p := printer{w: w, ds: &ds, graph: graph, html: asHTML}
+	// Flush reports any write failure encountered while formatting the object.
+	// Keep this buffer separate from any buffering the caller controls.
+	var w bufio.Writer
+	w.Reset(dst)
+	p := printer{w: &w, ds: &ds, graph: graph, html: asHTML}
 	p.index()
 	for i := range ds.objs {
 		o := &ds.objs[i]
 		name := p.objName(i)
 		if asHTML {
-			fmt.Fprintf(w, "<a name=\"%s\"></a>", name)
+			fmt.Fprintf(&w, "<a name=\"%s\"></a>", name)
 		}
-		fmt.Fprintf(w, "%s = ", name)
+		fmt.Fprintf(&w, "%s = ", name)
 		ti := o.ti
 		if o.exact != nil {
 			ti = o.exact
@@ -88,14 +97,18 @@ func printGraph(w io.Writer, data []byte, graph int, asHTML bool) {
 			p.value(reflect.NewAt(reflect.ArrayOf(n, ti.typ), o.base).Elem(), 0)
 		case objKindMap:
 			if o.mapType == nil {
-				fmt.Fprint(w, "map(unreferenced)")
+				fmt.Fprint(&w, "map(unreferenced)")
 				break
 			}
 			m := o.base
 			p.mapValue(reflect.NewAt(o.mapType.typ, unsafe.Pointer(&m)).Elem(), 0)
 		}
-		fmt.Fprint(w, "\n")
+		fmt.Fprint(&w, "\n")
+		if err := w.Flush(); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // printer prints decoded objects.
@@ -231,7 +244,9 @@ func (p *printer) value(v reflect.Value, depth int) {
 		fmt.Fprint(w, "[")
 		for i := 0; i < v.Len(); i++ {
 			if i > 0 {
-				fmt.Fprint(w, ", ")
+				if _, err := fmt.Fprint(w, ", "); err != nil {
+					return
+				}
 			}
 			p.value(v.Index(i), depth)
 		}
@@ -297,7 +312,9 @@ func (p *printer) value(v reflect.Value, depth int) {
 			case "nosave", "manual", "ignore":
 				continue
 			}
-			fmt.Fprintf(w, "%s%s: ", p.indent(depth+1), f.Name)
+			if _, err := fmt.Fprintf(w, "%s%s: ", p.indent(depth+1), f.Name); err != nil {
+				return
+			}
 			fv := v.Field(i)
 			switch fv.Kind() {
 			case reflect.Func, reflect.Chan, reflect.UnsafePointer:
@@ -322,7 +339,9 @@ func (p *printer) mapValue(v reflect.Value, depth int) {
 		v = reflect.NewAt(v.Type(), unsafe.Pointer(&m)).Elem()
 	}
 	w := p.w
-	fmt.Fprint(w, p.text(v.Type().String())+"{\n")
+	if _, err := fmt.Fprint(w, p.text(v.Type().String())+"{\n"); err != nil {
+		return
+	}
 	type mapEntry struct {
 		key, val string
 	}
@@ -350,7 +369,9 @@ func (p *printer) mapValue(v reflect.Value, depth int) {
 	})
 	indent := p.indent(depth + 1)
 	for _, entry := range entries {
-		fmt.Fprintf(w, "%s%s: %s,\n", indent, entry.key, entry.val)
+		if _, err := fmt.Fprintf(w, "%s%s: %s,\n", indent, entry.key, entry.val); err != nil {
+			return
+		}
 	}
 	fmt.Fprintf(w, "%s}", p.indent(depth))
 }
