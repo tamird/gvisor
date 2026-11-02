@@ -46996,7 +46996,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-02T07:14:50+00:00",
+      "updatedAt": "2026-11-02T07:42:45+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -48981,11 +48981,15 @@
           ]
         },
         {
-          "text": "Two CUBIC senders shared 20 Mbit/s at 100 ms RTT with a 100-packet queue. When gVisor started half a second before Linux, disabling RACK raised its median receiver rate from 0.250 to 4.719 Mbit/s across three pairs. When Linux started first, the corresponding medians were 5.882 and 7.416 Mbit/s; gVisor improved in two of those three pairs. The traces do not identify which recovery decision caused the difference.",
+          "text": "Two CUBIC senders shared 20 Mbit/s at 100 ms RTT with one 100-packet queue for both transmission and propagation. When gVisor started half a second before Linux, disabling RACK raised its median receiver rate from 0.250 to 4.719 Mbit/s across three pairs. When Linux started first, the corresponding medians were 5.882 and 7.416 Mbit/s; gVisor improved in two of those three pairs. The traces do not identify which recovery decision caused the difference. With RACK on, moving propagation behind the same 100-packet bottleneck raised stock gVisor’s rate from 1.86 to 6.97 Mbit/s and from 0.23 to 11.85 Mbit/s. The longest gaps between new bytes fell from 23.96 and at least 43.89 seconds to 132 and 101 ms.",
           "evidence": [
             {
               "label": "Paired gVisor and Linux receiver rates by start order, with RACK on and off",
               "url": "https://github.com/tamird/gvisor/actions/runs/41393574808/artifacts/13118664380"
+            },
+            {
+              "label": "Control with separate bottleneck and propagation queues",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41406462607/artifacts/13124530216"
             }
           ]
         },
@@ -49038,7 +49042,7 @@
           ]
         }
       ],
-      "nextStep": "The reviewer guide distinguishes #16624’s timeout from the RACK repair decision. The fresh-SACK amendment to #16495 awaits contributor review.",
+      "nextStep": "The reviewer guide distinguishes #16624’s timeout from the RACK repair decision. The fresh-SACK amendment to #16495 awaits contributor review. Use separate transmission and propagation queues when measuring 100 packets of bottleneck capacity.",
       "evidence": [
         {
           "label": "TCP_INFO retransmission count on Linux, stock gVisor and the candidate",
