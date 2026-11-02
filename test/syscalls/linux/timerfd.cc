@@ -14,6 +14,7 @@
 
 #include <errno.h>
 #include <poll.h>
+#include <sys/socket.h>
 #include <sys/timerfd.h>
 #include <time.h>
 #include <unistd.h>
@@ -26,6 +27,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
+#include "test/syscalls/linux/unix_domain_socket_test_util.h"
 #include "test/util/file_descriptor.h"
 #include "test/util/posix_error.h"
 #include "test/util/save_util.h"
@@ -55,6 +57,47 @@ PosixErrorOr<FileDescriptor> TimerfdCreate(int clockid, int flags) {
 // CLOCK_MONOTONIC used to trigger timerfd expirations. The same applies to
 // CLOCK_BOOTTIME.
 absl::Duration TimerSlack() { return absl::Milliseconds(500); }
+
+TEST(TimerfdRightsTest, RearmQueuedTimer) {
+  DisableSave setup;
+  auto sockets =
+      ASSERT_NO_ERRNO_AND_VALUE(UnixDomainSocketPair(SOCK_SEQPACKET).Create());
+  auto installed = ASSERT_NO_ERRNO_AND_VALUE(TimerfdCreate(CLOCK_MONOTONIC, 0));
+  auto queued = ASSERT_NO_ERRNO_AND_VALUE(TimerfdCreate(CLOCK_MONOTONIC, 0));
+  int sent[] = {installed.get(), queued.get()};
+  char tag = 'T';
+  ASSERT_NO_FATAL_FAILURE(SendFDs(sockets->first_fd(), sent, 2, &tag, 1));
+  queued.reset();
+  fprintf(stderr, "TIMER_RIGHTS queued-only reference established\n");
+
+  // The socket message owns both timers. Only the first also has an installed
+  // descriptor when the sandbox checkpoints.
+  setup.reset();
+  MaybeSave();
+  DisableSave finish;
+  int fds[] = {-1, -1};
+  char received = 0;
+  ASSERT_NO_FATAL_FAILURE(RecvFDs(sockets->second_fd(), fds, 2, &received, 1));
+  ASSERT_EQ(received, tag);
+  FileDescriptor visible(fds[0]);
+  FileDescriptor hidden(fds[1]);
+  auto armAndRead = [](int fd) {
+    struct itimerspec s = {};
+    s.it_value.tv_nsec = 1000000;
+    ASSERT_THAT(timerfd_settime(fd, 0, &s, nullptr), SyscallSucceeds());
+    struct pollfd pfd = {fd, POLLIN, 0};
+    ASSERT_THAT(poll(&pfd, 1, 5000), SyscallSucceedsWithValue(1));
+    uint64_t expirations = 0;
+    ASSERT_THAT(read(fd, &expirations, sizeof(expirations)),
+                SyscallSucceedsWithValue(sizeof(expirations)));
+    ASSERT_EQ(expirations, 1);
+  };
+  ASSERT_NO_FATAL_FAILURE(armAndRead(visible.get()));
+  fprintf(stderr,
+          "TIMER_RIGHTS installed control expired once; arming queued timer\n");
+  ASSERT_NO_FATAL_FAILURE(armAndRead(hidden.get()));
+  fprintf(stderr, "TIMER_RIGHTS queued timer expired once\n");
+}
 
 class TimerfdTest : public ::testing::TestWithParam<int> {};
 
