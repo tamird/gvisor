@@ -1,11 +1,11 @@
-name: Compare two real gVisor C++ gRPC generators
+name: Check gRPC plugin publication on Linux and macOS
 on:
   push:
-    branches: [qualification/grpc-native-codegen]
+    branches: [qualification/grpc-plugin-copy]
 permissions:
   contents: read
 jobs:
-  compare:
+  linux:
     if: github.repository == 'tamird/gvisor'
     runs-on: ubuntu-24.04
     timeout-minutes: 145
@@ -17,6 +17,13 @@ jobs:
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with: {fetch-depth: 6, persist-credentials: false}
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        repository: tamird/grpc
+        ref: 88ac70ff98fec233528eab6658e4b0945c9f062e
+        path: supplier
+        persist-credentials: false
+        fetch-depth: 2
     - name: Prepare the previously qualified compiler coordinator and execution platforms
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -49,13 +56,55 @@ jobs:
         umask 022
         gcc -dumpfullversion > "$d/coordinator-gcc"
         ld.bfd --version | head -1 > "$d/coordinator-linker"
-    - name: Run the stock and corrected configured gVisor actions
-      timeout-minutes: 135
-      run: |
-        python3 test/rbe/grpc-native-codegen/measure.py
+    - name: Run both existing generators on the shell-free worker
+      run: python3 test/rbe/grpc-native-codegen/copy.py linux
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: grpc-native-codegen
-        path: ${{ runner.temp }}/grpc-receipt/
+        name: grpc-plugin-copy-linux
+        path: ${{ runner.temp }}/linux-receipt.json
+        if-no-files-found: error
+  darwin:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: macos-15
+    timeout-minutes: 115
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {persist-credentials: false}
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        repository: tamird/grpc
+        ref: 88ac70ff98fec233528eab6658e4b0945c9f062e
+        path: supplier
+        persist-credentials: false
+        fetch-depth: 2
+    - name: Build, archive and run both installed universal plugins
+      run: python3 test/rbe/grpc-native-codegen/copy.py darwin
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: grpc-plugin-copy-darwin
+        path: ${{ runner.temp }}/darwin-receipt.json
+        if-no-files-found: error
+  metadata:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 115
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {persist-credentials: false}
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        repository: tamird/grpc
+        ref: 88ac70ff98fec233528eab6658e4b0945c9f062e
+        path: supplier
+        persist-credentials: false
+        fetch-depth: 2
+    - name: Compare the complete generated build manifests
+      run: python3 test/rbe/grpc-native-codegen/copy.py metadata
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: grpc-plugin-copy-metadata
+        path: ${{ runner.temp }}/metadata-receipt.json
         if-no-files-found: error
