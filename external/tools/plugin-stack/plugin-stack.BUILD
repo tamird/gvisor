@@ -57,8 +57,8 @@ make(
             # The compiler driver's executable link action is unsuitable for
             # DPDK's raw relocatable links.
             "'LD:=$(if $(filter /%,$(DPDK_LD)),$(DPDK_LD),$(EXT_BUILD_ROOT)/$(DPDK_LD))'",
-            # The plugin always passes --no-pci; virtio-user still needs the PCI bus.
-            "RTE_EAL_VFIO=n",
+            # DPDK 18.11 uses the large-file aliases in its VFIO implementation.
+            "EXTRA_CPPFLAGS=-D_LARGEFILE64_SOURCE",
         ],
         "//conditions:default": ["'LD:=$(LD)'"],
     }) + [

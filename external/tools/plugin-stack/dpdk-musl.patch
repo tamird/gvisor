@@ -1,6 +1,6 @@
 # DPDK uses glibc's port-I/O delay helpers, which musl does not provide.
 # Use the undelayed forms on musl, as in the upstream correction:
-# https://github.com/DPDK/dpdk/commit/204a7f44bc457b2c75c9eeb56468214664c830f0
+# https://github.com/DPDK/dpdk/commit/204a7f44b
 
 diff --git a/drivers/bus/pci/linux/pci_uio.c b/drivers/bus/pci/linux/pci_uio.c
 --- a/drivers/bus/pci/linux/pci_uio.c
@@ -17,3 +17,18 @@ diff --git a/drivers/bus/pci/linux/pci_uio.c b/drivers/bus/pci/linux/pci_uio.c
  #endif
  
  #include <rte_log.h>
+
+# Declare the positioned-I/O functions used by the VFIO implementation.
+# https://github.com/DPDK/dpdk/commit/c41a103c9
+
+diff --git a/drivers/bus/pci/linux/pci_vfio.c b/drivers/bus/pci/linux/pci_vfio.c
+--- a/drivers/bus/pci/linux/pci_vfio.c
++++ b/drivers/bus/pci/linux/pci_vfio.c
+@@ -2,6 +2,7 @@
+  * Copyright(c) 2010-2014 Intel Corporation
+  */
+ 
++#include <unistd.h>
+ #include <string.h>
+ #include <fcntl.h>
+ #include <linux/pci_regs.h>
