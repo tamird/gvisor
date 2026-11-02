@@ -190,16 +190,15 @@ func (s *sender) schedulePTO(advancingRTO bool) {
 	s.rtt.Unlock()
 
 	now := s.ep.stack.Clock().NowMonotonic()
-	if s.resendTimer.enabled() {
+	if !advancingRTO && s.resendTimer.enabled() {
 		if now.Add(pto).After(s.resendTimer.target) {
 			pto = s.resendTimer.target.Sub(now)
 		}
-		s.resendTimer.disable()
 	} else {
 		// The PTO must not be later than an RTO would fire (RFC 8985
-		// section 7.2). With no RTO timer armed, as after a segment is sent
-		// on an idle connection, that is one RTO from an ACK that advances
-		// SND.UNA, or else one RTO from the transmission of the oldest
+		// section 7.2). An ACK that advances SND.UNA restarts the RTO,
+		// even if the preceding flight had an RTO armed during recovery.
+		// With no timer armed after sending, use the transmission of the oldest
 		// outstanding segment, so that re-arming the PTO on every send
 		// cannot push it out. This follows tcp_schedule_loss_probe() in
 		// Linux, which also leaves the PTO alone once that time has passed.
@@ -213,7 +212,7 @@ func (s *sender) schedulePTO(advancingRTO bool) {
 			pto = rto
 		}
 	}
-
+	s.resendTimer.disable()
 	s.probeTimer.enable(pto)
 }
 
