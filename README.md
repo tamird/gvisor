@@ -29,6 +29,9 @@ facts and unresolved causes in every relationship.
   exact proposed text or commit. Remove the request when answered; keep any
   checks or publication left to the agent in the work item. After a PR head
   changes, verify the draft against the new source before asking for review.
+  If review starts before a check finishes, state which result publication
+  requires. When the owner verifies the result, link it from the work item
+  and update any pending card that still describes the check as running.
 - `edges` point **from prerequisite to dependent**. `depends_on` is an explicit
   dependency; `blocked_by` records an external blocker. `includes` relationships
   only identify work included in an integration branch, not a required PR stack.
