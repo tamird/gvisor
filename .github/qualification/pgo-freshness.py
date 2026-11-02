@@ -130,7 +130,7 @@ def main():
     switch(HIST)
     # Fetch history through the actual latest change to pkg (not a shallow artificial root).
     pkg = git("log", "-1", "--format=%H", "--", "pkg").decode().strip()
-    assert pkg.startswith("fc3ec9c05"), pkg
+    assert pkg == "d1e11f9359368fb2cb9f7da1b2acb61961889877", pkg
     receipt["historicalPkg"] = pkg
     receipt["historicalMarker"] = marker(old, "ffmpeg").read_text().strip()
     assert receipt["historicalMarker"].startswith("0bae1277a")
@@ -162,7 +162,7 @@ def main():
     profile(current, "nginx").write_bytes(old_data["nginx"])
     profile(current, "sysbench").write_bytes(gzip.compress(b"\x32\x00"))
     current_pkg = git("log", "-1", "--format=%H", "--", "pkg")
-    assert current_pkg.startswith(b"6e6276344"), current_pkg
+    assert current_pkg.strip() == b"25172e526f45929759a44e174e617c320df1ad58", current_pkg
     for n in ("nginx", "redis"):
         marker(current, n).write_bytes(current_pkg)
     assert git("ls-files", "--others", "--", str(profile(current, "ffmpeg"))).strip()
