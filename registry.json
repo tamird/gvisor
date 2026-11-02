@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T18:47:17.385770+00:00",
+    "updatedAt": "2026-11-02T18:53:19.569076+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28943,19 +28943,16 @@
       "url": "https://github.com/google/gvisor/pull/16496",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
-      "summary": "The approved source removes the cgroup test’s local tag. Copybara #16542 keeps it, preventing Bazel from generating the test main on AMD64 and ARM64 remote workers. Lucas has been asked to fix the imported test.",
+      "updatedAt": "2026-11-02T18:53:19.569076+00:00",
+      "summary": "Lucas confirmed that an internal Copybara export rule adds the local tag back. He is checking whether the rule can be removed. The source PR already removes the tag.",
       "followup": {
-        "owner": "root",
+        "owner": "Lucas Manning",
         "sourceHead": "17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b",
-        "observedAt": "2026-10-27T09:36:13+00:00",
-        "disposition": "Published as #16496",
-        "nextAction": "Follow maintainer review and public checks on #16496.",
+        "observedAt": "2026-11-02T18:53:19.569076+00:00",
+        "disposition": "Maintainer investigating Copybara export rule",
+        "nextAction": "Check the next public export for removal of the local tag. Lucas is investigating the internal rule.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16496",
-          "https://github.com/tamird/gvisor/commit/17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b",
-          "https://app.buildbuddy.io/invocation/d1321eb7-9d50-42a3-bd84-01c8862b3205",
-          "https://app.buildbuddy.io/invocation/a9d4d547-0267-4772-bfbc-1ed4ab4e3a16"
+          "https://github.com/google/gvisor/pull/16496#issuecomment-6585348052"
         ],
         "attentionDispositions": [
           {
@@ -29061,6 +29058,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Lucas identified the internal export rule",
+          "url": "https://github.com/google/gvisor/pull/16496#issuecomment-6585348052"
+        },
         {
           "label": "Imported diff: local tag is retained",
           "url": "https://github.com/google/gvisor/pull/16542/files"
@@ -41277,10 +41278,14 @@
       "head": "cf9d2e26369d531d159c54c90ed6ac82f5d7d8c1",
       "url": "https://github.com/tamird/hermetic-llvm/commit/cf9d2e263",
       "title": "Run the Linux toolchain helpers without a host libc",
-      "updatedAt": "2026-11-02T18:44:13.778224+00:00",
-      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T18:53:19.569076+00:00",
+      "status": "Delivered",
       "summary": "Five toolchain helpers could not start on Linux workers without glibc. All six, including the module-map generator from #899, now run there. Both native architectures produced the expected module map, DEF/VFS outputs, header and archive checks, and invoked clang++ through the Rust link wrapper.",
       "evidence": [
+        {
+          "label": "Upstream PR #908",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908"
+        },
         {
           "label": "Six executable checks on native AMD64",
           "url": "https://github.com/tamird/hermetic-llvm/actions/runs/41502500476/artifacts/13170230377"
@@ -41312,6 +41317,12 @@
           "head": "b44d0d90c064a84ae942a90812274b9bd9f6427a",
           "outcome": "approved-with-changes",
           "at": "2026-11-02T18:27:13.788641+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "cf9d2e26369d531d159c54c90ed6ac82f5d7d8c1",
+          "outcome": "approved",
+          "at": "2026-11-02T18:53:19.569076+00:00"
         }
       ],
       "refinement": {
@@ -41323,17 +41334,6 @@
           "head": "cf9d2e26369d531d159c54c90ed6ac82f5d7d8c1",
           "base": "413655560cc6269a1bf4eaac5100fd96830948bd"
         }
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "cf9d2e26369d531d159c54c90ed6ac82f5d7d8c1",
-        "baseHead": "413655560cc6269a1bf4eaac5100fd96830948bd",
-        "url": "https://github.com/tamird/hermetic-llvm/commit/cf9d2e263",
-        "title": "Link Linux-hosted toolchain helpers with musl",
-        "requestedAt": "2026-11-02T18:44:13.778224+00:00",
-        "summary": "Send the consolidated six-tool change to hermetic-llvm?",
-        "body": "Five toolchain helpers could not start on Linux workers without glibc. All six, including the module-map generator from #899, now run there. Both native architectures produced the expected module map, DEF/VFS outputs, header and archive checks, and invoked clang++ through the Rust link wrapper."
       }
     },
     {
@@ -45542,6 +45542,50 @@
           "head": "9963cb1a8fb4782b1bfa1c645db449a091397982",
           "outcome": "approved-with-changes",
           "at": "2026-11-02T18:30:15.670469+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:hermeticbuild/hermetic-llvm:908",
+      "type": "pr",
+      "repo": "hermeticbuild/hermetic-llvm",
+      "number": 908,
+      "ref": "proposal/linux-hosted-tool-musl",
+      "head": "cf9d2e26369d531d159c54c90ed6ac82f5d7d8c1",
+      "title": "Link Linux-hosted toolchain helpers with musl",
+      "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-02T18:53:19.569076+00:00",
+      "summary": "Five toolchain helpers could not start on Linux workers without glibc. All six, including the module-map generator from #899, now run there. Both native architectures produced the expected module map, DEF/VFS outputs, header and archive checks, and invoked clang++ through the Rust link wrapper.",
+      "evidence": [
+        {
+          "label": "Upstream PR #908",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908"
+        },
+        {
+          "label": "Six executable checks on native AMD64",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/41502500476/artifacts/13170230377"
+        },
+        {
+          "label": "Six executable checks on native ARM64",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/41502500476/artifacts/13168564806"
+        },
+        {
+          "label": "Original worker: two vDSO links could not start the wrapper",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41254370730/artifacts/13062732350"
+        },
+        {
+          "label": "Native ARM64: original and corrected wrapper ELFs, both vDSO links and the filter archive",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41255028279/artifacts/13062876059"
+        },
+        {
+          "label": "Existing Linux musl transition, merged in hermetic-llvm #899",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/899"
+        },
+        {
+          "label": "The module map generator uses the same per-CPU transition",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/eb198127b"
         }
       ]
     }
