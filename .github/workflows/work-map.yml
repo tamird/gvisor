@@ -1,0 +1,39 @@
+name: Read the deployed issue draft and pending decisions in Chromium
+on:
+  push:
+    branches: [qualification/work-map-gazelle-published]
+permissions:
+  contents: read
+jobs:
+  browser:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Check the deployed source and the exact approved snapshot
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = ee53a3f24d8f09aea6454401218374345e6d6855
+          test -z "$(git diff --name-only HEAD^ HEAD -- ':!.github')"
+          echo 'f427253a5d5e60061d6fbc8af1753019346ea3e71ab041c8019be2b9b370b384  app.js' | sha256sum -c
+          echo '3569d57e68549ffb5671d399b6303026b7702c3072c9fd07bbb412a02137e6b9  registry.json' | sha256sum -c
+          echo '28cda9992f254fb284266278ca26db21abf04fb266de562c63649ea88023df16  github-status.json' | sha256sum -c
+          mkdir results
+          node metadata-preflight.mjs . >results/preflight.json
+      - name: Read the canonical deep link and each pending card in hosted Chromium
+        env:
+          UI_ORIGIN: https://tamird.github.io/gvisor/
+        run: node --experimental-websocket .github/qualification/work-map-ui.mjs
+      - name: Preserve the paired production snapshot and exact browser result
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-map-gazelle-published
+          path: |
+            results/preflight.json
+            work-map-ui-result.json
+          if-no-files-found: error
