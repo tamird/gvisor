@@ -1,0 +1,69 @@
+name: Verify the two pending benchmark cards
+on:
+  push:
+    branches: [qualification/work-map-two-benchstat-cards]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the live UI and the curated pair
+        id: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = f77668b2a33f77649b47237121aa4b39335d3b0c
+          test "$(git rev-parse HEAD^^)" = 00eaeefe1b00c0d98383bf24c1b7ed55235caec9
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          test "$(git diff --name-only HEAD^^ HEAD^)" = "$(printf '%s\n' github-status.json registry.json)"
+          sha256sum -c <<'INPUTS'
+          e5d01ececbb039823104599713efd9082379b42e00b724e4580a0ffedf37230a  app.js
+          1546d51ee25a8dee5379eb405946401c309dcd7410db4535c2f1559fcfa79bee  registry.json
+          87b2176a431a126ac66f26fe3adddb4088156d2af091779bec04b7cfbd0e57f3  github-status.json
+          INPUTS
+          mkdir results
+      - name: Check the canonical metadata pair
+        id: metadata
+        if: always() && steps.source.outcome == 'success'
+        run: |
+          node metadata-preflight.mjs . > results/preflight.json
+          python3 - <<'PYTHON'
+          import hashlib, json, subprocess
+          from pathlib import Path
+          from work_states import derive_states
+          def prior(name):
+              return json.loads(subprocess.check_output(['git','show','HEAD^^:'+name]))
+          old=prior('registry.json'); old_s=prior('github-status.json')
+          r=json.loads(Path('registry.json').read_bytes()); s=json.loads(Path('github-status.json').read_bytes())
+          assert old_s.pop('registryDate')==old['meta']['updatedAt']
+          assert s.pop('registryDate')==r['meta']['updatedAt'] and old_s==s
+          assert derive_states(s['prs'],old)==derive_states(s['prs'],r)
+          current={n['id']:n for n in r['nodes']}; targets={'mutable-overlay-poll-waiter': ('65b4611218d04b56fe0d65d4ca39dddb292fa658', '22548c176cf953af18ba611896b5352ceaaea85890f6e67c7fd965db5b025ecd', 'https://github.com/tamird/gvisor/actions/runs/41007120186/artifacts/12956227771', 4), 'tcp-report-read-hangups': ('1b4eaf08e996c4741c8114a33b683b6312fe59ed', 'a116925a837c9ef5157f6406738bc846e59ffae776a3004ddce39b8289079baf', 'https://github.com/tamird/gvisor/actions/runs/41313774639/artifacts/13085808246', 5)}
+          for n in old['nodes']:
+              k=n['id'].removeprefix('branch:')
+              if k not in targets: continue
+              head,digest,url,count=targets[k];c=current[n['id']]
+              assert head==n['head']==c['head']==s['workStates'][n['id']]['contributor-review']['scope']
+              assert n['contributorReview']['body']!=c['contributorReview']['body']
+              assert c['contributorReview']['status']=='pending'
+              b=c['contributorReview']['body']; assert hashlib.sha256(b.encode()).hexdigest()==digest
+              assert b.split('```')[1].count('(p=')==count and any(item['url']==url for item in c['evidence'])
+              n['contributorReview']['body']=b;n['updatedAt']=c['updatedAt']
+              if k=='tcp-report-read-hangups':
+                  assert c['evidence'][:-1]==n['evidence'] and c['evidence'][-1]['url']==url
+                  n['evidence']=c['evidence']
+          old['meta']['updatedAt']=r['meta']['updatedAt'];assert old==r
+          PYTHON
+      - name: Publish the bounded verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: two-benchstat-cards-preflight
+          path: results/preflight.json
+          if-no-files-found: error
