@@ -1,35 +1,96 @@
-name: CI
-
-"on":
+name: Check scratch ownership of queued indirect values
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/state-conversion-storage-control]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      CONTROL: 5a66f106c704066f1a069b0ce25f462c783cf9cc
+      PRODUCT: f1f50238fed75a7a34b598fd134b3230fb829be7
+      SOURCE: 3582b3adc64b9bd5dda6f2fa72bb18494a26f9bb
+      FIXTURE: pkg/state/graph_decode_callbacks_test.go
+      OWNER: //pkg/state:state_test
+      CASE: TestQueuedIndirectConversionStorage
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 3, persist-credentials: false}
+    - name: Compare a premature-reuse mutation with the reviewed decoder
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -euo pipefail
+        profile=0ee70efe6d52576b8f173b40ad6b7ac117da3b72
+        reporter=599cb05aecfb107e07f81b8591a009cb12d6ffa7
+        git fetch -q --no-tags --depth=2 origin "$PRODUCT" "$profile" "$reporter"
+        test "$(git rev-parse HEAD^)" = "$CONTROL"
+        test "$(git rev-parse "$CONTROL^")" = "$PRODUCT"
+        test "$(git rev-parse "$PRODUCT^")" = "$SOURCE"
+        test "$(git diff --name-only "$SOURCE" "$PRODUCT")" = "$FIXTURE"
+        test "$(git diff --name-only "$PRODUCT" "$CONTROL")" = pkg/state/graph_decode_callbacks_unsafe.go
+        test "$(git rev-parse "$CONTROL:$FIXTURE")" = "$(git rev-parse "$PRODUCT:$FIXTURE")"
+        mkdir -p "$RUNNER_TEMP/proof" "$RUNNER_TEMP/gnu-platform"
+        echo '{"verdict":"INCOMPLETE"}' > "$RUNNER_TEMP/proof/verdict.json"
+        cp test/rbe/state_queued_storage.py "$RUNNER_TEMP/"
+        for file in BUILD.bazel MODULE.bazel; do
+          git show "$profile:test/rbe/gnu_platform/$file" > "$RUNNER_TEMP/gnu-platform/$file"
+        done
+        for mod in qualification_report unit_matrix; do
+          git show "$reporter:test/rbe/$mod.py" > "$RUNNER_TEMP/$mod.py"
+        done
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --init --name tcp-compiler --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        for arm in unsafe fixed; do
+          src=$CONTROL; [[ $arm == unsafe ]] || src=$PRODUCT
+          git checkout --quiet --detach "$src"
+          git diff --quiet HEAD --
+          d=$RUNNER_TEMP/$arm; mkdir "$d"
+          git rev-parse HEAD > "$d/source"
+          git rev-parse "HEAD:$FIXTURE" > "$d/fixture"
+          date -u +%FT%T.%3NZ > "$d/start"
+          rc=0
+          timeout -k 10s 14m docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config=x86_64 --jobs=48 --strategy=TestRunner=remote --nocache_test_results --test_sharding_strategy=disabled --test_output=errors --test_timeout=240 --test_env=GO_TEST_WRAP_TESTV=1 --test_filter="^${CASE}$" --build_event_json_file="$d/bep" "$OWNER" > "$d/build.log" 2>&1 || rc=$?
+          printf '%s\n' "$rc" > "$d/exit"
+          date -u +%FT%T.%3NZ > "$d/finish"
+          for f in xml log; do
+            docker exec tcp-compiler cat "bazel-testlogs/pkg/state/state_test/test.$f" > "$RUNNER_TEMP/proof/$arm.$f" || true
+          done
+          git diff --quiet HEAD --
+        done
+        python3 -B "$RUNNER_TEMP/state_queued_storage.py"
+    - name: Check the original artifact allowlist
+      id: privacy
+      if: always()
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        python3 - <<'PY'
+        import os
+        from pathlib import Path
+        root = Path(os.environ["RUNNER_TEMP"]) / "proof"
+        key = os.environ["BUILDBUDDY_API_KEY"].encode()
+        files = list(root.iterdir())
+        assert key and files and {f.name for f in files} <= {"verdict.json", "unsafe.xml", "unsafe.log", "fixed.xml", "fixed.log"}
+        for f in files:
+            assert f.is_file() and not f.is_symlink()
+            body = f.read_bytes()
+            assert key not in body and b"x-buildbuddy-api-key" not in body.lower()
+        PY
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.privacy.outcome == 'success'
       with:
-          name: runsc
-          path: bin/
+        name: state-queued-indirect-storage
+        path: ${{ runner.temp }}/proof/
+        if-no-files-found: error
