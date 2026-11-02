@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T04:56:17+00:00",
+    "updatedAt": "2026-11-02T05:08:02+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27067,14 +27067,14 @@
       "url": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-10-28T14:46:42.817788+00:00",
+      "updatedAt": "2026-11-02T05:08:02+00:00",
       "summary": "Standalone LLVM source migration 17d37fc9a is published on llvm-project-qualified. Its source patch is unchanged from 6aa2df662 (range-diff =); the prerequisite stack now includes #15146, the separate go-digest documentation-license record ea27b4806, and #16249. Canonical Fetch/Verify passed all 201 records, and GNU parser parity passed on AMD64 and ARM64. GNU/Coral remains selected. This is qualified fork work, not an upstream compiler PR or a contributor-review request.\n\nOn the separate qualification source c5f116723a, a native AMD64 and a native ARM64 TestParser each used the parser built against the merged supplier commit 17f6a30088. The catalog accepted all 201 entries. Both configured LLVM graphs contained 66 AArch64 and 70 X86 backend CodeGen actions, with other backends absent. This check did not repeat the driver-version parity suite. The merged supplier commit still awaits a BCR release.\n\nThe separate supplier change landed in hermetic-llvm #892 at 17f6a30088. It uses ordinary llvm.configure: an explicit root list selects the initial backends and every dependency contributes its requirements. The fresh same-supplier nine-versus-two-backend graph removes 479 configured LLVM C++ compile actions per CPU, matching the earlier comparisons. Those are graph counts, not measured build-time savings. Preserve #15940 until the replacement is delivered; the supplier and compiler switch remain separate.\n\nPreserved earlier source-specific record:\n\nStandalone source migration 6aa2df662 on fork branch llvm-project-source-catalog imports hermetic-llvm’s public @llvm-project repository and moves the NVIDIA parser to LLVM 23.1.2. GNU/Coral remains selected; this is agent-owned qualification, not an upstream PR or a contributor-review request. The catalog now names the actual redistributed llvm-project-23.1.2.src.tar.zst from llvmorg-23.1.2-r1; only metadata changed from 4872f66c2. Prerequisites remain #15146 and #16249, with no dependency on the future compiler switch.\n\nReadiness remains open. Preserve #15940’s backend-reduction work: the current nine-target graph has 663 additional configured LLVM C++ compile actions compared with #15940, but their LLVM pins differ. A same-release comparison is needed before choosing the final backend scope; this count is not a measured compilation-time or runtime result. The existing qualification links remain source-specific.\n\nEarlier catalog mismatch (preserved):\n\nStandalone source migration 4872f66c2 imports hermetic-llvm’s public @llvm-project repository and moves the NVIDIA parser to LLVM 23.1.2, using that supplier’s Bazel overlay and compression libraries. GNU/Coral remains the selected compiler. This is a fork proposal in qualification, not an open upstream PR or a contributor-review request. Its prerequisites are #15146 and #16249; it does not depend on the future C/C++ compiler switch. GNU AMD64 and ARM64 qualification results are pending. The catalog check exposed an archive-pin mismatch: the supplier uses the redistributed .tar.zst archive, while the record named the upstream .xz archive. That catalog correction is in progress; this source is not qualified for contributor review.",
       "followup": {
         "owner": "root",
         "sourceHead": "17d37fc9ad63e02bd1e53862ae49136179ec11eb",
-        "observedAt": "2026-10-28T14:46:42.817788+00:00",
+        "observedAt": "2026-11-02T05:08:02+00:00",
         "disposition": "Source and GNU parser checks passed; supplier change landed",
-        "nextAction": "Wait for a published BCR release containing hermetic-llvm #892 and remaining gVisor prerequisites before presenting the source migration. Keep #15940 active and the compiler switch separate.",
+        "nextAction": "Wait for a BCR release containing the merged backend-selection change (17f6a3008). The newest registry pin, 0.8.26, predates it and still requests all nine backends. Then qualify that pin with the gVisor catalog and parser prerequisites.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb",
           "https://app.buildbuddy.io/invocation/a0ed5b1c-6618-4291-9931-ec00d9183a9f",
@@ -27085,6 +27085,14 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Current LLVM registry versions",
+          "url": "https://bcr.bazel.build/modules/llvm/metadata.json"
+        },
+        {
+          "label": "Backend selection in the latest published module, 0.8.26",
+          "url": "https://bcr.bazel.build/modules/llvm/0.8.26/MODULE.bazel"
+        },
         {
           "label": "Supplier commit #892: two native TestParser runs and 201 licenses",
           "url": "https://app.buildbuddy.io/invocation/9f4b6536-8166-4896-9259-bce7f4f6b19b"
@@ -34092,15 +34100,19 @@
       "id": "branch:package-clang-format",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/clang-format-shared",
+      "ref": "research/clang-format-bazel9",
       "title": "Use the declared LLVM formatter for C and C++ lint",
-      "url": "https://github.com/tamird/gvisor/commit/3cd9523a5",
-      "head": "3cd9523a5b5a94d16df9b4f6383316e5591ac56a",
+      "url": "https://github.com/tamird/gvisor/commit/c5d0232e4",
+      "head": "c5d0232e44e980c4d69facfddd3b8bf301c68ebd",
       "group": "analysis",
-      "updatedAt": "2026-11-01T00:05:24.396268+00:00",
-      "status": "Agent work",
-      "summary": "Use the declared LLVM formatter in shared C and C++ lint targets. The earlier formatter matched the wheel across 485 files. Nine workspace and compatibility controls passed. Deleting a source directory broke discovery on both Bazel 8.8.1 and released 8.8.2 (Bazel #30883); Bazel 9.3 contains the fix.",
+      "updatedAt": "2026-11-02T05:08:02+00:00",
+      "status": "Contributor review requested",
+      "summary": "Bazel 9.3.1 ran clang-format on all 485 tracked C and C++ files. On the same server, adding a malformed file produced its exact diagnostic, deleting the directory restored the 485-file inventory, and recreating it with a differently named malformed file produced the new diagnostic. The fix target formatted that file and the next check passed.",
       "evidence": [
+        {
+          "label": "All six controls on the Bazel 9.3.1 formatter revision",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41391715864/artifacts/13117209551"
+        },
         {
           "label": "85 new or modified files compared directly; prior parity covers 400 unchanged files",
           "url": "https://github.com/tamird/gvisor/actions/runs/40838384247"
@@ -34130,18 +34142,24 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41252578192/artifacts/13060869831"
         }
       ],
-      "followup": {
-        "owner": "root",
-        "sourceHead": "3cd9523a5b5a94d16df9b4f6383316e5591ac56a",
-        "observedAt": "2026-11-01T00:05:24.396268+00:00",
-        "disposition": "Agent work",
-        "nextAction": "Wait for a compatible Bazel release containing the verified directory-watch backport, or qualify a different source-discovery method, before submission.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/blob/gh-pages/lint-design.md",
-          "https://github.com/tamird/gvisor/actions/runs/41252957874/artifacts/13062141950",
-          "https://github.com/bazelbuild/bazel/issues/30883",
-          "https://github.com/tamird/gvisor/actions/runs/41253749549/artifacts/13062399500"
-        ]
+      "refinement": {
+        "before": {
+          "head": "3cd9523a5b5a94d16df9b4f6383316e5591ac56a",
+          "base": "1d96ea04c417f23fd7d90abb453e93163aa83c1a"
+        },
+        "after": {
+          "head": "c5d0232e44e980c4d69facfddd3b8bf301c68ebd",
+          "base": "045a3f7a506c109eab8beb396e5b3af37776a2df"
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "c5d0232e44e980c4d69facfddd3b8bf301c68ebd",
+        "url": "https://github.com/tamird/gvisor/commit/c5d0232e4",
+        "requestedAt": "2026-11-02T05:08:02+00:00",
+        "title": "Open the declared clang-format change after #16663 lands",
+        "summary": "The formatter patch is unchanged on the Bazel 9.3.1 revision of #16663. The directory-watch fix is in that release. Both checking and applying clang-format run directly through Bazel."
       }
     },
     {
@@ -46173,18 +46191,9 @@
       "type": "depends_on",
       "from": "pr:16663",
       "to": "branch:package-clang-format",
-      "reason": "Uses the shared repository source inventory proposed in #16663.",
+      "reason": "Uses the shared Bazel 9.3.1 source inventory from the #16663 amendment.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/1d96ea04c"
-      ]
-    },
-    {
-      "type": "depends_on",
-      "from": "branch:buildifier-native-diff",
-      "to": "branch:package-clang-format",
-      "reason": "The lint driver uses the registered Buildifier; the installer regression moves to the remaining downloader.",
-      "evidence": [
-        "https://github.com/tamird/gvisor/compare/4c11ff414cfdf6d3535b2d6f3d5635b601a4f15e...e2b20441891e30cb1ef6a4b8b674dcae6010284e"
+        "https://github.com/tamird/gvisor/compare/045a3f7a5...c5d0232e4"
       ]
     },
     {
