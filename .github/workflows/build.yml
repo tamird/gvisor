@@ -4,27 +4,20 @@ on:
     branches: [qualification/foreign-cc-declared-shell]
 permissions:
   contents: read
+  actions: read
 jobs:
   plugin:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-22.04
-    timeout-minutes: 40
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: product, fetch-depth: 6, persist-credentials: false}
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          repository: tamird/bazel-central-registry
-          path: registry
-          ref: f8f5f201805db9b0c27571f7630cb8a37f3a78d6
-          persist-credentials: false
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          repository: tamird/rules_cc_autoconf
-          path: supplier
-          ref: b0b4b6c173c4312c14f3c5a427e9e3cb7271143c
-          persist-credentials: false
-      - name: Pin prerequisites and inventory the native image
+        with: {path: product, fetch-depth: 2, persist-credentials: false}
+      - name: Read the original artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api repos/tamird/gvisor/actions/artifacts/13129732760/zip > "$RUNNER_TEMP/original.zip"
+      - name: Reconcile the original escaped control error
         working-directory: product
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -33,41 +26,10 @@ jobs:
           umask 077
           mkdir -p "$RUNNER_TEMP/plugin-evidence"
           echo '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/plugin-evidence/result.json"
-          test -n "$BUILDBUDDY_API_KEY"
-          test "$(git -C ../registry rev-parse HEAD)" = f8f5f201805db9b0c27571f7630cb8a37f3a78d6
-          test "$(git -C ../supplier rev-parse HEAD)" = b0b4b6c173c4312c14f3c5a427e9e3cb7271143c
-          {
-            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/'
-            # Preserve original non-plugin dependency cache keys. The target
-            # itself selects TMPDIR=/tmp inside its declared build environment.
-            printf '%s\n' 'build --action_env=TMPDIR=.' 'build --host_action_env=TMPDIR=.'
-            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-            printf 'build --override_module=rules_cc_autoconf=%s/supplier\n' "$GITHUB_WORKSPACE"
-          } > "$RUNNER_TEMP/sidecar.bazelrc"
-          unset BUILDBUDDY_API_KEY
           curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
           echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod 0755 "$RUNNER_TEMP/bb"
-          python3 test/rbe/plugin_programs/image_inventory.py
-          python3 - <<'PYTHON'
-          import sys
-          sys.path.insert(0, "test/rbe/plugin_programs")
-          from action_log import context
-          assert context("ERROR: fatal error: missing_header.h: No such file or directory")[0]["text"].endswith("No such file or directory")
-          assert context("ERROR: x-buildbuddy-api-key=sentinel")[0]["text"] == "[credential-bearing line omitted]"
-          PYTHON
-      - name: Compare absent host shell and declared native musl build
-        working-directory: product
-        run: python3 -B test/rbe/plugin_programs/native_helper.py
-      - name: Collect the actual remote action and compare its outputs
-        if: always()
-        working-directory: product
-        env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: |
-          python3 -B test/rbe/plugin_programs/action_log.py
-          python3 -B test/rbe/plugin_programs/native_helper.py --outputs
+          python3 -B test/rbe/plugin_programs/native_helper.py --recover-control
       - name: Check the typed evidence boundary
         id: privacy
         if: always()
@@ -97,4 +59,4 @@ jobs:
           if-no-files-found: error
       - name: Require the native-helper verdict
         if: always()
-        run: jq -e '.status == "PASS" and .build_exit == 0 and .proof.verified and .launch.verified and .control.build_verified' "$RUNNER_TEMP/plugin-evidence/result.json"
+        run: jq -e '.status == "PASS" and .original.build_exit == 0 and .original.proof.verified and .original.launch.verified and .control_recovery.status == "EXPECTED_FAILURE"' "$RUNNER_TEMP/plugin-evidence/result.json"

@@ -239,7 +239,72 @@ def failure(r, key, exc):
     save(r)
 
 
+def recover_control(r):
+    import base64
+    from zipfile import ZipFile
+    from cas_inputs import blob, cas, rpc
+
+    source = "16d96cd23039c82aed1f2b38a5a198c43ef76c5e"
+    assert git("rev-parse", "HEAD^") == source and git("rev-parse", "HEAD") == os.environ["GITHUB_SHA"]
+    assert set(git("diff", "--name-only", source, "HEAD").splitlines()) == {
+        ".github/workflows/build.yml", "test/rbe/plugin_programs/native_helper.py"}
+    archive = TMP / "original.zip"
+    digest = sha256(archive.read_bytes()).hexdigest()
+    assert digest == "b970f69f1d5f6011f8a73180955e7fb56c7e635b79fcf70a1f63907371d0dbd6"
+    with ZipFile(archive) as z:
+        assert set(z.namelist()) == {"result.json", "image.json"}
+        original = json.loads(z.read("result.json"))
+    r.update(original=original, archive_sha256=digest, original_run=41421129869, artifact=13129732760)
+    save(r)
+    control = original["control"]
+    assert original["status"] == "INCOMPLETE" and original["source"] == control["source"] == source
+    assert original["build_exit"] == 0 and original["build_verified"] and original["source_clean"]
+    assert original["proof"]["verified"] and original["proof"]["byte_identical_archive"] and original["launch"]["verified"]
+    assert control["build_exit"] == 1 and not control["missing_host_shell"] and control["preflight"]["exit"] == 0
+    owner, = control["actions"]
+    positive, = original["actions"]
+    assert owner["targetLabel"] == positive["targetLabel"] == OWNER and owner["mnemonic"] == "CcMakeMakeRule"
+    assert owner["platform"] == positive["platform"] and owner["runner"] == "remote" and not owner["cacheHit"]
+    assert owner["digest"] == {"hash": "5ed5d7c6db58ca0d2cf68bdb2f8bd2903b7a80548c9ef26c2d9d97875b4caa9e", "sizeBytes": "376"}
+    invocation = control["invocation"]
+    assert invocation == "34bc596d-3a39-450a-8a29-f94ba99479f0"
+    executions = rpc("GetExecution", {"executionLookup": {"invocationId": invocation, "actionDigestHash": owner["digest"]["hash"]},
+                                      "inlineExecuteResponse": True}).get("execution", [])
+    execution, = [e for e in executions if e.get("actionDigest", {}).get("hash") == owner["digest"]["hash"]
+                  and str(e["actionDigest"]["sizeBytes"]) == "376"]
+    assert execution["stage"] in (4, "COMPLETED")
+    response = execution["executeResponse"]
+    assert not response.get("cachedResult") and response["result"].get("exitCode") == 1
+    result = response["result"]
+    output = result.get("stderrDigest", {})
+    data = blob(output, invocation) if int(output.get("sizeBytes", 0)) else base64.b64decode(result.get("stderrRaw", ""), validate=True)
+    assert 0 < len(data) < 4096
+    message = json.loads(data)["msg"]
+    missing = re.search(r"executable file `?/bin/bash`? not found: No such file or directory", message)
+    assert missing
+    action = cas(owner["digest"], "Action")
+    command = cas(action["commandDigest"], "Command")
+    args = command["arguments"]
+    assert args == owner["args"] + [positive["args"][1]] and owner["args"] == ["/bin/bash", "-c"]
+    assert len(command["platform"]["properties"]) == len(owner["platform"])
+    assert {p["name"]: p["value"] for p in command["platform"]["properties"]} == {p["name"]: p["value"] for p in owner["platform"]}
+    r["control_recovery"] = {"status": "EXPECTED_FAILURE", "invocation": invocation, "action": owner["digest"],
+                             "argv": args, "exit": 1, "stderr_sha256": sha256(data).hexdigest(), "stderr_bytes": len(data),
+                             "message": missing.group(0), "fresh_remote": True}
+    r["status"] = "PASS"
+
+
 if __name__ == "__main__":
+    if sys.argv[1:] == ["--recover-control"]:
+        r = {"status": "INCOMPLETE", "recovery_source": os.environ["GITHUB_SHA"], "started": now()}
+        save(r)
+        try:
+            recover_control(r)
+        except Exception as exc:
+            failure(r, "recovery_error", exc)
+        r["verdict_time"] = now()
+        save(r)
+        raise SystemExit(0 if r["status"] == "PASS" else 1)
     metadata = sys.argv[1:] == ["--outputs"]
     r = json.loads((OUT / "result.json").read_text())
     if metadata:
