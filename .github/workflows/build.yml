@@ -14,7 +14,7 @@ jobs:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 4, persist-credentials: false}
+        with: {fetch-depth: 5, persist-credentials: false}
       - name: Prepare original-byte recovery without a Bazel build
         env:
           GH_TOKEN: ${{ github.token }}
@@ -32,10 +32,10 @@ jobs:
           curl --retry 3 -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
           printf '%s  %s\n' bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224 "$RUNNER_TEMP/bb" | sha256sum -c -
           chmod 0755 "$RUNNER_TEMP/bb"
-          if ! gh api repos/tamird/gvisor/actions/artifacts/13126182561/zip > "$d/original.zip" 2> "$d/download.log"; then
+          if ! gh api repos/tamird/gvisor/actions/artifacts/13126238909/zip > "$d/original.zip" 2> "$d/download.log"; then
             printf '%s\n' 'Original archive unavailable; recovery will retain INCOMPLETE.'
           fi
-      - name: Inspect original actions and start their exact recovered binaries
+      - name: Reconcile original startup and identify actual proto generators
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: python3 -B "$RUNNER_TEMP/external-go/external_protoc_recover.py"
