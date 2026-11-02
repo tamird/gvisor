@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T18:34:02.855318+00:00",
+    "updatedAt": "2026-11-02T18:36:56.149538+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -45181,7 +45181,7 @@
       "url": "https://github.com/buildbuddy-io/buildbuddy/pull/14022",
       "group": "buildbuddy",
       "status": "open",
-      "updatedAt": "2026-11-02T18:27:13.788641+00:00",
+      "updatedAt": "2026-11-02T18:36:56.149538+00:00",
       "summary": "BuildBuddy mounted OverlayFS with an empty lowerdir when the image had no layers or every layer was empty. The executor can use its private bundle root for both. The native test ran a declared executable with both images; the BusyBox, whiteout and layer ownership controls also passed. Stock failed both new cases on both remote attempts. The workflow reported incomplete because its verifier expected a single failing attempt.",
       "evidence": [
         {
@@ -45199,6 +45199,22 @@
         {
           "label": "Why the runtime skips duplicate empty layers",
           "url": "https://github.com/buildbuddy-io/buildbuddy/commit/4c07f97e3"
+        },
+        {
+          "label": "Dev ARM64 cannot start overlayfs_test",
+          "url": "https://buildbuddy.buildbuddy.dev/invocation/d31d6985-7099-4634-802f-df3aba1e62c1"
+        },
+        {
+          "label": "Master fails the same overlayfs test in TestMain",
+          "url": "https://buildbuddy.buildbuddy.dev/invocation/067f7b4a-cc5d-442d-b384-2da7b982abbb"
+        },
+        {
+          "label": "Production ARM64 passed",
+          "url": "https://buildbuddy.buildbuddy.io/invocation/1b286843-36f3-41b3-a8f1-dfec8889b4d3"
+        },
+        {
+          "label": "Darwin dev interrupted before tests",
+          "url": "https://buildbuddy.buildbuddy.dev/invocation/9e49046e-c2ed-4f71-b8ba-920a54c7b4d7"
         }
       ],
       "settledReviews": [
@@ -45208,7 +45224,23 @@
           "outcome": "approved",
           "at": "2026-11-02T18:27:13.788641+00:00"
         }
-      ]
+      ],
+      "reviewDecision": "APPROVED",
+      "ciRecovery": {
+        "kind": "source-check-authentication",
+        "reason": "missing-api-key",
+        "sourceHead": "bd7d2e4c3b3a57d1fd19da69ae3edc452aa2cc00",
+        "observedAt": "2026-11-02T18:36:56.149538+00:00",
+        "checks": [
+          {
+            "id": "CR_kwDODlcBtc8AAAAdNneQzg",
+            "name": "build",
+            "workflowRun": 41500153697,
+            "job": 125467857102,
+            "jobURL": "https://github.com/buildbuddy-io/buildbuddy/actions/runs/41500153697/job/125467857102"
+          }
+        ]
+      }
     },
     {
       "id": "pr:16826",
