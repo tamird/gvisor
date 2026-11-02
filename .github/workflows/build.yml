@@ -1,35 +1,67 @@
-name: Verify the original plugin archive and build helper
+name: Qualify the ordinary static plugin runtime
 on:
   push:
-    branches: [qualification/plugin-original-outputs]
+    branches: [qualification/plugin-static-consumer]
 permissions:
   contents: read
-  actions: read
 jobs:
-  original:
+  plugin:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    runs-on: ubuntu-22.04
+    timeout-minutes: 49
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false}
-      - name: Fetch the pinned original receipt and existing CAS reader
+        with: {path: product, fetch-depth: 4, persist-credentials: false}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: tamird/bazel-central-registry
+          path: registry
+          ref: f8f5f201805db9b0c27571f7630cb8a37f3a78d6
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: tamird/rules_cc_autoconf
+          path: supplier
+          ref: b0b4b6c173c4312c14f3c5a427e9e3cb7271143c
+          persist-credentials: false
+      - name: Pin prerequisites and inventory the native image
+        working-directory: product
         env:
-          GH_TOKEN: ${{ github.token }}
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -eu
           umask 077
           mkdir -p "$RUNNER_TEMP/plugin-evidence"
-          echo '{"status":"INCOMPLETE","phase":"bootstrap","rerun":false}' > "$RUNNER_TEMP/plugin-evidence/result.json"
-          gh api repos/tamird/gvisor/actions/artifacts/13106771278/zip > "$RUNNER_TEMP/original.zip"
-          echo "65ef7cf33fb432d22307ef33b5775efab008c1702b67573d3dd30d380be57d72  $RUNNER_TEMP/original.zip" | sha256sum -c -
+          echo '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/plugin-evidence/result.json"
+          test -n "$BUILDBUDDY_API_KEY"
+          test "$(git -C ../registry rev-parse HEAD)" = f8f5f201805db9b0c27571f7630cb8a37f3a78d6
+          test "$(git -C ../supplier rev-parse HEAD)" = b0b4b6c173c4312c14f3c5a427e9e3cb7271143c
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/'
+            # Preserve original non-plugin dependency cache keys. The target
+            # itself selects TMPDIR=/tmp inside its declared build environment.
+            printf '%s\n' 'build --action_env=TMPDIR=.' 'build --host_action_env=TMPDIR=.'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --override_module=rules_cc_autoconf=%s/supplier\n' "$GITHUB_WORKSPACE"
+          } > "$RUNNER_TEMP/sidecar.bazelrc"
+          unset BUILDBUDDY_API_KEY
           curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
           echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod 0755 "$RUNNER_TEMP/bb"
-      - name: Read only the original successful action
+          python3 test/rbe/plugin_programs/image_inventory.py
+          if test -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+      - name: Build the production plugin runtime and run the existing socket case
+        working-directory: product
+        run: python3 -B test/rbe/plugin_programs/consumer.py
+      - name: Read the original action diagnostics and generator use
+        if: always()
+        working-directory: product
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 -B test/rbe/plugin_programs/recover_outputs.py
+        run: |
+          python3 -B test/rbe/plugin_programs/action_log.py
+          python3 -B test/rbe/plugin_programs/consumer_inputs.py
       - name: Check the typed evidence boundary
         id: privacy
         if: always()
@@ -41,7 +73,7 @@ jobs:
           from pathlib import Path
           folder = Path(os.environ["RUNNER_TEMP"]) / "plugin-evidence"
           files = list(folder.iterdir())
-          assert {f.name for f in files} == {"result.json"}
+          assert {f.name for f in files} in ({"result.json"}, {"result.json", "image.json"})
           for f in files:
               assert f.is_file() and not f.is_symlink() and f.stat().st_size < 100000
               data = f.read_bytes()
@@ -52,6 +84,19 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
-          name: plugin-original-outputs
-          path: ${{ runner.temp }}/plugin-evidence/result.json
+          name: plugin-static-consumer
+          path: |
+            ${{ runner.temp }}/plugin-evidence/result.json
+            ${{ runner.temp }}/plugin-evidence/image.json
           if-no-files-found: error
+      - name: Require the combined consumer verdict
+        if: always()
+        run: |
+          python3 - <<'PYTHON'
+          import json, os
+          from pathlib import Path
+          r = json.loads((Path(os.environ["RUNNER_TEMP"]) / "plugin-evidence/result.json").read_text())
+          assert r["status"] == "PASS", r["status"]
+          assert r["consumer_inputs"]["status"] == "PASS"
+          assert r["tests_executed"] == r["passed"] == 1 and r["failed"] == r["skipped"] == 0
+          PYTHON

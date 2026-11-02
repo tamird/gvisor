@@ -84,7 +84,7 @@ def main():
     try:
         invocation = record["invocation"]
         selected = [a for a in record.get("actions", []) if a.get("exitCode") or
-                    (a["targetLabel"] == OWNER and a["mnemonic"] == "CcMakeMakeRule")]
+                    (a["targetLabel"] == OWNER and a["mnemonic"] == "CcMakeMakeRule" and not a.get("cacheHit"))]
         assert len(selected) <= 6
         if record.get("build_exit"):
             try:
