@@ -18,9 +18,14 @@ config_setting(
     values = {"define": "plugin_tldk=true"},
 )
 
+config_setting(
+    name = "musl",
+    constraint_values = ["@llvm//constraints/libc:musl"],
+)
+
 # Both the plugin target and the build helper support Linux AMD64 only.
-# The helper's configuration must describe the objects it reads. The config
-# target uses the same Make inputs; qualification also checks the header bytes.
+# pmdinfogen uses RTE_ARCH_64 for ELF layout and reads byte order from the ELF.
+# Its build configuration need not enable the target's runtime drivers.
 _MAKE_ARGS = [
     "'SHELL:=$(FOREIGN_CC_SHELL)'",
     "'CC:=$(CC)'",
@@ -95,7 +100,12 @@ make(
         "'PMDINFO_GEN=$(PMDINFOGEN) $@ $@.pmd.c'",
         "DPDK_MAKE_TARGET=all",
         "'DPDK_LIBS_PATH=$(TLDK_ROOT)/dpdk/_build/dpdk/$(RTE_TARGET)/lib'",
-    ],
+    ] + select({
+        # The glue always uses virtio-user with --no-pci. Keep its PCI bus,
+        # but do not require Linux VFIO headers in the musl runtime.
+        ":musl": ["RTE_EAL_VFIO=n"],
+        "//conditions:default": [],
+    }),
     build_data = _BUILD_DATA + [
         ":pmd_config",
         "@plugin_dpdk//:pmdinfogen",
@@ -110,14 +120,19 @@ make(
     lib_source = ":sources",
     # The binary and configuration are additional qualification outputs.
     out_binaries = ["dpdk-pmdinfogen"],
-    out_data_files = ["rte_config.h"],
+    out_data_files = [
+        "rte_config.h",
+        "pmd_rte_config.h",
+    ],
     out_static_libs = ["libpluginstack.a"],
     postfix_script = """
-cmp $$PMD_CONFIG/rte_config.h dpdk/_build/dpdk/$$RTE_TARGET/include/rte_config.h
+grep -qx "#define RTE_ARCH_64 1" $$PMD_CONFIG/rte_config.h
+grep -qx "#define RTE_ARCH_64 1" dpdk/_build/dpdk/$$RTE_TARGET/include/rte_config.h
 mkdir -p $$INSTALLDIR/lib $$INSTALLDIR/include $$INSTALLDIR/bin
 cp -L libtldk.a $$INSTALLDIR/lib/libpluginstack.a
 cp -L $$PMDINFOGEN $$INSTALLDIR/bin/dpdk-pmdinfogen
-cp $$PMD_CONFIG/rte_config.h $$INSTALLDIR/rte_config.h
+cp dpdk/_build/dpdk/$$RTE_TARGET/include/rte_config.h $$INSTALLDIR/rte_config.h
+cp $$PMD_CONFIG/rte_config.h $$INSTALLDIR/pmd_rte_config.h
 """,
     target_compatible_with = select({
         ":plugin_tldk_condition": [
@@ -129,4 +144,8 @@ cp $$PMD_CONFIG/rte_config.h $$INSTALLDIR/rte_config.h
     targets = ["libtldk.a"],
     toolchains = ["@//external/tools/plugin-stack:toolchain"],
     visibility = ["//visibility:public"],
+    deps = select({
+        ":musl": ["@plugin_programs//:bsd_queue"],
+        "//conditions:default": [],
+    }),
 )

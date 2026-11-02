@@ -23,13 +23,9 @@ def _programs(ctx):
     for name in _APPLETS:
         ctx.symlink(ctx.path(ctx.attr.busybox), "bin/" + name)
 
-    # DPDK's build-only ELF reader includes the BSD queue macros through rte_pci.h.
-    # Keep this header out of the GNU target's compiler search path.
-    ctx.download(
-        url = "https://raw.githubusercontent.com/alpinelinux/aports/988f183cc9d6699930c3e18ccf4a9e36010afb56/main/libc-dev/sys-queue.h",
-        sha256 = "c13407edd0e33be73cae72514cb234f8612e1c0e54401c9448daffd3a240158b",
-        output = "include/sys/queue.h",
-    )
+    # Use the already pinned and licensed BSD header for musl build tools and
+    # targets; GNU targets retain their libc header search path.
+    ctx.symlink(ctx.path(ctx.attr.queue_header), "include/sys/queue.h")
     ctx.file("BUILD.bazel", """load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 exports_files(["bin/bash"])
@@ -50,5 +46,8 @@ filegroup(
 
 plugin_programs = repository_rule(
     implementation = _programs,
-    attrs = {"busybox": attr.label(mandatory = True, allow_single_file = True)},
+    attrs = {
+        "busybox": attr.label(mandatory = True, allow_single_file = True),
+        "queue_header": attr.label(default = Label("@plugin_bsd_queue//file"), allow_single_file = True),
+    },
 )
