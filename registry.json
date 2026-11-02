@@ -59645,15 +59645,19 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-02T02:26:35+00:00",
+      "updatedAt": "2026-11-02T02:39:40+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
-          "text": "The VFIO-enabled DPDK archive linked into both static AMD64 binaries. The actual VFIO compile command used the required large-file declarations and TestDumpStack passed. The socket test never started because the test installer tried to overwrite a read-only binary.",
+          "text": "Both static AMD64 binaries linked the VFIO-enabled DPDK archive. The compile action used the required large-file declarations. TestDumpStack passed in the original run. A second run used the same two executable files, confirmed that systrap loaded the plugin, and passed TestConnectToSelf.",
           "evidence": [
             {
               "label": "Compiler flags, archive symbols, link actions and the executed stack test",
               "url": "https://github.com/tamird/gvisor/actions/runs/41376238963/artifacts/13111068733"
+            },
+            {
+              "label": "Binary identity, plugin startup and the executed socket test",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41377771312/artifacts/13111992630"
             }
           ]
         },
@@ -61367,7 +61371,7 @@
           ]
         }
       ],
-      "nextStep": "Recover only the missing socket test using the verified VFIO-enabled binary. Packet traffic through a physical VFIO device still needs suitable hardware.",
+      "nextStep": "Check which of the DPDK build adjustments the standalone musl proposal needs with the regular GNU and LLVM/musl toolchains. Testing packet traffic through physical VFIO hardware still needs a suitable device.",
       "evidence": [
         {
           "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
