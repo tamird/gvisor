@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T18:03:09.740287+00:00",
+    "updatedAt": "2026-11-02T18:10:24.680607+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40967,40 +40967,39 @@
       "id": "branch:grpc-native-codegen",
       "type": "branch",
       "repo": "tamird/grpc",
-      "ref": "proposal/bazel-plugin-artifact",
-      "head": "ccfbbe36987afbad715cbca3c6bc791a7e33d2c9",
+      "ref": "proposal/bazel-plugin-symlink",
+      "head": "8e12f9a3e2460d4b1a5b14fb2ef0bf91e86ff4e5",
       "title": "Remove the shell copy from the gRPC plugin wrapper",
-      "url": "https://github.com/tamird/grpc/commit/ccfbbe369",
+      "url": "https://github.com/tamird/grpc/commit/8e12f9a3e",
       "group": "rbe",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T18:03:09.740287+00:00",
-      "summary": "Check whether a symlink to the selected native or universal plugin is enough. The copy was tested on Linux and macOS. The release ZIP needs a standalone executable, but the packaging step may already follow the link.",
+      "updatedAt": "2026-11-02T18:10:24.680607+00:00",
+      "summary": "Bazel can expose each protoc plugin with a symlink. The release uploader’s pkg_zip recipe follows the link and stores the executable bytes. The revised rule drops the C++ copy tool.",
       "evidence": [
         {
-          "label": "Linux code generation without a shell",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41481569578/artifacts/13159153891"
+          "label": "Release uploader identifies the packaging recipe",
+          "url": "https://github.com/grpc/grpc/issues/36801#issuecomment-2798222006"
         },
         {
-          "label": "Universal plugins and code generation on Intel macOS",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41489925538/artifacts/13166167197"
+          "label": "Two plugin archives in the proposed release recipe",
+          "url": "https://github.com/grpc/grpc/blob/0c725d390/BUILD#L5186-L5206"
         },
         {
-          "label": "Distribution and build metadata comparison",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41481569578/artifacts/13159939795"
+          "label": "Pinned ZIP writer reads the executable bytes",
+          "url": "https://github.com/bazelbuild/rules_pkg/blob/cd7e10846/pkg/private/zip/build_zip.py#L163-L184"
         }
       ],
       "followup": {
         "owner": "python_supplier_review",
-        "sourceHead": "ccfbbe36987afbad715cbca3c6bc791a7e33d2c9",
-        "observedAt": "2026-11-02T18:03:09.740287+00:00",
-        "disposition": "Contributor requested a simpler implementation",
-        "nextAction": "Trace the published CocoaPods ZIP to its packaging command. Verify whether the archiver follows the symlink and whether an extracted plugin runs independently.",
+        "sourceHead": "8e12f9a3e2460d4b1a5b14fb2ef0bf91e86ff4e5",
+        "observedAt": "2026-11-02T18:10:24.680607+00:00",
+        "disposition": "Testing the smaller symlink rule",
+        "nextAction": "Qualify native Linux code generation and both metadata generators. Build both macOS plugin ZIPs with the release recipe and run the extracted executables after Bazel cleanup.",
         "evidence": [
-          "https://github.com/tamird/grpc/commit/ccfbbe369",
-          "https://github.com/grpc/grpc/blob/db13f8422/CONTRIBUTING.md#generative-ai-policy",
-          "https://github.com/tamird/gvisor/actions/runs/41481569578/artifacts/13159153891",
-          "https://github.com/tamird/gvisor/actions/runs/41489925538/artifacts/13166167197",
-          "https://github.com/tamird/gvisor/actions/runs/41481569578/artifacts/13159939795"
+          "https://github.com/tamird/grpc/commit/8e12f9a3e",
+          "https://github.com/grpc/grpc/issues/36801#issuecomment-2798222006",
+          "https://github.com/grpc/grpc/blob/0c725d390/BUILD#L5186-L5206",
+          "https://github.com/bazelbuild/rules_pkg/blob/cd7e10846/pkg/private/zip/build_zip.py#L163-L184"
         ]
       }
     },
@@ -44724,27 +44723,37 @@
       "url": "https://github.com/tamird/gvisor/commit/22b87677f",
       "group": "analysis",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T17:56:54.547668+00:00",
-      "summary": "Four Buildkite jobs currently start the Docker builder to run the unit suite. The proposal shares the eight target patterns with make unit-tests and preserves the cgroup-specific test cache.",
+      "updatedAt": "2026-11-02T18:10:24.680607+00:00",
+      "summary": "Four Buildkite jobs can share the Make unit suite and run Bazel directly. On AMD64 all three entry points selected the same 355 runnable tests. The two focused targets passed all 471 cases, and changing cgroup mode invalidated both cached results.",
       "evidence": [
         {
-          "label": "Target identities and named unit cases on Linux",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41495497730"
+          "label": "Three matching AMD64 selections and 471 named buffer/cgroup cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41495497730/artifacts/13166333421"
         },
         {
-          "label": "First run, target counts and cache controls",
+          "label": "Cold, warm and alternate cgroup cache controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/41493261450/artifacts/13166725105"
+        },
+        {
+          "label": "Full native ARM64 run",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41497682946"
+        },
+        {
+          "label": "Public Buildkite unit queues on master",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53249"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "22b87677f7ae1fa27ebee5b4eb95ab9cfe966761",
-        "observedAt": "2026-11-02T17:56:54.547668+00:00",
-        "disposition": "Remote qualification in progress",
-        "nextAction": "Verify target identities and named buffer and cgroup cases from the Linux run. Reconcile real worker coverage separately.",
+        "observedAt": "2026-11-02T18:10:24.680607+00:00",
+        "disposition": "ARM64 full suite in progress",
+        "nextAction": "Verify the uncached ARM64 run and record any host restrictions. Correct the report’s 1,069 configured test rules to distinguish the 355 runnable tests from 711 Nogo and three KVM exclusions. A native cgroup v1 run still needs the upstream worker.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41495497730",
-          "https://github.com/tamird/gvisor/actions/runs/41493261450/artifacts/13166725105"
+          "https://github.com/tamird/gvisor/actions/runs/41495497730/artifacts/13166333421",
+          "https://github.com/tamird/gvisor/actions/runs/41493261450/artifacts/13166725105",
+          "https://github.com/tamird/gvisor/actions/runs/41497682946",
+          "https://buildkite.com/gvisor/pipeline/builds/53249"
         ]
       }
     }
