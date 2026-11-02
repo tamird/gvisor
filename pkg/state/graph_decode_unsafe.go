@@ -73,6 +73,9 @@ type graphObjectDecodeState struct {
 
 // graphDecodeState is the state of Load.
 type graphDecodeState struct {
+	// pending is set only while resolving skipped wire rows.
+	pending *deferredDecode
+
 	ctx context.Context
 	in  decBuf
 	// graphLen is the whole graph's size, even while in is limited to one object.
@@ -412,6 +415,7 @@ func (ds *graphDecodeState) noteRef(obj int32, t unsafe.Pointer, ti *typeInfo) {
 	off := uintptr(t) - uintptr(o.base)
 	if off == 0 || (o.kind == objKindArray && ti.size > 0 && off%ti.size == 0) {
 		o.decodeType = ti
+		ds.typeKnown(obj)
 	}
 }
 

@@ -16,10 +16,12 @@ package state
 
 import (
 	"bytes"
+	"container/heap"
 	"context"
 	"fmt"
 	"io"
 	"reflect"
+	"sort"
 	"unsafe"
 
 	"gvisor.dev/gvisor/pkg/gohacks"
@@ -67,23 +69,8 @@ func (ds *graphDecodeState) decodeObjects() {
 		}
 		ds.decodeFrame(int32(i), end)
 	}
-	for len(deferred) > 0 {
-		remaining := deferred[:0]
-		for _, do := range deferred {
-			if ds.objs[do.obj].decodeType == nil {
-				remaining = append(remaining, do)
-				continue
-			}
-			pos := d.pos
-			d.pos = do.pos
-			ds.cur = do.obj
-			ds.decodeFrame(do.obj, do.end)
-			d.pos = pos
-		}
-		if len(remaining) == len(deferred) {
-			Failf("the type of object %d (%s) is not known from references to it", remaining[0].obj, ds.objTypeName(remaining[0].obj))
-		}
-		deferred = remaining
+	if len(deferred) != 0 {
+		ds.decodeDeferred(deferred)
 	}
 }
 
@@ -129,11 +116,104 @@ func (ds *graphDecodeState) decodeObject(obj int32) {
 	}
 }
 
-// deferredObject is the data of an object that is decoded after other
-// objects.
+// deferredObject records a skipped payload and the first pass that can decode it.
 type deferredObject struct {
 	obj      int32
+	pass     uint32
 	pos, end int
+}
+
+type readyObjects []*deferredObject
+
+func (q readyObjects) Len() int      { return len(q) }
+func (q readyObjects) Swap(i, j int) { q[i], q[j] = q[j], q[i] }
+func (q readyObjects) Less(i, j int) bool {
+	if q[i].pass == q[j].pass {
+		return q[i].obj < q[j].obj
+	}
+	return q[i].pass < q[j].pass
+}
+func (q *readyObjects) Push(v any) { *q = append(*q, v.(*deferredObject)) }
+func (q *readyObjects) Pop() any {
+	last := len(*q) - 1
+	v := (*q)[last]
+	*q = (*q)[:last]
+	return v
+}
+
+type deferredDecode struct {
+	rows  []deferredObject // In wire order.
+	ready readyObjects
+	pass  uint32
+}
+
+// typeKnown is called the first time a reference supplies an object's type.
+func (ds *graphDecodeState) typeKnown(obj int32) {
+	if ds.pending != nil {
+		ds.pending.wake(obj, ds.cur)
+	}
+}
+
+func (q *deferredDecode) wake(obj, cur int32) {
+	i := sort.Search(len(q.rows), func(i int) bool { return q.rows[i].obj >= obj })
+	if i == len(q.rows) || q.rows[i].obj != obj {
+		return
+	}
+	row := &q.rows[i]
+	row.pass = q.pass
+	// A wire-order scan would already have passed an earlier row. Preserve
+	// the order of StateLoad calls and the first error in a malformed stream.
+	if obj < cur {
+		row.pass++
+	}
+	heap.Push(&q.ready, row)
+}
+
+func (ds *graphDecodeState) decodeDeferred(rows []deferredObject) {
+	end := ds.in.pos
+	remaining := rows[:0]
+	for _, row := range rows {
+		if ds.objs[row.obj].decodeType == nil {
+			remaining = append(remaining, row)
+			continue
+		}
+		ds.decodeDeferredFrame(row)
+	}
+	// A single scan can resolve every skipped frame without a work queue.
+	if len(remaining) != 0 {
+		ds.resolveDeferred(remaining)
+	}
+	ds.in.pos = end
+}
+
+func (ds *graphDecodeState) decodeDeferredFrame(row deferredObject) {
+	ds.cur = row.obj
+	ds.in.pos = row.pos
+	ds.decodeFrame(row.obj, row.end)
+}
+
+func (ds *graphDecodeState) resolveDeferred(rows []deferredObject) {
+	q := &deferredDecode{rows: rows}
+	ds.pending = q
+	for i := range rows {
+		if ds.objs[rows[i].obj].decodeType != nil {
+			// The initial entries are already in heap order.
+			q.ready = append(q.ready, &rows[i])
+		}
+	}
+	for range rows {
+		if len(q.ready) == 0 {
+			for _, row := range rows {
+				if ds.objs[row.obj].decodeType == nil {
+					Failf("the type of object %d (%s) is not known from references to it", row.obj, ds.objTypeName(row.obj))
+				}
+			}
+		}
+		row := heap.Pop(&q.ready).(*deferredObject)
+		q.pass = row.pass
+		ds.decodeDeferredFrame(*row)
+	}
+	ds.pending = nil
 }
 
 // loadValue decodes a value of type ti for Source.LoadValueTo, and calls
