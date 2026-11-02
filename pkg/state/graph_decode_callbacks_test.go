@@ -17,6 +17,7 @@ package state
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"math"
@@ -1397,4 +1398,198 @@ func TestPooledEncoderScratchReleasesPointers(t *testing.T) {
 		}
 	}
 	t.Fatal("pooled graphEncodeState retained user allocation across GC")
+}
+
+type scanCell [2]map[byte]scanLink
+
+type scanLink struct{ Next *scanCell }
+
+func (*scanLink) StateTypeName() string { return "state.scanLink" }
+func (*scanLink) StateFields() []string { return []string{"Next"} }
+func (l *scanLink) StateSave(s Sink)    { s.Save(0, &l.Next) }
+func (l *scanLink) StateLoad(ctx context.Context, s Source) {
+	if obs, ok := ctx.Value(scanTraceKey{}).(*scanTrace); ok {
+		ds := s.graph.ds
+		id := ds.cur
+		obs.loads = append(obs.loads, id)
+		obs.refs[id] = obs.streamBytes - ds.graphLen + ds.in.pos
+		s.AfterLoad(func() { obs.hooks = append(obs.hooks, id) })
+	}
+	s.Load(0, &l.Next)
+}
+
+type scanRoot struct {
+	Seeds []*map[byte]scanLink
+	Tail  *scanCell
+}
+
+func (*scanRoot) StateTypeName() string { return "state.scanRoot" }
+func (*scanRoot) StateFields() []string { return []string{"Seeds", "Tail"} }
+func (r *scanRoot) StateSave(s Sink) {
+	s.Save(0, &r.Seeds)
+	s.Save(1, &r.Tail)
+}
+func (r *scanRoot) StateLoad(ctx context.Context, s Source) {
+	s.Load(0, &r.Seeds)
+	if obs, ok := ctx.Value(scanTraceKey{}).(*scanTrace); ok {
+		ds := s.graph.ds
+		obs.tails = append(obs.tails, obs.streamBytes-ds.graphLen+ds.in.pos)
+	}
+	s.Load(1, &r.Tail)
+}
+
+type scanTraceKey struct{}
+type scanTrace struct {
+	streamBytes  int
+	loads, hooks []int32
+	refs         map[int32]int
+	tails        []int
+}
+
+var registerDeferredScan = sync.OnceFunc(func() {
+	Register((*scanRoot)(nil))
+	Register((*scanLink)(nil))
+	fingerprint.Store(0)
+})
+
+func newScanRoot(n int, seeded bool) scanRoot {
+	var root scanRoot
+	for i := range n {
+		cell := new(scanCell)
+		cell[1] = map[byte]scanLink{byte(i): {Next: root.Tail}}
+		root.Tail = cell
+		if seeded {
+			root.Seeds = append(root.Seeds, &cell[1])
+		}
+	}
+	return root
+}
+
+func checkScanRoot(t testing.TB, root *scanRoot, n int, seeded bool) {
+	t.Helper()
+	if (seeded && len(root.Seeds) != n) || (!seeded && root.Seeds != nil) {
+		t.Fatalf("unexpected seed count %d", len(root.Seeds))
+	}
+	cell := root.Tail
+	for i := n - 1; i >= 0; i-- {
+		if cell == nil || cell[0] != nil || len(cell[1]) != 1 || (seeded && root.Seeds[i] != &cell[1]) {
+			t.Fatalf("invalid restored cell or alias at %d", i)
+		}
+		link, ok := cell[1][byte(i)]
+		if !ok {
+			t.Fatalf("missing key at %d", i)
+		}
+		cell = link.Next
+	}
+	if cell != nil {
+		t.Fatal("restored chain exceeds its original length")
+	}
+}
+
+func TestGraphDeferredPasses(t *testing.T) {
+	registerDeferredScan()
+	for _, n := range []int{16, 64, 256, 1024} {
+		for _, seeded := range []bool{false, true} {
+			t.Run(fmt.Sprintf("n%d/seeded_%v", n, seeded), func(t *testing.T) {
+				input := newScanRoot(n, seeded)
+				var data bytes.Buffer
+				if _, err := Save(t.Context(), &data, &input); err != nil {
+					t.Fatal(err)
+				}
+				var output scanRoot
+				if _, err := Load(t.Context(), &data, &output); err != nil {
+					t.Fatal(err)
+				}
+				checkScanRoot(t, &output, n, seeded)
+			})
+		}
+	}
+}
+
+func TestDeferredTraversalOrder(t *testing.T) {
+	registerDeferredScan()
+	// Two independent, interleaved chains can be ready in the same scan.
+	input := [2]scanRoot{newScanRoot(8, true), newScanRoot(7, true)}
+	var data bytes.Buffer
+	if _, err := Save(t.Context(), &data, &input); err != nil {
+		t.Fatal(err)
+	}
+	load := func(stream []byte) (*scanTrace, error) {
+		trace := &scanTrace{streamBytes: len(stream), refs: make(map[int32]int)}
+		var dst [2]scanRoot
+		_, err := Load(context.WithValue(t.Context(), scanTraceKey{}, trace), bytes.NewReader(stream), &dst)
+		if err == nil {
+			checkScanRoot(t, &dst[0], 8, true)
+			checkScanRoot(t, &dst[1], 7, true)
+		}
+		return trace, err
+	}
+	trace, err := load(data.Bytes())
+	if err != nil || len(trace.loads) != 15 || len(trace.hooks) != 15 || len(trace.refs) != 15 || len(trace.tails) != 2 {
+		t.Fatalf("trace %+v, err %v", trace, err)
+	}
+	t.Logf("SCAN-ORDER valid digest=%x loads=%v hooks=%v", sha256.Sum256(data.Bytes()), trace.loads, trace.hooks)
+	// Choose rows by their wire offsets, independently of the observed visit order.
+	positions := make([]int, 0, len(trace.refs))
+	for _, pos := range trace.refs {
+		if data.Bytes()[pos] != 0 {
+			positions = append(positions, pos)
+		}
+	}
+	slices.Sort(positions)
+	for _, bad := range []string{"two_invalid_targets", "unknown_types"} {
+		damaged := bytes.Clone(data.Bytes())
+		if bad == "two_invalid_targets" {
+			for i, pos := range []int{positions[2], positions[3]} {
+				if damaged[pos] == 0 || damaged[pos] >= 126 {
+					t.Fatalf("not a one-byte reference: %d", damaged[pos])
+				}
+				damaged[pos] = byte(126 + i)
+			}
+		} else {
+			for _, pos := range trace.tails {
+				if damaged[pos] == 0 || damaged[pos] >= 126 {
+					t.Fatalf("not a one-byte root reference: %d", damaged[pos])
+				}
+				damaged[pos] = 0
+			}
+		}
+		seen, err := load(damaged)
+		se, ok := err.(*ErrState)
+		if !ok {
+			t.Fatalf("%s: unexpected %v", bad, err)
+		}
+		reason := se.err.Error()
+		if (bad == "two_invalid_targets" && reason != "invalid target 126" && reason != "invalid target 127") ||
+			(bad == "unknown_types" && !strings.Contains(reason, "not known from references")) || len(seen.hooks) != 0 {
+			t.Fatalf("%s: wrong first error or hooks: %q %v", bad, reason, seen.hooks)
+		}
+		t.Logf("SCAN-ORDER %s digest=%x loads=%v hooks=%v error=%q", bad, sha256.Sum256(damaged), seen.loads, seen.hooks, reason)
+	}
+}
+
+func BenchmarkDeferredChain(b *testing.B) {
+	registerDeferredScan()
+	for _, n := range []int{16, 64, 256, 1024} {
+		for _, seeded := range []bool{false, true} {
+			b.Run(fmt.Sprintf("n%d/seeded_%v", n, seeded), func(b *testing.B) {
+				input := newScanRoot(n, seeded)
+				var buf bytes.Buffer
+				ctx := b.Context()
+				if _, err := Save(ctx, &buf, &input); err != nil {
+					b.Fatal(err)
+				}
+				data := buf.Bytes()
+				var last scanRoot
+				for b.Loop() {
+					var output scanRoot
+					if _, err := Load(ctx, bytes.NewReader(data), &output); err != nil {
+						b.Fatal(err)
+					}
+					last = output
+				}
+				checkScanRoot(b, &last, n, seeded)
+			})
+		}
+	}
 }
