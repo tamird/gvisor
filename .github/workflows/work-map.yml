@@ -1,0 +1,64 @@
+name: Qualify settled publication links
+on:
+  push:
+    branches: [qualification/work-map-settled-publication-labels]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 4
+          persist-credentials: false
+      - name: Bind the UI change and unchanged metadata
+        id: source
+        run: |
+          test "$(git rev-parse HEAD^)" = 9626a51d10d5589e3cb1cde9db5dad3520dc9a46
+          test "$(git rev-parse HEAD~3)" = 481c1f3c041a01c2002de59d1ad83151a07cb683
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          git diff --quiet HEAD~3 HEAD^ -- registry.json github-status.json
+          mkdir results
+      - name: Check UI behavior
+        id: client
+        if: always() && steps.source.outcome == 'success'
+        run: node --test app_test.mjs
+      - name: Check collector and decision behavior
+        id: collector
+        if: always() && steps.source.outcome == 'success'
+        run: python3 -m unittest discover -p '*_test.py'
+      - name: Check the canonical metadata pair
+        id: metadata
+        if: always() && steps.source.outcome == 'success'
+        run: node metadata-preflight.mjs . > results/preflight.json
+      - name: Record the independent outcomes
+        if: always() && steps.source.outcome == 'success'
+        env:
+          CLIENT: ${{ steps.client.outcome }}
+          COLLECTOR: ${{ steps.collector.outcome }}
+          METADATA: ${{ steps.metadata.outcome }}
+        run: |
+          python3 - <<'PY'
+          from datetime import datetime, timezone
+          import json
+          import os
+          from pathlib import Path
+          outcomes = {name.lower(): os.environ[name] for name in ('CLIENT', 'COLLECTOR', 'METADATA')}
+          passed = all(value == 'success' for value in outcomes.values())
+          result = {'status': 'PASS' if passed else 'FAIL', 'source': os.environ['GITHUB_SHA'], 'product': '9626a51d10d5589e3cb1cde9db5dad3520dc9a46', 'base': '481c1f3c041a01c2002de59d1ad83151a07cb683', 'outcomes': outcomes, 'verified_at': datetime.now(timezone.utc).isoformat()}
+          Path('results/verdict.json').write_text(json.dumps(result, indent=2) + '\n')
+          print(json.dumps(result))
+          assert passed
+          PY
+      - name: Publish the bounded verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-map-settled-publications
+          path: |
+            results/preflight.json
+            results/verdict.json
+          if-no-files-found: error
