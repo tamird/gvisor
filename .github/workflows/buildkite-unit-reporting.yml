@@ -20,6 +20,7 @@ jobs:
       ARM64_ARTIFACT: pending
       ARM64_SHA256: pending
       ARM64_CARRIER: ea96012d1c799a775b8781834f9a69a6ffbf583a
+      GAZELLE_RECOVERY: f3d20ca2d2cf0bdf4f379795fe74f00a94ab496b
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -38,10 +39,18 @@ jobs:
             gh api "repos/tamird/gvisor/actions/artifacts/${!artifact}/zip" > "$RUNNER_TEMP/$arch.zip" || true
             gh api "repos/tamird/gvisor/actions/runs/${!run}" > "$RUNNER_TEMP/$arch-run.json" || true
           done
+          gh api repos/tamird/gvisor/actions/artifacts/13167514851 > "$RUNNER_TEMP/gazelle-artifact.json" || true
+          gh api repos/tamird/gvisor/actions/artifacts/13167514851/zip > "$RUNNER_TEMP/gazelle.zip" || true
       - name: Reconcile the original reports without executing tests
         run: |
           git fetch --quiet --depth=1 origin "$PRODUCT"
           python3 .github/qualification/reconcile-buildkite-units.py
+      - name: Reconcile the completed Gazelle controls independently
+        if: always()
+        run: |
+          git fetch --quiet --depth=3 origin "$GAZELLE_RECOVERY"
+          git show "$GAZELLE_RECOVERY:.github/qualification/gazelle-native-minimum.py" > "$RUNNER_TEMP/gazelle-replay.py"
+          python3 "$RUNNER_TEMP/gazelle-replay.py" --reconcile-original
       - name: Scan the bounded report
         id: scan
         if: always()
@@ -53,7 +62,7 @@ jobs:
           names = {'verdict.json', 'amd64-legacy-selection.json', 'amd64-make-selection.json',
                    'amd64-native-selection.json', 'amd64-execution-targets.txt', 'amd64-execution.json',
                    'arm64-analysis-selection.json', 'arm64-execution-targets.txt', 'arm64-execution.json',
-                   'arm64-build-roots.json'}
+                   'arm64-build-roots.json', 'gazelle-reconciliation.json'}
           assert root.is_dir()
           total = 0
           for path in root.iterdir():

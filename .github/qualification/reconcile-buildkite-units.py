@@ -194,6 +194,9 @@ def main():
                        coverage_gaps={key: runtime[key] for key in ("zero_case_owners", "all_skipped_owners")},
                        execution_finished_at=runtime["execution_finished_at"])
             if arch == "arm64":
+                row["configurations"] = report.read_json(root / "analysis/configurations.json")
+                assert set(row["configurations"]) == {target.configuration for target in selected.values()}
+                assert all(config["cpu"] == "aarch64" for config in row["configurations"].values())
                 assert configured(root / "full") == observed[0]["configured"]
                 build = build_coverage(root / "full", observed[0]["configured"])
                 row["build_coverage"] = {key: build[key] for key in ("missing", "failed")}
@@ -207,7 +210,8 @@ def main():
         except Exception as error:
             result["errors"].append(f"{arch}: {error!r}")
     if len(selections) == 2:
-        assert selections["amd64"] == selections["arm64"]
+        if selections["amd64"] != selections["arm64"]:
+            result["errors"].append("AMD64 and ARM64 runnable owner identities differ")
     result["status"] = "INCOMPLETE" if result["errors"] else "RECONCILED"
     result["verdict_available_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
     report.write_json(OUT / "verdict.json", result)
