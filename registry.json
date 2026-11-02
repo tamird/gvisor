@@ -34178,6 +34178,10 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41395141116/artifacts/13119196338"
         },
         {
+          "label": "Canonical license audit, dispatch checks, dependency visibility and AMD64/ARM64 scratch actions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41396075493/artifacts/13119622419"
+        },
+        {
           "label": "All five checks ran without Docker; tracked typo failed, untracked typo ignored; 223 license records passed",
           "url": "https://github.com/tamird/gvisor/actions/runs/40841175298"
         },
@@ -34186,18 +34190,25 @@
           "url": "https://app.buildbuddy.io/invocation/8c30dc22-4d7d-403e-b6f6-58fdd89c698c"
         }
       ],
-      "status": "Agent validating revision",
-      "updatedAt": "2026-11-02T05:42:03+00:00",
-      "followup": {
-        "owner": "root",
-        "sourceHead": "46b096d63f5a90ef49976a6ccdeafe81a5324c57",
-        "observedAt": "2026-11-02T05:42:03+00:00",
-        "disposition": "The contributor approved the earlier wheel pin. The revised action is being qualified.",
-        "nextAction": "Verify the real license catalog, scratch execution and external module use before requesting review of this revision.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/46b096d63",
-          "https://github.com/tamird/gvisor/compare/73eda260e...46b096d63"
-        ]
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T05:56:23+00:00",
+      "refinement": {
+        "before": {
+          "head": "73eda260e0388b7f6a32ba84fe167e8dbbaa5d88"
+        },
+        "after": {
+          "head": "46b096d63f5a90ef49976a6ccdeafe81a5324c57"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "46b096d63f5a90ef49976a6ccdeafe81a5324c57",
+        "url": "https://github.com/tamird/gvisor/commit/46b096d63",
+        "title": "Run the repository spelling check as a Bazel action",
+        "requestedAt": "2026-11-02T05:56:23+00:00",
+        "summary": "Open the revised spelling check after the shared Bazel lint rules land?",
+        "body": "Bazel runs the pinned codespell wheel against 3,329 declared sources. A typo fails the action with a filename and suggestion. The check rejects configuration that could edit the sources. Canonical Verify passed all 223 license entries. With the separate static interpreter registration, the same action also passed on AMD64 and ARM64 scratch workers."
       }
     },
     {
@@ -43289,6 +43300,43 @@
         "summary": "Open a standalone shared-memory PR?",
         "body": "A concurrent IPC_STAT could report SHM_DEST while still returning the segment’s old key. Remove the key and set SHM_DEST under the same registry and segment locks. All six syscall cases passed on systrap and Linux. The native runner’s one-ID map prevented the ownership case from switching credentials, so that unchanged case ran in the native worker’s own namespace."
       }
+    },
+    {
+      "id": "branch:buildkite-native-plugin",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/buildkite-native-plugin",
+      "head": "89fed95c14d3569acb4c895ae602983b7ce25d32",
+      "title": "Build the plugin runtime directly on Buildkite",
+      "group": "bazel",
+      "url": "https://github.com/tamird/gvisor/commit/89fed95c1",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T05:56:23+00:00",
+      "summary": "The AMD64 plugin runtime also builds an ARM64 cgo standard library. Give that input the declared LLVM cross-compiler and let the job run Bazelisk directly. DPDK and the optimized AMD64 runtime still use the worker’s GNU toolchain.",
+      "evidence": [
+        {
+          "label": "Native static AMD64 link, embedded plugin symbol, --version and architecture-specific compiler selection",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41395191771/artifacts/13119417233"
+        },
+        {
+          "label": "Original native build failed to find the ARM64 compiler",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41394053559/artifacts/13118243934"
+        },
+        {
+          "label": "Qualified integration source",
+          "url": "https://github.com/tamird/gvisor/commit/a490e1c09"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "89fed95c14d3569acb4c895ae602983b7ce25d32",
+        "url": "https://github.com/tamird/gvisor/commit/89fed95c1",
+        "title": "Build the plugin runtime directly on Buildkite",
+        "requestedAt": "2026-11-02T05:56:23+00:00",
+        "summary": "Open the plugin-job change once the Bazelisk hook and GNU plugin build land?",
+        "body": "The identical command built a static AMD64 runsc with libpluginstack.a and its plugin_preinitstack symbol, then ran its version command. Only the cross-compiler for ARM64 changes. This job checks compilation; device-backed traffic runs separately."
+      }
     }
   ],
   "edges": [
@@ -46807,6 +46855,20 @@
       "evidence": [
         "https://github.com/tamird/gvisor/commit/a385bd2b0"
       ]
+    },
+    {
+      "from": "pr:15153",
+      "to": "branch:buildkite-native-plugin",
+      "type": "depends_on",
+      "reason": "The native job uses the GNU plugin target.",
+      "evidence": "https://github.com/tamird/gvisor/actions/runs/41395191771/artifacts/13119417233"
+    },
+    {
+      "from": "branch:buildkite-source-lint-native",
+      "to": "branch:buildkite-native-plugin",
+      "type": "depends_on",
+      "reason": "The shared hook supplies Bazelisk when DOCKER_BUILD is false.",
+      "evidence": "https://github.com/tamird/gvisor/actions/runs/41395191771/artifacts/13119417233"
     }
   ],
   "investigations": [
