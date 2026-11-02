@@ -1,0 +1,53 @@
+name: Verify the prerequisite intake
+on:
+  push:
+    branches: [qualification/work-map-prerequisite-intake]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the live UI and the curated pair
+        id: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = a009d1f9616cbcd59826456be433adeb1c34fd4d
+          test "$(git rev-parse HEAD^^)" = f77668b2a33f77649b47237121aa4b39335d3b0c
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          test "$(git diff --name-only HEAD^^ HEAD^)" = "$(printf '%s\n' github-status.json registry.json)"
+          sha256sum -c <<'INPUTS'
+          e5d01ececbb039823104599713efd9082379b42e00b724e4580a0ffedf37230a  app.js
+          a062b557fdd1a2cc5d6a8ba3b3440a14aaaae3b1b08855ecc6f0c8a2163c6fdb  registry.json
+          52fae67d548bbced9f73f7ea6f3e599dd6153a44f71ba524f33adfc930b8e883  github-status.json
+          INPUTS
+          mkdir results
+      - name: Check the canonical metadata pair
+        id: metadata
+        if: always() && steps.source.outcome == 'success'
+        run: |
+          node metadata-preflight.mjs . > results/preflight.json
+          python3 - <<'PYTHON'
+          import json,subprocess
+          from pathlib import Path
+          from work_states import derive_states
+          k='branch:tcp-consumed-socket-error'
+          old=json.loads(subprocess.check_output(['git','show','HEAD^^:github-status.json']));s=json.loads(Path('github-status.json').read_bytes());r=json.loads(Path('registry.json').read_bytes());oldr=json.loads(subprocess.check_output(['git','show','HEAD^^:registry.json']))
+          old['registryDate']=r['meta']['updatedAt'];assert old['workStates'].pop(k)['contributor-review']['scope']=='c1bf3ee9af94ee5e6380252e28dfe6e8fb7f7d46' and old==s
+          oldderived=derive_states(s['prs'],oldr);oldderived.pop(k);assert oldderived==derive_states(s['prs'],r)
+          assert {n['id'] for n,p in zip(r['nodes'],oldr['nodes'])if n!=p}=={k,'branch:declared-jekyll-site'}
+          assert [n['id']for n,p in zip(r['investigations'],oldr['investigations']) if n!=p]==['investigation:project-feedback']
+          PYTHON
+      - name: Publish the bounded verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: prerequisite-intake-preflight
+          path: results/preflight.json
+          if-no-files-found: error
