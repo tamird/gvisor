@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T21:53:09.343406+00:00",
+    "updatedAt": "2026-11-02T22:04:01.189746+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -45980,18 +45980,22 @@
       "id": "branch:state-graph-print-errors",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "proposal/state-graph-print-errors",
-      "head": "57b52c547d6f60fb4c89f83c896c7e8f89db9145",
+      "ref": "revision/state-graph-print-returns",
+      "head": "38316d084325c7785d1d7e172a6db5e0caf0afc0",
       "title": "Report write failures when printing a state graph",
-      "url": "https://github.com/tamird/gvisor/commit/57b52c547",
+      "url": "https://github.com/tamird/gvisor/commit/38316d084",
       "group": "runtime",
-      "summary": "PrintGraph returned nil when a closed pipe rejected a write in either the text or HTML formatter. The fix returns io.ErrClosedPipe in both modes. The four cases passed on the corrected source, including the successful-output controls.",
-      "status": "Agent work",
-      "updatedAt": "2026-11-02T21:53:09.343406+00:00",
+      "summary": "PrintGraph now returns the original writer error directly in text and HTML mode. It streams through a private buffer without flushing a caller-owned buffer. On stock, the closed-pipe case reported success in both modes and the other three controls passed. All four passed on the revision with the same tests.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T22:04:01.189746+00:00",
       "evidence": [
         {
           "label": "Original stock/fixed graph printer results and test output",
           "url": "https://github.com/tamird/gvisor/actions/runs/41529423728/artifacts/13182405129"
+        },
+        {
+          "label": "Matched text/HTML closed-pipe, successful output, and caller-buffer controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41533115417/artifacts/13183400567"
         }
       ],
       "settledReviews": [
@@ -46002,16 +46006,26 @@
           "at": "2026-11-02T21:53:09.343406+00:00"
         }
       ],
-      "followup": {
-        "owner": "State checkpointing",
-        "sourceHead": "57b52c547d6f60fb4c89f83c896c7e8f89db9145",
-        "observedAt": "2026-11-02T21:53:09.343406+00:00",
-        "disposition": "Contributor requested a revision",
-        "nextAction": "Report writer errors directly. Qualify the revised text and HTML paths before requesting another review.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/57b52c547",
-          "https://github.com/tamird/gvisor/actions/runs/41529423728/artifacts/13182405129"
-        ]
+      "refinement": {
+        "before": {
+          "head": "57b52c547d6f60fb4c89f83c896c7e8f89db9145",
+          "base": "5b317311427fabfc62ffeca7d76b1622ff83f7b4"
+        },
+        "after": {
+          "head": "38316d084325c7785d1d7e172a6db5e0caf0afc0",
+          "base": "5b317311427fabfc62ffeca7d76b1622ff83f7b4"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "38316d084325c7785d1d7e172a6db5e0caf0afc0",
+        "baseHead": "5b317311427fabfc62ffeca7d76b1622ff83f7b4",
+        "url": "https://github.com/tamird/gvisor/commit/38316d084",
+        "title": "Report write failures when printing a state graph",
+        "requestedAt": "2026-11-02T22:04:01.189746+00:00",
+        "summary": "Open the revision that returns write errors directly and preserves caller-owned buffering?",
+        "body": "A closed pipe or full disk could truncate a text or HTML checkpoint dump\nwithout PrintGraph reporting an error. A caller such as runsc statefile\ncould then replace an existing output file with the truncated dump.\n\nFlush a private buffer after each graph object and return the writer's\nerror to the caller. This keeps output streaming even for large objects\nand leaves a caller-supplied buffer under the caller's control."
       }
     }
   ],
