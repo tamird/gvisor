@@ -13,9 +13,9 @@ import xml.etree.ElementTree as ET
 import qualification_report as report
 
 BASE = "918aefd5f"
-FIXTURE = "1b84aa14093a95c224b2a65cd6f0f1fd2ddb2958"
+FIXTURE = "67a0174a05bdc34f1f7ee53ab419a35cde286a48"
 LABELS = [f"//test/packetimpact/tests:tcp_cork_mss_{arm}_test" for arm in ("native", "netstack")]
-CASES = {"no_sack", "sack", "sack_receive_gap"}
+CASES = {"sack_receive_gap"}
 TEMP = Path(os.environ["RUNNER_TEMP"])
 PRIVATE = TEMP / "mss-original"
 PUBLIC = TEMP / "mss-report"
@@ -40,8 +40,8 @@ def run():
     try:
         source = output("git", "rev-parse", "HEAD")
         assert output("git", "merge-base", FIXTURE, "HEAD") == FIXTURE
-        assert output("git", "rev-parse", FIXTURE + "^") == output("git", "rev-parse", BASE)
-        assert output("git", "diff", FIXTURE, "HEAD", "--", ".", ":!.github/workflows/build.yml", ":!test/rbe/tcp_mss.py") == ""
+        assert output("git", "merge-base", BASE, FIXTURE) == output("git", "rev-parse", BASE)
+        assert output("git", "diff", FIXTURE, "HEAD", "--", ".", ":!.github/workflows/build.yml", ":!test/rbe/tcp_mss.py", ":!test/rbe/tcp_mss_recover.py") == ""
         result["source"] = source
         (PRIVATE / "commit").write_bytes(subprocess.check_output(["git", "cat-file", "commit", "HEAD"]))
         (PRIVATE / "before").write_text(output("git", "status", "--porcelain", "--untracked-files=no"))
@@ -51,13 +51,17 @@ def run():
         result["query_exit"] = selected.returncode
         result["selected"] = selected.stdout.splitlines()
         assert selected.returncode == 0 and set(result["selected"]) == set(LABELS)
-        args = ["test", "--config=x86_64", "--jobs=48", "--strategy=TestRunner=remote", "--nocache_test_results", "--keep_going", "--test_sharding_strategy=disabled", "--test_output=errors", "--test_timeout=120", "--test_env=GO_TEST_WRAP_TESTV=1", "--test_filter=^TestMSSSACKObservation$", "--build_event_json_file_path_conversion=false", f"--build_event_json_file={PRIVATE}/raw.bep", *LABELS]
+        args = ["test", "--config=x86_64", "--jobs=48", "--strategy=TestRunner=remote", "--nocache_test_results", "--keep_going", "--test_sharding_strategy=disabled", "--test_output=errors", "--test_timeout=120", "--test_env=GO_TEST_WRAP_TESTV=1", "--test_filter=^TestMSSSACKObservation$/^sack_receive_gap$", "--build_event_json_file_path_conversion=false", f"--build_event_json_file={PRIVATE}/raw.bep", *LABELS]
         (PRIVATE / "args").write_text("\n".join(args))
         result["command_started_at"] = now()
         with (PRIVATE / "bazel.log").open("w") as log:
             completed = subprocess.run([*bazel, *args], stdout=log, stderr=subprocess.STDOUT)
         result["native_exit"] = completed.returncode
         result["command_finished_at"] = now()
+        for line in (PRIVATE / "raw.bep").read_text().splitlines():
+            event = json.loads(line)
+            if "started" in event:
+                result["invocation"] = event["started"]["uuid"]
         (PRIVATE / "exit").write_text(str(completed.returncode))
         (PRIVATE / "after").write_text(output("git", "status", "--porcelain", "--untracked-files=no"))
         (PRIVATE / "head").write_text(output("git", "rev-parse", "HEAD"))
@@ -71,16 +75,22 @@ def run():
         _, reports, errors = report.retained_reports(report.manifest_path(PRIVATE / "events.jsonl"))
         assert not errors
         result["observations"] = {}
+        for (attempt, name), path in reports.items():
+            if attempt.owner.label in LABELS and name in ("test.log", "test.xml"):
+                arm = "native" if attempt.owner.label.endswith("_native_test") else "netstack"
+                (PUBLIC / f"{arm}-{name}").write_bytes(path.read_bytes())
         for row in verdict["executed"]:
             assert not row["cached_locally"] and row["execution_info"]["strategy"] == "remote" and not row["execution_info"].get("cachedRemotely", False)
         assert len(verdict["executed"]) == 2
         for (attempt, name), path in reports.items():
             arm = "native" if attempt.owner.label.endswith("_native_test") else "netstack"
             assert attempt.owner.label in LABELS and (attempt.run, attempt.shard, attempt.attempt) == (1, 1, 1)
+            if name in ("test.log", "test.xml"):
+                (PUBLIC / f"{arm}-{name}").write_bytes(path.read_bytes())
             if name == "test.log":
                 rows = [json.loads(raw) for raw in re.findall(r"MSSOBS (\{[^\n]*\})", path.read_text())]
                 result["observations"][arm] = rows
-                assert len(rows) == 3 and {row["case"] for row in rows} == CASES
+                assert len(rows) == 1 and {row["case"] for row in rows} == CASES
                 for row in rows:
                     assert row["send_bytes"] == 1460 and sum(packet["payload"] for packet in row["packets"]) == 1460
                     for packet in row["packets"]:
@@ -92,7 +102,7 @@ def run():
             elif name == "test.xml":
                 cases = list(ET.parse(path).getroot().iter("testcase"))
                 expected = {"TestMSSSACKObservation", *("TestMSSSACKObservation/" + case for case in CASES)}
-                assert len(cases) == 4 and {case.get("name") for case in cases} == expected
+                assert len(cases) == 2 and {case.get("name") for case in cases} == expected
                 assert all(case.find("failure") is None and case.find("error") is None and case.find("skipped") is None and case.get("status") != "notrun" and case.get("result") != "suppressed" for case in cases)
             else:
                 continue
@@ -115,7 +125,7 @@ def run():
 
 
 def scan():
-    allowed = {"result.json", *(f"{arm}-test.{ext}" for arm in ("native", "netstack") for ext in ("log", "xml"))}
+    allowed = {"original-result.json", "original-recovery.json", *(f"original-{arm}-test.{ext}" for arm in ("native", "netstack") for ext in ("log", "xml")), "result.json", *(f"{arm}-test.{ext}" for arm in ("native", "netstack") for ext in ("log", "xml"))}
     key = os.environ["BUILDBUDDY_API_KEY"].encode()
     assert key
     for path in PUBLIC.iterdir():

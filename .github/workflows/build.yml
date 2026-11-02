@@ -4,6 +4,7 @@ on:
     branches: [qualification/tcp-mss-sack-observation]
 permissions:
   contents: read
+  actions: read
 jobs:
   observe:
     if: github.repository == 'tamird/gvisor'
@@ -15,15 +16,18 @@ jobs:
       PROFILE: 0ee70efe6d52576b8f173b40ad6b7ac117da3b72
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 4, persist-credentials: false}
+      with: {fetch-depth: 6, persist-credentials: false}
     - name: Prepare the existing GNU and packetimpact profiles
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        GH_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
-        git fetch origin "$REPORTER" "$PROFILE"
+        git fetch origin "$REPORTER" "$PROFILE" cfa98382ba656459e79cfbece6a2c533cf47fe59
+        gh api repos/tamird/gvisor/actions/artifacts/13130973564/zip > "$RUNNER_TEMP/mss-original.zip"
         mkdir -p "$RUNNER_TEMP/reporter" "$RUNNER_TEMP/platform" "$RUNNER_TEMP/mss-report"
         for f in qualification_report.py unit_matrix.py; do git show "$REPORTER:test/rbe/$f" > "$RUNNER_TEMP/reporter/$f"; done
+        git show cfa98382ba:test/rbe/plugin_programs/cas_inputs.py > "$RUNNER_TEMP/reporter/cas_inputs.py"
         for f in BUILD.bazel MODULE.bazel; do git show "$PROFILE:test/rbe/gnu_platform/$f" > "$RUNNER_TEMP/platform/$f"; done
         umask 077
         {
@@ -34,9 +38,17 @@ jobs:
         unset BUILDBUDDY_API_KEY
         docker pull --platform=linux/amd64 "$GNU"
         docker run -d --name mss-compiler --entrypoint /bin/bash --user root --sysctl net.ipv6.conf.lo.disable_ipv6=0 -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
-    - name: One invocation of both existing packetimpact owners
+    - name: Recover both original test attempts and their four passed controls
+      id: original
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: PYTHONPATH="$RUNNER_TEMP/reporter" python3 test/rbe/tcp_mss_recover.py
+    - name: Only the corrected receive-gap case on both existing owners
       id: observe
-      run: docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" -e RUNNER_TEMP -e PYTHONPATH="$RUNNER_TEMP/reporter" mss-compiler python3 test/rbe/tcp_mss.py run
+      if: ${{ steps.original.outcome == 'success' }}
+      run: |
+        test -f "$RUNNER_TEMP/mss-gap-ready"
+        docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" -e RUNNER_TEMP -e PYTHONPATH="$RUNNER_TEMP/reporter" mss-compiler python3 test/rbe/tcp_mss.py run
     - name: Validate the bounded publication
       id: privacy
       if: always()
