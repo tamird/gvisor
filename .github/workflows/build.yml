@@ -1,7 +1,7 @@
-name: Check the plugin across its external virtio-user interface
+name: Check the published GNU plugin on its external interface
 on:
   push:
-    branches: [qualification/plugin-musl-external-traffic]
+    branches: [qualification/plugin-gnu-external-traffic]
 permissions:
   contents: read
   actions: read
@@ -56,7 +56,10 @@ jobs:
         working-directory: product
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api repos/tamird/gvisor/actions/artifacts/13111992630/zip > "$RUNNER_TEMP/original.zip"
+        run: |
+          gh api repos/tamird/gvisor/actions/artifacts/13047222365/zip > "$RUNNER_TEMP/original.zip"
+          gh api repos/tamird/gvisor/actions/artifacts/13048790798/zip > "$RUNNER_TEMP/actions.zip"
+          gh api repos/tamird/gvisor/actions/artifacts/13136054697/zip > "$RUNNER_TEMP/control.zip"
       - name: Recover and install the exact original executables
         id: original
         working-directory: product
@@ -91,12 +94,12 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
-          name: plugin-musl-external-payload
+          name: plugin-gnu-external-payload
           path: |
             ${{ runner.temp }}/plugin-evidence/result.json
             ${{ runner.temp }}/plugin-evidence/wire.json
           if-no-files-found: error
-      - name: Require the fresh owner and four bidirectional exchanges
+      - name: Require the fresh GNU owner and the matched native control
         if: always()
         run: |
           python3 - <<'PYTHON'
@@ -107,7 +110,7 @@ jobs:
           assert r["source"] == os.environ["GITHUB_SHA"] and r["status"] == r["stage"] == r["external"]["status"] == "PASS"
           assert r["case_records"] == r["tests_executed"] == r["passed"] == 1 and r["failed"] == r["skipped"] == 0
           assert r["runtime_markers"] == {"plugin_sentry": True, "plugin_init": True} and r["product_builds"] == 0
-          assert set(w) == {"runc", "runsc-qualified-plugin"}
+          assert set(w) == ({"runsc-qualified-plugin"} if r["native_basis"]["reused"] else {"runc", "runsc-qualified-plugin"})
           for arm in w.values():
               assert arm["ok"] and arm["image"] == r["guest_image"]["image_id"]
               assert set(arm["wire"]) == {"tcp_request", "tcp_reply", "udp_request", "udp_reply"}

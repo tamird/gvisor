@@ -29,10 +29,10 @@ def error(exc):
     return {"type": type(exc).__name__, "line": traceback.extract_tb(exc.__traceback__)[-1].lineno}
 
 
-def write_original(digest, path):
+def write_original(digest, path, invocation=ORIGINAL):
     path.parent.mkdir(parents=True, exist_ok=True)
     assert not path.exists()
-    path.write_bytes(blob(digest, ORIGINAL))
+    path.write_bytes(blob(digest, invocation))
     path.chmod(0o555)
     # The Go integration test and ordinary sidecars run on populated Ubuntu;
     # only the actual static owners have a no-loader/no-library contract.

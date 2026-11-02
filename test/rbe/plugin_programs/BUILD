@@ -12,3 +12,11 @@ native_test(
     src = "external_traffic.py",
     local = True,
 )
+
+native_test(
+    name = "gnu_external_traffic",
+    size = "medium",
+    src = "gnu_external_driver.py",
+    data = ["external_traffic.py"],
+    local = True,
+)
