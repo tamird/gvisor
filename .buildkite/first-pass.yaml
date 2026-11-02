@@ -33,14 +33,21 @@ steps:
   # Run smoke tests before the other tests.
   - <<: *common
     <<: *source_test
+    env:
+      DOCKER_BUILD: "false"
     label: ":fire: Smoke tests (AMD64)"
-    command: make smoke-tests
+    command: >-
+      bazel run //:release --
+      --alsologtostderr --network none --debug --TESTONLY-unsafe-nonroot=true --rootless do true
   - <<: *common
     <<: *source_test
     env:
+      DOCKER_BUILD: "false"
       GLIBC_TUNABLES: glibc.pthread.rseq=0
     label: ":fire: Smoke race tests"
-    command: make smoke-race-tests
+    command: >-
+      bazel run //:release-race --
+      --alsologtostderr --network none --debug --TESTONLY-unsafe-nonroot=true --rootless do true
 
   # Run the remaining tests only if the smoke tests pass, so that a change
   # that does not build or start does not use the other agents (presubmits
