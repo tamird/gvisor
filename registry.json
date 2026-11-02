@@ -41969,9 +41969,9 @@
       "title": "Keep RACK from repeating a fresh timeout repair",
       "url": "https://github.com/tamird/gvisor/commit/c79762708",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T02:46:13+00:00",
-      "summary": "After a timeout retransmitted the first missing segment, a new SACK made RACK send it again. Linux selected later losses in the packet test. In two matched 512 KiB transfers, both senders repaired the same two older holes, but stock also sent a fourth copy of the unmarked first segment. The fix omitted it through the first ACK covering it.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-02T03:02:48+00:00",
+      "summary": "With a delayed TCP head repair, the RACK change avoided a fourth copy. When both prior head repairs were dropped, stock sent the fourth on the next SACK and the receiver advanced at 496 ms. With the change it advanced at 640 ms, after the next timeout. Both senders promptly repaired the same two older holes. Check Linux recovery after real loss before requesting a contributor decision.",
       "evidence": [
         {
           "label": "Linux, stock and fixed packet traces, 101 package cases and both analyzers",
@@ -41996,19 +41996,12 @@
         {
           "label": "Matched transfer with three copies and the same two repairs",
           "url": "https://github.com/tamird/gvisor/actions/runs/41379139895/artifacts/13112835830"
+        },
+        {
+          "label": "Matched loss of both head repairs, ACK timings and the actual sender timer",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41380524965/artifacts/13112553088"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "c7976270813d5218a847539dd94f749c7cb4dfd5",
-        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
-        "url": "https://github.com/tamird/gvisor/commit/c79762708",
-        "title": "Keep RACK from repeating a fresh timeout repair",
-        "requestedAt": "2026-11-01T13:08:56.341814+00:00",
-        "summary": "Open the standalone RACK recovery fix?",
-        "body": "Only a segment marked lost by RACK is retransmitted on entry to RACK recovery. The controls still retransmit the first segment for a genuine loss and for three duplicate ACKs."
-      }
+      ]
     },
     {
       "id": "branch:syscall-libc-interfaces",
