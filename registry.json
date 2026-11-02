@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T17:40:23.772976+00:00",
+    "updatedAt": "2026-11-02T17:56:54.547668+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39726,15 +39726,15 @@
       "title": "Run both iperf3 benchmark endpoints on Ubuntu Jammy",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
+      "updatedAt": "2026-11-02T17:47:05.918366+00:00",
       "url": "https://github.com/tamird/gvisor/commit/67601a14c",
-      "summary": "One PR switches the benchmark client and server to iperf3, reports the sender bandwidth from JSON, and packages the BCR binary with the Ubuntu runtime. Its three Go files are identical to the approved metrics change. Native ARM64 completed all eight benchmark cases. OpenSSL already exports its license; BCR #11518 exports iperf’s.",
+      "summary": "The iperf3 benchmark uses the same Ubuntu Jammy runtime as iperf2. The AMD64 and ARM64 packages at 67601a14c contain the dynamic GNU binary and both upstream license notices. OpenSSL’s export is released. The iperf export was tested from its pending BCR change.",
       "followup": {
         "owner": "Build and release",
         "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
-        "observedAt": "2026-11-02T16:25:23.256481+00:00",
-        "disposition": "Qualify the reviewed image against the upstream BCR revision",
-        "nextAction": "Verify the actual image consumes both upstream license exports with no local patch, then deliver after BCR #11518 and the required license recognition land.",
+        "observedAt": "2026-11-02T17:47:05.918366+00:00",
+        "disposition": "Both packages verified; waiting for BCR and license recognition",
+        "nextAction": "After BCR #11518 and gVisor #15146 land, verify the released iperf module matches the qualified registry entry and deliver the approved image.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
@@ -39797,6 +39797,14 @@
         {
           "label": "Remove the local patch and override; benchmark source identical",
           "url": "https://github.com/tamird/gvisor/compare/05f0c6fea...67601a14c"
+        },
+        {
+          "label": "Actual AMD64 and ARM64 packages, original notices, and ARM64 link experiments",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41490188851/artifacts/13164983139"
+        },
+        {
+          "label": "Released OpenSSL license export",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11381"
         }
       ],
       "settledReviews": [
@@ -40959,45 +40967,51 @@
       "id": "branch:grpc-native-codegen",
       "type": "branch",
       "repo": "tamird/grpc",
-      "ref": "research/native-cpp-codegen",
-      "head": "184987c9af1522e853a8888a1dfd1e960c69d40a",
+      "ref": "proposal/bazel-plugin-artifact",
+      "head": "ccfbbe36987afbad715cbca3c6bc791a7e33d2c9",
       "title": "Remove the shell copy from the gRPC plugin wrapper",
-      "url": "https://github.com/tamird/grpc/commit/184987c9a",
+      "url": "https://github.com/tamird/grpc/commit/ccfbbe369",
       "group": "rbe",
-      "status": "Agent work",
-      "updatedAt": "2026-11-02T15:58:04.948535+00:00",
-      "summary": "The C++ proposal bypassed the common plugin wrapper. Replace its shell copy while preserving the named executable and the universal macOS distribution. The original Linux results cover the native plugin only.",
+      "status": "Human submission required",
+      "updatedAt": "2026-11-02T17:56:54.547668+00:00",
+      "summary": "The Bazel rule copies protoc plugins with a declared executable. Linux code generation works without a shell. On Intel macOS both universal plugins matched the upstream binaries and worked after Bazel cleanup.",
       "evidence": [
         {
-          "label": "Compare the one-line proposal and open a PR",
-          "url": "https://github.com/grpc/grpc/compare/master...tamird:grpc:research/native-cpp-codegen?expand=1"
+          "label": "Linux code generation without a shell",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41481569578/artifacts/13159153891"
         },
         {
-          "label": "Original GNU and scratch executions, ELF linkage and four generated files",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41230918674/artifacts/13053878288"
+          "label": "Universal plugins and code generation on Intel macOS",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41489925538/artifacts/13166167197"
         },
         {
-          "label": "Replayed missing-shell diagnostic and matching output hashes",
-          "url": "https://github.com/tamird/gvisor/blob/9c9a39762/test/rbe/grpc-native-codegen/result.json"
-        },
-        {
-          "label": "gRPC contribution policy",
-          "url": "https://github.com/grpc/grpc/blob/df3dd4dcb/CONTRIBUTING.md#generative-ai-policy"
-        },
-        {
-          "label": "The wrapper packages a universal plugin for Objective-C distribution",
-          "url": "https://github.com/grpc/grpc/commit/9a6bcd4c2"
+          "label": "Distribution and build metadata comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41481569578/artifacts/13159939795"
         }
       ],
       "followup": {
-        "owner": "python_supplier_review",
-        "sourceHead": "184987c9af1522e853a8888a1dfd1e960c69d40a",
-        "disposition": "Contributor requested a change to the shared wrapper",
-        "observedAt": "2026-11-02T15:58:04.948535+00:00",
-        "nextAction": "Qualify the replacement with shell-free Linux code generation, hosted macOS code generation and the distribution and build metadata consumers. Prepare the supplier commit for human submission.",
+        "owner": "tamird",
+        "sourceHead": "ccfbbe36987afbad715cbca3c6bc791a7e33d2c9",
+        "observedAt": "2026-11-02T17:56:54.547668+00:00",
+        "disposition": "Tested and ready for human submission",
+        "nextAction": "Review the commit and open the prefilled upstream pull request.",
         "evidence": [
-          "https://github.com/tamird/grpc/commit/184987c9a"
+          "https://github.com/tamird/grpc/commit/ccfbbe369",
+          "https://github.com/grpc/grpc/blob/db13f8422/CONTRIBUTING.md#generative-ai-policy",
+          "https://github.com/tamird/gvisor/actions/runs/41481569578/artifacts/13159153891",
+          "https://github.com/tamird/gvisor/actions/runs/41489925538/artifacts/13166167197",
+          "https://github.com/tamird/gvisor/actions/runs/41481569578/artifacts/13159939795"
         ]
+      },
+      "humanAction": {
+        "status": "pending",
+        "kind": "submission",
+        "head": "ccfbbe36987afbad715cbca3c6bc791a7e33d2c9",
+        "title": "[bazel] Copy protoc plugins with a declared executable",
+        "summary": "Review the commit and submit the prepared pull request from your account. gRPC requires human submission.",
+        "body": "The public protoc plugin targets used a shell to copy the selected\nexecutable to the filename expected by package consumers. This stopped\nC++ code generation on a Linux worker without /bin/bash [1].\n\nBuild the copy tool with the execution platform's C++ toolchain. Each\npublic target produces a regular executable that can be archived on its\nown. Keep the universal plugin on macOS for the CocoaPods packages and\nteach both build metadata generators to follow the new rule [2].\n\nThe C++ generators now run on the shell-free Linux worker [3]. On hosted\nIntel macOS, the archived C++ and Objective-C plugins matched the stock\nuniversal executables byte for byte. After removing the Bazel output\ntree, the installed plugins generated the same four files as stock [4].\n\n[1]: https://github.com/tamird/gvisor/blob/9c9a39762/test/rbe/grpc-native-codegen/result.json\n[2]: https://github.com/tamird/gvisor/actions/runs/41481569578/artifacts/13159939795\n[3]: https://github.com/tamird/gvisor/actions/runs/41481569578/artifacts/13159153891\n[4]: https://github.com/tamird/gvisor/actions/runs/41489925538/artifacts/13166167197\n",
+        "url": "https://github.com/grpc/grpc/compare/master...tamird:grpc:proposal/bazel-plugin-artifact?expand=1&title=%5Bbazel%5D+Copy+protoc+plugins+with+a+declared+executable&body=The+public+protoc+plugin+targets+used+a+shell+to+copy+the+selected%0Aexecutable+to+the+filename+expected+by+package+consumers.+This+stopped%0AC%2B%2B+code+generation+on+a+Linux+worker+without+%2Fbin%2Fbash+%5B1%5D.%0A%0ABuild+the+copy+tool+with+the+execution+platform%27s+C%2B%2B+toolchain.+Each%0Apublic+target+produces+a+regular+executable+that+can+be+archived+on+its%0Aown.+Keep+the+universal+plugin+on+macOS+for+the+CocoaPods+packages+and%0Ateach+both+build+metadata+generators+to+follow+the+new+rule+%5B2%5D.%0A%0AThe+C%2B%2B+generators+now+run+on+the+shell-free+Linux+worker+%5B3%5D.+On+hosted%0AIntel+macOS%2C+the+archived+C%2B%2B+and+Objective-C+plugins+matched+the+stock%0Auniversal+executables+byte+for+byte.+After+removing+the+Bazel+output%0Atree%2C+the+installed+plugins+generated+the+same+four+files+as+stock+%5B4%5D.%0A%0A%5B1%5D%3A+https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Fblob%2F9c9a39762%2Ftest%2Frbe%2Fgrpc-native-codegen%2Fresult.json%0A%5B2%5D%3A+https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Factions%2Fruns%2F41481569578%2Fartifacts%2F13159939795%0A%5B3%5D%3A+https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Factions%2Fruns%2F41481569578%2Fartifacts%2F13159153891%0A%5B4%5D%3A+https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Factions%2Fruns%2F41489925538%2Fartifacts%2F13166167197%0A",
+        "policyURL": "https://github.com/grpc/grpc/blob/db13f8422/CONTRIBUTING.md#generative-ai-policy"
       }
     },
     {
@@ -44720,20 +44734,28 @@
       "url": "https://github.com/tamird/gvisor/commit/22b87677f",
       "group": "analysis",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T17:40:23.772976+00:00",
+      "updatedAt": "2026-11-02T17:56:54.547668+00:00",
       "summary": "Four Buildkite jobs currently start the Docker builder to run the unit suite. The proposal shares the eight target patterns with make unit-tests and preserves the cgroup-specific test cache.",
       "evidence": [
         {
-          "label": "Native AMD64 target comparison, cgroup tests, and cache checks",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41493261450"
+          "label": "Target identities and named unit cases on Linux",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41495497730"
+        },
+        {
+          "label": "First run, target counts and cache controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41493261450/artifacts/13166725105"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "22b87677f7ae1fa27ebee5b4eb95ab9cfe966761",
-        "observedAt": "2026-11-02T17:40:23.772976+00:00",
+        "observedAt": "2026-11-02T17:56:54.547668+00:00",
         "disposition": "Remote qualification in progress",
-        "nextAction": "Compare all runnable test labels and auxiliary build targets. Exercise the cgroup-sensitive cache key, then run the complete suite on the worker configurations."
+        "nextAction": "Verify target identities and named buffer and cgroup cases from the Linux run. Reconcile real worker coverage separately.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41495497730",
+          "https://github.com/tamird/gvisor/actions/runs/41493261450/artifacts/13166725105"
+        ]
       }
     }
   ],
