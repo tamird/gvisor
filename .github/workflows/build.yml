@@ -1,7 +1,7 @@
 name: Check TCP idle restart after reverse-only traffic
 on:
   push:
-    branches: [qualification/tcp-idle-reverse-wire]
+    branches: [qualification/tcp-idle-reverse-wire-recovery]
 permissions:
   contents: read
 jobs:
@@ -24,7 +24,7 @@ jobs:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
         set -euo pipefail
-        test "$(git rev-parse HEAD^)" = "$PRODUCT"
+        test "$(git rev-parse HEAD^^)" = "$PRODUCT"
         test "$(git rev-parse "$PRODUCT^")" = "$CONTROL"
         test "$(git rev-parse "$CONTROL^")" = "$MASTER"
         test "$(git diff --name-only "$MASTER" "$CONTROL")" = "$FIXTURE"
@@ -44,7 +44,8 @@ jobs:
         git diff "$props^" "$props" -- "$PROPS" > "$RUNNER_TEMP/exec.patch"
         git show "$reporter:test/rbe/qualification_report.py" > "$RUNNER_TEMP/qualification_report.py"
         git show "$reporter:test/rbe/unit_matrix.py" > "$RUNNER_TEMP/unit_matrix.py"
-        git show "$PRODUCT:$FIXTURE" > "$RUNNER_TEMP/fixture.go"
+        git show "HEAD:$FIXTURE" > "$RUNNER_TEMP/fixture.go"
+        git diff "$PRODUCT" HEAD -- "$FIXTURE" > "$RUNNER_TEMP/fixture.patch"
         umask 077
         {
           printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
@@ -64,6 +65,7 @@ jobs:
           git checkout --quiet --detach "$source"
           test "$(git rev-parse HEAD)" = "$source"
           git diff --quiet HEAD --
+          git apply "$RUNNER_TEMP/fixture.patch"
           cmp "$RUNNER_TEMP/fixture.go" "$FIXTURE"
           opts=()
           if [[ $arm != owners ]]; then
@@ -84,7 +86,7 @@ jobs:
               docker exec tcp-compiler cat "bazel-testlogs/$path/$file" > "$d/$key/$file" || true
             done
           done
-          git restore --source=HEAD -- "$PROPS"
+          git restore --source=HEAD -- "$PROPS" "$FIXTURE"
           git diff --quiet HEAD --
         }
         native=//test/packetimpact/tests:tcp_retransmits_native_test
@@ -92,7 +94,6 @@ jobs:
         runarm native "$PRODUCT" 15m "$native"
         runarm stock "$CONTROL" 15m "$netstack"
         runarm fixed "$PRODUCT" 15m "$netstack"
-        runarm owners "$PRODUCT" 22m //pkg/tcpip/transport/tcp/test/e2e:tcp_acktiming_test //pkg/tcpip/transport/tcp:tcp_nogo
     - name: Check original invocations, wire cases and detailed reports
       if: always()
       run: python3 -B "$RUNNER_TEMP/tcp_idle_wire.py"

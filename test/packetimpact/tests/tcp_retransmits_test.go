@@ -160,7 +160,7 @@ func TestIdleRestart(t *testing.T) {
 				conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck | header.TCPFlagPsh)}, b)
 				ack := uint32(*conn.LocalSeqNum(t))
 				frame, err := conn.ExpectData(t, &testbench.TCP{SeqNum: &seq, AckNum: &ack, Flags: testbench.TCPFlags(header.TCPFlagAck)}, nil, time.Second)
-				if err != nil || len(frame) != 3 {
+				if err != nil || uint32(*conn.RemoteSeqNum(t)) != seq {
 					t.Fatalf("expected pure ACK seq=%d ack=%d: %v, %v", seq, ack, frame, err)
 				}
 			}

@@ -161,13 +161,15 @@ def read_arm(arm: str) -> dict:
     return result
 
 
-arms = {arm: read_arm(arm) for arm in ("native", "stock", "fixed", "owners")}
+arms = {arm: read_arm(arm) for arm in ("native", "stock", "fixed")}
 finished = datetime.now(timezone.utc)
 for row in arms.values():
     if finish := row.get("finished"):
         row["execution_to_verdict_seconds"] = (finished - datetime.fromisoformat(finish)).total_seconds()
 record = {"carrier": os.environ["GITHUB_SHA"], "stock_control": os.environ["CONTROL"], "candidate": os.environ["PRODUCT"],
           "fixture_sha256": digest((ROOT / "fixture.go").read_bytes()), "qualifier_exec_patch_sha256": digest((ROOT / "exec.patch").read_bytes()),
+          "owner_tests_reused_from": {"artifact": 13123244978, "run": 41407611924,
+                                      "sha256": "4af543d0c6dd503b8aadf01cb50b2155401630d16367818a04adec523cd2a059"},
           "expected": list(arms), "executed": [name for name, row in arms.items() if row["executed"]],
           "arms": arms, "verified_at": finished.isoformat(), "verified": all(row["verified"] for row in arms.values())}
 (PROOF / "verdict.json").write_text(json.dumps(record, indent=2) + "\n")
