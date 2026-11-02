@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T15:58:04.948535+00:00",
+    "updatedAt": "2026-11-02T16:25:23.256481+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -20957,31 +20957,9 @@
       "title": "Build the iperf image from the BCR",
       "url": "https://github.com/tamird/gvisor/commit/1d9470464",
       "group": "bazel",
-      "status": "Contributor review",
-      "updatedAt": "2026-10-31T07:18:55.041730+00:00",
-      "summary": "Remove Go’s MB/s figure, which was calculated from the requested byte count. The iperf3 JSON already reports measured sender bandwidth. This decision covers only those two lines. The standalone Ubuntu runtime proposal includes the identical Go source and has its own review.",
-      "followup": {
-        "owner": "hostinet_delivery",
-        "disposition": "Review only the two-line benchmark refinement",
-        "sourceHead": "1d9470464fa30721e30cf5164f07e6583e7f8571",
-        "observedAt": "2026-10-31T02:01:19.983938+00:00",
-        "nextAction": "After review and the image prerequisites, submit the image migration with the corrected benchmark report.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/compare/309a60834...1d9470464",
-          "https://github.com/tamird/gvisor/actions/runs/41157407720/artifacts/13025208355",
-          "https://github.com/tamird/gvisor/commit/7fc0ec3ee",
-          "https://registry.bazel.build/modules/iperf",
-          "https://app.buildbuddy.io/invocation/e909bd36-8976-4a72-89f9-911de26dfc33",
-          "https://app.buildbuddy.io/invocation/85a083fe-21bc-462f-ac0c-702fb065344e",
-          "https://github.com/tamird/gvisor/commit/1b8618835",
-          "https://app.buildbuddy.io/invocation/b9372053-859b-4a72-9f7b-12a884ca72be",
-          "https://github.com/tamird/gvisor/commit/ccd0b3b9f",
-          "https://github.com/tamird/gvisor/commit/2fe6d9b09",
-          "https://app.buildbuddy.io/invocation/267acaba-6e3a-4394-8280-c3d3c1d3bc45",
-          "https://github.com/tamird/gvisor/commit/309a60834"
-        ],
-        "reviewedHead": "51d411a3ff1211e342c0ee977c0492b9037e79d1"
-      },
+      "status": "Superseded",
+      "updatedAt": "2026-11-02T16:20:02.085486+00:00",
+      "summary": "The contributor approved the sender-bandwidth reporting in this branch. The Ubuntu iperf3 image includes the same three Go files and is the single delivery vehicle. The static ARM64 sender aborted after transferring data.",
       "evidence": [
         {
           "label": "Standalone runtime on current master carries the identical Go code",
@@ -21076,15 +21054,14 @@
           "head": "1d9470464fa30721e30cf5164f07e6583e7f8571"
         }
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "baseHead": "309a60834cbe1e7c02f7763f98548b51a16d49ab",
-        "head": "1d9470464fa30721e30cf5164f07e6583e7f8571",
-        "url": "https://github.com/tamird/gvisor/compare/309a60834...1d9470464",
-        "title": "Review the iperf throughput report",
-        "summary": "Remove Go’s MB/s figure, which is calculated from the requested byte count. iperf’s JSON reports the actual bytes and sender bandwidth; both versions reported 130,910.85 B/s from the same transfer."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "1d9470464fa30721e30cf5164f07e6583e7f8571",
+          "outcome": "approved",
+          "at": "2026-11-02T16:20:02.085486+00:00"
+        }
+      ]
     },
     {
       "id": "branch:rules-img-wrk2-image",
@@ -27571,15 +27548,15 @@
       "title": "Build the TLDK plugin against musl",
       "url": "https://github.com/tamird/gvisor/commit/603b12317",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T11:40:05.929558+00:00",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-11-02T16:20:02.085486+00:00",
       "summary": "On native AMD64 the musl plugin linked with all three VFIO functions and passed TestDumpStack on the revised kernel headers. The public revision adds the purpose and source of the TLDK patch. GNU coverage used the same compatibility changes. A separate AMD64 integration binary exchanged TCP and UDP over the virtio-user backend, which uses /dev/vhost-net. The check at this exact revision covered linking and stack unwinding.",
       "followup": {
         "owner": "arm64_results",
         "sourceHead": "603b1231738582ca6559d2a5e098598669842c3c",
-        "observedAt": "2026-11-02T04:19:10+00:00",
-        "disposition": "Rebased on the current GNU DPDK change",
-        "nextAction": "After contributor review and #15153, open the standalone musl follow-up for the LLVM compiler migration.",
+        "observedAt": "2026-11-02T16:20:02.085486+00:00",
+        "disposition": "Contributor approved; waiting for prerequisites",
+        "nextAction": "Publish the reviewed TLDK musl change after #15153 lands.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41384852262",
           "https://github.com/google/gvisor/pull/15153"
@@ -27672,17 +27649,14 @@
           "head": "603b1231738582ca6559d2a5e098598669842c3c"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "603b1231738582ca6559d2a5e098598669842c3c",
-        "baseHead": "675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa",
-        "url": "https://github.com/tamird/gvisor/commit/603b12317",
-        "title": "Build the TLDK plugin against musl",
-        "requestedAt": "2026-11-02T04:19:10+00:00",
-        "summary": "Open the musl follow-up after the GNU-only #15153 lands?",
-        "body": "Static runsc with the LLVM compiler uses musl. The plugin’s pinned TLDK and DPDK sources assume glibc for IPv6 layout, the queue header and backtraces. The change keeps VFIO and the stack diagnostic working with musl. The native cgo stack test and the 224-record license check passed. No attached-device packet traffic was tested."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "603b1231738582ca6559d2a5e098598669842c3c",
+          "outcome": "approved",
+          "at": "2026-11-02T16:20:02.085486+00:00"
+        }
+      ]
     },
     {
       "id": "pr:16453",
@@ -28409,13 +28383,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "fixes/tcp-interrupted-sack-recovery",
-      "head": "b7d9ced514fd9ea5d4159b36b42ae16a22dbe634",
+      "head": "5fd5532c13b7e4a17477430fe0ce2f5dc18b599f",
       "title": "Keep timed-out SACK recovery from restarting",
       "url": "https://github.com/google/gvisor/pull/16495",
       "group": "runtime",
       "status": "draft",
-      "summary": "The published draft waits for a second retransmission timeout after a fresh SACK. Linux, the parent and the fork amendment retry the missing segment within 80 ms. All four wait after an unchanged SACK. The amendment keeps the original recovery boundary and completed the reporter’s five burst-loss transfers.",
-      "updatedAt": "2026-11-02T07:06:48+00:00",
+      "summary": "The draft includes both the interrupted SACK recovery fix and prompt replacement when a fresh SACK identifies a lost repair. A repeated SACK alone does not trigger another retransmission.",
+      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
       "refinement": {
         "before": {
           "base": "99058130824e4d3166bf0e376f9b15b6ad50146c",
@@ -28425,26 +28399,6 @@
           "base": "99058130824e4d3166bf0e376f9b15b6ad50146c",
           "head": "5fd5532c13b7e4a17477430fe0ce2f5dc18b599f"
         }
-      },
-      "followup": {
-        "owner": "tamird",
-        "sourceHead": "b7d9ced514fd9ea5d4159b36b42ae16a22dbe634",
-        "observedAt": "2026-10-31T09:04:24.431841+00:00",
-        "disposition": "Tested amendment awaiting contributor review",
-        "nextAction": "Decide whether to publish 5fd5532c1 on the existing draft.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41400998891/artifacts/13121981713",
-          "https://github.com/tamird/gvisor/commit/5fd5532c1",
-          "https://github.com/tamird/gvisor/actions/runs/41186013306/artifacts/13037271126",
-          "https://github.com/tamird/gvisor/actions/runs/41183278861/artifacts/13035931229",
-          "https://github.com/google/gvisor/pull/16495",
-          "https://github.com/tamird/gvisor/commit/1a1e9569d",
-          "https://github.com/tamird/gvisor/commit/b7d9ced51",
-          "https://app.buildbuddy.io/invocation/f7ed2af2-413b-4c05-a984-edfdcee4f335",
-          "https://github.com/google/gvisor/issues/16393#issuecomment-6435044838",
-          "https://app.buildbuddy.io/invocation/d394897a-bb6a-425c-851c-78a650b7d144",
-          "https://github.com/tamird/gvisor/actions/runs/41187779725/artifacts/13037538424"
-        ]
       },
       "evidence": [
         {
@@ -28527,16 +28481,14 @@
         }
       ],
       "number": 16495,
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "5fd5532c13b7e4a17477430fe0ce2f5dc18b599f",
-        "baseHead": "b7d9ced514fd9ea5d4159b36b42ae16a22dbe634",
-        "url": "https://github.com/tamird/gvisor/commit/5fd5532c1",
-        "title": "Retry a lost repair during timeout recovery",
-        "summary": "Decide whether to add 5fd5532c1 to the existing draft. It restores prompt retransmission on a fresh SACK and preserves the original recovery boundary.",
-        "body": "RACK can detect that a retransmission was lost while TCP is still\nrecovering from a timeout. Replace that packet without starting another\ncongestion event or charging its place in the window twice.\n\nOn the published draft, SACKing segment 4 left segment 3 waiting for\nanother timeout. Linux and the parent retried segment 3 within 80 ms\n[1]. The amendment does the same while keeping the congestion window and\nslow-start threshold at two packets. Repeating the previous SACK waits\nfor the timeout [2].\n\nThe new manual-clock test fails only while waiting for segment 3 on the\npublished sender. On the amendment, 20 RACK cases passed and the\nexisting DSACK case skipped. The original recovery test also passed\nunchanged. The original reporter verified all 524,288 bytes in the\nno-loss control and each of five runs dropping first copies 101–124.\nEach loss run took one timeout and completed in 0.648–0.778 seconds\n[2]. The reviewed commit changes three test-comment lines from the\ntested source [3].\n\ngit range-diff 990581308..b7d9ced51 990581308..5fd5532c1\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41183278861/artifacts/13035931229\n[2]: https://github.com/tamird/gvisor/actions/runs/41186013306/artifacts/13037271126\n[3]: https://github.com/tamird/gvisor/compare/2314ad161..5fd5532c1"
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "5fd5532c13b7e4a17477430fe0ce2f5dc18b599f",
+          "outcome": "approved",
+          "at": "2026-11-02T16:25:23.256481+00:00"
+        }
+      ]
     },
     {
       "id": "pr:16499",
@@ -38990,17 +38942,23 @@
       "title": "Run the Go export assembler directly",
       "url": "https://github.com/tamird/gvisor/commit/bfc0d1dfb",
       "head": "bfc0d1dfb6edad51ac12b4d9bbdb55a1a59ec00d",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-31T00:38:48.282173+00:00",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-11-02T16:20:02.085486+00:00",
       "summary": "The approved #15106 launches its ZIP assembler through Bash. A declared Bazel action calls the assembler directly and produces the identical 2,526-entry archive.",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "bfc0d1dfb6edad51ac12b4d9bbdb55a1a59ec00d",
-        "url": "https://github.com/tamird/gvisor/commit/bfc0d1dfb",
-        "title": "Run the Go export assembler directly",
-        "summary": "The approved #15106 launches its ZIP assembler through Bash. A declared Bazel action calls the assembler directly and produces the identical 2,526-entry archive.",
-        "body": "Review the single BUILD change for submission after #15106 lands. The comparison verified both complete archives byte for byte and identified Genrule on the parent and GoExport on the proposal. https://github.com/tamird/gvisor/actions/runs/41150603904/artifacts/13022154932"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "bfc0d1dfb6edad51ac12b4d9bbdb55a1a59ec00d",
+          "outcome": "approved",
+          "at": "2026-11-02T16:20:02.085486+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "coordinator",
+        "sourceHead": "bfc0d1dfb6edad51ac12b4d9bbdb55a1a59ec00d",
+        "observedAt": "2026-11-02T16:20:02.085486+00:00",
+        "disposition": "Contributor approved; waiting for prerequisites",
+        "nextAction": "After #15106 lands, verify the merged launcher and publish the approved direct Bazel export."
       }
     },
     {
@@ -39697,9 +39655,9 @@
       "title": "Provide executable targets for Go SDK tools",
       "url": "https://github.com/tamird/rules_go/commit/aec31ccc8",
       "group": "rbe",
-      "status": "Contributor review requested",
-      "summary": "An action that calls go tool objdump can compile objdump inside its private cache. A declared SDK executable lets all analyzers reuse one build, or the prebuilt command when the selected Go SDK ships it. The Linux presubmit ran all 508 applicable targets across the original run and one isolated timeout recovery.",
-      "updatedAt": "2026-10-31T05:54:27.572486+00:00",
+      "status": "Published",
+      "summary": "Delivered in https://github.com/bazel-contrib/rules_go/pull/4772.",
+      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
       "evidence": [
         {
           "label": "Upstream issue",
@@ -39716,35 +39674,39 @@
         {
           "label": "Shared objdump in the gVisor build",
           "url": "https://github.com/tamird/gvisor/actions/runs/41166982711/artifacts/13029633072"
+        },
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/bazel-contrib/rules_go/pull/4772"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "aec31ccc81c407a63d5f6f5a3bdd7840f2d35bde",
-        "url": "https://github.com/tamird/rules_go/commit/aec31ccc8",
-        "title": "Provide executable targets for Go SDK tools",
-        "summary": "An action that calls go tool objdump can compile objdump inside its private cache. A declared SDK executable lets all analyzers reuse one build, or the prebuilt command when the selected Go SDK ships it. The Linux presubmit ran all 508 applicable targets across the original run and one isolated timeout recovery."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "aec31ccc81c407a63d5f6f5a3bdd7840f2d35bde",
+          "outcome": "approved",
+          "at": "2026-11-02T16:25:23.256481+00:00"
+        }
+      ]
     },
     {
       "id": "branch:standalone-iperf-runtime",
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/standalone-iperf-image",
-      "head": "05f0c6feac4693941c8ccf6b8730ddf3c258a51c",
+      "head": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
       "title": "Run both iperf3 benchmark endpoints on Ubuntu Jammy",
       "group": "bazel",
-      "status": "Contributor review",
-      "updatedAt": "2026-10-31T07:25:46.494761+00:00",
-      "url": "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
-      "summary": "The fully static ARM64 sender trapped while cancelling its network thread after transferring data. Both endpoints now use the published Ubuntu C runtime. Native AMD64 and ARM64 completed forward and four-way reverse transfers. iperf2 and iperf3 use incompatible protocols. Both endpoints move together. On native ARM64 the Go benchmark also reported positive sender bandwidth in all eight upload and download cases, with 1, 4, 16 and 64 connections. The AMD64 Go benchmark ran on the preceding Jammy image.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
+      "url": "https://github.com/tamird/gvisor/commit/67601a14c",
+      "summary": "One PR switches the benchmark client and server to iperf3, reports the sender bandwidth from JSON, and packages the BCR binary with the Ubuntu runtime. Its three Go files are identical to the approved metrics change. Native ARM64 completed all eight benchmark cases. OpenSSL already exports its license; BCR #11518 exports iperf’s.",
       "followup": {
         "owner": "Build and release",
-        "sourceHead": "05f0c6feac4693941c8ccf6b8730ddf3c258a51c",
-        "observedAt": "2026-10-31T07:25:46.494761+00:00",
-        "disposition": "Review the runtime and packaging",
-        "nextAction": "Open the standalone image after its review, disposition of the two-line metrics change, and acceptance of its license identifiers from held #15146.",
+        "sourceHead": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12",
+        "observedAt": "2026-11-02T16:25:23.256481+00:00",
+        "disposition": "Qualify the reviewed image against the upstream BCR revision",
+        "nextAction": "Verify the actual image consumes both upstream license exports with no local patch, then deliver after BCR #11518 and the required license recognition land.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
           "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13034770208",
@@ -39753,10 +39715,10 @@
       },
       "refinement": {
         "before": {
-          "head": "4be95c2fafab8da9703de07e7a0cd8258c737e3e"
+          "head": "05f0c6feac4693941c8ccf6b8730ddf3c258a51c"
         },
         "after": {
-          "head": "05f0c6feac4693941c8ccf6b8730ddf3c258a51c"
+          "head": "67601a14c6ffdf37d7e27a9124170a9d54ef0e12"
         }
       },
       "evidence": [
@@ -39799,17 +39761,24 @@
         {
           "label": "The shared public OpenSSL source label",
           "url": "https://github.com/tamird/gvisor/actions/runs/41177931871/artifacts/13033808570"
+        },
+        {
+          "label": "One-line BCR iperf license export",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11518"
+        },
+        {
+          "label": "Remove the local patch and override; benchmark source identical",
+          "url": "https://github.com/tamird/gvisor/compare/05f0c6fea...67601a14c"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "baseHead": "6e6276344dce3728a09a8271c8360269e7d881a4",
-        "head": "05f0c6feac4693941c8ccf6b8730ddf3c258a51c",
-        "url": "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea",
-        "title": "Review the iperf3 runtime and image packaging",
-        "summary": "Build the BCR iperf3 executable and use the Ubuntu Jammy runtime for both endpoints. The original fully static ARM64 sender aborted after transfer. Switching both endpoints from iperf2 changes the protocol and benchmark baseline. The three Go files are identical to the prior image revision. Its outstanding two-line metrics decision remains separate."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "05f0c6feac4693941c8ccf6b8730ddf3c258a51c",
+          "outcome": "approved-with-changes",
+          "at": "2026-11-02T16:20:02.085486+00:00"
+        }
+      ]
     },
     {
       "id": "branch:llvm-unwind-link-libraries",
@@ -40540,12 +40509,12 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/native-gazelle-check",
-      "head": "de64c6b62428b11ae47240b753998fc28f43069e",
-      "title": "Run the Gazelle presubmit as a Bazel action",
-      "url": "https://github.com/tamird/gvisor/commit/de64c6b62",
+      "head": "3ddf8ba1ac660c9d8bd3e3b85df4b0e27ce60c58",
+      "title": "Let Bazel cache and remotely execute the Gazelle check",
+      "url": "https://github.com/tamird/gvisor/commit/3ddf8ba1a",
       "group": "analysis",
-      "summary": "The separate Gazelle check uses the same managed package list and repository map as the fixer. A stale BUILD file produces Gazelle’s diff. Symlinks outside the checkout cannot become inputs; downstream target wildcards do not select the check’s status file.",
-      "updatedAt": "2026-10-31T15:53:13.605957+00:00",
+      "summary": "Presubmit reruns Gazelle on the CI checkout whenever it invokes bazel run, even if the checked packages are unchanged. Declaring the files Gazelle reads lets Bazel reuse a result or execute the check on a remote worker. The fixer and check continue to agree on which BUILD files to generate.",
+      "updatedAt": "2026-11-02T16:20:02.085486+00:00",
       "status": "Contributor review requested",
       "evidence": [
         {
@@ -40561,24 +40530,32 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41213227359/artifacts/13046902331"
         }
       ],
+      "refinement": {
+        "before": {
+          "head": "de64c6b62428b11ae47240b753998fc28f43069e"
+        },
+        "after": {
+          "head": "3ddf8ba1ac660c9d8bd3e3b85df4b0e27ce60c58"
+        }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "de64c6b62428b11ae47240b753998fc28f43069e",
+          "outcome": "changes-requested",
+          "at": "2026-11-02T16:20:02.085486+00:00"
+        }
+      ],
       "contributorReview": {
         "status": "pending",
         "kind": "proposal",
-        "head": "de64c6b62428b11ae47240b753998fc28f43069e",
-        "baseHead": "0eb8eca5ba25161133cd6fb8ad5a21604e988b92",
-        "url": "https://github.com/tamird/gvisor/commit/de64c6b62",
-        "title": "Run the Gazelle presubmit as a Bazel action",
-        "requestedAt": "2026-10-31T15:53:13.605957+00:00",
-        "summary": "The separate Gazelle check uses the same managed package list and repository map as the fixer. A stale BUILD file produces Gazelle’s diff. Symlinks outside the checkout cannot become inputs; downstream target wildcards do not select the check’s status file.",
-        "body": "Presubmit runs Gazelle through a shell launcher in the checkout. Run\nthe diff check on its declared inputs so it can execute on a remote\nworker. Collect the managed package files, including embedded data,\nand inherited BUILD directives in the existing lint inventory.\nExclude symlinks so files outside the checkout cannot become inputs.\n\nShare the package list, flags and Bzlmod repository map with the\nin-place fixer. Expose the Gazelle-owned map through a supplier alias\nso bazel mod tidy preserves the dependency. Leave the check and its\nstatus file with the other developer tools, behind the root alias."
-      },
-      "refinement": {
-        "before": {
-          "head": "0eb8eca5ba25161133cd6fb8ad5a21604e988b92"
-        },
-        "after": {
-          "head": "de64c6b62428b11ae47240b753998fc28f43069e"
-        }
+        "head": "3ddf8ba1ac660c9d8bd3e3b85df4b0e27ce60c58",
+        "baseHead": "de64c6b62428b11ae47240b753998fc28f43069e",
+        "url": "https://github.com/tamird/gvisor/commit/3ddf8ba1a",
+        "title": "Let Bazel cache and remotely execute the Gazelle check",
+        "requestedAt": "2026-11-02T16:20:02.085486+00:00",
+        "summary": "Presubmit reruns Gazelle on the CI checkout whenever it invokes bazel run, even if the checked packages are unchanged. Declaring the files Gazelle reads lets Bazel reuse a result or execute the check on a remote worker. The fixer and check continue to agree on which BUILD files to generate.",
+        "body": "Presubmit checks whether the Go sources and their BUILD files agree.\nWith bazel run, Bazel builds the launcher, but the launcher scans the\ncheckout on the CI runner every time. A change outside the packages\nmanaged by Gazelle still pays for the scan, and a remote worker cannot\nrun it on the runner's behalf.\n\nRun Gazelle in diff mode as a build action. Its inputs include files\nmatched by go:embed and BUILD files containing inherited directives, so\na change to either invalidates the result. Use the same package list,\nflags and repository map as the in-place fixer so that make gazelle-fix\napplies the diff reported by presubmit."
       }
     },
     {
@@ -40662,9 +40639,9 @@
       "title": "Release async checkpoint reads on error",
       "url": "https://github.com/tamird/gvisor/tree/checkpoint-page-read-error",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-31T18:05:07.150+00:00",
-      "summary": "A short checkpoint read can strand a task in MapInternal after restore reports EIO. Unfinished background reads can also retain page references. The fix stops I/O, clears the in-flight markers, wakes queued waiters and drops the loader’s references. On the exact head, all 69 package cases and both Nogo targets passed. The initial race test did not build. On a GNU worker all 69 race cases passed with zero skips.",
+      "status": "Published",
+      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
+      "summary": "Delivered in https://github.com/google/gvisor/pull/16807.",
       "evidence": [
         {
           "label": "Proposed source and permanent three-page test",
@@ -40693,19 +40670,20 @@
         {
           "label": "Combined original, corrected, analyzer and race results",
           "url": "https://github.com/tamird/gvisor/actions/runs/41225784692/artifacts/13052785144"
+        },
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16807"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "3adb1aa3b346842b1ac4bc6778c538828b0f12fb",
-        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
-        "url": "https://github.com/tamird/gvisor/commit/3adb1aa3b",
-        "title": "Release async checkpoint reads on error",
-        "requestedAt": "2026-10-31T17:39:47.195+00:00",
-        "summary": "Approve opening the tested cleanup for tasks and page references stranded by a checkpoint read failure.",
-        "body": "When a checkpoint read fails, the loader can report EIO while a task\nstill waits in MapInternal or a background read still holds a page\nreference [1][2].\n\nAfter stopping I/O, clear the in-flight markers, deliver previously\nqueued notifications, and drop the loader’s temporary references\noutside its locks. The three-page regression uses a truncated pages\nfile. It fails on the parent and passes with the fix [3].\n\n[1]: https://app.buildbuddy.io/invocation/cd1192b7-336c-45c0-ac9d-3a36a0237674\n[2]: https://app.buildbuddy.io/invocation/611ca9f7-ec64-4e86-bff7-4f4547f9db3d\n[3]: https://github.com/tamird/gvisor/actions/runs/41225245512/artifacts/13051463182"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "3adb1aa3b346842b1ac4bc6778c538828b0f12fb",
+          "outcome": "approved",
+          "at": "2026-11-02T16:25:23.256481+00:00"
+        }
+      ]
     },
     {
       "id": "branch:sentry-cgo-arena-limit",
@@ -41460,9 +41438,9 @@
       "head": "3e0709a90beefbc5dcbccfb6aa7115fab90b607b",
       "url": "https://github.com/tamird/gvisor/commit/3e0709a90",
       "title": "Exercise the race-instrumented Sentry in the smoke test",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T03:26:14+00:00",
-      "summary": "The Make race smoke test staged the ordinary Sentry and overlaid the race launcher. Stage a matched race release so the guest kernel also runs with the race detector. Select race mode on the Go binaries, keeping it out of host build tools.",
+      "status": "Published",
+      "updatedAt": "2026-11-02T16:20:02.085486+00:00",
+      "summary": "Delivered in #16803. The Make race smoke test staged the ordinary Sentry and overlaid the race launcher. Stage a matched race release so the guest kernel also runs with the race detector. Select race mode on the Go binaries, keeping it out of host build tools.",
       "evidence": [
         {
           "label": "Native AMD64 Make smoke tests booted both guests, checked all eight files per release, and matched both installed launchers and Sentries to their explicitly built binaries",
@@ -41495,6 +41473,10 @@
         {
           "label": "Why the launcher and Sentry must both be instrumented",
           "url": "https://github.com/google/gvisor/commit/6e97c9a36"
+        },
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16803"
         }
       ],
       "refinement": {
@@ -41505,17 +41487,14 @@
           "head": "3e0709a90beefbc5dcbccfb6aa7115fab90b607b"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "3e0709a90beefbc5dcbccfb6aa7115fab90b607b",
-        "baseHead": "d01551afde465a186992ecaf583f57cebbf98415",
-        "url": "https://github.com/tamird/gvisor/commit/3e0709a90",
-        "title": "Exercise the race-instrumented Sentry in the smoke test",
-        "requestedAt": "2026-11-02T03:26:14+00:00",
-        "summary": "Open the race smoke fix with the launcher and Sentry both instrumented?",
-        "body": "Both Make smoke entry points booted a native AMD64 sandbox. The installed binaries matched their explicit Bazel outputs. The race launcher and Sentry contained the race runtime; neither ordinary binary did."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "3e0709a90beefbc5dcbccfb6aa7115fab90b607b",
+          "outcome": "approved",
+          "at": "2026-11-02T16:20:02.085486+00:00"
+        }
+      ]
     },
     {
       "id": "pr:16787",
@@ -41690,22 +41669,25 @@
       "title": "Release POSIX locks when dup2 or dup3 closes an alias",
       "url": "https://github.com/tamird/gvisor/commit/75a95f0a8",
       "group": "runtime",
-      "updatedAt": "2026-11-01T06:03:00.137286+00:00",
-      "status": "Contributor review requested",
-      "summary": "Two descriptors referred to the same open file. Replacing one with dup2 or dup3 must release the process’s POSIX locks. Stock kept the write lock, while Linux and the fix released it. Passing the same descriptor twice to dup2 preserved the lock on all three.",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "75a95f0a86cf3d2f80e357509f713f8128b7bd88",
-        "url": "https://github.com/tamird/gvisor/commit/75a95f0a8",
-        "title": "Review the descriptor replacement fix",
-        "body": "Open this independent fix. The syscall test and four other targets passed on the tested tree. The wrapper failed to recognize the expected stock assertion because GTest expanded F_UNLCK to its numeric value. Both original assertions are retained.",
-        "requestedAt": "2026-11-01T06:03:00.137286+00:00"
-      },
+      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
+      "status": "Published",
+      "summary": "Delivered in https://github.com/google/gvisor/pull/16805.",
       "evidence": [
         {
           "label": "Stock, Linux and fixed syscall results, with package and analyzer checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/41277802109/artifacts/13071774529"
+        },
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16805"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "75a95f0a86cf3d2f80e357509f713f8128b7bd88",
+          "outcome": "approved",
+          "at": "2026-11-02T16:25:23.256481+00:00"
         }
       ]
     },
@@ -41718,8 +41700,8 @@
       "title": "Check the descriptor table’s writer lock",
       "url": "https://github.com/tamird/gvisor/commit/b5c5589ba",
       "group": "runtime",
-      "updatedAt": "2026-11-01T06:11:46.802628+00:00",
-      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
+      "status": "Contributor approved; waiting for prerequisites",
       "summary": "Check the mutex that serializes descriptor replacement and flag updates. Removing the mutex from the flag-only paths made both AMD64 and ARM64 Nogo reject the swaps. Removing it from RemoveIf also failed at the outer iterator call.",
       "evidence": [
         {
@@ -41731,14 +41713,20 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41278383474/artifacts/13071759313"
         }
       ],
-      "contributorReview": {
-        "head": "b5c5589bad4519a4bd03ae2939379ebf0d09d2b1",
-        "status": "pending",
-        "kind": "proposal",
-        "title": "Check the descriptor table’s writer lock",
-        "url": "https://github.com/tamird/gvisor/commit/b5c5589ba",
-        "body": "Submit this checklocks-only follow-up after the descriptor replacement fix. Both the reference-owning setter and the flag-only swap require the mutex. Three analyzer targets accepted the final source, and removing locks triggered all six intended diagnostics on each architecture.",
-        "requestedAt": "2026-11-01T06:11:46.802628+00:00"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "b5c5589bad4519a4bd03ae2939379ebf0d09d2b1",
+          "outcome": "approved",
+          "at": "2026-11-02T16:25:23.256481+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "coordinator",
+        "sourceHead": "b5c5589bad4519a4bd03ae2939379ebf0d09d2b1",
+        "observedAt": "2026-11-02T16:25:23.256481+00:00",
+        "disposition": "Approved for submission after #16805",
+        "nextAction": "Open the standalone FDTable lock annotation once the descriptor replacement fix in #16805 lands."
       }
     },
     {
@@ -42060,26 +42048,27 @@
       "title": "Preserve the last operator of untouched SysV semaphores",
       "url": "https://github.com/tamird/gvisor/commit/c4231067d",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T11:23:51.999036+00:00",
-      "summary": "A successful operation on semaphore 1 overwrote the last operator of semaphore 0. Linux leaves an untouched member’s PID at zero. Update the members named in the vector and keep waking waiters across the set.",
+      "status": "Published",
+      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
+      "summary": "Delivered in https://github.com/google/gvisor/pull/16806.",
       "evidence": [
         {
           "label": "Linux, stock and corrected gVisor syscall XML and analyzer result",
           "url": "https://github.com/tamird/gvisor/actions/runs/41301068076/artifacts/13081482611"
+        },
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16806"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "c4231067d198ea1b38bd629b7c87a5426f44b2c8",
-        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
-        "url": "https://github.com/tamird/gvisor/commit/c4231067d",
-        "title": "Preserve the last operator of untouched SysV semaphores",
-        "requestedAt": "2026-11-01T11:23:51.999036+00:00",
-        "summary": "Open the independent semaphore last-operator fix?",
-        "body": "An operation on semaphore 1 changed GETPID on untouched semaphore 0 from zero to one on stock gVisor. Linux and corrected gVisor passed all six syscall cases. The semaphore analyzer passed. Retaining the PID of a reaped writer is a separate issue."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "c4231067d198ea1b38bd629b7c87a5426f44b2c8",
+          "outcome": "approved",
+          "at": "2026-11-02T16:25:23.256481+00:00"
+        }
+      ]
     },
     {
       "id": "branch:semaphore-waiter-lock",
@@ -42120,9 +42109,9 @@
       "title": "Keep unread TCP data across shutdown in both directions",
       "url": "https://github.com/tamird/gvisor/commit/254c8ddfc",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T12:38:11.445994+00:00",
-      "summary": "With unread bytes, SHUT_RDWR reset the peer. Linux sends FIN, and the application can still read the queued data. Closing the socket discards unread data and sends a reset.",
+      "status": "Published",
+      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
+      "summary": "Delivered in https://github.com/google/gvisor/pull/16808.",
       "evidence": [
         {
           "label": "Linux and corrected gVisor pass all 36 cases; stock fails 12",
@@ -42135,19 +42124,20 @@
         {
           "label": "Remaining end-to-end analyzer on AMD64 and ARM64",
           "url": "https://github.com/tamird/gvisor/actions/runs/41306752453/artifacts/13082864420"
+        },
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16808"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "254c8ddfcc97180f83ba6454db22afb6235b5df3",
-        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
-        "url": "https://github.com/tamird/gvisor/commit/254c8ddfc",
-        "title": "Keep unread TCP data across shutdown in both directions",
-        "requestedAt": "2026-11-01T12:38:11.445994+00:00",
-        "summary": "Open the standalone TCP shutdown fix?",
-        "body": "All 36 syscall cases passed on Linux and corrected gVisor. Stock gVisor failed all 12 SHUT_RDWR cases. The final source also passes 405 packet tests and both owning analyzers on AMD64 and ARM64."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "254c8ddfcc97180f83ba6454db22afb6235b5df3",
+          "outcome": "approved",
+          "at": "2026-11-02T16:25:23.256481+00:00"
+        }
+      ]
     },
     {
       "id": "branch:tcp-rack-fresh-timeout-head",
@@ -43016,9 +43006,9 @@
       "title": "Report retransmitted segments in TCP_INFO",
       "url": "https://github.com/tamird/gvisor/commit/bc9ffcc0d",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T23:29:04+00:00",
-      "summary": "Expose the socket’s lifetime retransmission count to applications diagnosing packet loss.",
+      "status": "Published",
+      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
+      "summary": "Delivered in https://github.com/google/gvisor/pull/16809.",
       "evidence": [
         {
           "label": "Linux, stock gVisor and corrected gVisor on the same three socket traces",
@@ -43031,19 +43021,20 @@
         {
           "label": "SYN-cookie accounting when the link refuses the SYN-ACK, and final TCP analyzer",
           "url": "https://github.com/tamird/gvisor/actions/runs/41361977602/artifacts/13106036446"
+        },
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16809"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689",
-        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
-        "url": "https://github.com/tamird/gvisor/commit/bc9ffcc0d",
-        "title": "Report retransmitted segments in TCP_INFO",
-        "requestedAt": "2026-11-01T23:29:04+00:00",
-        "summary": "Open a standalone PR for the TCP_INFO fix?",
-        "body": "After five data retransmissions, stock gVisor still reported zero through getsockopt. It also reported zero on both the connecting and accepted sockets after a handshake retry. Linux and the correction reported 5, 1 and 1 respectively. The listener stayed at zero. Retransmitted batches count by TCP segment. The final amendment preserves the SYN-cookie counter when output fails."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689",
+          "outcome": "approved",
+          "at": "2026-11-02T16:25:23.256481+00:00"
+        }
+      ]
     },
     {
       "id": "branch:tcp-passive-syn-retry",
@@ -43507,9 +43498,9 @@
       "title": "Let goimports print a unified diff without a system diff program",
       "url": "https://github.com/tamird/tools/commit/d140e4d63",
       "group": "analysis",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T07:06:48+00:00",
-      "summary": "goimports prints an applicable unified diff without a system diff or temporary files. Its x/tools diff library needs the one-line correction from Go CL 834825 to print the right line number after nearby edits.",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-11-02T16:03:52.160242+00:00",
+      "summary": "goimports -d can produce a unified diff in process. Nearby edits expose a hunk line-count bug in golang.org/x/tools/internal/diff. Go CL 834825 corrects a vendored copy. goimports needs the correction in x/tools itself.",
       "evidence": [
         {
           "label": "Original hunk headers, forward and reverse patch application, and syntax controls",
@@ -43526,17 +43517,30 @@
         {
           "label": "Go issue on incorrect line numbers in multi-hunk patches",
           "url": "https://github.com/golang/go/issues/81453"
+        },
+        {
+          "label": "Reported the line-18 reproduction and requested the correction in x/tools",
+          "url": "https://go-review.googlesource.com/c/go/+/834825#message-ea3ef943d4e1243ac197a81618999be41bec558f"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "d140e4d63b51cb5053d57cde308379069b5a6436",
-        "baseHead": "0f433775b36d0f73ebb153029747fd4fa5318de3",
-        "url": "https://github.com/tamird/tools/commit/d140e4d63",
-        "title": "Let goimports print a unified diff without a system diff program",
-        "requestedAt": "2026-11-02T07:06:48+00:00",
-        "summary": "Review sending the goimports commit after the hunk correction lands and reporting the line-18 reproduction on the existing Go review."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "d140e4d63b51cb5053d57cde308379069b5a6436",
+          "outcome": "approved",
+          "at": "2026-11-02T16:03:52.160242+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "coordinator",
+        "sourceHead": "d140e4d63b51cb5053d57cde308379069b5a6436",
+        "disposition": "Approved for submission once x/tools has the hunk correction",
+        "observedAt": "2026-11-02T16:03:52.160242+00:00",
+        "nextAction": "Follow golang/go#81453 and CL 834825 for a change to golang.org/x/tools/internal/diff. Verify the new-file line number in x/tools, then send the approved goimports change.",
+        "evidence": [
+          "https://go-review.googlesource.com/c/go/+/834825#message-ea3ef943d4e1243ac197a81618999be41bec558f",
+          "https://github.com/golang/go/issues/81453"
+        ]
       }
     },
     {
@@ -43586,9 +43590,9 @@
       "title": "Keep gVisor’s default Linux headers local to its root module",
       "url": "https://github.com/tamird/gvisor/commit/d85bc40fd",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T08:20:02+00:00",
-      "summary": "A project importing gVisor cannot query the header repository because only gVisor’s own root applies the patch that defines configure. Scope its 6.18 selection to the root and keep the header repository available to consumers.",
+      "status": "Published",
+      "updatedAt": "2026-11-02T16:20:02.085486+00:00",
+      "summary": "Delivered in #16804. A project importing gVisor cannot query the header repository because only gVisor’s own root applies the patch that defines configure. Scope its 6.18 selection to the root and keep the header repository available to consumers.",
       "evidence": [
         {
           "label": "Original stock, downstream and root query outputs",
@@ -43597,19 +43601,26 @@
         {
           "label": "Reconciled query verdict and checked product tree",
           "url": "https://github.com/tamird/gvisor/actions/runs/41412191540/artifacts/13125079783"
+        },
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16804"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "d85bc40fda9451667fb01002c577d62ed8308b59",
-        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
-        "url": "https://github.com/tamird/gvisor/commit/d85bc40fd",
-        "title": "Keep gVisor’s default Linux headers local to its root module",
-        "requestedAt": "2026-11-02T08:20:02+00:00",
-        "summary": "Open the standalone fix against current master?",
-        "body": "The stock query failed with an unknown configure tag. With the fix, the importing project inherited its own default and gVisor as root still selected 6.18. Both generated maps resolved that series to 6.18.33. The first verifier rejected the wording of the stock diagnostic. The corrected verifier checked the original outputs without rerunning Bazel."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "d85bc40fda9451667fb01002c577d62ed8308b59",
+          "outcome": "approved-with-changes",
+          "at": "2026-11-02T16:20:02.085486+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "b01b6c0c7ff188126b0ff4e999a74d7baa1a4a98",
+          "outcome": "approved",
+          "at": "2026-11-02T16:20:02.085486+00:00"
+        }
+      ]
     },
     {
       "id": "branch:state-completion-queue",
@@ -43912,8 +43923,8 @@
       "title": "Publish Unix listener credentials with the listening state",
       "url": "https://github.com/tamird/gvisor/commit/b29a7c292",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T15:58:04.948535+00:00",
+      "status": "Agent work",
+      "updatedAt": "2026-11-02T16:20:02.085486+00:00",
       "summary": "A client connecting as a Unix stream socket started listening received PID 0 and unmapped UID/GID. Publish the listening task’s credentials while holding the same lock that connect uses to copy them.",
       "evidence": [
         {
@@ -43927,19 +43938,355 @@
         {
           "label": "Syscall reproduction with separate listener and client processes",
           "url": "https://github.com/tamird/gvisor/blob/a1e787f70/test/syscalls/linux/socket_unix_peercred.cc#L69-L133"
+        },
+        {
+          "label": "Unix transition and syscall qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41479325904"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "b29a7c292010100770b6ba5e4f38b8f47ed68f38",
-        "baseHead": "7a675ac66a1e2357abdaa6cccedabcd3cce9aa5c",
-        "title": "Publish Unix listener credentials with the listening state",
-        "url": "https://github.com/tamird/gvisor/commit/b29a7c292",
-        "requestedAt": "2026-11-02T15:58:04.948535+00:00",
-        "summary": "Open the standalone PR?",
-        "body": "A test barrier in the fork let the client connect before the old listener published its credentials. After accept and a byte exchange the client still read PID 0 and unmapped IDs. The corrected guest and native Linux reported the actual listening process. The remote Go suite separately passed all five transport tests."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "b29a7c292010100770b6ba5e4f38b8f47ed68f38",
+          "outcome": "changes-requested",
+          "at": "2026-11-02T16:20:02.085486+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "coordinator",
+        "sourceHead": "b29a7c292010100770b6ba5e4f38b8f47ed68f38",
+        "observedAt": "2026-11-02T16:20:02.085486+00:00",
+        "disposition": "Agent work",
+        "nextAction": "Qualify the revision that removes SetPeerCreds and exercises relisten through SO_PEERCRED on Linux and gVisor."
       }
+    },
+    {
+      "id": "pr:16803",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16803,
+      "ref": "proposals/make-race-target-mode",
+      "head": "3e0709a90beefbc5dcbccfb6aa7115fab90b607b",
+      "title": "Exercise the race-instrumented Sentry in the smoke test",
+      "url": "https://github.com/google/gvisor/pull/16803",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-02T16:20:02.085486+00:00",
+      "summary": "The Make race smoke test staged the ordinary Sentry and overlaid the race launcher. Stage a matched race release so the guest kernel also runs with the race detector. Select race mode on the Go binaries, keeping it out of host build tools.",
+      "evidence": [
+        {
+          "label": "Native AMD64 Make smoke tests booted both guests, checked all eight files per release, and matched both installed launchers and Sentries to their explicitly built binaries",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41381866216/artifacts/13113569543"
+        },
+        {
+          "label": "Both Make entry points select exactly the previously executed Bazel build command",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41273370612/artifacts/13069854156"
+        },
+        {
+          "label": "Original empty-worker build failures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41265372846/artifacts/13067411625"
+        },
+        {
+          "label": "Generator ELF interpreters, corrected scratch link and rootless guest",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41267001039/artifacts/13067872662"
+        },
+        {
+          "label": "Same-source Make smoke, eight staged ELF files and matching Sentry stamp",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41272340656/artifacts/13069493542"
+        },
+        {
+          "label": "Original GNU release analyzer resource failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41268339617/artifacts/13069347525"
+        },
+        {
+          "label": "Target-level race instrumentation introduced in ba94580e1",
+          "url": "https://github.com/google/gvisor/commit/ba94580e1"
+        },
+        {
+          "label": "Why the launcher and Sentry must both be instrumented",
+          "url": "https://github.com/google/gvisor/commit/6e97c9a36"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "3e0709a90beefbc5dcbccfb6aa7115fab90b607b",
+          "outcome": "approved",
+          "at": "2026-11-02T16:20:02.085486+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:16804",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16804,
+      "ref": "proposal/kernel-header-root-policy-standalone",
+      "head": "b01b6c0c7ff188126b0ff4e999a74d7baa1a4a98",
+      "title": "Keep the Linux header default in the root module",
+      "url": "https://github.com/google/gvisor/pull/16804",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-02T16:20:02.085486+00:00",
+      "summary": "A project importing gVisor cannot query the header repository because only gVisor’s own root applies the patch that defines configure. Scope its 6.18 selection to the root and keep the header repository available to consumers.",
+      "evidence": [
+        {
+          "label": "Original stock, downstream and root query outputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41410737080/artifacts/13125283113"
+        },
+        {
+          "label": "Reconciled query verdict and checked product tree",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41412191540/artifacts/13125079783"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "d85bc40fda9451667fb01002c577d62ed8308b59",
+          "outcome": "approved-with-changes",
+          "at": "2026-11-02T16:20:02.085486+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "b01b6c0c7ff188126b0ff4e999a74d7baa1a4a98",
+          "outcome": "approved",
+          "at": "2026-11-02T16:20:02.085486+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:bazelbuild/bazel-central-registry:11518",
+      "type": "pr",
+      "repo": "bazelbuild/bazel-central-registry",
+      "number": 11518,
+      "ref": "proposal/iperf-export-license",
+      "head": "fe25c8ed035077d6f3afe56d9b0d0411a6455b99",
+      "title": "Export the iperf3 license text",
+      "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11518",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
+      "summary": "Export the source notice for consumers packaging iperf3. The release keeps the source and CI matrix and declares the Bazel 7.2.1 minimum required for registry overlays."
+    },
+    {
+      "id": "pr:16805",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "proposal/fd-table-duplicate-close",
+      "head": "75a95f0a86cf3d2f80e357509f713f8128b7bd88",
+      "number": 16805,
+      "title": "Release POSIX locks when duplicating over the same file",
+      "url": "https://github.com/google/gvisor/pull/16805",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
+      "summary": "Two descriptors referred to the same open file. Replacing one with dup2 or dup3 must release the process’s POSIX locks. Stock kept the write lock, while Linux and the fix released it. Passing the same descriptor twice to dup2 preserved the lock on all three.",
+      "evidence": [
+        {
+          "label": "Stock, Linux and fixed syscall results, with package and analyzer checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41277802109/artifacts/13071774529"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "75a95f0a86cf3d2f80e357509f713f8128b7bd88",
+          "outcome": "approved",
+          "at": "2026-11-02T16:25:23.256481+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:16806",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "proposal/semop-last-pid",
+      "head": "c4231067d198ea1b38bd629b7c87a5426f44b2c8",
+      "number": 16806,
+      "title": "Preserve the last-operation PID on untouched semaphores",
+      "url": "https://github.com/google/gvisor/pull/16806",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
+      "summary": "A successful operation on semaphore 1 overwrote the last operator of semaphore 0. Linux leaves an untouched member’s PID at zero. Update the members named in the vector and keep waking waiters across the set.",
+      "evidence": [
+        {
+          "label": "Linux, stock and corrected gVisor syscall XML and analyzer result",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41301068076/artifacts/13081482611"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "c4231067d198ea1b38bd629b7c87a5426f44b2c8",
+          "outcome": "approved",
+          "at": "2026-11-02T16:25:23.256481+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:16807",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "checkpoint-page-read-error",
+      "head": "3adb1aa3b346842b1ac4bc6778c538828b0f12fb",
+      "number": 16807,
+      "title": "Release waiters and page references after a checkpoint read error",
+      "url": "https://github.com/google/gvisor/pull/16807",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
+      "summary": "A short checkpoint read can strand a task in MapInternal after restore reports EIO. Unfinished background reads can also retain page references. The fix stops I/O, clears the in-flight markers, wakes queued waiters and drops the loader’s references. On the exact head, all 69 package cases and both Nogo targets passed. The initial race test did not build. On a GNU worker all 69 race cases passed with zero skips.",
+      "evidence": [
+        {
+          "label": "Proposed source and permanent three-page test",
+          "url": "https://github.com/tamird/gvisor/commit/3adb1aa3b"
+        },
+        {
+          "label": "Stock blocked MapInternal caller",
+          "url": "https://app.buildbuddy.io/invocation/cd1192b7-336c-45c0-ac9d-3a36a0237674"
+        },
+        {
+          "label": "Stock short-read and reader-wide failure cases retain a reference",
+          "url": "https://app.buildbuddy.io/invocation/611ca9f7-ec64-4e86-bff7-4f4547f9db3d"
+        },
+        {
+          "label": "74 corrected package and diagnostic cases",
+          "url": "https://app.buildbuddy.io/invocation/b556a045-b302-4e5d-9d3a-cb61afbd19ff"
+        },
+        {
+          "label": "Exact stock failure, 69 corrected cases, two analyzers and missing race run",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41225245512/artifacts/13051463182"
+        },
+        {
+          "label": "GNU worker, all 69 race cases passed",
+          "url": "https://app.buildbuddy.io/invocation/763b9cf2-98fb-42cf-9467-61b32ccbbfb7"
+        },
+        {
+          "label": "Combined original, corrected, analyzer and race results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41225784692/artifacts/13052785144"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "3adb1aa3b346842b1ac4bc6778c538828b0f12fb",
+          "outcome": "approved",
+          "at": "2026-11-02T16:25:23.256481+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:16808",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "tcp-shutdown-keeps-unread-data",
+      "head": "254c8ddfcc97180f83ba6454db22afb6235b5df3",
+      "number": 16808,
+      "title": "tcp: keep unread data across bidirectional shutdown",
+      "url": "https://github.com/google/gvisor/pull/16808",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
+      "summary": "With unread bytes, SHUT_RDWR reset the peer. Linux sends FIN, and the application can still read the queued data. Closing the socket discards unread data and sends a reset.",
+      "evidence": [
+        {
+          "label": "Linux and corrected gVisor pass all 36 cases; stock fails 12",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41290607949/artifacts/13081923100"
+        },
+        {
+          "label": "405 end-to-end TCP cases and the primary analyzer",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41303197318/artifacts/13083144218"
+        },
+        {
+          "label": "Remaining end-to-end analyzer on AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41306752453/artifacts/13082864420"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "254c8ddfcc97180f83ba6454db22afb6235b5df3",
+          "outcome": "approved",
+          "at": "2026-11-02T16:25:23.256481+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:16809",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "proposal/tcp-info-total-retrans",
+      "head": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689",
+      "number": 16809,
+      "title": "Report retransmitted segments in TCP_INFO",
+      "url": "https://github.com/google/gvisor/pull/16809",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
+      "summary": "Expose the socket’s lifetime retransmission count to applications diagnosing packet loss.",
+      "evidence": [
+        {
+          "label": "Linux, stock gVisor and corrected gVisor on the same three socket traces",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41360715303/artifacts/13105296962"
+        },
+        {
+          "label": "Count the three TCP segments carried in two retransmission batches",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41361087857/artifacts/13104972344"
+        },
+        {
+          "label": "SYN-cookie accounting when the link refuses the SYN-ACK, and final TCP analyzer",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41361977602/artifacts/13106036446"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689",
+          "outcome": "approved",
+          "at": "2026-11-02T16:25:23.256481+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:bazel-contrib/rules_go:4772",
+      "type": "pr",
+      "repo": "bazel-contrib/rules_go",
+      "ref": "feat/go-sdk-tool",
+      "head": "aec31ccc81c407a63d5f6f5a3bdd7840f2d35bde",
+      "number": 4772,
+      "title": "Provide Go SDK commands as executable targets",
+      "url": "https://github.com/bazel-contrib/rules_go/pull/4772",
+      "group": "rbe",
+      "status": "open",
+      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
+      "summary": "An action that calls go tool objdump can compile objdump inside its private cache. A declared SDK executable lets all analyzers reuse one build, or the prebuilt command when the selected Go SDK ships it. The Linux presubmit ran all 508 applicable targets across the original run and one isolated timeout recovery.",
+      "evidence": [
+        {
+          "label": "Upstream issue",
+          "url": "https://github.com/bazel-contrib/rules_go/issues/4535"
+        },
+        {
+          "label": "Existing SDK command and 507 presubmit passes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41168531535/artifacts/13031497606"
+        },
+        {
+          "label": "Original timeout passed in isolation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41173644014/artifacts/13032631641"
+        },
+        {
+          "label": "Shared objdump in the gVisor build",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41166982711/artifacts/13029633072"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "aec31ccc81c407a63d5f6f5a3bdd7840f2d35bde",
+          "outcome": "approved",
+          "at": "2026-11-02T16:25:23.256481+00:00"
+        }
+      ]
     }
   ],
   "edges": [
@@ -47175,13 +47522,6 @@
       "evidence": "https://github.com/tamird/gvisor/actions/runs/41174339626/artifacts/13032936423"
     },
     {
-      "from": "branch:rules-img-iperf-image",
-      "to": "branch:standalone-iperf-runtime",
-      "type": "depends_on",
-      "reason": "The proposed tree carries the same two reporting lines as the separately pending metric review. It no longer needs the old native-Go image foundation.",
-      "evidence": "https://github.com/tamird/gvisor/compare/6e6276344...05f0c6fea"
-    },
-    {
       "from": "pr:15918",
       "to": "branch:multicast-device-before-bind",
       "type": "depends_on",
@@ -47192,7 +47532,7 @@
       ]
     },
     {
-      "from": "branch:rules-go-sdk-tool",
+      "from": "pr:bazel-contrib/rules_go:4772",
       "to": "branch:nogo-sandbox-actions",
       "type": "depends_on",
       "reason": "Sandboxed Nogo checks reuse one objdump built for the execution platform. The SDK target is proposed in rules_go.",
@@ -47220,7 +47560,7 @@
       ]
     },
     {
-      "from": "branch:checkpoint-page-read-error",
+      "from": "pr:16807",
       "to": "branch:checkpoint-memory-file-registration",
       "type": "depends_on",
       "reason": "The follow-up builds on the checkpoint reader cleanup. It preserves the first read error when another memory file later registers with the same reader.",
@@ -47312,7 +47652,7 @@
       ]
     },
     {
-      "from": "branch:fd-table-duplicate-close",
+      "from": "pr:16805",
       "to": "branch:fd-table-writer-contracts",
       "type": "depends_on",
       "reason": "The descriptor replacement fix introduces the raw swap used for flag-only updates. Both writers require the table mutex.",
@@ -47342,7 +47682,7 @@
       "evidence": "https://github.com/tamird/gvisor/commit/c5c3a66ce"
     },
     {
-      "from": "branch:semop-last-pid",
+      "from": "pr:16806",
       "to": "branch:semaphore-waiter-lock",
       "type": "depends_on",
       "reason": "The semaphore membership fix changes one of the wakeup loops. The annotation checks the resulting callers.",
@@ -47361,7 +47701,7 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:tcp-shutdown-keeps-unread-data",
+      "from": "pr:16808",
       "to": "branch:tcp-report-read-hangups",
       "reason": "The unread-data change preserves the queued byte needed to observe POLLHUP after both directions shut down.",
       "evidence": [
@@ -47397,7 +47737,7 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:tcp-info-total-retrans",
+      "from": "pr:16809",
       "to": "branch:tcp-passive-syn-retry",
       "reason": "Both timed and peer-requested SYN-ACK retries use the per-socket TCP_INFO counter.",
       "evidence": [
@@ -47415,7 +47755,7 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:smoke-race-target-mode",
+      "from": "pr:16803",
       "to": "branch:buildkite-direct-smoke",
       "reason": "The race smoke job runs the complete //:release-race with matching launcher and Sentry.",
       "evidence": [
@@ -47494,10 +47834,19 @@
     {
       "type": "depends_on",
       "from": "pr:16236",
-      "to": "branch:kernel-header-root-policy",
+      "to": "pr:16804",
       "reason": "The follow-up scopes the header selection introduced in #16236.",
       "evidence": [
         "https://github.com/google/gvisor/commit/cf5708fbb"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:bazelbuild/bazel-central-registry:11518",
+      "to": "branch:standalone-iperf-runtime",
+      "reason": "The packaged image consumes the BCR license file without a downstream patch.",
+      "evidence": [
+        "https://github.com/bazelbuild/bazel-central-registry/pull/11518"
       ]
     }
   ],
