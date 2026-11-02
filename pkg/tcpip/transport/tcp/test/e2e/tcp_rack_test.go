@@ -613,6 +613,27 @@ func TestRACKTLPOneRTOAfterAck(t *testing.T) {
 	ic.c.ReceiveAndCheckPacketWithOptions(ic.data, maxPayload+half, maxPayload-half, e2e.TSOptionSize)
 }
 
+// TestRACKTLPFlightAfterAck tests that the probe timeout an ACK schedules is
+// computed from the flight the ACK leaves outstanding. With two segments
+// outstanding the PTO is 2*SRTT, but once an ACK leaves only one, it is the
+// single-segment PTO, here capped at the RTO.
+func TestRACKTLPFlightAfterAck(t *testing.T) {
+	ic := newIdleRACKConn(t)
+
+	// Send two more segments and acknowledge the first of them an SRTT later.
+	ic.send(t, 1)
+	ic.send(t, 2)
+	ic.clock.Advance(ic.srtt)
+	rto, _ := ic.ack(t, 2*maxPayload)
+
+	// The probe, retransmitting the last segment, comes one RTO after the ACK,
+	// not 2*SRTT after it.
+	ic.clock.Advance(rto - time.Nanosecond)
+	ic.c.CheckNoPacketTimeout("probe sent before one RTO from the ACK", 200*time.Millisecond)
+	ic.clock.Advance(time.Nanosecond)
+	ic.c.ReceiveAndCheckPacketWithOptions(ic.data, 2*maxPayload, maxPayload, e2e.TSOptionSize)
+}
+
 // TestRACKDetectDSACK tests that RACK detects DSACK with duplicate segments.
 // See: https://tools.ietf.org/html/rfc2883#section-4.1.1.
 func TestRACKDetectDSACK(t *testing.T) {
