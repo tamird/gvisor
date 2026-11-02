@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T04:16:13+00:00",
+    "updatedAt": "2026-11-02T04:19:10+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27568,15 +27568,15 @@
       "title": "Build the TLDK plugin against musl",
       "url": "https://github.com/tamird/gvisor/commit/603b12317",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-11-02T04:16:13+00:00",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T04:19:10+00:00",
       "summary": "On native AMD64 the musl plugin linked with all three VFIO functions and passed TestDumpStack on the revised kernel headers. The public revision adds the purpose and source of the TLDK patch. GNU coverage used the same compatibility changes. PCI packet traffic still needs a vhost device.",
       "followup": {
         "owner": "arm64_results",
         "sourceHead": "603b1231738582ca6559d2a5e098598669842c3c",
-        "observedAt": "2026-11-02T04:16:13+00:00",
+        "observedAt": "2026-11-02T04:19:10+00:00",
         "disposition": "Rebased on the current GNU DPDK change",
-        "nextAction": "Check whether a supplier implementation of execinfo would shrink the DPDK patch. Both native musl validation and the full license check passed.",
+        "nextAction": "After contributor review and #15153, open the standalone musl follow-up for the LLVM compiler migration.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41384852262",
           "https://github.com/google/gvisor/pull/15153"
@@ -27658,11 +27658,23 @@
       ],
       "refinement": {
         "before": {
-          "head": "92c5bed67c8cac88959b0a4cb64e0b52f92b2ec9"
+          "head": "92c5bed67c8cac88959b0a4cb64e0b52f92b2ec9",
+          "base": "85c742f25194e6198c292e099754f09549f09cdf"
         },
         "after": {
           "head": "603b1231738582ca6559d2a5e098598669842c3c"
         }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "603b1231738582ca6559d2a5e098598669842c3c",
+        "baseHead": "675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa",
+        "url": "https://github.com/tamird/gvisor/commit/603b12317",
+        "title": "Build the TLDK plugin against musl",
+        "requestedAt": "2026-11-02T04:19:10+00:00",
+        "summary": "Open the musl follow-up after the GNU-only #15153 lands?",
+        "body": "Static runsc with the LLVM compiler uses musl. The plugin’s pinned TLDK and DPDK sources assume glibc for IPv6 layout, the queue header and backtraces. The change keeps VFIO and the stack diagnostic working with musl. The native cgo stack test and the 224-record license check passed. No attached-device packet traffic was tested."
       }
     },
     {
