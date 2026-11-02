@@ -113,6 +113,21 @@ def execution(phase, labels, name, selected=None):
     return verdict
 
 
+def configuration_groups(reference, observed):
+    """Match configured owner partitions without equating configuration hashes."""
+    groups = []
+    for rows in (reference, observed):
+        by_config = {}
+        for label, aspect, kind, tags, config in rows:
+            by_config.setdefault(config, []).append((label, aspect, kind, tags))
+        by_members = {tuple(sorted(members)): config for config, members in by_config.items()}
+        assert len(by_members) == len(by_config), "Ambiguous configuration partitions"
+        groups.append(by_members)
+    before, after = groups
+    assert before.keys() == after.keys(), "Configured owner partitions differ"
+    return [dict(reference=before[members], observed=after[members], records=len(members)) for members in sorted(before)]
+
+
 def rejection_controls(phase):
     context = report.read_json(phase / "context.json")
     wrong = phase / "wrong-context.json"
@@ -182,7 +197,11 @@ def main():
                 inventory, selected = selection(root / name)
                 report.write_json(OUT / (arch + "-" + name + "-selection.json"), inventory)
                 observed.append(inventory)
-            assert all(value == observed[0] for value in observed)
+            for value in observed:
+                assert all(value[key] == observed[0][key] for key in ("analyzed_test_rules", "runnable_tests", "excluded", "test_tag_filters"))
+            row["configuration_group_correspondence"] = {
+                name: configuration_groups(observed[0]["configured"], value["configured"])
+                for name, value in zip(phases, observed, strict=True)}
             selections[arch] = observed[0]["runnable_tests"]
             row.update(analyzed_test_rules=1069, runnable_tests=355, excluded_nogo=711, excluded_requires_kvm=3,
                        configured_records=3216, selection_verified=True)
@@ -202,6 +221,9 @@ def main():
                 row["build_coverage"] = {key: build[key] for key in ("missing", "failed")}
                 if runtime["native_exit"] == 0:
                     assert not build["missing"] and not build["failed"]
+                row["functional_coverage"] = ("COMPLETE" if runtime["status"] == "PASS" and
+                    {item["owner"]["label"] for item in runtime["executed"]} == set(selected) and
+                    not any(row["coverage_gaps"].values()) and not build["missing"] and not build["failed"] else "INCOMPLETE")
                 row["host"] = report.read_json(root / "host.json")
                 assert row["host"]["machine"] == "aarch64" and row["host"]["uid"] != 0
             else:
