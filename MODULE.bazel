@@ -294,7 +294,7 @@ img_pull(
 
 # Debian builds the native Puma and nio4r extensions against its Ruby 3.3 ABI
 # on each architecture. Keep their complete runtime closure at one snapshot.
-ruby_http_apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt", isolate = True)
+ruby_http_apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt")
 ruby_http_apt.sources_list(
     architectures = [
         "amd64",
@@ -315,6 +315,7 @@ ruby_http_apt.install(
         "ruby-sinatra",
         "ruby3.3",
     ],
+    suites = ["trixie"],
 )
 use_repo(ruby_http_apt, "ruby_http_packages")
 
