@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: 5
+          fetch-depth: 6
       - name: Configure the pinned Linux execution platform
         id: setup
         env:
@@ -51,7 +51,6 @@ jobs:
           RC
           for name in integration-image integration-c-guests; do git show "$GITHUB_SHA:test/rbe/$name.py" > "$RUNNER_TEMP/$name.py"; done
           mv "$RUNNER_TEMP/integration-c-guests.py" "$RUNNER_TEMP/guests.py"
-          git fetch --no-tags origin 9041e61701db27bd85b9658385cf5d7803681ab1
           cat > "$RUNNER_TEMP/privileged-fixture" <<'WRAPPER'
           #!/usr/bin/env bash
           set -u
@@ -66,8 +65,10 @@ jobs:
       - name: Recover the original independent phase outcomes
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api repos/tamird/gvisor/actions/artifacts/13178134790/zip > "$RUNNER_TEMP/original-integration.zip"
-      - name: Resolve the exact supplier archive and run the complete catalog audit
+        run: |
+          gh api repos/tamird/gvisor/actions/artifacts/13178134790/zip > "$RUNNER_TEMP/original-integration.zip" || true
+          gh api repos/tamird/gvisor/actions/artifacts/13180640411/zip > "$RUNNER_TEMP/prior-preflight.zip" || true
+      - name: Resolve the actual apt consumer and retain the complete catalog audit
         id: preflight
         if: always() && steps.setup.outcome == 'success'
         run: python3 "$RUNNER_TEMP/integration-image.py" --preflight

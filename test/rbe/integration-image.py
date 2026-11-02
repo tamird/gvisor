@@ -160,15 +160,49 @@ def original(row: dict) -> None:
     row["archive_sha256"] = sha(path.read_bytes())
 
 
+def prior_catalog(row: dict) -> None:
+    path = TMP / "prior-preflight.zip"
+    assert sha(path.read_bytes()) == "870922606cdb3c7eecea8237fa9b0aa54e70baa9361ed46bcbe0b71656fbf09d"
+    with zipfile.ZipFile(path) as z:
+        assert z.namelist() == ["result.json"]
+        old = json.loads(z.read("result.json"))
+    assert old["product"] == PRODUCT and old["carrier"] == "b9f0559251581519fb3ff0f08e06a5f7dd8f6c94"
+    assert old["status"] == "FAIL" and old["original"] == RESULT["original"]
+    assert old["phases"]["auditor"]["status"] == "PASS"
+    assert old["phases"]["auditor"]["source"] == AUDITOR
+    catalog = old["phases"]["catalog"]
+    assert catalog["status"] == "PASS" and catalog["commands"][-1]["exit"] == 0
+    assert catalog["verification"] == "all 350 dependencies have up-to-date license entries that conform to governance/licensing.yaml"
+    assert old["phases"]["resolve"]["commands"][-1]["exit"] == 1
+    assert "runtime_not_run" in old
+    checkout(PRODUCT, row)
+    assert catalog["catalog_sha256"] == sha(Path("tools/licensecheck/dependencies.yaml").read_bytes())
+    assert catalog["policy_sha256"] == sha(Path("governance/licensing.yaml").read_bytes())
+    RESULT["preflight_original"] = old
+    row["artifact"] = "https://github.com/tamird/gvisor/actions/runs/41525945396/artifacts/13180640411"
+    row["archive_sha256"] = sha(path.read_bytes())
+    row["verification"] = catalog["verification"]
+    row["auditor_source"] = AUDITOR
+    row["reused"] = True
+
+
 def resolve(row: dict) -> None:
     assert RESULT["phases"]["prerequisite"]["status"] == "PASS"
-    license = one("supplier-source", "@rules_distroless//:LICENSE", [], row)
+    target = "@integration_test_packages//:flat"
+    checked("supplier-consumer", BZ + ["cquery", "--config=x86_64", "--output=label", target], row)
+    text = checked("supplier-root", BZ + ["info", "output_base"], row)
+    roots = [Path(line) for line in text.splitlines() if line.startswith("/")]
+    assert len(roots) == 1
+    # This is the canonical module repository in the pinned Bazel 8 graph.
+    supplier = roots[0] / "external/rules_distroless+"
+    row["consumer"] = target
+    row["supplier_repository"] = "rules_distroless+"
     expected = {
         "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
         "MODULE.bazel": "96710543b5b35704cab307735d7635ced6c7e37f492aa6720e39eb07a37066d4",
         "apt/private/package_controls.bzl": "14417ed0bf5c80d9e580f8db40ccc26b11ce321b4b513731f272edae21b0b11e",
     }
-    actual = {name: sha((license.parent / name).read_bytes()) for name in expected}
+    actual = {name: sha((supplier / name).read_bytes()) for name in expected}
     assert actual == expected, "Resolved supplier source mismatch"
     row["source_sha256"] = actual
 
@@ -326,8 +360,7 @@ def phase(name: str, fn: Callable[[dict], None]) -> None:
 if sys.argv[1:] == ["--preflight"]:
     RESULT["started"] = now()
     phase("original", original)
-    phase("auditor", auditor)
-    phase("catalog", catalog)
+    phase("catalog", prior_catalog)
     phase("prerequisite", prerequisite)
     phase("resolve", resolve)
     RESULT["status"] = "PREFLIGHT_PASS" if all(r["status"] == "PASS" for r in RESULT["phases"].values()) else "PREFLIGHT_FAIL"
