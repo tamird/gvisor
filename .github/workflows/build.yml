@@ -1,14 +1,14 @@
-name: Check the native DPDK metadata generator on the empty worker
+name: Check declared shell launchers on the empty worker
 on:
   push:
-    branches: [qualification/dpdk-native-make-helper]
+    branches: [qualification/foreign-cc-declared-shell]
 permissions:
   contents: read
 jobs:
   plugin:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-22.04
-    timeout-minutes: 24
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: product, fetch-depth: 3, persist-credentials: false}
@@ -50,7 +50,7 @@ jobs:
           echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod 0755 "$RUNNER_TEMP/bb"
           python3 test/rbe/plugin_programs/image_inventory.py
-      - name: Build the ordinary native musl archive
+      - name: Compare absent host shell and declared native musl build
         working-directory: product
         run: python3 -B test/rbe/plugin_programs/native_helper.py
       - name: Collect the actual remote action and compare its outputs
@@ -83,11 +83,11 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
-          name: dpdk-native-helper
+          name: foreign-cc-declared-shell
           path: |
             ${{ runner.temp }}/plugin-evidence/result.json
             ${{ runner.temp }}/plugin-evidence/image.json
           if-no-files-found: error
       - name: Require the native-helper verdict
         if: always()
-        run: jq -e '.status == "PASS" and .build_exit == 0 and .proof.verified' "$RUNNER_TEMP/plugin-evidence/result.json"
+        run: jq -e '.status == "PASS" and .build_exit == 0 and .proof.verified and .launch.verified and .control.build_verified' "$RUNNER_TEMP/plugin-evidence/result.json"
