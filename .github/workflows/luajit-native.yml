@@ -1,7 +1,7 @@
 name: Qualify LuaJIT native supplier configurations
 on:
   push:
-    branches: [qualification/luajit-native-matrix]
+    branches: [qualification/luajit-native-recovery]
 permissions: {contents: read}
 jobs:
   native:
@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [macos-15-intel, macos-15, windows-2022]
+        runner: [macos-15-intel, macos-15]
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 50
     env:
@@ -20,7 +20,8 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           repository: tamird/bazel-central-registry
-          ref: b71adb61cb76def6e12e54b5deb73c1d910f71b5
+          ref: eaa81d92be8fcea5211d90823baa0fa80fd1fcc7
+          fetch-depth: 2
           path: supplier
           persist-credentials: false
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
@@ -47,6 +48,19 @@ jobs:
         with:
           pattern: luajit-native-*
           path: native-results
+      - name: Retrieve the original native observations
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/tamird/gvisor/actions/artifacts/13184329750/zip > "$RUNNER_TEMP/windows-original.zip" || true
+          gh api repos/tamird/gvisor/actions/artifacts/13184644342/zip > "$RUNNER_TEMP/macos-original.zip" || true
       - name: Report the actual exits from every native host
         if: always()
         run: python3 test/rbe/luajit-native.py summary
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: luajit-native-summary
+          path: ${{ runner.temp }}/luajit-public/result.json
+          if-no-files-found: error

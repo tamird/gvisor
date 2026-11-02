@@ -10,9 +10,11 @@ import re
 import shutil
 import subprocess
 import sys
+import zipfile
 
 
-SOURCE = "b71adb61cb76def6e12e54b5deb73c1d910f71b5"
+SOURCE = "eaa81d92be8fcea5211d90823baa0fa80fd1fcc7"
+ORIGINAL = "b71adb61cb76def6e12e54b5deb73c1d910f71b5"
 VERSION = "2.1.20230430"
 CLIENTS = ("9.3.1", "7.7.0", "8.8.1")
 ROOT = Path(os.environ["GITHUB_WORKSPACE"]) / "supplier"
@@ -71,6 +73,16 @@ def prepare(row):
     assert BAZEL, "native Bazel/Bazelisk is missing"
     assert subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip() == SOURCE
     assert not subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT)
+    assert subprocess.check_output(["git", "rev-parse", "HEAD^"], cwd=ROOT, text=True).strip() == ORIGINAL
+    prefix = "modules/luajit/" + VERSION + "/"
+    changed = subprocess.check_output(["git", "diff", "--name-only", ORIGINAL, SOURCE], cwd=ROOT, text=True).splitlines()
+    assert changed == [prefix + "overlay/BUILD.bazel", prefix + "source.json"]
+    old = subprocess.check_output(["git", "show", ORIGINAL + ":" + prefix + "overlay/BUILD.bazel"], cwd=ROOT, text=True)
+    updated = old.replace('            "LUAJIT_ENABLE_JIT",\n', '            "LUAJIT_ENABLE_JIT",\n            "LUAJIT_UNWIND_EXTERNAL",\n', 1)
+    updated = updated.replace('        "@platforms//os:macos": ["LUAJIT_OS=LUAJIT_OS_OSX"],',
+        '        "@platforms//os:macos": [\n            "LUAJIT_OS=LUAJIT_OS_OSX",\n            "LUAJIT_UNWIND_EXTERNAL",\n        ],', 1)
+    assert (ROOT / prefix / "overlay/BUILD.bazel").read_text() == updated
+    row["source_delta"] = "Only Darwin target defines and the corresponding overlay integrity change"
     expected = {"macos-15-intel": ("Darwin", "x86_64"), "macos-15": ("Darwin", "arm64"),
                 "windows-2022": ("Windows", "AMD64")}[os.environ["NATIVE_RUNNER"]]
     assert (platform.system(), platform.machine()) == expected
@@ -136,8 +148,31 @@ if sys.argv[1:] == ["summary"]:
         assert path.parent.name == "luajit-native-" + name
         assert name not in rows
         rows[name] = data
+    originals = {}
+    for name, digest in (("windows", "c3b6c4fd7cfcc41a9cf0c6072b46e0e3479be6ecb487d2e04f20c6f5433d8fed"),
+                         ("macos", "d3110bb17dd27b4e508810e7eb11f7bf947bb02cde18a40b410534cdae13ff9d")):
+        try:
+            path = Path(os.environ["RUNNER_TEMP"]) / (name + "-original.zip")
+            assert hashlib.sha256(path.read_bytes()).hexdigest() == digest
+            with zipfile.ZipFile(path) as z:
+                assert z.namelist() == ["result.json"]
+                data = json.loads(z.read("result.json"))
+            assert data["supplier"] == ORIGINAL
+            originals[name] = {"sha256": digest, "result": data}
+        except Exception as exc:
+            originals[name] = {"error": f"{type(exc).__name__}: {exc}"[:600]}
+    windows = originals["windows"].get("result", {})
+    original_macos = originals["macos"].get("result", {})
+    if windows.get("status") == "PASS" and windows.get("runner") == "windows-2022":
+        assert "windows-2022" not in rows
+        rows["windows-2022"] = windows
     expected = {"macos-15-intel", "macos-15", "windows-2022"}
-    ok = set(rows) == expected and all(row["status"] == "PASS" and row["supplier"] == SOURCE for row in rows.values())
+    ok = (set(rows) == expected and original_macos.get("status") == "FAIL"
+          and all(row["status"] == "PASS" and row["supplier"] == (ORIGINAL if name == "windows-2022" else SOURCE)
+                  for name, row in rows.items()))
+    ROW.update(status="PASS" if ok else "FAIL", original=originals, results=rows,
+               reused="Windows target inputs unchanged; no Windows execution repeated", finished=now())
+    save()
     text = "LuaJIT native supplier qualification\n\n" + "\n".join(
         f"- {name}: " + (", ".join(f"{key}={value['status']}" for key, value in rows[name]["phases"].items()) if name in rows else "MISSING")
         for name in sorted(expected)) + "\n"
