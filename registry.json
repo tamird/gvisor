@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T02:26:35+00:00",
+    "updatedAt": "2026-11-02T02:29:36+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -46461,8 +46461,8 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:futex-requeue-count",
-      "to": "branch:futex-waiter-mode",
+      "from": "branch:futex-waiter-mode",
+      "to": "branch:futex-requeue-count",
       "reason": "Both fixes change how requeueLocked returns its result. This follow-up counts moved waiters and preserves the parent’s error for mixing ordinary and PI waiters.",
       "evidence": [
         "https://github.com/tamird/gvisor/compare/3737ff32e...dabaf5e45"
