@@ -27569,8 +27569,8 @@
       "url": "https://github.com/tamird/gvisor/commit/92c5bed67",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T03:34:49+00:00",
-      "summary": "The musl build can keep DPDK VFIO support enabled. The GNU and musl archives each exported three VFIO symbols, and those symbols survived in the static AMD64 binaries that ran TestDumpStack. Both original tests passed. The musl Bazel client then ran out of memory; its original output and runfile digests were recovered without rerunning the tests. PCI-device traffic remains untested. The qualified change builds on an earlier revision of the GNU-only PR #15153.",
+      "updatedAt": "2026-11-02T03:36:08+00:00",
+      "summary": "The musl build can keep DPDK VFIO support enabled. The GNU and musl archives each exported three VFIO symbols, and those symbols survived in the static AMD64 binaries that ran TestDumpStack. Both original tests passed. The musl invocation reported an out-of-memory error and exited 36 after its test passed; its original output and runfile digests were recovered without rerunning the tests. PCI-device traffic remains untested. The qualified change builds on an earlier revision of the GNU-only PR #15153.",
       "followup": {
         "owner": "arm64_results",
         "sourceHead": "92c5bed67c8cac88959b0a4cb64e0b52f92b2ec9",
@@ -43040,8 +43040,8 @@
       "url": "https://github.com/tamird/gvisor/commit/ec41d0045",
       "title": "Run the Buildkite smoke guests directly with Bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T03:34:49+00:00",
-      "summary": "Buildkite can invoke runsc from a runnable release while keeping the full eight-file layout available to existing copy consumers. The native ARM64 check resolved all eight outputs, then Nogo rejected a Go SDK package before the guest could run. The owner is tracing that distinction and integrating the declared release copy action from #16506.",
+      "updatedAt": "2026-11-02T03:36:08+00:00",
+      "summary": "The native ARM64 check resolved the eight-file release. Before guest execution, Nogo found Go’s test-only crypto/internal/sysrand/internal/seccomp package in the built standard library. A previous sandboxed standard-library build omitted it on both target architectures. The owner is checking how this specific output was produced and integrating #16506’s declared copy actions.",
       "evidence": [
         {
           "label": "Native architecture jobs",
@@ -43050,6 +43050,10 @@
         {
           "label": "Native ARM64 layout and Nogo failure before guest execution",
           "url": "https://github.com/tamird/gvisor/actions/runs/41383306954/artifacts/13114402180"
+        },
+        {
+          "label": "Earlier GoStdlib sandbox control for the same extra archive on both target architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40960192898/artifacts/12936231116"
         }
       ]
     }
