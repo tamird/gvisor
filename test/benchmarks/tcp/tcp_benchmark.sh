@@ -383,6 +383,8 @@ half_loss=$(echo "${loss}"/2 | bc -l | awk '{printf "%1.6f", $0}')
 half_duplicate=$(echo "${duplicate}"/2 | bc -l | awk '{printf "%1.6f", $0}')
 helper_dir="${helper_dir#$(pwd)/}" # Use relative paths.
 proxy_binary="${helper_dir}/tcp_proxy"
+native_proxy="${helper_dir}/tcp_native_proxy"
+[[ -x "$native_proxy" ]] || native_proxy=$proxy_binary
 nsjoin_binary="${helper_dir}/nsjoin"
 
 if [[ ! -e ${proxy_binary} ]]; then
@@ -414,7 +416,7 @@ record_settings() {
   ip -Version
   tc -Version
   "$iperf_binary_name" --version
-  sha256sum "$proxy_binary" "$nsjoin_binary"
+  sha256sum "$proxy_binary" "$nsjoin_binary" "$native_proxy"
 }
 if [[ -n $output_dir ]]; then
   record_settings > "$output_dir/settings.txt" 2>&1
@@ -436,7 +438,7 @@ fi
 
 # Client proxy that will listen on the client's iperf target forward traffic
 # using the host networking stack.
-client_args="${proxy_binary} -congestion_control=${congestion_control} -port ${proxy_port} -forward ${full_server_proxy_addr}"
+client_args="${native_proxy} -congestion_control=${congestion_control} -port ${proxy_port} -forward ${full_server_proxy_addr}"
 if ${client}; then
   # Client proxy that will listen on the client's iperf target
   # and forward traffic using netstack.
@@ -448,7 +450,7 @@ fi
 
 # Server proxy that will listen on the proxy port and forward to the server's
 # iperf server using the host networking stack.
-server_args="${proxy_binary} -congestion_control=${congestion_control} -port ${proxy_port} -forward ${full_server_addr}"
+server_args="${native_proxy} -congestion_control=${congestion_control} -port ${proxy_port} -forward ${full_server_addr}"
 if ${server}; then
   # Server proxy that will listen on the proxy port and forward to the servers'
   # iperf server using netstack.
@@ -737,9 +739,10 @@ run_flow() {
     flow_duration=$((duration - second_start_delay))
     flow_cc=${second_congestion_control}
     flow_stack=${second_client}
-    server_command=("${proxy_binary}" "-congestion_control=\$flow_cc" -port "\$flow_proxy_port" -forward "${server_addr}:\$flow_iperf_port")
-    client_command=("${proxy_binary}" "-congestion_control=\$flow_cc" -port "\$flow_proxy_port" -forward "${server_proxy_addr}:\$flow_proxy_port")
+    server_command=("${native_proxy}" "-congestion_control=\$flow_cc" -port "\$flow_proxy_port" -forward "${server_addr}:\$flow_iperf_port")
+    client_command=("${native_proxy}" "-congestion_control=\$flow_cc" -port "\$flow_proxy_port" -forward "${server_proxy_addr}:\$flow_proxy_port")
     if [[ \$flow_stack == netstack ]]; then
+      client_command[0]=${proxy_binary}
       client_command+=(${netstack_opts} -client -mtu ${mtu} -iface client2.0 -addr 10.0.0.6 -mask ${mask} -gso=${gso} -swgso=${swgso} --gro=${gro} --xdp=false)
     fi
   fi

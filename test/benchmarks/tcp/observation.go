@@ -68,7 +68,7 @@ func observeNetstack() tcp.TCPProbeFunc {
 // The native sender is the dialed proxy socket facing the bottleneck; neither
 // the iperf socket on loopback nor the receiving proxy is a substitute.
 func observeNative(c *net.TCPConn) {
-	if *observation != "measured" {
+	if *observation != "measured" && *observation != "plain" {
 		return
 	}
 	peer := c.RemoteAddr().(*net.TCPAddr).Port
@@ -96,6 +96,10 @@ func observeNative(c *net.TCPConn) {
 	}
 	if sockErr != nil {
 		log.Fatal(sockErr)
+	}
+	if *observation == "plain" {
+		log.Printf("WANCONFIG_NATIVE port=%d peer=%d send=%d receive=%d cc=%s", port, peer, sndbuf, rcvbuf, cc)
+		return
 	}
 	go func() {
 		tick := time.NewTicker(10 * time.Millisecond)
