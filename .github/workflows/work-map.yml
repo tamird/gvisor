@@ -1,0 +1,25 @@
+name: Smoke the exact settled Gazelle route
+on:
+  push:
+    branches: [qualification/work-map-gazelle-settled-ui]
+permissions:
+  contents: read
+jobs:
+  browser:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - name: Read the exact deployed route in Chromium
+        run: node --experimental-websocket .github/qualification/work-map-ui.mjs
+      - name: Publish the bounded browser observations
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-map-gazelle-settled-ui
+          path: work-map-ui-result.json
+          if-no-files-found: error
+          retention-days: 14
