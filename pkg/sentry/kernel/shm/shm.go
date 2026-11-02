@@ -717,7 +717,6 @@ func (s *Shm) MarkDestroyed(ctx context.Context) error {
 	creds := auth.CredentialsFromContext(ctx)
 
 	r := s.registry
-	r.mu.Lock()
 	s.mu.Lock()
 	owned := s.obj.CheckOwnership(creds)
 	dropSelfRef := owned && !s.pendingDestruction
@@ -726,7 +725,6 @@ func (s *Shm) MarkDestroyed(ctx context.Context) error {
 		r.dissociateKeyLocked(s)
 	}
 	s.mu.Unlock()
-	r.mu.Unlock()
 
 	if !owned {
 		return linuxerr.EPERM
