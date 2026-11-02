@@ -1,0 +1,64 @@
+name: Verify the published checkpoint repair receipt
+on:
+  push:
+    branches: [qualification/work-map-checkpoint-receipt]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the live UI and the curated pair
+        id: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 56e0ef1eae33f44f5387affaa12cf3e3a6d8d9d0
+          test "$(git rev-parse HEAD^^)" = 2111a633766492edb1ed41a3bdbbb7de08bd46f6
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          test "$(git diff --name-only HEAD^^ HEAD^)" = "$(printf '%s\n' github-status.json registry.json)"
+          sha256sum -c <<'INPUTS'
+          e5d01ececbb039823104599713efd9082379b42e00b724e4580a0ffedf37230a  app.js
+          5ca4c5dd9ded641044ea0db64e9541ac2af0780e3eee616cdb60f7dfb3121f8e  registry.json
+          d548d42aad88080102174275db6ee0e5903a54eb0b0de321b5ac287b63786403  github-status.json
+          INPUTS
+          mkdir results
+      - name: Check the canonical metadata pair
+        id: metadata
+        if: always() && steps.source.outcome == 'success'
+        run: |
+          node metadata-preflight.mjs . > results/preflight.json
+          python3 - <<'PYTHON'
+          import json
+          from pathlib import Path
+          import subprocess
+          from work_states import derive_states
+          def prior(name):
+              return json.loads(subprocess.check_output(['git','show','HEAD^^:'+name]))
+          old=prior('registry.json'); old_s=prior('github-status.json')
+          r=json.loads(Path('registry.json').read_bytes()); s=json.loads(Path('github-status.json').read_bytes())
+          assert old_s.pop('registryDate')==old['meta']['updatedAt']
+          assert s.pop('registryDate')==r['meta']['updatedAt']
+          assert s==old_s
+          assert derive_states(s['prs'],old)==derive_states(s['prs'],r)
+          n=next(n for n in r['nodes'] if n['id']=='branch:checkpoint-page-write-error')
+          assert n['head']=='adf0d6a67589ad4587ea0c906818b77e40cb089b' and n['status']=='Published as #16869'
+          assert n['settledReviews'][-1]['outcome']=='approved' and n['settledReviews'][-1]['head']=='04c66b4d86260991e49c97c7461a04f5f479c823'
+          assert 'contributorReview' not in n
+          assert 'https://github.com/google/gvisor/pull/16869' in n['followup']['evidence']
+          old['nodes']=[n if x['id']==n['id'] else x for x in old['nodes']]
+          old['meta']['updatedAt']=r['meta']['updatedAt']
+          assert old==r
+          PYTHON
+      - name: Publish the bounded verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: checkpoint-receipt-preflight
+          path: results/preflight.json
+          if-no-files-found: error
