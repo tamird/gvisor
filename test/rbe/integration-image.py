@@ -139,7 +139,7 @@ def prerequisite(row: dict) -> None:
     path = Path("MODULE.bazel")
     text = path.read_text()
     row["product_module_sha256"] = sha(text.encode())
-    text = text.replace("image_apt.sources_list(\n", "image_apt.sources_list(\n    gpg_keys = [\"@integration_ubuntu_archive_keys//file\"],\n", 1)
+    text = text.replace("image_apt.sources_list(\n", "image_apt.sources_list(\n    gpg_keys = [\"@integration_ubuntu_archive_keys//file:ubuntu-archive-keyring.gpg\"],\n", 1)
     text += '\n# Qualification-only signed-source input for the newer supplier.\n'
     text += 'http_file(\n    name = "integration_ubuntu_archive_keys",\n'
     text += '    urls = ["https://archive.ubuntu.com/ubuntu/project/ubuntu-archive-keyring.gpg"],\n'
@@ -202,20 +202,20 @@ def prior_catalog(row: dict) -> None:
 
 def signature_boundary(row: dict) -> None:
     path = TMP / "unsigned-source.zip"
-    assert sha(path.read_bytes()) == "23c8eae6cb45e16abf1fd2394d3bff1e2adbb28fcedfd131adb31aef6aec1d60"
+    assert sha(path.read_bytes()) == "91f3a7d87ae4297a84b6199c40a0fc6e494cfe48c5740a6565a11c5d7d5fa208"
     with zipfile.ZipFile(path) as z:
         assert z.namelist() == ["result.json"]
         old = json.loads(z.read("result.json"))
-    assert old["product"] == PRODUCT and old["carrier"] == "57e3c2f75eaff71bc47ca4edc237feede2d3a5fd"
+    assert old["product"] == PRODUCT and old["carrier"] == "86900f73cb0fe776c7c81f46c9be53538dc522d2"
     assert old["status"] == "FAIL" and "runtime_not_run" in old
     assert old["preflight_original"] == RESULT["preflight_original"]
     command = old["phases"]["resolve"]["commands"][-1]
     assert command["exit"] == 48
-    assert any("rules_distroless+/apt/extensions.bzl:302:21" in line for line in command["diagnostics"])
+    assert any("rules_distroless+/apt/private/pgp.bzl:137:36" in line for line in command["diagnostics"])
     RESULT["unsigned_source_original"] = old
-    row["artifact"] = "https://github.com/tamird/gvisor/actions/runs/41527211267/artifacts/13180457046"
+    row["artifact"] = "https://github.com/tamird/gvisor/actions/runs/41530160380/artifacts/13182031189"
     row["archive_sha256"] = sha(path.read_bytes())
-    row["source_diagnosis"] = "The pinned supplier fails here when neither gpg_keys nor allow_unsigned is specified."
+    row["source_diagnosis"] = "The module-context key path needs the exported source-file label, not the http_file filegroup."
 
 
 def resolve(row: dict) -> None:
