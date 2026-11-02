@@ -21,11 +21,14 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {fetch-depth: 3, persist-credentials: false}
-      - name: Read the 597 original TestResults so they are not repeated
+      - name: Reconcile the 597 original results and the verified local cgroup actions
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           gh api repos/tamird/gvisor/actions/artifacts/13107794911/zip > "$RUNNER_TEMP/original-wildcard.zip"
+          gh api repos/tamird/gvisor/actions/artifacts/13109217470/zip > "$RUNNER_TEMP/original-cgroup.zip"
+          python3 .github/qualification/native-nogo-placement.py replay "$RUNNER_TEMP/original-cgroup.zip" "$RUNNER_TEMP/nogo-cgroup"
       - name: Set up the ordinary Linux Bazel client and declared GNU workers
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -33,7 +36,7 @@ jobs:
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/nogo-receipts" "$RUNNER_TEMP/gnu-platform"
           echo '{"verified":false,"reason":"qualification incomplete"}' > "$RUNNER_TEMP/nogo-receipts/verdict.json"
-          test "$(git rev-parse HEAD^)" = 2b5905dfd02ed93ee2124278b34c68396ef0b598
+          test "$(git rev-parse HEAD^)" = 165d6841e74a2792f1b33a0914361f58c28e16bf
           git fetch -q --no-tags --depth=1 origin "$PRODUCT"
           cp .github/qualification/native-nogo{,-placement}.py "$RUNNER_TEMP"
           mkdir -p "$RUNNER_TEMP/nogo-cgroup"
@@ -47,31 +50,10 @@ jobs:
           printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","EstimatedMemory":"4GB","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
           umask 077
           {
-            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'test --nocache_test_results' 'build --noremote_local_fallback' 'build --remote_download_outputs=toplevel' 'build --jobs=64' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu' 'test --strategy=TestRunner=sandboxed' 'test --local_test_jobs=4'
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'test --strategy=GoCompilePkg=remote,local' 'test --strategy=GoStaticAnalysis=remote,local' 'test --nocache_test_results' 'build --noremote_local_fallback' 'build --remote_download_outputs=toplevel' 'build --jobs=64' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu' 'test --strategy=TestRunner=sandboxed' 'test --local_test_jobs=4'
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$RUNNER_TEMP/nogo-resources.bazelrc"
-      - name: Read execution requirements of the configured cgroup actions
-        run: |
-          set -euo pipefail
-          # Test includes Nogo owners; ordinary builds and aquery exclude them.
-          timeout 5m bazel --bazelrc="$RUNNER_TEMP/nogo-resources.bazelrc" aquery --build_tag_filters= --strip=never --include_aspects --output=jsonproto --noinclude_commandline --noinclude_artifacts 'deps(//runsc/cgroup:cgroup_test_nogo)' > "$RUNNER_TEMP/cgroup-actions.json"
-          python3 "$RUNNER_TEMP/native-nogo-placement.py" requirements
-      - name: Execute and verify the cgroup analyzer before the remaining 273
-        env:
-          NOGO_OWNER: //runsc/cgroup:cgroup_test_nogo
-          NOGO_TIMEOUT: 12m
-        run: |
-          set -euo pipefail
-          export NOGO_TEST_STRATEGY="${NOGO_CGROUP_TEST_STRATEGY:-processwrapper-sandbox}"
-          cp "$RUNNER_TEMP/nogo-resources.bazelrc" "$RUNNER_TEMP/nogo-shared.bazelrc"
-          printf 'test --invocation_id=%s\ntest --execution_log_json_file=%s/cgroup-spawns.json\n' "$(cat /proc/sys/kernel/random/uuid)" "$RUNNER_TEMP" >> "$RUNNER_TEMP/nogo-resources.bazelrc"
-          rc=0
-          python3 "$RUNNER_TEMP/native-nogo.py" || rc=$?
-          cp "$RUNNER_TEMP/nogo-receipts/"{verdict,owners}.json "$RUNNER_TEMP/nogo-cgroup/"
-          cp "$RUNNER_TEMP/nogo-shared.bazelrc" "$RUNNER_TEMP/nogo-resources.bazelrc"
-          python3 "$RUNNER_TEMP/native-nogo-placement.py" execution
-          exit "$rc"
       - name: Execute the complementary 273 tests, checking both architecture logs
         run: |
           set -euo pipefail

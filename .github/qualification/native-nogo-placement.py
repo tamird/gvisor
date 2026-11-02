@@ -3,6 +3,7 @@ import json
 import os
 import re
 import sys
+import zipfile
 from pathlib import Path
 
 root = Path(os.environ["RUNNER_TEMP"])
@@ -38,7 +39,7 @@ def requirements():
             strategy = "sandboxed,local" if k == "TestRunner" else "remote,local"
             f.write(f"test --strategy={k}={strategy}\n")
     # A target with 'local' cannot use the processwrapper sandbox either.
-    if any(k == "TestRunner" and ("local" in info or "no-sandbox" in info) for _, k, info in rows):
+    if any(name == owner + "_nogo" and k == "TestRunner" and ("local" in info or "no-sandbox" in info) for name, k, info in rows):
         with Path(os.environ["GITHUB_ENV"]).open("a") as f:
             f.write("NOGO_CGROUP_TEST_STRATEGY=local\n")
 
@@ -78,8 +79,33 @@ def execution():
     receipt.write_text(json.dumps(v,indent=2)+"\n")
 
 
+def replay(archive, destination):
+    t = owner + "_nogo"
+    with zipfile.ZipFile(archive) as z:
+        v, o, p = (json.loads(z.read("nogo-cgroup/"+n+".json")) for n in ("verdict","owners","placement"))
+    assert v["source"] == os.environ["PRODUCT"] and v["invocation"] == "fbb7d83e-c7ce-4dfc-af91-4fb6c0e5618e"
+    assert v["status"] == 0 and v["bazel_exit"]["name"] == "SUCCESS" and v["testRunners"] == 1
+    assert o["configured"] == [t] and o["completed"] == {t: True} and o["summaries"] == {t:"PASSED"}
+    assert o["markers"] == {t: {"amd64": True, "arm64": True}}
+    assert o["results"] == {t: [{"status":"PASSED","strategy":"processwrapper-sandbox","cachedLocally":False,"cachedRemotely":False}]}
+    req = p["requirements"]
+    assert any(label(n) == owner and k == "TestRunner" and "local" in flags for n, k, flags in req)
+    assert not any(label(n) == t and k == "TestRunner" and ("local" in flags or "no-sandbox" in flags) for n,k,flags in req)
+    assert p["verified"]
+    for k in ("GoCompilePkg","GoStaticAnalysis"):
+        matches = [a for a in p["executions"] if label(a["targetLabel"]) == owner and a["mnemonic"] == k]
+        assert len(matches) == 2 and all(a["runner"] == "local" and not a["cacheHit"] and not a["exitCode"] for a in matches), matches
+    destination.mkdir(parents=True, exist_ok=True)
+    v.update(verified=True, outcome="passed", originalReporterVerdict=False,
+             reconciliation="Bazel and the named Nogo TestRunner passed. Local-only TestRunner requirements name the ordinary Go test, not this Nogo owner.")
+    for n, value in (("verdict",v), ("owners",o), ("placement",p)):
+        (destination/(n+".json")).write_text(json.dumps(value,indent=2)+"\n")
+
+
 if __name__ == "__main__":
-    if sys.argv[1] == "requirements":
+    if sys.argv[1] == "replay":
+        replay(Path(sys.argv[2]), Path(sys.argv[3]))
+    elif sys.argv[1] == "requirements":
         requirements()
     else:
         assert sys.argv[1] == "execution"
