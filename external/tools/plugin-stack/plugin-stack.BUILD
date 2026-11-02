@@ -54,7 +54,8 @@ _BUILD_DATA = [
 _ENV = {
     # Bash records its own absolute path. The declared applets are siblings.
     "PATH": "$${BASH%/*}",
-    "TMPDIR": "/tmp",
+    # Recursive Make changes directories, so keep this path absolute.
+    "TMPDIR": "$${BUILD_TMPDIR}",
     "DPDK_MAKEFILE": "$(execpath @plugin_dpdk//:Makefile)",
     "OBJDUMP": "$(PLUGIN_OBJDUMP)",
     "PLUGIN_LD": "$(PLUGIN_LD)",
@@ -62,7 +63,6 @@ _ENV = {
 }
 
 _EXEC_PROPERTIES = {
-    "container-image": "docker://gcr.io/distroless/static-debian13@sha256:d03c145fad326bff275ec4106475ed8310426caf709decd9f8cbc494af59bc18",
     "recycle-runner": "false",
 }
 
