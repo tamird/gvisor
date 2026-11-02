@@ -22,7 +22,7 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "5d0a29786a1372979154bf01be36f4bd890a0aea"
+        test "$(git rev-parse HEAD^1)" = "3ff83e1a9fe9271ef72ae815ef4bed5fc1e7a040"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -55,11 +55,19 @@ jobs:
         mkdir -p "$RUNNER_TEMP/gnu-home"
         docker run -d --name gnu-coordinator --entrypoint /bin/sleep \
           --user "$(id -u):$(id -g)" -e HOME="$RUNNER_TEMP/gnu-home" -e USE_BAZEL_VERSION \
-          -v "$(command -v bazelisk):/usr/local/bin/qualification-bazelisk:ro" \
           -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" \
           -w "$GITHUB_WORKSPACE" "$image" infinity
         docker exec gnu-coordinator gcc -print-file-name=include
-        test "$(docker exec gnu-coordinator /usr/local/bin/qualification-bazelisk --version)" = "bazel $USE_BAZEL_VERSION"
+        if [[ $(docker exec gnu-coordinator /usr/local/bin/bazel --version) != "bazel $USE_BAZEL_VERSION" ]]; then
+          binary=bazel-${USE_BAZEL_VERSION}-linux-x86_64
+          base=https://releases.bazel.build/${USE_BAZEL_VERSION}/release
+          curl -fsSL --retry 3 "$base/$binary" -o "$RUNNER_TEMP/$binary"
+          curl -fsSL --retry 3 "$base/$binary.sha256" -o "$RUNNER_TEMP/$binary.sha256"
+          (cd "$RUNNER_TEMP" && sha256sum -c "$binary.sha256")
+          chmod +x "$RUNNER_TEMP/$binary"
+          docker cp "$RUNNER_TEMP/$binary" gnu-coordinator:/usr/local/bin/bazel
+        fi
+        test "$(docker exec gnu-coordinator /usr/local/bin/bazel --version)" = "bazel $USE_BAZEL_VERSION"
         rc=$RUNNER_TEMP/fifo.bazelrc
         umask 077
         trap 'rm -f "$rc"' EXIT
@@ -88,13 +96,13 @@ jobs:
             # Capture the actual argv and Bazel exit, independent of the qualifier's exit.
             printf '%s\n' "$@" > "$TCP_EVIDENCE/executed_arguments"
             status=0
-            docker exec gnu-coordinator /usr/local/bin/qualification-bazelisk --bazelrc="$FIFO_RC" "$@" || status=$?
+            docker exec gnu-coordinator /usr/local/bin/bazel --bazelrc="$FIFO_RC" "$@" || status=$?
             printf '%s\n' "$status" > "$TCP_EVIDENCE/native_exit"
             date -u '+%Y-%m-%dT%H:%M:%S.%3N+00:00' > "$TCP_EVIDENCE/finished"
             exit "$status"
             ;;
         esac
-        exec docker exec gnu-coordinator /usr/local/bin/qualification-bazelisk --bazelrc="$FIFO_RC" "$@"
+        exec docker exec gnu-coordinator /usr/local/bin/bazel --bazelrc="$FIFO_RC" "$@"
         SH
         chmod +x "$RUNNER_TEMP/fifo-bin/bazel"
         export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
