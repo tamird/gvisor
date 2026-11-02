@@ -22,7 +22,7 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "c835ad43c6171072847a99e357a4ad5ff58f748d"
+        test "$(git rev-parse HEAD^1)" = "5d0a29786a1372979154bf01be36f4bd890a0aea"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -49,6 +49,17 @@ jobs:
         BUILD
         export USE_BAZEL_VERSION
         USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        # Configure the native C/C++ toolchain with the same compiler and
+        # builtin headers that execute the actions on remote workers.
+        image=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+        mkdir -p "$RUNNER_TEMP/gnu-home"
+        docker run -d --name gnu-coordinator --entrypoint /bin/sleep \
+          --user "$(id -u):$(id -g)" -e HOME="$RUNNER_TEMP/gnu-home" -e USE_BAZEL_VERSION \
+          -v "$(command -v bazelisk):/usr/local/bin/qualification-bazelisk:ro" \
+          -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" \
+          -w "$GITHUB_WORKSPACE" "$image" infinity
+        docker exec gnu-coordinator gcc -print-file-name=include
+        test "$(docker exec gnu-coordinator /usr/local/bin/qualification-bazelisk --version)" = "bazel $USE_BAZEL_VERSION"
         rc=$RUNNER_TEMP/fifo.bazelrc
         umask 077
         trap 'rm -f "$rc"' EXIT
@@ -77,13 +88,13 @@ jobs:
             # Capture the actual argv and Bazel exit, independent of the qualifier's exit.
             printf '%s\n' "$@" > "$TCP_EVIDENCE/executed_arguments"
             status=0
-            bazelisk --bazelrc="$FIFO_RC" "$@" || status=$?
+            docker exec gnu-coordinator /usr/local/bin/qualification-bazelisk --bazelrc="$FIFO_RC" "$@" || status=$?
             printf '%s\n' "$status" > "$TCP_EVIDENCE/native_exit"
             date -u '+%Y-%m-%dT%H:%M:%S.%3N+00:00' > "$TCP_EVIDENCE/finished"
             exit "$status"
             ;;
         esac
-        exec bazelisk --bazelrc="$FIFO_RC" "$@"
+        exec docker exec gnu-coordinator /usr/local/bin/qualification-bazelisk --bazelrc="$FIFO_RC" "$@"
         SH
         chmod +x "$RUNNER_TEMP/fifo-bin/bazel"
         export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
@@ -117,15 +128,14 @@ jobs:
           code=0
           bash test/rbe/qualify.sh --arch=amd64 "--test-target=$label" \
             "--bazel-option=--build_event_json_file=$raw" --bazel-option=--build_event_json_file_path_conversion=false \
-            --bazel-option=--test_timeout=240 --bazel-option=--test_filter=TestKeepaliveUserTimeout --bazel-option=--test_sharding_strategy=disabled --bazel-option=--cache_test_results=no \
+            --bazel-option=--nokeep_going --bazel-option=--test_timeout=240 --bazel-option=--test_filter=TestKeepaliveUserTimeout --bazel-option=--test_sharding_strategy=disabled --bazel-option=--cache_test_results=no \
             --bazel-option=--remote_download_outputs=toplevel '--bazel-option=--remote_download_regex=.*[/]test[.](log|xml)$' test || code=$?
           printf '%s\n' "$code" > "$TCP_EVIDENCE/runner_exit"
           git rev-parse HEAD > "$TCP_EVIDENCE/final_head"
           git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
           python3 -B "$RUNNER_TEMP/checker/tcp_long_replay.py" "$TCP_EVIDENCE" "$arm" "$source" "$label" "$raw" "$RUNNER_TEMP/replay-public" || overall=1
           # If the common target cannot compile, repeating three builds cannot add measurements.
-          if [[ $arm == stock && ! -s "$raw" ]]; then break; fi
-          if [[ $arm == stock && $code != 0 ]] && ! grep -q '"testResult":' "$raw"; then break; fi
+          if [[ $code != 0 ]] && { [[ ! -s $raw ]] || ! grep -q '"testResult":' "$raw"; }; then break; fi
         done
         exit "$overall"
     - name: Record completed and missing comparisons
