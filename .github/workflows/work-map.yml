@@ -1,0 +1,23 @@
+name: Observe the reported Gazelle card in the deployed work map
+on:
+  push:
+    branches: [qualification/work-map-gazelle-deployed-failure]
+permissions:
+  contents: read
+jobs:
+  browser:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Read the deployed tracker in Chromium
+        run: node --experimental-websocket .github/qualification/work-map-ui.mjs
+      - name: Publish the bounded browser observations
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-map-gazelle-deployed-failure
+          path: work-map-ui-result.json
+          if-no-files-found: error
+          retention-days: 14
