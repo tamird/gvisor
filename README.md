@@ -169,7 +169,10 @@ original per-record observation times, so a promoted branch does not reappear
 and old reviews or checks do not acquire a fresh timestamp. Reopened records
 receive full detail queries again. PR detail
 queries use batches of eight to limit the combined check, review and timeline
-payload. There is a 48-attempt ceiling, including retries, and a 200-open-PR bound.
+payload. Registered-only repositories share these batches, keyed by repository
+and PR number. The collector logs each requested inventory page and detail batch
+so growth can be distinguished from transport retries. There is a 48-attempt
+ceiling, including retries, and a 200-open-PR bound.
 Failed queries report the GitHub CLI diagnostic and leave the previous snapshot
 unchanged.
 
