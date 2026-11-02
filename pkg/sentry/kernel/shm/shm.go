@@ -62,7 +62,7 @@ type Registry struct {
 	userNS *auth.UserNamespace
 
 	// mu protects all fields below.
-	mu sync.Mutex `state:"nosave"`
+	mu observedRegistryMutex `state:"nosave"`
 
 	// reg defines basic fields and operations needed for all SysV registries.
 	//
@@ -737,4 +737,18 @@ func (s *Shm) MarkDestroyed(ctx context.Context) error {
 		s.DecRef(ctx)
 	}
 	return nil
+}
+
+// observedRegistryMutex observes an attempted acquisition while still using the
+// production mutex. Only the controlled contention test enables it.
+type observedRegistryMutex struct {
+	sync.Mutex
+	attempt chan struct{}
+}
+
+func (m *observedRegistryMutex) Lock() {
+	if ch := m.attempt; ch != nil {
+		ch <- struct{}{}
+	}
+	m.Mutex.Lock()
 }
