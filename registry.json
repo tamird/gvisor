@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T18:53:19.569076+00:00",
+    "updatedAt": "2026-11-02T19:05:28.791131+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40987,12 +40987,12 @@
       "repo": "tamird/grpc",
       "ref": "proposal/bazel-plugin-symlink",
       "head": "64745d2424a189c0e1661e1c10a26a3704c29144",
-      "title": "Expose the selected gRPC plugin with a Bazel symlink",
+      "title": "[bazel] Build protoc plugins without a shell",
       "url": "https://github.com/tamird/grpc/commit/64745d242",
       "group": "rbe",
       "status": "Human submission required",
-      "updatedAt": "2026-11-02T18:47:17.385770+00:00",
-      "summary": "The release ZIP stores the executable bytes. Both universal plugins still generated matching code after Bazel cleanup on Intel macOS, and Linux generation ran without a shell. The gRPC contribution policy requires human submission.",
+      "updatedAt": "2026-11-02T19:05:28.791131+00:00",
+      "summary": "Use a Bazel symlink to give each compiled protoc plugin its final filename. The plugin can then build on Linux workers without Bash.",
       "evidence": [
         {
           "label": "Both installed universal macOS plugins after Bazel cleanup",
@@ -41033,10 +41033,10 @@
         "status": "pending",
         "kind": "submission",
         "head": "64745d2424a189c0e1661e1c10a26a3704c29144",
-        "title": "[bazel] Expose protoc plugins with symlinks",
-        "summary": "The release ZIP stores the executable bytes. Both universal plugins still generated matching code after Bazel cleanup on Intel macOS, and Linux generation ran without a shell. The gRPC contribution policy requires human submission.",
-        "body": "The public protoc plugin targets use a genrule to copy the selected\nexecutable to its package filename. That shell step prevented C++ code\ngeneration on a Linux worker without /bin/bash [1].\n\nUse an executable symlink to expose each plugin under its existing name.\nKeep the native and macOS universal inputs visible to both build\nmetadata generators. They produce the same records for all seven plugins\n[2]. Both C++ code generation actions now run on the shell-free Linux\nworker and produce the stock output [3].\n\nThe CocoaPods ZIP recipe reads the symlink target [4]. On hosted Intel\nmacOS, each ZIP contained one regular executable with both arm64 and\nx86_64 slices. After removing the Bazel output tree, the installed C++\nand Objective-C plugins generated the same four files as stock [5]. A\ncaller moving a raw Bazel output on its own must dereference the link.\n\n[1]: https://github.com/tamird/gvisor/blob/9c9a39762/test/rbe/grpc-native-codegen/result.json\n[2]: https://github.com/tamird/gvisor/actions/runs/41498032551/artifacts/13167417797\n[3]: https://github.com/tamird/gvisor/actions/runs/41498032551/artifacts/13168012000\n[4]: https://github.com/grpc/grpc/pull/38677\n[5]: https://github.com/tamird/gvisor/actions/runs/41498032551/artifacts/13170810230",
-        "url": "https://github.com/grpc/grpc/compare/master...tamird:grpc:proposal/bazel-plugin-symlink?expand=1&title=%5Bbazel%5D+Expose+protoc+plugins+with+symlinks&body=The+public+protoc+plugin+targets+use+a+genrule+to+copy+the+selected%0Aexecutable+to+its+package+filename.+That+shell+step+prevented+C%2B%2B+code%0Ageneration+on+a+Linux+worker+without+%2Fbin%2Fbash+%5B1%5D.%0A%0AUse+an+executable+symlink+to+expose+each+plugin+under+its+existing+name.%0AKeep+the+native+and+macOS+universal+inputs+visible+to+both+build%0Ametadata+generators.+They+produce+the+same+records+for+all+seven+plugins%0A%5B2%5D.+Both+C%2B%2B+code+generation+actions+now+run+on+the+shell-free+Linux%0Aworker+and+produce+the+stock+output+%5B3%5D.%0A%0AThe+CocoaPods+ZIP+recipe+reads+the+symlink+target+%5B4%5D.+On+hosted+Intel%0AmacOS%2C+each+ZIP+contained+one+regular+executable+with+both+arm64+and%0Ax86_64+slices.+After+removing+the+Bazel+output+tree%2C+the+installed+C%2B%2B%0Aand+Objective-C+plugins+generated+the+same+four+files+as+stock+%5B5%5D.+A%0Acaller+moving+a+raw+Bazel+output+on+its+own+must+dereference+the+link.%0A%0A%5B1%5D%3A+https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Fblob%2F9c9a39762%2Ftest%2Frbe%2Fgrpc-native-codegen%2Fresult.json%0A%5B2%5D%3A+https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Factions%2Fruns%2F41498032551%2Fartifacts%2F13167417797%0A%5B3%5D%3A+https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Factions%2Fruns%2F41498032551%2Fartifacts%2F13168012000%0A%5B4%5D%3A+https%3A%2F%2Fgithub.com%2Fgrpc%2Fgrpc%2Fpull%2F38677%0A%5B5%5D%3A+https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Factions%2Fruns%2F41498032551%2Fartifacts%2F13170810230",
+        "title": "[bazel] Build protoc plugins without a shell",
+        "summary": "Use a Bazel symlink to give each compiled protoc plugin its final filename. The plugin can then build on Linux workers without Bash.",
+        "body": "Building `//src/compiler:grpc_cpp_plugin` starts a shell to copy the\ncompiled plugin to `grpc_cpp_plugin_binary`. On a Linux build worker\nwithout Bash, the copy fails and protoc cannot run the plugin.\n\nUse a Bazel symlink for that final name. It points to the universal\nbinary on macOS and the native binary elsewhere. Both build file\ngenerators need to recognize the new rule to keep generating the plugin\ntargets.\n\nOn Intel macOS I packaged the C++ and Objective-C plugins with\n`pkg_zip`. The ZIPs contained regular executables. Both unpacked\nplugins generated code after I removed the Bazel output tree.",
+        "url": "https://github.com/grpc/grpc/compare/master...tamird:grpc:proposal/bazel-plugin-symlink?expand=1&title=%5Bbazel%5D%20Build%20protoc%20plugins%20without%20a%20shell&body=Building%20%60%2F%2Fsrc%2Fcompiler%3Agrpc_cpp_plugin%60%20starts%20a%20shell%20to%20copy%20the%0Acompiled%20plugin%20to%20%60grpc_cpp_plugin_binary%60.%20On%20a%20Linux%20build%20worker%0Awithout%20Bash%2C%20the%20copy%20fails%20and%20protoc%20cannot%20run%20the%20plugin.%0A%0AUse%20a%20Bazel%20symlink%20for%20that%20final%20name.%20It%20points%20to%20the%20universal%0Abinary%20on%20macOS%20and%20the%20native%20binary%20elsewhere.%20Both%20build%20file%0Agenerators%20need%20to%20recognize%20the%20new%20rule%20to%20keep%20generating%20the%20plugin%0Atargets.%0A%0AOn%20Intel%20macOS%20I%20packaged%20the%20C%2B%2B%20and%20Objective-C%20plugins%20with%0A%60pkg_zip%60.%20The%20ZIPs%20contained%20regular%20executables.%20Both%20unpacked%0Aplugins%20generated%20code%20after%20I%20removed%20the%20Bazel%20output%20tree.",
         "policyURL": "https://github.com/grpc/grpc/blob/db13f8422/CONTRIBUTING.md#generative-ai-policy"
       }
     },
@@ -41885,14 +41885,22 @@
       "type": "branch",
       "group": "bazel",
       "repo": "tamird/gvisor",
-      "ref": "proposal/gazelle-native-environment",
-      "head": "ba8ac6d33a4f90cd7c77984ed9c0dc5ecdbc7eda",
-      "url": "https://github.com/tamird/gvisor/commit/ba8ac6d33",
+      "ref": "proposal/gazelle-native-environment-one-map",
+      "head": "3f09760978f08d3dfba28a63885c0533f2b03a02",
+      "url": "https://github.com/tamird/gvisor/commit/3f0976097",
       "title": "Let Gazelle fetch Go repositories without a host env executable",
-      "updatedAt": "2026-11-02T18:47:17.385770+00:00",
-      "status": "Contributor review requested",
-      "summary": "Bazel clears Gazelle’s subprocess environment without an installed env utility. The root module requires Bazel 8. Native client checks covered a worker without env, a deliberately leaked variable, and rejection of Bazel 7.7.",
+      "updatedAt": "2026-11-02T19:05:28.791131+00:00",
+      "status": "Delivered",
+      "summary": "The single-dictionary change is open in gVisor #16834. It removes the dependency on a host env utility for Bazel 8 clients.",
       "evidence": [
+        {
+          "label": "gVisor PR #16834",
+          "url": "https://github.com/google/gvisor/pull/16834"
+        },
+        {
+          "label": "All five client checks, including the empty-variable and missing-env cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41506063956/artifacts/13170238787"
+        },
         {
           "label": "Five Bazel client queries and original wrapper result",
           "url": "https://github.com/tamird/gvisor/actions/runs/41501536218/artifacts/13167514851"
@@ -41912,28 +41920,31 @@
           "head": "faf0f078942123f153391b4d430786a7841269e0",
           "outcome": "approved-with-changes",
           "at": "2026-11-02T18:27:13.788641+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "ba8ac6d33a4f90cd7c77984ed9c0dc5ecdbc7eda",
+          "outcome": "approved",
+          "at": "2026-11-02T19:05:28.791131+00:00",
+          "note": "Use only one dictionary; report upstream."
+        },
+        {
+          "kind": "proposal",
+          "head": "3f09760978f08d3dfba28a63885c0533f2b03a02",
+          "outcome": "approved",
+          "at": "2026-11-02T19:05:28.791131+00:00",
+          "note": "Applied the requested one-dictionary change."
         }
       ],
       "refinement": {
         "before": {
-          "head": "faf0f078942123f153391b4d430786a7841269e0",
-          "base": "6b575b681f2a05257f04e98c02e83b92c1fb766f"
-        },
-        "after": {
           "head": "ba8ac6d33a4f90cd7c77984ed9c0dc5ecdbc7eda",
           "base": "7a675ac66a1e2357abdaa6cccedabcd3cce9aa5c"
+        },
+        "after": {
+          "head": "3f09760978f08d3dfba28a63885c0533f2b03a02",
+          "base": "7a675ac66a1e2357abdaa6cccedabcd3cce9aa5c"
         }
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "ba8ac6d33a4f90cd7c77984ed9c0dc5ecdbc7eda",
-        "baseHead": "7a675ac66a1e2357abdaa6cccedabcd3cce9aa5c",
-        "url": "https://github.com/tamird/gvisor/commit/ba8ac6d33",
-        "title": "Use Bazel to clear Gazelle repository environments",
-        "requestedAt": "2026-11-02T18:47:17.385770+00:00",
-        "summary": "Open the simpler, Bazel-8-only gVisor change?",
-        "body": "Bazel clears Gazelle’s subprocess environment without an installed env utility. The root module requires Bazel 8. Native client checks covered a worker without env, a deliberately leaked variable, and rejection of Bazel 7.7. The original wrapper marked the run incomplete because its matcher missed the stock ENOENT wording. All five original results were verified without re-execution. The gVisor root override does not propagate to a consumer of gVisor."
       }
     },
     {
@@ -45588,6 +45599,36 @@
           "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/eb198127b"
         }
       ]
+    },
+    {
+      "id": "pr:16834",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16834,
+      "ref": "proposal/gazelle-native-environment-one-map",
+      "head": "3f09760978f08d3dfba28a63885c0533f2b03a02",
+      "title": "Use Bazel to clear Gazelle repository environments",
+      "url": "https://github.com/google/gvisor/pull/16834",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-02T19:05:28.791131+00:00",
+      "summary": "Gazelle can run repository commands on a client without a host env executable. The gVisor module declares its Bazel 8 minimum.",
+      "evidence": [
+        {
+          "label": "All five client checks, including the empty-variable and missing-env cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41506063956/artifacts/13170238787"
+        }
+      ],
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "3f09760978f08d3dfba28a63885c0533f2b03a02",
+        "url": "https://github.com/bazel-contrib/bazel-gazelle/issues/new?title=go_repository%20requires%20a%20host%20env%20executable%20on%20Bazel%208&body=Gazelle%20runs%20repository%20commands%20through%20%60env%20-i%60%20on%20Unix.%20On%20a%20Linux%0Aclient%20without%20%60env%60%20on%20PATH%2C%20even%20a%20command%20given%20by%20absolute%20path%0Afails%20before%20it%20starts%3A%0A%0A%20%20%20%20%22execvp%28env%2C%20...%29%22%3A%20No%20such%20file%20or%20directory%0A%0ACould%20Gazelle%20clear%20the%20environment%20with%20%60repository_ctx.execute%60%20on%0ABazel%208%20and%20newer%3F%20Setting%20an%20inherited%20variable%20to%20%60None%60%20removes%20it.%0ABazel%207%20could%20keep%20using%20%60env%20-i%60.%0A%0AI%20tested%20this%20with%20Gazelle%200.51.3%20and%20Bazel%208.8.1.%20The%20native%20API%20gave%0Athe%20child%20the%20same%20variables%20as%20%60env%20-i%60%2C%20including%20an%20explicitly%20empty%0Avalue%20and%20an%20inherited%20%60TMPDIR%60.%0A%0A%5BReproduction%20and%20results%5D%28https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Factions%2Fruns%2F41506063956%2Fartifacts%2F13170238787%29%20%C2%B7%20%5BBazel%20API%5D%28https%3A%2F%2Fgithub.com%2Fbazelbuild%2Fbazel%2Fblob%2Fc8217fdd2%2Fsrc%2Fmain%2Fjava%2Fcom%2Fgoogle%2Fdevtools%2Fbuild%2Flib%2Fbazel%2Frepository%2Fstarlark%2FStarlarkBaseExternalContext.java%23L1833-L1840%29%0A%0APosted%20by%20Codex%20on%20behalf%20of%20%40tamird.",
+        "title": "File the Gazelle issue about requiring env",
+        "body": "Gazelle runs repository commands through `env -i` on Unix. On a Linux\nclient without `env` on PATH, even a command given by absolute path\nfails before it starts:\n\n    \"execvp(env, ...)\": No such file or directory\n\nCould Gazelle clear the environment with `repository_ctx.execute` on\nBazel 8 and newer? Setting an inherited variable to `None` removes it.\nBazel 7 could keep using `env -i`.\n\nI tested this with Gazelle 0.51.3 and Bazel 8.8.1. The native API gave\nthe child the same variables as `env -i`, including an explicitly empty\nvalue and an inherited `TMPDIR`.\n\n[Reproduction and results](https://github.com/tamird/gvisor/actions/runs/41506063956/artifacts/13170238787) · [Bazel API](https://github.com/bazelbuild/bazel/blob/c8217fdd2/src/main/java/com/google/devtools/build/lib/bazel/repository/starlark/StarlarkBaseExternalContext.java#L1833-L1840)\n\nPosted by Codex on behalf of @tamird.",
+        "summary": "Report the issue to bazel-contrib/bazel-gazelle.",
+        "requestedAt": "2026-11-02T19:05:28.791131+00:00"
+      }
     }
   ],
   "edges": [
