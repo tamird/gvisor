@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T21:30:10.580114+00:00",
+    "updatedAt": "2026-11-02T21:41:54.604864+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39203,9 +39203,9 @@
       "title": "Extend shared slice backing arrays without a chain of parents",
       "url": "https://github.com/tamird/gvisor/commit/df7d6899c",
       "group": "runtime",
-      "status": "Contributor review requested",
+      "status": "Published as #16874",
       "summary": "Saving 2,048 progressively wider slices of one array took 70.919 ms before the change and 83.75 µs after it. Visiting the widest slice first showed no measurable change; a four-worker Nginx checkpoint had no eligible growth.",
-      "updatedAt": "2026-11-02T21:09:35.198072+00:00",
+      "updatedAt": "2026-11-02T21:41:54.604864+00:00",
       "evidence": [
         {
           "label": "Revised commit and significant original benchstat rows",
@@ -39230,6 +39230,10 @@
         {
           "label": "Benchstat from the two retained sample sets",
           "url": "https://github.com/tamird/gvisor/actions/runs/41160349524/artifacts/13027120317"
+        },
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16874"
         }
       ],
       "settledReviews": [
@@ -39244,6 +39248,12 @@
           "head": "fcc0c1c73904271d7b9bde558294fa66bdf00fb4",
           "outcome": "changes-requested",
           "at": "2026-11-02T21:09:35.198072+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "df7d6899cc87c642732764f294030e03d2c3d208",
+          "outcome": "approved",
+          "at": "2026-11-02T21:40:32Z"
         }
       ],
       "refinement": {
@@ -39254,15 +39264,15 @@
           "head": "df7d6899cc87c642732764f294030e03d2c3d208"
         }
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "df7d6899cc87c642732764f294030e03d2c3d208",
-        "url": "https://github.com/tamird/gvisor/commit/df7d6899c",
-        "title": "Grow shared slice backing arrays in place",
-        "summary": "Open the shared-slice encoder change? The nine significant time, byte and allocation rows are reproduced below. They apply to progressively wider slices of the same array; the reverse-order and Nginx controls did not show that benefit.",
-        "body": "When saving slices with the same starting address, the graph encoder\ncreated a parent array each time it saw a larger capacity. Saving 2,048\none-byte slices of a single 2 KiB array in increasing capacity order\nfollowed 4,192,256 parent links to write 8,119 bytes. [1]\n\nGrow the existing array when its element type matches and its new suffix\ncontains no other object. Reuse the existing targets and add only newly\ncovered blocks to the object index. An extension that overlaps another\nobject still uses the existing merge path.\n\nEight alternating pairs on one Linux/AMD64 CPU measured the cost of\nsaving 128, 512 and 2,048 slices in increasing capacity order. [2]\n\n```\n                                    │      stock      │                fixed                │\n                                    │     sec/op      │    sec/op     vs base               │\nSharedSliceSave/windows=128/narrow     266.670µ ±  3%   6.258µ ±  4%  -97.65% (p=0.000 n=8)\nSharedSliceSave/windows=512/narrow     3579.79µ ±  0%   22.37µ ±  3%  -99.38% (p=0.000 n=8)\nSharedSliceSave/windows=2048/narrow   70919.19µ ±  1%   83.75µ ±  2%  -99.88% (p=0.000 n=8)\n\n                                    │     stock     │                fixed                │\n                                    │     B/op      │    B/op     vs base                 │\nSharedSliceSave/windows=128/narrow     13432.5 ± 0%   160.0 ± 0%  -98.81% (p=0.000 n=8)\nSharedSliceSave/windows=512/narrow     55143.0 ± 0%   160.0 ± 0%  -99.71% (p=0.000 n=8)\nSharedSliceSave/windows=2048/narrow   391257.0 ± 0%   175.0 ± 1%  -99.96% (p=0.000 n=8)\n\n                                    │     stock     │                fixed                │\n                                    │   allocs/op   │ allocs/op   vs base                 │\nSharedSliceSave/windows=128/narrow     384.000 ± 0%   3.000 ± 0%  -99.22% (p=0.000 n=8)\nSharedSliceSave/windows=512/narrow    1536.000 ± 0%   3.000 ± 0%  -99.80% (p=0.000 n=8)\nSharedSliceSave/windows=2048/narrow   6148.000 ± 0%   3.000 ± 0%  -99.95% (p=0.000 n=8)\n```\n\nWith the widest slice first, save time and allocations showed no\nsignificant change at any size. A four-worker Nginx checkpoint had no\neligible array growth. [2] [3]\n\nEach reader restored the other version's stream with interior pointer\nidentity intact. Keep the deferred-map test on the merge path by\nextending its window to the left. [4]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41156339306/artifacts/13024129668\n[2]: https://github.com/tamird/gvisor/actions/runs/41520715670/artifacts/13176309664\n[3]: https://github.com/tamird/gvisor/actions/runs/41157636743/artifacts/13026048097\n[4]: https://github.com/tamird/gvisor/actions/runs/41159570245/artifacts/13026721647\n",
-        "requestedAt": "2026-11-02T21:09:35.198072+00:00"
+      "followup": {
+        "owner": "State checkpointing",
+        "sourceHead": "df7d6899cc87c642732764f294030e03d2c3d208",
+        "observedAt": "2026-11-02T21:41:54.604864+00:00",
+        "disposition": "Approved and published as #16874",
+        "nextAction": "Follow the upstream checks and maintainer review. No contributor decision remains.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16874"
+        ]
       }
     },
     {
@@ -41052,7 +41062,7 @@
       "url": "https://github.com/tamird/gvisor/commit/d30816db3",
       "group": "bazel",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T00:30:22.013294+00:00",
+      "updatedAt": "2026-11-02T21:41:54.604864+00:00",
       "summary": "Build //pkg/... and //runsc/... with Bazelisk on the Buildkite agent, passing each job’s architecture and excluding the network plugin only for runsc. The two architecture-specific pkg wildcards built 1,948 and 1,946 targets; the two runsc wildcards built 389 each after composing the cgroup, coverage and musl prerequisites.",
       "evidence": [
         {
@@ -41082,6 +41092,10 @@
         {
           "label": "389 runsc targets on each architecture with the reviewed prerequisites",
           "url": "https://github.com/tamird/gvisor/actions/runs/41252118749/artifacts/13063861013"
+        },
+        {
+          "label": "Master contains the cgroup tag removal and capability drop",
+          "url": "https://github.com/google/gvisor/commit/3164fe6e0"
         }
       ],
       "contributorReview": {
@@ -41092,8 +41106,8 @@
         "url": "https://github.com/tamird/gvisor/commit/d30816db3",
         "title": "Build pkg and runsc directly with Bazel on Buildkite",
         "requestedAt": "2026-11-01T00:30:22.013294+00:00",
-        "summary": "Open after the native Bazelisk hook, declared LLVM/static toolchain, corrected #16496 cgroup fixture, #16507 coverage changes and composed coverage/musl transition land.",
-        "body": "The compile jobs start a Docker builder and query the output paths of\nevery target. The jobs only need to know whether the builds succeeded.\nUse Bazelisk on the agent and build for the architecture of each job.\nKeep the network plugin exclusion scoped to runsc.\n\nOpen after the native Bazelisk hook, declared LLVM/static toolchain, corrected #16496 cgroup fixture, #16507 coverage changes and composed coverage/musl transition land."
+        "summary": "Open after the native Bazelisk hook, declared LLVM/static toolchain, #16507 coverage changes and composed coverage/musl transition land. The cgroup fixture from #16496 is already on master.",
+        "body": "The compile jobs start a Docker builder and query the output paths of\nevery target. The jobs only need to know whether the builds succeeded.\nUse Bazelisk on the agent and build for the architecture of each job.\nKeep the network plugin exclusion scoped to runsc.\n\nOpen after the native Bazelisk hook, declared LLVM/static toolchain, #16507 coverage changes and composed coverage/musl transition land. The cgroup fixture from #16496 is already on master."
       }
     },
     {
@@ -45921,6 +45935,36 @@
           "https://github.com/google/gvisor/pull/16871",
           "https://github.com/tamird/gvisor/actions/runs/41521259446/artifacts/13178112095"
         ]
+      }
+    },
+    {
+      "id": "branch:state-graph-print-errors",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/state-graph-print-errors",
+      "head": "57b52c547d6f60fb4c89f83c896c7e8f89db9145",
+      "title": "Report write failures when printing a state graph",
+      "url": "https://github.com/tamird/gvisor/commit/57b52c547",
+      "group": "runtime",
+      "summary": "PrintGraph returned nil when a closed pipe rejected a write in either the text or HTML formatter. The fix returns io.ErrClosedPipe in both modes. The four cases passed on the corrected source, including the successful-output controls.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T21:41:54.604864+00:00",
+      "evidence": [
+        {
+          "label": "Original stock/fixed graph printer results and test output",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41529423728/artifacts/13182405129"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "57b52c547d6f60fb4c89f83c896c7e8f89db9145",
+        "baseHead": "5b317311427fabfc62ffeca7d76b1622ff83f7b4",
+        "url": "https://github.com/tamird/gvisor/commit/57b52c547",
+        "title": "Report write failures when printing a state graph",
+        "requestedAt": "2026-11-02T21:41:54.604864+00:00",
+        "summary": "Open this change so runsc statefile reports a failed graph dump?",
+        "body": "The graph printer discarded write errors, so runsc statefile could\nreport success after writing only part of a text dump. When replacing\nan existing output file, that also allowed a partial dump to replace\nthe original if closing the temporary file succeeded.\n\nStop printing at the first failed write and return the error through\nthe graph printer's existing error boundary."
       }
     }
   ],
