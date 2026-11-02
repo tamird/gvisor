@@ -54,6 +54,10 @@ test:buildkite --config=ci --strip=never --nobuild_event_json_file_path_conversi
 
 test:nogo --test_tag_filters=nogo --build_tests_only
 
+# Run the unit suite from the workspace root.
+test:unit --target_pattern_file=tools/unit_test_targets.txt --test_tag_filters=-nogo,-requires-kvm --build_tag_filters=-network_plugins
+test:buildkite-unit --config=buildkite --config=unit --test_env=CGROUPV2 --sandbox_add_mount_pair=/tmp
+
 # Select the ordinary syscall tests used by public CI.
 test:syscalls-amd64 --test_tag_filters=-allsave,-runsc_slimvm
 test:syscalls-arm64 --test_tag_filters=-allsave,runsc_ptrace,runsc_systrap

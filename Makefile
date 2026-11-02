@@ -261,12 +261,9 @@ nogo-tests:
 	@$(call test,--config=nogo //...)
 .PHONY: nogo-tests
 
-# For unit tests, we take everything in the root, pkg/... and tools/..., and
-# pull in all directories in runsc except runsc/container.
-#
 # FIXME(gvisor.dev/issue/10045): Need to fix broken tests.
-unit-tests: ## Local package unit tests in pkg/..., tools/.., etc.
-	@$(call test,--test_tag_filters=-nogo$(COMMA)-requires-kvm --build_tag_filters=-network_plugins --test_env=CGROUPV2=$(CGROUPV2) -- //:all pkg/... tools/... runsc/... vdso/... sandboxexec/... examples/... test/trace/...)
+unit-tests: ## Local package unit tests in pkg/..., tools/..., etc.
+	@$(call test,--config=unit --test_env=CGROUPV2=$(CGROUPV2))
 .PHONY: unit-tests
 
 # See unit-tests: this includes runsc/container.
