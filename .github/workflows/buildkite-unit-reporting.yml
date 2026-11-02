@@ -1,0 +1,71 @@
+name: Reconcile original native unit evidence
+on:
+  push:
+    branches: [qualification/buildkite-unit-reporting]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  reports:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PRODUCT: 96fadde722e14d482a62276b80237398f8b62fbf
+      AMD64_RUN: '41495497730'
+      AMD64_ARTIFACT: '13166333421'
+      AMD64_SHA256: b247ccca19bdb5f7b8a6f26d065661ed2d6de782aa080b5bcc64bc86fcd62757
+      AMD64_CARRIER: c54d06430546113f648dcb3dac18a26ce2efbdbd
+      ARM64_RUN: '41497682946'
+      ARM64_ARTIFACT: pending
+      ARM64_SHA256: pending
+      ARM64_CARRIER: ea96012d1c799a775b8781834f9a69a6ffbf583a
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Retrieve the two original bundles
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          for arch in amd64 arm64; do
+            upper=${arch^^}
+            artifact=${upper}_ARTIFACT
+            run=${upper}_RUN
+            gh api "repos/tamird/gvisor/actions/artifacts/${!artifact}" > "$RUNNER_TEMP/$arch-artifact.json" || true
+            gh api "repos/tamird/gvisor/actions/artifacts/${!artifact}/zip" > "$RUNNER_TEMP/$arch.zip" || true
+            gh api "repos/tamird/gvisor/actions/runs/${!run}" > "$RUNNER_TEMP/$arch-run.json" || true
+          done
+      - name: Reconcile the original reports without executing tests
+        run: |
+          git fetch --quiet --depth=1 origin "$PRODUCT"
+          python3 .github/qualification/reconcile-buildkite-units.py
+      - name: Scan the bounded report
+        id: scan
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import os, re
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP']) / 'unit-reconciled'
+          names = {'verdict.json', 'amd64-legacy-selection.json', 'amd64-make-selection.json',
+                   'amd64-native-selection.json', 'amd64-execution-targets.txt', 'amd64-execution.json',
+                   'arm64-analysis-selection.json', 'arm64-execution-targets.txt', 'arm64-execution.json',
+                   'arm64-build-roots.json'}
+          assert root.is_dir()
+          total = 0
+          for path in root.iterdir():
+              assert path.name in names and path.is_file() and not path.is_symlink(), path
+              data = path.read_bytes()
+              total += len(data)
+              assert not re.search(rb'(?i)gh[pousr]_[a-z0-9]{30,}|github_pat_[a-z0-9_]{30,}|x-buildbuddy-api-key|authorization:|BEGIN (RSA |OPENSSH )?PRIVATE KEY', data), path
+          assert total < 32 * 1024**2, total
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.scan.outcome == 'success'
+        with:
+          name: native-unit-reconciliation
+          path: ${{ runner.temp }}/unit-reconciled/
+          if-no-files-found: error
