@@ -1,13 +1,13 @@
-name: Observe a SACK-on forwarding stall
+name: Compare recovery on the same Linux reverse transfer
 on:
   push:
-    branches: [qualification/tcp-sack-proxy-stall]
+    branches: [qualification/tcp-proxy-terminal-sack]
 permissions:
   contents: read
   actions: read
 jobs:
   capture:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-sack-proxy-stall'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-proxy-terminal-sack'
     runs-on: ubuntu-24.04
     timeout-minutes: 50
     steps:
@@ -17,24 +17,49 @@ jobs:
       run: |
         set -euo pipefail
         sudo -n apt-get update -qq
-        sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tshark tcpdump iproute2 iperf3 ethtool bc kmod iputils-ping
+        sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tshark tcpdump iproute2 iperf3 ethtool bc kmod iputils-ping strace
         sudo -n modprobe sch_netem
-    - name: Build the measured native Linux helper with the bounded diagnostic
-      run: python3 test/rbe/tcp_mss_forwarder.py build
-    - name: Observe up to eight SACK-on transfers on those binaries
-      run: python3 test/rbe/tcp_sack_stall.py observe
+    - name: Bind the experiment and build exactly two native sender variants
+      run: |
+        set -euo pipefail
+        stock=b779a7dcd19ab980c4e8893ca7c19707f8aaa907
+        guard=bcc3dc25a639b0de7e85c39ffd20951a0cf5d66e
+        test "$(git rev-parse "$stock^")" = ffa97cc23cf828410d46f99b24d0138f1fc2707b
+        test "$(git rev-parse "$guard^")" = "$stock"
+        test "$(git diff --name-only "$stock" "$guard")" = pkg/tcpip/transport/tcp/snd.go
+        python3 - "$stock" "$guard" <<'PYTHON'
+        import subprocess,sys
+        ref=lambda x:subprocess.check_output(["git","show",x+":pkg/tcpip/transport/tcp/snd.go"])
+        old,new=map(ref,sys.argv[1:])
+        prev=b"if numLost := s.rc.detectLoss(rcvdSeg.rcvdTime); numLost > 0 && !s.FastRecovery.Active {"
+        assert old.count(prev)==1 and old.replace(prev,prev[:-1]+b"&& s.state != tcpip.RTORecovery {")==new
+        PYTHON
+        test -z "$(git diff --name-only "$guard" HEAD -- pkg test/benchmarks/tcp ':(exclude)test/benchmarks/tcp/tcp_benchmark.sh')"
+        for arm in stock guard; do
+          sha=${!arm}
+          git switch --detach "$sha"
+          EXPECT_SOURCE="$sha" RUNNER_TEMP="$RUNNER_TEMP/$arm" python3 test/rbe/tcp_mss_forwarder.py build
+        done
+        git switch --detach "$GITHUB_SHA"
+    - name: Run loss and clean controls on both variants
+      run: python3 test/rbe/tcp_burst_proxy.py
     - name: Validate the typed publication
       id: privacy
       if: always()
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         GH_TOKEN: ${{ github.token }}
-      run: python3 test/rbe/tcp_mss_forwarder.py scan
+      run: |
+        set -euo pipefail
+        for p in "$RUNNER_TEMP/stock" "$RUNNER_TEMP/guard" "$RUNNER_TEMP"; do
+          if test -d "$p/mss-forwarder/public"; then RUNNER_TEMP="$p" python3 test/rbe/tcp_mss_forwarder.py scan; fi
+        done
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: ${{ always() && steps.privacy.outcome == 'success' }}
       with:
-        name: tcp-sack-proxy-stall
+        name: tcp-proxy-terminal-sack
         path: |
-          ${{ runner.temp }}/mss-forwarder/public/build.json
+          ${{ runner.temp }}/stock/mss-forwarder/public/build.json
+          ${{ runner.temp }}/guard/mss-forwarder/public/build.json
           ${{ runner.temp }}/mss-forwarder/public/result.json
         if-no-files-found: error
