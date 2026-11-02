@@ -6,7 +6,8 @@ import { join } from 'node:path';
 import { spawn, execFileSync } from 'node:child_process';
 
 const origin = 'https://tamird.github.io/gvisor/';
-const result = { status: 'INCOMPLETE', startedAt: new Date().toISOString(), node: process.version, routes: [], cases: [] };
+const result = { status: 'INCOMPLETE', startedAt: new Date().toISOString(), node: process.version, routes: [], cases: [],
+  previousObservation: {run: 41517119859, artifact: 13175468664, status: 'FAIL', cause: 'The readiness predicate accepted a missing DOM element before observing the site.'} };
 const profile = await mkdtemp(join(tmpdir(), 'work-map-ui-'));
 const pending = new Map();
 let chrome, socket, nextID = 0;
@@ -68,7 +69,7 @@ try {
   const url = origin + '?view=dag&reason=post-reply#pr%3A16834';
   const navigation = await send('Page.navigate', { url });
   assert.equal(navigation.errorText, undefined);
-  await until(() => evaluate("document.getElementById('visible-count')?.innerText === 'Registry unavailable' || !document.getElementById('details')?.hidden"));
+  await until(() => evaluate("document.getElementById('visible-count')?.innerText === 'Registry unavailable' || document.getElementById('details')?.hidden === false"));
   const visible = await evaluate(`({url: location.href, registryStatus: document.getElementById('visible-count').innerText,
     freshness: document.getElementById('freshness-text').innerText,
     detailsHidden: document.getElementById('details').hidden,
