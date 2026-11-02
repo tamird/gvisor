@@ -1,0 +1,53 @@
+name: Verify the paired work map and new-issue decision in Chromium
+on:
+  push:
+    branches: [qualification/work-map-gazelle-remedy]
+permissions:
+  contents: read
+jobs:
+  browser:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify the tested source and complete a canonical read-only collection
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          test "$(git rev-parse HEAD^)" = f98f527255de2ff128a0f2a942eaf6897207e4b1
+          test -z "$(git diff --name-only HEAD^ HEAD -- ':!.github')"
+          mkdir results
+          python3 update-status.py
+          node metadata-preflight.mjs . > results/preflight.json
+          cp github-status.json results/github-status.json
+      - name: Read the candidate card and other decisions in Chromium
+        run: |
+          python3 -m http.server 8771 --bind 127.0.0.1 >"$RUNNER_TEMP/http.log" 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          curl --retry 12 --retry-connrefused --retry-delay 1 -fsS http://127.0.0.1:8771/index.html -o /dev/null
+          node --experimental-websocket .github/qualification/work-map-ui.mjs
+      - name: Preserve the paired production snapshot and exact browser result
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-map-gazelle-paired-remedy
+          path: |
+            results/preflight.json
+            results/github-status.json
+            work-map-ui-result.json
+          if-no-files-found: error
+      - name: Run owning client and metadata suites
+        if: always()
+        run: |
+          set +e
+          node --test app_test.mjs
+          js=$?
+          python3 -m unittest discover -p '*_test.py'
+          py=$?
+          test "$js" = 0 && test "$py" = 0
