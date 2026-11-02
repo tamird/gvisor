@@ -48,6 +48,6 @@ plugin_programs = repository_rule(
     implementation = _programs,
     attrs = {
         "busybox": attr.label(mandatory = True, allow_single_file = True),
-        "queue_header": attr.label(default = Label("@plugin_bsd_queue//file"), allow_single_file = True),
+        "queue_header": attr.label(default = Label("@plugin_bsd_queue//file:queue.h"), allow_single_file = True),
     },
 )
