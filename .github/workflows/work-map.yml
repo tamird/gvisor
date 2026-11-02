@@ -1,0 +1,72 @@
+name: Qualify the bounded work-map collector
+on:
+  push:
+    branches: [qualification/work-map-six-44c592a8b]
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the collector and exact curation
+        id: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 44c592a8bb1ef63cf84e5614e5b49728c9766021
+          test "$(git rev-parse HEAD^^)" = 73a6291f16af79a67fc4544d8c68fd3582b92800
+          test -z "$(git diff --name-only HEAD^ HEAD -- ':!.github')"
+          test "$(git diff --name-only HEAD^^ HEAD^)" = registry.json
+          mkdir results
+      - name: Check collector and client behavior
+        run: |
+          node --test app_test.mjs
+          python3 -m unittest discover -p '*_test.py'
+      - name: Collect the canonical snapshot independently
+        if: always() && steps.source.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          status=0
+          python3 update-status.py || status=$?
+          jq -n --arg source "$GITHUB_SHA" --arg product "$(git rev-parse HEAD^)" \
+            --arg curation "$(git rev-parse HEAD^^)" --argjson exit "$status" \
+            '{source:$source,product:$product,curation:$curation,collector_exit:$exit}' > results/source.json
+          test "$status" = 0
+          node metadata-preflight.mjs . > results/preflight.json
+          cp registry.json github-status.json results/
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          registry = json.loads(Path('registry.json').read_text())
+          snapshot = json.loads(Path('github-status.json').read_text())
+          nodes = {node['id']: node for node in registry['nodes']}
+          expected = {16875: ('branch:ipv6-multicast-socket-options', '972a7152f'), 15562: ('pr:15562', 'cf6828177'), 16596: ('pr:16596', 'e1a3e3de2'), 16665: ('pr:16665', '5c7696351'), 16713: ('pr:16713', 'd125b1fbc'), 16718: ('pr:16718', '1f4905b21')}
+          for number, (key, prefix) in expected.items():
+              node = nodes[key]
+              actual, = [p for p in snapshot['prs'] if p['repo']=='google/gvisor' and p['number']==number]
+              assert actual['head']==node['head'] and node['head'].startswith(prefix)
+              assert 'contributorReview' not in node and node['settledReviews'][-1]['outcome']=='approved'
+              assert 'contributor-review' not in snapshot['workStates'].get(key,{})
+          proof=nodes['pr:16665']['reapproval'];assert proof['approvedHead'].startswith('0aa163b78') and proof['head'].startswith('5c7696351')
+          assert nodes['branch:state-graph-print-errors']['contributorReview']['head'].startswith('57b52c547')
+          assert snapshot['registryDate']==registry['meta']['updatedAt']
+          print(json.dumps({'settled':list(expected),'limits':snapshot['limits']}))
+          PY
+      - name: Publish the read-only snapshot pair and verifier
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-map-six-publications
+          path: |
+            results/source.json
+            results/preflight.json
+            results/registry.json
+            results/github-status.json
+          if-no-files-found: error
