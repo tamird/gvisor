@@ -30,15 +30,25 @@ def build(r, control=False):
              original={"invocation": ORIGINAL, "run": 41406257977, "artifact": 13123707083, "archive": OLD_ARCHIVE},
              arm="host-shell" if control else "declared-shell")
     save(r)
-    assert r["source"] == os.environ["GITHUB_SHA"] and git("rev-parse", "HEAD~3") == PRODUCT
-    assert git("rev-parse", "HEAD~4") == BASE
+    assert r["source"] == os.environ["GITHUB_SHA"] and git("rev-parse", "HEAD~4") == PRODUCT
+    assert git("rev-parse", "HEAD~5") == BASE
     assert set(git("diff", "--name-only", BASE, PRODUCT).splitlines()) == {
         "MODULE.bazel", "external/tools/plugin-stack/plugin-stack.BUILD", "test/rbe/plugin_programs/framework.patch"}
     assert set(git("diff", "--name-only", PRODUCT, "HEAD").splitlines()) == {
         ".github/workflows/build.yml", "test/rbe/plugin_programs/native_helper.py",
         "test/rbe/plugin_programs/preflight_recovery.py", "test/rbe/plugin_programs/action_log.py",
-        "test/rbe/empty_worker/repository.bzl"}
+        "test/rbe/empty_worker/repository.bzl", "MODULE.bazel"}
     assert git("diff", "--name-only", "HEAD") == ("external/tools/plugin-stack/plugin-stack.BUILD" if control else "")
+    module = Path("MODULE.bazel").read_text()
+    prior_module = git("show", PRODUCT + ":MODULE.bazel")
+    expected_module = prior_module.replace(
+        'single_version_override(module_name = "make", version = "4.4.1.bcr.4")',
+        'bazel_dep(name = "make", version = "4.4.1.bcr.4")',
+    ).replace('    mode = "source",\n    version = "4.4.1",',
+              '    mode = "custom",\n    target = "@make//:make",', 1)
+    assert module.strip() == expected_module
+    r["make_registration"] = {"mode": "custom", "target": "@make//:make", "version": "4.4.1.bcr.4",
+                              "module_sha256": sha256(module.encode()).hexdigest()}
     r["consumer_sha256"] = sha256(Path("external/tools/plugin-stack/plugin-stack.BUILD").read_bytes()).hexdigest()
     assert json.loads((OUT / "image.json").read_text())["manifest"] == NATIVE.split("@")[1]
     platform = "//test/rbe/empty_worker:amd64_musl"
@@ -49,7 +59,7 @@ def build(r, control=False):
              "--noremote_local_fallback", "--spawn_strategy=remote", "--remote_download_outputs=toplevel",
              "--jobs=400", "--color=no", "--curses=no", "--registry=" + (Path(os.environ["GITHUB_WORKSPACE"]) / "registry").as_uri(),
              "--registry=https://bcr.bazel.build"]
-    query = TARGET + ' + filter(":(pmd_config|pmdinfogen)$", deps(' + TARGET + '))'
+    query = TARGET + ' + filter("(:(pmd_config|pmdinfogen|make_built)$|^@@?make[+]?//:make$)", deps(' + TARGET + '))'
     query_bep = TMP / (r["arm"] + ".query.bep")
     p = subprocess.run([*bazel, "cquery", *flags, "--build_event_json_file=" + str(query_bep), "--output=label", query], text=True, capture_output=True, timeout=420)
     selected = [s.split()[0] for s in p.stdout.splitlines() if s.startswith(("@", "//"))]
@@ -66,7 +76,9 @@ def build(r, control=False):
         save(r)
         r["preflight"]["causal_context"] = context(p.stderr)
     save(r)
-    assert p.returncode == 0 and len(selected) == 1 and selected[0] in (TARGET, OWNER)
+    assert p.returncode == 0 and len(selected) == 2
+    assert len([label for label in selected if label in (TARGET, OWNER)]) == 1
+    assert len([label for label in selected if label in ("@make//:make", "@@make+//:make")]) == 1
     bep = TMP / (r["arm"] + ".bep")
     compact = TMP / (r["arm"] + ".compact")
     log = TMP / (r["arm"] + ".log")
