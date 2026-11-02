@@ -12,9 +12,10 @@ import subprocess
 import sys
 import tarfile
 import xml.etree.ElementTree as ET
+import zipfile
 
 PRODUCT = "fa1b424ffda1cecb818adffcaf46cfd3e0fb0028"
-AUDITOR = "fc1d164822161e8562a9f58cc97d7f3091bbcc22"
+AUDITOR = "9041e61701db27bd85b9658385cf5d7803681ab1"
 SUPPLIER = "af1089c91c36bfc78719b2836c73d374a66ef092"
 TMP = Path(os.environ["RUNNER_TEMP"])
 PRIVATE = TMP / "integration-private"
@@ -106,7 +107,17 @@ def auditor(row: dict) -> None:
 def catalog(row: dict) -> None:
     checkout(PRODUCT, row)
     os.environ["MAKEFLAGS"] = "DOCKER_BUILD=false STARTUP_OPTIONS=--bazelrc=" + str(TMP / "images.bazelrc")
-    text = checked("catalog", [str(PRIVATE / "licensecheck"), "--mode=verify"], row)
+    p = run("catalog", [str(PRIVATE / "licensecheck"), "--mode=verify"], row)
+    text = p.stdout
+    names = set(re.findall(r"(?m)^- dependency: (.+)$", Path("tools/licensecheck/dependencies.yaml").read_text()))
+    problems = [line for line in text.splitlines()
+                if re.fullmatch(r"(?:stale|missing|duplicate) entry for [A-Za-z0-9_./+@-]+", line)
+                or line.split(" ", 1)[0].removesuffix(":") in names]
+    assert all(len(line) <= 2000 for line in problems)
+    row["problems"] = problems
+    count = re.findall(r"licensecheck: (\d+) problems;", text)
+    row["diagnostics_complete"] = len(count) == 1 and int(count[0]) == len(problems) if p.returncode else True
+    assert p.returncode == 0, f"catalog exited {p.returncode}"
     lines = [line for line in text.splitlines() if re.fullmatch(r"all \d+ dependencies have up-to-date license entries that conform to governance/licensing.yaml", line)]
     assert len(lines) == 1, "Canonical complete-catalog success line missing"
     row["verification"] = lines[0]
@@ -122,7 +133,7 @@ def prerequisite(row: dict) -> None:
     row["product_module_sha256"] = sha(text.encode())
     text += '\n# Qualification-only pending installed-package inventory repair (#294).\n'
     text += 'archive_override(\n    module_name = "rules_distroless",\n'
-    text += '    urls = ["https://codeload.github.com/tamird/rules_distroless/tar.gz/' + SUPPLIER + '"],\n'
+    text += '    urls = ["https://github.com/tamird/rules_distroless/archive/' + SUPPLIER + '.tar.gz"],\n'
     text += '    strip_prefix = "rules_distroless-' + SUPPLIER + '",\n'
     text += '    integrity = "sha256-byvYMoZBAKqzZI+xkMZAMuYd16XyJkGsvPuKuiNopDM=",\n)\n'
     path.write_text(text)
@@ -130,6 +141,36 @@ def prerequisite(row: dict) -> None:
     row["supplier_archive_sha256"] = "6f2bd832864100aab3648fb190c64032e61dd7a5f22641acbcfb8aba2368a433"
     row["qualified_module_sha256"] = sha(text.encode())
     assert subprocess.check_output(["git", "diff", "--name-only"], text=True).splitlines() == ["MODULE.bazel"]
+
+
+def original(row: dict) -> None:
+    path = TMP / "original-integration.zip"
+    assert sha(path.read_bytes()) == "82be788bfb0930a5c14046bac85a895bf1faefc4775e8be121d7a9690ea12f3a"
+    with zipfile.ZipFile(path) as z:
+        assert z.namelist() == ["result.json"]
+        old = json.loads(z.read("result.json"))
+    assert old["product"] == PRODUCT and old["carrier"] == "17cd1ea8c44addf12b45de23d1a88c70ab8c12e1"
+    assert old["status"] == "FAIL" and old["phases"]["auditor"]["status"] == "PASS"
+    assert old["phases"]["catalog"]["commands"][-1]["exit"] == 1
+    for name in ("amd64", "arm64", "runtime"):
+        command = old["phases"][name]["commands"][-1]
+        assert command["exit"] == 37 and any("Expected a file with" in line for line in command["diagnostics"])
+    RESULT["original"] = old
+    row["artifact"] = "https://github.com/tamird/gvisor/actions/runs/41523954650/artifacts/13178134790"
+    row["archive_sha256"] = sha(path.read_bytes())
+
+
+def resolve(row: dict) -> None:
+    assert RESULT["phases"]["prerequisite"]["status"] == "PASS"
+    license = one("supplier-source", "@rules_distroless//:LICENSE", [], row)
+    expected = {
+        "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "MODULE.bazel": "96710543b5b35704cab307735d7635ced6c7e37f492aa6720e39eb07a37066d4",
+        "apt/private/package_controls.bzl": "14417ed0bf5c80d9e580f8db40ccc26b11ce321b4b513731f272edae21b0b11e",
+    }
+    actual = {name: sha((license.parent / name).read_bytes()) for name in expected}
+    assert actual == expected, "Resolved supplier source mismatch"
+    row["source_sha256"] = actual
 
 
 def inventory(cpu: str, flags: list[str], data: bytes, row: dict) -> None:
@@ -282,18 +323,32 @@ def phase(name: str, fn: Callable[[dict], None]) -> None:
         save()
 
 
-RESULT["started"] = now()
-phase("auditor", auditor)
-phase("catalog", catalog)
-phase("prerequisite", prerequisite)
-phase("amd64", lambda row: image("x86_64", "amd64", 62, row))
-phase("arm64", lambda row: image("aarch64", "arm64", 183, row))
-phase("make", make_image)
-phase("runtime", runtime)
-phase("nested", lambda row: guest("nested", row))
-phase("guest", lambda row: guest("guest", row))
-RESULT["status"] = "PASS" if all(row["status"] == "PASS" for row in RESULT["phases"].values()) else "FAIL"
-RESULT["finished"] = now()
+if sys.argv[1:] == ["--preflight"]:
+    RESULT["started"] = now()
+    phase("original", original)
+    phase("auditor", auditor)
+    phase("catalog", catalog)
+    phase("prerequisite", prerequisite)
+    phase("resolve", resolve)
+    RESULT["status"] = "PREFLIGHT_PASS" if all(r["status"] == "PASS" for r in RESULT["phases"].values()) else "PREFLIGHT_FAIL"
+    RESULT["preflight_finished"] = now()
+else:
+    assert sys.argv[1:] == ["--runtime"]
+    RESULT = json.loads((PUBLIC / "result.json").read_text())
+    assert RESULT["product"] == PRODUCT and RESULT["carrier"] == os.environ["GITHUB_SHA"]
+    assert subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() == PRODUCT
+    assert sha(Path("MODULE.bazel").read_bytes()) == RESULT["phases"]["prerequisite"]["qualified_module_sha256"]
+    if RESULT["phases"]["resolve"]["status"] == "PASS":
+        phase("amd64", lambda row: image("x86_64", "amd64", 62, row))
+        phase("arm64", lambda row: image("aarch64", "arm64", 183, row))
+        phase("make", make_image)
+        phase("runtime", runtime)
+        phase("nested", lambda row: guest("nested", row))
+        phase("guest", lambda row: guest("guest", row))
+    else:
+        RESULT["runtime_not_run"] = "Supplier repository did not resolve to the pinned source"
+    RESULT["status"] = "PASS" if all(row["status"] == "PASS" for row in RESULT["phases"].values()) else "FAIL"
+    RESULT["finished"] = now()
 save()
 print(json.dumps({"status": RESULT["status"], "phases": {k: v["status"] for k, v in RESULT["phases"].items()}}))
-raise SystemExit(RESULT["status"] != "PASS")
+raise SystemExit(RESULT["status"] not in ("PASS", "PREFLIGHT_PASS"))
