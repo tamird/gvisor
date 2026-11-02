@@ -99,38 +99,56 @@ cp dpdk/_build/dpdk/$$RTE_TARGET/include/rte_config.h $$INSTALLDIR/include/
 make(
     name = "libpluginstack",
     args = _MAKE_ARGS + [
-        "'PMDINFO_GEN=$(PMDINFOGEN) $@ $@.pmd.c'",
         "DPDK_MAKE_TARGET=all",
         "'DPDK_LIBS_PATH=$(TLDK_ROOT)/dpdk/_build/dpdk/$(RTE_TARGET)/lib'",
-    ],
-    build_data = _BUILD_DATA + [
-        ":pmd_config",
-        "@plugin_dpdk//:pmdinfogen",
-    ],
+    ] + select({
+        ":musl": [],
+        "//conditions:default": ["'PMDINFO_GEN=$(PMDINFOGEN) $@ $@.pmd.c'"],
+    }),
+    build_data = _BUILD_DATA + select({
+        ":musl": [],
+        "//conditions:default": [
+            ":pmd_config",
+            "@plugin_dpdk//:pmdinfogen",
+        ],
+    }),
     build_shell = "@plugin_programs//:bin/bash",
-    env = _ENV | {
-        "PMDINFOGEN": "$(execpath @plugin_dpdk//:pmdinfogen)",
-        "PMD_CONFIG": "$(execpath :pmd_config)",
-    },
+    env = select({
+        ":musl": _ENV,
+        "//conditions:default": _ENV | {
+            "PMDINFOGEN": "$(execpath @plugin_dpdk//:pmdinfogen)",
+            "PMD_CONFIG": "$(execpath :pmd_config)",
+        },
+    }),
     exec_compatible_with = _EXEC_CONSTRAINTS,
     exec_properties = _EXEC_PROPERTIES,
+    # DPDK builds and executes pmdinfogen on Linux AMD64. A static musl
+    # executable can run on the build worker without a dynamic loader.
+    features = select({
+        ":musl": ["fully_static_link"],
+        "//conditions:default": [],
+    }),
     lib_source = ":sources",
     # The binary and configuration are additional qualification outputs.
     out_binaries = ["dpdk-pmdinfogen"],
-    out_data_files = [
-        "rte_config.h",
-        "pmd_rte_config.h",
-    ],
+    out_data_files = ["rte_config.h"] + select({
+        ":musl": [],
+        "//conditions:default": ["pmd_rte_config.h"],
+    }),
     out_static_libs = ["libpluginstack.a"],
     postfix_script = """
-grep -qx "#define RTE_ARCH_64 1" $$PMD_CONFIG/rte_config.h
 grep -qx "#define RTE_ARCH_64 1" dpdk/_build/dpdk/$$RTE_TARGET/include/rte_config.h
 mkdir -p $$INSTALLDIR/lib $$INSTALLDIR/include $$INSTALLDIR/bin
 cp -L libtldk.a $$INSTALLDIR/lib/libpluginstack.a
-cp -L $$PMDINFOGEN $$INSTALLDIR/bin/dpdk-pmdinfogen
 cp dpdk/_build/dpdk/$$RTE_TARGET/include/rte_config.h $$INSTALLDIR/rte_config.h
+""" + select({
+        ":musl": "cp -L dpdk/_build/dpdk/$$RTE_TARGET/app/dpdk-pmdinfogen $$INSTALLDIR/bin/dpdk-pmdinfogen",
+        "//conditions:default": """
+grep -qx "#define RTE_ARCH_64 1" $$PMD_CONFIG/rte_config.h
+cp -L $$PMDINFOGEN $$INSTALLDIR/bin/dpdk-pmdinfogen
 cp $$PMD_CONFIG/rte_config.h $$INSTALLDIR/pmd_rte_config.h
 """,
+    }),
     target_compatible_with = select({
         ":plugin_tldk_condition": [
             "@platforms//cpu:x86_64",
