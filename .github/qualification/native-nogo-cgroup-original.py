@@ -67,7 +67,11 @@ def stream(result, name):
 try:
     record["targetActions"] = []
     for target in (label, label + "_nogo"):
-        response = rpc("GetTarget", {"invocationId": uid, "targetLabel": target})
+        try:
+            response = rpc("GetTarget", {"invocationId": uid, "targetLabel": target})
+        except (ValueError, OSError) as err:
+            record.setdefault("unavailableTargets", {})[target] = str(err) if isinstance(err, ValueError) else type(err).__name__
+            continue
         groups = response.get("targetGroups", [])
         record.setdefault("targets", {})[target] = [(g.get("status"), len(g.get("targets",[]))) for g in groups]
         for group in groups:
@@ -103,16 +107,11 @@ try:
         record["logComplete"] = not chunk.get("previousChunkId")
         record["labelMentions"] = buf.count(label.encode())
         txt = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "",buf.decode(errors="replace")).splitlines()
-        selected = [i for i,l in enumerate(txt) if label in l or ("ERROR:" in l and "cgroup" in l)]
-        kinds = []
-        for i in selected:
-            for l in txt[max(i-3,0):i+8]:
-                q=l.strip()
-                if not q or key in q or re.search(r"token|grpcs:|https?:|api-key|bearer|authorization|secret|\s--|\(cd |^exec |^env |PATH=",q,re.I):
-                    continue
-                if len(q)<=420 and not q.startswith("["):
-                    kinds.append(q)
-        record["cgroupContext"] = list(dict.fromkeys(kinds))[:25]
+        # The standard Bazel diagnostic includes a GitHub advice URL; recover
+        # only the fixed public failure category rather than the command line.
+        record["noUsableStrategy"] = sum("cannot be executed with any of the available strategies" in l for l in txt)
+        record["mentionsGoCompileStrategy"] = sum("GoCompilePkg" in l and "available strategies" in l for l in txt)
+        record["mentionsCgroupStrategy"] = sum(label in l and "available strategies" in l for l in txt)
     except (OSError,ValueError) as err:
         record["logLookupError"] = type(err).__name__
 finally:

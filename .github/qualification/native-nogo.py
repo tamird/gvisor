@@ -76,7 +76,11 @@ def main():
                     results[ident["testResult"]["label"]].append({"status": t.get("status"), "cachedLocally": t.get("cachedLocally", False), "strategy": t.get("executionInfo", {}).get("strategy")})
                 if "action" in ev and not ev["action"].get("success", False) and len(actions) < 50:
                     a = ev["action"]
-                    actions.append({"label":ident.get("actionCompleted",{}).get("label"), "mnemonic":a.get("type"), "exit":a.get("exitCode")})
+                    detail = a.get("failureDetail", {})
+                    actions.append({"label":ident.get("actionCompleted",{}).get("label"), "mnemonic":a.get("type"), "exit":a.get("exitCode"),
+                                    "failureClasses":{k: v.get("code") for k,v in detail.items() if isinstance(v,dict)},
+                                    "noUsableStrategy":"cannot be executed with any of the available strategies" in detail.get("message",""),
+                                    "stderrAvailable":bool(a.get("stderr",{}))})
                 if "started" in ev:
                     invocation = ev["started"].get("uuid")
                 if "buildMetrics" in ev:
