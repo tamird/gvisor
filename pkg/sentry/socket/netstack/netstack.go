@@ -500,10 +500,6 @@ func New(t *kernel.Task, family int, skType linux.SockType, protocol int, queue 
 // Release implements vfs.FileDescriptionImpl.Release.
 func (s *sock) Release(ctx context.Context) {
 	kernel.KernelFromContext(ctx).DeleteSocket(&s.vfsfd)
-	e, ch := waiter.NewChannelEntry(waiter.EventHUp | waiter.EventErr | waiter.EventInternal)
-	s.EventRegister(&e)
-	defer s.EventUnregister(&e)
-
 	s.Endpoint.Close()
 
 	// SO_LINGER option is valid only for TCP. For other socket types
@@ -520,6 +516,12 @@ func (s *sock) Release(ctx context.Context) {
 		t := kernel.TaskFromContext(ctx)
 		exiting := t != nil && t.ExitState() >= kernel.TaskExitInitiated
 		if v.Enabled && v.Timeout != 0 && !exiting {
+			// Check the state after registering so an ACK received during Close
+			// or before registration also ends the wait.
+			e, ch := waiter.NewChannelEntry(waiter.EventHUp | waiter.EventErr | waiter.EventInternal)
+			s.EventRegister(&e)
+			defer s.EventUnregister(&e)
+
 			timeout := v.Timeout
 			for isClosing(tcp.EndpointState(s.Endpoint.State())) {
 				var err error
