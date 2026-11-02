@@ -15,7 +15,9 @@
 package tcp
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"math"
 	"sort"
 	"time"
@@ -59,6 +61,44 @@ const (
 	// such Updates.
 	unknownRTT = time.Duration(-1)
 )
+
+// wanLossDecision records actual congestion-control decisions on the benchmark
+// proxy's WAN sockets. The closure samples the window after the site's normal
+// enter/leaveRecovery calls; the RTO pre-state precedes its leaveRecovery.
+func (s *sender) wanLossDecision(cause string, seg *segment, marked int) func() {
+	id := s.ep.TransportEndpointInfo.ID
+	if id.RemotePort != 44000 {
+		return func() {}
+	}
+	s.wanLossOrdinal++
+	s.ep.sndQueueInfo.sndQueueMu.Lock()
+	queued := s.ep.sndQueueInfo.SndBufUsed
+	s.ep.sndQueueInfo.sndQueueMu.Unlock()
+	m := map[string]any{
+		"ns": time.Now().UnixNano(), "ordinal": s.wanLossOrdinal, "cause": cause,
+		"port": id.LocalPort, "peer": id.RemotePort, "cwnd": s.SndCwnd,
+		"ssthresh": s.Ssthresh, "una": uint32(s.SndUna), "nxt": uint32(s.SndNxt),
+		"out": s.Outstanding, "queued": queued, "sacked": s.SackedOut,
+		"sacked_bytes": uint32(s.ep.scoreboard.Sacked()), "dupacks": s.DupAckCount,
+		"marked": marked, "recovery": s.FastRecovery.Active,
+		"tlp_high": uint32(s.rc.tlpHighRxt), "rto_ns": s.RTO.Nanoseconds(),
+	}
+	if seg != nil {
+		m["ack"] = uint32(seg.ackNumber)
+		m["ack_tsval"] = seg.parsedOptions.TSVal
+		m["ack_sacks"] = seg.parsedOptions.SACKBlocks
+	}
+	return func() {
+		m["cwnd_after"] = s.SndCwnd
+		m["ssthresh_after"] = s.Ssthresh
+		m["recovery_after"] = s.FastRecovery.Active
+		b, err := json.Marshal(m)
+		if err != nil {
+			panic(err)
+		}
+		log.Printf("WANLOSS %s", b)
+	}
+}
 
 // congestionControl is an interface that must be implemented by any supported
 // congestion control algorithm.
@@ -107,6 +147,8 @@ type lossRecovery interface {
 // +checklocksalias:rc.snd.ep.mu=ep.mu
 // +stateify savable
 type sender struct {
+	wanLossOrdinal uint64 `state:"nosave"`
+
 	// +checklocks:ep.mu
 	TCPSenderState
 
@@ -630,6 +672,7 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	//     After a retransmit timeout, record the highest sequence number
 	//     transmitted in the variable recover, and exit the fast recovery
 	//     procedure if applicable.
+	finishLoss := s.wanLossDecision("rto", nil, 0)
 	s.FastRecovery.Last = s.SndNxt - 1
 
 	if s.FastRecovery.Active {
@@ -645,6 +688,7 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 
 	s.state = tcpip.RTORecovery
 	s.cc.HandleRTOExpired()
+	finishLoss()
 
 	// Mark the next segment to be sent as the first unacknowledged one and
 	// start sending again. Set the number of outstanding packets to 0 so
@@ -1329,8 +1373,10 @@ func (s *sender) detectLoss(seg *segment) (fastRetransmit bool) {
 		s.DupAckCount = 0
 		return false
 	}
+	finishLoss := s.wanLossDecision("dupack_scoreboard", seg, 0)
 	s.cc.HandleLossDetected()
 	s.enterRecovery()
+	finishLoss()
 	return true
 }
 
@@ -1800,8 +1846,10 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			// If any segment is marked as lost by
 			// RACK, enter recovery and retransmit
 			// the lost segments.
+			finishLoss := s.wanLossDecision("rack_ack", rcvdSeg, numLost)
 			s.cc.HandleLossDetected()
 			s.enterRecovery()
+			finishLoss()
 			fastRetransmit = true
 		}
 
