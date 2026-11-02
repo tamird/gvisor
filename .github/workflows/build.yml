@@ -16,7 +16,7 @@ jobs:
       PROFILE: 0ee70efe6d52576b8f173b40ad6b7ac117da3b72
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 6, persist-credentials: false}
+      with: {fetch-depth: 8, persist-credentials: false}
     - name: Prepare the existing GNU and packetimpact profiles
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}

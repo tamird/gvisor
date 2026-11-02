@@ -1,4 +1,5 @@
 """Recover the original failed attempt and its passed controls before a gap retry."""
+import base64
 from hashlib import sha256
 import json
 import os
@@ -69,22 +70,41 @@ def recover():
             result = response["result"]
             assert action["stage"] in (4, "COMPLETED") and result["exitCode"] == 1 and not response.get("cachedResult", False)
             row.update(action=action["actionDigest"], exit=1, cached=False, files={})
-            contents = {}
-            for name in ("test.log", "test.xml"):
-                output, = [item for item in result.get("outputFiles", []) if Path(item["path"]).name == name]
-                digest = output["digest"]
-                data = blob(digest, invocation)
-                row["files"][name] = {"path": output["path"], "digest": digest}
-                (PUBLIC / f"original-{arm}-{name}").write_bytes(data)
-                contents[name] = data
-                saved()
-            cases = list(ET.fromstring(contents["test.xml"]).iter("testcase"))
+            row["execution_metadata"] = {key: value for key, value in action.get("executedActionMetadata", {}).items() if key in ("queuedTimestamp", "executionStartTimestamp", "executionCompletedTimestamp")}
+            row["output_files"] = [{"path": item["path"], "digest": item["digest"]} for item in result.get("outputFiles", [])]
+            # Bazel 8.8.1 StandaloneTestStrategy writes test.log from stdout,
+            # then appends stderr. It is not a declared TestRunner output.
+            streams = []
+            for name in ("stdout", "stderr"):
+                digest = result.get(name + "Digest")
+                if digest:
+                    digest = {"hash": digest["hash"], "sizeBytes": str(digest.get("sizeBytes", 0))}
+                    data = blob(digest, invocation) if int(digest["sizeBytes"]) else b""
+                    assert sha256(data).hexdigest() == digest["hash"]
+                else:
+                    data = base64.b64decode(result.get(name + "Raw", ""), validate=True)
+                    digest = {"hash": sha256(data).hexdigest(), "sizeBytes": str(len(data))}
+                row["files"][name] = {"digest": digest}
+                streams.append(data)
+            log = b"".join(streams)
+            assert log
+            (PUBLIC / f"original-{arm}-test.log").write_bytes(log)
+            row["files"]["test.log"] = {"sha256": sha256(log).hexdigest(), "size": len(log), "source": "stdout followed by stderr"}
+            row["observations"] = [json.loads(raw) for raw in re.findall(rb"MSSOBS (\{[^\n]*\})", log)]
+            saved()
+            assert len(row["observations"]) == 2 and {value["case"] for value in row["observations"]} == {"no_sack", "sack"}
+            if arm == "native":
+                assert row["observations"] == original["observations"]["native"]
+            xml, = [item for item in result.get("outputFiles", []) if Path(item["path"]).name == "test.xml"]
+            data = blob(xml["digest"], invocation)
+            row["files"]["test.xml"] = {"path": xml["path"], "digest": xml["digest"]}
+            (PUBLIC / f"original-{arm}-test.xml").write_bytes(data)
+            saved()
+            cases = list(ET.fromstring(data).iter("testcase"))
             assert len(cases) == 4 and len({case.get("name") for case in cases}) == 4
             dispositions = {case.get("name"): "FAIL" if case.find("failure") is not None or case.find("error") is not None else "SKIP" if case.find("skipped") is not None or case.get("status") == "notrun" or case.get("result") == "suppressed" else "PASS" for case in cases}
             assert dispositions == {"TestMSSSACKObservation": "FAIL", "TestMSSSACKObservation/sack_receive_gap": "FAIL", "TestMSSSACKObservation/no_sack": "PASS", "TestMSSSACKObservation/sack": "PASS"}
             row["cases"] = dispositions
-            row["observations"] = [json.loads(raw) for raw in re.findall(rb"MSSOBS (\{[^\n]*\})", contents["test.log"])]
-            assert len(row["observations"]) == 2 and {value["case"] for value in row["observations"]} == {"no_sack", "sack"}
             failures = ["".join(case.itertext()) for case in cases if case.get("name") == "TestMSSSACKObservation/sack_receive_gap"]
             row["gap_failure"] = failures
             row["expected_gap_cursor_failure"] = len(failures) == 1 and "data after 0 bytes:" in failures[0]
