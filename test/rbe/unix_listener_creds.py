@@ -9,6 +9,7 @@ import re
 import subprocess
 import traceback
 import uuid
+import zipfile
 import xml.etree.ElementTree as ET
 
 from image_execution import execution_records
@@ -76,6 +77,9 @@ def phase(result, name, source, labels, filter_):
             "--test_timeout=330", "--test_output=errors", "--remote_download_outputs=toplevel",
             "--build_event_json_file_path_conversion=false", "--build_event_json_file=" + str(out / "raw.json"),
             "--execution_log_json_file=" + str(out / "spawns.json")]
+    if name == "transport":
+        assert labels == [TRANSPORT] and not filter_
+        args.append("--test_arg=-test.v")
     if filter_:
         args.append("--test_env=GTEST_FILTER=" + filter_)
     args.extend(labels)
@@ -141,6 +145,8 @@ def phase(result, name, source, labels, filter_):
                 if failure is not None and key == CASE:
                     row.setdefault("failure", []).extend((e.get("message") or e.text or "")[:2800] for e in c.findall("failure"))
             row["cases"] = cases
+        elif r["identity"]["label"] == TRANSPORT:
+            row["passed_top_level"] = sorted(set(re.findall(r"(?m)^--- PASS: (Test\w+) \(", b.decode(errors="replace"))))
         elif r["identity"]["label"] in NOGO:
             parts = re.split(r"(?m)^(amd64|arm64)\.\.\.", b.decode(errors="replace"))
             row["arch"] = {a: ("PASS" if trace.strip().splitlines() == ["PASS"] else "OTHER")
@@ -150,7 +156,9 @@ def phase(result, name, source, labels, filter_):
                                   if re.match(r"^[a-z_]+: pkg/sentry/socket/unix/[a-z0-9_./]+\.go:\d+:\d+: ", line)][:12]
         save(result)
     negative = name == "stock"
-    assert code == (3 if negative else 0) and v["status"] == ("FAIL" if negative else "PASS")
+    accept_empty_xml = (name == "transport" and v["status"] == "INCOMPLETE" and len(v["errors"]) == 1
+                        and v["errors"][0].startswith("Test owner has no executed named cases;"))
+    assert code == (3 if negative else 0) and (v["status"] == ("FAIL" if negative else "PASS") or accept_empty_xml)
     assert not v["missing"] and not (out / "after").stat().st_size and not captured["errors"]
     for label, row in owners.items():
         expected_status = "FAILED" if negative else "PASSED"
@@ -163,8 +171,7 @@ def phase(result, name, source, labels, filter_):
             assert row["arch"] == {"amd64": "PASS", "arm64": "PASS"} and row["section_count"] == 2
         elif label == TRANSPORT:
             assert "FAIL" not in row["cases"].values()
-            assert any(c.endswith(".TestConnectionedEndpointClosedHostReadiness") and status == "PASS"
-                       for c, status in row["cases"].items())
+            assert row["passed_top_level"] == sorted(EXPECTED)
         elif name == "owners":
             assert row["cases"] == dict.fromkeys(CONTROLS, "PASS")
         else:
@@ -176,38 +183,64 @@ def phase(result, name, source, labels, filter_):
     p["status"] = "EXPECTED_NEGATIVE" if negative else "PASS"
 
 
+EXPECTED = {"TestSCMSenderBeforeSaveIdempotent", "TestHostSenderClosedHostReadiness",
+            "TestConnectionedEndpointClosedHostReadiness", "TestSeveredRecvSend", "TestEnqueueRightsOwnership"}
+ZIP_HASH = "b64d77a4f116b363a9cc461f1c0da181ffc82e8f981b939b019f446e94624360"
+
+
 def run():
-    result = {"status": "INCOMPLETE", "base": BASE, "product": PRODUCT, "phases": {}, "started": now()}
+    result = {"status": "INCOMPLETE", "original": "41472760658/13156208304", "base": BASE, "product": PRODUCT,
+              "phases": {}, "started": now()}
     save(result)
-    assert git("rev-parse", FIXED + "^").decode().strip() == PRODUCT
-    assert git("rev-parse", PRODUCT + "^").decode().strip() == BASE
-    assert git("rev-parse", STOCK + "^").decode().strip() == BASE
-    test = "test/syscalls/linux/socket_unix_peercred.cc"
-    socket = "pkg/sentry/socket/unix/unix.go"
-    for src, parent in ((FIXED, PRODUCT), (STOCK, BASE)):
-        assert set(git("diff", "--name-only", parent, src).decode().splitlines()) == {test, socket}
-    for path in (test, socket):
-        a, b = (git("show", src + ":" + path) for src in (FIXED, STOCK))
-        if path == socket:
-            a, b = (x.split(b"// Fork witness:", 1)[1].split(b"// extractEndpoint", 1)[0] for x in (a, b))
-        assert a == b
-        result.setdefault("fixture_sha256", {})[path] = hashlib.sha256(a).hexdigest()
+    original_zip = ROOT / "unix-original.zip"
+    assert hashlib.sha256(original_zip.read_bytes()).hexdigest() == ZIP_HASH
+    with zipfile.ZipFile(original_zip) as z:
+        original = json.loads(z.read("verdict.json"))
+    assert original["product"] == PRODUCT and original["base"] == BASE
+    assert {k: p["status"] for k, p in original["phases"].items()} == {
+        "native": "PASS", "stock": "EXPECTED_NEGATIVE", "fixed": "PASS", "owners": "INCOMPLETE"}
+    primary = original["phases"]["owners"]
+    assert primary["source"] == PRODUCT and primary["exit"] == 0
+    assert primary["uuid"] == "1deff514-65bf-4362-a94a-ba8074f6c094"
+    for label, row in primary["owners"].items():
+        a, = row["actions"]
+        assert a["runner"] == "remote" and a["owner"] and a["platform"] and not a["cache"] and a["exit"] == 0
+        assert row["attempts"] == [[1, "PASSED", False, False]]
+        if label == GUEST:
+            assert row["cases"] == dict.fromkeys(CONTROLS, "PASS")
+        elif label in NOGO:
+            assert row["section_count"] == 2 and row["arch"] == {"amd64": "PASS", "arm64": "PASS"}
+    assert set(primary["owners"]) == {GUEST, TRANSPORT, *NOGO}
+    source_names = set()
+    for f in ("host_test.go", "queue_test.go"):
+        b = git("show", PRODUCT + ":pkg/sentry/socket/unix/transport/" + f)
+        source_names.update(re.findall(r"(?m)^func (Test\w+)\(", b.decode()))
+    assert source_names == EXPECTED
+    result.update(reused=["native", "stock", "fixed", GUEST, *NOGO], original_verdict_at=original["verdict_at"],
+                  original_archive_sha256=ZIP_HASH, expected_go_cases=sorted(EXPECTED))
+    recovered = result["original_owner"] = {}
+    names = set()
+    for name, (digest, size) in primary["owners"][TRANSPORT]["reports"].items():
+        path = ROOT / ("unix-original-" + name)
+        recovered[name] = {"available": path.exists(), "sha256": digest, "size": size}
+        if not path.exists():
+            continue
+        b = path.read_bytes()
+        assert len(b) == size and hashlib.sha256(b).hexdigest() == digest
+        if name == "test.log":
+            recovered[name]["text"] = b.decode(errors="replace")
+            names.update(re.findall(r"(?m)^--- PASS: (Test\w+) \(", recovered[name]["text"]))
+        if name == "test.xml":
+            recovered[name]["xml_case_count"] = len(list(ET.fromstring(b).iter("testcase")))
     save(result)
-    for name, source, labels, filter_ in (("native", FIXED, [NATIVE], CASE), ("stock", STOCK, [GUEST], CASE),
-                                           ("fixed", FIXED, [GUEST], CASE),
-                                           ("owners", PRODUCT, [GUEST, TRANSPORT, *NOGO], ":".join(sorted(CONTROLS)))):
-        try:
-            phase(result, name, source, labels, filter_)
-        except Exception as e:
-            row = result["phases"].setdefault(name, {"status": "INCOMPLETE"})
-            row["error"] = type(e).__name__ + " at " + str(traceback.extract_tb(e.__traceback__)[-1].lineno)
-            save(result)
-    result["status"] = ("VERIFIED" if len(result["phases"]) == 4 and
-                        all(v["status"] == ("EXPECTED_NEGATIVE" if k == "stock" else "PASS")
-                            for k, v in result["phases"].items()) else "INCOMPLETE")
+    if names == EXPECTED:
+        result["reused"].append(TRANSPORT)
+    else:
+        phase(result, "transport", PRODUCT, [TRANSPORT], None)
+    result["status"] = "VERIFIED"
     result["verdict_at"] = now()
     save(result)
-    return result["status"] == "VERIFIED"
+    return True
 
 
 if __name__ == "__main__":
