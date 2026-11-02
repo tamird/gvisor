@@ -539,6 +539,8 @@ test('settled outgoing publications are normal links without drafts or new decis
   const context = client(), node = attentionNode(16834);
   const urls = ['https://github.com/bazel-contrib/bazel-gazelle/issues/2499',
     node.url + '#issuecomment-123', node.url + '#pullrequestreview-456'];
+  node.evidence = [{ label: 'Gazelle upstream issue #2499', url: urls[0] },
+    { label: 'Different publication', url: node.url + '#issuecomment-999' }];
   node.settledReviews = ['issue', 'reply', 'review'].map((kind, index) => ({
     kind, head: node.github.head, body: 'Historical draft must stay hidden', outcome: 'approved', postedURL: urls[index],
   }));
@@ -554,7 +556,8 @@ test('settled outgoing publications are normal links without drafts or new decis
   context.parentInput = createElement('section'); context.nodeInput = node;
   vm.runInContext('appendSettledPublications(parentInput, nodeInput)', context);
   assert.deepEqual(context.parentInput.children.map(child => [child.tag, child.textContent, child.href]),
-    ['Issue filed', 'Reply posted', 'Review posted'].map((label, index) => ['a', label + ' ↗', urls[index]]));
+    ['Issue filed · Gazelle upstream issue #2499', 'Reply posted', 'Review posted']
+      .map((label, index) => ['a', label + ' ↗', urls[index]]));
   for (const child of context.parentInput.children) {
     assert.equal(child.className, 'relation-source');
     assert.equal(child.target, '_blank');

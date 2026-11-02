@@ -1471,8 +1471,11 @@ function appendSettledPublications(parent, node) {
   const labels = { issue: "Issue filed", reply: "Reply posted", review: "Review posted" };
   for (const decision of node.settledReviews || []) {
     const url = safeURL(decision.postedURL);
-    if (Object.hasOwn(labels, decision.kind) && url)
-      parent.append(link(labels[decision.kind] + " ↗", url, "relation-source"));
+    if (Object.hasOwn(labels, decision.kind) && url) {
+      const evidence = node.evidence?.find(item => item.url === url);
+      const label = labels[decision.kind] + (evidence ? ` · ${evidence.label}` : "");
+      parent.append(link(label + " ↗", url, "relation-source"));
+    }
   }
 }
 function drawDetails() {
