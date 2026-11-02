@@ -45,11 +45,18 @@ def recover():
     assert selected.get("commitSha", "") in ("", SOURCE)
     invocation = invocation_id(selected)
     assert re.fullmatch(r"[a-f0-9-]{36}", invocation)
-    full, = rpc("GetInvocation", {"lookup": {"invocationId": invocation}})["invocation"]
-    assert invocation_id(full) == invocation and full["pattern"] == LABELS
-    assert full.get("commitSha", "") in ("", SOURCE)
     RESULT["invocation"] = invocation
-    RESULT["selection"] = {"host": selected.get("host"), "pattern": full["pattern"], "short_pattern": short_pattern, "commit_sha": selected.get("commitSha", ""), "created_at_usec": selected.get("createdAtUsec"), "updated_at_usec": selected.get("updatedAtUsec")}
+    RESULT["selection"] = {"host": selected.get("host"), "short_pattern": short_pattern, "commit_sha": selected.get("commitSha", ""), "created_at_usec": selected.get("createdAtUsec"), "updated_at_usec": selected.get("updatedAtUsec")}
+    saved()
+    full, = rpc("GetInvocation", {"lookup": {"invocationId": invocation}})["invocation"]
+    assert invocation_id(full) == invocation and full["pattern"] == [short_pattern]
+    assert full.get("commitSha", "") in ("", SOURCE)
+    # GetInvocation keeps the database summary at top level. The expanded
+    # BEP event retains the actual requested patterns (and can be truncated).
+    patterns = [item["buildEvent"]["id"]["pattern"]["pattern"] for item in full.get("event", []) if "pattern" in item.get("buildEvent", {}).get("id", {})]
+    RESULT["selection"]["expanded_pattern_count"] = len(patterns)
+    assert not full.get("patternsTruncated") and patterns == [LABELS]
+    RESULT["selection"]["pattern"] = patterns[0]
     saved()
     for label in LABELS:
         arm = "native" if label.endswith("_native_test") else "netstack"
