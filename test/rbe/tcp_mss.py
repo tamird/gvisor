@@ -36,12 +36,12 @@ def write(path, value):
 def run():
     PRIVATE.mkdir(exist_ok=True)
     PUBLIC.mkdir(exist_ok=True)
-    result = {"status": "INCOMPLETE", "started_at": now(), "labels": LABELS}
+    result = {"original_bootstrap": {"run": 41423992110, "artifact": 13131575573, "zip_sha256": "1487cf93134df4eec4f5791ec7b07e26c1af1ddaf825ffe5d4b8b4a005660a22", "status": "INCOMPLETE", "cause": "Git rejected coordinator checkout ownership before Bazel"}, "status": "INCOMPLETE", "started_at": now(), "labels": LABELS}
     try:
         source = output("git", "rev-parse", "HEAD")
-        assert output("git", "rev-parse", "HEAD^") == FIXTURE
-        assert output("git", "rev-parse", "HEAD^^") == output("git", "rev-parse", BASE)
-        assert output("git", "diff", "HEAD^", "HEAD", "--", ".", ":!.github/workflows/build.yml", ":!test/rbe/tcp_mss.py") == ""
+        assert output("git", "merge-base", FIXTURE, "HEAD") == FIXTURE
+        assert output("git", "rev-parse", FIXTURE + "^") == output("git", "rev-parse", BASE)
+        assert output("git", "diff", FIXTURE, "HEAD", "--", ".", ":!.github/workflows/build.yml", ":!test/rbe/tcp_mss.py") == ""
         result["source"] = source
         (PRIVATE / "commit").write_bytes(subprocess.check_output(["git", "cat-file", "commit", "HEAD"]))
         (PRIVATE / "before").write_text(output("git", "status", "--porcelain", "--untracked-files=no"))
@@ -104,6 +104,11 @@ def run():
         result["error"] = {"type": type(error).__name__, "line": error.__traceback__.tb_lineno}
         if result.get("native_exit", 0) != 0 or result.get("qualification", {}).get("status") == "FAIL":
             result["status"] = "FAIL"
+    for name in ("query", "bazel"):
+        log = PRIVATE / f"{name}.log"
+        if log.exists():
+            lines = log.read_text(errors="replace").splitlines()
+            result[name + "_diagnostics"] = [line[:1000] for line in lines if re.search(r"ERROR:|error:|fatal:|undefined:", line) and not re.search(r"authorization|api.key|(?:remote|bes)_header", line, re.I)][:20]
     result["verdict_at"] = now()
     write(PUBLIC / "result.json", result)
     return result["status"] == "PASS"

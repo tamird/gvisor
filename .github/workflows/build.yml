@@ -15,7 +15,7 @@ jobs:
       PROFILE: 0ee70efe6d52576b8f173b40ad6b7ac117da3b72
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 3, persist-credentials: false}
+      with: {fetch-depth: 4, persist-credentials: false}
     - name: Prepare the existing GNU and packetimpact profiles
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -36,7 +36,7 @@ jobs:
         docker run -d --name mss-compiler --entrypoint /bin/bash --user root --sysctl net.ipv6.conf.lo.disable_ipv6=0 -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
     - name: One invocation of both existing packetimpact owners
       id: observe
-      run: docker exec -e RUNNER_TEMP -e PYTHONPATH="$RUNNER_TEMP/reporter" mss-compiler python3 test/rbe/tcp_mss.py run
+      run: docker exec -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" -e RUNNER_TEMP -e PYTHONPATH="$RUNNER_TEMP/reporter" mss-compiler python3 test/rbe/tcp_mss.py run
     - name: Validate the bounded publication
       id: privacy
       if: always()
