@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T22:04:01.189746+00:00",
+    "updatedAt": "2026-11-02T22:17:21.705842+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39065,8 +39065,8 @@
       "url": "https://github.com/google/gvisor/pull/15019",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
-      "summary": "Linux keeps the TIME_WAIT endpoint after an unexpected SYN-ACK and ACKs the repeated old FIN. The proposed forwarder resets both. A bare SYN still reopens the connection with the narrower guard.",
+      "updatedAt": "2026-11-02T22:17:21.705842+00:00",
+      "summary": "The author applied the tested guard: an unexpected SYN-ACK and a repeated FIN are ACKed with the old sequence numbers in TIME_WAIT. Only a bare SYN may reopen through the forwarder. The revised tests also cover a forwarder that declines the connection.",
       "evidence": [
         {
           "label": "Packet traces: native Linux, proposed forwarder, and correction",
@@ -39079,6 +39079,10 @@
         {
           "label": "Posted review",
           "url": "https://github.com/google/gvisor/pull/15019#pullrequestreview-5739193389"
+        },
+        {
+          "label": "Author applied the guard and expanded the regression tests",
+          "url": "https://github.com/google/gvisor/pull/15019#issuecomment-6583440607"
         }
       ],
       "settledReviews": [
@@ -45986,8 +45990,8 @@
       "url": "https://github.com/tamird/gvisor/commit/38316d084",
       "group": "runtime",
       "summary": "PrintGraph now returns the original writer error directly in text and HTML mode. It streams through a private buffer without flushing a caller-owned buffer. On stock, the closed-pipe case reported success in both modes and the other three controls passed. All four passed on the revision with the same tests.",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T22:04:01.189746+00:00",
+      "status": "Agent work",
+      "updatedAt": "2026-11-02T22:17:21.705842+00:00",
       "evidence": [
         {
           "label": "Original stock/fixed graph printer results and test output",
@@ -46004,6 +46008,12 @@
           "head": "57b52c547d6f60fb4c89f83c896c7e8f89db9145",
           "outcome": "needs-work",
           "at": "2026-11-02T21:53:09.343406+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "38316d084325c7785d1d7e172a6db5e0caf0afc0",
+          "outcome": "needs-work",
+          "at": "2026-11-02T22:17:21.705842+00:00"
         }
       ],
       "refinement": {
@@ -46016,16 +46026,16 @@
           "base": "5b317311427fabfc62ffeca7d76b1622ff83f7b4"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "38316d084325c7785d1d7e172a6db5e0caf0afc0",
-        "baseHead": "5b317311427fabfc62ffeca7d76b1622ff83f7b4",
-        "url": "https://github.com/tamird/gvisor/commit/38316d084",
-        "title": "Report write failures when printing a state graph",
-        "requestedAt": "2026-11-02T22:04:01.189746+00:00",
-        "summary": "Open the revision that returns write errors directly and preserves caller-owned buffering?",
-        "body": "A closed pipe or full disk could truncate a text or HTML checkpoint dump\nwithout PrintGraph reporting an error. A caller such as runsc statefile\ncould then replace an existing output file with the truncated dump.\n\nFlush a private buffer after each graph object and return the writer's\nerror to the caller. This keeps output streaming even for large objects\nand leaves a caller-supplied buffer under the caller's control."
+      "followup": {
+        "owner": "State checkpointing",
+        "sourceHead": "38316d084325c7785d1d7e172a6db5e0caf0afc0",
+        "observedAt": "2026-11-02T22:17:21.705842+00:00",
+        "disposition": "Contributor declined this revision",
+        "nextAction": "Review the contributor feedback before preparing another proposal. No approval is pending.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/38316d084",
+          "https://github.com/tamird/gvisor/actions/runs/41533115417/artifacts/13183400567"
+        ]
       }
     }
   ],
