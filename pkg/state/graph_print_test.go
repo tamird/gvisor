@@ -17,6 +17,7 @@ package state
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"strings"
 	"sync"
@@ -97,6 +98,17 @@ func encodeRawGraph(t *testing.T, root any) []byte {
 		t.Fatalf("ReadFull: %v", err)
 	}
 	return raw
+}
+
+func TestPrintGraphWriteError(t *testing.T) {
+	raw := encodeRawGraph(t, new(int))
+	r, w := io.Pipe()
+	r.Close()
+	for _, asHTML := range []bool{false, true} {
+		if err := PrintGraph(w, raw, 0, asHTML); !errors.Is(err, io.ErrClosedPipe) {
+			t.Errorf("PrintGraph(html=%v) = %v, want closed pipe", asHTML, err)
+		}
+	}
 }
 
 func TestPrintGraphSliceNotation(t *testing.T) {

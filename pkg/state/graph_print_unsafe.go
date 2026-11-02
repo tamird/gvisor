@@ -33,8 +33,20 @@ import (
 // load callbacks.
 func PrintGraph(w io.Writer, data []byte, graph uint64, asHTML bool) error {
 	return safely(func() {
-		printGraph(w, data, int(graph), asHTML)
+		printGraph(graphPrintWriter{w}, data, int(graph), asHTML)
 	})
+}
+
+// graphPrintWriter stops the traversal on the first output error. PrintGraph's
+// safely boundary returns it to the caller along with any decoding errors.
+type graphPrintWriter struct{ io.Writer }
+
+func (w graphPrintWriter) Write(p []byte) (int, error) {
+	n, err := w.Writer.Write(p)
+	if err != nil {
+		panic(err)
+	}
+	return n, nil
 }
 
 // printGraph prints a single object graph.
