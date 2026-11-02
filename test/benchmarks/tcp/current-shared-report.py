@@ -172,33 +172,60 @@ def project(folder, public):
     return [json.loads(line) for line in records]
 
 
-def reconcile(wire, data, events, public, recovery):
+def reconcile(wire, data, events, public, recovery, write_events=True):
     selected = wire["netstack"]["client_port"]
     assert data["sockets"]["netstack"]["client_port"] == selected
     full = {}
     ack_receipts = defaultdict(list)
+    source_isn = None
+    new_data = []
+    last_payload = None
+    high = 0
     for stack, dev in (("netstack","client.1"), ("linux","client2.1")):
         flow = wire[stack]
         actual = flow["client_port"], flow["wan_port"]
         first = None
-        with gzip.open(public / f"measured-cubic-netstack-{dev}-packets.tsv.gz", "rt") as f:
+        path = public / f"measured-cubic-netstack-{dev}-packets.tsv.gz"
+        with path.open("rb") as source, gzip.open(source, "rt") as f:
             for row in csv.DictReader(f, delimiter="\t"):
                 ports = int(row["tcp.srcport"]), int(row["tcp.dstport"])
                 when = int(Decimal(row["frame.time_epoch"])*1_000_000_000)
+                if stack == "netstack" and ports == actual:
+                    seq, size = int(row["tcp.seq_raw"]), int(row["tcp.len"])
+                    if int(row["tcp.flags"], 0) & 2:
+                        assert source_isn in (None,seq)
+                        source_isn = seq
+                    if size:
+                        assert source_isn is not None
+                        last_payload = when
+                        offset = (seq-source_isn-1) % 2**32
+                        assert offset<=high and (offset==high or offset+size<=high)
+                        if offset==high:
+                            high += size
+                            new_data.append(when)
                 if first is None and ports == actual and int(row["tcp.len"]) == flow["wire_mss"]:
                     first = when
                 if stack == "netstack" and ports == actual[::-1] and int(row["tcp.flags"], 0) & 16 and row["tcp.options.timestamp.tsval"]:
                     left = row["tcp.options.sack_le"].split(",") if row["tcp.options.sack_le"] else []
                     right = row["tcp.options.sack_re"].split(",") if row["tcp.options.sack_re"] else []
                     assert len(left) == len(right)
-                    key = (int(row["tcp.ack_raw"]), int(row["tcp.options.timestamp.tsval"]), tuple((int(a),int(b)) for a,b in zip(left,right)))
-                    ack_receipts[key].append(when)
+                    # tcp.ack_raw is absolute. tshark's SACK edges are relative
+                    # to the observed sending socket's SYN, not its first data.
+                    assert source_isn is not None
+                    edges = tuple((int(a),int(b)) for a,b in zip(left,right))
+                    absolute = tuple(((source_isn+a)%2**32,(source_isn+b)%2**32) for a,b in edges)
+                    key = (int(row["tcp.ack_raw"]), int(row["tcp.options.timestamp.tsval"]), absolute)
+                    ack_receipts[key].append((when,edges))
         assert first is not None
         full[stack] = first
     selected_events = [dict(e) for e in events if e["peer"]==44000 and e["port"]==selected]
     assert [e["ordinal"] for e in selected_events] == list(range(1,len(selected_events)+1))
     assert all(a["ns"] <= b["ns"] for a,b in zip(selected_events,selected_events[1:]))
     counts = Counter()
+    ack_matches = Counter()
+    duplicate_kind = Counter()
+    proof = None
+    wrapped_edges = timer_events = empty_sacks = 0
     for e in selected_events:
         cause = e["cause"]
         assert cause in CAUSES and (recovery or cause not in {"rack_ack","rack_reorder_timer","tlp_confirmation"})
@@ -207,18 +234,73 @@ def reconcile(wire, data, events, public, recovery):
         counts[cause] += 1
         if cause in {"rack_ack","dupack_scoreboard","tlp_confirmation"}:
             key=(e["ack"],e["ack_tsval"],tuple((b["Start"],b["End"]) for b in e["ack_sacks"] or []))
-            matches=[t for t in ack_receipts.get(key,()) if t <= e["ns"]]
+            all_matches = ack_receipts.get(key, ())
+            matches = [(t, edges) for t, edges in all_matches if t <= e["ns"]]
             e["capture_ack_candidates_before"] = len(matches)
-            e["latest_matching_ack_before_us"] = (e["ns"]-max(matches))/1000 if matches else None
+            e["capture_ack_candidates_total"] = len(all_matches)
+            ack_matches["unique" if len(matches)==len(all_matches)==1 else "ambiguous" if matches else "unmatched"] += 1
+            empty_sacks += not key[2]
+            if len(matches)==len(all_matches)==1:
+                t, edges = matches[0]
+                e["ack_to_decision_us"] = (e["ns"]-t)/1000
+                wrapped_edges += sum(source_isn+x>=2**32 for pair in edges for x in pair)
+                if edges and proof is None:
+                    proof = dict(event=e["ordinal"], wire_ns=t, sender_isn=source_isn,
+                                 raw_ack=key[0], tsval=key[1], tshark_sacks=edges, raw_event_sacks=key[2])
+            if cause == "dupack_scoreboard":
+                duplicate_kind["threshold_met" if e["dupacks"]>=3 else "scoreboard_only"] += 1
         else:
             assert "ack" not in e
+            timer_events += 1
         e["since_first_full_ms"] = (e["ns"] - full["netstack"])/1e6
-    (public / "payload-decisions.jsonl").write_text("".join(json.dumps(e)+"\n" for e in selected_events))
-    return {"counts":{c:counts[c] for c in CAUSES}, "events":len(selected_events),
+    if write_events:
+        (public / "payload-decisions.jsonl").write_text("".join(json.dumps(e)+"\n" for e in selected_events))
+    assert len(new_data) == wire["netstack"]["original_packets"] and high == wire["netstack"]["original_bytes"]
+    def interval(start, end):
+        rows = [e for e in selected_events if start<=e["ns"]<=end]
+        return dict(start_s=(start-full["netstack"])/1e9, end_s=(end-full["netstack"])/1e9,
+                    duration_s=(end-start)/1e9, decisions=dict(Counter(e["cause"] for e in rows)))
+    _, start, end = max((b-a,a,b) for a,b in zip(new_data,new_data[1:]))
+    return {"ack_matches":dict(ack_matches),"ack_normalization_example":proof,
+            "observed_wrapped_sack_edges":wrapped_edges,"ack_events_without_sack":empty_sacks,
+            "timer_events_without_triggering_ack":timer_events,"dupack_scoreboard":dict(duplicate_kind),
+            "longest_between_new_sends":interval(start,end),
+            "final_new_send_to_last_payload":interval(new_data[-1],last_payload),
+            "first_ms_by_cause":{c:next((e["since_first_full_ms"] for e in selected_events if e["cause"]==c),None) for c in CAUSES},
+            "counts":{c:counts[c] for c in CAUSES}, "events":len(selected_events),
             "first":selected_events[0] if selected_events else None,
             "full_mss_ns":full, "full_mss_order":sorted(full,key=full.get),
             "ack_wire_matches":sum(e.get("capture_ack_candidates_before",0)>0 for e in selected_events),
             "ack_events":sum("ack" in e for e in selected_events)}
+
+def replay(archive):
+    """Recheck the original public packet and event tables; no new traffic."""
+    import hashlib
+    import zipfile
+    sha = hashlib.sha256(archive.read_bytes()).hexdigest()
+    assert sha == "a224f229cf2f51c3bc7667265cf3d36d3bdb87f24bdd7b64bff729af6b8ef770"
+    with zipfile.ZipFile(archive) as z:
+        v = json.loads(z.read("verdict.json"))
+        assert v["status"] == "pass" and not v["missing"] and not v["failures"]
+        summary = {}
+        for path, result in sorted(v["passed"].items()):
+            arm = path.split("/")[0]
+            public = zipfile.Path(z, at=arm+"/")
+            events = [json.loads(line) for line in (public/"all-decisions.jsonl").read_text().splitlines()]
+            q = reconcile(result["wire"],result,events,public,arm.endswith("-on"),write_events=False)
+            for key in ("counts","events","full_mss_ns","full_mss_order","ack_events"):
+                assert q[key] == result["decisions"][key], (arm,key)
+            assert q["ack_matches"] == {"unique":q["ack_events"]} and q["full_mss_order"]==["netstack","linux"]
+            summary[arm] = dict(socket_port=result["wire"]["netstack"]["client_port"],
+                                received=result["receiver_rates"], decisions=q)
+        return dict(artifact="https://github.com/tamird/gvisor/actions/runs/41396975788/artifacts/13120670595",
+                    sha256=sha, lineage=z.read("lineage.txt").decode().splitlines(), arm=summary)
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) == 3 and sys.argv[1]=="--replay":
+        print(json.dumps(replay(Path(sys.argv[2])),indent=2))
+        raise SystemExit(0)
 
 root=Path(os.environ["RUNNER_TEMP"])/"qualification/current-shared"
 destination=Path(os.environ["RUNNER_TEMP"])/"tcp-public"

@@ -1,0 +1,502 @@
+{
+  "artifact": "https://github.com/tamird/gvisor/actions/runs/41396975788/artifacts/13120670595",
+  "sha256": "a224f229cf2f51c3bc7667265cf3d36d3bdb87f24bdd7b64bff729af6b8ef770",
+  "lineage": [
+    "aa767e4c43d011121271551fe24da501a56f729d",
+    "6489fd4c9dc4d093c3adcc7d4412867da2e89a62",
+    "a89de7271af9ded5f5112651e0d504b58b08c116",
+    "bdb37e5c98364876b71c9664e86ab3501b6e6999"
+  ],
+  "arm": {
+    "primary1-off": {
+      "socket_port": 22087,
+      "received": {
+        "netstack": {
+          "max_zero_delivery_interval_seconds": 0,
+          "bytes": 42336256,
+          "seconds": 45.102929,
+          "mbps": 7.509269475603236
+        },
+        "linux": {
+          "max_zero_delivery_interval_seconds": 0,
+          "bytes": 56754176,
+          "seconds": 45.103223,
+          "mbps": 10.066540211549848
+        }
+      },
+      "decisions": {
+        "ack_matches": {
+          "unique": 13
+        },
+        "ack_normalization_example": {
+          "event": 1,
+          "wire_ns": 1793599558612675000,
+          "sender_isn": 858013982,
+          "raw_ack": 858374360,
+          "tsval": 1397573725,
+          "tshark_sacks": [
+            [
+              465890,
+              470150
+            ]
+          ],
+          "raw_event_sacks": [
+            [
+              858479872,
+              858484132
+            ]
+          ]
+        },
+        "observed_wrapped_sack_edges": 0,
+        "ack_events_without_sack": 0,
+        "timer_events_without_triggering_ack": 3,
+        "dupack_scoreboard": {
+          "threshold_met": 7,
+          "scoreboard_only": 6
+        },
+        "longest_between_new_sends": {
+          "start_s": 0.970426,
+          "end_s": 1.724557,
+          "duration_s": 0.754131,
+          "decisions": {
+            "rto": 1
+          }
+        },
+        "final_new_send_to_last_payload": {
+          "start_s": 45.699776,
+          "end_s": 45.699776,
+          "duration_s": 0.0,
+          "decisions": {}
+        },
+        "first_ms_by_cause": {
+          "tlp_confirmation": null,
+          "rack_reorder_timer": null,
+          "dupack_scoreboard": 606.566409,
+          "rack_ack": null,
+          "rto": 971.937728
+        },
+        "counts": {
+          "tlp_confirmation": 0,
+          "rack_reorder_timer": 0,
+          "dupack_scoreboard": 13,
+          "rack_ack": 0,
+          "rto": 3
+        },
+        "events": 16,
+        "first": {
+          "ack": 858374360,
+          "ack_sacks": [
+            {
+              "Start": 858479872,
+              "End": 858484132
+            }
+          ],
+          "ack_tsval": 1397573725,
+          "cause": "dupack_scoreboard",
+          "cwnd": 265,
+          "cwnd_after": 188,
+          "dupacks": 3,
+          "marked": 0,
+          "ns": 1793599558612729409,
+          "nxt": 858734916,
+          "ordinal": 1,
+          "out": 265,
+          "peer": 44000,
+          "port": 22087,
+          "queued": 3833964,
+          "recovery": false,
+          "recovery_after": true,
+          "rto_ns": 200000000,
+          "sacked": 0,
+          "sacked_bytes": 4260,
+          "ssthresh": 265,
+          "ssthresh_after": 185,
+          "tlp_high": 0,
+          "una": 858374360,
+          "capture_ack_candidates_before": 1,
+          "capture_ack_candidates_total": 1,
+          "ack_to_decision_us": 54.409,
+          "since_first_full_ms": 606.566409
+        },
+        "full_mss_ns": {
+          "netstack": 1793599558006163000,
+          "linux": 1793599558517867000
+        },
+        "full_mss_order": [
+          "netstack",
+          "linux"
+        ],
+        "ack_wire_matches": 13,
+        "ack_events": 13
+      }
+    },
+    "primary1-on": {
+      "socket_port": 39314,
+      "received": {
+        "netstack": {
+          "max_zero_delivery_interval_seconds": 2.9995559453964233,
+          "bytes": 40370176,
+          "seconds": 45.102816,
+          "mbps": 7.160559730904607
+        },
+        "linux": {
+          "max_zero_delivery_interval_seconds": 1.000905990600586,
+          "bytes": 46399488,
+          "seconds": 45.102637,
+          "mbps": 8.230026639018911
+        }
+      },
+      "decisions": {
+        "ack_matches": {
+          "unique": 15
+        },
+        "ack_normalization_example": {
+          "event": 1,
+          "wire_ns": 1793599499723510000,
+          "sender_isn": 3125242413,
+          "raw_ack": 3125602791,
+          "tsval": 896507631,
+          "tshark_sacks": [
+            [
+              465890,
+              467310
+            ]
+          ],
+          "raw_event_sacks": [
+            [
+              3125708303,
+              3125709723
+            ]
+          ]
+        },
+        "observed_wrapped_sack_edges": 0,
+        "ack_events_without_sack": 0,
+        "timer_events_without_triggering_ack": 19,
+        "dupack_scoreboard": {},
+        "longest_between_new_sends": {
+          "start_s": 1.291901,
+          "end_s": 5.767395,
+          "duration_s": 4.475494,
+          "decisions": {
+            "rto": 11,
+            "rack_ack": 11
+          }
+        },
+        "final_new_send_to_last_payload": {
+          "start_s": 45.229655,
+          "end_s": 45.229655,
+          "duration_s": 0.0,
+          "decisions": {}
+        },
+        "first_ms_by_cause": {
+          "tlp_confirmation": null,
+          "rack_reorder_timer": 16457.76055,
+          "dupack_scoreboard": null,
+          "rack_ack": 605.25767,
+          "rto": 971.596618
+        },
+        "counts": {
+          "tlp_confirmation": 0,
+          "rack_reorder_timer": 7,
+          "dupack_scoreboard": 0,
+          "rack_ack": 15,
+          "rto": 12
+        },
+        "events": 34,
+        "first": {
+          "ack": 3125602791,
+          "ack_sacks": [
+            {
+              "Start": 3125708303,
+              "End": 3125709723
+            }
+          ],
+          "ack_tsval": 896507631,
+          "cause": "rack_ack",
+          "cwnd": 265,
+          "cwnd_after": 188,
+          "dupacks": 1,
+          "marked": 78,
+          "ns": 1793599499723575670,
+          "nxt": 3125963347,
+          "ordinal": 1,
+          "out": 265,
+          "peer": 44000,
+          "port": 39314,
+          "queued": 3833964,
+          "recovery": false,
+          "recovery_after": true,
+          "rto_ns": 200000000,
+          "sacked": 1,
+          "sacked_bytes": 1420,
+          "ssthresh": 265,
+          "ssthresh_after": 185,
+          "tlp_high": 0,
+          "una": 3125602791,
+          "capture_ack_candidates_before": 1,
+          "capture_ack_candidates_total": 1,
+          "ack_to_decision_us": 65.67,
+          "since_first_full_ms": 605.25767
+        },
+        "full_mss_ns": {
+          "netstack": 1793599499118318000,
+          "linux": 1793599499645853000
+        },
+        "full_mss_order": [
+          "netstack",
+          "linux"
+        ],
+        "ack_wire_matches": 15,
+        "ack_events": 15
+      }
+    },
+    "primary2-off": {
+      "socket_port": 31751,
+      "received": {
+        "netstack": {
+          "max_zero_delivery_interval_seconds": 0,
+          "bytes": 37355520,
+          "seconds": 45.108684,
+          "mbps": 6.6249806799950095
+        },
+        "linux": {
+          "max_zero_delivery_interval_seconds": 0,
+          "bytes": 62259200,
+          "seconds": 45.131699,
+          "mbps": 11.03600376312002
+        }
+      },
+      "decisions": {
+        "ack_matches": {
+          "unique": 15
+        },
+        "ack_normalization_example": {
+          "event": 1,
+          "wire_ns": 1793599617529683000,
+          "sender_isn": 3875613309,
+          "raw_ack": 3875972267,
+          "tsval": 3111364617,
+          "tshark_sacks": [
+            [
+              465890,
+              470150
+            ]
+          ],
+          "raw_event_sacks": [
+            [
+              3876079199,
+              3876083459
+            ]
+          ]
+        },
+        "observed_wrapped_sack_edges": 0,
+        "ack_events_without_sack": 0,
+        "timer_events_without_triggering_ack": 2,
+        "dupack_scoreboard": {
+          "threshold_met": 9,
+          "scoreboard_only": 6
+        },
+        "longest_between_new_sends": {
+          "start_s": 0.945444,
+          "end_s": 1.922043,
+          "duration_s": 0.976599,
+          "decisions": {
+            "rto": 2
+          }
+        },
+        "final_new_send_to_last_payload": {
+          "start_s": 45.800915,
+          "end_s": 45.800915,
+          "duration_s": 0.0,
+          "decisions": {}
+        },
+        "first_ms_by_cause": {
+          "tlp_confirmation": null,
+          "rack_reorder_timer": null,
+          "dupack_scoreboard": 606.671828,
+          "rack_ack": null,
+          "rto": 964.209077
+        },
+        "counts": {
+          "tlp_confirmation": 0,
+          "rack_reorder_timer": 0,
+          "dupack_scoreboard": 15,
+          "rack_ack": 0,
+          "rto": 2
+        },
+        "events": 17,
+        "first": {
+          "ack": 3875972267,
+          "ack_sacks": [
+            {
+              "Start": 3876079199,
+              "End": 3876083459
+            }
+          ],
+          "ack_tsval": 3111364617,
+          "cause": "dupack_scoreboard",
+          "cwnd": 265,
+          "cwnd_after": 188,
+          "dupacks": 3,
+          "marked": 0,
+          "ns": 1793599617529760828,
+          "nxt": 3876334135,
+          "ordinal": 1,
+          "out": 265,
+          "peer": 44000,
+          "port": 31751,
+          "queued": 3835384,
+          "recovery": false,
+          "recovery_after": true,
+          "rto_ns": 200000000,
+          "sacked": 0,
+          "sacked_bytes": 4260,
+          "ssthresh": 265,
+          "ssthresh_after": 185,
+          "tlp_high": 0,
+          "una": 3875972267,
+          "capture_ack_candidates_before": 1,
+          "capture_ack_candidates_total": 1,
+          "ack_to_decision_us": 77.828,
+          "since_first_full_ms": 606.671828
+        },
+        "full_mss_ns": {
+          "netstack": 1793599616923089000,
+          "linux": 1793599617443160000
+        },
+        "full_mss_order": [
+          "netstack",
+          "linux"
+        ],
+        "ack_wire_matches": 15,
+        "ack_events": 15
+      }
+    },
+    "primary2-on": {
+      "socket_port": 26807,
+      "received": {
+        "netstack": {
+          "max_zero_delivery_interval_seconds": 9.000005960464478,
+          "bytes": 1149720,
+          "seconds": 45.107941,
+          "mbps": 0.2039055606639195
+        },
+        "linux": {
+          "max_zero_delivery_interval_seconds": 0,
+          "bytes": 97386496,
+          "seconds": 45.102367,
+          "mbps": 17.273859884116504
+        }
+      },
+      "decisions": {
+        "ack_matches": {
+          "unique": 107
+        },
+        "ack_normalization_example": {
+          "event": 3,
+          "wire_ns": 1793599677101799000,
+          "sender_isn": 2193497052,
+          "raw_ack": 2194186638,
+          "tsval": 2547372784,
+          "tshark_sacks": [
+            [
+              1364826,
+              1373346
+            ],
+            [
+              1360566,
+              1361986
+            ],
+            [
+              1258002,
+              1286510
+            ]
+          ],
+          "raw_event_sacks": [
+            [
+              2194861878,
+              2194870398
+            ],
+            [
+              2194857618,
+              2194859038
+            ],
+            [
+              2194755054,
+              2194783562
+            ]
+          ]
+        },
+        "observed_wrapped_sack_edges": 0,
+        "ack_events_without_sack": 0,
+        "timer_events_without_triggering_ack": 115,
+        "dupack_scoreboard": {},
+        "longest_between_new_sends": {
+          "start_s": -0.101732,
+          "end_s": 0.0,
+          "duration_s": 0.101732,
+          "decisions": {}
+        },
+        "final_new_send_to_last_payload": {
+          "start_s": 1.094642,
+          "end_s": 45.278394,
+          "duration_s": 44.183752,
+          "decisions": {
+            "rto": 111,
+            "rack_ack": 107,
+            "rack_reorder_timer": 3
+          }
+        },
+        "first_ms_by_cause": {
+          "tlp_confirmation": null,
+          "rack_reorder_timer": 604.905373,
+          "dupack_scoreboard": null,
+          "rack_ack": 1176.816646,
+          "rto": 1176.547706
+        },
+        "counts": {
+          "tlp_confirmation": 0,
+          "rack_reorder_timer": 4,
+          "dupack_scoreboard": 0,
+          "rack_ack": 107,
+          "rto": 111
+        },
+        "events": 222,
+        "first": {
+          "cause": "rack_reorder_timer",
+          "cwnd": 265,
+          "cwnd_after": 188,
+          "dupacks": 0,
+          "marked": 64,
+          "ns": 1793599676530216373,
+          "nxt": 2194217986,
+          "ordinal": 1,
+          "out": 265,
+          "peer": 44000,
+          "port": 26807,
+          "queued": 3833964,
+          "recovery": false,
+          "recovery_after": true,
+          "rto_ns": 200000000,
+          "sacked": 2,
+          "sacked_bytes": 2840,
+          "ssthresh": 265,
+          "ssthresh_after": 185,
+          "tlp_high": 0,
+          "una": 2193857430,
+          "since_first_full_ms": 604.905373
+        },
+        "full_mss_ns": {
+          "netstack": 1793599675925311000,
+          "linux": 1793599676426055000
+        },
+        "full_mss_order": [
+          "netstack",
+          "linux"
+        ],
+        "ack_wire_matches": 107,
+        "ack_events": 107
+      }
+    }
+  }
+}
