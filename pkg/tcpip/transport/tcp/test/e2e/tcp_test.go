@@ -5832,6 +5832,75 @@ func TestReusePort(t *testing.T) {
 	}
 }
 
+func TestTimeWaitReuseWireObservation(t *testing.T) {
+	for _, timestamps := range []bool{false, true} {
+		t.Run(fmt.Sprintf("timestamps=%t", timestamps), func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			c := context.NewWithOpts(t, context.Options{EnableV4: true, MTU: e2e.DefaultMTU, Clock: clock})
+			defer c.Cleanup()
+			const port = 40000
+			if err := c.Stack().SetPortRange(port, port); err != nil {
+				t.Fatal(err)
+			}
+			reuse := tcpip.TCPTimeWaitReuseOption(tcpip.TCPTimeWaitReuseGlobal)
+			if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &reuse); err != nil {
+				t.Fatal(err)
+			}
+			peer := c.CreateConnectedWithOptionsNoDelay(header.TCPSynOptions{TS: timestamps, TSVal: 42, WS: -1})
+			old := c.EP
+			old.Close()
+			fin := c.GetPacket()
+			defer fin.Release()
+			checker.IPv4(t, fin, checker.TCP(checker.SrcPort(port), checker.DstPort(context.TestPort), checker.TCPFlags(header.TCPFlagFin|header.TCPFlagAck)))
+			h := header.TCP(header.IPv4(fin.AsSlice()).Payload())
+			opts := h.ParsedOptions()
+			if opts.TS != timestamps {
+				t.Fatalf("FIN timestamp = %t, want %t", opts.TS, timestamps)
+			}
+			peer.Flags = header.TCPFlagFin | header.TCPFlagAck
+			peer.AckNum++
+			if timestamps {
+				peer.RecentTS = opts.TSVal
+				peer.SendPacketWithTS(nil, 43)
+			} else {
+				peer.SendPacket(nil, nil)
+			}
+			finalACK := c.GetPacket()
+			defer finalACK.Release()
+			checker.IPv4(t, finalACK, checker.TCP(checker.SrcPort(port), checker.TCPFlags(header.TCPFlagAck), checker.TCPAckNum(uint32(peer.NextSeqNum+1))))
+			c.Stack().Pause()
+			c.Stack().Resume()
+			if got := tcp.EndpointState(old.State()); got != tcp.StateTimeWait {
+				t.Fatalf("after FIN: old state = %s, want TIME-WAIT", got)
+			}
+			clock.Advance(1250 * time.Millisecond)
+			c.Create(-1)
+			err := c.EP.Connect(tcpip.FullAddress{Addr: context.TestAddr, Port: context.TestPort})
+			switch err.(type) {
+			case *tcpip.ErrConnectStarted:
+				syn := c.GetPacket()
+				defer syn.Release()
+				checker.IPv4(t, syn, checker.TCP(checker.SrcPort(port), checker.DstPort(context.TestPort), checker.TCPFlags(header.TCPFlagSyn)))
+				if got := tcp.EndpointState(old.State()); got != tcp.StateClose {
+					t.Fatalf("after SYN: old state = %s, want CLOSED", got)
+				}
+				t.Logf("TIMEWAIT_NETSTACK timestamps=%t age_ms=1250 port=%d syn=true", timestamps, port)
+			case *tcpip.ErrNoPortAvailable:
+				if got := tcp.EndpointState(old.State()); got != tcp.StateTimeWait {
+					t.Fatalf("after port refusal: old state = %s, want TIME-WAIT", got)
+				}
+				if packet := c.GetPacketNonBlocking(); packet != nil {
+					packet.Release()
+					t.Fatal("port unavailable but a packet was transmitted")
+				}
+				t.Logf("TIMEWAIT_NETSTACK timestamps=%t age_ms=1250 port=%d syn=false", timestamps, port)
+			default:
+				t.Fatalf("unexpected Connect error: %v", err)
+			}
+		})
+	}
+}
+
 func TestTimeWaitAssassination(t *testing.T) {
 	var wg sync.WaitGroup
 	defer wg.Wait()
