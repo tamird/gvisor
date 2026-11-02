@@ -1,0 +1,54 @@
+name: Verify the posted replies and graph decision
+on:
+  push:
+    branches: [qualification/work-map-pending-9318f2887]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the live UI and the curated pair
+        id: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 9318f2887e5c46d911b867f64b9b50f67d3ddf54
+          test "$(git rev-parse HEAD^^)" = 7389dfbcbf3cc26e4a1dbe12fd7fccf5fcbbf0a2
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          test "$(git diff --name-only HEAD^^ HEAD^)" = "$(printf '%s\n' github-status.json registry.json)"
+          sha256sum -c <<'INPUTS'
+          e5d01ececbb039823104599713efd9082379b42e00b724e4580a0ffedf37230a  app.js
+          5f1870457660882d90a38125a8cec4fc56c566ebf9fdf040b74eb6b64f03d73e  registry.json
+          d6a5179d4ffcca30c4a2514d876293ec6acee6933ea6cb9ad80a10e461849c27  github-status.json
+          INPUTS
+          mkdir results
+      - name: Check the canonical metadata pair
+        id: metadata
+        if: always() && steps.source.outcome == 'success'
+        run: |
+          node metadata-preflight.mjs . > results/preflight.json
+          python3 - <<'PYTHON'
+          from pathlib import Path
+          import subprocess,json
+          from work_states import record_states
+          r=json.loads(Path('registry.json').read_bytes());s=json.loads(Path('github-status.json').read_bytes());old=json.loads(subprocess.check_output(['git','show','HEAD^^:github-status.json']));nodes={n['id']:n for n in r['nodes']};states=record_states(s['prs'],r,old,s['checkedAt'])
+          for k,anchor in [('pr:16596','4448582193'),('pr:15972','4448596038')]:
+              n=nodes[k];assert n['settledReviews'][-1]['postedURL'].endswith(anchor) and n['settledReviews'][-1]['outcome']=='approved' and 'contributorReview' not in n and 'contributor-review' not in states[k];assert old['workStates'][k].pop('contributor-review')['scope']==n['head']
+          g='branch:state-graph-print-errors';n=nodes[g];assert n['contributorReview']['head']==n['head']==states[g]['contributor-review']['scope'] and n['head'].startswith('265ff93b2') and [x['head'][:9] for x in n['settledReviews'] if x['outcome']=='needs-work']==['57b52c547','38316d084'];old['workStates'][g]=states[g]
+          for k,end in [('branch:grpc-native-codegen','/43825'),('branch:rules-go-declared-stdlib-sources','/4774')]:
+              n=nodes[k];assert not n.get('humanAction') and not n.get('contributorReview') and n['followup']['evidence'][0].endswith(end)
+          old['registryDate']=r['meta']['updatedAt'];assert old==s
+          PYTHON
+      - name: Publish the bounded verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pending-proposals-preflight
+          path: results/preflight.json
+          if-no-files-found: error
