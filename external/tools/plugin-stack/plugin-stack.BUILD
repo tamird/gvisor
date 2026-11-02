@@ -40,7 +40,8 @@ _MAKE_ARGS = [
     "'EXTRA_HOST_LDFLAGS:=$(LDFLAGS)'",
     "'DPDK_TARGET:=$(RTE_TARGET)'",
     "DPDK_MACHINE=ivb",
-    "EXTRA_CFLAGS='-g -O3 -fPIC -fno-omit-frame-pointer -DLOOK_ASIDE_BACKEND -Wno-error'",
+    # DPDK 18.11 uses pread64/pwrite64; musl requires this feature macro.
+    "EXTRA_CFLAGS='-D_LARGEFILE64_SOURCE -g -O3 -fPIC -fno-omit-frame-pointer -DLOOK_ASIDE_BACKEND -Wno-error'",
 ]
 
 _BUILD_DATA = [
