@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T05:08:02+00:00",
+    "updatedAt": "2026-11-02T05:12:01+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36236,8 +36236,8 @@
       "title": "Finish loaded fields before copying their values",
       "url": "https://github.com/google/gvisor/pull/16713",
       "status": "open",
-      "updatedAt": "2026-11-02T04:56:17+00:00",
-      "summary": "The published change fixes legacy reader callbacks. Since graph decoding became the default, the same fixture also exposes a graph-reader error: the enclosing hook copied 0 instead of 2 from an inline child. The six map-key and map-value controls passed. A two-engine amendment is in remote qualification.",
+      "updatedAt": "2026-11-02T05:12:01+00:00",
+      "summary": "The published PR fixes legacy restore ordering. With graph decoding now the default, the same fixture returned success while an enclosing hook copied 0 instead of 2. The amendment finishes the fields before running the enclosing hooks in both readers.",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -36247,6 +36247,10 @@
         }
       ],
       "evidence": [
+        {
+          "label": "Exact-tree normal and race cases and six paired warm restore measurements",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41391648482/artifacts/13118052075"
+        },
         {
           "label": "Unchanged current-master graph reader, original report and log",
           "url": "https://github.com/tamird/gvisor/actions/runs/41390699623/artifacts/13116824768"
@@ -36267,7 +36271,26 @@
           "label": "Eight ordinary-map benchmark pairs: one more allocation and 40 bytes per Load",
           "url": "https://github.com/tamird/gvisor/actions/runs/40967483993"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "d7b1012300396fa2fc231060839ca6268b0adff1"
+        },
+        "after": {
+          "head": "d125b1fbc17eb4b51e4eb1a9b8ee7fd5ac8990da"
+        }
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "baseHead": "d7b1012300396fa2fc231060839ca6268b0adff1",
+        "head": "d125b1fbc17eb4b51e4eb1a9b8ee7fd5ac8990da",
+        "url": "https://github.com/tamird/gvisor/commit/d125b1fbc",
+        "requestedAt": "2026-11-02T05:12:01+00:00",
+        "title": "Amend #16713 to restore fields before enclosing hooks in both readers",
+        "summary": "The seven map and inline cases passed with both checkpoint formats, normally and with the race detector. The 20,000-node warm graph benchmark took 128.856 ms on stock and 133.128 ms on the candidate (medians, six pairs, candidate slower in five). Allocations were unchanged in both measured fixtures.",
+        "body": "The new graph change queues each loader’s AfterLoad hooks after its nested fields and value conversions. It reuses the existing callback records. Normal suites ran 11,553 cases with 85 skips. Race suites ran 11,597 cases with 87 skips. The proposed single commit has the same tree as the measured product."
+      }
     },
     {
       "id": "pr:16718",
