@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T22:17:21.705842+00:00",
+    "updatedAt": "2026-11-02T22:21:46.902482+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31658,7 +31658,7 @@
       "url": "https://github.com/google/gvisor/pull/16596",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T21:53:09.343406+00:00",
+      "updatedAt": "2026-11-02T22:21:46.902482+00:00",
       "summary": "Aditya’s review found that reducing the congestion window after a tail probe left the published sender in fast recovery. On two 10 ms RTT traces it waited 3 seconds to retransmit the next loss. The amended sender retried in 220 and 223 ms. Both senders still waited for a timeout on an ambiguous ACK and repaired a separate hole in 3 ms when the peer SACKed a later segment. Master produced three of the four observations and repaired a different segment in the ambiguous case. The final revision changes which recovery statistic counts the repaired probe.",
       "evidence": [
         {
@@ -31708,6 +31708,14 @@
         {
           "label": "Response to the maintainer on the published amendment",
           "url": "https://github.com/google/gvisor/pull/16596#issuecomment-6589285965"
+        },
+        {
+          "label": "Tail-probe ACK for unsent data: original native, published, and composed packet cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41533832046/artifacts/13184470515"
+        },
+        {
+          "label": "Unanswered input-validation finding",
+          "url": "https://github.com/google/gvisor/pull/16596#discussion_r4447247458"
         }
       ],
       "followup": {
@@ -31740,6 +31748,16 @@
         "diffSha256": "7ea84e182bfa75748dd8f7567fb126e7ffd5685ec22562e718b85b1e74787486",
         "summary": "After a tail probe repairs the hole, the amended sender reduces its congestion window without entering fast recovery. This lets it probe the next loss before the retransmission timeout.",
         "evidence": "https://github.com/google/gvisor/compare/1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4..e1a3e3de2bbeabfebfe45a0cb3c90c41add81709"
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "head": "e1a3e3de2bbeabfebfe45a0cb3c90c41add81709",
+        "url": "https://github.com/google/gvisor/pull/16596#discussion_r4447247458",
+        "title": "Reply about ACKs beyond the data sent",
+        "requestedAt": "2026-11-02T22:21:46.902482+00:00",
+        "summary": "Post this measured result in the existing #16596 review thread? The source amendment was approved separately.",
+        "body": "I reproduced this on e1a3e3de2. After the original flight was acknowledged, an ACK one byte past SND.NXT cut cwnd from 22 segments to 2. When a valid ACK then covered newly sent data, the probe evidence had already been consumed.\n\n#16378 rejects the invalid ACK before it reaches the sender. With both changes, cwnd stayed at 22 until the valid ACK, then fell to 2. Linux likewise stayed at 10 and then fell to 5. All five existing packet controls still passed in both stacks [1]. I’d keep the upper bound at that shared receiver check. The added packet case also links directly to Linux’s tcp_process_tlp_ack [2].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41533832046/artifacts/13184470515\n[2]: https://github.com/tamird/gvisor/commit/5703ff9db\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -41158,13 +41176,13 @@
       "type": "branch",
       "repo": "tamird/grpc",
       "ref": "proposal/bazel-plugin-symlink",
-      "head": "64745d2424a189c0e1661e1c10a26a3704c29144",
-      "title": "[bazel] Build protoc plugins without a shell",
-      "url": "https://github.com/tamird/grpc/commit/64745d242",
+      "head": "b056f09306c64c8166339d94b61ac6c1b3b2ba51",
+      "title": "[bazel] Replace the protoc plugin copy with a symlink",
+      "url": "https://github.com/tamird/grpc/commit/b056f0930",
       "group": "rbe",
       "status": "Human submission required",
-      "updatedAt": "2026-11-02T19:05:28.791131+00:00",
-      "summary": "Use a Bazel symlink to give each compiled protoc plugin its final filename. The plugin can then build on Linux workers without Bash.",
+      "updatedAt": "2026-11-02T22:21:46.902482+00:00",
+      "summary": "A Bazel symlink gives the compiled protoc plugin its public filename without running cp.",
       "evidence": [
         {
           "label": "Both installed universal macOS plugins after Bazel cleanup",
@@ -41189,26 +41207,30 @@
         {
           "label": "Pinned ZIP writer reads the executable bytes",
           "url": "https://github.com/bazelbuild/rules_pkg/blob/cd7e10846/pkg/private/zip/build_zip.py#L163-L184"
+        },
+        {
+          "label": "Earlier implementation comparison: regular copy and symlink",
+          "url": "https://github.com/tamird/grpc/compare/ccfbbe369...64745d242"
         }
       ],
       "refinement": {
         "before": {
-          "head": "ccfbbe36987afbad715cbca3c6bc791a7e33d2c9",
+          "head": "64745d2424a189c0e1661e1c10a26a3704c29144",
           "base": "db13f8422846404ffa2e81e5d76d19488df30586"
         },
         "after": {
-          "head": "64745d2424a189c0e1661e1c10a26a3704c29144",
+          "head": "b056f09306c64c8166339d94b61ac6c1b3b2ba51",
           "base": "db13f8422846404ffa2e81e5d76d19488df30586"
         }
       },
       "humanAction": {
         "status": "pending",
         "kind": "submission",
-        "head": "64745d2424a189c0e1661e1c10a26a3704c29144",
-        "title": "[bazel] Build protoc plugins without a shell",
-        "summary": "Use a Bazel symlink to give each compiled protoc plugin its final filename. The plugin can then build on Linux workers without Bash.",
-        "body": "Building `//src/compiler:grpc_cpp_plugin` starts a shell to copy the\ncompiled plugin to `grpc_cpp_plugin_binary`. On a Linux build worker\nwithout Bash, the copy fails and protoc cannot run the plugin.\n\nUse a Bazel symlink for that final name. It points to the universal\nbinary on macOS and the native binary elsewhere. Both build file\ngenerators need to recognize the new rule to keep generating the plugin\ntargets.\n\nOn Intel macOS I packaged the C++ and Objective-C plugins with\n`pkg_zip`. The ZIPs contained regular executables. Both unpacked\nplugins generated code after I removed the Bazel output tree.",
-        "url": "https://github.com/grpc/grpc/compare/master...tamird:grpc:proposal/bazel-plugin-symlink?expand=1&title=%5Bbazel%5D%20Build%20protoc%20plugins%20without%20a%20shell&body=Building%20%60%2F%2Fsrc%2Fcompiler%3Agrpc_cpp_plugin%60%20starts%20a%20shell%20to%20copy%20the%0Acompiled%20plugin%20to%20%60grpc_cpp_plugin_binary%60.%20On%20a%20Linux%20build%20worker%0Awithout%20Bash%2C%20the%20copy%20fails%20and%20protoc%20cannot%20run%20the%20plugin.%0A%0AUse%20a%20Bazel%20symlink%20for%20that%20final%20name.%20It%20points%20to%20the%20universal%0Abinary%20on%20macOS%20and%20the%20native%20binary%20elsewhere.%20Both%20build%20file%0Agenerators%20need%20to%20recognize%20the%20new%20rule%20to%20keep%20generating%20the%20plugin%0Atargets.%0A%0AOn%20Intel%20macOS%20I%20packaged%20the%20C%2B%2B%20and%20Objective-C%20plugins%20with%0A%60pkg_zip%60.%20The%20ZIPs%20contained%20regular%20executables.%20Both%20unpacked%0Aplugins%20generated%20code%20after%20I%20removed%20the%20Bazel%20output%20tree.",
+        "head": "b056f09306c64c8166339d94b61ac6c1b3b2ba51",
+        "title": "[bazel] Replace the protoc plugin copy with a symlink",
+        "summary": "A Bazel symlink gives the compiled protoc plugin its public filename without running cp.",
+        "body": "grpc_proto_plugin runs cp to give an already-built executable its public filename. On a Bazel worker without a shell, that copy fails before protoc can use the plugin. Use a Bazel symlink action to give the executable the same name.",
+        "url": "https://github.com/grpc/grpc/compare/master...tamird:grpc:proposal/bazel-plugin-symlink?expand=1&title=%5Bbazel%5D%20Replace%20the%20protoc%20plugin%20copy%20with%20a%20symlink&body=grpc_proto_plugin%20runs%20cp%20to%20give%20an%20already-built%20executable%20its%20public%20filename.%20On%20a%20Bazel%20worker%20without%20a%20shell%2C%20that%20copy%20fails%20before%20protoc%20can%20use%20the%20plugin.%20Use%20a%20Bazel%20symlink%20action%20to%20give%20the%20executable%20the%20same%20name.",
         "policyURL": "https://github.com/grpc/grpc/blob/db13f8422/CONTRIBUTING.md#generative-ai-policy"
       }
     },
