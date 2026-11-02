@@ -1,34 +1,36 @@
-name: Recover TCP captures and compare receiver intervals
+name: Reconcile original TCP receiver windows
 on:
   push:
-    branches: [qualification/tcp-mss-forwarder-captures]
+    branches: [qualification/tcp-mss-forwarder-reconcile]
 permissions:
   contents: read
   actions: read
 jobs:
-  capture:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-mss-forwarder-captures'
+  reconcile:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-mss-forwarder-reconcile'
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 5, persist-credentials: false}
-    - name: Prepare the existing native Linux TCP tools
-      run: |
-        set -euo pipefail
-        sudo -n apt-get update -qq
-        sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tshark tcpdump iproute2 iperf3 ethtool bc kmod iputils-ping
-        sudo -n modprobe sch_netem
-    - name: Retrieve the exact original report and executable artifacts
+      with: {fetch-depth: 2, persist-credentials: false}
+    - name: Retrieve only the exact original artifacts
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
-        set -euo pipefail
-        mkdir -p "$RUNNER_TEMP/mss-forwarder"
-        gh api repos/tamird/gvisor/actions/artifacts/13135903972/zip > "$RUNNER_TEMP/mss-forwarder/original.zip"
-        gh api repos/tamird/gvisor/actions/artifacts/13137025228/zip > "$RUNNER_TEMP/mss-forwarder/helpers.zip"
-    - name: Verify original bytes, capture controls and eight duration pairs
-      run: python3 test/rbe/tcp_mss_forwarder.py recover
+        python3 - <<'PYTHON'
+        import hashlib, os, subprocess
+        from pathlib import Path
+        root = Path(os.environ['RUNNER_TEMP']) / 'mss-forwarder'
+        root.mkdir()
+        for artifact, name in [(13137577796, 'duration.zip'), (13137025228, 'helpers.zip')]:
+            result = subprocess.run(['gh', 'api', f'repos/tamird/gvisor/actions/artifacts/{artifact}/zip?receipt=' + os.environ['GITHUB_RUN_ID']], capture_output=True)
+            if result.returncode:
+                print('artifact retrieval failed', artifact, result.returncode, hashlib.sha256(result.stderr).hexdigest())
+                raise SystemExit(result.returncode)
+            (root / name).write_bytes(result.stdout)
+        PYTHON
+    - name: Verify original bytes and the prespecified interior windows
+      run: python3 test/rbe/tcp_mss_forwarder.py reconcile
     - name: Validate the typed publication
       id: privacy
       if: always()
@@ -39,8 +41,19 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: ${{ always() && steps.privacy.outcome == 'success' }}
       with:
-        name: tcp-mss-forwarder-captures
-        path: |
-          ${{ runner.temp }}/mss-forwarder/public/build.json
-          ${{ runner.temp }}/mss-forwarder/public/result.json
+        name: tcp-mss-forwarder-reconciled
+        path: ${{ runner.temp }}/mss-forwarder/public/result.json
         if-no-files-found: error
+    - name: Publish the compact disposition and individual pairs
+      if: ${{ always() && steps.privacy.outcome == 'success' }}
+      run: |
+        python3 - <<'PYTHON'
+        import json, os
+        from pathlib import Path
+        row = json.loads((Path(os.environ['RUNNER_TEMP']) / 'mss-forwarder/public/result.json').read_text())
+        summary = {key: row.get(key) for key in ('verdict', 'original_run', 'original_workflow_conclusion', 'original_source', 'original_zip_sha256', 'error', 'execution_finish_unix', 'original_verifier_unix', 'reconciled_at_unix', 'medians_mbps', 'native_drift', 'pairs')}
+        text = json.dumps(summary, indent=2)
+        print(text)
+        with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as stream:
+            stream.write('```json\n' + text + '\n```\n')
+        PYTHON

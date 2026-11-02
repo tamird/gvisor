@@ -155,6 +155,10 @@ def packets(directory, arm, record):
     record.update(interface="server.1", packets=result,
                   pcap_sha256=digest(directory / "capture.pcap"),
                   pcap_bytes=(directory / "capture.pcap").stat().st_size)
+    record["large_payload_lengths"] = validate_packets(result, arm)
+
+
+def validate_packets(result, arm):
     require(len(result) == 200, "short independent capture")
     syn = [r for r in result if int(r["tcp.flags"], 16) & 0x12 == 0x02]
     require(syn, "missing client SYN")
@@ -173,7 +177,7 @@ def packets(directory, arm, record):
         require(unfragmented(r), "fragmented packet")
     data = [r for r in result if r["ip.src"] == "10.0.0.3" and int(r["tcp.len"]) > 1000]
     require(data, "no sender data")
-    record["large_payload_lengths"] = sorted({int(r["tcp.len"]) for r in data})
+    return sorted({int(r["tcp.len"]) for r in data})
 
 
 def observe(directory, arm, amount):
@@ -227,23 +231,30 @@ def observe(directory, arm, amount):
     qdiscs = {dev: json.loads((directory / f"{dev}-qdisc.json").read_text()) for dev in ("wan.0", "wan.1")}
     result = {"sent": sent, "received": received, "sender_writes": data, "stack": write["stack"], "links": links, "features": features, "sysctl": controls, "qdiscs": qdiscs}
     if amount is None:
-        intervals = [entry["sum"] for entry in iperf["intervals"]]
-        measured = [entry for entry in intervals if entry["omitted"] is False]
-        require(any(entry["omitted"] is True for entry in intervals), "no observed omitted warmup")
-        require(len(measured) >= 18 and all(entry["sender"] is False for entry in intervals), "receiver interval selection")
-        for entry in measured:
-            require(entry["bytes"] >= 0 and math.isfinite(entry["seconds"]) and entry["seconds"] > 0, "invalid receiver interval")
-            require(abs(entry["end"] - entry["start"] - entry["seconds"]) < 0.00001, "interval duration")
-            require(math.isclose(entry["bits_per_second"], entry["bytes"] * 8 / entry["seconds"], rel_tol=0.00001), "interval rate/byte identity")
-        require(all(abs(a["end"] - b["start"]) < 0.001 for a, b in zip(measured, measured[1:])), "noncontiguous measured intervals")
-        interior = measured[1:-1]
-        seconds = sum(entry["seconds"] for entry in interior)
-        delivered = sum(entry["bytes"] for entry in interior)
-        require(seconds >= 15 and delivered <= received["bytes"], "interior receiver coverage")
-        result.update(receiver_intervals=intervals,
-                      steady={"selection": "non-omitted receiver intervals excluding first and last", "interval_count": len(interior), "start": interior[0]["start"], "end": interior[-1]["end"], "bytes": delivered, "seconds": seconds, "mbps": delivered * 8 / seconds / 1e6},
-                      write_histogram_scope="entire warmup and transfer, including termination")
+        result.update(receiver_window(iperf))
     return result
+
+
+def receiver_window(iperf):
+    intervals = [entry["sum"] for entry in iperf["intervals"]]
+    measured = [entry for entry in intervals if entry["omitted"] is False]
+    require(any(entry["omitted"] is True for entry in intervals), "no observed omitted warmup")
+    require(len(measured) >= 18 and all(entry["sender"] is False for entry in intervals), "receiver interval selection")
+    # The first interval straddles iperf's omit reset. The predeclared window
+    # excludes both boundaries; do not require their timestamps to reconcile.
+    interior = measured[1:-1]
+    for entry in interior:
+        require(entry["bytes"] >= 0 and math.isfinite(entry["seconds"]) and entry["seconds"] > 0, "invalid receiver interval")
+        require(abs(entry["end"] - entry["start"] - entry["seconds"]) < 0.00001, "interval duration")
+        require(math.isclose(entry["bits_per_second"], entry["bytes"] * 8 / entry["seconds"], rel_tol=0.00001), "interval rate/byte identity")
+    require(all(abs(a["end"] - b["start"]) < 0.001 for a, b in zip(interior, interior[1:])), "noncontiguous measured intervals")
+    seconds = sum(entry["seconds"] for entry in interior)
+    delivered = sum(entry["bytes"] for entry in interior)
+    require(seconds >= 15 and delivered <= iperf["end"]["sum_received"]["bytes"], "interior receiver coverage")
+    return {"receiver_intervals": interior,
+            "discarded_boundaries": [{**e, "timestamp_difference": e["end"] - e["start"] - e["seconds"]} for e in (measured[0], measured[-1])],
+            "steady": {"selection": "non-omitted receiver intervals excluding first and last", "interval_count": len(interior), "start": interior[0]["start"], "end": interior[-1]["end"], "bytes": delivered, "seconds": seconds, "mbps": delivered * 8 / seconds / 1e6, "zero_byte_intervals": sum(e["bytes"] == 0 for e in interior)},
+            "write_histogram_scope": "entire warmup and transfer, including termination"}
 
 
 def run(recovery=False):
@@ -374,6 +385,79 @@ def recover():
     require(not unfragmented({fields[0]: "0", fields[1]: "True"}) and not unfragmented({fields[0]: "1", fields[1]: "False"}), "fragment rejection")
     run(recovery=True)
 
+
+def reconcile():
+    """Reconcile the original selected windows without executing either helper."""
+    PUBLIC.mkdir(parents=True, exist_ok=True)
+    row = {"verdict": "INCOMPLETE", "original_run": 41437984360, "original_workflow_conclusion": "failure", "started_at_unix": time.time(), "captures": [], "comparisons": []}
+    try:
+        original_source = "3ae4d9e8cf77c809e34b84b20f8c590724c1657d"
+        require(command(["git", "rev-parse", "HEAD^"]) == original_source, "original source parent")
+        require(not command(["git", "diff", original_source, "--", "test/benchmarks", "pkg", "runsc", "tools", "MODULE.bazel", ".bazelrc"]), "runtime source changed")
+        require(not command(["git", "status", "--porcelain", "--untracked-files=no"]), "tracked changes")
+        row["source"] = command(["git", "rev-parse", "HEAD"])
+        archive = ROOT / "duration.zip"
+        row["original_zip_sha256"] = digest(archive)
+        require(row["original_zip_sha256"] == "9242e74a8ee4e30de61ea2c96b7c97600b8b3c657b138adb2e483caa7e971fae", "original archive digest")
+        with zipfile.ZipFile(archive) as z:
+            require(set(z.namelist()) == {"build.json", "result.json"}, "original archive members")
+            d = json.loads(z.read("result.json"))
+            require(json.loads(z.read("build.json")) == d["build"], "original build receipt")
+        require(d["source"] == original_source and d["production"] == BASE and d["fixture"] == FIXTURE, "original source identity")
+        require(d["verdict"] == d["comparison_verdict"] == "INCOMPLETE" and d["capture_verdict"] == "PASS", "original verdicts")
+        require(d["build"]["source"] == ORIGINAL and d["build"]["verdict"] == "PASS" and d["cpus"] == [0, 1], "original executable/CPU identity")
+        helpers = ROOT / "helpers.zip"
+        require(digest(helpers) == "a2f08e06cfbee8bb1da7d9da5da4a366b710fd493299cd50305590eb554489f1", "helper artifact digest")
+        with zipfile.ZipFile(helpers) as z:
+            require(json.loads(z.read("public/build.json")) == d["build"], "helper source receipt")
+            for name, record in d["build"]["binaries"].items():
+                data = z.read("private/helpers/" + name)
+                require(len(data) == record["bytes"] and hashlib.sha256(data).hexdigest() == record["sha256"], "original helper bytes")
+        row.update(original_source=original_source, production=BASE, fixture=FIXTURE, binaries=d["build"]["binaries"], host=d["host"], parser_preflight=d["parser_preflight"], original_verifier_unix=d["verdict_unix"], execution_finish_unix=max(t["finish_unix"] for t in d["trials"]))
+        require(len(d["original"]["trials"]) == 13 and sum(t["verdict"] == "PASS" for t in d["original"]["trials"]) == 9, "retained fixed-byte outcomes")
+        refusal = next(t for t in d["original"]["trials"] if t["name"] == "pair-1-on")
+        require(refusal["exit"] == 1 and "Connection refused" in refusal["retained"]["iperf.json"]["error"], "retained pre-transfer refusal")
+        row["fixed_byte_original"] = {"run": 41434992762, "verdict": d["original"]["verdict"], "passing_trials": 9, "refusal": refusal}
+        expected = ["capture-" + arm for arm in ("linux", "off", "on")] + ["steady-linux-start"]
+        for i in range(8):
+            expected.extend(f"steady-pair-{i}-{arm}" for arm in (("on", "off") if i % 2 == 0 else ("off", "on")))
+        expected.append("steady-linux-end")
+        require([t["name"] for t in d["trials"]] == expected and all(t["exit"] == 0 for t in d["trials"]), "original trial inventory/exits")
+        for t in d["trials"]:
+            if t["capture_control"]:
+                require(t["verdict"] == "PASS", "original capture failure")
+                require(validate_packets(t["capture"]["packets"], t["arm"]) == t["capture"]["large_payload_lengths"], "original packet projection")
+                require(set(t["links"]) == set(DEVICES) and set(t["links"].values()) == {1500}, "capture MTUs")
+                require(all(set(t["features"][name].values()) == {"off"} for name in DEVICES if name not in {"br0", "br1"}), "capture offloads")
+                row["captures"].append(t)
+                continue
+            require(t["verdict"] == "INCOMPLETE" and t["error"] == "ValueError: interval duration", "unexpected original trial failure")
+            p = t["retained"]["iperf.json"]
+            require(p["error"] is None, "original iperf error")
+            start = p["start"]["test_start"]
+            require((start["reverse"], start["blksize"], start["duration"], start["omit"]) == (1, BUFFER, 20, 3), "original reverse workload")
+            w = t["retained"]["server-writes.json"]
+            require(w["buffer"] == BUFFER and w["gomaxprocs"] == w["num_cpu"] == 2 and w["gso_max"] == 0 and not w["gro"] and not w["swgso"], "original forwarder configuration")
+            total = lambda r: sum(int(n) * count for n, count in r["accepted"].items())
+            data = [r for r in w["writes"] if r["to"] == ("*net.TCPConn" if t["arm"] == "linux" else "*gonet.TCPConn") and total(r) > (1 << 20)]
+            require(len(data) == 1 and data[0]["accepted"].get(str(BUFFER), 0) > 0, "original data Write stream")
+            if t["arm"] != "linux":
+                state = w["stack"]["in"]
+                require((state["sack"], state["cc"], state["recovery"]) == (t["arm"] == "on", "cubic", 1), "original netstack setting")
+            r = {"name": t["name"], "arm": t["arm"], "original_exit": t["exit"], "original_error": t["error"], "start_unix": t["start_unix"], "finish_unix": t["finish_unix"], "sender_writes": data[0], "stack": w["stack"], "full_receiver": p["end"]["sum_received"], **receiver_window(p)}
+            require(abs(r["discarded_boundaries"][0]["timestamp_difference"]) >= 0.00001, "original rejected boundary")
+            row["comparisons"].append(r)
+        by_name = {r["name"]: r for r in row["comparisons"]}
+        row["pairs"] = [{"pair": i, "order": ["on", "off"] if i % 2 == 0 else ["off", "on"], "on": by_name[f"steady-pair-{i}-on"]["steady"], "off": by_name[f"steady-pair-{i}-off"]["steady"], "on_over_off": by_name[f"steady-pair-{i}-on"]["steady"]["mbps"] / by_name[f"steady-pair-{i}-off"]["steady"]["mbps"]} for i in range(8)]
+        row["medians_mbps"] = {arm: statistics.median(p[arm]["mbps"] for p in row["pairs"]) for arm in ("on", "off")}
+        row["native_drift"] = {"start": by_name["steady-linux-start"]["steady"], "end": by_name["steady-linux-end"]["steady"]}
+        row["verdict"] = "RECOVERED"
+    except Exception as exc:
+        row["error"] = type(exc).__name__ + ": " + str(exc)[:180]
+    row["reconciled_at_unix"] = time.time()
+    put(PUBLIC / "result.json", row)
+    require(row["verdict"] == "RECOVERED", "original reconciliation incomplete")
+
 def scan():
     require(PUBLIC.is_dir(), "no evidence directory")
     for p in PUBLIC.iterdir():
@@ -404,4 +488,4 @@ def scan_helpers():
 
 
 if __name__ == "__main__":
-    {"build": build, "run": run, "scan": scan, "scan_helpers": scan_helpers, "recover": recover}[sys.argv[1]]()
+    {"build": build, "run": run, "scan": scan, "scan_helpers": scan_helpers, "recover": recover, "reconcile": reconcile}[sys.argv[1]]()
