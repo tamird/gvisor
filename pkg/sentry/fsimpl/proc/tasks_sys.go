@@ -226,8 +226,9 @@ func (fs *filesystem) sysDirFiles(ctx context.Context, root *auth.Credentials, k
 			"version":            fs.newInode(ctx, root, 0444, newStaticFile(version.LinuxVersion)),
 		}
 	case "kernel/random":
+		ft := fs.VFSFilesystem().FilesystemType().(*FilesystemType)
 		return map[string]kernfs.Inode{
-			"boot_id": fs.newInode(ctx, root, 0444, newStaticFile(randUUID())),
+			"boot_id": fs.newInode(ctx, root, 0444, newStaticFile(ft.getBootID())),
 			"uuid":    fs.newInode(ctx, root, 0444, &uuidData{}),
 		}
 	case "kernel/yama":
