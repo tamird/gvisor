@@ -282,6 +282,7 @@ func (s *sender) detectTLPRecovery(ack seqnum.Value, rcvdSeg *segment) {
 			// Step 2. Either the original packet or the retransmission (in the
 			// form of a probe) was lost. Invoke a congestion control response
 			// equivalent to fast recovery.
+			s.researchEvent("tlp_before", rcvdSeg)
 			s.cc.HandleLossDetected()
 			s.enterRecovery()
 			s.leaveRecovery()
@@ -449,8 +450,10 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 
 	fastRetransmit := false
 	if !rc.snd.FastRecovery.Active {
+		rc.snd.researchEvent("rack_timer_before", nil)
 		rc.snd.cc.HandleLossDetected()
 		rc.snd.enterRecovery()
+		rc.snd.researchEvent("rack_timer_entered", nil)
 		fastRetransmit = true
 	}
 

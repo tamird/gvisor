@@ -458,6 +458,17 @@ if [[ -n "${mss_study_dir}" ]]; then
     ethtool -k \$dev > "${mss_study_dir}/\$dev-features.txt"
   done
   ip -j link show > "${mss_study_dir}/root-links.json"
+  # Keep only the short SYN exchange until the Go copy sampler flags a bulk
+  # connection with no returning writes for four consecutive 200 ms samples.
+  # Capture up to 384 subsequent frames on that connection, no other flow.
+  python3 test/rbe/tcp_sack_stall.py wire "${mss_study_dir}" &
+  wire_pid=\$!
+  for i in {1..100}; do
+    [[ -f "${mss_study_dir}/wire-ready" ]] && break
+    kill -0 \$wire_pid
+    sleep 0.02
+  done
+  [[ -f "${mss_study_dir}/wire-ready" ]]
   if ${mss_capture}; then
     tcpdump -U -n -i server.1 -c 200 -s 128 -w "${mss_study_dir}/capture.pcap" 'tcp port 44000' 2> "${mss_study_dir}/capture.log" &
     capture_pid=\$!
@@ -515,12 +526,19 @@ trap cleanup EXIT
 
 # Run the benchmark, recording the results file.
 if [[ -n "${mss_study_dir}" ]]; then
+  date +%s%N > "${mss_study_dir}/iperf-start-ns"
   if ${mss_duration}; then
     ${nsjoin_binary} /tmp/client.netns ${iperf_binary_name} -p ${proxy_port} -c ${client_addr} -R -t ${duration} -O 3 -l 61440 -J > "${mss_study_dir}/iperf.json"
   else
   ${nsjoin_binary} /tmp/client.netns ${iperf_binary_name} -p ${proxy_port} -c ${client_addr} -R -n ${mss_bytes} -l 61440 -J > "${mss_study_dir}/iperf.json"
   fi
   primary=\$?
+  date +%s%N > "${mss_study_dir}/iperf-end-ns"
+  ip -j -s link show > "${mss_study_dir}/link-stats.json"
+  touch "${mss_study_dir}/wire-stop"
+  wait \$wire_pid
+  wire_status=\$?
+  [[ \$primary == 0 ]] && primary=\$wire_status
   for dev in wan.0 wan.1; do
     tc -j -s qdisc show dev \$dev > "${mss_study_dir}/\$dev-qdisc.json"
   done

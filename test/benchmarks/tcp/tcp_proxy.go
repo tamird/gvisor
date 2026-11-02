@@ -446,6 +446,7 @@ func main() {
 		cleanup func() error
 	)
 	if *server {
+		tcp.ResearchObserve = keepEvent
 		in, cleanup, err = newNetstackImpl("server", *serverTCPProbeFile)
 		defer cleanup()
 

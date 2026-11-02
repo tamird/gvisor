@@ -575,6 +575,7 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 		return nil
 	}
 
+	s.researchEvent("rto_before", nil)
 	s.ep.stack.Stats().TCP.Timeouts.Increment()
 	s.ep.stats.SendErrors.Timeouts.Increment()
 
@@ -669,6 +670,7 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	// information is usable after an RTO.
 	s.ep.scoreboard.Reset()
 	s.updateWriteNext(s.writeList.Front())
+	s.researchEvent("rto_reset", nil)
 
 	// RFC 1122 4.2.2.17: Start sending zero window probes when we still see a
 	// zero receive window after retransmission interval and we have data to
@@ -1035,6 +1037,7 @@ var zeroProbeJunk = []byte{0}
 
 // +checklocks:s.ep.mu
 func (s *sender) sendZeroWindowProbe() {
+	s.researchEvent("window_probe", nil)
 	s.unackZeroWindowProbes++
 
 	// Send a zero window probe with sequence number pointing to the last
@@ -1312,6 +1315,9 @@ func (s *sender) detectLoss(seg *segment) (fastRetransmit bool) {
 		s.FastRecovery.HighRxt = s.SndUna - 1
 		// Do run SetPipe() to calculate the outstanding segments.
 		s.SetPipe()
+		if s.state == tcpip.RTORecovery {
+			s.researchEvent("rto_to_disorder", seg)
+		}
 		s.state = tcpip.Disorder
 		return false
 	}
@@ -1329,8 +1335,10 @@ func (s *sender) detectLoss(seg *segment) (fastRetransmit bool) {
 		s.DupAckCount = 0
 		return false
 	}
+	s.researchEvent("dup_before", seg)
 	s.cc.HandleLossDetected()
 	s.enterRecovery()
+	s.researchEvent("dup_entered", seg)
 	return true
 }
 
@@ -1634,6 +1642,9 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 	}
 
 	// Stash away the current window size.
+	if (s.SndWnd == 0) != (rcvdSeg.window == 0) {
+		s.researchEvent("window_edge", rcvdSeg)
+	}
 	s.SndWnd = rcvdSeg.window
 
 	// Disable zero window probing if remote advertises a non-zero receive
@@ -1800,8 +1811,10 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			// If any segment is marked as lost by
 			// RACK, enter recovery and retransmit
 			// the lost segments.
+			s.researchEvent("rack_ack_before", rcvdSeg)
 			s.cc.HandleLossDetected()
 			s.enterRecovery()
+			s.researchEvent("rack_ack_entered", rcvdSeg)
 			fastRetransmit = true
 		}
 
@@ -1945,4 +1958,80 @@ func (s *sender) corkTimerExpired() tcpip.Error {
 	// Drain all the segments.
 	s.sendData()
 	return nil
+}
+
+// ResearchState records only this fork's fixed data flow experiment. Numeric
+// counters are in segments, windows and sequence numbers are in bytes.
+type ResearchState struct {
+	HeadSeq                                                      seqnum.Value
+	HeadLen                                                      int
+	HeadCount                                                    uint32
+	HeadLost                                                     bool
+	At                                                           int64
+	Why                                                          string
+	Local, Remote                                                uint16
+	State                                                        tcpip.CongestionControlState
+	Active, Probing, Sack, Timestamps                            bool
+	Una, Nxt, Last                                               seqnum.Value
+	Window                                                       seqnum.Size
+	Scale                                                        uint8
+	Cwnd, Outstanding, Sacked, MSS, BufUsed, BufSize, Unassigned int
+	MoreUnassigned                                               bool
+	RTO, ToExpiry                                                time.Duration
+	HasAck                                                       bool
+	Ack                                                          seqnum.Value
+	AckWindow                                                    seqnum.Size
+	Blocks                                                       []header.SACKBlock
+}
+
+// ResearchObserve is set before creating the server endpoint.
+var ResearchObserve func(ResearchState)
+
+func (s *sender) researchEvent(why string, seg *segment) {
+	if ResearchObserve != nil {
+		ResearchObserve(s.researchState(why, seg))
+	}
+}
+
+func (s *sender) researchState(why string, seg *segment) ResearchState {
+	id := s.ep.TransportEndpointInfo.ID
+	r := ResearchState{At: time.Now().UnixNano(), Why: why, Local: id.LocalPort, Remote: id.RemotePort, State: s.state, Active: s.FastRecovery.Active, Probing: s.zeroWindowProbing, Sack: s.ep.SACKPermitted, Timestamps: s.ep.SendTSOk, Una: s.SndUna, Nxt: s.SndNxt, Last: s.FastRecovery.Last, Window: s.SndWnd, Scale: s.SndWndScale, Cwnd: s.SndCwnd, Outstanding: s.Outstanding, Sacked: s.SackedOut, MSS: s.MaxPayloadSize, RTO: s.RTO, ToExpiry: -1}
+	if front := s.writeList.Front(); front != nil {
+		r.HeadSeq = front.sequenceNumber
+		r.HeadLen = front.payloadSize()
+		r.HeadCount = front.xmitCount
+		r.HeadLost = front.lost
+	}
+	if s.resendTimer.enabled() {
+		r.ToExpiry = s.resendTimer.target.Sub(s.ep.stack.Clock().NowMonotonic())
+	}
+	s.ep.sndQueueInfo.sndQueueMu.Lock()
+	r.BufUsed = s.ep.sndQueueInfo.SndBufUsed
+	r.BufSize = s.ep.getSendBufferSize()
+	s.ep.sndQueueInfo.sndQueueMu.Unlock()
+	// Read the queued, never-assigned tail; never infer bytes from Outstanding.
+	for n, i := s.writeList.Back(), 0; n != nil && !s.isAssignedSequenceNumber(n); n, i = n.Prev(), i+1 {
+		if i == 128 {
+			r.MoreUnassigned = true
+			break
+		}
+		r.Unassigned += n.payloadSize()
+	}
+	if seg != nil {
+		r.HasAck = true
+		r.Ack = seg.ackNumber
+		r.AckWindow = seg.window
+		r.Blocks = append([]header.SACKBlock(nil), seg.parsedOptions.SACKBlocks...)
+	}
+	return r
+}
+
+// ResearchSample reports an idle socket even if no incoming ACK or timer fires.
+func (e *Endpoint) ResearchSample() ResearchState {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if e.snd == nil {
+		return ResearchState{Why: "no_sender", At: time.Now().UnixNano()}
+	}
+	return e.snd.researchState("sample", nil)
 }

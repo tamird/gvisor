@@ -739,3 +739,6 @@ func (c *UDPConn) LocalAddr() net.Addr {
 	}
 	return fullToUDPAddr(a)
 }
+
+// ResearchEndpoint exposes just this fork's sampled TCP connection.
+func (c *TCPConn) ResearchEndpoint() tcpip.Endpoint { return c.ep }

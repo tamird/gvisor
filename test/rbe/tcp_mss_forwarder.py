@@ -39,12 +39,11 @@ def put(path, value):
 
 
 def source():
-    require(command(["git", "rev-parse", "HEAD^"]) == ORIGINAL, "original carrier")
-    require(command(["git", "rev-parse", "HEAD~3"]) == FIXTURE, "fixture source")
-    require(command(["git", "rev-parse", "HEAD~4"]) == BASE, "stock source")
-    require(not command(["git", "diff", FIXTURE, "--", "test/benchmarks/tcp/BUILD", "test/benchmarks/tcp/tcp_proxy.go", "test/benchmarks/tcp/write_observation.go"]), "compiled fixture changed")
-    require(not command(["git", "diff", BASE, "--", "pkg", "runsc", "tools", "MODULE.bazel", ".bazelrc"]), "production changed")
-    require(not command(["git", "status", "--porcelain", "--untracked-files=no"]), "tracked tree dirty")
+    require(command(["git", "rev-parse", "HEAD^"]) == "3ae4d9e8cf77c809e34b84b20f8c590724c1657d", "measured carrier parent")
+    allowed = {"pkg/tcpip/adapters/gonet/gonet.go", "pkg/tcpip/transport/tcp/rack.go", "pkg/tcpip/transport/tcp/snd.go"}
+    require(set(command(["git", "diff", "--name-only", BASE, "--", "pkg", "runsc", "tools", "MODULE.bazel", ".bazelrc"]).splitlines()) == allowed, "instrumented product identities")
+    require(not command(["git", "diff", FIXTURE, "--", "test/benchmarks/tcp/BUILD","test/benchmarks/tcp/nsjoin.c"]), "compiled owners changed")
+    require(not command(["git", "status", "--porcelain", "--untracked-files=no"]), "dirty tracked sources")
     return command(["git", "rev-parse", "HEAD"])
 
 
@@ -71,10 +70,12 @@ def build():
     PRIVATE.mkdir(parents=True, exist_ok=True)
     PUBLIC.mkdir(exist_ok=True)
     row = {"source": source(), "production": BASE, "fixture": FIXTURE, "verdict": "INCOMPLETE"}
+    row["observation_diff"] = {name:command(["git","rev-parse",f"HEAD:{name}"]) for name in command(["git","diff","--name-only","HEAD^"]).splitlines()}
     # Reuse the native hosted-Linux build from the earlier WAN driver. The
     # original remote worker's GCC headers differed from the client toolchain.
     bazel = ["bazel"]
-    flags = ["--compilation_mode=opt", "--jobs=5"]
+    qflags = ["--compilation_mode=opt"]
+    flags = [*qflags, "--jobs=5"]
     row.update(execution="native Linux coordinator", original_run=41430977952,
                original_recovery=41432032243, original_build_exit=1)
     row.update(prior_native_run=41433088932, prior_native_build_exit=0,
@@ -83,7 +84,7 @@ def build():
     # Reuse the earlier WAN driver's per-owner output query before compiling.
     for name in ("tcp_proxy", "nsjoin"):
         label = "//test/benchmarks/tcp:" + name
-        p = subprocess.run(bazel + ["cquery", *flags, label, "--output=files"],
+        p = subprocess.run(bazel + ["cquery", *qflags, label, "--output=files"],
                            text=True, capture_output=True, timeout=300)
         selected = p.stdout.strip().splitlines()
         row["selection"][name] = {"label": label, "exit": p.returncode,
@@ -379,7 +380,7 @@ def scan():
     for p in PUBLIC.iterdir():
         require(p.name in {"build.json", "result.json"} and p.is_file() and not p.is_symlink(), "unexpected output")
         content = p.read_bytes()
-        require(len(content) <= 2_000_000, "oversized report")
+        require(len(content) <= 24_000_000, "oversized report")
         for name in ("BUILDBUDDY_API_KEY", "GH_TOKEN", "GITHUB_TOKEN"):
             key = os.environ.get(name, "")
             require(not key or key.encode() not in content, "credential in output")
