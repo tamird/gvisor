@@ -43,7 +43,7 @@ def main():
     owner = os.environ.get("NOGO_OWNER")
     expected = None
     previous = root / "original-wildcard.zip"
-    if os.environ.get("NOGO_RESUME_ORIGINAL"):
+    if not owner and os.environ.get("NOGO_RESUME_ORIGINAL"):
         assert not owner and previous.is_file() and os.environ["NOGO_RESUME_ORIGINAL"] == "13107794911"
         with zipfile.ZipFile(previous) as z:
             old = json.loads(z.read("owners.json"))
@@ -93,7 +93,7 @@ def main():
                     summaries[ident["testSummary"]["label"]] = ev["testSummary"]["overallStatus"]
                 if "testResult" in ev:
                     t = ev["testResult"]
-                    results[ident["testResult"]["label"]].append({"status": t.get("status"), "cachedLocally": t.get("cachedLocally", False), "strategy": t.get("executionInfo", {}).get("strategy")})
+                    results[ident["testResult"]["label"]].append({"status": t.get("status"), "cachedLocally": t.get("cachedLocally", False), "cachedRemotely": t.get("executionInfo", {}).get("cachedRemotely", False), "strategy": t.get("executionInfo", {}).get("strategy")})
                 if "action" in ev and not ev["action"].get("success", False) and len(actions) < 50:
                     a = ev["action"]
                     detail = a.get("failureDetail", {})
@@ -141,6 +141,11 @@ def main():
     coverage = (configured == expected if expected is not None else
                 configured == {owner} if owner else len(configured) == 871 and known <= configured)
     ok = status == 0 and bazel_exit and bazel_exit["name"] == "SUCCESS" and sets_agree and coverage and set(markers)==configured and log_arms and all(v=="PASSED" for v in summaries.values())
+    if os.environ.get("NOGO_FRESH_RESULTS"):
+        target_strategy = os.environ.get("NOGO_TEST_STRATEGY", "processwrapper-sandbox")
+        ok = bool(ok and all(complete.get(l) is True and len(results[l]) == 1 and
+                             results[l][0] == {"status":"PASSED","cachedLocally":False,"cachedRemotely":False,"strategy":target_strategy}
+                             for l in configured))
     write("owners", {"configured": sorted(configured), "completed": complete, "summaries":summaries, "results":results, "markers":markers, "failedLogs":failures})
     receipt = {"verified":bool(ok),"source":os.environ["PRODUCT"],"host":platform.machine(),"aarch64_gcc":shutil.which("aarch64-linux-gnu-gcc"),"bazel_command":cmd[2:],"bazel_exit":bazel_exit,"status":status,"started":started,"finished":finished,"filed":int(time.time()),"diskFreeBefore":free_start,"diskFreeAfter":shutil.disk_usage(".").free,"configured":len(configured),"summaries":dict(collections.Counter(summaries.values())),"testRunners":len(results),"amd64Markers":sum(m["amd64"] for m in markers.values()),"arm64Markers":sum(m["arm64"] for m in markers.values()),"eventTailLost":event_tail_lost,"actions":actions,"firstErrors":errs,"consoleTail":list(tail)}
     receipt["invocation"] = invocation

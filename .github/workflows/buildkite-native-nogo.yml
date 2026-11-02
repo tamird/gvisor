@@ -13,7 +13,7 @@ jobs:
     env:
       PRODUCT: 8e13db5ad62802add68356df383e4a581e8eb303
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      NOGO_TIMEOUT: 51m
+      NOGO_FRESH_RESULTS: "1"
       NOGO_RESUME_ORIGINAL: "13107794911"
       DOCKER_BUILD: 'false'
       DOCKER_HOST: unix:///nonexistent-gvisor-builder.sock
@@ -33,9 +33,11 @@ jobs:
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/nogo-receipts" "$RUNNER_TEMP/gnu-platform"
           echo '{"verified":false,"reason":"qualification incomplete"}' > "$RUNNER_TEMP/nogo-receipts/verdict.json"
-          test "$(git rev-parse HEAD^)" = 3f467bd36fdca2958651727c781e35854fff4c2d
+          test "$(git rev-parse HEAD^)" = 7a0430bdd573ec0616205c7a4cae6aa0cd87030c
           git fetch -q --no-tags --depth=1 origin "$PRODUCT"
-          cp .github/qualification/native-nogo.py "$RUNNER_TEMP"
+          cp .github/qualification/native-nogo{,-placement}.py "$RUNNER_TEMP"
+          mkdir -p "$RUNNER_TEMP/nogo-cgroup"
+          echo "$(( $(date +%s) + 53*60 ))" > "$RUNNER_TEMP/nogo-deadline"
           git checkout -q --detach "$PRODUCT"
           sed -n '/^install_.*bazel() {$/,$p' .buildkite/hooks/pre-command > "$RUNNER_TEMP/nogo-setup.bash"
           source "$RUNNER_TEMP/nogo-setup.bash"
@@ -45,33 +47,44 @@ jobs:
           printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","EstimatedMemory":"4GB","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
           umask 077
           {
-            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --strategy=GoCompilePkg=remote,local' 'test --nocache_test_results' 'build --noremote_local_fallback' 'build --remote_download_outputs=toplevel' 'build --jobs=64' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu' 'test --strategy=TestRunner=sandboxed' 'test --local_test_jobs=4'
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'test --nocache_test_results' 'build --noremote_local_fallback' 'build --remote_download_outputs=toplevel' 'build --jobs=64' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu' 'test --strategy=TestRunner=sandboxed' 'test --local_test_jobs=4'
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$RUNNER_TEMP/nogo-resources.bazelrc"
+      - name: Read execution requirements of the configured cgroup actions
+        run: |
+          set -euo pipefail
+          timeout 5m bazel --bazelrc="$RUNNER_TEMP/nogo-resources.bazelrc" aquery --strip=never --include_aspects --output=jsonproto --noinclude_commandline --noinclude_artifacts 'deps(//runsc/cgroup:cgroup_test_nogo)' > "$RUNNER_TEMP/cgroup-actions.json"
+          python3 "$RUNNER_TEMP/native-nogo-placement.py" requirements
+      - name: Execute and verify the cgroup analyzer before the remaining 273
+        env:
+          NOGO_OWNER: //runsc/cgroup:cgroup_test_nogo
+          NOGO_TIMEOUT: 12m
+        run: |
+          set -euo pipefail
+          export NOGO_TEST_STRATEGY="${NOGO_CGROUP_TEST_STRATEGY:-processwrapper-sandbox}"
+          cp "$RUNNER_TEMP/nogo-resources.bazelrc" "$RUNNER_TEMP/nogo-shared.bazelrc"
+          printf 'test --invocation_id=%s\ntest --execution_log_json_file=%s/cgroup-spawns.json\n' "$(cat /proc/sys/kernel/random/uuid)" "$RUNNER_TEMP" >> "$RUNNER_TEMP/nogo-resources.bazelrc"
+          rc=0
+          python3 "$RUNNER_TEMP/native-nogo.py" || rc=$?
+          cp "$RUNNER_TEMP/nogo-receipts/"{verdict,owners}.json "$RUNNER_TEMP/nogo-cgroup/"
+          cp "$RUNNER_TEMP/nogo-shared.bazelrc" "$RUNNER_TEMP/nogo-resources.bazelrc"
+          python3 "$RUNNER_TEMP/native-nogo-placement.py" execution
+          exit "$rc"
       - name: Execute the complementary 273 tests, checking both architecture logs
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$PRODUCT"
           printf 'test --invocation_id=%s\n' "$(cat /proc/sys/kernel/random/uuid)" >> "$RUNNER_TEMP/nogo-resources.bazelrc"
+          budget=$(( $(cat "$RUNNER_TEMP/nogo-deadline") - $(date +%s) ))
+          test "$budget" -gt 30
+          export NOGO_TIMEOUT="${budget}s"
           python3 "$RUNNER_TEMP/native-nogo.py"
-          python3 - <<'PYQUAL'
-          import json, os
-          from pathlib import Path
-          d = Path(os.environ["RUNNER_TEMP"])/"nogo-receipts"
-          v = json.loads((d/"verdict.json").read_text())
-          o = json.loads((d/"owners.json").read_text())
-          assert v["verified"] and v["configured"] == v["testRunners"] == 273, v["outcome"]
-          for label in o["configured"]:
-              assert o["completed"].get(label) is True and o["summaries"][label] == "PASSED"
-              assert o["markers"][label] == {"amd64": True, "arm64": True}
-              [result] = o["results"][label]
-              assert result["status"] == "PASSED" and result["strategy"] == "processwrapper-sandbox" and not result["cachedLocally"], result
-          PYQUAL
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
           name: native-nogo-complement
           path: |
             ${{ runner.temp }}/nogo-receipts/
+            ${{ runner.temp }}/nogo-cgroup/
           if-no-files-found: error
