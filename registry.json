@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T16:48:44.741382+00:00",
+    "updatedAt": "2026-11-02T17:00:21.324445+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -18,7 +18,8 @@
       "bazelbuild/bazel": "none",
       "hermeticbuild/rules_rs": "none",
       "bazel-contrib/rules_distroless": "none",
-      "periareon/rules_cc_autoconf": "none"
+      "periareon/rules_cc_autoconf": "none",
+      "llvm/llvm-project": "none"
     },
     "registeredOnlyRepositories": [
       "nodejs/node",
@@ -28,7 +29,8 @@
       "bazelbuild/bazel",
       "hermeticbuild/rules_rs",
       "bazel-contrib/rules_distroless",
-      "periareon/rules_cc_autoconf"
+      "periareon/rules_cc_autoconf",
+      "llvm/llvm-project"
     ],
     "registryDate": "2026-11-01"
   },
@@ -27056,14 +27058,14 @@
       "url": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T05:08:02+00:00",
-      "summary": "Standalone LLVM source migration 17d37fc9a is published on llvm-project-qualified. Its source patch is unchanged from 6aa2df662 (range-diff =); the prerequisite stack now includes #15146, the separate go-digest documentation-license record ea27b4806, and #16249. Canonical Fetch/Verify passed all 201 records, and GNU parser parity passed on AMD64 and ARM64. GNU/Coral remains selected. This is qualified fork work, not an upstream compiler PR or a contributor-review request.\n\nOn the separate qualification source c5f116723a, a native AMD64 and a native ARM64 TestParser each used the parser built against the merged supplier commit 17f6a30088. The catalog accepted all 201 entries. Both configured LLVM graphs contained 66 AArch64 and 70 X86 backend CodeGen actions, with other backends absent. This check did not repeat the driver-version parity suite. The merged supplier commit still awaits a BCR release.\n\nThe separate supplier change landed in hermetic-llvm #892 at 17f6a30088. It uses ordinary llvm.configure: an explicit root list selects the initial backends and every dependency contributes its requirements. The fresh same-supplier nine-versus-two-backend graph removes 479 configured LLVM C++ compile actions per CPU, matching the earlier comparisons. Those are graph counts, not measured build-time savings. Preserve #15940 until the replacement is delivered; the supplier and compiler switch remain separate.\n\nPreserved earlier source-specific record:\n\nStandalone source migration 6aa2df662 on fork branch llvm-project-source-catalog imports hermetic-llvm’s public @llvm-project repository and moves the NVIDIA parser to LLVM 23.1.2. GNU/Coral remains selected; this is agent-owned qualification, not an upstream PR or a contributor-review request. The catalog now names the actual redistributed llvm-project-23.1.2.src.tar.zst from llvmorg-23.1.2-r1; only metadata changed from 4872f66c2. Prerequisites remain #15146 and #16249, with no dependency on the future compiler switch.\n\nReadiness remains open. Preserve #15940’s backend-reduction work: the current nine-target graph has 663 additional configured LLVM C++ compile actions compared with #15940, but their LLVM pins differ. A same-release comparison is needed before choosing the final backend scope; this count is not a measured compilation-time or runtime result. The existing qualification links remain source-specific.\n\nEarlier catalog mismatch (preserved):\n\nStandalone source migration 4872f66c2 imports hermetic-llvm’s public @llvm-project repository and moves the NVIDIA parser to LLVM 23.1.2, using that supplier’s Bazel overlay and compression libraries. GNU/Coral remains the selected compiler. This is a fork proposal in qualification, not an open upstream PR or a contributor-review request. Its prerequisites are #15146 and #16249; it does not depend on the future C/C++ compiler switch. GNU AMD64 and ARM64 qualification results are pending. The catalog check exposed an archive-pin mismatch: the supplier uses the redistributed .tar.zst archive, while the record named the upstream .xz archive. That catalog correction is in progress; this source is not qualified for contributor review.",
+      "updatedAt": "2026-11-02T16:53:35.881136+00:00",
+      "summary": "Build the NVIDIA ABI parser against hermetic-llvm’s LLVM source using the GNU toolchain. The source change passed parser parity on AMD64 and ARM64 and the 201-entry license audit. A separate native run on each architecture verified that supplier commit 17f6a3008 selects only AArch64 and X86. Delivery needs a BCR release containing that commit, #15146 for the LLVM license terms, and #16249 to enumerate the repository. The independent go-digest notice applies to catalog regeneration with the new classifier.",
       "followup": {
         "owner": "root",
         "sourceHead": "17d37fc9ad63e02bd1e53862ae49136179ec11eb",
         "observedAt": "2026-11-02T05:08:02+00:00",
         "disposition": "Source and GNU parser checks passed; supplier change landed",
-        "nextAction": "Wait for a BCR release containing the merged backend-selection change (17f6a3008). The newest registry pin, 0.8.26, predates it and still requests all nine backends. Then qualify that pin with the gVisor catalog and parser prerequisites.",
+        "nextAction": "Qualify the first BCR release containing backend selection 17f6a3008. Pick only the LLVM migration when rebasing. Keep the LLVM NCSA classifier and repository enumeration prerequisites; route go-digest, QEMU and LTP to the independent catalog work.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb",
           "https://app.buildbuddy.io/invocation/a0ed5b1c-6618-4291-9931-ec00d9183a9f",
@@ -27133,6 +27135,10 @@
         {
           "label": "Upstream merge of hermetic-llvm #892",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a300884d73de0b903316f85c420c45471268"
+        },
+        {
+          "label": "The two migration trees differ only in the independent go-digest policy and catalog record",
+          "url": "https://github.com/tamird/gvisor/compare/6aa2df662..17d37fc9a"
         }
       ],
       "refinement": {
@@ -27153,19 +27159,9 @@
       "title": "Record the go-digest documentation license",
       "url": "https://github.com/tamird/gvisor/commit/17c6a2d9e",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-10-29T15:54:49.236666+00:00",
-      "summary": "The standalone fork records Apache-2.0 source and CC-BY-SA-4.0 documentation for go-digest v1.0.0, including the narrowly scoped documentation exception. It follows #15146 and precedes the LLVM source audit. The combined canonical Fetch/Verify passed 201 records. This policy/catalog change remains separately visible; that passing audit is not contributor approval or upstream delivery.",
-      "followup": {
-        "owner": "root",
-        "sourceHead": "17c6a2d9e5b3a4015f506a694a07f3ba3ab48999",
-        "observedAt": "2026-10-29T15:54:49.236666+00:00",
-        "disposition": "Agent work; no contributor decision pending",
-        "nextAction": "Review and deliver this independent notice/catalog change through the existing license workstream; retain its exact scope and do not infer approval from validation.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/ea27b4806607c7640e2c1f43a5996f80374a78af"
-        ]
-      },
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T16:53:35.881136+00:00",
+      "summary": "go-digest v1.0.0 licenses its Go code under Apache-2.0 and its README and CONTRIBUTING files under CC-BY-SA-4.0. The complete-license classifier in #15146 reports both terms, so a fresh catalog needs a module-specific exception. Both edits apply to the published classifier. QEMU and LTP have separate policy differences.",
       "evidence": [
         {
           "label": "Standalone notice and catalog change",
@@ -27178,6 +27174,18 @@
         {
           "label": "Combined canonical Fetch/Verify",
           "url": "https://app.buildbuddy.io/invocation/a0ed5b1c-6618-4291-9931-ec00d9183a9f"
+        },
+        {
+          "label": "Licenses for source and documentation in the pinned module",
+          "url": "https://github.com/opencontainers/go-digest/blob/ea51bea51/README.md#L91-L93"
+        },
+        {
+          "label": "Two identical regenerated catalogs and 206 entries verified",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40964802913/artifacts/12937627037"
+        },
+        {
+          "label": "Separate 225-entry comparison without the LLVM change; one of 22 fresh-catalog failures concerns go-digest",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41176176621/artifacts/13033092285"
         }
       ],
       "refinement": {
@@ -27187,6 +27195,17 @@
         "after": {
           "head": "17c6a2d9e5b3a4015f506a694a07f3ba3ab48999"
         }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "17c6a2d9e5b3a4015f506a694a07f3ba3ab48999",
+        "baseHead": "6f7d2db61bddacbed530e63aee95b82e45a1da30",
+        "url": "https://github.com/tamird/gvisor/commit/17c6a2d9e",
+        "title": "Record the license for go-digest’s documentation",
+        "summary": "go-digest v1.0.0 licenses its Go code under Apache-2.0 and its README and CONTRIBUTING files under CC-BY-SA-4.0. The complete-license classifier in #15146 reports both terms, so a fresh catalog needs a module-specific exception. Both edits apply to the published classifier. QEMU and LTP have separate policy differences.",
+        "body": "The go-digest v1.0.0 module contains Apache-2.0 Go source and two\nMarkdown files covered by its separate CC-BY-SA-4.0 license [1]. The\nlicense checker finds both terms in the module ZIP, so fetching the\ncatalog no longer reproduces the Apache-only entry. Record both terms\nand scope the documentation exception to this module.\n\n[1]: https://github.com/opencontainers/go-digest/blob/ea51bea51/README.md#L86-L93",
+        "requestedAt": "2026-11-02T16:53:35.881136+00:00"
       }
     },
     {
@@ -41742,9 +41761,9 @@
       "head": "21a5215f89afe39a50bfab5f5ff10a75fffa614a",
       "url": "https://github.com/tamird/hermetic-llvm/commit/21a5215f8",
       "title": "Generate the LLVM instrumentor header without a shell",
-      "updatedAt": "2026-11-02T16:48:44.741382+00:00",
-      "status": "Contributor approved; waiting for upstream submission",
-      "summary": "The reviewed 23.x backport supplies the same template and Starlark binding as the tested LLVM change. Cite its upstream submission when opening the backport.",
+      "updatedAt": "2026-11-02T17:00:21.324445+00:00",
+      "status": "Published",
+      "summary": "Delivered in https://github.com/hermeticbuild/hermetic-llvm/pull/907.",
       "evidence": [
         {
           "label": "Purpose of the overlay patch and the LLVM source it adapts",
@@ -41782,14 +41801,7 @@
           "outcome": "approved",
           "at": "2026-11-02T16:31:46.423209+00:00"
         }
-      ],
-      "followup": {
-        "owner": "LLVM upstream",
-        "sourceHead": "21a5215f89afe39a50bfab5f5ff10a75fffa614a",
-        "observedAt": "2026-11-02T16:31:46.423209+00:00",
-        "disposition": "Ready for backport after upstream submission",
-        "nextAction": "Cite the LLVM submission in the already-approved 23.x backport, which supplies the same generated Starlark binding for hermetic-llvm’s custom overlay."
-      }
+      ]
     },
     {
       "id": "branch:gazelle-native-repo-env",
@@ -43943,8 +43955,8 @@
       "title": "Publish Unix peer credentials with the socket transition",
       "url": "https://github.com/tamird/gvisor/commit/5cc94fa57",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T16:36:54.632738+00:00",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-11-02T16:56:11.198436+00:00",
       "summary": "Remove SetPeerCreds. Listening and connecting now publish credentials while holding their endpoint locks, and a socket pair receives its snapshot before either end is returned. The permanent syscall test checks what old and new clients see when a child relistens and a connected client tries to connect again.",
       "evidence": [
         {
@@ -43974,6 +43986,12 @@
           "head": "b29a7c292010100770b6ba5e4f38b8f47ed68f38",
           "outcome": "changes-requested",
           "at": "2026-11-02T16:20:02.085486+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "5cc94fa57a8d61a1c2d88a5387746d4f995ea8b6",
+          "outcome": "approved",
+          "at": "2026-11-02T16:56:11.198436+00:00"
         }
       ],
       "refinement": {
@@ -43984,16 +44002,12 @@
           "head": "5cc94fa57a8d61a1c2d88a5387746d4f995ea8b6"
         }
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "5cc94fa57a8d61a1c2d88a5387746d4f995ea8b6",
-        "baseHead": "b29a7c292010100770b6ba5e4f38b8f47ed68f38",
-        "url": "https://github.com/tamird/gvisor/commit/5cc94fa57",
-        "title": "Publish Unix peer credentials with the socket transition",
-        "summary": "Remove SetPeerCreds. Listening and connecting now publish credentials while holding their endpoint locks, and a socket pair receives its snapshot before either end is returned. The permanent syscall test checks what old and new clients see when a child relistens and a connected client tries to connect again.",
-        "body": "A client could connect after listen enabled the accept queue but before\nthe listener installed its credentials. It would keep PID 0 and an\nunset UID and GID even after exchanging data.\n\nCommit the credentials under the listener lock on each successful\nlisten. Initialize both socketpair endpoints before returning them.\nConnect already installs its snapshot under the endpoint locks; no\ncaller needs a separate setter.\n\nCheck across fork that relistening changes the PID seen by a new client,\nwhile reconnecting an inherited client with EISCONN preserves its\noriginal peer.",
-        "requestedAt": "2026-11-02T16:36:54.632738+00:00"
+      "followup": {
+        "owner": "Unix sockets",
+        "sourceHead": "5cc94fa57a8d61a1c2d88a5387746d4f995ea8b6",
+        "observedAt": "2026-11-02T16:56:11.198436+00:00",
+        "disposition": "Approved for submission after #14999",
+        "nextAction": "When #14999 merges, rebase the listener and socketpair transition onto its landed version, verify the credential regression, and open the PR."
       }
     },
     {
@@ -44479,9 +44493,9 @@
       "url": "https://github.com/tamird/rules_distroless/commit/af1089c91",
       "group": "bazel",
       "title": "List installed dependency packages in dpkg status",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T16:31:46.423209+00:00",
-      "summary": "A Debian image installed 16 packages but listed only three in its dpkg status file. Select the controls for installed data archives, and let a template that repacks a dependency carry its control explicitly. The three fixtures matched 16, 1 and 15 installed packages on each architecture.",
+      "status": "Published",
+      "updatedAt": "2026-11-02T17:00:21.324445+00:00",
+      "summary": "Delivered in https://github.com/bazel-contrib/rules_distroless/pull/294.",
       "evidence": [
         {
           "label": "Upstream package status regression",
@@ -44492,17 +44506,14 @@
           "url": "https://github.com/tamird/rules_distroless/actions/runs/41481142358/artifacts/13159617340"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "af1089c91c36bfc78719b2836c73d374a66ef092",
-        "baseHead": "15f9fc8d39ba3178c313e61d94feb3f6eb88f95f",
-        "url": "https://github.com/tamird/rules_distroless/commit/af1089c91",
-        "title": "Include installed dependencies in dpkg status",
-        "requestedAt": "2026-11-02T16:31:46.423209+00:00",
-        "summary": "A Debian image installed 16 packages but listed only three in its dpkg status file. Select the controls for installed data archives, and let a template that repacks a dependency carry its control explicitly. The three fixtures matched 16, 1 and 15 installed packages on each architecture.",
-        "body": "Package sets install dependency archives, but their status lists only\nexplicit roots. Match each dependency control archive to its declared\ndata output so custom templates can still omit dependencies.\n\nAllow templates that repack archives to expose the corresponding controls\nexplicitly, and deduplicate shared controls. Keep existing singleton\ncontrol targets and custom template variables compatible.\n\nFixes #261."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "af1089c91c36bfc78719b2836c73d374a66ef092",
+          "outcome": "approved",
+          "at": "2026-11-02T16:56:11.198436+00:00"
+        }
+      ]
     },
     {
       "id": "pr:14999",
@@ -44527,9 +44538,9 @@
       "head": "47a6f55681edffa637e6ccf43c220449f7ce2c50",
       "url": "https://github.com/tamird/llvm-project/commit/47a6f5568",
       "title": "[bazel] Expand the instrumentor runtime template without a shell",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T16:48:44.741382+00:00",
-      "summary": "LLVM compiles the runtime helper as C++ and also emits the header as text. Use the same template as CMake and GN for that text. With an editable checkout and a pinned archive, native Bazel produced identical output; editing the real header regenerated the compiled bytes.",
+      "status": "Published",
+      "updatedAt": "2026-11-02T17:00:21.324445+00:00",
+      "summary": "Delivered in https://github.com/llvm/llvm-project/pull/238034.",
       "evidence": [
         {
           "label": "Editable checkout, rebuild after a real header edit, and immutable archive",
@@ -44548,17 +44559,6 @@
           "url": "https://github.com/llvm/llvm-project/commit/adf91f4bf"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "47a6f55681edffa637e6ccf43c220449f7ce2c50",
-        "baseHead": "1c7a3fd23f422faed9c4abd05f820f19a495a360",
-        "url": "https://github.com/tamird/llvm-project/commit/47a6f5568",
-        "title": "[bazel] Expand the instrumentor runtime template without a shell",
-        "summary": "LLVM compiles the runtime helper as C++ and also emits the header as text. Use the same template as CMake and GN for that text. With an editable checkout and a pinned archive, native Bazel produced identical output; editing the real header regenerated the compiled bytes.",
-        "body": "Instrumentor includes its runtime helper as C++ and emits the same\nheader in generated runtime stubs. CMake and GN wrap the source with\nInstrumentorVariables.inc.in. Bazel spells out the declaration in POSIX\nand Windows commands, so its output omits the template’s license and\ngenerated-file notice and misses changes to the template.\n\nRead the helper while configuring the LLVM repository and substitute it\ninto the shared template with expand_template. Reading the resolved\nheader also makes edits in a local checkout invalidate the substitution.\n\nThanks to @youngd007 for identifying the template divergence while\ninvestigating Windows builds [1]. LLVM subsequently added a Windows\ncommand [2]. The template replaces both commands.\n\nWith LLVM’s pinned Bazel 9.2.0 on Linux, an editable checkout and a\ndigest-pinned source archive produced byte-identical generated headers\nand compiled C++ archives. Editing the helper on the same Bazel server\nchanged the bytes in both outputs [3].\n\nCodex assisted with the implementation and validation.\n\n[1]: https://github.com/llvm/llvm-project/pull/214242\n[2]: https://github.com/llvm/llvm-project/commit/14513d6af\n[3]: https://github.com/tamird/gvisor/actions/runs/41484039296/artifacts/13162350347",
-        "requestedAt": "2026-11-02T16:48:44.741382+00:00"
-      },
       "refinement": {
         "before": {
           "head": "adf91f4bf699eb0bc1f54865ecf7c7f685f06b77"
@@ -44566,7 +44566,115 @@
         "after": {
           "head": "47a6f55681edffa637e6ccf43c220449f7ce2c50"
         }
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "47a6f55681edffa637e6ccf43c220449f7ce2c50",
+          "outcome": "approved",
+          "at": "2026-11-02T17:00:21.324445+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:llvm/llvm-project:238034",
+      "type": "pr",
+      "repo": "llvm/llvm-project",
+      "number": 238034,
+      "ref": "bazel-instrumentor-template",
+      "head": "47a6f55681edffa637e6ccf43c220449f7ce2c50",
+      "title": "[bazel] Expand the instrumentor runtime template without a shell",
+      "url": "https://github.com/llvm/llvm-project/pull/238034",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-02T17:00:21.324445+00:00",
+      "summary": "LLVM compiles the instrumentor runtime as C++ and embeds its source text. Bazel now uses the CMake and GN template for that text. The editable checkout and pinned archive produced identical output, and editing the header regenerated the bytes.",
+      "evidence": [
+        {
+          "label": "Review request to Corentin",
+          "url": "https://github.com/llvm/llvm-project/pull/238034#issuecomment-6583043906"
+        },
+        {
+          "label": "Editable checkout, rebuild after a real header edit, and immutable archive",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41484039296/artifacts/13162350347"
+        },
+        {
+          "label": "Earlier LLVM draft",
+          "url": "https://github.com/llvm/llvm-project/pull/214242"
+        },
+        {
+          "label": "LLVM human review and disclosure policy",
+          "url": "https://github.com/llvm/llvm-project/blob/1c7a3fd23/llvm/docs/AIToolPolicy.md"
+        },
+        {
+          "label": "Range-diff baseline: the alternative in LLVM draft #214242",
+          "url": "https://github.com/llvm/llvm-project/commit/adf91f4bf"
+        }
+      ]
+    },
+    {
+      "id": "pr:bazel-contrib/rules_distroless:294",
+      "type": "pr",
+      "repo": "bazel-contrib/rules_distroless",
+      "number": 294,
+      "ref": "fix/dpkg-transitive-status",
+      "head": "af1089c91c36bfc78719b2836c73d374a66ef092",
+      "title": "List installed dependency packages in dpkg status",
+      "url": "https://github.com/bazel-contrib/rules_distroless/pull/294",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-02T17:00:21.324445+00:00",
+      "summary": "A Debian image installed 16 packages but reported only three to dpkg. The default and both custom templates now carry the control records for the files they install.",
+      "evidence": [
+        {
+          "label": "Upstream package status regression",
+          "url": "https://github.com/bazel-contrib/rules_distroless/issues/261"
+        },
+        {
+          "label": "Linux Bazel checks, including the default, custom and repacked sets on AMD64 and ARM64",
+          "url": "https://github.com/tamird/rules_distroless/actions/runs/41481142358/artifacts/13159617340"
+        }
+      ]
+    },
+    {
+      "id": "pr:hermeticbuild/hermetic-llvm:907",
+      "type": "pr",
+      "repo": "hermeticbuild/hermetic-llvm",
+      "number": 907,
+      "ref": "proposal/instrumentor-template",
+      "head": "21a5215f89afe39a50bfab5f5ff10a75fffa614a",
+      "title": "Generate the LLVM instrumentor header without a shell",
+      "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/907",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-02T17:00:21.324445+00:00",
+      "summary": "The LLVM 23 overlay expands the instrumentor template using the runtime header text supplied by the repository rule. The corresponding change to LLVM’s own Bazel configuration is open upstream.",
+      "evidence": [
+        {
+          "label": "LLVM implementation",
+          "url": "https://github.com/llvm/llvm-project/pull/238034"
+        },
+        {
+          "label": "Purpose of the overlay patch and the LLVM source it adapts",
+          "url": "https://github.com/tamird/hermetic-llvm/compare/bdd158a6b...21a5215f8"
+        },
+        {
+          "label": "Supplier Bazel 9 run with both architectures and a local source edit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41280686305/artifacts/13073123265"
+        },
+        {
+          "label": "gVisor Bazel 8 integration including TableGen",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41279721263/artifacts/13071944389"
+        },
+        {
+          "label": "Existing LLVM draft and template rationale",
+          "url": "https://github.com/llvm/llvm-project/pull/214242"
+        },
+        {
+          "label": "LLVM upstream candidate",
+          "url": "https://github.com/tamird/llvm-project/commit/47a6f5568"
+        }
+      ]
     }
   ],
   "edges": [
@@ -47343,13 +47451,6 @@
       "type": "depends_on",
       "reason": "The independent documentation notice/catalog change follows the complete-license classifier.",
       "evidence": "https://github.com/tamird/gvisor/commit/ea27b4806607c7640e2c1f43a5996f80374a78af"
-    },
-    {
-      "from": "branch:licensecheck-go-digest-notices",
-      "to": "branch:hermetic-llvm-project",
-      "type": "depends_on",
-      "reason": "The source migration audit includes the separately visible go-digest documentation-license record.",
-      "evidence": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb"
     },
     {
       "from": "branch:hermetic-llvm-root-backends",
