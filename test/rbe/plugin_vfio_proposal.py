@@ -74,11 +74,17 @@ def phase(result, name, extra):
         item["status"] = "FAIL"
     save(result)
     assert item["selection_exit"] == 0
-    selected = {}
+    raw_selected = {}
     for line in (out / "selection").read_text().splitlines():
         label, files = line.split("\t")
-        assert label not in selected
-        selected[label] = ast.literal_eval(files)
+        assert label not in raw_selected
+        raw_selected[label] = ast.literal_eval(files)
+    item["selected_raw"] = raw_selected
+    save(result)
+    # Starlark str(Label) includes @@ for the main repo; BEP labels omit it.
+    selected = {label[2:] if label.startswith("@@//") else label: files
+                for label, files in raw_selected.items()}
+    assert len(selected) == len(raw_selected)
     owner, = [label for label in selected if label.endswith("//:libpluginstack")]
     assert set(selected) == {owner, TEST}
     item["selected"] = selected
@@ -193,6 +199,9 @@ def main():
     PRIVATE.mkdir(exist_ok=True)
     PUBLIC.mkdir(exist_ok=True)
     result = {"status": "INCOMPLETE", "source": SOURCE, "base": "ccae8886eed54388bb6a36dd3211a6e5831ecc5b",
+              "previous": {"run": 41379620163, "artifact": 13112498352,
+                           "sha256": "7c1d4313d32d7986eb3e5a42509d4ac68b807c2d6b7baf63a3d3fdec4ccc76a4",
+                           "status": "INCOMPLETE", "phase": "selection", "builds": 0, "tests": 0},
               "scope": "ordinary proposal Make/archive/cgo backtrace on native populated GNU workers; no device traffic or scratch claim",
               "started": now(), "arms": {}}
     save(result)
