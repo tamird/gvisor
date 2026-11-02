@@ -226,7 +226,7 @@ function checkInfo(pr) {
 const DECISION_REASONS = [
   { id: "review-changes", owner: "user", title: "Review our changes" },
   { id: "post-review", owner: "user", title: "Approve outgoing PR reviews" },
-  { id: "post-reply", owner: "user", title: "Approve replies and comments" },
+  { id: "post-reply", owner: "user", title: "Approve replies, comments, and issues" },
 ];
 const ATTENTION_REASONS = [
   { id: "author-conflicts", owner: "agent", title: "Merge conflicts" },
@@ -935,7 +935,8 @@ function contributorChanges(node) {
 // messages about the same commit, so their text is part of the decision too.
 function alreadyReviewed(node, decision) {
   return node.settledReviews?.some(item => item.kind === decision.kind && item.head === decision.head
-    && (!["review", "reply"].includes(item.kind) || item.body === decision.body));
+    && (!["review", "reply", "issue"].includes(item.kind) || item.body === decision.body)
+    && (item.kind !== "issue" || item.url === decision.url && item.title === decision.title));
 }
 function commitLinkMatches(repo, head, url) {
   const prefix = `https://github.com/${repo}/commit/`;
@@ -945,12 +946,12 @@ function pendingDecisions(node) {
   const decisions = node.contributorReview ? [node.contributorReview] : [];
   return decisions.concat(node.additionalReviews || []).filter(decision => decision?.status === "pending" && !alreadyReviewed(node, decision) && (node.type === "branch" && decision.head === node.head
     || node.type === "pr" && decision.kind === "amendment" && !providerClosed(node) && decision.head !== node.github?.head
-    || ["pr", "issue"].includes(node.type) && decision.kind === "reply"
+    || ["pr", "issue"].includes(node.type) && ["reply", "issue"].includes(decision.kind)
     || node.type === "pr" && decision.kind === "review" && !providerClosed(node)));
 }
 function decisionReason(decision) {
   if (decision.kind === "review") return "post-review";
-  if (decision.kind === "reply") return "post-reply";
+  if (["reply", "issue"].includes(decision.kind)) return "post-reply";
   return "review-changes";
 }
 function visibleDecisions(node) {
@@ -1393,10 +1394,10 @@ function drawTable(nodes) {
       const revision = refinementComparison(node, decision);
       title.append(link((decision.title || "Review proposed change") + (revision ? ` · ${revision.label}` : ""), decision.url, "decision-source"));
     }
-    for (const kind of ["review", "reply"]) {
+    for (const [kind, plural] of [["review", "reviews"], ["reply", "replies"], ["issue", "issues"]]) {
       const count = decisions.filter(decision => decision.kind === kind).length;
       if (count) {
-        const name = kind === "review" ? (count === 1 ? "review" : "reviews") : (count === 1 ? "reply" : "replies");
+        const name = count === 1 ? kind : plural;
         title.append(button(`Read ${count === 1 ? "" : count + " "}draft ${name}`, () => select(node.id), "decision-source"));
       }
     }
@@ -1487,7 +1488,10 @@ function drawDetails() {
     if (decision.body) {
       section.append(element("div", "decision-body", decision.body));
     }
-    section.append(link(decision.kind === "review" ? "Open original PR ↗" : decision.kind === "reply" ? "Open original discussion ↗" : "Open proposed commit ↗", decision.url));
+    if (decision.kind === "issue") {
+      const form = decision.url + "?title=" + encodeURIComponent(decision.title) + "&body=" + encodeURIComponent(decision.body);
+      section.append(link("Open prefilled issue ↗", form));
+    } else section.append(link(decision.kind === "review" ? "Open original PR ↗" : decision.kind === "reply" ? "Open original discussion ↗" : "Open proposed commit ↗", decision.url));
     details.append(section);
   }
   const action = humanAction(node);
@@ -1814,9 +1818,10 @@ function validateRegistry(candidate) {
         && decision.head !== decision.baseHead
         && commitLinkMatches(`${candidate.meta.owner}/${node.repo.split("/")[1]}`, decision.head, decision.url)
         && [decision.title, decision.summary, decision.body].every(value => typeof value === "string" && value.trim());
-      const outgoing = ["pr", "issue"].includes(node.type) && ["reply", "review"].includes(decision?.kind)
+      const outgoing = ["pr", "issue"].includes(node.type) && ["reply", "review", "issue"].includes(decision?.kind)
         && (node.type === "issue" && decision.head === undefined || /^[a-f0-9]{40}$/.test(decision.head))
-        && (decision.url === node.url || decision.url?.startsWith(node.url + "#") ||
+        && (decision.kind === "issue" ? /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/issues\/new$/.test(decision.url)
+          : decision.url === node.url || decision.url?.startsWith(node.url + "#") ||
           decision.kind === "review" && decision.url?.startsWith(node.url + "/files#diff-") &&
             /^[a-f0-9]{64}[LR][1-9]\d*$/.test(decision.url.slice((node.url + "/files#diff-").length)))
         && typeof decision.title === "string" && decision.title.trim()
@@ -1825,7 +1830,7 @@ function validateRegistry(candidate) {
       if (!decision || decision.status !== "pending" || !proposal && !amendment && !outgoing
           || decision.body !== undefined && typeof decision.body !== "string"
           || decision.summary !== undefined && typeof decision.summary !== "string"
-          || decision.title !== undefined && typeof decision.title !== "string") throw new Error("Invalid contributor decision");
+          || decision.title !== undefined && typeof decision.title !== "string") throw new Error(`Invalid contributor decision for ${node.id}`);
     }
     const changes = node.contributorChangesRequested;
     if (changes !== undefined && (!changes || node.type !== "branch" || node.contributorReview !== undefined ||

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T19:22:19.825621+00:00",
+    "updatedAt": "2026-11-02T19:28:58.607513+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -45654,7 +45654,7 @@
       "url": "https://github.com/google/gvisor/pull/16834",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-02T19:06:42.570092+00:00",
+      "updatedAt": "2026-11-02T19:28:58.607513+00:00",
       "summary": "Gazelle can run repository commands on a client without a host env executable. The gVisor module declares its Bazel 8 minimum.",
       "evidence": [
         {
@@ -45663,11 +45663,11 @@
         }
       ],
       "contributorReview": {
-        "kind": "reply",
+        "kind": "issue",
         "status": "pending",
         "head": "3f09760978f08d3dfba28a63885c0533f2b03a02",
-        "url": "https://github.com/bazel-contrib/bazel-gazelle/issues/new?title=go_repository%20requires%20a%20host%20env%20executable%20on%20Bazel%208&body=Gazelle%20prepends%20%60env%20-i%60%20to%20repository%20commands%20on%20Unix.%20On%20a%20Linux%0Aclient%20without%20%60env%60%20on%20PATH%2C%20even%20a%20command%20given%20by%20absolute%20path%0Afails.%20I%20reproduced%20this%20with%20Gazelle%200.51.3%20and%20Bazel%208.8.1.%0A%0A%20%20%20%20env_execute%28ctx%2C%20%5B%22%2Ffixture%2Fprintenv%22%5D%2C%20environment%20%3D%20overrides%29%0A%0A%20%20%20%20%22execvp%28env%2C%20...%29%22%3A%20No%20such%20file%20or%20directory%0A%0ACould%20Gazelle%20clear%20the%20environment%20with%20%60repository_ctx.execute%60%20on%0ABazel%208%20and%20newer%3F%20Setting%20an%20inherited%20variable%20to%20%60None%60%20removes%20it.%0AWith%20this%20change%2C%20the%20child%20received%20an%20explicitly%20empty%20value%20and%0Ainherited%20%60TMPDIR%60.%20The%20unrelated%20parent%20variable%20was%20absent.%20Bazel%207%20could%20keep%20using%20%60env%20-i%60.%0A%0A%5BRepository%20rule%5D%28https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Fblob%2F999b71a83%2F.github%2Fqualification%2Fgazelle-native-minimum.py%29%20%C2%B7%20%5BBazel%208%20API%5D%28https%3A%2F%2Fgithub.com%2Fbazelbuild%2Fbazel%2Fblob%2Fc8217fdd2%2Fsrc%2Fmain%2Fjava%2Fcom%2Fgoogle%2Fdevtools%2Fbuild%2Flib%2Fbazel%2Frepository%2Fstarlark%2FStarlarkBaseExternalContext.java%23L1833-L1840%29%0A%0APosted%20by%20Codex%20on%20behalf%20of%20%40tamird.",
-        "title": "File the Gazelle issue about requiring env",
+        "url": "https://github.com/bazel-contrib/bazel-gazelle/issues/new",
+        "title": "go_repository requires a host env executable on Bazel 8",
         "body": "Gazelle prepends `env -i` to repository commands on Unix. On a Linux\nclient without `env` on PATH, even a command given by absolute path\nfails. I reproduced this with Gazelle 0.51.3 and Bazel 8.8.1.\n\n    env_execute(ctx, [\"/fixture/printenv\"], environment = overrides)\n\n    \"execvp(env, ...)\": No such file or directory\n\nCould Gazelle clear the environment with `repository_ctx.execute` on\nBazel 8 and newer? Setting an inherited variable to `None` removes it.\nWith this change, the child received an explicitly empty value and\ninherited `TMPDIR`. The unrelated parent variable was absent. Bazel 7 could keep using `env -i`.\n\n[Repository rule](https://github.com/tamird/gvisor/blob/999b71a83/.github/qualification/gazelle-native-minimum.py) · [Bazel 8 API](https://github.com/bazelbuild/bazel/blob/c8217fdd2/src/main/java/com/google/devtools/build/lib/bazel/repository/starlark/StarlarkBaseExternalContext.java#L1833-L1840)\n\nPosted by Codex on behalf of @tamird.",
         "summary": "Report the issue to bazel-contrib/bazel-gazelle.",
         "requestedAt": "2026-11-02T19:05:28.791131+00:00"
