@@ -41958,13 +41958,13 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/tcp-rack-fresh-timeout-head",
-      "head": "c7976270813d5218a847539dd94f749c7cb4dfd5",
+      "head": "2d59045da5c29f2f6bc62dacd9457591367c9498",
       "title": "Keep RACK from repeating a fresh timeout repair",
-      "url": "https://github.com/tamird/gvisor/commit/c79762708",
+      "url": "https://github.com/tamird/gvisor/commit/2d59045da",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-02T03:02:48+00:00",
-      "summary": "With a delayed TCP head repair, the RACK change avoided a fourth copy. When both prior head repairs were dropped, stock sent the fourth on the next SACK and the receiver advanced at 496 ms. With the change it advanced at 640 ms, after the next timeout. Both senders promptly repaired the same two older holes. Check Linux recovery after real loss before requesting a contributor decision.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T03:17:29+00:00",
+      "summary": "After a timeout, RACK can retransmit the oldest segment even though only a later hole was marked lost. The change avoided one duplicate when both earlier repairs were delayed. Dropping them instead let stock advance 144 ms sooner. With no further ACK, Linux and the change repaired later data first, then recovered the head on their next timeout. All three sent new data afterward.",
       "evidence": [
         {
           "label": "Linux, stock and fixed packet traces, 101 package cases and both analyzers",
@@ -41993,8 +41993,23 @@
         {
           "label": "Matched loss of both head repairs, ACK timings and the actual sender timer",
           "url": "https://github.com/tamird/gvisor/actions/runs/41380524965/artifacts/13112553088"
+        },
+        {
+          "label": "Linux and both gVisor senders recover a genuinely lost head without another ACK",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41381334602/artifacts/13113985160"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "2d59045da5c29f2f6bc62dacd9457591367c9498",
+        "baseHead": "c7976270813d5218a847539dd94f749c7cb4dfd5",
+        "url": "https://github.com/tamird/gvisor/commit/2d59045da",
+        "title": "Keep RACK from repeating a fresh timeout repair",
+        "requestedAt": "2026-11-02T03:17:29+00:00",
+        "summary": "Open the standalone RACK fix with both loss outcomes explained?",
+        "body": "The product tree is identical to c79762708. The revised message includes the delay when two repairs are really lost and the Linux timeout control. Both gVisor versions delivered the complete 512 KiB transfer in each case."
+      }
     },
     {
       "id": "branch:syscall-libc-interfaces",
