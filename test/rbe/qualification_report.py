@@ -296,7 +296,7 @@ def source_context(path: Path) -> tuple[dict[str, object], list[str]]:
 
 
 def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path | None = None,
-            expected_analysis: tuple[Path, ...] = ()) -> dict[str, object]:
+            expected_analysis: tuple[Path, ...] = (), *, test_tag_filters: tuple[str, ...] = ()) -> dict[str, object]:
     """Reconcile configured owners and announced runs/shards with originals."""
     started = time.monotonic()
     errors: list[str] = []
@@ -319,6 +319,8 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
         except (OSError, ValueError) as error:
             errors.append(str(error))
     configured: set[Owner] = set()
+    analyzed_tests: set[Owner] = set()
+    tag_filtered: set[Owner] = set()
     announced: set[Attempt] = set()
     completed: dict[Owner, bool] = {}
     results: dict[Attempt, dict[str, object]] = {}
@@ -333,7 +335,14 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             if "configured" in event:
                 details = mapping(event["configured"])
                 if details.get("targetKind") != "test_suite rule" and (info["command_kind"] != "test" or "testSize" in details):
-                    configured.update(Owner.parse(child["targetCompleted"]) for child in children if "targetCompleted" in child)
+                    owners = {Owner.parse(child["targetCompleted"]) for child in children if "targetCompleted" in child}
+                    if "testSize" in details:
+                        analyzed_tests.update(owners)
+                    tags = [string(tag) for tag in sequence(details.get("tag", []))]
+                    if info["command_kind"] == "test" and not unit_matrix.test_tags_match(tags, test_tag_filters):
+                        tag_filtered.update(owners)
+                    else:
+                        configured.update(owners)
             if "aborted" in event and mapping(event["aborted"]).get("reason") == "SKIPPED" and "targetCompleted" in identity:
                 skipped_owners.add(Owner.parse(identity["targetCompleted"]))
             announced.update(Attempt.parse(child["testResult"]) for child in children if "testResult" in child)
@@ -359,7 +368,8 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     labels = set(unit_matrix.owner_labels(str(expected_targets), allow_empty=True)) if expected_targets else set()
     expected: set[Owner] = set()
     for analysis in expected_analysis:
-        expected.update(Owner(label, target.configuration) for label, target in unit_matrix.configured_tests(str(analysis)).items())
+        expected.update(Owner(label, target.configuration) for label, target in unit_matrix.configured_tests(str(analysis)).items()
+                        if unit_matrix.test_tags_match(target.tags, test_tag_filters))
     if labels and expected and labels != {owner.label for owner in expected}:
         errors.append("Expected labels differ from selected analysis leaves")
     if not expected:
@@ -439,6 +449,9 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
     status = "FAIL" if info["native_exit"] != 0 or failures else "INCOMPLETE" if errors or missing else "PASS"
     now = datetime.datetime.now(datetime.timezone.utc)
     return {"schema_version": 1, **info, "status": status, "errors": errors, "failures": failures,
+            "test_tag_filters": list(test_tag_filters),
+            "analyzed_test_rules": [asdict(owner) for owner in sorted(analyzed_tests)],
+            "tag_filtered_owners": [asdict(owner) for owner in sorted(tag_filtered)],
             "expected_labels": sorted(labels or {owner.label for owner in expected}),
             "expected": [asdict(owner) for owner in sorted(expected)], "executed": observations,
             "missing": missing, "skips": skips, "case_counts": dict(cases),
@@ -523,6 +536,8 @@ def main() -> int:
     check.add_argument("--manifest", type=Path)
     check.add_argument("--expected-targets", type=Path)
     check.add_argument("--expected-analysis", type=Path, action="append", default=[])
+    check.add_argument("--test-tag-filter", action="append", default=[],
+                       help="Source-effective test tag inclusion or exclusion; may be repeated")
     pack = commands.add_parser("bundle")
     for name in ("directory", "output"):
         pack.add_argument("--" + name, type=Path, required=True)
@@ -534,7 +549,7 @@ def main() -> int:
         return int(bool(result["errors"]))
     if args.command == "verdict":
         result = verdict(args.events, args.manifest or manifest_path(args.events), args.context,
-                         args.expected_targets, tuple(args.expected_analysis))
+                         args.expected_targets, tuple(args.expected_analysis), test_tag_filters=tuple(args.test_tag_filter))
         write_json(args.output, result)
         return number(result["native_exit"]) or int(result["status"] != "PASS")
     result = bundle(args.directory, args.runner_exit, args.capture_exit, args.output)

@@ -547,8 +547,17 @@ def configured_targets(
 
 
 def configured_tests(events_path: str) -> dict[str, ConfiguredTarget]:
-    """Read this successful analysis invocation's runnable top-level tests."""
+    """Read analyzed test rules, including rules excluded by test-tag filters."""
     return configured_targets(events_path, tests=True)
+
+
+def test_tags_match(tags: list[str], filters: tuple[str, ...]) -> bool:
+    """Apply explicit tag inclusions/exclusions to recorded target tags."""
+    required = {tag.removeprefix("+") for tag in filters if not tag.startswith("-")}
+    excluded = {tag[1:] for tag in filters if tag.startswith("-")}
+    if "" in required or "" in excluded:
+        raise ValueError("Empty test tag filter")
+    return not excluded.intersection(tags) and (not required or bool(required.intersection(tags)))
 
 
 def cgroup_targets(events_path: str, *, guest_kvm: bool = False) -> list[str]:
