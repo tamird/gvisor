@@ -42976,6 +42976,38 @@
         "body": "Open after the PI waiter fix. The shared syscall fixture ran with and without FUTEX_PRIVATE_FLAG. A mixed requeue that had already moved an ordinary waiter before encountering a PI waiter was reviewed against Linux source only.\n\ngit range-diff 2d24ec26b^! dabaf5e45^!",
         "requestedAt": "2026-11-02T02:26:35+00:00"
       }
+    },
+    {
+      "id": "branch:futex-bucket-locks",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/futex-bucket-locks",
+      "head": "c576f0790bd336d8ae0ee2dc285feeddabe9e764",
+      "title": "Check the bucket locks used by futex wake and requeue",
+      "url": "https://github.com/tamird/gvisor/commit/c576f0790",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T02:58:01+00:00",
+      "summary": "Wake and requeue used a second pair of pointers to release their locks. Checklocks could not tell that those locks protected the queues being accessed. Returning the locked buckets in argument order removes all four unchecked calls and both same-bucket exceptions.",
+      "evidence": [
+        {
+          "label": "Standalone source, all 65 systrap syscall cases, 13 Go tests and both architecture analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41379815726/artifacts/13113336700"
+        },
+        {
+          "label": "Deliberately unlocked wake rejected on both architectures; 69 integrated syscall cases each on Linux and systrap",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41378810329/artifacts/13112850882"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "c576f0790bd336d8ae0ee2dc285feeddabe9e764",
+        "url": "https://github.com/tamird/gvisor/commit/c576f0790",
+        "title": "Check the bucket locks used by futex wake and requeue",
+        "body": "Open this standalone refactor on current master. It preserves lock order and uses one mutex when both futex keys map to the same bucket. The mixed PI waiter and requeue-count changes are independent.",
+        "requestedAt": "2026-11-02T02:58:01+00:00"
+      }
     }
   ],
   "edges": [
