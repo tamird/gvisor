@@ -14,7 +14,7 @@ import qualification_report
 
 from qualify import OUT, TMP, OWNER, audit, diagnostics, now, save
 
-PRODUCT = "8671cdbf4e13082f7bb76a46966a3dfb063b5a87"
+PRODUCT = "4094887b23e0879ea0318837593dadd1ead182b5"
 RUNSC = "//runsc:runsc-plugin-stack"
 SENTRY = "//runsc/cmd/sentry:gvisor_sentry_plugin_stack"
 TEST = "//test/e2e:integration_test"
@@ -175,6 +175,11 @@ def main():
          "control": {"product": "a24cd6513cec95981f723cf36b82f016e3fb9370", "artifact": 13109817821,
                      "sha256": "2e11f161ba40ff2def7b2412439163f4bed60669b679ac1e63901688a297d24f",
                      "named_cases_passed": 2, "vfio_enabled": False},
+         "prior_vfio_attempt": {"product": "8671cdbf4e13082f7bb76a46966a3dfb063b5a87",
+                                "run": 41373683054, "artifact": 13110665894,
+                                "sha256": "ebbd4525663c0735013c425cb61065ea68ef5189e4affc463caaa097d033887e",
+                                "status": "FAIL", "build_exit": 1, "tests_executed": 0,
+                                "cause": "pci_vfio.c uses undeclared pread64/pwrite64 in the selected musl build"},
          "expected": TARGETS, "target_libc": "musl (ordinary static Go transition)",
          "gnu_archive_evidence": {"run": 41364504151, "recovery_artifact": 13106931504, "distinct_configuration": True},
          "prior_static_consumer": {"run": 41366155971, "artifact": 13107584293, "status": "FAIL", "tests_executed": 0,

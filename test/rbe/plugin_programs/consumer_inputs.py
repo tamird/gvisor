@@ -60,6 +60,8 @@ def main():
                          "ld_lld": "/bin/ld.lld" in text, "llvm_objdump": "/bin/llvm-objdump" in text}
         assert triples == ["x86_64-linux-musl"]
         assert proof["make"]["ld_lld"] and proof["make"]["llvm_objdump"]
+        proof["make"]["large_file_api"] = "-D_LARGEFILE64_SOURCE" in text
+        assert proof["make"]["large_file_api"]
         # The supplier's selected UAPI tree is both forwarded into the Make
         # compiler flags and present in this exact action's input root.
         include_dirs = uapi_directories(text)
