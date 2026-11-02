@@ -91,7 +91,7 @@ def inspect_outputs(outputs):
     config = next(iter(outputs["rte_config.h"])).read_bytes()
     assert b"#define RTE_ARCH_64" in config and b"#define RTE_ARCH_X86_64" in config
     r["configuration"] = {"sha256": hashlib.sha256(config).hexdigest(), "bytes": len(config),
-                          "helper_matches_plugin": True}
+                          "elf_class": 64, "arch": "x86_64"}
     archives = outputs["libpluginstack.a"]
     assert len(archives) == 1
     path, = archives

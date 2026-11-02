@@ -5,10 +5,12 @@ from pathlib import Path
 import re
 import subprocess
 
-from cas_inputs import TMP, blob, cas, input_file
+from cas_inputs import TMP, blob, cas, input_file, rpc
 from consumer import RUNSC, SENTRY
-from qualify import OUT, OWNER, now
+from qualify import HELPER, OUT, OWNER, inspect_outputs, now
 
+
+CONTRACT = {'buildtools/pmdinfogen/pmdinfogen.c': '97b272650e33dadc0941d2aa0f956f37bda2a8865067284e1b9714506b2f870b', 'buildtools/pmdinfogen/pmdinfogen.h': '8b160a949f870fd287aa4d0541dd5f75230f45d4561e3f0c30c4389154ad30f0', 'lib/librte_pci/rte_pci.h': '176dc60761b80e09ee3f2fa416cf051b8106c8e8db8b35640ce2627050fa4bdb'}
 
 def main():
     path = OUT / "result.json"
@@ -36,6 +38,53 @@ def main():
                          "ld_lld": "/bin/ld.lld" in text, "llvm_objdump": "/bin/llvm-objdump" in text}
         assert triples == ["x86_64-linux-musl"]
         assert proof["make"]["ld_lld"] and proof["make"]["llvm_objdump"]
+        # The executed Make action publishes the actual target and helper
+        # configurations separately; runtime feature flags need not match.
+        rows = rpc("GetExecution", {"executionLookup": {"invocationId": r["invocation"], "actionDigestHash": make["digest"]["hash"]},
+                                    "inlineExecuteResponse": True}).get("execution", [])
+        execution, = [e for e in rows if e.get("actionDigest", {}).get("hash") == make["digest"]["hash"]
+                      and str(e["actionDigest"]["sizeBytes"]) == str(make["digest"]["sizeBytes"])]
+        assert execution["stage"] in (4, "COMPLETED")
+        response = execution["executeResponse"]
+        assert not response.get("status", {}).get("code") and response["result"].get("exitCode", 0) == 0
+        assert bool(response.get("cachedResult")) == bool(make["cacheHit"])
+        prefix = archive_path.rsplit("/lib/", 1)[0]
+        expected = {"libpluginstack.a": archive_path, "dpdk-pmdinfogen": prefix + "/bin/dpdk-pmdinfogen",
+                    "rte_config.h": prefix + "/rte_config.h", "pmd_rte_config.h": prefix + "/pmd_rte_config.h"}
+        outputs = {}
+        output_digests = {}
+        for name, expected_path in expected.items():
+            file, = [f for f in response["result"].get("outputFiles", []) if f["path"] == expected_path]
+            data = blob(file["digest"], r["invocation"])
+            local = TMP / ("verified-" + name)
+            local.write_bytes(data)
+            outputs[name] = {local}
+            output_digests[name] = file["digest"]
+        proof["outputs"] = inspect_outputs(outputs)
+        target_header = next(iter(outputs["rte_config.h"])).read_text()
+        helper_header = next(iter(outputs["pmd_rte_config.h"])).read_text()
+        assert "#define RTE_EAL_VFIO " not in target_header
+        assert "#define RTE_LIBRTE_PCI_BUS 1" in target_header
+        assert all("#define RTE_ARCH_64 1" in h and "#define RTE_ARCH_X86_64 1" in h for h in (target_header, helper_header))
+        proof["configurations"] = {"target": output_digests["rte_config.h"], "helper": output_digests["pmd_rte_config.h"],
+                                   "target_vfio": False, "target_pci_bus": True, "elf_class": 64,
+                                   "same_bytes": target_header == helper_header}
+        compile, = [a for a in r["actions"] if a["targetLabel"] == HELPER and a["mnemonic"] == "CppCompile"]
+        assert compile["target_triples"] == ["x86_64-linux-musl"] and not compile["exitCode"]
+        helper_action = cas(compile["digest"], "Action")
+        helper_command = cas(helper_action["commandDigest"], "Command")
+        source, = [a for a in helper_command["arguments"] if a.endswith("/buildtools/pmdinfogen/pmdinfogen.c")]
+        repo = source.removesuffix("buildtools/pmdinfogen/pmdinfogen.c")
+        for name, digest in CONTRACT.items():
+            f = input_file(helper_action["inputRootDigest"], repo + name)
+            assert f["digest"]["hash"] == digest
+        include, = [a for a in helper_command["arguments"] if a.endswith("/pmd_config/include")]
+        include = include.removeprefix("-isystem").removeprefix("-iquote").removeprefix("-I")
+        h = input_file(helper_action["inputRootDigest"], include + "/rte_config.h")
+        assert h["digest"]["hash"] == output_digests["pmd_rte_config.h"]["hash"]
+        assert int(h["digest"]["sizeBytes"]) == int(output_digests["pmd_rte_config.h"]["sizeBytes"])
+        proof["reader_contract"] = {"source_sha256": CONTRACT, "layout_setting": "RTE_ARCH_64",
+                                    "endianness": "read from input ELF", "helper_compile": compile["digest"]}
         proof["links"] = []
         seen = {}
         for owner in (RUNSC, SENTRY):
@@ -44,6 +93,8 @@ def main():
             # Match the producer's exact declared output in the real linker input tree.
             file = input_file(action["inputRootDigest"], archive_path)
             digest = file["digest"]
+            assert digest["hash"] == output_digests["libpluginstack.a"]["hash"]
+            assert int(digest["sizeBytes"]) == int(output_digests["libpluginstack.a"]["sizeBytes"])
             key = (digest["hash"], str(digest["sizeBytes"]))
             if key not in seen:
                 data = blob(digest, r["invocation"])
