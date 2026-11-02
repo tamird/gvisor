@@ -9,6 +9,7 @@ const origin = 'https://tamird.github.io/gvisor/';
 const metadataOrigin = 'https://raw.githubusercontent.com/tamird/gvisor/refs/heads/gh-pages/';
 const result = { status: 'INCOMPLETE', startedAt: new Date().toISOString(), node: process.version, routes: [], cases: [],
   deployedAppCommit: 'b1bd79bfa7f0ddfba19645a1ac35ed7e04de6907',
+  priorCollectorRun: 41518909551,
   previousObservation: {run: 41517274751, artifact: 13175078684, status: 'FAIL', cause: 'The settled source card had no link to the posted Gazelle issue.'} };
 const profile = await mkdtemp(join(tmpdir(), 'work-map-ui-'));
 const pending = new Map();
@@ -62,7 +63,7 @@ try {
     } else if (message.method === 'Network.responseReceived') {
       const { response, requestId } = message.params;
       const name = new URL(response.url).pathname.split('/').pop();
-      if (response.status === 200 && ((response.url === origin + 'app.js') ||
+      if (response.status === 200 && ((response.url.startsWith(origin) && new URL(response.url).pathname === '/gvisor/app.js') ||
           ['registry.json', 'github-status.json'].some(name => response.url === origin + name || response.url === metadataOrigin + name)))
         responses.set(name, {requestId, url:response.url});
     } else if (message.method === 'Runtime.exceptionThrown') exceptions.push(message.params.exceptionDetails.text);
