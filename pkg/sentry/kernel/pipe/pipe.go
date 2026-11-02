@@ -129,7 +129,9 @@ type Pipe struct {
 	// The number of active writers for this pipe.
 	writers atomicbitops.Int32
 
-	// writerGeneration advances when a writer opens.
+	// writerGeneration advances on each writer open, like Linux's
+	// pipe_inode_info.w_counter in fs/pipe.c. wOpen holds mu so that FIFO
+	// readers in rOpen and rReadinessLocked see both writer counters together.
 	writerGeneration atomicbitops.Int32
 
 	// mu protects all pipe internal state below.

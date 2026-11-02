@@ -2168,6 +2168,7 @@ TEST_F(FcntlLockTest, TestOFDGetLkReturnsNegPID) {
   ASSERT_EQ(fl.l_pid, -1);
 
   fl.l_len = 40;
+  fl.l_pid = 0;
   ASSERT_THAT(fcntl(fd2.get(), F_GETLK, &fl), SyscallSucceeds());
   EXPECT_EQ(fl.l_type, F_WRLCK);
   EXPECT_EQ(fl.l_pid, -1);

@@ -99,9 +99,14 @@ TEST(FifoTest, Fifo) {
 TEST(FifoTest, HangupDependsOnWhenReaderOpened) {
   const TempPath fifo(NewTempAbsPath());
   ASSERT_THAT(mkfifo(fifo.path().c_str(), 0600), SyscallSucceeds());
+  ASSERT_THAT(Open(fifo.path(), O_WRONLY | O_NONBLOCK), PosixErrorIs(ENXIO));
 
   const FileDescriptor early =
       ASSERT_NO_ERRNO_AND_VALUE(Open(fifo.path(), O_RDONLY | O_NONBLOCK));
+  struct pollfd initial = {early.get(), POLLIN, -1};
+  ASSERT_THAT(poll(&initial, 1, 0), SyscallSucceedsWithValue(0));
+  EXPECT_EQ(initial.revents, 0);
+
   FileDescriptor writer =
       ASSERT_NO_ERRNO_AND_VALUE(Open(fifo.path(), O_WRONLY | O_NONBLOCK));
   writer.reset();

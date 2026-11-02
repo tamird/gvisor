@@ -177,9 +177,10 @@ type VFSPipeFD struct {
 
 	pipe *Pipe
 
-	// A nonblocking FIFO reader opened without a writer suppresses POLLHUP
-	// until a writer has opened and closed. Other readers can already see
-	// POLLHUP on the same pipe. Immutable after open.
+	// initialWriters records the writer generation when a nonblocking FIFO
+	// reader opens without a writer. As with filp->f_pipe in Linux's
+	// fifo_open and pipe_poll, POLLHUP is suppressed while that generation
+	// is unchanged. Immutable after open.
 	initialWriters int32
 
 	// lastAddr is the last hostarch.Addr at which a call to a
