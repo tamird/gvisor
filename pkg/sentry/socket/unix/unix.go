@@ -19,6 +19,7 @@ package unix
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/abi/linux"
@@ -565,7 +566,34 @@ func (s *Socket) Listen(t *kernel.Task, backlog int) *syserr.Error {
 	if err := s.ep.Listen(t, backlog); err != nil {
 		return err
 	}
+	if err := s.waitForResearchConnection(); err != nil {
+		return err
+	}
 	s.ep.SetPeerCreds(control.MakeCreds(t))
+	return nil
+}
+
+// Fork witness: hold this one listener after the transport call until an actual
+// connect has committed. No accept can drain the queue before listen returns.
+func (s *Socket) waitForResearchConnection() *syserr.Error {
+	addr, err := s.ep.GetLocalAddress()
+	if err != nil || addr.Addr != "\x00gvisor-listen-cred-gap" {
+		return nil
+	}
+	w, ch := waiter.NewChannelEntry(waiter.ReadableEvents)
+	if err := s.EventRegister(&w); err != nil {
+		return syserr.FromError(err)
+	}
+	defer s.EventUnregister(&w)
+	timer := time.NewTimer(10 * time.Second)
+	defer timer.Stop()
+	for s.Readiness(waiter.ReadableEvents) == 0 {
+		select {
+		case <-ch:
+		case <-timer.C:
+			return syserr.ErrTimedOut
+		}
+	}
 	return nil
 }
 

@@ -15,6 +15,9 @@
 #include "test/syscalls/linux/socket_unix_peercred.h"
 
 #include <errno.h>
+#include <poll.h>
+#include <stddef.h>
+#include <stdio.h>
 #include <linux/capability.h>
 #include <sched.h>
 #include <signal.h>
@@ -29,6 +32,7 @@
 
 #include <array>
 #include <atomic>
+#include <chrono>
 #include <memory>
 
 #include "gmock/gmock.h"
@@ -60,6 +64,71 @@ void TestCredSetTo(struct ucred peerCreds, pid_t pid, uid_t uid, gid_t gid) {
   TEST_PCHECK_MSG(peerCreds.pid == pid, "peer pid does not match expected pid");
   TEST_PCHECK_MSG(peerCreds.uid == uid, "peer uid does not match expected uid");
   TEST_PCHECK_MSG(peerCreds.gid == gid, "peer gid does not match expected gid");
+}
+
+// The listener and connector have different PIDs. Wait for observable listen
+// readiness, then exchange a byte to prove that listen and accept returned.
+TEST(UnixListenerPeerCred, ConnectWhenListening) {
+  constexpr char kName[] = "\0gvisor-listen-cred-gap";
+  sockaddr_un addr = {};
+  addr.sun_family = AF_UNIX;
+  memcpy(addr.sun_path, kName, sizeof(kName) - 1);
+  constexpr socklen_t kLen = offsetof(sockaddr_un, sun_path) + sizeof(kName) - 1;
+  auto server = ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_UNIX, SOCK_STREAM, 0));
+  ASSERT_THAT(bind(server.get(), AsSockAddr(&addr), kLen), SyscallSucceeds());
+  const pid_t parent = getpid();
+  const pid_t child = fork();
+  ASSERT_GE(child, 0);
+  if (child == 0) {
+    alarm(15);
+    TEST_PCHECK(listen(server.get(), 4) == 0);
+    int fd = accept(server.get(), nullptr, nullptr);
+    TEST_PCHECK(fd >= 0);
+    struct ucred peer = {};
+    socklen_t len = sizeof(peer);
+    TEST_PCHECK(getsockopt(fd, SOL_SOCKET, SO_PEERCRED, &peer, &len) == 0);
+    TestCredSetTo(peer, parent, geteuid(), getegid());
+    char byte = 0;
+    TEST_PCHECK(read(fd, &byte, 1) == 1 && byte == 'C');
+    TEST_PCHECK(write(fd, "L", 1) == 1);
+    TEST_PCHECK(read(fd, &byte, 1) == 1 && byte == 'X');
+    _exit(0);
+  }
+  auto cleanup = Cleanup([&] {
+    kill(child, SIGKILL);
+    waitpid(child, nullptr, 0);
+  });
+  const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(12);
+  for (;;) {
+    int listening = 0;
+    socklen_t len = sizeof(listening);
+    ASSERT_THAT(getsockopt(server.get(), SOL_SOCKET, SO_ACCEPTCONN, &listening,
+                           &len), SyscallSucceeds());
+    if (listening != 0) break;
+    ASSERT_LT(std::chrono::steady_clock::now(), deadline);
+    sched_yield();
+  }
+  auto client = ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_UNIX, SOCK_STREAM, 0));
+  ASSERT_THAT(connect(client.get(), AsSockAddr(&addr), kLen), SyscallSucceeds());
+  ASSERT_THAT(write(client.get(), "C", 1), SyscallSucceedsWithValue(1));
+  struct pollfd fds = {client.get(), POLLIN, 0};
+  ASSERT_THAT(poll(&fds, 1, 12000), SyscallSucceedsWithValue(1));
+  char byte = 0;
+  ASSERT_THAT(read(client.get(), &byte, 1), SyscallSucceedsWithValue(1));
+  ASSERT_EQ(byte, 'L');
+  struct ucred peer = {};
+  socklen_t len = sizeof(peer);
+  ASSERT_THAT(getsockopt(client.get(), SOL_SOCKET, SO_PEERCRED, &peer, &len),
+              SyscallSucceeds());
+  ASSERT_THAT(write(client.get(), "X", 1), SyscallSucceedsWithValue(1));
+  int status = -1;
+  ASSERT_THAT(waitpid(child, &status, 0), SyscallSucceedsWithValue(child));
+  cleanup.Release();
+  ASSERT_EQ(status, 0);
+  EXPECT_EQ(peer.pid, child) << "listener credentials after accept/data; pid="
+                            << peer.pid << " uid=" << peer.uid << " gid=" << peer.gid;
+  EXPECT_EQ(peer.uid, geteuid());
+  EXPECT_EQ(peer.gid, getegid());
 }
 
 TEST_P(UnixSocketPeerCredTest, GetPeerCred) {
