@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T01:44:43+00:00",
+    "updatedAt": "2026-11-02T01:55:01+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42731,10 +42731,22 @@
       "title": "Run Buildkite Nogo tests without the builder",
       "url": "https://github.com/tamird/gvisor/commit/6aa894aa1",
       "group": "analysis",
-      "status": "Agent work",
-      "updatedAt": "2026-11-02T01:19:00+00:00",
-      "summary": "Both Buildkite jobs can launch Nogo directly with Bazelisk. The declared compiler built and analyzed the AMD64 and ARM64 vDSOs and systrap stubs on an AMD64 host without an installed cross compiler. A deliberate finding also reached Buildkite’s failed-log uploader. Full-repository execution still needs verification. The revised job retains Buildkite’s existing debug symbols. The full target pattern exposed a compiler integration defect in the syscallbench BUILD file.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T01:55:01+00:00",
+      "summary": "Both Buildkite Nogo jobs use host Bazelisk. The declared compiler handles both target architectures, and Buildkite can collect a failed analyzer’s log. All 871 selected tests passed across three runs on a Linux client with remote execution. The duration of a single cold Buildkite job is still unknown.",
       "evidence": [
+        {
+          "label": "597 original Nogo tests with both architecture reports",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41363500730/artifacts/13107794911"
+        },
+        {
+          "label": "The cgroup analyzer’s two architecture reports",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41370631971/artifacts/13109217470"
+        },
+        {
+          "label": "Remaining 273 tests, verdict and exact source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41371093548/artifacts/13110696516"
+        },
         {
           "label": "Both cross-architecture owners with the declared compiler",
           "url": "https://github.com/tamird/gvisor/actions/runs/41353882134/artifacts/13101954456"
@@ -42751,15 +42763,29 @@
       "followup": {
         "owner": "root",
         "sourceHead": "6aa894aa1bce04a655c7064f15c9a7f43ac77c2d",
-        "observedAt": "2026-11-01T22:36:52+00:00",
-        "disposition": "Selected native jobs verified",
-        "nextAction": "Check the complete Buildkite commands on the corrected compiler stack. Aquery configured all 871 wildcard-selected tests on AMD64, and every GoStaticAnalysis and TestRunner action key matched across strip settings. Some link actions differ, so the previous full run cannot qualify the final stack.",
+        "observedAt": "2026-11-02T01:55:01+00:00",
+        "disposition": "Complete target coverage",
+        "nextAction": "Open after contributor approval and both existing prerequisites land.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41353882134/artifacts/13101954456",
           "https://github.com/tamird/gvisor/actions/runs/41355123970",
           "https://github.com/tamird/gvisor/actions/runs/41356215600/artifacts/13103158395",
-          "https://github.com/tamird/gvisor/actions/runs/41357065776/artifacts/13104181385"
+          "https://github.com/tamird/gvisor/actions/runs/41357065776/artifacts/13104181385",
+          "https://github.com/tamird/gvisor/actions/runs/41363500730/artifacts/13107794911",
+          "https://github.com/tamird/gvisor/actions/runs/41370631971/artifacts/13109217470",
+          "https://github.com/tamird/gvisor/actions/runs/41371093548/artifacts/13110696516"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "6aa894aa1bce04a655c7064f15c9a7f43ac77c2d",
+        "baseHead": "e86e84eb839c0f691a227faa8e80406eb144f03c",
+        "url": "https://github.com/tamird/gvisor/commit/6aa894aa1",
+        "title": "Run Buildkite Nogo tests without the builder",
+        "summary": "Open after the host Bazelisk hook and declared compiler land.",
+        "body": "The previous proposal stripped some binaries differently from Make. This revision preserves the debug symbols. On the integrated source, all 871 targets had passing AMD64 and ARM64 analyzer logs. One result was cached. The final 273 took 38m45s; their verdict was ready in the same second. A single cold Buildkite job’s 55-minute deadline remains unverified.\n\ngit range-diff e86e84eb8^! 6aa894aa1^!",
+        "requestedAt": "2026-11-02T01:55:01+00:00"
       }
     },
     {
@@ -49407,9 +49433,22 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-01T21:29:32+00:00",
+      "updatedAt": "2026-11-02T01:55:01+00:00",
       "summary": "A restore of 50,000 tmpfs files queued 150,890 callbacks. About a third came from inode after-load hooks, a third from converting dentry parents, and a third from directory maps waiting for their children.",
       "findings": [
+        {
+          "text": "A 21,402-byte checkpoint written by ordinary Save made Load revisit deferred rows 1,046,529 times. The graph contained 1,024 linked cells and pointers into each cell’s map field. At 16, 64, 256 and 1,024 cells, retry visits equaled (N−1)². All eight round trips preserved data and pointer identity. Omitting the interior pointers needed zero retries at every size. The frequency of this ordering in kernel checkpoints is unknown.",
+          "evidence": [
+            {
+              "label": "Legal graph, alias checks and retry counter",
+              "url": "https://github.com/tamird/gvisor/commit/8fa8b12e9"
+            },
+            {
+              "label": "Eight original test cases and exact scan counts",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41374244217/artifacts/13110189987"
+            }
+          ]
+        },
         {
           "text": "A map whose payload ends immediately after its key could consume a value from outside that payload. Load and PrintGraph now bound eager and deferred reads by the object’s length prefix.",
           "evidence": [
@@ -52569,7 +52608,7 @@
           ]
         }
       ],
-      "nextStep": "Hold the reservation API. A map’s entry count is known before it is decoded, but each key or value can introduce zero or multiple dependencies. The independent callback/waiter simplification removes a redundant record at the point where the decoder knows both are needed.",
+      "nextStep": "Try resuming a skipped row when a reference supplies its exact type. Check hook order and the ordinary 50,000-file restore before proposing a decoder change. The callback reservation API remains on hold.",
       "evidence": [
         {
           "label": "16 paired decodes of the same checkpoint, both live restore checks and state suites",
@@ -59511,9 +59550,22 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-02T01:32:49+00:00",
+      "updatedAt": "2026-11-02T01:55:01+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
+        {
+          "text": "Enabling VFIO reached DPDK’s pci_vfio.c and failed on undeclared pread64 and pwrite64. The selected musl toolchain supplied the Linux UAPI headers and uses 64-bit off_t on the target. No runtime test executed. The follow-up enables the API requested by the pinned source and includes unistd.h directly.",
+          "evidence": [
+            {
+              "label": "Original compiler error and configured inputs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41373683054/artifacts/13110665894"
+            },
+            {
+              "label": "Feature flag and upstream header include",
+              "url": "https://github.com/tamird/gvisor/commit/4094887b2"
+            }
+          ]
+        },
         {
           "text": "Both AMD64 musl plugin executables linked statically. The original DPDK archive was used in both links. TestDumpStack passed on the native runner. TestConnectToSelf used the plugin Sentry to connect to the same container. Both named cases ran without skips. This build disabled DPDK’s VFIO backend; it has no result for traffic through a VFIO device. The original named XMLs were recovered without rerunning either test. The final collection job failed its separate exact-timing check. The named socket verdict became available 7m30s–7m35s after execution, bounded by the recorded start and finish of its Bazel command. Four manual repairs were needed across the build and collection steps.",
           "evidence": [
@@ -61207,7 +61259,7 @@
           ]
         }
       ],
-      "nextStep": "Build the musl plugin with its VFIO backend enabled using declared Linux UAPI headers. Check the effective configuration and linked driver symbols, then test external traffic on a worker with a suitable device. The approved native GitHub release workflow awaits #16753.",
+      "nextStep": "Qualify the declared large-file feature flag for the pinned DPDK build under musl, then check linked VFIO symbols and actual runtime cases. Physical VFIO traffic still needs a suitable device. The approved release workflow awaits #16753.",
       "evidence": [
         {
           "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
