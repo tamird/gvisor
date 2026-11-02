@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T10:33:50.966231+00:00",
+    "updatedAt": "2026-11-02T10:51:10.030297+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40155,10 +40155,22 @@
       "head": "4ff4f3d6a33db001cc080e44e81604427b7b9784",
       "title": "Share the proc boot ID across mounts",
       "url": "https://github.com/tamird/gvisor/commit/4ff4f3d6a",
-      "updatedAt": "2026-11-02T10:14:07.170563+00:00",
+      "updatedAt": "2026-11-02T10:51:10.030297+00:00",
       "status": "Agent work",
-      "summary": "Upstream moved boot-ID generation to the first lookup of kernel/random. The revised change shares the ID across mounts at that lookup. The namespace and checkpoint tests are running against the new base.",
+      "summary": "Upstream lazily populates kernel/random. The kernel-owned revision shares the ID across mounts there, preserving external proc filesystem registrations. The syscall and restore controls passed on the earlier filesystem-owned revision. Fresh checks include two kernels sharing a registration.",
       "evidence": [
+        {
+          "label": "Kernel-owned ID; per-mount factory API stays compatible",
+          "url": "https://github.com/tamird/gvisor/commit/b76315862"
+        },
+        {
+          "label": "Named Linux and stock namespace cases, earlier corrected ID across restores",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41427770224/artifacts/13132749630"
+        },
+        {
+          "label": "Corrected-side syscall, kernel independence and live restore qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41431510068"
+        },
         {
           "label": "Move the shared lookup into the new lazy directory loader",
           "url": "https://github.com/tamird/gvisor/commit/b990907f7"
@@ -43554,6 +43566,48 @@
         "summary": "Open the completion queue change as a standalone PR?",
         "body": "The graph decoder finishes resolving references before it starts running callbacks. Both stages need object IDs, so they can share a buffer. On a 50,000-file checkpoint the two scheduler queue append sites allocated 1,967,984 bytes in 25 allocations on master and zero with this change. The candidate passed the normal and race suites and the queue growth, callback ordering and cycle controls."
       }
+    },
+    {
+      "id": "branch:buildbuddy:oci-empty-image-root",
+      "type": "branch",
+      "repo": "tamird/buildbuddy",
+      "ref": "proposal/oci-empty-image-root",
+      "head": "bd7d2e4c3b3a57d1fd19da69ae3edc452aa2cc00",
+      "title": "Run OCI actions on images with no filesystem layers",
+      "url": "https://github.com/tamird/buildbuddy/commit/bd7d2e4c3",
+      "group": "buildbuddy",
+      "status": "Contributor review requested",
+      "summary": "BuildBuddy mounted OverlayFS with an empty lowerdir when the image had no layers or every layer was empty. The executor can use its private bundle root for both. The native test ran a declared executable with both images; the BusyBox, whiteout and layer ownership controls also passed. Stock failed both new cases on both remote attempts. The workflow reported incomplete because its verifier expected a single failing attempt.",
+      "updatedAt": "2026-11-02T10:51:10.030297+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "bd7d2e4c3b3a57d1fd19da69ae3edc452aa2cc00",
+        "baseHead": "acaf608b95780c2b0681b0205182c38bf5b6237d",
+        "url": "https://github.com/tamird/buildbuddy/commit/bd7d2e4c3",
+        "title": "Run OCI actions on images with no filesystem layers",
+        "requestedAt": "2026-11-02T10:51:10.030297+00:00",
+        "summary": "Send the empty-root OCI fix to BuildBuddy?",
+        "body": "BuildBuddy mounted OverlayFS with an empty lowerdir when the image had no layers or every layer was empty. The executor can use its private bundle root for both. The native test ran a declared executable with both images; the BusyBox, whiteout and layer ownership controls also passed. Stock failed both new cases on both remote attempts. The workflow reported incomplete because its verifier expected a single failing attempt."
+      },
+      "evidence": [
+        {
+          "label": "Reconciliation of the original attempts and named OCI test cases",
+          "url": "https://github.com/tamird/buildbuddy/blob/04e190dc2/.github/workflows/oci-empty-root-result.json"
+        },
+        {
+          "label": "Original native test records: two negative attempts, corrected run and layered controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41430613976/artifacts/13134188134"
+        },
+        {
+          "label": "Empty-image action failure and one-file DPDK worker control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41428504065/artifacts/13133351604"
+        },
+        {
+          "label": "Why the runtime skips duplicate empty layers",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/commit/4c07f97e3"
+        }
+      ]
     }
   ],
   "edges": [
@@ -60453,7 +60507,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-02T10:33:50.966231+00:00",
+      "updatedAt": "2026-11-02T10:51:10.030297+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -62235,7 +62289,7 @@
           ]
         }
       ],
-      "nextStep": "Test BuildBuddy’s zero-layer OCI fix with the empty image and the existing layered-image controls. DPDK’s AMD64 static musl archive runs with declared tools. The GNU and ARM64 builds and VFIO packet I/O still need qualification.",
+      "nextStep": "Submit the BuildBuddy empty-root OCI fix after contributor review. Once workers run it, repeat the DPDK action on a literal zero-layer image. The GNU and ARM64 builds and VFIO packet I/O still need qualification.",
       "evidence": [
         {
           "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
