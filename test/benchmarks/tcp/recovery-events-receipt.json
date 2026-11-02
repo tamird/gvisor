@@ -495,7 +495,169 @@
           "linux"
         ],
         "ack_wire_matches": 107,
-        "ack_events": 107
+        "ack_events": 107,
+        "first_interrupted_timeout": {
+          "timeout_ns": 1793599677101858706,
+          "rack_ack_ns": 1793599677102127646,
+          "timeout": {
+            "cause": "rto",
+            "cwnd": 188,
+            "cwnd_after": 1,
+            "dupacks": 0,
+            "marked": 0,
+            "ns": 1793599677101858706,
+            "nxt": 2195126862,
+            "ordinal": 2,
+            "out": 188,
+            "peer": 44000,
+            "port": 26807,
+            "queued": 3506176,
+            "recovery": true,
+            "recovery_after": false,
+            "rto_ns": 400000000,
+            "sacked": 74,
+            "sacked_bytes": 202072,
+            "ssthresh": 185,
+            "ssthresh_after": 129,
+            "tlp_high": 0,
+            "una": 2194185218
+          },
+          "rack_ack": {
+            "ack": 2194186638,
+            "ack_sacks": [
+              {
+                "Start": 2194861878,
+                "End": 2194870398
+              },
+              {
+                "Start": 2194857618,
+                "End": 2194859038
+              },
+              {
+                "Start": 2194755054,
+                "End": 2194783562
+              }
+            ],
+            "ack_tsval": 2547372784,
+            "cause": "rack_ack",
+            "cwnd": 2,
+            "cwnd_after": 5,
+            "dupacks": 0,
+            "marked": 275,
+            "ns": 1793599677102127646,
+            "nxt": 2195126862,
+            "ordinal": 3,
+            "out": 0,
+            "peer": 44000,
+            "port": 26807,
+            "queued": 3504756,
+            "recovery": false,
+            "recovery_after": true,
+            "rto_ns": 200000000,
+            "sacked": 74,
+            "sacked_bytes": 38448,
+            "ssthresh": 129,
+            "ssthresh_after": 2,
+            "tlp_high": 0,
+            "una": 2194186638
+          },
+          "packet_sequences": {
+            "A": 2194185218,
+            "B": 2194186638
+          },
+          "packet_payload_bytes": 1420,
+          "captures_ns_from_timeout": {
+            "client.1": {
+              "A": [
+                -625537706,
+                -456634706,
+                -317096706,
+                -100801706,
+                129294
+              ],
+              "B": [
+                -625531706,
+                -456630706,
+                -317092706,
+                -100795706,
+                505294
+              ]
+            },
+            "server.1": {
+              "A": [
+                -50189706,
+                58908294
+              ],
+              "B": [
+                -49594706,
+                59503294
+              ]
+            }
+          },
+          "ack_capture": {
+            "previous": {
+              "ack": 2194185218,
+              "tsval": 2547372702,
+              "raw_sacks": [
+                [
+                  2194861878,
+                  2194870398
+                ],
+                [
+                  2194857618,
+                  2194859038
+                ],
+                [
+                  2194755054,
+                  2194783562
+                ]
+              ],
+              "ns_from_timeout": -82188706
+            },
+            "trigger": {
+              "ack": 2194186638,
+              "tsval": 2547372784,
+              "raw_sacks": [
+                [
+                  2194861878,
+                  2194870398
+                ],
+                [
+                  2194857618,
+                  2194859038
+                ],
+                [
+                  2194755054,
+                  2194783562
+                ]
+              ],
+              "ns_from_timeout": -59706
+            }
+          },
+          "first_post_decision_sample": {
+            "bufsize": 4194304,
+            "cwnd": 5,
+            "fack": 2194870398,
+            "mss": 1420,
+            "ns": 1793599677102317952,
+            "out": 189,
+            "peer": 44000,
+            "port": 26807,
+            "queued": 3504756,
+            "rack_rtt_us": 112670,
+            "recovery": true,
+            "reord": true,
+            "reownd_us": 25073,
+            "rtt_us": 105247,
+            "sack_negotiated": true,
+            "sacked": 0,
+            "seq_flight": 940224,
+            "stack": "netstack",
+            "timestamps_negotiated": true,
+            "una": 2194186638,
+            "wnd": 2455744
+          }
+        }
       }
     }
   }

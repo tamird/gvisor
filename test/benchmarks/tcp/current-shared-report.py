@@ -273,6 +273,57 @@ def reconcile(wire, data, events, public, recovery, write_events=True):
             "ack_wire_matches":sum(e.get("capture_ack_candidates_before",0)>0 for e in selected_events),
             "ack_events":sum("ack" in e for e in selected_events)}
 
+def interrupted_timeout(public, events, flow):
+    """Bind the severe arm’s first RTO and advancing ACK to both captures."""
+    selected = [e for e in events if (e["port"],e["peer"]) == (flow["client_port"],flow["wan_port"])]
+    i = next(i for i,e in enumerate(selected) if e["cause"]=="rto")
+    timeout, decision = selected[i:i+2]
+    assert timeout["recovery"] and decision["cause"]=="rack_ack"
+    a,b = timeout["una"],decision["una"]
+    mss = flow["wire_mss"]
+    assert (b-a)%2**32==mss and timeout["nxt"]==decision["nxt"]
+    origins = {"A":a, "B":b}
+    times = {}
+    receipt = None
+    for dev in ("client.1","server.1"):
+        times[dev] = {key:[] for key in origins}
+        isn = previous = None
+        with (public/f"measured-cubic-netstack-{dev}-packets.tsv.gz").open("rb") as source, gzip.open(source,"rt") as f:
+            for row in csv.DictReader(f,delimiter="\t"):
+                ports = int(row["tcp.srcport"]),int(row["tcp.dstport"])
+                forward = (flow["client_port"],flow["wan_port"])
+                ns = int(Decimal(row["frame.time_epoch"])*1_000_000_000)
+                if ports==forward:
+                    seq = int(row["tcp.seq_raw"])
+                    if int(row["tcp.flags"],0)&2:
+                        assert isn in (None,seq)
+                        isn = seq
+                    for key,left in origins.items():
+                        if seq==left and int(row["tcp.len"])==mss:
+                            times[dev][key].append(ns-timeout["ns"])
+                elif dev=="client.1" and ports==forward[::-1] and int(row["tcp.flags"],0)&16:
+                    assert isn is not None
+                    ends = [row[name].split(",") if row[name] else [] for name in ("tcp.options.sack_le","tcp.options.sack_re")]
+                    assert len(ends[0])==len(ends[1])
+                    blocks = [[(isn+int(start))%2**32,(isn+int(end))%2**32] for start,end in zip(*ends)]
+                    ack = int(row["tcp.ack_raw"])
+                    tsval = int(row["tcp.options.timestamp.tsval"] or 0)
+                    if (ack,tsval,blocks)==(decision["ack"],decision["ack_tsval"],[[q["Start"],q["End"]] for q in decision["ack_sacks"]]):
+                        assert receipt is None and previous is not None
+                        assert previous["raw_sacks"]==blocks and previous["ack"]==a and ack==b
+                        receipt = {"previous":previous,"trigger":{"ack":ack,"tsval":tsval,"raw_sacks":blocks,"ns_from_timeout":ns-timeout["ns"]}}
+                    previous = {"ack":ack,"tsval":tsval,"raw_sacks":blocks,"ns_from_timeout":ns-timeout["ns"]}
+    assert receipt and receipt["trigger"]["ns_from_timeout"]<0
+    assert all(times["server.1"][key][0]<0 for key in origins)
+    with (public/"measured-cubic-netstack-netstack-samples.jsonl").open() as f:
+        sample = next(x for line in f if (x:=json.loads(line))["ns"]>decision["ns"] and x["port"]==flow["client_port"] and x["peer"]==flow["wan_port"])
+    assert sample["una"]==b and sample["out"]>sample["cwnd"] and sample["seq_flight"]<sample["wnd"]
+    return dict(timeout_ns=timeout["ns"],rack_ack_ns=decision["ns"],timeout=timeout,rack_ack=decision,
+                packet_sequences=origins,packet_payload_bytes=mss,
+                captures_ns_from_timeout=times,ack_capture=receipt,
+                first_post_decision_sample=sample)
+
+
 def replay(archive):
     """Recheck the original public packet and event tables; no new traffic."""
     import hashlib
@@ -291,6 +342,8 @@ def replay(archive):
             for key in ("counts","events","full_mss_ns","full_mss_order","ack_events"):
                 assert q[key] == result["decisions"][key], (arm,key)
             assert q["ack_matches"] == {"unique":q["ack_events"]} and q["full_mss_order"]==["netstack","linux"]
+            if arm=="primary2-on":
+                q["first_interrupted_timeout"] = interrupted_timeout(public,events,result["wire"]["netstack"])
             summary[arm] = dict(socket_port=result["wire"]["netstack"]["client_port"],
                                 received=result["receiver_rates"], decisions=q)
         return dict(artifact="https://github.com/tamird/gvisor/actions/runs/41396975788/artifacts/13120670595",
