@@ -21,6 +21,7 @@ REPO = REGISTRY["meta"]["repo"]
 OWNER = REGISTRY["meta"]["owner"]
 REQUEST_LIMIT = 48
 PR_BATCH_SIZE = 8
+MERGEABILITY_BATCH_SIZE = 64
 requests = 0
 query_cost = 0
 rate_remaining = None
@@ -38,7 +39,7 @@ commits(last:1) { nodes { commit { oid committedDate statusCheckRollup {
 } } } }
 """
 FIELDS = """
-number title url state isDraft headRefName headRefOid headRef { name target { oid } } baseRefOid updatedAt createdAt mergedAt closedAt mergeCommit { oid }
+number title url state isDraft headRefName headRefOid headRef { name target { oid } } baseRefOid baseRef { name target { oid } } updatedAt createdAt mergedAt closedAt mergeCommit { oid }
 headRepository { nameWithOwner owner { login } } repository { nameWithOwner }
 author { login } reviewDecision mergeable mergeStateStatus
 headHistory:timelineItems(last:1,itemTypes:[HEAD_REF_FORCE_PUSHED_EVENT]) {
@@ -330,7 +331,12 @@ def mergeability_fields(pr: dict) -> dict:
     if branch and (branch["name"] != pr["headRefName"]
                    or not re.fullmatch(r"[a-f0-9]{40}", branch["target"]["oid"])):
         raise RuntimeError(f"PR #{pr['number']} has an invalid source branch identity")
-    return {"base": pr["baseRefOid"], "branchHead": branch["target"]["oid"] if branch else None,
+    # An open PR's baseRefOid can stay at its original revision as master advances.
+    base = pr["baseRefOid"]
+    if pr["state"] == "OPEN":
+        target = pr["baseRef"]
+        base = target["target"]["oid"] if target else None
+    return {"base": base, "branchHead": branch["target"]["oid"] if branch else None,
             "mergeable": pr["mergeable"], "mergeState": pr["mergeStateStatus"],
             "mergeabilityCheckedAt": pr.get("_mergeabilityRetrievedAt", pr["_retrievedAt"])}
 
@@ -495,11 +501,13 @@ def recheck_unknown_mergeability(prs: list[dict], repo: str = REPO) -> dict[str,
     # Report the original candidate inventory; per-PR observations record which
     # batches actually completed if transport or the request budget stops us.
     numbers = sorted(unknown)
-    for start in range(0, len(numbers), PR_BATCH_SIZE):
+    for start in range(0, len(numbers), MERGEABILITY_BATCH_SIZE):
         if requests >= REQUEST_LIMIT:
             return {"status": "budget-exhausted", "numbers": numbers}
-        batch = numbers[start:start + PR_BATCH_SIZE]
-        fields = " ".join(f"p{number}:pullRequest(number:{number}){{number headRefOid headRef{{name target{{oid}}}} baseRefOid state mergeable mergeStateStatus}}"
+        batch = numbers[start:start + MERGEABILITY_BATCH_SIZE]
+        # mergeStateStatus includes branch protection and checks. Asking for it
+        # here times out large batches even when the conflict result is ready.
+        fields = " ".join(f"p{number}:pullRequest(number:{number}){{number headRefOid headRef{{name target{{oid}}}} baseRef{{name target{{oid}}}} state mergeable}}"
                           for number in batch)
         try:
             response = graphql(f'query {{ repository(owner:"{owner}",name:"{name}") {{ {fields} }} }}')["repository"]
@@ -519,9 +527,12 @@ def recheck_unknown_mergeability(prs: list[dict], repo: str = REPO) -> dict[str,
                 raise RuntimeError(f"PR #{number} changed during mergeability recheck; previous snapshot is unchanged")
             if result["mergeable"] not in {"MERGEABLE", "CONFLICTING", "UNKNOWN"}:
                 raise RuntimeError(f"Unexpected mergeability for PR #{number}; previous snapshot is unchanged")
-            pr.update(baseRefOid=result["baseRefOid"], mergeable=result["mergeable"],
-                      headRef=result.get("headRef"),
-                      mergeStateStatus=result["mergeStateStatus"], _mergeabilityRetrievedAt=retrieved_at)
+            # GitHub computes mergeability asynchronously. If the destination
+            # moved between reads, we cannot associate the verdict with its tip.
+            base = result["baseRef"]
+            mergeable = result["mergeable"] if base and base == pr["baseRef"] else "UNKNOWN"
+            pr.update(baseRef=base, headRef=result.get("headRef"), mergeable=mergeable,
+                      mergeStateStatus="UNKNOWN", _mergeabilityRetrievedAt=retrieved_at)
     return {"status": "completed", "numbers": numbers}
 
 

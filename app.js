@@ -468,7 +468,7 @@ function attentionReasons(node, owner) {
   const pr = node.github;
   if (node.type !== "pr" || pr?.headOwner !== owner || pr.status !== "open") return reasons;
   if (pr.branchHead && pr.branchHead !== pr.head) {
-    add("agent-refresh", `The source branch is ${pr.branchHead.slice(0, 9)}, but GitHub's PR still reports ${pr.head.slice(0, 9)}. Displayed reviews, checks and mergeability cover the older PR head; the branch's current mergeability is unknown.`);
+    add("agent-refresh", `The snapshot observed source branch ${pr.branchHead.slice(0, 9)}, but GitHub's PR reports ${pr.head.slice(0, 9)}. Displayed reviews, checks and mergeability cover the older PR head; the branch's current mergeability is unknown.`);
     return reasons;
   }
   const landed = landedPatch(node);
@@ -705,7 +705,7 @@ function mergeDescription(pr) {
   const current = pr.mergeable === "CONFLICTING" ? "Merge conflicts" : pr.mergeable === "MERGEABLE" ? "No reported merge conflict" : "GitHub is recomputing mergeability";
   const observed = previous ? ` Last observed ${previous.state === "CONFLICTING" ? "conflict" : "no conflict"} at ${date(previous.checkedAt)}, head ${previous.head.slice(0, 9)}, base ${previous.base?.slice(0, 9) || "not recorded"}.${previous.head !== pr.head ? " That observation belongs to an older head." : ""}` : " No previous concrete result is recorded.";
   const branch = pr.branchHead && pr.branchHead !== pr.head
-    ? `Source branch ${pr.branchHead.slice(0, 9)} differs from the PR head; its mergeability is unknown. PR head: ` : "";
+    ? `The observed source branch ${pr.branchHead.slice(0, 9)} differs from the PR head; its mergeability is unknown. PR head: ` : "";
   return branch + current + (pr.mergeable === "UNKNOWN" ? observed : ` · checked ${date(pr.conflictCheckedAt || pr.mergeabilityCheckedAt || pr.checkedAt)} · head ${pr.head.slice(0, 9)} · base ${pr.base?.slice(0, 9) || "not recorded"}`);
 }
 function withConflictResult(pr) {
@@ -719,7 +719,8 @@ function withConflictResult(pr) {
   }
   const changed = result.head !== pr.head;
   const current = { ...pr, head: result.head, headRepo: result.headRepo ?? null, ref: result.ref, base: result.base, status: result.status,
-    branchHead: null, // REST does not observe the branch ref; do not mix snapshots.
+    // A PR reread cannot clear a recorded mismatch on that same source ref.
+    branchHead: !changed && result.ref === pr.ref && result.headRepo === pr.headRepo && pr.branchHead !== pr.head ? pr.branchHead ?? null : null,
     mergeable: result.state, conflictCheckedAt: result.checkedAt, revisionChanged: changed, statusChanged: result.status !== pr.status };
   if (changed) Object.assign(current, { reviewDecision: null, approvedHead: null, githubReviewDecision: null,
     reviewsComplete: false, reviewRequestsComplete: false, checks: null, labels: [], labelsComplete: false,
@@ -743,7 +744,9 @@ async function refreshConflict(number, repo = registry.meta.repo) {
         headRepo !== null && (typeof headRepo !== "string" || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(headRepo)) ||
         ![true, false, null].includes(data.mergeable) || !["open", "closed"].includes(data.state) || typeof data.merged !== "boolean")
       throw new Error("GitHub returned an unexpected PR identity or mergeability result");
-    const result = { head: data.head.sha, headRepo, ref: data.head.ref, base: data.base.sha, state: data.mergeable === true ? "MERGEABLE" : data.mergeable === false ? "CONFLICTING" : "UNKNOWN",
+    // This REST response identifies the PR's recorded base, but does not
+    // observe the current destination branch tip.
+    const result = { head: data.head.sha, headRepo, ref: data.head.ref, base: null, state: data.mergeable === true ? "MERGEABLE" : data.mergeable === false ? "CONFLICTING" : "UNKNOWN",
       status: data.merged ? "merged" : data.state === "closed" ? "closed" : data.draft ? "draft" : "open", checkedAt: new Date().toISOString() };
     // A newer unknown response must not erase a concrete result obtained in this tab.
     const old = conflictResults.get(identity);

@@ -253,7 +253,8 @@ review-dismissal event records its previous state as approved.
 
 Posting also requires fresh `MERGEABLE` status. Conflicts defer to source work;
 unknown mergeability gets one bounded, head-checked reread per PR, using the
-existing eight-PR batches and request ceiling, and still defers if unresolved.
+existing request ceiling. Each query checks up to 64 PRs for conflicts. If
+the destination changes between reads, the reminder waits for a new snapshot.
 Snapshot rereads use only the budget left after collecting every repository and
 registered issue. When it runs out, unqueried PRs retain their initial UNKNOWN.
 Every normal sweep reports the full
@@ -505,7 +506,8 @@ Concrete mergeability observations retain head, base and time. GitHub's
 has cleared. The Conflicts filter retains a same-head prior conflict, explicitly
 labeled **last observed conflict** until a concrete response replaces it; details
 show the original base and date. A prior result for another head is history only.
-Older snapshots may not have recorded the base; it remains unknown. A new
+Scheduled reads record the destination branch tip. A browser reread and some
+older snapshots do not have that tip. A new
 MERGEABLE result clears the conflict. No unknown response grants merge readiness.
 
 A tab open across a deployment adopts the matching pair

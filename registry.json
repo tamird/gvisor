@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T08:53:53+00:00",
+    "updatedAt": "2026-11-02T09:13:42.901497+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38084,11 +38084,11 @@
       "group": "runtime",
       "repo": "google/gvisor",
       "ref": "proposal/cgroup-v2-effective-memory",
-      "head": "defd36ca12bb62b3a85b0aeb51efd82c9016130d",
+      "head": "8c31f62fe4c148c80771df7f75af484b2a9ce1b5",
       "title": "Respect ancestor memory limits in cgroup v2",
       "url": "https://github.com/google/gvisor/pull/16767",
       "status": "open",
-      "updatedAt": "2026-10-30T21:25:47.985190+00:00",
+      "updatedAt": "2026-11-02T09:13:42.901497+00:00",
       "summary": "The runsc integration test creates the host cgroup hierarchy before starting a real guest. With unlimited, larger and smaller leaves under a 512 MiB parent, the guest reports 512, 512 and 384 MiB. The same native cat reports host RAM in all three cgroups; a shared Linux MemTotal assertion would test a different contract.",
       "evidence": [
         {
@@ -38106,6 +38106,10 @@
         {
           "label": "Complete package without DAC overrides: 156 passed, 0 skipped",
           "url": "https://github.com/tamird/gvisor/actions/runs/41106589645/artifacts/13001043012"
+        },
+        {
+          "label": "Patch-identical rebase after the gofer CPU test landed",
+          "url": "https://github.com/tamird/gvisor/commit/8c31f62fe"
         }
       ],
       "settledReviews": [
@@ -38122,7 +38126,7 @@
           "head": "c89f8f55abfe0d08c2bfc836192bd27d0aee7161"
         },
         "after": {
-          "head": "defd36ca12bb62b3a85b0aeb51efd82c9016130d"
+          "head": "8c31f62fe4c148c80771df7f75af484b2a9ce1b5"
         }
       }
     },

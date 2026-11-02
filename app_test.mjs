@@ -1670,6 +1670,9 @@ test('provider branch mismatch routes refresh without rewriting PR evidence', ()
   context.nodeInput = node;
   assert.deepEqual(idsFor(node), ['agent-refresh']);
   assert.deepEqual(node.github, raw);
+  const reread = { head: raw.head, ref: raw.ref, headRepo: raw.headRepo, state: 'MERGEABLE', base: null, status: 'open', checkedAt: '2099-01-01T00:00:00Z' };
+  context.resultInput = reread;
+  assert.equal(vm.runInContext('conflictResults.set(prIdentity(nodeInput.github), resultInput); withConflictResult(nodeInput.github).branchHead', context), raw.branchHead);
   assert.match(vm.runInContext('mergeDescription(nodeInput.github)', context), /its mergeability is unknown/);
   assert.ok(vm.runInContext('conflictRecord(nodeInput.github)', context));
   const snapshot = { ...context.snapshotInput, workStates: { [node.id]: { 'waiting-merge': { scope: node.github.head } } } };
@@ -1706,6 +1709,7 @@ test('direct REST refresh replaces the repository and branch identity even on th
     assert.equal(current.headRepo, repo?.full_name ?? null);
     assert.equal(current.ref, 'new-name');
     assert.equal(current.branchHead, null);
+    assert.equal(current.base, null);
     assert.equal(current.revisionChanged, false);
     assert.equal(current.head, original.head);
   }

@@ -45,7 +45,7 @@ def raw_pr(number: int, state: str = "OPEN", *, author: str = "tamird", head: in
     return {
         "number": number, "title": f"PR {number}", "url": f"https://github.com/google/gvisor/pull/{number}",
         "state": state, "isDraft": False, "headRefName": f"topic-{number}", "headRefOid": oid,
-        "baseRefOid": "f" * 40, "updatedAt": OLD, "createdAt": OLD,
+        "baseRefOid": "f" * 40, "baseRef": {"name": "master", "target": {"oid": "e" * 40}}, "updatedAt": OLD, "createdAt": OLD,
         "mergedAt": OLD if state == "MERGED" else None,
         "mergeCommit": {"oid": "e" * 40} if state == "MERGED" else None,
         "closedAt": OLD if state != "OPEN" else None,
@@ -245,6 +245,7 @@ class IssueInventoryTest(unittest.TestCase):
 
 class MergeabilityBatchTest(unittest.TestCase):
     def setUp(self) -> None:
+        self.enterContext(mock.patch.object(updater, "MERGEABILITY_BATCH_SIZE", 8))
         self.rows = [raw_pr(number) for number in range(1, 18)]
         for row in self.rows:
             row["mergeable"] = "UNKNOWN"
@@ -254,8 +255,6 @@ class MergeabilityBatchTest(unittest.TestCase):
         numbers = [int(n) for n in re.findall(r"p(\d+):pullRequest", query)]
         self.batches.append(numbers)
         updater.requests += 1
-        if len(numbers) > updater.PR_BATCH_SIZE:
-            raise updater.GitHubTransportError("HTTP 502 for oversized mergeability query")
         return {"repository": {f"p{n}": {**raw_pr(n),
                 "mergeable": "CONFLICTING" if n == 13 else "MERGEABLE"} for n in numbers}}
 
@@ -297,6 +296,7 @@ class MergeabilityBatchTest(unittest.TestCase):
             updater.recheck_snapshot_mergeability([self.rows[12]], [first, second], "google/gvisor")
             self.assertEqual(self.batches, [[13]])
             self.assertEqual(first["mergeabilityObservation"]["state"], "CONFLICTING")
+            self.assertEqual(first["mergeabilityObservation"]["base"], self.rows[12]["baseRef"]["target"]["oid"])
             self.assertEqual(first, second)
             for row in (first, second):
                 row["mergeable"] = "UNKNOWN"
@@ -312,7 +312,7 @@ class MergeabilityBatchTest(unittest.TestCase):
 
         def recheck(query: str) -> dict:
             result = self.graphql(query)
-            result["repository"]["p1"]["mergeable"] = "UNKNOWN"
+            result["repository"]["p1"]["baseRef"]["target"]["oid"] = "b" * 40
             return result
 
         with mock.patch.object(updater, "requests", updater.REQUEST_LIMIT - 1), \
@@ -1605,7 +1605,7 @@ class ReapprovalReminderTest(unittest.TestCase):
                 self.assertEqual(len(comments), 1)
                 self.raw["mergeable"] = "UNKNOWN"
                 unresolved = {key: self.raw[key] for key in
-                              ("number", "headRefOid", "baseRefOid", "state", "mergeable", "mergeStateStatus")}
+                              ("number", "headRefOid", "baseRef", "state", "mergeable")}
                 with mock.patch.object(updater, "requests", 0), \
                         mock.patch.object(updater, "graphql", return_value={"repository": {"p7": unresolved}}) as query:
                     updater.reapproval_reminders(post=True)
