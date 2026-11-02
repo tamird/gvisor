@@ -1,0 +1,41 @@
+name: Verify the checklocks card with the live map
+on:
+  push:
+    branches: [qualification/work-map-checklocks-ui]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the live UI and the curated pair
+        id: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 27f51dc9f30e9b6e07b1383aa42894dc54c7fb3c
+          test "$(git rev-parse HEAD^^)" = b1bd79bfa7f0ddfba19645a1ac35ed7e04de6907
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          test "$(git diff --name-only HEAD^^ HEAD^)" = "$(printf '%s\n' github-status.json registry.json)"
+          sha256sum -c <<'INPUTS'
+          e5d01ececbb039823104599713efd9082379b42e00b724e4580a0ffedf37230a  app.js
+          35b8f274fe46067179c726f7c153162b5ec8381e4483c20df01de9950c320c41  registry.json
+          52383f46c60fe2a99418e36475c0d7c3a10412eaab7674ed4ae65dd7073222c4  github-status.json
+          INPUTS
+          mkdir results
+      - name: Check the canonical metadata pair
+        id: metadata
+        if: always() && steps.source.outcome == 'success'
+        run: node metadata-preflight.mjs . > results/preflight.json
+      - name: Publish the bounded verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-map-checklocks-live-ui
+          path: results/preflight.json
+          if-no-files-found: error
