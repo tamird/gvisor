@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T02:29:36+00:00",
+    "updatedAt": "2026-11-02T03:51:38+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27563,26 +27563,30 @@
       "id": "branch:plugin-toolchain-unwind",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "proposal/plugin-musl-vfio",
-      "head": "92c5bed67c8cac88959b0a4cb64e0b52f92b2ec9",
+      "ref": "proposal/plugin-musl-current",
+      "head": "b0713e2bcf6ccde362401912ae80d17a4e1738b5",
       "title": "Build the TLDK plugin against musl",
-      "url": "https://github.com/tamird/gvisor/commit/92c5bed67",
+      "url": "https://github.com/tamird/gvisor/commit/b0713e2bc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T03:36:08+00:00",
-      "summary": "The musl build can keep DPDK VFIO support enabled. The GNU and musl archives each exported three VFIO symbols, and those symbols survived in the static AMD64 binaries that ran TestDumpStack. Both original tests passed. The musl invocation reported an out-of-memory error and exited 36 after its test passed; its original output and runfile digests were recovered without rerunning the tests. PCI-device traffic remains untested. The qualified change builds on an earlier revision of the GNU-only PR #15153.",
+      "updatedAt": "2026-11-02T03:51:38+00:00",
+      "summary": "The musl follow-up now builds on #15153’s current GNU-only change. The earlier GNU and musl runs found all three VFIO symbols in the DPDK archive and the executable that passed TestDumpStack. The revised change uses newer kernel headers, so the native musl build and test are running again. PCI-device traffic remains untested.",
       "followup": {
         "owner": "arm64_results",
-        "sourceHead": "92c5bed67c8cac88959b0a4cb64e0b52f92b2ec9",
-        "observedAt": "2026-11-02T03:34:49+00:00",
-        "disposition": "GNU and musl original archive, linked symbols and runtime test verified",
-        "nextAction": "Reconcile the musl change with #15153’s current GNU-only head, 675d49b1c. Reuse verified evidence where the patch is equivalent and qualify source drift before presenting the complete change.",
+        "sourceHead": "b0713e2bcf6ccde362401912ae80d17a4e1738b5",
+        "observedAt": "2026-11-02T03:51:38+00:00",
+        "disposition": "Rebased on the current GNU DPDK change",
+        "nextAction": "Verify the archive, executable and stack-unwind result with the new headers before requesting review.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41383490365/artifacts/13114392072",
+          "https://github.com/tamird/gvisor/actions/runs/41384852262",
           "https://github.com/google/gvisor/pull/15153"
         ]
       },
       "evidence": [
+        {
+          "label": "Native musl archive, executable and stack unwinding on the revised source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41384852262"
+        },
         {
           "label": "Original archive → link → executed ELF, three symbols and named test verified for both libcs",
           "url": "https://github.com/tamird/gvisor/actions/runs/41383490365/artifacts/13114392072"
@@ -27650,10 +27654,10 @@
       ],
       "refinement": {
         "before": {
-          "head": "ccae8886eed54388bb6a36dd3211a6e5831ecc5b"
+          "head": "92c5bed67c8cac88959b0a4cb64e0b52f92b2ec9"
         },
         "after": {
-          "head": "92c5bed67c8cac88959b0a4cb64e0b52f92b2ec9"
+          "head": "b0713e2bcf6ccde362401912ae80d17a4e1738b5"
         }
       }
     },
@@ -41378,11 +41382,11 @@
       "repo": "google/gvisor",
       "number": 16787,
       "ref": "linger-close-fin-acked",
-      "head": "d2b869316104f8b9adc79045ca60274e2293defd",
+      "head": "1072c7c5b69f66636a755f29a207a8ce876a91f4",
       "title": "netstack: end a lingering close when the peer acknowledges the FIN",
       "url": "https://github.com/google/gvisor/pull/16787",
       "status": "open",
-      "updatedAt": "2026-11-01T09:30:13.357522+00:00",
+      "updatedAt": "2026-11-02T03:51:38+00:00",
       "summary": "Aditya Merchant’s netstack PR wakes a lingering close when the peer acknowledges the FIN and skips the wait on process exit. It introduces the shared process-exit syscall fixture used by the host-network follow-up.",
       "evidence": [
         {
@@ -43035,14 +43039,18 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "group": "bazel",
-      "ref": "proposal/buildkite-direct-smoke",
-      "head": "ec41d0045a4fa0ed1ee5320f1fc3f4ff609cf79f",
-      "url": "https://github.com/tamird/gvisor/commit/ec41d0045",
+      "ref": "proposal/buildkite-direct-smoke-declared",
+      "head": "f21dd0d1f664ffe62fa4f2da92d6d4414e121396",
+      "url": "https://github.com/tamird/gvisor/commit/f21dd0d1f",
       "title": "Run the Buildkite smoke guests directly with Bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T03:37:17+00:00",
-      "summary": "All five Buildkite job definitions selected the intended targets, and all three release layouts contained eight files. None of the three guests started. Nogo found test-only Go packages in the built standard library that rules_go excludes from its declared sources: internal/testpty on ordinary AMD64, internal/obscuretestdata on race AMD64, and crypto/internal/sysrand/internal/seccomp on ARM64. A previous sandboxed GoStdlib control omitted the extra packages. The owner is tracing the producing action and integrating #16506’s declared staging tool.",
+      "updatedAt": "2026-11-02T03:51:38+00:00",
+      "summary": "The five Buildkite jobs keep their existing architecture selection and use the declared staging tool from #16506. In the first run, three complete release layouts built, but all three kernels failed Nogo before the guest started. The new run compares the failing standard-library inputs with fresh builds on both native hosts.",
       "evidence": [
+        {
+          "label": "Native AMD64 and ARM64 guest qualification and Go standard-library action comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41384780443"
+        },
         {
           "label": "Original native AMD64 ordinary and race failures before guest execution",
           "url": "https://github.com/tamird/gvisor/actions/runs/41383306954/artifacts/13114088832"
@@ -43062,6 +43070,33 @@
         {
           "label": "Earlier GoStdlib sandbox control for the same extra archive on both target architectures",
           "url": "https://github.com/tamird/gvisor/actions/runs/40960192898/artifacts/12936231116"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "ec41d0045a4fa0ed1ee5320f1fc3f4ff609cf79f"
+        },
+        "after": {
+          "head": "f21dd0d1f664ffe62fa4f2da92d6d4414e121396"
+        }
+      }
+    },
+    {
+      "id": "branch:socket-close-linger-waiter",
+      "type": "branch",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "ref": "research/socket-close-linger-waiter",
+      "head": "fd2a308413e5fa06af407e08799d88351087dbc2",
+      "title": "Measure waiter allocation on ordinary TCP and UDP close",
+      "url": "https://github.com/tamird/gvisor/commit/fd2a30841",
+      "status": "Agent work",
+      "updatedAt": "2026-11-02T03:51:38+00:00",
+      "summary": "Closing a netstack socket creates a waiter even when SO_LINGER is disabled. Moving registration inside the positive-linger path leaves the state check after registration so an early ACK is still observed. A paired native systrap run measures TCP, UDP and an unchanged Unix-socket control, and compares the linger syscall cases with Linux.",
+      "evidence": [
+        {
+          "label": "Native Linux syscall controls and 16 paired systrap measurements",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41385226798"
         }
       ]
     }
@@ -46580,6 +46615,16 @@
       "reason": "Combine the runnable release with declared copy actions for staging.",
       "evidence": [
         "https://github.com/google/gvisor/pull/16506"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:16787",
+      "to": "branch:socket-close-linger-waiter",
+      "reason": "The measurement uses the PR’s post-registration state check to handle a FIN acknowledged before the waiter is installed.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16787",
+        "https://github.com/tamird/gvisor/commit/fd2a30841"
       ]
     }
   ],
