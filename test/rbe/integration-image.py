@@ -81,11 +81,17 @@ def outputs(name: str, target: str, flags: list[str], row: dict) -> list[Path]:
     paths = [Path(line) for line in text.splitlines() if line.startswith(("bazel-out/", "external/"))]
     assert paths, "No selected output files"
     if any(not path.is_file() for path in paths):
-        text = checked(name + "-root", BZ + ["info", "execution_root"], row)
-        roots = [Path(line) for line in text.splitlines() if line.startswith("/")]
-        assert len(roots) == 1
-        paths = [path if path.is_file() else roots[0] / path for path in paths]
-    assert all(path.is_file() for path in paths)
+        roots = {}
+        for kind in {"output_base" if path.parts[0] == "external" else "execution_root"
+                     for path in paths if not path.is_file()}:
+            text = checked(name + "-" + kind, BZ + ["info", kind], row)
+            values = [Path(line) for line in text.splitlines() if line.startswith("/")]
+            assert len(values) == 1, values
+            roots[kind] = values[0]
+        paths = [path if path.is_file() else
+                 roots["output_base" if path.parts[0] == "external" else "execution_root"] / path
+                 for path in paths]
+    assert all(path.is_file() for path in paths), "Selected files unavailable: " + ", ".join(str(p) for p in paths if not p.is_file())
     return paths
 
 
@@ -154,6 +160,8 @@ def prerequisite(row: dict) -> None:
     row["supplier_source"] = SUPPLIER
     row["supplier_archive_sha256"] = "6f2bd832864100aab3648fb190c64032e61dd7a5f22641acbcfb8aba2368a433"
     row["qualified_module_sha256"] = sha(text.encode())
+    if "runtime_original" in RESULT:
+        assert row["qualified_module_sha256"] == RESULT["runtime_original"]["phases"]["prerequisite"]["qualified_module_sha256"]
     assert subprocess.check_output(["git", "diff", "--name-only"], text=True).splitlines() == ["MODULE.bazel"]
 
 
@@ -294,19 +302,27 @@ def inventory(cpu: str, flags: list[str], data: bytes, row: dict) -> None:
         expected_url = lock["sources"][pkg["suite"]]["uris"][0].rstrip("/") + "/" + pkg["filename"]
         record = records["apt/integration_test_packages/" + cpu + "/" + pkg["name"]]
         assert record == {"version": expected_url, "sha256": pkg["sha256"]}
-    payloads = outputs(cpu + "-packages", "@integration_test_packages//:packages", flags, row)
-    assert len(payloads) == len(set(payloads)) == 64
     row["inventory"] = {"lock_sha256": sha(lock_path.read_bytes()), "status_sha256": sha(data),
-                        "tuples": expected, "data_archives": len(payloads), "catalog_records_matched": 64}
+                        "tuples": expected, "catalog_records_matched": 64}
+    save()
+    payloads = outputs(cpu + "-packages", "@integration_test_packages//:packages", flags, row)
+    row["inventory"]["data_archives"] = len(payloads)
+    assert len(payloads) == len(set(payloads)) == 64, "Expected 64 distinct installed package archives"
 
 
 def image(arch: str, cpu: str, machine: int, row: dict) -> None:
     assert RESULT["phases"]["prerequisite"]["status"] == "PASS"
     flags = ["--config=" + arch]
     target = "//images/basic:integrationtest_context"
-    checked(cpu + "-build", BZ + ["build", *flags, target], row)
+    # Retrieve the original image and its intermediate package archives from
+    # cache; request the latter explicitly so toplevel download materializes them.
+    cache_flags = ["--experimental_remote_require_cached"] if "runtime_original" in RESULT else []
+    checked(cpu + "-build", BZ + ["build", *cache_flags, *flags,
+                                  target, "@integration_test_packages//:packages"], row)
     archive = one(cpu + "-path", target, flags, row)
     row["context"] = {"size": archive.stat().st_size, "sha256": sha(archive.read_bytes())}
+    if "runtime_original" in RESULT:
+        assert row["context"] == RESULT["runtime_original"]["phases"][cpu]["context"], "Original image bytes changed"
     with tarfile.open(archive) as tar:
         members = [m for m in tar.getmembers() if m.name.removeprefix("./") == "images/basic/integrationtest/image.tar"]
         assert len(members) == 1 and members[0].isfile()
@@ -319,6 +335,8 @@ def image(arch: str, cpu: str, machine: int, row: dict) -> None:
     assert info["Config"]["User"] == "0:0" and info["Config"]["WorkingDir"] == "/root"
     assert info["Config"]["Cmd"] == ["/bin/bash"] and len(info["RootFS"]["Layers"]) == 3
     row["image"] = {"id": info["Id"], "architecture": cpu, "layers": info["RootFS"]["Layers"]}
+    if "runtime_original" in RESULT:
+        assert row["image"] == RESULT["runtime_original"]["phases"][cpu]["image"]
     cid = checked(cpu + "-create", ["docker", "create", "--platform=linux/" + cpu, TAG], row).strip()
     assert re.fullmatch(r"[a-f0-9]{64}", cid)
     try:
@@ -342,10 +360,14 @@ def image(arch: str, cpu: str, machine: int, row: dict) -> None:
                 elf = checked(cpu + "-elf-" + name, ["readelf", "-l", "-d", str(binary)], row)
                 assert "INTERP" not in elf and "(NEEDED)" not in elf
                 row["helpers"][name] = {"size": len(data), "sha256": sha(data), "machine": machine, "static": True}
+            if "runtime_original" in RESULT:
+                assert row["helpers"] == RESULT["runtime_original"]["phases"][cpu]["helpers"]
             inventory(cpu, flags, tar.extractfile(files["var/lib/dpkg/status"]).read(), row)
         command = 'test "$(id -u):$(id -g)" = 1338:1337; test -x ./host_connect; /bin/sh -c true; ip -Version; iptables --version; ip6tables --version; unshare --version; sysctl --version; ping -V; stat /tmp'
         checked(cpu + "-tools", ["docker", "run", "--platform=linux/" + cpu, "--runtime=runc", "--rm", "--workdir=/home/nonroot", "--user=nonroot", TAG, "/bin/bash", "-ec", command], row)
-        for fixture in ("test_copy_up", "test_rewinddir"):
+        # Copy-up is covered by the original Sentry TestHostOverlayfsCopyUp.
+        # Its mmap expectations are not the native overlayfs contract.
+        for fixture in ("test_rewinddir",):
             checked(cpu + "-" + fixture, ["docker", "run", "--platform=linux/" + cpu,
                     "--runtime=runc", "--rm", TAG, "./" + fixture], row)
         row["runtime"] = "native AMD64 runc" if cpu == "amd64" else "QEMU ARM64 under AMD64 runc"
@@ -408,7 +430,45 @@ def phase(name: str, fn: Callable[[dict], None]) -> None:
         save()
 
 
-if sys.argv[1:] == ["--preflight"]:
+def runtime_original(row: dict) -> None:
+    path = TMP / "runtime-original.zip"
+    assert sha(path.read_bytes()) == "8e4848f330fad7f1b23c495cfbf3f577cefa181dc8437c655c7aa8ca9e9e9d77"
+    with zipfile.ZipFile(path) as z:
+        assert z.namelist() == ["result.json"]
+        old = json.loads(z.read("result.json"))
+    RESULT["runtime_original"] = old
+    assert old["product"] == PRODUCT and old["carrier"] == "6a9523e82145fffc6b2ec69e4e0f1fd5011997e1"
+    assert old["status"] == "FAIL"
+    for name in ("catalog", "prerequisite", "resolve", "key_identity", "make", "runtime", "nested", "guest"):
+        assert old["phases"][name]["status"] == "PASS", name
+    for name, count in (("nested", 19), ("guest", 6)):
+        case = old["phases"][name]
+        assert case["consumer"]["rc"] == case["commands"][0]["exit"] == 0
+        assert case["consumer"]["source"] == PRODUCT
+        assert not any(case["consumer"][key] for key in ("missing", "FAIL", "SKIP"))
+        assert len(case["cases"]) == count and not any(c["failed"] or c["skipped"] for c in case["cases"])
+    for cpu in ("amd64", "arm64"):
+        image = old["phases"][cpu]
+        assert image["status"] == "FAIL" and image["error"] == "AssertionError: "
+        assert set(image["helpers"]) == set(HELPERS)
+        assert all(command["exit"] == 0 for command in image["commands"])
+        assert image["commands"][-1]["command"][-2:] == ["info", "execution_root"]
+        assert image["commands"][-2]["command"][-1] == "@integration_test_packages//:packages"
+    row["archive_sha256"] = sha(path.read_bytes())
+    row["reused_runtime_cases"] = 25
+    row["original_finished"] = old["finished"]
+
+
+if sys.argv[1:] == ["--inventory-recover"]:
+    RESULT["started"] = now()
+    phase("original", runtime_original)
+    phase("prerequisite", prerequisite)
+    if RESULT["phases"]["original"]["status"] == RESULT["phases"]["prerequisite"]["status"] == "PASS":
+        phase("amd64", lambda row: image("x86_64", "amd64", 62, row))
+        phase("arm64", lambda row: image("aarch64", "arm64", 183, row))
+    RESULT["status"] = "PASS" if set(RESULT["phases"]) == {"original", "prerequisite", "amd64", "arm64"} and all(row["status"] == "PASS" for row in RESULT["phases"].values()) else "FAIL"
+    RESULT["finished"] = now()
+elif sys.argv[1:] == ["--preflight"]:
     RESULT["started"] = now()
     phase("original", original)
     phase("catalog", prior_catalog)
