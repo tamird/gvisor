@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T00:42:04+00:00",
+    "updatedAt": "2026-11-02T01:03:14+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42439,7 +42439,7 @@
       "group": "bazel",
       "status": "Contributor review requested",
       "summary": "Upgrade the shared Bazel pin to 9.3.1. Two compatibility patches keep gVisor’s existing Coral compiler and LLVM parser. The upgrade includes the directory-watch fix needed by the lint migration.",
-      "updatedAt": "2026-11-01T17:48:17.215162+00:00",
+      "updatedAt": "2026-11-02T01:03:14+00:00",
       "evidence": [
         {
           "label": "Final upgrade commit",
@@ -42468,6 +42468,10 @@
         {
           "label": "Coral provider in original negative control",
           "url": "https://github.com/google-coral/crosstool/blob/8e8855091/cc_toolchain_config.bzl.tpl#L384"
+        },
+        {
+          "label": "Native AMD64 NVIDIA ABI parser test",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41368654125/artifacts/13108397749"
         }
       ],
       "refinement": {
@@ -63184,7 +63188,7 @@
       "title": "Upgrade gVisor to Bazel 9",
       "status": "active",
       "owner": "Build tools",
-      "updatedAt": "2026-11-01T19:12:39.872383+00:00",
+      "updatedAt": "2026-11-02T01:03:14+00:00",
       "summary": "Move the shared Docker and Bazelisk pin from 8.8.1 to 9.3.1. Fix compatibility in the current compiler setup so the upgrade can land independently of hermetic-llvm.",
       "nextStep": "The Bazel 9.3.1 proposal is ready for contributor review. After approval, open the PR on the current GNU toolchain.",
       "findings": [
@@ -63215,6 +63219,15 @@
             {
               "label": "Native ARM64 runsc",
               "url": "https://github.com/tamird/gvisor/actions/runs/41332521937/artifacts/13093609892"
+            }
+          ]
+        },
+        {
+          "text": "On the exact upgrade commit, Bazel linked the NVIDIA ABI parser with Clang and ran its existing test on native AMD64. The test checked C struct and union layouts, type aliases and five macro values.",
+          "evidence": [
+            {
+              "label": "Native AMD64 NVIDIA ABI parser test",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41368654125/artifacts/13108397749"
             }
           ]
         }
