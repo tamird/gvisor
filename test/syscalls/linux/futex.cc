@@ -17,6 +17,7 @@
 #include <linux/futex.h>
 #include <linux/types.h>
 #include <pthread.h>
+#include <sched.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/mman.h>
@@ -769,16 +770,23 @@ TEST_P(PrivateAndSharedFutexTest, PIWaiters) {
   EXPECT_EQ(a.load(), gettid());
 
   ScopedThread th([is_priv, &a] {
+    // The mask from a previous ordinary wait must not select a PI waiter.
+    EXPECT_THAT(futex_wait_bitset(is_priv, &a, 0, 1),
+                SyscallFailsWithErrno(EAGAIN));
     ASSERT_THAT(futex_lock_pi(is_priv, &a), SyscallSucceeds());
+    EXPECT_EQ(a.load() & FUTEX_TID_MASK, gettid());
     ASSERT_THAT(futex_unlock_pi(is_priv, &a), SyscallSucceeds());
   });
 
-  // Wait until the thread blocks on the futex, setting the waiters bit.
-  auto start = absl::Now();
-  while (a.load() != (int)(gettid() | FUTEX_WAITERS)) {
-    ASSERT_LT(absl::Now() - start, absl::Seconds(5));
-    absl::SleepFor(absl::Milliseconds(100));
+  const int contended = gettid() | FUTEX_WAITERS;
+  const absl::Time deadline = absl::Now() + absl::Seconds(5);
+  while (a.load() != contended && absl::Now() < deadline) {
+    sched_yield();
   }
+  EXPECT_EQ(a.load(), contended);
+  EXPECT_THAT(futex_wake_bitset(is_priv, &a, 1, 2),
+              SyscallFailsWithErrno(EINVAL));
+  EXPECT_THAT(futex_wake(is_priv, &a, 1), SyscallFailsWithErrno(EINVAL));
   ASSERT_THAT(futex_unlock_pi(is_priv, &a), SyscallSucceeds());
 }
 
