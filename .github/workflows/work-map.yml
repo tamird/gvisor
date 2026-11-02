@@ -1,0 +1,65 @@
+name: Verify the published decisions and final review requests
+on:
+  push:
+    branches: [qualification/work-map-20261102-pair]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the live UI and the curated pair
+        id: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 2111a633766492edb1ed41a3bdbbb7de08bd46f6
+          test "$(git rev-parse HEAD^^)" = 27f51dc9f30e9b6e07b1383aa42894dc54c7fb3c
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          test "$(git diff --name-only HEAD^^ HEAD^)" = "$(printf '%s\n' github-status.json registry.json)"
+          sha256sum -c <<'INPUTS'
+          e5d01ececbb039823104599713efd9082379b42e00b724e4580a0ffedf37230a  app.js
+          0c366755d047a1dcbaf87cdd83053ed5d69565126f5f936f3cb9aa92f4a7ceeb  registry.json
+          33d87d46e2d7abec4571078bd0e3397eee6c4602445c595dcdcaa1bd29cbbb6c  github-status.json
+          INPUTS
+          mkdir results
+      - name: Check the canonical metadata pair
+        id: metadata
+        if: always() && steps.source.outcome == 'success'
+        run: |
+          node metadata-preflight.mjs . > results/preflight.json
+          git show HEAD^^:github-status.json > results/previous.json
+          python3 - <<'PYTHON'
+          import json
+          from pathlib import Path
+          from work_states import record_states
+          registry = json.loads(Path('registry.json').read_bytes())
+          snapshot = json.loads(Path('github-status.json').read_bytes())
+          previous = json.loads(Path('results/previous.json').read_bytes())
+          assert snapshot['workStates'] == record_states(snapshot['prs'], registry, previous, snapshot['checkedAt'])
+          nodes = {n['id']: n for n in registry['nodes']}
+          observed = {p['url']: p['head'] for p in snapshot['prs']}
+          delivered = ['pr:16840', 'pr:16841', 'pr:16842', 'pr:16843', 'pr:16844', 'pr:16845', 'pr:16846', 'pr:16850', 'pr:16851', 'pr:16852', 'pr:16853', 'pr:16854', 'pr:16855', 'pr:16856', 'pr:16857', 'pr:16858', 'pr:16859', 'pr:16860', 'pr:16861', 'pr:16862', 'pr:16863', 'pr:16864', 'pr:16865', 'pr:16867', 'pr:16868', 'pr:hermeticbuild/hermetic-llvm:909', 'pr:protocolbuffers/protobuf:31234']
+          for key in delivered:
+              assert nodes[key]['head'] == observed[nodes[key]['url']], key
+              assert 'contributor-review' not in snapshot['workStates'].get(key, {}), key
+          heads = set(['04c66b4d8', '07d32506a', '0bf31f69d', '10f9a0f0d', '14abba8a4', '154269d6f', '166e16626', '1813a989c', '251159560', '2d59045da', '34d137cda', '3db00c1cf', '42b379a95', '54b3b894b', '5bb344423', '5bb68f84c', '64b2f7547', '6efbfd233', '73a1dfe9d', '799775e4b', '7ab597c1c', '8b0c840b1', '9dbf919c7', '9f19447bd', 'a4504c546', 'a859c3ac9', 'bcc567c6c', 'bf276987f', 'c576f0790', 'ca84e68c9', 'd7f75a4d8', 'e62e48e9a', 'e7e0d5319', 'eb90d9a01', 'f9ff0e087'])
+          assert heads <= {h.get('head', '')[:9] for n in nodes.values() for h in n.get('settledReviews', [])}
+          assert not any(n.get('contributorReview', {}).get('head', '')[:9] in heads for n in nodes.values())
+          assert nodes['branch:rules-go-declared-stdlib-sources']['settledReviews'][-1]['postedURL'] == 'https://github.com/bazel-contrib/rules_go/issues/4773'
+          for key in ('branch:go-helper-images', 'branch:state-grow-shared-slices'):
+              assert snapshot['workStates'][key]['contributor-review']['scope'] == nodes[key]['contributorReview']['head'] == nodes[key]['head']
+          print('Reconciled 27 observed publication heads, issued report, 35 settled scopes and both active proposals.')
+          PYTHON
+      - name: Publish the bounded verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-map-20261102-final-pair
+          path: results/preflight.json
+          if-no-files-found: error
