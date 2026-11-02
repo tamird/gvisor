@@ -493,6 +493,7 @@ ip link add server.0 type veth peer name server.1
 
 # Add network emulation devices.
 ip link add wan.0 type veth peer name wan.1
+ip link add prop.0 type veth peer name prop.1
 probe_pid=
 capture_pids=()
 stop_capture() {
@@ -504,7 +505,7 @@ stop_capture() {
 }
 flow_pids=()
 flow_names=(primary secondary)
-bridge_devices=(server.1 wan.0 wan.1)
+bridge_devices=(server.1 wan.0 wan.1 prop.0 prop.1)
 stop_probe() {
   local status=0 signal_status=0
   if [[ -z \$probe_pid ]]; then return 0; fi
@@ -561,13 +562,19 @@ trap 'exit 143' TERM
 
 ip link set wan.0 up
 ip link set wan.1 up
+ip link set prop.0 up
+ip link set prop.1 up
 
 # Enroll on the bridge.
 ip link add name br0 type bridge
 ip link add name br1 type bridge
 ip link set server.1 master br1
 ip link set wan.0 master br0
-ip link set wan.1 master br1
+ip link add name brmid type bridge
+ip link set wan.1 master brmid
+ip link set prop.0 master brmid
+ip link set prop.1 master br1
+ip link set brmid up
 ip link set br0 up
 ip link set br1 up
 
@@ -575,19 +582,23 @@ ip link set br1 up
 ip link set server.0 mtu ${mtu}
 ip link set wan.0 mtu ${mtu}
 ip link set wan.1 mtu ${mtu}
+ip link set prop.0 mtu ${mtu}
+ip link set prop.1 mtu ${mtu}
 
-# Add appropriate latency, loss and duplication.
-#
-# This is added in at the point of bridge connection.
-for device in wan.0 wan.1; do
-  # NOTE: We don't support a loss correlation as testing has shown that it
-  # actually doesn't work. The man page actually has a small comment about this
-  # "It is also possible to add a correlation, but this option is now deprecated
-  # due to the noticed bad behavior." For more information see netem(8).
-  tc qdisc add dev \$device root netem \\
-    limit ${queue_packets} \\
-    delay ${half_latency}ms ${latency_variation}ms ${distribution} \\
-    ${loss_opt} ${duplicate_opt} ${rate_opt} ${seed_opt}
+# Both directions use the same two serial stages. Only the location of
+# propagation delay changes; the first FIFO always serializes at the full
+# bottleneck rate and allows 100 queued packets. This lab uses no jitter,
+# configured loss, duplication, packet segmentation or receive coalescing.
+case "${TCP_QUEUE_LAYOUT:?expected combined or split}" in
+  combined) first_delay=${half_latency}; last_delay=0 ;;
+  split)    first_delay=0; last_delay=${half_latency} ;;
+  *) exit 2 ;;
+esac
+for device in wan.0 prop.1; do
+  tc qdisc add dev \$device root netem limit ${queue_packets} delay \${first_delay}ms ${rate_opt}
+done
+for device in prop.0 wan.1; do
+  tc qdisc add dev \$device root netem limit 4096 delay \${last_delay}ms
 done
 
 # Both clients attach to the same bridge and WAN queues. Keep their namespace,
@@ -701,7 +712,7 @@ if ${latency_probe}; then
 fi
 
 record_qdiscs() {
-  for device in wan.0 wan.1; do
+  for device in wan.0 prop.0 prop.1 wan.1; do
     printf '%s\n' "\$device"
     tc -s -d qdisc show dev "\$device"
   done
@@ -991,6 +1002,16 @@ fi
 result=0
 if [[ -n "${second_client}" ]]; then
   mkdir -p "\$TCP_BENCHMARK_OUTPUT_DIR/primary" "\$TCP_BENCHMARK_OUTPUT_DIR/secondary"
+  # Sample both queues in both arms; qlen maxima are lower bounds. Kernel
+  # drop counters before/after remain independent of the sample interval.
+  (
+    for ((i=0;i<550;i++)); do
+      printf 'sample %s\n' "\$EPOCHREALTIME"
+      tc -s qdisc show
+      sleep 0.1
+    done
+  ) > "\$TCP_BENCHMARK_OUTPUT_DIR/queue-samples.txt" &
+  sampler_pid=\$!
   if ${latency_probe}; then record_probe_phase flows-begin; fi
   run_flow primary > "\$TCP_BENCHMARK_OUTPUT_DIR/primary/benchmark.txt" 2> "\$TCP_BENCHMARK_OUTPUT_DIR/primary/stderr.txt" &
   flow_pids+=(\$!)
@@ -1008,6 +1029,8 @@ for index in "\${!flow_pids[@]}"; do
   if (( capture_status != 0 && result == 0 )); then result=\$capture_status; fi
 done
 if [[ -n "${second_client}" ]]; then
+  kill "\$sampler_pid" || true
+  wait "\$sampler_pid" || true
   if ${latency_probe}; then record_probe_phase flows-end; fi
   for flow in primary secondary; do
     cat "\$TCP_BENCHMARK_OUTPUT_DIR/\$flow/benchmark.txt"

@@ -73,6 +73,18 @@ def capture(d, public, name):
                 high += size
         mss = original.most_common(1)[0][0]
         assert mss == (1420 if stack == "netstack" else 1448) and max(original) == mss
+        first_full = next(r[0] for r in tx_data if r[5]==mss)
+        first_close = next((r[0] for r in tx if r[1:3] in ((flow,port),(port,flow)) and r[6]&5 and r[0]>=first_full),None)
+        bounds = {"duration":first_full+45,"last_observed_packet":tx[-1][0]}
+        if first_close is not None:
+            bounds["connection_close"] = first_close
+        horizon = min(bounds.values())
+        active = [t for t in original_times if first_full<=t<=horizon]
+        assert active and active[0]==first_full
+        out.update(first_full_seconds=first_full,horizon_s=horizon-first_full,
+                   horizon_limit=min(bounds,key=bounds.get),final_original_seconds=active[-1],
+                   last_outgoing_payload_seconds=tx_data[-1][0],terminal_gap_s=horizon-active[-1],
+                   interior_gap_s=max((b-a for a,b in zip(active,active[1:])), default=0))
         out.update(retransmitted_data_packets=len(tx_data)-sum(original.values()),
                    retransmitted_payload_bytes=sum(r[5] for r in tx_data)-high,
                    max_new_data_gap_seconds=max(b-a for a,b in zip(original_times, original_times[1:])),

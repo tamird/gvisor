@@ -1,28 +1,31 @@
-name: Compare netstack RACK settings sharing Linux WAN
+name: Separate the finite bottleneck queue from propagation delay
 on:
   push:
-    branches: [qualification/tcp-rack-shared-wan]
+    branches: [qualification/tcp-finite-queue-propagation]
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-rack-shared-wan'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-finite-queue-propagation'
     runs-on: ubuntu-24.04
     timeout-minutes: 55
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: 2
+          fetch-depth: 7
           persist-credentials: false
-      - name: Build one proxy and run the fixed matched schedule
-        run: bash test/benchmarks/tcp/current-shared-driver.sh
+      - name: Build the common senders and run the four fixed trials
+        run: |
+          cp test/benchmarks/tcp/{current-shared-report,flight_capture}.py "$RUNNER_TEMP/"
+          cp test/benchmarks/tcp/current-shared-driver.sh "$RUNNER_TEMP/driver.sh"
+          bash "$RUNNER_TEMP/driver.sh"
       - name: Reconcile receiver bytes, settings and packet observations
         if: always()
-        run: python3 test/benchmarks/tcp/current-shared-report.py
+        run: python3 "$RUNNER_TEMP/current-shared-report.py"
       - name: Publish the existing synthetic WAN evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: tcp-rack-shared-wan
+          name: tcp-finite-queue-propagation
           path: ${{ runner.temp }}/tcp-public/
           if-no-files-found: error
