@@ -23,7 +23,7 @@ def format(target):
     files_to_run = provider_map.get("FilesToRunProvider", None)
     default_info = provider_map.get("DefaultInfo", None)
     output_group_info = provider_map.get("OutputGroupInfo", None)
-    if files_to_run and files_to_run.executable:
+    if files_to_run and files_to_run.executable and not hasattr(output_group_info, "release_layout"):
         outputs[files_to_run.executable.path] = files_to_run.executable.basename
     elif default_info:
         for x in default_info.files.to_list():
