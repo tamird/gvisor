@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T18:44:13.778224+00:00",
+    "updatedAt": "2026-11-02T18:47:17.385770+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40986,13 +40986,21 @@
       "repo": "tamird/grpc",
       "ref": "proposal/bazel-plugin-symlink",
       "head": "64745d2424a189c0e1661e1c10a26a3704c29144",
-      "title": "Remove the shell copy from the gRPC plugin wrapper",
+      "title": "Expose the selected gRPC plugin with a Bazel symlink",
       "url": "https://github.com/tamird/grpc/commit/64745d242",
       "group": "rbe",
-      "status": "Agent work",
-      "updatedAt": "2026-11-02T18:30:15.670469+00:00",
-      "summary": "Bazel can expose each protoc plugin with a symlink. The release uploader’s pkg_zip recipe follows the link and stores the executable bytes. The revised rule drops the C++ copy tool.",
+      "status": "Human submission required",
+      "updatedAt": "2026-11-02T18:47:17.385770+00:00",
+      "summary": "The release ZIP stores the executable bytes. Both universal plugins still generated matching code after Bazel cleanup on Intel macOS, and Linux generation ran without a shell. The gRPC contribution policy requires human submission.",
       "evidence": [
+        {
+          "label": "Both installed universal macOS plugins after Bazel cleanup",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41498032551/artifacts/13170810230"
+        },
+        {
+          "label": "Linux plugin symlink and generated files",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41498032551/artifacts/13168012000"
+        },
         {
           "label": "Final declared symlink and archive checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/41498032551"
@@ -41010,18 +41018,25 @@
           "url": "https://github.com/bazelbuild/rules_pkg/blob/cd7e10846/pkg/private/zip/build_zip.py#L163-L184"
         }
       ],
-      "followup": {
-        "owner": "python_supplier_review",
-        "sourceHead": "64745d2424a189c0e1661e1c10a26a3704c29144",
-        "observedAt": "2026-11-02T18:30:15.670469+00:00",
-        "disposition": "Testing the smaller symlink rule",
-        "nextAction": "Linux code generation and both build metadata generators passed. Verify both packaged plugins on hosted macOS before handing this back for human submission.",
-        "evidence": [
-          "https://github.com/tamird/grpc/commit/8e12f9a3e",
-          "https://github.com/grpc/grpc/issues/36801#issuecomment-2798222006",
-          "https://github.com/grpc/grpc/blob/0c725d390/BUILD#L5186-L5206",
-          "https://github.com/bazelbuild/rules_pkg/blob/cd7e10846/pkg/private/zip/build_zip.py#L163-L184"
-        ]
+      "refinement": {
+        "before": {
+          "head": "ccfbbe36987afbad715cbca3c6bc791a7e33d2c9",
+          "base": "db13f8422846404ffa2e81e5d76d19488df30586"
+        },
+        "after": {
+          "head": "64745d2424a189c0e1661e1c10a26a3704c29144",
+          "base": "db13f8422846404ffa2e81e5d76d19488df30586"
+        }
+      },
+      "humanAction": {
+        "status": "pending",
+        "kind": "submission",
+        "head": "64745d2424a189c0e1661e1c10a26a3704c29144",
+        "title": "[bazel] Expose protoc plugins with symlinks",
+        "summary": "The release ZIP stores the executable bytes. Both universal plugins still generated matching code after Bazel cleanup on Intel macOS, and Linux generation ran without a shell. The gRPC contribution policy requires human submission.",
+        "body": "The public protoc plugin targets use a genrule to copy the selected\nexecutable to its package filename. That shell step prevented C++ code\ngeneration on a Linux worker without /bin/bash [1].\n\nUse an executable symlink to expose each plugin under its existing name.\nKeep the native and macOS universal inputs visible to both build\nmetadata generators. They produce the same records for all seven plugins\n[2]. Both C++ code generation actions now run on the shell-free Linux\nworker and produce the stock output [3].\n\nThe CocoaPods ZIP recipe reads the symlink target [4]. On hosted Intel\nmacOS, each ZIP contained one regular executable with both arm64 and\nx86_64 slices. After removing the Bazel output tree, the installed C++\nand Objective-C plugins generated the same four files as stock [5]. A\ncaller moving a raw Bazel output on its own must dereference the link.\n\n[1]: https://github.com/tamird/gvisor/blob/9c9a39762/test/rbe/grpc-native-codegen/result.json\n[2]: https://github.com/tamird/gvisor/actions/runs/41498032551/artifacts/13167417797\n[3]: https://github.com/tamird/gvisor/actions/runs/41498032551/artifacts/13168012000\n[4]: https://github.com/grpc/grpc/pull/38677\n[5]: https://github.com/tamird/gvisor/actions/runs/41498032551/artifacts/13170810230",
+        "url": "https://github.com/grpc/grpc/compare/master...tamird:grpc:proposal/bazel-plugin-symlink?expand=1&title=%5Bbazel%5D+Expose+protoc+plugins+with+symlinks&body=The+public+protoc+plugin+targets+use+a+genrule+to+copy+the+selected%0Aexecutable+to+its+package+filename.+That+shell+step+prevented+C%2B%2B+code%0Ageneration+on+a+Linux+worker+without+%2Fbin%2Fbash+%5B1%5D.%0A%0AUse+an+executable+symlink+to+expose+each+plugin+under+its+existing+name.%0AKeep+the+native+and+macOS+universal+inputs+visible+to+both+build%0Ametadata+generators.+They+produce+the+same+records+for+all+seven+plugins%0A%5B2%5D.+Both+C%2B%2B+code+generation+actions+now+run+on+the+shell-free+Linux%0Aworker+and+produce+the+stock+output+%5B3%5D.%0A%0AThe+CocoaPods+ZIP+recipe+reads+the+symlink+target+%5B4%5D.+On+hosted+Intel%0AmacOS%2C+each+ZIP+contained+one+regular+executable+with+both+arm64+and%0Ax86_64+slices.+After+removing+the+Bazel+output+tree%2C+the+installed+C%2B%2B%0Aand+Objective-C+plugins+generated+the+same+four+files+as+stock+%5B5%5D.+A%0Acaller+moving+a+raw+Bazel+output+on+its+own+must+dereference+the+link.%0A%0A%5B1%5D%3A+https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Fblob%2F9c9a39762%2Ftest%2Frbe%2Fgrpc-native-codegen%2Fresult.json%0A%5B2%5D%3A+https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Factions%2Fruns%2F41498032551%2Fartifacts%2F13167417797%0A%5B3%5D%3A+https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Factions%2Fruns%2F41498032551%2Fartifacts%2F13168012000%0A%5B4%5D%3A+https%3A%2F%2Fgithub.com%2Fgrpc%2Fgrpc%2Fpull%2F38677%0A%5B5%5D%3A+https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Factions%2Fruns%2F41498032551%2Fartifacts%2F13170810230",
+        "policyURL": "https://github.com/grpc/grpc/blob/db13f8422/CONTRIBUTING.md#generative-ai-policy"
       }
     },
     {
@@ -41874,9 +41889,9 @@
       "head": "ba8ac6d33a4f90cd7c77984ed9c0dc5ecdbc7eda",
       "url": "https://github.com/tamird/gvisor/commit/ba8ac6d33",
       "title": "Let Gazelle fetch Go repositories without a host env executable",
-      "updatedAt": "2026-11-02T18:44:13.778224+00:00",
-      "status": "Agent work",
-      "summary": "Gazelle cannot fetch a Go module on a Linux client without the env program. Bazel 8 and later can remove environment variables directly.",
+      "updatedAt": "2026-11-02T18:47:17.385770+00:00",
+      "status": "Contributor review requested",
+      "summary": "Bazel clears Gazelle’s subprocess environment without an installed env utility. The root module requires Bazel 8. Native client checks covered a worker without env, a deliberately leaked variable, and rejection of Bazel 7.7.",
       "evidence": [
         {
           "label": "Five Bazel client queries and original wrapper result",
@@ -41899,16 +41914,6 @@
           "at": "2026-11-02T18:27:13.788641+00:00"
         }
       ],
-      "followup": {
-        "owner": "arm64_results",
-        "sourceHead": "ba8ac6d33a4f90cd7c77984ed9c0dc5ecdbc7eda",
-        "disposition": "Contributor feedback in progress",
-        "nextAction": "Reconcile the five original client queries. The wrapper expected a different spelling of the missing env diagnostic.",
-        "observedAt": "2026-11-02T18:44:13.778224+00:00",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/faf0f0789"
-        ]
-      },
       "refinement": {
         "before": {
           "head": "faf0f078942123f153391b4d430786a7841269e0",
@@ -41918,6 +41923,17 @@
           "head": "ba8ac6d33a4f90cd7c77984ed9c0dc5ecdbc7eda",
           "base": "7a675ac66a1e2357abdaa6cccedabcd3cce9aa5c"
         }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "ba8ac6d33a4f90cd7c77984ed9c0dc5ecdbc7eda",
+        "baseHead": "7a675ac66a1e2357abdaa6cccedabcd3cce9aa5c",
+        "url": "https://github.com/tamird/gvisor/commit/ba8ac6d33",
+        "title": "Use Bazel to clear Gazelle repository environments",
+        "requestedAt": "2026-11-02T18:47:17.385770+00:00",
+        "summary": "Open the simpler, Bazel-8-only gVisor change?",
+        "body": "Bazel clears Gazelle’s subprocess environment without an installed env utility. The root module requires Bazel 8. Native client checks covered a worker without env, a deliberately leaked variable, and rejection of Bazel 7.7. The original wrapper marked the run incomplete because its matcher missed the stock ENOENT wording. All five original results were verified without re-execution. The gVisor root override does not propagate to a consumer of gVisor."
       }
     },
     {
@@ -42879,9 +42895,13 @@
       "url": "https://github.com/google/gvisor/pull/15867",
       "group": "runtime",
       "status": "draft",
-      "summary": "The callback now has to return with the locks it borrowed. The current fixture accepts balanced unlock/relock. One negative case would catch removal of the exit-state check. The author is waiting for his Linux run and CLA.",
-      "updatedAt": "2026-11-02T18:44:13.778224+00:00",
+      "summary": "The callback exit-state bug is fixed. Tamir asked whether checklocks can infer when a helper preserves its caller’s locks instead of naming standard-library functions. The author owns the Linux gate and CLA.",
+      "updatedAt": "2026-11-02T18:47:17.385770+00:00",
       "evidence": [
+        {
+          "label": "Open design question from Tamir",
+          "url": "https://github.com/google/gvisor/pull/15867#issuecomment-6585322042"
+        },
         {
           "label": "Author adopted the analyzer change and balanced case",
           "url": "https://github.com/google/gvisor/pull/15867#discussion_r4446281540"
@@ -42913,14 +42933,15 @@
           "url": "https://github.com/google/gvisor/pull/15867#discussion_r4444418439"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "reply",
-        "head": "0bf36f79214fa3be21b86435714026a0ed1b1c42",
-        "url": "https://github.com/google/gvisor/pull/15867#discussion_r4446281540",
-        "title": "Keep a negative callback-lock fixture",
-        "summary": "Post the negative test case on the existing checklocks thread?",
-        "body": "The balanced case now passes. Could you also keep releaseInPredicate from the parent of the test patch? It unlocks e.mu and returns without reacquiring it. Removing the new exit-state check still passes the balanced case, but leaves this callback’s delete unguarded. The negative fixture is here: https://github.com/tamird/gvisor/commit/dcef4dab2\n\nPosted by Codex on behalf of @tamird."
+      "followup": {
+        "owner": "tcp_split_owner",
+        "sourceHead": "0bf36f79214fa3be21b86435714026a0ed1b1c42",
+        "observedAt": "2026-11-02T18:47:17.385770+00:00",
+        "disposition": "Contributor raised a design question upstream",
+        "nextAction": "Verify whether a helper’s behavior can be inferred and shared through Nogo facts. The existing upstream comment already asks about the allowlist.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15867#issuecomment-6585322042"
+        ]
       }
     },
     {
