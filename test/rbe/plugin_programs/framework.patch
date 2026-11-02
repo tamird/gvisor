@@ -1,3 +1,4 @@
+diff --git a/foreign_cc/built_tools/private/built_tools_framework.bzl b/foreign_cc/built_tools/private/built_tools_framework.bzl
 --- a/foreign_cc/built_tools/private/built_tools_framework.bzl
 +++ b/foreign_cc/built_tools/private/built_tools_framework.bzl
 @@ -2,9 +2,8 @@
@@ -34,6 +35,7 @@
          execution_requirements = {"block-network": ""},
      )
  
+diff --git a/foreign_cc/private/framework.bzl b/foreign_cc/private/framework.bzl
 --- a/foreign_cc/private/framework.bzl
 +++ b/foreign_cc/private/framework.bzl
 @@ -10,7 +10,7 @@
@@ -131,6 +133,7 @@
          script_file = build_script_file,
          log_file = build_log_file,
          wrapper_script_file = wrapper_script_file,
+diff --git a/foreign_cc/private/framework/toolchain.bzl b/foreign_cc/private/framework/toolchain.bzl
 --- a/foreign_cc/private/framework/toolchain.bzl
 +++ b/foreign_cc/private/framework/toolchain.bzl
 @@ -23,10 +23,19 @@

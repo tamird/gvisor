@@ -15,7 +15,7 @@ from zipfile import ZipFile
 from action_log import context
 from qualify import CONFIG, HELPER, NATIVE, OUT, OWNER, TARGET, TMP, audit, diagnostics, inspect_outputs, now, save
 
-PRODUCT = "6eee103ac90c410b75f5a4390a423bf5f622acb2"
+PRODUCT = "1c17155579d2e316ab71147b42f573558f57b2bb"
 BASE = "cfa98382ba656459e79cfbece6a2c533cf47fe59"
 ORIGINAL = "c1210292-5868-4f9a-9ed1-ad1d49308b27"
 OLD_ARCHIVE = {"hash": "c31a5dc008783cf4d2f1ad4fcff830adf642a2ba2121c438d4ca6509dd126440", "sizeBytes": "7403456"}
@@ -66,7 +66,8 @@ def build(r, control=False, analyze_only=False):
              original={"invocation": ORIGINAL, "run": 41406257977, "artifact": 13123707083, "archive": OLD_ARCHIVE},
              arm="host-shell" if control else "declared-shell")
     save(r)
-    assert r["source"] == os.environ["GITHUB_SHA"] and git("rev-parse", "HEAD^") == PRODUCT
+    assert r["source"] == os.environ["GITHUB_SHA"] and git("rev-parse", "HEAD^2") == PRODUCT
+    assert git("rev-parse", "HEAD^1") == "8d10cec32cd3622a07c91e282305c78d5ee3453e"
     assert git("rev-parse", PRODUCT+"^") == BASE
     assert set(git("diff", "--name-only", BASE, PRODUCT).splitlines()) == {
         "MODULE.bazel", "external/tools/plugin-stack/BUILD", "external/tools/plugin-stack/plugin-stack.BUILD",
