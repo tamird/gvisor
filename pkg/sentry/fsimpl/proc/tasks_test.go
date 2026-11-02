@@ -123,6 +123,10 @@ func setupWithData(t *testing.T, data *InternalData) *testutil.System {
 }
 
 func setupWithDataAndStack(t *testing.T, data *InternalData, netStack inet.Stack) *testutil.System {
+	return setupWithFilesystemType(t, data, netStack, &FilesystemType{})
+}
+
+func setupWithFilesystemType(t *testing.T, data *InternalData, netStack inet.Stack, fsType vfs.FilesystemType) *testutil.System {
 	k, err := testutil.Boot()
 	if err != nil {
 		t.Fatalf("Error creating kernel: %v", err)
@@ -137,7 +141,7 @@ func setupWithDataAndStack(t *testing.T, data *InternalData, netStack inet.Stack
 		k.RootNetworkNamespace().RestoreRootStack(netStack)
 	}
 
-	k.VFS().MustRegisterFilesystemType(Name, &FilesystemType{}, &vfs.RegisterFilesystemTypeOptions{
+	k.VFS().MustRegisterFilesystemType(Name, fsType, &vfs.RegisterFilesystemTypeOptions{
 		AllowUserMount: true,
 	})
 
@@ -170,6 +174,31 @@ func setupWithDataAndStack(t *testing.T, data *InternalData, netStack inet.Stack
 		t.Fatalf("MountAt(/proc): %v", err)
 	}
 	return testutil.NewSystem(ctx, t, k.VFS(), mntns)
+}
+
+func TestBootIDWithSharedFilesystemType(t *testing.T) {
+	var _ vfs.FilesystemType = FilesystemType{}
+	shared := &FilesystemType{}
+	read := func() string {
+		s := setupWithFilesystemType(t, &InternalData{}, nil, shared)
+		defer s.Destroy()
+		fd, err := s.VFS.OpenAt(s.Ctx, s.Creds, s.PathOpAtRoot("/proc/sys/kernel/random/boot_id"), &vfs.OpenOptions{Flags: linux.O_RDONLY})
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer fd.DecRef(s.Ctx)
+		id, err := s.ReadToEnd(fd)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := kernel.KernelFromContext(s.Ctx).BootID() + "\n"; id != want {
+			t.Fatalf("read boot ID %q, want kernel boot ID %q", id, want)
+		}
+		return id
+	}
+	if first, second := read(), read(); first == second {
+		t.Errorf("two kernels sharing a proc filesystem type returned the same boot ID %q", first)
+	}
 }
 
 func TestTasksEmpty(t *testing.T) {
