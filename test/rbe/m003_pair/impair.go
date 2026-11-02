@@ -3,11 +3,15 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"os"
+	"runtime"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -31,6 +35,14 @@ type Signal struct {
 	Hole            *Hole
 }
 
+type HeadEvent struct {
+	Time    float64
+	Kind    string
+	Count   int
+	Delay   float64
+	Callers []string
+}
+
 type Hole struct {
 	Start, End, LatestEnd, Count                     uint32
 	AlreadyLost                                      bool
@@ -45,6 +57,7 @@ var x struct {
 	armed           bool
 	Reference, Seen []ByteRange
 	Signals         []Signal
+	HeadEvents      []HeadEvent
 }
 
 func startExperiment(r *Recorder) error {
@@ -57,6 +70,30 @@ func startExperiment(r *Recorder) error {
 		if err := json.Unmarshal(b, &x.Reference); err != nil {
 			return err
 		}
+	}
+	tcp.M003HeadEvent = func(head uint32, kind string, count int, delay time.Duration) {
+		eventAt := time.Now()
+		x.Lock()
+		defer x.Unlock()
+		if !x.armed || len(x.Reference) == 0 || head-x.origin != x.Reference[0].Offset {
+			return
+		}
+		e := HeadEvent{Time: eventAt.Sub(x.start).Seconds(), Kind: kind, Count: count, Delay: delay.Seconds()}
+		if kind == "successful-head-send" {
+			var pcs [32]uintptr
+			n := runtime.Callers(2, pcs[:])
+			frames := runtime.CallersFrames(pcs[:n])
+			for {
+				f, more := frames.Next()
+				if name, ok := strings.CutPrefix(f.Function, "gvisor.dev/gvisor/pkg/tcpip/transport/tcp."); ok {
+					e.Callers = append(e.Callers, name)
+				}
+				if !more {
+					break
+				}
+			}
+		}
+		x.HeadEvents = append(x.HeadEvents, e)
 	}
 	tcp.M003RecoveryObservation = func(kind string, una uint32, blocks []header.SACKBlock, stamp int64, lost bool, rto time.Duration) {
 		x.Lock()
@@ -79,7 +116,7 @@ func startExperiment(r *Recorder) error {
 	}
 	return nil
 }
-func finishExperiment(file string) error {
+func finishExperiment(file string, received []byte) error {
 	x.Lock()
 	defer x.Unlock()
 	b, err := json.Marshal(struct {
@@ -87,7 +124,9 @@ func finishExperiment(file string) error {
 		Anchor          float64
 		Reference, Seen []ByteRange
 		Signals         []Signal
-	}{x.origin, x.anchor.Sub(x.start).Seconds(), x.Reference, x.Seen, x.Signals})
+		HeadEvents      []HeadEvent
+		PayloadSHA256   string
+	}{x.origin, x.anchor.Sub(x.start).Seconds(), x.Reference, x.Seen, x.Signals, x.HeadEvents, fmt.Sprintf("%x", sha256.Sum256(received))})
 	if err != nil {
 		return err
 	}
@@ -129,7 +168,8 @@ func impaired(due time.Time, scenario string, seq uint32, n, position, copyNo in
 	if !x.armed {
 		return due, false
 	}
-	if slot < 3 && copyNo == 1 {
+	// Drop both repairs that the original experiment held until 495 ms.
+	if (slot < 3 && copyNo == 1) || (slot == 0 && (copyNo == 2 || copyNo == 3)) {
 		return due, true
 	}
 	clear := 265 * time.Millisecond

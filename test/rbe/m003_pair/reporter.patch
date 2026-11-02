@@ -68,6 +68,6 @@
 +		return err
 +	}
 @@ -321,0 +308,3 @@
-+	if err := finishExperiment(*output); err != nil {
++	if err := finishExperiment(*output, received[:n]); err != nil {
 +		return err
 +	}

@@ -62,8 +62,11 @@ def observe(binary, schedule, label, ranges=None):
             return (sequence - origin) % (1 << 32)
         head = seen[0]["Offset"]
         at = obs["Anchor"]
-        dropped = sorted((rel(e["seq"]), e["length"]) for e in tx if e["dropped"])
-        row["same_three_drops"] = dropped == [(r["Offset"], r["Length"]) for r in seen[:3]]
+        dropped = sorted((rel(e["seq"]), e["length"], e["copy"]) for e in tx if e["dropped"])
+        expected_drops = sorted([(r["Offset"], r["Length"], 1) for r in seen[:3]] +
+                                [(head, seen[0]["Length"], copy) for copy in (2, 3)])
+        row["dropped"] = dropped
+        row["expected_drops"] = dropped == expected_drops and row["injected_drops"] == 5
         packets = [e for e in tx if rel(e["seq"]) == head and e["length"] == seen[0]["Length"]]
         row["head_copies_ms"] = [round(1000 * (e["seconds"]-at), 3) for e in packets]
         row["extra_head_repairs"] = len(packets) - 2 if len(packets) >= 2 else None
@@ -98,7 +101,7 @@ def observe(binary, schedule, label, ranges=None):
         seen_right = {end for sack in row["sack_sequence"] for _, end in sack["ranges"]}
         expected = [seen[6]] if schedule == "timely" else [seen[6], seen[7]]
         row["genuine_extensions"] = all(r["Offset"] + r["Length"] in seen_right for r in expected)
-        row["valid"] = measured and row["same_three_drops"] and bool(data["probes"]) and at > 0 and bool(packets)
+        row["valid"] = measured and row["expected_drops"] and bool(data["probes"]) and at > 0 and bool(packets)
         row["mechanism"] = {"deadline": row["early_actual_timeout"], "queued_sack": row["head_after_entry"]}
         return row
     except (OSError, ValueError, KeyError, subprocess.TimeoutExpired) as e:
@@ -217,42 +220,56 @@ def discriminator(data, obs):
 
 
 def main():
-    binary, frozen, stock_wire, stock_events = map(Path, sys.argv[1:])
+    *binaries, frozen = map(Path, sys.argv[1:])
+    assert [p.name for p in binaries] == ["stock", "select"]
     ranges = json.loads(frozen.read_text())
-    assert binary.name == "select" and len(ranges) == 8 and ranges[0] == {"Offset": 117504, "Length": 1200}
-    original = json.loads(stock_wire.read_text())
-    original_events = json.loads(stock_events.read_text())
-    previous = discriminator(original, original_events)
-    assert previous["activation"] and previous["window"]["head_copies"] == [4] and previous["window"]["head_successful_sends"] and previous["window"]["repaired"]
-    assert original["expected_bytes"] == original["received_bytes"] == 524288 and original["integrity_ok"] and original["complete"]
-    label = "held-selected-hole"
-    row = observe(binary, "held", label, ranges)
-    out = OUT / (label+".json")
-    detail = {}
-    try:
-        detail = discriminator(json.loads(out.read_text()), json.loads(Path(str(out)+".events.json").read_text()))
-    except (OSError, ValueError, KeyError, TypeError) as error:
-        detail = {"incomplete": type(error).__name__}
-    verified = bool("gates" in detail and row.get("valid") and row.get("complete") and row.get("integrity") and row.get("received_bytes") == 524288)
-    matched = bool(verified and row["ranges"] == original_events["Seen"] and row["received_bytes"] == original["received_bytes"])
-    result = "intended_context_not_established"
-    if matched:
-        g, w = detail["gates"], detail["window"]
-        common = {tuple(p["range"]) for p in w["repaired"]} & {tuple(p["range"]) for p in previous["window"]["repaired"]}
-        core = all(g[k] for k in ("first_head_repair_observed", "oldest_repair_then_early_rto",
-                                   "real_peer_sacked_only_after_rto", "clean_head_at_rack_entry_for_that_sack"))
-        if core and w["uninterrupted"] and w["marked"]:
-            if w["head_copies"] or w["head_successful_sends"]:
-                result = "head_repaired_again"
-            elif w["later_head_before_sender_boundary"] or w["later_head_sends_before_sender_boundary"]:
-                result = "head_after_peer_emission_before_next_sender_observation"
-            elif common:
-                result = "marked_hole_repaired_without_repeating_head"
-            else:
-                result = "no_common_marked_hole_repair_observed"
-    write(OUT / "comparison.json", {"verified": verified, "rows": [row], "observation": detail, "stock": previous, "selectionOutcome": result, "matchedPayloadAndRanges": matched,
-                                    "baseline_series": BASE, "original": "614754a1f", "transfers": 1})
-    assert verified, row.get("error", "incomplete or invalid transfer")
+    assert len(ranges) == 8 and ranges[0] == {"Offset": 117504, "Length": 1200}
+    rows = []
+    for binary in binaries:
+        label = f"held-{binary.name}"
+        row = observe(binary, "held", label, ranges)
+        rows.append(row)
+        try:
+            path = OUT / (label+".json")
+            data = json.loads(path.read_text())
+            obs = json.loads(Path(str(path)+".events.json").read_text())
+            row["observation"] = discriminator(data, obs)
+            row["received_sha256"] = obs["PayloadSHA256"]
+            offset = obs["Anchor"]
+            row["head_send_paths"] = [{"copy": e["Count"], "ms": 1000*(e["Time"]-offset), "callers": e["Callers"]}
+                                      for e in obs["HeadEvents"] if e["Kind"] == "successful-head-send"]
+            start = ranges[0]["Offset"]
+            row["head_packets"] = [{"copy": e["copy"], "dropped": e["dropped"], "ms": 1000*(e["seconds"]-offset)}
+                                   for e in data["events"] if e["direction"] == "service_to_client" and
+                                   (e["seq"]-obs["Origin"]) % (1<<32) == start and e["length"] == ranges[0]["Length"]]
+            sent = [p["copy"] for p in row["head_packets"] if p["copy"] >= 2]
+            paths = row["head_send_paths"]
+            row["complete_send_attribution"] = bool(sent and sent == [h["copy"] for h in paths] and
+                                                    all(h["callers"] for h in paths))
+            row["verified_prefix"] = row["received_sha256"] == hashlib.sha256(bytes(
+                (i*17+3) % 251 for i in range(row["received_bytes"]))).hexdigest()
+        except (OSError, ValueError, KeyError, TypeError) as error:
+            row["observation_error"] = f"{type(error).__name__}: {error}"
+    # A real stalled transfer or a missed activation is a reportable observation.
+    verified = all(r.get("valid") and r.get("verified_prefix") and "observation" in r and
+                   r.get("head_send_paths") and r.get("head_packets") for r in rows)
+    contexts = []
+    holes = []
+    for r in rows:
+        obs = r.get("observation", {})
+        g, w = obs.get("gates", {}), obs.get("window", {})
+        contexts.append(all(g.get(k) for k in ("first_head_repair_observed", "oldest_repair_then_early_rto",
+                            "real_peer_sacked_only_after_rto", "clean_head_at_rack_entry_for_that_sack",
+                            "same_detector_marked_older_hole")) and w.get("uninterrupted"))
+        holes.append({tuple(e["range"]) for e in w.get("repaired", [])})
+    common = sorted(holes[0] & holes[1])
+    matched = bool(verified and all(contexts) and common and rows[0]["observation"]["activation"] and
+                   not rows[1]["observation"]["window"]["later_head_before_sender_boundary"] and
+                   not rows[1]["observation"]["window"]["later_head_sends_before_sender_boundary"])
+    verdict = {"verified": bool(verified), "activation_matched": matched, "common_older_holes_repaired": common,
+               "rows": rows, "baseline_series": BASE, "transfers": 2}
+    write(OUT / "comparison.json", verdict)
+    assert verified, [(r["arm"], r.get("error"), r.get("observation_error"), r.get("valid")) for r in rows]
 
 
 if __name__ == "__main__":

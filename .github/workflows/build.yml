@@ -1,7 +1,7 @@
-name: Compare a marked-hole repair with the retained stock trace
+name: Measure the loss of two successive head repairs
 on:
   push:
-    branches: [qualification/tcp-m003-selected-rack-hole]
+    branches: [qualification/tcp-m003-lost-head-repairs]
 permissions:
   contents: read
   actions: read
@@ -15,32 +15,17 @@ jobs:
       BASE: b0d2148f41d2d35577b5fe759192f71947cc87fd
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 5, persist-credentials: false}
-    - name: Bind the original M003 reporter, stock trace and selection source
+      with: {fetch-depth: 6, persist-credentials: false}
+    - name: Bind both sender policies and the original reporter
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        GH_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
-        [[ "$(git rev-parse HEAD~4)" == "$BASE" && "$(git rev-parse HEAD^)" == 8ba8d147ff1181ce7b800f8032c1caf31829b8be && "$(git rev-parse HEAD)" == "$GITHUB_SHA" ]]
+        [[ "$(git rev-parse HEAD~5)" == "$BASE" && "$(git rev-parse HEAD^)" == 8bdd0898c3bda82e975fc33ead5122cf792265da && "$(git rev-parse HEAD)" == "$GITHUB_SHA" ]]
         p=test/rbe/m003_pair
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu"
         echo '{"verified":false,"phase":"preparation"}' > "$RUNNER_TEMP/records/verdict.json"
-        git diff --exit-code HEAD^ HEAD -- "$p/impair.go" "$p/reporter.patch" "$p/ranges.json" "$p/prepare.py"
-        gh api repos/tamird/gvisor/actions/artifacts/13112017414/zip > "$RUNNER_TEMP/stock.zip"
-        echo "8542740537c668dee15faa6d0fd66a2ff6829a6bbaa842d7fb6ef4ef0f2717d5  $RUNNER_TEMP/stock.zip" | sha256sum -c
-        unzip -p "$RUNNER_TEMP/stock.zip" comparison/held-genuine-hole.json > "$p/stock-wire.json"
-        unzip -p "$RUNNER_TEMP/stock.zip" comparison/held-genuine-hole.json.events.json > "$p/stock-events.json"
-        TEST_UNDECLARED_OUTPUTS_DIR="$RUNNER_TEMP" python3 - "$p" <<'PYSTOCK'
-        import json, runpy, sys
-        from pathlib import Path
-        p = Path(sys.argv[1])
-        f = runpy.run_path(str(p / "run.py"))["discriminator"]
-        receipt = f(*[json.loads((p / name).read_text()) for name in ("stock-wire.json", "stock-events.json")])
-        w = receipt["window"]
-        assert receipt["activation"] and w["uninterrupted"] and w["head_copies"] == [4] and w["head_successful_sends"] and w["repaired"]
-        PYSTOCK
-        unset GH_TOKEN
+        git diff --exit-code HEAD^ HEAD -- "$p/ranges.json" pkg/tcpip/transport/tcp
         remote=https://github.com/tamird/gvisor.git
         git fetch -q --depth=1 "$remote" 0ee70efe6d52576b8f173b40ad6b7ac117da3b72 c7976270813d5218a847539dd94f749c7cb4dfd5
         for f in MODULE.bazel BUILD.bazel; do git show "0ee70efe6:test/rbe/gnu_platform/$f" > "$RUNNER_TEMP/gnu/$f"; done
@@ -62,7 +47,7 @@ jobs:
         docker exec tcp-compiler uname -srvm > "$RUNNER_TEMP/records/kernel"
         echo "$GITHUB_SHA $BASE" > "$RUNNER_TEMP/records/source"
         chmod 755 "$RUNNER_TEMP/records"
-    - name: Run one matched transfer changing only head selection
+    - name: Run the same lost-head transfer once on each sender
       run: |
         set -euo pipefail
         p=test/rbe/m003_pair
@@ -84,26 +69,34 @@ jobs:
           python3 "$p/status.py" "$name" "$RUNNER_TEMP" "$code"
           [[ $code == 0 ]]
         }
-        arm=select
-        python3 "$p/prepare.py" "$arm" "$d/source-$arm.json"
-        python3 - "$d/source-select.json" <<'PYHASH'
+        for arm in stock select; do
+          python3 "$p/prepare.py" "$arm" "$d/source-$arm.json"
+          python3 - "$d/source-$arm.json" "$arm" <<'PYHASH'
         import hashlib, json, sys
         from pathlib import Path
         m = json.loads(Path(sys.argv[1]).read_text())
-        assert m["arm"] == "select" and m["selection_source"].startswith("c79762708")
-        expected = {"snd.go": "ae34f3e35206ce295fd62a27aadbeb0792bc6ab4c756ea3469c895f473967c4b",
-                    "rack.go": "b81b07cbde5ebe52edfc5f0ccaf8e195f0428a7bd6eae7ec9ed819633e8484d1"}
-        for name, policy in expected.items():
-            assert m["files"][name]["policy"] == policy
-            assert m["files"][name]["observed"] == hashlib.sha256((Path("pkg/tcpip/transport/tcp")/name).read_bytes()).hexdigest()
+        arm = sys.argv[2]
+        assert m["arm"] == arm and m["selection_source"].startswith("c79762708")
+        policies = {
+            "stock": ["0f7052fa5f811ec980e3988519febae05e66225b6253a33ba86251c79b887216", "8be2333862544959f2e0b6dec1cef546ae67a1522271c091351e2bca629610e7"],
+            "select": ["ae34f3e35206ce295fd62a27aadbeb0792bc6ab4c756ea3469c895f473967c4b", "b81b07cbde5ebe52edfc5f0ccaf8e195f0428a7bd6eae7ec9ed819633e8484d1"],
+        }
+        for name, expected in zip(("snd.go", "rack.go"), policies[arm]):
+            assert m["files"][name]["policy"] == expected
+        for name, hashes in m["files"].items():
+            assert hashes["observed"] == hashlib.sha256((Path("pkg/tcpip/transport/tcp")/name).read_bytes()).hexdigest()
         PYHASH
-        code=0
-        bz build "${args[@]}" "//$p:reporter" > "$RUNNER_TEMP/build-$arm.log" 2>&1 || code=$?
-        echo "$code" > "$d/build-$arm.exit"
-        if [[ $code != 0 ]]; then python3 "$p/status.py" "build-$arm" "$RUNNER_TEMP" "$code"; exit "$code"; fi
-        docker exec tcp-compiler cp -L "bazel-bin/$p/reporter_/reporter" "$p/$arm"
-        docker exec tcp-compiler chmod 755 "$p/$arm"
-        sha256sum "$p/$arm" > "$d/selected-binaries"
+          code=0
+          bz build "${args[@]}" "//$p:reporter" > "$RUNNER_TEMP/build-$arm.log" 2>&1 || code=$?
+          echo "$code" > "$d/build-$arm.exit"
+          if [[ $code != 0 ]]; then
+            python3 "$p/status.py" "build-$arm" "$RUNNER_TEMP" "$code"
+            exit "$code"
+          fi
+          docker exec tcp-compiler cp -L "bazel-bin/$p/reporter_/reporter" "$p/$arm"
+          docker exec tcp-compiler chmod 755 "$p/$arm"
+          sha256sum "$p/$arm" >> "$d/selected-binaries"
+        done
         run_case comparison
         python3 - "$d" <<'PYVERIFY'
         import json, sys, time
@@ -117,10 +110,8 @@ jobs:
         assert cases and all(not any(case.find(n) is not None for n in ("error","failure","skipped")) for case in cases)
         assert len(attempts) == 1 and attempts[0]["status"] == "PASSED" and not attempts[0]["cached"] and attempts[0]["strategy"] == "local"
         selected = {Path(p).name: digest for digest,p in [line.split() for line in (folder/"selected-binaries").read_text().splitlines()]}
-        assert set(selected) == {"select"}
-        assert verdict["verified"] and len(verdict["rows"]) == 1 and all(selected[r["arm"]] == r["binary"] for r in verdict["rows"])
-        assert verdict["matchedPayloadAndRanges"] and verdict["stock"]["activation"]
-        verdict["stock_artifact"] = 13112017414
+        assert set(selected) == {"stock", "select"} and len(set(selected.values())) == 2
+        assert verdict["verified"] and [r["arm"] for r in verdict["rows"]] == ["stock", "select"] and all(selected[r["arm"]] == r["binary"] for r in verdict["rows"])
         verdict["test_finished_utc"] = (folder/"comparison.finished").read_text().strip()
         verdict["bundle_verified_unix"] = time.time()
         (folder/"verdict.json").write_text(json.dumps(verdict)+"\n")
@@ -147,4 +138,4 @@ jobs:
         PYBOUND
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always() && steps.allowlist.outcome == 'success'
-      with: {name: m003-selected-rack-hole, path: "${{ runner.temp }}/records", if-no-files-found: error}
+      with: {name: m003-lost-head-repairs, path: "${{ runner.temp }}/records", if-no-files-found: error}

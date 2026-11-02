@@ -41,6 +41,19 @@ def prepare(arm, output):
             start = source.index("\tif err != nil && seg.payloadSize() != 0 {\n\t\tif (s.FastRecovery.Active && seg.xmitCount")
             source = source[:start] + replacement + source[source.index("\n\t}", start) + 3:]
         product_hash = digest(source)
+        if name == "snd.go":
+            site = "\tep.snd.updateMaxPayloadSize(int(ep.snd.ep.route.MTU()), 0)"
+            names = ["resend", "reorder", "probe", "cork"]
+            source = once(source, site, "\n".join(
+                f'\tep.snd.{n}Timer.m003Owner, ep.snd.{n}Timer.m003Name = ep.snd, "{n}"' for n in names
+            ) + "\n" + site)
+            marker = "\t// On a send error, keep the conservative timer"
+            source = once(source, marker, (
+                '\tif M003HeadEvent != nil && err == nil && seg.payloadSize() != 0 && seg.xmitCount > 1 && seg == s.writeList.Front() {\n'
+                '\t\tM003HeadEvent(uint32(seg.sequenceNumber), "successful-head-send", int(seg.xmitCount), 0)\n'
+                '\t}\n'
+            ) + marker)
+            source += "\nvar M003HeadEvent func(head uint32, kind string, count int, delay time.Duration)\n"
         observation = f'{receiver}.m003Observe("{event}", nil, 0)'
         if name == "snd.go":
             observation = ('if rcvdSeg.hasNewSACKInfo && len(rcvdSeg.parsedOptions.SACKBlocks) > 0 {\n'
@@ -72,6 +85,26 @@ func (s *sender) m003Observe(kind string, blocks []header.SACKBlock, stamp int64
             source = once(source, marker, observe + marker)
         path.write_text(source)
         manifest["files"][name] = {"policy": product_hash, "observed": digest(source)}
+    path = pkg / "timer.go"
+    timer = show(BASE, path)
+    product_hash = digest(timer)
+    timer = once(timer, "type timer struct {", "type timer struct {\n\tm003Owner *sender\n\tm003Name string")
+    for before, code in (
+        ("\tt.state = timerStateEnabled", '\tt.m003Event("arm", t.target.Sub(t.clock.NowMonotonic()))'),
+        ("\t// The timer has actually expired", '\tt.m003Event("expire", 0)'),
+        ("func (t *timer) disable() {", '\tif t.enabled() { t.m003Event("disable", 0) }'),
+    ):
+        block = before+"\n"+code if before.endswith("{") or "timerStateEnabled" in before else code+"\n"+before
+        timer = once(timer, before, block)
+    timer += '''
+func (t *timer) m003Event(op string, left time.Duration) {
+	if t.m003Owner != nil && M003HeadEvent != nil {
+		M003HeadEvent(uint32(t.m003Owner.SndUna), t.m003Name+"-"+op, 0, left)
+	}
+}
+'''
+    path.write_text(timer)
+    manifest["files"][path.name] = {"policy": product_hash, "observed": digest(timer)}
     Path(output).write_text(json.dumps(manifest, indent=2))
 
 
