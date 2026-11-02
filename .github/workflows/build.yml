@@ -1,7 +1,7 @@
 name: Qualify the cgroups v3 Gazelle default
 on:
   push:
-    branches: [qualification/gazelle-cgroups-default]
+    branches: [qualification/gazelle-cgroups-registry]
 permissions:
   contents: read
   actions: read
@@ -14,7 +14,7 @@ jobs:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 3, persist-credentials: false}
+        with: {fetch-depth: 4, persist-credentials: false}
       - name: Prepare the released client and shared GNU worker
         env:
           BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -22,7 +22,7 @@ jobs:
           set -eu
           d="$RUNNER_TEMP/external-go"
           mkdir -p "$d"
-          cp test/rbe/external_shim.py "$d/"
+          cp test/rbe/external_shim.py tools/gazelle-cgroups-proto.patch "$d/"
           printf '%s\n' '{"verdict":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/external-go.json"
           curl --retry 3 -fsSL https://raw.githubusercontent.com/tamird/gvisor/b224a82d47407d754ce438e19f6d1b60f2e20fb3/.github/qualification/lint-pilot/check.py -o "$d/check.py"
           for v in 8.8.1; do
@@ -42,10 +42,11 @@ jobs:
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BB_KEY"
           } > "$d/bb.rc"
       - name: Bind both recovered cgroups compiler failures
-        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api repos/tamird/gvisor/actions/artifacts/13122370481/zip > "$RUNNER_TEMP/external-go/original.zip"
+        run: |
+          gh api repos/tamird/gvisor/actions/artifacts/13122370481/zip > "$RUNNER_TEMP/external-go/original.zip"
+          gh api repos/tamird/gvisor/actions/artifacts/13121654249/zip > "$RUNNER_TEMP/external-go/no-override.zip"
       - name: Build and probe the split root with dev dependencies disabled
         run: LINT_RC="$RUNNER_TEMP/external-go/bb.rc" python3 -B "$RUNNER_TEMP/external-go/external_shim.py"
       - name: Check the compact artifact boundary

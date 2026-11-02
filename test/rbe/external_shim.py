@@ -1,5 +1,6 @@
 """Qualify a pinned Gazelle default against the original failing shim build."""
 
+from base64 import b64encode
 from hashlib import sha256
 import json
 import os
@@ -7,6 +8,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+from urllib.request import urlopen
 from zipfile import ZipFile
 
 from external_go_policy import AREA, MASTER, SOURCE, client, details, git, now, read_events, select
@@ -28,6 +30,8 @@ RESULT = {"verdict": "INCOMPLETE", "builds": {}, "upstream": [
     "https://github.com/bazel-contrib/bazel-gazelle/pull/2491",
     "https://github.com/containerd/cgroups/pull/220",
 ]}
+REGISTRIES = ["--registry=" + (AREA / "registry").as_uri(), "--registry=https://bcr.bazel.build"]
+DEFAULTS_SHA = "4f95c9122a714f39d06b8aa3fe4b5bd70a982e571ac3a31599b73079b267d3db"
 BAZEL = [s for s in client("8.8.1") if s != "--noworkspace_rc"]
 
 
@@ -48,6 +52,56 @@ def original():
     RESULT["original"] = {"run": 41402235566, "artifact": 13122370481, "sha256": digest,
                           "build_run": prior["original_run"], "build_artifact": prior["artifact"],
                           "archive": prior["archive"], "original_states": prior["original_states"]}
+
+
+def prepare_registry():
+    files = {
+        "MODULE.bazel": "618a729142f66de1e2cb776d026413763be5b80d5e3d29ffb9d3d90c5defde90",
+        "source.json": "fbe5312a01fb4a2a58caff4a0d40dcf384b6f0bda75e85546663360da1d7538a",
+        "patches/module_dot_bazel_version.patch": "dec954e9b8f9dc27b23d430050146e01d18f73ec2b11980734e2e5f8cde0eade",
+    }
+    root = AREA / "registry"
+    dest = root / "modules/gazelle/0.51.3"
+    (dest / "patches").mkdir(parents=True)
+    (root / "bazel_registry.json").write_text("{}\n")
+    for name, digest in files.items():
+        with urlopen("https://bcr.bazel.build/modules/gazelle/0.51.3/" + name, timeout=30) as response:
+            data = response.read()
+        assert sha256(data).hexdigest() == digest
+        (dest / name).write_bytes(data)
+    source = dest / "source.json"
+    descriptor = json.loads(source.read_text())
+    patch = (AREA / "gazelle-cgroups-proto.patch").read_bytes()
+    assert git("hash-object", str(AREA / "gazelle-cgroups-proto.patch")) == git("rev-parse", PRODUCT + ":tools/gazelle-cgroups-proto.patch")
+    (dest / "patches/cgroups.patch").write_bytes(patch)
+    descriptor["patches"]["cgroups.patch"] = "sha256-" + b64encode(sha256(patch).digest()).decode()
+    source.write_text(json.dumps(descriptor))
+    RESULT["registry"] = {"original_sha256": files, "source": descriptor, "patched_source_json_sha256": sha256(source.read_bytes()).hexdigest()}
+    save()
+
+
+def preflight():
+    row = RESULT["preflight"] = {"verified": False, "ignore_dev_dependency": True, "source": SPLIT}
+    save()
+    flags = [*REGISTRIES, "--ignore_dev_dependency"]
+    packages = " + ".join(CGROUPS + "//" + n + "/stats:all" for n in ("cgroup1", "cgroup2"))
+    query = 'labels(srcs, kind("go_library", ' + packages + '))'
+    p = subprocess.run([*BAZEL, "query", *flags, query], capture_output=True, text=True)
+    labels = [s for s in p.stdout.splitlines() if s.startswith("@") and "com_github_containerd_cgroups_v3//" in s]
+    row.update(query=query, exit=p.returncode, labels=labels, errors=details(p.stderr) if p.returncode else [])
+    save()
+    base = subprocess.check_output([*BAZEL, "info", *flags, "output_base"], text=True).strip()
+    external = Path(base) / "external"
+    defaults = external / "gazelle+/internal/bzlmod/default_gazelle_overrides.bzl"
+    row["effective_defaults_sha256"] = sha256(defaults.read_bytes()).hexdigest()
+    metrics = {n: sha256((external / "gazelle++go_deps+com_github_containerd_cgroups_v3" / n).read_bytes()).hexdigest()
+               for n in FILES if n.endswith("/metrics.pb.go")}
+    row["effective_stats_sha256"] = metrics
+    row["verified"] = p.returncode == 0 and row["effective_defaults_sha256"] == DEFAULTS_SHA and all(
+        metrics[n] == FILES[n] and any(label.endswith("//" + n.replace("/metrics.pb.go", ":metrics.pb.go")) for label in labels)
+        for n in metrics)
+    save()
+    return row["verified"]
 
 
 def startup(name, exe, digest):
@@ -98,7 +152,7 @@ def build(name, sha, cwd):
                                     "ignore_dev_dependency": True, "state": "INCOMPLETE", "collection": {}}
     save()
     bep, spawns = AREA / (name + ".bep"), AREA / (name + ".spawns")
-    args = [*BAZEL, "build", "--jobs=32", "--keep_going",
+    args = [*BAZEL, "build", *REGISTRIES, "--jobs=32", "--keep_going",
             "--remote_default_exec_properties=Arch=amd64", "--remote_default_exec_properties=OSFamily=linux",
             "--remote_default_exec_properties=EstimatedMemory=2GB",
             "--remote_default_exec_properties=workload-isolation-type=firecracker",
@@ -171,19 +225,25 @@ def build(name, sha, cwd):
 
 
 def main():
-    assert git("rev-parse", "HEAD^") == PRODUCT and git("rev-parse", PRODUCT + "^") == SPLIT
-    assert git("diff", "--name-only", SPLIT, PRODUCT).splitlines() == ["MODULE.bazel", "tools/gazelle-cgroups-proto.patch"]
-    select(PRODUCT)
-    try:
-        build("default", PRODUCT, SOURCE)
-    finally:
-        save()
-    row = RESULT["builds"]["default"]
+    assert git("rev-parse", "HEAD^") == "0d08a91ce44afcd87d543150e1224033af66caed"
+    assert git("rev-parse", "HEAD^^") == PRODUCT and git("rev-parse", PRODUCT + "^") == SPLIT
+    select(SPLIT)
     try:
         original()
-        base = subprocess.check_output([*BAZEL, "info", "--ignore_dev_dependency", "output_base"], text=True).strip()
-        defaults = Path(base) / "external/gazelle+/internal/bzlmod/default_gazelle_overrides.bzl"
-        RESULT["effective_defaults_sha256"] = sha256(defaults.read_bytes()).hexdigest()
+        with ZipFile(AREA / "no-override.zip") as z:
+            prior = json.loads(z.read("external-go.json"))
+        assert sha256((AREA / "no-override.zip").read_bytes()).hexdigest() == "cef77a84fac1cff4a9a2550240cc4190e5a0e43f44a5e0d1451d70fbeaea3f0a"
+        prev = prior["builds"]["default"]
+        assert prev["source"] == PRODUCT and prev["state"] == "BUILD_FAILED" and prev["exit"] == 1
+        assert prior["effective_defaults_sha256"] == "68d62b8184488797a92004da081dc5f0f5044ac2ee2427445f4b0242b9c69688"
+        RESULT["ignored_override_control"] = {"run": 41402974439, "artifact": 13121654249, "source": PRODUCT,
+                                              "invocation": prev["invocation"], "defaults_sha256": prior["effective_defaults_sha256"],
+                                              "go_diagnostics": prev["go_diagnostics"]}
+        prepare_registry()
+        if not preflight():
+            return True
+        build("default", SPLIT, SOURCE)
+        row = RESULT["builds"]["default"]
         sources = {}
         for a in row["cgroups"]:
             assert not a["exit"] and (a["runner"] == "remote" or a["cached"])
@@ -196,7 +256,7 @@ def main():
         complete = row["completed"]
         obs = row.get("startup", {})
         checks = {
-            "pinned_default": RESULT["effective_defaults_sha256"] == "4f95c9122a714f39d06b8aa3fe4b5bd70a982e571ac3a31599b73079b267d3db",
+            "pinned_default": RESULT["preflight"]["verified"],
             "real_shim_built": row["state"] == "BUILT" and row["bazel_exit"] == row["exit"] == 0 and all(complete.values()),
             "cgroup_targets_built": all(any("com_github_containerd_cgroups_v3//" + name + ":" + name in k and v
                                             for k, v in complete.items()) for name in ("cgroup1", "cgroup2")),
