@@ -1,0 +1,96 @@
+name: Compare declared Go SDK sources across native execution strategies
+on:
+  push:
+    branches: [qualification/sdk-stdlib-input-contrast]
+permissions:
+  contents: read
+jobs:
+  stdlib:
+    if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    env:
+      ORIGINAL: aa767e4c43d011121271551fe24da501a56f729d
+      SOURCE: 3204d2d909636203100163e16af1304063fb5f9f
+      HELPER: 0a9bdf9bc331d6a66f35aefcbbb5cf466eb6f7f5
+      DOCKER_BUILD: "false"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Prepare the existing native Bazel client and preflight both source revisions
+        id: setup
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/sdk-inputs"
+          mkdir -p "$d/records"
+          printf '{"stock":"%s","fixed":"%s","carrier":"%s","expected":["sandbox","local","fixed","suite","verdict"]}\n' "$ORIGINAL" "$SOURCE" "$GITHUB_SHA" > "$d/records/expected.json"
+          [[ "$(git rev-parse HEAD^)" == "$SOURCE" && "$(git rev-parse HEAD^^)" == "$ORIGINAL" && "$(uname -m)" == x86_64 ]]
+          cp test/rbe/stdlib-sdk-inputs.py "$d/"
+          git fetch --no-tags --depth=2 origin "$HELPER"
+          git show "$HELPER:test/rbe/stdlib-provenance.py" > "$d/stdlib_provenance.py"
+          # shellcheck disable=SC1090
+          source <(git show "$HELPER^:.buildkite/hooks/pre-command" | sed -n '/^install_lint_bazel() {$/,$p')
+          echo "$BUILDKITE_BAZEL_DIRECTORY" >> "$GITHUB_PATH"
+          [[ "$(bazel --version)" == 'bazel 8.8.1' ]]
+          command -v zstd
+          if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+          unshare -Ur true
+          for revision in "$ORIGINAL" "$SOURCE"; do
+            git checkout --detach "$revision"
+            rc=0
+            timeout 4m bazel query 'set(@io_bazel_rules_go//tests/core/stdlib:stdlib_files @io_bazel_rules_go//go/tools/builders:stdliblist_test)' --output=label > "$d/$revision.labels" 2> "$d/$revision.errors" || rc=$?
+            python3 - "$d" "$revision" "$rc" <<'PY'
+          import json, os, re, sys
+          from pathlib import Path
+          d, rev, rc = Path(sys.argv[1]), sys.argv[2], int(sys.argv[3])
+          arm = "preflight-stock" if rev == os.environ["ORIGINAL"] else "preflight-fixed"
+          labels = (d / f"{rev}.labels").read_text().splitlines()
+          errors = [s[:900] for s in (d / f"{rev}.errors").read_text().splitlines() if "Error applying patch" in s][:2]
+          (d / "records" / (arm + ".json")).write_text(json.dumps(dict(source=rev, exit=rc, labels=labels, patchErrors=errors)))
+          assert rc == 0 and {l.split("//",1)[1] for l in labels} == {"tests/core/stdlib:stdlib_files","go/tools/builders:stdliblist_test"}
+          PY
+          done
+      - name: Standard library with the stock Linux sandbox
+        if: always() && steps.setup.outcome == 'success'
+        run: |
+          git checkout --detach "$ORIGINAL"
+          python3 "$RUNNER_TEMP/sdk-inputs/stdlib-sdk-inputs.py" sandbox
+      - name: The same two unmodified producers without a filesystem sandbox
+        if: always() && steps.setup.outcome == 'success'
+        run: |
+          git checkout --detach "$ORIGINAL"
+          python3 "$RUNNER_TEMP/sdk-inputs/stdlib-sdk-inputs.py" local
+      - name: The two corrected producers without a filesystem sandbox
+        if: always() && steps.setup.outcome == 'success'
+        run: |
+          git checkout --detach "$SOURCE"
+          python3 "$RUNNER_TEMP/sdk-inputs/stdlib-sdk-inputs.py" fixed
+      - name: The supplier's two package-list tests
+        if: always() && steps.setup.outcome == 'success'
+        run: |
+          git checkout --detach "$SOURCE"
+          python3 "$RUNNER_TEMP/sdk-inputs/stdlib-sdk-inputs.py" suite
+      - name: Reconcile the complete package sets
+        if: always() && steps.setup.outcome == 'success'
+        run: python3 "$RUNNER_TEMP/sdk-inputs/stdlib-sdk-inputs.py" verdict
+      - name: Validate the public receipt files
+        id: safe
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          d = Path(os.environ['RUNNER_TEMP'], 'sdk-inputs', 'records')
+          assert (d / 'expected.json').is_file()
+          for p in d.iterdir():
+              assert p.name in {s+'.json' for s in ('expected','preflight-stock','preflight-fixed','sandbox','local','fixed','suite','verdict')}
+              raw = p.read_bytes()
+              json.loads(raw)
+              assert not re.search(rb'(?i)authorization\s*:|x-buildbuddy-api-key|bearer\s+[A-Za-z0-9_.-]{12,}', raw)
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.safe.outcome == 'success'
+        with:
+          name: sdk-standard-library-inputs
+          path: ${{ runner.temp }}/sdk-inputs/records/*.json
+          if-no-files-found: error
