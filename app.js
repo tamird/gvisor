@@ -223,6 +223,11 @@ function checkInfo(pr) {
   return { ...result, passed, detail: `${substantive.length} current validation check/status contexts${checks.complete ? "" : "; context list incomplete"}. ${canceled.length ? "Buildkite reports a canceled run; its raw FAILURE status does not establish a failing test or CI configuration problem. " : ""}${checks.supersededContexts?.length ? `${checks.supersededContexts.length} superseded workflow attempts remain below as history. ` : ""}${assignmentFailures.length ? "Reviewer assignment failed; its raw result remains below and is not a contributor-source failure. " : ""}${importProblems.length ? "Copybara import status needs attention; its raw result remains below and does not establish a public source-test failure. " : ""}${approvalGates.length ? "BuildBuddy requires approving review before these checks run; their raw ERROR statuses remain below. " : ""}GitHub's aggregate is ${checks.state}. Checks/statuses are not test-case counts.` };
 }
 
+const DECISION_REASONS = [
+  { id: "review-changes", owner: "user", title: "Review our changes" },
+  { id: "post-review", owner: "user", title: "Approve outgoing PR reviews" },
+  { id: "post-reply", owner: "user", title: "Approve replies and comments" },
+];
 const ATTENTION_REASONS = [
   { id: "author-conflicts", owner: "agent", title: "Merge conflicts" },
   { id: "author-ci-remedy", owner: "agent", title: "Merged CI fix needs action" },
@@ -234,7 +239,7 @@ const ATTENTION_REASONS = [
   { id: "upstream-release", owner: "agent", title: "Waiting for an upstream release" },
   { id: "agent-rebase-check", owner: "agent", title: "Compare rebased patch" },
   { id: "agent-refresh", owner: "agent", title: "Public status refresh needed" },
-  { id: "author-proposal", owner: "user", title: "Contributor decisions" },
+  ...DECISION_REASONS,
   { id: "human-submission", owner: "user", title: "Human-only submissions" },
   { id: "maintainer-import-refresh", owner: "maintainer", title: "Refresh earlier export" },
   { id: "maintainer-reapproval", owner: "maintainer", title: "Reapprove current source PR" },
@@ -452,11 +457,13 @@ function attentionReasons(node, owner) {
       else reasons.push({ ...ATTENTION_REASONS.find(item => item.id === dispositionId), detail: triage });
     } else if (!reasons.some(item => item.id === id)) reasons.push({ ...ATTENTION_REASONS.find(item => item.id === id), ...(title ? { title } : {}), detail });
   };
-  if (states(node)["contributor-review"])
-    add("author-proposal", contributorDecision(node)?.summary || "A contributor decision is pending; this does not change the published head's review status.");
-  if (contributorDecisionNeedsRefresh(node)) {
-    const decision = contributorDecision(node), base = decision.baseHead || decision.head;
-    add("agent-refresh", `The ${decision.kind === "review" ? "review" : "amendment"} was prepared against ${base.slice(0, 9)}, but the published head is ${node.github.head.slice(0, 9)}. Check the new source before requesting a contributor decision.`);
+  for (const decision of pendingDecisions(node)) {
+    if (contributorDecisionNeedsRefresh(node, decision)) {
+      const base = decision.baseHead || decision.head;
+      add("agent-refresh", `The ${decision.kind} was prepared against ${base.slice(0, 9)}, but the published head is ${node.github.head.slice(0, 9)}. Check the new source before requesting a contributor decision.`);
+    } else if (states(node)["contributor-review"]) {
+      add(decisionReason(decision), decision.summary || decision.title || "Ready for your review.");
+    }
   }
   if (humanAction(node)) add("human-submission", humanAction(node).summary);
   if (contributorChanges(node)) add("author-feedback", "The contributor requested changes to this branch revision.");
@@ -609,17 +616,19 @@ function attentionReasons(node, owner) {
   return ATTENTION_REASONS.flatMap(definition => reasons.filter(reason => reason.id === definition.id));
 }
 function attentionGroups(nodes, owner, grouped = true, filters = reasonFilters) {
-  const entries = nodes.map(node => ({ node, reasons: attentionReasons(node, owner),
-    copyURL: filters.has("human-submission") && humanAction(node)
-      ? contributorDecisionURL(node, "human-submission") : filters.has("author-proposal") && contributorDecision(node) && states(node)["contributor-review"]
-      ? contributorDecisionURL(node) : node.type === "pr" && node.github?.headOwner === owner ? safeURL(node.url) : null }));
+  const entries = nodes.map(node => {
+    const reasons = attentionReasons(node, owner);
+    const selectedReason = reasons.find(reason => filters.has(reason.id));
+    const primary = selectedReason || reasons.find(reason => reason.owner !== "user") || reasons[0];
+    const linkReason = grouped ? primary : selectedReason;
+    const copyURL = linkReason?.owner === "user" ? contributorDecisionURL(node, linkReason.id)
+      : node.type === "pr" && node.github?.headOwner === owner ? safeURL(node.url) : null;
+    return { node, reasons, primary, copyURL };
+  });
   if (!grouped) return [{ id: "visible", owner: "other", title: "Visible items", entries }];
   const groups = [...ATTENTION_REASONS, ...OTHER_ATTENTION_GROUPS].map(group => ({ ...group, entries: [] }));
   for (const entry of entries) {
-    const primary = entry.reasons.find(item => filters.has(item.id)) || entry.reasons.find(item => item.id !== "author-proposal") || entry.reasons[0];
-    const id = primary?.id || (historical(entry.node) ? "resolved" : entry.node.github?.status === "draft" ? "draft" : "other");
-    if (id === "author-proposal" && contributorDecision(entry.node)) entry.copyURL = contributorDecisionURL(entry.node);
-    if (id === "human-submission" && humanAction(entry.node)) entry.copyURL = contributorDecisionURL(entry.node, "human-submission");
+    const id = entry.primary?.id || (historical(entry.node) ? "resolved" : entry.node.github?.status === "draft" ? "draft" : "other");
     groups.find(group => group.id === id).entries.push(entry);
   }
   return groups.filter(group => group.entries.length);
@@ -939,9 +948,19 @@ function pendingDecisions(node) {
     || ["pr", "issue"].includes(node.type) && decision.kind === "reply"
     || node.type === "pr" && decision.kind === "review" && !providerClosed(node)));
 }
+function decisionReason(decision) {
+  if (decision.kind === "review") return "post-review";
+  if (decision.kind === "reply") return "post-reply";
+  return "review-changes";
+}
+function visibleDecisions(node) {
+  const filtering = DECISION_REASONS.some(reason => reasonFilters.has(reason.id));
+  return pendingDecisions(node).filter(decision => !filtering || reasonFilters.has(
+    contributorDecisionNeedsRefresh(node, decision) ? "agent-refresh" : decisionReason(decision)));
+}
 function contributorDecision(node) {
   const pending = pendingDecisions(node);
-  return pending.find(decision => decision.head === node.github?.head) || pending[0] || null;
+  return pending.find(decision => !contributorDecisionNeedsRefresh(node, decision)) || pending[0] || null;
 }
 function contributorDecisionHeadChanged(node, decision = contributorDecision(node)) {
   const head = decision?.kind === "amendment" ? decision.baseHead : decision?.head;
@@ -954,7 +973,7 @@ function humanAction(node) {
   const action = node.humanAction;
   return action?.status === "pending" && action.kind === "submission" && action.head === node.head ? action : null;
 }
-function contributorDecisionURL(node, reason = "author-proposal") {
+function contributorDecisionURL(node, reason) {
   const url = new URL(location.href);
   url.search = `?view=table&reason=${reason}`;
   url.hash = encodeURIComponent(node.id);
@@ -962,8 +981,8 @@ function contributorDecisionURL(node, reason = "author-proposal") {
 }
 function stateLabel(node, state) {
   if (state === "contributor-review") {
-    const count = pendingDecisions(node).length;
-    return count > 1 ? `${count} separate review decisions` : contributorDecision(node)?.title || STATE_LABELS[state];
+    const decisions = visibleDecisions(node).filter(decision => !contributorDecisionNeedsRefresh(node, decision));
+    return decisions.length > 1 ? `${decisions.length} separate review decisions` : decisions[0]?.title || STATE_LABELS[state];
   }
   if (state === "changes-requested" && contributorChanges(node)) return "Contributor changes requested";
   if (state === "failing") return failureSources(node).map(item => item.failureLabel).join("; ") || STATE_LABELS[state];
@@ -978,8 +997,9 @@ function appendStates(parent, node, detail = false) {
     const qualifier = state === "failing" || (state === "importing" && !detail) ? "" : record.qualifier;
     const text = `${stateLabel(node, state)} ${age(record)}${qualifier ? " · " + qualifier : ""}`;
     const failures = state === "failing" ? failureSources(node) : [];
-    const decision = state === "contributor-review" ? contributorDecision(node) : state === "changes-requested" ? contributorChanges(node) : null;
-    const url = failures[0]?.url || decision?.url;
+    const decision = state === "contributor-review" ? visibleDecisions(node).find(item => !contributorDecisionNeedsRefresh(node, item)) : state === "changes-requested" ? contributorChanges(node) : null;
+    const url = failures[0]?.url || (state === "contributor-review" && decision && decisionReason(decision) !== "review-changes"
+      ? contributorDecisionURL(node, decisionReason(decision)) : decision?.url);
     const item = url ? link(text, url, `work-state ${state}`) : element("span", `work-state ${state}`, text);
     item.title = stateTitle(state, record) + (record.qualifier ? " " + record.qualifier : "");
     if (detail && record.basis !== "unknown") item.append(element("small", "state-origin", `${record.basis === "observed" ? "Observed since" : "Since"} ${date(record.since)}`));
@@ -1058,7 +1078,9 @@ function readViewURL() {
 function applyView(saved) {
   view = saved.view === "handoff" ? "table" : VIEWS.includes(saved.view) ? saved.view : "dag";
   tableGrouping = saved.view === "handoff" || saved.tableGrouping === true;
-  reasonFilters = new Set((Array.isArray(saved.reasonFilters) ? saved.reasonFilters : []).filter(id => ATTENTION_REASONS.some(reason => reason.id === id)));
+  // Older links and saved views used one filter for all contributor decisions.
+  const reasons = (Array.isArray(saved.reasonFilters) ? saved.reasonFilters : []).flatMap(id => id === "author-proposal" ? DECISION_REASONS.map(reason => reason.id) : [id]);
+  reasonFilters = new Set(reasons.filter(id => ATTENTION_REASONS.some(reason => reason.id === id)));
   sortKey = SORT_KEYS.includes(saved.sortKey) ? saved.sortKey : "impact"; sortDirection = saved.sortDirection === 1 ? 1 : -1;
   if (saved.selected?.startsWith("handoff-")) saved = { ...saved, selected: `attention-${LEGACY_HANDOFF_GROUPS[saved.selected.slice(8)] || saved.selected.slice(8)}` };
   const validID = id => typeof id === "string" && /^[^\s]{1,240}$/.test(id) ? id : null;
@@ -1348,13 +1370,8 @@ function drawTable(nodes) {
   nodes.sort((a, b) => (typeof value(a) === "number" ? value(a) - value(b) : String(value(a)).localeCompare(String(value(b)))) * sortDirection || a.title.localeCompare(b.title));
   visibleTableGroups = attentionGroups(nodes, registry.meta.owner, tableGrouping);
   $("handoff-copy-all").disabled = !model.checkedAt || !visibleTableGroups.some(group => group.entries.some(entry => entry.copyURL));
-  $("handoff-snapshot").textContent = `${reasonFilters.size === 1 && reasonFilters.has("human-submission")
-    ? "Copy visible exports every displayed human-only action with its tracker link."
-    : reasonFilters.size === 1 && reasonFilters.has("author-proposal")
-    ? "Copy visible exports every displayed contributor decision with its reviewable tracker link."
-    : reasonFilters.has("author-proposal") && reasonFilters.has("human-submission")
-    ? "Copy visible exports the displayed decisions and human-only actions with their tracker links."
-    : "Copy visible exports the source PRs shown as plain text."} Snapshot ${handoffTimestamp(model.checkedAt) || "unavailable"}.`;
+  const copyingDecisions = ATTENTION_REASONS.some(reason => reason.owner === "user" && reasonFilters.has(reason.id));
+  $("handoff-snapshot").textContent = `${copyingDecisions ? "Copy visible includes tracker links to the selected decisions." : "Copy visible exports the source PRs shown as plain text."} Snapshot ${handoffTimestamp(model.checkedAt) || "unavailable"}.`;
   for (const group of visibleTableGroups) {
     if (tableGrouping) {
       const headingRow = element("tr", `attention-heading ${group.owner}${selected === `attention-${group.id}` ? " selected" : ""}`);
@@ -1371,10 +1388,17 @@ function drawTable(nodes) {
     identity.append(link(label(node), node.url));
     const choose = button(node.title, () => select(node.id)); choose.dataset.node = node.id;
     title.append(choose);
-    const decision = contributorDecision(node);
-    if (decision && states(node)["contributor-review"]) {
-      const revision = ["amendment", "proposal"].includes(decision.kind) && refinementComparison(node);
-      title.append(link((decision.title || "Review proposal ↗") + (revision ? ` · ${revision.label}` : ""), decision.url, "decision-source"));
+    const decisions = visibleDecisions(node).filter(decision => !contributorDecisionNeedsRefresh(node, decision));
+    for (const decision of decisions.filter(decision => decisionReason(decision) === "review-changes")) {
+      const revision = refinementComparison(node, decision);
+      title.append(link((decision.title || "Review proposed change") + (revision ? ` · ${revision.label}` : ""), decision.url, "decision-source"));
+    }
+    for (const kind of ["review", "reply"]) {
+      const count = decisions.filter(decision => decision.kind === kind).length;
+      if (count) {
+        const name = kind === "review" ? (count === 1 ? "review" : "reviews") : (count === 1 ? "reply" : "replies");
+        title.append(button(`Read ${count === 1 ? "" : count + " "}draft ${name}`, () => select(node.id), "decision-source"));
+      }
     }
     const action = humanAction(node);
     if (action) title.append(link("Open submission context ↗", action.url, "human-action-source"));
@@ -1392,8 +1416,7 @@ function drawTable(nodes) {
     }
   }
 }
-function refinementComparison(node) {
-  const decision = contributorDecision(node);
+function refinementComparison(node, decision = contributorDecision(node)) {
   const amendment = decision?.kind === "amendment";
   let revision = node.refinement;
   if (amendment) {
@@ -1451,11 +1474,12 @@ function drawDetails() {
   const top = element("div", `detail-top ${node.type}`), close = button("×", () => select(null));
   close.setAttribute("aria-label", "Close details"); top.append(link(label(node) + " ↗", node.url), close);
   details.append(top, element("h2", "item-title", node.title), element("span", `status-pill ${node.status}`, status(node)));
-  for (const decision of pendingDecisions(node)) {
+  for (const decision of visibleDecisions(node)) {
     const changed = contributorDecisionNeedsRefresh(node, decision);
     if (!states(node)["contributor-review"] && !changed) continue;
     const section = element("section", "detail-section contributor-decision");
-    section.append(element("h3", "", changed ? "Check the new PR head" : decision.title || "Contributor decision requested"));
+    section.append(element("div", "detail-meta", DECISION_REASONS.find(reason => reason.id === decisionReason(decision)).title),
+      element("h3", "", changed ? "Check the new PR head" : decision.title || "Decision requested"));
     if (decision.summary) section.append(element("p", "", decision.summary));
     if (decision.head) section.append(element("p", "detail-meta", `Decision covers ${decision.head}`));
     if (changed)
@@ -1463,7 +1487,7 @@ function drawDetails() {
     if (decision.body) {
       section.append(element("div", "decision-body", decision.body));
     }
-    section.append(link(decision.kind === "review" ? "Open PR to review ↗" : decision.kind === "reply" ? "Open original discussion ↗" : "Open proposed commit ↗", decision.url));
+    section.append(link(decision.kind === "review" ? "Open original PR ↗" : decision.kind === "reply" ? "Open original discussion ↗" : "Open proposed commit ↗", decision.url));
     details.append(section);
   }
   const action = humanAction(node);

@@ -9,7 +9,7 @@
   <title>gVisor + BuildBuddy · Dependencies</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css?v=20261028-neighbors-4">
-  <script src="app.js?v=20261102-mergeability" defer></script>
+  <script src="app.js?v=20261102-decision-queues" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#workspace">Skip to work</a>
@@ -31,7 +31,7 @@
     <section id="work-state-controls" class="state-toolbar" aria-label="Work state filters">
       <div id="state-filters" class="state-filters" role="group" aria-label="Filter by state; select multiple reasons to match any"></div>
       <span id="legacy-state-filter" hidden></span>
-      <details class="state-help"><summary>Attention &amp; evidence</summary><p>Choose reasons under Agent work, Needs your decision, or Needs maintainer attention. Conflicts, public source failures and feedback triage are agent work; only actual proposal decisions require you. Reasons can overlap; selecting several matches any. Public source checks, internal Copybara feedback and import checks stay distinct. An author reply can require reviewer follow-up without establishing that the fix is accepted. A newer head or outdated location alone does not answer unresolved feedback. Unclear review holds are marked for clarification.</p><p>Unpublished proposal decisions do not change a published PR's review status. Inactive delivery, withdrawn, retired, merged and concluded records are hidden by default. Show history includes them for reference; they do not request action. Active PRs, decisions and ongoing work remain visible. Grouped rows appear once under the first matching reason; all their reasons remain visible. Internal CL progress and merge gates may be unknown. Recorded state ages retain their original revision-scoped observation clocks; attention labels do not invent new timestamps.</p></details>
+      <details class="state-help"><summary>Attention &amp; evidence</summary><p>Choose reasons under Agent work, Needs your decision, or Needs maintainer attention. Conflicts, public source failures and feedback triage are agent work; your filters separate proposed code changes, draft PR reviews, and replies awaiting permission to post. Reasons can overlap; selecting several matches any. Public source checks, internal Copybara feedback and import checks stay distinct. An author reply can require reviewer follow-up without establishing that the fix is accepted. A newer head or outdated location alone does not answer unresolved feedback. Unclear review holds are marked for clarification.</p><p>Unpublished proposal decisions do not change a published PR's review status. Inactive delivery, withdrawn, retired, merged and concluded records are hidden by default. Show history includes them for reference; they do not request action. Active PRs, decisions and ongoing work remain visible. Grouped rows appear once under the first matching reason; all their reasons remain visible. Internal CL progress and merge gates may be unknown. Recorded state ages retain their original revision-scoped observation clocks; attention labels do not invent new timestamps.</p></details>
     </section>
     <div class="workspace-body">
       <section class="work-pane" aria-label="Work inventory">

@@ -570,7 +570,11 @@ these classifications in `work_states.py`, and the UI consumes its snapshot:
   observation clock and remain separate from GitHub's incoming review, source
   head, CI and import states. A changed public head prompts reconciliation rather
   than silently deleting the outstanding question. Text and links appear in the
-  existing Table/details path and the **Contributor decisions** attention filter.
+  table and item details. **Review our changes** opens proposals and amendments.
+  **Approve outgoing PR reviews** shows the review text prepared for someone
+  else's PR. **Approve replies and comments** shows draft discussion messages.
+  Each filter has a shareable URL. Older contributor-decision links select
+  all three filters.
   When asking Tamir for a decision, record it here and link the request to its
   canonical tracker item with the exact proposed commit or reviewable reply.
   Verify that the item appears in the contributor filter before considering the
@@ -785,7 +789,7 @@ A human-only submission uses an explicit `humanAction` on its existing item:
 `status: pending`, `kind: submission`, exact local `head` matching the item's
 head, `title`, `summary`, full actionable `body`, public context `url`, and
 `policyURL`. It appears under **Human-only submissions**, separately from
-**Contributor decisions**, without implying that an agent may submit it.
+the filters for reviewing code and approving messages.
 This field and `contributorReview` are mutually exclusive. Remove the action
 when settled; changing its head requires explicit reconciliation. The same
 request-to-visible-item invariant applies, without creating another history or

@@ -29,7 +29,7 @@ test('a visible tab refreshes once when due and retains its view if the snapshot
   context.setTimeout = (callback, delay) => { timer = { callback, delay }; return 1; };
   context.AbortSignal = AbortSignal;
   context.fetch = () => { requests++; return pending; };
-  run('model = {checkedAt: registry.meta.updatedAt}; lastAttempt = Date.now(); selected = "pr:1"; reasonFilters.add("author-proposal"); scheduleRefresh()');
+  run('model = {checkedAt: registry.meta.updatedAt}; lastAttempt = Date.now(); selected = "pr:1"; reasonFilters.add("review-changes"); scheduleRefresh()');
   assert.equal(timer, null);
   now += 10 * 60 * 1000;
   context.document.visibilityState = 'visible';
@@ -43,7 +43,7 @@ test('a visible tab refreshes once when due and retains its view if the snapshot
   reject(new Error('offline'));
   await refresh;
   assert.equal(run('selected'), 'pr:1');
-  assert.deepEqual([...run('reasonFilters')], ['author-proposal']);
+  assert.deepEqual([...run('reasonFilters')], ['review-changes']);
   assert.equal(run('model.checkedAt'), context.registryInput.meta.updatedAt);
   assert.match(elems.get('freshness-text').textContent, /Keeping snapshot/);
   assert.equal(timer.delay, 5 * 60 * 1000);
@@ -60,7 +60,7 @@ test('a visible tab refreshes once when due and retains its view if the snapshot
   await timer.callback();
   assert.deepEqual([...context.rendered], ['table', 'pr:1', undefined]);
   assert.match(elems.get('freshness-text').textContent, /Work map · .+ \| GitHub snapshot · .+/);
-  assert.deepEqual([...run('reasonFilters')], ['author-proposal']);
+  assert.deepEqual([...run('reasonFilters')], ['review-changes']);
   assert.equal(timer.delay, 5 * 60 * 1000);
   context.document.visibilityState = 'hidden';
   run('scheduleRefresh()');
@@ -386,7 +386,7 @@ test('new registry decisions appear in table, DAG and counts before a provider r
   };
   vm.runInContext(`validateRegistry(registryInput); validateSnapshot(snapshotInput, registryInput);
     updateRegistryControls = () => {}; render = () => {}; setFreshness = () => {};
-    applyLive(snapshotInput, registryInput); reasonFilters = new Set(['author-proposal']);`, context);
+    applyLive(snapshotInput, registryInput); reasonFilters = new Set(['review-changes']);`, context);
   const expected = nodes.slice(0, 2).map(node => node.id);
   for (const expression of ['tableNodes()', 'graphNodes()'])
     assert.deepEqual(JSON.parse(vm.runInContext(`JSON.stringify(${expression}.map(node => node.id))`, context)), expected);
@@ -411,7 +411,7 @@ test('startup keeps registry decisions visible when no GitHub snapshot is usable
     ? { ok: true, json: async () => context.registryInput } : { ok: false, status: 503 };
   vm.runInContext('updateRegistryControls = () => {}; initialize = () => {}; restoreView = () => false; render = () => {};', context);
   await vm.runInContext('start()', context);
-  vm.runInContext('reasonFilters = new Set(["author-proposal"])', context);
+  vm.runInContext('reasonFilters = new Set(["review-changes"])', context);
   for (const expression of ['tableNodes()', 'graphNodes()'])
     assert.deepEqual(JSON.parse(vm.runInContext(`JSON.stringify(${expression}.map(node => node.id))`, context)), [branch.id]);
   assert.equal(vm.runInContext('model.nodes[0].workStates["contributor-review"].since', context), context.registryInput.meta.updatedAt);
@@ -462,7 +462,7 @@ test('contributor decisions bind the registered branch repository and exact prop
     context.registryInput = { ...context.registryInput, nodes: [node], edges: [], groups: [] };
     context.nodeInput = node;
     vm.runInContext('validateRegistry(registryInput)', context);
-    assert.deepEqual(idsFor(node), ['author-proposal']);
+    assert.deepEqual(idsFor(node), ['review-changes']);
     assert.equal(reasonsFor(node)[0].owner, 'user');
     const correct = node.contributorReview.url;
     for (const url of [`https://github.com/tamird/unrelated/commit/${head}`,
@@ -502,12 +502,12 @@ test('outgoing reviews return to the agent when the public head changes', () => 
   context.nodeInput = node;
   vm.runInContext('validateRegistry(registryInput); validateSnapshot(snapshotInput, registryInput)', context);
   node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
-  assert.equal(reasonsFor(node).find(reason => reason.id === 'author-proposal').owner, 'user');
+  assert.equal(reasonsFor(node).find(reason => reason.id === 'post-review').owner, 'user');
   node.github.revisionChanged = true; node.github.head = 'd'.repeat(40);
   node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
   assert.equal(node.workStates['contributor-review'], undefined);
   assert.ok(idsFor(node).includes('agent-refresh'));
-  assert.ok(!idsFor(node).includes('author-proposal'));
+  assert.ok(!idsFor(node).includes('post-review'));
   node.contributorReview.head = node.github.head;
   node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
   assert.equal(node.workStates['contributor-review'].scope, node.github.head);
@@ -531,6 +531,67 @@ test('settling either of two reviews on one PR leaves the other pending', () => 
   }
   node.settledReviews = [first, second];
   assert.equal(vm.runInContext('contributorDecision(nodeInput)', context), null);
+});
+
+test('mixed cards expose each current decision once and refresh only stale drafts', () => {
+  const node = attentionNode(16735);
+  node.github.headOwner = 'parth-opensrc';
+  const amendment = { status: 'pending', kind: 'amendment', head: 'c'.repeat(40), baseHead: node.github.head };
+  const review = { status: 'pending', kind: 'review', head: node.github.head, body: 'First finding' };
+  const reply = { status: 'pending', kind: 'reply', head: node.github.head, body: 'Answer the author', url: node.url };
+  node.contributorReview = amendment;
+  node.additionalReviews = [review, { ...review, body: 'Second finding' }, reply];
+  const { context } = historyView([node]);
+  context.nodeInput = node;
+  const refresh = () => { node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context); };
+  refresh();
+  assert.deepEqual(idsFor(node), ['review-changes', 'post-review', 'post-reply']);
+  for (const reason of ['review-changes', 'post-review', 'post-reply']) {
+    context.reasonInput = reason;
+    vm.runInContext('reasonFilters = new Set([reasonInput])', context);
+    assert.deepEqual([...vm.runInContext('tableNodes().map(n => n.id)', context)], [node.id]);
+    const groups = vm.runInContext('attentionGroups(tableNodes(), "tamird")', context);
+    assert.equal(groups.length, 1);
+    assert.equal(groups[0].id, reason);
+    assert.equal(groups[0].entries.length, 1);
+    assert.equal(new URL(groups[0].entries[0].copyURL).searchParams.get('reason'), reason);
+  }
+  vm.runInContext('reasonFilters = new Set(["review-changes", "post-review", "post-reply"])', context);
+  assert.equal(vm.runInContext('attentionGroups(tableNodes(), "tamird").flatMap(g => g.entries).length', context), 1);
+  amendment.baseHead = 'd'.repeat(40);
+  refresh();
+  assert.deepEqual(new Set(idsFor(node)), new Set(['agent-refresh', 'post-review', 'post-reply']));
+  node.settledReviews = [review];
+  refresh();
+  assert.ok(idsFor(node).includes('post-review')); // The second review has different text.
+  node.additionalReviews[1].head = 'd'.repeat(40);
+  refresh();
+  assert.deepEqual(new Set(idsFor(node)), new Set(['agent-refresh', 'post-reply']));
+  assert.equal(node.workStates['contributor-review'].scope, reply.head);
+  node.additionalReviews = node.additionalReviews.filter(d => d !== reply);
+  refresh();
+  assert.deepEqual(idsFor(node), ['agent-refresh']);
+  assert.equal(node.workStates['contributor-review'], undefined);
+});
+
+test('ended PRs retain reply decisions without reviving source amendments or reviews', () => {
+  const node = attentionNode(16496), { context } = historyView([node]);
+  node.contributorReview = { status: 'pending', kind: 'amendment', head: 'c'.repeat(40), baseHead: node.github.head };
+  node.additionalReviews = [
+    { status: 'pending', kind: 'review', head: node.github.head, body: 'Review the old source' },
+    { status: 'pending', kind: 'reply', head: node.github.head, body: 'Correct the imported source', url: node.url },
+  ];
+  context.nodeInput = node;
+  for (const status of ['closed', 'merged']) {
+    node.github.status = status;
+    node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
+    assert.deepEqual(idsFor(node), ['post-reply']);
+    assert.deepEqual([...vm.runInContext('tableNodes().map(n => n.id)', context)], [node.id]);
+  }
+  node.settledReviews = [node.additionalReviews[1]];
+  node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
+  assert.deepEqual(idsFor(node), []);
+  assert.equal(vm.runInContext('tableNodes().length', context), 0);
 });
 
 test('settled decisions are not requested again, but new code or a distinct comment can be', () => {
@@ -567,7 +628,7 @@ test('PR amendments keep the proposed commit and published base distinct', () =>
   context.location = { href: 'https://tamird.github.io/gvisor/' };
   vm.runInContext('validateRegistry(registryInput); validateSnapshot(snapshotInput, registryInput)', context);
   node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
-  assert.equal(reasonsFor(node).find(reason => reason.id === 'author-proposal').owner, 'user');
+  assert.equal(reasonsFor(node).find(reason => reason.id === 'review-changes').owner, 'user');
   assert.equal(vm.runInContext('contributorDecisionHeadChanged(nodeInput)', context), false);
   assert.equal(vm.runInContext('refinementComparison(nodeInput).command', context),
     `git range-diff --creation-factor=999 ${node.github.head}^! ${head}^!`);
@@ -576,14 +637,14 @@ test('PR amendments keep the proposed commit and published base distinct', () =>
   node.refinement = { before: { head: node.github.head }, after: { base: seriesBase, head } };
   assert.equal(vm.runInContext('refinementComparison(nodeInput).command', context),
     `git range-diff ${node.github.head}^! ${seriesBase}..${head}`);
-  const groups = vm.runInContext('attentionGroups([nodeInput], "tamird", false, new Set(["author-proposal"]))', context);
-  assert.equal(groups[0].entries[0].copyURL, `https://tamird.github.io/gvisor/?view=table&reason=author-proposal#${encodeURIComponent(node.id)}`);
+  const groups = vm.runInContext('attentionGroups([nodeInput], "tamird", false, new Set(["review-changes"]))', context);
+  assert.equal(groups[0].entries[0].copyURL, `https://tamird.github.io/gvisor/?view=table&reason=review-changes#${encodeURIComponent(node.id)}`);
   node.github.head = 'd'.repeat(40);
   assert.equal(vm.runInContext('contributorDecisionHeadChanged(nodeInput)', context), true);
   assert.equal(vm.runInContext('refinementComparison(nodeInput)', context), null);
   node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
   assert.equal(node.workStates['contributor-review'], undefined);
-  assert.ok(!idsFor(node).includes('author-proposal'));
+  assert.ok(!idsFor(node).includes('review-changes'));
   const refresh = reasonsFor(node).find(reason => reason.id === 'agent-refresh');
   assert.match(refresh.detail, new RegExp(node.contributorReview.baseHead.slice(0, 9)));
   assert.match(refresh.detail, new RegExp(node.github.head.slice(0, 9)));
@@ -601,7 +662,7 @@ test('PR amendments keep the proposed commit and published base distinct', () =>
     assert.equal(node.workStates['contributor-review'], undefined);
     assert.equal(vm.runInContext('contributorDecision(nodeInput)', context), null);
     assert.equal(vm.runInContext('contributorDecisionNeedsRefresh(nodeInput)', context), false);
-    assert.ok(!idsFor(node).includes('author-proposal'));
+    assert.ok(!idsFor(node).includes('review-changes'));
     assert.ok(!idsFor(node).includes('agent-refresh'));
     assert.equal(vm.runInContext('historical(nodeInput)', context), status !== 'open');
   }
@@ -1383,11 +1444,12 @@ test('agent work, contributor decisions and maintainer blockers have distinct ow
   node.github.checks = { complete: true, total: 2, state: 'FAILURE', contexts: [serviceStatus('gazelle', 'FAILURE'), serviceStatus('import/copybara', 'ERROR')] };
   node.github.threads = { complete: true, total: 1, unresolved: 1 };
   node.github.feedback.items = [{ kind: 'inline', threadId: 'thread', isResolved: false, author: { login: 'reviewer' }, createdAt: '2026-10-13T09:10:00Z' }];
+  node.contributorReview = { status: 'pending', kind: 'amendment', head: 'c'.repeat(40), baseHead: node.github.head };
   node.workStates['contributor-review'] = { scope: 'c'.repeat(40) };
   const owners = Object.fromEntries(reasonsFor(node).map(reason => [reason.id, reason.owner]));
   assert.equal(owners['author-conflicts'], 'agent'); assert.equal(owners['author-public-checks'], 'agent'); assert.equal(owners['author-feedback'], 'agent');
-  assert.equal(owners['author-proposal'], 'user'); assert.equal(owners['maintainer-import-failed'], 'maintainer');
-  assert.deepEqual(reasonsFor(node).filter(reason => reason.owner === 'user').map(reason => reason.id), ['author-proposal']);
+  assert.equal(owners['review-changes'], 'user'); assert.equal(owners['maintainer-import-failed'], 'maintainer');
+  assert.deepEqual(reasonsFor(node).filter(reason => reason.owner === 'user').map(reason => reason.id), ['review-changes']);
   const branch = { type: 'branch', head: 'c'.repeat(40), contributorChangesRequested: { head: 'c'.repeat(40) }, workStates: {} };
   assert.deepEqual(reasonsFor(branch).map(reason => reason.owner), ['agent']);
   const context = client();
@@ -1716,11 +1778,14 @@ test('direct REST refresh replaces the repository and branch identity even on th
 });
 
 test('unpublished proposal decisions do not replace the published head review', () => {
-  const node = attentionNode(); node.github.reviewDecision = 'REVIEW_REQUIRED'; node.workStates['contributor-review'] = { scope: 'c'.repeat(40) };
-  assert.ok(idsFor(node).includes('author-proposal')); assert.ok(idsFor(node).includes('maintainer-review'));
+  const node = attentionNode(); node.github.reviewDecision = 'REVIEW_REQUIRED';
+  node.contributorReview = { status: 'pending', kind: 'amendment', head: 'c'.repeat(40), baseHead: node.github.head };
+  node.workStates['contributor-review'] = { scope: 'c'.repeat(40) };
+  assert.ok(idsFor(node).includes('review-changes')); assert.ok(idsFor(node).includes('maintainer-review'));
   const context = client(); context.nodeInput = node;
+  context.location = { href: 'https://tamird.github.io/gvisor/' };
   assert.equal(vm.runInContext('attentionGroups([nodeInput], "tamird")[0].id', context), 'maintainer-review');
-  assert.equal(vm.runInContext('attentionGroups([nodeInput], "tamird", true, new Set(["author-proposal"]))[0].id', context), 'author-proposal');
+  assert.equal(vm.runInContext('attentionGroups([nodeInput], "tamird", true, new Set(["review-changes"]))[0].id', context), 'review-changes');
 });
 
 test('imported-unmerged does not assert readiness and administrative failures are maintainer work', () => {
@@ -1759,6 +1824,40 @@ test('shared table URLs preserve multiple attention reasons and legacy handoff n
   const alias = JSON.parse(vm.runInContext('JSON.stringify(readViewURL())', context)); assert.equal(alias.view, 'table'); assert.equal(alias.tableGrouping, true); assert.equal(alias.search, '15518');
   context.location = new URL('https://example.test/?view=table&group-by=attention&reason=author-conflicts&reason=maintainer-import-failed&sort=number&order=asc');
   const shared = JSON.parse(vm.runInContext('JSON.stringify(readViewURL())', context)); assert.deepEqual(shared.reasonFilters, ['author-conflicts', 'maintainer-import-failed']); assert.equal(shared.sortKey, 'number'); assert.equal(shared.sortDirection, 1);
+});
+
+test('legacy contributor URLs and saved views expand to all three decision filters', () => {
+  const review = attentionNode(15814), reply = attentionNode(16496), head = 'b'.repeat(40);
+  review.github.headOwner = 'EtiennePerot';
+  review.contributorReview = { status: 'pending', kind: 'review', head: review.github.head, url: review.url };
+  reply.contributorReview = { status: 'pending', kind: 'reply', head: reply.github.head, url: reply.url };
+  const branch = { id: 'branch:proposal', type: 'branch', title: 'Proposal', head,
+    contributorReview: { status: 'pending', head, url: `https://github.com/tamird/gvisor/commit/${head}` } };
+  const nodes = [branch, review, reply], { context } = historyView(nodes);
+  context.document.querySelectorAll = () => [];
+  for (const node of nodes) {
+    context.nodeInput = node;
+    node.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
+  }
+  for (const source of ['url', 'saved']) {
+    context.location = new URL(source === 'url'
+      ? 'https://example.test/?view=table&reason=author-proposal#pr%3A15814'
+      : 'https://example.test/');
+    context.localStorage = { getItem: () => source === 'saved' ? JSON.stringify({
+      view: 'table', reasonFilters: ['author-proposal'], selected: review.id,
+    }) : null };
+    vm.runInContext('restoreView()', context);
+    assert.deepEqual([...vm.runInContext('reasonFilters', context)], ['review-changes', 'post-review', 'post-reply']);
+    assert.deepEqual([...vm.runInContext('tableNodes().map(n => n.id)', context)], nodes.map(n => n.id));
+    assert.equal(vm.runInContext('selected', context), review.id);
+    const canonical = new URL(vm.runInContext('currentViewURL()', context), context.location);
+    assert.deepEqual(canonical.searchParams.getAll('reason'), ['review-changes', 'post-review', 'post-reply']);
+  }
+  // An explicit typed link overrides the older broad saved preference.
+  context.location = new URL('https://example.test/?view=table&reason=post-review#pr%3A15814');
+  vm.runInContext('restoreView()', context);
+  assert.deepEqual([...vm.runInContext('reasonFilters', context)], ['post-review']);
+  assert.deepEqual([...vm.runInContext('tableNodes().map(n => n.id)', context)], [review.id]);
 });
 
 function historyView(nodes, investigations = []) {
@@ -1852,7 +1951,7 @@ test('provider issue closure removes active blockers without claiming deployment
   context.nodeInput = closed;
   closed.workStates = vm.runInContext('stateRecords(snapshotInput, nodeInput)', context);
   assert.equal(closed.workStates['contributor-review'].scope, closed.contributorReview.url);
-  assert.deepEqual(idsFor(closed), ['author-proposal']);
+  assert.deepEqual(idsFor(closed), ['post-reply']);
   assert.deepEqual(ids('tableNodes()'), [closed.id, dependent.id, unrelated.id]);
   assert.equal(vm.runInContext('activeDependencyEdges().length', context), 0);
   delete closed.contributorReview;
@@ -2120,22 +2219,26 @@ test('registered-only repositories require direct review and retain curated node
   assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /registered-only/);
 });
 
-test('copying contributor decisions includes proposal and outgoing-review tracker links', () => {
+test('copying contributor decisions uses the matching change, review and reply links', () => {
   const context = client(), pr = attentionNode(15814);
   pr.github.headOwner = 'EtiennePerot';
   pr.contributorReview = { status: 'pending', kind: 'review', head: pr.github.head, url: pr.url };
   pr.workStates['contributor-review'] = { scope: pr.github.head };
   const branch = { id: 'branch:review/fix', type: 'branch', head: 'b'.repeat(40), contributorReview: { status: 'pending', head: 'b'.repeat(40) },
     workStates: { 'contributor-review': { scope: 'b'.repeat(40) } } };
+  const reply = { id: 'issue:2', type: 'issue', contributorReview: { status: 'pending', kind: 'reply', url: 'https://github.com/google/gvisor/issues/2' },
+    workStates: { 'contributor-review': { scope: 'https://github.com/google/gvisor/issues/2' } } };
   context.location = { href: 'https://tamird.github.io/gvisor/?q=old#stale' };
-  context.nodesInput = [pr, branch];
+  context.nodesInput = [pr, branch, reply];
+  const links = [
+    'https://tamird.github.io/gvisor/?view=table&reason=post-review#pr%3A15814',
+    'https://tamird.github.io/gvisor/?view=table&reason=review-changes#branch%3Areview%2Ffix',
+    'https://tamird.github.io/gvisor/?view=table&reason=post-reply#issue%3A2',
+  ];
   for (const grouped of [true, false]) {
     context.groupedInput = grouped;
-    const text = vm.runInContext('attentionText(attentionGroups(nodesInput, "tamird", groupedInput, new Set(["author-proposal"])), "2026-10-24T11:02:00Z")', context);
-    assert.deepEqual(text.split('\n').filter(line => line.startsWith('https://')), [
-      'https://tamird.github.io/gvisor/?view=table&reason=author-proposal#pr%3A15814',
-      'https://tamird.github.io/gvisor/?view=table&reason=author-proposal#branch%3Areview%2Ffix',
-    ]);
+    const text = vm.runInContext('attentionText(attentionGroups(nodesInput, "tamird", groupedInput, new Set(["review-changes", "post-review", "post-reply"])), "2026-10-24T11:02:00Z")', context);
+    assert.deepEqual(text.split('\n').filter(line => line.startsWith('https://')), grouped ? [links[1], links[0], links[2]] : links);
   }
 });
 
@@ -2174,10 +2277,10 @@ test('ungrouped combined human attention copies both reviews and manual actions'
     humanAction: { status: 'pending', kind: 'submission', head: 'c'.repeat(40), summary: 'Submit manually' } };
   context.nodesInput = [pr, branch, manual];
   context.location = { href: 'https://tamird.github.io/gvisor/' };
-  const text = vm.runInContext('attentionText(attentionGroups(nodesInput, "tamird", false, new Set(["author-proposal", "human-submission"])), "2026-10-24T11:02:00Z")', context);
+  const text = vm.runInContext('attentionText(attentionGroups(nodesInput, "tamird", false, new Set(["review-changes", "post-review", "post-reply", "human-submission"])), "2026-10-24T11:02:00Z")', context);
   assert.deepEqual(text.split('\n').filter(line => line.startsWith('https://')), [
-    'https://tamird.github.io/gvisor/?view=table&reason=author-proposal#pr%3A15814',
-    'https://tamird.github.io/gvisor/?view=table&reason=author-proposal#branch%3Afix',
+    'https://tamird.github.io/gvisor/?view=table&reason=post-review#pr%3A15814',
+    'https://tamird.github.io/gvisor/?view=table&reason=review-changes#branch%3Afix',
     'https://tamird.github.io/gvisor/?view=table&reason=human-submission#issue%3Agoogle%2Fbenchmark%3A1634',
   ]);
 });
