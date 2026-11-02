@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T14:59:52.193384+00:00",
+    "updatedAt": "2026-11-02T15:23:48.025870+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36306,7 +36306,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41390699623/artifacts/13116824768"
         },
         {
-          "label": "Current graph checkpoint findings",
+          "label": "State checklist (closed after earlier fixes); seven remaining cases covered by this amendment",
           "url": "https://github.com/google/gvisor/issues/16715"
         },
         {
@@ -63495,10 +63495,23 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-02T14:59:52.193384+00:00",
+      "updatedAt": "2026-11-02T15:23:48.025870+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Compare the remaining recovery proposals on the burst-loss and lost-repair cases in #16670. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. The #16793 reconnect review awaits a contributor decision.",
       "findings": [
+        {
+          "text": "A Linux receiver read all 7,372,800 bytes from a gVisor CUBIC sender after ten injected packet drops. Its first partial ACK repeated the same SACK block after the retransmission timeout. Stock reentered fast recovery and needed two more timeouts. Its last application read came 1.243 s after the first timeout. With the ACK guard from #16081, the last read came 38.7 ms after the first and only timeout. Both lossless controls delivered every byte without a timeout. The experiment used SACK with timestamps and GSO disabled. A matching Windows trace is still needed for #10343.",
+          "evidence": [
+            {
+              "label": "Packet captures, sender states and socket read times for all four transfers",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41469614009/artifacts/13154773163"
+            },
+            {
+              "label": "Review order and related configurations",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            }
+          ]
+        },
         {
           "text": "One of four instrumented CUBIC/SACK proxy transfers stalled. The receiver got 43,472 bytes in 18 seconds and had more than 7 MB of window available. After each of six retransmission timeouts, a partial ACK repeated the same SACK block and the sender immediately returned to fast recovery. More than 3.6 MB of new data remained queued. The trace explains how the stall persisted. Its onset and relationship to the Windows report are still open. With identical packets and partial ACKs, stock needed three timeouts to deliver 22,784 bytes. The ACK guard from #16081 delivered all of them 2.4 ms after the first timeout on a manual clock. Both lossless controls transferred the same bytes without a timeout.",
           "evidence": [
