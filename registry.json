@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T04:38:00+00:00",
+    "updatedAt": "2026-11-02T04:43:46+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -43080,14 +43080,26 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "group": "bazel",
-      "ref": "proposal/buildkite-direct-smoke-declared",
-      "head": "f21dd0d1f664ffe62fa4f2da92d6d4414e121396",
-      "url": "https://github.com/tamird/gvisor/commit/f21dd0d1f",
+      "ref": "proposal/buildkite-native-smoke-targets",
+      "head": "fbe18a2bd8ff26d2d843776a74b2ceba6a13a925",
+      "url": "https://github.com/tamird/gvisor/commit/fbe18a2bd",
       "title": "Run the Buildkite smoke guests directly with Bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-11-02T04:11:55+00:00",
-      "summary": "An unprivileged guest booted and exited on native AMD64, race-enabled AMD64, and native ARM64 using the actual Buildkite commands. Each guest ran the Sentry from its eight-file release. The race guest and launcher both contained race instrumentation. The comparison also reproduced four cached Go standard-library actions with undeclared inputs on ARM64.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T04:43:46+00:00",
+      "summary": "Five Buildkite steps now call two Bazel targets. On native AMD64, normal and race guests ran as UID 1001; on native ARM64, the normal guest did too. Each launcher used its matching Sentry and retained the eight-file release layout. Only the AMD64 race pair contained race instrumentation. These checks ran the production commands on GitHub-hosted Linux workers.",
       "evidence": [
+        {
+          "label": "AMD64 normal and race guest receipts",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41388216392/artifacts/13116654091"
+        },
+        {
+          "label": "ARM64 guest receipt",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41388216392/artifacts/13116736797"
+        },
+        {
+          "label": "Integration of the four prerequisites",
+          "url": "https://github.com/tamird/gvisor/commit/97f56d2dc"
+        },
         {
           "label": "Native AMD64 and ARM64 guest qualification and Go standard-library action comparison",
           "url": "https://github.com/tamird/gvisor/actions/runs/41384780443"
@@ -43123,11 +43135,19 @@
       ],
       "refinement": {
         "before": {
-          "head": "ec41d0045a4fa0ed1ee5320f1fc3f4ff609cf79f"
+          "head": "f21dd0d1f664ffe62fa4f2da92d6d4414e121396"
         },
         "after": {
-          "head": "f21dd0d1f664ffe62fa4f2da92d6d4414e121396"
+          "head": "fbe18a2bd8ff26d2d843776a74b2ceba6a13a925"
         }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "fbe18a2bd8ff26d2d843776a74b2ceba6a13a925",
+        "url": "https://github.com/tamird/gvisor/commit/fbe18a2bd",
+        "title": "Open the native smoke PR after its four prerequisites land",
+        "summary": "Five Buildkite steps now call two Bazel targets. On native AMD64, normal and race guests ran as UID 1001; on native ARM64, the normal guest did too. Each launcher used its matching Sentry and retained the eight-file release layout. Only the AMD64 race pair contained race instrumentation. These checks ran the production commands on GitHub-hosted Linux workers."
       }
     },
     {
@@ -43185,6 +43205,42 @@
         "requestedAt": "2026-11-02T04:11:55+00:00",
         "summary": "Open the independent decoder PR? The queued-value lifetime control passed.",
         "body": "The change removes one net implementation line and preserves callback ordering and the existing API. On a 50,000-file checkpoint, dentry parent conversions needed one temporary pointer cell allocation, down from 50,075. The full restore comparison measured an allocation reduction without a clear latency change."
+      }
+    },
+    {
+      "id": "branch:rules-go-declared-stdlib-sources",
+      "type": "branch",
+      "repo": "tamird/rules_go",
+      "group": "rbe",
+      "ref": "fix/stdlib-sdk-sources",
+      "head": "10f9a0f0d126d5fae773c18275bdaa8bc0ec3ae3",
+      "url": "https://github.com/tamird/rules_go/commit/10f9a0f0d",
+      "title": "Build the Go standard library from its declared SDK sources",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T04:43:46+00:00",
+      "summary": "With the same 5,931 declared SDK files, the unsandboxed builders emitted eight more archive packages and fourteen more list entries than the sandboxed builders. Copying only declared sources made both inventories match. The repo’s own package-list test reproduces the difference.",
+      "evidence": [
+        {
+          "label": "Paired original archive and package list inventories",
+          "url": "https://github.com/tamird/gvisor/blob/ffd865724/test/rbe/stdlib-sdk-receipt.json"
+        },
+        {
+          "label": "Upstream binary reproduced the undeclared package",
+          "url": "https://github.com/tamird/rules_go/actions/runs/41389254683/artifacts/13116369389"
+        },
+        {
+          "label": "Both tests pass on the fork proposal",
+          "url": "https://github.com/tamird/rules_go/actions/runs/41389594631/artifacts/13116459720"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "10f9a0f0d126d5fae773c18275bdaa8bc0ec3ae3",
+        "url": "https://github.com/tamird/rules_go/commit/10f9a0f0d",
+        "title": "Report the SDK source leak upstream and offer the tested fix",
+        "summary": "With the same 5,931 declared SDK files, the unsandboxed builders emitted eight more archive packages and fourteen more list entries than the sandboxed builders. Copying only declared sources made both inventories match. The repo’s own package-list test reproduces the difference.",
+        "body": "Unsandboxed GoStdlib actions include packages excluded from GoSDK.srcs\n\nAn ordinary gVisor `//:release` build on Linux ARM64 used cached standard library archives containing `crypto/internal/sysrand/internal/seccomp`. The Go analyzer rejected that package because it was absent from the declared SDK sources. Four of the six cached `GoStdlib` outputs contained the same eight extra packages. Forcing fresh sandboxed stdlib actions let the release and its guest smoke test pass. The cache records do not identify how the original producers ran. [1]\n\nOn Linux AMD64, three fresh builds declared the same 5,931 SDK source paths. They used rules_go v0.63.0, Bazel 8.8.1 and Go 1.27.3, with race and cgo enabled. [2]\n\n```\n                               Archive packages   Listed packages\nSandboxed                                   370               370\nUnsandboxed                                 378               384\nUnsandboxed, declared sources only          370               370\n```\n\nBoth builders recursively copy the physical SDK's `src` directory into a temporary GOROOT. That makes files excluded by the SDK rule, including `net/internal/socktest`, visible to `go install` and `go list` outside a filesystem sandbox. The archive tree and JSON list cover different sets of packages. Comparing each against its own sandboxed inventory gave an exact match after the change. [3]\n\nWould you accept passing `GoSDK.srcs` to both builders and copying those files into the same relative paths under GOROOT? The proposal applies the tested production change to current master at f9689452c. Its package-list test leaves `net/internal/socktest` physically present in the SDK while omitting it from the source arguments. With rules_go as the root module, the original directory copy reported that package and the proposed builder omitted it. Both export modes passed on the proposal. [4] [5] [6]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41384780443/artifacts/13115172336\n[2]: https://github.com/tamird/gvisor/actions/runs/41387753944/artifacts/13116705064\n[3]: https://github.com/tamird/gvisor/blob/ffd865724/test/rbe/stdlib-sdk-receipt.json\n[4]: https://github.com/tamird/rules_go/commit/10f9a0f0d\n[5]: https://github.com/tamird/rules_go/actions/runs/41389254683/artifacts/13116369389\n[6]: https://github.com/tamird/rules_go/actions/runs/41389594631/artifacts/13116459720\n\nPosted by Codex on behalf of @tamird."
       }
     }
   ],
@@ -46712,6 +46768,24 @@
       "evidence": [
         "https://github.com/google/gvisor/pull/16787",
         "https://github.com/tamird/gvisor/commit/fd2a30841"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:buildkite-source-lint-native",
+      "to": "branch:buildkite-direct-smoke",
+      "reason": "The Buildkite source hook provisions the pinned Bazelisk on a native worker.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/eafcb8392"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:hermetic-compiler-review",
+      "to": "branch:buildkite-direct-smoke",
+      "reason": "Building the release requires the compiler targets for both architectures’ embedded sysmsg and vDSO binaries.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/a385bd2b0"
       ]
     }
   ],
