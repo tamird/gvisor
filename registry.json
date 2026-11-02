@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T10:02:06.506089+00:00",
+    "updatedAt": "2026-11-02T10:14:07.170563+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40155,10 +40155,18 @@
       "head": "4ff4f3d6a33db001cc080e44e81604427b7b9784",
       "title": "Share the proc boot ID across mounts",
       "url": "https://github.com/tamird/gvisor/commit/4ff4f3d6a",
-      "updatedAt": "2026-10-31T12:43:37.962461+00:00",
-      "status": "Contributor review requested",
-      "summary": "A proc mount in a child PID namespace saw a different boot ID on gVisor. Store one ID per registered proc filesystem type. First-mount initialization preserves zero-valued pointer registrations used by an independent Sentry embedder. The shared syscall test and a live checkpoint with a newly mounted proc both passed.",
+      "updatedAt": "2026-11-02T10:14:07.170563+00:00",
+      "status": "Agent work",
+      "summary": "Upstream moved boot-ID generation to the first lookup of kernel/random. The revised change shares the ID across mounts at that lookup. The namespace and checkpoint tests are running against the new base.",
       "evidence": [
+        {
+          "label": "Move the shared lookup into the new lazy directory loader",
+          "url": "https://github.com/tamird/gvisor/commit/b990907f7"
+        },
+        {
+          "label": "Upstream lazy procfs implementation and first-access behavior",
+          "url": "https://github.com/google/gvisor/commit/8a719e832"
+        },
         {
           "label": "All three syscall arms, checkpoint restore, release build, proc package and both Nogo owners",
           "url": "https://github.com/tamird/gvisor/actions/runs/41200711011/artifacts/13042014044"
@@ -40175,18 +40183,7 @@
           "label": "Linux boot ID and random UUID interfaces",
           "url": "https://github.com/torvalds/linux/blob/adc218676/drivers/char/random.c#L1624-L1655"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "4ff4f3d6a33db001cc080e44e81604427b7b9784",
-        "baseHead": "25172e526f45929759a44e174e617c320df1ad58",
-        "url": "https://github.com/tamird/gvisor/commit/4ff4f3d6a",
-        "title": "Share the proc boot ID across mounts",
-        "requestedAt": "2026-10-31T12:43:37.962461+00:00",
-        "summary": "Decide whether to open the standalone sandbox boot ID fix. A zero-valued *proc.FilesystemType remains usable. The saved type now holds state and must be registered by pointer. The historical lazy-directory experiment is a separate investigation.",
-        "body": "Linux returns the same /proc/sys/kernel/random/boot_id from a new proc\nmount, including in a child PID namespace [1]. gVisor generated a UUID\nfor every mount. Store one ID on the proc filesystem type registered\nwith the sandbox. Initializing it under a mutex lets existing\nzero-valued pointer registrations create their first mount concurrently.\nEach mount keeps its own inode, and random/uuid still changes on every\nread.\n\nMountTest.UserNamespaceProcMount passed on Linux, failed because the IDs\ndiffered on 25172e526, and passed with this change. A guest read the\nsame ID on two restored mounts and a third mount created after restore.\nAll 12 reads of random/uuid were distinct. The proc package and both\nNogo targets passed [2].\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/drivers/char/random.c#L1624-L1655\n[2]: https://github.com/tamird/gvisor/actions/runs/41200711011/artifacts/13042014044"
-      }
+      ]
     },
     {
       "id": "branch:inotify-mask-create",
@@ -60443,7 +60440,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-02T09:47:53.786749+00:00",
+      "updatedAt": "2026-11-02T10:14:07.170563+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -62195,6 +62192,19 @@
             {
               "label": "Reconciled control and product verdict",
               "url": "https://github.com/tamird/gvisor/actions/runs/41422486998/artifacts/13130935501"
+            }
+          ]
+        },
+        {
+          "text": "A single rules_foreign_cc command toolchain supplies Bash to both DPDK Make targets. On an AMD64 distroless worker, the archive target executed with that Bash and produced the same 7,403,456-byte static musl archive, generator and configuration header. The second target was checked through Bazel action analysis. With the original toolchain, both targets still selected /bin/bash, which was absent on this worker. The verified verdict was available 20.8 seconds after the build finished.",
+          "evidence": [
+            {
+              "label": "Existing command toolchain with a declared Bash",
+              "url": "https://github.com/tamird/gvisor/commit/1c1715557"
+            },
+            {
+              "label": "Action selection, executed archive, exact output hashes and original missing-interpreter diagnostic",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41426238851/artifacts/13132865042"
             }
           ]
         }
