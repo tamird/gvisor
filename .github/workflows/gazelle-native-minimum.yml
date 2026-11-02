@@ -1,0 +1,39 @@
+name: Qualify the native Gazelle environment on the supported client
+on:
+  push:
+    branches: [qualification/gazelle-native-environment-one-map]
+permissions:
+  contents: read
+jobs:
+  repository:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Run the existing minimal-client controls
+        run: python3 .github/qualification/gazelle-native-minimum.py
+      - name: Check report publication
+        id: scan
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import os, re
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP']) / 'gazelle-minimum'
+          assert root.is_dir()
+          for path in root.iterdir():
+              assert path.name in {'minimal-files.json', 'verdict.json'} and path.is_file() and not path.is_symlink()
+              data = path.read_bytes()
+              assert len(data) < 100000
+              assert not re.search(rb'(?i)gh[pousr]_[a-z0-9]{30,}|github_pat_[a-z0-9_]{30,}|x-buildbuddy-api-key|authorization:|BEGIN (RSA |OPENSSH )?PRIVATE KEY', data)
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.scan.outcome == 'success'
+        with:
+          name: gazelle-native-minimum
+          path: ${{ runner.temp }}/gazelle-minimum/
+          if-no-files-found: error
