@@ -1,5 +1,4 @@
-"""Compare host and declared launchers for the real native musl DPDK build."""
-import base64
+"""Verify the supported GNU archive on the previously observed one-file worker."""
 from collections import Counter
 from hashlib import sha256
 import json
@@ -13,12 +12,10 @@ import uuid
 from zipfile import ZipFile
 
 from action_log import context
-from qualify import CONFIG, HELPER, NATIVE, OUT, OWNER, TARGET, TMP, audit, diagnostics, inspect_outputs, now, save
+from qualify import COMPILER_IMAGE, CONFIG, HELPER, OUT, OWNER, TARGET, TMP, audit, diagnostics, inspect_outputs, now, save
 
 PRODUCT = "1902df93dcc46803a60b5ede1c5d234fb265c6f0"
 BASE = "388a7cacc45e1fff44c845eb99254c1f3b584fba"
-ORIGINAL = "c1210292-5868-4f9a-9ed1-ad1d49308b27"
-OLD_ARCHIVE = {"hash": "c31a5dc008783cf4d2f1ad4fcff830adf642a2ba2121c438d4ca6509dd126440", "sizeBytes": "7403456"}
 OLD_CONFIG = "8fab57f51b67b2d8ac0aedd2988d3ad61173071fa6625ba23fb60a4b47838597"
 PMD = ["net_ring_pmd_info", "net_virtio_pmd_info", "net_virtio_user_pmd_info"]
 VFIO = ["pci_vfio_read_config", "pci_vfio_map_resource", "rte_vfio_container_dma_map"]
@@ -61,11 +58,30 @@ def check_selection(r, bazel, flags, platform, control):
     save(r)
 
 
+def arm_selection(r, bazel, flags):
+    # Only target selection changes; the host/exec platform remains AMD64.
+    invocation = str(uuid.uuid4())
+    args = ["--config=aarch64", *flags[1:], "--nobuild", "--invocation_id=" + invocation, TARGET]
+    p = subprocess.run([*bazel, "build", *args], text=True, capture_output=True, timeout=420)
+    messages = p.stdout + p.stderr
+    evidence = {"owner_incompatible": bool(re.search(r"(?m)^ERROR: .*libpluginstack.*incompatible.*explicitly requested", messages)),
+                "required_cpu": "@platforms//cpu:x86_64" in messages or "//cpu:x86_64" in messages}
+    r["arm64"] = {"target_platform": "//tools/bazeldefs:linux_arm64", "invocation": invocation,
+                  "args": args, "exit": p.returncode, "stderr_sha256": sha256(p.stderr.encode()).hexdigest(),
+                  "evidence": evidence, "verified": p.returncode == 1 and all(evidence.values())}
+    save(r)
+    if p.returncode and re.search(r"(?m)^ERROR:", messages):
+        try:
+            r["arm64"]["diagnostic"] = context(messages)
+        except AssertionError:
+            r["arm64"]["diagnostic_incomplete"] = True
+        save(r)
+
+
 def build(r):
-    from scratch_root import choose, ZERO
     r.update(source=git("rev-parse", "HEAD"), product=PRODUCT, base=BASE, target=TARGET, started=now(),
-             original={"invocation": "9ac98d9c-7337-4b54-a37d-5276517a46ab", "run": 41426238851, "artifact": 13132865042},
-             arm="native-empty-worker")
+             original={"run": 41428504065, "artifact": 13133351604},
+             arm="amd64-gnu")
     save(r)
     assert r["source"] == os.environ["GITHUB_SHA"] and git("rev-parse", PRODUCT + "^") == BASE
     assert git("merge-base", PRODUCT, "HEAD") == PRODUCT
@@ -79,25 +95,15 @@ def build(r):
     platform = "//test/rbe/empty_worker:amd64_musl"
     bazel = ["bazel", "--bazelrc=" + str(TMP / "sidecar.bazelrc")]
     flags = ["--config=x86_64", "--config=plugin-tldk", "-c", "opt",
-             "--platforms=@llvm//platforms:linux_x86_64_musl", "--host_platform=" + platform,
+             "--host_platform=" + platform,
              "--extra_execution_platforms=" + platform, "--remote_accept_cached", "--noremote_upload_local_results",
              "--noremote_local_fallback", "--spawn_strategy=remote", "--remote_download_outputs=toplevel",
              "--jobs=400", "--color=no", "--curses=no", "--registry=" + (Path(os.environ["GITHUB_WORKSPACE"]) / "registry").as_uri(),
              "--registry=https://bcr.bazel.build"]
-    image = choose(bazel, flags)
-    # Direct only this foreign action onto the zero-layer root. Common compiler
-    # dependencies keep their original execution and cache keys. The one-file
-    # fallback is the unmodified product on the registered musl platform.
-    current = original
-    if image == ZERO:
-        key = b"_EXEC_PROPERTIES = {\n"
-        assert original.count(key) == 1
-        current = original.replace(key, key + ('    "container-image": "' + image + '",\n').encode())
-        Path(src).write_bytes(current)
-    r["image"] = image
-    r["consumer"] = {"product_sha256": sha256(original).hexdigest(), "qualified_sha256": sha256(current).hexdigest(),
-                     "only_delta": "container-image" if current != original else None}
-    save(r)
+    image = r["image"] = COMPILER_IMAGE
+    r["root_proof"] = original_root()
+    r["target_platform"] = "//tools/bazeldefs:linux_amd64"
+    arm_selection(r, bazel, flags)
     check_selection(r, bazel, flags, platform, False)
     query = TARGET + ' + filter("(:(pmd_config|pmdinfogen|make_built)$|^@@?make[+]?//:make$)", deps(' + TARGET + '))'
     query_bep = TMP / (r["arm"] + ".query.bep")
@@ -116,9 +122,9 @@ def build(r):
         save(r)
         r["preflight"]["causal_context"] = context(p.stderr)
     save(r)
-    assert p.returncode == 0 and len(selected) == 2
-    assert len([label for label in selected if label in (TARGET, OWNER)]) == 1
-    assert len([label for label in selected if label in ("@make//:make", "@@make+//:make")]) == 1
+    assert p.returncode == 0
+    labels = {s.split("//")[-1] for s in selected}
+    assert labels == {":libpluginstack", ":pmd_config", ":pmdinfogen", ":make"}
     bep = TMP / (r["arm"] + ".bep")
     compact = TMP / (r["arm"] + ".compact")
     log = TMP / (r["arm"] + ".log")
@@ -139,7 +145,7 @@ def build(r):
             r["target_completed"] = e["completed"].get("success", False)
     save(r)
     r["actions"] = audit(compact) if compact.exists() else []
-    r["source_matches"] = Path(src).read_bytes() == current and git("diff", "--name-only", "HEAD") == (src if current != original else "")
+    r["source_matches"] = Path(src).read_bytes() == original and not git("diff", "--name-only", "HEAD")
     save(r)
     if rc:
         return
@@ -150,7 +156,12 @@ def build(r):
     assert owner["runner"] == "remote" and not owner["cacheHit"]
     assert owner["args"][0].endswith("plugin_programs/bin/bash")
     assert not owner["exitCode"] and not owner["status"]
-    assert not any(a["targetLabel"] in (CONFIG, HELPER) for a in r["actions"])
+    support = [a for a in r["actions"] if a["targetLabel"] in (CONFIG, HELPER)]
+    assert all(not a["exitCode"] and not a["status"] for a in support)
+    assert any(a["targetLabel"] == CONFIG and a["mnemonic"] == "CcMakeMakeRule" for a in support)
+    assert any(a["targetLabel"] == HELPER and a["mnemonic"] == "CppLink" for a in support)
+    compiles = [a for a in support if a["targetLabel"] == HELPER and a["mnemonic"] == "CppCompile"]
+    assert compiles and all(a["target_triples"] == ["x86_64-linux-musl"] for a in compiles)
     assert r["target_completed"] and r["source_matches"]
     r.update(build_verified=True, phase="original-outputs")
     save(r)
@@ -187,7 +198,7 @@ def collect(r):
     files = response["result"]["outputFiles"]
     archive, = [f["path"] for f in files if f["path"].endswith("/libpluginstack/lib/libpluginstack.a")]
     root = archive.rsplit("/lib/", 1)[0]
-    selected = [archive, root + "/bin/dpdk-pmdinfogen", root + "/rte_config.h", root + "_foreign_cc/Make.log"]
+    selected = [archive, root + "/bin/dpdk-pmdinfogen", root + "/rte_config.h", root + "/pmd_rte_config.h", root + "_foreign_cc/Make.log"]
     outputs = {}
     proof["output_digests"] = {}
     for name in selected:
@@ -200,25 +211,14 @@ def collect(r):
         save(r)
     proof["outputs"] = inspect_outputs(outputs)
     save(r)
-    assert proof["outputs"] == original_result()["proof"]["outputs"]
+    proof["matching_configuration"] = (TMP / "rte_config.h").read_bytes() == (TMP / "pmd_rte_config.h").read_bytes()
+    assert proof["matching_configuration"] and proof["outputs"]["configuration"]["sha256"] == OLD_CONFIG
     log = (TMP / "Make.log").read_text(errors="replace")
-    # These are DPDK's compact recipe names, from rte.hostapp.mk and
-    # rte.compile-pre.mk, inside the one selected remote Make action.
     recipes = Counter(re.findall(r"^\s*(HOSTCC|HOSTLD|PMDINFO)\s+(\S+)\s*$", log, re.M))
-    proof["in_build_recipes"] = {"compiled_helper": recipes[("HOSTCC", "pmdinfogen.o")],
-                                 "linked_helper": recipes[("HOSTLD", "dpdk-pmdinfogen")],
-                                 "metadata_files": sorted(n for (rule, n) in recipes if rule == "PMDINFO")}
+    proof["pmd_generation"] = sorted(n for rule, n in recipes if rule == "PMDINFO")
+    assert proof["pmd_generation"] and proof["outputs"]["archive"]["pmd_info_symbols"] == PMD
+    proof["archive_api"] = archive_api(TMP / "libpluginstack.a")
     save(r)
-    assert all(proof["in_build_recipes"].values())
-    assert proof["outputs"]["archive"]["pmd_info_symbols"] == PMD
-    header = (TMP / "rte_config.h").read_text()
-    assert "#define RTE_EAL_VFIO 1" in header and "#define RTE_LIBRTE_PCI_BUS 1" in header
-    assert proof["outputs"]["configuration"]["sha256"] == OLD_CONFIG
-    proof["new_api"] = archive_api(TMP / "libpluginstack.a")
-    save(r)
-    proof["old_api"] = original_result()["proof"]["new_api"]
-    proof["byte_identical_archive"] = proof["outputs"]["archive"]["sha256"] == OLD_ARCHIVE["hash"]
-    assert proof["byte_identical_archive"] and proof["new_api"] == proof["old_api"]
     proof.update(verified=True, finished=now())
     r.update(phase="verified-outputs", finished=now())
 
@@ -259,6 +259,9 @@ def launch_inputs(r):
     proof["make_uses_declared_shell"] = '"SHELL:=$BASH"' in script and "DPDK_BUILD_SHELL" not in script
     proof["consumer_utility_path"] = 'PATH="${BASH%/*}' in script
     assert all(proof[k] for k in ("inner_uses_declared_shell", "make_uses_declared_shell", "consumer_utility_path"))
+    proof["target_gnu"] = bool(re.search(r"-target(?:=|\s+)x86_64-linux-gnu\b", script))
+    proof["external_pmd_generator"] = "PMDINFO_GEN=$(PMDINFOGEN)" in script and "pmdinfogen" in script
+    assert proof["target_gnu"] and proof["external_pmd_generator"]
     proof["action_workspace_tmpdir"] = 'TMPDIR="${BUILD_TMPDIR}"' in script
     assert proof["action_workspace_tmpdir"]
     proof["command_env"] = {e["name"]: e["value"] for e in command.get("environmentVariables", [])
@@ -272,13 +275,19 @@ def failure(r, key, exc):
     save(r)
 
 
-def original_result():
+def original_root():
     archive = TMP / "original.zip"
-    assert sha256(archive.read_bytes()).hexdigest() == "62d03652e87b69d4493e6582fbb180e07e7b937cbd7ef7e61be1152cc3de9cf2"
+    digest = sha256(archive.read_bytes()).hexdigest()
+    assert digest == "22b16a181a64e5102f9ebb4d401b84e25b2977dd9c6268c0b3502167f4450f53"
     with ZipFile(archive) as z:
+        image = json.loads(z.read("image.json"))
         old = json.loads(z.read("result.json"))
-    assert old["status"] == "PASS" and old["source"] == BASE and old["proof"]["byte_identical_archive"]
-    return old
+    root = image["probes"]["one_file"]
+    assert image["selected"] == "one_file" and root["verified"] and root["tmp"] == ["absent"]
+    assert list(root["inventory"]["files"]) == ["hello"] and root["inventory"]["image"] == COMPILER_IMAGE
+    assert old["product"] == PRODUCT and old["build_verified"] and old["status"] == "PASS"
+    return {"zip_sha256": digest, "inventory": root["inventory"], "roots": root["roots"],
+            "tmp": root["tmp"], "report_sha256": root["report_sha256"], "invocation": root["invocation"]}
 
 
 if __name__ == "__main__":
@@ -291,23 +300,18 @@ if __name__ == "__main__":
                 except Exception as exc:
                     failure(r, key, exc)
         passed = all((r.get("source_clean"), r.get("source_matches"), r.get("build_verified"), r.get("selection", {}).get("verified"),
-                      r.get("proof", {}).get("verified"), r.get("launch", {}).get("verified")))
+                      r.get("proof", {}).get("verified"), r.get("launch", {}).get("verified"), r.get("arm64", {}).get("verified")))
         r.update(status="PASS" if passed else "FAIL" if r.get("build_exit") else "INCOMPLETE", verdict_time=now())
         save(r)
         raise SystemExit(0 if passed else 1)
 
     assert not sys.argv[1:]
     r = {"status": "INCOMPLETE"}
-    src = Path("external/tools/plugin-stack/plugin-stack.BUILD")
-    original = src.read_bytes()
     try:
-        original_result()
         build(r)
     except Exception as exc:
         failure(r, "collection_error", exc)
     finally:
-        if src.read_bytes() != original:
-            src.write_bytes(original)
         r["source_clean"] = not git("diff", "--name-only", "HEAD")
         save(r)
     raise SystemExit(0 if r.get("build_verified") and r["source_clean"] else 1)

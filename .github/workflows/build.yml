@@ -1,7 +1,7 @@
-name: Build the DPDK archive without a worker filesystem
+name: Build the GNU DPDK archive on the one-file worker
 on:
   push:
-    branches: [qualification/foreign-cc-empty-root]
+    branches: [qualification/foreign-cc-gnu-one-file]
 permissions:
   contents: read
   actions: read
@@ -25,10 +25,10 @@ jobs:
           path: supplier
           ref: b0b4b6c173c4312c14f3c5a427e9e3cb7271143c
           persist-credentials: false
-      - name: Retain the original native archive and action
+      - name: Retain the previously measured worker root
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api repos/tamird/gvisor/actions/artifacts/13132865042/zip > "$RUNNER_TEMP/original.zip"
+        run: gh api repos/tamird/gvisor/actions/artifacts/13133351604/zip > "$RUNNER_TEMP/original.zip"
       - name: Pin the original compiler, resolver, execution and evidence tools
         working-directory: product
         env:
@@ -61,7 +61,7 @@ jobs:
           assert context("ERROR: fatal error: missing_header.h: No such file or directory")[0]["text"].endswith("No such file or directory")
           assert context("ERROR: x-buildbuddy-api-key=sentinel")[0]["text"] == "[credential-bearing line omitted]"
           PYTHON
-      - name: Check the worker root, then build the selected archive once
+      - name: Check ARM64 compatibility and build the GNU archive once
         working-directory: product
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -85,7 +85,7 @@ jobs:
           from pathlib import Path
           folder = Path(os.environ["RUNNER_TEMP"]) / "plugin-evidence"
           files = list(folder.iterdir())
-          assert {f.name for f in files} in ({"result.json"}, {"result.json", "image.json"})
+          assert {f.name for f in files} == {"result.json"}
           for f in files:
               assert f.is_file() and not f.is_symlink() and f.stat().st_size < 100000
               data = f.read_bytes()
@@ -96,11 +96,9 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
-          name: foreign-cc-empty-root
-          path: |
-            ${{ runner.temp }}/plugin-evidence/result.json
-            ${{ runner.temp }}/plugin-evidence/image.json
+          name: foreign-cc-gnu-one-file
+          path: ${{ runner.temp }}/plugin-evidence/result.json
           if-no-files-found: error
       - name: Require the native-helper verdict
         if: always()
-        run: jq -e '.status == "PASS" and .build_exit == 0 and .source_clean and .selection.verified and .proof.byte_identical_archive and .proof.verified and .launch.verified and .source_matches' "$RUNNER_TEMP/plugin-evidence/result.json"
+        run: jq -e '.status == "PASS" and .build_exit == 0 and .source_clean and .selection.verified and .arm64.verified and .proof.verified and .launch.verified and .source_matches' "$RUNNER_TEMP/plugin-evidence/result.json"
