@@ -49536,11 +49536,11 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-02T01:55:01+00:00",
+      "updatedAt": "2026-11-02T02:48:54+00:00",
       "summary": "A restore of 50,000 tmpfs files queued 150,890 callbacks. About a third came from inode after-load hooks, a third from converting dentry parents, and a third from directory maps waiting for their children.",
       "findings": [
         {
-          "text": "A 21,402-byte checkpoint written by ordinary Save made Load revisit deferred rows 1,046,529 times. The graph contained 1,024 linked cells and pointers into each cell’s map field. At 16, 64, 256 and 1,024 cells, retry visits equaled (N−1)². All eight round trips preserved data and pointer identity. Omitting the interior pointers needed zero retries at every size. The frequency of this ordering in kernel checkpoints is unknown.",
+          "text": "Ordinary Save emitted a 21,402-byte checkpoint with 1,024 linked map fields that took Load 1,046,529 retry visits. Waking rows when their type became known cut median decode from 3.108 ms to 0.738 ms in 16 pairs. A 50,000-file tmpfs checkpoint had 101,263 object-table entries and only three deferred rows, all resolved in one pass. Ordinary decode with GC enabled slowed from 151.0 to 153.1 ms. Eight pairs of native restores showed no clear change in time to the first guest command.",
           "evidence": [
             {
               "label": "Legal graph, alias checks and retry counter",
@@ -49549,6 +49549,10 @@
             {
               "label": "Eight original test cases and exact scan counts",
               "url": "https://github.com/tamird/gvisor/actions/runs/41374244217/artifacts/13110189987"
+            },
+            {
+              "label": "Retry counts on the frozen kernel, paired benchstat and native restores",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41375804192/artifacts/13113190350"
             }
           ]
         },
@@ -52711,7 +52715,7 @@
           ]
         }
       ],
-      "nextStep": "Try resuming a skipped row when a reference supplies its exact type. Check hook order and the ordinary 50,000-file restore before proposing a decoder change. The callback reservation API remains on hold.",
+      "nextStep": "Keep the first linear scan for typical restores. Measure a variant that indexes only work left after that scan, including hook order, smaller graphs, and the 50,000-file checkpoint. The callback reservation API remains on hold.",
       "evidence": [
         {
           "label": "16 paired decodes of the same checkpoint, both live restore checks and state suites",
