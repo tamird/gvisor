@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T01:55:01+00:00",
+    "updatedAt": "2026-11-02T02:01:01+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42895,6 +42895,46 @@
         "body": "Open a standalone PR. The Linux comparison ran the normal Make selection for seven cases and stopped before installing the runtime or collecting benchmarks. The current Go 1.27.3 key has no checked-in profiles and both versions selected all six workloads for that key.",
         "requestedAt": "2026-11-02T00:31:44+00:00"
       }
+    },
+    {
+      "id": "branch:futex-waiter-mode",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/futex-waiter-mode",
+      "head": "3737ff32e7116dcdad1209cce125602ff3c33785",
+      "title": "Reject mixed PI and ordinary futex wakeups",
+      "url": "https://github.com/tamird/gvisor/commit/3737ff32e",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T02:01:01+00:00",
+      "summary": "An ordinary futex wake could report a successful PI lock to a thread that did not own it. In reverse, a PI unlock could name a thread that only asked to wait. Linux rejects both operations with EINVAL.",
+      "evidence": [
+        {
+          "label": "Ordinary wake of a priority-inheritance waiter on Linux, stock and corrected gVisor",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41372637891/artifacts/13110426321"
+        },
+        {
+          "label": "Priority-inheritance operations on an ordinary waiter and same-key requeue",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41373406806/artifacts/13110665540"
+        },
+        {
+          "label": "67 Linux and 67 gVisor syscall cases, both analyzer reports",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41374054804/artifacts/13110454324"
+        },
+        {
+          "label": "13 named Go package tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41375123700/artifacts/13111200300"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "3737ff32e7116dcdad1209cce125602ff3c33785",
+        "url": "https://github.com/tamird/gvisor/commit/3737ff32e",
+        "title": "Reject mixed PI and ordinary futex wakeups",
+        "body": "Open this standalone PR. Private and shared futexes reproduced both incorrect handoffs. All 67 syscall cases passed on Linux and gVisor, all 13 named Go tests passed, and both architecture analyzers passed.",
+        "requestedAt": "2026-11-02T02:01:01+00:00"
+      }
     }
   ],
   "edges": [
@@ -59550,11 +59590,11 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-02T01:55:01+00:00",
+      "updatedAt": "2026-11-02T02:01:01+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
-          "text": "Enabling VFIO reached DPDK’s pci_vfio.c and failed on undeclared pread64 and pwrite64. The selected musl toolchain supplied the Linux UAPI headers and uses 64-bit off_t on the target. No runtime test executed. The follow-up enables the API requested by the pinned source and includes unistd.h directly.",
+          "text": "Enabling VFIO reached DPDK’s pci_vfio.c and failed on undeclared pread64 and pwrite64. The selected musl toolchain supplied the Linux UAPI headers and uses 64-bit off_t on the target. No runtime test executed. The follow-up enables the API requested by the pinned source and includes unistd.h directly. Setting the feature flag on TLDK’s Make command left the DPDK compiler command unchanged. That attempt failed on the same two functions.",
           "evidence": [
             {
               "label": "Original compiler error and configured inputs",
@@ -59563,6 +59603,10 @@
             {
               "label": "Feature flag and upstream header include",
               "url": "https://github.com/tamird/gvisor/commit/4094887b2"
+            },
+            {
+              "label": "Flag lost at the recursive Make boundary; no tests ran",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41374521256/artifacts/13110643061"
             }
           ]
         },
@@ -61259,7 +61303,7 @@
           ]
         }
       ],
-      "nextStep": "Qualify the declared large-file feature flag for the pinned DPDK build under musl, then check linked VFIO symbols and actual runtime cases. Physical VFIO traffic still needs a suitable device. The approved release workflow awaits #16753.",
+      "nextStep": "Verify the feature flag on the actual pci_vfio.c compiler command before rebuilding the two plugin consumers. Physical VFIO traffic still needs a suitable device. The approved release workflow awaits #16753.",
       "evidence": [
         {
           "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
@@ -61542,7 +61586,7 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-02T01:44:43+00:00",
+      "updatedAt": "2026-11-02T02:01:01+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
@@ -61555,6 +61599,14 @@
             {
               "label": "Ordinary waiter first and same-key requeue on all three implementations",
               "url": "https://github.com/tamird/gvisor/actions/runs/41373406806/artifacts/13110665540"
+            },
+            {
+              "label": "67 Linux and 67 gVisor syscall cases, both analyzer reports",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41374054804/artifacts/13110454324"
+            },
+            {
+              "label": "13 named Go package tests",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41375123700/artifacts/13111200300"
             }
           ]
         },
