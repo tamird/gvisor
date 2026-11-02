@@ -1,4 +1,4 @@
-# Runs the source-level lint suite. See tools/lint.sh.
+# Runs the source-level lint suite.
 name: Lint
 
 "on":
@@ -24,4 +24,4 @@ jobs:
       with:
         persist-credentials: false
 
-    - run: make lint
+    - run: bazel build --keep_going //tools/lint:check

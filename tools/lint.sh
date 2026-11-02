@@ -110,9 +110,6 @@ install_clang_tidy() {
   echo "${bin}"
 }
 
-# Only tracked files, to skip bazel-* symlinks and other build output.
-go_files() { git ls-files -z -- '*.go' "$@"; }
-
 declare -a FAILED=()
 declare -a PASSED=()
 
@@ -125,25 +122,11 @@ report() {
   fi
 }
 
-# Formatting-only mode does not add or remove imports: generated packages may
-# not exist until Bazel builds them.
 check_goimports() {
-  local -ra goimports=(
-    bazel run --run_in_cwd @org_golang_x_tools//cmd/goimports -- -format-only
-  )
-  # This golden output tests comment positions across merged import declarations.
-  # goimports would merge the declarations and move their comments.
-  local -r golden_outputs=':(exclude)tools/go_generics/tests/simple/output.go'
-  if [[ "${FIX}" -eq 1 ]]; then
-    go_files "${golden_outputs}" | xargs -0 "${goimports[@]}" -w -l
-    return
-  fi
-  local output
-  output="$(go_files "${golden_outputs}" | xargs -0 "${goimports[@]}" -d)"
-  if [[ -n "${output}" ]]; then
-    printf '%s\n' "${output}"
-    echo 'Run `make lint-fix` to reformat these files.' >&2
-    return 1
+  if [[ "${FIX}" -eq 0 ]]; then
+    bazel build //tools/lint:goimports
+  else
+    bazel run //tools/lint:format_goimports
   fi
 }
 
