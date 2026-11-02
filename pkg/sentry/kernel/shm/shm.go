@@ -78,7 +78,7 @@ type Registry struct {
 	// keysToIDs maps segment keys to IDs.
 	//
 	// Shms in keysToIDs are guaranteed to be referenced, as they are
-	// removed by dissociateKey before the last DecRef.
+	// removed by dissociateKeyLocked before the last DecRef.
 	//
 	// +checklocks:mu
 	reg *ipc.Registry
@@ -132,6 +132,12 @@ func (r *Registry) dissociateKey(s *Shm) {
 	defer r.mu.Unlock()
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	r.dissociateKeyLocked(s)
+}
+
+// +checklocks:r.mu
+// +checklocks:s.mu
+func (r *Registry) dissociateKeyLocked(s *Shm) {
 	if s.obj.Key != linux.IPC_PRIVATE {
 		r.reg.DissociateKey(s.obj.Key)
 		s.obj.Key = linux.IPC_PRIVATE
@@ -278,7 +284,7 @@ func (r *Registry) ShmInfo() *linux.ShmInfo {
 // remove deletes a segment from this registry, deaccounting the memory used by
 // the segment.
 //
-// Precondition: Must follow a call to r.dissociateKey(s).
+// Precondition: The segment's key must already be dissociated.
 //
 // +checklocksexclude:r.mu
 // +checklocksexclude:s.mu
@@ -710,25 +716,25 @@ func (s *Shm) Set(ctx context.Context, ds *linux.ShmidDS) error {
 func (s *Shm) MarkDestroyed(ctx context.Context) error {
 	creds := auth.CredentialsFromContext(ctx)
 
+	r := s.registry
+	r.mu.Lock()
 	s.mu.Lock()
-	if !s.obj.CheckOwnership(creds) {
-		s.mu.Unlock()
+	owned := s.obj.CheckOwnership(creds)
+	dropSelfRef := owned && !s.pendingDestruction
+	if dropSelfRef {
+		s.pendingDestruction = true
+		r.dissociateKeyLocked(s)
+	}
+	s.mu.Unlock()
+	r.mu.Unlock()
+
+	if !owned {
 		return linuxerr.EPERM
 	}
-	if s.pendingDestruction {
-		s.mu.Unlock()
-		return nil
+	if dropSelfRef {
+		// Drop the self-reference after releasing both locks. The caller
+		// still holds a reference to the segment.
+		s.DecRef(ctx)
 	}
-	s.pendingDestruction = true
-	s.mu.Unlock()
-
-	s.registry.dissociateKey(s)
-
-	// Drop the self-reference so destruction occurs when all
-	// external references are gone.
-	//
-	// N.B. This cannot be the final DecRef, as the caller also
-	// holds a reference.
-	s.DecRef(ctx)
 	return nil
 }
