@@ -2,7 +2,7 @@ set -euo pipefail
 r="$RUNNER_TEMP/wrk2/licenses"; mkdir -p "$r"; exec > >(tee "$r/coordinator.log") 2>&1
 git rev-parse HEAD >"$r/source"
 bz() { bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" "$@"; }
-export MAKEFLAGS=DOCKER_BUILD=false
+export MAKEFLAGS="DOCKER_BUILD=false STARTUP_OPTIONS=--bazelrc=$RUNNER_TEMP/images.bazelrc"
 bz build //tools/licensecheck/main:licensecheck
 lic=$(bz cquery --output=files //tools/licensecheck/main:licensecheck)
 stock_rc=0

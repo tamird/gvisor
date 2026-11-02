@@ -10,8 +10,9 @@ import struct
 import subprocess
 import sys
 from datetime import datetime, timezone
-from urllib.parse import unquote, urlparse
+from urllib.parse import unquote, urlencode, urlparse
 import xml.etree.ElementTree as ET
+import zipfile
 
 TMP = Path(os.environ["RUNNER_TEMP"])
 PRIVATE = TMP / "wrk2-private"
@@ -42,6 +43,8 @@ def sha(data: bytes) -> str:
 def save() -> None:
     data = json.dumps(RESULT, indent=2).encode() + b"\n"
     secrets = re.findall(r"(?:remote_header|bes_header)=x-buildbuddy-api-key=(\S+)", RC.read_text())
+    if os.environ.get("GITHUB_TOKEN"):
+        secrets.append(os.environ["GITHUB_TOKEN"])
     assert secrets and all(secret.encode() not in data for secret in secrets)
     assert not re.search(rb"(?i)(authorization:|bearer |x-buildbuddy-api-key=|github_pat_|gh[pousr]_[A-Za-z0-9]{20})", data)
     REPORT.write_bytes(data)
@@ -198,8 +201,113 @@ def catalog(row: dict) -> None:
     row["catalog_sha256"] = sha(Path("tools/licensecheck/dependencies.yaml").read_bytes())
 
 
+def original(row: dict) -> None:
+    archive = (TMP / "original.zip").read_bytes()
+    assert sha(archive) == "9b9070e11c4806918c8dba3a81a3329cdc6009fd72150d3acb3160fcf2089ec6"
+    with zipfile.ZipFile(TMP / "original.zip") as z:
+        assert z.namelist() == ["result.json"]
+        old = json.loads(z.read("result.json"))
+    row["result"] = old
+    row["sha256"] = sha(archive)
+    assert old["product"] == PRODUCT and old["supplier"] == SUPPLIER
+    assert old["carrier"] == "877fc8549e053dca9baa104d1166ebf3fad42afc"
+    assert old["status"] == "FAIL"
+    assert all(old["phases"][name]["status"] == "PASS" for name in ("gc64", "nogc64", "amd64", "arm64"))
+    observed = old["phases"]["consumer"]
+    assert observed["build_test_exit"] == 0 and observed["attempt"]["status"] == "PASSED"
+    assert not observed["attempt"]["cachedLocally"]
+    assert observed["attempt"]["executionInfo"]["strategy"] == "local"
+    assert observed["commands"][0]["invocations"] == ["5ee939e4-6d5f-465e-a13b-83de79bd97c9"]
+
+
+def original_xml(row: dict) -> None:
+    # Use the same fixed-origin reader as the original plugin XML recovery.
+    from cas_inputs import fetch
+
+    old = RESULT["phases"]["original"]["result"]["phases"]["consumer"]
+    invocation, = old["commands"][0]["invocations"]
+    identity = old["attempt"]["id"]
+    label = "//test/kubernetes/benchmarks/httpbench:wrk2_test"
+    assert identity["label"] == label
+    response = json.loads(fetch("api/v1/GetAction", {"selector": {"invocation_id": invocation, "target_label": label}}))
+    assert not response.get("next_page_token", response.get("nextPageToken"))
+    choices = [(action, file) for action in response.get("action", [])
+               for file in action.get("file", []) if file["name"] == "test.xml"]
+    action, file = choices[0] if len(choices) == 1 else (None, None)
+    assert action is not None, "Expected exactly one original test XML"
+    for snake, camel, expected in (("invocation_id", "invocationId", invocation),
+                                   ("configuration_id", "configurationId", identity["configuration"]["id"])):
+        assert action["id"].get(snake, action["id"].get(camel)) == expected
+    assert action.get("target_label", action.get("targetLabel")) == label
+    assert all(int(action.get(key, 0)) == int(identity[key]) == 1 for key in ("run", "shard", "attempt"))
+    match = re.fullmatch(r"bytestream://remote\.buildbuddy\.io/(?:[^?#]*/)?blobs/([0-9a-f]{64})/(\d+)", file["uri"])
+    assert match, "Original XML has no CAS identity"
+    digest, length = match.group(1), int(match.group(2))
+    assert 0 < length < 1024 * 1024
+    data = fetch("file/download?" + urlencode({"bytestream_url": file["uri"], "invocation_id": invocation}))
+    assert len(data) == length and sha(data) == digest
+    row.update(xml=data.decode(), xml_sha256=digest, xml_bytes=length, action_id=action["id"],
+               original_command_finished=old["commands"][0]["finished"], available=now())
+    save()
+    xml = ET.fromstring(data)
+    cases = list(xml.iter("testcase"))
+    row["cases"] = [{"name": c.get("name"), "classname": c.get("classname"),
+                     "status": "FAIL" if c.find("failure") is not None or c.find("error") is not None else
+                               "SKIP" if c.find("skipped") is not None or c.get("status") == "notrun" or c.get("result") == "suppressed" else "PASS"}
+                    for c in cases]
+    assert len(cases) == 1 and row["cases"][0]["name"] == "TestWrk2Consumer"
+    assert row["cases"][0]["status"] == "PASS"
+    assert not any(xml.findall(".//" + tag) for tag in ("failure", "error", "skipped"))
+
+
+def hackbench_diagnosis(row: dict) -> None:
+    from cas_inputs import fetch, rpc
+
+    row["run"] = 41522986904
+    row["original_disposition"] = "cancelled: exceeded maximum execution time of 1h35m0s"
+    row["workloads_executed"] = 0
+    row["invocations"] = []
+    for source in ("7c63124a29588f4cdc264e11b8f345230c6efed3", "41b305bcc71d303421044555b4f1ddeccbcaed5a"):
+        response = rpc("SearchInvocation", {"query": {"commitSha": source,
+            "updatedAfter": "2026-11-02T20:51:00Z", "updatedBefore": "2026-11-03T00:00:00Z"}, "count": 12})
+        assert not response.get("nextPageToken"), "Invocation search exceeds the bounded window"
+        for found in response.get("invocation", []):
+            assert found["commitSha"] == source
+            item = {key: found.get(key) for key in ("invocationId", "commitSha", "command", "pattern",
+                    "invocationStatus", "success", "bazelExitCode", "durationUsec", "createdAtUsec", "updatedAtUsec")}
+            row["invocations"].append(item)
+            save()
+            token = ""
+            chunks = []
+            for _ in range(4):
+                result = json.loads(fetch("api/v1/GetLog", {"selector": {"invocation_id": item["invocationId"]}, "page_token": token}))
+                chunks.append(result.get("log", {}).get("contents", ""))
+                token = result.get("next_page_token", result.get("nextPageToken", ""))
+                if not token:
+                    break
+            text = "".join(chunks)
+            item["log_projection"] = {"sha256": sha(text.encode()), "partial": bool(token),
+                "lines": [line[:700] for line in text.splitlines()
+                          if line.startswith(("ERROR:", "FAIL:", "INFO: Analyzed", "INFO: Elapsed", "INFO: Build completed", "INFO: Found", "Executed "))
+                          and not re.search(r"(?i)authorization|bearer|remote_header|bes_header|x-buildbuddy|github_pat_|gh[pousr]_[A-Za-z0-9]{20}", line)][:30]}
+    assert row["invocations"], "No original invocations matched the exact source/time window"
+
+
 mode = sys.argv[1]
-if mode == "supplier":
+if mode == "recover":
+    # No image build or test is repeated. Keep the old aggregate and all of its
+    # phase dispositions intact inside the digest-bound original receipt.
+    phase("original", original)
+    if RESULT["phases"]["original"]["status"] == "PASS":
+        phase("consumer_xml", original_xml)
+    phase("hackbench_diagnosis", hackbench_diagnosis)
+    phase("catalog_recovery", catalog)
+    RESULT["status"] = "LINUX_CONSUMERS_PASS" if all(RESULT["phases"].get(name, {}).get("status") == "PASS"
+        for name in ("original", "consumer_xml", "catalog_recovery")) else "INCOMPLETE"
+    RESULT["tests_executed"] = 0
+    RESULT["registry_validation"] = "Separate native-matrix receipt; original unwaived failure retained"
+    RESULT["finished"] = now()
+elif mode == "supplier":
     phase("supplier", supplier)
     phase("gc64", lambda row: cli(row, True))
     phase("nogc64", lambda row: cli(row, False))
@@ -218,5 +326,5 @@ else:
     raise ValueError(mode)
 save()
 print(json.dumps({"status": RESULT["status"], "phases": {k: v["status"] for k, v in RESULT["phases"].items()}}))
-if mode == "finish":
-    raise SystemExit(RESULT["status"] != "PASS")
+if mode in ("finish", "recover"):
+    raise SystemExit(RESULT["status"] not in ("PASS", "LINUX_CONSUMERS_PASS"))

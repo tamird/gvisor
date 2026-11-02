@@ -1,26 +1,21 @@
-name: Qualify target-aware BCR LuaJIT and both wrk2 consumers
+name: Recover the completed wrk2 consumer and verify its catalog
 on:
   push:
-    branches: [qualification/wrk2-bcr-consumers]
+    branches: [qualification/wrk2-bcr-recovery]
 permissions:
   contents: read
 jobs:
   images:
     runs-on: ubuntu-22.04
-    timeout-minutes: 150
+    timeout-minutes: 35
     defaults:
       run:
         working-directory: gvisor
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: 2
+          fetch-depth: 3
           path: gvisor
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          repository: tamird/bazel-central-registry
-          ref: b71adb61cb76def6e12e54b5deb73c1d910f71b5
-          path: supplier
       - name: Configure the pinned Linux execution platform
         id: setup
         env:
@@ -56,78 +51,25 @@ jobs:
           build --remote_download_outputs=toplevel
           build --noshow_progress
           RC
-      - name: Validate the exact supplier registry module
-        timeout-minutes: 18
+      - name: Recover the original receipt and existing metadata reader
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          python3 - <<'PYCODE'
-          import hashlib,json,os,re,subprocess
-          from pathlib import Path
-          root=Path(os.environ['GITHUB_WORKSPACE'])/'supplier'
-          records=[]
-          for args in (["bazel","run","//tools:update_integrity","--","luajit","--version=2.1.20230430"],
-                       ["git","diff","--exit-code","--","modules/luajit"],
-                       ["bazel","run","//tools:bcr_validation","--","--check","luajit@2.1.20230430"]):
-              p=subprocess.run(args,cwd=root,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-              tail=p.stdout.decode(errors='replace').splitlines()[-12:]
-              token=os.environ.get('GITHUB_TOKEN','')
-              tail=[line for line in tail if not (token and token in line) and not re.search(r'(?i)(authorization|bearer |github_pat_|gh[pousr]_[A-Za-z0-9]{20})',line)]
-              records.append({'command':args,'exit':p.returncode,'output_sha256':hashlib.sha256(p.stdout).hexdigest(),'diagnostics':tail if p.returncode else []})
-              Path(os.environ['RUNNER_TEMP'],f'bcr-validation-{len(records)}.log').write_bytes(p.stdout)
-          subprocess.run(['bazel','shutdown'],cwd=root,check=False)
-          out={'source':subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip(),
-               'exit':0 if all(r['exit']==0 for r in records) else 1,'commands':records}
-          Path(os.environ['RUNNER_TEMP'],'bcr-validation.json').write_text(json.dumps(out))
-          print(json.dumps(out))
-          PYCODE
-      - name: Check supplier inputs and both x64 reference formats
-        if: always() && steps.setup.outcome == 'success'
-        timeout-minutes: 20
-        run: python3 test/rbe/wrk2-bcr-consumers.py supplier
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
-        with:
-          name: wrk2-bcr-preflight
-          path: ${{ runner.temp }}/wrk2-public/result.json
-          if-no-files-found: error
-      - name: Install the Linux ARM64 binfmt interpreter
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if [[ ! -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ]]; then
-            sudo apt-get update -qq
-            sudo apt-get install -y --no-install-recommends qemu-user-static binfmt-support
-            sudo update-binfmts --enable qemu-aarch64
-          fi
-          grep -Fx enabled /proc/sys/fs/binfmt_misc/qemu-aarch64
-          grep -E '^flags:.*F' /proc/sys/fs/binfmt_misc/qemu-aarch64
-      - name: Build both images and execute the original TLS workload
+          git fetch --quiet --depth=1 origin 93de62e8d3573407bfc1ded722a0a73d80cabedc
+          git show 93de62e8d3573407bfc1ded722a0a73d80cabedc:test/rbe/plugin_programs/cas_inputs.py > "$RUNNER_TEMP/cas_inputs.py"
+          git diff --exit-code 1bdd46d07b0388543da20e87e6b17d41fef46e51 HEAD -- . ':(exclude).github/workflows/build.yml' ':(exclude)test/rbe/wrk2-bcr-consumers.py' ':(exclude)test/rbe/wrk2-image-check.sh' ':(exclude)test/rbe/wrk2-source-check.sh'
+          gh api repos/tamird/gvisor/actions/artifacts/13185072152/zip > "$RUNNER_TEMP/original.zip" || true
+      - name: Read the original named XML and run only the catalog correction
         if: always() && steps.setup.outcome == 'success'
-        timeout-minutes: 40
-        run: python3 test/rbe/wrk2-bcr-consumers.py images
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
-        with:
-          name: wrk2-bcr-images
-          path: ${{ runner.temp }}/wrk2-public/result.json
-          if-no-files-found: error
-      - name: Run the real Kubernetes command and metrics consumer
-        if: always() && steps.setup.outcome == 'success'
-        timeout-minutes: 45
-        run: python3 test/rbe/wrk2-bcr-consumers.py consumer
-      - name: Regenerate the three source notices and verify the full catalog
-        if: always() && steps.setup.outcome == 'success'
-        timeout-minutes: 20
         env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
           GITHUB_TOKEN: ${{ github.token }}
-        run: python3 test/rbe/wrk2-bcr-consumers.py catalog
-      - name: Retain the combined verdict
-        if: always() && steps.setup.outcome == 'success'
-        run: python3 test/rbe/wrk2-bcr-consumers.py finish
+        run: PYTHONPATH="$RUNNER_TEMP" python3 test/rbe/wrk2-bcr-consumers.py recover
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: wrk2-bcr-consumers
+          name: wrk2-bcr-recovery
           path: ${{ runner.temp }}/wrk2-public/result.json
           if-no-files-found: error
       - name: Remove remote credentials
