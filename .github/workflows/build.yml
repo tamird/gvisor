@@ -1,7 +1,7 @@
 name: Compare two recovery decisions on a real M003 byte stream
 on:
   push:
-    branches: [qualification/tcp-m003-two-repairs]
+    branches: [qualification/tcp-m003-original-screen]
 permissions:
   contents: read
 jobs:
@@ -14,13 +14,39 @@ jobs:
       BASE: b0d2148f41d2d35577b5fe759192f71947cc87fd
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 2, persist-credentials: false}
-    - name: Bind the reporter, GNU worker and both policy sources
+      with: {fetch-depth: 3, persist-credentials: false}
+    - name: Recover the two original stock transfers from their published Bazel action
+      id: original
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
         set -euo pipefail
-        [[ "$(git rev-parse HEAD^)" == "$BASE" && "$(git rev-parse HEAD)" == "$GITHUB_SHA" ]]
+        original=30eb03cb88378a5805f951739ba8fadbd4a637a7
+        [[ "$(git rev-parse HEAD^)" == "$original" && "$(git rev-parse HEAD^^)" == "$BASE" ]]
+        git diff --exit-code "$original" HEAD -- test/rbe/m003_pair/{run.py,prepare.py,reporter.patch,impair.go,BUILD}
+        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/readers"
+        echo '{"verified":false,"phase":"original screen recovery"}' > "$RUNNER_TEMP/records/verdict.json"
+        git fetch -q --depth=1 https://github.com/tamird/gvisor.git 1fcf113e6349cc55f6321968944da1933ece3252 fb60e127516defd6aab633f80be09a03022f0737
+        git show 1fcf113e6:test/rbe/semop_owner_recovery.py > "$RUNNER_TEMP/readers/semop_owner_recovery.py"
+        for file in qualification_report unit_matrix; do git show "fb60e1275:test/rbe/$file.py" > "$RUNNER_TEMP/readers/$file.py"; done
+        PYTHONPATH="$RUNNER_TEMP/readers" python3 -B test/rbe/m003_pair/recover.py
+        active=$(python3 -c 'import json,sys; print(len(json.load(open(sys.argv[1]))["schedules"]))' "$RUNNER_TEMP/records/screen/screen.json")
+        echo "active=$active" >> "$GITHUB_OUTPUT"
+        if (( active == 0 )); then
+          python3 - "$RUNNER_TEMP/records" <<'PYV'
+        import json, pathlib, sys
+        d = pathlib.Path(sys.argv[1]); r = json.loads((d/"recovery.json").read_text())
+        (d/"verdict.json").write_text(json.dumps({"verified_observation":True, "four_arm_comparison_executed":False,
+            "status":"STOCK_SCREEN_ONLY","activation":r["activation"],"reason":"the two required mechanisms were not both observed"}))
+        PYV
+        fi
+    - name: Bind the reporter, GNU worker and both policy sources
+      if: steps.original.outputs.active != '0'
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail
+        [[ "$(git rev-parse HEAD^^)" == "$BASE" && "$(git rev-parse HEAD)" == "$GITHUB_SHA" ]]
         p=test/rbe/m003_pair
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu"
         echo '{"verified":false,"phase":"preparation"}' > "$RUNNER_TEMP/records/verdict.json"
@@ -45,7 +71,8 @@ jobs:
         docker exec tcp-compiler uname -srvm > "$RUNNER_TEMP/records/kernel"
         echo "$GITHUB_SHA $BASE" > "$RUNNER_TEMP/records/source"
         chmod 755 "$RUNNER_TEMP/records"
-    - name: Screen stock and run the qualified comparisons on the same Linux coordinator
+    - name: Run only the missing cells on the same Linux coordinator
+      if: steps.original.outputs.active != '0'
       run: |
         set -euo pipefail
         p=test/rbe/m003_pair
@@ -55,33 +82,39 @@ jobs:
         run_case() {
           local name="$1" code=0
           date -u --iso-8601=ns > "$d/$name.started"
-          bz test "${args[@]}" --strategy=TestRunner=local --nocache_test_results --test_env=GOMAXPROCS=2 --test_sharding_strategy=disabled --test_output=errors --test_timeout=235 --test_env=PYTHONDONTWRITEBYTECODE=1 --nozip_undeclared_test_outputs --build_event_json_file="$RUNNER_TEMP/$name.bep" "//$p:$name" > "$RUNNER_TEMP/$name.log" 2>&1 || code=$?
+          bz test "${args[@]}" --strategy=TestRunner=local --nocache_test_results --test_env=GOMAXPROCS=2 --test_sharding_strategy=disabled --test_output=errors --test_timeout=235 --test_env=PYTHONDONTWRITEBYTECODE=1 --nozip_undeclared_test_outputs --build_event_json_file_path_conversion=false --build_event_json_file="$RUNNER_TEMP/$name.bep" "//$p:$name" > "$RUNNER_TEMP/$name.log" 2>&1 || code=$?
           date -u --iso-8601=ns > "$d/$name.finished"
           echo "$code" > "$d/$name.exit"
-          if [[ -e "bazel-testlogs/$p/$name/test.xml" ]]; then cp "bazel-testlogs/$p/$name/test.xml" "$d/$name.xml"; fi
-          shopt -s nullglob
-          outputs=("bazel-testlogs/$p/$name/test.outputs/"*.json)
-          if (( ${#outputs[@]} )); then mkdir -p "$d/$name"; cp -L "${outputs[@]}" "$d/$name/"; fi
           python3 "$p/status.py" "$name" "$RUNNER_TEMP" "$code"
+          # The Bazel output path exists in the same container that ran the test.
+          docker exec tcp-compiler bash -euo pipefail -c '
+            tmp=$1; name=$2; pkg=$3
+            b=$(realpath bazel-testlogs)
+            mkdir -p "$tmp/private-reports" "$tmp/records/$name"
+            python3 "$tmp/readers/qualification_report.py" capture --events "$tmp/$name.bep" --output "$tmp/private-reports/selected.json" --output-root "$b" --report-dir "$tmp/private-reports/original"
+            install -m 0644 "$tmp/private-reports/original/$pkg/$name/test.xml" "$tmp/records/$name.xml"
+            shopt -s nullglob
+            files=("$b/$pkg/$name/test.outputs/"*.json)
+            for file in "${files[@]}"; do install -m 0644 "$file" "$tmp/records/$name/"; done
+          ' -- "$RUNNER_TEMP" "$name" "$p"
           [[ $code == 0 ]]
         }
-        python3 "$p/prepare.py" stock "$d/source-stock.json"
-        run_case screen
         cp "$d/screen/screen.json" "$p/screen.json"
-        active=$(python3 -c 'import json,sys; print(len(json.load(open(sys.argv[1]))["schedules"]))' "$p/screen.json")
-        if [[ "$active" == "0" ]]; then
-          printf '%s\n' '{"verified":false,"status":"BOTH_MECHANISMS_NOT_OBSERVED","comparison_transfers":0}' > "$d/verdict.json"
-          exit 0
-        fi
         for arm in stock deadline select both; do
           python3 "$p/prepare.py" "$arm" "$d/source-$arm.json"
           code=0
           bz build "${args[@]}" "//$p:reporter" > "$RUNNER_TEMP/build-$arm.log" 2>&1 || code=$?
           echo "$code" > "$d/build-$arm.exit"
           if [[ $code != 0 ]]; then python3 "$p/status.py" "build-$arm" "$RUNNER_TEMP" "$code"; exit "$code"; fi
-          cp "bazel-bin/$p/reporter_/reporter" "$p/$arm"
-          chmod 755 "$p/$arm"
-          sha256sum "$p/$arm" >> "$d/selected-binaries"
+          # Resolve the genuine target's output on the coordinator, then cross
+          # the mount boundary by copying to the shared workspace.
+          output=$(bz cquery "${args[@]}" --output=files "//$p:reporter" 2>"$RUNNER_TEMP/cquery-$arm.log")
+          [[ "$output" == *"/$p/reporter_/reporter" && "$output" != *$'\n'* ]]
+          docker exec tcp-compiler install -m 0755 "$output" "$p/$arm"
+          inside=$(docker exec tcp-compiler sha256sum "$output" | cut -d' ' -f1)
+          outside=$(sha256sum "$p/$arm" | cut -d' ' -f1)
+          [[ "$inside" == "$outside" ]]
+          echo "$outside $p/$arm" >> "$d/selected-binaries"
         done
         [[ "$(cut -d' ' -f1 "$d/selected-binaries" | sort -u | wc -l)" == 4 ]]
         run_case comparison
@@ -102,7 +135,7 @@ jobs:
             if not path.is_file():
                 continue
             name = path.relative_to(root).as_posix()
-            assert re.fullmatch(r"(gcc|kernel|source|selected-binaries|verdict\.json|source-(stock|select|both|deadline)\.json|(build-(stock|select|both|deadline)|screen|comparison)\.(exit|started|finished|xml|status\.json)|(screen|comparison)/[a-z0-9.-]+\.json)", name), name
+            assert re.fullmatch(r"(gcc|kernel|source|selected-binaries|recovery\.json|verdict\.json|source-(stock|select|both|deadline)\.json|(build-(stock|select|both|deadline)|screen|comparison)\.(exit|started|finished|xml|status\.json)|(screen|comparison)/[a-z0-9.-]+\.json)", name), name
             data = path.read_bytes()
             assert not (key and key in data) and b"x-buildbuddy-api-key" not in data and b"Authorization: Bearer" not in data
         PYBOUND

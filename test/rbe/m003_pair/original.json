@@ -1,0 +1,36 @@
+{
+  "source": "30eb03cb88378a5805f951739ba8fadbd4a637a7 b0d2148f41d2d35577b5fe759192f71947cc87fd",
+  "screen.status.json": {
+    "exit": 0,
+    "attempts": [
+      {
+        "run": 1,
+        "attempt": 1,
+        "status": "PASSED",
+        "cached": false
+      }
+    ],
+    "diagnostics": []
+  },
+  "screen.started": "2026-11-02T01:29:45,218712522+00:00",
+  "screen.finished": "2026-11-02T01:35:08,079798584+00:00",
+  "source-stock.json": {
+    "arm": "stock",
+    "base": "b0d2148f41d2d35577b5fe759192f71947cc87fd",
+    "deadline_source": "9df20cfc54ca29cd875845a5e6e9fc9e6ac5c9f8",
+    "selection_source": "c7976270813d5218a847539dd94f749c7cb4dfd5",
+    "files": {
+      "snd.go": {
+        "policy": "0f7052fa5f811ec980e3988519febae05e66225b6253a33ba86251c79b887216",
+        "observed": "33b102381723243a746c0c78d0f9c86b610b20a22f478b712b26c567d3efe110"
+      },
+      "rack.go": {
+        "policy": "8be2333862544959f2e0b6dec1cef546ae67a1522271c091351e2bca629610e7",
+        "observed": "01cce090cd2557a75250baa795fd0d91c594870c1ef11558ada6c8165f839145"
+      }
+    }
+  },
+  "run": 41372714631,
+  "artifact": 13110022028,
+  "archive_sha256": "8366de92b66e1736dbae2c8b12316fbf2101aed2ca7b9c5d4a2e3218559f2e33"
+}
