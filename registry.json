@@ -43439,6 +43439,44 @@
         "requestedAt": "2026-11-02T07:06:48+00:00",
         "summary": "Review sending the goimports commit after the hunk correction lands and reporting the line-18 reproduction on the existing Go review."
       }
+    },
+    {
+      "id": "branch:tcp-idle-restart-data",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/tcp-idle-restart-data",
+      "head": "646309a7d9b0cc9bc7b232ecabcfb92fa8d7cddd",
+      "title": "Restart the TCP congestion window after a pause in sending data",
+      "url": "https://github.com/tamird/gvisor/commit/646309a7d",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T08:02:39+00:00",
+      "summary": "After a pause in forward data, ACKs sent for reverse traffic let stock gVisor burst 50 segments. Linux and the corrected sender sent 10. All three sent 10 when the peer was quiet.",
+      "evidence": [
+        {
+          "label": "Linux, stock and corrected wire captures with matching TCP_INFO",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41408415755/artifacts/13123749763"
+        },
+        {
+          "label": "Repeated socket regression and owning checks on the final source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41409543048/artifacts/13125550718"
+        },
+        {
+          "label": "RFC 5681 on idle connections",
+          "url": "https://www.rfc-editor.org/rfc/rfc5681#section-4.1"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "646309a7d9b0cc9bc7b232ecabcfb92fa8d7cddd",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/646309a7d",
+        "title": "Restart the TCP congestion window after a pause in sending data",
+        "requestedAt": "2026-11-02T08:02:39+00:00",
+        "summary": "Open this independent PR using its commit message?",
+        "body": "Measure sender idle time from the last payload transmission. With reverse-only traffic for six retransmission timeouts, the regression twice observed a congestion window of 50 on stock and 10 on Linux and corrected gVisor. The quiet controls, existing TCP_INFO test, RTT and retransmission tests, and Nogo passed."
+      }
     }
   ],
   "edges": [
