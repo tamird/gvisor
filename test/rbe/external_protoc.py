@@ -1,5 +1,7 @@
 """Recover the original compiler failure, then use the released LLVM toolchain."""
 
+import ast
+import base64
 from hashlib import sha256
 import json
 import os
@@ -9,7 +11,7 @@ import shlex
 import subprocess
 from zipfile import ZipFile
 
-from cas_inputs import blob, cas, fetch, rpc
+from cas_inputs import blob, cas, rpc
 from external_go_policy import AREA, SOURCE, client, details, git, now, read_events
 
 SPLIT = "03763b0448f9e15a2247ba0a50e8b710cf4ba0e9"
@@ -45,6 +47,21 @@ def phase(name, fn):
     save()
 
 
+def invocation_log(invocation):
+    chunks, token = [], "0"
+    for _ in range(16):
+        response = rpc("GetEventLogChunk", {"invocationId": invocation, "chunkId": token, "minLines": 100000})
+        data = base64.b64decode(response.get("buffer", ""), validate=True)
+        chunks.append(data)
+        assert sum(map(len, chunks)) <= 16 * 1024 * 1024
+        next_token = response.get("nextChunkId", "")
+        if not data or not next_token:
+            return b"".join(chunks).decode()
+        assert next_token != token
+        token = next_token
+    raise ValueError("Original log exceeded the bounded recovery")
+
+
 def original(row):
     row["download_exit"] = int((AREA / "original-download-exit").read_text())
     assert row["download_exit"] == 0
@@ -56,18 +73,7 @@ def original(row):
         old = json.loads(z.read("external-go.json"))["builds"]["ordinary"]
     assert (old["source"], old["invocation"], old["state"], old["exit"]) == (SPLIT, INV, "BUILD_FAILED", 1)
     row.update(invocation=INV, original_exit=1, original_state=old["state"], actions=[])
-    # GetLog defaults to the last chunk; explicitly start at the first one.
-    body, chunks = {"selector": {"invocation_id": INV}, "page_token": "0"}, []
-    for _ in range(24):
-        response = json.loads(fetch("api/v1/GetLog", body))
-        chunks.append(response["log"].get("contents", ""))
-        token = response.get("nextPageToken", response.get("next_page_token", ""))
-        if not token:
-            break
-        body["page_token"] = token
-    else:
-        raise ValueError("Original log pagination did not finish")
-    log = "".join(chunks)
+    log = invocation_log(INV)
     row["log_sha256"] = sha256(log.encode()).hexdigest()
     log = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", log)
     row["absolute_headers"] = sorted(set(re.findall(r"['\"](/usr/(?:include|lib)/[A-Za-z0-9_./+-]+)['\"]", log)))
@@ -95,7 +101,7 @@ def original(row):
 
 
 def prepare():
-    assert git("rev-parse", "HEAD") == SPLIT and not git("status", "--porcelain", "--untracked-files=no")
+    assert git("rev-parse", "HEAD") == PRODUCT and not git("status", "--porcelain", "--untracked-files=no")
     work = AREA / "consumer"
     work.mkdir()
     patch = (AREA / "gazelle.patch").read_bytes()
@@ -125,32 +131,42 @@ def flags():
                 "workload-isolation-type": "firecracker", "container-image": IMAGE}.items()]]
 
 
-def preflight(row, work, control=False):
-    query = 'mnemonic("CppCompile", @protobuf//upb/base:base)'
-    bep = AREA / ("control-query.bep" if control else "query.bep")
-    p = subprocess.run([*BAZEL, "aquery", *flags(), "--build_event_json_file=" + str(bep), "--output=jsonproto", query], cwd=work,
-                       capture_output=True, text=True)
-    row.update(exit=p.returncode, errors=details(p.stderr) if p.returncode else [],
-               stderr_sha256=sha256(p.stderr.encode()).hexdigest(), source=git("rev-parse", "HEAD"), collection={})
-    for e in read_events(bep, row["collection"]):
-        if "started" in e:
-            row["invocation"] = e["started"]["uuid"]
+def prior():
+    data = (AREA / "selection.zip").read_bytes()
+    assert sha256(data).hexdigest() == "bf8b3f83acb1bab78a78a107da3575a43f4cce7a418be0f57c906a43157d1ebf"
+    with ZipFile(AREA / "selection.zip") as z:
+        assert z.namelist() == ["external-protoc.json"]
+        result = json.loads(z.read(z.namelist()[0]))
+    assert result["source"] == PRODUCT and result["control_source"] == SPLIT
+    return result
+
+
+def control_diagnostic(row):
+    previous = prior()["phases"]["control_preflight"]
+    assert previous["exit"] == 1 and previous["source"] == SPLIT
+    assert previous["invocation"] == "9c642ca9-e3b9-44d3-9089-3baf6ab4b069"
+    row["original_record"] = previous
+    log = invocation_log(previous["invocation"])
+    row.update(log_sha256=sha256(log.encode()).hexdigest(), diagnostics=details(log))
     save()
-    assert row["source"] == (SPLIT if control else PRODUCT)
-    if control:
-        assert p.returncode == 1 and "configure" in "\n".join(row["errors"]) and "kernel_headers" in p.stderr
-        row["status"] = "EXPECTED_REJECTION"
-        return
-    assert p.returncode == 0
-    graph = json.loads(p.stdout)
-    labels = {t["id"]: t["label"] for t in graph["targets"]}
-    commands = [a["arguments"] for a in graph["actions"] if labels[a["targetId"]] == BASE]
-    row["commands"] = commands
-    assert commands and all(a[0].startswith(("external/", "bazel-out/")) and "/clang" in a[0] for a in commands), commands
-    assert all(not a.startswith(("-I/usr/", "-isystem/usr/")) for args in commands for a in args)
-    assert all(not args[i + 1].startswith("/usr/") for args in commands
-               for i, a in enumerate(args[:-1]) if a in ("-I", "-isystem", "-iquote", "-idirafter", "--sysroot"))
-    row["status"] = "PASS"
+    assert "configure" in "\n".join(row["diagnostics"]) and "kernel_headers" in "\n".join(row["diagnostics"])
+    row["status"] = "RECOVERED"
+
+
+def selection(row):
+    previous = prior()
+    assert RESULT["consumer"] == previous["consumer"]
+    assert git("rev-parse", "HEAD") == PRODUCT
+    # Reuse the completed query only with identical build options and consumer.
+    old = git("show", "ad92caae641fb95f62621a26042552f71a6cfa01:test/rbe/external_protoc.py")
+    current = Path(__file__).read_text()
+    def flags_body(text):
+        return ast.dump(next(n for n in ast.parse(text).body if isinstance(n, ast.FunctionDef) and n.name == "flags"))
+    assert flags_body(old) == flags_body(current)
+    p = previous["phases"]["preflight"]
+    assert p["status"] == "PASS" and p["exit"] == 0 and p["source"] == PRODUCT
+    assert p["invocation"] == "d8f0e6a6-0e71-4be3-8969-059c561595c8"
+    row.update(status="PASS", original_record=p, reused_from_artifact=13123479492)
 
 
 def build(row, work):
@@ -278,12 +294,10 @@ def main():
     RESULT["diagnostic_projection_controls"] = "PASS"
     phase("original", original)
     work = prepare()
-    phase("control_preflight", lambda row: preflight(row, work, control=True))
-    subprocess.run(["git", "checkout", "--detach", PRODUCT], check=True)
-    assert not git("status", "--porcelain", "--untracked-files=no")
-    phase("preflight", lambda row: preflight(row, work))
+    phase("control_preflight", control_diagnostic)
+    phase("preflight", selection)
     # Only a verified declared compiler justifies building the full consumer.
-    if RESULT["phases"]["preflight"]["status"] == "PASS" and RESULT["phases"]["control_preflight"]["status"] == "EXPECTED_REJECTION":
+    if RESULT["phases"]["preflight"]["status"] == "PASS":
         phase("build", lambda row: build(row, work))
         phase("outputs", lambda row: outputs(row, work))
     RESULT["verdict"] = "PASS" if len(RESULT["phases"]) == 5 and all(

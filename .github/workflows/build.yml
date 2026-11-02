@@ -27,7 +27,7 @@ jobs:
           cp test/rbe/external_protoc.py "$d/"
           echo '{"verdict":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/external-protoc.json"
           curl --retry 3 -fsSL https://raw.githubusercontent.com/tamird/gvisor/b224a82d47407d754ce438e19f6d1b60f2e20fb3/.github/qualification/lint-pilot/check.py -o "$d/check.py"
-          curl --retry 3 -fsSL https://raw.githubusercontent.com/tamird/gvisor/f7b47d73dc941f5156a59d59821ae797eaba2377/test/rbe/external_go_policy.py -o "$d/external_go_policy.py"
+          curl --retry 3 -fsSL https://raw.githubusercontent.com/tamird/gvisor/b068472ea88909183902fc4bf12dac266f39d34d/test/rbe/external_go_policy.py -o "$d/external_go_policy.py"
           curl --retry 3 -fsSL https://raw.githubusercontent.com/tamird/gvisor/702294b69b629cedd9b74133aa4f37b10ddc82b3/test/rbe/plugin_programs/cas_inputs.py -o "$d/cas_inputs.py"
           curl --retry 3 -fsSL https://raw.githubusercontent.com/tamird/gvisor/8206a3e1cd4b643fc35882956dffc8be81b871bf/test/rbe/gazelle-cgroups-go-proto.patch -o "$d/gazelle.patch"
           printf '%s  %s\n' b4bc68892ad98df6cce81a8e35e0a3c01b83069c80eefa6c146b8d4d27ceeed7 "$d/cas_inputs.py" 02dbcbd8f45ef86ea3a9ce08eed9d88dd27a1d7493e9f5be0c80937b6b43a77e "$d/gazelle.patch" | sha256sum -c -
@@ -40,14 +40,15 @@ jobs:
           else
             echo "$?" > "$d/original-download-exit"
           fi
+          gh api repos/tamird/gvisor/actions/artifacts/13123479492/zip > "$d/selection.zip"
           {
             printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback'
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$d/bb.rc"
-          test "$(git rev-parse HEAD^)" = c734e2b4f7b776258294c4d5c2f508d6c6ec994e
-          test "$(git rev-parse HEAD~2)" = 03763b0448f9e15a2247ba0a50e8b710cf4ba0e9
-          git checkout --detach 03763b0448f9e15a2247ba0a50e8b710cf4ba0e9
+          test "$(git rev-parse HEAD^)" = ad92caae641fb95f62621a26042552f71a6cfa01
+          test "$(git rev-parse HEAD~2)" = c734e2b4f7b776258294c4d5c2f508d6c6ec994e
+          git checkout --detach c734e2b4f7b776258294c4d5c2f508d6c6ec994e
       - name: Recover the original failure and qualify the normal consumer
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
