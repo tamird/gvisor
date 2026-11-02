@@ -19,6 +19,7 @@ package unix
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/abi/linux"
@@ -572,7 +573,34 @@ func (s *Socket) GetSockName(t *kernel.Task) (linux.SockAddr, uint32, *syserr.Er
 // Listen implements the linux syscall listen(2) for sockets backed by
 // a transport.Endpoint.
 func (s *Socket) Listen(t *kernel.Task, backlog int) *syserr.Error {
-	return s.ep.Listen(t, backlog, control.MakeCreds(t))
+	if err := s.ep.Listen(t, backlog, control.MakeCreds(t)); err != nil {
+		return err
+	}
+	return s.waitForResearchConnection()
+}
+
+// Fork witness: hold this one listener after the transport call until an actual
+// connect has committed. No accept can drain the queue before listen returns.
+func (s *Socket) waitForResearchConnection() *syserr.Error {
+	addr, err := s.ep.GetLocalAddress()
+	if err != nil || addr.Addr != "\x00gvisor-listen-cred-gap" {
+		return nil
+	}
+	w, ch := waiter.NewChannelEntry(waiter.ReadableEvents)
+	if err := s.EventRegister(&w); err != nil {
+		return syserr.FromError(err)
+	}
+	defer s.EventUnregister(&w)
+	timer := time.NewTimer(10 * time.Second)
+	defer timer.Stop()
+	for s.Readiness(waiter.ReadableEvents) == 0 {
+		select {
+		case <-ch:
+		case <-timer.C:
+			return syserr.ErrTimedOut
+		}
+	}
+	return nil
 }
 
 // extractEndpoint retrieves the transport.BoundEndpoint associated with a Unix
