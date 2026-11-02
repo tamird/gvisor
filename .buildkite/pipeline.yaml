@@ -118,7 +118,9 @@ steps:
   - <<: *common
     <<: *source_test
     label: ":speedboat: Compile runsc-plugin-stack (AMD64)"
-    command: make runsc-plugin-stack
+    env:
+      DOCKER_BUILD: "false"
+    command: bazel build -c opt --config=plugin-tldk //runsc:runsc-plugin-stack
     agents:
       arch: "amd64"
       queue: "default"
