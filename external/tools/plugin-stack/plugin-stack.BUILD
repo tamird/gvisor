@@ -100,12 +100,7 @@ make(
         "'PMDINFO_GEN=$(PMDINFOGEN) $@ $@.pmd.c'",
         "DPDK_MAKE_TARGET=all",
         "'DPDK_LIBS_PATH=$(TLDK_ROOT)/dpdk/_build/dpdk/$(RTE_TARGET)/lib'",
-    ] + select({
-        # The glue always uses virtio-user with --no-pci. Keep its PCI bus,
-        # but do not require Linux VFIO headers in the musl runtime.
-        ":musl": ["RTE_EAL_VFIO=n"],
-        "//conditions:default": [],
-    }),
+    ],
     build_data = _BUILD_DATA + [
         ":pmd_config",
         "@plugin_dpdk//:pmdinfogen",
