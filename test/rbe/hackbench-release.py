@@ -10,6 +10,7 @@ import re
 import subprocess
 import tarfile
 import xml.etree.ElementTree as ET
+import zipfile
 
 PRODUCT = "7c63124a29588f4cdc264e11b8f345230c6efed3"
 COPYING = "ab15fd526bd8dd18a9e77ebc139656bf4d33e97fc7238cd11bf60e2b9b8666c6"
@@ -73,9 +74,10 @@ def output(name: str, target: str, flags: list[str], row: dict) -> Path:
 def image(arch: str, cpu: str, machine: int, row: dict) -> None:
     flags = ["--config=" + arch]
     target = "//images/benchmarks/hackbench:hackbench_context"
-    checked(arch + "-build", BZ + ["build", *flags, target], row)
+    checked(arch + "-build", BZ + ["build", "--experimental_remote_require_cached", *flags, target], row)
     archive = output(arch + "-path", target, flags, row)
     row["context"] = {"size": archive.stat().st_size, "sha256": sha(archive.read_bytes())}
+    assert row["context"] == RESULT["original"]["phases"][cpu]["context"]
     with tarfile.open(archive) as tar:
         members = [m for m in tar.getmembers() if m.name.removeprefix("./") ==
                    "images/benchmarks/hackbench/image.tar"]
@@ -90,7 +92,10 @@ def image(arch: str, cpu: str, machine: int, row: dict) -> None:
     assert info["Architecture"] == cpu and info["Os"] == "linux", info["Architecture"]
     row["image"] = {"id": info["Id"], "architecture": cpu, "os": info["Os"],
                     "layers": info["RootFS"]["Layers"]}
-    cid = checked(arch + "-create", ["docker", "create", tag, "--help"], row).strip()
+    assert row["image"] == RESULT["original"]["phases"][cpu]["image"]
+    cid = checked(arch + "-create", ["docker", "create", "--platform=linux/" + cpu,
+                  tag, "/usr/bin/hackbench", "--help"], row).strip()
+    assert re.fullmatch(r"[a-f0-9]{64}", cid), "Malformed container identity"
     try:
         binary = PRIVATE / (arch + "-hackbench")
         notice = PRIVATE / (arch + "-COPYING")
@@ -110,7 +115,8 @@ def image(arch: str, cpu: str, machine: int, row: dict) -> None:
         subprocess.run(["docker", "rm", "-f", cid], stdout=subprocess.DEVNULL, check=True)
     target = "//test/benchmarks/base:hackbench_test"
     bep = PRIVATE / (arch + "-benchmark.bep.json")
-    args = BZ + ["test", "--jobs=2", "--strategy=TestRunner=local", "--nocache_test_results",
+    args = BZ + ["test", "--jobs=2", r"--strategy_regexp=Compiling src/google/protobuf/.*\.cc=linux-sandbox",
+                 "--strategy=TestRunner=local", "--nocache_test_results",
                  "--test_output=errors", "--test_arg=-test.v", "--test_arg=-test.run=^$",
                  "--test_arg=-test.bench=^BenchmarkHackbench$", "--test_arg=-test.benchtime=1x",
                  "--test_arg=-runtime=runc", "--test_timeout=600", "--build_event_json_file=" + str(bep), target]
@@ -142,12 +148,24 @@ def image(arch: str, cpu: str, machine: int, row: dict) -> None:
     row["runtime"] = "native AMD64 runc" if cpu == "amd64" else "QEMU ARM64 under AMD64 runc"
 
 
-def catalog(row: dict) -> None:
-    os.environ["MAKEFLAGS"] = "DOCKER_BUILD=false STARTUP_OPTIONS=--bazelrc=" + str(TMP / "images.bazelrc")
-    text = checked("catalog", BZ + ["run", "//tools/licensecheck/main:licensecheck", "--", "--mode=verify"], row)
-    lines = [line for line in text.splitlines() if re.fullmatch(r"all \d+ dependencies have up-to-date license entries that conform to governance/licensing.yaml", line)]
-    assert len(lines) == 1, "Canonical catalog success line missing"
-    row["verification"] = lines[0]
+def original(row: dict) -> None:
+    data = (TMP / "original.zip").read_bytes()
+    expected = "ac28f02d7d1b4feb0752487b29e061c99646a41db2607ade29e33ed93beb2e9c"
+    assert sha(data) == expected
+    with zipfile.ZipFile(TMP / "original.zip") as z:
+        assert z.namelist() == ["result.json"]
+        old = json.loads(z.read("result.json"))
+    assert old["product"] == PRODUCT and old["carrier"] == "dd90552017925a5659d77e0feb1056af11fc86a7"
+    assert old["status"] == "FAIL" and set(old["phases"]) == {"amd64", "arm64", "catalog"}
+    assert old["phases"]["amd64"]["error"] == "AssertionError: x86_64-help exited 1"
+    assert old["phases"]["arm64"]["error"] == "AssertionError: aarch64-elf-copy exited 1"
+    catalog = old["phases"]["catalog"]
+    assert catalog["status"] == "PASS" and catalog["commands"][0]["exit"] == 0
+    assert catalog["verification"] == "all 221 dependencies have up-to-date license entries that conform to governance/licensing.yaml"
+    RESULT["original"] = old
+    row["artifact"] = "https://github.com/tamird/gvisor/actions/runs/41520993482/artifacts/13178695451"
+    row["archive_sha256"] = expected
+    row["catalog_reused"] = True
 
 
 def phase(name: str, fn: Callable[[dict], None]) -> None:
@@ -167,9 +185,9 @@ def phase(name: str, fn: Callable[[dict], None]) -> None:
 assert subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() == PRODUCT
 assert not subprocess.check_output(["git", "diff", "HEAD", "--"], text=True)
 RESULT["started"] = now()
+phase("original", original)
 phase("amd64", lambda row: image("x86_64", "amd64", 62, row))
 phase("arm64", lambda row: image("aarch64", "arm64", 183, row))
-phase("catalog", catalog)
 RESULT["status"] = "PASS" if all(row["status"] == "PASS" for row in RESULT["phases"].values()) else "FAIL"
 RESULT["finished"] = now()
 save()

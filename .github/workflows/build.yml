@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          fetch-depth: 3
+          fetch-depth: 4
       - name: Configure the pinned Linux execution platform
         id: setup
         env:
@@ -48,6 +48,10 @@ jobs:
           RC
           git show "$GITHUB_SHA:test/rbe/hackbench-release.py" > "$RUNNER_TEMP/hackbench-release.py"
           git checkout -q --detach 7c63124a29588f4cdc264e11b8f345230c6efed3
+      - name: Recover the original source-bound image and catalog receipts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api repos/tamird/gvisor/actions/artifacts/13178695451/zip > "$RUNNER_TEMP/original.zip"
       - name: Install the Linux ARM64 binfmt interpreter
         id: qemu
         run: |
