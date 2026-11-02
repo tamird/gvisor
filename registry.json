@@ -27563,29 +27563,34 @@
       "id": "branch:plugin-toolchain-unwind",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "qualification/plugin-musl-source",
-      "head": "ccae8886eed54388bb6a36dd3211a6e5831ecc5b",
+      "ref": "proposal/plugin-musl-vfio",
+      "head": "92c5bed67c8cac88959b0a4cb64e0b52f92b2ec9",
       "title": "Build the TLDK plugin against musl",
-      "url": "https://github.com/tamird/gvisor/commit/ccae8886eed54388bb6a36dd3211a6e5831ecc5b",
+      "url": "https://github.com/tamird/gvisor/commit/92c5bed67",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-10-26T19:13:24.310925+00:00",
-      "summary": "The separate musl fork remains ccae8886e on published GNU head 85c742f25, with the exact tested product tree. GNU and musl TestDumpStack each passed with zero skips; the candidate license check also passed. The combined compiler-consumer proof passed on private source 0b3cb773b: both AMD64 production binaries built, and runsc --version executed. Both binaries used the exact 6,881,160-byte plugin archive from the musl regression. This remains agent work with no contributor decision.\n\nThe complete build includes the existing freestanding-tool prerequisite 0c0b49881 and selects both LLVM toolchains for the ARM64 vDSO transition. It does not establish an ARM64 production-binary run. The preceding standalone attempt failed during analysis because $(OBJCOPY) was undefined; that result is preserved. This prerequisite is separate from the published GNU-only #15153 change. The coordinator lacked /dev/vhost-net, so no virtio-user packet flow or privileged networking is claimed.\n\nPreserved earlier experiment:\n\nExperimental LLVM follow-up 59ed8f878 uses the compiler unwinder for TLDK stack dumps on musl without libbacktrace. The focused cgo trace and static-program runs passed. This is a direct follow-up to 77d1072c5, separate from the preliminary GNU-only #15153 refinement. Cleanup and final source review remain; there is no upstream publication or contributor decision.",
+      "updatedAt": "2026-11-02T03:34:49+00:00",
+      "summary": "The musl build can keep DPDK VFIO support enabled. The GNU and musl archives each exported three VFIO symbols, and those symbols survived in the static AMD64 binaries that ran TestDumpStack. Both original tests passed. The musl Bazel client then ran out of memory; its original output and runfile digests were recovered without rerunning the tests. PCI-device traffic remains untested. The qualified change builds on an earlier revision of the GNU-only PR #15153.",
       "followup": {
-        "owner": "root",
-        "sourceHead": "ccae8886eed54388bb6a36dd3211a6e5831ecc5b",
-        "observedAt": "2026-10-26T19:13:24.310925+00:00",
-        "disposition": "GNU/musl regressions and composed AMD64 production build passed; packet traffic remains unqualified",
-        "nextAction": "Keep the composed-build prerequisite and source scope explicit during the remaining source/delivery review. Packet traffic needs suitable vhost-net capacity; no contributor action is pending.",
+        "owner": "arm64_results",
+        "sourceHead": "92c5bed67c8cac88959b0a4cb64e0b52f92b2ec9",
+        "observedAt": "2026-11-02T03:34:49+00:00",
+        "disposition": "GNU and musl original archive, linked symbols and runtime test verified",
+        "nextAction": "Reconcile the musl change with #15153’s current GNU-only head, 675d49b1c. Reuse verified evidence where the patch is equivalent and qualify source drift before presenting the complete change.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/ccae8886eed54388bb6a36dd3211a6e5831ecc5b",
-          "https://app.buildbuddy.io/invocation/05079e26-0161-42bc-a149-24c66ff93a22",
-          "https://app.buildbuddy.io/invocation/d20507c4-0ce0-44ac-ba95-53845c4d9c16",
-          "https://app.buildbuddy.io/invocation/ea12e802-0ac6-491d-a57b-6d490960e626",
-          "https://app.buildbuddy.io/invocation/2f77ca44-a6b2-40ed-909e-b53ef5662a02"
+          "https://github.com/tamird/gvisor/actions/runs/41383490365/artifacts/13114392072",
+          "https://github.com/google/gvisor/pull/15153"
         ]
       },
       "evidence": [
+        {
+          "label": "Original archive → link → executed ELF, three symbols and named test verified for both libcs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41383490365/artifacts/13114392072"
+        },
+        {
+          "label": "Original producer job and client failure after test execution",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41380029939/artifacts/13114535148"
+        },
         {
           "label": "Current musl candidate on the published GNU head",
           "url": "https://github.com/tamird/gvisor/commit/ccae8886eed54388bb6a36dd3211a6e5831ecc5b"
@@ -27645,10 +27650,10 @@
       ],
       "refinement": {
         "before": {
-          "head": "d86b92bcd85ce9f2faaf71f0f4336ee60f806540"
+          "head": "ccae8886eed54388bb6a36dd3211a6e5831ecc5b"
         },
         "after": {
-          "head": "ccae8886eed54388bb6a36dd3211a6e5831ecc5b"
+          "head": "92c5bed67c8cac88959b0a4cb64e0b52f92b2ec9"
         }
       }
     },
@@ -43024,6 +43029,29 @@
         "body": "Open this standalone refactor on current master. It preserves lock order and uses one mutex when both futex keys map to the same bucket. The mixed PI waiter and requeue-count changes are independent.",
         "requestedAt": "2026-11-02T02:58:01+00:00"
       }
+    },
+    {
+      "id": "branch:buildkite-direct-smoke",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "group": "bazel",
+      "ref": "proposal/buildkite-direct-smoke",
+      "head": "ec41d0045a4fa0ed1ee5320f1fc3f4ff609cf79f",
+      "url": "https://github.com/tamird/gvisor/commit/ec41d0045",
+      "title": "Run the Buildkite smoke guests directly with Bazel",
+      "status": "Agent work",
+      "updatedAt": "2026-11-02T03:34:49+00:00",
+      "summary": "Buildkite can invoke runsc from a runnable release while keeping the full eight-file layout available to existing copy consumers. The native ARM64 check resolved all eight outputs, then Nogo rejected a Go SDK package before the guest could run. The owner is tracing that distinction and integrating the declared release copy action from #16506.",
+      "evidence": [
+        {
+          "label": "Native architecture jobs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41383306954"
+        },
+        {
+          "label": "Native ARM64 layout and Nogo failure before guest execution",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41383306954/artifacts/13114402180"
+        }
+      ]
     }
   ],
   "edges": [
@@ -46522,6 +46550,24 @@
       "reason": "Both fixes change how requeueLocked returns its result. This follow-up counts moved waiters and preserves the parent’s error for mixing ordinary and PI waiters.",
       "evidence": [
         "https://github.com/tamird/gvisor/compare/3737ff32e...dabaf5e45"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:smoke-race-target-mode",
+      "to": "branch:buildkite-direct-smoke",
+      "reason": "The race smoke job runs the complete //:release-race with matching launcher and Sentry.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/3e0709a90"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:16506",
+      "to": "branch:buildkite-direct-smoke",
+      "reason": "Combine the runnable release with declared copy actions for staging.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16506"
       ]
     }
   ],
