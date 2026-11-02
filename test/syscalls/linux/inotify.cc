@@ -2872,6 +2872,42 @@ TEST(Inotify, KernfsDynamicFileAcrossSave) {
               IsPosixErrorOkAndHolds(wd));
 }
 
+TEST(Inotify, KernfsDynamicFileUnderCachePressure) {
+  // Exercise ordinary dentry eviction, independent of PrepareSave.
+  DisableSave disable_save;
+  const FileDescriptor fd =
+      ASSERT_NO_ERRNO_AND_VALUE(InotifyInit1(IN_NONBLOCK));
+  const std::string target = absl::StrCat("/proc/self/fdinfo/", fd.get());
+  const int wd =
+      ASSERT_NO_ERRNO_AND_VALUE(InotifyAddWatch(fd.get(), target, IN_OPEN));
+  auto expect_open = [&] {
+    const FileDescriptor opened =
+        ASSERT_NO_ERRNO_AND_VALUE(Open(target, O_RDONLY));
+    const std::vector<Event> events =
+        ASSERT_NO_ERRNO_AND_VALUE(DrainEvents(fd.get()));
+    EXPECT_THAT(events, Are({Event(IN_OPEN, wd)}));
+  };
+  ASSERT_NO_FATAL_FAILURE(expect_open());
+
+  // Look up more than procfs's default 1000 cached dentries. Keep the
+  // watched fd live, without holding its fdinfo file open during the churn.
+  int next_fd = fd.get() + 1;
+  for (int i = 0; i < 512; ++i) {
+    const FileDescriptor tmp(fcntl(fd.get(), F_DUPFD_CLOEXEC, next_fd));
+    ASSERT_THAT(tmp.get(), SyscallSucceeds());
+    next_fd = tmp.get() + 1;
+    struct stat st;
+    for (const char* dir : {"/proc/self/fd/", "/proc/self/fdinfo/"}) {
+      ASSERT_THAT(lstat(absl::StrCat(dir, tmp.get()).c_str(), &st),
+                  SyscallSucceeds());
+    }
+  }
+  SCOPED_TRACE("after 1024 distinct procfs lookups");
+  expect_open();
+  EXPECT_THAT(InotifyAddWatch(fd.get(), target, IN_OPEN),
+              IsPosixErrorOkAndHolds(wd));
+}
+
 }  // namespace
 }  // namespace testing
 }  // namespace gvisor
