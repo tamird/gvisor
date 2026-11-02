@@ -34,6 +34,36 @@ type cycleTestNode struct {
 	waitFor *cycleTestNode
 }
 
+// TestCompletionQueueCapacity exercises both growth sites and table reuse.
+func TestCompletionQueueCapacity(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		capacity int
+	}{{"empty", 0}, {"undersized", 1}, {"sufficient", 4}} {
+		t.Run(tc.name, func(t *testing.T) {
+			ds := graphDecodeState{targetObjs: make([]int32, tc.capacity)}
+			original := ds.targetObjs
+			var order []int
+			for i := 0; i < 4; i++ {
+				ds.ods = append(ds.ods, graphObjectDecodeState{cbHead: -1, cbTail: -1, waitHead: -1, waitTail: -1})
+				ds.addCallback(int32(i), decodeCallback{waiter: -1, fn: func() { order = append(order, i) }})
+			}
+			ds.wait(0, 3, decodeCallback{waiter: -1})
+			ds.wait(1, 3, decodeCallback{waiter: -1})
+			ds.runCallbacks()
+			if !slices.Equal(order, []int{2, 3, 0, 1}) {
+				t.Fatalf("callback order = %v, want [2 3 0 1]", order)
+			}
+			if len(ds.targetObjs) != 0 || cap(ds.targetObjs) < len(ds.ods) {
+				t.Fatalf("returned table len/cap = %d/%d", len(ds.targetObjs), cap(ds.targetObjs))
+			}
+			if tc.capacity == 4 && &original[0] != &ds.targetObjs[:4][0] {
+				t.Fatal("existing table was not reused")
+			}
+		})
+	}
+}
+
 func (*cycleTestNode) StateTypeName() string { return "state.cycleTestNode" }
 func (*cycleTestNode) StateFields() []string { return []string{"waitFor"} }
 func (n *cycleTestNode) StateSave(s Sink)    { s.graph.save(0, &n.waitFor) }
