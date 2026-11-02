@@ -1,0 +1,71 @@
+name: Qualify the bounded work-map collector
+on:
+  push:
+    branches: [qualification/work-map-request-budget]
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the collector and exact curation
+        id: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = cc38c1e804c8e43ea7e818fa5f4971ff0a036899
+          test "$(git rev-parse HEAD^^)" = 3ce603ce26c307eee7ee060e800710c644d8e36b
+          test -z "$(git diff --name-only HEAD^ HEAD -- ':!.github')"
+          test -z "$(git diff HEAD^^ HEAD -- registry.json github-status.json app.js)"
+          mkdir results
+      - name: Check collector and client behavior
+        run: |
+          node --test app_test.mjs
+          python3 -m unittest discover -p '*_test.py'
+      - name: Collect the canonical snapshot independently
+        if: always() && steps.source.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          status=0
+          python3 update-status.py || status=$?
+          jq -n --arg source "$GITHUB_SHA" --arg product "$(git rev-parse HEAD^)" \
+            --arg curation "$(git rev-parse HEAD^^)" --argjson exit "$status" \
+            '{source:$source,product:$product,curation:$curation,collector_exit:$exit}' > results/source.json
+          test "$status" = 0
+          node metadata-preflight.mjs . > results/preflight.json
+          cp registry.json github-status.json results/
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          registry = json.loads(Path('registry.json').read_text())
+          snapshot = json.loads(Path('github-status.json').read_text())
+          nodes = {node['id']: node for node in registry['nodes']}
+          llvm = nodes['pr:hermeticbuild/hermetic-llvm:908']
+          gazelle = nodes['pr:16834']
+          assert llvm['head'] == '533981c365e8ee683926bd465efcc81bc31158bf', llvm['head']
+          assert not llvm.get('contributorReview') and not gazelle.get('contributorReview')
+          assert any(row.get('postedURL') == 'https://github.com/bazel-contrib/bazel-gazelle/issues/2499'
+                     for row in gazelle['settledReviews']), gazelle['settledReviews']
+          actual, = [row for row in snapshot['prs'] if row['url'] == llvm['url']]
+          assert actual['head'] == llvm['head'], actual['head']
+          assert snapshot['registryDate'] == registry['meta']['updatedAt']
+          print(json.dumps({'settlements': [llvm['id'], gazelle['id']], 'limits': snapshot['limits']}))
+          PY
+      - name: Publish the read-only snapshot pair and verifier
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-map-request-budget
+          path: |
+            results/source.json
+            results/preflight.json
+            results/registry.json
+            results/github-status.json
+          if-no-files-found: error
