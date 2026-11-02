@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T17:00:21.324445+00:00",
+    "updatedAt": "2026-11-02T17:10:19.772540+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4626,8 +4626,8 @@
       "url": "https://github.com/tamird/gvisor/commit/a385bd2b0",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "The compiler revision on current master uses the upstream LLVM source repository and retains the current Go rules, Linux headers and libbpf. It needs the two syscall-test allocator exception specifications, not the full #15368 cleanup. The catalog gains llvm-project and with_cfg and drops llvm-raw. QEMU and LTP license mismatches also occur on the parent. The principal binaries and analyzers passed for both targets. A new remote AMD64 compile reproduced the 4,456,624-byte NVIDIA parser object. The NVIDIA driver parser linked on AMD64 (211,730,920 bytes) and ARM64 (224,953,640 bytes). Both ELF products matched the corresponding remote link digest. The ARM link reused one locally generated TableGen include. The original driver ABI TestParser passed on AMD64 and native ARM64, one test each with no skips. The original uncached ARM64 action supplied the exact 224,953,640-byte linked ELF through its test runfiles. The digest was recovered from its retained input tree. The static syscallbench binary now uses the same musl platform selection as static Go binaries. It ran all three syscall modes on AMD64. Its existing x86-64 constraint rejected ARM64 as expected. Ordinary C binaries used the GNU loader and libc on both architectures. The syscall() and fork/wait modes now call musl. Comparing their timing across compilers requires the same benchmark binary.",
-      "updatedAt": "2026-11-01T22:36:52+00:00",
+      "summary": "The compiler migration replaces llvm-raw with the supplier’s source repository. The NVIDIA ABI parser linked and its owning test passed on AMD64 and ARM64. All 871 selected Nogo targets passed on the integration with the licensecheck fixture repair. The three runs covered every target on both architectures, with one cached test result. Static syscallbench ran all three modes on AMD64. Its x86-64 constraint excludes ARM64. Ordinary C binaries used GNU libc on both architectures. The parser’s two-backend configuration still needs a supplier release containing #892.",
+      "updatedAt": "2026-11-02T17:10:19.772540+00:00",
       "head": "a385bd2b0155b82faf4fc6a0c195a153ad57550c",
       "evidence": [
         {
@@ -4705,6 +4705,18 @@
         {
           "label": "Static syscallbench execution and ordinary GNU C binaries on both architectures",
           "url": "https://github.com/tamird/gvisor/actions/runs/41357065776/artifacts/13104181385"
+        },
+        {
+          "label": "597 Nogo targets on the corrected compiler integration",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41363500730/artifacts/13107794911"
+        },
+        {
+          "label": "1 Nogo target on the corrected compiler integration",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41370631971/artifacts/13109217470"
+        },
+        {
+          "label": "273 Nogo targets on the corrected compiler integration",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41371093548/artifacts/13110696516"
         }
       ],
       "refinement": {
@@ -4727,8 +4739,8 @@
         "owner": "Compiler integration",
         "sourceHead": "a385bd2b0155b82faf4fc6a0c195a153ad57550c",
         "disposition": "Qualify current compiler",
-        "observedAt": "2026-11-01T22:36:52+00:00",
-        "nextAction": "Review the full Buildkite Nogo qualification on the revised compiler stack. Preserve the independent licensing prerequisites for compiler integration. When integrating on Bazel 9, remove tools/crosstool-bazel9.patch and tools/llvm-bazel9.patch with their consumers. Keep the independent Linux-header patch. To retain #15940’s AArch64/X86 restriction, use a supplier release containing 17f6a3008. Registry releases through 0.8.26 select nine backends. Recheck the selected backends and the NVIDIA parser under Bazel 9.",
+        "observedAt": "2026-11-02T17:10:19.772540+00:00",
+        "nextAction": "Preserve the independent licensing prerequisites for compiler integration. When integrating on Bazel 9, remove tools/crosstool-bazel9.patch and tools/llvm-bazel9.patch with their consumers. Keep the independent Linux-header patch. To retain #15940’s AArch64/X86 restriction, use a supplier release containing 17f6a3008. Registry releases through 0.8.26 select nine backends. Recheck the selected backends and the NVIDIA parser under Bazel 9.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
@@ -27217,20 +27229,9 @@
       "title": "Make extra LLVM backends development dependencies",
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/892",
       "group": "bazel",
-      "status": "Published as hermetic-llvm #892",
-      "updatedAt": "2026-10-27T23:27:50.136123+00:00",
-      "summary": "The LLVM module requests AArch64 and X86 for downstream builds. It requests seven additional backends through a development-only use of the same extension. Bazel resolved two backends for an unconfigured consumer, three for a consumer with a transitive BPF request, and all nine when hermetic-llvm was the root. Projects that build Clang from source for another target must request that backend. Prebuilt compilers do not change.",
-      "followup": {
-        "owner": "pinring_source_scope",
-        "sourceHead": "b18956ee24a60996dd51e52e826aedbf739bc57c",
-        "observedAt": "2026-10-27T23:27:50.136123+00:00",
-        "disposition": "Reviewed revision published; upstream CI passed",
-        "nextAction": "All 43 upstream checks passed on b18956ee. Await maintainer review.",
-        "evidence": [
-          "https://github.com/hermeticbuild/hermetic-llvm/pull/892/commits/b18956ee24a60996dd51e52e826aedbf739bc57c",
-          "https://app.buildbuddy.io/invocation/98d02265-ec22-4748-b956-9431ab4b6322"
-        ]
-      },
+      "status": "Published",
+      "updatedAt": "2026-11-02T17:10:19.772540+00:00",
+      "summary": "Merged in https://github.com/hermeticbuild/hermetic-llvm/pull/892. Release availability is tracked on the LLVM source migration.",
       "evidence": [
         {
           "label": "43 passing upstream checks",
@@ -38478,14 +38479,14 @@
       "group": "bazel",
       "status": "Agent work",
       "url": "https://github.com/tamird/gvisor/tree/research/declared-jekyll-site",
-      "updatedAt": "2026-11-01T07:48:29.705288+00:00",
+      "updatedAt": "2026-11-02T17:10:19.772540+00:00",
       "summary": "Bazel builds the website without a Docker daemon. Dropping the inline-SVG plugin and its optimizer preserved all 278 published files byte for byte; neither gem was installed in the selected SDK. Disabling Autoprefixer changed css/main.css, so it stays. The serving-image check also covered the hard-linked logo.",
       "followup": {
         "owner": "root",
         "sourceHead": "2d59e8489625bcc700c22ed572d4160ffff0a1fd",
         "observedAt": "2026-11-01T07:48:29.705288+00:00",
         "disposition": "Source notices verified; waiting for build prerequisites",
-        "nextAction": "Wait for the first BCR rules_img release containing #811 and the declared Buildkite Bazelisk bootstrap. The five Ruby gems and tar.bzl are verified. The pinned build SDK's component notices are recorded separately; the catalog does not enumerate OCI inputs. The Go docs and server still require GNU tools.",
+        "nextAction": "Wait for the rules_img 0.3.24 BCR publication (#11511) and the declared Buildkite Bazelisk bootstrap. The five Ruby gems and tar.bzl are verified. The pinned build SDK's component notices are recorded separately; the catalog does not enumerate OCI inputs. The Go docs and server still require GNU tools.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41148839163/artifacts/13021069904",
           "https://github.com/tamird/gvisor/actions/runs/41144112084/artifacts/13019603780",
@@ -38549,6 +38550,10 @@
         {
           "label": "Canonical verifier and original mixed-execution failure",
           "url": "https://github.com/tamird/gvisor/actions/runs/41118437298/artifacts/13007432076"
+        },
+        {
+          "label": "BCR publication of rules_img 0.3.24 with the layer fix",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11511"
         }
       ],
       "links": [
@@ -44587,7 +44592,7 @@
       "url": "https://github.com/llvm/llvm-project/pull/238034",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-02T17:00:21.324445+00:00",
+      "updatedAt": "2026-11-02T17:10:19.772540+00:00",
       "summary": "LLVM compiles the instrumentor runtime as C++ and embeds its source text. Bazel now uses the CMake and GN template for that text. The editable checkout and pinned archive produced identical output, and editing the header regenerated the bytes.",
       "evidence": [
         {
@@ -44609,8 +44614,33 @@
         {
           "label": "Range-diff baseline: the alternative in LLVM draft #214242",
           "url": "https://github.com/llvm/llvm-project/commit/adf91f4bf"
+        },
+        {
+          "label": "The native Windows target produced the identical generated header",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41486352283/artifacts/13161653973"
+        },
+        {
+          "label": "The libc build on main failed on the same header",
+          "url": "https://github.com/llvm/llvm-project/actions/runs/41485627933/job/125415084020"
+        },
+        {
+          "label": "The full libc build passed with its missing dependency declared",
+          "url": "https://github.com/llvm/llvm-project/actions/runs/41486952253/job/125419717363"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "LLVM integration",
+        "sourceHead": "47a6f55681edffa637e6ccf43c220449f7ce2c50",
+        "observedAt": "2026-11-02T17:10:19.772540+00:00",
+        "disposition": "Base branch fails the LLVM libc build",
+        "nextAction": "Check whether LLVM has merged #238035. If this PR still requires a green fullbuild, refresh it against the main branch containing that fix. Both the base and this PR failed to find libc’s kill.h.",
+        "evidence": [
+          "https://github.com/llvm/llvm-project/actions/runs/41485627933/job/125415084020",
+          "https://github.com/llvm/llvm-project/actions/runs/41486451831/job/125417959240",
+          "https://github.com/llvm/llvm-project/pull/238035",
+          "https://github.com/llvm/llvm-project/actions/runs/41486952253/job/125419717363"
+        ]
+      }
     },
     {
       "id": "pr:bazel-contrib/rules_distroless:294",
@@ -47453,7 +47483,7 @@
       "evidence": "https://github.com/tamird/gvisor/commit/ea27b4806607c7640e2c1f43a5996f80374a78af"
     },
     {
-      "from": "branch:hermetic-llvm-root-backends",
+      "from": "pr:hermeticbuild/hermetic-llvm:892",
       "to": "branch:hermetic-llvm-project",
       "type": "depends_on",
       "reason": "Preserve selectable LLVM backends and transitive requirements when delivering the standalone source migration; upstream supplier #892 remains separate from the compiler switch.",
