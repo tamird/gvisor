@@ -519,7 +519,7 @@ if [[ -n "${mss_study_dir}" ]]; then
   if ${mss_duration}; then
     ${nsjoin_binary} /tmp/client.netns ${iperf_binary_name} -p ${proxy_port} -c ${client_addr} -R -t ${duration} -O 3 -l 61440 -J > "${mss_study_dir}/iperf.json"
   else
-  ${nsjoin_binary} /tmp/client.netns timeout -k 2 30 strace -ff -ttt -T -e trace=read,recvfrom -e raw=read,recvfrom -o "${mss_study_dir}/receiver.read" ${iperf_binary_name} -p ${proxy_port} -c ${client_addr} -R -n ${mss_bytes} -l 61440 -J > "${mss_study_dir}/iperf.json"
+  ${nsjoin_binary} /tmp/client.netns timeout -k 2 30 strace -ff -ttt -T -e trace=connect,read,recvfrom -e raw=read,recvfrom -o "${mss_study_dir}/receiver.read" ${iperf_binary_name} -p ${proxy_port} -c ${client_addr} -R -n ${mss_bytes} -l 61440 -J > "${mss_study_dir}/iperf.json"
   fi
   primary=\$?
   date +%s%N > "${mss_study_dir}/iperf-end-ns"
