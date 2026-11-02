@@ -15,6 +15,8 @@
 package tcp_cork_mss_test
 
 import (
+	"bytes"
+	"encoding/json"
 	"flag"
 	"testing"
 	"time"
@@ -80,4 +82,101 @@ func TestTCPCorkMSS(t *testing.T) {
 		t.Fatalf("expected payload was not received: %s", err)
 	}
 	conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck)})
+}
+
+// TestMSSSACKObservation measures the same application write with timestamps
+// omitted. The receive-gap arm also makes the outgoing SACK option nonempty.
+// This is a packet-size observation, not a throughput benchmark.
+func TestMSSSACKObservation(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		sack bool
+		gap  bool
+	}{
+		{"no_sack", false, false},
+		{"sack", true, false},
+		{"sack_receive_gap", true, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dut := testbench.NewDUT(t)
+			listener, port := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1)
+			defer dut.Close(t, listener)
+			conn := dut.Net.NewTCPIPv4(t, testbench.TCP{DstPort: &port}, testbench.TCP{SrcPort: &port})
+			defer conn.Close(t)
+			options := make([]byte, 8)
+			n := header.EncodeMSSOption(1460, options)
+			if tc.sack {
+				n += header.EncodeNOP(options[n:])
+				n += header.EncodeNOP(options[n:])
+				n += header.EncodeSACKPermittedOption(options[n:])
+			}
+			conn.ConnectWithOptions(t, options[:n])
+			synAck := conn.SynAck(t)
+			negotiated := header.ParseSynOptions(synAck.Options, true)
+			if negotiated.TS || negotiated.SACKPermitted != tc.sack {
+				t.Fatalf("unexpected SYN-ACK options: %x (%+v)", synAck.Options, negotiated)
+			}
+			fd, _ := dut.Accept(t, listener)
+			defer dut.Close(t, fd)
+			dut.SetSockOptInt(t, fd, unix.IPPROTO_TCP, unix.TCP_NODELAY, 1)
+			clientSeq := uint32(*conn.LocalSeqNum(t))
+			var gapOptions []byte
+			if tc.gap {
+				conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), SeqNum: testbench.Uint32(clientSeq + 1)}, &testbench.Payload{Bytes: []byte{'b'}})
+				ack, err := conn.Expect(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: &clientSeq}, time.Second)
+				if err != nil {
+					t.Fatalf("receive-gap ACK: %s", err)
+				}
+				gapOptions = ack.Options
+				blocks := header.ParseTCPOptions(ack.Options).SACKBlocks
+				if len(blocks) != 1 || uint32(blocks[0].Start) != clientSeq+1 || uint32(blocks[0].End) != clientSeq+2 {
+					t.Fatalf("receive-gap SACK = %+v", blocks)
+				}
+			}
+			before := dut.GetSockOptTCPInfo(t, fd)
+			payload := bytes.Repeat([]byte{0x5a}, 1460)
+			if got := dut.Send(t, fd, payload, 0); got != int32(len(payload)) {
+				t.Fatalf("single Send = %d, want %d", got, len(payload))
+			}
+			var packets []map[string]any
+			for received := 0; received < len(payload); {
+				seq := uint32(*conn.RemoteSeqNum(t))
+				frame, err := conn.ExpectNextData(t, &testbench.TCP{SeqNum: &seq, AckNum: &clientSeq}, nil, time.Second)
+				if err != nil {
+					t.Fatalf("data after %d bytes: %s", received, err)
+				}
+				if len(frame) != 4 {
+					t.Fatalf("want Ethernet/IPv4/TCP/payload, got %s", frame)
+				}
+				tcp := frame[2].(*testbench.TCP)
+				data := frame[3].(*testbench.Payload).Bytes
+				if len(data) == 0 || len(data) > len(payload)-received || !bytes.Equal(data, payload[received:received+len(data)]) {
+					t.Fatalf("unexpected payload at %d: %x", received, data)
+				}
+				parsed := header.ParseTCPOptions(tcp.Options)
+				if parsed.TS || (!tc.sack && len(parsed.SACKBlocks) > 0) {
+					t.Fatalf("unexpected data options: %x", tcp.Options)
+				}
+				packets = append(packets, map[string]any{"payload": len(data), "options": tcp.Options, "header_bytes": *tcp.DataOffset, "seq": *tcp.SeqNum, "sack_blocks": parsed.SACKBlocks})
+				received += len(data)
+				conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), SeqNum: &clientSeq})
+			}
+			if tc.gap {
+				conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), SeqNum: &clientSeq}, &testbench.Payload{Bytes: []byte{'a'}})
+				if got := dut.Recv(t, fd, 2, unix.MSG_WAITALL); !bytes.Equal(got, []byte("ab")) {
+					t.Fatalf("filled receive gap: %q", got)
+				}
+			}
+			var uts unix.Utsname
+			if err := unix.Uname(&uts); err != nil {
+				t.Fatal(err)
+			}
+			observation := map[string]any{"case": tc.name, "syn_options": options[:n], "syn_ack_options": synAck.Options, "negotiated": negotiated, "before": before, "after": dut.GetSockOptTCPInfo(t, fd), "packets": packets, "send_bytes": len(payload), "tcp_nodelay": 1, "gap_ack_options": gapOptions, "worker_kernel": unix.ByteSliceToString(uts.Release[:])}
+			encoded, err := json.Marshal(observation)
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Logf("MSSOBS %s", encoded)
+		})
+	}
 }

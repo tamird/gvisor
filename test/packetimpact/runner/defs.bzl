@@ -92,6 +92,12 @@ def packetimpact_native_test(
         **kwargs: all the other args, forwarded to _packetimpact_test
     """
     expect_failure_flag = ["--expect_failure"] if expect_failure else []
+    kwargs.setdefault("exec_properties", {
+        "test.container-image": "docker://mirror.gcr.io/istio/base@sha256:cab6852ff5ae39349136f41af6ee892a228c8fb9634ec25e7550bd9b517a7a93",
+        "test.dockerUser": "root",
+        "test.network-enable-ipv6": "true",
+        "test.workload-isolation-type": "firecracker",
+    })
     _packetimpact_test(
         test_runner = "//test/packetimpact/runner:main",
         name = name + "_native_test",
@@ -118,6 +124,12 @@ def packetimpact_netstack_test(
     expect_failure_flag = []
     if expect_failure:
         expect_failure_flag = ["--expect_failure"]
+    kwargs.setdefault("exec_properties", {
+        "test.container-image": "docker://mirror.gcr.io/istio/base@sha256:cab6852ff5ae39349136f41af6ee892a228c8fb9634ec25e7550bd9b517a7a93",
+        "test.dockerUser": "root",
+        "test.network-enable-ipv6": "true",
+        "test.workload-isolation-type": "firecracker",
+    })
     _packetimpact_test(
         test_runner = "//test/packetimpact/runner:main",
         name = name + "_netstack_test",
