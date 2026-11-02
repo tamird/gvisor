@@ -12,6 +12,9 @@ import subprocess
 import tarfile
 import time
 import urllib.request
+import zipfile
+
+from cas_inputs import blob, rpc
 
 from image_execution import execution_records
 
@@ -124,7 +127,7 @@ def build(row, name, labels, flags):
     write()
     assert result.returncode == 0, (name, result.returncode)
     assert row["completed"] and all(item["success"] for item in row["completed"])
-    root = bazel(["info", *flags, "execution_root"], name + "-root")
+    root = bazel(["info", "execution_root"], name + "-root")
     assert root.returncode == 0, root.stderr[-2000:]
     files = {label: Path(root.stdout.strip()) / path for label, path in paths.items()}
     assert all(path.is_file() for path in files.values()), files
@@ -171,6 +174,7 @@ def stock(row):
 
 
 def package(row, arch):
+    assert REPORT["phases"]["coordinator"]["status"] == "PASS", "Unmatched GNU coordinator"
     checkout(PRODUCT)
     flags = ["--config=" + arch, "--linkopt=-Wl,-t"]
     files = build(row, "image-" + arch, [IMAGE, "@iperf//:LICENSE", "@openssl//:LICENSE.txt", TARGET], flags)
@@ -243,6 +247,7 @@ def transfers(row, name, binary):
 
 
 def static(row, name, flags):
+    assert REPORT["phases"]["coordinator"]["status"] == "PASS", "Unmatched GNU coordinator"
     checkout(PRODUCT)
     flags = [*flags, "--linkopt=-Wl,-t"]
     files = build(row, name, [TARGET], flags)
@@ -271,6 +276,72 @@ def inventory(row):
     assert row["catalog_blob"] == "a839024a773b44d059cdd156402328b94bea4dd7"  # unchanged from 05f0c6fea
 
 
+
+def original(row):
+    data = (WORK / "original.zip").read_bytes()
+    assert sha(data) == "3ec2fee4df4a7b55144106107b41b191b1cf1f0dd53dc9081152f353dfa33a51"
+    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+        assert archive.namelist() == ["result.json"]
+        old = json.loads(archive.read("result.json"))
+    assert old["product"] == PRODUCT and old["registry"] == REGISTRY
+    assert old["carrier"] == "5950d2219aafcb8dd75f7c5cb92a5b6dabb604b2"
+    assert old["verdict"] == "INCOMPLETE"
+    assert old["phases"]["inventory"]["status"] == old["phases"]["stock-license"]["status"] == "PASS"
+    row.update(archive_sha256=sha(data), report=old)
+
+
+def recover_musl(row):
+    old = REPORT["phases"]["original"]["report"]["phases"]["musl-feature"]
+    assert old["exit"] == 0 and old["completed"] == [{"label": "@@iperf+//:iperf3", "success": True}]
+    assert old["invocation"] == "bf392f41-70eb-484d-940c-07c0fa64447f"
+    action, = [a for a in old["actions"] if a["mnemonic"] == "CppLink"]
+    assert action["digest"]["hash"] == "ff27fc2914bb63e69c2ebed157fd6b74ca0ad9e3b0bb20a0776ffb46ea52e1dd"
+    assert int(action["digest"]["sizeBytes"]) == 388 and action["runner"] == "remote" and not action["cacheHit"]
+    rows = rpc("GetExecution", {"executionLookup": {"invocationId": old["invocation"], "actionDigestHash": action["digest"]["hash"]}, "inlineExecuteResponse": True}).get("execution", [])
+    execution, = [e for e in rows if e.get("actionDigest", {}).get("hash") == action["digest"]["hash"] and int(e["actionDigest"]["sizeBytes"]) == 388]
+    assert execution["stage"] in (4, "COMPLETED")
+    response = execution["executeResponse"]
+    assert not response.get("status", {}).get("code") and not response.get("cachedResult")
+    assert response["result"].get("exitCode", 0) == 0
+    file, = [f for f in response["result"].get("outputFiles", []) if f["path"] == old["selected"][TARGET]]
+    row.update(invocation=old["invocation"], action_digest=action["digest"], execution_finished=old["execution_finished"],
+               output={key: file[key] for key in ("path", "digest", "isExecutable") if key in file}, platform=action["platform"],
+               link_libraries=old["link_libraries"])
+    write()
+    binary = WORK / "musl-feature-iperf3"
+    binary.write_bytes(blob(file["digest"], old["invocation"]))
+    binary.chmod(0o755)
+    row["elf"] = elf(binary)
+    assert row["elf"]["machine"] == 183 and not row["elf"]["interpreter"] and not row["elf"]["needed"]
+    expanded = []
+    for arg in action["commandArgs"]:
+        if not arg.startswith("@"):
+            expanded.append(arg)
+            continue
+        parameter, = [p for p in action["parameter_files"] if p["path"] == arg[1:]]
+        expanded.extend(shlex.split(blob(parameter["digest"], old["invocation"]).decode()))
+    row["expanded_args"] = expanded
+    assert "-static" in expanded and "aarch64-linux-musl" in expanded
+    assert any("/musl/" in path and path.endswith("/libc.a") for path in row["link_libraries"])
+
+
+def musl_runtime(row):
+    assert REPORT["phases"]["musl-output"]["status"] == "PASS"
+    assert REPORT["phases"]["image-aarch64"]["status"] == "PASS", "No qualified native runtime image"
+    binary = WORK / "musl-feature-iperf3"
+    row["elf"] = elf(binary)
+    assert row["elf"] == REPORT["phases"]["musl-output"]["elf"]
+    transfers(row, "musl-feature", binary)
+
+
+def coordinator(row):
+    row["compiler"] = str(Path(shutil.which("gcc")).resolve())
+    row["gcc_version"] = checked(["gcc", "-dumpversion"], "coordinator-gcc")
+    row["gcc_full_version"] = checked(["gcc", "-dumpfullversion"], "coordinator-gcc-full")
+    row["default_gcc"] = (WORK / "default-gcc").read_text().strip()
+    assert row["gcc_version"] == "11", "Coral's include inventory must match the declared GCC11 execution worker"
+
+
 def scan():
     for path in PUBLIC.iterdir():
         assert path.name == "result.json" and path.is_file() and not path.is_symlink() and path.stat().st_size < 2_000_000
@@ -286,13 +357,14 @@ if __name__ == "__main__":
         raise SystemExit(0)
     assert os.uname().machine == "aarch64"
     REPORT["kernel"] = os.uname().release
-    phase("inventory", inventory)
-    phase("stock-license", stock)
+    phase("original", original)
+    phase("musl-output", recover_musl)
+    phase("coordinator", coordinator)
     for arch in ["aarch64", "x86_64"]:
         phase("image-" + arch, lambda row, arch=arch: package(row, arch))
     phase("gnu-feature", lambda row: static(row, "gnu-feature", ["--config=aarch64", "--features=fully_static_link"]))
     phase("gnu-linkopt", lambda row: static(row, "gnu-linkopt", ["--config=aarch64", "--linkopt=-static"]))
-    phase("musl-feature", lambda row: static(row, "musl-feature", ["--platforms=@llvm//platforms:linux_aarch64_musl", "--extra_toolchains=@llvm//toolchain:all", "--features=fully_static_link"]))
+    phase("musl-runtime", musl_runtime)
     REPORT["finished"] = time.time()
     REPORT["verdict"] = "COMPLETE" if all(row["status"] == "PASS" for row in REPORT["phases"].values()) else "INCOMPLETE"
     REPORT["runtime_failures"] = [{"arm": name, **trial} for name, row in REPORT["phases"].items() for trial in row.get("runtime", []) if trial["exit"]]

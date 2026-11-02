@@ -1,9 +1,10 @@
 name: Iperf ARM64 static link and image consumer
 on:
   push:
-    branches: [qualification/iperf-static-arm]
+    branches: [qualification/iperf-static-recover]
 permissions:
   contents: read
+  actions: read
 jobs:
   qualify:
     if: github.repository == 'tamird/gvisor'
@@ -12,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
         with:
-          fetch-depth: 4
+          fetch-depth: 5
           persist-credentials: false
       - uses: bazel-contrib/setup-bazel@0.19.0
       - name: Configure the existing declared GNU worker
@@ -21,17 +22,32 @@ jobs:
         run: |
           set -euo pipefail
           test "$(uname -m)" = aarch64
-          test "$(git rev-parse HEAD^)" = c63dd53b987ba347983312252352e85bb71c1273
-          test "$(git rev-parse HEAD^^)" = 67601a14c6ffdf37d7e27a9124170a9d54ef0e12
+          test "$(git rev-parse HEAD^)" = 5950d2219aafcb8dd75f7c5cb92a5b6dabb604b2
+          test "$(git rev-parse HEAD^^^)" = 67601a14c6ffdf37d7e27a9124170a9d54ef0e12
           mkdir -p "$RUNNER_TEMP/iperf-static/gnu"
           cp test/rbe/gnu_platform/{MODULE.bazel,BUILD.bazel} "$RUNNER_TEMP/iperf-static/gnu/"
-          cp test/rbe/{iperf_static,image_execution}.py "$RUNNER_TEMP/iperf-static/"
+          cp test/rbe/{iperf_static,image_execution,cas_inputs}.py "$RUNNER_TEMP/iperf-static/"
           umask 077
           {
             printf '%s\n' 'build --compilation_mode=opt' 'build --jobs=16' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --remote_timeout=10m' 'build --remote_download_outputs=all' 'build --remote_cache_compression' 'build --noshow_progress' 'build --noannounce_rc' 'build --noremote_upload_local_results' 'build --host_platform=@qualification_gnu//:gnu' 'build --extra_execution_platforms=@qualification_gnu//:gnu'
             printf 'build --inject_repository=qualification_gnu=%s/iperf-static/gnu\n' "$RUNNER_TEMP"
             printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" "$BUILDBUDDY_API_KEY"
           } > "$RUNNER_TEMP/iperf-static/remote.bazelrc"
+      - name: Match the repository probe to the existing GCC11 worker
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          gcc -dumpfullversion > "$RUNNER_TEMP/iperf-static/default-gcc"
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends gcc-11
+          mkdir "$RUNNER_TEMP/iperf-static/bin"
+          ln -s /usr/bin/gcc-11 "$RUNNER_TEMP/iperf-static/bin/gcc"
+          echo "$RUNNER_TEMP/iperf-static/bin" >> "$GITHUB_PATH"
+      - name: Retrieve the original independently of the missing builds
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api repos/tamird/gvisor/actions/artifacts/13161204626/zip > "$RUNNER_TEMP/iperf-static/original.zip"
       - name: Inspect actual links and native cancellation
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
