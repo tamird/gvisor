@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T05:12:01+00:00",
+    "updatedAt": "2026-11-02T05:42:03+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34166,13 +34166,17 @@
       "id": "branch:declared-codespell",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/declared-codespell",
-      "head": "73eda260e0388b7f6a32ba84fe167e8dbbaa5d88",
+      "ref": "review/codespell-bazel9",
+      "head": "46b096d63f5a90ef49976a6ccdeafe81a5324c57",
       "title": "Run the source spelling check with the declared Python toolchain",
-      "url": "https://github.com/tamird/gvisor/commit/73eda260e0388b7f6a32ba84fe167e8dbbaa5d88",
+      "url": "https://github.com/tamird/gvisor/commit/46b096d63",
       "group": "analysis",
-      "summary": "Bazel runs the pinned codespell wheel instead of downloading it in the lint script and invoking the host Python. All five source checks can run without Docker on a host with Bazel. Buildkite explicitly uses its builder until its agents provide Bazel.",
+      "summary": "The repository spelling action checked 3,329 declared files on a remote worker. A typo in a new Bazel package failed with its path and suggestion, and a request to edit sources in place failed before the file changed. The wheel contains GPL program code and CC-BY-SA dictionaries.",
       "evidence": [
+        {
+          "label": "Clean, misspelled, prohibited-write and configured-word controls on Bazel 9",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41395141116/artifacts/13119196338"
+        },
         {
           "label": "All five checks ran without Docker; tracked typo failed, untracked typo ignored; 223 license records passed",
           "url": "https://github.com/tamird/gvisor/actions/runs/40841175298"
@@ -34182,16 +34186,17 @@
           "url": "https://app.buildbuddy.io/invocation/8c30dc22-4d7d-403e-b6f6-58fdd89c698c"
         }
       ],
-      "status": "Contributor approval retained; waiting for prerequisites",
-      "updatedAt": "2026-10-29T15:46:52.917812+00:00",
+      "status": "Agent validating revision",
+      "updatedAt": "2026-11-02T05:42:03+00:00",
       "followup": {
         "owner": "root",
-        "sourceHead": "73eda260e0388b7f6a32ba84fe167e8dbbaa5d88",
-        "observedAt": "2026-10-29T15:46:52.917812+00:00",
-        "disposition": "Contributor approved the existing revision; newer lint guidance applies",
-        "nextAction": "Keep approval of the original tool pin. Isolate wheel imports from public BUILD files and validate the scratch action and external consumer; do not publish the shell call path.",
+        "sourceHead": "46b096d63f5a90ef49976a6ccdeafe81a5324c57",
+        "observedAt": "2026-11-02T05:42:03+00:00",
+        "disposition": "The contributor approved the earlier wheel pin. The revised action is being qualified.",
+        "nextAction": "Verify the real license catalog, scratch execution and external module use before requesting review of this revision.",
         "evidence": [
-          "https://github.com/tamird/gvisor/blob/gh-pages/lint-design.md"
+          "https://github.com/tamird/gvisor/commit/46b096d63",
+          "https://github.com/tamird/gvisor/compare/73eda260e...46b096d63"
         ]
       }
     },
@@ -43250,6 +43255,40 @@
         "summary": "With the same 5,931 declared SDK files, the unsandboxed builders emitted eight more archive packages and fourteen more list entries than the sandboxed builders. Copying only declared sources made both inventories match. The repo’s own package-list test reproduces the difference.",
         "body": "Unsandboxed GoStdlib actions include packages excluded from GoSDK.srcs\n\nAn ordinary gVisor `//:release` build on Linux ARM64 used cached standard library archives containing `crypto/internal/sysrand/internal/seccomp`. The Go analyzer rejected that package because it was absent from the declared SDK sources. Four of the six cached `GoStdlib` outputs contained the same eight extra packages. Forcing fresh sandboxed stdlib actions let the release and its guest smoke test pass. The cache records do not identify how the original producers ran. [1]\n\nOn Linux AMD64, three fresh builds declared the same 5,931 SDK source paths. They used rules_go v0.63.0, Bazel 8.8.1 and Go 1.27.3, with race and cgo enabled. [2]\n\n```\n                               Archive packages   Listed packages\nSandboxed                                   370               370\nUnsandboxed                                 378               384\nUnsandboxed, declared sources only          370               370\n```\n\nBoth builders recursively copy the physical SDK's `src` directory into a temporary GOROOT. That makes files excluded by the SDK rule, including `net/internal/socktest`, visible to `go install` and `go list` outside a filesystem sandbox. The archive tree and JSON list cover different sets of packages. Comparing each against its own sandboxed inventory gave an exact match after the change. [3]\n\nWould you accept passing `GoSDK.srcs` to both builders and copying those files into the same relative paths under GOROOT? The proposal applies the tested production change to current master at f9689452c. Its package-list test leaves `net/internal/socktest` physically present in the SDK while omitting it from the source arguments. With rules_go as the root module, the original directory copy reported that package and the proposed builder omitted it. Both export modes passed on the proposal. [4] [5] [6]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41384780443/artifacts/13115172336\n[2]: https://github.com/tamird/gvisor/actions/runs/41387753944/artifacts/13116705064\n[3]: https://github.com/tamird/gvisor/blob/ffd865724/test/rbe/stdlib-sdk-receipt.json\n[4]: https://github.com/tamird/rules_go/commit/10f9a0f0d\n[5]: https://github.com/tamird/rules_go/actions/runs/41389254683/artifacts/13116369389\n[6]: https://github.com/tamird/rules_go/actions/runs/41389594631/artifacts/13116459720\n\nPosted by Codex on behalf of @tamird."
       }
+    },
+    {
+      "id": "branch:shm-removal-publication",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/shm-removal-publication",
+      "head": "166e166261dd9140cfaac183445b2377b3be4f20",
+      "title": "Make shared memory removal visible atomically",
+      "url": "https://github.com/tamird/gvisor/commit/166e16626",
+      "group": "runtime",
+      "summary": "A concurrent IPC_STAT could report SHM_DEST while still returning the segment’s old key. Remove the key and set SHM_DEST under the same registry and segment locks.",
+      "evidence": [
+        {
+          "label": "Controlled interleaving before and after, systrap syscall cases and both architecture analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41394136215/artifacts/13119345175"
+        },
+        {
+          "label": "Native ownership case with mapped credentials, alongside the original retained results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41395245317/artifacts/13119595225"
+        }
+      ],
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T05:42:03+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "166e166261dd9140cfaac183445b2377b3be4f20",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/166e16626",
+        "title": "Make shared memory removal visible atomically",
+        "requestedAt": "2026-11-02T05:42:03+00:00",
+        "summary": "Open a standalone shared-memory PR?",
+        "body": "A concurrent IPC_STAT could report SHM_DEST while still returning the segment’s old key. Remove the key and set SHM_DEST under the same registry and segment locks. All six syscall cases passed on systrap and Linux. The native runner’s one-ID map prevented the ownership case from switching credentials, so that unchanged case ran in the native worker’s own namespace."
+      }
     }
   ],
   "edges": [
@@ -46223,27 +46262,9 @@
       "type": "depends_on",
       "from": "branch:package-clang-format",
       "to": "branch:declared-codespell",
-      "reason": "The other source checks must run without Docker before changing the default for the Make target.",
+      "reason": "The spelling action extends the shared Bazel 9 source inventory and lint package.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/73eda260e0388b7f6a32ba84fe167e8dbbaa5d88"
-      ]
-    },
-    {
-      "type": "depends_on",
-      "from": "branch:bazel-clang-tidy-llvm",
-      "to": "branch:declared-codespell",
-      "reason": "Provides the clang-tidy action used by the default source-lint command.",
-      "evidence": [
-        "https://github.com/tamird/gvisor/commit/73eda260e0388b7f6a32ba84fe167e8dbbaa5d88"
-      ]
-    },
-    {
-      "type": "depends_on",
-      "from": "pr:15114",
-      "to": "branch:declared-codespell",
-      "reason": "Licensecheck records the pinned codespell wheel and its bundled license.",
-      "evidence": [
-        "https://github.com/tamird/gvisor/commit/73eda260e0388b7f6a32ba84fe167e8dbbaa5d88"
+        "https://github.com/tamird/gvisor/commit/46b096d63"
       ]
     },
     {
