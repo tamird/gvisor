@@ -30081,19 +30081,20 @@
       "title": "Extract the mapped systrap bytes and offsets from the same ELF",
       "url": "https://github.com/tamird/gvisor/commit/6a54750c6a8b6836e3806faa63a5729b2f7621a7",
       "group": "bazel",
-      "status": "Approved; waiting for #16516 and #16518",
+      "status": "Contributor approved; waiting for #16516",
       "summary": "The offsets tool extracts .crblob from the same linked ELF. The raw stub and Go offsets match for AMD64 and ARM64 with 4 KiB and 64 KiB pages. A remote empty-root check ran the static tool with each ELF; installed AMD64 runsc started a systrap container. The outer empty-root job failed rereading its archived execution log; the original worker record verified all three cases.",
-      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "updatedAt": "2026-11-02T07:51:17+00:00",
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "6a54750c6a8b6836e3806faa63a5729b2f7621a7",
-        "observedAt": "2026-10-28T14:12:46.344996+00:00",
-        "disposition": "Approved; prerequisites are open",
-        "nextAction": "Publish after #16516 and #16518 land, preserving support for generated input files and the per-architecture single-output check.",
+        "observedAt": "2026-11-02T07:51:17+00:00",
+        "disposition": "Approved; #16518 merged",
+        "nextAction": "Publish after #16516 lands. Keep support for generated input files and check that each architecture produces one output.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6a54750c6a8b6836e3806faa63a5729b2f7621a7",
           "https://github.com/google/gvisor/pull/16516",
-          "https://github.com/google/gvisor/pull/16518"
+          "https://github.com/google/gvisor/pull/16518",
+          "https://github.com/google/gvisor/commit/6898ec4d5"
         ]
       },
       "evidence": [
