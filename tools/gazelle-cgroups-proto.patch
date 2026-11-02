@@ -1,0 +1,12 @@
+--- a/internal/bzlmod/default_gazelle_overrides.bzl
++++ b/internal/bzlmod/default_gazelle_overrides.bzl
+@@ -54,6 +54,9 @@
+         "gazelle:go_naming_convention import_alias",
+         "gazelle:proto disable",
+     ],
++    "github.com/containerd/cgroups/v3": [
++        "gazelle:proto disable",
++    ],
+     "github.com/containerd/containerd": [
+         "gazelle:proto disable",
+     ],
