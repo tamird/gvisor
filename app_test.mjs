@@ -686,6 +686,27 @@ test('outgoing decisions require reviewable text and the owning discussion', () 
   }
 });
 
+test('an upstream issue draft opens from its source PR without accepting cross-thread replies', () => {
+  const context = client();
+  const node = { id: 'pr:1', type: 'pr', repo: 'google/gvisor', number: 1, url: 'https://github.com/google/gvisor/pull/1' };
+  const draft = { status: 'pending', kind: 'issue', title: 'Missing executable', summary: 'File the upstream report.',
+    body: 'A & B', head: 'a'.repeat(40), url: 'https://github.com/owner/project/issues/new' };
+  node.contributorReview = draft;
+  context.registryInput = { ...context.registryInput, nodes: [node], edges: [], groups: [] };
+  context.nodeInput = node;
+  vm.runInContext('validateRegistry(registryInput)', context);
+  assert.equal(vm.runInContext('decisionReason(contributorDecision(nodeInput))', context), 'post-reply');
+  for (const change of [{ kind: 'reply' }, { url: 'https://github.com/owner/project/issues/1' }]) {
+    node.contributorReview = { ...draft, ...change };
+    assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid contributor decision for pr:1/);
+  }
+  node.contributorReview = draft;
+  node.settledReviews = [{ ...draft }];
+  assert.equal(vm.runInContext('contributorDecision(nodeInput)', context), null);
+  node.contributorReview = { ...draft, url: 'https://github.com/other/project/issues/new' };
+  assert.equal(vm.runInContext('contributorDecision(nodeInput).kind', context), 'issue');
+});
+
 test('direct terminal status refresh does not refresh other PR states', () => {
   const context = client();
   context.snapshotInput.prs = [{ number: 1, url: 'https://github.com/google/gvisor/pull/1', imports: [], head: 'a'.repeat(40), labels: [], threads: {}, checkedAt: context.snapshotInput.checkedAt,

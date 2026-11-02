@@ -504,7 +504,7 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
         decisions = [node["contributorReview"]] if "contributorReview" in node else []
         decisions.extend(node.get("additionalReviews", []))
         attached = any(node["type"] == "pr" and decision.get("kind") == "amendment"
-                       or node["type"] in {"pr", "issue"} and decision.get("kind") in {"reply", "review"}
+                       or node["type"] in {"pr", "issue"} and decision.get("kind") in {"reply", "review", "issue"}
                        for decision in decisions)
         if not attached and (node["type"] != "branch" or node["id"] in closed
                              or (node.get("repo"), node.get("ref")) in promoted):
@@ -513,7 +513,8 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
         for decision in decisions:
             settled = any(
                 item["kind"] == decision.get("kind") and item.get("head") == decision.get("head")
-                and (item["kind"] not in {"reply", "review"} or item.get("body") == decision.get("body"))
+                and (item["kind"] not in {"reply", "review", "issue"} or item.get("body") == decision.get("body"))
+                and (item["kind"] != "issue" or (item.get("url"), item.get("title")) == (decision.get("url"), decision.get("title")))
                 for item in node.get("settledReviews", [])
             )
             if decision["status"] == "pending" and not settled:
