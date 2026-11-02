@@ -1,35 +1,53 @@
-name: CI
-
-"on":
+name: Observe reverse TCP writes with SACK toggled
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-mss-forwarder]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-mss-forwarder'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 3, persist-credentials: false}
+    - name: Prepare the existing GNU profile and native TCP tools
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        profile=0ee70efe6d52576b8f173b40ad6b7ac117da3b72
+        git fetch origin "$profile"
+        mkdir -p "$RUNNER_TEMP/mss-forwarder/platform"
+        for f in BUILD.bazel MODULE.bazel; do git show "$profile:test/rbe/gnu_platform/$f" > "$RUNNER_TEMP/mss-forwarder/platform/$f"; done
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/mss-forwarder/platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/mss-forwarder/remote.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        sudo -n apt-get update -qq
+        sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tshark tcpdump iproute2 iperf3 ethtool bc kmod iputils-ping
+        sudo -n modprobe sch_netem
+    - name: Build the one stock forwarder with the observation fixture
+      id: build
+      run: python3 test/rbe/tcp_mss_forwarder.py build
+    - name: Short independent captures and the fixed alternating transfer schedule
+      if: ${{ steps.build.outcome == 'success' }}
+      run: python3 test/rbe/tcp_mss_forwarder.py run
+    - name: Validate the typed publication
+      id: privacy
+      if: always()
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: python3 test/rbe/tcp_mss_forwarder.py scan
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: ${{ always() && steps.privacy.outcome == 'success' }}
       with:
-          name: runsc
-          path: bin/
+        name: tcp-mss-forwarder
+        path: |
+          ${{ runner.temp }}/mss-forwarder/public/build.json
+          ${{ runner.temp }}/mss-forwarder/public/result.json
+        if-no-files-found: error
