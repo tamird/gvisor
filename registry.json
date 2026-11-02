@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T21:41:54.604864+00:00",
+    "updatedAt": "2026-11-02T21:49:41.876026+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -7866,27 +7866,25 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/runner-xml-collation",
-      "head": "b91b6f06ca53984c36fb915461aa293786b793a9",
+      "head": "cf68281770e2eb1d1324031d053659c4b02d25b1",
       "title": "Preserve XML test suites during collation",
       "url": "https://github.com/google/gvisor/pull/15562",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-11-02T19:17:25.956977+00:00",
+      "updatedAt": "2026-11-02T21:49:41.876026+00:00",
       "summary": "Add the XML collation cases to //test/runner:runner_test alongside the checkpoint tests. All six cases passed.\n\nEarlier source record:\nThe October 25 source reconciliation is delivered at b91b6f06ca53 and the 12:53 provider snapshot reports it mergeable. The four runner file postimages remain identical to the approved source. The Makefile adds only test/runner/... to the current unit-test list, preserving removal of the coretag exclusion. No runtime replay or fresh exact-head approval is claimed.\n\nHistorical source-specific record:\n\nCurrent conflict repair is published at ddb152b722 on master 491c2af99a. It preserves the landed metric-test inclusion while adding only test/runner to unit selection. Independent source review confirms the same original operation and unchanged remaining source; GitHub verifies this exact head mergeable. Current-head CI and existing maintainer review requests remain separate. No new review or runtime execution is claimed.\n\nEarlier evidence:\n\nThe source is rebased and published at4128ff3f61. Independent review confirms the complete XML payload is unchanged; only Make context preserves the upstream tracereplay landing. GitHub reported the published head mergeable. Milan’s existing current-revision review request remains; no new approval or reviewer notification is claimed.\n\nPreserved earlier review and delivery evidence:\n\nEtienne explicitly invalidated approval at08:37 UTC and re-requested milantracy review of the current published revision; his comment describes the diff as different. The prior patch-equivalence proof is retained as history but no longer carries active approval authority. This is a maintainer review action, not a request for another source amendment or public ping. Existing separate CI diagnoses remain unchanged.\n\nThe diagnosed linker failure is already corrected on current source0729 by merged toolchain fix928823 (#15772, imported by #15796). Fifteen owning toolchain, consumer and Bazel input files match the retained qualified source. The older failed importbc25 lacks that fix and remains failed; no fresh current-head runtime result is claimed. Source-fix work is complete and ordinary import progression remains pending.\n\nThe same-source loader diagnostic reproduced the failure and completed capture. The child loaded eight declared DT_NEEDED libraries and no Abseil DSO; the declared strings library exports the missing symbol, while posix_error leaves it undefined. The fixture link command places strings before its trailing no-as-needed option. Linker dependency retention is the next investigation; option ordering is not yet a proved cause.\n\nThe temporary exact-import diagnostic reproduced an actual pre-discovery dynamic-linker failure: posix_error_test exits127 with empty stdout because libposix_error cannot resolve absl lts20260817 FastIntToBuffer. This is below the fallback parser; owning shared-library dependency and artifact provenance remain to be diagnosed. Original public failure and hosted-environment limits are retained.\n\nHostinet now owns the bounded discovery-test diagnosis for older import15687/build50720. The exact subprocess error remains hidden by the existing fallback; no source correction or retry is yet qualified. WorkMap retains sole periodic monitoring.\n\nThe older import15687 atbc25 fails TestDiscoveryDoesNotWriteResults in all three final build50720 unit jobs (cgroupv1, cgroupv2 and ARM64). ParseTestCases returns Default.All, indicating discovery subprocess failure; the exact error is hidden by the existing fallback. WorkMap is isolating that cause. The current0729 approved patch rebase does not by itself resolve this old failure.\n\nThe patch approved by milantracy on 2026-10-12T05:53:15Z at 400d11eea2 is independently verified unchanged at 0729cdc9c7. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nRebased onto current master at d7ffb314ab. GitHub reports the source mergeable; fresh checks and maintainer approval are pending. The approved collation implementation is unchanged, and upstream's added example selection and runner XML changes are preserved. Milan has been notified for fresh review. GitHub rejected the native review re-request with HTTP 404; the existing kerumeto request remains. The generated import #15687 is untouched and refers to the preceding source head.\n\nPrevious source and validation record:\n\nmilantracy approved the current head 400d11eea on 2026-10-12T05:53:15Z. The PR is marked ready to pull and its import/copybara status is successful. It remains open; a successful import status is not a merged commit. No corrective review request or additional outreach is pending.\n\nEarlier source and validation record:\n\nThe user-approved change is now open as PR #15562 at 400d11eea. The current-base rebase preserves the approved fc05ca266 patch and commit message. No contributor decision remains. Current-head checks and maintainer review are tracked separately.\n\nPrior validation record:\n\nIt parses complete suites, preserving self-closing cases, case contents and suite metadata, and adds real-file regressions to the existing unit selection. The earlier filename-identity fix is already open as #15550. Independent source and saved-result reviews are closed: the old parser loses First.B and Second.Last; the corrected three parser cases and one discovery case pass, owning Nogo passes both CPUs, and the existing ARM64/64K shared cgroup run has all 56 console and XML identities exactly once with no skips. The parent remains failed because it retains the expected baseline failure. This is focused validation, not a full public-CI or performance result. This validation preceded PR #15562.",
       "followup": {
-        "owner": "work_map_current",
-        "disposition": "Pending contributor decision on the tested runner_test amendment",
-        "sourceHead": "b91b6f06ca53984c36fb915461aa293786b793a9",
-        "observedAt": "2026-10-30T23:03:18.501222+00:00",
-        "nextAction": "Review cf6828177 against b91b6f06c. If approved, update the existing PR under its current-head lease.",
+        "owner": "Existing upstream review",
+        "sourceHead": "cf68281770e2eb1d1324031d053659c4b02d25b1",
+        "observedAt": "2026-11-02T21:49:41.876026+00:00",
+        "disposition": "Approved amendment published on #15562",
+        "nextAction": "Follow the upstream checks and maintainer review. No contributor decision remains.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41141343766/artifacts/13019285220",
-          "https://github.com/tamird/gvisor/actions/runs/41140759531/artifacts/13018559070",
-          "https://github.com/tamird/gvisor/commit/cf6828177"
+          "https://github.com/google/gvisor/pull/15562"
         ]
       },
       "number": 15562,
-      "reviewDecision": "REVIEW_REQUIRED",
+      "reviewDecision": null,
       "evidence": [
         {
           "label": "Combined runner test: six executed cases",
@@ -7911,6 +7909,10 @@
         {
           "label": "Metric-selection context repair",
           "url": "https://github.com/tamird/gvisor/commit/ddb152b722a70654af52e3eaca3c844063d8f399"
+        },
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/15562"
         }
       ],
       "refinement": {
@@ -7932,16 +7934,15 @@
         "summary": "Existing approval-equivalence chain retained: current repair applies the same runner inclusion to the new master, preserving landed metric/trace selection. Complete non-Make source diff remains byte-identical. The explicit dismissed approval and pending maintainer re-review remain in force; no new approval is claimed.",
         "evidence": "https://github.com/google/gvisor/compare/2837520ad5d282550c859a80fb92df86afb2adc9..ddb152b722a70654af52e3eaca3c844063d8f399"
       },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "cf68281770e2eb1d1324031d053659c4b02d25b1",
-        "baseHead": "b91b6f06ca53984c36fb915461aa293786b793a9",
-        "url": "https://github.com/tamird/gvisor/commit/cf6828177",
-        "title": "Use the existing runner test for XML collation",
-        "summary": "Add the XML collation cases to //test/runner:runner_test alongside the checkpoint tests.",
-        "body": "The runner can drop self-closing test cases when it combines XML reports.\nThe amendment puts the collation tests in //test/runner:runner_test\nalongside the checkpoint tests. All six cases passed [1]. The runner\nbinary also built in a separate invocation that then failed on an\nobsolete test label [2].\n\ngit range-diff 7bffefa91..b91b6f06c 7317e2f45..cf6828177\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41141343766/artifacts/13019285220\n[2]: https://github.com/tamird/gvisor/actions/runs/41140759531/artifacts/13018559070"
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "cf68281770e2eb1d1324031d053659c4b02d25b1",
+          "outcome": "approved",
+          "at": "2026-11-02T21:49:41.876026+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/15562"
+        }
+      ]
     },
     {
       "id": "branch:rbe-current-integration",
@@ -31652,12 +31653,12 @@
       "repo": "google/gvisor",
       "number": 16596,
       "ref": "review/tcp-tail-probe-window-update",
-      "head": "1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4",
+      "head": "e1a3e3de2bbeabfebfe45a0cb3c90c41add81709",
       "title": "Wait for evidence of loss after a TCP tail probe",
       "url": "https://github.com/google/gvisor/pull/16596",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T07:26:24+00:00",
+      "updatedAt": "2026-11-02T21:49:41.876026+00:00",
       "summary": "Aditya’s review found that reducing the congestion window after a tail probe left the published sender in fast recovery. On two 10 ms RTT traces it waited 3 seconds to retransmit the next loss. The amended sender retried in 220 and 223 ms. Both senders still waited for a timeout on an ambiguous ACK and repaired a separate hole in 3 ms when the peer SACKed a later segment. Master produced three of the four observations and repaired a different segment in the ambiguous case. The final revision changes which recovery statistic counts the repaired probe.",
       "evidence": [
         {
@@ -31703,46 +31704,32 @@
         {
           "label": "Final source TCP suites and analyzer targets",
           "url": "https://github.com/tamird/gvisor/actions/runs/41227515403/artifacts/13052287840"
+        },
+        {
+          "label": "Response to the maintainer on the published amendment",
+          "url": "https://github.com/google/gvisor/pull/16596#issuecomment-6589285965"
         }
       ],
       "followup": {
-        "owner": "tcp_split_owner",
-        "sourceHead": "1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4",
-        "observedAt": "2026-10-31T17:34:52Z",
-        "disposition": "Tested amendment under review",
-        "nextAction": "Verify the Linux packets, TCP suites and analyzers on e1a3e3de2. Publish the approved amendment, description and reply only after the required checks and contributor decision.",
+        "owner": "Existing upstream review",
+        "sourceHead": "e1a3e3de2bbeabfebfe45a0cb3c90c41add81709",
+        "observedAt": "2026-11-02T21:49:41.876026+00:00",
+        "disposition": "Approved amendment published on #16596",
+        "nextAction": "Follow the upstream checks and maintainer review. No contributor decision remains.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16596",
-          "https://github.com/tamird/gvisor/commit/1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4",
-          "https://app.buildbuddy.io/invocation/d5c1faba-3fe7-4752-9d41-9ebd21dff862",
-          "https://app.buildbuddy.io/invocation/dea215a4-78bb-4acb-804b-54583419d20a",
-          "https://app.buildbuddy.io/invocation/df6869ae-9333-48b7-8304-41995b1754e4",
-          "https://app.buildbuddy.io/invocation/be435c44-8aa8-467f-88f1-b23917a5c019",
-          "https://github.com/google/gvisor/pull/16596#pullrequestreview-5724075574",
-          "https://github.com/tamird/gvisor/commit/e1a3e3de2",
-          "https://github.com/tamird/gvisor/actions/runs/41226847064/artifacts/13052405694",
-          "https://app.buildbuddy.io/invocation/39844fc3-1dd9-4d28-be76-ab3c921cf51c",
-          "https://github.com/tamird/gvisor/actions/runs/41227174846",
-          "https://github.com/tamird/gvisor/actions/runs/41227515403"
-        ],
-        "actionableComment": {
-          "kind": "review",
-          "head": "1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4",
-          "commentId": "PRR_kwDOB9IlXs8AAAABVS52Ng",
-          "url": "https://github.com/google/gvisor/pull/16596#pullrequestreview-5724075574"
-        }
+          "https://github.com/google/gvisor/pull/16596#issuecomment-6589285965"
+        ]
       },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "e1a3e3de2bbeabfebfe45a0cb3c90c41add81709",
-        "baseHead": "1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4",
-        "url": "https://github.com/tamird/gvisor/commit/e1a3e3de2",
-        "title": "Finish the tail-probe congestion response",
-        "summary": "Publish e1a3e3de2 to #16596, update the PR description from the commit message and reply to Aditya’s review?",
-        "requestedAt": "2026-10-31T18:03:49.634+00:00",
-        "body": "The published revision and corrected sender both reproduced all four manual-clock observations. In the two cases where an advancing ACK confirmed loss, the published sender waited 3 seconds and the corrected sender retried after 220 and 223 ms. The final amendment counts that response in TLPRecovery. Linux and the amended sender passed all five packet scenarios. The published sender failed three of the five. The final TCP suites and analyzers passed all 498 reported cases, with no skips.\n\ngit range-diff 1eb1f6b45^! e1a3e3de2^!\n\nProposed reply to Aditya\n\n@adios-404, thanks for the reproducer. I folded the fix into this PR and credited you. With your manual clock, the [previous version](https://app.buildbuddy.io/invocation/04537520-a094-4b81-ac6d-20fa2fcc50f1) waited three seconds in both write orderings. [With the fix](https://app.buildbuddy.io/invocation/39844fc3-1dd9-4d28-be76-ab3c921cf51c), the next tail was probed after 220 and 223 ms. Without an ACK past the original probe, the sender still waited for the RTO, as you pointed out.\n\nI kept the recovery point but removed the enter/leave-fast-recovery pair. That pair also discarded the SACK count if the advancing ACK reported another hole. A fourth trace checks that case: the sender stays in Disorder and RACK repairs the separate hole after 3 ms. The repaired probe now counts toward TLPRecovery; SACKRecovery still counts an actual entry into fast recovery. The existing packet test leaves one segment outstanding and checks the congestion state via TCP_INFO.\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "e1a3e3de2bbeabfebfe45a0cb3c90c41add81709",
+          "outcome": "approved",
+          "at": "2026-11-02T21:49:41.876026+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16596"
+        }
+      ]
     },
     {
       "id": "branch:state-restore-hook-values",
@@ -34784,7 +34771,7 @@
       "repo": "google/gvisor",
       "number": 16665,
       "ref": "research/fsconfigfd-checkpoint",
-      "head": "0aa163b78df385b88491955a5627c0d585c63123",
+      "head": "5c7696351adac2c56ac109c7e28d9018a604d8f6",
       "title": "Checkpoint open filesystem configuration and mount descriptors",
       "url": "https://github.com/google/gvisor/pull/16665",
       "group": "runtime",
@@ -34820,27 +34807,18 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-10-31T02:54:52.285980+00:00",
+      "updatedAt": "2026-11-02T21:49:41.876026+00:00",
       "followup": {
-        "owner": "root",
-        "observedAt": "2026-10-31T02:54:52.285980+00:00",
-        "sourceHead": "0aa163b78df385b88491955a5627c0d585c63123",
-        "disposition": "Contributor review requested",
-        "nextAction": "Publish the reviewed repair when authorized.",
+        "owner": "Existing upstream review",
+        "sourceHead": "5c7696351adac2c56ac109c7e28d9018a604d8f6",
+        "observedAt": "2026-11-02T21:49:41.876026+00:00",
+        "disposition": "Approved amendment published on #16665",
+        "nextAction": "Use the existing reapproval alarm for the updated source. The maintainer approved 0aa163b78 before the PeekFilesystem amendment.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/5c7696351",
-          "https://github.com/tamird/gvisor/actions/runs/41160927062/artifacts/13027885690"
+          "https://github.com/google/gvisor/pull/16665",
+          "https://github.com/google/gvisor/pull/16665#pullrequestreview-5742730585",
+          "https://github.com/google/gvisor/compare/0aa163b78df385b88491955a5627c0d585c63123..5c7696351adac2c56ac109c7e28d9018a604d8f6"
         ]
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "baseHead": "0aa163b78df385b88491955a5627c0d585c63123",
-        "head": "5c7696351adac2c56ac109c7e28d9018a604d8f6",
-        "url": "https://github.com/tamird/gvisor/commit/5c7696351",
-        "title": "Preserve fsmount permission checks on checkpoint restore",
-        "summary": "Decide whether to update #16665. The new mount API checks permission before it consumes the configured filesystem. The revision supplies its saved read-only setting at that check.",
-        "body": "Both 41-case checkpoint suites and all three mount-permission cases on Linux and gVisor passed. No skips or missing cases. The published PR still conflicts.\n\ngit range-diff 0aa163b78^! 5c7696351^!\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41160927062/artifacts/13027885690"
       },
       "refinement": {
         "before": {
@@ -34851,6 +34829,24 @@
           "head": "5c7696351adac2c56ac109c7e28d9018a604d8f6",
           "base": "0bbcbf9de7626fcecba97f37723dce80b435d73d"
         }
+      },
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "5c7696351adac2c56ac109c7e28d9018a604d8f6",
+          "outcome": "approved",
+          "at": "2026-11-02T21:49:41.876026+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16665"
+        }
+      ],
+      "reapproval": {
+        "kind": "content-amendment",
+        "method": "reviewed-source-diff",
+        "head": "5c7696351adac2c56ac109c7e28d9018a604d8f6",
+        "approvedHead": "0aa163b78df385b88491955a5627c0d585c63123",
+        "diffSha256": "b2990a91e3b481818a19e7dd9c1a15399c5f6e8b77f6c823b742312833fbc494",
+        "summary": "The amendment passes the saved read-only setting to PeekFilesystem, which the new fsmount permission check calls before consuming the filesystem.",
+        "evidence": "https://github.com/google/gvisor/compare/0aa163b78df385b88491955a5627c0d585c63123..5c7696351adac2c56ac109c7e28d9018a604d8f6"
       }
     },
     {
@@ -36290,18 +36286,25 @@
       "number": 16713,
       "group": "runtime",
       "ref": "review/state-legacy-map-entry",
-      "head": "d7b1012300396fa2fc231060839ca6268b0adff1",
+      "head": "d125b1fbc17eb4b51e4eb1a9b8ee7fd5ac8990da",
       "title": "Finish loaded fields before copying their values",
       "url": "https://github.com/google/gvisor/pull/16713",
       "status": "open",
-      "updatedAt": "2026-11-02T05:12:01+00:00",
-      "summary": "The published PR fixes legacy restore ordering. With graph decoding now the default, the same fixture returned success while an enclosing hook copied 0 instead of 2. The amendment finishes the fields before running the enclosing hooks in both readers.",
+      "updatedAt": "2026-11-02T21:49:41.876026+00:00",
+      "summary": "The original revision fixed legacy restore ordering. With graph decoding now the default, the same fixture returned success while an enclosing hook copied 0 instead of 2. The amendment finishes the fields before running the enclosing hooks in both readers.",
       "settledReviews": [
         {
           "kind": "proposal",
           "head": "d7b1012300396fa2fc231060839ca6268b0adff1",
           "outcome": "approved",
           "at": "2026-10-29T22:57:17.831574+00:00"
+        },
+        {
+          "kind": "amendment",
+          "head": "d125b1fbc17eb4b51e4eb1a9b8ee7fd5ac8990da",
+          "outcome": "approved",
+          "at": "2026-11-02T21:49:41.876026+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16713"
         }
       ],
       "evidence": [
@@ -36328,6 +36331,10 @@
         {
           "label": "Eight ordinary-map benchmark pairs: one more allocation and 40 bytes per Load",
           "url": "https://github.com/tamird/gvisor/actions/runs/40967483993"
+        },
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16713"
         }
       ],
       "refinement": {
@@ -36338,16 +36345,15 @@
           "head": "d125b1fbc17eb4b51e4eb1a9b8ee7fd5ac8990da"
         }
       },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "baseHead": "d7b1012300396fa2fc231060839ca6268b0adff1",
-        "head": "d125b1fbc17eb4b51e4eb1a9b8ee7fd5ac8990da",
-        "url": "https://github.com/tamird/gvisor/commit/d125b1fbc",
-        "requestedAt": "2026-11-02T05:12:01+00:00",
-        "title": "Amend #16713 to restore fields before enclosing hooks in both readers",
-        "summary": "The seven map and inline cases passed with both checkpoint formats, normally and with the race detector. The 20,000-node warm graph benchmark took 128.856 ms on stock and 133.128 ms on the candidate (medians, six pairs, candidate slower in five). Allocations were unchanged in both measured fixtures.",
-        "body": "The new graph change queues each loader’s AfterLoad hooks after its nested fields and value conversions. It reuses the existing callback records. Normal suites ran 11,553 cases with 85 skips. Race suites ran 11,597 cases with 87 skips. The proposed single commit has the same tree as the measured product."
+      "followup": {
+        "owner": "Existing upstream review",
+        "sourceHead": "d125b1fbc17eb4b51e4eb1a9b8ee7fd5ac8990da",
+        "observedAt": "2026-11-02T21:49:41.876026+00:00",
+        "disposition": "Approved amendment published on #16713",
+        "nextAction": "Follow the upstream checks and maintainer review. No contributor decision remains.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16713"
+        ]
       }
     },
     {
@@ -36355,11 +36361,11 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/state-preserve-negative-zero",
-      "head": "40eb760888e9c00c8aaeeee71e42a4f91800734b",
+      "head": "1f4905b21f956027a76ded34b96584e00f9269f1",
       "title": "Preserve negative zero across checkpoints",
       "url": "https://github.com/google/gvisor/pull/16718",
       "group": "runtime",
-      "status": "Contributor review requested",
+      "status": "open",
       "summary": "Saving a negative zero could omit it and restore a positive zero. Preserve the sign bit of floats and complex components, including primitive arrays, without changing how positive zeros are encoded.",
       "evidence": [
         {
@@ -36377,9 +36383,13 @@
         {
           "label": "Corrected full state suite",
           "url": "https://app.buildbuddy.io/invocation/71552189-dfb1-44a7-8f20-fb6ddd954b41"
+        },
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16718"
         }
       ],
-      "updatedAt": "2026-10-31T04:38:05.342918+00:00",
+      "updatedAt": "2026-11-02T21:49:41.876026+00:00",
       "number": 16718,
       "settledReviews": [
         {
@@ -36387,6 +36397,13 @@
           "head": "40eb760888e9c00c8aaeeee71e42a4f91800734b",
           "outcome": "approved",
           "at": "2026-10-29T23:29:40.685248+00:00"
+        },
+        {
+          "kind": "amendment",
+          "head": "1f4905b21f956027a76ded34b96584e00f9269f1",
+          "outcome": "approved",
+          "at": "2026-11-02T21:49:41.876026+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16718"
         }
       ],
       "refinement": {
@@ -36399,16 +36416,15 @@
           "base": "4319e9d026b47c1768b6b1fd8711f1ec15a14bd1"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "baseHead": "40eb760888e9c00c8aaeeee71e42a4f91800734b",
-        "head": "1f4905b21f956027a76ded34b96584e00f9269f1",
-        "url": "https://github.com/tamird/gvisor/commit/1f4905b21",
-        "title": "Run the signed-zero regression through both checkpoint engines",
-        "summary": "The production fix is unchanged. The four cases now explicitly cover wire and graph, so changing the default engine cannot hide a wire regression.",
-        "body": "May I amend #16718 with the expanded test? On stock, all four cases failed under wire and passed under graph. All eight passed on the revised PR, and both owning suites passed. The original approval remains recorded on the published head.",
-        "requestedAt": "2026-10-31T04:38:05.342918+00:00"
+      "followup": {
+        "owner": "Existing upstream review",
+        "sourceHead": "1f4905b21f956027a76ded34b96584e00f9269f1",
+        "observedAt": "2026-11-02T21:49:41.876026+00:00",
+        "disposition": "Approved amendment published on #16718",
+        "nextAction": "Follow the upstream checks and maintainer review. No contributor decision remains.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16718"
+        ]
       }
     },
     {
@@ -38964,6 +38980,10 @@
         {
           "label": "Old and new writes retain their own route",
           "url": "https://github.com/tamird/gvisor/actions/runs/41145500718/artifacts/13021260853"
+        },
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16875"
         }
       ],
       "refinement": {
@@ -38974,19 +38994,27 @@
           "head": "972a7152fa77dc23d98e4cdd3f03a330e615c222"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "972a7152fa77dc23d98e4cdd3f03a330e615c222",
-        "baseHead": "89a7d2beb0d553c3ffaff8b79478ffef09e09abc",
-        "url": "https://github.com/tamird/gvisor/compare/89a7d2beb...972a7152f",
-        "title": "Implement IPv6 multicast hop and loopback options",
-        "summary": "Open this standalone PR. It fixes the socket options used by #16059’s Java importer and keeps the original route for a write already in flight.",
-        "body": "OpenJDK’s DatagramSocketMulticasting test failed when #16059 exposed a multicast-capable interface. Its default DatagramSocket reads IPV6_MULTICAST_HOPS even when sending to an IPv4 group. Netstack returned ENOPROTOOPT. In IPv4-only mode, the JDK reads IP_MULTICAST_TTL and IP_MULTICAST_LOOP into a one-byte buffer, which netstack also rejected [1] [2].\n\nKeep IPv4 and IPv6 multicast settings independent. On a dual-stack socket sending to an IPv4-mapped group, Linux uses the IPv4 TTL and the IPv6 socket’s loopback setting [3]. Change the connected route’s loopback policy when the application sets the option. A send that already acquired the route keeps its original policy. With host networking, forward IPV6_MULTICAST_LOOP to the host socket.\n\nFive shared syscall cases cover option lengths, independent values, and delivery over a real multicast interface. Stock delivered a packet after the sender disabled loopback. Linux, corrected netstack and corrected hostinet delivered the following packet with IPv4 TTL 11 [4] [5]. The original Java test also completed on eth0 in both its default and IPv4-only modes [6]. A focused writer test sends two packets after changing the option. Mutating the old route incorrectly disables loopback for the first packet; retaining its acquired route passes, as do the full network suite and its analyzer [7].\n\n[1]: https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/52852/jobs/01a18479-3be3-4571-8423-f723c54a33b6/log\n[2]: https://github.com/tamird/gvisor/actions/runs/41131750771/artifacts/13013753296\n[3]: https://github.com/torvalds/linux/blob/7d0a66e4b/net/core/sock.c#L774-L790\n[4]: https://github.com/tamird/gvisor/actions/runs/41139775803/artifacts/13017933283\n[5]: https://github.com/tamird/gvisor/actions/runs/41143755175/artifacts/13020224398\n[6]: https://github.com/tamird/gvisor/actions/runs/41143755175/artifacts/13020616149\n[7]: https://github.com/tamird/gvisor/actions/runs/41145500718/artifacts/13021260853",
-        "requestedAt": "2026-10-30T23:43:49.478418+00:00"
-      },
-      "updatedAt": "2026-10-30T23:43:49.478418+00:00",
-      "status": "Contributor review requested"
+      "updatedAt": "2026-11-02T21:49:41.876026+00:00",
+      "status": "Published as #16875",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "972a7152fa77dc23d98e4cdd3f03a330e615c222",
+          "outcome": "approved",
+          "at": "2026-11-02T21:49:41.876026+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16875"
+        }
+      ],
+      "followup": {
+        "owner": "Existing upstream review",
+        "sourceHead": "972a7152fa77dc23d98e4cdd3f03a330e615c222",
+        "observedAt": "2026-11-02T21:49:41.876026+00:00",
+        "disposition": "Approved and published as #16875",
+        "nextAction": "Follow the upstream checks and maintainer review. No contributor decision remains.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16875"
+        ]
+      }
     },
     {
       "id": "branch:go-export-direct",
