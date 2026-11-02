@@ -1,18 +1,31 @@
-name: Check the upstream LLVM instrumentor overlay
+name: Check LLVM's instrumentor generator on Windows
 on:
   push:
-    branches: [qualification/upstream-llvm-instrumentor-template]
+    branches: [qualification/upstream-llvm-instrumentor-windows]
 permissions:
   contents: read
 jobs:
-  compare:
+  generate:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
-    runs-on: ubuntu-24.04
+    runs-on: windows-2025
     timeout-minutes: 45
     env:
       PRODUCT: 47a6f55681edffa637e6ccf43c220449f7ce2c50
       BASE: 1c7a3fd23f422faed9c4abd05f820f19a495a360
+      GIT_CONFIG_COUNT: 2
+      GIT_CONFIG_KEY_0: core.longpaths
+      GIT_CONFIG_VALUE_0: 'true'
+      GIT_CONFIG_KEY_1: core.autocrlf
+      GIT_CONFIG_VALUE_1: 'false'
     steps:
+      - name: Initialize the bounded receipt
+        shell: python
+        run: |
+          import json, os
+          from pathlib import Path
+          d = Path(os.environ["RUNNER_TEMP"]) / "llvm-evidence"
+          d.mkdir()
+          (d / "verdict.json").write_text(json.dumps({"product": os.environ["PRODUCT"], "status": "INCOMPLETE", "stage": "checkout or Bazel setup"}))
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {persist-credentials: false}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -22,22 +35,21 @@ jobs:
           path: llvm-project
           fetch-depth: 2
           persist-credentials: false
-      - name: Use LLVM's pinned Bazel
+      - name: Use LLVM's pinned Windows Bazel
         run: |
-          set -eu
-          mkdir -p "$RUNNER_TEMP/bazelisk-bin" "$RUNNER_TEMP/llvm-evidence"
-          curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$RUNNER_TEMP/bazelisk-bin/bazel"
-          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $RUNNER_TEMP/bazelisk-bin/bazel" | sha256sum -c -
-          chmod +x "$RUNNER_TEMP/bazelisk-bin/bazel"
-          echo "$RUNNER_TEMP/bazelisk-bin" >> "$GITHUB_PATH"
-      - name: Generate and compile from an editable checkout and an immutable source archive
-        timeout-minutes: 36
-        run: python3 test/rbe/llvm_scratch/verify-upstream.py
-      - name: Check the bounded result
-        id: publish
+          $dir = New-Item -ItemType Directory -Path (Join-Path $env:RUNNER_TEMP 'bazelisk-bin')
+          $exe = Join-Path $dir 'bazel.exe'
+          Invoke-WebRequest 'https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-windows-amd64.exe' -OutFile $exe
+          if ((Get-FileHash $exe).Hash.ToLower() -ne 'd4b5e1cea61fcdb0bed60f8868c2e37684221b65feae898d1124482cd39ec89e') { throw 'Incorrect Bazelisk executable' }
+          $dir.FullName >> $env:GITHUB_PATH
+      - name: Build the original generator label and compare literal source bytes
+        timeout-minutes: 27
+        run: python test/rbe/llvm_scratch/verify-upstream.py
+      - name: Check the public record
         if: always()
+        id: publish
+        shell: python
         run: |
-          python3 - <<'PY'
           import json, os
           from pathlib import Path
           d = Path(os.environ['RUNNER_TEMP']) / 'llvm-evidence'
@@ -46,10 +58,9 @@ jobs:
           b = p.read_bytes()
           assert len(b) < 50000 and b'authorization:' not in b.lower() and b'x-buildbuddy-api-key' not in b.lower()
           assert json.loads(b)['product'] == os.environ['PRODUCT']
-          PY
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.publish.outcome == 'success'
         with:
-          name: upstream-instrumentor-verdict
+          name: windows-instrumentor-verdict
           path: ${{ runner.temp }}/llvm-evidence/verdict.json
           if-no-files-found: error
