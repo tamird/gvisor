@@ -1,0 +1,84 @@
+name: Execute the assembled source release on its native CPU
+on:
+  push:
+    branches: [qualification/buildkite-native-smoke-targets]
+permissions:
+  contents: read
+jobs:
+  smoke:
+    if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {host: ubuntu-24.04, machine: x86_64}
+          - {host: ubuntu-24.04-arm, machine: aarch64}
+    runs-on: ${{ matrix.host }}
+    timeout-minutes: 118
+    env:
+      SOURCE: 97f56d2dc7a7ee5361b71d948717f12478a9a2a1
+      PROPOSAL: fbe18a2bd8ff26d2d843776a74b2ceba6a13a925
+      MACHINE: ${{ matrix.machine }}
+      DOCKER_BUILD: "false"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Select the source commit and retain an explicit incomplete result
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/direct-smoke"
+          mkdir -p "$d/records"
+          printf '{"source":"%s","carrier":"%s","architecture":"%s","expected":["release"%s]}\n' "$SOURCE" "$GITHUB_SHA" "$MACHINE" "$(if [[ "$MACHINE" == x86_64 ]]; then echo ',"release-race"'; fi)" > "$d/records/expected.json"
+          cp test/rbe/direct-release-smoke.py "$d/"
+          [[ "$(git rev-parse HEAD^)" == "$SOURCE" ]]
+          git checkout --detach "$SOURCE"
+          git diff --quiet
+          [[ "$(uname -m)" == "$MACHINE" && "$(id -u)" != 0 ]]
+          if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+          unshare -Ur true
+          if ! /usr/bin/python3 -c 'import yaml'; then sudo apt-get update -qq && sudo apt-get install -y python3-yaml; fi
+      - name: Configure only the shared action cache on the native client
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?}"
+          {
+            printf '%s\n' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --remote_download_outputs=toplevel' 'build --noremote_upload_local_results' 'build --modify_execution_info=^GoStdlib$=+no-cache'
+            printf 'run --build_event_json_file=%s/direct-smoke/guest.bep\n' "$RUNNER_TEMP"
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$RUNNER_TEMP/direct-smoke/cache.rc"
+      - name: Use the Buildkite Bazelisk setup and run the actual source smoke commands
+        run: |
+          set -euo pipefail
+          # shellcheck disable=SC1090
+          source <(sed -n '/^install_lint_bazel() {$/,$p' .buildkite/hooks/pre-command)
+          [[ "$(command -v bazel)" == "$BUILDKITE_BAZEL_DIRECTORY/bazel" ]]
+          df -h . | tail -1
+          timeout --kill-after=20s 105m /usr/bin/python3 "$RUNNER_TEMP/direct-smoke/direct-release-smoke.py"
+      - name: Keep credentials and HTTP headers out of the public receipt
+        id: sanitize
+        if: always()
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PYTHON'
+          import json, os, re
+          from pathlib import Path
+          records = Path(os.environ['RUNNER_TEMP'], 'direct-smoke', 'records')
+          key = os.environ['BUILDBUDDY_API_KEY'].encode()
+          assert key
+          for p in records.iterdir():
+              raw = p.read_bytes()
+              assert p.suffix == '.json'
+              json.loads(raw)
+              assert key not in raw
+              assert not re.search(rb'(?i)x-buildbuddy-api-key|authorization\s*:|bearer\s+[A-Za-z0-9_.-]{12,}', raw)
+          PYTHON
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.sanitize.outcome == 'success'
+        with:
+          name: native-smoke-targets-${{ matrix.machine }}
+          path: ${{ runner.temp }}/direct-smoke/records/
+          if-no-files-found: error
