@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-11-02T21:52:08.894413+00:00",
-  "registryDate": "2026-11-02T21:49:41.876026+00:00",
+  "registryDate": "2026-11-02T21:53:09.343406+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -298041,15 +298041,6 @@
       "contributor-review": {
         "scope": "89fed95c14d3569acb4c895ae602983b7ce25d32",
         "since": "2026-11-02T08:21:11+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-02T21:49:41.876026+00:00"
-      }
-    },
-    "branch:state-graph-print-errors": {
-      "contributor-review": {
-        "scope": "57b52c547d6f60fb4c89f83c896c7e8f89db9145",
-        "since": "2026-11-02T21:41:54.604864+00:00",
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-02T21:49:41.876026+00:00"

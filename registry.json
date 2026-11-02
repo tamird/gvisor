@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T21:49:41.876026+00:00",
+    "updatedAt": "2026-11-02T21:53:09.343406+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31658,7 +31658,7 @@
       "url": "https://github.com/google/gvisor/pull/16596",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T21:49:41.876026+00:00",
+      "updatedAt": "2026-11-02T21:53:09.343406+00:00",
       "summary": "Aditya’s review found that reducing the congestion window after a tail probe left the published sender in fast recovery. On two 10 ms RTT traces it waited 3 seconds to retransmit the next loss. The amended sender retried in 220 and 223 ms. Both senders still waited for a timeout on an ambiguous ACK and repaired a separate hole in 3 ms when the peer SACKed a later segment. Master produced three of the four observations and repaired a different segment in the ambiguous case. The final revision changes which recovery statistic counts the repaired probe.",
       "evidence": [
         {
@@ -31715,10 +31715,12 @@
         "sourceHead": "e1a3e3de2bbeabfebfe45a0cb3c90c41add81709",
         "observedAt": "2026-11-02T21:49:41.876026+00:00",
         "disposition": "Approved amendment published on #16596",
-        "nextAction": "Follow the upstream checks and maintainer review. No contributor decision remains.",
+        "nextAction": "Use the existing reapproval alarm for the amended source. The maintainer approved 1eb1f6b45 before this sender change.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16596",
-          "https://github.com/google/gvisor/pull/16596#issuecomment-6589285965"
+          "https://github.com/google/gvisor/pull/16596#issuecomment-6589285965",
+          "https://github.com/google/gvisor/pull/16596#pullrequestreview-5742733088",
+          "https://github.com/google/gvisor/compare/1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4..e1a3e3de2bbeabfebfe45a0cb3c90c41add81709"
         ]
       },
       "settledReviews": [
@@ -31729,7 +31731,16 @@
           "at": "2026-11-02T21:49:41.876026+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/16596"
         }
-      ]
+      ],
+      "reapproval": {
+        "kind": "content-amendment",
+        "method": "reviewed-source-diff",
+        "head": "e1a3e3de2bbeabfebfe45a0cb3c90c41add81709",
+        "approvedHead": "1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4",
+        "diffSha256": "7ea84e182bfa75748dd8f7567fb126e7ffd5685ec22562e718b85b1e74787486",
+        "summary": "After a tail probe repairs the hole, the amended sender reduces its congestion window without entering fast recovery. This lets it probe the next loss before the retransmission timeout.",
+        "evidence": "https://github.com/google/gvisor/compare/1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4..e1a3e3de2bbeabfebfe45a0cb3c90c41add81709"
+      }
     },
     {
       "id": "branch:state-restore-hook-values",
@@ -45975,24 +45986,32 @@
       "url": "https://github.com/tamird/gvisor/commit/57b52c547",
       "group": "runtime",
       "summary": "PrintGraph returned nil when a closed pipe rejected a write in either the text or HTML formatter. The fix returns io.ErrClosedPipe in both modes. The four cases passed on the corrected source, including the successful-output controls.",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T21:41:54.604864+00:00",
+      "status": "Agent work",
+      "updatedAt": "2026-11-02T21:53:09.343406+00:00",
       "evidence": [
         {
           "label": "Original stock/fixed graph printer results and test output",
           "url": "https://github.com/tamird/gvisor/actions/runs/41529423728/artifacts/13182405129"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "57b52c547d6f60fb4c89f83c896c7e8f89db9145",
-        "baseHead": "5b317311427fabfc62ffeca7d76b1622ff83f7b4",
-        "url": "https://github.com/tamird/gvisor/commit/57b52c547",
-        "title": "Report write failures when printing a state graph",
-        "requestedAt": "2026-11-02T21:41:54.604864+00:00",
-        "summary": "Open this change so runsc statefile reports a failed graph dump?",
-        "body": "The graph printer discarded write errors, so runsc statefile could\nreport success after writing only part of a text dump. When replacing\nan existing output file, that also allowed a partial dump to replace\nthe original if closing the temporary file succeeded.\n\nStop printing at the first failed write and return the error through\nthe graph printer's existing error boundary."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "57b52c547d6f60fb4c89f83c896c7e8f89db9145",
+          "outcome": "needs-work",
+          "at": "2026-11-02T21:53:09.343406+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "State checkpointing",
+        "sourceHead": "57b52c547d6f60fb4c89f83c896c7e8f89db9145",
+        "observedAt": "2026-11-02T21:53:09.343406+00:00",
+        "disposition": "Contributor requested a revision",
+        "nextAction": "Report writer errors directly. Qualify the revised text and HTML paths before requesting another review.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/57b52c547",
+          "https://github.com/tamird/gvisor/actions/runs/41529423728/artifacts/13182405129"
+        ]
       }
     }
   ],
