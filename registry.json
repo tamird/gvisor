@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T22:21:46.902482+00:00",
+    "updatedAt": "2026-11-02T22:25:48.028466+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38931,13 +38931,13 @@
       "repo": "google/gvisor",
       "number": 15972,
       "ref": "rack-pto-rto-cap",
-      "head": "8147e9ad3c95c67a0a9dd560f37aff9d7842f861",
+      "head": "32045814e05bcfcf3a6ea55a65e7329ab423b3fd",
       "title": "Review the tail probe deadline after an ACK",
       "url": "https://github.com/google/gvisor/pull/15972",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
-      "summary": "The PR caps a tail probe at the retransmission deadline. After an ACK reduces two outstanding segments to one, the parent retransmits the tail at 220 ms and the PR at 20 ms. Scheduling after ACK accounting retransmits it at the 50 ms RTO.",
+      "updatedAt": "2026-11-02T22:25:48.028466+00:00",
+      "summary": "The author applied the ACK-accounting fix. On a separate recovery-exit ACK, the PR sent the one remaining segment at the old 20 ms deadline. Using the advancing ACK’s 50 ms RTO matched the Linux timer calculation and preserved the four existing cases.",
       "evidence": [
         {
           "label": "Three sources, packet bytes and timing",
@@ -38958,6 +38958,18 @@
         {
           "label": "Posted review",
           "url": "https://github.com/google/gvisor/pull/15972#discussion_r4444417322"
+        },
+        {
+          "label": "Identical SACK recovery and final ACK on both sources; 20 ms and 50 ms wire deadlines",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41536170137/artifacts/13184662456"
+        },
+        {
+          "label": "Scope the old retransmission deadline to non-advancing transmissions",
+          "url": "https://github.com/tamird/gvisor/commit/114f689c8"
+        },
+        {
+          "label": "Author’s recovery-exit question",
+          "url": "https://github.com/google/gvisor/pull/15972#discussion_r4445336673"
         }
       ],
       "settledReviews": [
@@ -38969,7 +38981,17 @@
           "at": "2026-11-02T15:46:59.054342+00:00",
           "url": "https://github.com/google/gvisor/pull/15972#discussion_r4444417322"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "head": "32045814e05bcfcf3a6ea55a65e7329ab423b3fd",
+        "url": "https://github.com/google/gvisor/pull/15972#discussion_r4445336673",
+        "title": "Reply about the probe deadline after recovery",
+        "requestedAt": "2026-11-02T22:25:48.028466+00:00",
+        "summary": "Post the tested 20 ms versus 50 ms result in the author’s existing thread?",
+        "body": "Yes, arming a PTO on that ACK matches the Linux call order. The remaining difference is its deadline. On 32045814e the ACK ended SACK recovery with one newer segment outstanding and 20 ms left on the old retransmission timer. The probe retransmitted that segment 20 ms after the ACK.\n\nLinux uses a full RTO from an advancing ACK [1]. Ignoring the old deadline on an advancing ACK [2] kept the wire quiet at 20 ms and sent the same 10-byte tail at 50 ms, exactly one RTO after the ACK. Both versions passed the four existing timer tests [3].\n\n[1]: https://github.com/torvalds/linux/blob/7d0a66e4b/net/ipv4/tcp_output.c#L3073-L3081\n[2]: https://github.com/tamird/gvisor/commit/114f689c8\n[3]: https://github.com/tamird/gvisor/actions/runs/41536170137/artifacts/13184662456\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "branch:ipv6-multicast-socket-options",
