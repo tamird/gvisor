@@ -1,7 +1,8 @@
 import json
-from pathlib import Path
 import re
 import sys
+import xml.etree.ElementTree as ET
+from pathlib import Path
 
 import qualification_report as reporting
 
@@ -18,30 +19,61 @@ def main():
     events = out / "events.jsonl"
     verdict = reporting.verdict(events, reporting.manifest_path(events), out / "context.json", out / "targets.txt", ())
     proof.mkdir(exist_ok=True, parents=True)
-    metrics = []
     errors = []
+    logs = [(out / row["path"]).read_text(errors="replace") for row in captured["reports"] if row["name"] == "test.log"]
+    log = "\n".join(logs)
+    suite = "TestKeepaliveUserTimeout"
+    wanted_failure = suite + "/UserTimeout"
+    expected = {"ProbeCount": "PASS", "UserTimeout": "FAIL" if arm == "stock" else "PASS"}
+    observations = {}
+    unexpected_failures = set()
+
+    def observe(name, state):
+        if name.startswith(suite + "/"):
+            subcase = name.removeprefix(suite + "/")
+            if subcase in observations and observations[subcase] != state:
+                errors.append("inconsistent results for " + name)
+            observations[subcase] = state
+        if state == "FAIL" and name not in (suite, wanted_failure, label, label.rsplit(":", 1)[-1]):
+            unexpected_failures.add(name)
+
+    for state, name in re.findall(r"--- (PASS|FAIL|SKIP): (\S+) \(", log):
+        observe(name, state)
     for row in captured["reports"]:
-        if row["name"] == "test.log":
-            log = (out / row["path"]).read_text()
-            for extra, writes, rto, first in re.findall(r"TCP-NATIVE-PERSIST extra=(true|false) writes=(\d+) rto_us=(\d+) first_us=(\d+)", log):
-                metrics.append(dict(extra=extra=="true", writes=int(writes), rto_us=int(rto), first_us=int(first)))
+        if row["name"] == "test.xml":
+            for case in ET.parse(out / row["path"]).iter("testcase"):
+                full = case.get("name", "")
+                state = "FAIL" if case.find("failure") is not None or case.find("error") is not None else "SKIP" if case.find("skipped") is not None else "PASS"
+                observe(full, state)
     results = [e["testResult"] for line in events.read_text().splitlines() if "testResult" in (e := json.loads(line))]
     invocation = next((e["started"]["uuid"] for line in events.read_text().splitlines() if "started" in (e := json.loads(line))), None)
-    if ([m["extra"] for m in metrics] != [False, True] or metrics[0]["writes"] != 1 or metrics[1]["writes"] < 2):
-        errors.append("missing verified single/repeated write probes")
+    if observations != expected:
+        errors.append("actual keepalive cases differ from expected")
+    if unexpected_failures:
+        errors.append("unrelated failed cases: " + ", ".join(sorted(unexpected_failures)))
+    observed_timeout = "second keepalive probe: SO_ERROR = connection timed out;" in log
+    if arm == "stock" and not observed_timeout:
+        errors.append("missing second probe did not report ETIMEDOUT")
     if len(results) != 1 or any(r.get("cachedLocally") or r.get("executionInfo", {}).get("cachedRemotely") or r.get("executionInfo", {}).get("strategy") != "remote" for r in results):
         errors.append("expected one uncached remote result")
-    if (out / "runner_exit").read_text().strip() != "0" and verdict["status"] == "PASS":
-        errors.append("runner failed")
-    if errors and verdict["status"] == "PASS":
-        verdict["status"] = "INCOMPLETE"
+    runner_exit = int((out / "runner_exit").read_text())
+    if runner_exit != (1 if arm == "stock" else 0):
+        errors.append("unexpected qualification wrapper exit")
+    wanted_status = "FAILED" if arm == "stock" else "PASSED"
+    if len(results) == 1 and results[0].get("status") != wanted_status:
+        errors.append("unexpected Bazel test status")
+    if any(f.get("status", wanted_status) != wanted_status for f in verdict["failures"]):
+        errors.append("unrelated test summary failure")
     verdict["errors"].extend(errors)
-    verdict.update(arm=arm, invocation=invocation, packet_observations=metrics, platform="amd64")
-    # Publish only typed evidence; Bazel's private configuration never enters the artifact.
+    wanted_exit = 3 if arm == "stock" else 0
+    matched = bool(verdict["native_exit"] == wanted_exit and verdict["status"] == ("FAIL" if arm == "stock" else "PASS") and not verdict["errors"] and not verdict["missing"] and not verdict["skips"])
+    # Keep the negative control's original status even when its failure was expected.
+    verdict.update(arm=arm, invocation=invocation, platform="amd64", cases=observations,
+                   runner_exit=runner_exit, second_probe_errno="ETIMEDOUT" if observed_timeout else None,
+                   matches_expectation=matched)
     reporting.write_json(proof / (arm + ".json"), verdict)
-    print(json.dumps({k:verdict[k] for k in ("arm","invocation","status","errors","failures","missing","case_counts","packet_observations","execution_to_verdict_seconds")}), flush=True)
-    return int(verdict["status"] != "PASS")
-
+    print(json.dumps({k:verdict[k] for k in ("arm","invocation","status","errors","missing","cases","matches_expectation","execution_to_verdict_seconds")}), flush=True)
+    return int(not matched)
 
 if __name__ == "__main__":
     sys.exit(main())
