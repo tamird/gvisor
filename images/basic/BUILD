@@ -1,6 +1,5 @@
 load("@rules_img//img:image.bzl", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
-load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
 load("//images:img.bzl", "image_outputs")
 load("//tools:defs.bzl", "cc_binary", "pkg_tar")
 
@@ -106,8 +105,7 @@ _INTEGRATION_HELPERS = [
     "test_sticky",
 ]
 
-# The Docker context may be built on a different distribution or architecture.
-# Install static Linux executables for the requested target.
+# Install static Linux executables for the requested image architecture.
 [
     cc_binary(
         name = name,
@@ -119,29 +117,80 @@ _INTEGRATION_HELPERS = [
     for name in _INTEGRATION_HELPERS
 ]
 
-pkg_files(
-    name = "integrationtest_programs",
-    srcs = _INTEGRATION_HELPERS + [
-        "integrationtest/ping4.sh",
-        "integrationtest/ping6.sh",
-    ],
-    attributes = pkg_attributes(mode = "0755"),
-)
-
-pkg_files(
-    name = "integrationtest_files",
-    srcs = [
-        "integrationtest/Dockerfile.runtime",
-        "integrationtest/copy_up_testfile.txt",
-    ],
-    renames = {"integrationtest/Dockerfile.runtime": "Dockerfile"},
-)
-
+# /tmp must be writable by the nonroot host-socket test user as well.
 pkg_tar(
-    name = "integrationtest_context",
-    srcs = [
-        ":integrationtest_files",
+    name = "integrationtest_filesystem",
+    empty_dirs = ["tmp"],
+    mode = "01777",
+)
+
+# These helpers are invoked from /root by the existing integration tests.
+# Keep the socket client in the nonroot home as well for host-UID/GID checks.
+image_layer(
+    name = "integrationtest_programs",
+    srcs = {
+        "/etc/group": "integrationtest/group",
+        "/etc/passwd": "integrationtest/passwd",
+        "/home/nonroot/host_connect": ":host_connect",
+        "/root/copy_up_testfile.txt": "integrationtest/copy_up_testfile.txt",
+        "/root/host_connect": ":host_connect",
+        "/root/host_fd": ":host_fd",
+        "/root/link_test": ":link_test",
+        "/root/ping4.sh": "integrationtest/ping4.sh",
+        "/root/ping6.sh": "integrationtest/ping6.sh",
+        "/root/tcp_loopback": ":tcp_loopback",
+        "/root/tcp_server": ":tcp_server",
+        "/root/tcp_stress_server": ":tcp_stress_server",
+        "/root/test_copy_up": ":test_copy_up",
+        "/root/test_rewinddir": ":test_rewinddir",
+        "/root/test_sticky": ":test_sticky",
+    },
+    create_parent_directories = "enabled",
+    default_metadata = file_metadata(mode = "0755"),
+    include_runfiles = False,
+    file_metadata = {
+        "/etc/group": file_metadata(mode = "0644"),
+        "/etc/passwd": file_metadata(mode = "0644"),
+        "/home/nonroot": file_metadata(
+            gid = 1337,
+            mode = "0755",
+            uid = 1338,
+        ),
+        "/root": file_metadata(mode = "0700"),
+        "/root/copy_up_testfile.txt": file_metadata(mode = "0644"),
+    },
+    symlinks = {
+        # Package extraction does not run update-alternatives. Provide legacy
+        # xtables entry points for runsc do's network setup.
+        "/usr/sbin/ip6tables": "ip6tables-legacy",
+        "/usr/sbin/ip6tables-restore": "ip6tables-legacy-restore",
+        "/usr/sbin/ip6tables-save": "ip6tables-legacy-save",
+        "/usr/sbin/iptables": "iptables-legacy",
+        "/usr/sbin/iptables-restore": "iptables-legacy-restore",
+        "/usr/sbin/iptables-save": "iptables-legacy-save",
+        # base-files postinst normally migrates this path to /run. ip netns
+        # uses /run/netns, while runsc do opens the same namespace via /var/run.
+        "/var/run": "/run",
+    },
+)
+
+image_manifest(
+    name = "integrationtest_image",
+    cmd = ["/bin/bash"],
+    env = {"PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"},
+    layers = [
+        "@integration_test_packages//:flat",
+        ":integrationtest_filesystem",
         ":integrationtest_programs",
     ],
-    package_dir = "images/basic/integrationtest",
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:linux"],
+    user = "0:0",
+    working_dir = "/root",
+)
+
+image_outputs(
+    name = "integrationtest",
+    image = ":integrationtest_image",
+    image_name = "basic/integrationtest",
 )

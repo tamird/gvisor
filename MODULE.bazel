@@ -11,6 +11,8 @@ bazel_dep(name = "bazel_lib", version = "3.2.2")
 bazel_dep(name = "yq.bzl", version = "0.4.0")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_img", version = "0.3.23")
+bazel_dep(name = "rules_distroless", version = "0.11.0")
+bazel_dep(name = "tar.bzl", version = "0.10.4")
 bazel_dep(name = "rules_cc", version = "0.2.25")
 bazel_dep(name = "llvm", version = "0.8.24")
 bazel_dep(name = "libbpf", version = "1.7.0.bcr.1")
@@ -58,6 +60,53 @@ single_version_override(
     patch_strip = 1,
     patches = ["//tools:llvm-linux-header-default.patch"],
 )
+
+tar_toolchains = use_extension("@tar.bzl//tar:extensions.bzl", "toolchains")
+use_repo(tar_toolchains, "bsd_tar_toolchains")
+
+# The integration image uses a single pinned package closure, without running
+# package installation scripts, on both supported architectures.
+image_apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt")
+image_apt.sources_list(
+    architectures = [
+        "amd64",
+        "arm64",
+    ],
+    components = ["main"],
+    suites = [
+        "jammy",
+        "jammy-updates",
+        "jammy-security",
+    ],
+    types = ["deb"],
+    uris = ["https://snapshot.ubuntu.com/ubuntu/20260928T000000Z"],
+)
+# Runtime commands used by the integration image's existing end-to-end tests.
+# Keep their complete dependency closure; no package installation scripts run.
+image_apt.install(
+    dependency_set = "integration_test_packages",
+    packages = [
+        # Common package license notices and standard filesystem data.
+        "base-files (= 12ubuntu4.7)",
+        # Interpreter for the existing ping scripts.
+        "bash (= 5.1-6ubuntu1.1)",
+        # /bin/sh for runsc do and container shell commands.
+        "dash (= 0.5.11+git20210903+057cd650a4ed-3build1)",
+        # GNU sleep infinity, stat and ls, plus the other standard file tools.
+        "coreutils (= 8.32-4.1ubuntu1.4)",
+        # Interface configuration in the loopback tests and runsc do.
+        "iproute2 (= 5.15.0-1ubuntu2.2)",
+        # Legacy firewall commands used by runsc do's network setup.
+        "iptables (= 1.8.7-1ubuntu5.2)",
+        # IPv4 and IPv6 connectivity checks in the existing ping scripts.
+        "iputils-ping (= 3:20211215-1ubuntu0.1)",
+        # sysctl enables IPv4 forwarding for nested runsc do network setup.
+        "procps (= 2:3.3.17-6ubuntu2.1)",
+        # unshare is exercised without CAP_SETFCAP by the integration tests.
+        "util-linux (= 2.37.2-4ubuntu3.6)",
+    ],
+)
+use_repo(image_apt, "integration_test_packages")
 
 ### LLVM
 # TODO: try using "llvm-raw" from BCR

@@ -42,9 +42,11 @@ the Docker build.
 
 Docker still builds the separate ASCII image converter using `golang:1.25`.
 
-Bazel builds the nine C helpers in `basic/integrationtest` for the selected
-Linux architecture. Docker installs the network tools required by the tests
-on the pinned Ubuntu Bionic base.
+Bazel assembles `basic/integrationtest` from nine static C helpers and a
+pinned Ubuntu package closure for the selected Linux architecture. The image
+includes the shells and network tools used by nested-runtime tests, their
+package inventory and license notices. No Dockerfile or package installation
+scripts run during the build.
 
 ## Adding new images
 

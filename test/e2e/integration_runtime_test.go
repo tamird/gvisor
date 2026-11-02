@@ -44,7 +44,7 @@ import (
 const (
 	// defaultWait is the default wait time used for tests.
 	defaultWait = time.Minute
-	// nonRootUID and nonRootGID correspond to the uid/gid defined in images/basic/integrationtest/Dockerfile.runtime.
+	// nonRootUID and nonRootGID correspond to the uid/gid defined in images/basic/integrationtest/passwd and group.
 	nonRootUID = 1338
 	nonRootGID = 1337
 	memInfoCmd = "cat /proc/meminfo | grep MemTotal: | awk '{print $2}'"
