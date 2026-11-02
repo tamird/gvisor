@@ -261,7 +261,14 @@ def reconcile(wire, data, events, public, recovery, write_events=True):
         return dict(start_s=(start-full["netstack"])/1e9, end_s=(end-full["netstack"])/1e9,
                     duration_s=(end-start)/1e9, decisions=dict(Counter(e["cause"] for e in rows)))
     _, start, end = max((b-a,a,b) for a,b in zip(new_data,new_data[1:]))
-    return {"ack_matches":dict(ack_matches),"ack_normalization_example":proof,
+    interrupted = [e for e in selected_events if e["cause"]=="rto" and e["recovery"]]
+    following = [(a,b) for a,b in zip(selected_events,selected_events[1:]) if a["cause"]=="rto" and a["recovery"]]
+    transitions = {"rto_from_active_recovery":len(interrupted),"with_next_decision":len(following),
+                   "next_cause":dict(Counter(b["cause"] for _,b in following)),
+                   "advanced_una_by_next_cause":dict(Counter(b["cause"] for a,b in following if a["una"]!=b["una"])),
+                   "unchanged_nxt":sum(a["nxt"]==b["nxt"] for a,b in following),
+                   "rack_ack_under_one_ms":sum(b["cause"]=="rack_ack" and b["ns"]-a["ns"]<1_000_000 for a,b in following)}
+    return {"interrupted_timeout_transitions":transitions,"ack_matches":dict(ack_matches),"ack_normalization_example":proof,
             "observed_wrapped_sack_edges":wrapped_edges,"ack_events_without_sack":empty_sacks,
             "timer_events_without_triggering_ack":timer_events,"dupack_scoreboard":dict(duplicate_kind),
             "longest_between_new_sends":interval(start,end),
@@ -324,6 +331,49 @@ def interrupted_timeout(public, events, flow):
                 first_post_decision_sample=sample)
 
 
+def queued_write(archive):
+    """Check the matched bounded packet fixture separately from WAN performance."""
+    import hashlib
+    import zipfile
+    from xml.etree import ElementTree
+    sha = hashlib.sha256(archive.read_bytes()).hexdigest()
+    assert sha == "8371b63fd0f9554ea3a1ff76d636ab89da83f3bd5f42978f6481389908339835"
+    expected = {"stock": ("99058130824e4d3166bf0e376f9b15b6ad50146c","f5dd4ad5631f83330ed7632e0bea1dda02afdfbc"),
+                "draft": ("b7d9ced514fd9ea5d4159b36b42ae16a22dbe634","df1a224cdd27388d0fcbe67d99ffd48cee06480f")}
+    with zipfile.ZipFile(archive) as z:
+        v = json.loads(z.read("verdict.json"))
+        assert v["complete"] and set(v["arms"])==set(expected)
+        out = {}
+        for arm,(base,fixture) in expected.items():
+            a = v["arms"][arm]
+            assert a["complete"] and a["exit"]==0 and a["source"]==fixture
+            assert z.read(arm+"/uuid").decode().strip()==a["uuid"]
+            owner = "//pkg/tcpip/transport/tcp/test/e2e:tcp_rack_test"
+            assert set(a["targets"])=={owner}
+            target = a["targets"][owner]
+            assert target["passed"] and target["action"]==target["summary"]==["PASSED"] and not target["skips"]
+            cases = list(ElementTree.fromstring(z.read(arm+"/tcp_rack_test/test.xml")).iter("testcase"))
+            assert len(cases)==1 and cases[0].get("name")=="TestInterruptedRTOWithQueuedData" and not any(cases[0].find(k) is not None for k in ("skipped","error","failure"))
+            rows = target["trace"]
+            phase = {r["phase"]:r for r in rows}
+            assert len(phase)==len(rows)
+            first = next(r for r in rows if any(hi>r["old_end"] for _,hi in r["packets"] or []))
+            end = first["old_end"]
+            assert not phase["queued"]["packets"] and first["ack"]<end and phase["finished"]["ack"]==end+first["mss"]
+            assert (end,end+first["mss"]) in map(tuple,first["packets"])
+            assert first["timeouts"]==phase["finished"]["timeouts"]==1
+            ack = phase["partial_ack"]
+            armsame = ("original","sack_recovery","timeout","queued")
+            if arm=="draft":
+                assert all(phase[k]==out["stock"]["same_prefix"][k] for k in armsame)
+            out[arm] = dict(product=base,fixture=fixture,invocation=a["uuid"],same_prefix={k:phase[k] for k in armsame},
+                            first_partial_ack=ack,first_new_data=first,
+                            ns_from_partial_ack=first["clock_ns"]-ack["clock_ns"],
+                            first_before_old_flight_acked=True,final_ack=phase["finished"]["ack"],timeouts=first["timeouts"])
+        del out["draft"]["same_prefix"]
+        return dict(artifact="https://github.com/tamird/gvisor/actions/runs/41399340430/artifacts/13120793878",
+                    sha256=sha,arm=out)
+
 def replay(archive):
     """Recheck the original public packet and event tables; no new traffic."""
     import hashlib
@@ -351,8 +401,11 @@ def replay(archive):
 
 if __name__ == "__main__":
     import sys
-    if len(sys.argv) == 3 and sys.argv[1]=="--replay":
-        print(json.dumps(replay(Path(sys.argv[2])),indent=2))
+    if len(sys.argv) in (3,4) and sys.argv[1]=="--replay":
+        result = replay(Path(sys.argv[2]))
+        if len(sys.argv)==4:
+            result["queued_write_comparison"] = queued_write(Path(sys.argv[3]))
+        print(json.dumps(result,indent=2))
         raise SystemExit(0)
 
 root=Path(os.environ["RUNNER_TEMP"])/"qualification/current-shared"
