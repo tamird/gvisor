@@ -1246,3 +1246,77 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+// TestRACKTLPRecoveryExitWire observes the first probe after an ACK that
+// closes a real SACK-recovery episode but leaves a newer packet outstanding.
+func TestRACKTLPRecoveryExitWire(t *testing.T) {
+	ic := newIdleRACKConn(t)
+	ic.data = append(ic.data, make([]byte, 3*maxPayload)...)
+	for i := range ic.data {
+		ic.data[i] = byte(i)
+	}
+	snapshot := ic.c.EP.(*tcp.Endpoint).ResearchRecoveryExit
+	drain := func() { ic.c.Stack().Pause(); ic.c.Stack().Resume() }
+	seq := func(i int) seqnum.Value { return ic.c.IRS.Add(1 + seqnum.Size(i*maxPayload)) }
+	for i := 1; i <= 4; i++ {
+		ic.send(t, i)
+	}
+	ic.clock.Advance(ic.srtt / 2)
+	for i := 2; i <= 4; i++ {
+		ic.c.SendAckWithSACK(seqnum.Value(context.TestInitialSequenceNumber).Add(1), maxPayload, []header.SACKBlock{{Start: seq(2), End: seq(i + 1)}})
+		drain()
+	}
+	// Give RACK's reordering timer time to expire if needed. This is still
+	// well before the RTO of the missing first segment.
+	ic.clock.Advance(ic.srtt)
+	drain()
+	repaired := snapshot()
+	if repaired.State != tcpip.SACKRecovery || !repaired.Active || repaired.Una != seq(1) || repaired.Last != seq(5)-1 || repaired.Nxt != seq(5) || repaired.ResendIn <= 0 || repaired.Sacked == 0 {
+		t.Fatalf("SACK recovery not reached: %+v", repaired)
+	}
+	ic.c.ReceiveAndCheckPacketWithOptions(ic.data, maxPayload, maxPayload, e2e.TSOptionSize)
+	ic.send(t, 5)
+	armed := snapshot()
+	if armed.Nxt != seq(6) || armed.Last != repaired.Last || !armed.Active || armed.ResendIn <= 0 {
+		t.Fatalf("new data did not extend recovery flight: %+v", armed)
+	}
+	ic.clock.Advance(armed.ResendIn / 2)
+	drain()
+	pre := snapshot()
+	rto, _ := ic.ack(t, 5*maxPayload)
+	drain()
+	post := snapshot()
+	if pre.ResendIn <= 0 || pre.ResendIn >= rto || post.Una != seq(5) || post.Nxt != seq(6) || post.Active || post.State != tcpip.Open || post.Outstanding != 1 || post.Sacked != 0 || post.ResendIn >= 0 || post.ProbeIn <= 0 || post.RTO != rto {
+		t.Fatalf("wanted recovery exit with one packet and distinct deadlines: before=%+v after=%+v rto=%v", pre, post, rto)
+	}
+	t.Logf("EXIT_CONTEXT old_ns=%d fresh_ns=%d armed_ns=%d sent=%d repaired=%d marked=%d cumulative=%d tail=%d out=%d sacked=%d", pre.ResendIn, rto, post.ProbeIn, 4*maxPayload, maxPayload, uint32(repaired.Last+1-seq(0)), uint32(post.Una-seq(0)), uint32(post.Nxt-seq(0)), post.Outstanding, post.Sacked)
+	var elapsed time.Duration
+	for _, edge := range []time.Duration{pre.ResendIn - time.Nanosecond, pre.ResendIn, rto - time.Nanosecond, rto} {
+		ic.clock.Advance(edge - elapsed)
+		elapsed = edge
+		drain()
+		v := ic.c.GetPacketNonBlocking()
+		if v == nil {
+			t.Logf("EXIT_EMPTY ns=%d", elapsed)
+			continue
+		}
+		defer v.Release()
+		ip := header.IPv4(v.AsSlice())
+		h := header.TCP(ip.Payload())
+		if h.SequenceNumber() != uint32(seq(5)) || !bytes.Equal(h.Payload(), ic.data[5*maxPayload:]) {
+			t.Fatalf("unexpected output seq=%d payload=%x", h.SequenceNumber(), h.Payload())
+		}
+		if elapsed != post.ProbeIn {
+			t.Fatalf("unexpected first repair at %s, timer %s", elapsed, post.ProbeIn)
+		}
+		t.Logf("EXIT_TAIL ns=%d bytes=%d seq=%d payload=%x", elapsed, len(h.Payload()), h.SequenceNumber(), h.Payload())
+		ic.ack(t, 6*maxPayload)
+		drain()
+		done := snapshot()
+		if done.Una != done.Nxt || done.Outstanding != 0 || done.ProbeIn >= 0 || done.ResendIn >= 0 {
+			t.Fatalf("flight not fully acknowledged: %+v", done)
+		}
+		return
+	}
+	t.Fatal("tail never retransmitted")
+}

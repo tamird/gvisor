@@ -3481,3 +3481,28 @@ func (e *Endpoint) getExperimentOptionValue(route *stack.Route) uint16 {
 	}
 	return 0
 }
+
+// RecoveryExitSnapshot contains the sender state at one instant of the
+// fork-only recovery-exit packet experiment. A disabled timer is -1.
+type RecoveryExitSnapshot struct {
+	State                  tcpip.CongestionControlState
+	Active                 bool
+	Una, Nxt, Last         seqnum.Value
+	Outstanding            int
+	Sacked                 seqnum.Size
+	RTO, ResendIn, ProbeIn time.Duration
+}
+
+func (e *Endpoint) ResearchRecoveryExit() RecoveryExitSnapshot {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	s := e.snd
+	now := e.stack.Clock().NowMonotonic()
+	until := func(t *timer) time.Duration {
+		if !t.enabled() {
+			return -1
+		}
+		return t.target.Sub(now)
+	}
+	return RecoveryExitSnapshot{State: s.state, Active: s.FastRecovery.Active, Una: s.SndUna, Nxt: s.SndNxt, Last: s.FastRecovery.Last, Outstanding: s.Outstanding, Sacked: e.scoreboard.Sacked(), RTO: s.RTO, ResendIn: until(&s.resendTimer), ProbeIn: until(&s.probeTimer)}
+}
