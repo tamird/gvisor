@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T02:01:01+00:00",
+    "updatedAt": "2026-11-02T02:21:08+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -46433,9 +46433,22 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-02T01:44:43+00:00",
+      "updatedAt": "2026-11-02T02:21:08+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
+        {
+          "text": "With a 200 ms timeout, the baseline sender retransmitted its oldest repair after 93–98 ms. When an ACK came about 125 ms after repair, #16624 avoided the extra packet in eight of eight pairs. With the ACK 355–360 ms after repair, the corrected sender timed out after 200–201 ms in all eight pairs. All 34 transfers delivered 512 KiB. The two policies used identical loss ranges.",
+          "evidence": [
+            {
+              "label": "34 transfers, packet copies, sender timers and test XML",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41376331975/artifacts/13112165228"
+            },
+            {
+              "label": "Review order and downstream LAN reordering measurements",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            }
+          ]
+        },
         {
           "text": "On the CUBIC sender series, two 512 KiB transfers timed out 93–94 ms after repairing the oldest segment, with a 200 ms RTO. Delaying a new SACK until after the timeout produced no second RACK recovery. The sender had repaired all three holes first. Both transfers delivered the full payload. The four policy comparisons were skipped because this workload exercised just the deadline change.",
           "evidence": [
@@ -48405,7 +48418,7 @@
           ]
         }
       ],
-      "nextStep": "To measure both changes in one transfer, leave an older hole unrepaired at the timeout and have the next SACK acknowledge a later transmission. Verify both events before comparing the sender variants. The passive handshake fix has a separate review card.",
+      "nextStep": "Review #16624 for the oldest packet’s deadline. To measure its interaction with RACK, retain an unrepaired older hole at timeout and verify that a newly acknowledged later transmission triggers its repair.",
       "evidence": [
         {
           "label": "TCP_INFO retransmission count on Linux, stock gVisor and the candidate",
@@ -61586,9 +61599,18 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-02T02:01:01+00:00",
+      "updatedAt": "2026-11-02T02:21:08+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
+        {
+          "text": "With two waiters asleep on a futex, Linux returned 2 for a request to requeue up to seven of them on the same word. Stock gVisor returned 0. Counting instead of removing and reinserting the same waiters fixes both the return value and the queue used by the next requeue. A change that only increments the count returned 7 for the same two threads. Both FUTEX_PRIVATE_FLAG settings reproduced the difference.",
+          "evidence": [
+            {
+              "label": "Linux, stock, count-only and corrected syscall results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41375952995/artifacts/13112030565"
+            }
+          ]
+        },
         {
           "text": "An ordinary futex wake let a thread return successfully from a priority-inheritance lock while the futex word still named the old owner. In the reverse case, a PI unlock assigned ownership to a thread that had only asked to wait. Linux rejected both operations with EINVAL. The correction preserved ownership for private and shared futexes and distinguished an ordinary requeue from a PI requeue.",
           "evidence": [
@@ -61778,7 +61800,7 @@
           ]
         }
       ],
-      "nextStep": "The SysV GETPID fix and the inline review on #15867 are ready for contributor decisions. #16795 is with maintainers.",
+      "nextStep": "Verify the same-word fix on top of the PI waiter fix, including the partially completed requeue that must return EINVAL. The PI waiter correction is available for separate contributor review.",
       "evidence": [
         {
           "label": "Timekeeper updater: all four lock diagnostics verified",
