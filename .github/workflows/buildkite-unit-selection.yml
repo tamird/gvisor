@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 3
+          fetch-depth: 5
           persist-credentials: false
       - name: Compare the complete suite and exercise both cache keys
         run: |
@@ -29,7 +29,8 @@ jobs:
           for tool in unit_matrix qualification_report; do
             git show "$VERIFIER:test/rbe/$tool.py" > "$RUNNER_TEMP/$tool.py"
           done
-          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          git merge-base --is-ancestor "$PRODUCT" HEAD
+          git diff --exit-code "$PRODUCT" HEAD -- . ':(exclude).github/qualification/buildkite-unit-selection.py' ':(exclude).github/workflows/buildkite-unit-selection.yml'
           git checkout --quiet --detach "$PRODUCT"
           sed -n '/^install_.*bazel() {$/,$p' .buildkite/hooks/pre-command > "$RUNNER_TEMP/unit-setup.bash"
           source "$RUNNER_TEMP/unit-setup.bash"

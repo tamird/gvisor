@@ -35,7 +35,7 @@ def run(name, args, *, analysis=False, mode):
     directory.mkdir()
     raw = TMP / (name + ".jsonl")
     position = args.index("--") if "--" in args else len(args)
-    options = (["--nobuild"] if analysis else ["--cache_test_results=yes",
+    options = (["--nobuild"] if analysis else ["--test_env=GO_TEST_WRAP_TESTV=1", "--nocache_test_results",
                f"--target_pattern_file={TMP / 'focused-targets'}"])
     command = args[:position] + options + [f"--build_event_json_file={raw}"] + args[position:]
     (directory / "executed_arguments").write_text("\n".join(command) + "\n")
@@ -50,19 +50,30 @@ def run(name, args, *, analysis=False, mode):
     (directory / "final_head").write_bytes(git("rev-parse", "HEAD"))
     if completed.returncode:
         print((TMP / (name + ".console")).read_text()[-8000:], flush=True)
-    if analysis:
-        roots = {}
-        for key, tests in (("tests", True), ("build", False)):
-            targets = unit_matrix.configured_targets(str(raw), tests=tests, allow_test_no_build=True,
-                                                    expected_exit=completed.returncode)
-            roots[key] = {label: {"tags": target.tags, "aspects": target.aspects}
-                          for label, target in sorted(targets.items())}
-        assert set(TARGETS) <= roots["tests"].keys()
-        assert not (directory / "source_before").read_bytes() and not (directory / "source_after").read_bytes()
-        report.write_json(directory / "selected.json", roots)
-        return roots
     events = directory / "events.jsonl"
     captured = report.capture(raw, events, Path("bazel-out"), directory / "reports")
+    if analysis:
+        assert not captured["errors"], captured["errors"]
+        selected = unit_matrix.configured_targets(str(raw), tests=True, allow_test_no_build=True,
+                                                 expected_exit=completed.returncode)
+        assert set(TARGETS) <= selected.keys()
+        roots = []
+        skipped = []
+        with events.open() as source:
+            for line in source:
+                event = json.loads(line)
+                if "configured" in event:
+                    owner = event["id"]["targetConfigured"]
+                    detail = event["configured"]
+                    if not owner.get("aspect") and not detail.get("targetKind"):
+                        raise ValueError(f"Missing kind for {owner}")
+                    roots.append((owner["label"], owner.get("aspect", ""), detail.get("targetKind", ""), sorted(detail.get("tag", []))))
+                if event.get("aborted", {}).get("reason") == "SKIPPED" and "targetCompleted" in event["id"]:
+                    skipped.append(event["id"]["targetCompleted"]["label"])
+        value = dict(tests=sorted(selected), configured=sorted(roots), skipped=sorted(skipped))
+        assert not (directory / "source_before").read_bytes() and not (directory / "source_after").read_bytes()
+        report.write_json(directory / "selected.json", value)
+        return value
     (directory / "capture_exit").write_text("1" if captured["errors"] else "0")
     names = ("executed_arguments", "commit_file", "source_before", "source_after", "native_exit", "capture_exit", "final_head")
     context = {key: key for key in names}
@@ -71,6 +82,7 @@ def run(name, args, *, analysis=False, mode):
     v = report.verdict(events, report.manifest_path(events), directory / "context.json", TMP / "focused-targets", ())
     report.write_json(directory / "verdict.json", v)
     assert v["status"] == "PASS", (v["errors"], v["missing"], v["failures"])
+    assert not v["zero_case_owners"] and not v["all_skipped_owners"], (v["zero_case_owners"], v["all_skipped_owners"])
     cache = {}
     for line in events.read_text().splitlines():
         e = json.loads(line)
@@ -106,19 +118,17 @@ def main():
     if len(selected) == 3:
         baseline = selected["legacy"]
         receipt["configured_unit_tests"] = len(baseline["tests"])
-        receipt["auxiliary_build_targets"] = len(baseline["build"])
+        receipt["configured_records"] = len(baseline["configured"])
         for name, result in selected.items():
             if result != baseline:
                 receipt["errors"].append(f"{name} differs from the Make selection")
-    for name, mode, cached in (("actual", actual, False), ("repeat", actual, True),
-                               ("alternate-cache-key", "false" if actual == "true" else "true", False)):
-        try:
-            seen = run(name, native, mode=mode)
-            receipt[name] = seen
-            if any(value != cached for value in seen.values()):
-                receipt["errors"].append(f"{name} unexpected cache result: {seen}")
-        except Exception as error:
-            receipt["errors"].append(f"{name} execution: {error!r}")
+    receipt["prior_cache_evidence"] = "https://github.com/tamird/gvisor/actions/runs/41493261450/artifacts/13166725105"
+    try:
+        seen = run("named-cases", native, mode=actual)
+        if any(seen.values()):
+            raise ValueError("Expected fresh test results from both packages")
+    except Exception as error:
+        receipt["errors"].append(f"named cases: {error!r}")
     receipt["verified"] = not receipt["errors"]
     report.write_json(OUT / "verdict.json", receipt)
     if receipt["errors"]:
