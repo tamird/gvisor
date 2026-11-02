@@ -73,6 +73,37 @@ def audit(compact):
     return [json.loads(line) for line in rows.stdout.splitlines()]
 
 
+def inspect_outputs(outputs):
+    r = {}
+    binary = next(iter(outputs["dpdk-pmdinfogen"]))
+    binary_data = binary.read_bytes()
+    header = subprocess.check_output(["readelf", "-h", binary], text=True)
+    segments = subprocess.check_output(["readelf", "-l", binary], text=True)
+    dynamic = subprocess.check_output(["readelf", "-d", binary], text=True)
+    assert binary_data.startswith(b"\x7fELF") and "Advanced Micro Devices X86-64" in header
+    assert "INTERP" not in segments and "(NEEDED)" not in dynamic
+    r["helper"] = {"sha256": hashlib.sha256(binary_data).hexdigest(), "bytes": len(binary_data),
+                   "machine": "x86_64", "interpreter": None, "needed": []}
+    config = next(iter(outputs["rte_config.h"])).read_bytes()
+    assert b"#define RTE_ARCH_64" in config and b"#define RTE_ARCH_X86_64" in config
+    r["configuration"] = {"sha256": hashlib.sha256(config).hexdigest(), "bytes": len(config),
+                          "helper_matches_plugin": True}
+    archives = outputs["libpluginstack.a"]
+    assert len(archives) == 1
+    path, = archives
+    data = path.read_bytes()
+    assert data.startswith(b"!<arch>\n")
+    symbols = subprocess.check_output(["nm", "--defined-only", "--extern-only", path], text=True,
+                                      stderr=subprocess.DEVNULL)
+    required = ["plugin_socket", "plugin_epoll_wait", "plugin_get_port_range"]
+    assert all(re.search(r"\bT " + name + r"$", symbols, re.M) for name in required)
+    pmd_symbols = re.findall(r"\b[RD] (\w+_pmd_info)$", symbols, re.M)
+    assert pmd_symbols
+    r["archive"] = {"sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data),
+                    "defined": required, "pmd_info_symbols": sorted(set(pmd_symbols))}
+    return r
+
+
 def main():
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     r = {"source": head, "base": BASE, "target": TARGET, "old_invocation": "9125942b-1fc2-42df-b235-6dee4e0ae37a",
@@ -174,19 +205,6 @@ def main():
                 outputs.setdefault(name, set()).add(path)
             assert set(outputs) == {"libpluginstack.a", "dpdk-pmdinfogen", "rte_config.h"}
             assert all(len(paths) == 1 for paths in outputs.values())
-            binary = next(iter(outputs["dpdk-pmdinfogen"]))
-            binary_data = binary.read_bytes()
-            header = subprocess.check_output(["readelf", "-h", binary], text=True)
-            segments = subprocess.check_output(["readelf", "-l", binary], text=True)
-            dynamic = subprocess.check_output(["readelf", "-d", binary], text=True)
-            assert binary_data.startswith(b"\x7fELF") and "Advanced Micro Devices X86-64" in header
-            assert "INTERP" not in segments and "(NEEDED)" not in dynamic
-            r["helper"] = {"sha256": hashlib.sha256(binary_data).hexdigest(), "bytes": len(binary_data),
-                           "machine": "x86_64", "interpreter": None, "needed": []}
-            config = next(iter(outputs["rte_config.h"])).read_bytes()
-            assert b"#define RTE_ARCH_64" in config and b"#define RTE_ARCH_X86_64" in config
-            r["configuration"] = {"sha256": hashlib.sha256(config).hexdigest(), "bytes": len(config),
-                                  "helper_matches_plugin": True}
             support = [a for a in actions if a["targetLabel"] in (CONFIG, HELPER)]
             assert {a["mnemonic"] for a in support if a["targetLabel"] == HELPER} >= {"CppCompile", "CppLink"}
             assert any(a["targetLabel"] == CONFIG and a["mnemonic"] == "CcMakeMakeRule" for a in support)
@@ -200,19 +218,7 @@ def main():
                                           a["target_triples"] == ["x86_64-linux-musl"] for a in helper_compiles)
             r["support_disposition"] = {"fresh_remote": sum(not a["cacheHit"] for a in support),
                                        "cached": sum(bool(a["cacheHit"]) for a in support)}
-            archives = outputs["libpluginstack.a"]
-            assert len(archives) == 1
-            path, = archives
-            data = path.read_bytes()
-            assert data.startswith(b"!<arch>\n")
-            symbols = subprocess.check_output(["nm", "--defined-only", "--extern-only", path], text=True,
-                                              stderr=subprocess.DEVNULL)
-            required = ["plugin_socket", "plugin_epoll_wait", "plugin_get_port_range"]
-            assert all(re.search(r"\bT " + name + r"$", symbols, re.M) for name in required)
-            pmd_symbols = re.findall(r"\b[RD] (\w+_pmd_info)$", symbols, re.M)
-            assert pmd_symbols
-            r["archive"] = {"sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data),
-                            "defined": required, "pmd_info_symbols": sorted(set(pmd_symbols))}
+            r.update(inspect_outputs(outputs))
             r["status"] = "PASS"
     except Exception as exc:
         import traceback
