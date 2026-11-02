@@ -51,6 +51,9 @@ disable_linux_gro=
 gro=false
 num_client_threads=1
 sniff=false
+mss_study_dir=
+mss_bytes=251658240
+mss_capture=false
 xdp=false
 declare -a unshare_opts=( -U -r )
 
@@ -107,6 +110,18 @@ while [[ $# -gt 0 ]]; do
       shift
       [[ "$#" -le 0 ]] && echo "no mtu provided" && exit 1
       mtu=$1
+      ;;
+    --mss-study)
+      shift
+      mss_study_dir=$1
+      checktmp "$mss_study_dir"
+      ;;
+    --mss-bytes)
+      shift
+      mss_bytes=$1
+      ;;
+    --mss-capture)
+      mss_capture=true
       ;;
     --sack)
       netstack_opts="${netstack_opts} -sack"
@@ -307,6 +322,11 @@ if ${server}; then
       --xdp=${xdp}"
 fi
 
+if [[ -n "$mss_study_dir" ]]; then
+  client_args="$client_args -copy_buffer=61440 -write_report=$mss_study_dir/client-writes.json"
+  server_args="$server_args -copy_buffer=61440 -write_report=$mss_study_dir/server-writes.json"
+fi
+
 # Specify loss and duplicate parameters only if they are non-zero
 loss_opt=""
 if [[ "$(echo "$half_loss" | bc -q)" != "0" ]]; then
@@ -416,6 +436,36 @@ ${nsjoin_binary} /tmp/server.netns ip link set lo up
 ip link set dev client.1 up
 ip link set dev server.1 up
 
+if [[ -n "${mss_study_dir}" ]]; then
+  for ns in client server; do
+    ${nsjoin_binary} /tmp/\$ns.netns sysctl -w net.ipv4.tcp_timestamps=0 net.ipv4.tcp_sack=1 net.ipv4.tcp_congestion_control=cubic
+    ${nsjoin_binary} /tmp/\$ns.netns sysctl net.ipv4.tcp_timestamps net.ipv4.tcp_sack net.ipv4.tcp_congestion_control > "${mss_study_dir}/\$ns-sysctl.txt"
+    ${nsjoin_binary} /tmp/\$ns.netns ip -j link show > "${mss_study_dir}/\$ns-links.json"
+    ${nsjoin_binary} /tmp/\$ns.netns ethtool -K \$ns.0 tso off gso off gro off
+    ${nsjoin_binary} /tmp/\$ns.netns ethtool -k \$ns.0 > "${mss_study_dir}/\$ns.0-features.txt"
+  done
+  for dev in client.1 server.1 wan.0 wan.1; do
+    ip link set dev \$dev mtu 1500
+    ethtool -K \$dev tso off gso off gro off
+    ethtool -k \$dev > "${mss_study_dir}/\$dev-features.txt"
+  done
+  for dev in br0 br1; do
+    ip link set dev \$dev mtu 1500
+    ethtool -k \$dev > "${mss_study_dir}/\$dev-features.txt"
+  done
+  ip -j link show > "${mss_study_dir}/root-links.json"
+  if ${mss_capture}; then
+    tcpdump -U -n -i server.1 -c 200 -s 128 -w "${mss_study_dir}/capture.pcap" 'tcp port 44000' 2> "${mss_study_dir}/capture.log" &
+    capture_pid=\$!
+    for i in {1..100}; do
+      grep -q 'listening on' "${mss_study_dir}/capture.log" && break
+      kill -0 \$capture_pid
+      sleep 0.02
+    done
+    grep -q 'listening on' "${mss_study_dir}/capture.log"
+  fi
+fi
+
 ${nsjoin_binary} /tmp/server.netns ${server_args} &
 server_pid=\$!
 
@@ -447,6 +497,23 @@ function cleanup {
 # Allow failure from this point.
 set +e
 trap cleanup EXIT
+
+# Run the benchmark, recording the results file.
+if [[ -n "${mss_study_dir}" ]]; then
+  ${nsjoin_binary} /tmp/client.netns ${iperf_binary_name} -p ${proxy_port} -c ${client_addr} -R -n ${mss_bytes} -l 61440 -J > "${mss_study_dir}/iperf.json"
+  primary=\$?
+  for dev in wan.0 wan.1; do
+    tc -j -s qdisc show dev \$dev > "${mss_study_dir}/\$dev-qdisc.json"
+  done
+  if ${mss_capture}; then
+    wait \$capture_pid
+    capture_status=\$?
+    [[ \$primary == 0 ]] && primary=\$capture_status
+  fi
+  cleanup
+  trap - EXIT
+  exit \$primary
+fi
 
 # Run the benchmark, recording the results file.
 while ${nsjoin_binary} /tmp/client.netns ${iperf_binary_name} \\

@@ -19,7 +19,6 @@ import (
 	"encoding/gob"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"os"
@@ -507,8 +506,8 @@ func main() {
 			// sockets. That penalizes netstack, but isn't relevant
 			// to real use cases where only one end of netstack is
 			// attached to a socket.
-			go io.Copy(io.MultiWriter(inConn), io.MultiReader(next))
-			go io.Copy(io.MultiWriter(next), io.MultiReader(inConn))
+			go copyObserved(inConn, next)
+			go copyObserved(next, inConn)
 
 			// Print stats every second.
 			go func() {
@@ -533,6 +532,7 @@ func main() {
 
 	// Wait for the SIGTERM notifying us to stop.
 	<-sigs
+	writeCopyReport(in, out)
 
 	if *memprofile != "" {
 		f, err := os.Create(*memprofile)
