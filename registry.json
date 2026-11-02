@@ -41306,13 +41306,17 @@
       "group": "bazel",
       "repo": "tamird/gvisor",
       "ref": "proposals/make-race-target-mode",
-      "head": "d01551afde465a186992ecaf583f57cebbf98415",
-      "url": "https://github.com/tamird/gvisor/commit/d01551afd",
-      "title": "Use target-scoped race mode in the Make targets",
-      "status": "Agent work",
-      "updatedAt": "2026-11-02T03:11:16+00:00",
-      "summary": "The previous smoke run instrumented the launcher but staged the ordinary Sentry. Its source stamp and a successful guest boot did not verify kernel race detection. Qualifying a release that stages both race executables together and runs the guest.",
+      "head": "3e0709a90beefbc5dcbccfb6aa7115fab90b607b",
+      "url": "https://github.com/tamird/gvisor/commit/3e0709a90",
+      "title": "Exercise the race-instrumented Sentry in the smoke test",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T03:26:14+00:00",
+      "summary": "The Make race smoke test staged the ordinary Sentry and overlaid the race launcher. Stage a matched race release so the guest kernel also runs with the race detector. Select race mode on the Go binaries, keeping it out of host build tools.",
       "evidence": [
+        {
+          "label": "Native AMD64 Make smoke tests booted both guests, checked all eight files per release, and matched both installed launchers and Sentries to their explicitly built binaries",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41381866216/artifacts/13113569543"
+        },
         {
           "label": "Both Make entry points select exactly the previously executed Bazel build command",
           "url": "https://github.com/tamird/gvisor/actions/runs/41273370612/artifacts/13069854156"
@@ -41344,11 +41348,22 @@
       ],
       "refinement": {
         "before": {
-          "head": "8c6ed7a88a418240a629c29a6e9bbe217491bbab"
+          "head": "d01551afde465a186992ecaf583f57cebbf98415"
         },
         "after": {
-          "head": "d01551afde465a186992ecaf583f57cebbf98415"
+          "head": "3e0709a90beefbc5dcbccfb6aa7115fab90b607b"
         }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "3e0709a90beefbc5dcbccfb6aa7115fab90b607b",
+        "baseHead": "d01551afde465a186992ecaf583f57cebbf98415",
+        "url": "https://github.com/tamird/gvisor/commit/3e0709a90",
+        "title": "Exercise the race-instrumented Sentry in the smoke test",
+        "requestedAt": "2026-11-02T03:26:14+00:00",
+        "summary": "Open the race smoke fix with the launcher and Sentry both instrumented?",
+        "body": "Both Make smoke entry points booted a native AMD64 sandbox. The installed binaries matched their explicit Bazel outputs. The race launcher and Sentry contained the race runtime; neither ordinary binary did."
       }
     },
     {
