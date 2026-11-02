@@ -1,35 +1,144 @@
-name: CI
-
+name: Native Ruby HTTP image consumers
 "on":
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/ruby-distro-native-make-fix]
+permissions:
+  contents: read
+env:
+  PRODUCT: 718444941712db2adca6c88e2d1a431ac6788801
+  IMAGE: gvisor.dev/images/image-test/ruby:latest
+  OWNER: //test/image:image_test
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  native:
+    if: github.repository == 'tamird/gvisor'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {runner: ubuntu-24.04, machine: x86_64, arch: amd64, cross: crossbuild-essential-arm64, manifest: 'sha256:81fbfaf6b818a34e12e2347df34d4150b06937e41e5ad6bc047c84b44eb3324c'}
+          - {runner: ubuntu-24.04-arm, machine: aarch64, arch: arm64, cross: crossbuild-essential-amd64, manifest: 'sha256:84952c54b8d2ccabb6cb15e29b6e16d1ea928103109e35f320cfec6a61c02ec6'}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 100
+    env:
+      MACHINE: ${{ matrix.machine }}
+      CPU: ${{ matrix.arch }}
+      CROSS: ${{ matrix.cross }}
+      MANIFEST: ${{ matrix.manifest }}
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ env.PRODUCT }}
+          persist-credentials: false
+      - name: Check immutable product and native host
+        id: host
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$PRODUCT"
+          test "$(uname -m)" = "$MACHINE"
+          test -z "$(git status --porcelain --untracked-files=no)"
+          mkdir "$RUNNER_TEMP/receipt"
+          printf '%s %s\n' "$PRODUCT" "$MACHINE" >"$RUNNER_TEMP/receipt/source.txt"
+          sudo apt-get -q update
+          sudo apt-get -qy install --no-install-recommends "$CROSS" libnuma-dev
+          test "$(bazelisk --version)" = "bazel $(cat .bazelversion)"
+      - name: Rebuild the ordinary Debian image through Make
+        id: image
+        run: |
+          set -euo pipefail
+          rc=0
+          make rebuild-image-test_ruby ARCH="$MACHINE" DOCKER_BUILD=false BAZEL=bazelisk OPTIONS="-c opt" || rc=$?
+          printf '%s\n' "$rc" >"$RUNNER_TEMP/receipt/make.exit"
+          test "$rc" = 0
+          docker image inspect "$IMAGE" | jq -e --arg a "$CPU" '
+            .[0] | select(.Architecture==$a and (.Config.Entrypoint // [])==[] and .Config.Cmd==["/usr/bin/ruby3.3","/server.rb"]) |
+            {Id,Architecture,Size,Cmd:.Config.Cmd,Layers:.RootFS.Layers}' >"$RUNNER_TEMP/receipt/debian-image.json"
+          python3 - "$RUNNER_TEMP/receipt/debian-closure.json" <<'PYTHON'
+          import hashlib, json, sys
+          from pathlib import Path
+          extensions = json.loads(Path("MODULE.bazel.lock").read_text())["moduleExtensions"]
+          spec = extensions["@@rules_distroless+//apt:extensions.bzl%apt"]["general"]["generatedRepoSpecs"]
+          rows = sorted([k, v["attributes"]["urls"], v["attributes"]["sha256"]] for k, v in spec.items()
+                        if v["repoRuleId"].endswith("%deb_import"))
+          digest = hashlib.sha256(json.dumps(rows, separators=(",", ":")).encode()).hexdigest()
+          Path(sys.argv[1]).write_text(json.dumps({"count": len(rows), "digest": digest}) + "\n")
+          # The resolved isolated APT extension at f459d924f had exactly these URLs and SHA-256s.
+          assert len(rows) == 78 and digest == "708ee3a992e8463760011860de5dc3dd72b0b738c8fe5f29df7cf582c81cf6ef"
+          PYTHON
+      - name: Configure the exact source runtime
+        if: ${{ !cancelled() && steps.host.outcome == 'success' }}
+        id: runtime
+        run: |
+          set -euo pipefail
+          flags=(--config="$MACHINE" -c opt --strategy=GoStdlib=sandboxed --strategy=GoStdlibList=sandboxed)
+          rc=0
+          bazelisk build "${flags[@]}" //:release || rc=$?
+          printf '%s\n' "$rc" >"$RUNNER_TEMP/receipt/runtime.exit"
+          test "$rc" = 0
+          runtime_dir="$RUNNER_TEMP/gvisor-runtime"
+          mkdir -m 755 "$runtime_dir"
+          cp -RL bazel-bin/release/. "$runtime_dir"
+          for binary in "$runtime_dir"/{runsc,gvisor-bin/*}; do
+            readelf -h "$binary" | grep -E "Machine:.*$(if [[ $CPU == amd64 ]]; then echo X86-64; else echo AArch64; fi)"
+            sha256sum "$binary" >>"$RUNNER_TEMP/receipt/runtime.sha256"
+          done
+          sudo "$runtime_dir/runsc" install --runtime=qualification-images \
+            --download-sidecars=NEVER --require-sidecars=ALWAYS -- --platform=systrap
+          sudo systemctl reload docker
+          for ((n=0; n<30; n++)); do
+            if docker info --format '{{json .Runtimes}}' | jq -e 'has("qualification-images")' >/dev/null; then break; fi
+            sleep 1
+          done
+          docker info --format '{{json .Runtimes}}' | jq -e --arg binary "$runtime_dir/runsc" '.["qualification-images"].path == $binary'
+      - name: Exercise the pinned stock image and Debian image using the unchanged owner
+        if: ${{ !cancelled() && steps.runtime.outcome == 'success' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/receipt"
+          stock="us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/image-test/ruby_${MACHINE}@$MANIFEST"
+          docker pull "$stock"
+          docker image inspect "$stock" | jq -e --arg a "$CPU" '
+            .[0] | select(.Architecture==$a and (.Config.Entrypoint // [])==[] and .Config.Cmd==["ruby","/server.rb"]) |
+            {Id,Architecture,Size,Cmd:.Config.Cmd,Layers:.RootFS.Layers}' >"$out/stock-image.json"
+          result=0
+          for arm in stock debian; do
+            if [[ ! -s "$out/$arm-image.json" ]]; then result=1; continue; fi
+            id=$(jq -er .Id "$out/$arm-image.json")
+            docker tag "$id" "$IMAGE"
+            ruby=ruby
+            if [[ $arm == debian ]]; then ruby=/usr/bin/ruby3.3; fi
+            docker run --rm --pull=never --entrypoint="$ruby" "$IMAGE" -rjson -e '
+              require "puma"; require "nio"; require "rackup"; require "sinatra/base"
+              expected = ARGV.fetch(0) == "debian" ? %w[3.3.8 6.6.0 2.7.3 2.1.0 4.1.1] : %w[3.3.5 7.2.0 2.7.5 2.3.1 4.2.1]
+              versions = [RUBY_VERSION] + %w[puma nio4r rackup sinatra].map { |g| Gem.loaded_specs.fetch(g).version.to_s }
+              native = $LOADED_FEATURES.grep(/(?:puma_http11|nio4r_ext)\.so$/)
+              puts({versions: versions, extensions: native, cpu: RUBY_PLATFORM}.to_json)
+              abort unless versions == expected && native.length == 2 && Rackup::Handler.get(:puma) == Rackup::Handler::Puma
+            ' "$arm" >"$out/$arm-gems.json" || result=1
+            for runtime in runc qualification-images; do
+              test "$(docker image inspect --format '{{.Id}}' "$IMAGE")" = "$id"
+              args=(--config="$MACHINE" -c opt --strategy=GoStdlib=sandboxed --strategy=GoStdlibList=sandboxed
+                --nocache_test_results --test_output=errors '--test_filter=^TestRuby$'
+                --test_env=GO_TEST_WRAP_TESTV=1 "--test_arg=--runtime=$runtime")
+              log=bazel-testlogs/test/image/image_test/test.xml
+              path="$out/$arm-$runtime"
+              rm -f "$log"
+              rc=0
+              bazelisk test "${args[@]}" "$OWNER" || rc=$?
+              printf '%s\n' "$rc" >"$path.exit"
+              if [[ -s "$log" ]]; then
+                cp -L "$log" "$path.xml"
+                python3 -c 'import sys,xml.etree.ElementTree as E; cs=E.parse(sys.argv[1]).findall(".//testcase"); assert len(cs)==1 and cs[0].get("name")=="TestRuby" and cs[0].get("status","run")=="run" and cs[0].get("result","completed")=="completed" and not list(cs[0]), [c.attrib for c in cs]' "$path.xml" || result=1
+              else result=1; fi
+              [[ $rc == 0 ]] || result=1
+              test "$(docker image inspect --format '{{.Id}}' "$IMAGE")" = "$id"
+            done
+          done
+          test -z "$(git status --porcelain --untracked-files=no)"
+          exit "$result"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: ${{ !cancelled() }}
+        with:
+          name: ruby-http-${{ matrix.arch }}
+          path: ${{ runner.temp }}/receipt/
+          if-no-files-found: error
