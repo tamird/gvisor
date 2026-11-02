@@ -1,0 +1,71 @@
+name: Native ARM64 Buildkite unit suite
+on:
+  push:
+    branches: [qualification/buildkite-unit-arm64]
+permissions:
+  contents: read
+jobs:
+  unit:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 110
+    env:
+      DOCKER_BUILD: 'false'
+      PRODUCT: 96fadde722e14d482a62276b80237398f8b62fbf
+      VERIFIER: 6b3fe9ab6c03facafe6340c85f8d60ca3591566b
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Run the complete native ARM64 unit selection
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/unit-results"
+          printf '{"status":"INCOMPLETE","reason":"bootstrap"}\n' > "$RUNNER_TEMP/unit-results/verdict.json"
+          cp .github/qualification/buildkite-unit-arm64.py "$RUNNER_TEMP"
+          git fetch --quiet --depth=1 origin "$VERIFIER"
+          for tool in unit_matrix qualification_report; do
+            git show "$VERIFIER:test/rbe/$tool.py" > "$RUNNER_TEMP/$tool.py"
+          done
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          git checkout --quiet --detach "$PRODUCT"
+          sed -n '/^install_.*bazel() {$/,$p' .buildkite/hooks/pre-command > "$RUNNER_TEMP/unit-setup.bash"
+          source "$RUNNER_TEMP/unit-setup.bash"
+          test -n "$BUILDKITE_BAZEL_DIRECTORY"
+          test "$(bazel --version)" = "bazel $(cat .bazelversion)"
+          printf '%s\n' 'build --jobs=4' 'build --remote_cache=' 'build --remote_executor=' > "$RUNNER_TEMP/unit-resources.bazelrc"
+          python3 "$RUNNER_TEMP/buildkite-unit-arm64.py"
+      - name: Scan bounded evidence
+        id: scan
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import os, re
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP']) / 'unit-results'
+          secrets = [value.encode() for key, value in os.environ.items()
+                     if re.search('TOKEN|SECRET|PASSWORD|CREDENTIAL', key) and len(value) > 16]
+          total = 0
+          for path in root.rglob('*'):
+              assert not path.is_symlink(), path
+              if path.is_file():
+                  relative = path.relative_to(root)
+                  if len(relative.parts) == 1:
+                      assert relative.name in ('verdict.json', 'host.json', 'expected-targets.txt'), relative
+                  else:
+                      assert relative.parts[0] in ('analysis', 'full'), relative
+                      if len(relative.parts) > 2:
+                          assert relative.parts[1] == 'reports' and relative.name in ('test.log', 'test.xml'), relative
+                  total += path.stat().st_size
+                  data = path.read_bytes()
+                  assert not any(secret in data for secret in secrets), path
+                  assert not re.search(rb'gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|BEGIN (RSA |OPENSSH )?PRIVATE KEY', data), path
+          assert total < 2 * 1024**3, total
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.scan.outcome == 'success'
+        with:
+          name: native-arm64-unit-suite
+          path: ${{ runner.temp }}/unit-results/
+          if-no-files-found: error
