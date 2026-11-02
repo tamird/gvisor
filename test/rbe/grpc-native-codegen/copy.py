@@ -12,7 +12,7 @@ import sys
 import time
 import zipfile
 
-SOURCE = "d38eb8b2ef2131b5baeaa45e9ab274e7f523bfb6"
+SOURCE = "ccfbbe36987afbad715cbca3c6bc791a7e33d2c9"
 BASE = "db13f8422846404ffa2e81e5d76d19488df30586"
 TEMP = Path(os.environ["RUNNER_TEMP"])
 ROOT = Path.cwd()
@@ -85,10 +85,14 @@ def linux():
         assert all(c.startswith("bazel-out/") for vs in selected.values() for c in [vs[0].split("=", 2)[-1]])
         spawns = TEMP / "copy-spawns.json"
         build = [*prior.bazel, "build", *flags, "--execution_log_json_file=" + str(spawns), *targets]
-        run("generate", build, ROOT)
+        failed = None
+        try:
+            run("generate", build, ROOT)
+        except RuntimeError as error:
+            failed = error
         accesses = []
         copies = []
-        for s in prior.spawns(spawns):
+        for s in prior.spawns(spawns) if spawns.exists() else []:
             owner = prior.label(s.get("targetLabel", ""))
             if owner == prior.wrapper and s.get("mnemonic") == "CopyGrpcPlugin":
                 argv = s["commandArgs"]
@@ -109,6 +113,9 @@ def linux():
                                                        if i["path"] == selected[owner][0].split("=", 2)[-1]), None)})
         report["copies"] = copies
         report["executions"] = accesses
+        save()
+        if failed:
+            raise failed
         expected = json.loads((ROOT / "test/rbe/grpc-native-codegen/result.json").read_bytes())["matches"]
         actual = {p: {"size": (ROOT / "bazel-bin" / p).stat().st_size, "sha256": digest(ROOT / "bazel-bin" / p)} for p in expected}
         report["outputs"] = actual
@@ -164,16 +171,19 @@ def metadata():
         assert output("git", "rev-parse", "HEAD") == ref
         run("artifact-gen-" + name, ["tools/artifact_gen/artifact_gen.sh"])
         model = json.loads((SUPPLIER / "tools/artifact_gen/build.json").read_bytes())
-        plugins = {t["name"]: t for t in model["targets"] if t["name"] in expected}
+        plugin_names = {"src/compiler:" + n for n in expected}
+        plugins = {t["name"]: t for t in model["targets"] if t["name"] in plugin_names}
         changes = output("git", "diff", "--name-only").splitlines()
         generated = [n for n in changes if (SUPPLIER / n).is_file()]
-        report[name] = {"plugins": plugins, "generated": {n: digest(SUPPLIER / n) for n in generated}}
+        report[name] = {"plugins": plugins, "build_json": digest(SUPPLIER / "tools/artifact_gen/build.json"),
+                        "actual_plugin_names": [t["name"] for t in model["targets"] if "plugin" in t["name"] and t.get("build") == "protoc"],
+                        "generated": {n: digest(SUPPLIER / n) for n in generated}}
         save()
         if changes:
             run("restore-generated-" + name, ["git", "restore", "--", *changes])
     assert report["python_manifest"] == original and len(expected) == 7
     assert report["base"] == report["candidate"]
-    assert set(report["candidate"]["plugins"]) == expected
+    assert set(report["candidate"]["plugins"]) == plugin_names
     assert all(t["src"] for t in report["candidate"]["plugins"].values())
 
 
