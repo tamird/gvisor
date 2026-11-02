@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T19:54:18.116293+00:00",
+    "updatedAt": "2026-11-02T20:19:07.552706+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42906,8 +42906,8 @@
       "url": "https://github.com/google/gvisor/pull/15867",
       "group": "runtime",
       "status": "draft",
-      "summary": "An iterator can unlock before slices.SortedFunc calls its comparator. The PR accepts that unprotected read. A prototype infers when a helper calls its predicate with the caller’s locks intact, and passed the safe and unsafe cases on both architectures. A standalone alternative for #15728 is in development.",
-      "updatedAt": "2026-11-02T19:22:19.825621+00:00",
+      "summary": "An iterator can unlock before slices.SortedFunc calls its comparator. The PR accepts that unprotected read. A prototype infers when a helper calls its predicate with the caller’s locks intact, and passed the safe and unsafe cases on both architectures. The standalone alternative for #15728 is ready for contributor review.",
+      "updatedAt": "2026-11-02T20:19:07.552706+00:00",
       "evidence": [
         {
           "label": "Nogo passed the inferred callback cases on both architectures",
@@ -42971,11 +42971,13 @@
       "followup": {
         "owner": "tcp_split_owner",
         "sourceHead": "0bf36f79214fa3be21b86435714026a0ed1b1c42",
-        "observedAt": "2026-11-02T19:22:19.825621+00:00",
-        "disposition": "Develop a standalone alternative for #15728",
-        "nextAction": "Build the alternative on master, verify the reported bound-method call and its negative controls, then submit it as its own PR.",
+        "observedAt": "2026-11-02T20:19:07.552706+00:00",
+        "disposition": "Standalone alternative verified; contributor decision tracked on its branch",
+        "nextAction": "Review the proposal/checklocks-callback-facts branch. No reply is pending on this draft.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15867#issuecomment-6585322042"
+          "https://github.com/google/gvisor/pull/15867#issuecomment-6585322042",
+          "https://github.com/tamird/gvisor/commit/bf276987f",
+          "https://github.com/tamird/gvisor/actions/runs/41515890904/artifacts/13176136134"
         ]
       }
     },
@@ -45687,6 +45689,56 @@
           "postedURL": "https://github.com/bazel-contrib/bazel-gazelle/issues/2499"
         }
       ]
+    },
+    {
+      "id": "branch:checklocks-callback-facts",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/checklocks-callback-facts",
+      "head": "bf276987f6e86bf80463f97bb35e0b94dca62ae3",
+      "title": "checklocks: infer when callbacks can use the caller’s locks",
+      "url": "https://github.com/tamird/gvisor/commit/bf276987f",
+      "group": "analysis",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T20:19:07.552706+00:00",
+      "summary": "Checklocks accepts the locked bound-method call from #15728 and reports the unlocked call at the call site. The proof follows the helper body across packages without a list of trusted names. Eight of fourteen slices helpers qualify. This standalone change is based on gVisor master.",
+      "evidence": [
+        {
+          "label": "Both Nogo architectures and standalone held/unheld checks; BinarySearchFunc, CompareFunc, ContainsFunc, EqualFunc, IndexFunc, IsSortedFunc, MaxFunc and MinFunc qualify. CompactFunc, DeleteFunc, SortFunc, SortStableFunc, SortedFunc and SortedStableFunc remain conservative.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41515890904/artifacts/13176136134"
+        },
+        {
+          "label": "Original bound-method report from Joachim Bauch",
+          "url": "https://github.com/google/gvisor/issues/15728"
+        },
+        {
+          "label": "Danny Ward’s synchronous slice callback proposal",
+          "url": "https://github.com/google/gvisor/pull/15867"
+        },
+        {
+          "label": "Original inference experiment",
+          "url": "https://github.com/tamird/gvisor/commit/75000d12b"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "bf276987f6e86bf80463f97bb35e0b94dca62ae3",
+        "baseHead": "14555f88af78c8bafdb5ae7015720a8ef7c83b58",
+        "url": "https://github.com/tamird/gvisor/commit/bf276987f",
+        "title": "checklocks: infer when callbacks can use the caller’s locks",
+        "requestedAt": "2026-11-02T20:19:07.552706+00:00",
+        "summary": "Open the standalone alternative for #15728 with this commit and PR description?",
+        "body": "Passing e.hasKeyLocked to slices.ContainsFunc reports a missing mutex\neven when the caller holds e.mu. Checklocks treats the method value as\nescaping the caller and checks it without that lock.\n\nInfer from a helper’s body whether it calls its predicate without\nrunning other code that could release the lock. Export that property on\nthe function declaration so it works across packages and through\nforwarding helpers. For slices.SortedFunc the caller supplies an\niterator that can unlock before the first comparison, so its comparator\nstill gets checked without the caller’s locks.\n\nA helper can call the predicate repeatedly or never call it. Check that\neach returning invocation preserves the held locks and their modes, and\ndiscard captured pointer identities that change between invocations.\n\nFixes #15728, reported by Joachim Bauch (@fancycode).\nRelated to #15867 by Danny Ward (@dannyward630)."
+      },
+      "refinement": {
+        "before": {
+          "head": "75000d12b7a9f532160dc30f992c9b667ddea823"
+        },
+        "after": {
+          "head": "bf276987f6e86bf80463f97bb35e0b94dca62ae3"
+        }
+      }
     }
   ],
   "edges": [
