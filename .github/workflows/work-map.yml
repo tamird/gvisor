@@ -1,0 +1,37 @@
+name: Collect the paired work map after the LLVM amendment
+on:
+  push:
+    branches: [qualification/work-map-llvm-908-paired]
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify the tested source and complete a canonical read-only collection
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          test "$(git rev-parse HEAD^)" = 6d6afa6c6974521db34e0043ca9052ca9d6f589c
+          test -z "$(git diff --name-only HEAD^ HEAD -- ':!.github')"
+          mkdir results
+          python3 update-status.py
+          node metadata-preflight.mjs . > results/preflight.json
+          cp github-status.json results/github-status.json
+          jq -e '[.prs[] | select(.url == "https://github.com/hermeticbuild/hermetic-llvm/pull/908") | .head] == ["ed1ed5105e6cd8b638b1e55d4c32e28b7511541d"]' results/github-status.json
+      - name: Preserve the resulting provider snapshot and paired semantic preflight
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-map-llvm-settled-pair
+          path: |
+            results/preflight.json
+            results/github-status.json
+          if-no-files-found: error
