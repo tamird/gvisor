@@ -18,10 +18,10 @@ def label(value):
 
 def requirements():
     query = json.loads((root / "cgroup-actions.json").read_text())
-    labels = {t["id"]: label(t["label"]) for t in query["targets"]}
+    labels = {t["id"]: label(t["label"]) for t in query.get("targets", [])}
     rows = []
     special = {"local", "no-remote", "no-remote-exec"}
-    for action in query["actions"]:
+    for action in query.get("actions", []):
         name = labels.get(action.get("targetId"))
         if name not in targets:
             continue
@@ -29,7 +29,7 @@ def requirements():
         if info & special:
             rows.append((name, action["mnemonic"], sorted(info & (special | {"no-sandbox"}))))
     kinds = {k for _, k, _ in rows}
-    receipt.write_text(json.dumps({"requirements":rows,"mnemonics":sorted(kinds)}, indent=2)+"\n")
+    receipt.write_text(json.dumps({"configuredTargets":len(labels),"actions":len(query.get("actions", [])),"requirements":rows,"mnemonics":sorted(kinds)}, indent=2)+"\n")
     assert {"GoCompilePkg", "GoStaticAnalysis"} <= kinds, rows
     with (root / "nogo-resources.bazelrc").open("a") as f:
         for k in sorted(kinds):
