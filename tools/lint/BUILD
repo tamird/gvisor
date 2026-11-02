@@ -29,6 +29,16 @@ BUILDIFIER_FLAGS = [
     "--warnings=-duplicated-name,-list-append,-native-py,-native-sh-binary,-native-sh-library,-native-sh-test,-native-proto",
 ]
 
+GOIMPORTS_TOOL = "@org_golang_x_tools//cmd/goimports"
+
+# Formatting-only mode does not add or remove imports: generated packages may
+# not exist until Bazel builds them.
+GOIMPORTS_FLAGS = ["-format-only"]
+
+# This golden output tests comment positions across merged import declarations.
+# goimports would merge the declarations and move their comments.
+GOIMPORTS_INPUTS = [p for p in INPUTS["go"] if p != "tools/go_generics/tests/simple/output.go"]
+
 # The LLVM multicall driver selects clang-format from argv[0].
 native_binary(
     name = "clang_format_tool",
@@ -62,6 +72,49 @@ workspace_formatters(
         data = ["@lint_inputs//:ROOT.d/.clang-format"],
         tool = ":clang_format_tool",
     ),
+    goimports = dict(
+        args = GOIMPORTS_FLAGS + [
+            "-w",
+            "-l",
+            "--",
+        ] + ["./" + p for p in GOIMPORTS_INPUTS],
+        data = [],
+        tool = GOIMPORTS_TOOL,
+    ),
+)
+
+run_binary(
+    name = "goimports_list",
+    srcs = [
+        "@lint_inputs//:ROOT",
+        "@lint_inputs//:go",
+    ],
+    args = GOIMPORTS_FLAGS + [
+        "-l",
+        "--",
+    ] + [shell.quote(ROOT + "/" + p.replace("$", "$$")) for p in GOIMPORTS_INPUTS],
+    mnemonic = "GoimportsList",
+    stdout = "goimports.list",
+    tool = GOIMPORTS_TOOL,
+)
+
+# goimports -l reports filenames but exits successfully when formatting differs.
+run_binary(
+    name = "goimports",
+    srcs = [":goimports.list"],
+    args = [
+        "-IB",
+        "$(execpath :check_empty.py)",
+        "$(execpath :goimports.list)",
+    ],
+    mnemonic = "LintReportCheck",
+    progress_message = "Checking Go formatting; fix with bazel run //tools/lint:format_goimports",
+    stdout = "goimports.report",
+    tool = ":python_interpreter",
+    tools = [
+        ":check_empty.py",
+        ":python_runtime",
+    ],
 )
 
 run_binary(
@@ -182,6 +235,7 @@ filegroup(
         ":buildifier",
         ":clang_format",
         ":cpplint",
+        ":goimports",
         ":spelling",
     ],
 )
