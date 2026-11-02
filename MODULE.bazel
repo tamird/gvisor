@@ -108,6 +108,16 @@ python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = "3.11")
 python.toolchain(python_version = "3.11")
 
+# Codespell's pure-Python wheel includes the dictionaries it opens at runtime.
+http_archive(
+    name = "codespell",
+    build_file = "//tools/lint:codespell.BUILD",
+    dev_dependency = True,
+    sha256 = "a9c7cef2501c9cfede2110fd6d4e5e62296920efe9abfb84648df866e47f58d1",
+    type = "zip",
+    urls = ["https://files.pythonhosted.org/packages/0e/20/b6019add11e84f821184234cea0ad91442373489ef7ccfa3d73a71b908fa/codespell-2.3.0-py3-none-any.whl"],
+)
+
 ### Crosstool
 coral_crosstool_extension = use_extension("//tools/bazeldefs:extensions/coral_crosstool.bzl", "coral_crosstool_extension")
 use_repo(coral_crosstool_extension, "coral_crosstool")

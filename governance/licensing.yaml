@@ -28,6 +28,14 @@ allowed_licenses:
   - Zlib
   - Google patent license for Golang
 exceptions:
+  - dependency: codespell
+    license:
+      - CC-BY-SA-3.0
+      - GPL-2.0-only
+    exception_rationale: >-
+      Only the spelling check uses the GPL program and the CC-BY-SA
+      dictionaries. The wheel records both licenses in its METADATA. See
+      https://github.com/codespell-project/codespell/blob/193cd7d27/README.rst#license.
   - dependency: google_root_pem
     license: NOASSERTION
     exception_rationale: >-

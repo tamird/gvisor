@@ -6,6 +6,11 @@ package(
     licenses = ["notice"],
 )
 
+exports_files(
+    [".codespellrc"],
+    visibility = ["//tools/lint:__pkg__"],
+)
+
 config_setting(
     name = "debug",
     values = {"compilation_mode": "dbg"},
