@@ -41970,8 +41970,8 @@
       "url": "https://github.com/tamird/gvisor/commit/c79762708",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T13:34:54.530558+00:00",
-      "summary": "After a timeout retransmitted the first missing segment, a new SACK for later data made RACK send that segment again. The same packet exchange on Linux continued with the later losses.",
+      "updatedAt": "2026-11-02T02:46:13+00:00",
+      "summary": "After a timeout retransmitted the first missing segment, a new SACK made RACK send it again. Linux selected later losses in the packet test. In two matched 512 KiB transfers, both senders repaired the same two older holes, but stock also sent a fourth copy of the unmarked first segment. The fix omitted it through the first ACK covering it.",
       "evidence": [
         {
           "label": "Linux, stock and fixed packet traces, 101 package cases and both analyzers",
@@ -41988,6 +41988,14 @@
         {
           "label": "Independent timing comparison with #16624 and its ACK-withheld control",
           "url": "https://github.com/tamird/gvisor/actions/runs/41311309196/artifacts/13085019861"
+        },
+        {
+          "label": "Stock transfer with four copies of the first segment",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41378384387/artifacts/13112017414"
+        },
+        {
+          "label": "Matched transfer with three copies and the same two repairs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41379139895/artifacts/13112835830"
         }
       ],
       "contributorReview": {
