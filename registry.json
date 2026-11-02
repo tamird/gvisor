@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T04:29:14+00:00",
+    "updatedAt": "2026-11-02T04:38:00+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -22448,12 +22448,12 @@
       "group": "bazel",
       "url": "https://github.com/tamird/gvisor/commit/4b21538bf",
       "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
-      "summary": "Two source links in the local rules_rs patch use the verified nine-character revision. The patch hunks, catalog and prior approval are unchanged.\n\nThe Rust library-notice export is proposed in hermeticbuild/rules_rs#333. The image proposal pins BCR rules_rs 0.1.3. Remove the local patch when the first BCR version containing the merged export is available.\n\nCurrent foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nApproved 6a38390bf is refined to c82e52cb77 by upstream issue citations and commit prose only; patch payload and executable sources are unchanged. The public notice-export request is filed as hermeticbuild/rules_rs#312. The commit explains canonical Buildifier via tools/lint.sh in make lint and its agreement with mod tidy. Existing approval and prerequisite gates remain intact; no new decision or runtime replay. Compare git range-diff 6a38390bf^! c82e52cb77^!.\n\nEarlier source-specific record:\n\nThe contributor explicitly approved final 6a38390bf. The rules_rs notice-export upstream report/patch and reference are authorized; root owns that follow-up and the formatter explanation. Existing output/runtime evidence and prerequisite edges remain unchanged.\n\nEarlier source-specific record:\n\nBuild the Rust example with rules_rs while separating execution-host selection from Linux musl image targets. The final tree exactly matches qualified c50e; no rules_rust override or private compiler repository import remains. The public toolchain notice alias uses one distribution archive only for target-independent documentation. Both-CPU static/image/Make evidence and AMD64 runc+systrap TestRust are retained; Darwin coverage is configured compiler-dependency analysis only, with no Darwin or ARM64 runtime claim.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe requested Protobuf 37.0-rc1 prerequisite removes the generated-lock backport and passes canonical Fetch/Verify without a rules_rust override. The corrected gRPC declarations now build the selected generated C++ and Go consumers on both CPUs. Its analyzer ran successfully, but retained reporting was incomplete because the callback omitted local report URI flags; that failure remains preserved. The bounded retry adds those flags and validates a public toolchain-repository notice alias with normal mod tidy and the same five image output comparisons. Canonical formatting and all five reporter controls now pass. Real mod tidy exposed a missing governance-extension lock entry after targeted graph preparation. The native failure and dirty-module status are retained; the bounded correction evaluates all module extensions before strict tidy and retains the exact module postimage.\n\nThe Rust child uses rules_rs defaults with Linux musl image targets and standard host toolchain selection. The supplier exposes the architecture-independent library notice from one Linux x86-64 compiler distribution without selecting an execution host. Root imports only the public toolchain repository. Prior runtime evidence remains tied to its original source until current outputs match: static images on both CPUs, AMD64 runc/systrap TestRust, ordinary Make, native input identities and notices. Darwin coverage is configured dependency analysis only; no Darwin execution or ARM64 runtime is claimed. No upstream PR is open.",
+      "updatedAt": "2026-11-02T04:38:00+00:00",
+      "summary": "Two source links in the local rules_rs patch use the verified nine-character revision. The patch hunks, catalog and prior approval are unchanged.\n\nThe notice export merged in hermeticbuild/rules_rs#333, one commit after the latest BCR release, 0.2.1. The approved image still pins 0.1.3 with the local patch. Drop the patch when a BCR release contains ef65be177.\n\nCurrent foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nApproved 6a38390bf is refined to c82e52cb77 by upstream issue citations and commit prose only; patch payload and executable sources are unchanged. The public notice-export request is filed as hermeticbuild/rules_rs#312. The commit explains canonical Buildifier via tools/lint.sh in make lint and its agreement with mod tidy. Existing approval and prerequisite gates remain intact; no new decision or runtime replay. Compare git range-diff 6a38390bf^! c82e52cb77^!.\n\nEarlier source-specific record:\n\nThe contributor explicitly approved final 6a38390bf. The rules_rs notice-export upstream report/patch and reference are authorized; root owns that follow-up and the formatter explanation. Existing output/runtime evidence and prerequisite edges remain unchanged.\n\nEarlier source-specific record:\n\nBuild the Rust example with rules_rs while separating execution-host selection from Linux musl image targets. The final tree exactly matches qualified c50e; no rules_rust override or private compiler repository import remains. The public toolchain notice alias uses one distribution archive only for target-independent documentation. Both-CPU static/image/Make evidence and AMD64 runc+systrap TestRust are retained; Darwin coverage is configured compiler-dependency analysis only, with no Darwin or ARM64 runtime claim.\n\nRoot requested contributor review of the concrete Protobuf prerequisite and Rust child. Earlier conditional acceptance remains recorded; the new gRPC dependency and public notice patches are now visible for review. The exact final compatibility run passed all 18 phases, eight configured generated-code owners and the owning analyzer, canonical formatting, strict module tidy, and all five prior image output hash/size comparisons. No runtime replay was needed.\n\nCombined refinement command: git -C ~/code/gvisor range-diff --creation-factor=999 6941cf2a1^! e8c022855^..6a38390bf\n\nEarlier source record:\n\nThe requested Protobuf 37.0-rc1 prerequisite removes the generated-lock backport and passes canonical Fetch/Verify without a rules_rust override. The corrected gRPC declarations now build the selected generated C++ and Go consumers on both CPUs. Its analyzer ran successfully, but retained reporting was incomplete because the callback omitted local report URI flags; that failure remains preserved. The bounded retry adds those flags and validates a public toolchain-repository notice alias with normal mod tidy and the same five image output comparisons. Canonical formatting and all five reporter controls now pass. Real mod tidy exposed a missing governance-extension lock entry after targeted graph preparation. The native failure and dirty-module status are retained; the bounded correction evaluates all module extensions before strict tidy and retains the exact module postimage.\n\nThe Rust child uses rules_rs defaults with Linux musl image targets and standard host toolchain selection. The supplier exposes the architecture-independent library notice from one Linux x86-64 compiler distribution without selecting an execution host. Root imports only the public toolchain repository. Prior runtime evidence remains tied to its original source until current outputs match: static images on both CPUs, AMD64 runc/systrap TestRust, ordinary Make, native input identities and notices. Darwin coverage is configured dependency analysis only; no Darwin execution or ARM64 runtime is claimed. No upstream PR is open.",
       "followup": {
         "owner": "root",
         "sourceHead": "4b21538bf21567c09e57a36c9749ff25b7332669",
-        "observedAt": "2026-10-31T00:17:49.384556+00:00",
+        "observedAt": "2026-11-02T04:38:00+00:00",
         "disposition": "Contributor approved; waiting for prerequisites",
         "nextAction": "Deliver the approved source after its other recorded prerequisites actually land. The #16097 basic foundation is already satisfied by #16307; do not wait on the closed source or repeat the contributor decision. Preserve the recorded source-specific qualification limits. Replace the local notice patch once a BCR rules_rs version includes the public library_notice target.",
         "evidence": [
@@ -22467,6 +22467,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Notice export after rules_rs 0.2.1",
+          "url": "https://github.com/hermeticbuild/rules_rs/compare/v0.2.1...ef65be177"
+        },
         {
           "label": "Upstream Rust standard-library notice export",
           "url": "https://github.com/hermeticbuild/rules_rs/pull/333"
@@ -33496,9 +33500,13 @@
       "url": "https://github.com/tamird/hermetic-llvm/commit/317378dd0778ebc15d190e4ebb018b5903b1039e",
       "group": "bazel",
       "status": "Delivered",
-      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
-      "summary": "The module map generator change is published in hermeticbuild/hermetic-llvm#899.",
+      "updatedAt": "2026-11-02T04:38:00+00:00",
+      "summary": "Merged upstream in hermeticbuild/hermetic-llvm#899. BCR llvm 0.8.26 predates the fix.",
       "evidence": [
+        {
+          "label": "Upstream merge",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/eb198127b"
+        },
         {
           "label": "Proposed commit",
           "url": "https://github.com/tamird/hermetic-llvm/commit/317378dd0778ebc15d190e4ebb018b5903b1039e"
@@ -35720,11 +35728,15 @@
       "title": "Link the Linux module map generator with musl",
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/899",
       "group": "bazel",
-      "status": "open",
+      "status": "merged",
       "head": "317378dd0778ebc15d190e4ebb018b5903b1039e",
-      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
-      "summary": "The module map generator change is published in hermeticbuild/hermetic-llvm#899.",
+      "updatedAt": "2026-10-29T20:59:01Z",
+      "summary": "The Linux module map generator links with musl so a worker can run it without a host glibc loader.",
       "evidence": [
+        {
+          "label": "Upstream merge",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/eb198127b"
+        },
         {
           "label": "Proposed commit",
           "url": "https://github.com/tamird/hermetic-llvm/commit/317378dd0778ebc15d190e4ebb018b5903b1039e"
@@ -38198,10 +38210,14 @@
       "title": "Expose the Rust standard library notice",
       "url": "https://github.com/hermeticbuild/rules_rs/pull/333",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-10-30T17:32:27.326543+00:00",
-      "summary": "David asked what happens on Rust 1.85, which lacks the library notice. The normal Linux CI verified the generated repository query and ran an existing crate using that compiler. A target that consumes the notice fails when it needs the absent file.",
+      "status": "merged",
+      "updatedAt": "2026-10-31T17:52:15Z",
+      "summary": "The merged change exports the Rust standard library notice. Its Linux CI also queries the generated repository and runs a crate with Rust 1.85, which predates the notice. David requested the older-compiler coverage and merged the tested revision.",
       "evidence": [
+        {
+          "label": "Upstream merge",
+          "url": "https://github.com/hermeticbuild/rules_rs/commit/ef65be177"
+        },
         {
           "label": "Maintainer question about older Rust releases",
           "url": "https://github.com/hermeticbuild/rules_rs/pull/333#discussion_r4426297068"
@@ -38214,16 +38230,7 @@
           "label": "Older compiler registration and missing notice consumer",
           "url": "https://github.com/tamird/rules_rs/actions/runs/41093475315/artifacts/12994678505"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "reply",
-        "head": "636da66aba4cab5a6a6466cb0ae635074f7a0585",
-        "url": "https://github.com/hermeticbuild/rules_rs/pull/333#discussion_r4426297068",
-        "title": "Reply to David about Rust 1.85",
-        "summary": "David asked what happens on Rust 1.85, which lacks the library notice. The normal Linux CI verified the generated repository query and ran an existing crate using that compiler. A target that consumes the notice fails when it needs the absent file.",
-        "body": "Rust 1.85 can still register the toolchains and compile an existing crate. The library notice first shipped in 1.86. Building a target that consumes :library_notice on 1.85 fails because the archive lacks the file. Omitting its export when the glob is empty also breaks recursive queries that traverse the alias [1].\n\n636da66ab adds one Linux CI step for 1.85. It queries the generated toolchain repository and runs an existing crate test with that toolchain [2]. The existing test still packages the notice from a current compiler.\n\n[1]: https://github.com/tamird/rules_rs/actions/runs/41093475315/artifacts/12994678505\n[2]: https://github.com/hermeticbuild/rules_rs/actions/runs/41096757990/job/124204798881\n\nPosted on behalf of @tamird."
-      }
+      ]
     },
     {
       "id": "branch:proc-forwarding-mounts",
