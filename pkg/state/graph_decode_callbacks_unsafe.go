@@ -45,6 +45,14 @@ func (ds *graphDecodeState) load(root unsafe.Pointer, ti *typeInfo) {
 	ds.runCallbacks()
 }
 
+// deferredScanKey enables per-Load observations in the qualification fixture.
+type deferredScanKey struct{}
+
+type deferredScan struct {
+	objects, pendingMaps, pendingOther int
+	visits                             []int
+}
+
 // decodeObjects decodes the data of all objects.
 func (ds *graphDecodeState) decodeObjects() {
 	d := &ds.in
@@ -70,7 +78,21 @@ func (ds *graphDecodeState) decodeObjects() {
 		}
 		ds.decodeObject(int32(i))
 	}
+	scan, _ := ds.ctx.Value(deferredScanKey{}).(*deferredScan)
+	if scan != nil {
+		scan.objects = len(ds.objs)
+		for _, item := range deferred {
+			if ds.objs[item.obj].kind == objKindMap {
+				scan.pendingMaps++
+			} else {
+				scan.pendingOther++
+			}
+		}
+	}
 	for len(deferred) > 0 {
+		if scan != nil {
+			scan.visits = append(scan.visits, len(deferred))
+		}
 		remaining := deferred[:0]
 		for _, do := range deferred {
 			if !ds.decodable(&ds.objs[do.obj]) {

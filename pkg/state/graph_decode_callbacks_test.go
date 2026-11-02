@@ -1372,3 +1372,92 @@ func TestPooledEncoderScratchReleasesPointers(t *testing.T) {
 	}
 	t.Fatal("pooled graphEncodeState retained user allocation across GC")
 }
+
+type scanCell [2]map[byte]scanLink
+
+type scanLink struct {
+	Next *scanCell
+}
+
+func (*scanLink) StateTypeName() string                   { return "state.scanLink" }
+func (*scanLink) StateFields() []string                   { return []string{"Next"} }
+func (l *scanLink) StateSave(s Sink)                      { s.Save(0, &l.Next) }
+func (l *scanLink) StateLoad(_ context.Context, s Source) { s.Load(0, &l.Next) }
+
+type scanRoot struct {
+	Seeds []*map[byte]scanLink
+	Tail  *scanCell
+}
+
+func (*scanRoot) StateTypeName() string { return "state.scanRoot" }
+func (*scanRoot) StateFields() []string { return []string{"Seeds", "Tail"} }
+func (r *scanRoot) StateSave(s Sink)    { s.Save(0, &r.Seeds); s.Save(1, &r.Tail) }
+func (r *scanRoot) StateLoad(_ context.Context, s Source) {
+	s.Load(0, &r.Seeds)
+	s.Load(1, &r.Tail)
+}
+
+var registerDeferredScan = sync.OnceFunc(func() {
+	Register((*scanLink)(nil))
+	Register((*scanRoot)(nil))
+	fingerprint.Store(0)
+})
+
+func TestGraphDeferredPasses(t *testing.T) {
+	registerDeferredScan()
+	if !GraphEngineEnabled() {
+		t.Fatal("expected graph Save")
+	}
+	for _, n := range []int{16, 64, 256, 1024} {
+		for _, seeded := range []bool{false, true} {
+			t.Run(fmt.Sprintf("n%d/seeded_%v", n, seeded), func(t *testing.T) {
+				var root scanRoot
+				for i := 0; i < n; i++ {
+					cell := new(scanCell)
+					cell[1] = map[byte]scanLink{byte(i): {Next: root.Tail}}
+					root.Tail = cell
+					if seeded {
+						root.Seeds = append(root.Seeds, &cell[1])
+					}
+				}
+				var saved bytes.Buffer
+				if _, err := Save(t.Context(), &saved, &root); err != nil {
+					t.Fatal(err)
+				}
+				size := saved.Len()
+				var scan deferredScan
+				var restored scanRoot
+				ctx := context.WithValue(t.Context(), deferredScanKey{}, &scan)
+				if _, err := Load(ctx, &saved, &restored); err != nil {
+					t.Fatal(err)
+				}
+				if saved.Len() != 0 || (seeded && len(restored.Seeds) != n) || (!seeded && restored.Seeds != nil) {
+					t.Fatalf("unread bytes %d, restored seeds %d", saved.Len(), len(restored.Seeds))
+				}
+				cell := restored.Tail
+				for i := n - 1; i >= 0; i-- {
+					if cell == nil || cell[0] != nil || len(cell[1]) != 1 {
+						t.Fatalf("invalid restored cell %d", i)
+					}
+					if seeded && restored.Seeds[i] != &cell[1] {
+						t.Fatalf("seed %d does not point to the restored slot", i)
+					}
+					link, ok := cell[1][byte(i)]
+					if !ok {
+						t.Fatalf("cell %d missing its only key", i)
+					}
+					cell = link.Next
+				}
+				if cell != nil || scan.objects < n {
+					t.Fatalf("chain did not terminate or scan missing: %p, %d objects", cell, scan.objects)
+				}
+				retryVisits := 0
+				for _, count := range scan.visits {
+					retryVisits += count
+				}
+				t.Logf("DEFERRED_SCAN n=%d seeded=%v bytes=%d objects=%d pending_maps=%d pending_other=%d passes=%d retry_visits=%d scan_sizes=%v",
+					n, seeded, size, scan.objects, scan.pendingMaps, scan.pendingOther, len(scan.visits), retryVisits, scan.visits)
+			})
+		}
+	}
+}
