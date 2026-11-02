@@ -27,6 +27,21 @@ platform(
 
 observed_root(name = "root")
 
+observed_root(
+    name = "no_layers",
+    exec_properties = {
+        "container-image": "docker://docker.io/tianon/scratch@sha256:3d455195f1141b05cb8cc6deb07ea96b617e5436c7a259d9f3e7b1985f4d3f51",
+        "recycle-runner": "false",
+    },
+    tool = "@bootstrap_busybox//:payload/usr/bin/busybox",
+)
+
+observed_root(
+    name = "one_file",
+    exec_properties = {"recycle-runner": "false"},
+    tool = "@bootstrap_busybox//:payload/usr/bin/busybox",
+)
+
 platform(
     name = "gnu",
     parents = ["@io_bazel_rules_go//go/toolchain:linux_arm64_cgo"],

@@ -62,7 +62,7 @@ def diagnostics(text):
 
 
 def audit(compact, include_links=False):
-    query = """select(.spawn != null) | .spawn | select(.targetLabel == $owner or .targetLabel == $config or .targetLabel == $helper or ($include_links and .mnemonic == "GoLink") or (.exitCode != null and .exitCode != 0))
+    query = """select(.spawn != null) | .spawn | select(.mnemonic == "ObserveWorkerRoot" or .targetLabel == $owner or .targetLabel == $config or .targetLabel == $helper or ($include_links and .mnemonic == "GoLink") or (.exitCode != null and .exitCode != 0))
         | {mnemonic, targetLabel, args:(if .targetLabel == $owner or .targetLabel == $config or .targetLabel == $helper then .args[0:2] else [] end), digest, runner, cacheHit, exitCode, status,
         target_triples: ([range(0; (.args | length)) as $i | select(.args[$i] == "-target" or .args[$i] == "--target") | .args[$i+1]] + [.args[]? | select(startswith("--target=")) | ltrimstr("--target=")]),
         output: (if .mnemonic == "GoLink" then (.args | index("-o")) as $i | if $i == null then null else .args[$i+1] end else null end),

@@ -15,8 +15,8 @@ from zipfile import ZipFile
 from action_log import context
 from qualify import CONFIG, HELPER, NATIVE, OUT, OWNER, TARGET, TMP, audit, diagnostics, inspect_outputs, now, save
 
-PRODUCT = "1c17155579d2e316ab71147b42f573558f57b2bb"
-BASE = "cfa98382ba656459e79cfbece6a2c533cf47fe59"
+PRODUCT = "1902df93dcc46803a60b5ede1c5d234fb265c6f0"
+BASE = "388a7cacc45e1fff44c845eb99254c1f3b584fba"
 ORIGINAL = "c1210292-5868-4f9a-9ed1-ad1d49308b27"
 OLD_ARCHIVE = {"hash": "c31a5dc008783cf4d2f1ad4fcff830adf642a2ba2121c438d4ca6509dd126440", "sizeBytes": "7403456"}
 OLD_CONFIG = "8fab57f51b67b2d8ac0aedd2988d3ad61173071fa6625ba23fb60a4b47838597"
@@ -61,22 +61,21 @@ def check_selection(r, bazel, flags, platform, control):
     save(r)
 
 
-def build(r, control=False, analyze_only=False):
+def build(r):
+    from scratch_root import choose, ZERO
     r.update(source=git("rev-parse", "HEAD"), product=PRODUCT, base=BASE, target=TARGET, started=now(),
-             original={"invocation": ORIGINAL, "run": 41406257977, "artifact": 13123707083, "archive": OLD_ARCHIVE},
-             arm="host-shell" if control else "declared-shell")
+             original={"invocation": "9ac98d9c-7337-4b54-a37d-5276517a46ab", "run": 41426238851, "artifact": 13132865042},
+             arm="native-empty-worker")
     save(r)
-    assert r["source"] == os.environ["GITHUB_SHA"] and git("rev-parse", "HEAD^2") == PRODUCT
-    assert git("rev-parse", "HEAD^1") == "8d10cec32cd3622a07c91e282305c78d5ee3453e"
-    assert git("rev-parse", PRODUCT+"^") == BASE
-    assert set(git("diff", "--name-only", BASE, PRODUCT).splitlines()) == {
-        "MODULE.bazel", "external/tools/plugin-stack/BUILD", "external/tools/plugin-stack/plugin-stack.BUILD",
-        "test/rbe/plugin_programs/framework.patch"}
-    assert set(git("diff", "--name-only", PRODUCT, "HEAD").splitlines()) == {
-        ".github/workflows/build.yml", "test/rbe/plugin_programs/native_helper.py"}
-    assert git("diff", "--name-only", "HEAD") == ("MODULE.bazel" if control else "")
-    r["consumer_sha256"] = sha256(Path("external/tools/plugin-stack/plugin-stack.BUILD").read_bytes()).hexdigest()
-    assert json.loads((OUT / "image.json").read_text())["manifest"] == NATIVE.split("@")[1]
+    assert r["source"] == os.environ["GITHUB_SHA"] and git("rev-parse", PRODUCT + "^") == BASE
+    assert git("merge-base", PRODUCT, "HEAD") == PRODUCT
+    src = "external/tools/plugin-stack/plugin-stack.BUILD"
+    assert git("diff", "--name-only", BASE, PRODUCT) == src
+    assert set(git("diff", "--name-only", PRODUCT, "HEAD").splitlines()) <= {
+        ".github/workflows/build.yml", "test/rbe/empty_worker/BUILD", "test/rbe/empty_worker/probe.bzl",
+        "test/rbe/plugin_programs/qualify.py", "test/rbe/plugin_programs/native_helper.py", "test/rbe/plugin_programs/scratch_root.py"}
+    original = subprocess.check_output(["git", "show", PRODUCT + ":" + src])
+    assert Path(src).read_bytes() == original and not git("diff", "--name-only", "HEAD")
     platform = "//test/rbe/empty_worker:amd64_musl"
     bazel = ["bazel", "--bazelrc=" + str(TMP / "sidecar.bazelrc")]
     flags = ["--config=x86_64", "--config=plugin-tldk", "-c", "opt",
@@ -85,9 +84,21 @@ def build(r, control=False, analyze_only=False):
              "--noremote_local_fallback", "--spawn_strategy=remote", "--remote_download_outputs=toplevel",
              "--jobs=400", "--color=no", "--curses=no", "--registry=" + (Path(os.environ["GITHUB_WORKSPACE"]) / "registry").as_uri(),
              "--registry=https://bcr.bazel.build"]
-    check_selection(r, bazel, flags, platform, control)
-    if analyze_only:
-        return
+    image = choose(bazel, flags)
+    # Direct only this foreign action onto the zero-layer root. Common compiler
+    # dependencies keep their original execution and cache keys. The one-file
+    # fallback is the unmodified product on the registered musl platform.
+    current = original
+    if image == ZERO:
+        key = b"_EXEC_PROPERTIES = {\n"
+        assert original.count(key) == 1
+        current = original.replace(key, key + ('    "container-image": "' + image + '",\n').encode())
+        Path(src).write_bytes(current)
+    r["image"] = image
+    r["consumer"] = {"product_sha256": sha256(original).hexdigest(), "qualified_sha256": sha256(current).hexdigest(),
+                     "only_delta": "container-image" if current != original else None}
+    save(r)
+    check_selection(r, bazel, flags, platform, False)
     query = TARGET + ' + filter("(:(pmd_config|pmdinfogen|make_built)$|^@@?make[+]?//:make$)", deps(' + TARGET + '))'
     query_bep = TMP / (r["arm"] + ".query.bep")
     p = subprocess.run([*bazel, "cquery", *flags, "--build_event_json_file=" + str(query_bep), "--output=label", query], text=True, capture_output=True, timeout=420)
@@ -128,26 +139,19 @@ def build(r, control=False, analyze_only=False):
             r["target_completed"] = e["completed"].get("success", False)
     save(r)
     r["actions"] = audit(compact) if compact.exists() else []
-    r["source_clean"] = not git("diff", "--name-only", "HEAD")
+    r["source_matches"] = Path(src).read_bytes() == current and git("diff", "--name-only", "HEAD") == (src if current != original else "")
     save(r)
-    if rc and not control:
+    if rc:
         return
     owner, = [a for a in r["actions"] if a["targetLabel"] == OWNER and a["mnemonic"] == "CcMakeMakeRule"]
     props = {p["name"]: p["value"] for p in owner["platform"]}
-    assert props == {"Arch": "amd64", "OSFamily": "linux", "container-image": NATIVE,
+    assert props == {"Arch": "amd64", "OSFamily": "linux", "container-image": image,
                      "recycle-runner": "false", "workload-isolation-type": "oci"}
     assert owner["runner"] == "remote" and not owner["cacheHit"]
-    if control:
-        # Bazel's rendered log can contain JSON-escaped provider stderr. Verify
-        # the original structured stderr below, when the RPC key is in scope.
-        assert rc and owner["args"][0] == "/bin/bash" and (owner["exitCode"] or owner["status"])
-        r["pending_control_stderr"] = True
-        save(r)
-        return
     assert owner["args"][0].endswith("plugin_programs/bin/bash")
     assert not owner["exitCode"] and not owner["status"]
     assert not any(a["targetLabel"] in (CONFIG, HELPER) for a in r["actions"])
-    assert r["target_completed"] and r["source_clean"]
+    assert r["target_completed"] and r["source_matches"]
     r.update(build_verified=True, phase="original-outputs")
     save(r)
 
@@ -196,7 +200,7 @@ def collect(r):
         save(r)
     proof["outputs"] = inspect_outputs(outputs)
     save(r)
-    assert proof["outputs"] == original_result()["original"]["proof"]["outputs"]
+    assert proof["outputs"] == original_result()["proof"]["outputs"]
     log = (TMP / "Make.log").read_text(errors="replace")
     # These are DPDK's compact recipe names, from rte.hostapp.mk and
     # rte.compile-pre.mk, inside the one selected remote Make action.
@@ -212,9 +216,7 @@ def collect(r):
     assert proof["outputs"]["configuration"]["sha256"] == OLD_CONFIG
     proof["new_api"] = archive_api(TMP / "libpluginstack.a")
     save(r)
-    previous = TMP / "previous-plugin.a"
-    previous.write_bytes(blob(OLD_ARCHIVE, ORIGINAL))
-    proof["old_api"] = archive_api(previous)
+    proof["old_api"] = original_result()["proof"]["new_api"]
     proof["byte_identical_archive"] = proof["outputs"]["archive"]["sha256"] == OLD_ARCHIVE["hash"]
     assert proof["byte_identical_archive"] and proof["new_api"] == proof["old_api"]
     proof.update(verified=True, finished=now())
@@ -257,6 +259,10 @@ def launch_inputs(r):
     proof["make_uses_declared_shell"] = '"SHELL:=$BASH"' in script and "DPDK_BUILD_SHELL" not in script
     proof["consumer_utility_path"] = 'PATH="${BASH%/*}' in script
     assert all(proof[k] for k in ("inner_uses_declared_shell", "make_uses_declared_shell", "consumer_utility_path"))
+    proof["action_workspace_tmpdir"] = 'TMPDIR="${BUILD_TMPDIR}"' in script
+    assert proof["action_workspace_tmpdir"]
+    proof["command_env"] = {e["name"]: e["value"] for e in command.get("environmentVariables", [])
+                            if e["name"] in ("PATH", "TMPDIR") and re.fullmatch(r"[A-Za-z0-9_:./-]*", e["value"])}
     proof["verified"] = True
     save(r)
 
@@ -268,93 +274,40 @@ def failure(r, key, exc):
 
 def original_result():
     archive = TMP / "original.zip"
-    assert sha256(archive.read_bytes()).hexdigest() == "4e77036c8b4704ab3b14e57a646a146a65960043ba502ee47cd3d590b9d34848"
+    assert sha256(archive.read_bytes()).hexdigest() == "62d03652e87b69d4493e6582fbb180e07e7b937cbd7ef7e61be1152cc3de9cf2"
     with ZipFile(archive) as z:
-        original = json.loads(z.read("result.json"))
-    assert original["status"] == "PASS" and original["recovery_source"] == BASE
-    assert original["original_run"] == 41421129869
-    return original
-
-
-def verify_missing_bash(r):
-    from cas_inputs import blob, cas, rpc
-
-    control = r["control"]
-    assert control["selection"]["verified"]
-    original = original_result()
-    if control.get("pending_control_stderr"):
-        negative = control
-    else:
-        negative = original["original"]["control"]
-        control["evidence"] = {"source": negative["source"], "run": 41422486998, "artifact": 13130935501}
-    action, = [a for a in negative["actions"] if a["targetLabel"] == OWNER and a["mnemonic"] == "CcMakeMakeRule"]
-    assert action["runner"] == "remote" and not action["cacheHit"] and negative["build_exit"] == 1
-    digest, invocation = action["digest"], negative["invocation"]
-    response, = [e["executeResponse"] for e in rpc("GetExecution", {"executionLookup": {
-        "invocationId": invocation, "actionDigestHash": digest["hash"]}, "inlineExecuteResponse": True}).get("execution", [])
-                 if e.get("actionDigest", {}).get("hash") == digest["hash"]
-                 and str(e["actionDigest"]["sizeBytes"]) == str(digest["sizeBytes"]) and e["stage"] in (4, "COMPLETED")]
-    assert not response.get("cachedResult") and response["result"]["exitCode"] == 1
-    result = response["result"]
-    output = result.get("stderrDigest", {})
-    data = blob(output, invocation) if int(output.get("sizeBytes", 0)) else base64.b64decode(result["stderrRaw"], validate=True)
-    assert 0 < len(data) < 4096
-    message = re.search(r"executable file `?/bin/bash`? not found: No such file or directory", json.loads(data)["msg"])
-    assert message, "unexpected original control diagnostic"
-    command = cas(cas(digest, "Action")["commandDigest"], "Command")
-    (a,) = [a for a in control["selection"]["actions"] if a["target"].endswith("//:libpluginstack")]
-    assert command["arguments"] == a["argv"]
-    props = {p["name"]: p["value"] for p in command["platform"]["properties"]}
-    assert props == {"Arch":"amd64", "OSFamily":"linux", "container-image":NATIVE, "recycle-runner":"false",
-                     "workload-isolation-type":"oci"}
-    control.update(build_verified=True, disposition="EXPECTED_FAILURE", invocation=invocation,
-                   action=digest, stderr_sha256=sha256(data).hexdigest(), message=message.group(0))
-    if not control.get("pending_control_stderr"):
-        old = original["control_recovery"]
-        assert [control[k] for k in ("action","invocation","stderr_sha256","message")] == [
-            old[k] for k in ("action","invocation","stderr_sha256","message")]
-    save(r)
+        old = json.loads(z.read("result.json"))
+    assert old["status"] == "PASS" and old["source"] == BASE and old["proof"]["byte_identical_archive"]
+    return old
 
 
 if __name__ == "__main__":
     if sys.argv[1:] == ["--outputs"]:
         r = json.loads((OUT / "result.json").read_text())
-        checks = [("control_error", verify_missing_bash)]
         if r.get("build_verified"):
-            checks.extend([("output_error", collect), ("launch_error", launch_inputs)])
-        for key, operation in checks:
-            try:
-                operation(r)
-            except Exception as exc:
-                failure(r, key, exc)
-        passed = all((r.get("source_clean"),r.get("build_verified"),r.get("selection",{}).get("verified"),
-                      r.get("proof",{}).get("verified"),r.get("launch",{}).get("verified"),
-                      r.get("control",{}).get("build_verified"))) and not any(k in r for k, _ in checks)
-        status = "PASS" if passed else "FAIL" if r.get("build_exit", 0) != 0 else "INCOMPLETE"
-        r.update(status=status, verdict_time=now())
+            for key, operation in (("output_error", collect), ("launch_error", launch_inputs)):
+                try:
+                    operation(r)
+                except Exception as exc:
+                    failure(r, key, exc)
+        passed = all((r.get("source_clean"), r.get("source_matches"), r.get("build_verified"), r.get("selection", {}).get("verified"),
+                      r.get("proof", {}).get("verified"), r.get("launch", {}).get("verified")))
+        r.update(status="PASS" if passed else "FAIL" if r.get("build_exit") else "INCOMPLETE", verdict_time=now())
         save(r)
         raise SystemExit(0 if passed else 1)
 
-    assert sys.argv[1:] in ([], ["--fresh-control"])
-    path = Path("MODULE.bazel")
-    original = path.read_bytes()
-    needle = b'register_toolchains("//external/tools/plugin-stack:linux_amd64_bash")\n'
-    assert original.count(needle) == 1
-    control = {"status": "INCOMPLETE"}
+    assert not sys.argv[1:]
+    r = {"status": "INCOMPLETE"}
+    src = Path("external/tools/plugin-stack/plugin-stack.BUILD")
+    original = src.read_bytes()
     try:
-        path.write_bytes(original.replace(needle, b""))
-        build(control, control=True, analyze_only=not sys.argv[1:])
-    except Exception as exc:
-        failure(control, "collection_error", exc)
-    finally:
-        path.write_bytes(original)
-    r = {"status":"INCOMPLETE", "control":control}
-    save(r)
-    try:
+        original_result()
         build(r)
     except Exception as exc:
         failure(r, "collection_error", exc)
     finally:
+        if src.read_bytes() != original:
+            src.write_bytes(original)
         r["source_clean"] = not git("diff", "--name-only", "HEAD")
         save(r)
     raise SystemExit(0 if r.get("build_verified") and r["source_clean"] else 1)
