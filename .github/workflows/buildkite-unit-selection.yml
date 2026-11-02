@@ -1,0 +1,45 @@
+name: Native Buildkite unit selection
+on:
+  push:
+    branches: [qualification/buildkite-unit-selection]
+permissions:
+  contents: read
+jobs:
+  unit:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
+    env:
+      DOCKER_BUILD: 'false'
+      BUILDKITE_LABEL: ':test_tube: Unit tests (cgroupv2)'
+      PRODUCT: 96fadde722e14d482a62276b80237398f8b62fbf
+      VERIFIER: 6b3fe9ab6c03facafe6340c85f8d60ca3591566b
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Compare the complete suite and exercise both cache keys
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/unit-results"
+          printf '{"verified":false,"reason":"incomplete"}\n' > "$RUNNER_TEMP/unit-results/verdict.json"
+          cp .github/qualification/buildkite-unit-selection.py "$RUNNER_TEMP"
+          git fetch --quiet --depth=1 origin "$VERIFIER"
+          for tool in unit_matrix qualification_report; do
+            git show "$VERIFIER:test/rbe/$tool.py" > "$RUNNER_TEMP/$tool.py"
+          done
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          git checkout --quiet --detach "$PRODUCT"
+          sed -n '/^install_.*bazel() {$/,$p' .buildkite/hooks/pre-command > "$RUNNER_TEMP/unit-setup.bash"
+          source "$RUNNER_TEMP/unit-setup.bash"
+          test -n "$BUILDKITE_BAZEL_DIRECTORY"
+          test "$(bazel --version)" = "bazel $(cat .bazelversion)"
+          printf '%s\n' 'build --jobs=4' 'build --remote_cache=' 'build --remote_executor=' > "$RUNNER_TEMP/unit-resources.bazelrc"
+          python3 "$RUNNER_TEMP/buildkite-unit-selection.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: native-unit-selection
+          path: ${{ runner.temp }}/unit-results/
+          if-no-files-found: error
