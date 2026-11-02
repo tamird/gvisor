@@ -63,6 +63,40 @@ release_files(
     visibility = ["//visibility:public"],
 )
 
+SMOKE_ARGS = [
+    "--alsologtostderr",
+    "--network",
+    "none",
+    "--debug",
+    "--TESTONLY-unsafe-nonroot=true",
+    "--rootless",
+    "do",
+    "true",
+]
+
+# Start a guest on this worker on every presubmit, even when the release
+# binaries are cached.
+SMOKE_TAGS = [
+    "external",
+    "local",
+    "manual",
+]
+
+native_test(
+    name = "smoke",
+    src = ":release",
+    args = SMOKE_ARGS,
+    tags = SMOKE_TAGS,
+)
+
+native_test(
+    name = "smoke-race",
+    src = ":release-race",
+    args = SMOKE_ARGS,
+    env = {"GLIBC_TUNABLES": "glibc.pthread.rseq=0"},
+    tags = SMOKE_TAGS,
+)
+
 nogo_config(
     name = "nogo_config",
     srcs = ["nogo.yaml"],

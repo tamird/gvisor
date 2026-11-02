@@ -33,14 +33,16 @@ steps:
   # Run smoke tests before the other tests.
   - <<: *common
     <<: *source_test
+    env: &source_smoke_env
+      DOCKER_BUILD: "false"
+      BAZEL_TEST_STRIP: ""
     label: ":fire: Smoke tests (AMD64)"
-    command: make smoke-tests
+    command: make test TARGETS=//:smoke
   - <<: *common
     <<: *source_test
-    env:
-      GLIBC_TUNABLES: glibc.pthread.rseq=0
+    env: *source_smoke_env
     label: ":fire: Smoke race tests"
-    command: make smoke-race-tests
+    command: make test TARGETS=//:smoke-race
 
   # Run the remaining tests only if the smoke tests pass, so that a change
   # that does not build or start does not use the other agents (presubmits
