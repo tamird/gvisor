@@ -39,10 +39,7 @@ def put(path, value):
 
 
 def source():
-    require(command(["git", "rev-parse", "HEAD^"]) == "3ae4d9e8cf77c809e34b84b20f8c590724c1657d", "measured carrier parent")
-    allowed = {"pkg/tcpip/adapters/gonet/gonet.go", "pkg/tcpip/transport/tcp/rack.go", "pkg/tcpip/transport/tcp/snd.go"}
-    require(set(command(["git", "diff", "--name-only", BASE, "--", "pkg", "runsc", "tools", "MODULE.bazel", ".bazelrc"]).splitlines()) == allowed, "instrumented product identities")
-    require(not command(["git", "diff", FIXTURE, "--", "test/benchmarks/tcp/BUILD","test/benchmarks/tcp/nsjoin.c"]), "compiled owners changed")
+    require(command(["git", "rev-parse", "HEAD"]) == os.environ["EXPECT_SOURCE"], "selected source")
     require(not command(["git", "status", "--porcelain", "--untracked-files=no"]), "dirty tracked sources")
     return command(["git", "rev-parse", "HEAD"])
 

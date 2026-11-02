@@ -328,7 +328,7 @@ fi
 
 if [[ -n "$mss_study_dir" ]]; then
   client_args="$client_args -copy_buffer=61440 -write_report=$mss_study_dir/client-writes.json"
-  server_args="$server_args -copy_buffer=61440 -write_report=$mss_study_dir/server-writes.json"
+  server_args="$server_args -burst_mode=${TERMINAL_BURST_MODE:-open} -copy_buffer=61440 -write_report=$mss_study_dir/server-writes.json"
 fi
 
 # Specify loss and duplicate parameters only if they are non-zero
@@ -458,19 +458,8 @@ if [[ -n "${mss_study_dir}" ]]; then
     ethtool -k \$dev > "${mss_study_dir}/\$dev-features.txt"
   done
   ip -j link show > "${mss_study_dir}/root-links.json"
-  # Keep only the short SYN exchange until the Go copy sampler flags a bulk
-  # connection with no returning writes for four consecutive 200 ms samples.
-  # Capture up to 384 subsequent frames on that connection, no other flow.
-  python3 test/rbe/tcp_sack_stall.py wire "${mss_study_dir}" &
-  wire_pid=\$!
-  for i in {1..100}; do
-    [[ -f "${mss_study_dir}/wire-ready" ]] && break
-    kill -0 \$wire_pid
-    sleep 0.02
-  done
-  [[ -f "${mss_study_dir}/wire-ready" ]]
   if ${mss_capture}; then
-    tcpdump -U -n -i server.1 -c 200 -s 128 -w "${mss_study_dir}/capture.pcap" 'tcp port 44000' 2> "${mss_study_dir}/capture.log" &
+    tcpdump -B 8192 -U -n -i server.1 -c 30000 -s 128 -w "${mss_study_dir}/capture.pcap" 'tcp and host 10.0.0.3 and host 10.0.0.2 and port 44000' 2> "${mss_study_dir}/capture.log" &
     capture_pid=\$!
     for i in {1..100}; do
       grep -q 'listening on' "${mss_study_dir}/capture.log" && break
@@ -530,19 +519,17 @@ if [[ -n "${mss_study_dir}" ]]; then
   if ${mss_duration}; then
     ${nsjoin_binary} /tmp/client.netns ${iperf_binary_name} -p ${proxy_port} -c ${client_addr} -R -t ${duration} -O 3 -l 61440 -J > "${mss_study_dir}/iperf.json"
   else
-  ${nsjoin_binary} /tmp/client.netns ${iperf_binary_name} -p ${proxy_port} -c ${client_addr} -R -n ${mss_bytes} -l 61440 -J > "${mss_study_dir}/iperf.json"
+  ${nsjoin_binary} /tmp/client.netns timeout -k 2 30 strace -ff -ttt -T -e trace=read,recvfrom -e raw=read,recvfrom -o "${mss_study_dir}/receiver.read" ${iperf_binary_name} -p ${proxy_port} -c ${client_addr} -R -n ${mss_bytes} -l 61440 -J > "${mss_study_dir}/iperf.json"
   fi
   primary=\$?
   date +%s%N > "${mss_study_dir}/iperf-end-ns"
   ip -j -s link show > "${mss_study_dir}/link-stats.json"
-  touch "${mss_study_dir}/wire-stop"
-  wait \$wire_pid
-  wire_status=\$?
-  [[ \$primary == 0 ]] && primary=\$wire_status
   for dev in wan.0 wan.1; do
     tc -j -s qdisc show dev \$dev > "${mss_study_dir}/\$dev-qdisc.json"
   done
   if ${mss_capture}; then
+    sleep 0.25
+    kill -INT \$capture_pid 2>/dev/null
     wait \$capture_pid
     capture_status=\$?
     [[ \$primary == 0 ]] && primary=\$capture_status

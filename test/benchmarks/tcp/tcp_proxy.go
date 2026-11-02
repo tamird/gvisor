@@ -256,7 +256,10 @@ func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 		ep = sniffer.New(ep)
 	}
 
-	qDisc := fifo.New(ep, runtime.GOMAXPROCS(0), 1000)
+	var qDisc stack.QueueingDiscipline = fifo.New(ep, runtime.GOMAXPROCS(0), 1000)
+	if *burstMode != "" && *server {
+		qDisc = &lossQueue{QueueingDiscipline: qDisc}
+	}
 	opts := stack.NICOptions{QDisc: qDisc}
 	if err := s.CreateNICWithOptions(nicID, ep, opts); err != nil {
 		return nil, probeFile.Close, fmt.Errorf("error creating NIC %q: %v", *iface, err)

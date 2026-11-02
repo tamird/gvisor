@@ -171,7 +171,7 @@ func writeCopyReport(in, out impl) {
 		ordered = append(ordered[:512], events[start:]...)
 		ordered = append(ordered, events[512:start]...)
 	}
-	if err := json.NewEncoder(f).Encode(map[string]any{"events": ordered, "events_dropped": lostEvents, "buffer": *copyBuffer, "writes": rows, "stack": stats, "gomaxprocs": runtime.GOMAXPROCS(0), "num_cpu": runtime.NumCPU(), "gso_max": *gso, "swgso": *swgso, "gro": *gro}); err != nil {
+	if err := json.NewEncoder(f).Encode(map[string]any{"link": linkSnapshot(), "events": ordered, "events_dropped": lostEvents, "buffer": *copyBuffer, "writes": rows, "stack": stats, "gomaxprocs": runtime.GOMAXPROCS(0), "num_cpu": runtime.NumCPU(), "gso_max": *gso, "swgso": *swgso, "gro": *gro}); err != nil {
 		log.Fatal(err)
 	}
 }

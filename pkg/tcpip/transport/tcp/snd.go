@@ -1623,6 +1623,9 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 	}
 
 	ack := rcvdSeg.ackNumber
+	if s.state == tcpip.RTORecovery && (ack-1).InRange(s.SndUna, s.SndNxt) && ack != s.SndNxt {
+		s.researchEvent("partial_rto_ack", rcvdSeg)
+	}
 	fastRetransmit := false
 	// Do not leave fast recovery, if the ACK is out of range.
 	if s.FastRecovery.Active {

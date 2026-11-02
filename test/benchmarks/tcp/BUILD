@@ -9,6 +9,7 @@ package(
 go_binary(
     name = "tcp_proxy",
     srcs = [
+        "burst_loss.go",
         "tcp_proxy.go",
         "write_observation.go",
         "xdp.go",
@@ -18,6 +19,7 @@ go_binary(
         "//pkg/rand",
         "//pkg/tcpip",
         "//pkg/tcpip/adapters/gonet",
+        "//pkg/tcpip/header",
         "//pkg/tcpip/link/fdbased",
         "//pkg/tcpip/link/qdisc/fifo",
         "//pkg/tcpip/link/sniffer",
