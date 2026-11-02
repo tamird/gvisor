@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T18:27:13.788641+00:00",
+    "updatedAt": "2026-11-02T18:30:15.670469+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39531,10 +39531,14 @@
       "title": "Honor OCI TCP buffer settings for private network stacks",
       "url": "https://github.com/tamird/gvisor/commit/e290b349e",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-31T04:46:15.204222+00:00",
+      "status": "Published",
+      "updatedAt": "2026-11-02T18:30:15.670469+00:00",
       "summary": "A private sandbox configured with a 256 MiB TCP buffer ceiling still reported the 4 MiB netstack default. Apply tcp_rmem and tcp_wmem before the first process starts and keep the guest’s current values across restore. All 76 named runtime checks passed with zero skips, including preservation of a guest update.",
       "evidence": [
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16829"
+        },
         {
           "label": "All 76 named runtime checks, including restore",
           "url": "https://github.com/tamird/gvisor/actions/runs/41165176587/artifacts/13029430513"
@@ -39552,16 +39556,14 @@
           "url": "https://github.com/google/gvisor/issues/16670"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "e290b349e0d5d5e92ed816f30599112870f5c811",
-        "url": "https://github.com/tamird/gvisor/commit/e290b349e",
-        "title": "Open the private-stack OCI TCP buffer settings fix",
-        "summary": "A sandbox configured with a 256 MiB TCP buffer ceiling still reported 4 MiB. The correction applies tcp_rmem and tcp_wmem to a private stack before the first process starts, rejects changes to a shared stack and preserves the guest values on restore.",
-        "body": "May I open the fix for the OCI TCP buffer settings in #11837? All 76 named runtime checks passed, including a restore after the guest changed its buffers. Both owning analyzers passed on AMD64 and ARM64.",
-        "requestedAt": "2026-10-31T04:46:15.204222+00:00"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "e290b349e0d5d5e92ed816f30599112870f5c811",
+          "outcome": "approved",
+          "at": "2026-11-02T18:30:15.670469+00:00"
+        }
+      ]
     },
     {
       "id": "issue:15865",
@@ -39647,7 +39649,7 @@
       "title": "Wake poll on a drained host Unix datagram socket",
       "url": "https://github.com/tamird/gvisor/commit/9963cb1a8",
       "summary": "When an external Unix datagram receiver drained, stock gVisor left the writer asleep even though a separate poll confirmed it was writable. Linux and the tested correction delivered EPOLLOUT.",
-      "updatedAt": "2026-10-31T04:41:52.055360+00:00",
+      "updatedAt": "2026-11-02T18:30:15.670469+00:00",
       "evidence": [
         {
           "label": "Unix datagram drain and writable wakeup on Linux, stock and corrected gVisor",
@@ -39658,7 +39660,7 @@
           "url": "https://github.com/tamird/gvisor/compare/86114ad1b..9963cb1a8"
         }
       ],
-      "status": "Contributor review requested",
+      "status": "Agent work",
       "refinement": {
         "before": {
           "head": "86114ad1b83d3871975d774cbcea966b205daff7",
@@ -39669,15 +39671,23 @@
           "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25"
         }
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "9963cb1a8fb4782b1bfa1c645db449a091397982",
-        "url": "https://github.com/tamird/gvisor/commit/9963cb1a8",
-        "title": "Open the host Unix datagram writable-wakeup fix",
-        "summary": "Linux and the proposed implementation delivered EPOLLOUT after a full host socket drained. Stock gVisor timed out, although an immediate poll confirmed the socket was writable.",
-        "body": "May I open the Unix datagram wakeup fix? Connect attaches host notifications to the waiting endpoint queue before replacing its old peer. The final revision adds a comment explaining the queue selection. The measured code and shared syscall test are unchanged.",
-        "requestedAt": "2026-10-31T04:41:52.055360+00:00"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "9963cb1a8fb4782b1bfa1c645db449a091397982",
+          "outcome": "approved-with-changes",
+          "at": "2026-11-02T18:30:15.670469+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "tcp_split_owner",
+        "sourceHead": "9963cb1a8fb4782b1bfa1c645db449a091397982",
+        "disposition": "Contributor approved with a diagnostic change",
+        "nextAction": "Add readable messages to the syscall test’s errno assertions and publish the amendment.",
+        "observedAt": "2026-11-02T18:30:15.670469+00:00",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/9963cb1a8"
+        ]
       }
     },
     {
@@ -40619,9 +40629,13 @@
       "url": "https://github.com/tamird/gvisor/commit/ff0622973",
       "group": "runtime",
       "summary": "With the sentry at its file descriptor limit, pausing unused host notifications panicked. A failed first registration also poisoned later attempts after the limit was restored. Independent Linux processes reproduced both failures; both fixed cases and the existing eventfd consumers pass.",
-      "updatedAt": "2026-10-31T16:03:25.373275+00:00",
-      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T18:30:15.670469+00:00",
+      "status": "Published",
       "evidence": [
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16826"
+        },
         {
           "label": "Stock: cold Pause and retried AddFD both fail",
           "url": "https://app.buildbuddy.io/invocation/7c2fd860-3c8e-4cdf-8d5f-92f56138ca4d"
@@ -40635,17 +40649,14 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41217199370/artifacts/13047977795"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "ff062297311a053e968fc6cdf2b7e98f09854232",
-        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
-        "url": "https://github.com/tamird/gvisor/commit/ff0622973",
-        "title": "Start the host FD notifier on the first registration",
-        "requestedAt": "2026-10-31T16:03:25.373275+00:00",
-        "summary": "With the sentry at its file descriptor limit, pausing unused host notifications panicked. A failed first registration also poisoned later attempts after the limit was restored. Independent Linux processes reproduced both failures; both fixed cases and the existing eventfd consumers pass.",
-        "body": "Checkpointing pauses host notifications even if no files are being\nwatched. Pause allocated an epoll FD and dereferenced a nil notifier\nif the sentry had reached its descriptor limit. A failed allocation\nalso made every later registration return EMFILE, even after a file\ndescriptor became available.\n\nGive the notification lock process lifetime. Create the epoll FD\nunder the registration lock when adding the first file, leaving the\nnotifier ready to retry if creation fails."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "ff062297311a053e968fc6cdf2b7e98f09854232",
+          "outcome": "approved",
+          "at": "2026-11-02T18:30:15.670469+00:00"
+        }
+      ]
     },
     {
       "id": "branch:eventfd-import-failure",
@@ -40980,14 +40991,18 @@
       "type": "branch",
       "repo": "tamird/grpc",
       "ref": "proposal/bazel-plugin-symlink",
-      "head": "8e12f9a3e2460d4b1a5b14fb2ef0bf91e86ff4e5",
+      "head": "64745d2424a189c0e1661e1c10a26a3704c29144",
       "title": "Remove the shell copy from the gRPC plugin wrapper",
-      "url": "https://github.com/tamird/grpc/commit/8e12f9a3e",
+      "url": "https://github.com/tamird/grpc/commit/64745d242",
       "group": "rbe",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T18:10:24.680607+00:00",
+      "updatedAt": "2026-11-02T18:30:15.670469+00:00",
       "summary": "Bazel can expose each protoc plugin with a symlink. The release uploader’s pkg_zip recipe follows the link and stores the executable bytes. The revised rule drops the C++ copy tool.",
       "evidence": [
+        {
+          "label": "Final declared symlink and archive checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41498032551"
+        },
         {
           "label": "Release uploader identifies the packaging recipe",
           "url": "https://github.com/grpc/grpc/issues/36801#issuecomment-2798222006"
@@ -41003,10 +41018,10 @@
       ],
       "followup": {
         "owner": "python_supplier_review",
-        "sourceHead": "8e12f9a3e2460d4b1a5b14fb2ef0bf91e86ff4e5",
-        "observedAt": "2026-11-02T18:10:24.680607+00:00",
+        "sourceHead": "64745d2424a189c0e1661e1c10a26a3704c29144",
+        "observedAt": "2026-11-02T18:30:15.670469+00:00",
         "disposition": "Testing the smaller symlink rule",
-        "nextAction": "Qualify native Linux code generation and both metadata generators. Build both macOS plugin ZIPs with the release recipe and run the extracted executables after Bazel cleanup.",
+        "nextAction": "Linux code generation and both build metadata generators passed. Verify both packaged plugins on hosted macOS before handing this back for human submission.",
         "evidence": [
           "https://github.com/tamird/grpc/commit/8e12f9a3e",
           "https://github.com/grpc/grpc/issues/36801#issuecomment-2798222006",
@@ -41187,13 +41202,17 @@
       "group": "runtime",
       "repo": "tamird/gvisor",
       "ref": "proposal/tcp-receive-memory-width",
-      "head": "fb022c9ac24524fabade7a33d603bab8dbf607d2",
+      "head": "38d67a0f7132b3773ce2864717a728efdd9bd907",
       "title": "Keep TCP receive memory charges above 2 GiB representable",
-      "url": "https://github.com/tamird/gvisor/commit/fb022c9ac",
-      "updatedAt": "2026-11-02T18:27:13.788641+00:00",
-      "status": "Agent work",
+      "url": "https://github.com/tamird/gvisor/commit/38d67a0f7",
+      "updatedAt": "2026-11-02T18:30:15.670469+00:00",
+      "status": "Published",
       "summary": "When a one-byte payload fits in the last byte of a receive buffer, its headers and bookkeeping can take the charge above MaxInt32. The old signed counter wrapped, reported 4,294,966,720 bytes free and accepted another payload. The correction reported zero, refused that payload, and recovered exactly one byte after release.",
       "evidence": [
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16825"
+        },
         {
           "label": "Original and fixed queue boundary; AMD64 TCP unit tests and both owning analyzers, 45/45 records",
           "url": "https://github.com/tamird/gvisor/actions/runs/41254453359/artifacts/13061998440"
@@ -41206,17 +41225,7 @@
           "outcome": "approved-with-changes",
           "at": "2026-11-02T18:27:13.788641+00:00"
         }
-      ],
-      "followup": {
-        "owner": "tcp_split_owner",
-        "sourceHead": "fb022c9ac24524fabade7a33d603bab8dbf607d2",
-        "disposition": "Contributor feedback in progress",
-        "nextAction": "Verify whether a syscall test can exercise the real receive-memory charge above 2 GiB without a multi-gigabyte test fixture.",
-        "observedAt": "2026-11-02T18:27:13.788641+00:00",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/fb022c9ac"
-        ]
-      }
+      ]
     },
     {
       "id": "branch:bazel-8-dirwatch",
@@ -41454,10 +41463,14 @@
       "head": "3732b4758e2276a9e60ff9ed250ee0a10339e8db",
       "title": "Transfer TCP receive charges with handshake data",
       "url": "https://github.com/tamird/gvisor/commit/3732b4758",
-      "updatedAt": "2026-11-01T02:48:55.837565+00:00",
-      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T18:30:15.670469+00:00",
+      "status": "Published",
       "summary": "With a small receive buffer, the fifth SYN-cookie connection on stock gVisor never made the listener readable when its final ACK carried 512 bytes. Linux and corrected gVisor delivered all eight such connections; all three delivered eight ordinary connections. The fix moves the receive charge from the listening socket to the accepted socket.",
       "evidence": [
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16827"
+        },
         {
           "label": "Wire receipts: native Linux, stock gVisor, corrected gVisor and TCP Nogo",
           "url": "https://github.com/tamird/gvisor/actions/runs/41265485310/artifacts/13067017335"
@@ -41479,17 +41492,14 @@
           "url": "https://app.buildbuddy.io/invocation/c908fb88-774c-40a0-a65c-02aa3581144e"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "3732b4758e2276a9e60ff9ed250ee0a10339e8db",
-        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
-        "url": "https://github.com/tamird/gvisor/commit/3732b4758",
-        "title": "Transfer TCP receive charges with handshake data",
-        "requestedAt": "2026-11-01T02:48:55.837565+00:00",
-        "summary": "Open the standalone fix for receive accounting on TCP listeners? It has no prerequisite.",
-        "body": "With SYN cookies and a small receive buffer, a listener can stop\naccepting connections even after the application reads and closes every\naccepted socket. When each connection sends 512 bytes on its final ACK,\nthe first four succeed but the fifth never makes the listener readable.\n\nThat ACK passes from the listener to the accepted socket. Each enqueue\ncharges the segment to its new socket, but freeing it releases only the\nlast charge. Transfer the charge when the segment changes sockets and\nkeep it when the same socket requeues it.\n\nExercise eight successive connections with and without SYN cookies.\nLinux and gVisor both accept all eight and deliver their payloads."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "3732b4758e2276a9e60ff9ed250ee0a10339e8db",
+          "outcome": "approved",
+          "at": "2026-11-02T18:30:15.670469+00:00"
+        }
+      ]
     },
     {
       "id": "branch:smoke-race-target-mode",
@@ -42515,12 +42525,16 @@
       "ref": "proposal/network-pcap-setup",
       "head": "28cfe8fb884b83198704dd55a9ee53ac596b59fe",
       "title": "Share one packet capture across network interfaces",
-      "url": "https://github.com/tamird/gvisor/tree/proposal/network-pcap-setup",
+      "url": "https://github.com/tamird/gvisor/commit/28cfe8fb8",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T17:42:13.998320+00:00",
+      "status": "Published",
+      "updatedAt": "2026-11-02T18:30:15.670469+00:00",
       "summary": "FD-based and XDP backends now hand their endpoints to one NIC setup path. The first successfully constructed external endpoint opens the shared capture; later interfaces append their packets.",
       "evidence": [
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16828"
+        },
         {
           "label": "Review refactor",
           "url": "https://github.com/tamird/gvisor/commit/28cfe8fb8"
@@ -42558,17 +42572,14 @@
           "head": "28cfe8fb884b83198704dd55a9ee53ac596b59fe"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "28cfe8fb884b83198704dd55a9ee53ac596b59fe",
-        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
-        "url": "https://github.com/tamird/gvisor/commit/28cfe8fb8",
-        "title": "Configure packet capture once across external interfaces",
-        "requestedAt": "2026-11-01T17:36:49.836627+00:00",
-        "summary": "Open the qualified packet-capture refactor?",
-        "body": "The RPC separates optional files from link descriptors up front. Both backends use addExternalNIC, which opens the capture on its first interface and wraps each endpoint there. One- and two-interface guests started and wrote a single PCAP header with traffic on every interface. Three route tests also fail on the parent and pass with #15866. Physical XDP was not exercised. The boot analyzer passed for AMD64 and ARM64 on the exact product. BuildBuddy reported resource exhaustion for the earlier remote attempts on its procfs dependency."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "28cfe8fb884b83198704dd55a9ee53ac596b59fe",
+          "outcome": "approved",
+          "at": "2026-11-02T18:30:15.670469+00:00"
+        }
+      ]
     },
     {
       "id": "branch:autoconf-direct-compiler",
@@ -44632,14 +44643,22 @@
       "repo": "llvm/llvm-project",
       "number": 238034,
       "ref": "bazel-instrumentor-template",
-      "head": "47a6f55681edffa637e6ccf43c220449f7ce2c50",
+      "head": "e8b652ff99ac81b7e4b9b5a3f95b8abcaa3b10c2",
       "title": "[bazel] Expand the instrumentor runtime template without a shell",
       "url": "https://github.com/llvm/llvm-project/pull/238034",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-02T17:10:19.772540+00:00",
+      "updatedAt": "2026-11-02T18:30:15.670469+00:00",
       "summary": "LLVM compiles the instrumentor runtime as C++ and embeds its source text. Bazel now uses the CMake and GN template for that text. The editable checkout and pinned archive produced identical output, and editing the header regenerated the bytes.",
       "evidence": [
+        {
+          "label": "Bazel Build/Test after the upstream libc fix",
+          "url": "https://github.com/llvm/llvm-project/actions/runs/41493782555/job/125443298989"
+        },
+        {
+          "label": "LLVM-libc Fullbuild",
+          "url": "https://github.com/llvm/llvm-project/actions/runs/41493782555/job/125443299492"
+        },
         {
           "label": "Review request to Corentin",
           "url": "https://github.com/llvm/llvm-project/pull/238034#issuecomment-6583043906"
@@ -45171,6 +45190,206 @@
           "kind": "proposal",
           "head": "bd7d2e4c3b3a57d1fd19da69ae3edc452aa2cc00",
           "outcome": "approved",
+          "at": "2026-11-02T18:27:13.788641+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:16826",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16826,
+      "ref": "research/fdnotifier-startup",
+      "head": "ff062297311a053e968fc6cdf2b7e98f09854232",
+      "title": "Start the host FD notifier on the first registration",
+      "url": "https://github.com/google/gvisor/pull/16826",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-02T18:30:15.670469+00:00",
+      "summary": "With the sentry at its file descriptor limit, pausing unused host notifications panicked. A failed first registration also poisoned later attempts after the limit was restored. Independent Linux processes reproduced both failures; both fixed cases and the existing eventfd consumers pass.",
+      "evidence": [
+        {
+          "label": "Stock: cold Pause and retried AddFD both fail",
+          "url": "https://app.buildbuddy.io/invocation/7c2fd860-3c8e-4cdf-8d5f-92f56138ca4d"
+        },
+        {
+          "label": "Fixed: both probes and eventfd tests pass",
+          "url": "https://app.buildbuddy.io/invocation/46cfaaeb-0a5d-4d9f-9793-295ec2e8216a"
+        },
+        {
+          "label": "Complete verdict: runtime and AMD64/ARM64 analyzer findings",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41217199370/artifacts/13047977795"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "ff062297311a053e968fc6cdf2b7e98f09854232",
+          "outcome": "approved",
+          "at": "2026-11-02T18:30:15.670469+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:16827",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16827,
+      "ref": "research/tcp-listener-transfer",
+      "head": "3732b4758e2276a9e60ff9ed250ee0a10339e8db",
+      "title": "Transfer TCP receive memory with the segment that owns it",
+      "url": "https://github.com/google/gvisor/pull/16827",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-02T18:30:15.670469+00:00",
+      "summary": "With a small receive buffer, the fifth SYN-cookie connection on stock gVisor never made the listener readable when its final ACK carried 512 bytes. Linux and corrected gVisor delivered all eight such connections; all three delivered eight ordinary connections. The fix moves the receive charge from the listening socket to the accepted socket.",
+      "evidence": [
+        {
+          "label": "Wire receipts: native Linux, stock gVisor, corrected gVisor and TCP Nogo",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41265485310/artifacts/13067017335"
+        },
+        {
+          "label": "TCP owning suites and migration tests: 560 normal and 556 race records, no skips or missing results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41265984209/artifacts/13068165052"
+        },
+        {
+          "label": "Stock packet trace: the fifth cookie connection timed out",
+          "url": "https://app.buildbuddy.io/invocation/0eb56bce-6219-4c3d-a4b4-0fa3229667ce"
+        },
+        {
+          "label": "Native Linux: 16 handshakes delivered their full payloads",
+          "url": "https://app.buildbuddy.io/invocation/9bc9a9c8-c1b5-4077-be12-f7a1bf08b24a"
+        },
+        {
+          "label": "Corrected gVisor: 16 handshakes delivered their full payloads",
+          "url": "https://app.buildbuddy.io/invocation/c908fb88-774c-40a0-a65c-02aa3581144e"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "3732b4758e2276a9e60ff9ed250ee0a10339e8db",
+          "outcome": "approved",
+          "at": "2026-11-02T18:30:15.670469+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:16828",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16828,
+      "ref": "proposal/network-pcap-setup",
+      "head": "28cfe8fb884b83198704dd55a9ee53ac596b59fe",
+      "title": "Share packet capture across runsc network interfaces",
+      "url": "https://github.com/google/gvisor/pull/16828",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-02T18:30:15.670469+00:00",
+      "summary": "FD-based and XDP backends now hand their endpoints to one NIC setup path. The first successfully constructed external endpoint opens the shared capture; later interfaces append their packets.",
+      "evidence": [
+        {
+          "label": "Review refactor",
+          "url": "https://github.com/tamird/gvisor/commit/28cfe8fb8"
+        },
+        {
+          "label": "Live capture and owning checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41326153933"
+        },
+        {
+          "label": "Two-interface startup failed on stock",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41321760907/artifacts/13089167969"
+        },
+        {
+          "label": "One- and two-interface runtime captures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41322736747/artifacts/13089828658"
+        },
+        {
+          "label": "Three netlink cases fail on the parent and pass with #15866",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41329357634/artifacts/13093005036"
+        },
+        {
+          "label": "Original boot analyzer action failed in its proc dependency",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41328544063/artifacts/13093327461"
+        },
+        {
+          "label": "Boot analyzer passed, including AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41332409416/artifacts/13093962996"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "28cfe8fb884b83198704dd55a9ee53ac596b59fe",
+          "outcome": "approved",
+          "at": "2026-11-02T18:30:15.670469+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:16829",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16829,
+      "ref": "research/oci-tcp-buffer-settings",
+      "head": "e290b349e0d5d5e92ed816f30599112870f5c811",
+      "title": "Honor OCI TCP buffer settings for private network stacks",
+      "url": "https://github.com/google/gvisor/pull/16829",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-02T18:30:15.670469+00:00",
+      "summary": "A private sandbox configured with a 256 MiB TCP buffer ceiling still reported the 4 MiB netstack default. Apply tcp_rmem and tcp_wmem before the first process starts and keep the guest’s current values across restore. All 76 named runtime checks passed with zero skips, including preservation of a guest update.",
+      "evidence": [
+        {
+          "label": "All 76 named runtime checks, including restore",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41165176587/artifacts/13029430513"
+        },
+        {
+          "label": "All four AMD64 and ARM64 procfs and boot analyzer reports",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41167051808/artifacts/13031020224"
+        },
+        {
+          "label": "Original operator report",
+          "url": "https://github.com/google/gvisor/issues/11837"
+        },
+        {
+          "label": "Linux and stock controls in the TCP review guide",
+          "url": "https://github.com/google/gvisor/issues/16670"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "e290b349e0d5d5e92ed816f30599112870f5c811",
+          "outcome": "approved",
+          "at": "2026-11-02T18:30:15.670469+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:16825",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16825,
+      "ref": "proposal/tcp-receive-memory-width",
+      "head": "38d67a0f7132b3773ce2864717a728efdd9bd907",
+      "title": "Keep large TCP receive charges representable",
+      "url": "https://github.com/google/gvisor/pull/16825",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-02T18:30:15.670469+00:00",
+      "summary": "When a one-byte payload fits in the last byte of a receive buffer, its headers and bookkeeping can take the charge above MaxInt32. The old signed counter wrapped, reported 4,294,966,720 bytes free and accepted another payload. The correction reported zero, refused that payload, and recovered exactly one byte after release.",
+      "evidence": [
+        {
+          "label": "Original and fixed queue boundary; AMD64 TCP unit tests and both owning analyzers, 45/45 records",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41254453359/artifacts/13061998440"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "fb022c9ac24524fabade7a33d603bab8dbf607d2",
+          "outcome": "approved-with-changes",
           "at": "2026-11-02T18:27:13.788641+00:00"
         }
       ]
