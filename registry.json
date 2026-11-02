@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T07:17:10+00:00",
+    "updatedAt": "2026-11-02T07:26:24+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31635,7 +31635,7 @@
       "url": "https://github.com/google/gvisor/pull/16596",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T19:24:37.648+00:00",
+      "updatedAt": "2026-11-02T07:26:24+00:00",
       "summary": "Aditya’s review found that reducing the congestion window after a tail probe left the published sender in fast recovery. On two 10 ms RTT traces it waited 3 seconds to retransmit the next loss. The amended sender retried in 220 and 223 ms. Both senders still waited for a timeout on an ambiguous ACK and repaired a separate hole in 3 ms when the peer SACKed a later segment. Master produced three of the four observations and repaired a different segment in the ambiguous case. The final revision changes which recovery statistic counts the repaired probe.",
       "evidence": [
         {
@@ -31675,12 +31675,12 @@
           "url": "https://app.buildbuddy.io/invocation/39844fc3-1dd9-4d28-be76-ab3c921cf51c"
         },
         {
-          "label": "Linux and gVisor packet comparison before the counter-only revision",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41227174846"
+          "label": "Five packet scenarios on Linux, the published sender and the final amendment",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41236476799/artifacts/13056271637"
         },
         {
           "label": "Final source TCP suites and analyzer targets",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41227515403"
+          "url": "https://github.com/tamird/gvisor/actions/runs/41227515403/artifacts/13052287840"
         }
       ],
       "followup": {
@@ -31717,9 +31717,9 @@
         "baseHead": "1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4",
         "url": "https://github.com/tamird/gvisor/commit/e1a3e3de2",
         "title": "Finish the tail-probe congestion response",
-        "summary": "After the outstanding checks pass, publish e1a3e3de2 to #16596, update the PR description from the commit message and send the prepared reply to Aditya’s review?",
+        "summary": "Publish e1a3e3de2 to #16596, update the PR description from the commit message and reply to Aditya’s review?",
         "requestedAt": "2026-10-31T18:03:49.634+00:00",
-        "body": "The published revision and corrected sender both reproduced all four manual-clock observations. In the two cases where an advancing ACK confirmed loss, the published sender waited 3 seconds and the corrected sender retried after 220 and 223 ms. The final amendment counts that response in TLPRecovery. The Linux packet comparison, TCP suites and analyzers are still in progress.\n\ngit range-diff 1eb1f6b45^! e1a3e3de2^!\n\nProposed reply to Aditya\n\n@adios-404, thanks for the reproducer. I folded the fix into this PR and credited you. With your manual clock, the [previous version](https://app.buildbuddy.io/invocation/04537520-a094-4b81-ac6d-20fa2fcc50f1) waited three seconds in both write orderings. [With the fix](https://app.buildbuddy.io/invocation/39844fc3-1dd9-4d28-be76-ab3c921cf51c), the next tail was probed after 220 and 223 ms. Without an ACK past the original probe, the sender still waited for the RTO, as you pointed out.\n\nI kept the recovery point but removed the enter/leave-fast-recovery pair. That pair also discarded the SACK count if the advancing ACK reported another hole. A fourth trace checks that case: the sender stays in Disorder and RACK repairs the separate hole after 3 ms. The repaired probe now counts toward TLPRecovery; SACKRecovery still counts an actual entry into fast recovery. The existing packet test leaves one segment outstanding and checks the congestion state via TCP_INFO.\n\nPosted by Codex on behalf of @tamird."
+        "body": "The published revision and corrected sender both reproduced all four manual-clock observations. In the two cases where an advancing ACK confirmed loss, the published sender waited 3 seconds and the corrected sender retried after 220 and 223 ms. The final amendment counts that response in TLPRecovery. Linux and the amended sender passed all five packet scenarios. The published sender failed three of the five. The final TCP suites and analyzers passed all 498 reported cases, with no skips.\n\ngit range-diff 1eb1f6b45^! e1a3e3de2^!\n\nProposed reply to Aditya\n\n@adios-404, thanks for the reproducer. I folded the fix into this PR and credited you. With your manual clock, the [previous version](https://app.buildbuddy.io/invocation/04537520-a094-4b81-ac6d-20fa2fcc50f1) waited three seconds in both write orderings. [With the fix](https://app.buildbuddy.io/invocation/39844fc3-1dd9-4d28-be76-ab3c921cf51c), the next tail was probed after 220 and 223 ms. Without an ACK past the original probe, the sender still waited for the RTO, as you pointed out.\n\nI kept the recovery point but removed the enter/leave-fast-recovery pair. That pair also discarded the SACK count if the advancing ACK reported another hole. A fourth trace checks that case: the sender stays in Disorder and RACK repairs the separate hole after 3 ms. The repaired probe now counts toward TLPRecovery; SACKRecovery still counts an actual entry into fast recovery. The existing packet test leaves one segment outstanding and checks the congestion state via TCP_INFO.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
