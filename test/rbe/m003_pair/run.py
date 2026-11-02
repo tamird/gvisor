@@ -8,7 +8,6 @@ import sys
 import time
 
 OUT = Path(os.environ["TEST_UNDECLARED_OUTPUTS_DIR"])
-ARMS = ("stock", "deadline", "select", "both")
 SCHEDULES = ("timely", "held")
 BASE = "b0d2148f41d2d35577b5fe759192f71947cc87fd"
 
@@ -68,7 +67,7 @@ def observe(binary, schedule, label, ranges=None):
         row["same_three_drops"] = dropped == [(r["Offset"], r["Length"]) for r in seen[:3]]
         packets = [e for e in tx if rel(e["seq"]) == head and e["length"] == seen[0]["Length"]]
         row["head_copies_ms"] = [round(1000 * (e["seconds"]-at), 3) for e in packets]
-        row["extra_head_repairs"] = len(packets) - 2
+        row["extra_head_repairs"] = len(packets) - 2 if len(packets) >= 2 else None
         advances = [e for e in data["events"] if e["direction"] == "client_to_service" and e["seconds"] >= at
                     and head + seen[0]["Length"] <= rel(e["ack"]) <= 524289]
         row["first_peer_ack_past_head_ms"] = round(1000 * (advances[0]["seconds"] - at), 3) if advances else None
@@ -109,43 +108,46 @@ def observe(binary, schedule, label, ranges=None):
         return row
 
 
+
 def main():
-    mode, *files = sys.argv[1:]
-    binaries = [Path(name) for name in files]
+    stock, deadline, frozen = map(Path, sys.argv[1:])
+    arms = (stock, deadline)
+    ranges = json.loads(frozen.read_text())
+    assert len(ranges) == 8 and len({digest(binary) for binary in arms}) == 2
     rows = []
-    if mode == "screen":
-        for schedule in SCHEDULES:
-            row = observe(binaries[0], schedule, "screen-" + schedule)
-            rows.append(row)
-        usable = len(rows) == 2 and all(r.get("valid") for r in rows)
-        # A schedule may isolate either effect. Run the factorial only if both
-        # mechanisms were actually witnessed somewhere in the two stock screens.
-        both_seen = usable and all(any(r["mechanism"][m] for r in rows) for m in ("deadline", "queued_sack"))
-        active = {r["schedule"]: r["ranges"] for r in rows if both_seen and any(r["mechanism"].values())}
-        write(OUT / "screen.json", {"schedules": active, "usable": usable, "baseline_series": BASE, "rows": rows})
-        assert usable, "stock measurement failed; no activation conclusion"
-        print("stock activation", sorted(active), flush=True)
-        return
-    screen_result = json.loads(binaries.pop().read_text())
-    screen = screen_result["schedules"]
-    assert screen_result["baseline_series"] == BASE and screen_result["usable"]
-    assert all(r["binary"] == digest(binaries[0]) for r in screen_result["rows"])
-    assert [b.name for b in binaries] == list(ARMS) and len({digest(b) for b in binaries}) == 4
-    assert screen and len(binaries) == 4
-    for i, binary in enumerate(binaries):
-        rows.append(observe(binary, "control", f"control-{ARMS[i]}"))
-    # A four-period balanced Latin square: each arm once in every position.
-    for rep, order in enumerate(((0,1,3,2), (1,2,0,3), (2,3,1,0), (3,0,2,1))):
-        schedules = list(screen) if rep % 2 == 0 else list(reversed(screen))
+    for arm in arms:
+        rows.append(observe(arm, "control", "control-" + arm.name))
+    for pair in range(8):
+        schedules = SCHEDULES if pair % 2 == 0 else SCHEDULES[::-1]
         for schedule in schedules:
-            for i in order:
-                rows.append(observe(binaries[i], schedule, f"r{rep}-{schedule}-{ARMS[i]}", screen[schedule]))
-                write(OUT / "comparison.json", {"rows": rows, "verified": False})
-    verified = all(r.get("valid") and r.get("exit") == 0 and r.get("expected_bytes") == 524288
-                   and (not r.get("complete") or r.get("integrity")) for r in rows)
-    write(OUT / "comparison.json", {"schedules": list(screen), "baseline_series": BASE, "verified": verified, "rows": rows})
-    print("attempted transfers", len(rows), "complete", sum(bool(r.get("complete") and r.get("integrity")) for r in rows), flush=True)
-    assert verified
+            # Balance arm order separately inside each delivery schedule.
+            order = arms if (pair + SCHEDULES.index(schedule)) % 2 == 0 else arms[::-1]
+            for arm in order:
+                row = observe(arm, schedule, f"r{pair}-{schedule}-{arm.name}", ranges)
+                row["pair"] = pair
+                rows.append(row)
+                write(OUT / "comparison.json", {"verified": False, "rows": rows})
+    invalid = [r["trial"] for r in rows if not r.get("valid") or r.get("exit") != 0
+               or (r.get("complete") and not r.get("integrity"))]
+    cells = {}
+    for schedule in SCHEDULES:
+        for arm in arms:
+            cell = [r for r in rows if r["schedule"] == schedule and r["arm"] == arm.name]
+            assert {r["pair"] for r in cell} == set(range(8))
+            complete = [r for r in cell if r.get("complete") and r.get("integrity")]
+            cells[f"{schedule}-{arm.name}"] = {
+                "completed": len(complete),
+                "first_repair_observed": sum(bool(r.get("first_repair")) for r in cell),
+                "early_timeout_observed": sum(bool(r.get("early_actual_timeout")) for r in cell),
+                "head_copies_after_first_repair": [r.get("extra_head_repairs") for r in cell],
+                "completed_seconds": [r["seconds"] for r in complete],
+            }
+    # A failed/incomplete transfer still has a row. Never attribute its speed to completion.
+    verdict = {"verified": len(rows) == 34 and not invalid, "invalid": invalid,
+               "cells": cells, "rows": rows, "verified_unix": time.time(),
+               "reference_run": 41372714631, "recovery_artifact": 13110565963}
+    write(OUT / "comparison.json", verdict)
+    assert verdict["verified"], invalid
 
 
 if __name__ == "__main__":

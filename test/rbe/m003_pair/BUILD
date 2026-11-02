@@ -21,31 +21,16 @@ go_binary(
 )
 
 py_test(
-    name = "screen",
-    srcs = ["run.py"],
-    args = [
-        "screen",
-        "$(rootpath :reporter)",
-    ],
-    data = [":reporter"],
-    main = "run.py",
-)
-
-py_test(
     name = "comparison",
     srcs = ["run.py"],
-    args = ["compare"] + ["$(rootpath :%s)" % f for f in [
-        "stock",
-        "deadline",
-        "select",
-        "both",
-        "screen.json",
-    ]],
+    args = [
+        "$(rootpath :stock)",
+        "$(rootpath :deadline)",
+        "$(rootpath :ranges.json)",
+    ],
     data = [
-        "both",
         "deadline",
-        "screen.json",
-        "select",
+        "ranges.json",
         "stock",
     ],
     main = "run.py",
