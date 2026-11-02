@@ -17,7 +17,7 @@ bazel_dep(name = "libbpf", version = "1.7.0.bcr.1")
 bazel_dep(name = "rules_shell", version = "0.8.0")
 bazel_dep(name = "rules_qemu", version = "0.3.0")
 bazel_dep(name = "grpc", version = "1.84.0", repo_name = "com_github_grpc_grpc")
-bazel_dep(name = "iperf", version = "3.18.0.bcr.1", dev_dependency = True)
+bazel_dep(name = "iperf", version = "3.18.0", dev_dependency = True)
 bazel_dep(name = "openssl", version = "3.3.1.bcr.11", dev_dependency = True)
 
 # gRPC's older minimum imports a removed Google APIs extension repository.
