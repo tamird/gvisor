@@ -20,6 +20,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
+	"slices"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/state"
@@ -170,6 +171,34 @@ func BenchmarkEncoding(b *testing.B) {
 				for b.Loop() {
 					if _, err := algoInfo.Save(context.Background(), io.Discard, v); err != nil {
 						b.Errorf("save failed: %v", err)
+					}
+				}
+			})
+		}
+	}
+}
+
+// BenchmarkSharedSliceSave varies the order in which Save discovers the
+// capacity of one backing array. All windows have the same first byte.
+func BenchmarkSharedSliceSave(b *testing.B) {
+	previous := state.GraphEngineEnabled()
+	state.EnableGraphEngine(true)
+	b.Cleanup(func() { state.EnableGraphEngine(previous) })
+	for _, n := range []int{128, 512, 2048} {
+		for _, order := range []string{"narrow", "wide"} {
+			b.Run(fmt.Sprintf("windows=%d/%s", n, order), func(b *testing.B) {
+				backing := make([]byte, n)
+				windows := make([][]byte, n)
+				for i := range windows {
+					windows[i] = backing[: 1 : i+1]
+				}
+				if order == "wide" {
+					slices.Reverse(windows)
+				}
+				b.ReportAllocs()
+				for b.Loop() {
+					if _, err := state.Save(b.Context(), io.Discard, &windows); err != nil {
+						b.Fatal(err)
 					}
 				}
 			})
