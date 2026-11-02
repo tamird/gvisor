@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-01T23:42:59+00:00",
+    "updatedAt": "2026-11-02T00:04:15+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42779,6 +42779,44 @@
         "summary": "Open a standalone PR for the TCP_INFO fix?",
         "body": "After five data retransmissions, stock gVisor still reported zero through getsockopt. It also reported zero on both the connecting and accepted sockets after a handshake retry. Linux and the correction reported 5, 1 and 1 respectively. The listener stayed at zero. Retransmitted batches count by TCP segment. The final amendment preserves the SYN-cookie counter when output fails."
       }
+    },
+    {
+      "id": "branch:tcp-passive-syn-retry",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/tcp-passive-syn-paws",
+      "head": "22d8cfc02a0c99c00fc9e9a97160d3dae8208b48",
+      "title": "Retransmit the SYN-ACK when a peer repeats its SYN",
+      "url": "https://github.com/tamird/gvisor/commit/22d8cfc02",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T00:04:15+00:00",
+      "summary": "When the client repeats its SYN before the retransmission timer fires, stock gVisor answers with a bare ACK. Linux and the fix reply immediately with the missing SYN-ACK, suppress a third immediate request, and report 1 ms RTT on the accepted socket. A prototype that reused the first local timestamp reported 1,553 ms. The final revision also matches Linux at the signed timestamp boundary.",
+      "evidence": [
+        {
+          "label": "Stock and Linux before the handshake timer fires",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41362026193/artifacts/13106345311"
+        },
+        {
+          "label": "Packet sequence, timer, rate limit and RTT on Linux and gVisor",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41364087508/artifacts/13106692029"
+        },
+        {
+          "label": "Final timestamp boundary and both architecture analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41364729375/artifacts/13107085903"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "22d8cfc02a0c99c00fc9e9a97160d3dae8208b48",
+        "baseHead": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689",
+        "url": "https://github.com/tamird/gvisor/commit/22d8cfc02",
+        "title": "Retransmit the SYN-ACK when a peer repeats its SYN",
+        "requestedAt": "2026-11-02T00:04:15+00:00",
+        "summary": "Open this PR after per-socket TCP retransmission accounting lands?",
+        "body": "When the client repeats its SYN before the retransmission timer fires, stock gVisor answers with a bare ACK. Linux and the fix reply immediately with the missing SYN-ACK, suppress a third immediate request, and report 1 ms RTT on the accepted socket. A prototype that reused the first local timestamp reported 1,553 ms. The final revision also matches Linux at the signed timestamp boundary."
+      }
     }
   ],
   "edges": [
@@ -46260,6 +46298,15 @@
       "evidence": [
         "https://github.com/tamird/gvisor/actions/runs/41353882134/artifacts/13101954456"
       ]
+    },
+    {
+      "type": "depends_on",
+      "from": "branch:tcp-info-total-retrans",
+      "to": "branch:tcp-passive-syn-retry",
+      "reason": "Both timed and peer-requested SYN-ACK retries use the per-socket TCP_INFO counter.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/compare/bc9ffcc0d...22d8cfc02"
+      ]
     }
   ],
   "investigations": [
@@ -46268,7 +46315,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-01T23:42:59+00:00",
+      "updatedAt": "2026-11-01T23:59:24+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -48214,11 +48261,15 @@
           ]
         },
         {
-          "text": "When a client repeated its SYN before timeout, Linux answered with another SYN-ACK and stock gVisor answered with a bare ACK. Both accepted the connection. Linux counted one retransmission on the accepted socket, and both listeners stayed at zero.",
+          "text": "On a repeated SYN, stock gVisor sent a bare ACK. Linux and the corrected passive handshake retransmitted the SYN-ACK and suppressed a third immediate SYN. Reusing the first local timestamp in a prototype produced a 1,553 ms RTT on the accepted socket. Linux and the correction used a fresh transmit timestamp, echoed the original peer value, and reported 1 ms RTT.",
           "evidence": [
             {
               "label": "Linux and gVisor, with and without a repeated SYN",
               "url": "https://github.com/tamird/gvisor/actions/runs/41362026193/artifacts/13106345311"
+            },
+            {
+              "label": "Linux, stock and both timestamp implementations",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41364087508/artifacts/13106692029"
             }
           ]
         }
@@ -59370,7 +59421,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T21:03:30.269380+00:00",
+      "updatedAt": "2026-11-02T00:04:15+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -60994,6 +61045,27 @@
             {
               "label": "ARM64 release build",
               "url": "https://app.buildbuddy.io/invocation/99f7b9d0-8d3d-45e0-ae96-6da4914558cd"
+            }
+          ]
+        },
+        {
+          "text": "On native AMD64, DPDK’s GNU Make build with Clang targeting GNU libc failed because its legacy linker and objdump paths did not exist. Declaring ld.lld and llvm-objdump let the full Make action finish on a distroless worker. The recovered 7,653,880-byte archive contains the plugin API and all three required network driver symbols. The static AMD64 pmdinfogen helper used musl. Verification used the original remote outputs and took 5 min 4 s after the build, with one collection repair. The plugin-enabled runsc link is the next check.",
+          "evidence": [
+            {
+              "label": "Remote action failure and original diagnostic",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41363920702/artifacts/13106596549"
+            },
+            {
+              "label": "Explicit execution-configured LLVM tools",
+              "url": "https://github.com/tamird/gvisor/commit/f503093fe"
+            },
+            {
+              "label": "Successful Make action and incomplete local output collection",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41364504151/artifacts/13106771278"
+            },
+            {
+              "label": "Original archive, ELF helper and generated configuration",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41365184774/artifacts/13106931504"
             }
           ]
         }
