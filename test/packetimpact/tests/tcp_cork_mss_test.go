@@ -123,6 +123,8 @@ func TestMSSSACKObservation(t *testing.T) {
 			var gapOptions []byte
 			if tc.gap {
 				conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), SeqNum: testbench.Uint32(clientSeq + 1)}, &testbench.Payload{Bytes: []byte{'b'}})
+				// Keep the helper's contiguous send cursor at the missing byte.
+				*conn.LocalSeqNum(t)--
 				ack, err := conn.Expect(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: &clientSeq}, time.Second)
 				if err != nil {
 					t.Fatalf("receive-gap ACK: %s", err)
@@ -163,6 +165,8 @@ func TestMSSSACKObservation(t *testing.T) {
 			}
 			if tc.gap {
 				conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), SeqNum: &clientSeq}, &testbench.Payload{Bytes: []byte{'a'}})
+				// The out-of-order byte is now contiguous too.
+				*conn.LocalSeqNum(t)++
 				if got := dut.Recv(t, fd, 2, unix.MSG_WAITALL); !bytes.Equal(got, []byte("ab")) {
 					t.Fatalf("filled receive gap: %q", got)
 				}
