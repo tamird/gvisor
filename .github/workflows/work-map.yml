@@ -1,0 +1,67 @@
+name: Verify the shared-slice decision and published images
+on:
+  push:
+    branches: [qualification/work-map-benchstat-revision]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the live UI and the curated pair
+        id: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 00eaeefe1b00c0d98383bf24c1b7ed55235caec9
+          test "$(git rev-parse HEAD^^)" = 56e0ef1eae33f44f5387affaa12cf3e3a6d8d9d0
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          test "$(git diff --name-only HEAD^^ HEAD^)" = "$(printf '%s\n' github-status.json registry.json)"
+          sha256sum -c <<'INPUTS'
+          e5d01ececbb039823104599713efd9082379b42e00b724e4580a0ffedf37230a  app.js
+          c9fec0a6b9b9078f1e15b5043fef8138789b5b2f6eec26f04990461a6a5aab73  registry.json
+          dbec5ce6a24b18cb72c0f5a9fdbf55ff21de398490d9458daf32c4e777fd2a94  github-status.json
+          INPUTS
+          mkdir results
+      - name: Check the canonical metadata pair
+        id: metadata
+        if: always() && steps.source.outcome == 'success'
+        run: |
+          node metadata-preflight.mjs . > results/preflight.json
+          python3 - <<'PYTHON'
+          import hashlib, json, subprocess
+          from pathlib import Path
+          from work_states import record_states
+          old = json.loads(subprocess.check_output(['git','show','HEAD^^:github-status.json']))
+          s = json.loads(Path('github-status.json').read_bytes())
+          r = json.loads(Path('registry.json').read_bytes())
+          n = {z['id']:z for z in r['nodes']}; a='branch:go-helper-images'; b='branch:state-grow-shared-slices'
+          before='fcc0c1c73904271d7b9bde558294fa66bdf00fb4'; after='df7d6899cc87c642732764f294030e03d2c3d208'
+          assert n[b]['refinement']=={'before':{'head':before},'after':{'head':after}}
+          assert n[b]['settledReviews'][-1]['outcome']=='changes-requested' and n[b]['settledReviews'][-1]['head']==before
+          assert n[b]['head']==n[b]['contributorReview']['head']==after
+          assert hashlib.sha256(n[b]['contributorReview']['body'].encode()).hexdigest()=='74bd2d82e05be4b05f9d937aa1e92868ad7ee1dc746f93506a3c11dc6a2d5659'
+          assert n[a]['settledReviews'][-1]['outcome']=='approved' and n[a]['followup']['evidence'][0]=='https://github.com/google/gvisor/pull/16871'
+          assert 'contributorReview' not in n[a] and a not in s['workStates']
+          rebuilt=record_states(s['prs'],r,old,s['checkedAt'])
+          assert s['workStates'][b]==rebuilt[b] and a not in rebuilt
+          for k in ('registryDate','workStates'):
+              if k=='workStates':
+                  for key in [a,b]:
+                      old[k].pop(key,None);s[k].pop(key,None)
+                  assert old[k]==s[k]
+              del old[k],s[k]
+          assert old==s
+          PYTHON
+      - name: Publish the bounded verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: benchstat-revision-preflight
+          path: results/preflight.json
+          if-no-files-found: error
