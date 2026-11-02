@@ -1,35 +1,92 @@
-name: CI
-
-"on":
+name: Qualify Unix credential transitions on the peer groups proposal
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/unix-peercreds-transitions]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      FIXED: d9263816352e39d9ccb5adc54f8570da04be3484
+      PRODUCT: 5cc94fa57a8d61a1c2d88a5387746d4f995ea8b6
+      STOCK: d2236518bbdefab0d4eb9c6c9f19b956a6863eab
+      MASTERTEST: b8ba00dc327cdcd0422743fcd925f166977ada13
+      PEERGROUPS: bdf1068d1ad7ecd626d71553e361402f966e223d
+      BASE: 7a675ac66a1e2357abdaa6cccedabcd3cce9aa5c
+      REPORTER: fb60e127516defd6aab633f80be09a03022f0737
+      READER: 029a8365b981b8aee96e6dad1ecf22328ca6c6de
+      PROFILE: 0ee70efe6d52576b8f173b40ad6b7ac117da3b72
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 5}
+      - name: Use the qualified GNU action platform and original test report reader
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = "$FIXED"
+          test "$(git rev-parse HEAD^^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD^^^)" = "$PEERGROUPS"
+          test "$(git rev-parse HEAD^^^^)" = "$BASE"
+          umask 077
+          mkdir -p "$RUNNER_TEMP/unix-public" "$RUNNER_TEMP/gnu-platform"
+          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/unix-public/verdict.json"
+          git fetch -q --depth=3 --no-tags origin "$STOCK" "$MASTERTEST"
+          git fetch -q --depth=1 --no-tags origin "$REPORTER" "$READER" "$PROFILE"
+          for file in qualification_report unit_matrix; do git show "$REPORTER:test/rbe/$file.py" > "$RUNNER_TEMP/$file.py"; done
+          git show "$READER:test/rbe/image_execution.py" > "$RUNNER_TEMP/image_execution.py"
+          for file in BUILD.bazel MODULE.bazel; do git show "$PROFILE:test/rbe/gnu_platform/$file" > "$RUNNER_TEMP/gnu-platform/$file"; done
+          cp test/rbe/unix_listener_creds.py "$RUNNER_TEMP/"
+          git checkout -q --detach "$FIXED"
+          test -n "$BUILDBUDDY_API_KEY"
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$RUNNER_TEMP/gnu.bazelrc"
+          unset BUILDBUDDY_API_KEY
+          # Supply the identical public release file to Bazel's ordinary checked download.
+          distdir="$RUNNER_TEMP/protoc-dist"
+          mkdir "$distdir"
+          asset=protoc-35.1-linux-x86_64.zip
+          expected=6930ebf62bd4ea607b98fff052596c6ee564b9835b4ce172c75a3f53ae9d91b7
+          for url in "https://github.com/protocolbuffers/protobuf/releases/download/v35.1/$asset" https://api.github.com/repos/protocolbuffers/protobuf/releases/assets/445060247; do
+            if curl -fsSL --retry 2 --retry-all-errors --connect-timeout 10 --max-time 90 \
+               -H 'Accept: application/octet-stream' "$url" -o "$distdir/download" &&
+               echo "$expected  $distdir/download" | sha256sum -c -; then
+              mv "$distdir/download" "$distdir/$asset"
+              printf 'common --distdir=%s\n' "$distdir" >> "$RUNNER_TEMP/gnu.bazelrc"
+              break
+            fi
+          done
+          docker pull --platform=linux/amd64 "$GNU"
+          docker run -d --init --name unix-gnu --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+      - name: Check permanent and controlled cases, then both analyzers
+        run: docker exec -e GNU -e RUNNER_TEMP -e FIXED -e STOCK -e PRODUCT -e BASE -e PEERGROUPS -e MASTERTEST unix-gnu python3 "$RUNNER_TEMP/unix_listener_creds.py"
+      - name: Check the typed evidence boundary
+        id: safe
+        if: always()
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          d = Path(os.environ["RUNNER_TEMP"]) / "unix-public"
+          p = d / "verdict.json"
+          assert list(d.iterdir()) == [p] and p.is_file() and not p.is_symlink()
+          b = p.read_bytes()
+          assert len(b) < 500000 and os.environ["BUILDBUDDY_API_KEY"].encode() not in b
+          assert b"x-buildbuddy-api-key" not in b.lower()
+          json.loads(b)
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.safe.outcome == 'success'
+        with:
+          name: unix-peercreds-transitions
+          path: ${{ runner.temp }}/unix-public/verdict.json
+          if-no-files-found: error
