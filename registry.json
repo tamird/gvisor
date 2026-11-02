@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T04:43:46+00:00",
+    "updatedAt": "2026-11-02T04:56:17+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -25699,35 +25699,14 @@
       "title": "Account for RACK loss when estimating flight",
       "url": "https://github.com/tamird/gvisor/commit/7859018167653b4fb3f762878cba599c4d1ec5c7",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-10-29T14:13:23.833788+00:00",
-      "summary": "On the same wire histories the corrected estimator repairs all three lost 496-byte segments, caps new data at two when three of five slots are occupied, and admits seven before the probe ACK. The predecessor repaired all three but sent an extra packet. The #15634 parent repaired only two. Both native architectures ran complete TCP/RACK suites and Nogo: 71 passed, one pre-existing skip each.",
-      "followup": {
-        "owner": "root",
-        "sourceHead": "7859018167653b4fb3f762878cba599c4d1ec5c7",
-        "observedAt": "2026-10-29T14:13:23.833788+00:00",
-        "disposition": "Coordinate with pending #15432; no duplicate PR",
-        "nextAction": "Recommend the missing before-ACK probe charge on #15432 or as an agreed follow-up. Keep the fork estimator comparative, not a competing PR. Both #15432 and the fork already repair all three segments and send precisely two after the selective ACK.",
-        "evidence": [
-          "https://app.buildbuddy.io/invocation/4a34011d-e824-431a-a00b-a35326e809ef",
-          "https://github.com/google/gvisor/issues/16670",
-          "https://github.com/tamird/gvisor/commit/7859018167653b4fb3f762878cba599c4d1ec5c7",
-          "https://github.com/tamird/gvisor/compare/b909bc6898663235442ae8be2ff97607115d39d8...7859018167653b4fb3f762878cba599c4d1ec5c7",
-          "https://github.com/tamird/gvisor/compare/83ab4392c284f6804ef13dc0efe5291d688bdca5...7859018167653b4fb3f762878cba599c4d1ec5c7",
-          "https://github.com/tamird/gvisor/commit/9073385cd68f98e340665aad5619aace4e3b638d",
-          "https://app.buildbuddy.io/invocation/94718b62-6d95-4b23-bc00-0448c81c588d",
-          "https://app.buildbuddy.io/invocation/d14d7308-6063-40b3-98b7-7e2debe10633",
-          "https://github.com/google/gvisor/pull/15432",
-          "https://github.com/tamird/gvisor/commit/83ab4392c284f6804ef13dc0efe5291d688bdca5",
-          "https://github.com/tamird/gvisor/compare/b909bc6898663235442ae8be2ff97607115d39d8...83ab4392c284f6804ef13dc0efe5291d688bdca5",
-          "https://github.com/tamird/gvisor/commit/3327ae6769dfd2426f27bb69730051eb96333773",
-          "https://github.com/tamird/gvisor/compare/933263e71c97b0ae7bd0cb04489b2399fe4523f1...3327ae6769dfd2426f27bb69730051eb96333773",
-          "https://app.buildbuddy.io/invocation/2ddf2d5e-442f-43ac-970f-e6661a34a11f",
-          "https://app.buildbuddy.io/invocation/2f32e590-0b85-480b-bf58-569ea8615540"
-        ],
-        "condition": "Qualified 7859018167 is directly atop 83ab4392c2 and #15634 b909bc689. Older contributor approval does not cover this correction; #15432 is an alternative to 83ab, not a prerequisite."
-      },
+      "status": "Delivered",
+      "updatedAt": "2026-11-02T04:56:17+00:00",
+      "summary": "The October 29 inline review on #15432 reports the before-ACK probe count: four outstanding transmissions and eight new packets exceeded an eleven-packet window. The fork remains the comparison for that review.\n\nOn the same wire histories the corrected estimator repairs all three lost 496-byte segments, caps new data at two when three of five slots are occupied, and admits seven before the probe ACK. The predecessor repaired all three but sent an extra packet. The #15634 parent repaired only two. Both native architectures ran complete TCP/RACK suites and Nogo: 71 passed, one pre-existing skip each.",
       "evidence": [
+        {
+          "label": "Delivered review with the before-ACK packet trace",
+          "url": "https://github.com/google/gvisor/pull/15432#discussion_r4416541513"
+        },
         {
           "label": "Exact open #15432: three repairs and post-SACK cap pass; before SACK sends 8 where 7 fit",
           "url": "https://app.buildbuddy.io/invocation/4a34011d-e824-431a-a00b-a35326e809ef"
@@ -31735,10 +31714,18 @@
       "title": "Finish restore hooks before copying map and interface values",
       "url": "https://github.com/tamird/gvisor/commit/0a10d127a226b19165c820a24b20a71bcf5a5a3c",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-10-28T16:37:49.176783+00:00",
-      "summary": "The decoder prototype now finishes a value before copying it into a map or interface, and tracks pending writes only for structs that actually have them. This fixes the observed map-key and shared-slice restore bugs. Loading the same wire slot into two destinations also runs each hook exactly once on the right value. On 1,024 ordinary structs, stock and candidate both used 5,702 allocations in every sample; bytes fell 11.90%. The graph fixture still used 3.45% more allocations and 1.80% more bytes. None of these three Load fixtures established a timing improvement. The branch link identifies the earlier proposal; the first evidence link opens this refactor.",
+      "status": "Retired",
+      "updatedAt": "2026-11-02T04:56:17+00:00",
+      "summary": "The 3.45% allocation increase belonged to the legacy prototype at e21422fdb, running a graph-shaped fixture. The default reader now uses a different scheduler. The narrower legacy fix is tracked in #16713. A separate current-master ordering failure is recorded in #16715.\n\nThe decoder prototype now finishes a value before copying it into a map or interface, and tracks pending writes only for structs that actually have them. This fixes the observed map-key and shared-slice restore bugs. Loading the same wire slot into two destinations also runs each hook exactly once on the right value. On 1,024 ordinary structs, stock and candidate both used 5,702 allocations in every sample; bytes fell 11.90%. The graph fixture still used 3.45% more allocations and 1.80% more bytes. None of these three Load fixtures established a timing improvement. The branch link identifies the earlier proposal; the first evidence link opens this refactor.",
       "evidence": [
+        {
+          "label": "Current graph callback-ordering result and prior fixes",
+          "url": "https://github.com/google/gvisor/issues/16715"
+        },
+        {
+          "label": "Scoped legacy-reader fix",
+          "url": "https://github.com/google/gvisor/pull/16713"
+        },
         {
           "label": "Decoder refactor: finish each value before publishing it",
           "url": "https://github.com/tamird/gvisor/commit/e21422fdb32136e7f57586c2e4d7ff994f144705"
@@ -31815,35 +31802,7 @@
           "label": "Earlier proposal: conversions observed incomplete map and interface values",
           "url": "https://app.buildbuddy.io/invocation/32f90ac8-bf85-4a61-bf77-7f402b3a516d"
         }
-      ],
-      "followup": {
-        "owner": "root",
-        "sourceHead": "0a10d127a226b19165c820a24b20a71bcf5a5a3c",
-        "observedAt": "2026-10-28T16:37:49.176783+00:00",
-        "disposition": "Correctness verified; extra graph allocations remain under investigation",
-        "nextAction": "Measure where the additional graph allocations come from and whether they affect checkpoint restore. Keep this as a fork prototype and share the correctness fixtures in support of the maintainers’ rewrite.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/e21422fdb32136e7f57586c2e4d7ff994f144705",
-          "https://app.buildbuddy.io/invocation/1db2e6e0-2f15-41d2-a389-29cd646bbbc7",
-          "https://app.buildbuddy.io/invocation/5ec12a19-31ef-46d6-87fc-a0f501308b54",
-          "https://app.buildbuddy.io/invocation/caa679e0-98fb-47c1-9d9c-81f755742a63",
-          "https://app.buildbuddy.io/invocation/b491bf42-41d4-4258-a0c5-f758fb7f7c3c",
-          "https://github.com/tamird/gvisor/commit/9f7e1bf5d2cd24bc3aa22a8552a182f536d60964",
-          "https://app.buildbuddy.io/invocation/025a6d0e-602d-4296-a4e3-566abc9e96a7",
-          "https://app.buildbuddy.io/invocation/829fa554-02d0-4f0b-94ad-7f74b4b35e31",
-          "https://app.buildbuddy.io/invocation/eb8a0e62-8cb5-4e2f-86d7-d5b9e4720d6f",
-          "https://app.buildbuddy.io/invocation/fc16ce88-1e44-4f5f-972e-fbe298e48edb",
-          "https://app.buildbuddy.io/invocation/06ff76a0-8687-4fda-9374-11c4a22458cd",
-          "https://app.buildbuddy.io/invocation/caafd179-be7f-4a75-81d8-1cb0ad60533a",
-          "https://app.buildbuddy.io/invocation/61a6a795-6b28-41f7-970e-6a66075898b8",
-          "https://app.buildbuddy.io/invocation/5181816f-4108-41d2-a3d9-978c69435461",
-          "https://github.com/tamird/gvisor/commit/0e3067deeb552ba493e029c088b70d7dc3dd495d",
-          "https://github.com/tamird/gvisor/commit/0a10d127a226b19165c820a24b20a71bcf5a5a3c",
-          "https://app.buildbuddy.io/invocation/032a74cd-085d-4ddb-8693-46cc671cb05b",
-          "https://app.buildbuddy.io/invocation/32f90ac8-bf85-4a61-bf77-7f402b3a516d",
-          "https://app.buildbuddy.io/invocation/0454c309-69f3-4e7c-8437-bfb8f03b982e"
-        ]
-      }
+      ]
     },
     {
       "id": "branch:signalfd-mask-wakeup",
@@ -36259,8 +36218,8 @@
       "title": "Finish loaded fields before copying their values",
       "url": "https://github.com/google/gvisor/pull/16713",
       "status": "open",
-      "updatedAt": "2026-10-29T22:57:17.831574+00:00",
-      "summary": "Two distinct map keys could collapse into one zero key during checkpoint restore. Finish each field’s load before copying it into a map, interface or conversion callback.",
+      "updatedAt": "2026-11-02T04:56:17+00:00",
+      "summary": "The published change fixes legacy reader callbacks. Since graph decoding became the default, the same fixture also exposes a graph-reader error: the enclosing hook copied 0 instead of 2 from an inline child. The six map-key and map-value controls passed. A two-engine amendment is in remote qualification.",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -36270,6 +36229,14 @@
         }
       ],
       "evidence": [
+        {
+          "label": "Unchanged current-master graph reader, original report and log",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41390699623/artifacts/13116824768"
+        },
+        {
+          "label": "Current graph checkpoint findings",
+          "url": "https://github.com/google/gvisor/issues/16715"
+        },
         {
           "label": "Stock decoder loses an entry",
           "url": "https://app.buildbuddy.io/invocation/e92e7824-3881-4e01-b87a-2468a5156f66"
