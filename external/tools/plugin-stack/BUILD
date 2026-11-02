@@ -1,3 +1,4 @@
+load("@rules_foreign_cc_framework_toolchain_linux//:defs.bzl", "foreign_cc_framework_toolchain")
 load("//tools:defs.bzl", "bzl_library", "cc_linker", "go_test")
 load(":toolchain.bzl", "plugin_toolchain")
 
@@ -14,6 +15,21 @@ exports_files(glob([
 bzl_library(
     name = "toolchain_bzl",
     srcs = ["toolchain.bzl"],
+)
+
+foreign_cc_framework_toolchain(
+    name = "linux_commands",
+    bash = "@plugin_programs//:bin/bash",
+)
+
+toolchain(
+    name = "linux_amd64_bash",
+    exec_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    toolchain = ":linux_commands",
+    toolchain_type = "@rules_foreign_cc//foreign_cc/private/framework:shell_toolchain",
 )
 
 plugin_toolchain(

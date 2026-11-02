@@ -145,6 +145,9 @@ foreign_cc_tools.make(
     mode = "custom",
     target = "@make//:make",
 )
+use_repo(foreign_cc_tools, "rules_foreign_cc_framework_toolchain_linux")
+
+register_toolchains("//external/tools/plugin-stack:linux_amd64_bash")
 
 http_file(
     name = "buildkite_pipeline_schema",
