@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T16:36:54.632738+00:00",
+    "updatedAt": "2026-11-02T16:48:44.741382+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41742,9 +41742,9 @@
       "head": "21a5215f89afe39a50bfab5f5ff10a75fffa614a",
       "url": "https://github.com/tamird/hermetic-llvm/commit/21a5215f8",
       "title": "Generate the LLVM instrumentor header without a shell",
-      "updatedAt": "2026-11-02T16:31:46.423209+00:00",
-      "status": "Agent work",
-      "summary": "LLVM’s Bazel build embeds InstrumentorRuntimeHelper.h as text. The reviewed 23.x backport replaces printf, cat and echo with template expansion. Develop the change against LLVM’s canonical Bazel overlay so release packagers can consume it there.",
+      "updatedAt": "2026-11-02T16:48:44.741382+00:00",
+      "status": "Contributor approved; waiting for upstream submission",
+      "summary": "The reviewed 23.x backport supplies the same template and Starlark binding as the tested LLVM change. Cite its upstream submission when opening the backport.",
       "evidence": [
         {
           "label": "Purpose of the overlay patch and the LLVM source it adapts",
@@ -41761,6 +41761,10 @@
         {
           "label": "Existing LLVM draft and template rationale",
           "url": "https://github.com/llvm/llvm-project/pull/214242"
+        },
+        {
+          "label": "LLVM upstream candidate",
+          "url": "https://github.com/tamird/llvm-project/commit/47a6f5568"
         }
       ],
       "refinement": {
@@ -41783,8 +41787,8 @@
         "owner": "LLVM upstream",
         "sourceHead": "21a5215f89afe39a50bfab5f5ff10a75fffa614a",
         "observedAt": "2026-11-02T16:31:46.423209+00:00",
-        "disposition": "Approved backport; preparing the canonical LLVM change first",
-        "nextAction": "Qualify local and archive checkout paths, preserve the explanation of the runtime header, and give LLVM reviewers the simpler patch. Update the 23.x backport to cite the upstream change when available."
+        "disposition": "Ready for backport after upstream submission",
+        "nextAction": "Cite the LLVM submission in the already-approved 23.x backport, which supplies the same generated Starlark binding for hermetic-llvm’s custom overlay."
       }
     },
     {
@@ -44513,6 +44517,56 @@
       "status": "open",
       "updatedAt": "2026-11-02T16:36:54.632738+00:00",
       "summary": "Anzal’s Unix socket change installs a credential snapshot as part of Connect. The listener and socketpair credential follow-up builds on this change."
+    },
+    {
+      "id": "branch:llvm-upstream-instrumentor-template",
+      "type": "branch",
+      "group": "bazel",
+      "repo": "tamird/llvm-project",
+      "ref": "bazel-instrumentor-template",
+      "head": "47a6f55681edffa637e6ccf43c220449f7ce2c50",
+      "url": "https://github.com/tamird/llvm-project/commit/47a6f5568",
+      "title": "[bazel] Expand the instrumentor runtime template without a shell",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T16:48:44.741382+00:00",
+      "summary": "LLVM compiles the runtime helper as C++ and also emits the header as text. Use the same template as CMake and GN for that text. With an editable checkout and a pinned archive, native Bazel produced identical output; editing the real header regenerated the compiled bytes.",
+      "evidence": [
+        {
+          "label": "Editable checkout, rebuild after a real header edit, and immutable archive",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41484039296/artifacts/13162350347"
+        },
+        {
+          "label": "Earlier LLVM draft",
+          "url": "https://github.com/llvm/llvm-project/pull/214242"
+        },
+        {
+          "label": "LLVM human review and disclosure policy",
+          "url": "https://github.com/llvm/llvm-project/blob/1c7a3fd23/llvm/docs/AIToolPolicy.md"
+        },
+        {
+          "label": "Range-diff baseline: the alternative in LLVM draft #214242",
+          "url": "https://github.com/llvm/llvm-project/commit/adf91f4bf"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "47a6f55681edffa637e6ccf43c220449f7ce2c50",
+        "baseHead": "1c7a3fd23f422faed9c4abd05f820f19a495a360",
+        "url": "https://github.com/tamird/llvm-project/commit/47a6f5568",
+        "title": "[bazel] Expand the instrumentor runtime template without a shell",
+        "summary": "LLVM compiles the runtime helper as C++ and also emits the header as text. Use the same template as CMake and GN for that text. With an editable checkout and a pinned archive, native Bazel produced identical output; editing the real header regenerated the compiled bytes.",
+        "body": "Instrumentor includes its runtime helper as C++ and emits the same\nheader in generated runtime stubs. CMake and GN wrap the source with\nInstrumentorVariables.inc.in. Bazel spells out the declaration in POSIX\nand Windows commands, so its output omits the template’s license and\ngenerated-file notice and misses changes to the template.\n\nRead the helper while configuring the LLVM repository and substitute it\ninto the shared template with expand_template. Reading the resolved\nheader also makes edits in a local checkout invalidate the substitution.\n\nThanks to @youngd007 for identifying the template divergence while\ninvestigating Windows builds [1]. LLVM subsequently added a Windows\ncommand [2]. The template replaces both commands.\n\nWith LLVM’s pinned Bazel 9.2.0 on Linux, an editable checkout and a\ndigest-pinned source archive produced byte-identical generated headers\nand compiled C++ archives. Editing the helper on the same Bazel server\nchanged the bytes in both outputs [3].\n\nCodex assisted with the implementation and validation.\n\n[1]: https://github.com/llvm/llvm-project/pull/214242\n[2]: https://github.com/llvm/llvm-project/commit/14513d6af\n[3]: https://github.com/tamird/gvisor/actions/runs/41484039296/artifacts/13162350347",
+        "requestedAt": "2026-11-02T16:48:44.741382+00:00"
+      },
+      "refinement": {
+        "before": {
+          "head": "adf91f4bf699eb0bc1f54865ecf7c7f685f06b77"
+        },
+        "after": {
+          "head": "47a6f55681edffa637e6ccf43c220449f7ce2c50"
+        }
+      }
     }
   ],
   "edges": [
