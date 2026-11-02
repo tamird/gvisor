@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T09:28:00.177248+00:00",
+    "updatedAt": "2026-11-02T10:02:06.506089+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41455,9 +41455,13 @@
       "title": "netstack: end a lingering close when the peer acknowledges the FIN",
       "url": "https://github.com/google/gvisor/pull/16787",
       "status": "open",
-      "updatedAt": "2026-11-02T04:11:55+00:00",
+      "updatedAt": "2026-11-02T10:02:06.506089+00:00",
       "summary": "Aditya Merchant’s netstack PR wakes a lingering close when the peer acknowledges the FIN and skips the wait on process exit. It introduces the shared process-exit syscall fixture used by the host-network follow-up.",
       "evidence": [
+        {
+          "label": "Author’s offer to include the tested commit",
+          "url": "https://github.com/google/gvisor/pull/16787#issuecomment-6574091521"
+        },
         {
           "label": "Sixteen paired socket-close measurements and 28 selected Linux and gVisor linger tests",
           "url": "https://github.com/tamird/gvisor/actions/runs/41385911507/artifacts/13115805373"
@@ -41475,11 +41479,11 @@
         "status": "pending",
         "kind": "reply",
         "head": "1072c7c5b69f66636a755f29a207a8ce876a91f4",
-        "url": "https://github.com/google/gvisor/pull/16787",
-        "title": "Send the tested socket-close suggestion to the author",
-        "requestedAt": "2026-11-02T04:11:55+00:00",
-        "summary": "Post the measured finding on the waiter allocation?",
-        "body": "Register after checking for positive linger and before testing the TCP state. Ordinary unconnected TCP and UDP close took 16.8% and 16.2% less time on AMD64 systrap. Linux and both versions of the PR passed the 28 selected linger cases."
+        "url": "https://github.com/google/gvisor/pull/16787#issuecomment-6574091521",
+        "title": "Answer Aditya’s offer to include the close-waiter fix",
+        "requestedAt": "2026-11-02T10:02:06.506089+00:00",
+        "summary": "May Aditya take fd2a30841 into his PR as a second commit with Tamir’s authorship?",
+        "body": "Aditya saw the measured fix and offered to take it. Its sole parent is his current head. The 28 selected linger cases passed with both changes. Ordinary TCP and UDP close took 16.8% and 16.2% less time on AMD64 systrap. A yes lets Aditya add the tested commit and rerun the cases before he pushes."
       }
     },
     {
@@ -43518,6 +43522,40 @@
         "requestedAt": "2026-11-02T08:20:02+00:00",
         "summary": "Open the standalone fix against current master?",
         "body": "The stock query failed with an unknown configure tag. With the fix, the importing project inherited its own default and gVisor as root still selected 6.18. Both generated maps resolved that series to 6.18.33. The first verifier rejected the wording of the stock diagnostic. The corrected verifier checked the original outputs without rerunning Bazel."
+      }
+    },
+    {
+      "id": "branch:state-completion-queue",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/state-completion-queue",
+      "head": "0bf31f69d3ddba01a058fa512e3f63438984415c",
+      "title": "Reuse graph target IDs for the completion queue",
+      "url": "https://github.com/tamird/gvisor/commit/0bf31f69d",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T09:58:17.763358+00:00",
+      "summary": "The graph decoder finishes resolving references before it starts running callbacks. Both stages need object IDs, so they can share a buffer. On a 50,000-file checkpoint the two scheduler queue append sites allocated 1,967,984 bytes in 25 allocations on master and zero with this change. The candidate passed the normal and race suites and the queue growth, callback ordering and cycle controls.",
+      "evidence": [
+        {
+          "label": "Standalone two-file change",
+          "url": "https://github.com/tamird/gvisor/commit/0bf31f69d"
+        },
+        {
+          "label": "Allocation profiles on one frozen checkpoint and correctness controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41422456146/artifacts/13131506474"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "0bf31f69d3ddba01a058fa512e3f63438984415c",
+        "baseHead": "918aefd5f3771a161013fb72873d8aa19196e1bc",
+        "url": "https://github.com/tamird/gvisor/commit/0bf31f69d",
+        "title": "Reuse graph target IDs for the completion queue",
+        "requestedAt": "2026-11-02T09:58:17.763358+00:00",
+        "summary": "Open the completion queue change as a standalone PR?",
+        "body": "The graph decoder finishes resolving references before it starts running callbacks. Both stages need object IDs, so they can share a buffer. On a 50,000-file checkpoint the two scheduler queue append sites allocated 1,967,984 bytes in 25 allocations on master and zero with this change. The candidate passed the normal and race suites and the queue growth, callback ordering and cycle controls."
       }
     }
   ],
@@ -50220,7 +50258,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-02T04:29:14+00:00",
+      "updatedAt": "2026-11-02T09:58:17.763358+00:00",
       "summary": "Restoring 50,000 tmpfs files allocated a temporary pointer cell almost every time the decoder queued a parent pointer. The queue already held a copy of the pointer. Reusing that cell reduced total allocations per decode from 155,164 to 105,078.",
       "findings": [
         {
@@ -53344,7 +53382,7 @@
           ]
         },
         {
-          "text": "The 50,000-file restore queued 50,079 inode hooks, 50,075 dentry parent conversions, and 50,075 directory-map waits. A prototype reserved 50,289 callback slots using generated loader information. Across eight paired runs, median restore fell from 230 to 208 ms. Across 16 decode pairs, peak heap fell from 114.4 to 96.1 MiB and retained heap from 63.88 to 62.03 MiB.",
+          "text": "The 50,000-file restore queued 50,079 inode hooks, 50,075 dentry parent conversions, and 50,075 directory-map waits. On the decoder that already combined each callback with its waiter, a prototype reserved 50,289 slots using generated loader information. Across eight paired runs, median restore fell from 230 to 208 ms. Across 16 decode pairs, peak heap fell from 114.4 to 96.1 MiB and retained heap from 63.88 to 62.03 MiB.",
           "evidence": [
             {
               "label": "Callback counts from all 50,000 restored files",
@@ -53361,7 +53399,7 @@
           ]
         },
         {
-          "text": "On unchanged master, 50,000 files needed 200,998 callback records. The standalone registration API reserved 50,289 slots, but the final slice grew to 243,598 slots versus 228,693. Allocated bytes fell 5.47% and peak heap fell 3.58%. Retained heap rose 1.55%. Eight native pairs did not establish faster restore (230.3 ms stock, 236.4 ms with reservation). Hold the proposal. The earlier 9.55% improvement was measured on the separate decoder that combines a callback and its waiter (150,890 records). Generated loaders know the number of unconditional hooks. They discover whether a conversion also needs a wait when they read the pointer: nil, self and root references can complete immediately. The target table does not record how many slots reference each object.",
+          "text": "On unchanged master, 50,000 files needed 200,998 callback records. The standalone registration API reserved 50,289 slots, but the final slice grew to 243,598 slots versus 228,693. Allocated bytes fell 5.47% and peak heap fell 3.58%. Retained heap rose 1.55%. Across eight native pairs, the Restore RPC took a median 230.3 ms on stock and 236.4 ms with reservation (p=0.130); time through the guest file check was 241.2 and 246.7 ms (p=0.161). Hold the proposal. The earlier 9.55% improvement was measured on the separate decoder that combines a callback and its waiter (150,890 records). Generated loaders know the number of unconditional hooks. They discover whether a conversion also needs a wait when they read the pointer: nil, self and root references can complete immediately. The target table does not record how many slots reference each object.",
           "evidence": [
             {
               "label": "Standalone API on current master",
@@ -53419,9 +53457,22 @@
               "url": "https://github.com/google/gvisor/blob/aa767e4c4/runsc/config/flags.go#L195"
             }
           ]
+        },
+        {
+          "text": "The graph decoder finishes reading its target-to-object table before it starts scheduling completed objects. Both use object IDs. Reusing this buffer removed both queue growth sites: 1,967,984 bytes in 25 allocations fell to zero on the same 7,302,094-byte checkpoint. One cold decode per binary allocated 144,177,224 bytes on master and 142,208,680 bytes with reuse. Timing was outside the scope of this allocation profile. The candidate completed at 09:56:20.515 UTC and the verified result was available at 09:56:20.947 UTC.",
+          "evidence": [
+            {
+              "label": "Standalone two-file change",
+              "url": "https://github.com/tamird/gvisor/commit/0bf31f69d"
+            },
+            {
+              "label": "Queue sizes, normal and race suites, and exact allocation profiles",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41422456146/artifacts/13131506474"
+            }
+          ]
         }
       ],
-      "nextStep": "Review the shared value-loading change and its ownership checks. The 16 complete guest restores showed no measurable latency difference. Keep the separate callback-table capacity experiment on hold.",
+      "nextStep": "Review the small completion-queue change and the independent callback/waiter change. The standalone generated reservation API remains on hold.",
       "evidence": [
         {
           "label": "Restore timings, heap profiles, callback counts and suite results",
@@ -54506,6 +54557,10 @@
         {
           "label": "Paired range-index experiment; same graph mode and two-order alias checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/41110148739"
+        },
+        {
+          "label": "Queue sizes, normal and race suites, and exact allocation profiles",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41422456146/artifacts/13131506474"
         }
       ],
       "comparisons": [
@@ -60388,7 +60443,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-02T07:35:16+00:00",
+      "updatedAt": "2026-11-02T09:47:53.786749+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -62125,9 +62180,26 @@
               "url": "https://github.com/tamird/gvisor/commit/b171d8325"
             }
           ]
+        },
+        {
+          "text": "The AMD64 DPDK build produced the same 7,403,456-byte static musl archive on a distroless worker without /bin/bash. Its three driver metadata records and generator also matched. Both generated scripts and GNU Make used the declared Bash. On the same worker, the original action failed to start /bin/bash. The product outputs were verified four seconds after execution. Recovering the control’s JSON-escaped error brought the combined verdict to 6 minutes 51 seconds, without a rebuild.",
+          "evidence": [
+            {
+              "label": "Declared interpreter and Make selection",
+              "url": "https://github.com/tamird/gvisor/commit/16d96cd23"
+            },
+            {
+              "label": "Original native build and archive comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41421129869/artifacts/13129732760"
+            },
+            {
+              "label": "Reconciled control and product verdict",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41422486998/artifacts/13130935501"
+            }
+          ]
         }
       ],
-      "nextStep": "The static-musl proposal can use DPDK’s own metadata generator. For GNU, establish how the host generator runs on an empty worker. The foreign-build rule still needs a declared interpreter for both its wrapper and the script it starts. Exercising packet I/O through VFIO requires a device.",
+      "nextStep": "Determine how consumers can select one declared Bash for the rules_foreign_cc wrapper and its child scripts. The AMD64 static-musl build works. GNU-target and ARM64 builds and VFIO packet I/O have separate qualification requirements.",
       "evidence": [
         {
           "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
@@ -64412,6 +64484,66 @@
         {
           "label": "Original gVisor reproduction",
           "url": "https://github.com/tamird/gvisor/actions/runs/41253749549/artifacts/13062399500"
+        }
+      ]
+    },
+    {
+      "id": "investigation:kernfs-inotify-cache",
+      "title": "How procfs cache eviction affects inotify watches",
+      "group": "runtime",
+      "status": "concluded",
+      "owner": "VFS",
+      "updatedAt": "2026-11-02T09:56:25.161171+00:00",
+      "summary": "After actual dentry reclaim, Linux and gVisor can both give the same /proc/self/fdinfo name a new inode. A watch installed on the old inode then misses opens through the name. The difference observed after 1,024 sibling lookups was cache retention.",
+      "findings": [
+        {
+          "text": "All three kernels initially delivered IN_OPEN on watch 1. After 1,024 sibling lookups, Linux still delivered the event and adding the watch again returned 1. Current gVisor and the head of #16088 delivered no event, and adding the same watch returned 2. The test did not take a checkpoint.",
+          "evidence": [
+            {
+              "label": "Same syscall regression on Linux and current gVisor",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41417740854/artifacts/13129436691"
+            },
+            {
+              "label": "Same regression on the watch-ownership PR",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41420988410/artifacts/13130427477"
+            }
+          ]
+        },
+        {
+          "text": "On a private Linux 7.0 VM, the watched inode changed from 21693 to 18855 after reclaim. An unwatched sibling also changed inode. Opening the name then produced no event and re-adding the watch returned 2. Removing watch 1 still succeeded and delivered IN_IGNORED. Linux retained the original watch on its old inode.",
+          "evidence": [
+            {
+              "label": "Linux observed before and after confirmed dentry reclaim",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41424381619/artifacts/13131975352"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Closed. The Linux control explains the result on current gVisor and on #16088.",
+      "evidence": [
+        {
+          "label": "Linux observed before and after confirmed dentry reclaim",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41424381619/artifacts/13131975352"
+        },
+        {
+          "label": "Same syscall regression on Linux and current gVisor",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41417740854/artifacts/13129436691"
+        },
+        {
+          "label": "Same regression on the watch-ownership PR",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41420988410/artifacts/13130427477"
+        },
+        {
+          "label": "Existing watch-ownership change",
+          "url": "https://github.com/google/gvisor/pull/16088"
+        },
+        {
+          "label": "Linux releases the lookup path after installing the inode watch",
+          "url": "https://github.com/torvalds/linux/blob/adc218676/fs/notify/inotify/inotify_user.c#L784-L787"
+        },
+        {
+          "label": "A new proc inode receives a fresh number",
+          "url": "https://github.com/torvalds/linux/blob/adc218676/fs/proc/base.c#L1947-L1956"
         }
       ]
     }
