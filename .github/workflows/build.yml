@@ -1,35 +1,96 @@
-name: CI
-
-"on":
+name: Execute the NVIDIA ABI parser with Bazel 9.3.1
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/bazel9-nvidia-parser-owner]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  parser:
+    if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 115
+    env:
+      PRODUCT: 375b2c57032fa910447d4b81217fde2171303a9b
+      OWNER: //tools/nvidia_driver_differ:driver_ast_parser_test
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 2, persist-credentials: false}
+    - name: Prepare the released client and pinned GNU worker
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -euo pipefail
+        d="$RUNNER_TEMP/parser"
+        mkdir -p "$d/records" "$d/platform"
+        echo '{"verdict":"INCOMPLETE","phase":"bootstrap"}' > "$d/records/verdict.json"
+        test "$(git rev-parse HEAD^)" = "$PRODUCT"
+        cp test/rbe/parser_owner.py "$d/"
+        reporter=599cb05aecfb107e07f81b8591a009cb12d6ffa7
+        git fetch -q --no-tags --depth=1 origin "$reporter"
+        for mod in qualification_report unit_matrix; do
+          git show "$reporter:test/rbe/$mod.py" > "$d/$mod.py"
+        done
+        git checkout --quiet --detach "$PRODUCT"
+        git diff --exit-code HEAD --
+        test "$(cat .bazelversion)" = 9.3.1
+        curl --retry 3 -fsSL https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$d/bazel"
+        echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $d/bazel" | sha256sum -c -
+        chmod +x "$d/bazel"
+        printf '%s\n' 'module(name="tcp_gnu")' > "$d/platform/MODULE.bazel"
+        cat > "$d/platform/BUILD" <<EOF
+        package(default_visibility=["//visibility:public"])
+        platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","EstimatedMemory":"8GB","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://$GNU"})
+        EOF
+        umask 077
+        {
+          echo 'build --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/'
+          echo "build --spawn_strategy=remote --noremote_local_fallback --inject_repository=tcp_gnu=$d/platform --extra_execution_platforms=@tcp_gnu//:gnu --host_platform=@tcp_gnu//:gnu"
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$d/bb.rc"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run --init -d --name gnu --entrypoint /bin/bash --user root -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e "GIT_CONFIG_VALUE_0=$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        test "$(docker exec gnu uname -m)" = x86_64
+        test "$(docker exec gnu "$d/bazel" --version)" = 'bazel 9.3.1'
+    - name: Run the unmodified owning test
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        d="$RUNNER_TEMP/parser"
+        git rev-parse HEAD > "$d/source"
+        date -u +%FT%T.%3NZ > "$d/start"
+        rc=0
+        timeout -k 30s 100m docker exec gnu "$d/bazel" --bazelrc="$d/bb.rc" test --config=x86_64 --jobs=90 --strategy=TestRunner=remote --nocache_test_results --test_sharding_strategy=disabled --test_env=GO_TEST_WRAP_TESTV=1 --remote_download_outputs=toplevel --build_event_json_file="$d/bep" "$OWNER" > "$d/build.log" 2>&1 || rc=$?
+        printf '%s\n' "$rc" > "$d/exit"
+        date -u +%FT%T.%3NZ > "$d/finish"
+        for f in xml log; do
+          if docker exec gnu cat "bazel-testlogs/tools/nvidia_driver_differ/driver_ast_parser_test/test.$f" > "$d/test.$f"; then
+            cp "$d/test.$f" "$d/records/"
+          fi
+        done
+        git diff --quiet "$PRODUCT" --
+        python3 -B "$d/parser_owner.py"
+    - name: Check original file boundary
+      id: privacy
+      if: always()
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PY'
+        import os
+        from pathlib import Path
+        root = Path(os.environ["RUNNER_TEMP"]) / "parser/records"
+        key = os.environ["BUILDBUDDY_API_KEY"].encode()
+        assert key and (root/"verdict.json").is_file()
+        for f in root.iterdir():
+            assert f.is_file() and not f.is_symlink() and f.name in {"verdict.json", "test.xml", "test.log"}
+            b = f.read_bytes()
+            assert key not in b and b"x-buildbuddy-api-key" not in b.lower()
+        PY
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.privacy.outcome == 'success'
       with:
-          name: runsc
-          path: bin/
+        name: bazel9-nvidia-parser-amd64
+        path: ${{ runner.temp }}/parser/records/
+        if-no-files-found: error
