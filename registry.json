@@ -49569,9 +49569,22 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-02T02:48:54+00:00",
+      "updatedAt": "2026-11-02T03:20:19+00:00",
       "summary": "A restore of 50,000 tmpfs files queued 150,890 callbacks. About a third came from inode after-load hooks, a third from converting dentry parents, and a third from directory maps waiting for their children.",
       "findings": [
+        {
+          "text": "Keeping the first scan in wire order lets the 50,000-file checkpoint resolve its three deferred frames without creating an index. Across 16 pairs, ordinary decode was 190.4 vs 188.4 ms (p=.926); both used 65.50 MiB live and 131.5 MiB peak heap. Eight native pairs verified every file after restore and showed no clear change to first guest readiness. An index for rows still unresolved after the first scan reduced a legal 1,024-cell chain from 3.554 to 0.814 ms (77.1%). The 16- and 64-cell cases showed no clear difference. The implementation adds 85 net lines for this worst case. Hold it while profiling ordinary restore.",
+          "evidence": [
+            {
+              "label": "Initial wire-order scan and deferred type lookup prototype",
+              "url": "https://github.com/tamird/gvisor/commit/7a789f600"
+            },
+            {
+              "label": "Paired checkpoint restores, constructed chains and graph counters",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41380027399/artifacts/13112894438"
+            }
+          ]
+        },
         {
           "text": "Ordinary Save emitted a 21,402-byte checkpoint with 1,024 linked map fields that took Load 1,046,529 retry visits. Waking rows when their type became known cut median decode from 3.108 ms to 0.738 ms in 16 pairs. A 50,000-file tmpfs checkpoint had 101,263 object-table entries and only three deferred rows, all resolved in one pass. Ordinary decode with GC enabled slowed from 151.0 to 153.1 ms. Eight pairs of native restores showed no clear change in time to the first guest command.",
           "evidence": [
@@ -52748,8 +52761,16 @@
           ]
         }
       ],
-      "nextStep": "Keep the first linear scan for typical restores. Measure a variant that indexes only work left after that scan, including hook order, smaller graphs, and the 50,000-file checkpoint. The callback reservation API remains on hold.",
+      "nextStep": "Profile the default graph decoder on the real 101,263-object kernel. Look for an API or data-layout change that reduces an observed cost during ordinary restore. The ordered retry queue remains a measured option for workloads with long chains.",
       "evidence": [
+        {
+          "label": "Initial wire-order scan and deferred type lookup prototype",
+          "url": "https://github.com/tamird/gvisor/commit/7a789f600"
+        },
+        {
+          "label": "Paired checkpoint restores, constructed chains and graph counters",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41380027399/artifacts/13112894438"
+        },
         {
           "label": "16 paired decodes of the same checkpoint, both live restore checks and state suites",
           "url": "https://github.com/tamird/gvisor/actions/runs/41310990566/artifacts/13086186114"
