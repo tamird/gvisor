@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T21:18:09.988070+00:00",
+    "updatedAt": "2026-11-02T21:30:10.580114+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38508,14 +38508,14 @@
       "group": "bazel",
       "status": "Agent work",
       "url": "https://github.com/tamird/gvisor/tree/research/declared-jekyll-site",
-      "updatedAt": "2026-11-02T17:10:19.772540+00:00",
+      "updatedAt": "2026-11-02T21:30:10.580114+00:00",
       "summary": "Bazel builds the website without a Docker daemon. Dropping the inline-SVG plugin and its optimizer preserved all 278 published files byte for byte; neither gem was installed in the selected SDK. Disabling Autoprefixer changed css/main.css, so it stays. The serving-image check also covered the hard-linked logo.",
       "followup": {
         "owner": "root",
         "sourceHead": "2d59e8489625bcc700c22ed572d4160ffff0a1fd",
-        "observedAt": "2026-11-01T07:48:29.705288+00:00",
+        "observedAt": "2026-11-02T21:30:10.580114+00:00",
         "disposition": "Source notices verified; waiting for build prerequisites",
-        "nextAction": "Wait for the rules_img 0.3.24 BCR publication (#11511) and the declared Buildkite Bazelisk bootstrap. The five Ruby gems and tar.bzl are verified. The pinned build SDK's component notices are recorded separately; the catalog does not enumerate OCI inputs. The Go docs and server still require GNU tools.",
+        "nextAction": "The BCR now publishes rules_img 0.3.24, including the archive import and layer fix from #811. Update this proposal from 0.3.23 and check the site and the hard-linked logo against the released module. The native Buildkite entry still needs its Bazelisk bootstrap. The five Ruby gems and tar.bzl are verified; the Go documentation and server still need GNU tools.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41148839163/artifacts/13021069904",
           "https://github.com/tamird/gvisor/actions/runs/41144112084/artifacts/13019603780",
@@ -38524,7 +38524,9 @@
           "https://github.com/tamird/gvisor/actions/runs/41120650004/artifacts/13008608480",
           "https://github.com/tamird/gvisor/actions/runs/41115737834/artifacts/13005113336",
           "https://github.com/tamird/gvisor/actions/runs/41118437298/artifacts/13007432076",
-          "https://github.com/bazel-contrib/rules_img/pull/811"
+          "https://github.com/bazel-contrib/rules_img/pull/811",
+          "https://github.com/bazelbuild/bazel-central-registry/pull/11511",
+          "https://bcr.bazel.build/modules/rules_img/0.3.24/source.json"
         ]
       },
       "refinement": {
@@ -42133,8 +42135,8 @@
       "title": "Clear TCP poll errors after the socket error is consumed",
       "url": "https://github.com/tamird/gvisor/commit/c1bf3ee9a",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T18:34:02.855318+00:00",
+      "status": "Agent work",
+      "updatedAt": "2026-11-02T21:30:10.580114+00:00",
       "summary": "After a refused nonblocking connect, Linux reports a hangup after the program reads ECONNREFUSED from SO_ERROR. gVisor still reported POLLERR and claimed urgent data was available. The fix checks the pending socket error and extended error queue. Poll can do that without acquiring the endpoint mutex. The established-connection ICMP soft-error case from #6666 is tracked separately.",
       "evidence": [
         {
@@ -42146,17 +42148,6 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41287543512/artifacts/13077550587"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "c1bf3ee9af94ee5e6380252e28dfe6e8fb7f7d46",
-        "baseHead": "9940ecdc2dd3651121dd468889cc094f0ec84247",
-        "url": "https://github.com/tamird/gvisor/commit/c1bf3ee9a",
-        "title": "Clear TCP poll errors after the socket error is consumed",
-        "requestedAt": "2026-11-01T09:12:10.782787+00:00",
-        "summary": "Open the terminal TCP socket-error PR after #16667 lands?",
-        "body": "After a refused nonblocking connect, Linux reports a hangup after the program reads ECONNREFUSED from SO_ERROR. gVisor still reported POLLERR and claimed urgent data was available. The fix checks the pending socket error and extended error queue. Poll can do that without acquiring the endpoint mutex. The established-connection ICMP soft-error case from #6666 is tracked separately."
-      },
       "refinement": {
         "before": {
           "head": "31698e51e22cdf8ba72fbc117edda9bbec5a8d3c",
@@ -42166,6 +42157,19 @@
           "head": "c1bf3ee9af94ee5e6380252e28dfe6e8fb7f7d46",
           "base": "9940ecdc2dd3651121dd468889cc094f0ec84247"
         }
+      },
+      "followup": {
+        "owner": "TCP sockets",
+        "sourceHead": "c1bf3ee9af94ee5e6380252e28dfe6e8fb7f7d46",
+        "disposition": "Compose the poll fix with the merged single-refusal behavior",
+        "observedAt": "2026-11-02T21:30:10.580114+00:00",
+        "nextAction": "The lock change #16667 landed. The prior review request no longer applies: #16817 removes the handshakeFailed write to lastError that this branch still uses, and the two patches conflict. Preserve the single refusal, rerun the blocking/nonblocking SO_ERROR and terminal poll controls on the composed source, then present the revised change.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16667",
+          "https://github.com/google/gvisor/pull/16817",
+          "https://github.com/tamird/gvisor/commit/c1bf3ee9a",
+          "https://github.com/tamird/gvisor/actions/runs/41289554960/artifacts/13077348405"
+        ]
       }
     },
     {
@@ -66457,7 +66461,7 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-11-02T21:09:35.198072+00:00",
+      "updatedAt": "2026-11-02T21:30:10.580114+00:00",
       "lastReviewedAt": "2026-11-02T08:31:43+00:00",
       "summary": "The project owner checks a new review decision against other open, unpublished and recently landed work. This is agent work; an approved source normally gets a follow-up rather than an amendment.",
       "findings": [
@@ -66603,6 +66607,23 @@
             {
               "label": "Original eight-pair benchmark comparison",
               "url": "https://github.com/tamird/gvisor/actions/runs/41520715670/artifacts/13176309664"
+            }
+          ]
+        },
+        {
+          "text": "The #15730 description now includes the original benchmark comparison; the approved head and import are unchanged. For #16466 (Apache) and #15181 (allocator), BuildBuddy lists the original benchstat output and samples but downloading them returns 404. No local copy was found. Recover an original before adding rows to either description.",
+          "evidence": [
+            {
+              "label": "Corrected netip description",
+              "url": "https://github.com/google/gvisor/pull/15730"
+            },
+            {
+              "label": "Apache benchmark original unavailable",
+              "url": "https://github.com/google/gvisor/pull/16466"
+            },
+            {
+              "label": "Allocator benchmark original unavailable",
+              "url": "https://github.com/google/gvisor/pull/15181"
             }
           ]
         }
