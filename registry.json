@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T08:31:43+00:00",
+    "updatedAt": "2026-11-02T08:53:53+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -63967,10 +63967,23 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-02T07:17:10+00:00",
+      "updatedAt": "2026-11-02T08:53:53+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independently runnable Bazel checks and an explicit format command. The combined target ran Buildifier, cpplint, clang-format, spelling and Go formatting on remote workers.",
       "findings": [
+        {
+          "text": "With the consuming project explicitly selecting LLVM 0.8.24, both source-built protoc binaries reported 35.1. Two gVisor taskserver Go generation actions used the recovered exec binary. The containerd shim started and its API compiled the shipped Go bindings. The original Bazel client ran out of Java heap after completing all three targets. Two recovery jobs verified the original outputs 24 min 43 s after the job ended, without repeating compilation. The descriptor action succeeded; its compiler identity was not verified.",
+          "evidence": [
+            {
+              "label": "Original external build and Bazel client failure",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41408846892/artifacts/13126182561"
+            },
+            {
+              "label": "Compiler, generator and shim results recovered from the original actions",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41415800823/artifacts/13126979726"
+            }
+          ]
+        },
         {
           "text": "Gazelle checks the 218 selected packages with declared inputs and no host tools. All 16 direct checks passed: a stale rule prints a diff, a malformed BUILD file prints its parse error, and an unexpected exit status still fails the build. An external project built a gVisor resource. Its Go library and full root wildcard hit the same existing Go module override on both revisions. With those overrides masked for diagnosis, the rules-only root wildcard (:all) omitted Gazelle; explicitly selecting it entered toolchain setup.",
           "evidence": [
@@ -64123,7 +64136,7 @@
           ]
         },
         {
-          "text": "containerd/cgroups rewrites generated Go field names in all ten published v3 releases. A three-line Gazelle default selects the shipped Go sources and keeps both protobuf descriptor targets. The shim linked, started, and read its executable eight times. The stock gVisor build applies a protobuf patch and makes zero such reads. Building protoc in the external consumer still fails on C++ header paths.",
+          "text": "containerd/cgroups rewrites generated Go field names in all ten published v3 releases. A three-line Gazelle default selects the shipped Go sources and keeps both protobuf descriptor targets. The shim linked, started, and read its executable eight times. The stock gVisor build applies a protobuf patch and makes zero such reads. In that run, building protoc in the external consumer failed on C++ header paths.",
           "evidence": [
             {
               "label": "Both descriptor actions and the real shim startup",
