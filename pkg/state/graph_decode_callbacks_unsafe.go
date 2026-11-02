@@ -174,7 +174,7 @@ func (ds *graphDecodeState) loadValue(ti *typeInfo, slot int, l ValueLoader) {
 	// keep p until StateLoadValue has copied them. Either form must keep
 	// p if user code could have retained its address during decoding.
 	reusable := ds.hooks == hooks
-	copied := ti.direct
+	copied := true
 	switch {
 	case ds.lastRef > 0 && ds.lastRef != ds.cur:
 		ds.wait(ds.cur, ds.lastRef, cb)
