@@ -41309,9 +41309,9 @@
       "head": "d01551afde465a186992ecaf583f57cebbf98415",
       "url": "https://github.com/tamird/gvisor/commit/d01551afd",
       "title": "Use target-scoped race mode in the Make targets",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T04:31:22.639808+00:00",
-      "summary": "Both make runsc-race and the Buildkite smoke target passed the global race configuration to a launcher that already instruments its own packages. Four build tools then required an ELF loader missing on empty workers. Both Make commands now select the same self-instrumenting executable. The empty-worker link and ordinary same-stamp smoke passed; the final one-line shortcut change was verified against the executed Bazel arguments.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-02T03:11:16+00:00",
+      "summary": "The previous smoke run instrumented the launcher but staged the ordinary Sentry. Its source stamp and a successful guest boot did not verify kernel race detection. Qualifying a release that stages both race executables together and runs the guest.",
       "evidence": [
         {
           "label": "Both Make entry points select exactly the previously executed Bazel build command",
@@ -41336,19 +41336,12 @@
         {
           "label": "Target-level race instrumentation introduced in ba94580e1",
           "url": "https://github.com/google/gvisor/commit/ba94580e1"
+        },
+        {
+          "label": "Why the launcher and Sentry must both be instrumented",
+          "url": "https://github.com/google/gvisor/commit/6e97c9a36"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "d01551afde465a186992ecaf583f57cebbf98415",
-        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
-        "requestedAt": "2026-11-01T04:31:22.639808+00:00",
-        "url": "https://github.com/tamird/gvisor/commit/d01551afd",
-        "title": "Use target-scoped race mode in the Make targets",
-        "summary": "Open the standalone correction for both Make race-launcher targets upstream? It has no prerequisite.",
-        "body": "Since ba94580e1, runsc-race enables the Go race detector for its own\npackages. Passing --config=race also instruments the tools that generate\ntheir sources and makes Nogo depend on the host C library. Those tools\ncannot run on a worker without the corresponding ELF loader.\n\nHave make runsc-race and smoke-race-tests build the self-instrumenting\nlauncher directly. Keep --config=race available for callers that need\nto instrument a whole build, including syscall tests."
-      },
       "refinement": {
         "before": {
           "head": "8c6ed7a88a418240a629c29a6e9bbe217491bbab"
