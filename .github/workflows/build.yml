@@ -1,35 +1,135 @@
-name: CI
-
-"on":
+name: Qualify target-aware BCR LuaJIT and both wrk2 consumers
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/wrk2-bcr-consumers]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  images:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
+    defaults:
+      run:
+        working-directory: gvisor
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 2
+          path: gvisor
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: tamird/bazel-central-registry
+          ref: b71adb61cb76def6e12e54b5deb73c1d910f71b5
+          path: supplier
+      - name: Configure the pinned Linux execution platform
+        id: setup
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          echo "Coordinator $(gcc -dumpfullversion), worker GCC 11"
+          test "$(gcc -dumpversion | cut -d. -f1)" = 11
+          if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+          unshare --user --map-root-user true
+          mkdir -p "$RUNNER_TEMP/gnu"
+          GNU=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          printf 'module(name="epoll_gnu")\n' > "$RUNNER_TEMP/gnu/MODULE.bazel"
+          printf 'platform(name="gnu", constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"], exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"}, visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu/BUILD"
+          test -n "$BUILDBUDDY_API_KEY"
+          rc=$RUNNER_TEMP/images.bazelrc
+          umask 077
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=linux-sandbox' "build --inject_repository=epoll_gnu=$RUNNER_TEMP/gnu" 'build --host_platform=@epoll_gnu//:gnu' 'build --extra_execution_platforms=@epoll_gnu//:gnu'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          cat >> "$rc" <<'RC'
+          common --registry=https://raw.githubusercontent.com/tamird/bazel-central-registry/b71adb61cb76def6e12e54b5deb73c1d910f71b5/
+          build --jobs=8
+          build --strategy=GoStdlib=linux-sandbox
+          build --strategy=GoStdlibList=linux-sandbox
+          build --strategy=GoStandardLibraryAnalysis=linux-sandbox
+          build --strategy=GoStaticAnalysis=linux-sandbox
+          build --modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache
+          build --noremote_upload_local_results
+          build --remote_download_outputs=toplevel
+          build --noshow_progress
+          RC
+      - name: Validate the exact supplier registry module
+        timeout-minutes: 18
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PYCODE'
+          import hashlib,json,os,re,subprocess
+          from pathlib import Path
+          root=Path(os.environ['GITHUB_WORKSPACE'])/'supplier'
+          records=[]
+          for args in (["bazel","run","//tools:update_integrity","--","luajit","--version=2.1.20230430"],
+                       ["git","diff","--exit-code","--","modules/luajit"],
+                       ["bazel","run","//tools:bcr_validation","--","--check","luajit@2.1.20230430"]):
+              p=subprocess.run(args,cwd=root,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+              tail=p.stdout.decode(errors='replace').splitlines()[-12:]
+              token=os.environ.get('GITHUB_TOKEN','')
+              tail=[line for line in tail if not (token and token in line) and not re.search(r'(?i)(authorization|bearer |github_pat_|gh[pousr]_[A-Za-z0-9]{20})',line)]
+              records.append({'command':args,'exit':p.returncode,'output_sha256':hashlib.sha256(p.stdout).hexdigest(),'diagnostics':tail if p.returncode else []})
+              Path(os.environ['RUNNER_TEMP'],f'bcr-validation-{len(records)}.log').write_bytes(p.stdout)
+          subprocess.run(['bazel','shutdown'],cwd=root,check=False)
+          out={'source':subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip(),
+               'exit':0 if all(r['exit']==0 for r in records) else 1,'commands':records}
+          Path(os.environ['RUNNER_TEMP'],'bcr-validation.json').write_text(json.dumps(out))
+          print(json.dumps(out))
+          PYCODE
+      - name: Check supplier inputs and both x64 reference formats
+        if: always() && steps.setup.outcome == 'success'
+        timeout-minutes: 20
+        run: python3 test/rbe/wrk2-bcr-consumers.py supplier
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: wrk2-bcr-preflight
+          path: ${{ runner.temp }}/wrk2-public/result.json
+          if-no-files-found: error
+      - name: Install the Linux ARM64 binfmt interpreter
+        run: |
+          set -euo pipefail
+          if [[ ! -e /proc/sys/fs/binfmt_misc/qemu-aarch64 ]]; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends qemu-user-static binfmt-support
+            sudo update-binfmts --enable qemu-aarch64
+          fi
+          grep -Fx enabled /proc/sys/fs/binfmt_misc/qemu-aarch64
+          grep -E '^flags:.*F' /proc/sys/fs/binfmt_misc/qemu-aarch64
+      - name: Build both images and execute the original TLS workload
+        if: always() && steps.setup.outcome == 'success'
+        timeout-minutes: 40
+        run: python3 test/rbe/wrk2-bcr-consumers.py images
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: wrk2-bcr-images
+          path: ${{ runner.temp }}/wrk2-public/result.json
+          if-no-files-found: error
+      - name: Run the real Kubernetes command and metrics consumer
+        if: always() && steps.setup.outcome == 'success'
+        timeout-minutes: 45
+        run: python3 test/rbe/wrk2-bcr-consumers.py consumer
+      - name: Regenerate the three source notices and verify the full catalog
+        if: always() && steps.setup.outcome == 'success'
+        timeout-minutes: 20
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 test/rbe/wrk2-bcr-consumers.py catalog
+      - name: Retain the combined verdict
+        if: always() && steps.setup.outcome == 'success'
+        run: python3 test/rbe/wrk2-bcr-consumers.py finish
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: wrk2-bcr-consumers
+          path: ${{ runner.temp }}/wrk2-public/result.json
+          if-no-files-found: error
+      - name: Remove remote credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/images.bazelrc"
