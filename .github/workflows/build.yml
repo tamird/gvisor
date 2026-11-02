@@ -1,7 +1,7 @@
-name: Run the original VFIO-enabled plugin socket case
+name: Check the plugin across its external virtio-user interface
 on:
   push:
-    branches: [qualification/plugin-musl-vfio]
+    branches: [qualification/plugin-musl-external-traffic]
 permissions:
   contents: read
   actions: read
@@ -52,27 +52,23 @@ jobs:
           for module in qualification_report unit_matrix; do
             git show "fb60e127516defd6aab633f80be09a03022f0737:test/rbe/$module.py" > "$RUNNER_TEMP/$module.py"
           done
-          curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
-          echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
-          chmod 0755 "$RUNNER_TEMP/bb"
-          if test -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
-      - name: Retrieve the original producer verdict
+      - name: Retrieve the original installed runtime receipt
         working-directory: product
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api repos/tamird/gvisor/actions/artifacts/13111068733/zip > "$RUNNER_TEMP/original.zip"
+        run: gh api repos/tamird/gvisor/actions/artifacts/13111992630/zip > "$RUNNER_TEMP/original.zip"
       - name: Recover and install the exact original executables
         id: original
         working-directory: product
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 -B test/rbe/plugin_programs/resume_consumer.py recover
-      - name: Run only the previously unexecuted socket case
+        run: python3 -B test/rbe/plugin_programs/traffic_consumer.py stage
+      - name: Run TCP and UDP over the bridge with native Linux and the plugin
         if: steps.original.outcome == 'success'
         working-directory: product
         env:
           BUILDBUDDY_API_KEY: ''
-        run: python3 -B test/rbe/plugin_programs/resume_consumer.py tests
+        run: python3 -B test/rbe/plugin_programs/traffic_consumer.py traffic
       - name: Check the typed evidence boundary
         id: privacy
         if: always()
@@ -84,7 +80,7 @@ jobs:
           from pathlib import Path
           folder = Path(os.environ["RUNNER_TEMP"]) / "plugin-evidence"
           files = list(folder.iterdir())
-          assert {f.name for f in files} in ({"result.json"}, {"result.json", "image.json"})
+          assert {f.name for f in files} in ({"result.json"}, {"result.json", "wire.json"})
           for f in files:
               assert f.is_file() and not f.is_symlink() and f.stat().st_size < 100000
               data = f.read_bytes()
@@ -95,21 +91,24 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
-          name: plugin-musl-vfio-original-socket
+          name: plugin-musl-external-payload
           path: |
             ${{ runner.temp }}/plugin-evidence/result.json
-            ${{ runner.temp }}/plugin-evidence/image.json
+            ${{ runner.temp }}/plugin-evidence/wire.json
           if-no-files-found: error
-      - name: Require the combined consumer verdict
+      - name: Require the fresh owner and four bidirectional exchanges
         if: always()
         run: |
           python3 - <<'PYTHON'
           import json, os
           from pathlib import Path
-          r = json.loads((Path(os.environ["RUNNER_TEMP"]) / "plugin-evidence/result.json").read_text())
-          assert r["status"] == "PASS", r["status"]
-          assert r["consumer_inputs"]["status"] == "PASS"
-          assert r["followup_tests_executed"] == 1
-          assert r["recovery"]["readonly_install"]["status"] == "PASS"
-          assert r["tests_executed"] == r["passed"] == 2 and r["failed"] == r["skipped"] == 0
+          base = Path(os.environ["RUNNER_TEMP"]) / "plugin-evidence"
+          r, w = [json.loads((base / name).read_text()) for name in ("result.json", "wire.json")]
+          assert r["source"] == os.environ["GITHUB_SHA"] and r["status"] == r["stage"] == r["external"]["status"] == "PASS"
+          assert r["case_records"] == r["tests_executed"] == r["passed"] == 1 and r["failed"] == r["skipped"] == 0
+          assert r["runtime_markers"] == {"plugin_sentry": True, "plugin_init": True} and r["product_builds"] == 0
+          assert set(w) == {"runc", "runsc-qualified-plugin"}
+          for arm in w.values():
+              assert arm["ok"] and arm["image"] == r["guest_image"]["image_id"]
+              assert set(arm["wire"]) == {"tcp_request", "tcp_reply", "udp_request", "udp_reply"}
           PYTHON

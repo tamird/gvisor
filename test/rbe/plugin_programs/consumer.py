@@ -172,7 +172,7 @@ def install_runtime(install, release, runsc, sentry):
     return sources
 
 
-def test_case(r, key, bazel, flags, target, name, extra=()):
+def test_case(r, key, bazel, flags, target, name, extra=(), *, owners=("backtrace", "socket")):
     row = r[key] = {"status": "INCOMPLETE", "target": target, "expected": name, "started": now()}
     bep = TMP / (key + ".bep")
     save(r)
@@ -237,7 +237,7 @@ def test_case(r, key, bazel, flags, target, name, extra=()):
         import traceback
         row["collection_error"] = {"type": type(exc).__name__, "line": traceback.extract_tb(exc.__traceback__)[-1].lineno}
     row["verdict_time"] = now()
-    cases = [c for key in ("backtrace", "socket") for c in r.get(key, {}).get("cases", [])]
+    cases = [c for owner in owners for c in r.get(owner, {}).get("cases", [])]
     r.update(case_records=len(cases), tests_executed=sum(c["status"] != "SKIP" for c in cases),
              passed=sum(c["status"] == "PASS" for c in cases), failed=sum(c["status"] == "FAIL" for c in cases),
              skipped=sum(c["status"] == "SKIP" for c in cases))
