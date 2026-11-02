@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T16:25:23.256481+00:00",
+    "updatedAt": "2026-11-02T16:36:54.632738+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40285,9 +40285,9 @@
       "head": "b79fa85f739884e7544fb47a248640073f22d8c2",
       "title": "Check the instance lock when changing inotify watch indexes",
       "url": "https://github.com/tamird/gvisor/commit/b79fa85f7",
-      "updatedAt": "2026-10-31T13:04:02.570333+00:00",
-      "status": "Contributor review requested",
-      "summary": "Adding or removing an inotify watch changes two indexes. Passing the instance lets checklocks identify its mutex. An unlocked removal failed the VFS owner on AMD64 and ARM64; three existing syscall controls passed. The change preserves the existing lock order and makes no Linux behavior change.",
+      "updatedAt": "2026-11-02T16:31:46.423209+00:00",
+      "status": "Published",
+      "summary": "Delivered in #16812.",
       "evidence": [
         {
           "label": "VFS analyzer: product passes",
@@ -40300,19 +40300,20 @@
         {
           "label": "gVisor: duplicate watch, mask-add and one-shot syscall cases",
           "url": "https://app.buildbuddy.io/invocation/805676b8-a808-4bbb-9bde-e458da8a30c1"
+        },
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16812"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "b79fa85f739884e7544fb47a248640073f22d8c2",
-        "baseHead": "25172e526f45929759a44e174e617c320df1ad58",
-        "url": "https://github.com/tamird/gvisor/commit/b79fa85f7",
-        "title": "Check the instance lock when changing inotify watch indexes",
-        "requestedAt": "2026-10-31T13:04:02.570333+00:00",
-        "summary": "Decide whether to open the standalone watch-index lock refactor. The IN_MASK_CREATE ABI fix is a separate review.",
-        "body": "A watch belongs to both an inotify instance and a watched object.\nLooking it up or removing it by an integer ID hid the required instance\nlock from checklocks. Hold both locks from lookup through insertion,\nand pass the instance when removing its watch from the target.\n\nReturn the remaining count while holding the target lock. Both callers\nalready need it to decide whether to notify the filesystem. Keep that\nnotification outside both locks.\n\nThe VFS analyzer passed the refactor [1]. Dropping the instance lock\nbefore removing a watch in Release made the analyzer reject the call on\nboth target architectures [2]. Three existing syscall tests passed:\nduplicate watches, mask addition, and one-shot removal [3].\n\n[1]: https://app.buildbuddy.io/invocation/e7e8b98a-fcdd-4eb9-8a96-131a56b2b26b\n[2]: https://github.com/tamird/gvisor/actions/runs/41203211510/artifacts/13043293902\n[3]: https://app.buildbuddy.io/invocation/805676b8-a808-4bbb-9bde-e458da8a30c1"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "b79fa85f739884e7544fb47a248640073f22d8c2",
+          "outcome": "approved",
+          "at": "2026-11-02T16:31:46.423209+00:00"
+        }
+      ]
     },
     {
       "id": "branch:host-testlogs",
@@ -40323,18 +40324,9 @@
       "title": "Collect Buildkite test logs without starting the builder",
       "url": "https://github.com/tamird/gvisor/compare/aa767e4c4...096e5e98d",
       "group": "release",
-      "status": "Contributor review requested",
-      "summary": "Buildkite reads Bazel’s failed and flaky test logs after every job. Treat make testlogs as a host-only goal so reporting a result can proceed without a builder. The existing hook still reads the same event file and runs its separate Docker cleanup.",
-      "updatedAt": "2026-10-31T13:26:02.814339+00:00",
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "096e5e98dda1e4a60eabff04f765eaaa5da16095",
-        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
-        "url": "https://github.com/tamird/gvisor/compare/aa767e4c4...096e5e98d",
-        "title": "Open the host-only testlogs change",
-        "summary": "Buildkite reads Bazel’s failed and flaky test logs after every job. Treat make testlogs as a host-only goal so reporting a result can proceed without a builder. The existing hook still reads the same event file and runs its separate Docker cleanup."
-      },
+      "status": "Published",
+      "summary": "Delivered in #16813.",
+      "updatedAt": "2026-11-02T16:31:46.423209+00:00",
       "evidence": [
         {
           "label": "Native AMD64. Five cold Docker calls became zero. Eleven log uploads and annotations matched across failed and retried tests.",
@@ -40347,6 +40339,18 @@
         {
           "label": "Buildkite’s existing post-command reads test-log paths from Make.",
           "url": "https://github.com/google/gvisor/blob/aa767e4c4/.buildkite/hooks/post-command#L8-L56"
+        },
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16813"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "096e5e98dda1e4a60eabff04f765eaaa5da16095",
+          "outcome": "approved",
+          "at": "2026-11-02T16:31:46.423209+00:00"
         }
       ]
     },
@@ -41738,9 +41742,9 @@
       "head": "21a5215f89afe39a50bfab5f5ff10a75fffa614a",
       "url": "https://github.com/tamird/hermetic-llvm/commit/21a5215f8",
       "title": "Generate the LLVM instrumentor header without a shell",
-      "updatedAt": "2026-11-01T07:48:29.705288+00:00",
-      "status": "Contributor review requested",
-      "summary": "LLVM 23 embeds a runtime helper in a C++ string using a shell and cat. Bazel can use LLVM’s CMake template for the same header. The resulting AMD64 and ARM64 archives contained the same 9,899 bytes and terminating NUL. Editing the helper in a local checkout with the amended overlay regenerated the header.",
+      "updatedAt": "2026-11-02T16:31:46.423209+00:00",
+      "status": "Agent work",
+      "summary": "LLVM’s Bazel build embeds InstrumentorRuntimeHelper.h as text. The reviewed 23.x backport replaces printf, cat and echo with template expansion. Develop the change against LLVM’s canonical Bazel overlay so release packagers can consume it there.",
       "evidence": [
         {
           "label": "Purpose of the overlay patch and the LLVM source it adapts",
@@ -41753,19 +41757,12 @@
         {
           "label": "gVisor Bazel 8 integration including TableGen",
           "url": "https://github.com/tamird/gvisor/actions/runs/41279721263/artifacts/13071944389"
+        },
+        {
+          "label": "Existing LLVM draft and template rationale",
+          "url": "https://github.com/llvm/llvm-project/pull/214242"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "baseHead": "fd2addebff08b29675ee266bc2766e475ce9263b",
-        "head": "21a5215f89afe39a50bfab5f5ff10a75fffa614a",
-        "url": "https://github.com/tamird/hermetic-llvm/commit/21a5215f8",
-        "title": "Generate the LLVM instrumentor header without a shell",
-        "requestedAt": "2026-11-01T06:33:17.043911+00:00",
-        "summary": "Review submitting the LLVM 23 overlay correction to hermeticbuild/hermetic-llvm.",
-        "body": "LLVM's Bazel rule uses printf, cat, and echo to embed the instrumentor\nruntime source in a C++ string. Building the IPO library therefore\nrequires a shell and cat on the execution platform.\n\nExpose the helper text to LLVM 23's overlay and expand the template that\nCMake and GN use for the same header. Bazel can then generate it without\nrunning another program. Read the resolved source path so edits in a\nlocal LLVM checkout regenerate the header."
-      },
       "refinement": {
         "before": {
           "head": "bdd158a6b8ddecb97fd226e416dcf1440b3595fb"
@@ -41773,6 +41770,21 @@
         "after": {
           "head": "21a5215f89afe39a50bfab5f5ff10a75fffa614a"
         }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "21a5215f89afe39a50bfab5f5ff10a75fffa614a",
+          "outcome": "approved",
+          "at": "2026-11-02T16:31:46.423209+00:00"
+        }
+      ],
+      "followup": {
+        "owner": "LLVM upstream",
+        "sourceHead": "21a5215f89afe39a50bfab5f5ff10a75fffa614a",
+        "observedAt": "2026-11-02T16:31:46.423209+00:00",
+        "disposition": "Approved backport; preparing the canonical LLVM change first",
+        "nextAction": "Qualify local and archive checkout paths, preserve the explanation of the runtime header, and give LLVM reviewers the simpler patch. Update the 23.x backport to cite the upstream change when available."
       }
     },
     {
@@ -42910,26 +42922,27 @@
       "title": "Check PIDFD task-set lock requirements",
       "url": "https://github.com/tamird/gvisor/commit/1bf9f3f36",
       "group": "analysis",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T21:47:22+00:00",
-      "summary": "PID lookup and PIDFD notifications share the TaskSet lock. Annotate the three entry points and fold the allocation helper into the guarded lookup so bypassing the lock is caught during analysis. Runtime locking is unchanged.",
+      "status": "Published",
+      "updatedAt": "2026-11-02T16:31:46.423209+00:00",
+      "summary": "Delivered in #16811.",
       "evidence": [
         {
           "label": "Both architecture analyzers, six missing-lock diagnostics, and all six Linux and gVisor syscall cases",
           "url": "https://github.com/tamird/gvisor/actions/runs/41353086095/artifacts/13102067904"
+        },
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16811"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "1bf9f3f36d3ae3b763049ccb0e2b3e80d4061e5b",
-        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
-        "url": "https://github.com/tamird/gvisor/commit/1bf9f3f36",
-        "title": "Check PIDFD task-set lock requirements",
-        "requestedAt": "2026-11-01T21:47:22+00:00",
-        "summary": "Open the PIDFD lock annotation PR?",
-        "body": "Dropping the lock at each of three callers triggers a diagnostic on both AMD64 and ARM64. All six existing PIDFD syscall tests passed on native AMD64 Linux and gVisor systrap. The positive analyzer checks passed on both architectures."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "1bf9f3f36d3ae3b763049ccb0e2b3e80d4061e5b",
+          "outcome": "approved",
+          "at": "2026-11-02T16:31:46.423209+00:00"
+        }
+      ]
     },
     {
       "id": "branch:buildkite-native-nogo",
@@ -43115,9 +43128,9 @@
       "title": "Reject mixed PI and ordinary futex wakeups",
       "url": "https://github.com/tamird/gvisor/commit/3737ff32e",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T02:01:01+00:00",
-      "summary": "An ordinary futex wake could report a successful PI lock to a thread that did not own it. In reverse, a PI unlock could name a thread that only asked to wait. Linux rejects both operations with EINVAL.",
+      "status": "Published",
+      "updatedAt": "2026-11-02T16:31:46.423209+00:00",
+      "summary": "Delivered in #16810.",
       "evidence": [
         {
           "label": "Ordinary wake of a priority-inheritance waiter on Linux, stock and corrected gVisor",
@@ -43134,17 +43147,20 @@
         {
           "label": "13 named Go package tests",
           "url": "https://github.com/tamird/gvisor/actions/runs/41375123700/artifacts/13111200300"
+        },
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16810"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "3737ff32e7116dcdad1209cce125602ff3c33785",
-        "url": "https://github.com/tamird/gvisor/commit/3737ff32e",
-        "title": "Reject mixed PI and ordinary futex wakeups",
-        "body": "Open this standalone PR. Private and shared futexes reproduced both incorrect handoffs. All 67 syscall cases passed on Linux and gVisor, all 13 named Go tests passed, and both architecture analyzers passed.",
-        "requestedAt": "2026-11-02T02:01:01+00:00"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "3737ff32e7116dcdad1209cce125602ff3c33785",
+          "outcome": "approved",
+          "at": "2026-11-02T16:31:46.423209+00:00"
+        }
+      ]
     },
     {
       "id": "branch:futex-requeue-count",
@@ -43918,14 +43934,14 @@
       "id": "branch:unix-listen-peer-credentials",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "proposal/unix-listen-peer-credentials",
-      "head": "b29a7c292010100770b6ba5e4f38b8f47ed68f38",
-      "title": "Publish Unix listener credentials with the listening state",
-      "url": "https://github.com/tamird/gvisor/commit/b29a7c292",
+      "ref": "proposal/unix-socket-credential-transitions",
+      "head": "5cc94fa57a8d61a1c2d88a5387746d4f995ea8b6",
+      "title": "Publish Unix peer credentials with the socket transition",
+      "url": "https://github.com/tamird/gvisor/commit/5cc94fa57",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-02T16:20:02.085486+00:00",
-      "summary": "A client connecting as a Unix stream socket started listening received PID 0 and unmapped UID/GID. Publish the listening task’s credentials while holding the same lock that connect uses to copy them.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T16:36:54.632738+00:00",
+      "summary": "Remove SetPeerCreds. Listening and connecting now publish credentials while holding their endpoint locks, and a socket pair receives its snapshot before either end is returned. The permanent syscall test checks what old and new clients see when a child relistens and a connected client tries to connect again.",
       "evidence": [
         {
           "label": "Native Linux, stock and corrected syscall results, four ABI controls, and both architectures’ analyzers",
@@ -43942,6 +43958,10 @@
         {
           "label": "Unix transition and syscall qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/41479325904"
+        },
+        {
+          "label": "Native and corrected syscall cases, forced publication interleaving, and both architecture analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41479325904/artifacts/13159434666"
         }
       ],
       "settledReviews": [
@@ -43952,12 +43972,24 @@
           "at": "2026-11-02T16:20:02.085486+00:00"
         }
       ],
-      "followup": {
-        "owner": "coordinator",
-        "sourceHead": "b29a7c292010100770b6ba5e4f38b8f47ed68f38",
-        "observedAt": "2026-11-02T16:20:02.085486+00:00",
-        "disposition": "Agent work",
-        "nextAction": "Qualify the revision that removes SetPeerCreds and exercises relisten through SO_PEERCRED on Linux and gVisor."
+      "refinement": {
+        "before": {
+          "head": "b29a7c292010100770b6ba5e4f38b8f47ed68f38"
+        },
+        "after": {
+          "head": "5cc94fa57a8d61a1c2d88a5387746d4f995ea8b6"
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "5cc94fa57a8d61a1c2d88a5387746d4f995ea8b6",
+        "baseHead": "b29a7c292010100770b6ba5e4f38b8f47ed68f38",
+        "url": "https://github.com/tamird/gvisor/commit/5cc94fa57",
+        "title": "Publish Unix peer credentials with the socket transition",
+        "summary": "Remove SetPeerCreds. Listening and connecting now publish credentials while holding their endpoint locks, and a socket pair receives its snapshot before either end is returned. The permanent syscall test checks what old and new clients see when a child relistens and a connected client tries to connect again.",
+        "body": "A client could connect after listen enabled the accept queue but before\nthe listener installed its credentials. It would keep PID 0 and an\nunset UID and GID even after exchanging data.\n\nCommit the credentials under the listener lock on each successful\nlisten. Initialize both socketpair endpoints before returning them.\nConnect already installs its snapshot under the endpoint locks; no\ncaller needs a separate setter.\n\nCheck across fork that relistening changes the PID seen by a new client,\nwhile reconnecting an inherited client with EISCONN preserves its\noriginal peer.",
+        "requestedAt": "2026-11-02T16:36:54.632738+00:00"
       }
     },
     {
@@ -44066,7 +44098,13 @@
       "group": "bazel",
       "status": "open",
       "updatedAt": "2026-11-02T16:25:23.256481+00:00",
-      "summary": "Export the source notice for consumers packaging iperf3. The release keeps the source and CI matrix and declares the Bazel 7.2.1 minimum required for registry overlays."
+      "summary": "Export the source notice for consumers packaging iperf3. The release keeps the source and CI matrix and declares the Bazel 7.2.1 minimum required for registry overlays.",
+      "evidence": [
+        {
+          "label": "Corrected 7.2.1 minimum; all reported checks passed",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11518/checks"
+        }
+      ]
     },
     {
       "id": "pr:16805",
@@ -44287,6 +44325,194 @@
           "at": "2026-11-02T16:25:23.256481+00:00"
         }
       ]
+    },
+    {
+      "id": "pr:16810",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16810,
+      "ref": "proposal/futex-waiter-mode",
+      "head": "3737ff32e7116dcdad1209cce125602ff3c33785",
+      "title": "Reject mixed PI and ordinary futex wakeups",
+      "url": "https://github.com/google/gvisor/pull/16810",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-02T16:31:46.423209+00:00",
+      "summary": "An ordinary futex wake could report a successful PI lock to a thread that did not own it. In reverse, a PI unlock could name a thread that only asked to wait. Linux rejects both operations with EINVAL.",
+      "evidence": [
+        {
+          "label": "Ordinary wake of a priority-inheritance waiter on Linux, stock and corrected gVisor",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41372637891/artifacts/13110426321"
+        },
+        {
+          "label": "Priority-inheritance operations on an ordinary waiter and same-key requeue",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41373406806/artifacts/13110665540"
+        },
+        {
+          "label": "67 Linux and 67 gVisor syscall cases, both analyzer reports",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41374054804/artifacts/13110454324"
+        },
+        {
+          "label": "13 named Go package tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41375123700/artifacts/13111200300"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "3737ff32e7116dcdad1209cce125602ff3c33785",
+          "outcome": "approved",
+          "at": "2026-11-02T16:31:46.423209+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:16811",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16811,
+      "ref": "proposal/pidfd-lock-contract",
+      "head": "1bf9f3f36d3ae3b763049ccb0e2b3e80d4061e5b",
+      "title": "Check PIDFD task-set lock requirements",
+      "url": "https://github.com/google/gvisor/pull/16811",
+      "group": "analysis",
+      "status": "open",
+      "updatedAt": "2026-11-02T16:31:46.423209+00:00",
+      "summary": "PID lookup and PIDFD notifications share the TaskSet lock. Annotate the three entry points and fold the allocation helper into the guarded lookup so bypassing the lock is caught during analysis. Runtime locking is unchanged.",
+      "evidence": [
+        {
+          "label": "Both architecture analyzers, six missing-lock diagnostics, and all six Linux and gVisor syscall cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41353086095/artifacts/13102067904"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "1bf9f3f36d3ae3b763049ccb0e2b3e80d4061e5b",
+          "outcome": "approved",
+          "at": "2026-11-02T16:31:46.423209+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:16812",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16812,
+      "ref": "review/inotify-instance-locks",
+      "head": "b79fa85f739884e7544fb47a248640073f22d8c2",
+      "title": "Check the instance lock when changing inotify watch indexes",
+      "url": "https://github.com/google/gvisor/pull/16812",
+      "group": "analysis",
+      "status": "open",
+      "updatedAt": "2026-11-02T16:31:46.423209+00:00",
+      "summary": "Adding or removing an inotify watch changes two indexes. Passing the instance lets checklocks identify its mutex. An unlocked removal failed the VFS owner on AMD64 and ARM64; three existing syscall controls passed. The change preserves the existing lock order and makes no Linux behavior change.",
+      "evidence": [
+        {
+          "label": "VFS analyzer: product passes",
+          "url": "https://app.buildbuddy.io/invocation/e7e8b98a-fcdd-4eb9-8a96-131a56b2b26b"
+        },
+        {
+          "label": "Unlocked Release: required instance mutex reported on AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41203211510/artifacts/13043293902"
+        },
+        {
+          "label": "gVisor: duplicate watch, mask-add and one-shot syscall cases",
+          "url": "https://app.buildbuddy.io/invocation/805676b8-a808-4bbb-9bde-e458da8a30c1"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "b79fa85f739884e7544fb47a248640073f22d8c2",
+          "outcome": "approved",
+          "at": "2026-11-02T16:31:46.423209+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:16813",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16813,
+      "ref": "review/host-testlogs",
+      "head": "096e5e98dda1e4a60eabff04f765eaaa5da16095",
+      "title": "Read Bazel test logs without starting the Docker builder",
+      "url": "https://github.com/google/gvisor/pull/16813",
+      "group": "release",
+      "status": "open",
+      "updatedAt": "2026-11-02T16:31:46.423209+00:00",
+      "summary": "Buildkite reads Bazel’s failed and flaky test logs after every job. Treat make testlogs as a host-only goal so reporting a result can proceed without a builder. The existing hook still reads the same event file and runs its separate Docker cleanup.",
+      "evidence": [
+        {
+          "label": "Native AMD64. Five cold Docker calls became zero. Eleven log uploads and annotations matched across failed and retried tests.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41205012552/artifacts/13043986903"
+        },
+        {
+          "label": "Native ARM64. Passing test uploaded nothing. Final failures and failed flaky attempts retained the same log bytes.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41205012552/artifacts/13044057953"
+        },
+        {
+          "label": "Buildkite’s existing post-command reads test-log paths from Make.",
+          "url": "https://github.com/google/gvisor/blob/aa767e4c4/.buildkite/hooks/post-command#L8-L56"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "096e5e98dda1e4a60eabff04f765eaaa5da16095",
+          "outcome": "approved",
+          "at": "2026-11-02T16:31:46.423209+00:00"
+        }
+      ]
+    },
+    {
+      "id": "branch:rules-distroless-installed-status",
+      "type": "branch",
+      "repo": "tamird/rules_distroless",
+      "ref": "fix/dpkg-transitive-status",
+      "head": "af1089c91c36bfc78719b2836c73d374a66ef092",
+      "url": "https://github.com/tamird/rules_distroless/commit/af1089c91",
+      "group": "bazel",
+      "title": "List installed dependency packages in dpkg status",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T16:31:46.423209+00:00",
+      "summary": "A Debian image installed 16 packages but listed only three in its dpkg status file. Select the controls for installed data archives, and let a template that repacks a dependency carry its control explicitly. The three fixtures matched 16, 1 and 15 installed packages on each architecture.",
+      "evidence": [
+        {
+          "label": "Upstream package status regression",
+          "url": "https://github.com/bazel-contrib/rules_distroless/issues/261"
+        },
+        {
+          "label": "Linux Bazel checks, including the default, custom and repacked sets on AMD64 and ARM64",
+          "url": "https://github.com/tamird/rules_distroless/actions/runs/41481142358/artifacts/13159617340"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "af1089c91c36bfc78719b2836c73d374a66ef092",
+        "baseHead": "15f9fc8d39ba3178c313e61d94feb3f6eb88f95f",
+        "url": "https://github.com/tamird/rules_distroless/commit/af1089c91",
+        "title": "Include installed dependencies in dpkg status",
+        "requestedAt": "2026-11-02T16:31:46.423209+00:00",
+        "summary": "A Debian image installed 16 packages but listed only three in its dpkg status file. Select the controls for installed data archives, and let a template that repacks a dependency carry its control explicitly. The three fixtures matched 16, 1 and 15 installed packages on each architecture.",
+        "body": "Package sets install dependency archives, but their status lists only\nexplicit roots. Match each dependency control archive to its declared\ndata output so custom templates can still omit dependencies.\n\nAllow templates that repack archives to expose the corresponding controls\nexplicitly, and deduplicate shared controls. Keep existing singleton\ncontrol targets and custom template variables compatible.\n\nFixes #261."
+      }
+    },
+    {
+      "id": "pr:14999",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 14999,
+      "ref": "feat/so-peergroups",
+      "head": "bdf1068d1ad7ecd626d71553e361402f966e223d",
+      "title": "Implement SO_PEERGROUPS for Unix sockets",
+      "url": "https://github.com/google/gvisor/pull/14999",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-02T16:36:54.632738+00:00",
+      "summary": "Anzal’s Unix socket change installs a credential snapshot as part of Connect. The listener and socketpair credential follow-up builds on this change."
     }
   ],
   "edges": [
@@ -47746,7 +47972,7 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:futex-waiter-mode",
+      "from": "pr:16810",
       "to": "branch:futex-requeue-count",
       "reason": "Both fixes change how requeueLocked returns its result. This follow-up counts moved waiters and preserves the parent’s error for mixing ordinary and PI waiters.",
       "evidence": [
@@ -47847,6 +48073,16 @@
       "reason": "The packaged image consumes the BCR license file without a downstream patch.",
       "evidence": [
         "https://github.com/bazelbuild/bazel-central-registry/pull/11518"
+      ]
+    },
+    {
+      "from": "pr:14999",
+      "to": "branch:unix-listen-peer-credentials",
+      "type": "depends_on",
+      "reason": "Connect installs its credential snapshot under the endpoint locks in #14999. The follow-up removes the separate setter and completes Listen and socketpair initialization.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/14999",
+        "https://github.com/tamird/gvisor/commit/5cc94fa57"
       ]
     }
   ],
