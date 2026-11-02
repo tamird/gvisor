@@ -907,6 +907,21 @@ func TestGraphDecodeMapAndLoadValueDirectStructWithHooks(t *testing.T) {
 	checkVal("child.toArr[0]", loaded.child.toArr[0], 107)
 }
 
+// The two array values are boxed indirectly. Decoding the child's array
+// must not overwrite the earlier value while its conversion is queued.
+func TestQueuedIndirectConversionStorage(t *testing.T) {
+	registerMapDirectHookTypes()
+	dep := 7
+	saved := mapDirectHookRoot{shared: 3, dep: &dep, child: &mapDirectHookNode{}}
+	saved.rootLV.toArr = [1]any{saved.dep}
+	saved.child.toArr = [1]any{&saved.shared}
+	var loaded mapDirectHookRoot
+	graphRoundTrip(t, &saved, &loaded)
+	if loaded.rootLV.toArr[0] != loaded.dep || loaded.child.toArr[0] != &loaded.shared {
+		t.Errorf("queued conversion aliases changed: root=%v child=%v", loaded.rootLV.toArr, loaded.child.toArr)
+	}
+}
+
 // mapSyncHookKey is registered via RegisterStruct (ti.hooks == true) while
 // StateLoad schedules no deferred callbacks.
 type mapSyncHookKey struct {
