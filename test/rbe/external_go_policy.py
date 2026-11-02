@@ -74,7 +74,7 @@ def details(log):
     for line in log.splitlines():
         if not re.search(r"error:|error in fail:|fatal:|failed:|not found|no such |cannot |could not |unable to ", line, re.I):
             continue
-        if re.search(r"key[=:]|api[-_]key|header|token|password|secret|credential|auth|bearer|cookie|[?&][a-z]+=|/bin/bash -c", line, re.I):
+        if re.search(r"key[=:]|api[-_]key|--(?:remote|bes)_header(?:=|\s)|token|password|secret|credential|auth|bearer|cookie|[?&][a-z]+=|/bin/bash -c", line, re.I):
             continue
         line = re.sub(r"(?:https?|grpcs?|bytestream)://[^ ]+", "<url>", line.strip())
         line = re.sub(r"/(?:home/runner|tmp|__w)/[^ :]*?/external/", "@@", line)
