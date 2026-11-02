@@ -25,10 +25,10 @@ jobs:
           path: supplier
           ref: b0b4b6c173c4312c14f3c5a427e9e3cb7271143c
           persist-credentials: false
-      - name: Retain the previously measured worker root
+      - name: Retain the original target selection and worker root
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api repos/tamird/gvisor/actions/artifacts/13133351604/zip > "$RUNNER_TEMP/original.zip"
+        run: gh api repos/tamird/gvisor/actions/artifacts/13135782307/zip > "$RUNNER_TEMP/original.zip"
       - name: Pin the original compiler, resolver, execution and evidence tools
         working-directory: product
         env:
@@ -61,7 +61,7 @@ jobs:
           assert context("ERROR: fatal error: missing_header.h: No such file or directory")[0]["text"].endswith("No such file or directory")
           assert context("ERROR: x-buildbuddy-api-key=sentinel")[0]["text"] == "[credential-bearing line omitted]"
           PYTHON
-      - name: Check ARM64 compatibility and build the GNU archive once
+      - name: Reuse the configured targets and build the GNU archive once
         working-directory: product
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -72,7 +72,9 @@ jobs:
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
-          python3 -B test/rbe/plugin_programs/action_log.py
+          if jq -e 'has("build_exit")' "$RUNNER_TEMP/plugin-evidence/result.json" >/dev/null; then
+            python3 -B test/rbe/plugin_programs/action_log.py
+          fi
           python3 -B test/rbe/plugin_programs/native_helper.py --outputs
       - name: Check the typed evidence boundary
         id: privacy

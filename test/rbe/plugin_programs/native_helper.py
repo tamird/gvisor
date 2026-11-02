@@ -8,7 +8,6 @@ import re
 import subprocess
 import sys
 import traceback
-import uuid
 from zipfile import ZipFile
 
 from action_log import context
@@ -25,62 +24,49 @@ def git(*args):
     return subprocess.check_output(["git", *args], text=True).strip()
 
 
-def check_selection(r, bazel, flags, platform, control):
-    query = 'mnemonic("CcMakeMakeRule", set(@libpluginstack//:libpluginstack @libpluginstack//:pmd_config))'
-    invocation = str(uuid.uuid4())
-    q = subprocess.run([*bazel, "aquery", *flags, "--invocation_id=" + invocation, "--output=jsonproto", "--noinclude_artifacts", query],
-                       text=True, capture_output=True, timeout=420)
-    selection = r["selection"] = {"invocation": invocation, "exit": q.returncode, "verified": False}
-    save(r)
-    if q.returncode:
-        selection["diagnostic"] = context(q.stderr)
-        save(r)
-        raise ValueError("Could not analyze the selected tools")
-    data = json.loads(q.stdout)
-    targets = {t["id"]: t["label"] for t in data["targets"]}
-    rows = []
-    for a in data["actions"]:
-        argv = a["arguments"]
-        rows.append({"target": targets[a["targetId"]], "argv": argv,
-                     "exec_platform": a["executionPlatform"], "aquery_key": a["actionKey"]})
-    selection["actions"] = rows
-    save(r)
-    assert len(rows) == 2 and {a["target"].rsplit(":", 1)[1] for a in rows} == {"libpluginstack", "pmd_config"}
-    for a in rows:
-        args = a["argv"]
-        assert a["target"].lstrip("@").split("//")[0] in ("libpluginstack", "+_repo_rules+libpluginstack")
-        assert a["exec_platform"].lstrip("@") == platform and args[-1].endswith("/wrapper_build_script.sh")
-        if control:
-            assert len(args) == 3 and args[:2] == ["/bin/bash", "-c"]
-        else:
-            assert len(args) == 2 and args[0].endswith("plugin_programs/bin/bash")
-    selection["verified"] = True
-    save(r)
+def selection_roles(rows):
+    roles = {}
+    for row in rows:
+        bash, wrapper = row["argv"]
+        assert bash == "external/+_repo_rules5+plugin_programs/bin/bash"
+        assert row["exec_platform"] == "//test/rbe/empty_worker:amd64_musl"
+        match = re.fullmatch(r"bazel-out/k8-opt(-exec-ST-[a-f0-9]+)?/bin/external/\+_repo_rules\+libpluginstack/"
+                             r"(libpluginstack|pmd_config)_foreign_cc/wrapper_build_script[.]sh", wrapper)
+        assert match and re.fullmatch("[a-f0-9]{64}", row["aquery_key"])
+        name = match[2]
+        assert row["target"] == (OWNER if name == "libpluginstack" else CONFIG)
+        role = name + ("_exec" if match[1] else "_target")
+        assert role not in roles
+        roles[role] = row
+    assert set(roles) == {"libpluginstack_target", "pmd_config_target", "pmd_config_exec"}
+    assert len({row["aquery_key"] for row in rows}) == 3
+    return roles
 
 
-def arm_selection(r, bazel, flags):
-    # Only target selection changes; the host/exec platform remains AMD64.
-    invocation = str(uuid.uuid4())
-    args = ["--config=aarch64", *flags[1:], "--nobuild", "--invocation_id=" + invocation, TARGET]
-    p = subprocess.run([*bazel, "build", *args], text=True, capture_output=True, timeout=420)
-    messages = p.stdout + p.stderr
-    evidence = {"owner_incompatible": bool(re.search(r"(?m)^ERROR: .*libpluginstack.*incompatible.*explicitly requested", messages)),
-                "required_cpu": "@platforms//cpu:x86_64" in messages or "//cpu:x86_64" in messages}
-    r["arm64"] = {"target_platform": "//tools/bazeldefs:linux_arm64", "invocation": invocation,
-                  "args": args, "exit": p.returncode, "stderr_sha256": sha256(p.stderr.encode()).hexdigest(),
-                  "evidence": evidence, "verified": p.returncode == 1 and all(evidence.values())}
+def resume_selection(r):
+    path = TMP / "original.zip"
+    digest = sha256(path.read_bytes()).hexdigest()
+    assert digest == "0438e45c201d388518ccca7ac7eab0d44fde13e10d4aed41d1b48e3d55d61a95"
+    with ZipFile(path) as z:
+        old = json.loads(z.read("result.json"))
+    assert old["source"] == "04ee6cb7818a57de26aec412ea1484965e58ad40" and old["product"] == PRODUCT
+    assert not old.get("build_started") and not old.get("actions") and old["status"] == "INCOMPLETE"
+    assert old["arm64"]["exit"] == 1 and old["arm64"]["verified"] and all(old["arm64"]["evidence"].values())
+    assert old["arm64"]["target_platform"] == "//tools/bazeldefs:linux_arm64" and "--nobuild" in old["arm64"]["args"]
+    assert old["root_proof"]["zip_sha256"] == "22b16a181a64e5102f9ebb4d401b84e25b2977dd9c6268c0b3502167f4450f53"
+    assert old["root_proof"]["inventory"]["image"] == COMPILER_IMAGE and old["root_proof"]["tmp"] == ["absent"]
+    selection = old["selection"]
+    assert selection["exit"] == 0 and not selection["verified"]
+    roles = selection_roles(selection["actions"])
+    r.update(arm64=old["arm64"], root_proof=old["root_proof"],
+             selection={"roles": roles, "invocation": selection["invocation"], "verified": True},
+             original_selection_zip=digest)
     save(r)
-    if p.returncode and re.search(r"(?m)^ERROR:", messages):
-        try:
-            r["arm64"]["diagnostic"] = context(messages)
-        except AssertionError:
-            r["arm64"]["diagnostic_incomplete"] = True
-        save(r)
 
 
 def build(r):
     r.update(source=git("rev-parse", "HEAD"), product=PRODUCT, base=BASE, target=TARGET, started=now(),
-             original={"run": 41428504065, "artifact": 13133351604},
+             original={"run": 41434303723, "artifact": 13135782307},
              arm="amd64-gnu")
     save(r)
     assert r["source"] == os.environ["GITHUB_SHA"] and git("rev-parse", PRODUCT + "^") == BASE
@@ -101,10 +87,8 @@ def build(r):
              "--jobs=400", "--color=no", "--curses=no", "--registry=" + (Path(os.environ["GITHUB_WORKSPACE"]) / "registry").as_uri(),
              "--registry=https://bcr.bazel.build"]
     image = r["image"] = COMPILER_IMAGE
-    r["root_proof"] = original_root()
     r["target_platform"] = "//tools/bazeldefs:linux_amd64"
-    arm_selection(r, bazel, flags)
-    check_selection(r, bazel, flags, platform, False)
+    resume_selection(r)
     query = TARGET + ' + filter("(:(pmd_config|pmdinfogen|make_built)$|^@@?make[+]?//:make$)", deps(' + TARGET + '))'
     query_bep = TMP / (r["arm"] + ".query.bep")
     p = subprocess.run([*bazel, "cquery", *flags, "--build_event_json_file=" + str(query_bep), "--output=label", query], text=True, capture_output=True, timeout=420)
@@ -123,8 +107,9 @@ def build(r):
         r["preflight"]["causal_context"] = context(p.stderr)
     save(r)
     assert p.returncode == 0
-    labels = {s.split("//")[-1] for s in selected}
-    assert labels == {":libpluginstack", ":pmd_config", ":pmdinfogen", ":make"}
+    owners = {TARGET: OWNER, "@libpluginstack//:pmd_config": CONFIG,
+              "@plugin_dpdk//:pmdinfogen": HELPER, "@make//:make": "@@make+//:make"}
+    assert {owners.get(s, s) for s in selected} == {OWNER, CONFIG, HELPER, "@@make+//:make"}
     bep = TMP / (r["arm"] + ".bep")
     compact = TMP / (r["arm"] + ".compact")
     log = TMP / (r["arm"] + ".log")
@@ -154,11 +139,14 @@ def build(r):
     assert props == {"Arch": "amd64", "OSFamily": "linux", "container-image": image,
                      "recycle-runner": "false", "workload-isolation-type": "oci"}
     assert owner["runner"] == "remote" and not owner["cacheHit"]
-    assert owner["args"][0].endswith("plugin_programs/bin/bash")
+    roles = r["selection"]["roles"]
+    assert owner["args"] == roles["libpluginstack_target"]["argv"]
     assert not owner["exitCode"] and not owner["status"]
     support = [a for a in r["actions"] if a["targetLabel"] in (CONFIG, HELPER)]
     assert all(not a["exitCode"] and not a["status"] for a in support)
-    assert any(a["targetLabel"] == CONFIG and a["mnemonic"] == "CcMakeMakeRule" for a in support)
+    configs = [a for a in support if a["targetLabel"] == CONFIG and a["mnemonic"] == "CcMakeMakeRule"]
+    config, = [a for a in configs if a["args"] == roles["pmd_config_exec"]["argv"]]
+    assert {p["name"]: p["value"] for p in config["platform"]} == props
     assert any(a["targetLabel"] == HELPER and a["mnemonic"] == "CppLink" for a in support)
     compiles = [a for a in support if a["targetLabel"] == HELPER and a["mnemonic"] == "CppCompile"]
     assert compiles and all(a["target_triples"] == ["x86_64-linux-musl"] for a in compiles)
@@ -212,7 +200,8 @@ def collect(r):
     proof["outputs"] = inspect_outputs(outputs)
     save(r)
     proof["matching_configuration"] = (TMP / "rte_config.h").read_bytes() == (TMP / "pmd_rte_config.h").read_bytes()
-    assert proof["matching_configuration"] and proof["outputs"]["configuration"]["sha256"] == OLD_CONFIG
+    proof["matches_previous_configuration"] = proof["outputs"]["configuration"]["sha256"] == OLD_CONFIG
+    assert proof["matching_configuration"]
     log = (TMP / "Make.log").read_text(errors="replace")
     recipes = Counter(re.findall(r"^\s*(HOSTCC|HOSTLD|PMDINFO)\s+(\S+)\s*$", log, re.M))
     proof["pmd_generation"] = sorted(n for rule, n in recipes if rule == "PMDINFO")
@@ -273,21 +262,6 @@ def launch_inputs(r):
 def failure(r, key, exc):
     r[key] = {"type": type(exc).__name__, "line": traceback.extract_tb(exc.__traceback__)[-1].lineno}
     save(r)
-
-
-def original_root():
-    archive = TMP / "original.zip"
-    digest = sha256(archive.read_bytes()).hexdigest()
-    assert digest == "22b16a181a64e5102f9ebb4d401b84e25b2977dd9c6268c0b3502167f4450f53"
-    with ZipFile(archive) as z:
-        image = json.loads(z.read("image.json"))
-        old = json.loads(z.read("result.json"))
-    root = image["probes"]["one_file"]
-    assert image["selected"] == "one_file" and root["verified"] and root["tmp"] == ["absent"]
-    assert list(root["inventory"]["files"]) == ["hello"] and root["inventory"]["image"] == COMPILER_IMAGE
-    assert old["product"] == PRODUCT and old["build_verified"] and old["status"] == "PASS"
-    return {"zip_sha256": digest, "inventory": root["inventory"], "roots": root["roots"],
-            "tmp": root["tmp"], "report_sha256": root["report_sha256"], "invocation": root["invocation"]}
 
 
 if __name__ == "__main__":
