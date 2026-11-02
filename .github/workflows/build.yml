@@ -1,35 +1,58 @@
-name: CI
-
-"on":
+name: Diagnose the Buildkite plugin compiler
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/buildkite-native-plugin-cc]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compile:
+    if: github.repository == 'tamird/gvisor' && github.run_attempt == '1'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 58
+    env:
+      SOURCE: b8af597dce91b33e5753b450774be07f1d3b92e3
+      REPORTER: fb60e127516defd6aab633f80be09a03022f0737
+      DOCKER_BUILD: "false"
+      DOCKER_HOST: unix:///nonexistent-buildkite-plugin-docker.sock
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Keep the harness outside the clean product tree
+        run: |
+          set -euo pipefail
+          [[ "$(git rev-parse HEAD^)" == "$SOURCE" ]]
+          mkdir -p "$RUNNER_TEMP/plugin-native"
+          printf '{"source":"%s","status":"INCOMPLETE","phase":"reporter setup"}\n' "$SOURCE" > "$RUNNER_TEMP/plugin-native/result.json"
+          cp test/rbe/buildkite_plugin.py "$RUNNER_TEMP/plugin-native/"
+          git fetch --no-tags --depth=1 origin "$REPORTER"
+          for f in qualification_report unit_matrix; do
+            git show "$REPORTER:test/rbe/$f.py" > "$RUNNER_TEMP/plugin-native/$f.py"
+          done
+          git checkout --detach "$SOURCE"
+          [[ "$(uname -m)" == x86_64 ]]
+      - name: Execute the production AMD64 invocation with the Buildkite Bazelisk setup
+        run: |
+          set -euo pipefail
+          # shellcheck disable=SC1090
+          source <(sed -n '/^install_lint_bazel() {$/,$p' .buildkite/hooks/pre-command)
+          [[ "$(command -v bazel)" == "$BUILDKITE_BAZEL_DIRECTORY/bazel" ]]
+          python3 "$RUNNER_TEMP/plugin-native/buildkite_plugin.py"
+      - name: Validate the only upload
+        id: sanitize
+        if: always()
+        run: |
+          python3 - <<'PYTHON'
+          import json, os, re
+          from pathlib import Path
+          raw = (Path(os.environ["RUNNER_TEMP"]) / "plugin-native/result.json").read_bytes()
+          assert json.loads(raw)["source"] == os.environ["SOURCE"]
+          assert not re.search(rb"(?i)x-buildbuddy-api-key|authorization\s*:|bearer\s+[a-z0-9_.-]{12,}|gh[pousr]_[a-zA-Z0-9]{12,}", raw)
+          PYTHON
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.sanitize.outcome == 'success'
+        with:
+          name: native-plugin-compiler
+          if-no-files-found: error
+          path: ${{ runner.temp }}/plugin-native/result.json
