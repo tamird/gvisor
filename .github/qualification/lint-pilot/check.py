@@ -11,7 +11,6 @@ from uuid import uuid4
 SOURCE = "46b096d63f5a90ef49976a6ccdeafe81a5324c57"
 TREE = "90d2cd10df212fc722155a9a56dec8d3c7485253"
 TEMP = Path(os.environ["RUNNER_TEMP"])
-BAZEL = [str(TEMP / "lint-bazel9/bazel"), "--bazelrc=" + os.environ["LINT_RC"]]
 TARGET = "//tools/lint:spelling"
 CASE = Path("test/util/new_spelling_package")
 CONFIG = Path("tools/.codespellrc")
@@ -46,10 +45,11 @@ def events(path):
 
 
 def invoke(phase, verb, target, *flags):
+    bazel = [str(TEMP / "lint-bazel9/bazel"), "--bazelrc=" + os.environ["LINT_RC"]]
     inv = str(uuid4())
     row = OUT["phases"][phase] = {"invocation": inv, "started": now(), "target": target, "verified": False}
     save()
-    cmd = [*BAZEL, verb, "--config=x86_64", "--invocation_id="+inv, *flags, target]
+    cmd = [*bazel, verb, "--config=x86_64", "--invocation_id="+inv, *flags, target]
     p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=420)
     row.update(exit=p.returncode, finished=now(), logSha256=sha256(p.stdout).hexdigest())
     log = p.stdout.decode(errors="replace")
