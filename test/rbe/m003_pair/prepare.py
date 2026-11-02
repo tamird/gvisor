@@ -41,27 +41,35 @@ def prepare(arm, output):
             start = source.index("\tif err != nil && seg.payloadSize() != 0 {\n\t\tif (s.FastRecovery.Active && seg.xmitCount")
             source = source[:start] + replacement + source[source.index("\n\t}", start) + 3:]
         product_hash = digest(source)
-        observation = f'{receiver}.m003Observe("{event}", 0)'
+        observation = f'{receiver}.m003Observe("{event}", nil, 0)'
         if name == "snd.go":
             observation = ('if rcvdSeg.hasNewSACKInfo && len(rcvdSeg.parsedOptions.SACKBlocks) > 0 {\n'
-                           + indent + '\ts.m003Observe("rack-ack-new-sack", uint32(rcvdSeg.parsedOptions.SACKBlocks[0].End))\n'
+                           + indent + '\ts.m003Observe("rack-ack-new-sack", rcvdSeg.parsedOptions.SACKBlocks, rcvdSeg.rcvdTime.Sub(tcpip.MonotonicTime{}).Nanoseconds())\n'
                            + indent + '} else {\n' + indent + '\t' + observation + '\n' + indent + '}')
         source = once(source, entry, observation + "\n" + indent + entry)
         if name == "snd.go":
             marker = "\ts.ep.stack.Stats().TCP.Timeouts.Increment()"
-            source = once(source, marker, '\ts.m003Observe("rto", 0)\n' + marker)
+            source = once(source, marker, '\ts.m003Observe("rto", nil, 0)\n' + marker)
             marker = "\t// On a send error, keep the conservative timer"
-            source = once(source, marker, '\tif err == nil && seg.payloadSize() != 0 && s.FastRecovery.Active && s.ep.SACKPermitted && seg.xmitCount > 1 && seg == s.writeList.Front() {\n\t\ts.m003Observe("head-repair", 0)\n\t}\n' + marker)
+            source = once(source, marker, '\tif err == nil && seg.payloadSize() != 0 && s.FastRecovery.Active && s.ep.SACKPermitted && seg.xmitCount > 1 && seg == s.writeList.Front() {\n\t\ts.m003Observe("head-repair", nil, 0)\n\t}\n' + marker)
             source += '''
-// M003RecoveryObservation records only the three recovery events used by the fork experiment.
-var M003RecoveryObservation func(kind string, head, sackRight uint32, lost bool, rto time.Duration)
+// M003RecoveryObservation passively records the sender decision and actual incoming SACKs.
+var M003RecoveryObservation func(kind string, head uint32, blocks []header.SACKBlock, stamp int64, lost bool, rto time.Duration)
+var M003RACKLoss func(head, start, end, latestEnd, count uint32, stamp int64, alreadyLost bool, headAge, holeAge, latestAge, rtt, reo, precision time.Duration)
 
-func (s *sender) m003Observe(kind string, sackRight uint32) {
+func (s *sender) m003Observe(kind string, blocks []header.SACKBlock, stamp int64) {
 	if M003RecoveryObservation != nil && s.writeList.Front() != nil {
-		M003RecoveryObservation(kind, uint32(s.SndUna), sackRight, s.writeList.Front().lost, s.RTO)
+		M003RecoveryObservation(kind, uint32(s.SndUna), blocks, stamp, s.writeList.Front().lost, s.RTO)
 	}
 }
 '''
+        else:
+            marker = "\t\t\t\tseg.lost = true"
+            observe = """                if M003RACKLoss != nil {
+                    M003RACKLoss(uint32(rc.snd.SndUna), uint32(seg.sequenceNumber), uint32(endSeq), uint32(rc.EndSequence), seg.xmitCount, rcvTime.Sub(tcpip.MonotonicTime{}).Nanoseconds(), seg.lost, rcvTime.Sub(rc.snd.writeList.Front().xmitTime), rcvTime.Sub(seg.xmitTime), rcvTime.Sub(rc.XmitTime), rc.RTT, rc.ReoWnd, clockResolution)
+                }
+"""
+            source = once(source, marker, observe + marker)
         path.write_text(source)
         manifest["files"][name] = {"policy": product_hash, "observed": digest(source)}
     Path(output).write_text(json.dumps(manifest, indent=2))

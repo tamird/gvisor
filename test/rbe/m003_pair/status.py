@@ -16,7 +16,7 @@ if bep.exists():
             key = event["id"].get("testResult", {})
             if key.get("label") == label:
                 r = event["testResult"]
-                results.append({"run": key.get("run", 1), "attempt": key.get("attempt", 1), "status": r["status"],
+                results.append({"run": key.get("run", 1), "attempt": key.get("attempt", 1), "status": r["status"], "strategy": r.get("executionInfo", {}).get("strategy"),
                                 "cached": r.get("cachedLocally", False) or r.get("executionInfo", {}).get("cachedRemotely", False)})
 errors = []
 log = root / (name + ".log")

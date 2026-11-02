@@ -25,11 +25,9 @@ py_test(
     srcs = ["run.py"],
     args = [
         "$(rootpath :stock)",
-        "$(rootpath :deadline)",
         "$(rootpath :ranges.json)",
     ],
     data = [
-        "deadline",
         "ranges.json",
         "stock",
     ],

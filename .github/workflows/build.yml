@@ -1,7 +1,7 @@
-name: Measure the oldest-repair timer on fixed M003 loss ranges
+name: Observe a post-timeout RACK decision on a real peer SACK
 on:
   push:
-    branches: [qualification/tcp-m003-deadline-pair]
+    branches: [qualification/tcp-m003-genuine-rack-hole]
 permissions:
   contents: read
 jobs:
@@ -14,18 +14,18 @@ jobs:
       BASE: b0d2148f41d2d35577b5fe759192f71947cc87fd
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 3, persist-credentials: false}
-    - name: Bind the reporter, GNU worker and both policy sources
+      with: {fetch-depth: 4, persist-credentials: false}
+    - name: Bind the original M003 reporter, held schedule and stock sender
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
         set -euo pipefail
-        [[ "$(git rev-parse HEAD~2)" == "$BASE" && "$(git rev-parse HEAD)" == "$GITHUB_SHA" ]]
+        [[ "$(git rev-parse HEAD~3)" == "$BASE" && "$(git rev-parse HEAD^)" == 614754a1f9ff660f6841678b9876c65865dd346c && "$(git rev-parse HEAD)" == "$GITHUB_SHA" ]]
         p=test/rbe/m003_pair
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu"
         echo '{"verified":false,"phase":"preparation"}' > "$RUNNER_TEMP/records/verdict.json"
         remote=https://github.com/tamird/gvisor.git
-        git fetch -q --depth=1 "$remote" 0ee70efe6d52576b8f173b40ad6b7ac117da3b72 9df20cfc54ca29cd875845a5e6e9fc9e6ac5c9f8 c7976270813d5218a847539dd94f749c7cb4dfd5
+        git fetch -q --depth=1 "$remote" 0ee70efe6d52576b8f173b40ad6b7ac117da3b72
         for f in MODULE.bazel BUILD.bazel; do git show "0ee70efe6:test/rbe/gnu_platform/$f" > "$RUNNER_TEMP/gnu/$f"; done
         curl --fail --silent --show-error --location --retry 2 https://github.com/user-attachments/files/34000273/gvisor-16393-reproducer-final.zip -o "$RUNNER_TEMP/m003.zip"
         echo "3c348dc00359607416c236e7a56fb7e0ea87da4efeec79a377a1020a8b622a24  $RUNNER_TEMP/m003.zip" | sha256sum -c
@@ -45,7 +45,7 @@ jobs:
         docker exec tcp-compiler uname -srvm > "$RUNNER_TEMP/records/kernel"
         echo "$GITHUB_SHA $BASE" > "$RUNNER_TEMP/records/source"
         chmod 755 "$RUNNER_TEMP/records"
-    - name: Verify the two timer policies on the same native Linux coordinator
+    - name: Run one stock held transfer with a fresh SACK for a later transmission
       run: |
         set -euo pipefail
         p=test/rbe/m003_pair
@@ -55,7 +55,7 @@ jobs:
         run_case() {
           local name="$1" code=0
           date -u --iso-8601=ns > "$d/$name.started"
-          bz test "${args[@]}" --strategy=TestRunner=local --nocache_test_results --test_env=GOMAXPROCS=2 --test_sharding_strategy=disabled --test_output=errors --test_timeout=235 --test_env=PYTHONDONTWRITEBYTECODE=1 --nozip_undeclared_test_outputs --build_event_json_file="$RUNNER_TEMP/$name.bep" "//$p:$name" > "$RUNNER_TEMP/$name.log" 2>&1 || code=$?
+          bz test "${args[@]}" --strategy=TestRunner=local --nocache_test_results --test_env=GOMAXPROCS=2 --test_sharding_strategy=disabled --test_output=errors --test_timeout=45 --test_env=PYTHONDONTWRITEBYTECODE=1 --nozip_undeclared_test_outputs --build_event_json_file="$RUNNER_TEMP/$name.bep" "//$p:$name" > "$RUNNER_TEMP/$name.log" 2>&1 || code=$?
           date -u --iso-8601=ns > "$d/$name.finished"
           echo "$code" > "$d/$name.exit"
           # Only the compiler container can resolve Bazel's output-base symlinks.
@@ -67,18 +67,20 @@ jobs:
           python3 "$p/status.py" "$name" "$RUNNER_TEMP" "$code"
           [[ $code == 0 ]]
         }
-        for arm in stock deadline; do
-          python3 "$p/prepare.py" "$arm" "$d/source-$arm.json"
-          code=0
-          bz build "${args[@]}" "//$p:reporter" > "$RUNNER_TEMP/build-$arm.log" 2>&1 || code=$?
-          echo "$code" > "$d/build-$arm.exit"
-          if [[ $code != 0 ]]; then python3 "$p/status.py" "build-$arm" "$RUNNER_TEMP" "$code"; exit "$code"; fi
-          docker exec tcp-compiler cp -L "bazel-bin/$p/reporter_/reporter" "$p/$arm"
-          docker exec tcp-compiler chmod 755 "$p/$arm"
-          sha256sum "$p/$arm" >> "$d/selected-binaries"
+        arm=stock
+        python3 "$p/prepare.py" "$arm" "$d/source-$arm.json"
+        for f in snd.go rack.go; do
+          actual=$(git show "$BASE:pkg/tcpip/transport/tcp/$f" | sha256sum | cut -d' ' -f1)
+          expected=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["files"][sys.argv[2]]["policy"])' "$d/source-stock.json" "$f")
+          [[ $actual == "$expected" ]]
         done
-        [[ "$(cut -d' ' -f1 "$d/selected-binaries" | sort -u | wc -l)" == 2 ]]
-        python3 -c 'import json,sys; a,b=[json.load(open(p)) for p in sys.argv[1:]]; assert a["base"] == b["base"]; assert a["files"]["rack.go"]==b["files"]["rack.go"] and a["files"]["snd.go"]["policy"]!=b["files"]["snd.go"]["policy"]' "$d/source-stock.json" "$d/source-deadline.json"
+        code=0
+        bz build "${args[@]}" "//$p:reporter" > "$RUNNER_TEMP/build-$arm.log" 2>&1 || code=$?
+        echo "$code" > "$d/build-$arm.exit"
+        if [[ $code != 0 ]]; then python3 "$p/status.py" "build-$arm" "$RUNNER_TEMP" "$code"; exit "$code"; fi
+        docker exec tcp-compiler cp -L "bazel-bin/$p/reporter_/reporter" "$p/$arm"
+        docker exec tcp-compiler chmod 755 "$p/$arm"
+        sha256sum "$p/$arm" > "$d/selected-binaries"
         run_case comparison
         python3 - "$d" <<'PYVERIFY'
         import json, sys, time
@@ -90,10 +92,10 @@ jobs:
         attempts = json.loads((folder/"comparison.status.json").read_text())["attempts"]
         cases = list(ElementTree.parse(folder/"comparison.xml").iter("testcase"))
         assert cases and all(not any(case.find(n) is not None for n in ("error","failure","skipped")) for case in cases)
-        assert len(attempts) == 1 and attempts[0]["status"] == "PASSED" and not attempts[0]["cached"]
+        assert len(attempts) == 1 and attempts[0]["status"] == "PASSED" and not attempts[0]["cached"] and attempts[0]["strategy"] == "local"
         selected = {Path(p).name: digest for digest,p in [line.split() for line in (folder/"selected-binaries").read_text().splitlines()]}
-        assert set(selected) == {"stock","deadline"}
-        assert verdict["verified"] and len(verdict["rows"]) == 34 and all(selected[r["arm"]] == r["binary"] for r in verdict["rows"])
+        assert set(selected) == {"stock"}
+        assert verdict["verified"] and len(verdict["rows"]) == 1 and all(selected[r["arm"]] == r["binary"] for r in verdict["rows"])
         verdict["test_finished_utc"] = (folder/"comparison.finished").read_text().strip()
         verdict["bundle_verified_unix"] = time.time()
         (folder/"verdict.json").write_text(json.dumps(verdict)+"\n")
@@ -120,4 +122,4 @@ jobs:
         PYBOUND
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always() && steps.allowlist.outcome == 'success'
-      with: {name: m003-oldest-repair-timer, path: "${{ runner.temp }}/records", if-no-files-found: error}
+      with: {name: m003-genuine-rack-hole, path: "${{ runner.temp }}/records", if-no-files-found: error}

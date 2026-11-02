@@ -1,4 +1,4 @@
-"""Run one real two-stack M003 transfer per cell on the same native host."""
+"""Follow one real peer SACK through the stock sender's loss decision."""
 import hashlib
 import json
 import os
@@ -8,7 +8,6 @@ import sys
 import time
 
 OUT = Path(os.environ["TEST_UNDECLARED_OUTPUTS_DIR"])
-SCHEDULES = ("timely", "held")
 BASE = "b0d2148f41d2d35577b5fe759192f71947cc87fd"
 
 
@@ -79,9 +78,8 @@ def observe(binary, schedule, label, ranges=None):
         row["sack_sequence"] = [{"ms": round(1000*(e["seconds"]-at), 3), "ranges":
                                 [[rel(a), rel(b)] for a,b in e["sack"]]} for e in new_sacks]
         row["first_repair"] = bool(repairs)
-        expected_ends = {r["Offset"] + r["Length"] for r in seen[6:]}
         fresh_entries = [s for s in signals if s["Kind"] == "rack-ack-new-sack" and
-                         rel(s["SACKRight"]) in expected_ends and not s["Lost"]]
+                         s.get("Blocks") and not s["Lost"]]
         # Bind the same fresh SACK decision and its actual subsequent head copy to
         # one RTO cycle. A later timeout cannot provide either side of this witness.
         episodes = []
@@ -107,47 +105,87 @@ def observe(binary, schedule, label, ranges=None):
         row.update({"finished": time.time(), "error": type(e).__name__, "valid": False})
         return row
 
+def discriminator(data, obs):
+    origin, anchor = obs["Origin"], obs["Anchor"]
+    head, hole, donor = (117504, 118704), (127104, 128304), (140672, 141872)
+    def rel(x):
+        return (x-origin) % (1 << 32)
+    def span(e):
+        start = rel(e["seq"])
+        return start, start+e["length"]
+    def blocks(e):
+        return [(rel(a), rel(b)) for a,b in (e or [])]
+    def first(stream):
+        return next(iter(stream), None)
+    signals = [s for s in obs["Signals"] or [] if rel(s["Head"]) == head[0]]
+    fwd = [p for p in data["events"] if p["direction"] == "service_to_client" and p["length"]]
+    rev = [p for p in data["events"] if p["direction"] == "client_to_service"]
+    a = {p["copy"]: p for p in fwd if span(p) == head}
+    repaired = first(s for s in signals if s["Kind"] == "head-repair")
+    rto = first(s for s in signals if s["Kind"] == "rto")
+    donor_ack = first(e for e in rev if any(l <= donor[0] and donor[1] <= r for l,r in blocks(e.get("sack"))))
+    entry = None
+    if donor_ack:
+        entry = first(s for s in signals if s["Kind"] == "rack-ack-new-sack"
+                      and 0 < s["At"]-donor_ack["seconds"] < .030 and blocks(s["Blocks"]) == blocks(donor_ack.get("sack")))
+    mark = None
+    if entry:
+        mark = first(s for s in signals if s["Kind"] == "rack-loss" and s["Stamp"] == entry["Stamp"]
+                     and s["At"] <= entry["At"] and (rel(s["Hole"]["Start"]), rel(s["Hole"]["End"])) == hole)
+    def one_original(range_, until):
+        sent = [p for p in fwd if span(p) == range_ and p["seconds"] < until]
+        return len(sent) == 1 and sent[0]["copy"] == 1 and not sent[0]["dropped"]
+    clean = False
+    if mark:
+        m = mark["Hole"]
+        clean = (m["Count"] == 1 and not m["AlreadyLost"] and rel(m["LatestEnd"]) == donor[1]
+                 and m["HeadAge"] < m["LatestAge"] < m["HoleAge"] and m["HoleAge"] > m["RTT"]+m["Reo"]+m["Precision"])
+    gates = {
+        "first_head_repair_observed": bool(repaired and 2 in a),
+        "oldest_repair_then_early_rto": bool(rto and repaired and 2 in a and 3 in a and repaired["At"] < rto["At"] < a[3]["seconds"]
+                                            and a[2]["seconds"] < rto["At"] and rto["At"]-repaired["At"] < repaired["RTO"]-.015),
+        "real_peer_sacked_only_after_rto": bool(rto and 3 in a and donor_ack and a[3]["seconds"] < donor_ack["seconds"]
+                                                and rel(donor_ack["ack"]) == head[0] and .280 <= donor_ack["seconds"]-anchor < .365
+                                                and one_original(hole, donor_ack["seconds"]) and one_original(donor, donor_ack["seconds"])),
+        "clean_head_at_rack_entry_for_that_sack": bool(entry and not entry["Lost"]),
+        "same_detector_marked_older_hole": bool(mark and clean),
+        "head_sent_once_more_by_this_entry": False,
+    }
+    if entry and 4 in a:
+        when = a[4]["seconds"]
+        later = [s for s in signals if entry["At"] <= s["At"] < entry["At"]+.012 and s["Kind"] == "head-repair"]
+        gates["head_sent_once_more_by_this_entry"] = bool(later and entry["At"] <= when < entry["At"]+.012
+            and not any(s["Kind"] == "rto" and rto and rto["At"] < s["At"] <= when for s in signals)
+            and not any(donor_ack and donor_ack["seconds"] < p["seconds"] <= when for p in rev)
+            and not any(rto and rto["At"] < p["seconds"] <= when and head[1] <= rel(p["ack"]) <= 524289 for p in rev))
+    stamp = lambda e,key: None if e is None else round(1000*(e[key]-anchor),3)
+    context = all(passed for name, passed in gates.items() if name != "head_sent_once_more_by_this_entry")
+    outcome = ("observed_extra_head" if all(gates.values()) else
+               "no_qualifying_extra_head_observed" if context else "intended_context_not_established")
+    return {"outcome": outcome, "activation": all(gates.values()), "gates": gates,
+            "missing": [name for name,passed in gates.items() if not passed],
+            "first_head_repair_ms": stamp(repaired,"At"), "timeout_ms": stamp(rto,"At"),
+            "donor_ack_ms": stamp(donor_ack,"seconds"), "donor_ack_blocks": blocks(donor_ack.get("sack")) if donor_ack else [],
+            "entry_ms": stamp(entry,"At"), "marked_ms": stamp(mark,"At"), "marked": mark["Hole"] if mark else None,
+            "head_copies_ms": [stamp(a[k],"seconds") for k in sorted(a)]}
 
 
 def main():
-    stock, deadline, frozen = map(Path, sys.argv[1:])
-    arms = (stock, deadline)
+    binary, frozen = map(Path, sys.argv[1:])
     ranges = json.loads(frozen.read_text())
-    assert len(ranges) == 8 and len({digest(binary) for binary in arms}) == 2
-    rows = []
-    for arm in arms:
-        rows.append(observe(arm, "control", "control-" + arm.name))
-    for pair in range(8):
-        schedules = SCHEDULES if pair % 2 == 0 else SCHEDULES[::-1]
-        for schedule in schedules:
-            # Balance arm order separately inside each delivery schedule.
-            order = arms if (pair + SCHEDULES.index(schedule)) % 2 == 0 else arms[::-1]
-            for arm in order:
-                row = observe(arm, schedule, f"r{pair}-{schedule}-{arm.name}", ranges)
-                row["pair"] = pair
-                rows.append(row)
-                write(OUT / "comparison.json", {"verified": False, "rows": rows})
-    invalid = [r["trial"] for r in rows if not r.get("valid") or r.get("exit") != 0
-               or (r.get("complete") and not r.get("integrity"))]
-    cells = {}
-    for schedule in SCHEDULES:
-        for arm in arms:
-            cell = [r for r in rows if r["schedule"] == schedule and r["arm"] == arm.name]
-            assert {r["pair"] for r in cell} == set(range(8))
-            complete = [r for r in cell if r.get("complete") and r.get("integrity")]
-            cells[f"{schedule}-{arm.name}"] = {
-                "completed": len(complete),
-                "first_repair_observed": sum(bool(r.get("first_repair")) for r in cell),
-                "early_timeout_observed": sum(bool(r.get("early_actual_timeout")) for r in cell),
-                "head_copies_after_first_repair": [r.get("extra_head_repairs") for r in cell],
-                "completed_seconds": [r["seconds"] for r in complete],
-            }
-    # A failed/incomplete transfer still has a row. Never attribute its speed to completion.
-    verdict = {"verified": len(rows) == 34 and not invalid, "invalid": invalid,
-               "cells": cells, "rows": rows, "verified_unix": time.time(),
-               "reference_run": 41372714631, "recovery_artifact": 13110565963}
-    write(OUT / "comparison.json", verdict)
-    assert verdict["verified"], invalid
+    assert binary.name == "stock" and len(ranges) == 8 and ranges[0] == {"Offset": 117504, "Length": 1200}
+    label = "held-genuine-hole"
+    row = observe(binary, "held", label, ranges)
+    out = OUT / (label+".json")
+    detail = {}
+    try:
+        detail = discriminator(json.loads(out.read_text()), json.loads(Path(str(out)+".events.json").read_text()))
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        detail = {"incomplete": type(error).__name__}
+    verified = bool("gates" in detail and row.get("valid") and row.get("complete") and row.get("integrity") and row.get("received_bytes") == 524288)
+    write(OUT / "comparison.json", {"verified": verified, "rows": [row], "observation": detail,
+                                    "baseline_series": BASE, "original": "614754a1f", "transfers": 1})
+    assert verified, row.get("error", "incomplete or invalid transfer")
 
 
 if __name__ == "__main__":

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"gvisor.dev/gvisor/pkg/buffer"
+	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/link/channel"
 	"gvisor.dev/gvisor/pkg/tcpip/network/ipv4"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
@@ -25,6 +26,15 @@ type Signal struct {
 	Head, SACKRight uint32
 	Lost            bool
 	RTO             float64
+	Stamp           int64
+	Blocks          [][2]uint32
+	Hole            *Hole
+}
+
+type Hole struct {
+	Start, End, LatestEnd, Count                     uint32
+	AlreadyLost                                      bool
+	HeadAge, HoleAge, LatestAge, RTT, Reo, Precision float64
 }
 
 var reference = flag.String("ranges", "", "stock screen's eight relative byte ranges")
@@ -48,10 +58,24 @@ func startExperiment(r *Recorder) error {
 			return err
 		}
 	}
-	tcp.M003RecoveryObservation = func(kind string, una, sackRight uint32, lost bool, rto time.Duration) {
+	tcp.M003RecoveryObservation = func(kind string, una uint32, blocks []header.SACKBlock, stamp int64, lost bool, rto time.Duration) {
 		x.Lock()
 		defer x.Unlock()
-		x.Signals = append(x.Signals, Signal{kind, time.Since(x.start).Seconds(), una, sackRight, lost, rto.Seconds()})
+		s := Signal{Kind: kind, At: time.Since(x.start).Seconds(), Head: una, Stamp: stamp, Lost: lost, RTO: rto.Seconds()}
+		for _, b := range blocks {
+			s.Blocks = append(s.Blocks, [2]uint32{uint32(b.Start), uint32(b.End)})
+		}
+		if len(s.Blocks) != 0 {
+			s.SACKRight = s.Blocks[0][1]
+		}
+		x.Signals = append(x.Signals, s)
+	}
+	tcp.M003RACKLoss = func(head, start, end, latestEnd, count uint32, stamp int64, alreadyLost bool, headAge, holeAge, latestAge, rtt, reo, precision time.Duration) {
+		x.Lock()
+		defer x.Unlock()
+		x.Signals = append(x.Signals, Signal{Kind: "rack-loss", At: time.Since(x.start).Seconds(), Head: head, Stamp: stamp,
+			Hole: &Hole{Start: start, End: end, LatestEnd: latestEnd, Count: count, AlreadyLost: alreadyLost,
+				HeadAge: headAge.Seconds(), HoleAge: holeAge.Seconds(), LatestAge: latestAge.Seconds(), RTT: rtt.Seconds(), Reo: reo.Seconds(), Precision: precision.Seconds()}})
 	}
 	return nil
 }
@@ -122,6 +146,10 @@ func impaired(due time.Time, scenario string, seq uint32, n, position, copyNo in
 		if scenario == "held" {
 			delay = 365 * time.Millisecond
 		}
+	}
+	// Only this original packet is released earlier than in the measured held schedule.
+	if scenario == "held" && r == (ByteRange{140672, 1200}) && copyNo == 1 {
+		delay = 280 * time.Millisecond
 	}
 	lower := x.anchor.Add(delay)
 	if due.Before(lower) {
