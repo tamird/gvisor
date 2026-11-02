@@ -572,7 +572,7 @@ func (pc *passContext) checkCall(call callCommon, lff *lockFunctionFacts, ls *lo
 		// Note that creating and then invoking closures locally is
 		// allowed, but analysis of passing closures is done when
 		// checking individual instructions.
-		pc.checkClosure(call, fn, lff, ls)
+		ls.returnFrom(pc.checkClosure(call, fn, lff, ls))
 	default:
 		return
 	}
@@ -643,6 +643,10 @@ func (pc *passContext) checkFunctionCall(call callCommon, fn *types.Func, lff *l
 	}
 
 	callPos := call.Pos()
+	if !callPos.IsValid() && call.Common().Value != nil && enableWrappers {
+		// The forwarding call in a bound-method wrapper has no source position.
+		callPos = pc.callbackPos
+	}
 	posKey := pc.positionKey(callPos)
 	_, forced := pc.forced[posKey]
 	callValue := call.Value()
@@ -731,7 +735,7 @@ func (pc *passContext) checkFunctionCall(call callCommon, fn *types.Func, lff *l
 
 // checkClosure forks the lock state, and creates a binding for the FreeVars of
 // the closure. This allows the analysis to resolve the closure.
-func (pc *passContext) checkClosure(call callCommon, fn *ssa.MakeClosure, lff *lockFunctionFacts, ls *lockState) {
+func (pc *passContext) checkClosure(call callCommon, fn *ssa.MakeClosure, lff *lockFunctionFacts, ls *lockState) *lockState {
 	clls := ls.fork()
 	clfn := fn.Fn.(*ssa.Function)
 	for i, fv := range clfn.FreeVars {
@@ -744,11 +748,18 @@ func (pc *passContext) checkClosure(call callCommon, fn *ssa.MakeClosure, lff *l
 	nlff := lockFunctionFacts{
 		Ignore: lff.Ignore, // Inherit ignore.
 	}
-	ls.returnFrom(pc.checkFunction(call, clfn, &nlff, clls, true /* force */))
+	return pc.checkFunction(call, clfn, &nlff, clls, true /* force */)
 }
 
-// directInvocation distinguishes calling a function from passing it to a call.
-// Only synchronous calls and defers inherit the lock state at execution.
+// localInvocation reports whether fn will be checked with its execution-time locks.
+func (pc *passContext) localInvocation(inst ssa.Instruction, fn ssa.Value) bool {
+	if call, ok := inst.(*ssa.Call); ok && pc.callback(call) == fn {
+		return true
+	}
+	return directInvocation(inst, fn)
+}
+
+// directInvocation distinguishes calling fn from passing it as an argument.
 func directInvocation(inst ssa.Instruction, fn ssa.Value) bool {
 	switch x := inst.(type) {
 	case *ssa.Call:
@@ -831,7 +842,7 @@ func (pc *passContext) checkInstruction(inst ssa.Instruction, lff *lockFunctionF
 		}
 		if fn, ok := (*v).(*ssa.Function); ok && fn.Object() == nil {
 			// Capturing functions are handled by MakeClosure below.
-			if _, closure := inst.(*ssa.MakeClosure); !closure && !directInvocation(inst, fn) {
+			if _, closure := inst.(*ssa.MakeClosure); !closure && !pc.localInvocation(inst, fn) {
 				pc.checkEscapedFunction(fn, lff)
 			}
 		}
@@ -869,6 +880,9 @@ func (pc *passContext) checkInstruction(inst ssa.Instruction, lff *lockFunctionF
 			pc.checkFieldAccess(x, x.X, x.Field, ls, isWrite(x))
 		}
 	case *ssa.Call:
+		if callback := pc.callback(x); callback != nil {
+			pc.checkCallback(x, callback, lff, ls)
+		}
 		pc.checkCall(x, lff, ls)
 	case *ssa.Defer:
 		ls.pushDefer(x)
@@ -883,7 +897,7 @@ func (pc *passContext) checkInstruction(inst ssa.Instruction, lff *lockFunctionF
 				nonCalls int
 			)
 			for _, ref := range *refs {
-				if directInvocation(ref, x) {
+				if pc.localInvocation(ref, x) {
 					calls++
 				} else {
 					nonCalls++

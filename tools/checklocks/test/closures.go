@@ -21,14 +21,10 @@ func testClosureInvalid(tc *oneGuardStruct) {
 	})
 }
 
-func testClosureUnsupported(tc *oneGuardStruct) {
-	// Locked outside the closure, so may or may not be valid. This cannot
-	// be handled and we should explicitly fail. This can't be handled
-	// because of the call through callClosure, below, which means the
-	// closure will actually be passed as a value somewhere.
+func testClosurePassedToHelper(tc *oneGuardStruct) {
 	tc.mu.Lock()
 	callClosure(func() {
-		tc.guardedField = 1 // +checklocksfail
+		tc.guardedField = 1
 	})
 	tc.mu.Unlock()
 }
