@@ -255,7 +255,8 @@ func (s *sender) probeTimerExpired() tcpip.Error {
 }
 
 // detectTLPRecovery checks whether a retransmitted tail probe repaired a loss.
-// See RFC 8985 section 7.4.2.
+// See RFC 8985 section 7.4.2 and Linux tcp_process_tlp_ack:
+// https://github.com/torvalds/linux/blob/7d0a66e4b/net/ipv4/tcp_input.c#L3892-L3920
 //
 // +checklocks:s.ep.mu
 func (s *sender) detectTLPRecovery(ack seqnum.Value, rcvdSeg *segment) {

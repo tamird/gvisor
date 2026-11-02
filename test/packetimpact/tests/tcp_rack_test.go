@@ -101,12 +101,13 @@ func sendAndReceive(t *testing.T, dut testbench.DUT, conn testbench.TCPIPv4, num
 // repaired a loss (RFC 8985 section 7.4.2).
 func TestRACKTailProbeACK(t *testing.T) {
 	for _, tc := range []struct {
-		name                                       string
-		sameSequence, repeatAfterByte, dsack, loss bool
+		name                                                  string
+		sameSequence, repeatAfterByte, dsack, futureACK, loss bool
 	}{
 		{name: "DuplicateACK", sameSequence: true},
 		{name: "MatchingDSACK", dsack: true, repeatAfterByte: true},
 		{name: "NoDuplicate", loss: true},
+		{name: "UnsentData", futureACK: true, loss: true},
 		{name: "UnrelatedDSACK", dsack: true, loss: true},
 		{name: "WindowUpdate", repeatAfterByte: true, loss: true},
 	} {
@@ -146,6 +147,19 @@ func TestRACKTailProbeACK(t *testing.T) {
 				t.Errorf("ACK at probe end cut ssthresh from %d to %d (cwnd %d to %d)", before.SndSsthresh, atEnd.SndSsthresh, before.SndCwnd, atEnd.SndCwnd)
 			}
 
+			ssthresh := atEnd.SndSsthresh
+			if tc.futureACK {
+				// No data has been sent beyond end. Follow the invalid ACK
+				// with an in-order byte so the snapshot follows its processing.
+				conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(end + 1))})
+				next := advance(end, nil)
+				t.Logf("ACK for unsent data: cwnd %d to %d, ssthresh %d to %d", atEnd.SndCwnd, next.SndCwnd, ssthresh, next.SndSsthresh)
+				if next.SndSsthresh != ssthresh {
+					t.Errorf("ACK for unsent data changed ssthresh from %d to %d", ssthresh, next.SndSsthresh)
+				}
+				ssthresh = next.SndSsthresh
+			}
+
 			var options []byte
 			if tc.dsack {
 				dsackEnd := end
@@ -174,8 +188,8 @@ func TestRACKTailProbeACK(t *testing.T) {
 			if got, want := after.CaState, uint8(linux.TCP_CA_Open); tc.loss && got != want {
 				t.Errorf("congestion state after probe repaired the loss = %d, want %d", got, want)
 			}
-			if got := after.SndSsthresh < before.SndSsthresh; got != tc.loss {
-				t.Errorf("ACK beyond probe: ssthresh changed from %d to %d, want reduction=%t", before.SndSsthresh, after.SndSsthresh, tc.loss)
+			if got := after.SndSsthresh < ssthresh; got != tc.loss {
+				t.Errorf("ACK beyond probe: ssthresh changed from %d to %d, want reduction=%t", ssthresh, after.SndSsthresh, tc.loss)
 			}
 		})
 	}
