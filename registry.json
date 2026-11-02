@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T15:23:48.025870+00:00",
+    "updatedAt": "2026-11-02T15:34:38.869315+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -43580,6 +43580,48 @@
         "requestedAt": "2026-11-02T09:58:17.763358+00:00",
         "summary": "Open the completion queue change as a standalone PR?",
         "body": "The graph decoder finishes resolving references before it starts running callbacks. Both stages need object IDs, so they can share a buffer. On a 50,000-file checkpoint the two scheduler queue append sites allocated 1,967,984 bytes in 25 allocations on master and zero with this change. The candidate passed the normal and race suites and the queue growth, callback ordering and cycle controls."
+      }
+    },
+    {
+      "id": "branch:timerfd-rights-restore",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/timerfd-rights-restore",
+      "head": "bdc2103681f20eb3b91ded1156b0ac74fb15e4c5",
+      "title": "Track live timerfds across checkpoint and restore",
+      "url": "https://github.com/tamird/gvisor/commit/bdc210368",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T15:33:34.862406+00:00",
+      "summary": "Rearming a restored timerfd panicked when its only reference at checkpoint was in a queued SCM_RIGHTS message. Track timers through the lifetime of their file descriptions so checkpoint and restore reach them after the sender closes its descriptor.",
+      "evidence": [
+        {
+          "label": "Stock restore panic after the descriptor-held control fired, with passing Linux and systrap controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41465909698/artifacts/13152066829"
+        },
+        {
+          "label": "Native and systrap timerfd suites and AMD64/ARM64 owning analyzers passed. Both checkpoint targets stopped at the protoc fetch.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41468613780/artifacts/13154833930"
+        },
+        {
+          "label": "Fresh periodic expiration after restore and passing live-save-mode case",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41471570284/artifacts/13155870792"
+        },
+        {
+          "label": "Tested source with the same tree as the proposal",
+          "url": "https://github.com/tamird/gvisor/commit/187ebca80"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "bdc2103681f20eb3b91ded1156b0ac74fb15e4c5",
+        "baseHead": "7a675ac66a1e2357abdaa6cccedabcd3cce9aa5c",
+        "url": "https://github.com/tamird/gvisor/commit/bdc210368",
+        "title": "Track live timerfds across checkpoint and restore",
+        "requestedAt": "2026-11-02T15:33:34.862406+00:00",
+        "summary": "Open the timerfd checkpoint fix as a standalone PR?",
+        "body": "The kernel currently finds timers to pause and resume by walking descriptor tables. A Unix socket can still hold a timerfd after the last installed descriptor closes. The change indexes live timerfds per kernel and rebuilds that index from restored file descriptions.\n\nAfter an actual save and restore, the guest received the queued timerfd, drained it, observed a new expiration and read back its original 100 ms period. The same case passed with live-save mode enabled. Its retained logs did not independently confirm that a live save completed."
       }
     },
     {
