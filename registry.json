@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T19:06:42.570092+00:00",
+    "updatedAt": "2026-11-02T19:11:55.361201+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42906,9 +42906,21 @@
       "url": "https://github.com/google/gvisor/pull/15867",
       "group": "runtime",
       "status": "draft",
-      "summary": "On both architectures the proposed allowlist accepts a comparator that reads after its iterator unlocks, and rejects a helper that safely forwards a callback. Inferring a fact from the helper body distinguishes both cases.",
-      "updatedAt": "2026-11-02T19:06:42.570092+00:00",
+      "summary": "The current PR accepts a read after an iterator unlocks, and rejects safe callback forwarding in another package. A prototype using Nogo facts handles both and the original slices.ContainsFunc case on AMD64 and ARM64.",
+      "updatedAt": "2026-11-02T19:11:55.361201+00:00",
       "evidence": [
+        {
+          "label": "Nogo passed the inferred callback cases on both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41507063340/artifacts/13171775780"
+        },
+        {
+          "label": "Unprotected read in the comparator",
+          "url": "https://github.com/tamird/gvisor/blob/0038cb10c/tools/checklocks/test/callbacks.go#L97-L109"
+        },
+        {
+          "label": "Fork-only inference experiment",
+          "url": "https://github.com/tamird/gvisor/commit/75000d12b"
+        },
         {
           "label": "Original and experimental checklocks results on both architectures",
           "url": "https://github.com/tamird/gvisor/actions/runs/41504589303/artifacts/13171655273"
@@ -42951,12 +42963,22 @@
       "followup": {
         "owner": "tcp_split_owner",
         "sourceHead": "0bf36f79214fa3be21b86435714026a0ed1b1c42",
-        "observedAt": "2026-11-02T19:06:42.570092+00:00",
-        "disposition": "Contributor raised a design question upstream",
-        "nextAction": "Verify the corrected expectation in the existing direct-call fixture. Retain the original failed analyzer run.",
+        "observedAt": "2026-11-02T19:11:55.361201+00:00",
+        "disposition": "Design experiment verified on both architectures",
+        "nextAction": "Offer the author the reproduced false negative and the inference experiment after approval to post.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15867#issuecomment-6585322042"
         ]
+      },
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "0bf36f79214fa3be21b86435714026a0ed1b1c42",
+        "url": "https://github.com/dannyward630/gvisor/blob/0bf36f792/tools/checklocks/analysis.go#L778-L785",
+        "title": "Report the missed lock diagnostic in SortedFunc",
+        "summary": "Post the tested counterexample and prototype inline on the current PR?",
+        "body": "`SortedFunc` runs the supplied iterator before it calls the comparator. In [this example](https://github.com/tamird/gvisor/blob/0038cb10c/tools/checklocks/test/callbacks.go#L97-L109), the iterator unlocks `globalMu` and the comparator reads a field guarded by it. Checklocks accepts that read on this head. [AMD64 and ARM64 results](https://github.com/tamird/gvisor/actions/runs/41504589303/artifacts/13171655273)\n\nI tried [inferring this from the helper body](https://github.com/tamird/gvisor/commit/75000d12b). A helper can call its predicate directly, or forward it to another helper with the same guarantee. If it can run unknown code first, the predicate doesn't inherit the caller's locks. That covers the original `slices.ContainsFunc` example and a helper in another package, and diagnoses the unprotected read here. [Analyzer results](https://github.com/tamird/gvisor/actions/runs/41507063340/artifacts/13171775780)\n\nPosted by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-02T19:11:55.361201+00:00"
       }
     },
     {
