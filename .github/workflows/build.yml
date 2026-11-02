@@ -1,35 +1,92 @@
-name: CI
-
-"on":
+name: Qualify the VFIO-preserving musl proposal
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/plugin-musl-vfio-proposal]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  qualify:
+    if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      PRODUCT: 92c5bed67c8cac88959b0a4cb64e0b52f92b2ec9
+      REPORTER: fb60e127516defd6aab633f80be09a03022f0737
+      READER: 029a8365b981b8aee96e6dad1ecf22328ca6c6de
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: carrier, persist-credentials: false, fetch-depth: 1}
+      - name: Preserve the existing profile and report resolver
+        working-directory: carrier
+        run: |
+          set -eu
+          mkdir -p "$RUNNER_TEMP/vfio-proposal-evidence"
+          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/vfio-proposal-evidence/result.json"
+          git fetch -q --no-tags --depth=1 origin "$REPORTER" "$READER"
+          for module in qualification_report unit_matrix; do
+            git show "$REPORTER:test/rbe/$module.py" > "$RUNNER_TEMP/$module.py"
+          done
+          git show "$READER:test/rbe/image_execution.py" > "$RUNNER_TEMP/image_execution.py"
+          cp test/rbe/plugin_vfio_proposal.py "$RUNNER_TEMP/"
+          cp -R test/rbe/gnu_platform "$RUNNER_TEMP/gnu-platform"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          path: product
+          ref: 92c5bed67c8cac88959b0a4cb64e0b52f92b2ec9
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Prepare the existing GNU remote route
+        working-directory: product
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          test "$(git rev-parse HEAD)" = "$PRODUCT"
+          test -n "$BUILDBUDDY_API_KEY"
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$RUNNER_TEMP/gnu.bazelrc"
+          unset BUILDBUDDY_API_KEY
+          timeout 180 docker pull --platform=linux/amd64 "$GNU"
+          docker run -d --name gnu-profile --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$PWD" "$GNU" -c 'sleep infinity'
+      - name: Run ordinary GNU and explicit musl owners
+        working-directory: product
+        run: |
+          docker exec -e RUNNER_TEMP -e GNU -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$PWD" gnu-profile python3 "$RUNNER_TEMP/plugin_vfio_proposal.py"
+      - name: Check the explicit artifact boundary
+        id: privacy
+        if: always()
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PYCODE'
+          import os
+          from pathlib import Path
+          key = os.environ["BUILDBUDDY_API_KEY"].encode()
+          assert key
+          folder = Path(os.environ["RUNNER_TEMP"]) / "vfio-proposal-evidence"
+          assert {p.name for p in folder.iterdir()} == {"result.json"}
+          path = folder / "result.json"
+          assert path.is_file() and not path.is_symlink()
+          content = path.read_bytes()
+          assert key not in content and b"x-buildbuddy-api-key" not in content.lower()
+          PYCODE
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.privacy.outcome == 'success'
+        with:
+          name: vfio-proposal
+          path: ${{ runner.temp }}/vfio-proposal-evidence/result.json
+          if-no-files-found: error
+      - name: Require the final qualification result
+        if: always()
+        run: |
+          python3 - <<'PYCODE'
+          import json, os
+          from pathlib import Path
+          result = json.loads((Path(os.environ['RUNNER_TEMP']) / 'vfio-proposal-evidence/result.json').read_text())
+          assert result['status'] == 'PASS', result['status']
+          PYCODE
