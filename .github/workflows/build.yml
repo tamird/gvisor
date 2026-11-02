@@ -1,41 +1,44 @@
 name: Observe reverse TCP writes with SACK toggled
 on:
   push:
-    branches: [qualification/tcp-mss-forwarder]
+    branches: [qualification/tcp-mss-forwarder-paths]
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-mss-forwarder'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-mss-forwarder-paths'
     runs-on: ubuntu-24.04
     timeout-minutes: 55
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 3, persist-credentials: false}
-    - name: Prepare the existing GNU profile and native TCP tools
-      env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      with: {fetch-depth: 4, persist-credentials: false}
+    - name: Prepare the existing native Linux TCP tools
       run: |
         set -euo pipefail
-        profile=0ee70efe6d52576b8f173b40ad6b7ac117da3b72
-        git fetch origin "$profile"
-        mkdir -p "$RUNNER_TEMP/mss-forwarder/platform"
-        for f in BUILD.bazel MODULE.bazel; do git show "$profile:test/rbe/gnu_platform/$f" > "$RUNNER_TEMP/mss-forwarder/platform/$f"; done
-        umask 077
-        {
-          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/mss-forwarder/platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
-          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-        } > "$RUNNER_TEMP/mss-forwarder/remote.bazelrc"
-        unset BUILDBUDDY_API_KEY
         sudo -n apt-get update -qq
         sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tshark tcpdump iproute2 iperf3 ethtool bc kmod iputils-ping
         sudo -n modprobe sch_netem
     - name: Build the one stock forwarder with the observation fixture
       id: build
       run: python3 test/rbe/tcp_mss_forwarder.py build
+    - name: Verify the two built executable bytes for retention
+      id: helpers
+      if: ${{ always() && steps.build.outcome == 'success' }}
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        GH_TOKEN: ${{ github.token }}
+      run: python3 test/rbe/tcp_mss_forwarder.py scan_helpers
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: ${{ always() && steps.helpers.outcome == 'success' }}
+      with:
+        name: tcp-mss-forwarder-helpers
+        path: |
+          ${{ runner.temp }}/mss-forwarder/private/helpers/tcp_proxy
+          ${{ runner.temp }}/mss-forwarder/private/helpers/nsjoin
+          ${{ runner.temp }}/mss-forwarder/public/build.json
+        if-no-files-found: error
     - name: Short independent captures and the fixed alternating transfer schedule
-      if: ${{ steps.build.outcome == 'success' }}
+      if: ${{ always() && steps.build.outcome == 'success' }}
       run: python3 test/rbe/tcp_mss_forwarder.py run
     - name: Validate the typed publication
       id: privacy

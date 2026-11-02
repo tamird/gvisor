@@ -35,8 +35,10 @@ def put(path, value):
 
 
 def source():
-    require(command(["git", "rev-parse", "HEAD^"]) == FIXTURE, "fixture source")
-    require(command(["git", "rev-parse", "HEAD^^"]) == BASE, "stock source")
+    require(command(["git", "rev-parse", "HEAD^"]) == "a25479282117f3dfecd541b45b2bd545c6088d93", "original carrier")
+    require(command(["git", "rev-parse", "HEAD^^"]) == FIXTURE, "fixture source")
+    require(command(["git", "rev-parse", "HEAD^^^"]) == BASE, "stock source")
+    require(not command(["git", "diff", FIXTURE, "--", "test/benchmarks/tcp"]), "fixture changed")
     require(not command(["git", "diff", BASE, "--", "pkg", "runsc", "tools", "MODULE.bazel", ".bazelrc"]), "production changed")
     require(not command(["git", "status", "--porcelain", "--untracked-files=no"]), "tracked tree dirty")
     return command(["git", "rev-parse", "HEAD"])
@@ -46,12 +48,49 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def diagnostic(text):
+    """Retain the first compiler/analysis error and bounded causal context."""
+    lines = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", text).splitlines()
+    first = next((i for i, line in enumerate(lines) if re.search(r"ERROR:|error:|compilepkg:", line)), None)
+    result = []
+    for line in lines[first:first + 36] if first is not None else []:
+        if re.search(r"authorization|x-buildbuddy|(?:remote|bes)_header|credential|password|token\s*[:=]|https?://", line, re.I):
+            continue
+        key = os.environ.get("BUILDBUDDY_API_KEY", "")
+        if key and key in line:
+            continue
+        result.append(line[:1000])
+    return {"sha256": hashlib.sha256(text.encode()).hexdigest(), "first_error_context": result}
+
+
 def build():
     PRIVATE.mkdir(parents=True, exist_ok=True)
     PUBLIC.mkdir(exist_ok=True)
     row = {"source": source(), "production": BASE, "fixture": FIXTURE, "verdict": "INCOMPLETE"}
-    bazel = ["bazel", f"--bazelrc={ROOT / 'remote.bazelrc'}"]
-    flags = ["--compilation_mode=opt", "--jobs=16", "--remote_download_outputs=all"]
+    # Reuse the native hosted-Linux build from the earlier WAN driver. The
+    # original remote worker's GCC headers differed from the client toolchain.
+    bazel = ["bazel"]
+    flags = ["--compilation_mode=opt", "--jobs=5"]
+    row.update(execution="native Linux coordinator", original_run=41430977952,
+               original_recovery=41432032243, original_build_exit=1)
+    row.update(prior_native_run=41433088932, prior_native_build_exit=0,
+               selection={}, binaries={})
+    paths = {}
+    # Reuse the earlier WAN driver's per-owner output query before compiling.
+    for name in ("tcp_proxy", "nsjoin"):
+        label = "//test/benchmarks/tcp:" + name
+        p = subprocess.run(bazel + ["cquery", *flags, label, "--output=files"],
+                           text=True, capture_output=True, timeout=300)
+        selected = p.stdout.strip().splitlines()
+        row["selection"][name] = {"label": label, "exit": p.returncode,
+                                  "diagnostics": diagnostic(p.stderr)}
+        if p.returncode == 0:
+            row["selection"][name]["paths"] = selected
+        put(PUBLIC / "build.json", row)
+        require(p.returncode == 0, "output selection failed")
+        require(len(selected) == 1 and Path(selected[0]).name == name,
+                "unique expected executable output")
+        paths[name] = selected[0]
     row["invocation"] = str(uuid.uuid4())
     bep = PRIVATE / "build.bep.json"
     flags += [f"--invocation_id={row['invocation']}", f"--build_event_json_file={bep}"]
@@ -59,29 +98,26 @@ def build():
     with (PRIVATE / "build.log").open("w") as log:
         p = subprocess.run(bazel + ["run", *flags, f"--script_path={PRIVATE / 'start'}", "//test/benchmarks/tcp:tcp_benchmark"], stdout=log, stderr=subprocess.STDOUT, timeout=1800)
     row.update(exit=p.returncode, command_start_unix=start, command_finish_unix=time.time())
+    if p.returncode:
+        row.update(verdict="FAIL", diagnostics=diagnostic((PRIVATE / "build.log").read_text()))
     put(PUBLIC / "build.json", row)
     require(p.returncode == 0, "build failed; original log retained on runner")
     events = [json.loads(line) for line in bep.read_text().splitlines()]
     completions = [e["completed"] for e in events if e.get("id", {}).get("targetCompleted", {}).get("label") == "//test/benchmarks/tcp:tcp_benchmark"]
     require(len(completions) == 1 and completions[0]["success"], "target completion")
     row["target_completed"] = True
-    # The selection query is a separate invocation, not the original build.
-    flags = flags[:3]
-    expr = 'str(target.label) + "\\t" + target[DefaultInfo].files_to_run.executable.path'
-    paths = command(bazel + ["cquery", *flags, "set(//test/benchmarks/tcp:tcp_proxy //test/benchmarks/tcp:nsjoin)", "--output=starlark", "--starlark:expr=" + expr])
-    binaries = {}
+    binaries = row["binaries"]
     helpers = PRIVATE / "helpers"
     helpers.mkdir(exist_ok=True)
-    for line in paths.splitlines():
-        label, path = line.split("\t")
-        name = label.rsplit(":", 1)[1]
-        require(name in {"tcp_proxy", "nsjoin"} and name not in binaries, "unexpected executable")
+    for name, path in paths.items():
         p = Path(path)
+        require(p.is_file() and os.access(p, os.X_OK), "built executable missing")
         elf = command(["readelf", "-h", str(p)])
         require("Advanced Micro Devices X86-64" in elf, "non-native executable")
         (helpers / name).write_bytes(p.read_bytes())
         (helpers / name).chmod(0o755)
         binaries[name] = {"path": path, "sha256": digest(p), "bytes": p.stat().st_size}
+        put(PUBLIC / "build.json", row)
     require(set(binaries) == {"tcp_proxy", "nsjoin"}, "missing executable")
     row.update(verdict="PASS", binaries=binaries, observed_at_unix=time.time())
     put(PUBLIC / "build.json", row)
@@ -200,6 +236,19 @@ def run():
             trial["verdict"] = "PASS"
         except Exception as exc:
             trial["error"] = type(exc).__name__ + ": " + str(exc)[:160]
+            # Preserve completed measurements even if a later observation gate
+            # rejects them. This does not turn an incomplete trial into PASS.
+            trial["retained"] = {}
+            for filename in ("iperf.json", "server-writes.json"):
+                path = directory / filename
+                if path.is_file() and path.stat().st_size <= 100_000:
+                    try:
+                        value = json.loads(path.read_text())
+                        if filename == "iperf.json":
+                            value = {key: value.get(key) for key in ("start", "end", "error")}
+                        trial["retained"][filename] = value
+                    except ValueError:
+                        trial["retained"][filename] = {"sha256": digest(path), "parse": "invalid JSON"}
         put(PUBLIC / "result.json", row)
     require(source() == row["source"], "source changed during run")
     require(len(row["trials"]) == 13, "incomplete schedule")
@@ -225,5 +274,22 @@ def scan():
         require(not re.search(rb"(?i)authorization|x-buildbuddy-api-key|gh[pousr]_[A-Za-z0-9]{20}", content), "credential marker")
 
 
+def scan_helpers():
+    scan()
+    row = json.loads((PUBLIC / "build.json").read_text())
+    require(row["verdict"] == "PASS", "unverified build outputs")
+    files = list((PRIVATE / "helpers").iterdir())
+    require({p.name for p in files} == set(row["binaries"]) == {"tcp_proxy", "nsjoin"}, "helper names")
+    for p in files:
+        require(p.is_file() and not p.is_symlink(), "helper file type")
+        record = row["binaries"][p.name]
+        require(p.stat().st_size == record["bytes"] <= 64 << 20 and digest(p) == record["sha256"], "helper bytes")
+        data = p.read_bytes()
+        require(data[:6] == b"\x7fELF\x02\x01" and data[18:20] == b"\x3e\x00", "AMD64 ELF")
+        for name in ("BUILDBUDDY_API_KEY", "GH_TOKEN", "GITHUB_TOKEN"):
+            key = os.environ.get(name, "")
+            require(not key or key.encode() not in data, "credential in executable")
+
+
 if __name__ == "__main__":
-    {"build": build, "run": run, "scan": scan}[sys.argv[1]]()
+    {"build": build, "run": run, "scan": scan, "scan_helpers": scan_helpers}[sys.argv[1]]()
