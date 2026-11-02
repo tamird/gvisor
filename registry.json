@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T11:33:45.806437+00:00",
+    "updatedAt": "2026-11-02T14:38:06.439854+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1820,10 +1820,10 @@
       "url": "https://github.com/google/gvisor/pull/15153",
       "group": "bazel",
       "status": "open",
-      "summary": "The source conflict is repaired at e22d4ffb69. Complete path, mode and added/removed lines match the previously approved or reviewed patch; range-diff changes only adjacent upstream LTP context. Existing source review requirements remain; this equivalent rebase does not request another approval. The GNU amendment remains delivered; the independent musl follow-up keeps its own evidence and scope.\n\nEarlier source-specific record:\n\nThe contributor-approved GNU replacement is published on #15153 at 85c742f25. This revision preserves the approved implementation and applies buildifier attribute ordering. Both ordinary GNU static consumers passed on 7d549676b, and the 203-record license audit remains bound to identical license inputs. No GNU runtime traffic is claimed. The contributor decision is complete; current public checks and the two existing maintainer requests are reported by the provider snapshot. The separate musl candidate ccae8886e has target-specific GNU and musl evidence but remains agent work pending full compiler-consumer proof.\n\nPreserved earlier amendment record:\n\nThe public PR remains open at a3818d179. The GNU-only replacement 7d549676b is now ready for a single contributor decision: both static consumers passed the ordinary GNU build on the exact candidate, and the separately linked 203-record audit passed on identical license inputs. The candidate remains unpublished upstream. Its musl follow-up is separate, with tests still in progress and no final result claim.\n\nPreserved earlier source-specific record:\n\nPR and fork heads now agree at 154d10c44a78 on public base 7fef679b2b. GitHub reports MERGEABLE. Root independently verified that the published tree exactly matches the clean merge of the prior fork revision; the difference from 596535 is context around already-landed libbpf. The provider synchronization and conflict repair are complete. Observe fresh current-head CI through the existing watcher. No stale approval was present, so no reviewer reminder is needed.\n\nPreserved earlier record:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at 596535e6b16e, while GitHub's PR and upstream pull ref still identify 007e776dd0bd and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Root owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 007e776dd0bd on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at 6779464a0fa6 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe mechanical rebase is published at 1160d751fd on upstream 383c1da19b. The plugin source and tests are unchanged; the license-list resolution preserves both plugin and upstream QEMU exceptions. GitHub reports the head mergeable. The three previously authorized replies remain delivered in their open threads, awaiting reviewer responses; no earlier human approval exists to renew.\n\nEarlier source-specific record:\n\nRoot refreshed this change onto current master. The exact published head is c80d6b6ab; current CI and mergeability are reported in the snapshot. The temporary conflict delimiter in the first rebase was corrected in the final source. The three current Gemini findings were inspected against the actual caller and dependency contracts. No actionable current source defect was established: the log helper has one serial test-only caller, the pinned frame callback respects the existing bound, and the toolchain guard agrees with downstream compiler selection. The contributor approved replies explaining the inspected caller and dependency contracts. All three replies were submitted on October 16; the threads remain open for reviewer responses and the source head is unchanged.",
+      "summary": "The GNU-only change builds both static binaries. On a host with /dev/vhost-net, the published plugin initialized but its Sentry exited before the guest opened either socket. Native Linux exchanged both TCP and UDP payloads on the same Docker bridge. Earlier diagnostics traced the startup failure to a glibc allocator call blocked by seccomp and reproduced it on the unchanged parent. The separate musl binaries passed the bridge test.",
       "number": 15153,
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-31T16:37:26.194794+00:00",
+      "updatedAt": "2026-11-02T11:39:07.762322+00:00",
       "followup": {
         "disposition": "Equivalent conflict repair published; existing review requirements retained",
         "owner": "root",
@@ -1852,6 +1852,14 @@
         }
       },
       "evidence": [
+        {
+          "label": "Published GNU binaries and the native TCP/UDP bridge control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41438132408/artifacts/13138100725"
+        },
+        {
+          "label": "Static musl plugin TCP and UDP exchange",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41436977329/artifacts/13136054697"
+        },
         {
           "label": "GNU plugin: same binaries and socket case passed on retry",
           "url": "https://github.com/tamird/gvisor/actions/runs/41216582843/artifacts/13048790798"
@@ -1919,6 +1927,10 @@
         {
           "label": "Unmodified parent built both binaries and hit the same seccomp startup failure",
           "url": "https://github.com/tamird/gvisor/actions/runs/41217449718/artifacts/13049805793"
+        },
+        {
+          "label": "Prior proposal and rebase history",
+          "url": "https://github.com/tamird/gvisor/blob/a05683ce8/registry.json#L1815"
         }
       ]
     },
@@ -27560,8 +27572,8 @@
       "url": "https://github.com/tamird/gvisor/commit/603b12317",
       "group": "bazel",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T04:19:10+00:00",
-      "summary": "On native AMD64 the musl plugin linked with all three VFIO functions and passed TestDumpStack on the revised kernel headers. The public revision adds the purpose and source of the TLDK patch. GNU coverage used the same compatibility changes. PCI packet traffic still needs a vhost device.",
+      "updatedAt": "2026-11-02T11:40:05.929558+00:00",
+      "summary": "On native AMD64 the musl plugin linked with all three VFIO functions and passed TestDumpStack on the revised kernel headers. The public revision adds the purpose and source of the TLDK patch. GNU coverage used the same compatibility changes. A separate AMD64 integration binary exchanged TCP and UDP over the virtio-user backend, which uses /dev/vhost-net. The check at this exact revision covered linking and stack unwinding.",
       "followup": {
         "owner": "arm64_results",
         "sourceHead": "603b1231738582ca6559d2a5e098598669842c3c",
@@ -27574,6 +27586,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "External traffic on the static musl integration binary at acf4a7122",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41436977329/artifacts/13136054697"
+        },
         {
           "label": "Native musl archive, linked VFIO functions and TestDumpStack",
           "url": "https://github.com/tamird/gvisor/actions/runs/41384852262/artifacts/13115137890"
@@ -40155,10 +40171,14 @@
       "head": "b76315862da33f1ffe8fcba18740ae26b565f7b7",
       "title": "Share the proc boot ID across mounts",
       "url": "https://github.com/tamird/gvisor/commit/b76315862",
-      "updatedAt": "2026-11-02T11:33:45.806437+00:00",
-      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T14:32:55.873851+00:00",
+      "status": "Delivered as #16800",
       "summary": "Linux reports one boot ID across proc mounts, including mounts in child PID namespaces. Store the lazily generated ID on the Sentry kernel so mounts in the same sandbox agree, including after restore.",
       "evidence": [
+        {
+          "label": "Upstream PR #16800",
+          "url": "https://github.com/google/gvisor/pull/16800"
+        },
         {
           "label": "Exact-source namespace test, live restores and nine owning test and Nogo targets",
           "url": "https://github.com/tamird/gvisor/actions/runs/41431510068/artifacts/13136657385"
@@ -40196,17 +40216,7 @@
           "head": "b76315862da33f1ffe8fcba18740ae26b565f7b7"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "b76315862da33f1ffe8fcba18740ae26b565f7b7",
-        "baseHead": "8a719e8320254be572f33393c39f3f0a22ed8f64",
-        "url": "https://github.com/tamird/gvisor/commit/b76315862",
-        "title": "Share the proc boot ID across mounts",
-        "requestedAt": "2026-11-02T11:33:45.806437+00:00",
-        "summary": "Open the standalone proc boot ID fix?",
-        "body": "The namespace syscall test agrees with Linux and fails on stock. A checkpoint taken after observing the ID preserved it across three proc mounts, one created after restore. Each restore of an unread checkpoint generated its own ID in this run. Nine rand, kernel, and proc test/analyzer targets passed."
-      }
+      "inactive": true
     },
     {
       "id": "branch:inotify-mask-create",
@@ -41808,8 +41818,8 @@
       "url": "https://github.com/tamird/gvisor/commit/9f19447bd",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T09:09:12.149661+00:00",
-      "summary": "Deliver the loaded value and unblock its waiting object with one callback record.",
+      "updatedAt": "2026-11-02T11:37:32.591065+00:00",
+      "summary": "The decoder registers value delivery and a wakeup together when it discovers that one object needs another. Both can use one callback record. On a 50,000-file checkpoint that removes 50,108 records. In 16 paired runs it reduced DecodeStatefile time by 5.09% and allocated bytes by 11.42%.",
       "evidence": [
         {
           "label": "Matched decodes, real guest restores and correctness suites",
@@ -41818,6 +41828,10 @@
         {
           "label": "Removing the callback delivery fails the ordering check",
           "url": "https://github.com/tamird/gvisor/actions/runs/41289759911/artifacts/13076269819"
+        },
+        {
+          "label": "Counts by producer for the 50,000-file checkpoint",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41329255858/artifacts/13092843079"
         }
       ],
       "contributorReview": {
@@ -43619,6 +43633,50 @@
           "url": "https://github.com/buildbuddy-io/buildbuddy/commit/4c07f97e3"
         }
       ]
+    },
+    {
+      "ref": "review/proc-sandbox-boot-id",
+      "head": "b76315862da33f1ffe8fcba18740ae26b565f7b7",
+      "group": "runtime",
+      "summary": "Linux reports one boot ID across proc mounts, including mounts in child PID namespaces. Store the lazily generated ID on the Sentry kernel so mounts in the same sandbox agree, including after restore.",
+      "evidence": [
+        {
+          "label": "Exact-source namespace test, live restores and nine owning test and Nogo targets",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41431510068/artifacts/13136657385"
+        },
+        {
+          "label": "Named Linux and stock namespace cases, earlier corrected ID across restores",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41427770224/artifacts/13132749630"
+        },
+        {
+          "label": "Upstream lazy procfs implementation and first-access behavior",
+          "url": "https://github.com/google/gvisor/commit/8a719e832"
+        },
+        {
+          "label": "All three syscall arms, checkpoint restore, release build, proc package and both Nogo owners",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41200711011/artifacts/13042014044"
+        },
+        {
+          "label": "Single product commit on 25172e526",
+          "url": "https://github.com/tamird/gvisor/commit/4ff4f3d6a"
+        },
+        {
+          "label": "External Sentry registers the zero-valued proc filesystem pointer",
+          "url": "https://github.com/xgo-dev/sandbox/blob/a531c1065/sentry/fs_linux.go#L195-L200"
+        },
+        {
+          "label": "Linux boot ID and random UUID interfaces",
+          "url": "https://github.com/torvalds/linux/blob/adc218676/drivers/char/random.c#L1624-L1655"
+        }
+      ],
+      "id": "pr:16800",
+      "number": 16800,
+      "type": "pr",
+      "repo": "google/gvisor",
+      "title": "proc: share the boot ID across a kernel's proc mounts",
+      "url": "https://github.com/google/gvisor/pull/16800",
+      "status": "open",
+      "updatedAt": "2026-11-02T14:32:55.873851+00:00"
     }
   ],
   "edges": [
@@ -50320,7 +50378,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-02T09:58:17.763358+00:00",
+      "updatedAt": "2026-11-02T11:37:32.591065+00:00",
       "summary": "Restoring 50,000 tmpfs files allocated a temporary pointer cell almost every time the decoder queued a parent pointer. The queue already held a copy of the pointer. Reusing that cell reduced total allocations per decode from 155,164 to 105,078.",
       "findings": [
         {
@@ -53530,6 +53588,23 @@
             {
               "label": "Queue sizes, normal and race suites, and exact allocation profiles",
               "url": "https://github.com/tamird/gvisor/actions/runs/41422456146/artifacts/13131506474"
+            }
+          ]
+        },
+        {
+          "text": "A census explains the preallocation limit on the 50,000-file checkpoint. Of the 200,998 stock callback records, registration could predict 50,289 after-load hooks. The rest were 100,587 wakeups, 50,114 value deliveries and eight additional after-load hooks. Of the wakeups, 50,108 had a paired value delivery: wait already receives both, so it can store them together. Map lengths alone cannot predict the remaining dependencies. The decoder registered 50,446 waits while decoding 50,672 map entries and learned their object IDs as it decoded their keys and values.",
+          "evidence": [
+            {
+              "label": "Counts by producer for the 50,000-file checkpoint",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41329255858/artifacts/13092843079"
+            },
+            {
+              "label": "Value delivery and wakeup in the same record",
+              "url": "https://github.com/tamird/gvisor/commit/9f19447bd"
+            },
+            {
+              "label": "Registration API and stock total",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41335098309/artifacts/13095863118"
             }
           ]
         }
@@ -60527,7 +60602,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-02T11:30:56.529148+00:00",
+      "updatedAt": "2026-11-02T11:39:07.762322+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional.",
       "findings": [
         {
@@ -62337,9 +62412,22 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41377771312/artifacts/13111992630"
             }
           ]
+        },
+        {
+          "text": "The published GNU-only #15153 at 675d49b1c initialized its plugin but exited before guest startup on a worker with /dev/vhost-net. Both native host-to-container payload controls passed on that worker. The run restored all eight original GNU binaries and sidecars without rebuilding. It ended before either guest socket was ready; it did not identify the failing syscall. An earlier trace on the same GNU binaries and an unmodified-parent comparison are linked from the PR card.",
+          "evidence": [
+            {
+              "label": "Published GNU binaries and the native TCP/UDP bridge control",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41438132408/artifacts/13138100725"
+            },
+            {
+              "label": "Unmodified parent startup comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41217449718/artifacts/13049805793"
+            }
+          ]
         }
       ],
-      "nextStep": "Apply the verified external TCP and UDP fixture to the published GNU-only DPDK proposal. Once BuildBuddy deploys its empty-root OCI correction, repeat the DPDK build on a zero-layer image. The plugin target explicitly requires x86-64.",
+      "nextStep": "Submit the BuildBuddy empty-root correction once reviewed. After it is deployed, qualify the DPDK archive on a zero-layer worker. The published GNU runtime fails before guest startup; the separate static musl runtime passed TCP and UDP over its external interface.",
       "evidence": [
         {
           "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
@@ -63357,10 +63445,19 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-02T11:05:55.853872+00:00",
+      "updatedAt": "2026-11-02T14:38:06.439854+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "For #15253, paired captures or GSO metadata from the reporter’s Kubernetes interfaces would show where the paths diverge. The #16793 reconnect review remains ready for a contributor decision.",
+      "nextStep": "Capture the bulk sender’s queued bytes, advertised window and retransmission decisions during a stall on #10343. For #15253, paired captures or GSO metadata from the reporter’s Kubernetes interfaces would show where the paths diverge. The #16793 reconnect review remains ready for a contributor decision.",
       "findings": [
+        {
+          "text": "In eight paired Linux proxy transfers with gVisor sending, one SACK-on run delivered 34,854 bytes in 18 seconds, including 16 zero-byte intervals. Its SACK-off partner delivered 4.14 GB. Separate short captures with offloads disabled showed maximum payloads of 1,424 and 1,460 bytes. Neither observation identifies what caused the stall or explains the Windows report.",
+          "evidence": [
+            {
+              "label": "All 18 receiver windows, three separate wire controls and the artifact-only reconciliation",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41463258878/artifacts/13149812537"
+            }
+          ]
+        },
         {
           "text": "Using the existing local shutdown flags to skip an unnecessary receive-queue lock reduced the added cost of an established-socket RDHUP poll from 4.38 to 0.94 ns per call. With write interest too, it fell from 4.68 to 0.60 ns. Six IPv4/IPv6 syscall cases passed, including mandatory hangup with an empty interest mask.",
           "evidence": [
@@ -64514,7 +64611,7 @@
       "title": "Proc boot IDs across mounts and checkpoint restores",
       "status": "concluded",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-02T11:33:45.806437+00:00",
+      "updatedAt": "2026-11-02T14:32:55.873851+00:00",
       "summary": "Restoring one checkpoint twice before the first guest read produced the same boot ID per proc mount on 085e111d7 and different IDs on both mounts on efad71b8c. Both sources preserved IDs the guest had already read. Separately, both sources assigned different boot IDs to different mounts in one sandbox. Native Linux shared one ID.",
       "findings": [
         {
@@ -64565,8 +64662,12 @@
           ]
         }
       ],
-      "nextStep": "The kernel-owned revision is ready for contributor review. Restoring an unread checkpoint still permits each restored kernel to generate its own first ID.",
+      "nextStep": "Follow maintainer review on #16800. The fix preserves the lazy first boot ID for checkpoints that have never populated kernel/random.",
       "evidence": [
+        {
+          "label": "Upstream PR #16800",
+          "url": "https://github.com/google/gvisor/pull/16800"
+        },
         {
           "label": "Two independent restores on each historical source, before and after the first read",
           "url": "https://github.com/tamird/gvisor/actions/runs/41197574258/artifacts/13041268479"
