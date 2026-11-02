@@ -13,16 +13,17 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          fetch-depth: 3
+          fetch-depth: 4
           persist-credentials: false
       - name: Bind the original qualified snapshot to the same production inputs
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^^)" = f98f527255de2ff128a0f2a942eaf6897207e4b1
-          test "$(git rev-parse HEAD^)" = 2ffa35132e2c14c4cec4867c4645ff89ca568d63
-          test -z "$(git diff --name-only HEAD^^ HEAD -- ':!.github')"
+          product=f98f527255de2ff128a0f2a942eaf6897207e4b1
+          git merge-base --is-ancestor "$product" HEAD
+          git merge-base --is-ancestor 2ffa35132e2c14c4cec4867c4645ff89ca568d63 HEAD
+          test -z "$(git diff --name-only "$product" HEAD -- ':!.github')"
           gh api repos/tamird/gvisor/actions/artifacts/13172123750/zip >"$RUNNER_TEMP/prior.zip"
           echo "709ca163fc83ba63c4efd2b3b927bc82a5bef3f0d991d0355ab35d89a508cff7  $RUNNER_TEMP/prior.zip" | sha256sum -c
           unzip -p "$RUNNER_TEMP/prior.zip" results/github-status.json >github-status.json

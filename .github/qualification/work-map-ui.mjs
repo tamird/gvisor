@@ -68,7 +68,7 @@ try {
   const url = origin + '?view=table#pr%3A16834';
   const navigation = await send('Page.navigate', { url });
   assert.equal(navigation.errorText, undefined);
-  await until(() => evaluate("!document.getElementById('details').hidden && document.querySelector('#details .contributor-decision h3') && document.querySelector('#work-table button[data-node]')"));
+  await until(() => evaluate("document.getElementById('details')?.hidden === false && document.querySelector('#details .contributor-decision h3') && document.querySelector('#work-table button[data-node]')"));
   const live = await evaluate(`(() => {
     const n = registry.nodes.find(n => n.id === 'pr:16834'), d=n.contributorReview;
     const card = document.querySelector('#details .contributor-decision');
@@ -85,6 +85,7 @@ try {
       registryAt:registry.meta.updatedAt, visible: !document.getElementById('details').hidden};
   })()`);
   result.cases.push({id:'pr:16834', ...live});
+  console.log('Observed primary card', JSON.stringify(live));
   assert.equal(live.url, url); assert.equal(live.selected,'pr:16834'); assert.equal(live.kind,'issue'); assert.ok(live.visible && live.rows > 0);
   assert.equal(live.title, live.expectedTitle); assert.ok(live.bodyEqual && live.titleParameterEqual && live.bodyParameterEqual);
   assert.equal(live.sourceURL,'https://github.com/google/gvisor/pull/16834');
@@ -125,6 +126,10 @@ try {
   result.status = 'PASS';
 } catch (error) {
   result.status = 'FAIL'; result.error = { name: error.name, message: error.message }; process.exitCode = 1;
+  if (socket?.readyState === 1) result.pageOnFailure = await evaluate(`({url:location.href,title:document.title,
+    status:document.getElementById('freshness-text')?.innerText, details:document.querySelector('#details .item-title')?.textContent,
+    visibleCount:document.getElementById('visible-count')?.innerText, rows:document.querySelectorAll('#work-table button[data-node]').length})`).catch(()=>null);
+
 } finally {
   result.finishedAt = new Date().toISOString(); result.runtimeExceptions = exceptions;
   await writeFile('work-map-ui-result.json', JSON.stringify(result, null, 2) + '\n');
