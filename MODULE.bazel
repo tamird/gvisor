@@ -99,8 +99,11 @@ use_repo(crosstool, "crosstool")
 ### Linux headers
 # Select current UAPI declarations independently of libc and test platforms.
 kernel_headers = use_extension("@llvm//kernel/extension:kernel_headers.bzl", "kernel_headers")
-kernel_headers.configure(default_version = "6.18")
 use_repo(kernel_headers, "kernel_headers")
+
+# The consuming root owns the default header version.
+root_kernel_headers = use_extension("@llvm//kernel/extension:kernel_headers.bzl", "kernel_headers", dev_dependency = True)
+root_kernel_headers.configure(default_version = "6.18")
 
 ### zlib-ng
 # TODO: try using "zlib-ng" from BCR
