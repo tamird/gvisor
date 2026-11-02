@@ -1,0 +1,171 @@
+diff --git a/go/private/actions/stdlib.bzl b/go/private/actions/stdlib.bzl
+--- a/go/private/actions/stdlib.bzl
++++ b/go/private/actions/stdlib.bzl
+@@ -52,6 +52,7 @@
+     out = go.declare_file(go, "stdlib.pkg.json")
+     cache_dir = go.declare_directory(go, "gocache")
+     args = go.builder_args(go, "stdliblist")
++    args.add_all(sdk.srcs, before_each = "-src")
+     args.add("-out", out)
+     args.add_all("-cache", [cache_dir], expand_directories = False)
+     if go.export_stdlib:
+@@ -134,6 +135,7 @@
+     args.add("-gcflags", quote_opts(go.mode.gc_goopts))
+ 
+     sdk = go.sdk
++    args.add_all(sdk.srcs, before_each = "-src")
+     inputs_direct = [sdk.go, sdk.package_list, sdk.root_file]
+     inputs_transitive = [sdk.headers, sdk.srcs, sdk.tools, go.cc_toolchain_files]
+ 
+diff --git a/go/tools/builders/replicate.go b/go/tools/builders/replicate.go
+--- a/go/tools/builders/replicate.go
++++ b/go/tools/builders/replicate.go
+@@ -42,6 +42,32 @@
+ 	return func(config *replicateConfig) {
+ 		config.paths = append(config.paths, paths...)
+ 	}
++}
++
++// replicateSDK copies only declared sources: the physical SDK may contain files
++// that aren't inputs to the action when the builder runs outside a sandbox.
++func replicateSDK(root, dst string, srcs []string) error {
++	if err := replicate(root, dst, replicatePaths("pkg/tool", "pkg/include")); err != nil {
++		return err
++	}
++	source := filepath.Join(root, "src")
++	target := filepath.Join(dst, "src")
++	if err := os.RemoveAll(target); err != nil {
++		return err
++	}
++	for _, src := range srcs {
++		rel, err := filepath.Rel(source, abs(src))
++		if err != nil {
++			return err
++		}
++		if !filepath.IsLocal(rel) {
++			return fmt.Errorf("SDK source %q is outside %q", src, source)
++		}
++		if err := replicateFile(src, filepath.Join(target, rel), &replicateConfig{}); err != nil {
++			return err
++		}
++	}
++	return nil
+ }
+ 
+ // replicatePrepare is the common preparation steps for a replication entry
+diff --git a/go/tools/builders/stdlib.go b/go/tools/builders/stdlib.go
+--- a/go/tools/builders/stdlib.go
++++ b/go/tools/builders/stdlib.go
+@@ -29,6 +29,8 @@
+ 	// process the args
+ 	flags := flag.NewFlagSet("stdlib", flag.ExitOnError)
+ 	goenv := envFlags(flags)
++	var srcs multiFlag
++	flags.Var(&srcs, "src", "Go SDK source file")
+ 	out := flags.String("out", "", "Path to output go root")
+ 	race := flags.Bool("race", false, "Build in race mode")
+ 	msan := flags.Bool("msan", false, "Build in msan mode")
+@@ -58,7 +60,7 @@
+ 	}
+ 
+ 	// Link in the bare minimum needed to the new GOROOT
+-	if err := replicate(goroot, output, replicatePaths("src", "pkg/tool", "pkg/include")); err != nil {
++	if err := replicateSDK(abs(goroot), output, srcs); err != nil {
+ 		return err
+ 	}
+ 
+diff --git a/go/tools/builders/stdliblist.go b/go/tools/builders/stdliblist.go
+--- a/go/tools/builders/stdliblist.go
++++ b/go/tools/builders/stdliblist.go
+@@ -201,6 +201,8 @@
+ 	// process the args
+ 	flags := flag.NewFlagSet("stdliblist", flag.ExitOnError)
+ 	goenv := envFlags(flags)
++	var srcs multiFlag
++	flags.Var(&srcs, "src", "Go SDK source file")
+ 	out := flags.String("out", "", "Path to output go list json")
+ 	cachePath := flags.String("cache", "", "Path to use for GOCACHE")
+ 	export := flags.Bool("export", false, "Should -export be passed to go list")
+@@ -239,7 +241,7 @@
+ 	defer func() { cleanup() }()
+ 
+ 	newGoRoot := filepath.Join(cloneBase, goenv.sdk)
+-	if err := replicate(abs(goenv.sdk), abs(newGoRoot), replicatePaths("src", "pkg/tool", "pkg/include")); err != nil {
++	if err := replicateSDK(abs(goenv.sdk), abs(newGoRoot), srcs); err != nil {
+ 		return err
+ 	}
+ 
+diff --git a/go/tools/builders/stdliblist_test.go b/go/tools/builders/stdliblist_test.go
+--- a/go/tools/builders/stdliblist_test.go
++++ b/go/tools/builders/stdliblist_test.go
+@@ -2,6 +2,7 @@
+ 
+ import (
+ 	"encoding/json"
++	"io/fs"
+ 	"os"
+ 	"path"
+ 	"path/filepath"
+@@ -17,6 +18,22 @@
+ 	return path.Dir(goSDKRootFileRlocationPath)
+ }
+ 
++// sdkSourceArgs supplies the SDK files in the test's runfiles to the builder.
++func sdkSourceArgs(t *testing.T) []string {
++	t.Helper()
++	src := filepath.Join("..", sdkDir(), "src")
++	var args []string
++	if err := fs.WalkDir(os.DirFS(src), ".", func(p string, d fs.DirEntry, err error) error {
++		if err == nil && !d.IsDir() {
++			args = append(args, "-src="+filepath.Join(src, p))
++		}
++		return err
++	}); err != nil {
++		t.Fatal(err)
++	}
++	return args
++}
++
+ func Test_stdliblist_noexport(t *testing.T) {
+ 	testDir := t.TempDir()
+ 	outJSON := filepath.Join(testDir, "out.json")
+@@ -26,7 +43,7 @@
+ 		"-sdk=../" + sdkDir(),
+ 	}
+ 
+-	if err := stdliblist(test_args); err != nil {
++	if err := stdliblist(append(test_args, sdkSourceArgs(t)...)); err != nil {
+ 		t.Errorf("calling stdliblist got err: %v", err)
+ 	}
+ 	f, err := os.Open(outJSON)
+@@ -41,8 +58,8 @@
+ 			t.Errorf("unable to decode output json: %v\n", err)
+ 		}
+ 
+-		if !strings.HasPrefix(result.ID, "@@//stdlib:") {
+-			t.Errorf("ID should be prefixed with @@//stdlib: :%v", result)
++		if want := rulesGoStdlibPrefix + result.PkgPath; result.ID != want {
++			t.Errorf("ID = %q, want %q", result.ID, want)
+ 		}
+ 		if result.ExportFile != "" {
+ 			t.Errorf("ExportsFile should be empty when disabled but got: %v", result)
+@@ -67,7 +84,7 @@
+ 	// Disable CGO otherwise, this takes forever to build.
+ 	t.Setenv("CGO_ENABLED", "0")
+ 
+-	if err := stdliblist(test_args); err != nil {
++	if err := stdliblist(append(test_args, sdkSourceArgs(t)...)); err != nil {
+ 		t.Errorf("calling stdliblist got err: %v", err)
+ 	}
+ 	f, err := os.Open(outJSON)
+@@ -83,8 +100,8 @@
+ 			t.Errorf("unable to decode output json: %v\n", err)
+ 		}
+ 
+-		if !strings.HasPrefix(result.ID, "@@//stdlib:") {
+-			t.Errorf("ID should be prefixed with @@//stdlib: :%v", result)
++		if want := rulesGoStdlibPrefix + result.PkgPath; result.ID != want {
++			t.Errorf("ID = %q, want %q", result.ID, want)
+ 		}
+ 		if result.ExportFile != "" {
+ 			anyExportSet = true
