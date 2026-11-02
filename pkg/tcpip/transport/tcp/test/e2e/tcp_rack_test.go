@@ -16,6 +16,7 @@ package tcp_rack_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"testing"
@@ -1199,4 +1200,180 @@ func TestMain(m *testing.M) {
 	time.Sleep(1 * time.Second)
 	refs.DoLeakCheck()
 	os.Exit(code)
+}
+
+// TestInterruptedRTOWithQueuedData holds the old flight's last byte, so an
+// already queued new MSS can be identified by its actual sequence and payload.
+func TestInterruptedRTOWithQueuedData(t *testing.T) {
+	const rtt = 10 * time.Millisecond
+	clock := faketime.NewManualClock()
+	c := context.NewWithOpts(t, context.Options{EnableV4: true, MTU: 1500, Clock: clock})
+	defer c.Cleanup()
+	e2e.EnableCUBIC(t, c)
+	e2e.SetStackSACKPermitted(t, c, true)
+	e2e.SetStackTCPRecovery(t, c, int(tcpip.TCPRACKLossDetection))
+	peer := e2e.CreateConnectedWithSACKPermittedOption(c)
+	// EnableCUBIC affects new endpoints. The context creates its endpoint
+	// before the handshake, so select and check CUBIC on this data socket.
+	cc := tcpip.CongestionControlOption("cubic")
+	if err := c.EP.SetSockOpt(&cc); err != nil {
+		t.Fatal(err)
+	}
+	cc = ""
+	if err := c.EP.GetSockOpt(&cc); err != nil || cc != "cubic" {
+		t.Fatalf("CC=%q err=%v", cc, err)
+	}
+	info := func() tcpip.TCPInfoOption {
+		var i tcpip.TCPInfoOption
+		if err := c.EP.GetSockOpt(&i); err != nil {
+			t.Fatal(err)
+		}
+		return i
+	}
+	mss := int(info().SndMss)
+	end := 7*mss + 1
+	data := make([]byte, end+mss)
+	for i := range data {
+		data[i] = byte(i%251 + 31*(i/mss))
+	}
+	barrier := func() { c.Stack().Pause(); c.Stack().Resume() }
+	var elapsed time.Duration
+	advance := func(d time.Duration) { clock.Advance(d); elapsed += d; barrier() }
+	write := func(b []byte) {
+		if n, err := c.EP.Write(bytes.NewReader(b), tcpip.WriteOptions{}); err != nil || n != int64(len(b)) {
+			t.Fatalf("write=%d err=%v", n, err)
+		}
+		barrier()
+	}
+	var acked int
+	block := header.SACKBlock{Start: peer.AckNum.Add(seqnum.Size(6 * mss)), End: peer.AckNum.Add(seqnum.Size(7 * mss))}
+	var hasBlock bool
+	ack := func(offset int, sack bool) {
+		acked, hasBlock = offset, sack
+		if sack {
+			c.SendAckWithSACK(peer.NextSeqNum, offset, []header.SACKBlock{block})
+		} else {
+			c.SendAckWithSACK(peer.NextSeqNum, offset, nil)
+		}
+		barrier()
+	}
+	drain := func(phase string) [][2]int {
+		var packets [][2]int
+		for {
+			v := c.GetPacketNonBlocking()
+			if v == nil {
+				break
+			}
+			ip := header.IPv4(v.AsSlice())
+			h := header.TCP(ip.Payload())
+			b := h[h.DataOffset():]
+			off := int(h.SequenceNumber() - uint32(peer.AckNum))
+			if len(b) == 0 || off < 0 || off+len(b) > len(data) || !bytes.Equal(b, data[off:off+len(b)]) {
+				t.Fatalf("unexpected payload range %d+%d", off, len(b))
+			}
+			packets = append(packets, [2]int{off, off + len(b)})
+			v.Release()
+		}
+		i := info()
+		r := map[string]any{"phase": phase, "clock_ns": elapsed.Nanoseconds(), "ack": acked, "repeat_block": hasBlock, "cc_state": int(i.CcState), "cwnd": i.SndCwnd, "ssthresh": i.SndSsthresh, "rto_ns": i.RTO.Nanoseconds(), "timeouts": c.Stack().Stats().TCP.Timeouts.Value(), "mss": mss, "old_end": end, "packets": packets}
+		j, err := json.Marshal(r)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("QUEUED %s", j)
+		return packets
+	}
+	write(data[:end])
+	initial := drain("original")
+	pos := 0
+	for _, p := range initial {
+		if p[0] != pos {
+			t.Fatalf("initial discontinuity: %v", initial)
+		}
+		pos = p[1]
+	}
+	if pos != end || len(initial) != 8 {
+		t.Fatalf("initial flight: %v", initial)
+	}
+	advance(rtt)
+	ack(mss, true)
+	advance(rtt)
+	before := drain("sack_recovery")
+	if info().CcState != tcpip.SACKRecovery {
+		t.Fatalf("wanted active SACK recovery, got %v", info())
+	}
+	contains := func(ps [][2]int, first, last int) bool {
+		for _, p := range ps {
+			if p[0] <= first && last <= p[1] {
+				return true
+			}
+		}
+		return false
+	}
+	if !contains(before, mss, 2*mss) {
+		t.Fatalf("missing pre-timeout head repair: %v", before)
+	}
+	advance(info().RTO)
+	prior := drain("timeout")
+	if info().CcState != tcpip.RTORecovery || !contains(prior, mss, 2*mss) {
+		t.Fatalf("missing timeout repair: %v %v", prior, info())
+	}
+	write(data[end:])
+	if ps := drain("queued"); len(ps) != 0 {
+		t.Fatalf("queued suffix escaped before ACK: %v", ps)
+	}
+	// Accept the older copy of the timeout head. All post-timeout feedback
+	// below covers bytes seen here: only repairs of other missing ranges
+	// are released. The penultimate segment was SACKed before the timeout.
+	seen := make([]bool, len(data))
+	for i := 0; i < 2*mss; i++ {
+		seen[i] = true
+	}
+	for i := 6 * mss; i < 7*mss; i++ {
+		seen[i] = true
+	}
+	deliver := func(ps [][2]int) {
+		for _, p := range ps {
+			for i := p[0]; i < p[1]; i++ {
+				if i != end-1 {
+					seen[i] = true
+				}
+			}
+		}
+	}
+	prefix := func() int {
+		n := 0
+		for n < len(data) && seen[n] {
+			n++
+		}
+		return n
+	}
+	advance(rtt)
+	ack(2*mss, true)
+	deliver(drain("partial_ack"))
+	for i := 0; i < 12; i++ {
+		advance(rtt)
+		deliver(drain(fmt.Sprintf("timer_%d", i)))
+		p := prefix()
+		if p == acked {
+			break
+		}
+		ack(p, p < 6*mss)
+		deliver(drain(fmt.Sprintf("repair_ack_%d", i)))
+	}
+	// Release the original tail and any other held original packets. This
+	// final control cannot count toward a send while old bytes remain.
+	ack(end, false)
+	deliver(drain("release_old"))
+	if !seen[len(data)-1] {
+		advance(info().RTO)
+		deliver(drain("final_timer"))
+	}
+	for i := end; i < len(data); i++ {
+		if !seen[i] {
+			t.Fatalf("missing queued byte %d after release", i)
+		}
+	}
+	ack(len(data), false)
+	drain("finished")
 }
