@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T15:46:59.054342+00:00",
+    "updatedAt": "2026-11-02T15:58:04.948535+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40951,12 +40951,12 @@
       "repo": "tamird/grpc",
       "ref": "research/native-cpp-codegen",
       "head": "184987c9af1522e853a8888a1dfd1e960c69d40a",
-      "title": "Use the native C++ plugin during gRPC code generation",
+      "title": "Remove the shell copy from the gRPC plugin wrapper",
       "url": "https://github.com/tamird/grpc/commit/184987c9a",
       "group": "rbe",
-      "status": "Human submission required",
-      "updatedAt": "2026-10-31T19:09:11.372+00:00",
-      "summary": "The distribution wrapper requires Bash on Linux. With statically linked protoc and the native execution-platform plugin, two real gVisor service generators ran on a shell-free Linux AMD64 worker. Their four output files matched the ordinary build. CocoaPods keeps its universal macOS distribution target. gRPC requires a human to own and submit upstream contributions.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-02T15:58:04.948535+00:00",
+      "summary": "The C++ proposal bypassed the common plugin wrapper. Replace its shell copy while preserving the named executable and the universal macOS distribution. The original Linux results cover the native plugin only.",
       "evidence": [
         {
           "label": "Compare the one-line proposal and open a PR",
@@ -40979,15 +40979,15 @@
           "url": "https://github.com/grpc/grpc/commit/9a6bcd4c2"
         }
       ],
-      "humanAction": {
-        "status": "pending",
-        "kind": "submission",
-        "head": "184987c9af1522e853a8888a1dfd1e960c69d40a",
-        "title": "[Bazel] Use the native C++ plugin for codegen",
-        "summary": "Review the one-line change and submit the gRPC PR yourself if you choose. gRPC requires the human contributor to own the code and the upstream communication.",
-        "body": "cc_grpc_library passes protoc a distribution artifact. On Linux its\nGenrule copies the plugin with Bash and cp. A worker with no shell\ncould not start that action [1].\n\nPass protoc the C++ plugin built for its execution platform. The\ndistribution target still provides the named binary used by CocoaPods,\nincluding the universal binary on macOS.\n\nWith statically linked tools on Linux AMD64, two gVisor services ran\ntheir generators on a worker with no shell. All four generated C++\nsources and headers matched the ordinary build byte for byte [2].\n\n[1]: https://app.buildbuddy.io/invocation/d53749e5-853f-4758-b191-7ed38a23e192\n[2]: https://github.com/tamird/gvisor/blob/9c9a39762/test/rbe/grpc-native-codegen/result.json",
-        "url": "https://github.com/grpc/grpc/compare/master...tamird:grpc:research/native-cpp-codegen?expand=1",
-        "policyURL": "https://github.com/grpc/grpc/blob/df3dd4dcb/CONTRIBUTING.md#generative-ai-policy"
+      "followup": {
+        "owner": "python_supplier_review",
+        "sourceHead": "184987c9af1522e853a8888a1dfd1e960c69d40a",
+        "disposition": "Contributor requested a change to the shared wrapper",
+        "observedAt": "2026-11-02T15:58:04.948535+00:00",
+        "nextAction": "Qualify the replacement with shell-free Linux code generation, hosted macOS code generation and the distribution and build metadata consumers. Prepare the supplier commit for human submission.",
+        "evidence": [
+          "https://github.com/tamird/grpc/commit/184987c9a"
+        ]
       }
     },
     {
@@ -43654,8 +43654,8 @@
       "title": "Track live timerfds across checkpoint and restore",
       "url": "https://github.com/tamird/gvisor/commit/ea9559ea9",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
+      "status": "Published",
+      "updatedAt": "2026-11-02T15:53:11.652826+00:00",
       "summary": "Rearming a restored timerfd panicked when its only reference at checkpoint was in a queued SCM_RIGHTS message. Track timers through the lifetime of their file descriptions so checkpoint and restore reach them after the sender closes its descriptor.",
       "evidence": [
         {
@@ -43673,6 +43673,14 @@
         {
           "label": "Tested source before the restore key changed to an empty struct",
           "url": "https://github.com/tamird/gvisor/commit/187ebca80"
+        },
+        {
+          "label": "Queued timerfd fired after restore and both architecture analyzers passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41474723644/artifacts/13157212207"
+        },
+        {
+          "label": "Published PR #16802",
+          "url": "https://github.com/google/gvisor/pull/16802"
         }
       ],
       "settledReviews": [
@@ -43697,16 +43705,7 @@
           "head": "ea9559ea9b1352132b9c510a0cca652d75905b2a"
         }
       },
-      "followup": {
-        "owner": "checkpoint_owner",
-        "sourceHead": "ea9559ea9b1352132b9c510a0cca652d75905b2a",
-        "disposition": "Approved singleton restore key",
-        "observedAt": "2026-11-02T15:46:59.054342+00:00",
-        "nextAction": "Open the reviewed PR after the restored timer test and both package analyzers pass.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41474723644"
-        ]
-      }
+      "inactive": true
     },
     {
       "id": "branch:buildbuddy:oci-empty-image-root",
@@ -43853,6 +43852,94 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41398089026/artifacts/13120208022"
         }
       ]
+    },
+    {
+      "id": "pr:16802",
+      "number": 16802,
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "proposal/timerfd-rights-restore",
+      "head": "ea9559ea9b1352132b9c510a0cca652d75905b2a",
+      "title": "Track live timerfds across checkpoint and restore",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-02T15:53:11.652826+00:00",
+      "url": "https://github.com/google/gvisor/pull/16802",
+      "summary": "Rearming a restored timerfd panicked when its only reference at checkpoint was in a queued SCM_RIGHTS message. Track timers through the lifetime of their file descriptions so checkpoint and restore reach them after the sender closes its descriptor.",
+      "evidence": [
+        {
+          "label": "Stock restore panic after the descriptor-held control fired, with passing Linux and systrap controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41465909698/artifacts/13152066829"
+        },
+        {
+          "label": "Native and systrap timerfd suites and AMD64/ARM64 owning analyzers passed. Both checkpoint targets stopped at the protoc fetch.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41468613780/artifacts/13154833930"
+        },
+        {
+          "label": "Fresh periodic expiration after restore and passing live-save-mode case",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41471570284/artifacts/13155870792"
+        },
+        {
+          "label": "Tested source before the restore key changed to an empty struct",
+          "url": "https://github.com/tamird/gvisor/commit/187ebca80"
+        },
+        {
+          "label": "Queued timerfd fired after restore and both architecture analyzers passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41474723644/artifacts/13157212207"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "bdc2103681f20eb3b91ded1156b0ac74fb15e4c5",
+          "outcome": "approved-with-changes",
+          "at": "2026-11-02T15:46:59.054342+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "ea9559ea9b1352132b9c510a0cca652d75905b2a",
+          "outcome": "approved",
+          "at": "2026-11-02T15:46:59.054342+00:00"
+        }
+      ]
+    },
+    {
+      "id": "branch:unix-listen-peer-credentials",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/unix-listen-peer-credentials",
+      "head": "b29a7c292010100770b6ba5e4f38b8f47ed68f38",
+      "title": "Publish Unix listener credentials with the listening state",
+      "url": "https://github.com/tamird/gvisor/commit/b29a7c292",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T15:58:04.948535+00:00",
+      "summary": "A client connecting as a Unix stream socket started listening received PID 0 and unmapped UID/GID. Publish the listening task’s credentials while holding the same lock that connect uses to copy them.",
+      "evidence": [
+        {
+          "label": "Native Linux, stock and corrected syscall results, four ABI controls, and both architectures’ analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41472760658/artifacts/13156208304"
+        },
+        {
+          "label": "Five transport tests and seven subtests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41475673893/artifacts/13156169419"
+        },
+        {
+          "label": "Syscall reproduction with separate listener and client processes",
+          "url": "https://github.com/tamird/gvisor/blob/a1e787f70/test/syscalls/linux/socket_unix_peercred.cc#L69-L133"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "b29a7c292010100770b6ba5e4f38b8f47ed68f38",
+        "baseHead": "7a675ac66a1e2357abdaa6cccedabcd3cce9aa5c",
+        "title": "Publish Unix listener credentials with the listening state",
+        "url": "https://github.com/tamird/gvisor/commit/b29a7c292",
+        "requestedAt": "2026-11-02T15:58:04.948535+00:00",
+        "summary": "Open the standalone PR?",
+        "body": "A test barrier in the fork let the client connect before the old listener published its credentials. After accept and a byte exchange the client still read PID 0 and unmapped IDs. The corrected guest and native Linux reported the actual listening process. The remote Go suite separately passed all five transport tests."
+      }
     }
   ],
   "edges": [
