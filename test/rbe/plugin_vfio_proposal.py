@@ -89,6 +89,7 @@ def phase(result, name, extra):
             "--nocache_test_results", "--modify_execution_info=^TestRunner$=+no-remote-cache",
             "--test_sharding_strategy=disabled", "--test_timeout=60", "--strategy=TestRunner=remote",
             "--remote_download_outputs=toplevel", "--build_event_json_file_path_conversion=false",
+            "--remote_download_regex=.*[/]libpluginstack_foreign_cc[/]build_script[.]sh$",
             "--build_event_json_file=" + str(out / "raw.bep"),
             "--execution_log_json_file=" + str(out / "spawns.json"), ARCHIVE, TEST]
     item["exit"] = command(args, out / "test.log")
