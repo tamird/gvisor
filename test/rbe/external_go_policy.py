@@ -74,7 +74,7 @@ def details(log):
     context = 0
     for line in log.splitlines():
         line = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", line)
-        if re.search(r"error\b|fatal\b|failed\b|not found|no such |cannot |could not |unable to ", line, re.I):
+        if re.search(r"\berror\b|\bfatal\b|\bfailed\b|not found|no such |cannot |could not |unable to ", line, re.I):
             context = 3
         elif context:
             context -= 1
