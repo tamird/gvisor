@@ -1,0 +1,79 @@
+name: Qualify the checklocks proposal and snapshot
+on:
+  push:
+    branches: [qualification/work-map-checklocks-callback]
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the exact curation
+        id: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 0c6b9c6c8364a933fdc9072a6701683839e834cf
+          test "$(git rev-parse HEAD^^)" = 481c1f3c041a01c2002de59d1ad83151a07cb683
+          test -z "$(git diff --name-only HEAD^ HEAD -- ':!.github')"
+          test "$(git diff --name-only HEAD^^ HEAD^)" = registry.json
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          mkdir results
+      - name: Check collector and client behavior
+        run: |
+          node --test app_test.mjs
+          python3 -m unittest discover -p '*_test.py'
+      - name: Collect the canonical snapshot independently
+        if: always() && steps.source.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          status=0
+          python3 update-status.py || status=$?
+          jq -n --arg source "$GITHUB_SHA" --arg product "$(git rev-parse HEAD^)" \
+            --arg curation "$(git rev-parse HEAD^^)" --argjson exit "$status" \
+            '{source:$source,curation:$product,base:$curation,collector_exit:$exit}' > results/source.json
+          test "$status" = 0
+          node metadata-preflight.mjs . > results/preflight.json
+          cp registry.json github-status.json results/
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          registry = json.loads(Path('registry.json').read_text())
+          snapshot = json.loads(Path('github-status.json').read_text())
+          nodes = {node['id']: node for node in registry['nodes']}
+          identity = 'branch:checklocks-callback-facts'
+          card = nodes[identity]
+          decision = card['contributorReview']
+          final = 'bf276987f6e86bf80463f97bb35e0b94dca62ae3'
+          assert card['head'] == decision['head'] == final
+          assert decision['baseHead'] == '14555f88af78c8bafdb5ae7015720a8ef7c83b58'
+          assert (decision['kind'], decision['status']) == ('proposal', 'pending')
+          assert card['refinement'] == {
+              'before': {'head': '75000d12b7a9f532160dc30f992c9b667ddea823'},
+              'after': {'head': final},
+          }
+          assert 'contributorReview' not in nodes['pr:15867']
+          assert all(identity not in (edge['from'], edge['to']) for edge in registry['edges'])
+          state = snapshot['workStates'][identity]['contributor-review']
+          assert state['scope'] == final, state
+          assert snapshot['registryDate'] == registry['meta']['updatedAt']
+          print(json.dumps({'verified': identity, 'state': state, 'limits': snapshot['limits']}))
+          PY
+      - name: Publish the read-only snapshot pair and verifier
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-map-checklocks-callback
+          path: |
+            results/source.json
+            results/preflight.json
+            results/registry.json
+            results/github-status.json
+          if-no-files-found: error
