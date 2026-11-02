@@ -90,21 +90,28 @@ def _release_files_impl(ctx):
     for target, name in ctx.attr.sidecars.items():
         layout.append((_single_file(target), "gvisor-bin/" + name))
 
-    outputs = []
+    outputs = {}
     for src, path in layout:
         out = ctx.actions.declare_file("%s/%s" % (ctx.label.name, path))
         copy_file_action(ctx, src, out)
-        outputs.append(out)
+        outputs[path] = out
 
-    runfiles = ctx.runfiles(files = outputs)
-    return [DefaultInfo(
-        files = depset(outputs),
-        default_runfiles = runfiles,
-        data_runfiles = runfiles,
-    )]
+    files = depset(outputs.values())
+    runfiles = ctx.runfiles(transitive_files = files)
+    return [
+        DefaultInfo(
+            executable = outputs["runsc"],
+            files = files,
+            default_runfiles = runfiles,
+            data_runfiles = runfiles,
+        ),
+        # A copy of this target must include the sidecars next to runsc.
+        OutputGroupInfo(release_layout = files),
+    ]
 
 release_files = rule(
     implementation = _release_files_impl,
+    executable = True,
     attrs = {
         "bins": attr.label_list(
             doc = "Binaries placed at the top level of the layout.",

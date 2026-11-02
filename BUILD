@@ -1,5 +1,5 @@
 load("@bazel_lib//lib:write_source_files.bzl", "write_source_files")
-load("@bazel_skylib//rules:native_binary.bzl", "native_test")
+load("@bazel_skylib//rules:native_binary.bzl", "native_binary", "native_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_license//rules:license.bzl", "license")
 load("//tools:defs.bzl", "build_test", "gazelle", "go_path")
@@ -61,6 +61,31 @@ release_files(
     sidecars = sidecars("race"),
     tags = ["manual"],
     visibility = ["//visibility:public"],
+)
+
+SMOKE_ARGS = [
+    "--alsologtostderr",
+    "--network",
+    "none",
+    "--debug",
+    "--TESTONLY-unsafe-nonroot=true",
+    "--rootless",
+    "do",
+    "true",
+]
+
+native_binary(
+    name = "smoke",
+    src = ":release",
+    args = SMOKE_ARGS,
+    tags = ["manual"],
+)
+
+native_binary(
+    name = "smoke-race",
+    src = ":release-race",
+    args = SMOKE_ARGS,
+    tags = ["manual"],
 )
 
 nogo_config(
