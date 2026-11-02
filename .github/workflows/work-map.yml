@@ -1,0 +1,86 @@
+name: Verify contributor decision settlement and canonical snapshot
+on:
+  push:
+    branches: [qualification/work-map-20261102-publications]
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the exact curation
+        id: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = f19a844804e2c8de792131354e2b19e09acde440
+          test "$(git rev-parse HEAD^^)" = 27f51dc9f30e9b6e07b1383aa42894dc54c7fb3c
+          test -z "$(git diff --name-only HEAD^ HEAD -- ':!.github')"
+          test "$(git diff --name-only HEAD^^ HEAD^)" = registry.json
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          mkdir results
+      - name: Check collector and client behavior
+        run: |
+          node --test app_test.mjs
+          python3 -m unittest discover -p '*_test.py'
+      - name: Collect the canonical snapshot independently
+        if: always() && steps.source.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          status=0
+          python3 update-status.py || status=$?
+          jq -n --arg source "$GITHUB_SHA" --arg product "$(git rev-parse HEAD^)" \
+            --arg curation "$(git rev-parse HEAD^^)" --argjson exit "$status" \
+            '{source:$source,curation:$product,base:$curation,collector_exit:$exit}' > results/source.json
+          test "$status" = 0
+          node metadata-preflight.mjs . > results/preflight.json
+          cp registry.json github-status.json results/
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          registry = json.loads(Path('registry.json').read_text())
+          snapshot = json.loads(Path('github-status.json').read_text())
+          nodes = {node['id']: node for node in registry['nodes']}
+          settled = ['04c66b4d8', '07d32506a', '0bf31f69d', '10f9a0f0d', '14abba8a4', '154269d6f', '166e16626', '1813a989c', '251159560', '2d59045da', '34d137cda', '3db00c1cf', '42b379a95', '54b3b894b', '5bb344423', '5bb68f84c', '64b2f7547', '6efbfd233', '73a1dfe9d', '799775e4b', '7ab597c1c', '8b0c840b1', '9dbf919c7', '9f19447bd', 'a4504c546', 'a859c3ac9', 'bcc567c6c', 'bf276987f', 'c576f0790', 'ca84e68c9', 'd7f75a4d8', 'e62e48e9a', 'e7e0d5319', 'eb90d9a01', 'f9ff0e087']
+          ids = ['pr:16840', 'pr:16841', 'pr:16842', 'pr:16843', 'pr:16844', 'pr:16845', 'pr:16846', 'pr:16850', 'pr:16851', 'pr:16852', 'pr:16853', 'pr:16854', 'pr:16855', 'pr:16856', 'pr:16857', 'pr:16858', 'pr:16859', 'pr:16860', 'pr:16861', 'pr:16862', 'pr:16863', 'pr:16864', 'pr:16865', 'pr:16867', 'pr:16868', 'pr:hermeticbuild/hermetic-llvm:909', 'pr:protocolbuffers/protobuf:31234']
+          saved_reviews = {review.get('head', '')[:9] for node in registry['nodes'] for review in node.get('settledReviews', [])}
+          assert set(settled) <= saved_reviews
+          pending = [node for node in registry['nodes'] if node.get('contributorReview', {}).get('status') == 'pending']
+          assert not any(n['contributorReview']['head'][:9] in settled for n in pending)
+          card = nodes['branch:state-grow-shared-slices']
+          assert card['contributorReview']['head'] == card['head'] == 'fcc0c1c73904271d7b9bde558294fa66bdf00fb4'
+          assert snapshot['workStates'][card['id']]['contributor-review']['scope'] == card['head']
+          images = nodes['branch:go-helper-images']
+          assert images['contributorReview']['head'] == images['head'] == 'cea9b0192347cc0ec34ef72f51915ecdf07774c3'
+          assert snapshot['workStates'][images['id']]['contributor-review']['scope'] == images['head']
+          for key in ('branch:rules-img-hey', 'branch:official-ollama-go-image', 'branch:official-profile-go-image'):
+              assert nodes[key]['inactive'] and 'contributorReview' not in nodes[key], key
+              assert 'contributor-review' not in snapshot['workStates'].get(key, {}), key
+          prs = {entry['url']: entry for entry in snapshot['prs']}
+          for key in ids:
+              node = nodes[key]
+              assert prs[node['url']]['head'] == node['head'], key
+              assert 'contributor-review' not in snapshot['workStates'].get(key, {}), key
+          issue = nodes['branch:rules-go-declared-stdlib-sources']['settledReviews'][-1]
+          assert issue['postedURL'] == 'https://github.com/bazel-contrib/rules_go/issues/4773'
+          assert snapshot['registryDate'] == registry['meta']['updatedAt']
+          print(json.dumps({'settled': len(settled), 'published_prs': len(ids), 'limits': snapshot['limits']}))
+          PY
+      - name: Publish the read-only snapshot pair and verifier
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-map-20261102-publications
+          path: |
+            results/source.json
+            results/preflight.json
+            results/registry.json
+            results/github-status.json
+          if-no-files-found: error
