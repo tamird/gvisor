@@ -23,6 +23,11 @@ FORMATTED = DIRTY.replace("_=", "_ = ")
 MULTI = DIRTY + "\nvar A=1\n\n" + "".join(f"// filler {i}\n" for i in range(12)) + "var B=2\n"
 MULTI_FORMATTED = MULTI.replace("_=", "_ = ").replace("A=1", "A = 1").replace("B=2", "B = 2")
 OUT = {"source": SOURCE, "tree": TREE, "verdict": "INCOMPLETE", "phases": {},
+       "priorAttempt": {"run": 41402832471, "artifact": 13122371568,
+                        "archiveSha256": "b16f671dea64e12e7fb8ef31f1494ccc152518bb0b3dfddb414aed11c061b3ae",
+                        "firstInvocation": "5b2e6d11-bd7d-4eaa-83fc-8c19445c06f3", "exit": 1,
+                        "cause": "GoCompilePkg missing strict dependency golang.org/x/tools/internal/diff",
+                        "goimportsActionsExecuted": 0},
        "supplierVersion": "v0.51.0", "supplierChange": "d140e4d63b51cb5053d57cde308379069b5a6436",
        "hunkPrerequisite": {"author": "Mustafa Senoglu", "githubCommit": "e135a42156aede7624b869cd526ad7cd75859084",
                             "gerritRevision": "3f8223d50b560eece75d128e1b139c6f7252c462", "change": 834825,
@@ -205,6 +210,8 @@ def phase(name: str, function, *args, **kwargs) -> None:
     except Exception as e:
         row = OUT["phases"].setdefault(name, {})
         row.update(verified=False, error=type(e).__name__)
+        if isinstance(e, ValueError):
+            row["diagnostic"] = str(e)
         tb = e.__traceback__
         while tb.tb_next:
             tb = tb.tb_next
@@ -301,15 +308,15 @@ def main() -> None:
     require(len(sources) == 2685 and not CASE.exists(), "unexpected source inventory")
     build, module = Path("tools/lint/BUILD"), Path("MODULE.bazel")
     original_build, original_module, golden = build.read_text(), module.read_text(), GOLDEN.read_bytes()
-    patches = ["goimports.patch", "unified-lines.patch"]
+    patches = ["goimports.patch", "goimports-build.patch", "unified-lines.patch"]
     OUT["patches"] = {}
     for name in patches:
         data = (TEMP / "lint-bazel9" / name).read_bytes()
         (build.parent / name).write_bytes(data)
         OUT["patches"][name] = {"sha256": sha256(data).hexdigest(), "size": len(data)}
-    exports = '\nexports_files(["goimports.patch", "unified-lines.patch"])\n'
+    exports = '\nexports_files(' + repr(patches) + ')\n'
     def overlay(corrected: bool, minimal: bool) -> None:
-        labels = ["//tools/lint:" + p for p in patches[:2 if corrected else 1]]
+        labels = ["//tools/lint:" + p for p in patches[:3 if corrected else 2]]
         module.write_text(original_module + '\ngo_deps.module_override(\n    patch_strip = 1,\n    patches = ' + repr(labels) + ',\n    path = "golang.org/x/tools",\n)\n')
         contents = original_build + exports
         if minimal:

@@ -13,7 +13,7 @@ jobs:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 2, persist-credentials: false}
+        with: {fetch-depth: 3, persist-credentials: false}
       - name: Prepare the verified released client and GNU execution platform
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}

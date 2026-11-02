@@ -1,0 +1,8 @@
+# Gazelle generates BUILD files before applying module_override patches.
+# Declare the import introduced by goimports.patch for this qualification.
+--- a/cmd/goimports/BUILD.bazel
++++ b/cmd/goimports/BUILD.bazel
+@@ -10,2 +10,3 @@
+     deps = [
++        "//internal/diff",
+         "//internal/gocommand",
