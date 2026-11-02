@@ -1,17 +1,18 @@
-name: Qualify the ordinary static plugin runtime
+name: Run the original static plugin binaries
 on:
   push:
     branches: [qualification/plugin-static-musl]
 permissions:
   contents: read
+  actions: read
 jobs:
   plugin:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-22.04
-    timeout-minutes: 49
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: product, fetch-depth: 2, persist-credentials: false}
+        with: {path: product, fetch-depth: 3, persist-credentials: false}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: tamird/bazel-central-registry
@@ -24,7 +25,7 @@ jobs:
           path: supplier
           ref: b0b4b6c173c4312c14f3c5a427e9e3cb7271143c
           persist-credentials: false
-      - name: Pin prerequisites and inventory the native image
+      - name: Pin prerequisites for original-output recovery
         working-directory: product
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -49,22 +50,32 @@ jobs:
           curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
           echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod 0755 "$RUNNER_TEMP/bb"
-          python3 test/rbe/plugin_programs/image_inventory.py
           if test -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
-      - name: Validate the case verifier without product execution
+      - name: Retrieve the original producer verdict
         working-directory: product
-        run: python3 -B test/rbe/plugin_programs/consumer_controls.py
-      - name: Build the production plugin runtime and run the existing socket case
-        working-directory: product
-        run: python3 -B test/rbe/plugin_programs/consumer.py
-      - name: Read the original action diagnostics and generator use
-        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api repos/tamird/gvisor/actions/artifacts/13108819013/zip > "$RUNNER_TEMP/original.zip"
+      - name: Recover the exact original executables
+        id: original
         working-directory: product
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: |
-          python3 -B test/rbe/plugin_programs/action_log.py
-          python3 -B test/rbe/plugin_programs/consumer_inputs.py
+        run: python3 -B test/rbe/plugin_programs/resume_consumer.py recover
+      - name: Run only the two previously unexecuted cases
+        if: steps.original.outcome == 'success'
+        working-directory: product
+        # The metadata reader imports the helper, but tests must never inherit
+        # the authenticated RPC key. This unused empty value is not a header.
+        env:
+          BUILDBUDDY_API_KEY: ''
+        run: python3 -B test/rbe/plugin_programs/resume_consumer.py tests
+      - name: Complete the original link-to-archive provenance
+        if: always() && steps.original.outcome == 'success'
+        working-directory: product
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -B test/rbe/plugin_programs/consumer_inputs.py
       - name: Check the typed evidence boundary
         id: privacy
         if: always()
@@ -87,7 +98,7 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
-          name: plugin-static-musl
+          name: plugin-static-musl-original-tests
           path: |
             ${{ runner.temp }}/plugin-evidence/result.json
             ${{ runner.temp }}/plugin-evidence/image.json
