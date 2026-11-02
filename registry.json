@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T22:25:48.028466+00:00",
+    "updatedAt": "2026-11-02T22:54:43.336654+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31658,7 +31658,7 @@
       "url": "https://github.com/google/gvisor/pull/16596",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T22:21:46.902482+00:00",
+      "updatedAt": "2026-11-02T22:54:43.336654+00:00",
       "summary": "Aditya’s review found that reducing the congestion window after a tail probe left the published sender in fast recovery. On two 10 ms RTT traces it waited 3 seconds to retransmit the next loss. The amended sender retried in 220 and 223 ms. Both senders still waited for a timeout on an ambiguous ACK and repaired a separate hole in 3 ms when the peer SACKed a later segment. Master produced three of the four observations and repaired a different segment in the ambiguous case. The final revision changes which recovery statistic counts the repaired probe.",
       "evidence": [
         {
@@ -31714,8 +31714,12 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41533832046/artifacts/13184470515"
         },
         {
-          "label": "Unanswered input-validation finding",
+          "label": "Maintainer’s input-validation finding",
           "url": "https://github.com/google/gvisor/pull/16596#discussion_r4447247458"
+        },
+        {
+          "label": "Posted reply with the tested result",
+          "url": "https://github.com/google/gvisor/pull/16596#discussion_r4448582193"
         }
       ],
       "followup": {
@@ -31723,7 +31727,7 @@
         "sourceHead": "e1a3e3de2bbeabfebfe45a0cb3c90c41add81709",
         "observedAt": "2026-11-02T21:49:41.876026+00:00",
         "disposition": "Approved amendment published on #16596",
-        "nextAction": "Use the existing reapproval alarm for the amended source. The maintainer approved 1eb1f6b45 before this sender change.",
+        "nextAction": "Apply the Linux function and line citation to the original PR while it remains open; verify the head before pushing. Keep the tested future-ACK guard at the shared receiver on #16378 and use the existing reapproval alarm for the sender amendment.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16596",
           "https://github.com/google/gvisor/pull/16596#issuecomment-6589285965",
@@ -31738,6 +31742,14 @@
           "outcome": "approved",
           "at": "2026-11-02T21:49:41.876026+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/16596"
+        },
+        {
+          "kind": "reply",
+          "body": "I reproduced this on e1a3e3de2. After the original flight was acknowledged, an ACK one byte past SND.NXT cut cwnd from 22 segments to 2. When a valid ACK then covered newly sent data, the probe evidence had already been consumed.\n\n#16378 rejects the invalid ACK before it reaches the sender. With both changes, cwnd stayed at 22 until the valid ACK, then fell to 2. Linux likewise stayed at 10 and then fell to 5. All five existing packet controls still passed in both stacks [1]. I’d keep the upper bound at that shared receiver check. The added packet case also links directly to Linux’s tcp_process_tlp_ack [2].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41533832046/artifacts/13184470515\n[2]: https://github.com/tamird/gvisor/commit/5703ff9db\n\nPosted by Codex on behalf of @tamird.",
+          "head": "e1a3e3de2bbeabfebfe45a0cb3c90c41add81709",
+          "outcome": "approved",
+          "at": "2026-11-02T22:31:59Z",
+          "postedURL": "https://github.com/google/gvisor/pull/16596#discussion_r4448582193"
         }
       ],
       "reapproval": {
@@ -31748,16 +31760,6 @@
         "diffSha256": "7ea84e182bfa75748dd8f7567fb126e7ffd5685ec22562e718b85b1e74787486",
         "summary": "After a tail probe repairs the hole, the amended sender reduces its congestion window without entering fast recovery. This lets it probe the next loss before the retransmission timeout.",
         "evidence": "https://github.com/google/gvisor/compare/1eb1f6b45fc2f0c80fa775b9c32d10f3f43fd0c4..e1a3e3de2bbeabfebfe45a0cb3c90c41add81709"
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "reply",
-        "head": "e1a3e3de2bbeabfebfe45a0cb3c90c41add81709",
-        "url": "https://github.com/google/gvisor/pull/16596#discussion_r4447247458",
-        "title": "Reply about ACKs beyond the data sent",
-        "requestedAt": "2026-11-02T22:21:46.902482+00:00",
-        "summary": "Post this measured result in the existing #16596 review thread? The source amendment was approved separately.",
-        "body": "I reproduced this on e1a3e3de2. After the original flight was acknowledged, an ACK one byte past SND.NXT cut cwnd from 22 segments to 2. When a valid ACK then covered newly sent data, the probe evidence had already been consumed.\n\n#16378 rejects the invalid ACK before it reaches the sender. With both changes, cwnd stayed at 22 until the valid ACK, then fell to 2. Linux likewise stayed at 10 and then fell to 5. All five existing packet controls still passed in both stacks [1]. I’d keep the upper bound at that shared receiver check. The added packet case also links directly to Linux’s tcp_process_tlp_ack [2].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41533832046/artifacts/13184470515\n[2]: https://github.com/tamird/gvisor/commit/5703ff9db\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -38936,7 +38938,7 @@
       "url": "https://github.com/google/gvisor/pull/15972",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T22:25:48.028466+00:00",
+      "updatedAt": "2026-11-02T22:54:43.336654+00:00",
       "summary": "The author applied the ACK-accounting fix. On a separate recovery-exit ACK, the PR sent the one remaining segment at the old 20 ms deadline. Using the advancing ACK’s 50 ms RTO matched the Linux timer calculation and preserved the four existing cases.",
       "evidence": [
         {
@@ -38970,6 +38972,10 @@
         {
           "label": "Author’s recovery-exit question",
           "url": "https://github.com/google/gvisor/pull/15972#discussion_r4445336673"
+        },
+        {
+          "label": "Posted reply with the tested result",
+          "url": "https://github.com/google/gvisor/pull/15972#discussion_r4448596038"
         }
       ],
       "settledReviews": [
@@ -38980,18 +38986,16 @@
           "outcome": "approved",
           "at": "2026-11-02T15:46:59.054342+00:00",
           "url": "https://github.com/google/gvisor/pull/15972#discussion_r4444417322"
+        },
+        {
+          "kind": "reply",
+          "body": "Yes, arming a PTO on that ACK matches the Linux call order. The remaining difference is its deadline. On 32045814e the ACK ended SACK recovery with one newer segment outstanding and 20 ms left on the old retransmission timer. The probe retransmitted that segment 20 ms after the ACK.\n\nLinux uses a full RTO from an advancing ACK [1]. Ignoring the old deadline on an advancing ACK [2] kept the wire quiet at 20 ms and sent the same 10-byte tail at 50 ms, exactly one RTO after the ACK. Both versions passed the four existing timer tests [3].\n\n[1]: https://github.com/torvalds/linux/blob/7d0a66e4b/net/ipv4/tcp_output.c#L3073-L3081\n[2]: https://github.com/tamird/gvisor/commit/114f689c8\n[3]: https://github.com/tamird/gvisor/actions/runs/41536170137/artifacts/13184662456\n\nPosted by Codex on behalf of @tamird.",
+          "head": "32045814e05bcfcf3a6ea55a65e7329ab423b3fd",
+          "outcome": "approved",
+          "at": "2026-11-02T22:33:44Z",
+          "postedURL": "https://github.com/google/gvisor/pull/15972#discussion_r4448596038"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "reply",
-        "head": "32045814e05bcfcf3a6ea55a65e7329ab423b3fd",
-        "url": "https://github.com/google/gvisor/pull/15972#discussion_r4445336673",
-        "title": "Reply about the probe deadline after recovery",
-        "requestedAt": "2026-11-02T22:25:48.028466+00:00",
-        "summary": "Post the tested 20 ms versus 50 ms result in the author’s existing thread?",
-        "body": "Yes, arming a PTO on that ACK matches the Linux call order. The remaining difference is its deadline. On 32045814e the ACK ended SACK recovery with one newer segment outstanding and 20 ms left on the old retransmission timer. The probe retransmitted that segment 20 ms after the ACK.\n\nLinux uses a full RTO from an advancing ACK [1]. Ignoring the old deadline on an advancing ACK [2] kept the wire quiet at 20 ms and sent the same 10-byte tail at 50 ms, exactly one RTO after the ACK. Both versions passed the four existing timer tests [3].\n\n[1]: https://github.com/torvalds/linux/blob/7d0a66e4b/net/ipv4/tcp_output.c#L3073-L3081\n[2]: https://github.com/tamird/gvisor/commit/114f689c8\n[3]: https://github.com/tamird/gvisor/actions/runs/41536170137/artifacts/13184662456\n\nPosted by Codex on behalf of @tamird."
-      }
+      ]
     },
     {
       "id": "branch:ipv6-multicast-socket-options",
@@ -41202,8 +41206,8 @@
       "title": "[bazel] Replace the protoc plugin copy with a symlink",
       "url": "https://github.com/tamird/grpc/commit/b056f0930",
       "group": "rbe",
-      "status": "Human submission required",
-      "updatedAt": "2026-11-02T22:21:46.902482+00:00",
+      "status": "Published as grpc/grpc#43825",
+      "updatedAt": "2026-11-02T22:54:43.336654+00:00",
       "summary": "A Bazel symlink gives the compiled protoc plugin its public filename without running cp.",
       "evidence": [
         {
@@ -41233,6 +41237,10 @@
         {
           "label": "Earlier implementation comparison: regular copy and symlink",
           "url": "https://github.com/tamird/grpc/compare/ccfbbe369...64745d242"
+        },
+        {
+          "label": "Published upstream pull request",
+          "url": "https://github.com/grpc/grpc/pull/43825"
         }
       ],
       "refinement": {
@@ -41245,15 +41253,15 @@
           "base": "db13f8422846404ffa2e81e5d76d19488df30586"
         }
       },
-      "humanAction": {
-        "status": "pending",
-        "kind": "submission",
-        "head": "b056f09306c64c8166339d94b61ac6c1b3b2ba51",
-        "title": "[bazel] Replace the protoc plugin copy with a symlink",
-        "summary": "A Bazel symlink gives the compiled protoc plugin its public filename without running cp.",
-        "body": "grpc_proto_plugin runs cp to give an already-built executable its public filename. On a Bazel worker without a shell, that copy fails before protoc can use the plugin. Use a Bazel symlink action to give the executable the same name.",
-        "url": "https://github.com/grpc/grpc/compare/master...tamird:grpc:proposal/bazel-plugin-symlink?expand=1&title=%5Bbazel%5D%20Replace%20the%20protoc%20plugin%20copy%20with%20a%20symlink&body=grpc_proto_plugin%20runs%20cp%20to%20give%20an%20already-built%20executable%20its%20public%20filename.%20On%20a%20Bazel%20worker%20without%20a%20shell%2C%20that%20copy%20fails%20before%20protoc%20can%20use%20the%20plugin.%20Use%20a%20Bazel%20symlink%20action%20to%20give%20the%20executable%20the%20same%20name.",
-        "policyURL": "https://github.com/grpc/grpc/blob/db13f8422/CONTRIBUTING.md#generative-ai-policy"
+      "followup": {
+        "owner": "Upstream maintainer review",
+        "sourceHead": "b056f09306c64c8166339d94b61ac6c1b3b2ba51",
+        "observedAt": "2026-11-02T22:54:43.336654+00:00",
+        "disposition": "Published as grpc/grpc#43825",
+        "nextAction": "Follow the upstream checks and maintainer review. No submission is pending.",
+        "evidence": [
+          "https://github.com/grpc/grpc/pull/43825"
+        ]
       }
     },
     {
@@ -43754,8 +43762,8 @@
       "head": "10f9a0f0d126d5fae773c18275bdaa8bc0ec3ae3",
       "url": "https://github.com/tamird/rules_go/commit/10f9a0f0d",
       "title": "Build the Go standard library from its declared SDK sources",
-      "status": "Waiting for upstream response",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
+      "status": "Published as bazel-contrib/rules_go#4774",
+      "updatedAt": "2026-11-02T22:54:43.336654+00:00",
       "summary": "With the same 5,931 declared SDK files, the unsandboxed builders emitted eight more archive packages and fourteen more list entries than the sandboxed builders. Copying only declared sources made both inventories match. The repo’s own package-list test reproduces the difference.",
       "evidence": [
         {
@@ -43773,6 +43781,10 @@
         {
           "label": "Both tests pass on the fork proposal",
           "url": "https://github.com/tamird/rules_go/actions/runs/41389594631/artifacts/13116459720"
+        },
+        {
+          "label": "Published upstream pull request",
+          "url": "https://github.com/bazel-contrib/rules_go/pull/4774"
         }
       ],
       "settledReviews": [
@@ -43788,13 +43800,13 @@
         }
       ],
       "followup": {
-        "owner": "Workstream owner",
-        "disposition": "Upstream report posted",
-        "observedAt": "2026-11-02T20:50:09.856350+00:00",
+        "owner": "Upstream maintainer review",
         "sourceHead": "10f9a0f0d126d5fae773c18275bdaa8bc0ec3ae3",
-        "nextAction": "Follow the rules_go issue; the tested patch is available if upstream requests a pull request.",
+        "observedAt": "2026-11-02T22:54:43.336654+00:00",
+        "disposition": "Published as bazel-contrib/rules_go#4774",
+        "nextAction": "Follow the upstream checks and maintainer review. No submission is pending.",
         "evidence": [
-          "https://github.com/bazel-contrib/rules_go/issues/4773"
+          "https://github.com/bazel-contrib/rules_go/pull/4774"
         ]
       }
     },
@@ -46028,14 +46040,14 @@
       "id": "branch:state-graph-print-errors",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "revision/state-graph-print-returns",
-      "head": "38316d084325c7785d1d7e172a6db5e0caf0afc0",
-      "title": "Report write failures when printing a state graph",
-      "url": "https://github.com/tamird/gvisor/commit/38316d084",
+      "ref": "revision/state-graph-print-errors-direct",
+      "head": "265ff93b26f4273d9fa694d30fcc7473efad23ea",
+      "title": "Return write errors from the state graph printer",
+      "url": "https://github.com/tamird/gvisor/commit/265ff93b2",
       "group": "runtime",
-      "summary": "PrintGraph now returns the original writer error directly in text and HTML mode. It streams through a private buffer without flushing a caller-owned buffer. On stock, the closed-pipe case reported success in both modes and the other three controls passed. All four passed on the revision with the same tests.",
-      "status": "Agent work",
-      "updatedAt": "2026-11-02T22:17:21.705842+00:00",
+      "summary": "When the output pipe closed inside an array, PrintGraph returned nil for both text and HTML. The revision returns each nested write error directly and retains the existing panic handling for the shared decoder and reflection. The same fixture passed 5 of 6 cases on stock and all 6 on the revision.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T22:54:43.336654+00:00",
       "evidence": [
         {
           "label": "Original stock/fixed graph printer results and test output",
@@ -46044,6 +46056,10 @@
         {
           "label": "Matched text/HTML closed-pipe, successful output, and caller-buffer controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/41533115417/artifacts/13183400567"
+        },
+        {
+          "label": "Same graph fixture: closed pipe inside an array and five controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41537064444/artifacts/13184613470"
         }
       ],
       "settledReviews": [
@@ -46062,24 +46078,24 @@
       ],
       "refinement": {
         "before": {
-          "head": "57b52c547d6f60fb4c89f83c896c7e8f89db9145",
-          "base": "5b317311427fabfc62ffeca7d76b1622ff83f7b4"
+          "base": "5b317311427fabfc62ffeca7d76b1622ff83f7b4",
+          "head": "38316d084325c7785d1d7e172a6db5e0caf0afc0"
         },
         "after": {
-          "head": "38316d084325c7785d1d7e172a6db5e0caf0afc0",
-          "base": "5b317311427fabfc62ffeca7d76b1622ff83f7b4"
+          "base": "5b317311427fabfc62ffeca7d76b1622ff83f7b4",
+          "head": "265ff93b26f4273d9fa694d30fcc7473efad23ea"
         }
       },
-      "followup": {
-        "owner": "State checkpointing",
-        "sourceHead": "38316d084325c7785d1d7e172a6db5e0caf0afc0",
-        "observedAt": "2026-11-02T22:17:21.705842+00:00",
-        "disposition": "Contributor declined this revision",
-        "nextAction": "Review the contributor feedback before preparing another proposal. No approval is pending.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/38316d084",
-          "https://github.com/tamird/gvisor/actions/runs/41533115417/artifacts/13183400567"
-        ]
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "265ff93b26f4273d9fa694d30fcc7473efad23ea",
+        "baseHead": "5b317311427fabfc62ffeca7d76b1622ff83f7b4",
+        "title": "Return write errors from the state graph printer",
+        "url": "https://github.com/tamird/gvisor/commit/265ff93b2",
+        "requestedAt": "2026-11-02T22:54:43.336654+00:00",
+        "summary": "Open the revision that returns write errors directly from nested graph values?",
+        "body": "PrintGraph reported success when its reader closed partway through a\ncheckpoint dump. Return each write error through the value being printed,\nso callers see the error even when it occurs inside a nested value.\n\nReturn malformed graph headers and trailing-data errors directly as\nwell. Keep the existing recovery for the shared decoder and reflection,\nwhich can panic on malformed input."
       }
     }
   ],
@@ -65447,12 +65463,12 @@
     },
     {
       "id": "investigation:weekly-review-cleanup",
-      "title": "Weekly cleanup of approved review suggestions",
+      "title": "Apply reviewer cleanups to their original changes",
       "status": "active",
       "group": "tests",
-      "owner": "Tamir",
-      "updatedAt": "2026-10-29T00:37:26.613452+00:00",
-      "summary": "Four suggestions are ready in the first rollup, which waits on #16496. Two more have tested fixes and replies in a separate rollup; #16594 and #16605 retain their approved heads.",
+      "owner": "Source PR owners",
+      "updatedAt": "2026-11-02T22:54:43.336654+00:00",
+      "summary": "Apply Lucas Manning’s requested cleanups directly to open source PRs, even after approval or while a Copybara import is running. The earlier rollups below preserve tested changes and prior commitments.",
       "findings": [
         {
           "text": "#16453 (landed): Explain when the state benchmark encounters the array after encoding its elements.",
@@ -65578,7 +65594,7 @@
           ]
         }
       ],
-      "nextStep": "Open the first reviewed rollup after #16496 lands. Open the second reviewed rollup after #16594 and #16605 land.",
+      "nextStep": "Check each original PR and its current source just before publication. For an open PR, its owner applies the qualified edit there. If it merged without the change, only then route the missing edit to a follow-up. No weekly batch is required.",
       "evidence": [
         {
           "label": "Approved cleanup with final comment wording and Linux source link",
@@ -66620,9 +66636,9 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-11-02T21:30:10.580114+00:00",
+      "updatedAt": "2026-11-02T22:54:43.336654+00:00",
       "lastReviewedAt": "2026-11-02T08:31:43+00:00",
-      "summary": "The project owner checks a new review decision against other open, unpublished and recently landed work. This is agent work; an approved source normally gets a follow-up rather than an amendment.",
+      "summary": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning’s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
       "findings": [
         {
           "text": "In syscall regressions, use a syscall matcher for a failing call and print strerror(err) when checking an error value such as SO_ERROR. A sweep of additions in 108 active or recently updated gVisor proposals found one more bare expected-errno assertion beyond the Unix datagram correction. Both now produce readable diagnostics.",
@@ -66787,7 +66803,7 @@
           ]
         }
       ],
-      "nextStep": "Owners pick up changes as guidance arrives and check the full queue once each UTC day while the goal is active. Pending changes can be amended; imported or merged changes get a follow-up when useful. Only advance the review date after checking evidence.",
+      "nextStep": "Check the current upstream head and merge state immediately before pushing. For Lucas’s cleanup requests, use a separate follow-up only if the original merged without the change. Honor existing explicit holds and review decisions; check the queue daily.",
       "evidence": [
         {
           "label": "TCP review map",

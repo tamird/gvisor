@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-11-02T21:52:08.894413+00:00",
-  "registryDate": "2026-11-02T22:25:48.028466+00:00",
+  "registryDate": "2026-11-02T22:54:43.336654+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -294900,13 +294900,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-02T21:51:49.197792+00:00"
-      },
-      "contributor-review": {
-        "scope": "32045814e05bcfcf3a6ea55a65e7329ab423b3fd",
-        "since": "2026-11-02T22:25:48.028466+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-02T22:25:48.028466+00:00"
       }
     },
     "pr:15977": {
@@ -295988,13 +295981,6 @@
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
         "observedAt": "2026-11-02T21:51:49.197792+00:00"
-      },
-      "contributor-review": {
-        "scope": "e1a3e3de2bbeabfebfe45a0cb3c90c41add81709",
-        "since": "2026-11-02T22:21:46.902482+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-02T22:21:46.902482+00:00"
       }
     },
     "pr:16597": {
@@ -298058,6 +298044,15 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-02T21:49:41.876026+00:00"
+      }
+    },
+    "branch:state-graph-print-errors": {
+      "contributor-review": {
+        "scope": "265ff93b26f4273d9fa694d30fcc7473efad23ea",
+        "since": "2026-11-02T22:54:43.336654+00:00",
+        "observedAt": "2026-11-02T22:54:43.336654+00:00",
+        "basis": "observed",
+        "qualifier": null
       }
     }
   },
