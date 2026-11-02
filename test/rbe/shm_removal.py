@@ -185,11 +185,25 @@ def main():
         assert git("rev-parse", commit + "^").decode().strip() == parent
     for path in ("pkg/sentry/kernel/shm/removal_probe_test.go", "pkg/sentry/kernel/shm/BUILD"):
         assert git("rev-parse", STOCK_PROBE + ":" + path) == git("rev-parse", FIXED_PROBE + ":" + path)
-    def patch(commit, parent):
-        diff = git("diff", "--no-ext-diff", "-U0", parent, commit, "--")
-        return subprocess.check_output(["git", "patch-id", "--stable"], input=diff).split()[0].decode()
-    result["fixture_patch"] = patch(STOCK_PROBE, BASE)
-    assert result["fixture_patch"] == patch(FIXED_PROBE, FIXED)
+    result["earlier_preflight"] = {"run": 41393938887, "artifact": 13117639769,
+                                   "sha256": "21f13db36621d9cf9bc94ee52ca00294d3ac6ace8a48e6fae4b3fccaed123bf7",
+                                   "bazel_invocations": 0, "outcome": "fixture patch-ID mismatch"}
+    path = "pkg/sentry/kernel/shm/shm.go"
+    marker = b"mu sync.Mutex `state:\"nosave\"`"
+    substitution = b"mu observedRegistryMutex `state:\"nosave\"`"
+    suffixes = []
+    for head, parent in ((STOCK_PROBE, BASE), (FIXED_PROBE, FIXED)):
+        paths = git("diff", "--name-only", parent, head).decode().splitlines()
+        assert set(paths) == {path, "pkg/sentry/kernel/shm/BUILD", "pkg/sentry/kernel/shm/removal_probe_test.go"}
+        original = git("show", parent + ":" + path)
+        instrumented = git("show", head + ":" + path)
+        assert original.index(b"type Registry struct") < original.index(marker) < original.index(b"func NewRegistry")
+        prefix = original.replace(marker, substitution, 1)
+        assert instrumented.startswith(prefix + b"\n// observedRegistryMutex observes")
+        suffixes.append(instrumented[len(prefix):])
+    assert suffixes[0] == suffixes[1]
+    result["mutex_observer_sha256"] = hashlib.sha256(suffixes[0]).hexdigest()
+    write(result)
     for name, source, labels, extra in [
         ("stock-contention", STOCK_PROBE, [PROBE], ["--test_env=GO_TEST_WRAP_TESTV=1"]),
         ("fixed-contention", FIXED_PROBE, [PROBE], ["--test_env=GO_TEST_WRAP_TESTV=1"]),
