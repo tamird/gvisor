@@ -251,6 +251,11 @@ func TestMapNilKeys(t *testing.T) {
 }
 
 func TestMapLoadHookReceivers(t *testing.T) {
+	runWithBothEngines(t, testMapLoadHookReceivers)
+}
+
+func testMapLoadHookReceivers(t *testing.T) {
+	t.Helper()
 	for _, test := range []struct {
 		name  string
 		value any
