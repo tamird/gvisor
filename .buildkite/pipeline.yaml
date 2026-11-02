@@ -84,17 +84,24 @@ steps:
   # Run basic AMD64 smoke tests before preceding to other tests.
   - <<: *common
     <<: *source_test
+    env:
+      DOCKER_BUILD: "false"
     label: ":fire: Smoke tests (AMD64)"
-    command: make smoke-tests
+    command: >-
+      bazel run //:release --
+      --alsologtostderr --network none --debug --TESTONLY-unsafe-nonroot=true --rootless do true
     agents:
       arch: "amd64"
       queue: "default"
   - <<: *common
     <<: *source_test
     env:
+      DOCKER_BUILD: "false"
       GLIBC_TUNABLES: glibc.pthread.rseq=0
     label: ":fire: Smoke race tests"
-    command: make smoke-race-tests
+    command: >-
+      bazel run //:release-race --
+      --alsologtostderr --network none --debug --TESTONLY-unsafe-nonroot=true --rootless do true
     agents:
       queue: "default"
 
@@ -109,8 +116,12 @@ steps:
   # we are severely limited in ARM64 agent capacity.
   - <<: *common
     <<: *source_test
+    env:
+      DOCKER_BUILD: "false"
     label: ":fire: Smoke tests (ARM64)"
-    command: make smoke-tests
+    command: >-
+      bazel run //:release --
+      --alsologtostderr --network none --debug --TESTONLY-unsafe-nonroot=true --rootless do true
     agents:
       arch: "arm64"
       queue: "arm64"
