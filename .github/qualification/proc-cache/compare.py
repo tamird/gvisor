@@ -30,13 +30,29 @@ def save():
 def runsc(install, bundle, *args, required=True):
     cmd = [str(install / "runsc"), "--root=" + str(bundle / "runtime"), "--platform=systrap",
            "--network=none", "--overlay2=none", "--host-settings=ignore", "--ignore-cgroups", *args]
-    result = subprocess.run(cmd, env={**os.environ, "GVISOR_SIDECAR_BINARIES_DIR": str(install / "gvisor-bin")},
-                            stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=120)
-    if required and result.returncode:
-        # runsc and this guest receive no credential environment in this phase.
-        error = (result.stderr or result.stdout).splitlines()
-        raise RuntimeError((args[0], result.returncode, error[-8:]))
-    return result.stdout
+    # A detached guest may keep stdio alive after the CLI has exited. Wait
+    # on the CLI process; do not wait for EOF from the persistent guest.
+    with (bundle / (args[0] + ".stdout")).open("w+") as out, (bundle / (args[0] + ".stderr")).open("w+") as err:
+        result = subprocess.run(cmd, env={**os.environ, "GVISOR_SIDECAR_BINARIES_DIR": str(install / "gvisor-bin")},
+                                stdin=subprocess.DEVNULL, stdout=out, stderr=err, timeout=120)
+        out.seek(0)
+        err.seek(0)
+        if required and result.returncode:
+            raise RuntimeError((args[0], result.returncode, (err.read() or out.read()).splitlines()[-8:]))
+        return out.read()
+
+
+def cleanup_namespace(bundle):
+    # runsc/specutils.UnmountNullNetNS loops since concurrent creators can
+    # stack nsfs bind mounts at this one path. This CLI root belongs to trial.
+    mount = str(bundle / "runtime/null-netns")
+    while True:
+        rows = [ln.split(" - ", 1)[1].split()[0] for ln in Path("/proc/self/mountinfo").read_text().splitlines()
+                if ln.split()[4] == mount]
+        if not rows:
+            return
+        assert set(rows) == {"nsfs"}, (mount, rows)
+        subprocess.run(["umount", "--lazy", "--", mount], check=True)
 
 
 def trial(bundle, number, arm, mode):
@@ -105,8 +121,18 @@ def trial(bundle, number, arm, mode):
         row["status"] = "PASS"
         del row["phase"]
         save()
+    except Exception as exc:
+        row["failure"] = str(exc)[-1000:]
+        stderr = bundle / "run.stderr"
+        if stderr.is_file():
+            row["guest_stderr_tail"] = stderr.read_text(errors="replace").splitlines()[-8:]
+        save()
+        raise
     finally:
-        runsc(install, bundle, "delete", "--force", ID, required=False)
+        try:
+            runsc(install, bundle, "delete", "--force", ID, required=False)
+        finally:
+            cleanup_namespace(bundle)
 
 
 def main():
@@ -124,6 +150,12 @@ def main():
             for arm in (("base", "current") if number % 2 == 0 else ("current", "base")):
                 with tempfile.TemporaryDirectory(dir=ROOT) as directory:
                     trial(Path(directory), number, arm, mode)
+                    if len(REPORT["trials"]) == 1:
+                        first = REPORT["trials"][0]
+                        assert (number, mode, arm, first["status"]) == (-1, "primed", "current", "PASS")
+                        assert first["after"]["pinned_fd"][1] == "eep\n" and len(first["after"]["stat_inos"]) == 16
+                        REPORT["excluded_canary"] = "complete checkpoint, restore, guest ps, sysfs, pinned comm"
+                        save()
     assert len(REPORT["trials"]) == 28 and all(row["status"] == "PASS" for row in REPORT["trials"])
     REPORT["status"] = "PASS"
 
