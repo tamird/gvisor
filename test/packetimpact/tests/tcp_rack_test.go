@@ -16,6 +16,7 @@ package tcp_rack_test
 
 import (
 	"flag"
+	"fmt"
 	"testing"
 	"time"
 
@@ -148,11 +149,13 @@ func TestRACKTailProbeACK(t *testing.T) {
 			}
 
 			ssthresh := atEnd.SndSsthresh
+			checked := atEnd
 			if tc.futureACK {
 				// No data has been sent beyond end. Follow the invalid ACK
 				// with an in-order byte so the snapshot follows its processing.
 				conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(end + 1))})
 				next := advance(end, nil)
+				checked = next
 				t.Logf("ACK for unsent data: cwnd %d to %d, ssthresh %d to %d", atEnd.SndCwnd, next.SndCwnd, ssthresh, next.SndSsthresh)
 				if next.SndSsthresh != ssthresh {
 					t.Errorf("ACK for unsent data changed ssthresh from %d to %d", ssthresh, next.SndSsthresh)
@@ -184,6 +187,7 @@ func TestRACKTailProbeACK(t *testing.T) {
 			// confirms or rules out loss of the probe.
 			sendAndReceive(t, dut, conn, 2, fd, mss, false /* sendACK */)
 			after := advance(end.Add(seqnum.Size(mss)), options)
+			fmt.Printf("TLP_FUTURE %s end=%d mss=%d before=%d/%d atend=%d/%d checked=%d/%d after=%d/%d ca=%d unacked=%d\n", tc.name, end, mss, before.SndCwnd, before.SndSsthresh, atEnd.SndCwnd, atEnd.SndSsthresh, checked.SndCwnd, checked.SndSsthresh, after.SndCwnd, after.SndSsthresh, after.CaState, after.Unacked)
 			t.Logf("probe cwnd/ssthresh: before=%d/%d end=%d/%d beyond=%d/%d", before.SndCwnd, before.SndSsthresh, atEnd.SndCwnd, atEnd.SndSsthresh, after.SndCwnd, after.SndSsthresh)
 			if got, want := after.CaState, uint8(linux.TCP_CA_Open); tc.loss && got != want {
 				t.Errorf("congestion state after probe repaired the loss = %d, want %d", got, want)
