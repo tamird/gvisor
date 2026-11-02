@@ -1,35 +1,46 @@
-name: CI
-
-"on":
+name: Check automatic TCP TIME_WAIT port reuse
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-timewait-retention]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 46
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Establish the source and normal GNU test environment
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = c7a94793c04f9ae50eae7db67971cf152673ed81
+          test "$(git rev-parse HEAD^^)" = aa767e4c43d011121271551fe24da501a56f729d
+          test "$(git diff --name-only HEAD^^ HEAD^ -- pkg/tcpip/transport/tcp/endpoint.go)" = ""
+          mkdir -p "$RUNNER_TEMP/gnu-platform" "$RUNNER_TEMP/timewait-proof"
+          printf '{"verified":false,"phase":"setup"}\n' > "$RUNNER_TEMP/timewait-proof/verdict.json"
+          cp test/rbe/tcp_timewait/qualify.py "$RUNNER_TEMP/timewait-qualify.py"
+          git checkout -q --detach HEAD^
+          test "$(bazel --version)" = "bazel $(cat .bazelversion)"
+          printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+          printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","EstimatedMemory":"2GB","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
+          umask 077
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --remote_download_outputs=toplevel' 'build --jobs=64' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu' 'test --strategy=TestRunner=local' 'test --local_test_jobs=4'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$RUNNER_TEMP/tcp.bazelrc"
+      - name: Check native loopback and production gVisor endpoints
+        timeout-minutes: 39
+        run: python3 "$RUNNER_TEMP/timewait-qualify.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: timewait-timestamp-observation
+          path: ${{ runner.temp }}/timewait-proof/
+          if-no-files-found: error
