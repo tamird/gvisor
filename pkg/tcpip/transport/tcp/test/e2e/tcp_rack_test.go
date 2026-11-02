@@ -16,8 +16,10 @@ package tcp_rack_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -1122,6 +1124,188 @@ func TestRACKWithWindowFull(t *testing.T) {
 
 	// No packet should be received as the receive window size is zero.
 	c.CheckNoPacket("unexpected packet received after userTimeout has expired")
+}
+
+// TestRepeatedTerminalSACK uses a real window of original TCP packets. The
+// simulated receiver acknowledges only contiguous bytes it actually kept.
+func TestRepeatedTerminalSACK(t *testing.T) {
+	for _, mode := range []string{"no_loss", "held_tail"} {
+		t.Run(mode, func(t *testing.T) {
+			const flight = tcp.InitialCwnd
+			const total = flight + 6
+			const mss = 1424
+			clk := faketime.NewManualClock()
+			start := clk.NowMonotonic()
+			var latest atomic.Pointer[tcp.TCPSenderState]
+			c := context.NewWithOpts(t, context.Options{EnableV4: true, MTU: 1500, Clock: clk, Probe: func(s *tcp.TCPEndpointState) { v := s.Sender; latest.Store(&v) }})
+			defer c.Cleanup()
+			e2e.EnableCUBIC(t, c)
+			e2e.SetStackSACKPermitted(t, c, true)
+			recovery := tcpip.TCPRecovery(tcpip.TCPRACKLossDetection)
+			if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &recovery); err != nil {
+				t.Fatal(err)
+			}
+			c.CreateConnectedWithRawOptions(context.TestInitialSequenceNumber, 30000, -1, []byte{2, 4, 5, 180, 4, 2, 1, 1})
+			info := func() tcpip.TCPInfoOption {
+				t.Helper()
+				var x tcpip.TCPInfoOption
+				if err := c.EP.GetSockOpt(&x); err != nil {
+					t.Fatal(err)
+				}
+				return x
+			}
+			if x := info(); x.SndMss != mss || x.SndCwnd != flight || !c.EP.(*tcp.Endpoint).SACKPermitted || c.EP.(*tcp.Endpoint).SendTSOk {
+				t.Fatalf("negotiation: %+v", x)
+			}
+			base := c.IRS.Add(1)
+			data := make([]byte, total*mss)
+			for i := range data {
+				data[i] = byte(i*17 + i/251)
+			}
+			received := make([]byte, len(data))
+			kept := make([]bool, total)
+			cum := 0
+			deliver := func(i int) {
+				copy(received[i*mss:], data[i*mss:(i+1)*mss])
+				kept[i] = true
+				for cum < total && kept[cum] {
+					cum++
+				}
+			}
+			write := func(lo, hi int) {
+				t.Helper()
+				n, err := c.EP.Write(bytes.NewReader(data[lo*mss:hi*mss]), tcpip.WriteOptions{})
+				if err != nil || n != int64((hi-lo)*mss) {
+					t.Fatalf("Write(%d,%d)=(%d,%v)", lo, hi, n, err)
+				}
+			}
+			wires := func() []int {
+				t.Helper()
+				var rv []int
+				for p := c.GetPacketNonBlocking(); p != nil; p = c.GetPacketNonBlocking() {
+					b := p.AsSlice()
+					h := header.TCP(header.IPv4(b).Payload())
+					off := int(int32(h.SequenceNumber() - uint32(base)))
+					if off < 0 || off%mss != 0 || off+mss > len(data) || !bytes.Equal(h.Payload(), data[off:off+mss]) {
+						p.Release()
+						t.Fatalf("unexpected wire offset=%d", off)
+					}
+					rv = append(rv, off/mss)
+					p.Release()
+				}
+				return rv
+			}
+			count := func() uint64 { return c.Stack().Stats().TCP.Timeouts.Value() }
+			now := func() int64 { return clk.NowMonotonic().Sub(start).Nanoseconds() }
+			record := func(phase string, w []int, blocks []header.SACKBlock) {
+				t.Helper()
+				x := info()
+				row := map[string]any{"phase": phase, "ns": now(), "wire": w, "ack_bytes": cum * mss, "timeouts": count(), "rto_ns": x.RTO.Nanoseconds(), "state": x.CcState, "cwnd": x.SndCwnd}
+				if len(blocks) != 0 {
+					row["sack_bytes"] = []int{int(base.Size(blocks[0].Start)), int(base.Size(blocks[0].End))}
+				}
+				if st := latest.Load(); st != nil {
+					row["last_probe_outstanding"] = st.Outstanding
+					row["last_probe_nxt_bytes"] = base.Size(st.SndNxt)
+				}
+				b, e := json.Marshal(row)
+				if e != nil {
+					t.Fatal(e)
+				}
+				t.Logf("REPLAY %s", b)
+			}
+			ack := func(phase string, w []int) {
+				t.Helper()
+				var blocks []header.SACKBlock
+				if cum < flight-1 && kept[flight-1] {
+					blocks = []header.SACKBlock{{Start: base.Add(seqnum.Size((flight - 1) * mss)), End: base.Add(seqnum.Size(flight * mss))}}
+				}
+				c.SendAckWithSACK(seqnum.Value(context.TestInitialSequenceNumber).Add(1), cum*mss, blocks)
+				c.Stack().Pause()
+				c.Stack().Resume()
+				if st := latest.Load(); st == nil || base.Size(st.SndUna) != seqnum.Size(cum*mss) {
+					t.Fatalf("ACK not processed, want %d", cum*mss)
+				}
+				record(phase, w, blocks)
+			}
+			clk.Advance(time.Millisecond)
+			write(0, flight)
+			original := wires()
+			if len(original) != flight {
+				t.Fatalf("initial flight: %v", original)
+			}
+			for i, v := range original {
+				if i != v {
+					t.Fatalf("initial order: %v", original)
+				}
+			}
+			record("original", original, nil)
+			if mode == "no_loss" {
+				for _, v := range original {
+					deliver(v)
+				}
+				clk.Advance(time.Millisecond)
+				ack("ordinary_ack", original)
+				write(flight, total)
+			} else {
+				// Give the receiver only the original terminal MSS. Discard any repair
+				// before the first real RTO; upstream loss before that point is unknown.
+				deliver(flight - 1)
+				clk.Advance(time.Millisecond)
+				ack("terminal_sack", original)
+				for i := 0; count() == 0 && i < 3000; i++ {
+					if w := wires(); len(w) != 0 {
+						record("pre_rto_dropped", w, nil)
+					}
+					clk.Advance(time.Millisecond)
+				}
+				if count() != 1 {
+					t.Fatalf("first RTO not reached: %d", count())
+				}
+				w := wires()
+				if len(w) != 1 || w[0] != 0 {
+					t.Fatalf("first RTO emitted %v", w)
+				}
+				record("first_rto", w, nil)
+				write(flight, total)
+				queued := wires()
+				if len(queued) != 0 {
+					t.Fatalf("queued suffix unexpectedly emitted %v", queued)
+				}
+				deliver(0)
+				clk.Advance(time.Millisecond)
+				ack("first_repair_ack", w)
+			}
+			// Deliver every subsequent real packet and return an honest cumulative
+			// ACK for each. Advance slowly enough to distinguish ACK-driven progress
+			// from a doubled RTO, and bound a sender that does not recover.
+			stop := clk.NowMonotonic().Add(8 * time.Second)
+			lastTimeoutCount := count()
+			for cum < total && clk.NowMonotonic().Before(stop) {
+				w := wires()
+				if n := count(); n != lastTimeoutCount {
+					record("later_rto", w, nil)
+					lastTimeoutCount = n
+				}
+				if len(w) == 0 {
+					clk.Advance(time.Millisecond)
+					continue
+				}
+				for _, v := range w {
+					deliver(v)
+					clk.Advance(100 * time.Microsecond)
+					ack("repair_or_new_ack", []int{v})
+				}
+			}
+			record("end", nil, nil)
+			if !bytes.Equal(received[:cum*mss], data[:cum*mss]) {
+				t.Fatal("delivered prefix mismatch")
+			}
+			if mode == "no_loss" && (cum != total || count() != 0) {
+				t.Fatalf("lossless transfer ACKed %d/%d with %d timeouts", cum, total, count())
+			}
+		})
+	}
 }
 
 func TestMain(m *testing.M) {
