@@ -1,0 +1,55 @@
+name: Verify the qualified review decisions
+on:
+  push:
+    branches: [qualification/work-map-pending-73a6291f1]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the live UI and the curated pair
+        id: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 73a6291f16af79a67fc4544d8c68fd3582b92800
+          test "$(git rev-parse HEAD^^)" = a009d1f9616cbcd59826456be433adeb1c34fd4d
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          test "$(git diff --name-only HEAD^^ HEAD^)" = "$(printf '%s\n' github-status.json registry.json)"
+          sha256sum -c <<'INPUTS'
+          e5d01ececbb039823104599713efd9082379b42e00b724e4580a0ffedf37230a  app.js
+          4325be1f7b8f15abb3bb435f71c2ed8d921f0762b185f5f829e5b714509111c8  registry.json
+          e4590a45164f3b3c74581b32d3493994e49b0843767b2fc7953fe1da132d06c2  github-status.json
+          INPUTS
+          mkdir results
+      - name: Check the canonical metadata pair
+        id: metadata
+        if: always() && steps.source.outcome == 'success'
+        run: |
+          node metadata-preflight.mjs . > results/preflight.json
+          python3 - <<'PYTHON'
+          import json,subprocess
+          from pathlib import Path
+          from work_states import record_states
+          old=json.loads(subprocess.check_output(['git','show','HEAD^^:github-status.json']));s=json.loads(Path('github-status.json').read_bytes());r=json.loads(Path('registry.json').read_bytes())
+          normalized=record_states(s['prs'],r,old,s['checkedAt'])
+          for k in ['branch:state-grow-shared-slices']:
+              assert k not in normalized and old['workStates'].pop(k)['contributor-review']['scope']=='df7d6899cc87c642732764f294030e03d2c3d208'
+          for k in ['branch:state-graph-print-errors']:
+              assert k not in old['workStates'] and normalized[k]==s['workStates'][k]
+              old['workStates'][k]=normalized[k]
+          old['registryDate']=r['meta']['updatedAt'];assert old==s
+          PYTHON
+      - name: Publish the bounded verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pending-proposals-preflight
+          path: results/preflight.json
+          if-no-files-found: error
