@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T18:30:15.670469+00:00",
+    "updatedAt": "2026-11-02T18:34:02.855318+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39645,12 +39645,16 @@
       "group": "runtime",
       "repo": "tamird/gvisor",
       "ref": "review/gofer-dgram-host-writable",
-      "head": "9963cb1a8fb4782b1bfa1c645db449a091397982",
+      "head": "2a8882a8c441ccbb0b3a825e60cc08cc916b7721",
       "title": "Wake poll on a drained host Unix datagram socket",
-      "url": "https://github.com/tamird/gvisor/commit/9963cb1a8",
+      "url": "https://github.com/tamird/gvisor/commit/2a8882a8c",
       "summary": "When an external Unix datagram receiver drained, stock gVisor left the writer asleep even though a separate poll confirmed it was writable. Linux and the tested correction delivered EPOLLOUT.",
-      "updatedAt": "2026-11-02T18:30:15.670469+00:00",
+      "updatedAt": "2026-11-02T18:34:02.855318+00:00",
       "evidence": [
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16830"
+        },
         {
           "label": "Unix datagram drain and writable wakeup on Linux, stock and corrected gVisor",
           "url": "https://github.com/tamird/gvisor/actions/runs/41166357327/artifacts/13029668642"
@@ -39660,15 +39664,15 @@
           "url": "https://github.com/tamird/gvisor/compare/86114ad1b..9963cb1a8"
         }
       ],
-      "status": "Agent work",
+      "status": "Published",
       "refinement": {
         "before": {
-          "head": "86114ad1b83d3871975d774cbcea966b205daff7",
+          "head": "9963cb1a8fb4782b1bfa1c645db449a091397982",
           "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25"
         },
         "after": {
-          "head": "9963cb1a8fb4782b1bfa1c645db449a091397982",
-          "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25"
+          "head": "2a8882a8c441ccbb0b3a825e60cc08cc916b7721",
+          "base": "7a675ac66a1e2357abdaa6cccedabcd3cce9aa5c"
         }
       },
       "settledReviews": [
@@ -39678,17 +39682,7 @@
           "outcome": "approved-with-changes",
           "at": "2026-11-02T18:30:15.670469+00:00"
         }
-      ],
-      "followup": {
-        "owner": "tcp_split_owner",
-        "sourceHead": "9963cb1a8fb4782b1bfa1c645db449a091397982",
-        "disposition": "Contributor approved with a diagnostic change",
-        "nextAction": "Add readable messages to the syscall test’s errno assertions and publish the amendment.",
-        "observedAt": "2026-11-02T18:30:15.670469+00:00",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/9963cb1a8"
-        ]
-      }
+      ]
     },
     {
       "id": "branch:rules-go-sdk-tool",
@@ -41970,12 +41964,12 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/tcp-terminal-poll-after-socket-error",
-      "head": "31698e51e22cdf8ba72fbc117edda9bbec5a8d3c",
+      "head": "c1bf3ee9af94ee5e6380252e28dfe6e8fb7f7d46",
       "title": "Clear TCP poll errors after the socket error is consumed",
-      "url": "https://github.com/tamird/gvisor/commit/31698e51e",
+      "url": "https://github.com/tamird/gvisor/commit/c1bf3ee9a",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T09:12:10.782787+00:00",
+      "updatedAt": "2026-11-02T18:34:02.855318+00:00",
       "summary": "After a refused nonblocking connect, Linux reports a hangup after the program reads ECONNREFUSED from SO_ERROR. gVisor still reported POLLERR and claimed urgent data was available. The fix checks the pending socket error and extended error queue. Poll can do that without acquiring the endpoint mutex. The established-connection ICMP soft-error case from #6666 is tracked separately.",
       "evidence": [
         {
@@ -41990,13 +41984,23 @@
       "contributorReview": {
         "status": "pending",
         "kind": "proposal",
-        "head": "31698e51e22cdf8ba72fbc117edda9bbec5a8d3c",
+        "head": "c1bf3ee9af94ee5e6380252e28dfe6e8fb7f7d46",
         "baseHead": "9940ecdc2dd3651121dd468889cc094f0ec84247",
-        "url": "https://github.com/tamird/gvisor/commit/31698e51e",
+        "url": "https://github.com/tamird/gvisor/commit/c1bf3ee9a",
         "title": "Clear TCP poll errors after the socket error is consumed",
         "requestedAt": "2026-11-01T09:12:10.782787+00:00",
         "summary": "Open the terminal TCP socket-error PR after #16667 lands?",
         "body": "After a refused nonblocking connect, Linux reports a hangup after the program reads ECONNREFUSED from SO_ERROR. gVisor still reported POLLERR and claimed urgent data was available. The fix checks the pending socket error and extended error queue. Poll can do that without acquiring the endpoint mutex. The established-connection ICMP soft-error case from #6666 is tracked separately."
+      },
+      "refinement": {
+        "before": {
+          "head": "31698e51e22cdf8ba72fbc117edda9bbec5a8d3c",
+          "base": "9940ecdc2dd3651121dd468889cc094f0ec84247"
+        },
+        "after": {
+          "head": "c1bf3ee9af94ee5e6380252e28dfe6e8fb7f7d46",
+          "base": "9940ecdc2dd3651121dd468889cc094f0ec84247"
+        }
       }
     },
     {
@@ -44825,9 +44829,13 @@
       "url": "https://github.com/google/gvisor/pull/16821",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T18:27:13.788641+00:00",
+      "updatedAt": "2026-11-02T18:34:02.855318+00:00",
       "summary": "Use the shared IFReq.SetName for TUNSETIFF, TUNGETIFF and host queries. Linux and corrected gVisor passed the same nine ioctl cases; stock zeroed a caller-owned byte after the name. The ABI, hostinet and TUN analyzers passed.",
       "evidence": [
+        {
+          "label": "Public CI stopped fetching rules_m4 with HTTP 500; the archive now matches BCR’s checksum",
+          "url": "https://github.com/google/gvisor/actions/runs/41500137494/job/125465192977"
+        },
         {
           "label": "Exact syscall, stock control and analyzer results",
           "url": "https://github.com/tamird/gvisor/actions/runs/41125713649/artifacts/13012542083"
@@ -44917,9 +44925,13 @@
       "url": "https://github.com/google/gvisor/pull/16818",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T18:27:13.788641+00:00",
+      "updatedAt": "2026-11-02T18:34:02.855318+00:00",
       "summary": "Opening /dev/fuse leaves the device unattached. Linux reports POLLERR and allows epoll to watch it. gVisor returned EPERM in the matching poll and epoll cases.",
       "evidence": [
+        {
+          "label": "Public CI stopped fetching rules_m4 with HTTP 500; the archive now matches BCR’s checksum",
+          "url": "https://github.com/google/gvisor/actions/runs/41500109178/job/125465093807"
+        },
         {
           "label": "Native Linux, stock and corrected gVisor, including mounted controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/41167813105/artifacts/13030461234"
@@ -45129,9 +45141,13 @@
       "url": "https://github.com/google/gvisor/pull/16820",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T18:27:13.788641+00:00",
+      "updatedAt": "2026-11-02T18:34:02.855318+00:00",
       "summary": "After a pause in forward data, ACKs sent for reverse traffic let stock gVisor burst 50 segments. Linux and the corrected sender sent 10. All three sent 10 when the peer was quiet.",
       "evidence": [
+        {
+          "label": "Public CI stopped fetching rules_m4 with HTTP 500; the archive now matches BCR’s checksum",
+          "url": "https://github.com/google/gvisor/actions/runs/41500128857/job/125465161984"
+        },
         {
           "label": "Linux, stock and corrected wire captures with matching TCP_INFO",
           "url": "https://github.com/tamird/gvisor/actions/runs/41408415755/artifacts/13123749763"
@@ -45391,6 +45407,38 @@
           "head": "fb022c9ac24524fabade7a33d603bab8dbf607d2",
           "outcome": "approved-with-changes",
           "at": "2026-11-02T18:27:13.788641+00:00"
+        }
+      ]
+    },
+    {
+      "id": "pr:16830",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16830,
+      "ref": "review/gofer-dgram-host-writable",
+      "head": "2a8882a8c441ccbb0b3a825e60cc08cc916b7721",
+      "title": "Watch writable host datagrams on the endpoint queue",
+      "url": "https://github.com/google/gvisor/pull/16830",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-02T18:34:02.855318+00:00",
+      "summary": "When an external Unix datagram receiver drained, stock gVisor left the writer asleep even though a separate poll confirmed it was writable. Linux and the tested correction delivered EPOLLOUT.",
+      "evidence": [
+        {
+          "label": "Unix datagram drain and writable wakeup on Linux, stock and corrected gVisor",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41166357327/artifacts/13029668642"
+        },
+        {
+          "label": "Three-line explanation added to the tested source",
+          "url": "https://github.com/tamird/gvisor/compare/86114ad1b..9963cb1a8"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "9963cb1a8fb4782b1bfa1c645db449a091397982",
+          "outcome": "approved-with-changes",
+          "at": "2026-11-02T18:30:15.670469+00:00"
         }
       ]
     }
