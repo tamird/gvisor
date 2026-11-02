@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shlex
 import shutil
 import subprocess
 from urllib.parse import unquote, urlparse
@@ -12,9 +13,9 @@ import xml.etree.ElementTree as ET
 
 import qualification_report
 
-from qualify import OUT, TMP, OWNER, audit, diagnostics, now, save
+from qualify import NATIVE, OUT, TMP, OWNER, audit, diagnostics, now, save
 
-PRODUCT = "4094887b23e0879ea0318837593dadd1ead182b5"
+PRODUCT = "acf4a712219b1b4917d033c4a108d88d142b3861"
 RUNSC = "//runsc:runsc-plugin-stack"
 SENTRY = "//runsc/cmd/sentry:gvisor_sentry_plugin_stack"
 TEST = "//test/e2e:integration_test"
@@ -23,12 +24,75 @@ TARGETS = [RUNSC, SENTRY, "//:release", TEST, BACKTRACE]
 RUNTIME = "runsc-qualified-plugin"
 IMAGE = "ubuntu@sha256:64483f3496c1373bfd55348e88694d1c4d0c9b660dee6bfef5e12f43b9933b30"
 PLATFORM = "//test/rbe/empty_worker:amd64_musl"
+PROBE = "@@+_repo_rules+libpluginstack//:vfio_command_probe"
 
 
 def command(args, log, seconds=1800):
     with log.open("w") as dst:
         return subprocess.run(["timeout", "--signal=INT", "--kill-after=20s", str(seconds), *map(str, args)],
                               stdout=dst, stderr=subprocess.STDOUT).returncode
+
+
+def compiler_preflight(r, bazel, flags):
+    """Check the real recursive Make command before building all consumers."""
+    p = r["compiler_preflight"] = {"status": "INCOMPLETE", "started": now(), "target": PROBE,
+        "scope": "dry-run pci_vfio.c recipe plus an actually compiled unistd.h declaration probe"}
+    bep, compact, log = TMP / "vfio-probe.bep", TMP / "vfio-probe.compact", TMP / "vfio-probe.log"
+    p["exit"] = command([*bazel, "build", *flags, "--platforms=@llvm//platforms:linux_x86_64_musl",
+                         "--build_event_json_file=" + str(bep), "--build_event_json_file_path_conversion=false",
+                         "--execution_log_compact_file=" + str(compact), PROBE], log, 600)
+    p.update(finished=now(), diagnostics=diagnostics(log.read_text(errors="replace")))
+    if p["exit"]:
+        p["status"] = r["status"] = "FAIL"
+    save(r)
+    ev = events(bep) if bep.exists() else []
+    if ev:
+        p["invocation"], = [e["started"]["uuid"] for e in ev if "started" in e]
+    if compact.exists():
+        p["actions"] = audit(compact)
+    save(r)
+    if p["exit"]:
+        return False
+    action, = [a for a in p["actions"] if a["targetLabel"] == PROBE]
+    p["action"] = action
+    assert action["mnemonic"] == "CcMakeMakeRule" and action["runner"] == "remote"
+    assert not action["cacheHit"] and not action["exitCode"] and not action["status"]
+    assert {x["name"]: x["value"] for x in action["platform"]} == {
+        "Arch": "amd64", "OSFamily": "linux", "container-image": NATIVE,
+        "workload-isolation-type": "oci", "recycle-runner": "false"}
+    files = outputs(ev, PROBE)
+    assert set(files) == {"pci-vfio-dry-run.txt", "vfio-api-command.txt"}
+    p["outputs"] = {name: {"sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "bytes": path.stat().st_size}
+                    for name, path in files.items()}
+    commands = []
+    for line in files["pci-vfio-dry-run.txt"].read_text().splitlines():
+        if "cmd_linux/pci_vfio.o = " in line:
+            words = list(shlex.shlex(line, posix=True, punctuation_chars=True))
+            commands += [w.split(" = ", 1)[1] for w in words if w.startswith("cmd_linux/pci_vfio.o = ")]
+    expected, = commands
+    actual = files["vfio-api-command.txt"].read_text().strip()
+    assert actual.startswith("cmd_linux/vfio_api_probe.o = ")
+    actual = actual.split(" = ", 1)[1]
+
+    def flags_only(text, source, output):
+        args = shlex.split(text)
+        assert args[0].endswith("/bin/clang")
+        assert args[args.index("-c") + 1].endswith("/" + source)
+        assert args[args.index("-o") + 1] == output
+        assert "-D_LARGEFILE64_SOURCE" in args
+        assert ("-target" in args and args[args.index("-target") + 1] == "x86_64-linux-musl") or "--target=x86_64-linux-musl" in args
+        ignored = {args.index("-o"), args.index("-o") + 1, args.index("-c"), args.index("-c") + 1}
+        return [a for i, a in enumerate(args) if i not in ignored and not a.startswith("-Wp,-MD,")]
+
+    expected_args = flags_only(expected, "pci_vfio.c", "linux/pci_vfio.o")
+    actual_args = flags_only(actual, "vfio_api_probe.c", "linux/vfio_api_probe.o")
+    assert actual_args == expected_args
+    p.update(status="PASS", same_effective_flags=True, large_file_api=True, target_triple="x86_64-linux-musl",
+             normalized_command_sha256=hashlib.sha256(json.dumps(actual_args).encode()).hexdigest(),
+             probe_source_sha256=hashlib.sha256(Path("test/rbe/plugin_programs/vfio_api_probe.c").read_bytes()).hexdigest(),
+             verified=now())
+    save(r)
+    return True
 
 
 def events(path):
@@ -180,6 +244,10 @@ def main():
                                 "sha256": "ebbd4525663c0735013c425cb61065ea68ef5189e4affc463caaa097d033887e",
                                 "status": "FAIL", "build_exit": 1, "tests_executed": 0,
                                 "cause": "pci_vfio.c uses undeclared pread64/pwrite64 in the selected musl build"},
+         "prior_flag_attempt": {"product": "4094887b23e0879ea0318837593dadd1ead182b5", "run": 41374521256,
+                                "artifact": 13110643061, "sha256": "b9547f283425311b66ccfe66bbdbfe0a448988f85fc7abc43b4c7c70fc1ad472",
+                                "status": "FAIL", "build_exit": 1, "tests_executed": 0,
+                                "cause": "vendor dpdk/Makefile replaces TLDK's EXTRA_CFLAGS with DPDK_EXTRA_CFLAGS"},
          "expected": TARGETS, "target_libc": "musl (ordinary static Go transition)",
          "gnu_archive_evidence": {"run": 41364504151, "recovery_artifact": 13106931504, "distinct_configuration": True},
          "prior_static_consumer": {"run": 41366155971, "artifact": 13107584293, "status": "FAIL", "tests_executed": 0,
@@ -193,7 +261,11 @@ def main():
     save(r)
     try:
         assert r["source"] == os.environ["GITHUB_SHA"]
-        assert subprocess.run(["git", "diff", "--quiet", PRODUCT, "HEAD", "--", ".", ":(exclude)test/rbe", ":(exclude).github/workflows/build.yml"]).returncode == 0
+        build_path = "external/tools/plugin-stack/plugin-stack.BUILD"
+        original_build = subprocess.check_output(["git", "show", PRODUCT + ":" + build_path])
+        probe_build = Path("test/rbe/plugin_programs/vfio_probe.BUILD").read_bytes()
+        assert Path(build_path).read_bytes() == original_build + b"\n" + probe_build
+        assert subprocess.run(["git", "diff", "--quiet", PRODUCT, "HEAD", "--", ".", ":(exclude)test/rbe", ":(exclude).github/workflows/build.yml", ":(exclude)" + build_path]).returncode == 0
         assert subprocess.run(["git", "diff", "--quiet", "HEAD"]).returncode == 0
         bazel = ["bazel", "--bazelrc=" + str(TMP / "sidecar.bazelrc")]
         flags = ["--config=x86_64", "--config=plugin-tldk", "-c", "opt", "--host_platform=" + PLATFORM,
@@ -203,6 +275,10 @@ def main():
                  "--jobs=400", "--remote_download_outputs=toplevel", "--noremote_local_fallback", "--spawn_strategy=remote",
                  "--color=no", "--curses=no", "--registry=" + (Path(os.environ["GITHUB_WORKSPACE"]) / "registry").as_uri(),
                  "--registry=https://bcr.bazel.build"]
+        r["phase"] = "compiler-preflight"
+        if not compiler_preflight(r, bazel, flags):
+            return 1
+        r["phase"] = "target-preflight"
         query = "set(" + " ".join(TARGETS) + ")"
         qlog = TMP / "consumer-query.log"
         r["preflight_exit"] = command([*bazel, "cquery", *flags, query, "--output=label"], qlog, 300)

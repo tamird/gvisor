@@ -62,7 +62,7 @@ def diagnostics(text):
 
 
 def audit(compact, include_links=False):
-    query = """select(.spawn != null) | .spawn | select(.targetLabel == $owner or .targetLabel == $config or .targetLabel == $helper or ($include_links and .mnemonic == "GoLink") or (.exitCode != null and .exitCode != 0))
+    query = """select(.spawn != null) | .spawn | select(.targetLabel == $owner or .targetLabel == $config or .targetLabel == $helper or .targetLabel == $probe or ($include_links and .mnemonic == "GoLink") or (.exitCode != null and .exitCode != 0))
         | {mnemonic, targetLabel, args:(if .targetLabel == $owner or .targetLabel == $config or .targetLabel == $helper then .args[0:2] else [] end), digest, runner, cacheHit, exitCode, status,
         target_triples: ([range(0; (.args | length)) as $i | select(.args[$i] == "-target" or .args[$i] == "--target") | .args[$i+1]] + [.args[]? | select(startswith("--target=")) | ltrimstr("--target=")]),
         output: (if .mnemonic == "GoLink" then (.args | index("-o")) as $i | if $i == null then null else .args[$i+1] end else null end),
@@ -70,7 +70,7 @@ def audit(compact, include_links=False):
                .name=="container-image" or .name=="workload-isolation-type" or .name=="recycle-runner")]}"""
     with subprocess.Popen([str(TMP / "bb"), "print", "--raw", "--compact_execution_log=" + str(compact)],
                           stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) as reader:
-        rows = subprocess.run(["jq", "-c", "--arg", "owner", OWNER, "--arg", "config", CONFIG, "--arg", "helper", HELPER, "--argjson", "include_links", json.dumps(include_links), query], stdin=reader.stdout,
+        rows = subprocess.run(["jq", "-c", "--arg", "owner", OWNER, "--arg", "config", CONFIG, "--arg", "helper", HELPER, "--arg", "probe", "@@+_repo_rules+libpluginstack//:vfio_command_probe", "--argjson", "include_links", json.dumps(include_links), query], stdin=reader.stdout,
                               stdout=subprocess.PIPE, text=True, check=True)
         reader.stdout.close()
         assert reader.wait() == 0

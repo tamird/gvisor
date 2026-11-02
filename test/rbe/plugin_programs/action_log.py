@@ -82,11 +82,14 @@ def main():
     record["original_action_output"] = observation
     path.write_text(json.dumps(record, indent=2) + "\n")
     try:
-        invocation = record["invocation"]
-        selected = [a for a in record.get("actions", []) if a.get("exitCode") or
+        original = record.get("compiler_preflight", {}) if record.get("phase") == "compiler-preflight" else record
+        observation["phase"] = record.get("phase")
+        invocation = original["invocation"]
+        observation["invocation"] = invocation
+        selected = [a for a in original.get("actions", []) if a.get("exitCode") or
                     (a["targetLabel"] == OWNER and a["mnemonic"] == "CcMakeMakeRule" and not a.get("cacheHit"))]
         assert len(selected) <= 6
-        if record.get("build_exit"):
+        if original.get("build_exit", original.get("exit")):
             try:
                 observation["build_log"] = original_log(invocation)
                 observation["status"] = "RECOVERED_LOGS"
