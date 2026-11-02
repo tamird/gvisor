@@ -54,6 +54,7 @@ sniff=false
 mss_study_dir=
 mss_bytes=251658240
 mss_capture=false
+mss_duration=false
 xdp=false
 declare -a unshare_opts=( -U -r )
 
@@ -119,6 +120,9 @@ while [[ $# -gt 0 ]]; do
     --mss-bytes)
       shift
       mss_bytes=$1
+      ;;
+    --mss-duration)
+      mss_duration=true
       ;;
     --mss-capture)
       mss_capture=true
@@ -479,6 +483,17 @@ sleep 5
 ${nsjoin_binary} /tmp/client.netns ${client_args} &
 client_pid=\$!
 
+if [[ -n "${mss_study_dir}" ]]; then
+  # The fixed-byte observation does not retry a transfer after it starts.
+  # Wait for the native client proxy's listener before launching iperf.
+  for i in {1..100}; do
+    ${nsjoin_binary} /tmp/client.netns ss -H -lnt 'sport = :${proxy_port}' | grep -q LISTEN && break
+    kill -0 \$client_pid
+    sleep 0.02
+  done
+  ${nsjoin_binary} /tmp/client.netns ss -H -lnt 'sport = :${proxy_port}' | grep -q LISTEN
+fi
+
 # Show traffic information.
 if ! ${client} && ! ${server}; then
   ${nsjoin_binary} /tmp/client.netns ping -c 100 -i 0.001 -W 1 ${server_addr} >&2 || true
@@ -500,7 +515,11 @@ trap cleanup EXIT
 
 # Run the benchmark, recording the results file.
 if [[ -n "${mss_study_dir}" ]]; then
+  if ${mss_duration}; then
+    ${nsjoin_binary} /tmp/client.netns ${iperf_binary_name} -p ${proxy_port} -c ${client_addr} -R -t ${duration} -O 3 -l 61440 -J > "${mss_study_dir}/iperf.json"
+  else
   ${nsjoin_binary} /tmp/client.netns ${iperf_binary_name} -p ${proxy_port} -c ${client_addr} -R -n ${mss_bytes} -l 61440 -J > "${mss_study_dir}/iperf.json"
+  fi
   primary=\$?
   for dev in wan.0 wan.1; do
     tc -j -s qdisc show dev \$dev > "${mss_study_dir}/\$dev-qdisc.json"

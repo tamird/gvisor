@@ -1,55 +1,45 @@
-name: Observe reverse TCP writes with SACK toggled
+name: Recover TCP captures and compare receiver intervals
 on:
   push:
-    branches: [qualification/tcp-mss-forwarder-paths]
+    branches: [qualification/tcp-mss-forwarder-captures]
 permissions:
   contents: read
+  actions: read
 jobs:
-  compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-mss-forwarder-paths'
+  capture:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-mss-forwarder-captures'
     runs-on: ubuntu-24.04
-    timeout-minutes: 55
+    timeout-minutes: 20
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 4, persist-credentials: false}
+      with: {fetch-depth: 5, persist-credentials: false}
     - name: Prepare the existing native Linux TCP tools
       run: |
         set -euo pipefail
         sudo -n apt-get update -qq
         sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tshark tcpdump iproute2 iperf3 ethtool bc kmod iputils-ping
         sudo -n modprobe sch_netem
-    - name: Build the one stock forwarder with the observation fixture
-      id: build
-      run: python3 test/rbe/tcp_mss_forwarder.py build
-    - name: Verify the two built executable bytes for retention
-      id: helpers
-      if: ${{ always() && steps.build.outcome == 'success' }}
+    - name: Retrieve the exact original report and executable artifacts
       env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         GH_TOKEN: ${{ github.token }}
-      run: python3 test/rbe/tcp_mss_forwarder.py scan_helpers
-    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      if: ${{ always() && steps.helpers.outcome == 'success' }}
-      with:
-        name: tcp-mss-forwarder-helpers
-        path: |
-          ${{ runner.temp }}/mss-forwarder/private/helpers/tcp_proxy
-          ${{ runner.temp }}/mss-forwarder/private/helpers/nsjoin
-          ${{ runner.temp }}/mss-forwarder/public/build.json
-        if-no-files-found: error
-    - name: Short independent captures and the fixed alternating transfer schedule
-      if: ${{ always() && steps.build.outcome == 'success' }}
-      run: python3 test/rbe/tcp_mss_forwarder.py run
+      run: |
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/mss-forwarder"
+        gh api repos/tamird/gvisor/actions/artifacts/13135903972/zip > "$RUNNER_TEMP/mss-forwarder/original.zip"
+        gh api repos/tamird/gvisor/actions/artifacts/13137025228/zip > "$RUNNER_TEMP/mss-forwarder/helpers.zip"
+    - name: Verify original bytes, capture controls and eight duration pairs
+      run: python3 test/rbe/tcp_mss_forwarder.py recover
     - name: Validate the typed publication
       id: privacy
       if: always()
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        GH_TOKEN: ${{ github.token }}
       run: python3 test/rbe/tcp_mss_forwarder.py scan
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: ${{ always() && steps.privacy.outcome == 'success' }}
       with:
-        name: tcp-mss-forwarder
+        name: tcp-mss-forwarder-captures
         path: |
           ${{ runner.temp }}/mss-forwarder/public/build.json
           ${{ runner.temp }}/mss-forwarder/public/result.json
