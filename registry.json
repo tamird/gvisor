@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T21:01:12.442264+00:00",
+    "updatedAt": "2026-11-02T21:09:35.198072+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39197,14 +39197,18 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/state-shared-slice-growth",
-      "head": "fcc0c1c73904271d7b9bde558294fa66bdf00fb4",
+      "head": "df7d6899cc87c642732764f294030e03d2c3d208",
       "title": "Extend shared slice backing arrays without a chain of parents",
-      "url": "https://github.com/tamird/gvisor/commit/fcc0c1c73",
+      "url": "https://github.com/tamird/gvisor/commit/df7d6899c",
       "group": "runtime",
       "status": "Contributor review requested",
       "summary": "Saving 2,048 progressively wider slices of one array took 70.919 ms before the change and 83.75 µs after it. Visiting the widest slice first showed no measurable change; a four-worker Nginx checkpoint had no eligible growth.",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
+      "updatedAt": "2026-11-02T21:09:35.198072+00:00",
       "evidence": [
+        {
+          "label": "Revised commit and significant original benchstat rows",
+          "url": "https://github.com/tamird/gvisor/commit/df7d6899c"
+        },
         {
           "label": "Eight alternating pairs: progressively wider slices and reverse-order control",
           "url": "https://github.com/tamird/gvisor/actions/runs/41520715670/artifacts/13176309664"
@@ -39232,25 +39236,31 @@
           "head": "64b2f7547dadf8769a5ce66e6475cd8dba6b181f",
           "outcome": "changes-requested",
           "at": "2026-11-02T20:50:09.856350+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "fcc0c1c73904271d7b9bde558294fa66bdf00fb4",
+          "outcome": "changes-requested",
+          "at": "2026-11-02T21:09:35.198072+00:00"
         }
       ],
       "refinement": {
         "before": {
-          "head": "64b2f7547dadf8769a5ce66e6475cd8dba6b181f"
+          "head": "fcc0c1c73904271d7b9bde558294fa66bdf00fb4"
         },
         "after": {
-          "head": "fcc0c1c73904271d7b9bde558294fa66bdf00fb4"
+          "head": "df7d6899cc87c642732764f294030e03d2c3d208"
         }
       },
       "contributorReview": {
         "kind": "proposal",
         "status": "pending",
-        "head": "fcc0c1c73904271d7b9bde558294fa66bdf00fb4",
-        "url": "https://github.com/tamird/gvisor/commit/fcc0c1c73",
+        "head": "df7d6899cc87c642732764f294030e03d2c3d208",
+        "url": "https://github.com/tamird/gvisor/commit/df7d6899c",
         "title": "Grow shared slice backing arrays in place",
-        "summary": "Open the measured encoder change? Saving 2,048 progressively wider slices of one array took 70.919 ms before the change and 83.75 µs after it. Visiting the widest slice first showed no measurable change; a four-worker Nginx checkpoint had no eligible growth.",
-        "body": "Saving slices with increasing capacities at the same address creates a\nparent array for each new capacity. For 2,048 one-byte slices of one\n2 KiB array, saving the narrowest slice first followed 4,192,256 parent\nlinks and wrote 8,119 bytes. [1]\n\nExtend the existing array when its element type matches and the new\nsuffix contains no other object. Keep the existing targets and index\nonly newly covered blocks. Interior windows and overlapping objects\nstill use the existing merge path.\n\nEight alternating pairs on one Linux/AMD64 CPU measured each save. [2]\n\n```\n                         Before       After\nNarrowest first          70.92 ms     83.75 us\nBytes allocated/save      391,257          175\nAllocations/save            6,148            3\n```\n\nWith the widest slice first, both versions allocated 160 bytes in three\nallocations. Save time was 57.98 vs. 58.52 us (p=0.645). A four-worker\nNginx checkpoint had no eligible array extensions. [2] [3]\n\nEach reader restored the other version's stream with interior pointer\nidentity intact. Keep the deferred-map test on the merge path by\nextending its window to the left. [4]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41156339306/artifacts/13024129668\n[2]: https://github.com/tamird/gvisor/actions/runs/41520715670/artifacts/13176309664\n[3]: https://github.com/tamird/gvisor/actions/runs/41157636743/artifacts/13026048097\n[4]: https://github.com/tamird/gvisor/actions/runs/41159570245/artifacts/13026721647",
-        "requestedAt": "2026-11-02T20:50:09.856350+00:00"
+        "summary": "Open the shared-slice encoder change? The nine significant time, byte and allocation rows are reproduced below. They apply to progressively wider slices of the same array; the reverse-order and Nginx controls did not show that benefit.",
+        "body": "When saving slices with the same starting address, the graph encoder\ncreated a parent array each time it saw a larger capacity. Saving 2,048\none-byte slices of a single 2 KiB array in increasing capacity order\nfollowed 4,192,256 parent links to write 8,119 bytes. [1]\n\nGrow the existing array when its element type matches and its new suffix\ncontains no other object. Reuse the existing targets and add only newly\ncovered blocks to the object index. An extension that overlaps another\nobject still uses the existing merge path.\n\nEight alternating pairs on one Linux/AMD64 CPU measured the cost of\nsaving 128, 512 and 2,048 slices in increasing capacity order. [2]\n\n```\n                                    │      stock      │                fixed                │\n                                    │     sec/op      │    sec/op     vs base               │\nSharedSliceSave/windows=128/narrow     266.670µ ±  3%   6.258µ ±  4%  -97.65% (p=0.000 n=8)\nSharedSliceSave/windows=512/narrow     3579.79µ ±  0%   22.37µ ±  3%  -99.38% (p=0.000 n=8)\nSharedSliceSave/windows=2048/narrow   70919.19µ ±  1%   83.75µ ±  2%  -99.88% (p=0.000 n=8)\n\n                                    │     stock     │                fixed                │\n                                    │     B/op      │    B/op     vs base                 │\nSharedSliceSave/windows=128/narrow     13432.5 ± 0%   160.0 ± 0%  -98.81% (p=0.000 n=8)\nSharedSliceSave/windows=512/narrow     55143.0 ± 0%   160.0 ± 0%  -99.71% (p=0.000 n=8)\nSharedSliceSave/windows=2048/narrow   391257.0 ± 0%   175.0 ± 1%  -99.96% (p=0.000 n=8)\n\n                                    │     stock     │                fixed                │\n                                    │   allocs/op   │ allocs/op   vs base                 │\nSharedSliceSave/windows=128/narrow     384.000 ± 0%   3.000 ± 0%  -99.22% (p=0.000 n=8)\nSharedSliceSave/windows=512/narrow    1536.000 ± 0%   3.000 ± 0%  -99.80% (p=0.000 n=8)\nSharedSliceSave/windows=2048/narrow   6148.000 ± 0%   3.000 ± 0%  -99.95% (p=0.000 n=8)\n```\n\nWith the widest slice first, save time and allocations showed no\nsignificant change at any size. A four-worker Nginx checkpoint had no\neligible array growth. [2] [3]\n\nEach reader restored the other version's stream with interior pointer\nidentity intact. Keep the deferred-map test on the merge path by\nextending its window to the left. [4]\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41156339306/artifacts/13024129668\n[2]: https://github.com/tamird/gvisor/actions/runs/41520715670/artifacts/13176309664\n[3]: https://github.com/tamird/gvisor/actions/runs/41157636743/artifacts/13026048097\n[4]: https://github.com/tamird/gvisor/actions/runs/41159570245/artifacts/13026721647\n",
+        "requestedAt": "2026-11-02T21:09:35.198072+00:00"
       }
     },
     {
@@ -45856,10 +45866,14 @@
       "title": "Build the Hey, Ollama client and profiling images with Bazel",
       "url": "https://github.com/tamird/gvisor/commit/cea9b0192",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T20:50:10.024463+00:00",
+      "status": "Published as #16871",
+      "updatedAt": "2026-11-02T21:09:35.198072+00:00",
       "summary": "Three image conversions share one rule for installing an executable. On AMD64 and ARM64 all six manifests, configs and Docker load archives matched the original proposals byte for byte. Make loaded the expected images; the Hey, Ollama and profiling consumer tests passed. The ARM64 programs ran under emulation.",
       "evidence": [
+        {
+          "label": "Published three-commit image conversion",
+          "url": "https://github.com/google/gvisor/pull/16871"
+        },
         {
           "label": "Six image and consumer comparisons against the original actions",
           "url": "https://github.com/tamird/gvisor/actions/runs/41521259446/artifacts/13178112095"
@@ -45881,16 +45895,24 @@
           "url": "https://github.com/tamird/gvisor/commit/cea9b0192"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "cea9b0192347cc0ec34ef72f51915ecdf07774c3",
-        "baseHead": "7cabb422b882a47bafdf3a7ab8a7adabc069e1a7",
-        "url": "https://github.com/tamird/gvisor/compare/7cabb422b...cea9b0192",
-        "title": "Build three Go helper images with Bazel",
-        "summary": "Open the three image conversions together? The shared rule replaces the repeated staging; the six images and their runtime behavior matched the individual proposals.",
-        "body": "The Hey benchmark, Ollama HTTP client and profiling helper each install one Go executable. Build their Linux binaries with Bazel and share the image layer, manifest and Docker archive rules. Each image still chooses its own base, executable path and command.\n\nThe existing Make targets load the Bazel archives under their original names. Hey uses its pinned Go module, the Ollama client keeps its overridable command and the profiling helper inherits the Ubuntu base configuration.",
-        "requestedAt": "2026-11-02T20:50:10.024463+00:00"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "cea9b0192347cc0ec34ef72f51915ecdf07774c3",
+          "outcome": "approved",
+          "at": "2026-11-02T21:04:46Z"
+        }
+      ],
+      "followup": {
+        "owner": "Workstream owner",
+        "sourceHead": "cea9b0192347cc0ec34ef72f51915ecdf07774c3",
+        "observedAt": "2026-11-02T21:09:35.198072+00:00",
+        "disposition": "Approved and published as #16871",
+        "nextAction": "Follow the published pull request.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16871",
+          "https://github.com/tamird/gvisor/actions/runs/41521259446/artifacts/13178112095"
+        ]
       }
     }
   ],
@@ -66431,7 +66453,7 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-11-02T18:44:13.778224+00:00",
+      "updatedAt": "2026-11-02T21:09:35.198072+00:00",
       "lastReviewedAt": "2026-11-02T08:31:43+00:00",
       "summary": "The project owner checks a new review decision against other open, unpublished and recently landed work. This is agent work; an approved source normally gets a follow-up rather than an amendment.",
       "findings": [
@@ -66564,6 +66586,19 @@
             {
               "label": "Upstream compiler-probe fix",
               "url": "https://github.com/periareon/rules_cc_autoconf/commit/8e7ad85a7"
+            }
+          ]
+        },
+        {
+          "text": "When presenting a benchmark comparison, include the significant rows and their column headers from the original benchstat output in the commit message, proposed PR description and contributor review card. Omit unchanged rows from the table. Describe unchanged controls in prose and say whether the measured case occurred in a representative workload. The shared-slice change benefits progressively wider slices; the reverse order showed no significant change and a four-worker Nginx checkpoint had no eligible growth.",
+          "evidence": [
+            {
+              "label": "Shared-slice revision with original benchstat rows",
+              "url": "https://github.com/tamird/gvisor/commit/df7d6899c"
+            },
+            {
+              "label": "Original eight-pair benchmark comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41520715670/artifacts/13176309664"
             }
           ]
         }
