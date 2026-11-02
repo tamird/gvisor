@@ -65,37 +65,54 @@ def stream(result, name):
 
 
 try:
-    for target in [label, "@@" + label]:
-        try:
-            body = {"executionLookup": {"invocationId": uid, "targetLabel": target}, "inlineExecuteResponse": True}
-            rows = rpc("GetExecution", body).get("execution", [])
-            for row in rows:
-                if row.get("targetLabel", "").lstrip("@") != label or row.get("actionMnemonic") != "GoCompilePkg":
-                    continue
-                response = row.get("executeResponse") or {}
-                result = response.get("result") or {}
-                status = row.get("status") or {}
-                if not (int(row.get("exitCode") or 0) or int(status.get("code") or 0)):
-                    continue
-                a = {"stage": row.get("stage"), "exit": row.get("exitCode"), "status": status.get("code",0),
-                     "action": row.get("actionDigest"), "start": row.get("executedActionMetadata",{}).get("executionStartTimestamp"),
-                     "finish": row.get("executedActionMetadata",{}).get("executionCompletedTimestamp"),
-                     "statusDiagnostic": list(lines(status.get("message","").encode()))}
-                for name in ("stderr","stdout"):
-                    try:
-                        a[name] = stream(result,name)
-                    except (OSError,ValueError,AssertionError) as err:
-                        a[name] = {"lookupError": type(err).__name__}
-                if a not in record["actions"]:
-                    record["actions"].append(a)
-        except (OSError,ValueError) as err:
-            record.setdefault("lookupErrors",[]).append(type(err).__name__)
+    record["targetActions"] = []
+    for target in (label, label + "_nogo"):
+        response = rpc("GetTarget", {"invocationId": uid, "targetLabel": target})
+        groups = response.get("targetGroups", [])
+        record.setdefault("targets", {})[target] = [(g.get("status"), len(g.get("targets",[]))) for g in groups]
+        for group in groups:
+            for t in group.get("targets", []):
+                for event in t.get("actionEvents", []):
+                    action = event.get("action", {})
+                    if action.get("type") != "GoCompilePkg":
+                        continue
+                    rec = {"mnemonic":action.get("type"),"exit":action.get("exitCode"),"success":action.get("success",False)}
+                    detail = action.get("failureDetail",{})
+                    rec["failureClass"] = {k: v.get("code") for k,v in detail.items() if isinstance(v,dict)}
+                    rec["message"] = list(lines(detail.get("message","").encode()))
+                    for name in ("stderr","stdout"):
+                        f = action.get(name,{})
+                        uri = f.get("uri","")
+                        rec[name] = {"uriScheme":uri.partition(":")[0],"size":f.get("length")}
+                        if f.get("contents"):
+                            rec[name].update(evidence(base64.b64decode(f["contents"])))
+                        else:
+                            valid = re.fullmatch(r"bytestream://(?:remote|cache)\.buildbuddy\.io/(?:[^?#]*/)?blobs/([a-f0-9]{64})/(\d+)",uri)
+                            if valid and int(valid[2])<4194304:
+                                try:
+                                    b = request("/api/v1/GetFile", {"uri":uri})
+                                    assert len(b)==int(valid[2]) and hashlib.sha256(b).hexdigest()==valid[1]
+                                    rec[name].update(evidence(b))
+                                except (ValueError,OSError,AssertionError) as err:
+                                    rec[name]["lookupError"] = type(err).__name__
+                    record["targetActions"].append(rec)
     try:
         chunk = rpc("GetEventLogChunk", {"invocationId": uid, "minLines": 30000})
         buf = base64.b64decode(chunk.get("buffer",""))
         record["logEvidence"] = evidence(buf)
         record["logComplete"] = not chunk.get("previousChunkId")
         record["labelMentions"] = buf.count(label.encode())
+        txt = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "",buf.decode(errors="replace")).splitlines()
+        selected = [i for i,l in enumerate(txt) if label in l or ("ERROR:" in l and "cgroup" in l)]
+        kinds = []
+        for i in selected:
+            for l in txt[max(i-3,0):i+8]:
+                q=l.strip()
+                if not q or key in q or re.search(r"token|grpcs:|https?:|api-key|bearer|authorization|secret|\s--|\(cd |^exec |^env |PATH=",q,re.I):
+                    continue
+                if len(q)<=420 and not q.startswith("["):
+                    kinds.append(q)
+        record["cgroupContext"] = list(dict.fromkeys(kinds))[:25]
     except (OSError,ValueError) as err:
         record["logLookupError"] = type(err).__name__
 finally:
