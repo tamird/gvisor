@@ -1,0 +1,80 @@
+name: Qualify short commit links in import reminders
+on:
+  push:
+    branches: [qualification/work-map-nine-character-reminders]
+permissions:
+  contents: read
+jobs:
+  qualify:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Verify browser, planner and public snapshot
+        env:
+          PRODUCTION_SHA: 897197dcd67453d02d0ba8d4fa161f2a9d4aaa74
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = "$PRODUCTION_SHA"
+          test "$(git diff --name-only HEAD^ HEAD)" = ".github/workflows/work-map.yml"
+          set +e
+          set -uo pipefail
+          mkdir -p results
+          node --test --test-reporter=tap app_test.mjs >results/browser.tap 2>&1; b=$?
+          python3 -m unittest discover -p '*_test.py' >results/planner.log 2>&1; p=$?
+          node metadata-preflight.mjs . >results/preflight.json; m=$?
+          python3 - "$b" "$p" "$m" <<'PY'
+          import json, os, re, sys
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from reapproval import reminder_plan
+
+          def load(file):
+              return json.loads(Path(file).read_bytes())
+
+          pr = next(row for row in load("github-status.json")["prs"] if row["number"] == 16551)
+          node = next(row for row in load("registry.json")["nodes"] if row["id"] == "pr:16551")
+          plan = reminder_plan(pr, node, datetime(2026, 11, 2, 18, 39, 56, tzinfo=timezone.utc),
+                               "tamird", frozenset(pr["maintainerReviewers"]))
+          head = "fa7daa135f0ca5de5461ac4b27f046632707e5e2"
+          expected = (
+              "🚨 @kerumeto please restore `ready to pull` to import "
+              "[fa7daa135](https://github.com/google/gvisor/commit/fa7daa135). "
+              "You already approved this head. There is no public export for this head.\n\n"
+              "Posted by Codex on behalf of @tamird.\n\n"
+              f"<!-- codex-reapproval-reminder:v1 head={head} action=restore-import-label -->"
+          )
+          browser = Path("results/browser.tap").read_text()
+          browser_count = re.search(r"^# tests (\d+)$", browser, re.M)
+          planner = Path("results/planner.log").read_text()
+          planner_count = re.search(r"^Ran (\d+) tests", planner, re.M)
+          results = {
+              "source": os.environ["GITHUB_SHA"], "productionSource": os.environ["PRODUCTION_SHA"],
+              "exitCodes": dict(zip(("browser", "planner", "snapshot"), map(int, sys.argv[1:]), strict=True)),
+              "browserTests": int(browser_count[1]) if browser_count else 0,
+              "plannerTests": int(planner_count[1]) if planner_count else 0,
+              "disposition": pr["publicImportDisposition"]["action"],
+              "reminder": {key:plan.get(key) for key in ("head","action","approvers","status","reason","body")},
+              "verifiedAt":datetime.now(timezone.utc).isoformat(),
+          }
+          passed = (not any(results["exitCodes"].values()) and results["browserTests"] and
+                    results["plannerTests"] and results["disposition"] == "maintainer-import-label" and
+                    plan.get("status") == "due" and plan.get("action") == "restore-import-label" and
+                    plan.get("approvers") == ["kerumeto"] and plan.get("head") == head and
+                    plan.get("body") == expected)
+          results["verdict"] = "PASS" if passed else "FAIL"
+          print(json.dumps(results))
+          Path("results/verdict.json").write_text(json.dumps(results, indent=2))
+          sys.exit(0 if passed else 1)
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: work-map-qualification
+          path: results
+          if-no-files-found: error
