@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T07:35:16+00:00",
+    "updatedAt": "2026-11-02T08:21:11+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41461,13 +41461,17 @@
         {
           "label": "Upstream proposal and shared syscall fixture",
           "url": "https://github.com/google/gvisor/pull/16787"
+        },
+        {
+          "label": "Tested change for the review reply",
+          "url": "https://github.com/tamird/gvisor/commit/fd2a30841"
         }
       ],
       "contributorReview": {
         "status": "pending",
         "kind": "reply",
         "head": "1072c7c5b69f66636a755f29a207a8ce876a91f4",
-        "url": "https://github.com/tamird/gvisor/commit/fd2a30841",
+        "url": "https://github.com/google/gvisor/pull/16787",
         "title": "Send the tested socket-close suggestion to the author",
         "requestedAt": "2026-11-02T04:11:55+00:00",
         "summary": "Post the measured finding on the waiter allocation?",
@@ -43476,6 +43480,40 @@
         "requestedAt": "2026-11-02T08:02:39+00:00",
         "summary": "Open this independent PR using its commit message?",
         "body": "Measure sender idle time from the last payload transmission. With reverse-only traffic for six retransmission timeouts, the regression twice observed a congestion window of 50 on stock and 10 on Linux and corrected gVisor. The quiet controls, existing TCP_INFO test, RTT and retransmission tests, and Nogo passed."
+      }
+    },
+    {
+      "id": "branch:kernel-header-root-policy",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/kernel-header-root-policy-standalone",
+      "head": "d85bc40fda9451667fb01002c577d62ed8308b59",
+      "title": "Keep gVisor’s default Linux headers local to its root module",
+      "url": "https://github.com/tamird/gvisor/commit/d85bc40fd",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T08:20:02+00:00",
+      "summary": "A project importing gVisor cannot query the header repository because only gVisor’s own root applies the patch that defines configure. Scope its 6.18 selection to the root and keep the header repository available to consumers.",
+      "evidence": [
+        {
+          "label": "Original stock, downstream and root query outputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41410737080/artifacts/13125283113"
+        },
+        {
+          "label": "Reconciled query verdict and checked product tree",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41412191540/artifacts/13125079783"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "d85bc40fda9451667fb01002c577d62ed8308b59",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/d85bc40fd",
+        "title": "Keep gVisor’s default Linux headers local to its root module",
+        "requestedAt": "2026-11-02T08:20:02+00:00",
+        "summary": "Open the standalone fix against current master?",
+        "body": "The stock query failed with an unknown configure tag. With the fix, the importing project inherited its own default and gVisor as root still selected 6.18. Both generated maps resolved that series to 6.18.33. The first verifier rejected the wording of the stock diagnostic. The corrected verifier checked the original outputs without rerunning Bazel."
       }
     }
   ],
@@ -47026,6 +47064,15 @@
       "reason": "The existing Go check shows a unified diff. Running goimports -d on a scratch worker requires a formatter that can produce that diff in process.",
       "evidence": [
         "https://github.com/tamird/tools/commit/d140e4d63"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:16236",
+      "to": "branch:kernel-header-root-policy",
+      "reason": "The follow-up scopes the header selection introduced in #16236.",
+      "evidence": [
+        "https://github.com/google/gvisor/commit/cf5708fbb"
       ]
     }
   ],
