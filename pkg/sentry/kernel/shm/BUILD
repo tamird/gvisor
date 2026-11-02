@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library")
+load("//tools:defs.bzl", "go_library", "go_test")
 load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
@@ -45,5 +45,20 @@ go_library(
         "//pkg/sentry/vfs",
         "//pkg/sync",
         "//pkg/usermem",
+    ],
+)
+
+go_test(
+    name = "removal_probe_test",
+    size = "small",
+    srcs = ["removal_probe_test.go"],
+    embed = [":shm"],
+    deps = [
+        "//pkg/abi/linux",
+        "//pkg/context",
+        "//pkg/errors/linuxerr",
+        "//pkg/sentry/contexttest",
+        "//pkg/sentry/kernel/auth",
+        "//pkg/sentry/pgalloc",
     ],
 )
