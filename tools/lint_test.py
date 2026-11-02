@@ -18,7 +18,6 @@
 
 import os
 import pathlib
-import re
 import subprocess
 import sys
 import tempfile
@@ -40,13 +39,6 @@ class LintTest(unittest.TestCase):
     self.env["PATH"] = str(self.bin) + os.pathsep + self.env["PATH"]
     self.cache.mkdir()
     self.bin.mkdir()
-    self.versions = dict(
-        re.findall(
-            r'^declare -r ([A-Z_]+)_VERSION="([^"]+)"$',
-            LINT.read_text(),
-            re.MULTILINE,
-        )
-    )
     self.tool(self.bin / "git", "printf 'tracked source\\0'")
     self.tool(self.bin / "curl", "echo unexpected-download >&2; exit 42")
     self.tool(self.bin / "bazel", "exit 0")
@@ -82,6 +74,7 @@ class LintTest(unittest.TestCase):
         ("goimports",),
         ("clang-format",),
         ("buildifier",),
+        ("spelling",),
         ("--fix", "goimports"),
     ):
       name = args[-1]
@@ -99,27 +92,6 @@ class LintTest(unittest.TestCase):
     self.assert_failed(result, "clang-format")
     self.assertIn("formatter-crashed", result.stderr)
     self.assertIn("PASS  buildifier", result.stderr)
-
-  def test_installer_failure(self) -> None:
-    # Codespell still downloads its wheel; never use an incomplete cache.
-    result = self.lint("spelling")
-    self.assert_failed(result, "spelling")
-    self.assertIn("unexpected-download", result.stderr)
-    self.assertFalse((self.cache / f"codespell-{self.versions['CODESPELL']}").exists())
-    self.tool(self.bin / "mktemp", "echo temporary-file-failed >&2; exit 7")
-    result = self.lint("spelling", "goimports")
-    self.assert_failed(result, "spelling")
-    self.assertIn("temporary-file-failed", result.stderr)
-    self.assertNotIn("unexpected-download", result.stderr)
-    self.assertIn("PASS  goimports", result.stderr)
-
-  def test_failed_file_selection(self) -> None:
-    # The last spelling selection succeeds; it must not hide an earlier
-    # failed list operation in the same pipeline.
-    self.tool(self.bin / "git", 'case "$4" in "*.md") exit 7;; esac; exit 0')
-    (self.cache / f"codespell-{self.versions['CODESPELL']}").mkdir()
-    self.tool(self.bin / "python3", "exit 0")
-    self.assert_failed(self.lint("spelling"), "spelling")
 
 
 if __name__ == "__main__":

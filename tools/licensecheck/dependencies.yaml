@@ -180,6 +180,14 @@
   commit: f4b10eef3a7b114033d52c8d83ad43b105a150b3
   sha256: 2c8a2520ef58c3d2a6e9e0392ec2cea37adb17db4e00c903d48415fd809397f8
   license: Apache-2.0
+- dependency: codespell
+  version: https://files.pythonhosted.org/packages/0e/20/b6019add11e84f821184234cea0ad91442373489ef7ccfa3d73a71b908fa/codespell-2.3.0-py3-none-any.whl
+  retrieved: "2026-11-02"
+  commit: 193cd7d27cd571f79358af09a8fb8997e54f8fff
+  sha256: a9c7cef2501c9cfede2110fd6d4e5e62296920efe9abfb84648df866e47f58d1
+  license:
+    - CC-BY-SA-3.0
+    - GPL-2.0-only
 - dependency: cpplint
   version: https://github.com/cpplint/cpplint/archive/refs/tags/2.0.2.tar.gz
   retrieved: "2026-10-29"

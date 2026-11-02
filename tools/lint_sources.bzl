@@ -17,7 +17,7 @@
 def _lint_sources(ctx):
     root = ctx.path(ctx.attr.root).dirname
     pending = [(root, "")]
-    groups = {"buildifier": [], "buildifier_config": [], "cc": [], "clang_format_config": [], "cpplint_config": []}
+    groups = {"buildifier": [], "buildifier_config": [], "cc": [], "clang_format_config": [], "cpplint_config": [], "docs": [], "go": []}
 
     # A native glob stops at each subpackage; it also cannot discover a source
     # not named by any target. Visit one level per pass (Starlark has no while
@@ -48,6 +48,10 @@ def _lint_sources(ctx):
                     groups["cpplint_config"].append(path)
                 elif name.endswith((".c", ".cc", ".h")):
                     groups["cc"].append(path)
+                elif name.endswith(".go"):
+                    groups["go"].append(path)
+                elif name.endswith((".md", ".html")):
+                    groups["docs"].append(path)
     if pending:
         fail("lint input tree exceeds 4096 directory levels")
 

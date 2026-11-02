@@ -49,12 +49,7 @@ declare -ra FIXABLE_CHECKS=(goimports clang-format buildifier)
 declare -ra OPTIONAL_CHECKS=(actions clang-tidy)
 declare -ra KNOWN_CHECKS=("${ALL_CHECKS[@]}" "${OPTIONAL_CHECKS[@]}")
 
-declare -r CODESPELL_VERSION="2.3.0"
 declare -r CLANG_TIDY_VERSION="22.1.8"
-
-# The codespell wheel is architecture-independent.
-declare -r CODESPELL_URL="https://files.pythonhosted.org/packages/0e/20/b6019add11e84f821184234cea0ad91442373489ef7ccfa3d73a71b908fa/codespell-${CODESPELL_VERSION}-py3-none-any.whl"
-declare -r CODESPELL_SHA256="a9c7cef2501c9cfede2110fd6d4e5e62296920efe9abfb84648df866e47f58d1"
 
 case "$(uname -m)" in
   x86_64|amd64)
@@ -98,20 +93,6 @@ fetch() {
   mv "${tmp}" "${out}"
 }
 
-install_codespell() {
-  local -r dir="${CACHE_DIR}/codespell-${CODESPELL_VERSION}"
-  if [[ ! -d "${dir}" ]]; then
-    local -r wheel="${CACHE_DIR}/codespell.whl"
-    fetch "${CODESPELL_URL}" "${CODESPELL_SHA256}" "${wheel}"
-    rm -rf "${dir}.tmp"
-    mkdir -p "${dir}.tmp"
-    unzip -q "${wheel}" -d "${dir}.tmp"
-    mv "${dir}.tmp" "${dir}"
-    rm -f "${wheel}"
-  fi
-  echo "${dir}"
-}
-
 install_clang_tidy() {
   local -r dir="${CACHE_DIR}/clang-tidy-${CLANG_TIDY_VERSION}"
   local -r bin="${dir}/clang_tidy/data/bin/clang-tidy"
@@ -131,8 +112,6 @@ install_clang_tidy() {
 
 # Only tracked files, to skip bazel-* symlinks and other build output.
 go_files() { git ls-files -z -- '*.go' "$@"; }
-doc_files() { git ls-files -z -- '*.md' '*.html'; }
-cc_files() { git ls-files -z -- '*.c' '*.cc' '*.h'; }
 
 declare -a FAILED=()
 declare -a PASSED=()
@@ -216,13 +195,7 @@ check_actions() {
 }
 
 check_spelling() {
-  local codespell_dir
-  codespell_dir="$(install_codespell)"
-  # Source is included, so identifiers codespell reads as prose (offsetP,
-  # FillIn, ...) need entries in tools/.codespellrc.
-  { doc_files && go_files && cc_files; } |
-    PYTHONPATH="${codespell_dir}" xargs -0 python3 -m codespell_lib \
-      --config "${REPO_DIR}/tools/.codespellrc"
+  bazel build //tools/lint:spelling
 }
 
 check_cpplint() {
