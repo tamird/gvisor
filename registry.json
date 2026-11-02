@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T05:42:03+00:00",
+    "updatedAt": "2026-11-02T06:15:03+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34167,12 +34167,16 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/codespell-bazel9",
-      "head": "46b096d63f5a90ef49976a6ccdeafe81a5324c57",
+      "head": "c28bb7409901425e94c7fdf7a293c792c87a731c",
       "title": "Run the source spelling check with the declared Python toolchain",
-      "url": "https://github.com/tamird/gvisor/commit/46b096d63",
+      "url": "https://github.com/tamird/gvisor/commit/c28bb7409",
       "group": "analysis",
       "summary": "The repository spelling action checked 3,329 declared files on a remote worker. A typo in a new Bazel package failed with its path and suggestion, and a request to edit sources in place failed before the file changed. The wheel contains GPL program code and CC-BY-SA dictionaries.",
       "evidence": [
+        {
+          "label": "Buildifier only reordered the output attribute and wrapped the source groups after qualification",
+          "url": "https://github.com/tamird/gvisor/compare/46b096d63..c28bb7409"
+        },
         {
           "label": "Clean, misspelled, prohibited-write and configured-word controls on Bazel 9",
           "url": "https://github.com/tamird/gvisor/actions/runs/41395141116/artifacts/13119196338"
@@ -34191,20 +34195,20 @@
         }
       ],
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T05:56:23+00:00",
+      "updatedAt": "2026-11-02T06:15:03+00:00",
       "refinement": {
         "before": {
           "head": "73eda260e0388b7f6a32ba84fe167e8dbbaa5d88"
         },
         "after": {
-          "head": "46b096d63f5a90ef49976a6ccdeafe81a5324c57"
+          "head": "c28bb7409901425e94c7fdf7a293c792c87a731c"
         }
       },
       "contributorReview": {
         "status": "pending",
         "kind": "proposal",
-        "head": "46b096d63f5a90ef49976a6ccdeafe81a5324c57",
-        "url": "https://github.com/tamird/gvisor/commit/46b096d63",
+        "head": "c28bb7409901425e94c7fdf7a293c792c87a731c",
+        "url": "https://github.com/tamird/gvisor/commit/c28bb7409",
         "title": "Run the repository spelling check as a Bazel action",
         "requestedAt": "2026-11-02T05:56:23+00:00",
         "summary": "Open the revised spelling check after the shared Bazel lint rules land?",
@@ -46877,7 +46881,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-02T05:49:41+00:00",
+      "updatedAt": "2026-11-02T06:15:03+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -48869,9 +48873,18 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41393574808/artifacts/13118664380"
             }
           ]
+        },
+        {
+          "text": "In two additional gVisor-first on/off pairs, all four senders first reduced the congestion window from 265 packets to 188. One RACK-on sender then went 44.2 seconds without new data. After its last new packet, the trace recorded 111 retransmission timeouts and 110 entries into RACK recovery on ACKs. Its receiver got 1.15 MB versus 37.36 MB with RACK off. The other RACK-on sender recovered after a 4.48-second gap. No window reduction came from confirming a tail loss probe.",
+          "evidence": [
+            {
+              "label": "Recovery decisions matched to raw ACKs and SACK ranges in four CUBIC transfers",
+              "url": "https://github.com/tamird/gvisor/blob/d37c2665b/test/benchmarks/tcp/recovery-events-receipt.json"
+            }
+          ]
         }
       ],
-      "nextStep": "Trace the first congestion-window reduction in a gVisor-first shared-bottleneck pair and identify what triggered the retransmission. For #16624, retain an older hole at timeout and check whether a newly acknowledged later transmission triggers its repair.",
+      "nextStep": "Replay the first timeout and following ACK from the stalled shared-link transfer to determine why recovery repeatedly allowed repairs but no new data. For #16624, retain an older hole at timeout and check whether a newly acknowledged later transmission triggers its repair.",
       "evidence": [
         {
           "label": "TCP_INFO retransmission count on Linux, stock gVisor and the candidate",
@@ -49316,6 +49329,10 @@
         {
           "label": "Paired gVisor and Linux receiver rates by start order, with RACK on and off",
           "url": "https://github.com/tamird/gvisor/actions/runs/41393574808/artifacts/13118664380"
+        },
+        {
+          "label": "Recovery decisions matched to raw ACKs and SACK ranges in four CUBIC transfers",
+          "url": "https://github.com/tamird/gvisor/blob/d37c2665b/test/benchmarks/tcp/recovery-events-receipt.json"
         }
       ],
       "comparisons": [
