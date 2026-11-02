@@ -35,8 +35,10 @@ def put(path, value):
 
 
 def source():
-    require(command(["git", "rev-parse", "HEAD^"]) == FIXTURE, "fixture source")
-    require(command(["git", "rev-parse", "HEAD^^"]) == BASE, "stock source")
+    require(command(["git", "rev-parse", "HEAD^"]) == "a25479282117f3dfecd541b45b2bd545c6088d93", "original carrier")
+    require(command(["git", "rev-parse", "HEAD^^"]) == FIXTURE, "fixture source")
+    require(command(["git", "rev-parse", "HEAD^^^"]) == BASE, "stock source")
+    require(not command(["git", "diff", FIXTURE, "--", "test/benchmarks/tcp"]), "fixture changed")
     require(not command(["git", "diff", BASE, "--", "pkg", "runsc", "tools", "MODULE.bazel", ".bazelrc"]), "production changed")
     require(not command(["git", "status", "--porcelain", "--untracked-files=no"]), "tracked tree dirty")
     return command(["git", "rev-parse", "HEAD"])
@@ -46,12 +48,31 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def diagnostic(text):
+    """Retain the first compiler/analysis error and bounded causal context."""
+    lines = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", text).splitlines()
+    first = next((i for i, line in enumerate(lines) if re.search(r"ERROR:|error:|compilepkg:", line)), None)
+    result = []
+    for line in lines[first:first + 36] if first is not None else []:
+        if re.search(r"authorization|x-buildbuddy|(?:remote|bes)_header|credential|password|token\s*[:=]|https?://", line, re.I):
+            continue
+        key = os.environ.get("BUILDBUDDY_API_KEY", "")
+        if key and key in line:
+            continue
+        result.append(line[:1000])
+    return {"sha256": hashlib.sha256(text.encode()).hexdigest(), "first_error_context": result}
+
+
 def build():
     PRIVATE.mkdir(parents=True, exist_ok=True)
     PUBLIC.mkdir(exist_ok=True)
     row = {"source": source(), "production": BASE, "fixture": FIXTURE, "verdict": "INCOMPLETE"}
-    bazel = ["bazel", f"--bazelrc={ROOT / 'remote.bazelrc'}"]
-    flags = ["--compilation_mode=opt", "--jobs=16", "--remote_download_outputs=all"]
+    # Reuse the native hosted-Linux build from the earlier WAN driver. The
+    # original remote worker's GCC headers differed from the client toolchain.
+    bazel = ["bazel"]
+    flags = ["--compilation_mode=opt", "--jobs=5"]
+    row.update(execution="native Linux coordinator", original_run=41430977952,
+               original_recovery=41432032243, original_build_exit=1)
     row["invocation"] = str(uuid.uuid4())
     bep = PRIVATE / "build.bep.json"
     flags += [f"--invocation_id={row['invocation']}", f"--build_event_json_file={bep}"]
@@ -59,6 +80,8 @@ def build():
     with (PRIVATE / "build.log").open("w") as log:
         p = subprocess.run(bazel + ["run", *flags, f"--script_path={PRIVATE / 'start'}", "//test/benchmarks/tcp:tcp_benchmark"], stdout=log, stderr=subprocess.STDOUT, timeout=1800)
     row.update(exit=p.returncode, command_start_unix=start, command_finish_unix=time.time())
+    if p.returncode:
+        row.update(verdict="FAIL", diagnostics=diagnostic((PRIVATE / "build.log").read_text()))
     put(PUBLIC / "build.json", row)
     require(p.returncode == 0, "build failed; original log retained on runner")
     events = [json.loads(line) for line in bep.read_text().splitlines()]
@@ -66,7 +89,7 @@ def build():
     require(len(completions) == 1 and completions[0]["success"], "target completion")
     row["target_completed"] = True
     # The selection query is a separate invocation, not the original build.
-    flags = flags[:3]
+    flags = flags[:2]
     expr = 'str(target.label) + "\\t" + target[DefaultInfo].files_to_run.executable.path'
     paths = command(bazel + ["cquery", *flags, "set(//test/benchmarks/tcp:tcp_proxy //test/benchmarks/tcp:nsjoin)", "--output=starlark", "--starlark:expr=" + expr])
     binaries = {}
@@ -200,6 +223,19 @@ def run():
             trial["verdict"] = "PASS"
         except Exception as exc:
             trial["error"] = type(exc).__name__ + ": " + str(exc)[:160]
+            # Preserve completed measurements even if a later observation gate
+            # rejects them. This does not turn an incomplete trial into PASS.
+            trial["retained"] = {}
+            for filename in ("iperf.json", "server-writes.json"):
+                path = directory / filename
+                if path.is_file() and path.stat().st_size <= 100_000:
+                    try:
+                        value = json.loads(path.read_text())
+                        if filename == "iperf.json":
+                            value = {key: value.get(key) for key in ("start", "end", "error")}
+                        trial["retained"][filename] = value
+                    except ValueError:
+                        trial["retained"][filename] = {"sha256": digest(path), "parse": "invalid JSON"}
         put(PUBLIC / "result.json", row)
     require(source() == row["source"], "source changed during run")
     require(len(row["trials"]) == 13, "incomplete schedule")
