@@ -93,9 +93,6 @@ try {
 } catch (error) {
   result.status = 'FAIL'; result.error = { name: error.name, message: error.message }; process.exitCode = 1;
 } finally {
-  socket?.close();
-  if (chrome) { chrome.kill('SIGTERM'); await Promise.race([new Promise(resolve => chrome.once('exit', resolve)), delay(2000)]); if (chrome.exitCode === null) chrome.kill('SIGKILL'); }
-  await rm(profile, { recursive: true, force: true });
   result.finishedAt = new Date().toISOString(); result.runtimeExceptions = exceptions;
   await writeFile('work-map-ui-result.json', JSON.stringify(result, null, 2) + '\n');
   const summary = `Deployed work-map browser smoke: ${result.status}\n\n` +
@@ -103,4 +100,8 @@ try {
     result.cases.map(c => `${c.id}: ${c.status}`).join('\n') + (result.error ? `\n${result.error.message}` : '') + '\n';
   console.log(summary);
   if (process.env.GITHUB_STEP_SUMMARY) await appendFile(process.env.GITHUB_STEP_SUMMARY, summary);
+  socket?.close();
+  if (chrome) chrome.kill('SIGTERM');
+  await rm(profile, { recursive: true, force: true, maxRetries: 6, retryDelay: 150 }).catch(() => {});
+
 }
