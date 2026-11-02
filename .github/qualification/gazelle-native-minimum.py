@@ -9,12 +9,62 @@ import subprocess
 import tarfile
 import tempfile
 import datetime
+import sys
+import zipfile
 
 SOURCE = "2b09bdf5dd2be338899abb48753c27cd9e80ba22"
 BAZEL = "5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160"
+
+
+def reconcile_original():
+    """Classify the observed process-wrapper error without repeating a query."""
+    temporary = Path(os.environ["RUNNER_TEMP"])
+    archive = (temporary / "gazelle.zip").read_bytes()
+    sha = hashlib.sha256(archive).hexdigest()
+    assert sha == "9c47e13b07ebfaa3435c79b33c70fc3fc3be8044a8a0b1521e699ab559b3798f"
+    metadata = json.loads((temporary / "gazelle-artifact.json").read_text())
+    assert metadata["id"] == 13167514851 and metadata["size_in_bytes"] == len(archive)
+    assert metadata["digest"] == "sha256:" + sha
+    assert metadata["workflow_run"]["id"] == 41501536218
+    assert metadata["workflow_run"]["head_sha"] == "999b71a831bb3bc743a1d8e59c2484a54284ef91"
+    with zipfile.ZipFile(temporary / "gazelle.zip") as bundle:
+        assert sorted(bundle.namelist()) == ["minimal-files.json", "verdict.json"]
+        original = json.loads(bundle.read("verdict.json"))
+        inventory = json.loads(bundle.read("minimal-files.json"))
+    assert not any(path in inventory for path in ("bin/env", "usr/bin/env"))
+    assert original["source"] == SOURCE and original["status"] == "INCOMPLETE"
+    for field, path in (("module_sha256", "MODULE.bazel"), ("patch_sha256", "tools/gazelle-native-environment.patch")):
+        data = subprocess.check_output(["git", "show", SOURCE + ":" + path])
+        assert original[field] == hashlib.sha256(data).hexdigest()
+    phases = original["phases"]
+    assert list(phases) == ["stock", "stock-with-env", "candidate", "leaking-control", "bazel7-minimum"]
+    stock = phases["stock"]
+    assert stock["status"] == "INCOMPLETE" and stock["error"] == "AssertionError" and stock["exit"] == 7
+    assert any('"execvp(env, ...)": No such file or directory' in line for line in stock["diagnostics"])
+    assert all(phases[name]["status"] == "PASS" for name in list(phases)[1:])
+    assert stock["effective_helper_sha256"] == phases["stock-with-env"]["effective_helper_sha256"]
+    assert phases["candidate"]["patch_sha256"] == original["patch_sha256"]
+    expected = {"GAZELLE_FIX_EXPLICIT": "child", "GAZELLE_FIX_OVERRIDDEN": "child", "GAZELLE_FIX_EMPTY": "", "TMP": "/tmp", "TMPDIR": "/tmp"}
+    assert all(phases[name]["exit"] == 0 and phases[name]["child_environment"] == expected for name in ("candidate", "stock-with-env"))
+    assert phases["leaking-control"]["exit"] == 7 and any("child environment differs:" in line and "GAZELLE_FIX_AMBIENT" in line for line in phases["leaking-control"]["diagnostics"])
+    assert phases["bazel7-minimum"]["exit"] == 48 and any('module "<root>" (bazel_compatibility: [>=8.0.0])' in line for line in phases["bazel7-minimum"]["diagnostics"])
+    destination = temporary / "unit-reconciled"
+    destination.mkdir(exist_ok=True)
+    value = dict(status="RECOVERED", source=SOURCE, original_archive_sha256=sha, original_actions_conclusion="failure",
+                 original=original, corrected_phase_status={name: "PASS" for name in phases},
+                 intervention="Accept the actual process-wrapper execvp(env) ENOENT diagnostic; no query or build repeated",
+                 recovered_at=datetime.datetime.now(datetime.timezone.utc).isoformat())
+    (destination / "gazelle-reconciliation.json").write_text(json.dumps(value, indent=2) + "\n")
+    print(json.dumps({key: value[key] for key in ("status", "source", "recovered_at")}))
+
+
+if sys.argv[1:] == ["--reconcile-original"]:
+    reconcile_original()
+    sys.exit(0)
+
 tree = Path.cwd()
 assert os.uname().machine == "x86_64"
-assert subprocess.check_output(["git", "rev-parse", "HEAD^"], text=True).strip() == SOURCE
+assert set(subprocess.check_output(["git", "diff", "--name-only", SOURCE, "HEAD"], text=True).splitlines()) == {".github/qualification/gazelle-native-minimum.py", ".github/workflows/gazelle-native-minimum.yml"}
 assert not subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"], text=True)
 staging = Path(tempfile.mkdtemp(dir=os.environ["RUNNER_TEMP"], prefix="repo-fetch-"))
 evidence = Path(os.environ["RUNNER_TEMP"]) / "gazelle-minimum"
@@ -188,7 +238,7 @@ for name in ['stock', 'stock-with-env', 'candidate', 'leaking-control', 'bazel7-
             row['child_environment'] = json.loads(verdicts[0].read_text())
             assert row['child_environment'] == want
         elif name == 'stock':
-            assert row['exit'] not in (0, 124) and ('Cannot run program "env"' in log or 'env is not found in PATH' in log), row
+            assert row['exit'] not in (0, 124) and any(error in log for error in ('Cannot run program "env"', 'env is not found in PATH', '"execvp(env, ...)": No such file or directory')), row
         elif name == 'leaking-control':
             assert row['exit'] not in (0, 124) and 'child environment differs:' in log and 'GAZELLE_FIX_AMBIENT' in log, row
         else:

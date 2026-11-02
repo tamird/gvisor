@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 2
+          fetch-depth: 3
           persist-credentials: false
       - name: Run the existing minimal-client controls
         run: python3 .github/qualification/gazelle-native-minimum.py
