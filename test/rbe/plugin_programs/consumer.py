@@ -1,4 +1,5 @@
 """Build ordinary static plugin consumers and run the existing socket case."""
+import datetime
 import hashlib
 import json
 import os
@@ -9,9 +10,11 @@ import subprocess
 from urllib.parse import unquote, urlparse
 import xml.etree.ElementTree as ET
 
+import qualification_report
+
 from qualify import OUT, TMP, OWNER, audit, diagnostics, now, save
 
-PRODUCT = "a24cd6513cec95981f723cf36b82f016e3fb9370"
+PRODUCT = "8671cdbf4e13082f7bb76a46966a3dfb063b5a87"
 RUNSC = "//runsc:runsc-plugin-stack"
 SENTRY = "//runsc/cmd/sentry:gvisor_sentry_plugin_stack"
 TEST = "//test/e2e:integration_test"
@@ -119,13 +122,36 @@ def test_case(r, key, bazel, flags, target, name, extra=()):
         xml, = [f for f in result["testActionOutput"] if f["name"] == "test.xml"]
         uri = urlparse(xml["uri"])
         assert uri.scheme == "file"
-        data = Path(unquote(uri.path)).read_bytes()
-        assert hashlib.sha256(data).hexdigest() == xml["digest"] and len(data) == int(xml["length"])
+        captured = TMP / (key + ".captured.jsonl")
+        retained = qualification_report.capture(bep, captured, Path(unquote(uri.path)).resolve().parent,
+                                                 TMP / (key + "-reports"))
+        assert not retained["errors"]
+        report, = [f for f in retained["reports"] if f["name"] == "test.xml"]
+        assert report["identity"]["label"] == target
+        data = (captured.parent / report["path"]).read_bytes()
+        row["capture_status"] = "PASS"
+        # Timing is ancillary to the original runtime verdict.
+        row["timing_status"] = "INCOMPLETE"
+        try:
+            if result.get("testAttemptStart") is not None and result.get("testAttemptDuration") is not None:
+                start = qualification_report.timestamp(result["testAttemptStart"])
+                duration = result["testAttemptDuration"]
+                assert re.fullmatch(r"[0-9]+(?:\.[0-9]+)?s", duration)
+                elapsed = float(duration[:-1])
+            else:
+                start = datetime.datetime.fromtimestamp(int(result["testAttemptStartMillis"]) / 1000,
+                                                        datetime.timezone.utc)
+                elapsed = int(result["testAttemptDurationMillis"]) / 1000
+            assert 0 <= elapsed <= 600
+            row.update(timing_status="PASS", execution_started=start.isoformat(),
+                       execution_finished=(start + datetime.timedelta(seconds=elapsed)).isoformat())
+        except (KeyError, ValueError, TypeError, AssertionError, OverflowError) as exc:
+            row["timing_error"] = type(exc).__name__
         cases = [{"class": c.get("classname"), "name": c.get("name"),
                   "status": "FAIL" if c.find("failure") is not None or c.find("error") is not None else
                             "SKIP" if c.find("skipped") is not None or c.get("status") == "notrun" or c.get("result") == "suppressed" else "PASS"}
                  for c in ET.fromstring(data).iter("testcase")]
-        row.update(cases=cases, xml_sha256=xml["digest"], xml_bytes=len(data))
+        row.update(cases=cases, xml_sha256=report["sha256"], xml_bytes=len(data))
         if any(c["status"] == "FAIL" for c in cases):
             row["status"] = r["status"] = "FAIL"
         save(r)
@@ -146,6 +172,9 @@ def test_case(r, key, bazel, flags, target, name, extra=()):
 def main():
     OUT.mkdir(exist_ok=True)
     r = {"source": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(), "product": PRODUCT,
+         "control": {"product": "a24cd6513cec95981f723cf36b82f016e3fb9370", "artifact": 13109817821,
+                     "sha256": "2e11f161ba40ff2def7b2412439163f4bed60669b679ac1e63901688a297d24f",
+                     "named_cases_passed": 2, "vfio_enabled": False},
          "expected": TARGETS, "target_libc": "musl (ordinary static Go transition)",
          "gnu_archive_evidence": {"run": 41364504151, "recovery_artifact": 13106931504, "distinct_configuration": True},
          "prior_static_consumer": {"run": 41366155971, "artifact": 13107584293, "status": "FAIL", "tests_executed": 0,
@@ -153,6 +182,9 @@ def main():
          "prior_header_binding": {"run": 41369346381, "artifact": 13109046368, "status": "FAIL", "tests_executed": 0,
                                   "cause": "repository rule used the header filegroup instead of its source file"},
          "status": "INCOMPLETE", "phase": "preflight", "started": now(), "tests_executed": 0}
+    control = TMP / "uapi-control.json"
+    if control.exists():
+        r["control"]["uapi_script"] = json.loads(control.read_text())
     save(r)
     try:
         assert r["source"] == os.environ["GITHUB_SHA"]
@@ -193,13 +225,16 @@ def main():
         runsc, = by_target[RUNSC].values()
         sentry, = by_target[SENTRY].values()
         r["binaries"] = {RUNSC: elf(runsc), SENTRY: elf(sentry)}
-        # Only exact output paths from the requested targets bind their links.
-        output_base = subprocess.check_output([*bazel, "info", "execution_root"], text=True, stderr=subprocess.DEVNULL).strip()
+        # The original configured owner's single GoLink binds the output.
+        # consumer_inputs independently verifies its declared output and digest.
         for target, path in ((RUNSC, runsc), (SENTRY, sentry)):
-            relative = str(path.relative_to(output_base))
-            link, = [a for a in r["actions"] if a["mnemonic"] == "GoLink" and a.get("output") == relative]
-            assert not link["exitCode"] and link["runner"] in ("remote", "remote cache hit")
+            link, = [a for a in r["actions"] if a["mnemonic"] == "GoLink" and
+                     a["targetLabel"] in (target, target + "_/" + target.rsplit(":", 1)[1])]
+            assert not link["exitCode"] and link["runner"] in ("remote", "remote cache hit", "disk cache hit")
             r["binaries"][target]["link"] = link
+            parts = path.parts
+            assert parts.count("bazel-out") == 1
+            r["binaries"][target]["output_path"] = str(Path(*parts[parts.index("bazel-out"):]))
         test_case(r, "backtrace", bazel, flags, BACKTRACE, "TestDumpStack")
         r["devices"] = devices()
         save(r)
@@ -213,8 +248,8 @@ def main():
             shutil.copy2(path, destination)
         shutil.copy2(runsc, install / "runsc")
         shutil.copy2(sentry, install / "gvisor-bin/gvisor_sentry_plugin_stack")
-        assert elf(install / "runsc") == {k: v for k, v in r["binaries"][RUNSC].items() if k != "link"}
-        assert elf(install / "gvisor-bin/gvisor_sentry_plugin_stack") == {k: v for k, v in r["binaries"][SENTRY].items() if k != "link"}
+        assert elf(install / "runsc") == {k: v for k, v in r["binaries"][RUNSC].items() if k not in ("link", "output_path")}
+        assert elf(install / "gvisor-bin/gvisor_sentry_plugin_stack") == {k: v for k, v in r["binaries"][SENTRY].items() if k not in ("link", "output_path")}
         private_logs = TMP / "plugin-runtime-logs"
         private_logs.mkdir()
         subprocess.run(["docker", "pull", IMAGE], check=True, stdout=subprocess.DEVNULL)
@@ -230,6 +265,14 @@ def main():
         r.update(phase="socket-test", test_started=now())
         save(r)
         test_case(r, "socket", bazel, flags, TEST, "TestConnectToSelf", ["--test_arg=-runtime=" + RUNTIME])
+        marker = 'Sidecar "gvisor_sentry_plugin_stack" found: booting sandbox with ' + str(install / "gvisor-bin/gvisor_sentry_plugin_stack")
+        observed = {"plugin_sentry": False, "plugin_initialization": False}
+        for path in private_logs.iterdir():
+            text = subprocess.check_output(["sudo", "tail", "-c", "1000000", path]).decode(errors="replace")
+            observed["plugin_sentry"] |= marker in text
+            observed["plugin_initialization"] |= "Initializing plugin network stack, config:" in text
+        r["runtime"]["observed"] = observed
+        assert all(observed.values())
         suites = [r["backtrace"], r["socket"]]
         if all(suite["status"] == "PASS" for suite in suites):
             r.update(status="PASS", runtime_status="PASS", phase="verified", vhost_traffic="device opened; same-container socket exchange only")

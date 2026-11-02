@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import re
 import subprocess
+import sys
 
 from cas_inputs import TMP, blob, cas, input_file, rpc
 from consumer import RUNSC, SENTRY
@@ -11,6 +12,27 @@ from qualify import HELPER, OUT, OWNER, inspect_outputs, now
 
 
 CONTRACT = {'buildtools/pmdinfogen/pmdinfogen.c': '97b272650e33dadc0941d2aa0f956f37bda2a8865067284e1b9714506b2f870b', 'buildtools/pmdinfogen/pmdinfogen.h': '8b160a949f870fd287aa4d0541dd5f75230f45d4561e3f0c30c4389154ad30f0', 'lib/librte_pci/rte_pci.h': '176dc60761b80e09ee3f2fa416cf051b8106c8e8db8b35640ce2627050fa4bdb'}
+
+def uapi_directories(text):
+    return sorted(set(re.findall(r"external/[A-Za-z0-9_+./-]*linux_kernel_headers[A-Za-z0-9_+./-]*/include", text)))
+
+
+def check_control():
+    proof = {"status": "INCOMPLETE", "invocation": "ac716cf3-de03-44be-97c0-05927b5ca766"}
+    try:
+        action = cas({"hash": "07336ff6db2b69b2de15a1572fa928a59bade0f131bc10fc62d273a1c6f78fb8", "sizeBytes": "376"}, "Action")
+        command = cas(action["commandDigest"], "Command")
+        script, = [a.replace("wrapper_build_script.sh", "build_script.sh") for a in command["arguments"] if a.endswith("wrapper_build_script.sh")]
+        node = input_file(action["inputRootDigest"], script)
+        assert node["digest"]["hash"] == "77de355b64a2f15b0e830f166d42bdc7efc18843ccec7558e8e0ce15da2aeea2"
+        directories = uapi_directories(blob(node["digest"], proof["invocation"]).decode())
+        proof.update(script_digest=node["digest"], include_directories=directories)
+        assert len(directories) == 1
+        proof["status"] = "PASS"
+    except Exception as exc:
+        proof["error"] = type(exc).__name__
+    (TMP / "uapi-control.json").write_text(json.dumps(proof))
+
 
 def main():
     path = OUT / "result.json"
@@ -38,6 +60,21 @@ def main():
                          "ld_lld": "/bin/ld.lld" in text, "llvm_objdump": "/bin/llvm-objdump" in text}
         assert triples == ["x86_64-linux-musl"]
         assert proof["make"]["ld_lld"] and proof["make"]["llvm_objdump"]
+        # The supplier's selected UAPI tree is both forwarded into the Make
+        # compiler flags and present in this exact action's input root.
+        include_dirs = uapi_directories(text)
+        proof["uapi_include_count"] = len(include_dirs)
+        assert len(include_dirs) == 1
+        uapi = proof["uapi"] = {}
+        for name in ("linux/version.h", "linux/vfio.h"):
+            header = input_file(action["inputRootDigest"], include_dirs[0] + "/" + name)
+            content = blob(header["digest"], r["invocation"])
+            uapi[name] = {"sha256": header["digest"]["hash"], "bytes": int(header["digest"]["sizeBytes"])}
+            if name == "linux/version.h":
+                version, = re.findall(rb"^#define LINUX_VERSION_CODE ([0-9]+)$", content, re.M)
+                version = int(version)
+                uapi[name]["version"] = [version >> 16, (version >> 8) & 255, version & 255]
+                assert uapi[name]["version"][:2] == [6, 18]
         # The executed Make action publishes the actual target and helper
         # configurations separately; runtime feature flags need not match.
         rows = rpc("GetExecution", {"executionLookup": {"invocationId": r["invocation"], "actionDigestHash": make["digest"]["hash"]},
@@ -63,11 +100,11 @@ def main():
         proof["outputs"] = inspect_outputs(outputs)
         target_header = next(iter(outputs["rte_config.h"])).read_text()
         helper_header = next(iter(outputs["pmd_rte_config.h"])).read_text()
-        assert "#define RTE_EAL_VFIO " not in target_header
+        assert "#define RTE_EAL_VFIO 1" in target_header
         assert "#define RTE_LIBRTE_PCI_BUS 1" in target_header
         assert all("#define RTE_ARCH_64 1" in h and "#define RTE_ARCH_X86_64 1" in h for h in (target_header, helper_header))
         proof["configurations"] = {"target": output_digests["rte_config.h"], "helper": output_digests["pmd_rte_config.h"],
-                                   "target_vfio": False, "target_pci_bus": True, "elf_class": 64,
+                                   "target_vfio": True, "target_pci_bus": True, "elf_class": 64,
                                    "same_bytes": target_header == helper_header}
         compile, = [a for a in r["actions"] if a["targetLabel"] == HELPER and a["mnemonic"] == "CppCompile"]
         assert compile["target_triples"] == ["x86_64-linux-musl"] and not compile["exitCode"]
@@ -90,6 +127,19 @@ def main():
         for owner in (RUNSC, SENTRY):
             link = r["binaries"][owner]["link"]
             action = cas(link["digest"], "Action")
+            link_command = cas(action["commandDigest"], "Command")
+            output = r["binaries"][owner]["output_path"]
+            assert output in link_command.get("outputPaths", []) + link_command.get("outputFiles", [])
+            executions = rpc("GetExecution", {"executionLookup": {"invocationId": r["invocation"], "actionDigestHash": link["digest"]["hash"]},
+                                               "inlineExecuteResponse": True}).get("execution", [])
+            completed, = [e for e in executions if e.get("actionDigest", {}).get("hash") == link["digest"]["hash"]
+                          and str(e["actionDigest"]["sizeBytes"]) == str(link["digest"]["sizeBytes"])]
+            assert completed["stage"] in (4, "COMPLETED")
+            response = completed["executeResponse"]
+            assert not response.get("status", {}).get("code") and not response["result"].get("exitCode", 0)
+            binary, = [f for f in response["result"].get("outputFiles", []) if f["path"] == output]
+            assert binary["digest"]["hash"] == r["binaries"][owner]["sha256"]
+            assert int(binary["digest"]["sizeBytes"]) == r["binaries"][owner]["bytes"]
             # Match the producer's exact declared output in the real linker input tree.
             file = input_file(action["inputRootDigest"], archive_path)
             digest = file["digest"]
@@ -106,8 +156,10 @@ def main():
                 assert all(re.search(r"\bT " + name + r"$", symbols, re.M) for name in required)
                 pmd = sorted(set(re.findall(r"\b[RD] (\w+_pmd_info)$", symbols, re.M)))
                 assert pmd == ["net_ring_pmd_info", "net_virtio_pmd_info", "net_virtio_user_pmd_info"]
-                seen[key] = {"sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data), "defined": required, "pmd_symbols": pmd}
-            proof["links"].append({"target": owner, "action": link["digest"], "archive_path": archive_path, "archive": seen[key]})
+                vfio = ["pci_vfio_read_config", "pci_vfio_map_resource", "rte_vfio_container_dma_map"]
+                assert all(re.search(r"\bT " + name + r"$", symbols, re.M) for name in vfio)
+                seen[key] = {"vfio_symbols": vfio, "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data), "defined": required, "pmd_symbols": pmd}
+            proof["links"].append({"target": owner, "action": link["digest"], "archive_path": archive_path, "archive": seen[key], "binary_digest": binary["digest"]})
         assert len(seen) == 1
         proof.update(status="PASS", finished=now())
         if original_status == "PASS":
@@ -120,4 +172,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if sys.argv[1:] == ["--check-control"]:
+        check_control()
+    else:
+        main()
