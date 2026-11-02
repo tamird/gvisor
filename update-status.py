@@ -427,6 +427,8 @@ def fetch_numbers(numbers: list[int], timeline: bool, repo: str = REPO, *, team_
     # Reminder decisions need individual reviews, not organization team names.
     selected_fields = FIELDS if team_details else FIELDS.replace(" ... on Team { name slug }", "")
     for start in range(0, len(numbers), PR_BATCH_SIZE):
+        print(json.dumps({"prBatch": {"repo": repo, "numbers": numbers[start:start + PR_BATCH_SIZE],
+                                      "nextRequest": requests + 1}}), flush=True)
         fields = " ".join(f"p{number}:pullRequest(number:{number}){{{selected_fields}{TIMELINE if timeline else 'body'}}}"
                           for number in numbers[start:start + PR_BATCH_SIZE])
         response = graphql(f'query {{ repository(owner:"{owner}",name:"{name}") {{ {fields} }} }}')
@@ -435,6 +437,33 @@ def fetch_numbers(numbers: list[int], timeline: bool, repo: str = REPO, *, team_
                 raise RuntimeError("A tracked public PR was unavailable; previous snapshot is unchanged")
             pr["_retrievedAt"] = datetime.now(timezone.utc).isoformat()
             result[pr["number"]] = pr
+    return result
+
+
+def fetch_registered_prs(repositories: set[str]) -> dict[tuple[str, int], dict]:
+    """Batch selected supplier PRs across repositories without broad discovery."""
+    identities = sorted({(node["repo"], node["number"]) for node in REGISTRY["nodes"]
+                         if node["type"] == "pr" and node["repo"] in repositories})
+    result = {}
+    for start in range(0, len(identities), PR_BATCH_SIZE):
+        batch = {f"r{index}": identity for index, identity in
+                 enumerate(identities[start:start + PR_BATCH_SIZE])}
+        fields = []
+        for alias, (repo, number) in batch.items():
+            owner, name = repo.split("/")
+            fields.append(f'{alias}:repository(owner:"{owner}",name:"{name}"){{'
+                          f'pullRequest(number:{number}){{{FIELDS}{TIMELINE}}}}}')
+        print(json.dumps({"registeredPRBatch": {"identities": list(batch.values()),
+                                                "nextRequest": requests + 1}}), flush=True)
+        response = graphql("query {" + " ".join(fields) + "}")
+        if set(response) != set(batch):
+            raise RuntimeError("Registered PR inventory is incomplete; previous snapshot is unchanged")
+        for alias, identity in batch.items():
+            pr = (response[alias] or {}).get("pullRequest")
+            if not pr or (pr["repository"]["nameWithOwner"], pr["number"]) != identity:
+                raise RuntimeError(f"Registered PR {identity} was unavailable or mismatched; previous snapshot is unchanged")
+            pr["_retrievedAt"] = datetime.now(timezone.utc).isoformat()
+            result[identity] = pr
     return result
 
 
@@ -457,6 +486,8 @@ def open_inventory(repo: str = REPO) -> dict[int, str | None]:
     numbers = {}
     total = None
     while True:
+        print(json.dumps({"openInventoryPage": {"repo": repo, "offset": len(numbers),
+                                                "nextRequest": requests + 1}}), flush=True)
         query = """query($owner:String!,$name:String!,$after:String) {
           repository(owner:$owner,name:$name) {
             pullRequests(states:OPEN,first:100,after:$after) {
@@ -550,7 +581,8 @@ def recheck_snapshot_mergeability(raw_prs: list[dict], rows: list[dict], repo: s
     return result
 
 
-def collect_repository(repo: str, policy: str, previous: dict) -> tuple[list[dict], dict, dict, dict]:
+def collect_repository(repo: str, policy: str, previous: dict,
+                       registered: dict[tuple[str, int], dict] | None = None) -> tuple[list[dict], dict, dict, dict]:
     numbers = {node["number"] for node in REGISTRY["nodes"]
                if node["type"] == "pr" and node["repo"] == repo}
     prior_sources = {pr["number"]: pr for pr in previous.get("prs", []) if pr.get("repo", REPO) == repo}
@@ -566,7 +598,9 @@ def collect_repository(repo: str, policy: str, previous: dict) -> tuple[list[dic
         open_numbers = open_inventory(repo)
         numbers.update(number for number, author in open_numbers.items() if author == OWNER)
         refresh_numbers = {number for number in numbers if needs_refresh(number, prior_sources, open_numbers)}
-    originals = fetch_numbers(sorted(refresh_numbers), timeline=True, repo=repo)
+    originals = ({number: registered[repo, number] for number in refresh_numbers}
+                 if registered_only and registered is not None
+                 else fetch_numbers(sorted(refresh_numbers), timeline=True, repo=repo))
     relations = {number: {pr["number"]: pr["sourceHead"]
                           for pr in prior_sources.get(number, {}).get("imports", []) if policy == "copybara"}
                  for number in numbers}
@@ -881,6 +915,8 @@ def collect_issues(previous: dict) -> dict[str, dict]:
     issues = {}
     for start in range(0, len(nodes), PR_BATCH_SIZE):
         batch = {f"i{index}": node for index, node in enumerate(nodes[start:start + PR_BATCH_SIZE], start)}
+        print(json.dumps({"issueBatch": {"identities": [node["id"] for node in batch.values()],
+                                         "nextRequest": requests + 1}}), flush=True)
         fields = []
         for alias, node in batch.items():
             owner, name = node["repo"].split("/")
@@ -970,8 +1006,12 @@ def main() -> None:
             previous = {}
     prs, refreshed, prior_prs, inventories = [], {}, {}, {}
     maintainers = fetch_maintainers()
+    registered_repositories = set(REGISTRY["meta"].get("registeredOnlyRepositories", [])) & policies.keys()
+    registered = None
     for repo, policy in policies.items():
-        records, fresh, prior, inventory = collect_repository(repo, policy, previous)
+        if repo in registered_repositories and registered is None:
+            registered = fetch_registered_prs(registered_repositories)
+        records, fresh, prior, inventory = collect_repository(repo, policy, previous, registered)
         if repo == "google/gvisor":
             records = [with_maintainer_reviewers(pr, maintainers) if pr["status"] == "open" else pr for pr in records]
         # Keep observed human feedback actionable even if a later repository or
