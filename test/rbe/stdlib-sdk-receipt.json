@@ -1,0 +1,207 @@
+{
+  "source": "bd1cc2039a4d7ad2f6490c6d69130ca3763a48f6",
+  "target": "@io_bazel_rules_go//tests/core/stdlib:stdlib_files",
+  "startedAt": "2026-11-02T04:26:19.630745+00:00",
+  "verified": true,
+  "outputs": {
+    "archive": {
+      "expectedCount": 370,
+      "expectedSha256": "fab5aa14d9f7d336e44b0a0d86d1e5275f6eda5c325df5cf7194431a0f029aa3",
+      "differences": {
+        "local": {
+          "added": [
+            "crypto/internal/sysrand/internal/seccomp",
+            "encoding/json/internal/jsontest",
+            "internal/obscuretestdata",
+            "internal/testpty",
+            "log/slog/internal/benchmarks",
+            "net/internal/socktest",
+            "reflect/internal/example1",
+            "reflect/internal/example2"
+          ],
+          "missing": []
+        },
+        "fixed": {
+          "added": [],
+          "missing": []
+        }
+      }
+    },
+    "list": {
+      "expectedCount": 370,
+      "expectedSha256": "7d54916a3206d4e861a7ed83adfe56d9c82a46c8cdeb2fc601b425c8dfa2fcfc",
+      "differences": {
+        "local": {
+          "added": [
+            "crypto/internal/fips140test",
+            "crypto/internal/sysrand/internal/seccomp",
+            "embed/internal/embedtest",
+            "encoding/json/internal/jsontest",
+            "internal/copyright",
+            "internal/coverage/test",
+            "internal/obscuretestdata",
+            "internal/runtime/wasitest",
+            "internal/testpty",
+            "log/slog/internal/benchmarks",
+            "net/internal/cgotest",
+            "net/internal/socktest",
+            "reflect/internal/example1",
+            "reflect/internal/example2"
+          ],
+          "missing": []
+        },
+        "fixed": {
+          "added": [],
+          "missing": []
+        }
+      }
+    }
+  },
+  "finishedAt": "2026-11-02T04:26:19.631731+00:00",
+  "input": {
+    "run": 41387753944,
+    "artifact": 13116705064,
+    "zipSha256": "33ad746060c7b76fac1e2bcc59a2896182de260eeda1fc136c583d1bc2450475",
+    "originalVerdict": {
+      "source": "bd1cc2039a4d7ad2f6490c6d69130ca3763a48f6",
+      "target": "@io_bazel_rules_go//tests/core/stdlib:stdlib_files",
+      "startedAt": "2026-11-02T04:24:19.659373+00:00",
+      "verified": false,
+      "error": "",
+      "finishedAt": "2026-11-02T04:24:19.661141+00:00"
+    },
+    "carrier": "31a51fe7123d59f3a63e0d413ec4d77129156713",
+    "earlierAttempts": [
+      {
+        "run": 41386641989,
+        "artifact": 13114888719,
+        "result": "Bazel patch-file preflight rejected missing diff --git headers; no producer ran."
+      },
+      {
+        "run": 41386960435,
+        "artifact": 13115806231,
+        "result": "The selected supplier configuration requires race and cgo; analysis stopped before either producer. The package-list TestRunner failed."
+      }
+    ]
+  },
+  "observed": {
+    "sandbox": {
+      "source": "aa767e4c43d011121271551fe24da501a56f729d",
+      "declaredFiles": 5931,
+      "declaredSha256": "babf90923bd428f4a217c3684dc861d02c32e894ffe2979ed1cb9fe9e8c1d12f",
+      "archiveCount": 370,
+      "archiveSha256": "fab5aa14d9f7d336e44b0a0d86d1e5275f6eda5c325df5cf7194431a0f029aa3",
+      "listCount": 370,
+      "listSha256": "7d54916a3206d4e861a7ed83adfe56d9c82a46c8cdeb2fc601b425c8dfa2fcfc",
+      "actions": [
+        {
+          "mnemonic": "GoStdlibList",
+          "runner": "linux-sandbox",
+          "owner": "@@rules_go+//:stdlib",
+          "cacheHit": false,
+          "status": "",
+          "exit": 0
+        },
+        {
+          "mnemonic": "GoStdlib",
+          "runner": "linux-sandbox",
+          "owner": "@@rules_go+//:stdlib",
+          "cacheHit": false,
+          "status": "",
+          "exit": 0
+        }
+      ],
+      "finishedAt": "2026-11-02T04:20:59.799716+00:00"
+    },
+    "local": {
+      "source": "aa767e4c43d011121271551fe24da501a56f729d",
+      "declaredFiles": 5931,
+      "declaredSha256": "babf90923bd428f4a217c3684dc861d02c32e894ffe2979ed1cb9fe9e8c1d12f",
+      "archiveCount": 378,
+      "archiveSha256": "814fd8d328592fdd94f2782bfebe07969694825a023d85fe2d2db67634eab1e6",
+      "listCount": 384,
+      "listSha256": "5a2f7e70f487d8d66f824fb18fd39a2d1fc4733338633217a5ffb3f7f156f154",
+      "actions": [
+        {
+          "mnemonic": "GoStdlibList",
+          "runner": "local",
+          "owner": "@@rules_go+//:stdlib",
+          "cacheHit": false,
+          "status": "",
+          "exit": 0
+        },
+        {
+          "mnemonic": "GoStdlib",
+          "runner": "local",
+          "owner": "@@rules_go+//:stdlib",
+          "cacheHit": false,
+          "status": "",
+          "exit": 0
+        }
+      ],
+      "finishedAt": "2026-11-02T04:21:36.640891+00:00"
+    },
+    "fixed": {
+      "source": "bd1cc2039a4d7ad2f6490c6d69130ca3763a48f6",
+      "declaredFiles": 5931,
+      "declaredSha256": "babf90923bd428f4a217c3684dc861d02c32e894ffe2979ed1cb9fe9e8c1d12f",
+      "archiveCount": 370,
+      "archiveSha256": "fab5aa14d9f7d336e44b0a0d86d1e5275f6eda5c325df5cf7194431a0f029aa3",
+      "listCount": 370,
+      "listSha256": "7d54916a3206d4e861a7ed83adfe56d9c82a46c8cdeb2fc601b425c8dfa2fcfc",
+      "actions": [
+        {
+          "mnemonic": "GoStdlibList",
+          "runner": "local",
+          "owner": "@@rules_go+//:stdlib",
+          "cacheHit": false,
+          "status": "",
+          "exit": 0
+        },
+        {
+          "mnemonic": "GoStdlib",
+          "runner": "local",
+          "owner": "@@rules_go+//:stdlib",
+          "cacheHit": false,
+          "status": "",
+          "exit": 0
+        }
+      ],
+      "finishedAt": "2026-11-02T04:22:38.158562+00:00"
+    }
+  },
+  "tests": {
+    "previous-suite": {
+      "source": "3204d2d909636203100163e16af1304063fb5f9f",
+      "bazelExit": 3,
+      "testLabel": "@@rules_go+//go/tools/builders:stdliblist_test",
+      "testStatus": "FAILED",
+      "cachedLocally": false,
+      "cachedRemotely": false,
+      "passed": [],
+      "failed": [
+        "Test_stdliblist_export",
+        "Test_stdliblist_noexport"
+      ],
+      "externalPrefixMismatches": 704,
+      "otherDiagnosticCount": 0,
+      "finishedAt": "2026-11-02T04:23:53.525515+00:00"
+    },
+    "suite": {
+      "source": "bd1cc2039a4d7ad2f6490c6d69130ca3763a48f6",
+      "bazelExit": 0,
+      "testLabel": "@@rules_go+//go/tools/builders:stdliblist_test",
+      "testStatus": "PASSED",
+      "cachedLocally": false,
+      "cachedRemotely": false,
+      "passed": [
+        "Test_stdliblist_export",
+        "Test_stdliblist_noexport"
+      ],
+      "failed": [],
+      "externalPrefixMismatches": 0,
+      "otherDiagnosticCount": 0,
+      "finishedAt": "2026-11-02T04:24:19.580044+00:00"
+    }
+  }
+}

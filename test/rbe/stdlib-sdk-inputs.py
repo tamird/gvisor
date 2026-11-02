@@ -118,7 +118,6 @@ def observe(arm, row):
         row[name + "Sha256"] = hash_set(values)
         row[name + "Excluded"] = sorted(excluded & values)
         assert {"fmt", "crypto/sha256", "net/http"} <= values and len(values) > 250, (name, len(values))
-        (root / f"{arm}-{name}.json").write_text(json.dumps(sorted(values)))
     assert len(srcs) > 1000 and physical == excluded and not declared_excluded, (len(srcs), physical, declared_excluded)
     row["verified"] = True
 
@@ -168,10 +167,18 @@ def verdict(row):
     inputs = {arm: json.loads((records / f"{arm}.json").read_text()) for arm in [*arms, "previous-suite", "suite"]}
     assert all(r.get("verified") for r in inputs.values()), {a: r.get("verified") for a, r in inputs.items()}
     assert len({inputs[a]["declaredSha256"] for a in arms}) == 1
+    row["outputs"] = {}
     for name in ("archive", "list"):
-        sets = {a: set(json.loads((root / f"{a}-{name}.json").read_text())) for a in arms}
-        assert sets["fixed"] == sets["sandbox"] and not (excluded & sets["fixed"])
-        assert sets["local"] == sets["sandbox"] | excluded and not (excluded & sets["sandbox"])
+        sets = {a: set(inputs[a][name + "Packages"]) for a in arms}
+        assert all(len(values) == inputs[a][name + "Count"] and hash_set(values) == inputs[a][name + "Sha256"]
+                   for a, values in sets.items()), name
+        expected = sets["sandbox"]
+        differences = {a: {"added": sorted(sets[a] - expected), "missing": sorted(expected - sets[a])}
+                       for a in ("local", "fixed")}
+        row["outputs"][name] = {"expectedCount": len(expected), "expectedSha256": hash_set(expected),
+                                "differences": differences}
+        assert sets["fixed"] == expected, (name, differences["fixed"])
+        assert expected <= sets["local"] and excluded <= sets["local"] - expected, (name, differences["local"])
     row["verified"] = True
 
 
