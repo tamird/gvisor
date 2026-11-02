@@ -33,7 +33,36 @@ def write_original(digest, path):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(blob(digest, ORIGINAL))
     path.chmod(0o755)
-    return elf(path)
+    # The Go integration test and ordinary sidecars run on populated Ubuntu;
+    # only the actual static owners have a no-loader/no-library contract.
+    header = subprocess.check_output(["readelf", "-h", path], text=True)
+    programs = subprocess.check_output(["readelf", "-l", path], text=True)
+    dynamic = subprocess.check_output(["readelf", "-d", path], text=True)
+    assert "Advanced Micro Devices X86-64" in header and "ELF64" in header
+    interpreters = re.findall(r"\[Requesting program interpreter: ([^\]]+)\]", programs)
+    needed = re.findall(r"\(NEEDED\).*Shared library: \[([^\]]+)\]", dynamic)
+    assert len(interpreters) <= 1 and bool(interpreters) == ("INTERP" in programs)
+    assert len(needed) == dynamic.count("(NEEDED)")
+    return {"sha256": digest["hash"], "bytes": int(digest["sizeBytes"]), "machine": "x86_64",
+            "interpreter": interpreters[0] if interpreters else None, "needed": needed}
+
+
+def preflight_roles(r):
+    rows = r["recovery"]["outputs"]
+    checks = {}
+    for owner in LINKS:
+        actual = rows[owner]["file"]
+        static = owner in (RUNSC, SENTRY, BACKTRACE)
+        checks[owner] = {"native_amd64": actual["machine"] == "x86_64", "requires_static": static,
+                         "is_static": actual["interpreter"] is None and not actual["needed"]}
+    for name, actual in r["recovery"]["sidecars"].items():
+        checks["sidecar:" + name] = {"native_amd64": actual["machine"] == "x86_64", "requires_static": False,
+                                   "is_static": actual["interpreter"] is None and not actual["needed"]}
+    r["recovery"]["elf_preflight"] = checks
+    save(r)
+    assert all(c["native_amd64"] and (not c["requires_static"] or c["is_static"]) for c in checks.values())
+    # These are the exact prior producer's two static-deliverable observations.
+    assert all(rows[o]["file"] == {k: v for k, v in r["binaries"][o].items() if k != "link"} for o in (RUNSC, SENTRY))
 
 
 def link_output(r, owner, path):
@@ -52,7 +81,6 @@ def link_output(r, owner, path):
     output, = [f for f in response["result"].get("outputFiles", []) if Path(f["path"]).name == name]
     actual = write_original(output["digest"], path)
     if owner in (RUNSC, SENTRY):
-        assert actual == r["binaries"][owner]
         r["binaries"][owner]["link"] = link
     return {"action": link["digest"], "output": output["path"], "file": actual, "fresh_original_link": True}
 
@@ -117,10 +145,16 @@ def recover():
                                 "status": r["status"], "tests_executed": 0, "error": r.pop("collection_error"),
                                 "verdict_time": r["verdict_time"], "consumer_inputs": r.pop("consumer_inputs")}
     r["recovery"] = {"carrier": os.environ["GITHUB_SHA"], "started": now(), "status": "INCOMPLETE", "outputs": {}}
+    r["prior_replay"] = {"run": 41371493256, "artifact": 13109144077,
+                         "sha256": "3e3b9f9136a8d05f9a1359fa71af76fe4e4ba019217fc8fd22ba4f518b6731e4",
+                         "status": "INCOMPLETE", "tests_executed": 0,
+                         "cause": "static-deliverable check incorrectly applied to ordinary GNU integration_test"}
+    r["manual_interventions"] = ["correct source-file label for queue.h", "recover original outputs after reporting-path failure",
+                                 "restrict static ELF requirement to actual static owners"]
     save(r)
     try:
         assert subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() == os.environ["GITHUB_SHA"]
-        assert subprocess.run(["git", "diff", "--quiet", PRODUCT, "HEAD", "--", ".", ":(exclude)test/rbe", ":(exclude).github/workflows/build.yml"]).returncode == 0
+        assert subprocess.run(["git", "diff", "--quiet", SOURCE, "HEAD", "--", ".", ":(exclude)test/rbe", ":(exclude).github/workflows/build.yml"]).returncode == 0
         install = TMP / "plugin-installed"
         pkg = Path("test/rbe/plugin_programs/reused")
         destinations = {RUNSC: install / "runsc", SENTRY: install / "gvisor-bin/gvisor_sentry_plugin_stack",
@@ -132,6 +166,7 @@ def recover():
             save(r)
         del r["recovery"]["recovering_owner"]
         sidecars(r, install)
+        preflight_roles(r)
         (pkg / "BUILD").write_text('load("@bazel_skylib//rules:native_binary.bzl", "native_test")\n\n'
                                   'native_test(name = "backtrace", src = "exact_backtrace", size = "large", local = True)\n'
                                   'native_test(name = "socket", src = "exact_socket", size = "large", local = True)\n')
