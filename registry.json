@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T19:54:18.116293+00:00",
+    "updatedAt": "2026-11-02T20:19:07.552706+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42906,8 +42906,8 @@
       "url": "https://github.com/google/gvisor/pull/15867",
       "group": "runtime",
       "status": "draft",
-      "summary": "An iterator can unlock before slices.SortedFunc calls its comparator. The PR accepts that unprotected read. A prototype infers when a helper calls its predicate with the caller’s locks intact, and passed the safe and unsafe cases on both architectures. A standalone alternative for #15728 is in development.",
-      "updatedAt": "2026-11-02T19:22:19.825621+00:00",
+      "summary": "An iterator can unlock before slices.SortedFunc calls its comparator. The PR accepts that unprotected read. A prototype infers when a helper calls its predicate with the caller’s locks intact, and passed the safe and unsafe cases on both architectures. The standalone alternative for #15728 is ready for contributor review.",
+      "updatedAt": "2026-11-02T20:19:07.552706+00:00",
       "evidence": [
         {
           "label": "Nogo passed the inferred callback cases on both architectures",
@@ -42971,11 +42971,13 @@
       "followup": {
         "owner": "tcp_split_owner",
         "sourceHead": "0bf36f79214fa3be21b86435714026a0ed1b1c42",
-        "observedAt": "2026-11-02T19:22:19.825621+00:00",
-        "disposition": "Develop a standalone alternative for #15728",
-        "nextAction": "Build the alternative on master, verify the reported bound-method call and its negative controls, then submit it as its own PR.",
+        "observedAt": "2026-11-02T20:19:07.552706+00:00",
+        "disposition": "Standalone alternative verified; contributor decision tracked on its branch",
+        "nextAction": "Review the proposal/checklocks-callback-facts branch. No reply is pending on this draft.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15867#issuecomment-6585322042"
+          "https://github.com/google/gvisor/pull/15867#issuecomment-6585322042",
+          "https://github.com/tamird/gvisor/commit/bf276987f",
+          "https://github.com/tamird/gvisor/actions/runs/41515890904/artifacts/13176136134"
         ]
       }
     },
@@ -45687,6 +45689,56 @@
           "postedURL": "https://github.com/bazel-contrib/bazel-gazelle/issues/2499"
         }
       ]
+    },
+    {
+      "id": "branch:checklocks-callback-facts",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/checklocks-callback-facts",
+      "head": "bf276987f6e86bf80463f97bb35e0b94dca62ae3",
+      "title": "checklocks: infer when callbacks can use the caller’s locks",
+      "url": "https://github.com/tamird/gvisor/commit/bf276987f",
+      "group": "analysis",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T20:19:07.552706+00:00",
+      "summary": "Checklocks accepts the locked bound-method call from #15728 and reports the unlocked call at the call site. The proof follows the helper body across packages without a list of trusted names. Eight of fourteen slices helpers qualify. This standalone change is based on gVisor master.",
+      "evidence": [
+        {
+          "label": "Both Nogo architectures, standalone held/unheld method and helper census",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41515890904/artifacts/13176136134"
+        },
+        {
+          "label": "Original bound-method report from Joachim Bauch",
+          "url": "https://github.com/google/gvisor/issues/15728"
+        },
+        {
+          "label": "Danny Ward’s synchronous slice callback proposal",
+          "url": "https://github.com/google/gvisor/pull/15867"
+        },
+        {
+          "label": "Original inference experiment",
+          "url": "https://github.com/tamird/gvisor/commit/75000d12b"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "bf276987f6e86bf80463f97bb35e0b94dca62ae3",
+        "baseHead": "14555f88af78c8bafdb5ae7015720a8ef7c83b58",
+        "url": "https://github.com/tamird/gvisor/commit/bf276987f",
+        "title": "checklocks: infer when callbacks can use the caller’s locks",
+        "requestedAt": "2026-11-02T20:19:07.552706+00:00",
+        "summary": "Open the standalone alternative for #15728 with this commit and PR description?",
+        "body": "Passing `e.hasKeyLocked` to `slices.ContainsFunc` reports a missing mutex even when the caller holds `e.mu`. Infer from the helper’s body whether it invokes the predicate during the call without an intervening operation that can change the locks. Export that fact on the function declaration so it also works when another package forwards the predicate through a generic helper.\n\nA helper may call a predicate zero or more times. Each normal return must preserve the locks and their modes. The checker does not assume that a value the helper passes to the predicate is the same object the caller has locked.\n\nThe [standalone analyzer and Nogo tests](https://github.com/tamird/gvisor/actions/runs/41515890904/artifacts/13176136134) accept the reported call and diagnose the same call without its lock. Eight Go 1.27.3 helpers qualify: `BinarySearchFunc`, `CompareFunc`, `ContainsFunc`, `EqualFunc`, `IndexFunc`, `IsSortedFunc`, `MaxFunc`, and `MinFunc`. The checker still checks callbacks without the caller’s locks for `CompactFunc` and `DeleteFunc`, which modify the slice; `SortFunc` and `SortStableFunc`, which delegate to in-place sorting; and `SortedFunc` and `SortedStableFunc`, which run a caller-supplied iterator before comparing elements.\n\nFixes #15728, reported by Joachim Bauch (@fancycode). Danny Ward (@dannyward630) explored which synchronous slice callbacks can use the caller’s locks in #15867."
+      },
+      "refinement": {
+        "before": {
+          "head": "75000d12b7a9f532160dc30f992c9b667ddea823"
+        },
+        "after": {
+          "head": "bf276987f6e86bf80463f97bb35e0b94dca62ae3"
+        }
+      }
     }
   ],
   "edges": [
