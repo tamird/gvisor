@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T19:28:58.607513+00:00",
+    "updatedAt": "2026-11-02T19:54:18.116293+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -45586,14 +45586,26 @@
       "repo": "hermeticbuild/hermetic-llvm",
       "number": 908,
       "ref": "proposal/linux-hosted-tool-musl",
-      "head": "cf9d2e26369d531d159c54c90ed6ac82f5d7d8c1",
+      "head": "533981c365e8ee683926bd465efcc81bc31158bf",
       "title": "Link Linux-hosted toolchain helpers with musl",
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-02T19:17:25.956977+00:00",
-      "summary": "The six Linux helpers run without glibc on AMD64 and ARM64. Both upstream MSVC cross-compilation jobs failed because the VFS generator rule requires one file, but the toolchain transition exposed both its symlink and the binary. A fix that preserves the published helper labels is in preparation.",
+      "updatedAt": "2026-11-02T19:54:18.116293+00:00",
+      "summary": "The MSVC build consumes its overlay generator as one executable. The published amendment selects musl on the binary rule so it exposes one file. All four MSVC targets built and all six Linux tools ran without glibc on AMD64 and ARM64.",
       "evidence": [
+        {
+          "label": "Buildifier annotation for the internal rule registered by with_cfg",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/533981c36"
+        },
+        {
+          "label": "AMD64 MSVC builds and six scratch executions",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/41509171713/artifacts/13172442226"
+        },
+        {
+          "label": "ARM64 MSVC builds and six scratch executions",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/41509171713/artifacts/13172272799"
+        },
         {
           "label": "Upstream MSVC analysis on AMD64",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/actions/runs/41504585361/job/125480498149"
@@ -45631,17 +45643,14 @@
           "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/eb198127b"
         }
       ],
-      "followup": {
-        "owner": "python_supplier_review",
-        "sourceHead": "cf9d2e26369d531d159c54c90ed6ac82f5d7d8c1",
-        "observedAt": "2026-11-02T19:17:25.956977+00:00",
-        "disposition": "Repair the public executable targets",
-        "nextAction": "Run the four MSVC cross-builds and execute the six helpers on native AMD64 and ARM64.",
-        "evidence": [
-          "https://github.com/hermeticbuild/hermetic-llvm/actions/runs/41504585361/job/125480498149",
-          "https://github.com/hermeticbuild/hermetic-llvm/actions/runs/41504585361/job/125480498427"
-        ]
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "ed1ed5105e6cd8b638b1e55d4c32e28b7511541d",
+          "at": "2026-11-02T19:41:01.662487+00:00",
+          "outcome": "approved"
+        }
+      ]
     },
     {
       "id": "pr:16834",
@@ -45654,24 +45663,30 @@
       "url": "https://github.com/google/gvisor/pull/16834",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-02T19:28:58.607513+00:00",
+      "updatedAt": "2026-11-02T19:50:18.494436+00:00",
       "summary": "Gazelle can run repository commands on a client without a host env executable. The gVisor module declares its Bazel 8 minimum.",
       "evidence": [
+        {
+          "label": "Gazelle upstream issue #2499",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/issues/2499"
+        },
         {
           "label": "All five client checks, including the empty-variable and missing-env cases",
           "url": "https://github.com/tamird/gvisor/actions/runs/41506063956/artifacts/13170238787"
         }
       ],
-      "contributorReview": {
-        "kind": "issue",
-        "status": "pending",
-        "head": "3f09760978f08d3dfba28a63885c0533f2b03a02",
-        "url": "https://github.com/bazel-contrib/bazel-gazelle/issues/new",
-        "title": "go_repository requires a host env executable on Bazel 8",
-        "body": "Gazelle prepends `env -i` to repository commands on Unix. On a Linux\nclient without `env` on PATH, even a command given by absolute path\nfails. I reproduced this with Gazelle 0.51.3 and Bazel 8.8.1.\n\n    env_execute(ctx, [\"/fixture/printenv\"], environment = overrides)\n\n    \"execvp(env, ...)\": No such file or directory\n\nCould Gazelle clear the environment with `repository_ctx.execute` on\nBazel 8 and newer? Setting an inherited variable to `None` removes it.\nWith this change, the child received an explicitly empty value and\ninherited `TMPDIR`. The unrelated parent variable was absent. Bazel 7 could keep using `env -i`.\n\n[Repository rule](https://github.com/tamird/gvisor/blob/999b71a83/.github/qualification/gazelle-native-minimum.py) · [Bazel 8 API](https://github.com/bazelbuild/bazel/blob/c8217fdd2/src/main/java/com/google/devtools/build/lib/bazel/repository/starlark/StarlarkBaseExternalContext.java#L1833-L1840)\n\nPosted by Codex on behalf of @tamird.",
-        "summary": "Report the issue to bazel-contrib/bazel-gazelle.",
-        "requestedAt": "2026-11-02T19:05:28.791131+00:00"
-      }
+      "settledReviews": [
+        {
+          "kind": "issue",
+          "head": "3f09760978f08d3dfba28a63885c0533f2b03a02",
+          "url": "https://github.com/bazel-contrib/bazel-gazelle/issues/new",
+          "title": "go_repository requires a host env executable on Bazel 8",
+          "body": "Gazelle prepends `env -i` to repository commands on Unix. On a Linux\nclient without `env` on PATH, even a command given by absolute path\nfails. I reproduced this with Gazelle 0.51.3 and Bazel 8.8.1.\n\n    env_execute(ctx, [\"/fixture/printenv\"], environment = overrides)\n\n    \"execvp(env, ...)\": No such file or directory\n\nCould Gazelle clear the environment with `repository_ctx.execute` on\nBazel 8 and newer? Setting an inherited variable to `None` removes it.\nWith this change, the child received an explicitly empty value and\ninherited `TMPDIR`. The unrelated parent variable was absent. Bazel 7 could keep using `env -i`.\n\n[Repository rule](https://github.com/tamird/gvisor/blob/999b71a83/.github/qualification/gazelle-native-minimum.py) · [Bazel 8 API](https://github.com/bazelbuild/bazel/blob/c8217fdd2/src/main/java/com/google/devtools/build/lib/bazel/repository/starlark/StarlarkBaseExternalContext.java#L1833-L1840)\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-02T19:49:24Z",
+          "postedURL": "https://github.com/bazel-contrib/bazel-gazelle/issues/2499"
+        }
+      ]
     }
   ],
   "edges": [
