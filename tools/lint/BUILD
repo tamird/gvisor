@@ -11,7 +11,10 @@ package(
     licenses = ["notice"],
 )
 
-exports_files(["buildifier_native.patch"])
+exports_files([
+    "buildifier_native.patch",
+    "codespell.BUILD",
+])
 
 # run_binary splits expanded args like a shell; quote each path separately.
 # ROOT.d holds only the exact source/config groups requested by this action.
@@ -139,11 +142,42 @@ run_binary(
     ],
 )
 
+# Invoke the wheel with the registered interpreter. Its dictionaries must stay
+# beside the Python package, where codespell opens them by filename.
+run_binary(
+    name = "spelling",
+    srcs = [
+        "//tools:.codespellrc",
+        "@lint_inputs//:ROOT",
+        "@lint_inputs//:cc",
+        "@lint_inputs//:docs",
+        "@lint_inputs//:go",
+    ],
+    args = [
+        "-IB",
+        "$(execpath :spelling.py)",
+        "$(execpath @codespell//:codespell_lib/__main__.py)",
+        "$(execpath //tools:.codespellrc)",
+        ROOT,
+        "$(execpath :spelling.ok)",
+    ] + [shell.quote(p.replace("$", "$$")) for kind in ["cc", "docs", "go"] for p in INPUTS[kind]],
+    mnemonic = "Codespell",
+    outs = ["spelling.ok"],
+    tool = ":python_interpreter",
+    tools = [
+        ":python_runtime",
+        ":spelling.py",
+        "@codespell//:codespell_lib/__main__.py",
+        "@codespell//:library",
+    ],
+)
+
 filegroup(
     name = "check",
     srcs = [
         ":buildifier",
         ":clang_format",
         ":cpplint",
+        ":spelling",
     ],
 )
