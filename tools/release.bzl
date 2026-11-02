@@ -86,11 +86,10 @@ def _release_files_impl(ctx):
     commands = []
 
     # Top-level binaries
-    bins = [(target, _single_file(target).basename) for target in ctx.attr.bins]
-    bins.append((ctx.attr.runsc, "runsc"))
-    for target, name in bins:
+    runsc = ctx.actions.declare_file("%s/runsc" % ctx.label.name)
+    for target in ctx.attr.bins + [ctx.attr.runsc]:
         src = _single_file(target)
-        out = ctx.actions.declare_file("%s/%s" % (ctx.label.name, name))
+        out = runsc if target == ctx.attr.runsc else ctx.actions.declare_file("%s/%s" % (ctx.label.name, src.basename))
         inputs.append(src)
         outputs.append(out)
         commands.append('cp -f "%s" "%s"' % (src.path, out.path))
@@ -111,14 +110,21 @@ def _release_files_impl(ctx):
     )
 
     runfiles = ctx.runfiles(files = outputs)
-    return [DefaultInfo(
-        files = depset(outputs),
-        default_runfiles = runfiles,
-        data_runfiles = runfiles,
-    )]
+    files = depset(outputs)
+    return [
+        DefaultInfo(
+            executable = runsc,
+            files = files,
+            default_runfiles = runfiles,
+            data_runfiles = runfiles,
+        ),
+        # A copy of this target must include the sidecars next to runsc.
+        OutputGroupInfo(release_layout = files),
+    ]
 
 release_files = rule(
     implementation = _release_files_impl,
+    executable = True,
     attrs = {
         "bins": attr.label_list(
             doc = "Binaries placed at the top level of the layout.",
