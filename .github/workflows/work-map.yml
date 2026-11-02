@@ -1,0 +1,98 @@
+name: Verify collector tests and retained snapshot
+
+on:
+  push:
+    branches: [qualification/work-map-request-budget-verify]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the test-only correction
+        id: source
+        run: |
+          test "$(git rev-parse HEAD^)" = aa432f1690a64aa21570f66b4cadae838ac83236
+          test "$(git rev-parse HEAD^^)" = 3ce603ce26c307eee7ee060e800710c644d8e36b
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          git fetch --no-tags --depth=1 origin cc38c1e804c8e43ea7e818fa5f4971ff0a036899
+          test "$(git diff --name-only cc38c1e804c8e43ea7e818fa5f4971ff0a036899 HEAD^)" = update_status_test.py
+          mkdir results
+      - name: Recover the original canonical pair
+        id: original
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/tamird/gvisor/actions/artifacts/13175142711/zip > "$RUNNER_TEMP/original.zip"
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          import zipfile
+          data = (Path(os.environ['RUNNER_TEMP']) / 'original.zip').read_bytes()
+          assert hashlib.sha256(data).hexdigest() == 'f3b418d643492f0abb5510b025acf50425fff4ec07f47ad3b27849eb6fce5ebf'
+          with zipfile.ZipFile(Path(os.environ['RUNNER_TEMP']) / 'original.zip') as archive:
+              assert set(archive.namelist()) == {'source.json', 'preflight.json', 'registry.json', 'github-status.json'}
+              assert len(archive.namelist()) == 4
+              source = json.loads(archive.read('source.json'))
+              assert source == {'source': '7835ff64f5eaf6907b86050c196e6b3f0342c0a8', 'product': 'cc38c1e804c8e43ea7e818fa5f4971ff0a036899', 'curation': '3ce603ce26c307eee7ee060e800710c644d8e36b', 'collector_exit': 0}
+              proof = json.loads(archive.read('preflight.json'))
+              assert proof['status'] == 'PASS'
+              for name in ('app.js', 'registry.json', 'github-status.json'):
+                  value = Path(name).read_bytes() if name == 'app.js' else archive.read(name)
+                  assert proof['inputs'][name] == {'bytes': len(value), 'sha256': hashlib.sha256(value).hexdigest()}
+              for name in archive.namelist():
+                  Path('results', name).write_bytes(archive.read(name))
+              for name in ('registry.json', 'github-status.json'):
+                  Path(name).write_bytes(archive.read(name))
+          PY
+      - name: Check client behavior
+        id: client
+        if: always() && steps.source.outcome == 'success'
+        run: node --test app_test.mjs
+      - name: Check collector behavior
+        id: collector
+        if: always() && steps.source.outcome == 'success'
+        run: python3 -m unittest discover -p '*_test.py'
+      - name: Revalidate the exact original snapshot
+        id: verdict
+        if: always() && steps.original.outcome == 'success'
+        env:
+          CLIENT: ${{ steps.client.outcome }}
+          COLLECTOR: ${{ steps.collector.outcome }}
+        run: |
+          node metadata-preflight.mjs . > "$RUNNER_TEMP/preflight.json"
+          python3 - <<'PY'
+          from datetime import datetime, timezone
+          import json
+          import os
+          from pathlib import Path
+          assert json.loads((Path(os.environ['RUNNER_TEMP']) / 'preflight.json').read_text()) == json.loads(Path('results/preflight.json').read_text())
+          passed = os.environ['CLIENT'] == os.environ['COLLECTOR'] == 'success'
+          result = {'status': 'PASS' if passed else 'FAIL', 'source': os.environ['GITHUB_SHA'], 'product': 'aa432f1690a64aa21570f66b4cadae838ac83236', 'original_run': 41515375186, 'original_conclusion': 'failure', 'original_unit_failure': 'Refreshed retrieval timestamp compared against OLD in the new test oracle', 'collector_source_unchanged': True, 'new_collection': False, 'client_tests': os.environ['CLIENT'], 'collector_tests': os.environ['COLLECTOR'], 'verified_at': datetime.now(timezone.utc).isoformat()}
+          Path('results/recovery.json').write_text(json.dumps(result, indent=2) + '\n')
+          print(json.dumps(result))
+          assert passed
+          PY
+      - name: Publish the verified pair and original disposition
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-map-request-budget-verified
+          path: |
+            results/source.json
+            results/preflight.json
+            results/registry.json
+            results/github-status.json
+            results/recovery.json
+          if-no-files-found: error
