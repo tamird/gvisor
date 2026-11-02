@@ -1,35 +1,77 @@
-name: CI
-
-"on":
+name: Qualify a downstream source protoc with LLVM
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/external-protoc-llvm-recovery]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  consumer:
+    if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Prepare the existing client and fixed-origin evidence reader
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          umask 077
+          d="$RUNNER_TEMP/external-go"
+          mkdir -p "$d"
+          cp test/rbe/external_protoc.py "$d/"
+          echo '{"verdict":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/external-protoc.json"
+          curl --retry 3 -fsSL https://raw.githubusercontent.com/tamird/gvisor/b224a82d47407d754ce438e19f6d1b60f2e20fb3/.github/qualification/lint-pilot/check.py -o "$d/check.py"
+          curl --retry 3 -fsSL https://raw.githubusercontent.com/tamird/gvisor/f7b47d73dc941f5156a59d59821ae797eaba2377/test/rbe/external_go_policy.py -o "$d/external_go_policy.py"
+          curl --retry 3 -fsSL https://raw.githubusercontent.com/tamird/gvisor/702294b69b629cedd9b74133aa4f37b10ddc82b3/test/rbe/plugin_programs/cas_inputs.py -o "$d/cas_inputs.py"
+          curl --retry 3 -fsSL https://raw.githubusercontent.com/tamird/gvisor/8206a3e1cd4b643fc35882956dffc8be81b871bf/test/rbe/gazelle-cgroups-go-proto.patch -o "$d/gazelle.patch"
+          printf '%s  %s\n' b4bc68892ad98df6cce81a8e35e0a3c01b83069c80eefa6c146b8d4d27ceeed7 "$d/cas_inputs.py" 02dbcbd8f45ef86ea3a9ce08eed9d88dd27a1d7493e9f5be0c80937b6b43a77e "$d/gazelle.patch" | sha256sum -c -
+          curl --retry 3 -fsSL https://releases.bazel.build/8.8.1/release/bazel-8.8.1-linux-x86_64 -o "$d/bazel-8.8.1"
+          curl --retry 3 -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
+          printf '%s  %s\n' 5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160 "$d/bazel-8.8.1" bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224 "$RUNNER_TEMP/bb" | sha256sum -c -
+          chmod 0755 "$d/bazel-8.8.1" "$RUNNER_TEMP/bb"
+          if gh api repos/tamird/gvisor/actions/artifacts/13122060478/zip > "$d/original.zip" 2> "$d/original-download.log"; then
+            echo 0 > "$d/original-download-exit"
+          else
+            echo "$?" > "$d/original-download-exit"
+          fi
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$d/bb.rc"
+          test "$(git rev-parse HEAD^)" = c734e2b4f7b776258294c4d5c2f508d6c6ec994e
+          test "$(git rev-parse HEAD~2)" = 03763b0448f9e15a2247ba0a50e8b710cf4ba0e9
+          git checkout --detach 03763b0448f9e15a2247ba0a50e8b710cf4ba0e9
+      - name: Recover the original failure and qualify the normal consumer
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: LINT_RC="$RUNNER_TEMP/external-go/bb.rc" python3 -B "$RUNNER_TEMP/external-go/external_protoc.py"
+      - name: Check the single compact report
+        id: privacy
+        if: always()
+        env:
+          KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          p = Path(os.environ["RUNNER_TEMP"]) / "external-protoc.json"
+          assert p.is_file() and not p.is_symlink() and p.stat().st_size < 2 * 1024 * 1024
+          data = p.read_bytes()
+          key = os.environ["KEY"].encode()
+          assert key and key not in data
+          assert all(s not in data.lower() for s in (b"x-buildbuddy-api-key", b"authorization:", b"bearer "))
+          assert isinstance(json.loads(data), dict)
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.privacy.outcome == 'success'
+        with:
+          name: external-protoc
+          path: ${{ runner.temp }}/external-protoc.json
+          if-no-files-found: error
