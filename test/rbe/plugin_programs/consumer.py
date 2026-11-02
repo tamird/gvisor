@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET
 
 from qualify import OUT, TMP, OWNER, audit, diagnostics, now, save
 
-PRODUCT = "2d68da5f7345065daffa8de48f8c01d2d99fa435"
+PRODUCT = "a24cd6513cec95981f723cf36b82f016e3fb9370"
 RUNSC = "//runsc:runsc-plugin-stack"
 SENTRY = "//runsc/cmd/sentry:gvisor_sentry_plugin_stack"
 TEST = "//test/e2e:integration_test"
@@ -150,6 +150,8 @@ def main():
          "gnu_archive_evidence": {"run": 41364504151, "recovery_artifact": 13106931504, "distinct_configuration": True},
          "prior_static_consumer": {"run": 41366155971, "artifact": 13107584293, "status": "FAIL", "tests_executed": 0,
                                    "cause": "DPDK musl compile missing sys/queue.h"},
+         "prior_header_binding": {"run": 41369346381, "artifact": 13109046368, "status": "FAIL", "tests_executed": 0,
+                                  "cause": "repository rule used the header filegroup instead of its source file"},
          "status": "INCOMPLETE", "phase": "preflight", "started": now(), "tests_executed": 0}
     save(r)
     try:
@@ -169,6 +171,7 @@ def main():
         r["preflight_exit"] = command([*bazel, "cquery", *flags, query, "--output=label"], qlog, 300)
         found = sorted(set(re.findall(r"^(//\S+) \([0-9a-f]+\)$", qlog.read_text(), re.M)))
         r["selected"] = found
+        r["preflight_diagnostics"] = diagnostics(qlog.read_text(errors="replace"))
         save(r)
         assert r["preflight_exit"] == 0 and found == sorted(TARGETS)
         bep, compact, log = TMP / "consumer.bep", TMP / "consumer.compact", TMP / "consumer.log"
