@@ -16,6 +16,7 @@ package tcp_rack_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"testing"
@@ -1122,6 +1123,127 @@ func TestRACKWithWindowFull(t *testing.T) {
 
 	// No packet should be received as the receive window size is zero.
 	c.CheckNoPacket("unexpected packet received after userTimeout has expired")
+}
+
+// TestRACKTimeoutHoleDeadline observes the next RTO when a SACK reports
+// later data while the repair of the oldest segment is still unacknowledged.
+func TestRACKTimeoutHoleDeadline(t *testing.T) {
+	const warm = 8
+	const tick = time.Millisecond
+	clk := faketime.NewManualClock()
+	start := clk.NowMonotonic()
+	states := make(chan tcp.TCPSenderState, 8)
+	c := context.NewWithOpts(t, context.Options{
+		MTU: mtu, EnableV4: true, Clock: clk,
+		Probe: func(st *tcp.TCPEndpointState) { states <- st.Sender },
+	})
+	defer c.Cleanup()
+	e2e.EnableCUBIC(t, c)
+	e2e.SetStackSACKPermitted(t, c, true)
+	e2e.CreateConnectedWithSACKAndTS(c)
+	first := c.IRS.Add(1 + warm*maxPayload)
+	stats := c.Stack().Stats().TCP
+	receive := func(p *buffer.View) int {
+		t.Helper()
+		defer p.Release()
+		h := header.TCP(header.IPv4(p.AsSlice()).Payload())
+		off := int(int32(h.SequenceNumber() - uint32(first)))
+		if len(h.Payload()) != maxPayload || off%maxPayload != 0 {
+			t.Fatalf("unexpected data seq offset %d, length %d", off, len(h.Payload()))
+		}
+		seg := off / maxPayload
+		if !bytes.Equal(h.Payload(), bytes.Repeat([]byte{byte(seg + warm)}, maxPayload)) {
+			t.Fatalf("wrong payload for segment %d", seg)
+		}
+		return seg
+	}
+	write := func(at, n int) {
+		t.Helper()
+		data := make([]byte, n*maxPayload)
+		for i := range data {
+			data[i] = byte(at + i/maxPayload + warm)
+		}
+		if count, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || int(count) != len(data) {
+			t.Fatalf("Write = (%d,%v), want %d", count, err, len(data))
+		}
+		for i := at; i < at+n; i++ {
+			if got := receive(c.GetPacket()); got != i {
+				t.Fatalf("initial segment = %d, want %d", got, i)
+			}
+		}
+	}
+	ack := func(n int, blocks ...header.SACKBlock) tcp.TCPSenderState {
+		t.Helper()
+		c.SendAckWithSACK(seqnum.Value(context.TestInitialSequenceNumber).Add(1), (warm+n)*maxPayload, blocks)
+		select {
+		case st := <-states:
+			if st.SndUna != first.Add(seqnum.Size(n*maxPayload)) {
+				t.Fatalf("after ACK %d: SND.UNA=%d, want %d", n, st.SndUna, first.Add(seqnum.Size(n*maxPayload)))
+			}
+			return st
+		case <-time.After(5 * time.Second):
+			t.Fatal("timed out processing ACK")
+			return tcp.TCPSenderState{}
+		}
+	}
+	record := func(phase string, required bool) {
+		t.Helper()
+		var wires []int
+		for p := c.GetPacketNonBlocking(); p != nil; p = c.GetPacketNonBlocking() {
+			wires = append(wires, receive(p))
+		}
+		if !required && len(wires) == 0 {
+			return
+		}
+		var info tcpip.TCPInfoOption
+		if err := c.EP.GetSockOpt(&info); err != nil {
+			t.Fatalf("TCP_INFO: %v", err)
+		}
+		row, err := json.Marshal(map[string]any{
+			"phase": phase, "ns": clk.NowMonotonic().Sub(start).Nanoseconds(),
+			"wires": wires, "timeouts": stats.Timeouts.Value(), "rto_ns": info.RTO.Nanoseconds(), "cc_state": info.CcState,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("HOLE %s", row)
+	}
+	write(-warm, warm)
+	clk.Advance(100 * time.Millisecond)
+	ack(0)
+	write(0, 3)
+	clk.Advance(5 * time.Millisecond)
+	write(3, 4)
+	record("sent", true)
+
+	until := func(want uint64, name string) {
+		t.Helper()
+		for i := 0; i < 7000 && stats.Timeouts.Value() < want; i++ {
+			clk.Advance(tick)
+			if stats.Timeouts.Value() < want {
+				record("intervening", false)
+			}
+		}
+		if got := stats.Timeouts.Value(); got != want {
+			t.Fatalf("timeouts=%d, want %d", got, want)
+		}
+		record(name, true)
+	}
+	until(1, "first_rto")
+	// Keep A-C missing. Both stacks have just retransmitted A; D-F were
+	// all originally sent after B and C, but before this transmission of A.
+	clk.Advance(40 * time.Millisecond)
+	record("before_sack", true)
+	ack(0, header.SACKBlock{Start: first.Add(3 * maxPayload), End: first.Add(6 * maxPayload)})
+	record("sack_d_f", true)
+	until(2, "second_rto")
+
+	// All originals have now been observed; release the withheld cumulative
+	// ACK and confirm that data beyond the seven-segment flight is delivered.
+	ack(7)
+	record("released", true)
+	write(7, 1)
+	record("complete", true)
 }
 
 func TestMain(m *testing.M) {
