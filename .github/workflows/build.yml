@@ -1,57 +1,75 @@
-name: Qualify rebased BuildBuddy VFS routing
+name: Verify empty OCI roots
 on:
   push:
-    branches: [qualification/buildbuddy-vfs-routing-recovery]
+    branches: [qualification/buildbuddy-oci-empty-root-auth]
 permissions:
   contents: read
 jobs:
-  qualification:
+  native:
     runs-on: ubuntu-24.04
-    timeout-minutes: 110
+    timeout-minutes: 75
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: harness, persist-credentials: false}
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
         with:
           repository: tamird/buildbuddy
-          ref: 8441f4beeb18129b5cfd4416b714f2684d10ea97
-          fetch-depth: 2
-          path: buildbuddy
+          ref: f22252cbede950094b4eb1b30a43332f0de33531
+          path: supplier
+          fetch-depth: 3
           persist-credentials: false
-      - name: Prepare the Bazel client for the authorized RBE endpoint
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          repository: tamird/gvisor
+          ref: 75e2307ba8f512bbfe9063a88e35b0d45b44ad3a
+          path: harness
+          persist-credentials: false
+      - name: Configure the already-authorized remote client
         env:
           RBE_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        shell: bash
         run: |
           set -euo pipefail
           umask 077
           test -n "$RBE_KEY"
+          test ! -e supplier/user.bazelrc
+          grep -Fx 'try-import %workspace%/user.bazelrc' supplier/.bazelrc
           printf 'common --remote_header=x-buildbuddy-api-key=%s\ncommon --bes_header=x-buildbuddy-api-key=%s\n' "$RBE_KEY" "$RBE_KEY" > "$RUNNER_TEMP/rbe.bazelrc"
-          python3 -B harness/test/rbe/qualification_report.py --help >/dev/null
-      - name: Qualify three affected race suites and the scheduling client
-        working-directory: buildbuddy
+          printf 'import %s/rbe.bazelrc\n' "$RUNNER_TEMP" > supplier/user.bazelrc
+      - name: Exercise the OCI provider on the supplier's privileged native test platform
+        working-directory: supplier
         shell: bash
+        env:
+          PRODUCT: bd7d2e4c3b3a57d1fd19da69ae3edc452aa2cc00
+          CONTROL: 656e89190ef75cb63a5dadbdb6f7085c7f7612fa
+          BASE: acaf608b95780c2b0681b0205182c38bf5b6237d
         run: |
           set -euo pipefail
-          out=$RUNNER_TEMP/vfs-records
-          mkdir -p "$out"
-          test "$(git rev-parse HEAD)" = 8441f4beeb18129b5cfd4416b714f2684d10ea97
-          test "$(git rev-parse HEAD^)" = acaf608b95780c2b0681b0205182c38bf5b6237d
-          git cat-file commit HEAD > "$out/commit_file"
-          git status --porcelain --untracked-files=no > "$out/source_before"
-          owners=(//enterprise/server/remote_execution/execution_server:execution_server_test //enterprise/server/remote_execution/executorplatform:executorplatform_test //enterprise/server/scheduling/scheduler_server:scheduler_server_test)
-          printf '%s\n' "${owners[@]}" > "$out/targets"
-          args=(test --config=untrusted-ci --config=race --nocache_test_results --remote_download_outputs=toplevel --build_event_json_file="$out/raw.jsonl" --build_event_json_file_path_conversion=false "${owners[@]}" //enterprise/server/scheduling/scheduler_client:scheduler_client)
-          printf '%s\n' "${args[@]}" > "$out/executed_arguments"
-          rc=0; bazelisk --bazelrc="$RUNNER_TEMP/rbe.bazelrc" "${args[@]}" || rc=$?
-          printf '%s\n' "$rc" > "$out/native_exit"
-          date -u '+%Y-%m-%dT%H:%M:%S.%3N+00:00' > "$out/finished"
-          git rev-parse HEAD > "$out/final_head"
-          git status --porcelain --untracked-files=no > "$out/source_after"
-          python3 -B ../harness/test/rbe/buildbuddy-routing-verdict.py "$out" 8441f4beeb18129b5cfd4416b714f2684d10ea97 || exit "${rc/#0/1}"
-          exit "$rc"
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+          mkdir -p "$RUNNER_TEMP/oci-public"
+          printf '%s\n' '{"verified":false,"status":"INCOMPLETE","reason":"source or native execution did not finish"}' > "$RUNNER_TEMP/oci-public/verdict.json"
+          cp .github/workflows/oci-empty-root.py "$RUNNER_TEMP/oci-empty-root.py"
+          git fetch --no-tags --depth=2 origin "$PRODUCT"
+          test "$(git rev-parse "$PRODUCT^")" = "$BASE"
+          test "$(git rev-parse "$CONTROL^")" = "$BASE"
+          test "$(git diff --name-only "$BASE" "$CONTROL")" = enterprise/server/remote_execution/containers/ociruntime/ociruntime_test.go
+          test "$(git diff --name-only "$CONTROL" "$PRODUCT")" = enterprise/server/remote_execution/containers/ociruntime/ociruntime.go
+          export PYTHONPATH="$GITHUB_WORKSPACE/harness/test/rbe"
+          python3 -B "$RUNNER_TEMP/oci-empty-root.py"
+      - name: Check the small artifact allowlist and omit any credential-containing report
         if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, re
+          d = pathlib.Path(os.environ['RUNNER_TEMP'], 'oci-public')
+          allowed = {'verdict.json', 'stock.json', 'fixed.json', 'stock.xml', 'fixed.xml', 'stock.log', 'fixed.log'}
+          assert (d / 'verdict.json').is_file()
+          for f in d.iterdir():
+              assert f.name in allowed and f.is_file() and not f.is_symlink()
+              assert not re.search(rb'x-buildbuddy-api-key|github_pat_|gh[pousr]_[a-zA-Z0-9]{20,}|authorization:\s*(?:basic|bearer)\s+\S+', f.read_bytes(), re.I)
+          PY
+        id: safe
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.safe.outcome == 'success'
         with:
-          name: vfs-routing-verdict
-          path: ${{ runner.temp }}/vfs-records/verdict.json
+          name: oci-empty-root-native
+          path: ${{ runner.temp }}/oci-public/
           if-no-files-found: error
