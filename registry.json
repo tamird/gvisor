@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T06:50:50+00:00",
+    "updatedAt": "2026-11-02T07:06:48+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28399,7 +28399,7 @@
       "group": "runtime",
       "status": "draft",
       "summary": "The published draft waits for a second retransmission timeout after a fresh SACK. Linux, the parent and the fork amendment retry the missing segment within 80 ms. All four wait after an unchanged SACK. The amendment keeps the original recovery boundary and completed the reporter’s five burst-loss transfers.",
-      "updatedAt": "2026-11-02T06:50:50+00:00",
+      "updatedAt": "2026-11-02T07:06:48+00:00",
       "refinement": {
         "before": {
           "base": "99058130824e4d3166bf0e376f9b15b6ad50146c",
@@ -28431,6 +28431,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Two draft/amendment pairs on the same shared link",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41402683228/artifacts/13122192958"
+        },
         {
           "label": "Two 45-second stock/draft pairs sharing a CUBIC link, with packet and receiver records",
           "url": "https://github.com/tamird/gvisor/actions/runs/41400998891/artifacts/13121981713"
@@ -43359,15 +43363,23 @@
       "id": "branch:goimports-bazel-action",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "proposal/goimports-bazel-action",
-      "head": "80c4e21583bedbc99d1ff253fe02612df4e6e21d",
+      "ref": "proposal/goimports-bazel-diff",
+      "head": "8858bbb350e274b58fdb4be8cd1057dd3d9a3ddc",
       "title": "Run the Go formatting check as a Bazel action",
-      "url": "https://github.com/tamird/gvisor/commit/80c4e2158",
+      "url": "https://github.com/tamird/gvisor/commit/8858bbb35",
       "group": "analysis",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T06:50:50+00:00",
-      "summary": "The Bazel action checked 2,685 Go files. Preserving the unified diff requires a goimports change; verify hunk positions and patch application before requesting review.",
+      "updatedAt": "2026-11-02T07:06:48+00:00",
+      "summary": "The check preserves the unified diff and the formatter updates both changed files. With the two supplier changes applied during qualification, the scratch worker handled dirty and invalid inputs and the restored action selected all 2,685 intended Go files. The product commit contains neither supplier patch.",
       "evidence": [
+        {
+          "label": "Original hunk headers, forward and reverse patch application, and syntax controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41403301559/artifacts/13122616373"
+        },
+        {
+          "label": "Earlier filename-only check",
+          "url": "https://github.com/tamird/gvisor/commit/80c4e2158"
+        },
         {
           "label": "All six Bazel lint actions and the goimports executable recovered from its scratch worker",
           "url": "https://github.com/tamird/gvisor/actions/runs/41399910347/artifacts/13120089067"
@@ -43376,7 +43388,15 @@
           "label": "Formatting, syntax, filename and golden-file controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/41398915499/artifacts/13120871828"
         }
-      ]
+      ],
+      "refinement": {
+        "before": {
+          "head": "80c4e21583bedbc99d1ff253fe02612df4e6e21d"
+        },
+        "after": {
+          "head": "8858bbb350e274b58fdb4be8cd1057dd3d9a3ddc"
+        }
+      }
     },
     {
       "id": "branch:goimports-in-process-diff",
@@ -43387,10 +43407,18 @@
       "title": "Let goimports print a unified diff without a system diff program",
       "url": "https://github.com/tamird/tools/commit/d140e4d63",
       "group": "analysis",
-      "status": "Agent work",
-      "updatedAt": "2026-11-02T06:50:50+00:00",
-      "summary": "Changed inputs now produce an applicable diff with an empty PATH, including a filename containing a space. Verify positions across multiple hunks with the pending fix for Go issue 81453.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T07:06:48+00:00",
+      "summary": "goimports prints an applicable unified diff without a system diff or temporary files. Its x/tools diff library needs the one-line correction from Go CL 834825 to print the right line number after nearby edits.",
       "evidence": [
+        {
+          "label": "Original hunk headers, forward and reverse patch application, and syntax controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41403301559/artifacts/13122616373"
+        },
+        {
+          "label": "gofmt moved diff computation into the formatter",
+          "url": "https://github.com/golang/go/commit/7747c33a4"
+        },
         {
           "label": "Stock requires an external diff; the candidate output applies to both formatted files",
           "url": "https://github.com/tamird/gvisor/actions/runs/41401577103/artifacts/13121068651"
@@ -43399,7 +43427,17 @@
           "label": "Go issue on incorrect line numbers in multi-hunk patches",
           "url": "https://github.com/golang/go/issues/81453"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "d140e4d63b51cb5053d57cde308379069b5a6436",
+        "baseHead": "0f433775b36d0f73ebb153029747fd4fa5318de3",
+        "url": "https://github.com/tamird/tools/commit/d140e4d63",
+        "title": "Let goimports print a unified diff without a system diff program",
+        "requestedAt": "2026-11-02T07:06:48+00:00",
+        "summary": "Review sending the goimports commit after the hunk correction lands and reporting the line-18 reproduction on the existing Go review."
+      }
     }
   ],
   "edges": [
@@ -46958,7 +46996,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-02T06:50:50+00:00",
+      "updatedAt": "2026-11-02T07:06:48+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
@@ -48974,8 +49012,12 @@
           ]
         },
         {
-          "text": "With RACK on and tracing off, stock gVisor stopped sending new sequence bytes for at least 43.98 seconds and for 31.59 seconds on the 20 Mbit/s shared CUBIC link. Applying only published #16495 cut the longest gaps to 1.49 and 1.75 seconds. Receiver goodput rose from 0.24 to 8.60 Mbit/s and from 1.14 to 8.32 Mbit/s. The order of the builds was reversed in the second pair. Both are gVisor-first comparisons.",
+          "text": "With RACK on and tracing off, stock gVisor stopped sending new sequence bytes for at least 43.98 seconds and for 31.59 seconds on the 20 Mbit/s shared CUBIC link. Applying only published #16495 cut the longest gaps to 1.49 and 1.75 seconds. Receiver goodput rose from 0.24 to 8.60 Mbit/s and from 1.14 to 8.32 Mbit/s. The order of the builds was reversed in the second pair. Both are gVisor-first comparisons. Two further reversed-order pairs compared the published draft with its fresh-SACK amendment. The longest completed gaps went from 0.92 and 1.72 seconds to 0.10 seconds in each amended run. Receiver rates crossed (5.56 to 7.32 and 8.04 to 5.67 Mbit/s).",
           "evidence": [
+            {
+              "label": "Two draft/amendment pairs on the same shared link",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41402683228/artifacts/13122192958"
+            },
             {
               "label": "Two 45-second stock/draft pairs sharing a CUBIC link, with packet and receiver records",
               "url": "https://github.com/tamird/gvisor/actions/runs/41400998891/artifacts/13121981713"
@@ -48983,7 +49025,7 @@
           ]
         }
       ],
-      "nextStep": "Compare the published #16495 draft with its fresh-SACK amendment on the same shared link. For #16624, retain an older hole at timeout and check whether a newly acknowledged later transmission triggers its repair.",
+      "nextStep": "For #16624, retain an older hole at timeout and check what a fresh SACK of a later transmission does to its repair and retransmission deadline.",
       "evidence": [
         {
           "label": "TCP_INFO retransmission count on Linux, stock gVisor and the candidate",
@@ -63796,7 +63838,7 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-02T06:50:50+00:00",
+      "updatedAt": "2026-11-02T07:06:48+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independently runnable Bazel checks and an explicit format command. The combined target ran Buildifier, cpplint, clang-format, spelling and Go formatting on remote workers.",
       "findings": [
@@ -63952,8 +63994,20 @@
           ]
         },
         {
-          "text": "The public containerd shim linked and ran on stock 8.8.1 with development dependencies ignored. In the proposed split, compiling cgroup1 and cgroup2 failed because v1.Metrics and stats.Metrics were undefined. Both upstream proto files use go_package paths lacking /v3; stock Gazelle directives select the distributed metrics.pb.go files. Without the root toolchain configuration, two external consumers built the Go extension but failed on absolute C++ headers during the protobuf compiler build.",
+          "text": "The containerd/cgroups v3 generator renames exported fields after generating Go from its two proto files. With development dependencies ignored, letting Gazelle select the shipped Go files restored both cgroups packages and the 16,556,192-byte containerd shim. During startup, this shim read its executable eight times. The stock build, which applied gVisor’s protobuf patch, made zero such reads. Two external consumers still failed on C++ toolchain paths when building protoc.",
           "evidence": [
+            {
+              "label": "Both cgroups compiles, shim link and eight startup reads with the Gazelle default",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41403591637/artifacts/13122681614"
+            },
+            {
+              "label": "First attempt selected unpatched Gazelle with development dependencies ignored",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41402974439/artifacts/13121654249"
+            },
+            {
+              "label": "How containerd produces its public Go field names",
+              "url": "https://github.com/containerd/cgroups/pull/220"
+            },
             {
               "label": "Original cgroup1 and cgroup2 compiler diagnostics",
               "url": "https://github.com/tamird/gvisor/actions/runs/41402235566/artifacts/13122370481"
@@ -63965,8 +64019,16 @@
           ]
         },
         {
-          "text": "Goimports can print an applicable two-file unified diff without a system diff command by using x/tools/internal/diff. The in-process candidate passed both supplier suites. Go issue 81453 identifies a separate hunk-position error in this library; its owning sources still contain the affected calculation.",
+          "text": "On a source file with two hunks, the in-process goimports change exposed an existing x/tools bug. It printed +17 for a hunk starting on line 18. GNU patch compensated only on reversal. Applying the one-line fix proposed in Go CL 834825 to the owning x/tools source produced the right header. The two-file patch then applied and reversed with zero offsets, including a filename containing a space.",
           "evidence": [
+            {
+              "label": "Original hunk headers, forward and reverse patch application, and syntax controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41403301559/artifacts/13122616373"
+            },
+            {
+              "label": "Mustafa Senoglu’s hunk position correction",
+              "url": "https://go.dev/cl/834825"
+            },
             {
               "label": "Stock requires an external diff; the candidate output applies to both formatted files",
               "url": "https://github.com/tamird/gvisor/actions/runs/41401577103/artifacts/13121068651"
@@ -63978,7 +64040,7 @@
           ]
         }
       ],
-      "nextStep": "Test multi-hunk unified diff positions before proposing the goimports change. Trace the smallest supplier correction for containerd/cgroups so a module consumer can build the production shim without inheriting development-only policy.",
+      "nextStep": "Coordinate the hunk correction and goimports submission. For the shim, qualify a Gazelle default that selects the distributed Go sources and also keeps both language-neutral proto targets.",
       "evidence": [
         {
           "label": "Gazelle: qualified proposal",
