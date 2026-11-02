@@ -1,35 +1,111 @@
-name: CI
-
-"on":
+name: Compare two recovery decisions on a real M003 byte stream
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-m003-two-repairs]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      BASE: b0d2148f41d2d35577b5fe759192f71947cc87fd
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 2, persist-credentials: false}
+    - name: Bind the reporter, GNU worker and both policy sources
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -euo pipefail
+        [[ "$(git rev-parse HEAD^)" == "$BASE" && "$(git rev-parse HEAD)" == "$GITHUB_SHA" ]]
+        p=test/rbe/m003_pair
+        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu"
+        echo '{"verified":false,"phase":"preparation"}' > "$RUNNER_TEMP/records/verdict.json"
+        remote=https://github.com/tamird/gvisor.git
+        git fetch -q --depth=1 "$remote" 0ee70efe6d52576b8f173b40ad6b7ac117da3b72 9df20cfc54ca29cd875845a5e6e9fc9e6ac5c9f8 c7976270813d5218a847539dd94f749c7cb4dfd5
+        for f in MODULE.bazel BUILD.bazel; do git show "0ee70efe6:test/rbe/gnu_platform/$f" > "$RUNNER_TEMP/gnu/$f"; done
+        curl --fail --silent --show-error --location --retry 2 https://github.com/user-attachments/files/34000273/gvisor-16393-reproducer-final.zip -o "$RUNNER_TEMP/m003.zip"
+        echo "3c348dc00359607416c236e7a56fb7e0ea87da4efeec79a377a1020a8b622a24  $RUNNER_TEMP/m003.zip" | sha256sum -c
+        unzip -p "$RUNNER_TEMP/m003.zip" main.go > "$p/main.go"
+        echo "82cb123ff35d3ed82775d80ae000bab853c7a21a0d8ad698955ed180e2132b72  $p/main.go" | sha256sum -c
+        (cd "$p" && patch -s -p1 -i reporter.patch)
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --init --name tcp-compiler --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        docker exec tcp-compiler gcc -dumpfullversion > "$RUNNER_TEMP/records/gcc"
+        docker exec tcp-compiler uname -srvm > "$RUNNER_TEMP/records/kernel"
+        echo "$GITHUB_SHA $BASE" > "$RUNNER_TEMP/records/source"
+        chmod 755 "$RUNNER_TEMP/records"
+    - name: Screen stock and run the qualified comparisons on the same Linux coordinator
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+        set -euo pipefail
+        p=test/rbe/m003_pair
+        d="$RUNNER_TEMP/records"
+        bz() { docker exec -e GOMAXPROCS=2 tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" "$@"; }
+        args=(--config=x86_64 --jobs=48 --remote_download_outputs=toplevel)
+        run_case() {
+          local name="$1" code=0
+          date -u --iso-8601=ns > "$d/$name.started"
+          bz test "${args[@]}" --strategy=TestRunner=local --nocache_test_results --test_env=GOMAXPROCS=2 --test_sharding_strategy=disabled --test_output=errors --test_timeout=235 --test_env=PYTHONDONTWRITEBYTECODE=1 --nozip_undeclared_test_outputs --build_event_json_file="$RUNNER_TEMP/$name.bep" "//$p:$name" > "$RUNNER_TEMP/$name.log" 2>&1 || code=$?
+          date -u --iso-8601=ns > "$d/$name.finished"
+          echo "$code" > "$d/$name.exit"
+          if [[ -e "bazel-testlogs/$p/$name/test.xml" ]]; then cp "bazel-testlogs/$p/$name/test.xml" "$d/$name.xml"; fi
+          shopt -s nullglob
+          outputs=("bazel-testlogs/$p/$name/test.outputs/"*.json)
+          if (( ${#outputs[@]} )); then mkdir -p "$d/$name"; cp -L "${outputs[@]}" "$d/$name/"; fi
+          python3 "$p/status.py" "$name" "$RUNNER_TEMP" "$code"
+          [[ $code == 0 ]]
+        }
+        python3 "$p/prepare.py" stock "$d/source-stock.json"
+        run_case screen
+        cp "$d/screen/screen.json" "$p/screen.json"
+        active=$(python3 -c 'import json,sys; print(len(json.load(open(sys.argv[1]))["schedules"]))' "$p/screen.json")
+        if [[ "$active" == "0" ]]; then
+          printf '%s\n' '{"verified":false,"status":"BOTH_MECHANISMS_NOT_OBSERVED","comparison_transfers":0}' > "$d/verdict.json"
+          exit 0
+        fi
+        for arm in stock deadline select both; do
+          python3 "$p/prepare.py" "$arm" "$d/source-$arm.json"
+          code=0
+          bz build "${args[@]}" "//$p:reporter" > "$RUNNER_TEMP/build-$arm.log" 2>&1 || code=$?
+          echo "$code" > "$d/build-$arm.exit"
+          if [[ $code != 0 ]]; then python3 "$p/status.py" "build-$arm" "$RUNNER_TEMP" "$code"; exit "$code"; fi
+          cp "bazel-bin/$p/reporter_/reporter" "$p/$arm"
+          chmod 755 "$p/$arm"
+          sha256sum "$p/$arm" >> "$d/selected-binaries"
+        done
+        [[ "$(cut -d' ' -f1 "$d/selected-binaries" | sort -u | wc -l)" == 4 ]]
+        run_case comparison
+        cp "$d/comparison/comparison.json" "$d/verdict.json"
+    - name: Check the public observation boundary
+      id: allowlist
+      if: always()
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PYBOUND'
+        from pathlib import Path
+        import os, re
+        root = Path(os.environ["RUNNER_TEMP"]) / "records"
+        key = os.environ["BUILDBUDDY_API_KEY"].encode()
+        for path in root.rglob("*"):
+            assert not path.is_symlink(), path.name
+            if not path.is_file():
+                continue
+            name = path.relative_to(root).as_posix()
+            assert re.fullmatch(r"(gcc|kernel|source|selected-binaries|verdict\.json|source-(stock|select|both|deadline)\.json|(build-(stock|select|both|deadline)|screen|comparison)\.(exit|started|finished|xml|status\.json)|(screen|comparison)/[a-z0-9.-]+\.json)", name), name
+            data = path.read_bytes()
+            assert not (key and key in data) and b"x-buildbuddy-api-key" not in data and b"Authorization: Bearer" not in data
+        PYBOUND
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.allowlist.outcome == 'success'
+      with: {name: m003-paired-recovery, path: "${{ runner.temp }}/records", if-no-files-found: error}

@@ -1,0 +1,73 @@
+--- a/main.go
++++ b/main.go
+@@ -16 +15,0 @@
+-	"gvisor.dev/gvisor/pkg/buffer"
+@@ -27,7 +26,9 @@
+-	Seconds   float64 `json:"seconds"`
+-	Direction string  `json:"direction"`
+-	Seq       uint32  `json:"seq"`
+-	Ack       uint32  `json:"ack"`
+-	Length    int     `json:"length"`
+-	Dropped   bool    `json:"dropped"`
+-	Copy      int     `json:"copy"`
++	Position  int         `json:"position,omitempty"`
++	SACK      [][2]uint32 `json:"sack,omitempty"`
++	Seconds   float64     `json:"seconds"`
++	Direction string      `json:"direction"`
++	Seq       uint32      `json:"seq"`
++	Ack       uint32      `json:"ack"`
++	Length    int         `json:"length"`
++	Dropped   bool        `json:"dropped"`
++	Copy      int         `json:"copy"`
+@@ -150 +151,2 @@
+-			copyNo := 0
++			copyNo, position := 0, 0
++			due := time.Now().Add(5 * time.Millisecond)
+@@ -158 +160,4 @@
+-				position := positions[seq]
++				position = positions[seq]
++				if scenario == "timely" || scenario == "held" {
++					due, drop = impaired(due, scenario, seq, n, position, copyNo)
++				}
+@@ -172 +177 @@
+-			r.event(PacketEvent{Seconds: time.Since(r.start).Seconds(), Direction: direction, Seq: seq, Ack: ack, Length: n, Dropped: drop, Copy: copyNo})
++			r.event(PacketEvent{Seconds: time.Since(r.start).Seconds(), Direction: direction, Seq: seq, Ack: ack, Length: n, Dropped: drop, Copy: copyNo, Position: position, SACK: sackBlocks(t[:thl])})
+@@ -177 +182 @@
+-			case q <- Transfer{data: data, due: time.Now().Add(5 * time.Millisecond)}:
++			case q <- Transfer{data: data, due: due}:
+@@ -183,23 +188 @@
+-	for {
+-		select {
+-		case p, ok := <-q:
+-			if !ok {
+-				return
+-			}
+-			wait := time.Until(p.due)
+-			if wait > 0 {
+-				timer := time.NewTimer(wait)
+-				select {
+-				case <-timer.C:
+-				case <-ctx.Done():
+-					timer.Stop()
+-					return
+-				}
+-			}
+-			pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: buffer.MakeWithData(p.data)})
+-			to.InjectInbound(ipv4.ProtocolNumber, pkt)
+-			pkt.DecRef()
+-		case <-ctx.Done():
+-			return
+-		}
+-	}
++	deliver(ctx, q, to)
+@@ -246 +229 @@
+-	if *scenario != "control" && *scenario != "burst6" && *scenario != "burst24" && *scenario != "lost-tail-probe" {
++	if *scenario != "control" && *scenario != "burst6" && *scenario != "burst24" && *scenario != "lost-tail-probe" && *scenario != "timely" && *scenario != "held" {
+@@ -251,0 +235,3 @@
++	if err := startExperiment(r); err != nil {
++		return err
++	}
+@@ -321,0 +308,3 @@
++	if err := finishExperiment(*output); err != nil {
++		return err
++	}
