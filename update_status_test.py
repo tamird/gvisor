@@ -143,6 +143,69 @@ class ReleaseObservationTest(unittest.TestCase):
                 self.observe({"module": "llvm"}, metadata)
 
 
+class RegisteredPRBatchTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.rows = {}
+        self.nodes = []
+        for index, count in enumerate((2, 3, 6, 1, 1, 1, 2, 1, 1)):
+            repo = f"supplier{index}/project"
+            for number in range(1, count + 1):
+                row = raw_pr(number, "CLOSED" if number == 1 else "OPEN")
+                row.update(repository={"nameWithOwner": repo}, url=f"https://github.com/{repo}/pull/{number}")
+                self.rows[repo, number] = row
+                self.nodes.append({"type": "pr", "repo": repo, "number": number})
+        self.batches = []
+
+    def graphql(self, query: str) -> dict:
+        matches = re.findall(r'(r\d+):repository\(owner:"([^"]+)",name:"([^"]+)"\)\{pullRequest\(number:(\d+)\)', query)
+        self.assertIn(updater.FIELDS, query)
+        self.assertIn(updater.TIMELINE, query)
+        batch = {alias: (f"{owner}/{name}", int(number)) for alias, owner, name, number in matches}
+        self.assertGreater(len(batch), 0)
+        self.assertLessEqual(len(batch), updater.PR_BATCH_SIZE)
+        self.batches.append(list(batch.values()))
+        return {alias: {"pullRequest": copy.deepcopy(self.rows[identity])} for alias, identity in batch.items()}
+
+    def fetch(self) -> dict:
+        repositories = {repo for repo, _ in self.rows}
+        with mock.patch.object(updater, "REGISTRY", {"nodes": self.nodes}), \
+                mock.patch.object(updater, "graphql", side_effect=self.graphql):
+            return updater.fetch_registered_prs(repositories)
+
+    def test_batches_keep_equal_numbers_in_different_repositories(self) -> None:
+        # This is the nine-repository supplier inventory that previously used
+        # nine calls. All 18 observations, including terminal PRs, remain fresh.
+        result = self.fetch()
+        self.assertEqual([len(batch) for batch in self.batches], [8, 8, 2])
+        self.assertEqual([identity for batch in self.batches for identity in batch], sorted(self.rows))
+        self.assertEqual(result.keys(), self.rows.keys())
+        for identity, row in result.items():
+            self.assertGreater(datetime.fromisoformat(row.pop("_retrievedAt")), datetime.fromisoformat(OLD))
+            self.assertEqual(row, self.rows[identity])
+
+    def test_missing_extra_or_mismatched_alias_fails_closed(self) -> None:
+        query = self.graphql
+        for failure in ("missing", "extra", "repository", "number", "unavailable"):
+            with self.subTest(failure=failure):
+                def malformed(text: str) -> dict:
+                    response = query(text)
+                    if failure == "missing":
+                        del response["r0"]
+                    elif failure == "extra":
+                        response["r99"] = response["r0"]
+                    elif failure == "unavailable":
+                        response["r0"] = None
+                    elif failure == "number":
+                        response["r0"]["pullRequest"]["number"] += 1
+                    else:
+                        response["r0"]["pullRequest"]["repository"]["nameWithOwner"] = "other/project"
+                    return response
+
+                with mock.patch.object(self, "graphql", side_effect=malformed), \
+                        self.assertRaisesRegex(RuntimeError, "Registered PR"):
+                    self.fetch()
+
+
 class IssueInventoryTest(unittest.TestCase):
     def setUp(self) -> None:
         self.nodes = [{"id": f"issue:{index}", "type": "issue", "repo": repo, "number": index}
@@ -392,6 +455,11 @@ class CollectorHistoryTest(unittest.TestCase):
                 "totalCount": len(self.open_rows), "nodes": rows,
                 "pageInfo": {"hasNextPage": offset + 100 < len(self.open_rows), "endCursor": str(offset + 100)},
             }}}
+        if 'r0:repository(' in query:
+            matches = re.findall(r'(r\d+):repository\(owner:"([^"]+)",name:"([^"]+)"\)\{pullRequest\(number:(\d+)\)', query)
+            self.requested.extend(int(number) for _, _, _, number in matches)
+            return {alias: {"pullRequest": copy.deepcopy(self.raw[int(number)])}
+                    for alias, _, _, number in matches}
         numbers = [int(n) for n in re.findall(r"p(\d+):pullRequest", query)]
         self.assertTrue(numbers, query)
         self.requested.extend(numbers)
@@ -596,10 +664,10 @@ class CollectorHistoryTest(unittest.TestCase):
         self.raw[3]["comments"]["nodes"] = [comment]
         collect_repository = updater.collect_repository
 
-        def fail_later(repo: str, policy: str, previous: dict) -> tuple:
+        def fail_later(repo: str, policy: str, previous: dict, registered: dict | None = None) -> tuple:
             if repo == "buildbuddy-io/buildbuddy":
                 raise RuntimeError("Open PR inventory changed during retrieval")
-            return collect_repository(repo, policy, previous)
+            return collect_repository(repo, policy, previous, registered)
 
         with mock.patch.object(updater, "collect_repository", side_effect=fail_later), \
                 mock.patch("builtins.print") as output, \
@@ -783,10 +851,11 @@ class CollectorHistoryTest(unittest.TestCase):
         def graphql(query: str, variables: dict | None = None) -> dict:
             self.assertNotEqual((variables or {}).get("owner"), "nodejs", "Registered-only mode must not discover PRs")
             if 'owner:"nodejs"' in query:
-                numbers = [int(number) for number in re.findall(r"p(\d+):pullRequest", query)]
+                numbers = [int(number) for number in re.findall(r"pullRequest\(number:(\d+)\)", query)]
                 node_requests.extend(numbers)
                 self.assertEqual(numbers, [66835, 66874])
-                return {"repository": {f"p{number}": copy.deepcopy(raw[number]) for number in numbers}}
+                return {f"r{index}": {"pullRequest": copy.deepcopy(raw[number])}
+                        for index, number in enumerate(numbers)}
             return primary_graphql(query, variables)
 
         with mock.patch.object(self, "graphql", side_effect=graphql):
