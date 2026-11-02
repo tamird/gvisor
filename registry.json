@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T15:34:38.869315+00:00",
+    "updatedAt": "2026-11-02T15:46:59.054342+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28967,8 +28967,8 @@
       "url": "https://github.com/google/gvisor/pull/16496",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T19:51:53.969+00:00",
-      "summary": "The approved source removes the cgroup test’s local tag. Copybara #16542 keeps it, preventing Bazel from generating the test main on AMD64 and ARM64 remote workers. A comment asking Lucas to fix the import is ready.",
+      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
+      "summary": "The approved source removes the cgroup test’s local tag. Copybara #16542 keeps it, preventing Bazel from generating the test main on AMD64 and ARM64 remote workers. Lucas has been asked to fix the imported test.",
       "followup": {
         "owner": "root",
         "sourceHead": "17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b",
@@ -29108,6 +29108,10 @@
         {
           "label": "Weekly review cleanup queue",
           "url": "https://tamird.github.io/gvisor/?view=investigations#investigation%3Aweekly-review-cleanup"
+        },
+        {
+          "label": "Posted reply",
+          "url": "https://github.com/google/gvisor/pull/16496#issuecomment-6581414202"
         }
       ],
       "refinement": {
@@ -29119,16 +29123,16 @@
         }
       },
       "number": 16496,
-      "contributorReview": {
-        "status": "pending",
-        "kind": "reply",
-        "head": "17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b",
-        "url": "https://github.com/google/gvisor/pull/16496",
-        "title": "Ask Lucas to correct the imported cgroup test",
-        "requestedAt": "2026-10-31T19:51:53.969+00:00",
-        "summary": "Post the tested difference? The approved source removes the local tag but the import keeps it. It blocks the runsc builds on both remote architectures.",
-        "body": "@manninglucas, [the import](https://github.com/google/gvisor/pull/16542/files) includes the capability fix from the approved head, but keeps `tags = [\"local\"]` on `//runsc/cgroup:cgroup_test`. The [source change](https://github.com/google/gvisor/pull/16496/files) removes that line. With it present Bazel cannot even generate the test’s Go main on a remote worker ([AMD64](https://app.buildbuddy.io/invocation/34735724-4f08-4272-8288-1c81321339c4); [both architectures](https://github.com/tamird/gvisor/actions/runs/41231932306/artifacts/13055965081)).\n\nCould you remove the local tag in the internal change before it lands? The import already points to the head you approved.\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "head": "17ecf36e73b7a3c9e9baf7d30546bf9c67c17c9b",
+          "body": "@manninglucas, [the import](https://github.com/google/gvisor/pull/16542/files) includes the capability fix from the approved head, but keeps `tags = [\"local\"]` on `//runsc/cgroup:cgroup_test`. The [source change](https://github.com/google/gvisor/pull/16496/files) removes that line. With it present Bazel cannot even generate the test’s Go main on a remote worker ([AMD64](https://app.buildbuddy.io/invocation/34735724-4f08-4272-8288-1c81321339c4); [both architectures](https://github.com/tamird/gvisor/actions/runs/41231932306/artifacts/13055965081)).\n\nCould you remove the local tag in the internal change before it lands? The import already points to the head you approved.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-02T15:46:59.054342+00:00",
+          "url": "https://github.com/google/gvisor/pull/16496#issuecomment-6581414202"
+        }
+      ]
     },
     {
       "id": "pr:16505",
@@ -35544,7 +35548,7 @@
       "url": "https://github.com/google/gvisor/pull/15432",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-30T19:20:31.842124+00:00",
+      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
       "summary": "On the exact PR, four live repairs were missed and five more left cwnd five with nine outstanding. A common-send-path fork counted the four, emitted one and preserved repair progress. The combined sender removed those four copies when RACK marked them lost again.",
       "settledReviews": [
         {
@@ -35553,6 +35557,14 @@
           "outcome": "approved",
           "at": "2026-10-29T18:56:07.113045+00:00",
           "body": "After RACK marks #2 lost, retransmitting it clears `s1.lost`. This\nbranch then counts #2 once, and the `HighRxt` branch below counts it a\nsecond time. In this PR’s tail-loss test, the ACK of #1 opens a\nfive-packet window, but [only #2–#5 are sent](https://app.buildbuddy.io/invocation/e771617b-851e-4019-a76e-f73015f02f74).\n[Omitting the second count](https://app.buildbuddy.io/invocation/e3b6733c-2ae1-4ac3-a4a8-93f4a7b9a126)\nlets #6 go as well, with GSO both on and off.\n\nCan the flight estimate distinguish a **lost original** from an\n**unacknowledged tail probe** whose original might still arrive? The\n[probe case](https://app.buildbuddy.io/invocation/4a34011d-e824-431a-a00b-a35326e809ef)\nhas the opposite error: four transmissions are outstanding at a window\nof 11, yet the next write sends eight new packets rather than seven.\n\nPosted by Codex on behalf of @tamird."
+        },
+        {
+          "kind": "review",
+          "head": "00aaa82b9e9cda8dc25dbe1df6e07a56c68302c5",
+          "body": "The two RACK changes release a reproducible stall. The combined\n#15634 and #16738 sender counted 44 RACK-lost tail packets against\na congestion window of five. With your changes it sent the short\nrepair and four more on the first ACK [1].\n\nOn your exact head, the next ACK covered only that short repair.\nThe four other repairs were still unacknowledged, and RACK had not\nmarked them lost. SetPipe counted none of them. The earlier SACKs\nstill classified their sequence ranges as lost, and HighRxt stopped\nat the short repair. Sending five more left nine outstanding with a\nwindow of five. Updating HighRxt only in the RACK loop gave the same\nresult because the ordinary send loop also repairs from writeNext\nafter a timeout [2].\n\nA small fork change records the last byte actually retransmitted in\nthe common send path and excludes a retransmission once RACK marks it\nlost again. On both your head and the combined sender the short ACK\nthen released one repair. When the peer acknowledged only that later\nrepair, the combined sender marked the four earlier repairs lost and\nresent them. Your head retained the four that RACK still considered\nin flight [3] [4]. RFC 6675 also advances the high-water mark on\nordinary recovery retransmissions. Linux separately tracks copies\nretransmitted after loss [5] [6].\n\nCould you rebase the RACK changes and cover both sides of that ACK?\nMaster already advances writeNext after an RTO retransmission. #15634\nalso preserves the clone's delivery and loss state. Please keep the\ncase where the original and its probe might both be in flight [7].\nThe full-transfer control did not reproduce the long stall, so it\ndoesn't establish a throughput effect [8].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41108811393/artifacts/13002067553\n[2]: https://github.com/tamird/gvisor/actions/runs/41111079975/artifacts/13004156935\n[3]: https://github.com/tamird/gvisor/compare/00aaa82b9...a1da0f98e\n[4]: https://github.com/tamird/gvisor/actions/runs/41112566996/artifacts/13006150199\n[5]: https://www.rfc-editor.org/rfc/rfc6675.html#section-5\n[6]: https://github.com/torvalds/linux/blob/7d0a66e4b/net/ipv4/tcp_input.c#L1320-L1342\n[7]: https://github.com/google/gvisor/pull/15432#discussion_r4416541513\n[8]: https://github.com/tamird/gvisor/actions/runs/41104025638/artifacts/13000928053\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-02T15:46:59.054342+00:00",
+          "url": "https://github.com/google/gvisor/pull/15432#discussion_r4444420689"
         }
       ],
       "evidence": [
@@ -35587,17 +35599,12 @@
         {
           "label": "Short ACK, four live repairs and subsequent confirmed loss",
           "url": "https://github.com/tamird/gvisor/actions/runs/41112566996/artifacts/13006150199"
+        },
+        {
+          "label": "Posted review",
+          "url": "https://github.com/google/gvisor/pull/15432#discussion_r4444420689"
         }
-      ],
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "00aaa82b9e9cda8dc25dbe1df6e07a56c68302c5",
-        "url": "https://github.com/google/gvisor/pull/15432",
-        "title": "Review the RACK tail-loss fix",
-        "summary": "Review both sides of SetPipe on the exact head. A fork records successfully sent repairs and excludes copies declared lost again. The proposed comment retains the separate original-plus-probe check.",
-        "body": "The two RACK changes release a reproducible stall. The combined\n#15634 and #16738 sender counted 44 RACK-lost tail packets against\na congestion window of five. With your changes it sent the short\nrepair and four more on the first ACK [1].\n\nOn your exact head, the next ACK covered only that short repair.\nThe four other repairs were still unacknowledged, and RACK had not\nmarked them lost. SetPipe counted none of them. The earlier SACKs\nstill classified their sequence ranges as lost, and HighRxt stopped\nat the short repair. Sending five more left nine outstanding with a\nwindow of five. Updating HighRxt only in the RACK loop gave the same\nresult because the ordinary send loop also repairs from writeNext\nafter a timeout [2].\n\nA small fork change records the last byte actually retransmitted in\nthe common send path and excludes a retransmission once RACK marks it\nlost again. On both your head and the combined sender the short ACK\nthen released one repair. When the peer acknowledged only that later\nrepair, the combined sender marked the four earlier repairs lost and\nresent them. Your head retained the four that RACK still considered\nin flight [3] [4]. RFC 6675 also advances the high-water mark on\nordinary recovery retransmissions. Linux separately tracks copies\nretransmitted after loss [5] [6].\n\nCould you rebase the RACK changes and cover both sides of that ACK?\nMaster already advances writeNext after an RTO retransmission. #15634\nalso preserves the clone's delivery and loss state. Please keep the\ncase where the original and its probe might both be in flight [7].\nThe full-transfer control did not reproduce the long stall, so it\ndoesn't establish a throughput effect [8].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41108811393/artifacts/13002067553\n[2]: https://github.com/tamird/gvisor/actions/runs/41111079975/artifacts/13004156935\n[3]: https://github.com/tamird/gvisor/compare/00aaa82b9...a1da0f98e\n[4]: https://github.com/tamird/gvisor/actions/runs/41112566996/artifacts/13006150199\n[5]: https://www.rfc-editor.org/rfc/rfc6675.html#section-5\n[6]: https://github.com/torvalds/linux/blob/7d0a66e4b/net/ipv4/tcp_input.c#L1320-L1342\n[7]: https://github.com/google/gvisor/pull/15432#discussion_r4416541513\n[8]: https://github.com/tamird/gvisor/actions/runs/41104025638/artifacts/13000928053\n\nPosted by Codex on behalf of @tamird."
-      }
+      ]
     },
     {
       "id": "pr:16620",
@@ -38156,8 +38163,8 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-01T23:13:12+00:00",
-      "summary": "Both restores on 5068ecb10 ran at a 200 MiB kernel limit. Starting at 200 MiB selected a 99.93 MiB Go limit and succeeded. Shrinking from 2 GiB selected 1,023 MiB and the kernel OOM-killed the Sentry. The pending review also identifies the cgroup directory reads in the fixture. The ancestor limit at boot is a separate finding. On a 4-vCPU worker with a 2 GiB limit, the proposed GC policy reduced median save time from 2.011 s to 1.817 s and increased peak sampled Sentry RSS during save through exit from 630.9 MiB to 735.4 MiB. The earlier #16152 policy took 1.968 s and used 650.1 MiB. The comparison used 12 balanced triplets. All 39 archives, including three warmups, restored all 100,000 files.",
+      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
+      "summary": "Both restores on 5068ecb10 ran at a 200 MiB kernel limit. Starting at 200 MiB selected a 99.93 MiB Go limit and succeeded. Shrinking from 2 GiB selected 1,023 MiB and the kernel OOM-killed the Sentry. The review also identifies the cgroup directory reads in the fixture. The ancestor limit at boot is a separate finding. On a 4-vCPU worker with a 2 GiB limit, the proposed GC policy reduced median save time from 2.011 s to 1.817 s and increased peak sampled Sentry RSS during save through exit from 630.9 MiB to 735.4 MiB. The earlier #16152 policy took 1.968 s and used 650.1 MiB. The comparison used 12 balanced triplets. All 39 archives, including three warmups, restored all 100,000 files.",
       "evidence": [
         {
           "label": "Matched save time and sampled memory for all three GC policies",
@@ -38238,27 +38245,33 @@
         {
           "label": "Three-way 100,000-file save comparison with the earlier reference policy",
           "url": "https://github.com/tamird/gvisor/actions/runs/41356803281"
+        },
+        {
+          "label": "Posted review",
+          "url": "https://github.com/google/gvisor/pull/16735#pullrequestreview-5739165844"
+        },
+        {
+          "label": "Posted review",
+          "url": "https://github.com/google/gvisor/pull/16735#discussion_r4444409895"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "review",
-        "head": "5068ecb10e0ca383cc00791cc4a655b7a90a626f",
-        "url": "https://github.com/google/gvisor/pull/16735/files#diff-90e781a80cf5f39deaf2f50f0040406c0b5237af8a8db5ce25a9ad4017091fb3R274",
-        "title": "Post the restore OOM and test-counter review",
-        "summary": "Post the two inline findings? A resized sandbox was OOM-killed at restore; the test reads a cgroup directory instead of memory.events. Reading the live bound let both 200 MiB restores complete.",
-        "body": "On the call to gccontrol.Suspend in SuspendGCForRestore:\n\n@parth-opensrc, this uses the limit from sandbox creation. If the user lowers the limit before restore, the kernel enforces the new value but GC still budgets against the old one.\n\nI saved the existing 50,000-file workload under 2 GiB in both cases and restored it with memory.max at 200 MiB. Creating the restore sandbox at 200 MiB gave Go a 99.93 MiB limit and restore succeeded. Creating it at 2 GiB and lowering it with Container.Update before Restore gave Go a 1,023 MiB limit. The restore RPC returned EOF and memory.events recorded one OOM kill, versus zero in the control. The [test output and cgroup counters](https://github.com/tamird/gvisor/actions/runs/41285846799/artifacts/13075252336) are from the same run.\n\nOn the earlier revision, [reading the limit when the host sends Restore](https://github.com/tamird/gvisor/commit/07696b6af) let [both restores finish](https://github.com/tamird/gvisor/actions/runs/41235711507/artifacts/13055496610) with a Go limit of about 99 MiB and no OOM kills. Could Sandbox.Restore and Sandbox.Checkpoint pass the current effective cgroup limit with the RPC? The guest /proc checkpoint starts SaveAsync inside the Sentry. When that path has no fresh host limit, it could keep ordinary GC enabled.\n\nPosted by Codex on behalf of @tamird.\n\nOn the read of memory.events in the restore test:\n\n@parth-opensrc, on cgroup v2, MakePath takes a controller name and returns the cgroup directory regardless of that argument [1]. Both Stat calls here therefore succeed as long as the directory exists, even if memory.swap.max is missing. The failure diagnostic later tries to ReadFile the directory, too, so it drops the OOM counters when restore fails.\n\nCould these use filepath.Join(probe.MakePath(\"\"), \"memory.max\") (and similarly for memory.swap.max and memory.events)? That makes the optional swap check and the OOM report inspect the intended files. If skipping systems without the memory controller is required, Install can itself fail before these checks.\n\nThere is a second reason to read those counters on failure: with the 200 MiB cap applied during fixture setup, the [sentry was OOM-killed during Save](https://github.com/tamird/gvisor/actions/runs/41235498081/artifacts/13055292180) before this test reached Restore. The same happened with ordinary GC; on this worker the proposed policy declined to suspend anyway. Giving only the checkpoint writer 2 GiB let the restore assertion run against a real 200 MiB cap.\n\n[1]: https://github.com/google/gvisor/blob/5068ecb10/runsc/cgroup/cgroup_v2.go#L436\n\nPosted by Codex on behalf of @tamird."
-      },
       "head": "5068ecb10e0ca383cc00791cc4a655b7a90a626f",
-      "additionalReviews": [
+      "settledReviews": [
         {
-          "status": "pending",
           "kind": "review",
           "head": "5068ecb10e0ca383cc00791cc4a655b7a90a626f",
-          "url": "https://github.com/google/gvisor/pull/16735/files#diff-4a63c582bfe39ff0651f5f25907be2de2f9702f6df1e6f2748ef495ab507c4e6R367",
-          "title": "Post the nested memory.max boot review",
-          "summary": "With a 512 MiB parent and a 2 GiB child, boot set Go’s soft limit to 1 GiB; using the tighter cgroup limit set it to 256 MiB. A 256 MiB child gave 128 MiB either way. This draft asks about the boot calculation only.",
-          "body": "@parth-opensrc, `b.totalMem` can be larger than the cgroup limit Linux enforces. On the earlier revision I set a parent’s `memory.max` to 512 MiB and its child’s to 2 GiB. The [cgroup reader](https://github.com/google/gvisor/blob/5068ecb10/runsc/cgroup/cgroup_v2.go#L413) returned 2 GiB, and `Suspend` set Go’s soft memory limit to 1 GiB. It did the same with two unlimited levels below the 512 MiB parent. A 256 MiB child correctly got a 128 MiB Go limit.\n\nCould we land [#16767](https://github.com/google/gvisor/pull/16767) before relying on this value to suspend GC? It fixes the shared cgroup reader. Taking the smallest visible limit gave the first two cases a 256 MiB Go limit and left the control unchanged. [Results from a real cgroup-v2 hierarchy](https://github.com/tamird/gvisor/actions/runs/41166214724/artifacts/13029347885). These measure the limit passed to Go; no workload was driven to OOM.\n\nPosted by Codex on behalf of @tamird."
+          "body": "On the call to gccontrol.Suspend in SuspendGCForRestore:\n\n@parth-opensrc, this uses the limit from sandbox creation. If the user lowers the limit before restore, the kernel enforces the new value but GC still budgets against the old one.\n\nI saved the existing 50,000-file workload under 2 GiB in both cases and restored it with memory.max at 200 MiB. Creating the restore sandbox at 200 MiB gave Go a 99.93 MiB limit and restore succeeded. Creating it at 2 GiB and lowering it with Container.Update before Restore gave Go a 1,023 MiB limit. The restore RPC returned EOF and memory.events recorded one OOM kill, versus zero in the control. The [test output and cgroup counters](https://github.com/tamird/gvisor/actions/runs/41285846799/artifacts/13075252336) are from the same run.\n\nOn the earlier revision, [reading the limit when the host sends Restore](https://github.com/tamird/gvisor/commit/07696b6af) let [both restores finish](https://github.com/tamird/gvisor/actions/runs/41235711507/artifacts/13055496610) with a Go limit of about 99 MiB and no OOM kills. Could Sandbox.Restore and Sandbox.Checkpoint pass the current effective cgroup limit with the RPC? The guest /proc checkpoint starts SaveAsync inside the Sentry. When that path has no fresh host limit, it could keep ordinary GC enabled.\n\nPosted by Codex on behalf of @tamird.\n\nOn the read of memory.events in the restore test:\n\n@parth-opensrc, on cgroup v2, MakePath takes a controller name and returns the cgroup directory regardless of that argument [1]. Both Stat calls here therefore succeed as long as the directory exists, even if memory.swap.max is missing. The failure diagnostic later tries to ReadFile the directory, too, so it drops the OOM counters when restore fails.\n\nCould these use filepath.Join(probe.MakePath(\"\"), \"memory.max\") (and similarly for memory.swap.max and memory.events)? That makes the optional swap check and the OOM report inspect the intended files. If skipping systems without the memory controller is required, Install can itself fail before these checks.\n\nThere is a second reason to read those counters on failure: with the 200 MiB cap applied during fixture setup, the [sentry was OOM-killed during Save](https://github.com/tamird/gvisor/actions/runs/41235498081/artifacts/13055292180) before this test reached Restore. The same happened with ordinary GC; on this worker the proposed policy declined to suspend anyway. Giving only the checkpoint writer 2 GiB let the restore assertion run against a real 200 MiB cap.\n\n[1]: https://github.com/google/gvisor/blob/5068ecb10/runsc/cgroup/cgroup_v2.go#L436\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-02T15:46:59.054342+00:00",
+          "url": "https://github.com/google/gvisor/pull/16735#pullrequestreview-5739165844"
+        },
+        {
+          "kind": "review",
+          "head": "5068ecb10e0ca383cc00791cc4a655b7a90a626f",
+          "body": "@parth-opensrc, `b.totalMem` can be larger than the cgroup limit Linux enforces. On the earlier revision I set a parent’s `memory.max` to 512 MiB and its child’s to 2 GiB. The [cgroup reader](https://github.com/google/gvisor/blob/5068ecb10/runsc/cgroup/cgroup_v2.go#L413) returned 2 GiB, and `Suspend` set Go’s soft memory limit to 1 GiB. It did the same with two unlimited levels below the 512 MiB parent. A 256 MiB child correctly got a 128 MiB Go limit.\n\nCould we land [#16767](https://github.com/google/gvisor/pull/16767) before relying on this value to suspend GC? It fixes the shared cgroup reader. Taking the smallest visible limit gave the first two cases a 256 MiB Go limit and left the control unchanged. [Results from a real cgroup-v2 hierarchy](https://github.com/tamird/gvisor/actions/runs/41166214724/artifacts/13029347885). These measure the limit passed to Go; no workload was driven to OOM.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-02T15:46:59.054342+00:00",
+          "url": "https://github.com/google/gvisor/pull/16735#discussion_r4444409895"
         }
       ]
     },
@@ -38871,7 +38884,7 @@
       "url": "https://github.com/google/gvisor/pull/15972",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-30T23:00:22.480244+00:00",
+      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
       "summary": "The PR caps a tail probe at the retransmission deadline. After an ACK reduces two outstanding segments to one, the parent retransmits the tail at 220 ms and the PR at 20 ms. Scheduling after ACK accounting retransmits it at the 50 ms RTO.",
       "evidence": [
         {
@@ -38889,17 +38902,22 @@
         {
           "label": "TCP review guide",
           "url": "https://github.com/google/gvisor/issues/16670"
+        },
+        {
+          "label": "Posted review",
+          "url": "https://github.com/google/gvisor/pull/15972#discussion_r4444417322"
         }
       ],
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "8147e9ad3c95c67a0a9dd560f37aff9d7842f861",
-        "url": "https://github.com/google/gvisor/pull/15972",
-        "title": "Review the timer for the last segment",
-        "summary": "Decide whether to post the proposed inline at snd.go line 1080. The change preserves the postXmit guard and starts the ACK timer only after removing acknowledged packets.",
-        "body": "Could you schedule the probe after accounting for the ACK? When two\nsegments are outstanding and the first is acknowledged, schedulePTO\nstill sees two. This guard preserves that timer for the lone remaining\nsegment. In the packet test the PR retransmits the last 10 bytes at\n20 ms (twice the measured RTT) [1]. Moving the timer calculation below\nACK accounting sends those bytes at the 50 ms RTO and keeps the three\nexisting tests passing [2].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41140493959/artifacts/13018229764\n[2]: https://github.com/tamird/gvisor/commit/b0b469219\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "review",
+          "head": "8147e9ad3c95c67a0a9dd560f37aff9d7842f861",
+          "body": "Could you schedule the probe after accounting for the ACK? When two\nsegments are outstanding and the first is acknowledged, schedulePTO\nstill sees two. This guard preserves that timer for the lone remaining\nsegment. In the packet test the PR retransmits the last 10 bytes at\n20 ms (twice the measured RTT) [1]. Moving the timer calculation below\nACK accounting sends those bytes at the 50 ms RTO and keeps the three\nexisting tests passing [2].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41140493959/artifacts/13018229764\n[2]: https://github.com/tamird/gvisor/commit/b0b469219\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-02T15:46:59.054342+00:00",
+          "url": "https://github.com/google/gvisor/pull/15972#discussion_r4444417322"
+        }
+      ]
     },
     {
       "id": "branch:ipv6-multicast-socket-options",
@@ -38995,7 +39013,7 @@
       "url": "https://github.com/google/gvisor/pull/15019",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T01:17:56.603458+00:00",
+      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
       "summary": "Linux keeps the TIME_WAIT endpoint after an unexpected SYN-ACK and ACKs the repeated old FIN. The proposed forwarder resets both. A bare SYN still reopens the connection with the narrower guard.",
       "evidence": [
         {
@@ -39005,17 +39023,22 @@
         {
           "label": "Guard and repeated-FIN control",
           "url": "https://github.com/tamird/gvisor/compare/9a707824b...2bc369a8a"
+        },
+        {
+          "label": "Posted review",
+          "url": "https://github.com/google/gvisor/pull/15019#pullrequestreview-5739193389"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "review",
-        "head": "e503a89e87b363812834ccaa96eb503446490faa",
-        "url": "https://github.com/google/gvisor/pull/15019",
-        "title": "Post the TIME_WAIT packet comparison",
-        "summary": "Linux keeps the TIME_WAIT endpoint after an unexpected SYN-ACK and ACKs the repeated old FIN. The proposed forwarder resets both. A bare SYN still reopens the connection with the narrower guard.",
-        "body": "Could we keep the TIME_WAIT endpoint for this SYN-ACK? With these packet fields, Linux ACKs the SYN-ACK with the old connection’s sequence numbers. Repeating that connection’s last FIN gets the same ACK. On this head both packets get RSTs: the forwarder rejects the SYN-ACK, but by then the old endpoint is already gone.\n\nRestricting TIME_WAIT reuse to a SYN without ACK or RST keeps both ACKs and still accepts a genuine reopening SYN. Here are the [packet traces](https://github.com/tamird/gvisor/actions/runs/41153077876/artifacts/13024367271), the [tested guard](https://github.com/tamird/gvisor/compare/9a707824b...2bc369a8a), and [the corresponding Linux check](https://github.com/torvalds/linux/blob/7d0a66e4b/net/ipv4/tcp_minisocks.c#L253)."
-      }
+      "settledReviews": [
+        {
+          "kind": "review",
+          "head": "e503a89e87b363812834ccaa96eb503446490faa",
+          "body": "Could we keep the TIME_WAIT endpoint for this SYN-ACK? With these packet fields, Linux ACKs the SYN-ACK with the old connection’s sequence numbers. Repeating that connection’s last FIN gets the same ACK. On this head both packets get RSTs: the forwarder rejects the SYN-ACK, but by then the old endpoint is already gone.\n\nRestricting TIME_WAIT reuse to a SYN without ACK or RST keeps both ACKs and still accepts a genuine reopening SYN. Here are the [packet traces](https://github.com/tamird/gvisor/actions/runs/41153077876/artifacts/13024367271), the [tested guard](https://github.com/tamird/gvisor/compare/9a707824b...2bc369a8a), and [the corresponding Linux check](https://github.com/torvalds/linux/blob/7d0a66e4b/net/ipv4/tcp_minisocks.c#L253).",
+          "outcome": "approved",
+          "at": "2026-11-02T15:46:59.054342+00:00",
+          "url": "https://github.com/google/gvisor/pull/15019#pullrequestreview-5739193389"
+        }
+      ]
     },
     {
       "id": "branch:fdnotifier-epoll-registration",
@@ -39060,17 +39083,8 @@
       "url": "https://github.com/google/gvisor/pull/16445",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T01:49:10.922738+00:00",
+      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
       "summary": "The nested Docker benchmark credits 128 KiB for a transfer that sends and receives 1 KiB. Use measured throughput for the topology comparison.",
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "ba675225290a8da4a5d1468219a40fda74fc1b05",
-        "url": "https://github.com/google/gvisor/pull/16445",
-        "title": "Post the measured iperf review",
-        "summary": "The nested Docker benchmark credits 128 KiB for a transfer that sends and receives 1 KiB. Use measured throughput for the topology comparison.",
-        "body": "At `b.N=1`, the DING image’s iperf2 sender and receiver both report 1 KiB, but this call also prints Go’s MB/s as if 128 KiB had been transferred. That 128 KiB is the write buffer size. Go times the whole client invocation; iperf measures the transfer. Could we use the `bandwidth.bytes_per_second` metric for comparing topologies and omit the misleading MB/s? [The one- and four-stream Linux captures](https://github.com/tamird/gvisor/actions/runs/41156099116/artifacts/13025064483) include the sender and receiver reports.\n\nThe shared [iperf3 migration](https://github.com/tamird/gvisor/commit/309a60834) changes both command names and reads aggregate JSON. If this PR lands first, that migration will also need to switch DING’s servers and its container’s iperf package.\n\nPosted on behalf of @tamird."
-      },
       "evidence": [
         {
           "label": "15 native transfer cases with sender and receiver byte counts",
@@ -39079,6 +39093,20 @@
         {
           "label": "TCP reviewer guide",
           "url": "https://github.com/google/gvisor/issues/16670#reviews-that-can-proceed-independently"
+        },
+        {
+          "label": "Posted review",
+          "url": "https://github.com/google/gvisor/pull/16445#discussion_r4444415641"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "review",
+          "head": "ba675225290a8da4a5d1468219a40fda74fc1b05",
+          "body": "At `b.N=1`, the DING image’s iperf2 sender and receiver both report 1 KiB, but this call also prints Go’s MB/s as if 128 KiB had been transferred. That 128 KiB is the write buffer size. Go times the whole client invocation; iperf measures the transfer. Could we use the `bandwidth.bytes_per_second` metric for comparing topologies and omit the misleading MB/s? [The one- and four-stream Linux captures](https://github.com/tamird/gvisor/actions/runs/41156099116/artifacts/13025064483) include the sender and receiver reports.\n\nThe shared [iperf3 migration](https://github.com/tamird/gvisor/commit/309a60834) changes both command names and reads aggregate JSON. If this PR lands first, that migration will also need to switch DING’s servers and its container’s iperf package.\n\nPosted on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-02T15:46:59.054342+00:00",
+          "url": "https://github.com/google/gvisor/pull/16445#discussion_r4444415641"
         }
       ]
     },
@@ -39554,16 +39582,8 @@
       "url": "https://github.com/google/gvisor/issues/15865",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T04:29:49.483123+00:00",
+      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
       "summary": "The July source and August release differ in how checkpointing waits for TIME_WAIT timer callbacks. The GKE build revision and whether failures reuse a client port are still unknown.",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "reply",
-        "url": "https://github.com/google/gvisor/issues/15865",
-        "title": "Reply about the GKE build and source ports",
-        "summary": "Ask which revision was deployed in GKE and whether the other post-restore crashes shared a client port. The available checkpoint and loopback evidence narrows both questions.",
-        "body": "@SecretSun, I wouldn’t change `--allow-connected-on-save` for the 127.0.0.1:8081 connection. In [the July source you identified](https://github.com/google/gvisor/blob/9f653e577/pkg/tcpip/transport/tcp/endpoint_state.go#L48-L67), TCP only marks a connection for termination if the route lacks save/restore support. The [loopback device advertises that support](https://github.com/google/gvisor/blob/9f653e577/pkg/tcpip/link/loopback/loopback.go#L83-L85).\n\nI [tested the public July 21 release](https://github.com/tamird/gvisor/actions/runs/41168603665/artifacts/13030331016) without that flag. I checkpointed and restored twice with a connection from port 43425 already accepted on port 8081 and another connection still in the accept queue. Both exchanged bytes after each restore, and a fresh connection from 43425 reached the listener. That didn’t reproduce the panic.\n\nFor the checkpoint crash, a TIME_WAIT timer can remove a connection from the demuxer. July didn’t wait for those callbacks before serializing the kernel; [2337c1f9f](https://github.com/google/gvisor/commit/2337c1f9f) made it wait. The August 31 release you tested includes the fix. Can someone on the GKE side confirm whether the failing build includes it? We don’t know which map was being written.\n\nFor the nil endpoint, do the other crashes from the same checkpoint show the same client port, or a small set of recurring ports? [Lookup tries an exact connection before the listener](https://github.com/google/gvisor/blob/9f653e577/pkg/tcpip/stack/transport_demuxer.go#L77-L108). The source ports would help distinguish a stale connection entry from a problem with the listener itself.\n\nPosted by Codex on behalf of @tamird."
-      },
       "evidence": [
         {
           "label": "July 2026 runsc with the default flag: two loopback restores and tuple reuse",
@@ -39580,6 +39600,19 @@
         {
           "label": "July exact-tuple demultiplexer lookup",
           "url": "https://github.com/google/gvisor/blob/9f653e577/pkg/tcpip/stack/transport_demuxer.go#L77-L108"
+        },
+        {
+          "label": "Posted reply",
+          "url": "https://github.com/google/gvisor/issues/15865#issuecomment-6581391275"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "body": "@SecretSun, I wouldn’t change `--allow-connected-on-save` for the 127.0.0.1:8081 connection. In [the July source you identified](https://github.com/google/gvisor/blob/9f653e577/pkg/tcpip/transport/tcp/endpoint_state.go#L48-L67), TCP only marks a connection for termination if the route lacks save/restore support. The [loopback device advertises that support](https://github.com/google/gvisor/blob/9f653e577/pkg/tcpip/link/loopback/loopback.go#L83-L85).\n\nI [tested the public July 21 release](https://github.com/tamird/gvisor/actions/runs/41168603665/artifacts/13030331016) without that flag. I checkpointed and restored twice with a connection from port 43425 already accepted on port 8081 and another connection still in the accept queue. Both exchanged bytes after each restore, and a fresh connection from 43425 reached the listener. That didn’t reproduce the panic.\n\nFor the checkpoint crash, a TIME_WAIT timer can remove a connection from the demuxer. July didn’t wait for those callbacks before serializing the kernel; [2337c1f9f](https://github.com/google/gvisor/commit/2337c1f9f) made it wait. The August 31 release you tested includes the fix. Can someone on the GKE side confirm whether the failing build includes it? We don’t know which map was being written.\n\nFor the nil endpoint, do the other crashes from the same checkpoint show the same client port, or a small set of recurring ports? [Lookup tries an exact connection before the listener](https://github.com/google/gvisor/blob/9f653e577/pkg/tcpip/stack/transport_demuxer.go#L77-L108). The source ports would help distinguish a stale connection entry from a problem with the listener itself.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-02T15:46:59.054342+00:00",
+          "url": "https://github.com/google/gvisor/issues/15865#issuecomment-6581391275"
         }
       ]
     },
@@ -39840,17 +39873,8 @@
       "url": "https://github.com/google/gvisor/pull/16472",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-01T10:37:33.302070+00:00",
+      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
       "summary": "Buffering reduced cold kernel load for the 12.2 MiB checkpoint. Across 72 paired comparisons on small Nginx checkpoints, buffering reached the first verified HTTP response sooner in 33 pairs. All 216 restores served the expected bytes.",
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "63d3761ddffe329a13d142d91dd61cceeec76fcd",
-        "url": "https://github.com/google/gvisor/pull/16472#issuecomment-6431225649",
-        "title": "Post the checkpoint and Nginx restore measurements on #16472",
-        "summary": "Buffering reduced cold kernel load for the 12.2 MiB checkpoint. Across 72 paired comparisons on small Nginx checkpoints, buffering reached the first verified HTTP response sooner in 33 pairs. All 216 restores served the expected bytes.",
-        "body": "@EtiennePerot, @milantracy: I tried `POSIX_FADV_WILLNEED` on the local\nstate file with the existing reader. On a cold checkpoint it saved about\n3% of kernel load time in paired rounds; buffering saved 41%. Here are\nthe cold rows from [benchstat][1] (milliseconds, 18 restores per column):\n\n```\n             │    direct    │               advice                │                buffer                │\n             │ kernel-ms/op │ kernel-ms/op  vs base               │ kernel-ms/op  vs base                │\nRestore/cold     777.3 ± 4%     751.0 ± 3%       ~ (p=0.091 n=18)     450.5 ± 3%  -42.04% (p=0.000 n=18)\n\n             │   direct   │              advice               │               buffer               │\n             │ cli-ms/op  │ cli-ms/op   vs base               │ cli-ms/op   vs base                │\nRestore/cold   809.4 ± 4%   784.1 ± 2%       ~ (p=0.091 n=18)   489.2 ± 3%  -39.56% (p=0.000 n=18)\n```\n\nWith all three input files **warm**, benchstat didn't distinguish the\nreaders. Comparing buffered with direct *within each round*, though,\nthe restore command was slower in 15 of 18 rounds: median +2.2%\n(95% interval +0.3% to +5.0%). The kernel-load difference was less\nclear: +1.3% (−0.6% to +4.9%). This is consistent with the hot CLI\nregression in the PR; it doesn't establish a hot kernel-load regression.\n\nThe [108 restores][2] used the [same executable][3] on one 4-vCPU\nLinux worker, in balanced order, with a 12.2 MiB state file and a\n513 MiB pages file. CLI time ends when the background restore command\nreturns. Memory and pipe contents were checked afterward.\n\nI also tried the six requested OCI quotas on a listening four-worker\nNginx. Each quota had its own checkpoint, and all three readers restored\nthe same bytes within each quota. Here are the medians of the six\npaired percentage changes for buffering versus direct reads. HTTP\ntime runs from starting restore through the first verified 1 KiB\nresponse to a guest `curl` launched with `runsc exec`.\n\n| Application CPU quota | Cold kernel load | Cold first HTTP | Warm first HTTP |\n|---|---:|---:|---:|\n| 0.25 | +0.2% | +7.9% | +3.0% |\n| 1 | −2.2% | +0.2% | −0.4% |\n| 2 | −3.4% | +1.3% | +0.4% |\n| 4 | −8.8% | −1.1% | +0.7% |\n| 16 | −9.4% | −1.4% | −3.0% |\n| Uncapped (19 CPUs) | −9.7% | −1.0% | −0.7% |\n\nBuffering shortened cold kernel load in all six pairs at both 4 and\n16 CPUs. It reached the first HTTP response sooner in three and four\nof those pairs, respectively. Across the 72 pairs, buffering reached\nHTTP sooner in 33 and WILLNEED in 36. At 0.25 CPU, five of six cold\nbuffered restores reached HTTP later. Individual differences ranged\nfrom −19% to +20%. All 216 restores served the expected bytes on the\nfirst request and on a subsequent 16-request burst. [Quota results][4]\n\nThe Nginx state files were only 301–343 kB. The buffered reader used\ntwo 512 KiB chunks, so the whole state file fit in its first data read.\nThis sweep cannot choose a queue depth for larger files. It used the\ndefault creation and lifecycle CPU policies. The background reader\nuses the application CPU count, and the test verified each sandbox’s\napplication quota after restore. [Reader sizing][5] · [CPU policies][6]\n\nPosted on behalf of @tamird.\n\n[1]: https://tamird.github.io/gvisor/restore-readers-benchstat.txt\n[2]: https://github.com/tamird/gvisor/actions/runs/41186223756/artifacts/13037505941\n[3]: https://github.com/tamird/gvisor/commit/d3066814d\n[4]: https://github.com/tamird/gvisor/actions/runs/41297735728/artifacts/13080207857\n[5]: https://github.com/google/gvisor/blob/63d3761dd/runsc/boot/controller.go#L402-L407\n[6]: https://github.com/google/gvisor/blob/63d3761dd/runsc/config/config.go#L1574-L1577"
-      },
       "evidence": [
         {
           "label": "Proposed reply to the readahead discussion",
@@ -39867,6 +39891,20 @@
         {
           "label": "Three readers on the same PR source",
           "url": "https://github.com/tamird/gvisor/commit/d3066814d"
+        },
+        {
+          "label": "Posted review",
+          "url": "https://github.com/google/gvisor/pull/16472#issuecomment-6581373723"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "review",
+          "head": "63d3761ddffe329a13d142d91dd61cceeec76fcd",
+          "body": "@EtiennePerot, @milantracy: I tried `POSIX_FADV_WILLNEED` on the local\nstate file with the existing reader. On a cold checkpoint it saved about\n3% of kernel load time in paired rounds; buffering saved 41%. Here are\nthe cold rows from [benchstat][1] (milliseconds, 18 restores per column):\n\n```\n             │    direct    │               advice                │                buffer                │\n             │ kernel-ms/op │ kernel-ms/op  vs base               │ kernel-ms/op  vs base                │\nRestore/cold     777.3 ± 4%     751.0 ± 3%       ~ (p=0.091 n=18)     450.5 ± 3%  -42.04% (p=0.000 n=18)\n\n             │   direct   │              advice               │               buffer               │\n             │ cli-ms/op  │ cli-ms/op   vs base               │ cli-ms/op   vs base                │\nRestore/cold   809.4 ± 4%   784.1 ± 2%       ~ (p=0.091 n=18)   489.2 ± 3%  -39.56% (p=0.000 n=18)\n```\n\nWith all three input files **warm**, benchstat didn't distinguish the\nreaders. Comparing buffered with direct *within each round*, though,\nthe restore command was slower in 15 of 18 rounds: median +2.2%\n(95% interval +0.3% to +5.0%). The kernel-load difference was less\nclear: +1.3% (−0.6% to +4.9%). This is consistent with the hot CLI\nregression in the PR; it doesn't establish a hot kernel-load regression.\n\nThe [108 restores][2] used the [same executable][3] on one 4-vCPU\nLinux worker, in balanced order, with a 12.2 MiB state file and a\n513 MiB pages file. CLI time ends when the background restore command\nreturns. Memory and pipe contents were checked afterward.\n\nI also tried the six requested OCI quotas on a listening four-worker\nNginx. Each quota had its own checkpoint, and all three readers restored\nthe same bytes within each quota. Here are the medians of the six\npaired percentage changes for buffering versus direct reads. HTTP\ntime runs from starting restore through the first verified 1 KiB\nresponse to a guest `curl` launched with `runsc exec`.\n\n| Application CPU quota | Cold kernel load | Cold first HTTP | Warm first HTTP |\n|---|---:|---:|---:|\n| 0.25 | +0.2% | +7.9% | +3.0% |\n| 1 | −2.2% | +0.2% | −0.4% |\n| 2 | −3.4% | +1.3% | +0.4% |\n| 4 | −8.8% | −1.1% | +0.7% |\n| 16 | −9.4% | −1.4% | −3.0% |\n| Uncapped (19 CPUs) | −9.7% | −1.0% | −0.7% |\n\nBuffering shortened cold kernel load in all six pairs at both 4 and\n16 CPUs. It reached the first HTTP response sooner in three and four\nof those pairs, respectively. Across the 72 pairs, buffering reached\nHTTP sooner in 33 and WILLNEED in 36. At 0.25 CPU, five of six cold\nbuffered restores reached HTTP later. Individual differences ranged\nfrom −19% to +20%. All 216 restores served the expected bytes on the\nfirst request and on a subsequent 16-request burst. [Quota results][4]\n\nThe Nginx state files were only 301–343 kB. The buffered reader used\ntwo 512 KiB chunks, so the whole state file fit in its first data read.\nThis sweep cannot choose a queue depth for larger files. It used the\ndefault creation and lifecycle CPU policies. The background reader\nuses the application CPU count, and the test verified each sandbox’s\napplication quota after restore. [Reader sizing][5] · [CPU policies][6]\n\nPosted on behalf of @tamird.\n\n[1]: https://tamird.github.io/gvisor/restore-readers-benchstat.txt\n[2]: https://github.com/tamird/gvisor/actions/runs/41186223756/artifacts/13037505941\n[3]: https://github.com/tamird/gvisor/commit/d3066814d\n[4]: https://github.com/tamird/gvisor/actions/runs/41297735728/artifacts/13080207857\n[5]: https://github.com/google/gvisor/blob/63d3761dd/runsc/boot/controller.go#L402-L407\n[6]: https://github.com/google/gvisor/blob/63d3761dd/runsc/config/config.go#L1574-L1577",
+          "outcome": "approved",
+          "at": "2026-11-02T15:46:59.054342+00:00",
+          "url": "https://github.com/google/gvisor/pull/16472#issuecomment-6581373723"
         }
       ]
     },
@@ -40088,15 +40126,7 @@
       "group": "runtime",
       "status": "open",
       "summary": "The issue author has an IPv4 TTL fix, and another contributor offered to send it with a concurrent regression. Offer them a two-line change inside DeepCopyForForwarding. Reading header lengths from packet metadata preserves the original header storage while the forwarded packet keeps its writable copy.",
-      "updatedAt": "2026-10-31T12:12:41.296093+00:00",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "reply",
-        "url": "https://github.com/google/gvisor/issues/16742",
-        "title": "Offer the lower-level fix to the contributors working on #16742",
-        "summary": "The issue author has an IPv4 TTL fix, and another contributor offered to send it with a concurrent regression. Offer them a two-line change inside DeepCopyForForwarding. Reading header lengths from packet metadata preserves the original header storage while the forwarded packet keeps its writable copy.",
-        "body": "@cknolla @learnrahulrai-ui, would you consider fixing this inside `DeepCopyForForwarding`? [This two-line change](https://github.com/tamird/gvisor/commit/8959e5c44) reads the network and transport header lengths from the packet metadata. Calling `Slice` just to get those lengths is what moves the source storage: at that point `BufferSince` still holds a reference to the same chunk.\n\nWith that change, the IPv4 caller can keep its original header, and the forwarded packet still has independently writable headers. [The same test on both revisions](https://github.com/tamird/gvisor/actions/runs/41199044377/artifacts/13041728253) checks both properties: stock moves the source header, while the change passes. It would be useful to run your concurrent TTL test against this version too.\n\nPosted by Codex on behalf of @tamird."
-      },
+      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
       "evidence": [
         {
           "label": "Original TTL report",
@@ -40113,6 +40143,19 @@
         {
           "label": "Original fails, corrected passes, eight alternating pairs",
           "url": "https://github.com/tamird/gvisor/actions/runs/41199044377/artifacts/13041728253"
+        },
+        {
+          "label": "Posted reply",
+          "url": "https://github.com/google/gvisor/issues/16742#issuecomment-6581368835"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "body": "@cknolla @learnrahulrai-ui, would you consider fixing this inside `DeepCopyForForwarding`? [This two-line change](https://github.com/tamird/gvisor/commit/8959e5c44) reads the network and transport header lengths from the packet metadata. Calling `Slice` just to get those lengths is what moves the source storage: at that point `BufferSince` still holds a reference to the same chunk.\n\nWith that change, the IPv4 caller can keep its original header, and the forwarded packet still has independently writable headers. [The same test on both revisions](https://github.com/tamird/gvisor/actions/runs/41199044377/artifacts/13041728253) checks both properties: stock moves the source header, while the change passes. It would be useful to run your concurrent TTL test against this version too.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-02T15:46:59.054342+00:00",
+          "url": "https://github.com/google/gvisor/issues/16742#issuecomment-6581368835"
         }
       ]
     },
@@ -41485,7 +41528,7 @@
       "title": "netstack: end a lingering close when the peer acknowledges the FIN",
       "url": "https://github.com/google/gvisor/pull/16787",
       "status": "open",
-      "updatedAt": "2026-11-02T10:02:06.506089+00:00",
+      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
       "summary": "Aditya Merchant’s netstack PR wakes a lingering close when the peer acknowledges the FIN and skips the wait on process exit. It introduces the shared process-exit syscall fixture used by the host-network follow-up.",
       "evidence": [
         {
@@ -41503,18 +41546,22 @@
         {
           "label": "Tested change for the review reply",
           "url": "https://github.com/tamird/gvisor/commit/fd2a30841"
+        },
+        {
+          "label": "Tamir’s reply to Aditya",
+          "url": "https://github.com/google/gvisor/pull/16787#issuecomment-6575934131"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "reply",
-        "head": "1072c7c5b69f66636a755f29a207a8ce876a91f4",
-        "url": "https://github.com/google/gvisor/pull/16787#issuecomment-6574091521",
-        "title": "Answer Aditya’s offer to include the close-waiter fix",
-        "requestedAt": "2026-11-02T10:02:06.506089+00:00",
-        "summary": "May Aditya take fd2a30841 into his PR as a second commit with Tamir’s authorship?",
-        "body": "Aditya saw the measured fix and offered to take it. Its sole parent is his current head. The 28 selected linger cases passed with both changes. Ordinary TCP and UDP close took 16.8% and 16.2% less time on AMD64 systrap. A yes lets Aditya add the tested commit and rerun the cases before he pushes."
-      }
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "head": "1072c7c5b69f66636a755f29a207a8ce876a91f4",
+          "body": "Aditya saw the measured fix and offered to take it. Its sole parent is his current head. The 28 selected linger cases passed with both changes. Ordinary TCP and UDP close took 16.8% and 16.2% less time on AMD64 systrap. A yes lets Aditya add the tested commit and rerun the cases before he pushes.",
+          "outcome": "answered-separately",
+          "at": "2026-11-02T15:46:59.054342+00:00",
+          "url": "https://github.com/google/gvisor/pull/16787#issuecomment-6575934131"
+        }
+      ]
     },
     {
       "id": "branch:hostinet-exit-linger",
@@ -42331,7 +42378,7 @@
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/768",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-01T14:26:02.402974+00:00",
+      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
       "summary": "The supplier proposal provides a static glibc for downstream C++ binaries. Its assembly compilation needs a writable temporary directory on scratch workers.",
       "evidence": [
         {
@@ -42345,18 +42392,22 @@
         {
           "label": "Both native scratch workers",
           "url": "https://github.com/tamird/gvisor/actions/runs/41314071876/artifacts/13087500690"
+        },
+        {
+          "label": "Posted reply",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/768#issuecomment-6581425427"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "reply",
-        "head": "6f070847add9ac9bf0d19c96dee873e84f9594d9",
-        "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/768",
-        "title": "Send the scratch compiler fix to the static glibc author",
-        "requestedAt": "2026-11-01T14:26:02.402974+00:00",
-        "summary": "Reply to the supplier proposal with the two-line fix and the native AMD64 and ARM64 results.",
-        "body": "@geligeli, Clang uses a temporary file while preprocessing glibc assembly. On a scratch executor without /tmp, the GlibcStaticCompile action [failed on both AMD64 and ARM64](https://github.com/tamird/gvisor/actions/runs/41308187475/artifacts/13084852008). Could you set TMPDIR to out.dirname in that action? Bazel creates the output directory before starting Clang. With [those two lines](https://github.com/tamird/hermetic-llvm/commit/a7ce65dc2), [all six fork syscall cases ran on scratch](https://github.com/tamird/gvisor/actions/runs/41314071876/artifacts/13087500690).\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "head": "6f070847add9ac9bf0d19c96dee873e84f9594d9",
+          "body": "@geligeli, Clang uses a temporary file while preprocessing glibc assembly. On a scratch executor without /tmp, the GlibcStaticCompile action [failed on both AMD64 and ARM64](https://github.com/tamird/gvisor/actions/runs/41308187475/artifacts/13084852008). Could you set TMPDIR to out.dirname in that action? Bazel creates the output directory before starting Clang. With [those two lines](https://github.com/tamird/hermetic-llvm/commit/a7ce65dc2), [all six fork syscall cases ran on scratch](https://github.com/tamird/gvisor/actions/runs/41314071876/artifacts/13087500690).\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-02T15:46:59.054342+00:00",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/768#issuecomment-6581425427"
+        }
+      ]
     },
     {
       "id": "branch:tcp-limited-transmit-credit",
@@ -42676,19 +42727,9 @@
       "title": "Review hostinet read shutdown across TCP reconnect",
       "url": "https://github.com/google/gvisor/pull/16793",
       "group": "runtime",
-      "status": "Contributor review requested",
+      "status": "open",
       "summary": "After a failed SHUT_RD, AF_UNSPEC and reconnect, Linux waited for the receive timeout. The proposed change returned EOF on both IPv4 and IPv6, then received the next byte.",
-      "updatedAt": "2026-11-01T16:59:39.784864+00:00",
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "c16f3c5e55d1740154b7ddfa0300ef0dff0202ce",
-        "url": "https://github.com/google/gvisor/pull/16793",
-        "title": "Post the syscall finding on hostinet reconnect",
-        "summary": "After a failed SHUT_RD, AF_UNSPEC and reconnect, Linux waited for the receive timeout. The proposed change returned EOF on both IPv4 and IPv6, then received the next byte.",
-        "body": "Can a second TCP read that still gets EAGAIN go through the normal wait/deadline path? `recvClosed` stays set across `connect(AF_UNSPEC)`. I called `shutdown(SHUT_RD)` on a fresh TCP socket (ENOTCONN), disconnected with AF_UNSPEC, then connected to a listener. With the peer open and no data queued, Linux waited for the 150 ms receive timeout and returned EAGAIN; this change returned EOF immediately. Both subsequently received the peer’s byte. Without the disconnect, Linux and this change both correctly returned EOF.\n\nOn TCP, the second host read already returns zero for a real read shutdown. That leaves the synthetic EOF for datagram sockets, without clearing the flag on every connect. [Shared syscall test](https://github.com/tamird/gvisor/blob/5f7d378a3/test/syscalls/linux/tcp_socket.cc#L230-L277) · [native IPv4/IPv6 and hostinet IPv4](https://github.com/tamird/gvisor/actions/runs/41327870699/artifacts/13092287012) · [hostinet IPv6](https://github.com/tamird/gvisor/actions/runs/41328486242/artifacts/13091944899).",
-        "requestedAt": "2026-11-01T16:59:39.784864+00:00"
-      },
+      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
       "evidence": [
         {
           "label": "Native Linux, stock and proposed head",
@@ -42697,6 +42738,20 @@
         {
           "label": "IPv6 hostinet results",
           "url": "https://github.com/tamird/gvisor/actions/runs/41328486242/artifacts/13091944899"
+        },
+        {
+          "label": "Posted review",
+          "url": "https://github.com/google/gvisor/pull/16793#discussion_r4444407246"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "review",
+          "head": "c16f3c5e55d1740154b7ddfa0300ef0dff0202ce",
+          "body": "Can a second TCP read that still gets EAGAIN go through the normal wait/deadline path? `recvClosed` stays set across `connect(AF_UNSPEC)`. I called `shutdown(SHUT_RD)` on a fresh TCP socket (ENOTCONN), disconnected with AF_UNSPEC, then connected to a listener. With the peer open and no data queued, Linux waited for the 150 ms receive timeout and returned EAGAIN; this change returned EOF immediately. Both subsequently received the peer’s byte. Without the disconnect, Linux and this change both correctly returned EOF.\n\nOn TCP, the second host read already returns zero for a real read shutdown. That leaves the synthetic EOF for datagram sockets, without clearing the flag on every connect. [Shared syscall test](https://github.com/tamird/gvisor/blob/5f7d378a3/test/syscalls/linux/tcp_socket.cc#L230-L277) · [native IPv4/IPv6 and hostinet IPv4](https://github.com/tamird/gvisor/actions/runs/41327870699/artifacts/13092287012) · [hostinet IPv6](https://github.com/tamird/gvisor/actions/runs/41328486242/artifacts/13091944899).",
+          "outcome": "approved",
+          "at": "2026-11-02T15:46:59.054342+00:00",
+          "url": "https://github.com/google/gvisor/pull/16793#discussion_r4444407246"
         }
       ]
     },
@@ -42710,19 +42765,9 @@
       "title": "Review lock ownership after synchronous slice callbacks",
       "url": "https://github.com/google/gvisor/pull/15867",
       "group": "runtime",
-      "status": "Contributor review requested",
+      "status": "open",
       "summary": "A slices.ContainsFunc predicate can release its caller’s mutex. The proposed analyzer then accepts a map deletion that requires that mutex. Taking a different mutex inside the predicate hides the same bug.",
-      "updatedAt": "2026-11-01T19:40:22.453604+00:00",
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "1165b33ea7500227832c74e5c82e0b7230d52a0f",
-        "url": "https://github.com/google/gvisor/pull/15867",
-        "title": "Post the checklocks finding on the slices callback",
-        "summary": "A slices.ContainsFunc predicate can release its caller’s mutex. The proposed analyzer then accepts a map deletion that requires that mutex. Taking a different mutex inside the predicate hides the same bug.",
-        "body": "Could we check that the callback returns with the same locks it had on entry? With one element, a ContainsFunc predicate that unlocks e.mu and returns true leaves the following delete(e.entries, key) unguarded. checkFunction returns the callback’s exit state here, but the caller still treats e.mu as held.\n\nComparing lock identity and mode catches both the unlock and an exchange for another mutex. Unlocking and reacquiring e.mu inside the predicate still passes, as do the bound-method examples. [Tested change](https://github.com/tamird/gvisor/commit/a79d4bf1b) · [AMD64 and ARM64 analyzer results](https://github.com/tamird/gvisor/actions/runs/41340536537/artifacts/13098361016).",
-        "requestedAt": "2026-11-01T19:40:22.453604+00:00"
-      },
+      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
       "evidence": [
         {
           "label": "Original, corrected and negative-control analyzer results",
@@ -42731,6 +42776,20 @@
         {
           "label": "Check the callback’s exit lock state",
           "url": "https://github.com/tamird/gvisor/commit/a79d4bf1b"
+        },
+        {
+          "label": "Posted review",
+          "url": "https://github.com/google/gvisor/pull/15867#discussion_r4444418439"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "review",
+          "head": "1165b33ea7500227832c74e5c82e0b7230d52a0f",
+          "body": "Could we check that the callback returns with the same locks it had on entry? With one element, a ContainsFunc predicate that unlocks e.mu and returns true leaves the following delete(e.entries, key) unguarded. checkFunction returns the callback’s exit state here, but the caller still treats e.mu as held.\n\nComparing lock identity and mode catches both the unlock and an exchange for another mutex. Unlocking and reacquiring e.mu inside the predicate still passes, as do the bound-method examples. [Tested change](https://github.com/tamird/gvisor/commit/a79d4bf1b) · [AMD64 and ARM64 analyzer results](https://github.com/tamird/gvisor/actions/runs/41340536537/artifacts/13098361016).",
+          "outcome": "approved",
+          "at": "2026-11-02T15:46:59.054342+00:00",
+          "url": "https://github.com/google/gvisor/pull/15867#discussion_r4444418439"
         }
       ]
     },
@@ -42786,19 +42845,9 @@
       "title": "TCP: respond to a spurious loss recovery",
       "url": "https://github.com/google/gvisor/pull/14458",
       "group": "runtime",
-      "status": "Contributor review requested",
+      "status": "open",
       "summary": "On #14458, a delayed original left the slow-start threshold at 2 packets instead of restoring 10 after timestamp wrap or a second timeout. The detector predates the proposed response. The tested correction kept the threshold at 2 after a real second repair.",
-      "updatedAt": "2026-11-01T20:56:16.869578+00:00",
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "1af4ae880239496a8470baaa16f34b131d4fe045",
-        "url": "https://github.com/google/gvisor/pull/14458/files#diff-0912a3274bb72f64af67df685e65186477ca212ce5ad3d655a37ba9872a64fd1R1810",
-        "title": "Post the Eifel timestamp finding",
-        "summary": "On #14458, a delayed original left the slow-start threshold at 2 packets instead of restoring 10 after timestamp wrap or a second timeout. The detector predates the proposed response. The tested correction kept the threshold at 2 after a real second repair.",
-        "body": "The existing detector can miss a delayed original here. With RACK off, the first advancing ACK echoed the original packet’s timestamp (4294967290), which preceded the first repair (994). Because the timestamp wrapped, this branch didn’t run and `ssthresh` stayed at 2 packets instead of returning to 10.\n\nThe same thing happened without wrap after a second timeout cleared `retransmitTS`. Changing only the comparison then restored 10 for a genuine second repair. [Keeping the first repair’s timestamp for the whole recovery episode and comparing in serial order](https://github.com/tamird/gvisor/compare/47d4d443c...1c3a16f77) distinguished the original from both repairs in [all eight packet traces](https://github.com/tamird/gvisor/actions/runs/41348536380/artifacts/13100039686). A separate detector fix would cover both cases for this response.\n\nReview by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-01T20:56:16.869578+00:00"
-      },
+      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
       "evidence": [
         {
           "label": "Eight packet traces on each of three senders",
@@ -42811,6 +42860,20 @@
         {
           "label": "Reviewer discussion and independent performance evidence",
           "url": "https://github.com/google/gvisor/pull/14458#issuecomment-6545722386"
+        },
+        {
+          "label": "Posted review",
+          "url": "https://github.com/google/gvisor/pull/14458#pullrequestreview-5739198329"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "review",
+          "head": "1af4ae880239496a8470baaa16f34b131d4fe045",
+          "body": "The existing detector can miss a delayed original here. With RACK off, the first advancing ACK echoed the original packet’s timestamp (4294967290), which preceded the first repair (994). Because the timestamp wrapped, this branch didn’t run and `ssthresh` stayed at 2 packets instead of returning to 10.\n\nThe same thing happened without wrap after a second timeout cleared `retransmitTS`. Changing only the comparison then restored 10 for a genuine second repair. [Keeping the first repair’s timestamp for the whole recovery episode and comparing in serial order](https://github.com/tamird/gvisor/compare/47d4d443c...1c3a16f77) distinguished the original from both repairs in [all eight packet traces](https://github.com/tamird/gvisor/actions/runs/41348536380/artifacts/13100039686). A separate detector fix would cover both cases for this response.\n\nReview by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-02T15:46:59.054342+00:00",
+          "url": "https://github.com/google/gvisor/pull/14458#pullrequestreview-5739198329"
         }
       ]
     },
@@ -43587,12 +43650,12 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/timerfd-rights-restore",
-      "head": "bdc2103681f20eb3b91ded1156b0ac74fb15e4c5",
+      "head": "ea9559ea9b1352132b9c510a0cca652d75905b2a",
       "title": "Track live timerfds across checkpoint and restore",
-      "url": "https://github.com/tamird/gvisor/commit/bdc210368",
+      "url": "https://github.com/tamird/gvisor/commit/ea9559ea9",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T15:33:34.862406+00:00",
+      "status": "Agent work",
+      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
       "summary": "Rearming a restored timerfd panicked when its only reference at checkpoint was in a queued SCM_RIGHTS message. Track timers through the lifetime of their file descriptions so checkpoint and restore reach them after the sender closes its descriptor.",
       "evidence": [
         {
@@ -43608,20 +43671,41 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41471570284/artifacts/13155870792"
         },
         {
-          "label": "Tested source with the same tree as the proposal",
+          "label": "Tested source before the restore key changed to an empty struct",
           "url": "https://github.com/tamird/gvisor/commit/187ebca80"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "bdc2103681f20eb3b91ded1156b0ac74fb15e4c5",
-        "baseHead": "7a675ac66a1e2357abdaa6cccedabcd3cce9aa5c",
-        "url": "https://github.com/tamird/gvisor/commit/bdc210368",
-        "title": "Track live timerfds across checkpoint and restore",
-        "requestedAt": "2026-11-02T15:33:34.862406+00:00",
-        "summary": "Open the timerfd checkpoint fix as a standalone PR?",
-        "body": "The kernel currently finds timers to pause and resume by walking descriptor tables. A Unix socket can still hold a timerfd after the last installed descriptor closes. The change indexes live timerfds per kernel and rebuilds that index from restored file descriptions.\n\nAfter an actual save and restore, the guest received the queued timerfd, drained it, observed a new expiration and read back its original 100 ms period. The same case passed with live-save mode enabled. Its retained logs did not independently confirm that a live save completed."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "bdc2103681f20eb3b91ded1156b0ac74fb15e4c5",
+          "outcome": "approved-with-changes",
+          "at": "2026-11-02T15:46:59.054342+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "ea9559ea9b1352132b9c510a0cca652d75905b2a",
+          "outcome": "approved",
+          "at": "2026-11-02T15:46:59.054342+00:00"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "bdc2103681f20eb3b91ded1156b0ac74fb15e4c5"
+        },
+        "after": {
+          "head": "ea9559ea9b1352132b9c510a0cca652d75905b2a"
+        }
+      },
+      "followup": {
+        "owner": "checkpoint_owner",
+        "sourceHead": "ea9559ea9b1352132b9c510a0cca652d75905b2a",
+        "disposition": "Approved singleton restore key",
+        "observedAt": "2026-11-02T15:46:59.054342+00:00",
+        "nextAction": "Open the reviewed PR after the restored timer test and both package analyzers pass.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41474723644"
+        ]
       }
     },
     {
