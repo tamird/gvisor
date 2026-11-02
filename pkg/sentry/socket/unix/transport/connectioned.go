@@ -106,13 +106,8 @@ type connectionedEndpoint struct {
 	// tcpip.SockStream.
 	stype linux.SockType
 
-	// peerCreds is used to store the peer credentials.
-	// It is nil until the connection is established with connect(2), so a
-	// connect(2) that fails leaves it untouched. Once the connection is
-	// established, this stores the peer's credentials. The use of this option
-	// is possible only for connected `AF_UNIX` stream and seqpacket sockets and
-	// for `AF_UNIX` stream, seqpacket and datagram socket pairs created using
-	// socketpair(2).
+	// peerCreds is the last successful listener's credentials on a
+	// listening endpoint, or the peer's credentials on a connected pair.
 	peerCreds CredentialsControlMessage
 
 	// acceptedChan is per the TCP endpoint implementation. Note that the
@@ -154,9 +149,11 @@ func newConnectioned(ctx context.Context, stype linux.SockType, uid uniqueid.Pro
 }
 
 // NewPair allocates a new pair of connected unix-domain connectionedEndpoints.
-func NewPair(ctx context.Context, stype linux.SockType, uid uniqueid.Provider) (Endpoint, Endpoint) {
+func NewPair(ctx context.Context, stype linux.SockType, uid uniqueid.Provider, creds CredentialsControlMessage) (Endpoint, Endpoint) {
 	a := newConnectioned(ctx, stype, uid)
 	b := newConnectioned(ctx, stype, uid)
+	a.peerCreds = creds
+	b.peerCreds = creds
 
 	q1 := &queue{readerWaiters: a.WaitQueue, writerWaiters: b.WaitQueue, limit: defaultBufferSize}
 	q1.InitRefs()
@@ -437,9 +434,20 @@ func (e *connectionedEndpoint) Connect(ctx context.Context, server BoundEndpoint
 }
 
 // Listen starts listening on the connection.
-func (e *connectionedEndpoint) Listen(ctx context.Context, backlog int) *syserr.Error {
+func (e *connectionedEndpoint) Listen(ctx context.Context, backlog int, creds CredentialsControlMessage) *syserr.Error {
 	e.Lock()
 	defer e.Unlock()
+	if err := e.listenLocked(ctx, backlog); err != nil {
+		return err
+	}
+	e.peerCreds = creds
+	return nil
+}
+
+// listenLocked enables connections or updates the backlog.
+//
+// +checklocks:e.endpointMutex
+func (e *connectionedEndpoint) listenLocked(ctx context.Context, backlog int) *syserr.Error {
 	if e.ListeningLocked() {
 		// Adjust the size of the channel iff we can fix existing
 		// pending connections into the new one
@@ -724,10 +732,4 @@ func (e *connectionedEndpoint) PeerCreds() CredentialsControlMessage {
 	e.Lock()
 	defer e.Unlock()
 	return e.peerCreds
-}
-
-func (e *connectionedEndpoint) SetPeerCreds(creds CredentialsControlMessage) {
-	e.Lock()
-	defer e.Unlock()
-	e.peerCreds = creds
 }

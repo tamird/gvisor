@@ -81,16 +81,6 @@ type CredentialsControlMessage interface {
 	Equals(CredentialsControlMessage) bool
 }
 
-// A PeerCredentialer is a socket or endpoint that supports the SO_PEERCREDS socket
-// option.
-type PeerCredentialer interface {
-	// PeerCreds returns the peer credentials.
-	PeerCreds() CredentialsControlMessage
-
-	// SetPeerCreds sets the peer credentials.
-	SetPeerCreds(creds CredentialsControlMessage)
-}
-
 // A ControlMessages represents a collection of socket control messages.
 //
 // +stateify savable
@@ -181,8 +171,10 @@ type RecvOutput struct {
 // etc. to Unix socket implementations.
 type Endpoint interface {
 	Credentialer
-	PeerCredentialer
 	waiter.Waitable
+
+	// PeerCreds returns the credentials reported by SO_PEERCRED.
+	PeerCreds() CredentialsControlMessage
 
 	// Close puts the endpoint in a closed state and frees all resources
 	// associated with it.
@@ -226,9 +218,9 @@ type Endpoint interface {
 	// to its peer.
 	Shutdown(flags tcpip.ShutdownFlags) *syserr.Error
 
-	// Listen puts the endpoint in "listen" mode, which allows it to accept
-	// new connections.
-	Listen(ctx context.Context, backlog int) *syserr.Error
+	// Listen enables new connections. On success, the listening state and
+	// the listening task's credentials become visible to peers together.
+	Listen(ctx context.Context, backlog int, creds CredentialsControlMessage) *syserr.Error
 
 	// Accept returns a new endpoint if a peer has established a connection
 	// to an endpoint previously set to listen mode. This method does not

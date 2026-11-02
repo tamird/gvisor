@@ -421,7 +421,7 @@ func (*provider) Pair(t *kernel.Task, stype linux.SockType, protocol int) (*vfs.
 	}
 
 	// Create the endpoints and sockets.
-	ep1, ep2 := transport.NewPair(t, stype, t.Kernel())
+	ep1, ep2 := transport.NewPair(t, stype, t.Kernel(), control.MakeCreds(t))
 	s1, err := NewSockfsFile(t, ep1, stype)
 	if err != nil {
 		ep1.Close(t)
@@ -434,11 +434,6 @@ func (*provider) Pair(t *kernel.Task, stype linux.SockType, protocol int) (*vfs.
 		ep2.Close(t)
 		return nil, nil, err
 	}
-	// Initialize the peer credentials.
-	creds := control.MakeCreds(t)
-	ep1.SetPeerCreds(creds)
-	ep2.SetPeerCreds(creds)
-
 	return s1, s2, nil
 }
 
@@ -577,11 +572,7 @@ func (s *Socket) GetSockName(t *kernel.Task) (linux.SockAddr, uint32, *syserr.Er
 // Listen implements the linux syscall listen(2) for sockets backed by
 // a transport.Endpoint.
 func (s *Socket) Listen(t *kernel.Task, backlog int) *syserr.Error {
-	if err := s.ep.Listen(t, backlog); err != nil {
-		return err
-	}
-	s.ep.SetPeerCreds(control.MakeCreds(t))
-	return nil
+	return s.ep.Listen(t, backlog, control.MakeCreds(t))
 }
 
 // extractEndpoint retrieves the transport.BoundEndpoint associated with a Unix
