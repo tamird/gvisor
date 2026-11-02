@@ -195,7 +195,8 @@ print(json.dumps(public_import_disposition(row['pr'], row['node'].get('approvedP
     assert.equal(!!reapproval, row.expectedAction === 'reapprove-amendment', String(row.pr.number));
     if (reapproval) {
       assert.equal(reapproval.title, 'Reapprove current source PR');
-      assert.match(reapproval.detail, new RegExp(row.pr.head.slice(0, 12)));
+      assert.ok(reapproval.detail.includes(`current source ${row.pr.head.slice(0, 9)} (`));
+      assert.ok(reapproval.detail.includes(`still exports ${row.pr.imports[0].sourceHead.slice(0, 9)}:`));
       assert.match(reapproval.detail, new RegExp('#' + row.pr.imports[0].number));
       assert.equal(reasons.some(item => ['maintainer-import-refresh', 'maintainer-import-previous'].includes(item.id)), false);
       if (row.pr.number === 15940) assert.match(reapproval.detail, /success public checks \(15 reported\)/);
@@ -223,7 +224,8 @@ print(json.dumps(public_import_disposition(row['pr'], row['node'].get('approvedP
           assert.equal(held.some(item => item.id === 'maintainer-import-label'), false);
           delete context.nodeInput.releaseWait;
         } else {
-          assert.ok(freshReasons.some(item => item.title === 'Reapproved; waiting for Copybara'));
+          const waiting = freshReasons.find(item => item.title === 'Reapproved; waiting for Copybara');
+          assert.ok(waiting.detail.includes(`Current source ${current.pr.head.slice(0, 9)} has a fresh approval`));
         }
         const outsider = current.pr.feedback.items.at(-1);
         outsider.author = { login: 'outsider', __typename: 'User' };

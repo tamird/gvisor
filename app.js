@@ -524,14 +524,14 @@ function attentionReasons(node, owner) {
     : !active.length && pr.importsComplete && lineage.length
       ? lineage.some(item => item.status === "merged") ? "maintainer-import-landed" : "maintainer-reimport" : null;
   if (importAction === "maintainer-reapproval") {
-    const exports = active.map(item => `Copybara PR #${item.number} (${item.url}) still exports ${item.sourceHead.slice(0, 12)}: ${checkInfo(item).text.toLowerCase()} public checks (${item.checks.total} reported)${conflictRecord(item) ? "; merge conflicts" : ""}`);
-    add("maintainer-reapproval", `Ask the approving maintainer to reapprove current source ${pr.head.slice(0, 12)} (${pr.url}), published ${pr.headIntroducedAt}. The prior approval was submitted ${acceptedPatch.submittedAt}. ${exports.join(". ")}. Reapproval of this source PR lets Copybara regenerate the import. Equivalent source patches and an open older export do not replace current-head approval; the periodic alarm uses the existing per-PR cooldown and business hours.`);
+    const exports = active.map(item => `Copybara PR #${item.number} (${item.url}) still exports ${item.sourceHead.slice(0, 9)}: ${checkInfo(item).text.toLowerCase()} public checks (${item.checks.total} reported)${conflictRecord(item) ? "; merge conflicts" : ""}`);
+    add("maintainer-reapproval", `Ask the approving maintainer to reapprove current source ${pr.head.slice(0, 9)} (${pr.url}), published ${pr.headIntroducedAt}. The prior approval was submitted ${acceptedPatch.submittedAt}. ${exports.join(". ")}. Reapproval of this source PR lets Copybara regenerate the import. Equivalent source patches and an open older export do not replace current-head approval; the periodic alarm uses the existing per-PR cooldown and business hours.`);
   }
   const restoreLabel = importAction === "maintainer-import-label";
   const awaitingReapprovedExport = !restoreLabel && importDisposition?.binding.eligible && importDisposition.scope === "equivalent"
     && importDisposition.binding.currentApproval && active.length;
   if (awaitingReapprovedExport)
-    add("maintainer-unknown", `Current source ${pr.head.slice(0, 12)} has a fresh approval. Copybara still shows the earlier export ${active.map(item => "#" + item.number).join(", ")}; wait for its replacement. The earlier export is not a request for manual conflict repair.`, "Reapproved; waiting for Copybara");
+    add("maintainer-unknown", `Current source ${pr.head.slice(0, 9)} has a fresh approval. Copybara still shows the earlier export ${active.map(item => "#" + item.number).join(", ")}; wait for its replacement. The earlier export is not a request for manual conflict repair.`, "Reapproved; waiting for Copybara");
   for (const item of active) if (conflictRecord(item) && (current.length || importAction === "maintainer-import-refresh"))
     add(current.length ? "author-conflicts" : "maintainer-import-refresh", `Import #${item.number}: ${mergeDescription(item)}${current.length ? "" : " This export predates the equivalent source rebase. Refresh the export; its conflict does not establish a conflict on the current source."}`);
   const failed = unresolvedImportChecks(lineage).filter(item => checkInfo(item).tone === "bad");

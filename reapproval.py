@@ -53,6 +53,11 @@ def import_author_block(pr: dict, node: dict) -> str | None:
     return None
 
 
+def commit_link(head: str) -> str:
+    short = head[:9]
+    return f"[{short}](https://github.com/google/gvisor/commit/{short})"
+
+
 def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
                   maintainers: frozenset[str]) -> dict:
     """Plan either an exact amendment review or a verified missing import trigger."""
@@ -123,8 +128,8 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
         exports = ", ".join(f"[#{item['number']}](https://github.com/google/gvisor/pull/{item['number']})"
                             for item in disposition["binding"]["imports"] if item["status"] in {"open", "draft"})
         body = (f"🚨 {' '.join('@' + login for login in approvers)} please reapprove the current source head "
-                f"[{head[:12]}](https://github.com/google/gvisor/commit/{head}) so Copybara can regenerate its import. "
-                f"Your earlier approval covered [{old[:12]}](https://github.com/google/gvisor/commit/{old}) "
+                f"{commit_link(head)} so Copybara can regenerate its import. "
+                f"Your earlier approval covered {commit_link(old)} "
                 f"and was submitted {patch['submittedAt']}, before this head was published {pr['headIntroducedAt']}. "
                 f"The open Copybara PR {exports} still names the earlier source revision. "
                 "The source rebase preserves the reviewed patch, but that comparison and the older export "
@@ -159,7 +164,7 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
             export_status = "There is no public export for this head."
         head = pr["head"]
         body = (f"🚨 {' '.join('@' + login for login in approvers)} please restore `ready to pull` "
-                f"to import [{head[:12]}](https://github.com/google/gvisor/commit/{head}). "
+                f"to import {commit_link(head)}. "
                 f"{'You already approved this head.' if current_approval else 'The reviewed patch is unchanged.'} "
                 f"{export_status}\n\n"
                 f"Posted by Codex on behalf of @{owner}.\n\n{MARKER}head={head} action=restore-import-label -->")
@@ -216,10 +221,9 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
                        if (item.get("commit") or {}).get("oid") == old)
     if not approvers:
         return skip("no-matching-prior-maintainer-approval")
-    commit_url = "https://github.com/google/gvisor/commit/"
     body = (f"🚨 {' '.join('@' + login for login in approvers)} please reapprove the amended head "
-            f"[{head[:12]}]({commit_url}{head}) before it is imported. Your earlier approval covered "
-            f"[{old[:12]}]({commit_url}{old}). Copybara may still import the earlier approved "
+            f"{commit_link(head)} before it is imported. Your earlier approval covered "
+            f"{commit_link(old)}. Copybara may still import the earlier approved "
             f"revision and omit this amendment.\n\n{summary}\n\n"
             f"[Amendment evidence]({evidence})\n\n"
             f"Posted by Codex on behalf of @{owner}.\n\n{MARKER}head={head} -->")

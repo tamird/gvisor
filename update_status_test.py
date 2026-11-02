@@ -1149,6 +1149,11 @@ class ReapprovalReminderTest(unittest.TestCase):
     def plan(self, now: datetime | None = None) -> dict:
         return updater.reminder_plan(retained(self.raw), self.node, now or self.now, "tamird", self.maintainers)
 
+    def assert_commit_links(self, plan: dict, *heads: str) -> None:
+        links = re.findall(r"\[([0-9a-f]+)\]\(https://github\.com/google/gvisor/commit/([^)]+)\)", plan["body"])
+        self.assertEqual(links, [(head[:9], head[:9]) for head in heads])
+        self.assertIn(f"<!-- codex-reapproval-reminder:v1 head={plan['head']} ", plan["body"])
+
     def test_import_trigger_alarm_replays_three_actual_missing_labels(self) -> None:
         fixture = json.loads((Path(__file__).parent / "import-trigger-fixtures.json").read_text())
         now = datetime.fromisoformat(fixture["cutoff"].replace("Z", "+00:00"))
@@ -1209,7 +1214,7 @@ class ReapprovalReminderTest(unittest.TestCase):
                     continue
                 self.assertEqual((plan["status"], plan["approvers"]), ("due", ["EtiennePerot"]))
                 self.assertIn("please reapprove the current source head", plan["body"])
-                self.assertIn(pr["head"], plan["body"])
+                self.assert_commit_links(plan, pr["head"], node["approvedPatch"]["approvedHead"])
                 self.assertNotIn("resolve", plan["body"])
                 self.assertNotIn("restore", plan["body"])
                 self.assertNotIn("preserve", plan["body"].split("The source rebase")[0])
@@ -1271,7 +1276,10 @@ class ReapprovalReminderTest(unittest.TestCase):
         def plan(node):
             return updater.reminder_plan(pr, node, now, "tamird", frozenset({"etienneperot"}))
 
-        self.assertEqual(plan({})["action"], "restore-import-label")
+        reminder = plan({})
+        self.assertEqual(reminder["action"], "restore-import-label")
+        self.assert_commit_links(reminder, pr["head"])
+        self.assertTrue(reminder["body"].endswith(f"head={pr['head']} action=restore-import-label -->"))
         # A listed maintainer may only be a CONTRIBUTOR on GitHub (#16551).
         fresh = pr["feedback"]["items"][-1]
         with mock.patch.dict(fresh, {"authorAssociation": "CONTRIBUTOR"}):
@@ -1409,12 +1417,14 @@ class ReapprovalReminderTest(unittest.TestCase):
             self.plan(datetime(2026, 10, 22, 16, 30))
 
     def test_exact_amendment_and_maintainer_binding(self) -> None:
+        old = "7" * 40
+        self.review["commit"]["oid"] = old
+        self.node["reapproval"]["approvedHead"] = old
         plan = self.plan()
         self.assertEqual((plan["approvedHead"], plan["head"], plan["approvers"]),
-                         (f"{7:040x}", f"{8:040x}", ["maintainer"]))
+                         (old, f"{8:040x}", ["maintainer"]))
         self.assertIn("🚨 @maintainer", plan["body"])
-        self.assertIn(f"commit/{7:040x}", plan["body"])
-        self.assertIn(f"commit/{8:040x}", plan["body"])
+        self.assert_commit_links(plan, plan["head"], plan["approvedHead"])
         self.assertIn("Posted by Codex on behalf of @tamird.", plan["body"])
         for key, value in [("head", "a" * 40), ("approvedHead", "a" * 40), ("diffSha256", "bad")]:
             with self.subTest(key=key), mock.patch.dict(self.node["reapproval"], {key: value}):
