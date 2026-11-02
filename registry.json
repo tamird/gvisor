@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T03:51:38+00:00",
+    "updatedAt": "2026-11-02T04:06:49+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -27564,19 +27564,19 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/plugin-musl-current",
-      "head": "b0713e2bcf6ccde362401912ae80d17a4e1738b5",
+      "head": "603b1231738582ca6559d2a5e098598669842c3c",
       "title": "Build the TLDK plugin against musl",
-      "url": "https://github.com/tamird/gvisor/commit/b0713e2bc",
+      "url": "https://github.com/tamird/gvisor/commit/603b12317",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T03:51:38+00:00",
-      "summary": "The musl follow-up now builds on #15153’s current GNU-only change. The earlier GNU and musl runs found all three VFIO symbols in the DPDK archive and the executable that passed TestDumpStack. The revised change uses newer kernel headers, so the native musl build and test are running again. PCI-device traffic remains untested.",
+      "updatedAt": "2026-11-02T04:06:49+00:00",
+      "summary": "On native AMD64 the musl plugin linked with all three VFIO functions and passed TestDumpStack on the revised kernel headers. The public revision adds the purpose and source of the TLDK patch. GNU coverage used the same compatibility changes. PCI packet traffic still needs a vhost device.",
       "followup": {
         "owner": "arm64_results",
-        "sourceHead": "b0713e2bcf6ccde362401912ae80d17a4e1738b5",
-        "observedAt": "2026-11-02T03:51:38+00:00",
+        "sourceHead": "603b1231738582ca6559d2a5e098598669842c3c",
+        "observedAt": "2026-11-02T04:06:49+00:00",
         "disposition": "Rebased on the current GNU DPDK change",
-        "nextAction": "Verify the archive, executable and stack-unwind result with the new headers before requesting review.",
+        "nextAction": "Run the standalone license checker on the added queue.h record before requesting contributor review.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41384852262",
           "https://github.com/google/gvisor/pull/15153"
@@ -27584,8 +27584,8 @@
       },
       "evidence": [
         {
-          "label": "Native musl archive, executable and stack unwinding on the revised source",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41384852262"
+          "label": "Native musl archive, linked VFIO functions and TestDumpStack",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41384852262/artifacts/13115137890"
         },
         {
           "label": "Original archive → link → executed ELF, three symbols and named test verified for both libcs",
@@ -43044,12 +43044,16 @@
       "url": "https://github.com/tamird/gvisor/commit/f21dd0d1f",
       "title": "Run the Buildkite smoke guests directly with Bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T03:51:38+00:00",
-      "summary": "The five Buildkite jobs keep their existing architecture selection and use the declared staging tool from #16506. In the first run, three complete release layouts built, but all three kernels failed Nogo before the guest started. The new run compares the failing standard-library inputs with fresh builds on both native hosts.",
+      "updatedAt": "2026-11-02T04:06:49+00:00",
+      "summary": "The native ARM64 job reproduced four cached Go standard-library actions containing eight excluded archives each. Fresh sandbox builds omitted all eight. All six analyzers then passed, and an unprivileged ARM64 guest booted the staged release. AMD64 qualification is running.",
       "evidence": [
         {
           "label": "Native AMD64 and ARM64 guest qualification and Go standard-library action comparison",
           "url": "https://github.com/tamird/gvisor/actions/runs/41384780443"
+        },
+        {
+          "label": "ARM64 cached archives, fresh producers, analyzers and release guest",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41384780443/artifacts/13115172336"
         },
         {
           "label": "Original native AMD64 ordinary and race failures before guest execution",
@@ -43091,11 +43095,15 @@
       "title": "Measure waiter allocation on ordinary TCP and UDP close",
       "url": "https://github.com/tamird/gvisor/commit/fd2a30841",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T03:51:38+00:00",
+      "updatedAt": "2026-11-02T04:06:49+00:00",
       "summary": "Closing a netstack socket creates a waiter even when SO_LINGER is disabled. Moving registration inside the positive-linger path leaves the state check after registration so an early ACK is still observed. A paired native systrap run measures TCP, UDP and an unchanged Unix-socket control, and compares the linger syscall cases with Linux.",
       "evidence": [
         {
-          "label": "Native Linux syscall controls and 16 paired systrap measurements",
+          "label": "Paired close timing and linger syscall controls using separate Sentry binaries",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41385911507"
+        },
+        {
+          "label": "The first comparison stopped before timing because it built identical launchers",
           "url": "https://github.com/tamird/gvisor/actions/runs/41385226798"
         }
       ]
@@ -49687,9 +49695,18 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-02T03:20:19+00:00",
-      "summary": "A restore of 50,000 tmpfs files queued 150,890 callbacks. About a third came from inode after-load hooks, a third from converting dentry parents, and a third from directory maps waiting for their children.",
+      "updatedAt": "2026-11-02T04:06:49+00:00",
+      "summary": "Restoring 50,000 tmpfs files allocated a temporary pointer cell almost every time the decoder queued a parent pointer. The queue already held a copy of the pointer. Reusing that cell reduced total allocations per decode from 155,164 to 105,078.",
       "findings": [
+        {
+          "text": "Across 300,736 LoadValueTo calls, the decoder needed 50,130 temporary cells on stock and 43 with direct-value reuse. Total allocations fell 32.3%, about 401 kB per decode. Live heap remained 67.04 MiB. Eight paired restores of the same 50,000-file checkpoint put the first guest command at 251.1 ms on stock and 245.0 ms with reuse (p=.721).",
+          "evidence": [
+            {
+              "label": "Restore timings, heap profiles, callback counts and suite results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41383319719/artifacts/13115730116"
+            }
+          ]
+        },
         {
           "text": "Keeping the first scan in wire order lets the 50,000-file checkpoint resolve its three deferred frames without creating an index. Across 16 pairs, ordinary decode was 190.4 vs 188.4 ms (p=.926); both used 65.50 MiB live and 131.5 MiB peak heap. Eight native pairs verified every file after restore and showed no clear change to first guest readiness. An index for rows still unresolved after the first scan reduced a legal 1,024-cell chain from 3.554 to 0.814 ms (77.1%). The 16- and 64-cell cases showed no clear difference. The implementation adds 85 net lines for this worst case. Hold it while profiling ordinary restore.",
           "evidence": [
@@ -52879,8 +52896,12 @@
           ]
         }
       ],
-      "nextStep": "Profile the default graph decoder on the real 101,263-object kernel. Look for an API or data-layout change that reduces an observed cost during ordinary restore. The ordered retry queue remains a measured option for workloads with long chains.",
+      "nextStep": "Review the shared value-loading change and its ownership checks. The 16 complete guest restores showed no measurable latency difference. Keep the separate callback-table capacity experiment on hold.",
       "evidence": [
+        {
+          "label": "Restore timings, heap profiles, callback counts and suite results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41383319719/artifacts/13115730116"
+        },
         {
           "label": "Initial wire-order scan and deferred type lookup prototype",
           "url": "https://github.com/tamird/gvisor/commit/7a789f600"
