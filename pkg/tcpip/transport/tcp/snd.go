@@ -112,6 +112,10 @@ type sender struct {
 
 	ep *Endpoint
 
+	// lastDataSendTime is the last transmission attempt for queued payload,
+	// including retransmissions. Pure ACKs do not restart the data clock.
+	lastDataSendTime tcpip.MonotonicTime
+
 	// finSent is set when the FIN segment is actually transmitted.
 	// The endpoint may be in FIN_WAIT1/LAST_ACK while the FIN is still
 	// queued behind blocked data; finSent guards closing ACK completions.
@@ -272,6 +276,7 @@ func initSender(ep *Endpoint, iss, irs seqnum.Value, sndWnd seqnum.Size, mss uin
 	// See: https://tools.ietf.org/html/rfc6691#section-2
 	maxPayloadSize := int(mss) - ep.maxOptionSize()
 
+	now := ep.stack.Clock().NowMonotonic()
 	ep.snd = &sender{
 		ep: ep,
 		TCPSenderState: TCPSenderState{
@@ -279,7 +284,7 @@ func initSender(ep *Endpoint, iss, irs seqnum.Value, sndWnd seqnum.Size, mss uin
 			SndUna:           iss + 1,
 			SndNxt:           iss + 1,
 			RTTMeasureSeqNum: iss + 1,
-			LastSendTime:     ep.stack.Clock().NowMonotonic(),
+			LastSendTime:     now,
 			MaxPayloadSize:   maxPayloadSize,
 			MaxSentAck:       irs + 1,
 			FastRecovery: TCPFastRecoveryState{
@@ -290,8 +295,9 @@ func initSender(ep *Endpoint, iss, irs seqnum.Value, sndWnd seqnum.Size, mss uin
 			},
 			RTO: 1 * time.Second,
 		},
-		smallSegmentEnd: iss + 1,
-		gso:             ep.gso.Type != stack.GSONone,
+		lastDataSendTime: now,
+		smallSegmentEnd:  iss + 1,
+		gso:              ep.gso.Type != stack.GSONone,
 		writeList: protectedWriteList{
 			set: make(map[*segment]struct{}),
 		},
@@ -1121,7 +1127,7 @@ func (s *sender) sendData() {
 	// "A TCP SHOULD set cwnd to no more than RW before beginning
 	// transmission if the TCP has not sent data in the interval exceeding
 	// the retrasmission timeout."
-	if !s.FastRecovery.Active && s.state != tcpip.RTORecovery && s.ep.stack.Clock().NowMonotonic().Sub(s.LastSendTime) > s.RTO {
+	if s.writeNext != nil && !s.FastRecovery.Active && s.state != tcpip.RTORecovery && s.ep.stack.Clock().NowMonotonic().Sub(s.lastDataSendTime) > s.RTO {
 		if s.SndCwnd > InitialCwnd {
 			s.SndCwnd = InitialCwnd
 			s.cc.HandleWindowRestart()
@@ -1844,6 +1850,9 @@ func (s *sender) sendSegment(seg *segment) tcpip.Error {
 		}
 	}
 	seg.xmitTime = s.ep.stack.Clock().NowMonotonic()
+	if seg.payloadSize() != 0 {
+		s.lastDataSendTime = seg.xmitTime
+	}
 	seg.xmitCount++
 	seg.lost = false
 
