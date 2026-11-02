@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T01:32:49+00:00",
+    "updatedAt": "2026-11-02T01:44:43+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -46367,9 +46367,22 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Hostinet",
-      "updatedAt": "2026-11-02T01:19:00+00:00",
+      "updatedAt": "2026-11-02T01:44:43+00:00",
       "summary": "The reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
+        {
+          "text": "On the CUBIC sender series, two 512 KiB transfers timed out 93–94 ms after repairing the oldest segment, with a 200 ms RTO. Delaying a new SACK until after the timeout produced no second RACK recovery. The sender had repaired all three holes first. Both transfers delivered the full payload. The four policy comparisons were skipped because this workload exercised just the deadline change.",
+          "evidence": [
+            {
+              "label": "Two original packet traces, sender events and test XML",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41373778008/artifacts/13110565963"
+            },
+            {
+              "label": "Reviewer guide and individual controls",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            }
+          ]
+        },
         {
           "text": "On a 20 Mb/s, 100 ms path with a 100-packet queue, counting the original packets and their retransmissions separately increased CUBIC’s share against Linux in both pairs, from 33–36% to 41–44% and from 30–33% to 37–40%. Reno’s ranges overlapped. Neither controller consistently reduced the longest stall. The ranges bound bytes delivered at the edges of the observation window.",
           "evidence": [
@@ -48326,7 +48339,7 @@
           ]
         }
       ],
-      "nextStep": "Measure the deadline and RACK changes separately and together on a transfer that reproduces both events on stock. The passive handshake fix is on its own review card.",
+      "nextStep": "To measure both changes in one transfer, leave an older hole unrepaired at the timeout and have the next SACK acknowledge a later transmission. Verify both events before comparing the sender variants. The passive handshake fix has a separate review card.",
       "evidence": [
         {
           "label": "TCP_INFO retransmission count on Linux, stock gVisor and the candidate",
@@ -61477,9 +61490,22 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-01T21:14:06.082065+00:00",
+      "updatedAt": "2026-11-02T01:44:43+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
+        {
+          "text": "An ordinary futex wake let a thread return successfully from a priority-inheritance lock while the futex word still named the old owner. In the reverse case, a PI unlock assigned ownership to a thread that had only asked to wait. Linux rejected both operations with EINVAL. The correction preserved ownership for private and shared futexes and distinguished an ordinary requeue from a PI requeue.",
+          "evidence": [
+            {
+              "label": "PI waiter first, original native, stock and corrected runs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41372637891/artifacts/13110426321"
+            },
+            {
+              "label": "Ordinary waiter first and same-key requeue on all three implementations",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41373406806/artifacts/13110665540"
+            }
+          ]
+        },
         {
           "text": "A successful semop on semaphore 1 overwrote GETPID on untouched semaphore 0. Stock returned PID 1. Linux and corrected gVisor returned zero and passed all six cases. A separate test found that gVisor loses the writer’s PID after the writer is reaped because GETPID looks up a live thread group. Linux retains the PID.",
           "evidence": [
