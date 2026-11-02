@@ -111,12 +111,17 @@ def analyze(row):
     seen=next((e for e in events if partial and e["Why"]=="partial_rto_ack" and off(e["Ack"])==partial["ack"] and [[off(b["Start"]),off(b["End"])] for b in e["Blocks"] or []]==tail),None)
     decision=next((e for e in events if seen and e["Why"]=="rack_ack_entered" and e["At"]>=seen["At"] and e["Ack"]==seen["Ack"] and e["Blocks"]==seen["Blocks"]),None)
     catch=next((a for a in acks if a["ns"]>rto["At"] and off(rto["Nxt"])<=a["ack"]<=AMOUNT+1),None)
-    result.update(first_rto_prior_state=rto["State"], recovery_active=rto["Active"], first_rto_flight=off(rto["Nxt"]),
+    first_head=next((when for when,seq,n in data if when>=rto["At"] and seq==0 and n==MSS),None)
+    next_deadline=rtos[1]["At"] if len(rtos)>1 else row["iperf_end_ns"]
+    result.update(first_head_wire_ns=first_head, next_rto_or_end_ns=next_deadline,
+                  first_rto_prior_state=rto["State"], recovery_active=rto["Active"], first_rto_flight=off(rto["Nxt"]),
                   original_sack=initial,partial=partial,partial_processed=seen,reentered_on_that_ack=decision,
                   catchup_after_rto_ms=(catch["ns"]-rto["At"])/1e6 if catch else None,
                   last_app_read_after_rto_ms=(rd[-1]["at"]-rto["At"])/1e6 if result["last_byte_observed"] else None)
     result["schedule_matched"]=bool(attempts==[(i*MSS,MSS,i!=9) for i in range(10)] and
-        before==[(9*MSS,MSS)] and initial and partial and partial["window"]>0 and seen and rto["State"]==3 and
+        before==[(9*MSS,MSS)] and initial and partial and partial["ack"]==MSS and partial["window"]>0 and seen and
+        first_head and first_head<=partial["ns"]<next_deadline and rto["At"]<=seen["At"]<next_deadline and
+        seen["Una"]==base and seen["State"]==1 and not seen["Probing"] and seen["AckWindow"]>0 and rto["State"]==3 and
         rto["Active"] and rto["Una"]==base and not rto["Probing"] and off(rto["Nxt"])>=10*MSS and
         next(((seq,n) for when,seq,n in data if when>rto["At"]),None)==(0,MSS))
 
