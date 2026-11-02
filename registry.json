@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T18:36:56.149538+00:00",
+    "updatedAt": "2026-11-02T18:44:13.778224+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41258,14 +41258,22 @@
       "type": "branch",
       "group": "bazel",
       "repo": "tamird/hermetic-llvm",
-      "ref": "fix/linux-link-wrapper-musl",
-      "head": "b44d0d90c064a84ae942a90812274b9bd9f6427a",
-      "url": "https://github.com/tamird/hermetic-llvm/commit/b44d0d90c",
-      "title": "Link the Linux link wrapper with musl",
-      "updatedAt": "2026-11-02T18:27:13.788641+00:00",
-      "status": "Agent work",
-      "summary": "On a native ARM64 Linux worker without glibc, four vDSO objects compiled but the linker could not start its 12,208-byte wrapper: it needed the AArch64 glibc loader and three shared libraries. With the existing musl transition, the 67,560-byte wrapper needed neither an interpreter nor shared libraries. It linked both the ARM64 and x86 vDSOs, and Bazel produced the 336,470-byte runsc filter archive. The x86 vDSO was cross-linked on ARM64; no native x86 wrapper execution was tested.",
+      "ref": "proposal/linux-hosted-tool-musl",
+      "head": "cf9d2e26369d531d159c54c90ed6ac82f5d7d8c1",
+      "url": "https://github.com/tamird/hermetic-llvm/commit/cf9d2e263",
+      "title": "Run the Linux toolchain helpers without a host libc",
+      "updatedAt": "2026-11-02T18:44:13.778224+00:00",
+      "status": "Contributor review requested",
+      "summary": "Five toolchain helpers could not start on Linux workers without glibc. All six, including the module-map generator from #899, now run there. Both native architectures produced the expected module map, DEF/VFS outputs, header and archive checks, and invoked clang++ through the Rust link wrapper.",
       "evidence": [
+        {
+          "label": "Six executable checks on native AMD64",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/41502500476/artifacts/13170230377"
+        },
+        {
+          "label": "Six executable checks on native ARM64",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/41502500476/artifacts/13168564806"
+        },
         {
           "label": "Original worker: two vDSO links could not start the wrapper",
           "url": "https://github.com/tamird/gvisor/actions/runs/41254370730/artifacts/13062732350"
@@ -41291,15 +41299,26 @@
           "at": "2026-11-02T18:27:13.788641+00:00"
         }
       ],
-      "followup": {
-        "owner": "python_supplier_review",
-        "sourceHead": "b44d0d90c064a84ae942a90812274b9bd9f6427a",
-        "disposition": "Contributor feedback in progress",
-        "nextAction": "Audit all six hosted tools after hermetic-LLVM #899 and qualify one shared Linux execution-tool fix.",
-        "observedAt": "2026-11-02T18:27:13.788641+00:00",
-        "evidence": [
-          "https://github.com/tamird/hermetic-llvm/commit/b44d0d90c"
-        ]
+      "refinement": {
+        "before": {
+          "head": "b44d0d90c064a84ae942a90812274b9bd9f6427a",
+          "base": "fd2addebff08b29675ee266bc2766e475ce9263b"
+        },
+        "after": {
+          "head": "cf9d2e26369d531d159c54c90ed6ac82f5d7d8c1",
+          "base": "413655560cc6269a1bf4eaac5100fd96830948bd"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "cf9d2e26369d531d159c54c90ed6ac82f5d7d8c1",
+        "baseHead": "413655560cc6269a1bf4eaac5100fd96830948bd",
+        "url": "https://github.com/tamird/hermetic-llvm/commit/cf9d2e263",
+        "title": "Link Linux-hosted toolchain helpers with musl",
+        "requestedAt": "2026-11-02T18:44:13.778224+00:00",
+        "summary": "Send the consolidated six-tool change to hermetic-llvm?",
+        "body": "Five toolchain helpers could not start on Linux workers without glibc. All six, including the module-map generator from #899, now run there. Both native architectures produced the expected module map, DEF/VFS outputs, header and archive checks, and invoked clang++ through the Rust link wrapper."
       }
     },
     {
@@ -41851,14 +41870,18 @@
       "type": "branch",
       "group": "bazel",
       "repo": "tamird/gvisor",
-      "ref": "research/gazelle-native-repo-env",
-      "head": "faf0f078942123f153391b4d430786a7841269e0",
-      "url": "https://github.com/tamird/gvisor/commit/faf0f0789",
+      "ref": "proposal/gazelle-native-environment",
+      "head": "ba8ac6d33a4f90cd7c77984ed9c0dc5ecdbc7eda",
+      "url": "https://github.com/tamird/gvisor/commit/ba8ac6d33",
       "title": "Let Gazelle fetch Go repositories without a host env executable",
-      "updatedAt": "2026-11-02T18:27:13.788641+00:00",
+      "updatedAt": "2026-11-02T18:44:13.778224+00:00",
       "status": "Agent work",
       "summary": "Gazelle cannot fetch a Go module on a Linux client without the env program. Bazel 8 and later can remove environment variables directly.",
       "evidence": [
+        {
+          "label": "Five Bazel client queries and original wrapper result",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41501536218/artifacts/13167514851"
+        },
         {
           "label": "Four native ARM64 release-analysis controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/41282085987/artifacts/13074171050"
@@ -41878,13 +41901,23 @@
       ],
       "followup": {
         "owner": "arm64_results",
-        "sourceHead": "faf0f078942123f153391b4d430786a7841269e0",
+        "sourceHead": "ba8ac6d33a4f90cd7c77984ed9c0dc5ecdbc7eda",
         "disposition": "Contributor feedback in progress",
-        "nextAction": "Prepare the Bazel 8 minimum for gVisor and simplify the gVisor path. Keep the Bazel 7 lane of upstream Gazelle working.",
-        "observedAt": "2026-11-02T18:27:13.788641+00:00",
+        "nextAction": "Reconcile the five original client queries. The wrapper expected a different spelling of the missing env diagnostic.",
+        "observedAt": "2026-11-02T18:44:13.778224+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/faf0f0789"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "faf0f078942123f153391b4d430786a7841269e0",
+          "base": "6b575b681f2a05257f04e98c02e83b92c1fb766f"
+        },
+        "after": {
+          "head": "ba8ac6d33a4f90cd7c77984ed9c0dc5ecdbc7eda",
+          "base": "7a675ac66a1e2357abdaa6cccedabcd3cce9aa5c"
+        }
       }
     },
     {
@@ -42841,14 +42874,22 @@
       "repo": "google/gvisor",
       "number": 15867,
       "ref": "codex/checklocks-slices-callbacks-15728",
-      "head": "1165b33ea7500227832c74e5c82e0b7230d52a0f",
+      "head": "0bf36f79214fa3be21b86435714026a0ed1b1c42",
       "title": "Review lock ownership after synchronous slice callbacks",
       "url": "https://github.com/google/gvisor/pull/15867",
       "group": "runtime",
-      "status": "open",
-      "summary": "A slices.ContainsFunc predicate can release its caller’s mutex. The proposed analyzer then accepts a map deletion that requires that mutex. Taking a different mutex inside the predicate hides the same bug.",
-      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
+      "status": "draft",
+      "summary": "The callback now has to return with the locks it borrowed. The current fixture accepts balanced unlock/relock. One negative case would catch removal of the exit-state check. The author is waiting for his Linux run and CLA.",
+      "updatedAt": "2026-11-02T18:44:13.778224+00:00",
       "evidence": [
+        {
+          "label": "Author adopted the analyzer change and balanced case",
+          "url": "https://github.com/google/gvisor/pull/15867#discussion_r4446281540"
+        },
+        {
+          "label": "Negative fixture omitted by the cherry-pick",
+          "url": "https://github.com/tamird/gvisor/commit/dcef4dab2"
+        },
         {
           "label": "Original, corrected and negative-control analyzer results",
           "url": "https://github.com/tamird/gvisor/actions/runs/41340536537/artifacts/13098361016"
@@ -42871,7 +42912,16 @@
           "at": "2026-11-02T15:46:59.054342+00:00",
           "url": "https://github.com/google/gvisor/pull/15867#discussion_r4444418439"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "head": "0bf36f79214fa3be21b86435714026a0ed1b1c42",
+        "url": "https://github.com/google/gvisor/pull/15867#discussion_r4446281540",
+        "title": "Keep a negative callback-lock fixture",
+        "summary": "Post the negative test case on the existing checklocks thread?",
+        "body": "The balanced case now passes. Could you also keep releaseInPredicate from the parent of the test patch? It unlocks e.mu and returns without reacquiring it. Removing the new exit-state check still passes the balanced case, but leaves this callback’s delete unguarded. The negative fixture is here: https://github.com/tamird/gvisor/commit/dcef4dab2\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "branch:semctl-writer-pid",
@@ -66012,10 +66062,23 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-11-02T08:31:43+00:00",
+      "updatedAt": "2026-11-02T18:44:13.778224+00:00",
       "lastReviewedAt": "2026-11-02T08:31:43+00:00",
       "summary": "The project owner checks a new review decision against other open, unpublished and recently landed work. This is agent work; an approved source normally gets a follow-up rather than an amendment.",
       "findings": [
+        {
+          "text": "In syscall regressions, use a syscall matcher for a failing call and print strerror(err) when checking an error value such as SO_ERROR. A sweep of additions in 108 active or recently updated gVisor proposals found one more bare expected-errno assertion beyond the Unix datagram correction. Both now produce readable diagnostics.",
+          "evidence": [
+            {
+              "label": "Unix datagram syscall matcher",
+              "url": "https://github.com/google/gvisor/pull/16830"
+            },
+            {
+              "label": "TCP socket-error diagnostic",
+              "url": "https://github.com/tamird/gvisor/commit/c1bf3ee9a"
+            }
+          ]
+        },
         {
           "text": "Reviewed the 27 records changed after the November 2 full sweep. The current codespell action catches a typo in a new, untracked package. The older RACK pre-ACK flight count was measured on gVisor with a manual clock. When preparing the musl plugin, Sentry race smoke and futex requeue proposals for publication, rewrap their 73–74-column commit-message lines.",
           "evidence": [
