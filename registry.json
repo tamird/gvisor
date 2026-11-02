@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T07:14:50+00:00",
+    "updatedAt": "2026-11-02T07:17:10+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -63851,7 +63851,7 @@
       "title": "Repository lint on scratch workers and in downstream Bazel modules",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-02T07:14:50+00:00",
+      "updatedAt": "2026-11-02T07:17:10+00:00",
       "group": "analysis",
       "summary": "Replace tools/lint.sh with independently runnable Bazel checks and an explicit format command. The combined target ran Buildifier, cpplint, clang-format, spelling and Go formatting on remote workers.",
       "findings": [
@@ -64063,9 +64063,38 @@
               "url": "https://github.com/golang/go/issues/81453"
             }
           ]
+        },
+        {
+          "text": "Deferring protobuf’s binary hash to first use would still read the executable while initializing its error prefix. Deferring both could move the first read into Sentry after seccomp is installed. Go calls readlinkat with AT_FDCWD there. The production filter has no matching rule and its default kills the process. This source analysis excludes lazy hashing as a substitute for the startup patch. The independent containerd Gazelle fix does not change protobuf.",
+          "evidence": [
+            {
+              "label": "Protobuf initializes its error prefix with detrand.Bool",
+              "url": "https://github.com/protocolbuffers/protobuf-go/blob/v1.36.11/internal/errors/errors.go#L26-L34"
+            },
+            {
+              "label": "Go reads /proc/self/exe to resolve the running executable",
+              "url": "https://github.com/golang/go/blob/go1.27.3/src/os/executable_procfs.go#L15"
+            },
+            {
+              "label": "Linux readlinkat uses AT_FDCWD",
+              "url": "https://github.com/golang/go/blob/go1.27.3/src/syscall/syscall_linux.go#L310"
+            },
+            {
+              "label": "Sentry permits readlinkat on nonnegative file descriptors",
+              "url": "https://github.com/google/gvisor/blob/aa767e4c4/runsc/boot/filter/config/config_main.go#L438"
+            },
+            {
+              "label": "The default action kills the process",
+              "url": "https://github.com/google/gvisor/blob/aa767e4c4/pkg/seccomp/seccomp.go#L411-L413"
+            },
+            {
+              "label": "Original cold-start measurement",
+              "url": "https://github.com/google/gvisor/commit/dba564686"
+            }
+          ]
         }
       ],
-      "nextStep": "The goimports change needs the upstream hunk correction. Preparing the independent containerd change for Gazelle needs a Gazelle checkout and fork. The protobuf startup behavior is being investigated separately.",
+      "nextStep": "The goimports change needs the upstream hunk correction. Preparing the independent containerd change for Gazelle needs a Gazelle checkout and fork. Keep gVisor’s protobuf startup patch when changing the production Go dependency policy.",
       "evidence": [
         {
           "label": "Gazelle: qualified proposal",
