@@ -1,25 +1,31 @@
-name: Verify the local-tagged cgroup compilation
+name: Resume the exact unreported Nogo owners
 on:
   push:
     branches: [qualification/buildkite-native-nogo-inputs]
 permissions:
   contents: read
+  actions: read
 jobs:
   native:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
     runs-on: ubuntu-24.04
-    timeout-minutes: 28
+    timeout-minutes: 60
     env:
       PRODUCT: 8e13db5ad62802add68356df383e4a581e8eb303
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      NOGO_TIMEOUT: 21m
-      NOGO_OWNER: //runsc/cgroup:cgroup_test_nogo
+      NOGO_TIMEOUT: 51m
+      NOGO_RESUME_ORIGINAL: "13107794911"
       DOCKER_BUILD: 'false'
       DOCKER_HOST: unix:///nonexistent-gvisor-builder.sock
       BUILDKITE_LABEL: ':golang: Nogo tests'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {fetch-depth: 3, persist-credentials: false}
+      - name: Read the 597 original TestResults so they are not repeated
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/tamird/gvisor/actions/artifacts/13107794911/zip > "$RUNNER_TEMP/original-wildcard.zip"
       - name: Set up the ordinary Linux Bazel client and declared GNU workers
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -27,7 +33,7 @@ jobs:
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/nogo-receipts" "$RUNNER_TEMP/gnu-platform"
           echo '{"verified":false,"reason":"qualification incomplete"}' > "$RUNNER_TEMP/nogo-receipts/verdict.json"
-          test "$(git rev-parse HEAD^)" = b970b2ef96e0c6a570510d68f86eeaf488fe0a78
+          test "$(git rev-parse HEAD^)" = 3f467bd36fdca2958651727c781e35854fff4c2d
           git fetch -q --no-tags --depth=1 origin "$PRODUCT"
           cp .github/qualification/native-nogo.py "$RUNNER_TEMP"
           git checkout -q --detach "$PRODUCT"
@@ -43,7 +49,7 @@ jobs:
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$RUNNER_TEMP/nogo-resources.bazelrc"
-      - name: Execute the one missing cgroup analyzer and verify both target architectures
+      - name: Execute the complementary 273 tests, checking both architecture logs
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$PRODUCT"
@@ -55,17 +61,17 @@ jobs:
           d = Path(os.environ["RUNNER_TEMP"])/"nogo-receipts"
           v = json.loads((d/"verdict.json").read_text())
           o = json.loads((d/"owners.json").read_text())
-          label = os.environ["NOGO_OWNER"]
-          assert v["verified"] and v["configured"] == v["testRunners"] == 1, v["outcome"]
-          assert o["configured"] == [label] and o["completed"].get(label) is True
-          assert o["summaries"] == {label: "PASSED"} and o["markers"] == {label: {"amd64": True, "arm64": True}}
-          [result] = o["results"][label]
-          assert result["status"] == "PASSED" and result["strategy"] == "processwrapper-sandbox" and not result["cachedLocally"], result
+          assert v["verified"] and v["configured"] == v["testRunners"] == 273, v["outcome"]
+          for label in o["configured"]:
+              assert o["completed"].get(label) is True and o["summaries"][label] == "PASSED"
+              assert o["markers"][label] == {"amd64": True, "arm64": True}
+              [result] = o["results"][label]
+              assert result["status"] == "PASSED" and result["strategy"] == "processwrapper-sandbox" and not result["cachedLocally"], result
           PYQUAL
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: cgroup-nogo-executed
+          name: native-nogo-complement
           path: |
             ${{ runner.temp }}/nogo-receipts/
           if-no-files-found: error

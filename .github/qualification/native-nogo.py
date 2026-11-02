@@ -1,6 +1,7 @@
 """Run Buildkite's complete Nogo command and report configured vs executed tests."""
 
 import collections
+import hashlib
 import json
 import os
 import platform
@@ -9,6 +10,7 @@ import shlex
 import shutil
 import subprocess
 import time
+import zipfile
 from pathlib import Path
 
 root = Path(os.environ["RUNNER_TEMP"])
@@ -39,6 +41,24 @@ def main():
     assert subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() == os.environ["PRODUCT"]
     cmd = commands()
     owner = os.environ.get("NOGO_OWNER")
+    expected = None
+    previous = root / "original-wildcard.zip"
+    if os.environ.get("NOGO_RESUME_ORIGINAL"):
+        assert not owner and previous.is_file() and os.environ["NOGO_RESUME_ORIGINAL"] == "13107794911"
+        with zipfile.ZipFile(previous) as z:
+            old = json.loads(z.read("owners.json"))
+            v = json.loads(z.read("verdict.json"))
+        assert v["source"] == os.environ["PRODUCT"] and v["invocation"] == "1c14ce87-518f-4e52-bedf-45e54d2390b5"
+        matching = set(old["configured"])
+        done = set(old["results"])
+        cgroup = "//runsc/cgroup:cgroup_test_nogo"
+        assert len(matching) == 871 and len(done) == 597 and cgroup not in done
+        expected = matching - done - {cgroup}
+        labels = sorted(expected)
+        assert len(labels) == 273 and all(re.fullmatch(r"//[^: ]+:[^: ]+_nogo", l) for l in labels)
+        fingerprint = hashlib.sha256(("\n".join(labels) + "\n").encode()).hexdigest()
+        assert fingerprint == "8e25e39007ebb27ab6e6f096794897b7b9337500184bb74b52a597faab511d3b"
+        cmd[-1:] = labels
     if owner:
         assert owner.startswith("//") and owner.endswith("_nogo")
         cmd[-1] = owner
@@ -118,7 +138,9 @@ def main():
     known = {"//pkg/sentry/loader/vdsodata:vdsodata_nogo","//pkg/sentry/platform/systrap/sysmsg:sysmsg_nogo","//pkg/bits:bits_nogo","//pkg/tcpip/seqnum:seqnum_nogo"}
     if owner:
         known = {owner}
-    ok = status == 0 and bazel_exit and bazel_exit["name"] == "SUCCESS" and sets_agree and (owner or len(configured) == 871) and known <= configured and set(markers)==configured and log_arms and all(v=="PASSED" for v in summaries.values())
+    coverage = (configured == expected if expected is not None else
+                configured == {owner} if owner else len(configured) == 871 and known <= configured)
+    ok = status == 0 and bazel_exit and bazel_exit["name"] == "SUCCESS" and sets_agree and coverage and set(markers)==configured and log_arms and all(v=="PASSED" for v in summaries.values())
     write("owners", {"configured": sorted(configured), "completed": complete, "summaries":summaries, "results":results, "markers":markers, "failedLogs":failures})
     receipt = {"verified":bool(ok),"source":os.environ["PRODUCT"],"host":platform.machine(),"aarch64_gcc":shutil.which("aarch64-linux-gnu-gcc"),"bazel_command":cmd[2:],"bazel_exit":bazel_exit,"status":status,"started":started,"finished":finished,"filed":int(time.time()),"diskFreeBefore":free_start,"diskFreeAfter":shutil.disk_usage(".").free,"configured":len(configured),"summaries":dict(collections.Counter(summaries.values())),"testRunners":len(results),"amd64Markers":sum(m["amd64"] for m in markers.values()),"arm64Markers":sum(m["arm64"] for m in markers.values()),"eventTailLost":event_tail_lost,"actions":actions,"firstErrors":errs,"consoleTail":list(tail)}
     receipt["invocation"] = invocation
