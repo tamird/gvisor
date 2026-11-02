@@ -1,35 +1,99 @@
-name: CI
-
-"on":
+name: Qualify the reconciled musl plugin
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/plugin-musl-current]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  qualify:
+    if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      PRODUCT: b0713e2bcf6ccde362401912ae80d17a4e1738b5
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: carrier, persist-credentials: false, fetch-depth: 1}
+      - name: Preserve the verified profile and original-byte readers
+        working-directory: carrier
+        run: |
+          set -eu
+          umask 077
+          mkdir -p "$RUNNER_TEMP/musl-current-evidence" "$RUNNER_TEMP/gnu-platform"
+          echo '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/musl-current-evidence/result.json"
+          git fetch -q --no-tags --depth=1 origin 725f2cb41ccb7cc4446f74c1594de1dfe6592f6d b8adfee03658810bdd209ef33190d0c0af16f303 7c639344dfffdb686c1952d9e62adbabea8ff2f6 fb60e127516defd6aab633f80be09a03022f0737
+          for name in BUILD.bazel MODULE.bazel; do
+            git show "725f2cb41ccb7cc4446f74c1594de1dfe6592f6d:test/rbe/gnu_platform/$name" > "$RUNNER_TEMP/gnu-platform/$name"
+          done
+          for name in qualification_report unit_matrix; do
+            git show "fb60e127516defd6aab633f80be09a03022f0737:test/rbe/$name.py" > "$RUNNER_TEMP/$name.py"
+          done
+          git show b8adfee03658810bdd209ef33190d0c0af16f303:test/rbe/plugin_vfio_original.py > "$RUNNER_TEMP/plugin_vfio_original.py"
+          git show 7c639344dfffdb686c1952d9e62adbabea8ff2f6:test/rbe/plugin_programs/cas_inputs.py > "$RUNNER_TEMP/cas_inputs.py"
+          test "$(git hash-object "$RUNNER_TEMP/cas_inputs.py")" = 54047870d2d32c621a5c8616687a74bdc75001d5
+          cp test/rbe/plugin_musl_current.py "$RUNNER_TEMP/"
+          curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
+          echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
+          chmod 0755 "$RUNNER_TEMP/bb"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          path: product
+          ref: b0713e2bcf6ccde362401912ae80d17a4e1738b5
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Prepare the existing GNU remote route
+        working-directory: product
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          test "$(git rev-parse HEAD)" = "$PRODUCT"
+          test -n "$BUILDBUDDY_API_KEY"
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$RUNNER_TEMP/gnu.bazelrc"
+          timeout 180 docker pull --platform=linux/amd64 "$GNU"
+          docker run -d --name gnu-profile --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$PWD" "$GNU" -c 'sleep infinity'
+      - name: Run only the affected musl archive and cgo test
+        working-directory: product
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: docker exec -e RUNNER_TEMP -e BUILDBUDDY_API_KEY -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$PWD" gnu-profile python3 -B "$RUNNER_TEMP/plugin_musl_current.py"
+      - name: Check the exact publication boundary
+        id: privacy
+        if: always()
+        env:
+          KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PYTHON'
+          import json, os
+          from pathlib import Path
+          folder = Path(os.environ["RUNNER_TEMP"]) / "musl-current-evidence"
+          files = list(folder.iterdir())
+          assert {f.name for f in files} == {"result.json"}
+          f, = files
+          assert f.is_file() and not f.is_symlink() and f.stat().st_size < 100000
+          data = f.read_bytes()
+          json.loads(data)
+          assert os.environ["KEY"] and os.environ["KEY"].encode() not in data
+          assert all(m not in data.lower() for m in (b"authorization:", b"bearer ", b"x-buildbuddy-api-key"))
+          PYTHON
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.privacy.outcome == 'success'
+        with:
+          name: musl-plugin-current
+          path: ${{ runner.temp }}/musl-current-evidence/result.json
+          if-no-files-found: error
+      - name: Require the complete result
+        if: always()
+        run: |
+          python3 - <<'PYTHON'
+          import json, os
+          from pathlib import Path
+          r = json.loads((Path(os.environ["RUNNER_TEMP"]) / "musl-current-evidence/result.json").read_text())
+          assert r["status"] == "PASS", r["status"]
+          PYTHON
