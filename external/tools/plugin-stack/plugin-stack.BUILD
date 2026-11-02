@@ -27,7 +27,7 @@ config_setting(
 # pmdinfogen uses RTE_ARCH_64 for ELF layout and reads byte order from the ELF.
 # Its build configuration need not enable the target's runtime drivers.
 _MAKE_ARGS = [
-    "'SHELL:=$(FOREIGN_CC_SHELL)'",
+    "'SHELL:=$(DPDK_BUILD_SHELL)'",
     "'CC:=$(CC)'",
     "'CPP:=$(CC) -E'",
     "'AR:=$(AR)'",
@@ -52,6 +52,9 @@ _BUILD_DATA = [
 ]
 
 _ENV = {
+    # Bash records its own absolute path. The declared applets are siblings.
+    "DPDK_BUILD_SHELL": "$${BASH}",
+    "PATH": "$${BASH%/*}",
     "TMPDIR": "/tmp",
     "DPDK_MAKEFILE": "$(execpath @plugin_dpdk//:Makefile)",
     "OBJDUMP": "$(PLUGIN_OBJDUMP)",
