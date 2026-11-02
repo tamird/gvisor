@@ -26,7 +26,9 @@ facts and unresolved causes in every relationship.
   also carry `repo` and `number`; branch and PR records carry `ref`.
 - Add a `contributorReview` to the target PR, branch, or issue when asking
   for a decision, including outgoing reviews on someone else's PR. Record the
-  exact proposed text or commit. Remove the request when answered; keep any
+  exact proposed text or commit. Use `kind: issue` on the source work item with
+  the destination repository's `/issues/new` URL and the form's `title` and
+  `body`; `kind: reply` refers to an existing thread. Remove the request when answered; keep any
   checks or publication left to the agent in the work item. After a PR head
   changes, verify the draft against the new source before asking for review.
   If review starts before a check finishes, state which result publication
