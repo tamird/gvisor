@@ -4,15 +4,18 @@ on:
     branches: [qualification/kernel-header-root-policy]
 permissions:
   contents: read
+  actions: read
 jobs:
   queries:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 4, persist-credentials: false}
-      - name: Prepare the existing query client and diagnostic reader
+        with: {fetch-depth: 5, persist-credentials: false}
+      - name: Prepare the existing diagnostic reader and original query receipt
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -eu
           umask 077
@@ -20,14 +23,13 @@ jobs:
           mkdir -p "$d"
           cp test/rbe/header_root_policy.py "$d/"
           echo '{"verdict":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/header-policy.json"
-          curl --retry 3 -fsSL https://raw.githubusercontent.com/tamird/gvisor/b224a82d47407d754ce438e19f6d1b60f2e20fb3/.github/qualification/lint-pilot/check.py -o "$d/check.py"
+          curl --retry 3 -fsSL https://raw.githubusercontent.com/tamird/gvisor/56ed4a613a3f82c5005718e4404a5393647aba06/.github/qualification/lint-pilot/check.py -o "$d/check.py"
           curl --retry 3 -fsSL https://raw.githubusercontent.com/tamird/gvisor/b068472ea88909183902fc4bf12dac266f39d34d/test/rbe/external_go_policy.py -o "$d/external_go_policy.py"
-          curl --retry 3 -fsSL https://releases.bazel.build/8.8.1/release/bazel-8.8.1-linux-x86_64 -o "$d/bazel-8.8.1"
-          printf '%s  %s\n' 5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160 "$d/bazel-8.8.1" | sha256sum -c -
-          chmod 0755 "$d/bazel-8.8.1"
-          test "$(git rev-parse HEAD~2)" = 48428434392bfa3b1a1ce9fb50ca404b38f21b73
-      - name: Evaluate the dependency before and after, then the gVisor root
-        run: LINT_RC=/dev/null python3 -B "$RUNNER_TEMP/header-policy/header_root_policy.py"
+          test "$(git rev-parse HEAD~3)" = 48428434392bfa3b1a1ce9fb50ca404b38f21b73
+          git fetch --depth=1 https://github.com/tamird/gvisor.git d85bc40fda9451667fb01002c577d62ed8308b59
+          gh api repos/tamird/gvisor/actions/artifacts/13125283113/zip > "$d/original.zip" || true
+      - name: Verify diagnostic-only import and reconcile the original three queries
+        run: env -u LINT_RC python3 -B "$RUNNER_TEMP/header-policy/header_root_policy.py" --reconcile "$RUNNER_TEMP/header-policy/original.zip"
       - name: Check the single compact report
         id: privacy
         if: always()
