@@ -757,34 +757,129 @@ func directInvocation(inst ssa.Instruction, fn ssa.Value) bool {
 	}
 }
 
-// synchronousCallbackArgument reports whether callback is passed as an
-// argument to a standard-library slices function that invokes it
-// synchronously. These functions do not retain the callback, so it is safe to
-// analyze it with the caller's lock state.
-func synchronousCallbackArgument(call *ssa.Call, callback ssa.Value) bool {
-	fn := call.Common().StaticCallee()
+// callbackFact identifies one callback argument of a free function that can
+// borrow the caller's locks. Other calls or writes might change those locks
+// before the callback runs even when the function itself never retains it.
+type callbackFact struct{ Index int }
+
+func (*callbackFact) AFact() {}
+
+// Probe only a small, read-only SSA subset; an absent fact keeps the existing
+// escaped-closure checks. Generic instances have the declaration's contract.
+func callbackObject(fn *ssa.Function) *types.Func {
 	if fn == nil {
-		return false
+		return nil
 	}
 	obj, ok := fn.Object().(*types.Func)
-	if !ok || obj.Pkg() == nil || obj.Pkg().Path() != "slices" {
-		return false
+	if !ok || obj.Pkg() == nil || obj.Type().(*types.Signature).Recv() != nil {
+		return nil
 	}
+	if origin := fn.Origin(); origin != nil {
+		fn = origin
+	}
+	if fn.Pkg == nil || fn.Pkg.Members[obj.Name()] != fn {
+		return nil
+	}
+	return obj.Origin()
+}
 
-	// Keep this list explicit: only functions whose contract guarantees
-	// synchronous callback invocation may borrow the caller's lock state.
-	var callbackIndex int
-	switch obj.Name() {
-	case "CompactFunc", "ContainsFunc", "DeleteFunc", "IndexFunc",
-		"IsSortedFunc", "MaxFunc", "MinFunc", "SortFunc", "SortStableFunc",
-		"SortedFunc", "SortedStableFunc":
-		callbackIndex = 1
-	case "BinarySearchFunc", "CompareFunc", "EqualFunc":
-		callbackIndex = 2
-	default:
-		return false
+func (pc *passContext) inferCallbackFacts(funcs []*ssa.Function) {
+	local := make(map[*types.Func]*ssa.Function)
+	for _, fn := range funcs {
+		if o := callbackObject(fn); o != nil {
+			local[o] = fn
+		}
 	}
-	return callbackIndex < len(call.Common().Args) && call.Common().Args[callbackIndex] == callback
+	seen := make(map[*types.Func]bool)
+	var lookup func(*types.Func) int
+	lookup = func(o *types.Func) int {
+		if o == nil {
+			return -1
+		}
+		fn := local[o]
+		if fn == nil || seen[o] {
+			var fact callbackFact
+			if pc.pass.ImportObjectFact(o, &fact) {
+				return fact.Index
+			}
+			return -1
+		}
+		seen[o] = true // Conservative for recursion.
+		i := borrowedCallback(fn, lookup)
+		if i >= 0 {
+			pc.pass.ExportObjectFact(o, &callbackFact{Index: i})
+		}
+		return i
+	}
+	for o := range local {
+		lookup(o)
+	}
+}
+
+func borrowedCallback(fn *ssa.Function, lookup func(*types.Func) int) int {
+	index := -1
+	for i, p := range fn.Params {
+		if _, ok := p.Type().Underlying().(*types.Signature); ok {
+			if index >= 0 {
+				return -1
+			} // Do not assume another callback preserves locks.
+			index = i
+		}
+	}
+	if index == -1 || len(fn.Blocks) == 0 {
+		return -1
+	}
+	p := fn.Params[index]
+	called := false
+	for _, block := range fn.Blocks {
+		for _, inst := range block.Instrs {
+			switch x := inst.(type) {
+			case *ssa.Call:
+				c := x.Common()
+				b, isBuiltin := c.Value.(*ssa.Builtin)
+				switch {
+				case c.Value == p && !slices.Contains(c.Args, ssa.Value(p)):
+					called = true
+				case isBuiltin && b.Name() == "len":
+					continue
+				default:
+					n := lookup(callbackObject(c.StaticCallee()))
+					if !isSoleArgument(c.Args, n, p) {
+						return -1
+					}
+					called = true
+				}
+				continue
+			case *ssa.UnOp:
+				if x.Op != token.MUL {
+					return -1
+				}
+			case *ssa.If, *ssa.Jump, *ssa.Return, *ssa.Phi, *ssa.BinOp, *ssa.Index, *ssa.IndexAddr, *ssa.Field, *ssa.FieldAddr, *ssa.Extract, *ssa.ChangeType, *ssa.Convert:
+			default:
+				return -1
+			}
+			for _, op := range inst.Operands(nil) {
+				if *op == p {
+					return -1
+				} // Includes returning or aliasing the callback.
+			}
+		}
+	}
+	if !called {
+		return -1
+	}
+	return index
+}
+
+func isSoleArgument(args []ssa.Value, i int, callback ssa.Value) bool {
+	return i >= 0 && i < len(args) && args[i] == callback &&
+		!slices.Contains(args[:i], callback) && !slices.Contains(args[i+1:], callback)
+}
+
+func (pc *passContext) synchronousCallbackArgument(call *ssa.Call, callback ssa.Value) bool {
+	o := callbackObject(call.Common().StaticCallee())
+	var fact callbackFact
+	return o != nil && pc.pass.ImportObjectFact(o, &fact) && isSoleArgument(call.Common().Args, fact.Index, callback)
 }
 
 // checkSynchronousCallback analyzes a closure argument using the lock state at
@@ -912,7 +1007,7 @@ func (pc *passContext) checkInstruction(inst ssa.Instruction, lff *lockFunctionF
 		}
 	case *ssa.Call:
 		for _, arg := range x.Common().Args {
-			if callback, ok := arg.(*ssa.MakeClosure); ok && synchronousCallbackArgument(x, callback) {
+			if callback, ok := arg.(*ssa.MakeClosure); ok && pc.synchronousCallbackArgument(x, callback) {
 				pc.checkSynchronousCallback(x, callback, lff, ls)
 			}
 		}
@@ -935,7 +1030,7 @@ func (pc *passContext) checkInstruction(inst ssa.Instruction, lff *lockFunctionF
 					continue
 				}
 				call, ok := ref.(*ssa.Call)
-				if ok && synchronousCallbackArgument(call, x) {
+				if ok && pc.synchronousCallbackArgument(call, x) {
 					localCalls++
 					continue
 				}

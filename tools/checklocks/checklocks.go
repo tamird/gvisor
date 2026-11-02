@@ -46,6 +46,7 @@ var Analyzer = &analysis.Analyzer{
 		(*atomicAlignment)(nil),
 		(*lockGuardFacts)(nil),
 		(*lockFunctionFacts)(nil),
+		(*callbackFact)(nil),
 		(*lockTypeFacts)(nil),
 	},
 }
@@ -184,6 +185,7 @@ func run(pass *analysis.Pass) (any, error) {
 
 	// Scan all code looking for invalid accesses.
 	state := pass.ResultOf[buildssa.Analyzer].(*buildssa.SSA)
+	pc.inferCallbackFacts(state.SrcFuncs)
 	for _, fn := range state.SrcFuncs {
 		// Import function facts generated above.
 		//
