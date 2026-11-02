@@ -1,35 +1,28 @@
-name: CI
-
-"on":
+name: Trace five sender loss decisions on a shared WAN
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-cubic-recovery-events]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-cubic-recovery-events'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Build one proxy and run the fixed matched schedule
+        run: bash test/benchmarks/tcp/current-shared-driver.sh
+      - name: Reconcile receiver bytes, settings and packet observations
+        if: always()
+        run: python3 test/benchmarks/tcp/current-shared-report.py
+      - name: Publish the existing synthetic WAN evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: tcp-cubic-recovery-events
+          path: ${{ runner.temp }}/tcp-public/
+          if-no-files-found: error

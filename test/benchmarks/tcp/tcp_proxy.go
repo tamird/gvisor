@@ -16,6 +16,7 @@
 package main
 
 import (
+	"context"
 	"encoding/gob"
 	"flag"
 	"fmt"
@@ -29,6 +30,7 @@ import (
 	"runtime/pprof"
 	"runtime/trace"
 	"strconv"
+	"syscall"
 	"time"
 
 	"golang.org/x/sys/unix"
@@ -61,7 +63,7 @@ var (
 	sack               = flag.Bool("sack", false, "enable SACK support for netstack")
 	rack               = flag.Bool("rack", true, "enable RACK in TCP")
 	moderateRecvBuf    = flag.Bool("moderate_recv_buf", true, "enable TCP Receive Buffer Auto-tuning")
-	cubic              = flag.Bool("cubic", false, "enable use of CUBIC congestion control for netstack")
+	congestionControl  = flag.String("congestion_control", "reno", "TCP congestion control for native and netstack sockets: reno or cubic")
 	gso                = flag.Int("gso", 0, "GSO maximum size")
 	swgso              = flag.Bool("swgso", false, "gVisor-level GSO")
 	gro                = flag.Bool("gro", false, "gVisor-level GRO")
@@ -85,12 +87,33 @@ type impl interface {
 
 type netImpl struct{}
 
+func setCongestionControl(_, _ string, conn syscall.RawConn) error {
+	var sockErr error
+	if err := conn.Control(func(fd uintptr) {
+		for _, option := range []int{unix.SO_SNDBUFFORCE, unix.SO_RCVBUFFORCE} {
+			if sockErr = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, option, bufSize/2); sockErr != nil {
+				return
+			}
+		}
+		sockErr = unix.SetsockoptString(int(fd), unix.IPPROTO_TCP, unix.TCP_CONGESTION, *congestionControl)
+	}); err != nil {
+		return err
+	}
+	return sockErr
+}
+
 func (netImpl) dial(address string) (net.Conn, error) {
-	return net.Dial("tcp", address)
+	dialer := net.Dialer{Control: setCongestionControl}
+	conn, err := dialer.Dial("tcp", address)
+	if err == nil {
+		observeNative(conn.(*net.TCPConn))
+	}
+	return conn, err
 }
 
 func (netImpl) listen(port int) (net.Listener, error) {
-	return net.Listen("tcp", fmt.Sprintf(":%d", port))
+	config := net.ListenConfig{Control: setCongestionControl}
+	return config.Listen(context.Background(), "tcp", fmt.Sprintf(":%d", port))
 }
 
 func (netImpl) printStats() {
@@ -195,7 +218,7 @@ func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 
 	var probeFile *os.File
 	var err error
-	probe := func(_ *tcp.TCPEndpointState) {}
+	probe := observeNetstack()
 	if probeFileName != "" {
 		probeFile, err = os.Create(probeFileName)
 		if err != nil {
@@ -295,6 +318,17 @@ func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 		},
 	})
 
+	// Fix socket capacity across both recovery arms. Linux doubles the supplied
+	// SO_*BUFFORCE value; these defaults use the resulting four MiB capacity.
+	for _, option := range []tcpip.SettableTransportProtocolOption{
+		&tcpip.TCPSendBufferSizeRangeOption{Min: 4096, Default: bufSize, Max: bufSize},
+		&tcpip.TCPReceiveBufferSizeRangeOption{Min: 4096, Default: bufSize, Max: bufSize},
+	} {
+		if err := s.SetTransportProtocolOption(tcp.ProtocolNumber, option); err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	// Set protocol options.
 	{
 		opt := tcpip.TCPSACKEnabled(*sack)
@@ -311,21 +345,32 @@ func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 		}
 	}
 
-	// Enable Receive Buffer Auto-Tuning.
+	// Hold receive capacity fixed for the paired recovery comparison.
 	{
-		opt := tcpip.TCPModerateReceiveBufferOption(*moderateRecvBuf)
+		opt := tcpip.TCPModerateReceiveBufferOption(false)
 		if err := s.SetTransportProtocolOption(tcp.ProtocolNumber, &opt); err != nil {
 			return nil, probeFile.Close, fmt.Errorf("SetTransportProtocolOption(%d, &%T(%t)): %s", tcp.ProtocolNumber, opt, opt, err)
 		}
 	}
 
-	// Set Congestion Control to cubic if requested.
-	if *cubic {
-		opt := tcpip.CongestionControlOption("cubic")
+	// Select the same algorithm for the native and netstack paths.
+	{
+		opt := tcpip.CongestionControlOption(*congestionControl)
 		if err := s.SetTransportProtocolOption(tcp.ProtocolNumber, &opt); err != nil {
 			return nil, probeFile.Close, fmt.Errorf("SetTransportProtocolOption(%d, &%T(%s)): %s", tcp.ProtocolNumber, opt, opt, err)
 		}
 	}
+
+	var recovery tcpip.TCPRecovery
+	var send tcpip.TCPSendBufferSizeRangeOption
+	var receive tcpip.TCPReceiveBufferSizeRangeOption
+	for _, option := range []tcpip.GettableTransportProtocolOption{&recovery, &send, &receive} {
+		if err := s.TransportProtocolOption(tcp.ProtocolNumber, option); err != nil {
+			log.Fatal(err)
+		}
+	}
+	log.Printf("WANCONFIG recovery=%d send=%d receive=%d", recovery, send.Default, receive.Default)
+	log.Printf("netstack %s settings: congestion_control=%s sack=%t rack=%t moderate_recv_buf=%t packet_buffer_bytes=%d gso=%d swgso=%t gro=%t xdp=%t", mode, *congestionControl, *sack, *rack, false, bufSize, *gso, *swgso, *gro, *useXDP)
 
 	return netstackImpl{
 		s:    s,
@@ -389,6 +434,11 @@ func (n netstackImpl) printStats() {
 
 func main() {
 	flag.Parse()
+	switch *congestionControl {
+	case "reno", "cubic":
+	default:
+		log.Fatalf("unsupported congestion control: %q", *congestionControl)
+	}
 	if *port == 0 {
 		log.Fatalf("no port provided")
 	}
@@ -484,7 +534,7 @@ func main() {
 		// this proxy is started.
 		log.Fatalf("unable to listen: %v", err)
 	}
-	log.Printf("client=%v, server=%v, ready.", *client, *server)
+	log.Printf("client=%v, server=%v, congestion_control=%s, ready.", *client, *server, *congestionControl)
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, unix.SIGTERM)
