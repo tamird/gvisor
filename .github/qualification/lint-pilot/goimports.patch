@@ -1,0 +1,179 @@
+diff --git a/cmd/goimports/goimports.go b/cmd/goimports/goimports.go
+index 84b9b9e90..4dee1b395 100644
+--- a/cmd/goimports/goimports.go
++++ b/cmd/goimports/goimports.go
+@@ -15,7 +15,6 @@ import (
+ 	"io/fs"
+ 	"log"
+ 	"os"
+-	"os/exec"
+ 	"path/filepath"
+ 	"runtime"
+ 	"runtime/pprof"
+@@ -23,6 +22,7 @@ import (
+ 	"testing"
+ 
+ 	"golang.org/x/telemetry/counter"
++	"golang.org/x/tools/internal/diff"
+ 	"golang.org/x/tools/internal/gocommand"
+ 	"golang.org/x/tools/internal/imports"
+ )
+@@ -170,12 +170,11 @@ func processFile(filename string, in io.Reader, out io.Writer, argType argumentT
+ 			if argType == fromStdin {
+ 				filename = "stdin.go" // because <standard input>.orig looks silly
+ 			}
+-			data, err := diff(src, res, filename)
+-			if err != nil {
+-				return fmt.Errorf("computing diff: %s", err)
+-			}
+-			fmt.Printf("diff -u %s %s\n", filepath.ToSlash(filename+".orig"), filepath.ToSlash(filename))
+-			out.Write(data)
++			// Always print filepath with slash separator.
++			filename = filepath.ToSlash(filename)
++			// Keep a tab after filenames so diff readers can parse names with spaces.
++			data := diff.Unified(filename+".orig\t", filename+"\t", string(src), string(res))
++			_, err = fmt.Fprintf(out, "diff -u %s %s\n%s", filename+".orig", filename, data)
+ 		}
+ 	}
+ 
+@@ -303,78 +302,6 @@ func gofmtMain() {
+ 	}
+ }
+ 
+-func writeTempFile(dir, prefix string, data []byte) (string, error) {
+-	file, err := os.CreateTemp(dir, prefix)
+-	if err != nil {
+-		return "", err
+-	}
+-	_, err = file.Write(data)
+-	if err1 := file.Close(); err == nil {
+-		err = err1
+-	}
+-	if err != nil {
+-		os.Remove(file.Name())
+-		return "", err
+-	}
+-	return file.Name(), nil
+-}
+-
+-func diff(b1, b2 []byte, filename string) (data []byte, err error) {
+-	f1, err := writeTempFile("", "gofmt", b1)
+-	if err != nil {
+-		return
+-	}
+-	defer os.Remove(f1)
+-
+-	f2, err := writeTempFile("", "gofmt", b2)
+-	if err != nil {
+-		return
+-	}
+-	defer os.Remove(f2)
+-
+-	cmd := "diff"
+-	if runtime.GOOS == "plan9" {
+-		cmd = "/bin/ape/diff"
+-	}
+-
+-	data, err = exec.Command(cmd, "-u", f1, f2).CombinedOutput()
+-	if len(data) > 0 {
+-		// diff exits with a non-zero status when the files don't match.
+-		// Ignore that failure as long as we get output.
+-		return replaceTempFilename(data, filename)
+-	}
+-	return
+-}
+-
+-// replaceTempFilename replaces temporary filenames in diff with actual one.
+-//
+-// --- /tmp/gofmt316145376	2017-02-03 19:13:00.280468375 -0500
+-// +++ /tmp/gofmt617882815	2017-02-03 19:13:00.280468375 -0500
+-// ...
+-// ->
+-// --- path/to/file.go.orig	2017-02-03 19:13:00.280468375 -0500
+-// +++ path/to/file.go	2017-02-03 19:13:00.280468375 -0500
+-// ...
+-func replaceTempFilename(diff []byte, filename string) ([]byte, error) {
+-	bs := bytes.SplitN(diff, []byte{'\n'}, 3)
+-	if len(bs) < 3 {
+-		return nil, fmt.Errorf("got unexpected diff for %s", filename)
+-	}
+-	// Preserve timestamps.
+-	var t0, t1 []byte
+-	if i := bytes.LastIndexByte(bs[0], '\t'); i != -1 {
+-		t0 = bs[0][i:]
+-	}
+-	if i := bytes.LastIndexByte(bs[1], '\t'); i != -1 {
+-		t1 = bs[1][i:]
+-	}
+-	// Always print filepath with slash separator.
+-	f := filepath.ToSlash(filename)
+-	bs[0] = fmt.Appendf(nil, "--- %s%s", f+".orig", t0)
+-	bs[1] = fmt.Appendf(nil, "+++ %s%s", f, t1)
+-	return bytes.Join(bs, []byte{'\n'}), nil
+-}
+-
+ // isFile reports whether name is a file.
+ func isFile(name string) bool {
+ 	fi, err := os.Stat(name)
+diff --git a/cmd/goimports/main_test.go b/cmd/goimports/main_test.go
+index 9383c2c61..26789cb02 100644
+--- a/cmd/goimports/main_test.go
++++ b/cmd/goimports/main_test.go
+@@ -5,9 +5,12 @@
+ package main
+ 
+ import (
++	"bytes"
++	"io"
+ 	"log"
+ 	"os"
+ 	"path/filepath"
++	"strings"
+ 	"testing"
+ 
+ 	"golang.org/x/tools/internal/modindex"
+@@ -107,3 +110,44 @@ func TestCmd(t *testing.T) {
+ 		t.Errorf("goimports -w %s failed: got %s, want %s", fname, got, want)
+ 	}
+ }
++
++// TestDiff verifies that -d needs neither temporary files nor a diff command.
++func TestDiff(t *testing.T) {
++	t.Setenv("PATH", "")
++	t.Setenv("TMPDIR", filepath.Join(t.TempDir(), "missing"))
++	oldList, oldWrite, oldDiff, oldOptions := *list, *write, *doDiff, *options
++	*list, *write, *doDiff = false, false, true
++	options.FormatOnly = true
++	t.Cleanup(func() {
++		*list, *write, *doDiff, *options = oldList, oldWrite, oldDiff, oldOptions
++	})
++
++	// Include a missing final newline and a line that needs a tab.
++	src := "package p\n\nfunc f() {\nprintln(1)\n}"
++	var out bytes.Buffer
++	if err := processFile(filepath.Join("dir", "input file.go"), strings.NewReader(src), &out, singleArg); err != nil {
++		t.Fatal(err)
++	}
++	const want = "diff -u dir/input file.go.orig dir/input file.go\n" +
++		"--- dir/input file.go.orig\t\n" +
++		"+++ dir/input file.go\t\n" +
++		"@@ -1,5 +1,5 @@\n" +
++		" package p\n" +
++		" \n" +
++		" func f() {\n" +
++		"-println(1)\n" +
++		"-}\n" +
++		"\\ No newline at end of file\n" +
++		"+\tprintln(1)\n" +
++		"+}\n"
++	if got := out.String(); got != want {
++		t.Errorf("goimports -d output:\ngot:\n%s\nwant:\n%s", got, want)
++	}
++
++	r, w := io.Pipe()
++	r.Close()
++	defer w.Close()
++	if err := processFile("input.go", strings.NewReader(src), w, singleArg); err != io.ErrClosedPipe {
++		t.Errorf("diff write error = %v, want %v", err, io.ErrClosedPipe)
++	}
++}

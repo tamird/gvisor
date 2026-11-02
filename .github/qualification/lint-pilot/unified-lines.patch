@@ -1,0 +1,27 @@
+From 3f8223d50b560eece75d128e1b139c6f7252c462 Mon Sep 17 00:00:00 2001
+From: Mustafa Senoglu <mmustafasenoglu0@gmail.com>
+Date: Fri, 18 Sep 2026 09:41:57 +0000
+Subject: [PATCH] cmd/vendor/golang.org/x/tools: fix wrong new-file start line in unified diff
+
+Fixes #81453
+
+When toUnified joins a nearby edit into the current hunk it adds the intervening lines without advancing the new-file counter, so every later hunk header gets a stale start line. One-line fix, verified against the reproducer in the issue (output now matches GNU diff).
+
+Change-Id: I205ce03db5e6db043bec0e3654ef6eb5809a8e46
+GitHub-Last-Rev: e135a42156aede7624b869cd526ad7cd75859084
+GitHub-Pull-Request: golang/go#81588
+---
+
+diff --git a/internal/diff/unified.go b/internal/diff/unified.go
+index 6e8adad..aeeb49f 100644
+--- a/internal/diff/unified.go
++++ b/internal/diff/unified.go
+@@ -134,7 +134,7 @@
+ 			//direct extension
+ 		case h != nil && start <= last+gap:
+ 			//within range of previous lines, add the joiners
+-			addEqualLines(h, lines, last, start)
++			toLine += addEqualLines(h, lines, last, start)
+ 		default:
+ 			//need to start a new hunk
+ 			if h != nil {
