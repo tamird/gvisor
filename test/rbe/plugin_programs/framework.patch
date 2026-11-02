@@ -1,64 +1,156 @@
-# Declare both Bash invocations on rules_foreign_cc 0.17.0.
-# The default launcher remains in place, including its Windows behavior.
-# The consumer owns its PATH and Make SHELL settings.
-
+--- a/foreign_cc/built_tools/private/built_tools_framework.bzl
++++ b/foreign_cc/built_tools/private/built_tools_framework.bzl
+@@ -2,9 +2,8 @@
+ 
+ load("//foreign_cc/private:cc_toolchain_util.bzl", "absolutize_path_in_str", "find_cpp_toolchain")
+ load("//foreign_cc/private:detect_root.bzl", "detect_root")
+-load("//foreign_cc/private:framework.bzl", "FOREIGN_CC_FRAMEWORK_COMMON_ATTRS", "get_env_prelude", "wrap_outputs")
++load("//foreign_cc/private:framework.bzl", "FOREIGN_CC_FRAMEWORK_COMMON_ATTRS", "get_env_prelude", "run_wrapped", "wrap_outputs")
+ load("//foreign_cc/private:resource_sets.bzl", "get_resource_env_vars")
+-load("//foreign_cc/private/framework:exec_groups.bzl", "FOREIGN_CC_EXEC_GROUP")
+ load("//foreign_cc/private/framework:helpers.bzl", "convert_shell_script", "shebang")
+ 
+ # Common attributes for all built_tool rules
+@@ -132,11 +131,9 @@
+ 
+     resource_set, env = get_resource_env_vars(ctx.attr)
+ 
+-    # The use of `run_shell` here is intended to ensure bash is correctly setup on windows
+-    # environments. This should not be replaced with `run` until a cross platform implementation
+-    # is found that guarantees bash exists or appropriately errors out.
+-    ctx.actions.run_shell(
+-        exec_group = FOREIGN_CC_EXEC_GROUP,
++    run_wrapped(
++        ctx,
++        wrapped_outputs,
+         mnemonic = mnemonic,
+         inputs = ctx.attr.srcs.files,
+         outputs = [out_dir, wrapped_outputs.log_file],
+@@ -144,7 +141,6 @@
+         env = env,
+         resource_set = resource_set,
+         use_default_shell_env = True,
+-        command = wrapped_outputs.wrapper_script_file.path,
+         execution_requirements = {"block-network": ""},
+     )
+ 
 --- a/foreign_cc/private/framework.bzl
 +++ b/foreign_cc/private/framework.bzl
-@@ -126,6 +126,12 @@
-         cfg = config.exec(FOREIGN_CC_EXEC_GROUP),
-         default = [],
-     ),
-+    "build_shell": attr.label(
-+        doc = "Optional Bash executable for the wrapper and build scripts. Uses the foreign build's execution platform and includes the executable's runfiles. Without it, use Bazel's configured shell.",
-+        allow_single_file = True,
-+        executable = True,
-+        cfg = config.exec(FOREIGN_CC_EXEC_GROUP),
-+    ),
-     "data": attr.label_list(
-         doc = "Files needed by this rule at runtime. May list file or rule targets. Generally allows any target.",
-         mandatory = False,
-@@ -638,7 +644,14 @@
+@@ -10,7 +10,7 @@
+ load("//foreign_cc:providers.bzl", "ForeignCcArtifactInfo", "ForeignCcDepsInfo")
+ load("//foreign_cc/private:detect_root.bzl", "filter_containing_dirs_from_inputs")
+ load("//foreign_cc/private:resource_sets.bzl", "SIZE_ATTRIBUTES", "get_resource_env_vars")
+-load("//foreign_cc/private/framework:exec_groups.bzl", "FOREIGN_CC_EXEC_GROUP")
++load("//foreign_cc/private/framework:exec_groups.bzl", "FOREIGN_CC_EXEC_GROUP", "get_toolchains")
+ load(
+     "//foreign_cc/private/framework:helpers.bzl",
+     "convert_shell_script",
+@@ -625,10 +625,6 @@
+     # TODO: `additional_tools` is deprecated, remove.
+     legacy_tools = ctx.files.additional_tools + ctx.files.tools_deps
+ 
+-    # The use of `run_shell` here is intended to ensure bash is correctly setup on windows
+-    # environments. This should not be replaced with `run` until a cross platform implementation
+-    # is found that guarantees bash exists or appropriately errors out.
+-
+     tool_runfiles = []
+     for data in data_dependencies:
+         tool_runfiles += data[DefaultInfo].default_runfiles.files.to_list()
+@@ -638,8 +634,9 @@
  
      resource_set, env = get_resource_env_vars(ctx.attr)
  
 -    ctx.actions.run_shell(
-+    shell = ctx.executable.build_shell
-+    action = ctx.actions.run if shell else ctx.actions.run_shell
-+    invocation = {
-+        "arguments": [wrapped_outputs.wrapper_script_file.path],
-+        "executable": shell,
-+    } if shell else {"command": wrapped_outputs.wrapper_script_file.path}
-+    shell_tools = [ctx.attr.build_shell[DefaultInfo].files_to_run] if shell else []
-+    action(
-         exec_group = FOREIGN_CC_EXEC_GROUP,
+-        exec_group = FOREIGN_CC_EXEC_GROUP,
++    run_wrapped(
++        ctx,
++        wrapped_outputs,
          mnemonic = "Cc" + attrs.configure_name.capitalize() + "MakeRule",
          inputs = depset(inputs.declared_inputs),
-@@ -650,8 +663,8 @@
-             legacy_tools +
+         outputs = rule_outputs + [wrapped_outputs.log_file],
+@@ -651,7 +648,6 @@
              cc_toolchain.all_files.to_list() +
              tool_runfiles +
-+            shell_tools +
              [data[DefaultInfo].files_to_run for data in data_dependencies],
 -        command = wrapped_outputs.wrapper_script_file.path,
          execution_requirements = execution_requirements,
          use_default_shell_env = True,
          progress_message = "Foreign Cc - {configure_name}: Building {lib_name}".format(
-@@ -660,6 +673,7 @@
-         ),
-         resource_set = resource_set,
-         env = env,
-+        **invocation
-     )
+@@ -726,11 +722,37 @@
+         "script_file": "Main script file",
+         "wrapper_script": "Wrapper script text to execute",
+         "wrapper_script_file": "Wrapper script file (output for debugging purposes)",
++        "bash": "Optional FilesToRunProvider for the selected Bash.",
+     },
+ )
  
-     # Gather runfiles transitively as per the documentation in:
-@@ -791,7 +805,9 @@
++def run_wrapped(ctx, wrapped, **kwargs):
++    """Run the generated wrapper on the foreign build's execution platform.
++
++    Args:
++        ctx: Rule context.
++        wrapped: Output of wrap_outputs.
++        **kwargs: Other arguments to the Bazel action.
++    """
++    if wrapped.bash:
++        ctx.actions.run(
++            executable = wrapped.bash,
++            arguments = [wrapped.wrapper_script_file.path],
++            exec_group = FOREIGN_CC_EXEC_GROUP,
++            **kwargs
++        )
++    else:
++        # Preserve Bazel's shell setup, notably on Windows.
++        ctx.actions.run_shell(
++            command = wrapped.wrapper_script_file.path,
++            exec_group = FOREIGN_CC_EXEC_GROUP,
++            **kwargs
++        )
++
+ # buildifier: disable=function-docstring
+ def wrap_outputs(ctx, lib_name, configure_name, script_text, env_prelude, build_script_file = None):
++    # Older custom toolchains may supply only command templates.
++    bash = getattr(get_toolchains(ctx)[Label("//foreign_cc/private/framework:shell_toolchain")], "bash", None)
+     extension = script_extension(ctx)
+     build_log_file = ctx.actions.declare_file("{}_foreign_cc/{}.log".format(lib_name, configure_name))
+     build_script_file = ctx.actions.declare_file("{}_foreign_cc/build_script{}".format(lib_name, extension))
+@@ -791,7 +813,7 @@
          "export BUILD_LOG=\"{}\"".format(build_log_file.path),
          # sometimes the log file is not created, we do not want our script to fail because of this
          "##touch## \"$$BUILD_LOG$$\"",
 -        "##redirect_out_err## \"$$BUILD_SCRIPT$$\" \"$$BUILD_LOG$$\"",
-+        ('"$$EXT_BUILD_ROOT$$/{}" "$$BUILD_SCRIPT$$" &> "$$BUILD_LOG$$"'.format(ctx.executable.build_shell.path)
-+         if getattr(ctx.executable, "build_shell", None)
-+         else "##redirect_out_err## \"$$BUILD_SCRIPT$$\" \"$$BUILD_LOG$$\""),
++        ('"$$EXT_BUILD_ROOT$$/{}" "$$BUILD_SCRIPT$$" &> "$$BUILD_LOG$$"'.format(bash.executable.path) if bash else "##redirect_out_err## \"$$BUILD_SCRIPT$$\" \"$$BUILD_LOG$$\""),
      ]
      build_command = "\n".join([
          shebang(ctx),
+@@ -806,6 +828,7 @@
+     )
+ 
+     return WrappedOutputs(
++        bash = bash,
+         script_file = build_script_file,
+         log_file = build_log_file,
+         wrapper_script_file = wrapper_script_file,
+--- a/foreign_cc/private/framework/toolchain.bzl
++++ b/foreign_cc/private/framework/toolchain.bzl
+@@ -23,10 +23,19 @@
+ def _foreign_cc_framework_toolchain_impl(ctx):
+     return platform_common.ToolchainInfo(
+         commands = commands,
++        bash = ctx.attr.bash[DefaultInfo].files_to_run if ctx.attr.bash else None,
+     )
+ 
+ foreign_cc_framework_toolchain = rule(
+-    doc = "A toolchain contianing foreign_cc commands",
++    doc = "A toolchain containing foreign_cc commands and an optional Bash executable.",
++    attrs = {{
++        "bash": attr.label(
++            doc = "Bash used to run the wrapper and build scripts. If omitted, use Bazel's configured shell.",
++            allow_files = True,
++            cfg = "exec",
++            executable = True,
++        ),
++    }},
+     implementation = _foreign_cc_framework_toolchain_impl,
+ )
+ """
