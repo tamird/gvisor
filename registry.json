@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T17:56:54.547668+00:00",
+    "updatedAt": "2026-11-02T18:03:09.740287+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40972,9 +40972,9 @@
       "title": "Remove the shell copy from the gRPC plugin wrapper",
       "url": "https://github.com/tamird/grpc/commit/ccfbbe369",
       "group": "rbe",
-      "status": "Human submission required",
-      "updatedAt": "2026-11-02T17:56:54.547668+00:00",
-      "summary": "The Bazel rule copies protoc plugins with a declared executable. Linux code generation works without a shell. On Intel macOS both universal plugins matched the upstream binaries and worked after Bazel cleanup.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-02T18:03:09.740287+00:00",
+      "summary": "Check whether a symlink to the selected native or universal plugin is enough. The copy was tested on Linux and macOS. The release ZIP needs a standalone executable, but the packaging step may already follow the link.",
       "evidence": [
         {
           "label": "Linux code generation without a shell",
@@ -40990,11 +40990,11 @@
         }
       ],
       "followup": {
-        "owner": "tamird",
+        "owner": "python_supplier_review",
         "sourceHead": "ccfbbe36987afbad715cbca3c6bc791a7e33d2c9",
-        "observedAt": "2026-11-02T17:56:54.547668+00:00",
-        "disposition": "Tested and ready for human submission",
-        "nextAction": "Review the commit and open the prefilled upstream pull request.",
+        "observedAt": "2026-11-02T18:03:09.740287+00:00",
+        "disposition": "Contributor requested a simpler implementation",
+        "nextAction": "Trace the published CocoaPods ZIP to its packaging command. Verify whether the archiver follows the symlink and whether an extracted plugin runs independently.",
         "evidence": [
           "https://github.com/tamird/grpc/commit/ccfbbe369",
           "https://github.com/grpc/grpc/blob/db13f8422/CONTRIBUTING.md#generative-ai-policy",
@@ -41002,16 +41002,6 @@
           "https://github.com/tamird/gvisor/actions/runs/41489925538/artifacts/13166167197",
           "https://github.com/tamird/gvisor/actions/runs/41481569578/artifacts/13159939795"
         ]
-      },
-      "humanAction": {
-        "status": "pending",
-        "kind": "submission",
-        "head": "ccfbbe36987afbad715cbca3c6bc791a7e33d2c9",
-        "title": "[bazel] Copy protoc plugins with a declared executable",
-        "summary": "Review the commit and submit the prepared pull request from your account. gRPC requires human submission.",
-        "body": "The public protoc plugin targets used a shell to copy the selected\nexecutable to the filename expected by package consumers. This stopped\nC++ code generation on a Linux worker without /bin/bash [1].\n\nBuild the copy tool with the execution platform's C++ toolchain. Each\npublic target produces a regular executable that can be archived on its\nown. Keep the universal plugin on macOS for the CocoaPods packages and\nteach both build metadata generators to follow the new rule [2].\n\nThe C++ generators now run on the shell-free Linux worker [3]. On hosted\nIntel macOS, the archived C++ and Objective-C plugins matched the stock\nuniversal executables byte for byte. After removing the Bazel output\ntree, the installed plugins generated the same four files as stock [4].\n\n[1]: https://github.com/tamird/gvisor/blob/9c9a39762/test/rbe/grpc-native-codegen/result.json\n[2]: https://github.com/tamird/gvisor/actions/runs/41481569578/artifacts/13159939795\n[3]: https://github.com/tamird/gvisor/actions/runs/41481569578/artifacts/13159153891\n[4]: https://github.com/tamird/gvisor/actions/runs/41489925538/artifacts/13166167197\n",
-        "url": "https://github.com/grpc/grpc/compare/master...tamird:grpc:proposal/bazel-plugin-artifact?expand=1&title=%5Bbazel%5D+Copy+protoc+plugins+with+a+declared+executable&body=The+public+protoc+plugin+targets+used+a+shell+to+copy+the+selected%0Aexecutable+to+the+filename+expected+by+package+consumers.+This+stopped%0AC%2B%2B+code+generation+on+a+Linux+worker+without+%2Fbin%2Fbash+%5B1%5D.%0A%0ABuild+the+copy+tool+with+the+execution+platform%27s+C%2B%2B+toolchain.+Each%0Apublic+target+produces+a+regular+executable+that+can+be+archived+on+its%0Aown.+Keep+the+universal+plugin+on+macOS+for+the+CocoaPods+packages+and%0Ateach+both+build+metadata+generators+to+follow+the+new+rule+%5B2%5D.%0A%0AThe+C%2B%2B+generators+now+run+on+the+shell-free+Linux+worker+%5B3%5D.+On+hosted%0AIntel+macOS%2C+the+archived+C%2B%2B+and+Objective-C+plugins+matched+the+stock%0Auniversal+executables+byte+for+byte.+After+removing+the+Bazel+output%0Atree%2C+the+installed+plugins+generated+the+same+four+files+as+stock+%5B4%5D.%0A%0A%5B1%5D%3A+https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Fblob%2F9c9a39762%2Ftest%2Frbe%2Fgrpc-native-codegen%2Fresult.json%0A%5B2%5D%3A+https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Factions%2Fruns%2F41481569578%2Fartifacts%2F13159939795%0A%5B3%5D%3A+https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Factions%2Fruns%2F41481569578%2Fartifacts%2F13159153891%0A%5B4%5D%3A+https%3A%2F%2Fgithub.com%2Ftamird%2Fgvisor%2Factions%2Fruns%2F41489925538%2Fartifacts%2F13166167197%0A",
-        "policyURL": "https://github.com/grpc/grpc/blob/db13f8422/CONTRIBUTING.md#generative-ai-policy"
       }
     },
     {
