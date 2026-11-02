@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-02T04:06:49+00:00",
+    "updatedAt": "2026-11-02T04:11:55+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41386,14 +41386,28 @@
       "title": "netstack: end a lingering close when the peer acknowledges the FIN",
       "url": "https://github.com/google/gvisor/pull/16787",
       "status": "open",
-      "updatedAt": "2026-11-02T03:51:38+00:00",
+      "updatedAt": "2026-11-02T04:11:55+00:00",
       "summary": "Aditya Merchant’s netstack PR wakes a lingering close when the peer acknowledges the FIN and skips the wait on process exit. It introduces the shared process-exit syscall fixture used by the host-network follow-up.",
       "evidence": [
+        {
+          "label": "Sixteen paired socket-close measurements and 28 selected Linux and gVisor linger tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41385911507/artifacts/13115805373"
+        },
         {
           "label": "Upstream proposal and shared syscall fixture",
           "url": "https://github.com/google/gvisor/pull/16787"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "head": "1072c7c5b69f66636a755f29a207a8ce876a91f4",
+        "url": "https://github.com/tamird/gvisor/commit/fd2a30841",
+        "title": "Send the tested socket-close suggestion to the author",
+        "requestedAt": "2026-11-02T04:11:55+00:00",
+        "summary": "Post the measured finding on the waiter allocation?",
+        "body": "Register after checking for positive linger and before testing the TCP state. Ordinary unconnected TCP and UDP close took 16.8% and 16.2% less time on AMD64 systrap. Linux and both versions of the PR passed the 28 selected linger cases."
+      }
     },
     {
       "id": "branch:hostinet-exit-linger",
@@ -43044,12 +43058,16 @@
       "url": "https://github.com/tamird/gvisor/commit/f21dd0d1f",
       "title": "Run the Buildkite smoke guests directly with Bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T04:06:49+00:00",
-      "summary": "The native ARM64 job reproduced four cached Go standard-library actions containing eight excluded archives each. Fresh sandbox builds omitted all eight. All six analyzers then passed, and an unprivileged ARM64 guest booted the staged release. AMD64 qualification is running.",
+      "updatedAt": "2026-11-02T04:11:55+00:00",
+      "summary": "An unprivileged guest booted and exited on native AMD64, race-enabled AMD64, and native ARM64 using the actual Buildkite commands. Each guest ran the Sentry from its eight-file release. The race guest and launcher both contained race instrumentation. The comparison also reproduced four cached Go standard-library actions with undeclared inputs on ARM64.",
       "evidence": [
         {
           "label": "Native AMD64 and ARM64 guest qualification and Go standard-library action comparison",
           "url": "https://github.com/tamird/gvisor/actions/runs/41384780443"
+        },
+        {
+          "label": "AMD64 normal and race guest exits, matching launcher and Sentry hashes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41384780443/artifacts/13115074627"
         },
         {
           "label": "ARM64 cached archives, fresh producers, analyzers and release guest",
@@ -43094,19 +43112,49 @@
       "head": "fd2a308413e5fa06af407e08799d88351087dbc2",
       "title": "Measure waiter allocation on ordinary TCP and UDP close",
       "url": "https://github.com/tamird/gvisor/commit/fd2a30841",
-      "status": "Agent work",
-      "updatedAt": "2026-11-02T04:06:49+00:00",
-      "summary": "Closing a netstack socket creates a waiter even when SO_LINGER is disabled. Moving registration inside the positive-linger path leaves the state check after registration so an early ACK is still observed. A paired native systrap run measures TCP, UDP and an unchanged Unix-socket control, and compares the linger syscall cases with Linux.",
+      "status": "validated",
+      "updatedAt": "2026-11-02T04:11:55+00:00",
+      "summary": "Registering the waiter inside the positive-linger branch cut unconnected TCP close from 1.563 to 1.300 µs and UDP close from 1.141 to 0.957 µs in 16 paired AMD64 systrap runs. The Unix socket control and 28 linger cases on each of Linux and the two gVisor builds stayed consistent.",
       "evidence": [
         {
-          "label": "Paired close timing and linger syscall controls using separate Sentry binaries",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41385911507"
+          "label": "Sixteen paired socket-close measurements and 28 selected Linux and gVisor linger tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41385911507/artifacts/13115805373"
         },
         {
           "label": "The first comparison stopped before timing because it built identical launchers",
           "url": "https://github.com/tamird/gvisor/actions/runs/41385226798"
         }
       ]
+    },
+    {
+      "id": "branch:state-direct-value-storage",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/state-direct-value-storage",
+      "head": "3582b3adc64b9bd5dda6f2fa72bb18494a26f9bb",
+      "title": "Reuse temporary storage after a checkpoint callback takes a copy",
+      "url": "https://github.com/tamird/gvisor/commit/3582b3adc",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-02T04:11:55+00:00",
+      "summary": "A queue that holds its own copy of a pointer lets the shared decoder reuse one scratch cell. On a 50,000-file checkpoint this cut total allocations 32.3% and allocated bytes 0.28%. Eight paired guest restores showed no detectable latency change.",
+      "evidence": [
+        {
+          "label": "Restore benchmarks, guest timings, callback counts and state/race suites",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41383319719/artifacts/13115730116"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "3582b3adc64b9bd5dda6f2fa72bb18494a26f9bb",
+        "baseHead": "aa767e4c43d011121271551fe24da501a56f729d",
+        "url": "https://github.com/tamird/gvisor/commit/3582b3adc",
+        "title": "Reuse scratch storage for checkpoint conversions",
+        "requestedAt": "2026-11-02T04:11:55+00:00",
+        "summary": "Open the independent decoder PR after the queued-value lifetime control passes?",
+        "body": "The change removes one net implementation line and preserves callback ordering and the existing API. On a 50,000-file checkpoint, dentry parent conversions needed one temporary pointer cell allocation, down from 50,075. The full restore comparison measured an allocation reduction without a clear latency change."
+      }
     }
   ],
   "edges": [
