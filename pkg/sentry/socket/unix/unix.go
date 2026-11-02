@@ -562,11 +562,7 @@ func (s *Socket) GetSockName(t *kernel.Task) (linux.SockAddr, uint32, *syserr.Er
 // Listen implements the linux syscall listen(2) for sockets backed by
 // a transport.Endpoint.
 func (s *Socket) Listen(t *kernel.Task, backlog int) *syserr.Error {
-	if err := s.ep.Listen(t, backlog); err != nil {
-		return err
-	}
-	s.ep.SetPeerCreds(control.MakeCreds(t))
-	return nil
+	return s.ep.Listen(t, backlog, control.MakeCreds(t))
 }
 
 // extractEndpoint retrieves the transport.BoundEndpoint associated with a Unix

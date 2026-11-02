@@ -161,7 +161,7 @@ func (e *connectionlessEndpoint) Shutdown(flags tcpip.ShutdownFlags) *syserr.Err
 }
 
 // Listen starts listening on the connection.
-func (*connectionlessEndpoint) Listen(context.Context, int) *syserr.Error {
+func (*connectionlessEndpoint) Listen(context.Context, int, CredentialsControlMessage) *syserr.Error {
 	return syserr.ErrNotSupported
 }
 

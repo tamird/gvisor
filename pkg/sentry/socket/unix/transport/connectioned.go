@@ -437,9 +437,18 @@ func (e *connectionedEndpoint) Connect(ctx context.Context, server BoundEndpoint
 }
 
 // Listen starts listening on the connection.
-func (e *connectionedEndpoint) Listen(ctx context.Context, backlog int) *syserr.Error {
+func (e *connectionedEndpoint) Listen(ctx context.Context, backlog int, creds CredentialsControlMessage) *syserr.Error {
 	e.Lock()
 	defer e.Unlock()
+	if err := e.listenLocked(ctx, backlog); err != nil {
+		return err
+	}
+	e.peerCreds = creds
+	return nil
+}
+
+// listenLocked enables connections or updates the backlog. e must be locked.
+func (e *connectionedEndpoint) listenLocked(ctx context.Context, backlog int) *syserr.Error {
 	if e.ListeningLocked() {
 		// Adjust the size of the channel iff we can fix existing
 		// pending connections into the new one

@@ -222,9 +222,9 @@ type Endpoint interface {
 	// to its peer.
 	Shutdown(flags tcpip.ShutdownFlags) *syserr.Error
 
-	// Listen puts the endpoint in "listen" mode, which allows it to accept
-	// new connections.
-	Listen(ctx context.Context, backlog int) *syserr.Error
+	// Listen enables new connections. On success, the listening state and
+	// the listening task's credentials become visible to peers together.
+	Listen(ctx context.Context, backlog int, creds CredentialsControlMessage) *syserr.Error
 
 	// Accept returns a new endpoint if a peer has established a connection
 	// to an endpoint previously set to listen mode. This method does not
