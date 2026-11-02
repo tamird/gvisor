@@ -27,11 +27,17 @@ FILES = {
     "cgroup2/manager.go": "619d9119f8476fce135cf7febcc665897f9428e410f811182f72ad4d1153e01e",
 }
 RESULT = {"verdict": "INCOMPLETE", "builds": {}, "upstream": [
+    "https://github.com/bazel-contrib/bazel-gazelle/pull/791",
+    "https://github.com/bazel-contrib/bazel-gazelle/pull/1701",
     "https://github.com/bazel-contrib/bazel-gazelle/pull/2491",
     "https://github.com/containerd/cgroups/pull/220",
 ]}
 REGISTRIES = ["--registry=" + (AREA / "registry").as_uri(), "--registry=https://bcr.bazel.build"]
-DEFAULTS_SHA = "4f95c9122a714f39d06b8aa3fe4b5bd70a982e571ac3a31599b73079b267d3db"
+DEFAULTS_SHA = "a0291c4f216ea6ffbf660980c84eb5dc332c0d5da82400e778cb109219174e46"
+SCHEMAS = {
+    "cgroup1/stats": "9d803f5e1cfd6cdeb8b127cb880bd56ccc8a8c2c6efbfa501312d91b1dfd6097",
+    "cgroup2/stats": "78af4bf80cc92b88d72db84aa8fb41d9b20f416d833c760f4d4b786ca73c76af",
+}
 BAZEL = [s for s in client("8.8.1") if s != "--noworkspace_rc"]
 
 
@@ -72,7 +78,7 @@ def prepare_registry():
     source = dest / "source.json"
     descriptor = json.loads(source.read_text())
     patch = (AREA / "gazelle-cgroups-proto.patch").read_bytes()
-    assert git("hash-object", str(AREA / "gazelle-cgroups-proto.patch")) == git("rev-parse", PRODUCT + ":tools/gazelle-cgroups-proto.patch")
+    assert git("hash-object", str(AREA / "gazelle-cgroups-proto.patch")) == RESULT["patch_blob"]
     (dest / "patches/cgroups.patch").write_bytes(patch)
     descriptor["patches"]["cgroups.patch"] = "sha256-" + b64encode(sha256(patch).digest()).decode()
     source.write_text(json.dumps(descriptor))
@@ -85,7 +91,8 @@ def preflight():
     save()
     flags = [*REGISTRIES, "--ignore_dev_dependency"]
     packages = " + ".join(CGROUPS + "//" + n + "/stats:all" for n in ("cgroup1", "cgroup2"))
-    query = 'labels(srcs, kind("go_library", ' + packages + '))'
+    proto = 'kind("proto_library", ' + packages + ')'
+    query = 'labels(srcs, kind("go_library", ' + packages + ')) + ' + proto + ' + labels(srcs, ' + proto + ')'
     p = subprocess.run([*BAZEL, "query", *flags, query], capture_output=True, text=True)
     labels = [s for s in p.stdout.splitlines() if s.startswith("@") and "com_github_containerd_cgroups_v3//" in s]
     row.update(query=query, exit=p.returncode, labels=labels, errors=details(p.stderr) if p.returncode else [])
@@ -97,9 +104,12 @@ def preflight():
     metrics = {n: sha256((external / "gazelle++go_deps+com_github_containerd_cgroups_v3" / n).read_bytes()).hexdigest()
                for n in FILES if n.endswith("/metrics.pb.go")}
     row["effective_stats_sha256"] = metrics
+    names = {label.split("//", 1)[1] for label in labels}
+    neutral = {f"{pkg}:stats_proto" for pkg in SCHEMAS} | {f"{pkg}:metrics.proto" for pkg in SCHEMAS}
+    row["neutral_targets_and_sources"] = sorted(names & neutral)
     row["verified"] = p.returncode == 0 and row["effective_defaults_sha256"] == DEFAULTS_SHA and all(
         metrics[n] == FILES[n] and any(label.endswith("//" + n.replace("/metrics.pb.go", ":metrics.pb.go")) for label in labels)
-        for n in metrics)
+        for n in metrics) and neutral <= names
     save()
     return row["verified"]
 
@@ -138,7 +148,7 @@ def actions(path, collection):
         endswith("//shim:containerd-shim-runsc-v1") or endswith("//pkg/shim/v1/extension:extension") or
         contains("/internal/detrand:") or contains("//pkg/protobuf/types:") or contains("com_github_containerd_cgroups_v3//"))) |
         {targetLabel,mnemonic,exitCode,runner,cacheHit,status,platform,actualOutputs,
-         inputs: [.inputs[]? | select(.path | endswith("/internal/detrand/rand.go") or endswith("/metrics.pb.go") or
+         inputs: [.inputs[]? | select(.path | endswith("/internal/detrand/rand.go") or endswith("/metrics.pb.go") or endswith("/metrics.proto") or
              endswith("/cpuacct.go") or endswith("/memory.go") or endswith("/manager.go"))]}'''
     with subprocess.Popen(["jq", "-c", filt, str(path)], stdout=subprocess.PIPE, text=True) as p:
         for line in p.stdout:
@@ -160,6 +170,7 @@ def build(name, sha, cwd):
             "--remote_download_outputs=toplevel", "--build_event_json_file=" + str(bep),
             "--execution_log_json_file=" + str(spawns)]
     args += ["--ignore_dev_dependency", shim, ext, CGROUPS + "//cgroup1:cgroup1", CGROUPS + "//cgroup2:cgroup2"]
+    args.extend(CGROUPS + "//" + pkg + ":stats_proto" for pkg in SCHEMAS)
     p = subprocess.run(args, cwd=cwd, capture_output=True, text=True, errors="replace")
     log = p.stderr + p.stdout
     row.update(exit=p.returncode, returned=now(), safe_errors=details(log) if p.returncode else [],
@@ -175,13 +186,30 @@ def build(name, sha, cwd):
             row["bazel_exit"] = e["finished"]["exitCode"].get("code", 0)
         if "targetCompleted" in e.get("id", {}):
             completed[e["id"]["targetCompleted"]["label"]] = e.get("completed", {}).get("success", False)
-    row.update(completed=completed, actions=[], cgroups=[], protobuf_sources=[], containerd_types=[], failures=[])
+    row.update(completed=completed, actions=[], cgroups=[], descriptors=[], protobuf_sources=[], containerd_types=[], failures=[])
     save()
     for s in actions(spawns, row["collection"]):
         label = s.get("targetLabel") or ""
         mnemonic = s.get("mnemonic")
         if s.get("exitCode", 0) and len(row["failures"]) < 10:
             row["failures"].append([label, mnemonic, s["exitCode"], s.get("status")])
+        pkg = label.split("//")[-1].split(":")[0]
+        if pkg in SCHEMAS and label.endswith(":stats_proto") and "com_github_containerd_cgroups_v3//" in label:
+            outputs = [f for f in s.get("actualOutputs") or [] if f["path"].endswith("/stats_proto-descriptor-set.proto.bin")]
+            if outputs:
+                out, = outputs
+                props = {p["name"]: p["value"] for p in (s.get("platform") or {}).get("properties", [])}
+                sources = [f["digest"]["hash"] for f in s["inputs"] if f["path"].endswith("/metrics.proto")]
+                desc = {"package": pkg, "owner": label, "mnemonic": mnemonic, "sources": sources, "output": out,
+                        "exit": s.get("exitCode", 0), "runner": s.get("runner"), "cached": s.get("cacheHit", False),
+                        "image": props.get("container-image")}
+                row["descriptors"].append(desc)
+                save()
+                data = (cwd / out["path"]).read_bytes()
+                num = pkg[len("cgroup")]
+                desc.update(local_sha256=sha256(data).hexdigest(), bytes=len(data),
+                            package_present=("io.containerd.cgroups.v" + num).encode() in data,
+                            metrics_present=b"Metrics" in data)
         if mnemonic == "GoCompilePkg" and "com_github_containerd_cgroups_v3//" in label:
             sources = {key: f.get("digest", {}).get("hash") for f in s.get("inputs", [])
                        for key in FILES if f["path"].endswith("/" + key)}
@@ -225,8 +253,9 @@ def build(name, sha, cwd):
 
 
 def main():
-    assert git("rev-parse", "HEAD^") == "0d08a91ce44afcd87d543150e1224033af66caed"
-    assert git("rev-parse", "HEAD^^") == PRODUCT and git("rev-parse", PRODUCT + "^") == SPLIT
+    assert git("rev-parse", "HEAD^") == "b9afe68e525620ea07a00b107bfd0f39bb3c7827"
+    RESULT["patch_blob"] = git("rev-parse", "HEAD:test/rbe/gazelle-cgroups-go-proto.patch")
+    assert git("rev-parse", "HEAD~3") == PRODUCT and git("rev-parse", PRODUCT + "^") == SPLIT
     select(SPLIT)
     try:
         original()
@@ -239,6 +268,13 @@ def main():
         RESULT["ignored_override_control"] = {"run": 41402974439, "artifact": 13121654249, "source": PRODUCT,
                                               "invocation": prev["invocation"], "defaults_sha256": prior["effective_defaults_sha256"],
                                               "go_diagnostics": prev["go_diagnostics"]}
+        broad_zip = AREA / "broad.zip"
+        assert sha256(broad_zip.read_bytes()).hexdigest() == "30880909c6cb9b2e64dddf8791562877255926331117da63b97bf7d3fadb3844"
+        with ZipFile(broad_zip) as z:
+            broad = json.loads(z.read("external-go.json"))
+        assert broad["verdict"] == "PASS" and all(broad["checks"].values()) and broad["builds"]["default"]["source"] == SPLIT
+        RESULT["broad_control"] = {"run": 41403591637, "artifact": 13122681614, "sha256": sha256(broad_zip.read_bytes()).hexdigest(),
+                                   "default": "gazelle:proto disable", "checks": broad["checks"]}
         prepare_registry()
         if not preflight():
             return True
@@ -255,7 +291,15 @@ def main():
                 assert sources.setdefault(key, value) == value
         complete = row["completed"]
         obs = row.get("startup", {})
+        descriptors = row["descriptors"]
         checks = {
+            "neutral_targets_built": all(any(k.endswith("//" + pkg + ":stats_proto") and ok for k, ok in complete.items())
+                                         for pkg in SCHEMAS),
+            "neutral_descriptors": sorted(d["package"] for d in descriptors) == sorted(SCHEMAS) and all(
+                not d["exit"] and (d["runner"] == "remote" or d["cached"]) and d["image"] == "docker://" + os.environ["GNU"] and
+                set(d["sources"]) == {SCHEMAS[d["package"]]} and d["local_sha256"] == d["output"]["digest"]["hash"] and
+                d["bytes"] == int(d["output"]["digest"]["sizeBytes"]) and d["package_present"] and d["metrics_present"]
+                for d in descriptors),
             "pinned_default": RESULT["preflight"]["verified"],
             "real_shim_built": row["state"] == "BUILT" and row["bazel_exit"] == row["exit"] == 0 and all(complete.values()),
             "cgroup_targets_built": all(any("com_github_containerd_cgroups_v3//" + name + ":" + name in k and v
