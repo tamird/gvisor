@@ -1,35 +1,49 @@
-name: CI
-
-"on":
+name: Reconcile the original Bazel 9 Coral control
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/bazel9-coral-original]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  recover:
+    if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 1}
+      - name: Fetch the original source identities
+        run: |
+          git fetch -q --no-tags --depth=1 origin 54016945752ce190e5a707c41053384855007269 aa767e4c43d011121271551fe24da501a56f729d 542eadd05f05f309cc0d2344ac4b07e967a67fd1 375b2c57032fa910447d4b81217fde2171303a9b
+          mkdir "$RUNNER_TEMP/coral-evidence"
+          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/coral-evidence/result.json"
+      - name: Verify the original artifact and recorded failure
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 test/rbe/bazel9_coral_original.py
+      - name: Validate the sole publication file
+        id: privacy
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          folder = Path(os.environ["RUNNER_TEMP"]) / "coral-evidence"
+          assert {p.name for p in folder.iterdir()} == {"result.json"}
+          path = folder / "result.json"
+          assert path.is_file() and not path.is_symlink()
+          data = path.read_bytes()
+          assert len(data) < 32768
+          key = os.environ["GH_TOKEN"].encode()
+          assert key and key not in data
+          assert not any(marker in data.lower() for marker in (b"authorization:", b"x-buildbuddy-api-key", b"github_pat_"))
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.privacy.outcome == 'success'
+        with:
+          name: bazel9-coral-original
+          path: ${{ runner.temp }}/coral-evidence/result.json
+          if-no-files-found: error
