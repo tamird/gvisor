@@ -1,0 +1,33 @@
+name: Check PGO profile eligibility
+on:
+  push:
+    branches: [qualification/pgo-profile-collection-time]
+permissions:
+  contents: read
+jobs:
+  native:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 36
+    env:
+      DOCKER_HOST: unix:///nonexistent-pgo-builder.sock
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 30, persist-credentials: false}
+      - name: Prepare the historical checkout and fixed clock
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/pgo-receipts"
+          echo '{"verified":false,"phase":"setup"}' > "$RUNNER_TEMP/pgo-receipts/verdict.json"
+          cp .github/qualification/pgo-freshness.py "$RUNNER_TEMP/"
+          git fetch --no-tags --depth=65 origin 586ae55fa12aa44f3654a6206901fed272e784bf
+          test "$(bazel --version)" = "bazel $(cat .bazelversion)"
+      - name: Compare the ordinary Linux Make decision without launching a benchmark
+        timeout-minutes: 30
+        run: python3 "$RUNNER_TEMP/pgo-freshness.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: pgo-profile-eligibility
+          path: ${{ runner.temp }}/pgo-receipts/
+          if-no-files-found: error
