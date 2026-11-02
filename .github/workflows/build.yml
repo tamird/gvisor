@@ -1,35 +1,67 @@
-name: CI
-
-"on":
+name: Compare graph saves of shared slice windows
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/state-window-allocations-run]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  benchmark:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      FIXTURE: de18ff02e318fccf53984876d4480db8f0c89fdd
+      PRODUCT: 64b2f7547dadf8769a5ce66e6475cd8dba6b181f
+      BASE: 85dbf4e6526c8309d424ce905d4889a5dd6000dd
+      VERIFIER: 6b3fe9ab6c03facafe6340c85f8d60ca3591566b
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 4
+          persist-credentials: false
+      - name: Benchmark both save implementations on the same Linux CPU
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/results"
+          printf '{"status":"INCOMPLETE","phase":"bootstrap"}\n' > "$RUNNER_TEMP/results/verdict.json"
+          test "$(git rev-parse HEAD^)" = "$FIXTURE"
+          test "$(git rev-parse HEAD^^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD^^^)" = "$BASE"
+          test "$(git diff --name-only "$PRODUCT" "$FIXTURE")" = pkg/state/tests/bench_test.go
+          cp .github/qualification/window_benchmark.py "$RUNNER_TEMP"
+          git fetch --quiet --depth=1 origin "$VERIFIER"
+          for helper in unit_matrix qualification_report; do
+            git show "$VERIFIER:test/rbe/$helper.py" > "$RUNNER_TEMP/$helper.py"
+          done
+          if ! command -v bazelisk; then
+            GOBIN="$RUNNER_TEMP" go install github.com/bazelbuild/bazelisk@v1.30.0
+            export PATH="$RUNNER_TEMP:$PATH"
+          fi
+          test "$(bazelisk --version)" = "bazel $(cat .bazelversion)"
+          python3 "$RUNNER_TEMP/window_benchmark.py"
+      - name: Calculate benchstat for the 16 observed TestRunner attempts
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/results"
+          go run golang.org/x/perf/cmd/benchstat@v0.0.0-20261009192801-be2c69fb417e stock fixed | tee benchstat.txt
+          for metric in sec/op B/op allocs/op; do grep -Fq "$metric" benchstat.txt; done
+      - name: Check the bounded original benchmark evidence
+        id: scan
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, re
+          root = pathlib.Path(os.environ["RUNNER_TEMP"]) / "results"
+          for path in root.iterdir():
+              assert path.is_file() and not path.is_symlink()
+              assert re.fullmatch(r"verdict\.json|benchstat\.txt|stock|fixed|pair-[1-8]-(stock|fixed)\.(log|xml)", path.name), path
+              data = path.read_bytes()
+              assert len(data) < 1024**2
+              assert not re.search(rb"gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|BEGIN (RSA |OPENSSH )?PRIVATE KEY", data)
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.scan.outcome == 'success'
+        with:
+          name: shared-window-benchstat
+          path: ${{ runner.temp }}/results/
+          if-no-files-found: error
