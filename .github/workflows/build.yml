@@ -1,7 +1,7 @@
-name: Build the DPDK archive without a worker filesystem
+name: Check the deployed zero-layer OCI worker
 on:
   push:
-    branches: [qualification/foreign-cc-empty-root]
+    branches: [qualification/buildbuddy-zero-layer-deployed]
 permissions:
   contents: read
   actions: read
@@ -9,8 +9,12 @@ jobs:
   plugin:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-22.04
-    timeout-minutes: 40
+    timeout-minutes: 12
     steps:
+      - name: Retain a verdict even if setup fails
+        run: |
+          mkdir "$RUNNER_TEMP/plugin-evidence"
+          echo '{"status":"INCOMPLETE","phase":"setup"}' > "$RUNNER_TEMP/zero-layer.json"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: product, fetch-depth: 5, persist-credentials: false}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -25,10 +29,6 @@ jobs:
           path: supplier
           ref: b0b4b6c173c4312c14f3c5a427e9e3cb7271143c
           persist-credentials: false
-      - name: Retain the original native archive and action
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api repos/tamird/gvisor/actions/artifacts/13132865042/zip > "$RUNNER_TEMP/original.zip"
       - name: Pin the original compiler, resolver, execution and evidence tools
         working-directory: product
         env:
@@ -36,8 +36,6 @@ jobs:
         run: |
           set -eu
           umask 077
-          mkdir -p "$RUNNER_TEMP/plugin-evidence"
-          echo '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/plugin-evidence/result.json"
           test -n "$BUILDBUDDY_API_KEY"
           test "$(git -C ../registry rev-parse HEAD)" = f8f5f201805db9b0c27571f7630cb8a37f3a78d6
           test "$(git -C ../supplier rev-parse HEAD)" = b0b4b6c173c4312c14f3c5a427e9e3cb7271143c
@@ -54,27 +52,12 @@ jobs:
           curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
           echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
           chmod 0755 "$RUNNER_TEMP/bb"
-          python3 - <<'PYTHON'
-          import sys
-          sys.path.insert(0, "test/rbe/plugin_programs")
-          from action_log import context
-          assert context("ERROR: fatal error: missing_header.h: No such file or directory")[0]["text"].endswith("No such file or directory")
-          assert context("ERROR: x-buildbuddy-api-key=sentinel")[0]["text"] == "[credential-bearing line omitted]"
-          PYTHON
-      - name: Check the worker root, then build the selected archive once
+      - name: Run the original zero-layer action once
         working-directory: product
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 -B test/rbe/plugin_programs/native_helper.py
-      - name: Collect the actual remote action and compare its outputs
-        if: always()
-        working-directory: product
-        env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: |
-          python3 -B test/rbe/plugin_programs/action_log.py
-          python3 -B test/rbe/plugin_programs/native_helper.py --outputs
-      - name: Check the typed evidence boundary
+        run: python3 -B test/rbe/plugin_programs/deployed_zero_layer.py
+      - name: Check the typed receipt before upload
         id: privacy
         if: always()
         env:
@@ -83,24 +66,17 @@ jobs:
           python3 - <<'PY'
           import json, os
           from pathlib import Path
-          folder = Path(os.environ["RUNNER_TEMP"]) / "plugin-evidence"
-          files = list(folder.iterdir())
-          assert {f.name for f in files} in ({"result.json"}, {"result.json", "image.json"})
-          for f in files:
-              assert f.is_file() and not f.is_symlink() and f.stat().st_size < 100000
-              data = f.read_bytes()
-              json.loads(data)
-              assert os.environ["KEY"] and os.environ["KEY"].encode() not in data
-              assert all(marker not in data.lower() for marker in (b"authorization:", b"bearer ", b"x-buildbuddy-api-key"))
+          p = Path(os.environ['RUNNER_TEMP']) / 'zero-layer.json'
+          assert p.is_file() and not p.is_symlink() and p.stat().st_size < 10000
+          data = p.read_bytes()
+          assert isinstance(json.loads(data), dict)
+          assert all(v not in data.lower() for v in (b'x-buildbuddy-api-key', b'authorization:', b'bearer '))
+          key = os.environ.get('KEY', '').encode()
+          assert not key or key not in data
           PY
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
-          name: foreign-cc-empty-root
-          path: |
-            ${{ runner.temp }}/plugin-evidence/result.json
-            ${{ runner.temp }}/plugin-evidence/image.json
+          name: zero-layer-deployed
+          path: ${{ runner.temp }}/zero-layer.json
           if-no-files-found: error
-      - name: Require the native-helper verdict
-        if: always()
-        run: jq -e '.status == "PASS" and .build_exit == 0 and .source_clean and .selection.verified and .proof.byte_identical_archive and .proof.verified and .launch.verified and .source_matches' "$RUNNER_TEMP/plugin-evidence/result.json"
