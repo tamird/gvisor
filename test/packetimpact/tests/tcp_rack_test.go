@@ -174,9 +174,11 @@ func TestRACKFreshTimeoutRetransmission(t *testing.T) {
 	// segment. A tail loss probe may have retransmitted the last one.
 	head := &testbench.TCP{SeqNum: testbench.Uint32(uint32(first))}
 	payload := &testbench.Payload{Bytes: make([]byte, mss)}
-	if _, err := conn.ExpectData(t, head, payload, 3*time.Second); err != nil {
+	timeoutRepair, err := conn.ExpectData(t, head, payload, 3*time.Second)
+	if err != nil {
 		t.Fatalf("timeout retransmission: %v", err)
 	}
+	tuple := timeoutRepair[2].(*testbench.TCP)
 	info := dut.GetSockOptTCPInfo(t, fd)
 	if info.CaState != linux.TCP_CA_Loss {
 		t.Fatalf("TCP state after head retransmission = %d, want Loss", info.CaState)
@@ -190,7 +192,27 @@ func TestRACKFreshTimeoutRetransmission(t *testing.T) {
 		End:   first.Add(seqnum.Size(6 * mss)),
 	}}, opts[:])
 	conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(first)), Options: opts[:n]})
-	if _, err := conn.ExpectData(t, head, payload, time.Duration(info.RTO)*time.Microsecond/2); err == nil {
+	frames, repeatedHead := conn.ListenForFrame(t, testbench.Layers{nil, nil, head, payload}, time.Duration(info.RTO)*time.Microsecond/2)
+	var repairs []uint32
+	for _, f := range frames {
+		if len(f) != 4 {
+			continue
+		}
+		tcp, ok := f[2].(*testbench.TCP)
+		data, hasData := f[3].(*testbench.Payload)
+		if !ok || !hasData || len(data.Bytes) == 0 || *tcp.SrcPort != *tuple.SrcPort || *tcp.DstPort != *tuple.DstPort {
+			continue
+		}
+		delta := *tcp.SeqNum - uint32(first)
+		if delta%uint32(mss) != 0 || len(data.Bytes)%mss != 0 {
+			t.Fatalf("unexpected repair offset %d, size %d, MSS %d", delta, len(data.Bytes), mss)
+		}
+		for i := 0; i < len(data.Bytes)/mss; i++ {
+			repairs = append(repairs, delta/uint32(mss)+uint32(i)+1)
+		}
+	}
+	t.Logf("RACK_AFTER_TIMEOUT repairs=%v mss=%d", repairs, mss)
+	if repeatedHead {
 		t.Fatal("SACK of later segments retransmitted the freshly repaired head")
 	}
 
