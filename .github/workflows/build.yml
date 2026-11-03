@@ -1,35 +1,183 @@
-name: CI
-
-"on":
+name: Compare two RACK guards after a timeout repair is lost
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-two-rack-guards-lost-repair]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-two-rack-guards-lost-repair'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 8
+        persist-credentials: false
+    - name: Retain the original Linux, stock and three-guard observations
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh api repos/tamird/gvisor/actions/artifacts/13035138294/zip > "$RUNNER_TEMP/original.zip"
+        echo "bd42d58c3c05a7e8237cd42137992dd014ac488cd5f9f56bcc4ca83817d4087d  $RUNNER_TEMP/original.zip" | sha256sum -c -
+    - name: Run the unchanged repeat-ACK and late-SACK cases on the two-guard source
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+        source=0639f2d26e1504fae2d5239205f2a3909691d1a1
+        parent=a35b6af25962f49d24c8d9bac6dad4c276fbf2dd
+        test "$(git rev-parse HEAD^)" = "$source"
+        test "$(git rev-parse "$source^")" = "$parent"
+        test "$(git diff --name-only "$parent" "$source")" = pkg/tcpip/transport/tcp/snd.go
+        test "$(git rev-parse "$source:pkg/tcpip/transport/tcp/snd.go")" = e6cb234b462c6df71ac821f249666b2dda88af01
+        mkdir -p "$RUNNER_TEMP/checker"
+        for file in qualify.sh unit_matrix.py qualification_report.py tcp_fence_report.py tcp_two_guard_result.py; do
+          cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
+        done
+        python3 -m py_compile "$RUNNER_TEMP/checker/"*.py
+        mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
+        platform=$RUNNER_TEMP/fifo_platform
+        printf '%s\n' 'module(name="fifo_platform")' > "$platform/MODULE.bazel"
+        cat > "$platform/BUILD" <<'BUILD'
+        platform(
+            name = "ubuntu",
+            constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+            exec_properties = {
+                "Arch": "amd64",
+                "OSFamily": "linux",
+                "workload-isolation-type": "oci",
+                "container-image": "docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+            },
+            visibility = ["//visibility:public"],
+        )
+        BUILD
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+        rc=$RUNNER_TEMP/fifo.bazelrc
+        umask 077
+        trap 'rm -f "$rc"' EXIT
+        {
+          printf '%s\n' 'build --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+            'build --spawn_strategy=linux-sandbox' 'build --strategy=TestRunner=local' 'build --jobs=4' \
+            'build --modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache' \
+            'build --remote_accept_cached' \
+            "build --inject_repository=fifo_platform=$platform" \
+            'build --host_platform=@fifo_platform//:ubuntu' \
+            'build --extra_execution_platforms=@fifo_platform//:ubuntu' \
+            'build --platforms=//tools/bazeldefs:linux_amd64'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$rc"
+        unset BUILDBUDDY_API_KEY
+        export FIFO_RC=$rc
+        mkdir -p "$RUNNER_TEMP/fifo-bin"
+        cat > "$RUNNER_TEMP/fifo-bin/bazel" <<'SH'
+        #!/bin/sh
+        case "$1" in
+          test)
+            # Capture the actual argv and Bazel exit, independent of the qualifier's exit.
+            printf '%s\n' "$@" > "$TCP_EVIDENCE/executed_arguments"
+            status=0
+            bazelisk --bazelrc="$FIFO_RC" "$@" || status=$?
+            printf '%s\n' "$status" > "$TCP_EVIDENCE/native_exit"
+            date -u '+%Y-%m-%dT%H:%M:%S.%3N+00:00' > "$TCP_EVIDENCE/finished"
+            exit "$status"
+            ;;
+        esac
+        exec bazelisk --bazelrc="$FIFO_RC" "$@"
+        SH
+        chmod +x "$RUNNER_TEMP/fifo-bin/bazel"
+        export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
+        if test -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns; then
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+        fi
+        test -x /sbin/iptables-nft
+        test -x /sbin/ip6tables-nft
+        test -x /usr/bin/x86_64-linux-gnu-gcc
+        mkdir -p "$RUNNER_TEMP/replay-public"
+        printf '%s\n' '{"status":"INCOMPLETE","phase":"compiler installation"}' > "$RUNNER_TEMP/replay-public/preflight.json"
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu tcpdump
+        export FENCE_HOST_ID=$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT FENCE_HOST_PROBE=$RUNNER_TEMP/host-marker
+        export XTABLES_LOCKFILE=$RUNNER_TEMP/fence-xtables.lock
+        touch "$XTABLES_LOCKFILE"
+        printf '%s' "$FENCE_HOST_ID" > "$FENCE_HOST_PROBE"
+        probe_raw=$RUNNER_TEMP/host-probe.jsonl
+        printf '%s\n' '{"status":"INCOMPLETE","phase":"Bazel host compiler/namespace test"}' > "$RUNNER_TEMP/replay-public/preflight.json"
+        bazelisk --bazelrc="$rc" test --nocache_test_results --zip_undeclared_test_outputs --test_output=all --strategy=TestRunner=local \
+          --test_env=FENCE_HOST_ID --test_env=FENCE_HOST_PROBE --test_env=XTABLES_LOCKFILE --build_event_json_file="$probe_raw" \
+          //test/rbe/fence_host_probe:check
+        python3 - "$probe_raw" "$RUNNER_TEMP/replay-public/preflight.json" <<'PYCHECK'
+        import json, sys
+        from pathlib import Path
+        events = [json.loads(row) for row in Path(sys.argv[1]).read_text().splitlines()]
+        results = [e["testResult"] for e in events if "testResult" in e]
+        assert len(results) == 1, results
+        result = results[0]
+        assert result["status"] == "PASSED" and not result.get("cachedLocally"), result
+        assert result["executionInfo"]["strategy"] in ("local", "standalone"), result["executionInfo"]
+        assert not result["executionInfo"].get("cachedRemotely"), result["executionInfo"]
+        Path(sys.argv[2]).write_text(json.dumps({"status":"PASS","target":"//test/rbe/fence_host_probe:check","execution":result["executionInfo"],"hostMarker":True,"writableDAD":True,"crossCompilers":["x86_64","aarch64"]})+"\n")
+        print("Both compilers, namespace sysctl, real host marker and uncached local TestRunner verified")
+        PYCHECK
+        # Both native architectures have already passed this analyzer preflight
+        # under these flags. The listener builds only the facts it actually uses.
+        proved=01811d57c4a1a18ef002fe92956669b43799f466
+        git fetch --no-tags --depth=1 "https://github.com/$GITHUB_REPOSITORY.git" "$proved"
+        git diff --quiet "$proved" "$source" -- MODULE.bazel MODULE.bazel.lock .bazelrc go.mod images/default/bazelversion tools/nogo tools/bazeldefs tools/defs.bzl
+        cat > "$RUNNER_TEMP/replay-public/build-preflight.json" <<'PROOF'
+        {"status":"REUSED","target":"//tools/nogo:stdlib","amd64":"d9bdc880-d554-41ae-b6b8-fc618bd00b9e","arm64":"6fe91843-025a-4f50-8376-44c94e7f54bb","workflowRun":40927688302}
+        PROOF
+        overall=0
+        mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
+        arm=two_guard
+        label=//test/packetimpact/tests:tcp_rack_netstack_test
+        git checkout --quiet --detach "$source"
+        test "$(git rev-parse HEAD)" = "$source"
+        export TCP_EVIDENCE="$RUNNER_TEMP/replay-private/$arm"
+        mkdir -p "$TCP_EVIDENCE" test/rbe
+        cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
+        git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_before"
+        test ! -s "$TCP_EVIDENCE/source_before"
+        git cat-file commit HEAD > "$TCP_EVIDENCE/commit_file"
+        raw="$RUNNER_TEMP/replay-private/$arm.raw.jsonl"
+        uname -r > "$TCP_EVIDENCE/kernel"
+        code=0
+        bazel test --config=x86_64 --strategy=TestRunner=local --spawn_strategy=linux-sandbox \
+          --jobs=4 --test_env=GO_TEST_WRAP_TESTV=1 --test_env=GVISOR_TEST_CLOCK_SOURCE=calibrated --test_env=XTABLES_LOCKFILE \
+          --define=gvisor_test_clock_source=calibrated --strip=never --test_sharding_strategy=disabled \
+          --nocache_test_results --zip_undeclared_test_outputs --test_output=all "--build_event_json_file=$raw" \
+          --build_event_json_file_path_conversion=false "$label" || code=$?
+        printf '%s\n' "$code" > "$TCP_EVIDENCE/runner_exit"
+        git rev-parse HEAD > "$TCP_EVIDENCE/final_head"
+        git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
+        python3 -B "$RUNNER_TEMP/checker/tcp_fence_report.py" "$TCP_EVIDENCE" "$arm" "$source" "$label" "$raw" "$RUNNER_TEMP/replay-public" || overall=1
+        if ((overall)); then exit "$overall"; fi
+        python3 -B "$RUNNER_TEMP/checker/tcp_two_guard_result.py" "$RUNNER_TEMP/original.zip" "$RUNNER_TEMP/replay-public"
+    - name: Check public records before upload
+      id: scan
+      if: always()
+      env:
+        KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PYSCAN'
+        import os
+        from pathlib import Path
+        root = Path(os.environ["RUNNER_TEMP"]) / "replay-public"
+        for p in root.glob("*.json"):
+            data = p.read_bytes()
+            assert not any(s and s in data for s in (os.environ["KEY"].encode(), b"x-buildbuddy-api-key=", b"Authorization: Bearer "))
+        PYSCAN
+    - name: Save only the typed results
+      if: always() && steps.scan.outcome == 'success'
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: tcp-two-rack-guards-lost-repair
+        path: ${{ runner.temp }}/replay-public/*.json
+        if-no-files-found: error
