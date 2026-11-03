@@ -574,9 +574,178 @@ def run() -> None:
     save()
 
 
+def recover_original() -> None:
+    """Inspect the failed original invocations without executing another test."""
+    from cas_inputs import blob, fetch, rpc
+
+    original = "aaed41e45c71fb16ddb3ec4b6f630e15a60df757"
+    assert git("rev-parse", "HEAD^").decode().strip() == original
+    assert set(git("diff", "--name-only", original, SOURCE).decode().splitlines()) == {
+        PACKAGE + "/check.py", ".github/workflows/native-unit-amd64-cgroup-v1.yml"}
+    raw = (TMP / "original.zip").read_bytes()
+    assert sha(raw) == "2da258561d341293458e0021f0bb8f2124033b3e87d512848c018198c1655dd0"
+    with ZipFile(BytesIO(raw)) as archive:
+        assert archive.namelist() == ["verdict.json"]
+        old = json.loads(archive.read("verdict.json"))
+    assert old["carrier"] == original and old["product"] == PRODUCT and old["status"] == "FAIL"
+    bulk, guest = [old["phases"][name] for name in ("remaining353", "coretag_native_kvm")]
+    assert bulk["native_exit"] == 1 and guest["native_exit"] == 3
+    assert len({a["owner"]["label"] for a in bulk["suite_executed"]}) == 353
+    record.update(original_zip_sha256=sha(raw), original=old, workload_repeated=False,
+                  scope="Original v1 diagnostics and timing only; original FAIL unchanged")
+    save()
+    catalog = git("show", PRODUCT + ":tools/licensecheck/dependencies.yaml").decode()
+    dependencies = set(re.findall(r"(?m)^\s*- dependency: ([A-Za-z0-9_./+-]+)$", catalog))
+    assert dependencies
+
+    def project(data):
+        # Output fixed diagnostic classes and source-known dependency names,
+        # never arbitrary messages, commands, environment or checkpoint text.
+        patterns = {
+            "permission_denied": r"(?i)permission denied|operation not permitted|EACCES",
+            "missing_file": r"(?i)no such file or directory|file not found|not found in .?PATH",
+            "exec_format": r"(?i)exec format error|cannot execute binary file",
+            "kvm_unavailable": r"(?i)could not access KVM|failed to initialize kvm|KVM.*not supported",
+            "cpu_topology": r"(?i)CPU topology|thread siblings|requires.*SMT|doesn't support requested feature",
+            "missing_shared_library": r"(?i)error while loading shared libraries|GLIBC_[0-9.]+.*not found",
+            "sudo_password": r"(?i)sudo:.*password|sudo:.*terminal",
+            "nogo_diagnostic": r"(?i)nogo:|GoStaticAnalysis|static analysis failed",
+            "source_analysis": r"(?i)error running subcommand|failed to (?:compile|link)|compilation terminated",
+            "kernel_panic": r"Kernel panic|not syncing|VFS: Unable to mount root",
+            "timeout": r"(?i)timed out|TIMEOUT|deadline exceeded",
+            "qemu_error": r"(?i)qemu-system.*(?:error|failed|could not|invalid|unsupported|requires|unavailable)",
+            "license_mismatch": r"exception for .* lists licenses|uses disallowed licenses|unnecessary exception",
+            "assertion": r"Assertion.*failed|assertion failed|panic:|FATAL ERROR:",
+        }
+        rows = []
+        for line in data.decode(errors="replace").splitlines():
+            if re.search(r"(?i)authorization|x-buildbuddy-api-key|remote_header|bes_header|github_pat_|gh[pousr]_", line):
+                continue
+            classes = sorted(name for name, pattern in patterns.items() if re.search(pattern, line))
+            if not classes:
+                continue
+            rows.append(dict(classes=classes, line_sha256=sha(line.encode()),
+                tools=sorted(set(re.findall(r"\b(?:aarch64-linux-gnu-gcc|aarch64-linux-gnu-g\+\+|qemu-system-x86_64|setpriv|sudo|nogo|clang|gcc)\b", line))),
+                dependencies=sorted(name for name in dependencies if re.search(
+                    r"(?<![A-Za-z0-9_./+-])" + re.escape(name) + r"(?![A-Za-z0-9_./+-])", line))
+                    if "license_mismatch" in classes else []))
+            if len(rows) == 48:
+                break
+        return dict(sha256=sha(data), bytes=len(data), diagnostics=rows,
+                    projection_limit_reached=len(rows) == 48)
+
+    def controls(row):
+        assert project(b"Authorization: Bearer private-token")['diagnostics'] == []
+        sample = project(b"execvp(/usr/bin/aarch64-linux-gnu-gcc): No such file or directory")
+        assert sample['diagnostics'][0]['classes'] == ['missing_file']
+        assert sample['diagnostics'][0]['tools'] == ['aarch64-linux-gnu-gcc']
+        assert "private" not in json.dumps(project(b"panic: private-checkpoint"))
+        dependency = sorted(dependencies)[0]
+        sample = project(f"exception for {dependency} lists licenses".encode())
+        assert sample['diagnostics'][0]['dependencies'] == [dependency]
+        sample = project(f"exception for {dependency}-not-a-catalog-entry lists licenses".encode())
+        assert dependency not in sample['diagnostics'][0]['dependencies']
+        row['synthetic_projection'] = 'PASS'
+        row['coverage_complete'] = True
+
+    def invocation(row, source):
+        identifier = source['invocation']
+        result = rpc('GetInvocation', {'lookup': {'invocationId': identifier}})
+        inv, = result['invocation']
+        assert inv['invocationId'] == identifier
+        entries = [e['buildEvent'] for e in inv['event']]
+        owners = {a['owner']['label'] for a in source['suite_executed']}
+        summaries = [e for e in entries if 'testSummary' in e and e['id']['testSummary']['label'] in owners]
+        row.update(invocation=identifier, metadata_sha256=sha(json.dumps(result, sort_keys=True).encode()),
+                   summary_count=len(summaries), expected_owners=len(owners), last_test_finish=None)
+        if owners and len(summaries) == len(owners) and {e['id']['testSummary']['label'] for e in summaries} == owners:
+            values = []
+            for entry in summaries:
+                summary = entry['testSummary']
+                value = summary.get('lastStopTime')
+                if value is None:
+                    value = datetime.fromtimestamp(int(summary['lastStopTimeMillis']) / 1000, timezone.utc).isoformat()
+                if isinstance(value, dict):
+                    value = datetime.fromtimestamp(int(value['seconds']) + int(value.get('nanos', 0)) / 10**9, timezone.utc).isoformat()
+                stamp = datetime.fromisoformat(value.replace('Z', '+00:00'))
+                assert stamp.tzinfo is not None
+                values.append(stamp)
+            row['last_test_finish'] = max(values).isoformat()
+        row['timing_complete'] = row['last_test_finish'] is not None
+        row['coverage_complete'] = row['timing_complete']
+
+    def console(row, source):
+        identifier = source['invocation']
+        token = ''; chunks = []
+        for _ in range(8):
+            value = json.loads(fetch('api/v1/GetLog', {'selector': {'invocation_id': identifier}, 'page_token': token}))
+            chunks.append(value.get('log', {}).get('contents', ''))
+            token = value.get('next_page_token', value.get('nextPageToken', ''))
+            assert sum(len(c.encode()) for c in chunks) < 8 * 1024**2
+            if not token:
+                break
+        row.update(invocation=identifier, partial=bool(token), pages=len(chunks), **project(''.join(chunks).encode()))
+        row['coverage_complete'] = not token and row['bytes'] > 0
+        assert row['bytes'] > 0, 'original console unavailable'
+
+    def files(row, source, label):
+        identifier = source['invocation']
+        response = json.loads(fetch('api/v1/GetAction', {'selector': {'invocation_id': identifier, 'target_label': label}}))
+        assert not response.get('next_page_token', response.get('nextPageToken'))
+        actions = response.get('action', [])
+        assert len(actions) <= 8
+        selected = row['files'] = []
+        row.update(invocation=identifier, owner=label, action_count=len(actions))
+        for action in actions:
+            assert action.get('target_label', action.get('targetLabel')) == label
+            identity = action['id']
+            assert identity.get('invocation_id', identity.get('invocationId')) == identifier
+            attempts = [a for a in source['suite_executed'] if a['owner']['label'] == label]
+            if attempts:
+                attempt, = attempts
+                assert identity.get('configuration_id', identity.get('configurationId')) == attempt['owner']['configuration']
+                assert all(int(action.get(key, 0)) == attempt[key] == 1 for key in ('run', 'shard', 'attempt'))
+            for item in action.get('file', []):
+                if item['name'] not in {'test.log', 'test.xml', 'stderr', 'stdout'}:
+                    continue
+                match = re.fullmatch(r'bytestream://remote\.buildbuddy\.io/(?:[^?#]*/)?blobs/([a-f0-9]{64})/(\d+)', item['uri'])
+                assert match and 0 <= int(match[2]) < 2 * 1024**2
+                data = blob({'hash': match[1], 'sizeBytes': match[2]}, identifier) if int(match[2]) else b''
+                assert len(data) == int(match[2]) and sha(data) == match[1]
+                prior = [f for f in source['original_reports'] if f['identity']['label'] == label and f['name'] == item['name']]
+                if prior:
+                    expected, = prior
+                    assert expected['sha256'] == sha(data) and expected['bytes'] == len(data)
+                selected.append(dict(name=item['name'], action_id={key: value for key, value in identity.items()
+                    if key in {'invocation_id', 'invocationId', 'target_id', 'targetId',
+                               'configuration_id', 'configurationId', 'action_id', 'actionId'}}, **project(data)))
+        assert selected, 'no original files available for selected owner'
+        row['coverage_complete'] = True
+
+    phase('projection_controls', controls)
+    for name, source in (('bulk', bulk), ('coretag', guest)):
+        phase(name + '_timing', lambda row, s=source: invocation(row, s))
+        phase(name + '_console', lambda row, s=source: console(row, s))
+    for name, source, label in (
+            ('nogo_files', bulk, '//runsc/cgroup:cgroup_test_nogo'),
+            ('license_files', bulk, '//tools/licensecheck:licensecheck_test'),
+            ('coretag_files', guest, '//' + WORKER + ':guest_test')):
+        phase(name, lambda row, s=source, l=label: files(row, s, l))
+    record['status'] = 'ORIGINAL_FAIL_DIAGNOSTICS_RECORDED'
+    record['lookups_succeeded'] = all(p['status'] == 'PASS' for p in record['phases'].values())
+    record['diagnostics_complete'] = record['lookups_succeeded'] and all(
+        p.get('coverage_complete', False) for p in record['phases'].values())
+    record['cause_established'] = False
+    record['diagnostic_scope'] = 'Recognized log classes and exact source-known names; matching a class alone does not establish the cause'
+    save()
+
+
 if __name__ == "__main__":
     save()
     try:
+        if sys.argv[1:] == ['--recover-original']:
+            recover_original()
+            sys.exit(0 if record['diagnostics_complete'] else 1)
         with tempfile.TemporaryDirectory(dir=TMP) as directory:
             prepare(Path(directory))
             del os.environ["BUILDBUDDY_API_KEY"]

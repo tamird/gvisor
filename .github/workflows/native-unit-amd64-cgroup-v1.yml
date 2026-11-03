@@ -1,4 +1,4 @@
-name: Complete native AMD64 unit coverage on cgroup v1
+name: Recover original native cgroup-v1 diagnostics
 on:
   push:
     branches: [qualification/buildkite-unit-amd64-v1-complete]
@@ -9,7 +9,7 @@ jobs:
   unit:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.run_attempt == 1
     runs-on: ubuntu-22.04
-    timeout-minutes: 210
+    timeout-minutes: 20
     steps:
       - name: Initialize the bounded receipt
         run: |
@@ -17,36 +17,32 @@ jobs:
           echo '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/unit-v1-public/verdict.json"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 4
+          fetch-depth: 2
           persist-credentials: false
-      - name: Recover authoritative selection and the already completed v1 owner
+      - name: Recover the original failed aggregate
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api repos/tamird/gvisor/actions/artifacts/13166333421/zip > "$RUNNER_TEMP/old-selection.zip"
-          gh api repos/tamird/gvisor/actions/artifacts/13220747324/zip > "$RUNNER_TEMP/old-cgroup.zip"
-          gh api repos/tamird/gvisor/actions/artifacts/13225283923/zip > "$RUNNER_TEMP/old-preflight.zip"
-          gh api repos/tamird/gvisor/actions/artifacts/13226009347/zip > "$RUNNER_TEMP/prior-analysis.zip"
-      - name: Stage the existing verifier and native client
+          gh api repos/tamird/gvisor/actions/artifacts/13234271430/zip > "$RUNNER_TEMP/original.zip"
+      - name: Stage the existing read-only evidence helpers
         run: |
           set -euo pipefail
           guest=38745c527784376e0b5d915fe5ebd85e1d1385fd
           decoder=0a9bdf9bc331d6a66f35aefcbbb5cf466eb6f7f5
-          git fetch --quiet --depth=1 origin "$guest" "$decoder"
+          cas_helper=680739b629229eb1c8fa91aa1147d1bca71eb04f
+          product=96fadde722e14d482a62276b80237398f8b62fbf
+          git fetch --quiet --depth=1 origin "$guest" "$decoder" "$cas_helper" "$product"
           for tool in qualification_report unit_matrix credential_artifacts; do
             git show "$guest:test/rbe/$tool.py" > "$RUNNER_TEMP/$tool.py"
           done
           git show "$decoder:test/rbe/stdlib-provenance.py" > "$RUNNER_TEMP/stdlib_provenance.py"
+          git show "$cas_helper:test/rbe/cas_inputs.py" > "$RUNNER_TEMP/cas_inputs.py"
           cp .github/qualification/unit-cgroup-v1/check.py "$RUNNER_TEMP/check-v1.py"
-          sed -n '/^install_.*bazel() {$/,$p' .buildkite/hooks/pre-command > "$RUNNER_TEMP/unit-setup.bash"
-          source "$RUNNER_TEMP/unit-setup.bash"
-          test "$(bazel --version)" = "bazel $(cat .bazelversion)"
-          command -v zstd
-      - name: Execute the remaining original owners on capable native workers
-        timeout-minutes: 200
+      - name: Read original invocation diagnostics and timing
+        timeout-minutes: 15
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 -B "$RUNNER_TEMP/check-v1.py"
+        run: python3 -B "$RUNNER_TEMP/check-v1.py" --recover-original
       - name: Check the sole public artifact
         id: scan
         if: always()
@@ -70,6 +66,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.scan.outcome == 'success'
         with:
-          name: native-amd64-unit-cgroup-v1-complete
+          name: native-amd64-unit-cgroup-v1-diagnostics
           path: ${{ runner.temp }}/unit-v1-public/verdict.json
           if-no-files-found: error
