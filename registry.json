@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T22:47:50.448492+00:00",
+    "updatedAt": "2026-11-03T23:01:26.342761+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35745,16 +35745,16 @@
       "title": "Flush corked TCP data when a FIN is queued",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T22:47:50.448492+00:00",
+      "updatedAt": "2026-11-03T23:01:26.342761+00:00",
       "reviewDecision": null,
       "url": "https://github.com/google/gvisor/pull/16671",
       "summary": "Close and SHUT_WR flush a corked short write before FIN instead of waiting 200 ms.",
       "followup": {
         "owner": "TCP owner",
-        "disposition": "Amendment prepared",
+        "disposition": "Restore qualification required",
         "sourceHead": "c336db121f61914f6f2a761dc005bf4293f67e09",
-        "observedAt": "2026-11-03T22:47:50.448492+00:00",
-        "nextAction": "Check the Linux, published-sender, amended-sender and manual-clock results before publishing or replying.",
+        "observedAt": "2026-11-03T23:01:26.342761+00:00",
+        "nextAction": "Qualify restored idle sockets and sockets already waiting on CORK before preparing a replacement amendment. Keep the existing Linux, published-sender, amended-sender and manual-clock comparison as separate non-restore evidence.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16671#discussion_r4461143676",
           "https://github.com/tamird/gvisor/actions/runs/41733158454"
@@ -35821,18 +35821,7 @@
           "outcome": "approved",
           "at": "2026-10-30T15:06:49.038409+00:00"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "8c163432bc4c380e6df07501350db84de8d0bd3a",
-        "baseHead": "c336db121f61914f6f2a761dc005bf4293f67e09",
-        "url": "https://github.com/tamird/gvisor/commit/8c163432b",
-        "title": "Flush corked TCP data when a FIN is queued",
-        "requestedAt": "2026-11-03T22:47:50.448492+00:00",
-        "summary": "Publish the single-commit cork timer amendment and reply to Parth after checks pass?",
-        "body": "The single commit retains the FIN flush and disables the prior timer when the data no longer waits for coalescing. The existing socket test now sends and receives two bytes separately without clearing TCP_CORK. The Linux comparison is running. Publish and reply only if the published sender times out on the second read, Linux and the amended sender pass, and the manual-clock cases still pass.\n\nFull series: git -C ~/code/gvisor range-diff 03e72471a..c336db121 8c163432b^!\nFocused changes: git -C ~/code/gvisor diff c336db121..8ec04c32d\n\nReply to @parth-opensrc after checks pass:\nYes. I disabled the timer when the segment no longer waits for coalescing, including when a FIN is queued behind it. I also removed a separate flag that stayed set after the timer expired. With TCP_CORK still enabled, Linux and the updated sender delivered two successive short writes; on the previous head the second read timed out. The close and SHUT_WR cases still pass.\n\nPosted by Codex on behalf of @tamird."
-      }
+      ]
     },
     {
       "id": "branch:release-archives-versioned",
