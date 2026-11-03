@@ -25,7 +25,6 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/kernel/ipc"
 	"gvisor.dev/gvisor/pkg/sentry/ktime"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
-	"gvisor.dev/gvisor/pkg/sync"
 )
 
 const (
@@ -63,33 +62,30 @@ type Set struct {
 	// registry owning this sem set. Immutable.
 	registry *Registry
 
-	// mu protects mutable state below, including the mutable fields of obj.
-	mu sync.Mutex `state:"nosave"`
-
 	// obj points to common IPC metadata. The pointer is immutable; mutable
-	// fields of the object require mu.
+	// fields of the object require obj.Mu.
 	obj *ipc.Object
 
-	// +checklocks:mu
+	// +checklocks:obj.Mu
 	opTime ktime.Time
 
-	// +checklocks:mu
+	// +checklocks:obj.Mu
 	changeTime ktime.Time
 
 	// sems holds all semaphores in the set. Its slice header is immutable after
-	// initialization; access to mutable fields of its elements requires mu.
+	// initialization; access to mutable fields of its elements requires obj.Mu.
 	sems []sem
 
 	// dead is set to true when the set is removed and can't be reached anymore.
 	// All waiters must wake up and fail when set is dead.
 	//
-	// +checklocks:mu
+	// +checklocks:obj.Mu
 	dead bool
 }
 
 // sem represents a single semaphore from a set.
 //
-// Its fields are protected by the owning Set.mu. sem has no pointer to its
+// Its fields are protected by the owning Set.obj.Mu. sem has no pointer to its
 // Set, so checklocks cannot infer that mutex from membership in Set.sems.
 //
 // +stateify savable
@@ -104,7 +100,7 @@ type sem struct {
 //
 // +stateify savable
 type waiter struct {
-	// waiterEntry is protected by the owning Set.mu while queued.
+	// waiterEntry is protected by the owning Set.obj.Mu while queued.
 	// waiter has no Set pointer, so checklocks cannot recover that owner
 	// through list membership.
 	waiterEntry
@@ -254,12 +250,12 @@ func (r *Registry) Remove(id ipc.ID, creds *auth.Credentials) error {
 func (r *Registry) newSetLocked(ctx context.Context, key ipc.Key, creator *auth.Credentials, mode linux.FileMode, nsems int32) (*Set, error) {
 	set := &Set{
 		registry:   r,
-		obj:        ipc.NewObject(r.reg.UserNS, ipc.Key(key), creator, creator, mode),
+		obj:        new(ipc.Object),
 		changeTime: ktime.NowFromContext(ctx),
 		sems:       make([]sem, nsems),
 	}
 
-	err := r.reg.Register(set)
+	err := r.reg.Register(set, key, creator, mode)
 	if err != nil {
 		return nil, err
 	}
@@ -342,23 +338,9 @@ func (s *Set) Object() *ipc.Object {
 	return s.obj
 }
 
-// Lock implements ipc.Mechanism.Lock.
-//
-// +checklocksacquire:s.mu
-func (s *Set) Lock() {
-	s.mu.Lock()
-}
-
-// Unlock implements ipc.Mechanism.Unlock.
-//
-// +checklocksrelease:s.mu
-func (s *Set) Unlock() {
-	s.mu.Unlock()
-}
-
 // findSem returns the semaphore at num, or nil if num is out of range.
 // It reads only the immutable slice header. Access to the returned semaphore's
-// mutable fields requires s.mu; sem has no link back to s for checklocks.
+// mutable fields requires s.obj.Mu; sem has no link back to s for checklocks.
 func (s *Set) findSem(num int32) *sem {
 	if num < 0 || int(num) >= s.Size() {
 		return nil
@@ -367,17 +349,17 @@ func (s *Set) findSem(num int32) *sem {
 }
 
 // Size returns the number of semaphores in the set. The slice header is
-// immutable, so Size does not require s.mu.
+// immutable, so Size does not require s.obj.Mu.
 func (s *Set) Size() int {
 	return len(s.sems)
 }
 
 // Set modifies attributes for a semaphore set. See semctl(IPC_SET).
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (s *Set) Set(ctx context.Context, ds *linux.SemidDS) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.obj.Mu.Lock()
+	defer s.obj.Mu.Unlock()
 
 	if err := s.obj.Set(ctx, &ds.SemPerm); err != nil {
 		return err
@@ -389,7 +371,7 @@ func (s *Set) Set(ctx context.Context, ds *linux.SemidDS) error {
 
 // GetStat extracts semid_ds information from the set.
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (s *Set) GetStat(creds *auth.Credentials) (*linux.SemidDS, error) {
 	// "The calling process must have read permission on the semaphore set."
 	return s.semStat(creds, vfs.MayRead)
@@ -397,15 +379,15 @@ func (s *Set) GetStat(creds *auth.Credentials) (*linux.SemidDS, error) {
 
 // GetStatAny extracts semid_ds information from the set without requiring read access.
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (s *Set) GetStatAny(creds *auth.Credentials) (*linux.SemidDS, error) {
 	return s.semStat(creds, 0)
 }
 
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (s *Set) semStat(creds *auth.Credentials, ats vfs.AccessTypes) (*linux.SemidDS, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.obj.Mu.Lock()
+	defer s.obj.Mu.Unlock()
 
 	if !s.obj.CheckPermissions(creds, ats) {
 		return nil, linuxerr.EACCES
@@ -429,14 +411,14 @@ func (s *Set) semStat(creds *auth.Credentials, ats vfs.AccessTypes) (*linux.Semi
 
 // SetVal overrides a semaphore value, waking up waiters as needed.
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (s *Set) SetVal(ctx context.Context, num int32, val int16, creds *auth.Credentials, pid int32) error {
 	if val < 0 || val > valueMax {
 		return linuxerr.ERANGE
 	}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.obj.Mu.Lock()
+	defer s.obj.Mu.Unlock()
 
 	// "The calling process must have alter permission on the semaphore set."
 	if !s.obj.CheckPermissions(creds, vfs.MayWrite) {
@@ -461,7 +443,7 @@ func (s *Set) SetVal(ctx context.Context, num int32, val int16, creds *auth.Cred
 //
 // 'len(vals)' must be equal to 's.Size()'.
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (s *Set) SetValAll(ctx context.Context, vals []uint16, creds *auth.Credentials, pid int32) error {
 	if len(vals) != s.Size() {
 		panic(fmt.Sprintf("vals length (%d) different that Set.Size() (%d)", len(vals), s.Size()))
@@ -473,8 +455,8 @@ func (s *Set) SetValAll(ctx context.Context, vals []uint16, creds *auth.Credenti
 		}
 	}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.obj.Mu.Lock()
+	defer s.obj.Mu.Unlock()
 
 	// "The calling process must have alter permission on the semaphore set."
 	if !s.obj.CheckPermissions(creds, vfs.MayWrite) {
@@ -495,10 +477,10 @@ func (s *Set) SetValAll(ctx context.Context, vals []uint16, creds *auth.Credenti
 
 // GetVal returns a semaphore value.
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (s *Set) GetVal(num int32, creds *auth.Credentials) (int16, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.obj.Mu.Lock()
+	defer s.obj.Mu.Unlock()
 
 	// "The calling process must have read permission on the semaphore set."
 	if !s.obj.CheckPermissions(creds, vfs.MayRead) {
@@ -514,10 +496,10 @@ func (s *Set) GetVal(num int32, creds *auth.Credentials) (int16, error) {
 
 // GetValAll returns value for all semaphores.
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (s *Set) GetValAll(creds *auth.Credentials) ([]uint16, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.obj.Mu.Lock()
+	defer s.obj.Mu.Unlock()
 
 	// "The calling process must have read permission on the semaphore set."
 	if !s.obj.CheckPermissions(creds, vfs.MayRead) {
@@ -533,10 +515,10 @@ func (s *Set) GetValAll(creds *auth.Credentials) ([]uint16, error) {
 
 // GetPID returns the PID set when performing operations in the semaphore.
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (s *Set) GetPID(num int32, creds *auth.Credentials) (int32, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.obj.Mu.Lock()
+	defer s.obj.Mu.Unlock()
 
 	// "The calling process must have read permission on the semaphore set."
 	if !s.obj.CheckPermissions(creds, vfs.MayRead) {
@@ -550,13 +532,13 @@ func (s *Set) GetPID(num int32, creds *auth.Credentials) (int32, error) {
 	return sem.pid, nil
 }
 
-// countWaiters calls pred synchronously under s.mu. pred must not release or
+// countWaiters calls pred synchronously under s.obj.Mu. pred must not release or
 // reacquire that mutex.
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (s *Set) countWaiters(num int32, creds *auth.Credentials, pred func(w *waiter) bool) (uint16, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.obj.Mu.Lock()
+	defer s.obj.Mu.Unlock()
 
 	// The calling process must have read permission on the semaphore set.
 	if !s.obj.CheckPermissions(creds, vfs.MayRead) {
@@ -578,7 +560,7 @@ func (s *Set) countWaiters(num int32, creds *auth.Credentials, pred func(w *wait
 
 // CountZeroWaiters returns number of waiters waiting for the sem's value to increase.
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (s *Set) CountZeroWaiters(num int32, creds *auth.Credentials) (uint16, error) {
 	return s.countWaiters(num, creds, func(w *waiter) bool {
 		return w.value == 0
@@ -587,7 +569,7 @@ func (s *Set) CountZeroWaiters(num int32, creds *auth.Credentials) (uint16, erro
 
 // CountNegativeWaiters returns number of waiters waiting for the sem to go to zero.
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (s *Set) CountNegativeWaiters(num int32, creds *auth.Credentials) (uint16, error) {
 	return s.countWaiters(num, creds, func(w *waiter) bool {
 		return w.value < 0
@@ -600,10 +582,10 @@ func (s *Set) CountNegativeWaiters(num int32, creds *auth.Credentials) (uint16, 
 // On failure, it may return an error (retries are hopeless) or it may return
 // a channel that can be waited on before attempting again.
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (s *Set) ExecuteOps(ctx context.Context, ops []linux.Sembuf, creds *auth.Credentials, pid int32) (chan struct{}, int32, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.obj.Mu.Lock()
+	defer s.obj.Mu.Unlock()
 
 	// Did it race with a removal operation?
 	if s.dead {
@@ -636,7 +618,7 @@ func (s *Set) ExecuteOps(ctx context.Context, ops []linux.Sembuf, creds *auth.Cr
 	return ch, num, nil
 }
 
-// +checklocks:s.mu
+// +checklocks:s.obj.Mu
 func (s *Set) executeOps(ctx context.Context, ops []linux.Sembuf, pid int32) (chan struct{}, int32, error) {
 	// Changes to semaphores go to this slice temporarily until they all succeed.
 	tmpVals := make([]int16, len(s.sems))
@@ -704,10 +686,10 @@ func (s *Set) executeOps(ctx context.Context, ops []linux.Sembuf, pid int32) (ch
 // AbortWait notifies that a waiter is giving up and will not wait on the
 // channel anymore.
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (s *Set) AbortWait(num int32, ch chan struct{}) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.obj.Mu.Lock()
+	defer s.obj.Mu.Unlock()
 
 	sem := &s.sems[num]
 	for w := sem.waiters.Front(); w != nil; w = w.Next() {
@@ -721,7 +703,7 @@ func (s *Set) AbortWait(num int32, ch chan struct{}) {
 
 // Destroy implements ipc.Mechanism.Destroy.
 //
-// +checklocks:s.mu
+// +checklocks:s.obj.Mu
 func (s *Set) Destroy() {
 	// Notify all waiters. They will fail on the next attempt to execute
 	// operations and return error.
@@ -743,7 +725,7 @@ func abs(val int16) int16 {
 
 // wakeWaiters notifies waiters that can retry on semaphore num.
 //
-// +checklocks:s.mu
+// +checklocks:s.obj.Mu
 func (s *Set) wakeWaiters(num int) {
 	sem := &s.sems[num]
 	// Note that this will release all waiters waiting for 0 too.

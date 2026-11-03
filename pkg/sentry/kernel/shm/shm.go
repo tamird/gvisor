@@ -49,7 +49,6 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/pgalloc"
 	"gvisor.dev/gvisor/pkg/sentry/usage"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
-	"gvisor.dev/gvisor/pkg/sync"
 )
 
 // Registry tracks all shared memory segments in an IPC namespace. The registry
@@ -121,17 +120,17 @@ func (r *Registry) FindByID(id ipc.ID) *Shm {
 // references remain.
 //
 // +checklocksexclude:r.reg.Mu
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (r *Registry) dissociateKey(s *Shm) {
 	r.reg.Mu.Lock()
 	defer r.reg.Mu.Unlock()
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.obj.Mu.Lock()
+	defer s.obj.Mu.Unlock()
 	r.dissociateKeyLocked(s)
 }
 
 // +checklocks:r.reg.Mu
-// +checklocks:s.mu
+// +checklocks:s.obj.Mu
 func (r *Registry) dissociateKeyLocked(s *Shm) {
 	if s.obj.Key != linux.IPC_PRIVATE {
 		r.reg.DissociateKey(s.obj.Key)
@@ -233,16 +232,16 @@ func (r *Registry) newShmLocked(ctx context.Context, pid int32, key ipc.Key, cre
 		devID:         devID,
 		size:          size,
 		effectiveSize: effectiveSize,
-		obj:           ipc.NewObject(r.reg.UserNS, ipc.Key(key), creator, creator, mode),
+		obj:           new(ipc.Object),
 		fr:            fr,
 		creatorPID:    pid,
 		changeTime:    ktime.NowFromContext(ctx),
 	}
-	shm.InitRefs()
 
-	if err := r.reg.Register(shm); err != nil {
+	if err := r.reg.Register(shm, key, creator, mode); err != nil {
 		return nil, err
 	}
+	shm.InitRefs()
 	r.totalPages += effectiveSize >> hostarch.PageShift
 
 	return shm, nil
@@ -282,12 +281,12 @@ func (r *Registry) ShmInfo() *linux.ShmInfo {
 // Precondition: The segment's key must already be dissociated.
 //
 // +checklocksexclude:r.reg.Mu
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (r *Registry) remove(s *Shm) {
 	r.reg.Mu.Lock()
 	defer r.reg.Mu.Unlock()
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.obj.Mu.Lock()
+	defer s.obj.Mu.Unlock()
 
 	if s.obj.Key != linux.IPC_PRIVATE {
 		panic(fmt.Sprintf("Attempted to remove %s from the registry whose key is still associated", s.debugLocked()))
@@ -310,11 +309,11 @@ func (r *Registry) Release(ctx context.Context) {
 	r.reg.ForAllObjects(
 		func(o ipc.Mechanism) {
 			s := o.(*Shm)
-			s.mu.Lock()
+			s.obj.Mu.Lock()
 			if !s.pendingDestruction {
 				toRelease = append(toRelease, s)
 			}
-			s.mu.Unlock()
+			s.obj.Mu.Unlock()
 		},
 	)
 	r.reg.Mu.Unlock()
@@ -374,28 +373,25 @@ type Shm struct {
 	// fr is the range in mf that backs the contents of this segment. Immutable.
 	fr memmap.FileRange
 
-	// mu protects mutable state below, including the mutable fields of obj.
-	mu sync.Mutex `state:"nosave"`
-
 	// obj points to common IPC metadata. The pointer is immutable; the ID is
 	// assigned during registration, then immutable. The key, owner IDs, and mode
-	// require mu after initialization.
+	// require obj.Mu after initialization.
 	obj *ipc.Object
 
 	// attachTime is updated on every successful shmat.
 	//
-	// +checklocks:mu
+	// +checklocks:obj.Mu
 	attachTime ktime.Time
 
 	// detachTime is updated on every successful shmdt.
 	//
-	// +checklocks:mu
+	// +checklocks:obj.Mu
 	detachTime ktime.Time
 
 	// changeTime is updated on every successful changes to the segment via
 	// shmctl(IPC_SET).
 	//
-	// +checklocks:mu
+	// +checklocks:obj.Mu
 	changeTime ktime.Time
 
 	// creatorPID is the PID of the process that created the segment. Immutable.
@@ -404,7 +400,7 @@ type Shm struct {
 	// lastAttachDetachPID is the pid of the process that issued the last shmat
 	// or shmdt syscall.
 	//
-	// +checklocks:mu
+	// +checklocks:obj.Mu
 	lastAttachDetachPID int32
 
 	// pendingDestruction indicates the segment was marked as destroyed through
@@ -412,7 +408,7 @@ type Shm struct {
 	// remains accessible by ID while references remain. It is destroyed when
 	// the last reference is dropped.
 	//
-	// +checklocks:mu
+	// +checklocks:obj.Mu
 	pendingDestruction bool
 }
 
@@ -434,25 +430,11 @@ func (s *Shm) Object() *ipc.Object {
 // Destroy implements ipc.Mechanism.Destroy. No work is performed on shm.Destroy
 // because a different removal mechanism is used in shm. See Shm.MarkDestroyed.
 //
-// +checklocks:s.mu
+// +checklocks:s.obj.Mu
 func (s *Shm) Destroy() {
 }
 
-// Lock implements ipc.Mechanism.Lock.
-//
-// +checklocksacquire:s.mu
-func (s *Shm) Lock() {
-	s.mu.Lock()
-}
-
-// Unlock implements ipc.Mechanism.Unlock.
-//
-// +checklocksrelease:s.mu
-func (s *Shm) Unlock() {
-	s.mu.Unlock()
-}
-
-// +checklocks:s.mu
+// +checklocks:s.obj.Mu
 func (s *Shm) debugLocked() string {
 	return fmt.Sprintf("Shm{id: %d, key: %d, size: %d bytes, refs: %d, destroyed: %v}",
 		s.obj.ID, s.obj.Key, s.size, s.ReadRefs(), s.pendingDestruction)
@@ -460,10 +442,10 @@ func (s *Shm) debugLocked() string {
 
 // MappedName implements memmap.MappingIdentity.MappedName.
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (s *Shm) MappedName(ctx context.Context) string {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.obj.Mu.Lock()
+	defer s.obj.Mu.Unlock()
 	return fmt.Sprintf("SYSV%08d", s.obj.Key)
 }
 
@@ -482,7 +464,7 @@ func (s *Shm) InodeID() uint64 {
 // DecRef drops a reference on s. The final reference drop acquires the registry
 // and segment mutexes to remove the segment.
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 // +checklocksexclude:s.registry.reg.Mu
 func (s *Shm) DecRef(ctx context.Context) {
 	s.ShmRefs.DecRef(func() {
@@ -499,10 +481,10 @@ func (s *Shm) Msync(context.Context, memmap.MappableRange) error {
 
 // AddMapping implements memmap.Mappable.AddMapping.
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (s *Shm) AddMapping(ctx context.Context, _ memmap.MappingSpace, _ hostarch.AddrRange, _ uint64, _ bool) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.obj.Mu.Lock()
+	defer s.obj.Mu.Unlock()
 	s.attachTime = ktime.NowFromContext(ctx)
 	if pid, ok := auth.ThreadGroupIDFromContext(ctx); ok {
 		s.lastAttachDetachPID = pid
@@ -516,10 +498,10 @@ func (s *Shm) AddMapping(ctx context.Context, _ memmap.MappingSpace, _ hostarch.
 
 // RemoveMapping implements memmap.Mappable.RemoveMapping.
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (s *Shm) RemoveMapping(ctx context.Context, _ memmap.MappingSpace, _ hostarch.AddrRange, _ uint64, _ bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.obj.Mu.Lock()
+	defer s.obj.Mu.Unlock()
 	// RemoveMapping may be called during task exit, when ctx
 	// is context.Background. Gracefully handle missing clocks. Failing to
 	// update the detach time in these cases is ok, since no one can observe the
@@ -579,10 +561,10 @@ type AttachOpts struct {
 // Postconditions: The returned MMapOpts are valid only as long as a reference
 // continues to be held on s.
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (s *Shm) ConfigureAttach(ctx context.Context, addr hostarch.Addr, opts AttachOpts) (memmap.MMapOpts, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.obj.Mu.Lock()
+	defer s.obj.Mu.Unlock()
 	if s.pendingDestruction && s.ReadRefs() == 0 {
 		return memmap.MMapOpts{}, linuxerr.EIDRM
 	}
@@ -630,10 +612,10 @@ func (s *Shm) EffectiveSize() uint64 {
 
 // IPCStat returns information about a shm. See shmctl(IPC_STAT).
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (s *Shm) IPCStat(ctx context.Context) (*linux.ShmidDS, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.obj.Mu.Lock()
+	defer s.obj.Mu.Unlock()
 
 	// "The caller must have read permission on the shared memory segment."
 	//   - man shmctl(2)
@@ -688,10 +670,10 @@ func (s *Shm) IPCStat(ctx context.Context) (*linux.ShmidDS, error) {
 
 // Set modifies attributes for a segment. See shmctl(IPC_SET).
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 func (s *Shm) Set(ctx context.Context, ds *linux.ShmidDS) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.obj.Mu.Lock()
+	defer s.obj.Mu.Unlock()
 
 	if err := s.obj.Set(ctx, &ds.ShmPerm); err != nil {
 		return err
@@ -706,21 +688,21 @@ func (s *Shm) Set(ctx context.Context, ds *linux.ShmidDS) error {
 // times, and is safe to call after a segment has already been destroyed. See
 // shmctl(IPC_RMID).
 //
-// +checklocksexclude:s.mu
+// +checklocksexclude:s.obj.Mu
 // +checklocksexclude:s.registry.reg.Mu
 func (s *Shm) MarkDestroyed(ctx context.Context) error {
 	creds := auth.CredentialsFromContext(ctx)
 
 	r := s.registry
 	r.reg.Mu.Lock()
-	s.mu.Lock()
+	s.obj.Mu.Lock()
 	owned := s.obj.CheckOwnership(creds)
 	dropSelfRef := owned && !s.pendingDestruction
 	if dropSelfRef {
 		s.pendingDestruction = true
 		r.dissociateKeyLocked(s)
 	}
-	s.mu.Unlock()
+	s.obj.Mu.Unlock()
 	r.reg.Mu.Unlock()
 
 	if !owned {

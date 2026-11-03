@@ -25,7 +25,6 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/kernel/ipc"
 	"gvisor.dev/gvisor/pkg/sentry/ktime"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
-	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
 
@@ -63,18 +62,15 @@ type Queue struct {
 	// registry is the registry owning this queue. Immutable.
 	registry *Registry
 
-	// mu protects queue state and the mutable fields of obj.
-	mu sync.Mutex `state:"nosave"`
-
 	// dead is set to true when a queue is removed from the registry and should
 	// not be used. Operations on the queue should check dead, and return
 	// EIDRM if set to true.
 	//
-	// +checklocks:mu
+	// +checklocks:obj.Mu
 	dead bool
 
 	// obj defines basic fields that should be included in all SysV IPC objects.
-	// The pointer is immutable; mutable fields of the object require mu.
+	// The pointer is immutable; mutable fields of the object require obj.Mu.
 	obj *ipc.Object
 
 	// senders holds a queue of blocked message senders. Senders are notified
@@ -89,55 +85,55 @@ type Queue struct {
 
 	// messages is a list of sent messages.
 	//
-	// +checklocks:mu
+	// +checklocks:obj.Mu
 	messages msgList
 
 	// sendTime is the last time a msgsnd was performed.
 	//
-	// +checklocks:mu
+	// +checklocks:obj.Mu
 	sendTime ktime.Time
 
 	// receiveTime is the last time a msgrcv was performed.
 	//
-	// +checklocks:mu
+	// +checklocks:obj.Mu
 	receiveTime ktime.Time
 
 	// changeTime is the last time the queue was modified using msgctl.
 	//
-	// +checklocks:mu
+	// +checklocks:obj.Mu
 	changeTime ktime.Time
 
 	// byteCount is the current number of message bytes in the queue.
 	//
-	// +checklocks:mu
+	// +checklocks:obj.Mu
 	byteCount uint64
 
 	// messageCount is the current number of messages in the queue.
 	//
-	// +checklocks:mu
+	// +checklocks:obj.Mu
 	messageCount uint64
 
 	// maxBytes is the maximum allowed number of bytes in the queue, and is also
 	// used as a limit for the number of total possible messages.
 	//
-	// +checklocks:mu
+	// +checklocks:obj.Mu
 	maxBytes uint64
 
 	// sendPID is the PID of the process that performed the last msgsnd.
 	//
-	// +checklocks:mu
+	// +checklocks:obj.Mu
 	sendPID int32
 
 	// receivePID is the PID of the process that performed the last msgrcv.
 	//
-	// +checklocks:mu
+	// +checklocks:obj.Mu
 	receivePID int32
 }
 
 // Message represents a message exchanged through a Queue via msgsnd(2) and
 // msgrcv(2).
 //
-// The containing Queue.mu protects the list links while queued. Message has
+// The containing Queue.obj.Mu protects the list links while queued. Message has
 // no Queue pointer, so checklocks cannot infer that owner from list membership.
 //
 // Once enqueued, Type, Text's slice header, and its backing bytes must remain
@@ -198,14 +194,14 @@ func (r *Registry) FindOrCreate(ctx context.Context, key ipc.Key, mode linux.Fil
 func (r *Registry) newQueueLocked(ctx context.Context, key ipc.Key, creds *auth.Credentials, mode linux.FileMode) (*Queue, error) {
 	q := &Queue{
 		registry:    r,
-		obj:         ipc.NewObject(r.reg.UserNS, key, creds, creds, mode),
+		obj:         new(ipc.Object),
 		sendTime:    ktime.ZeroTime,
 		receiveTime: ktime.ZeroTime,
 		changeTime:  ktime.NowFromContext(ctx),
 		maxBytes:    maxQueueBytes,
 	}
 
-	err := r.reg.Register(q)
+	err := r.reg.Register(q, key, creds, mode)
 	if err != nil {
 		return nil, err
 	}
@@ -264,10 +260,10 @@ func (r *Registry) MsgInfo(ctx context.Context) *linux.MsgInfo {
 	r.reg.ForAllObjects(
 		func(o ipc.Mechanism) {
 			q := o.(*Queue)
-			q.mu.Lock()
+			q.obj.Mu.Lock()
 			messages += q.messageCount
 			bytes += q.byteCount
-			q.mu.Unlock()
+			q.obj.Mu.Unlock()
 		},
 	)
 
@@ -286,7 +282,7 @@ func (r *Registry) MsgInfo(ctx context.Context) *linux.MsgInfo {
 // Send appends a message to the message queue, and returns an error if sending
 // fails. See msgsnd(2).
 //
-// +checklocksexclude:q.mu
+// +checklocksexclude:q.obj.Mu
 // +checklocksexclude:q.receivers.mu
 // +checklocksexclude:q.senders.mu
 func (q *Queue) Send(ctx context.Context, m Message, wait bool, pid int32) error {
@@ -327,15 +323,15 @@ func (q *Queue) Send(ctx context.Context, m Message, wait bool, pid int32) error
 // the message would cause the queue to exceed its maximum capacity, which can
 // be used as a signal to block the task. Other errors should be returned as is.
 //
-// +checklocksexclude:q.mu
+// +checklocksexclude:q.obj.Mu
 // +checklocksexclude:q.receivers.mu
 func (q *Queue) push(ctx context.Context, m Message, creds *auth.Credentials, pid int32) error {
 	if m.Type <= 0 {
 		return linuxerr.EINVAL
 	}
 
-	q.mu.Lock()
-	defer q.mu.Unlock()
+	q.obj.Mu.Lock()
+	defer q.obj.Mu.Unlock()
 
 	if !q.obj.CheckPermissions(creds, vfs.MayWrite) {
 		// The calling process does not have write permission on the message
@@ -391,7 +387,7 @@ func (q *Queue) push(ctx context.Context, m Message, creds *auth.Credentials, pi
 // Callers must preserve the payload immutability described by Message, since
 // returned aliases may survive removal. See msgrcv(2).
 //
-// +checklocksexclude:q.mu
+// +checklocksexclude:q.obj.Mu
 // +checklocksexclude:q.receivers.mu
 // +checklocksexclude:q.senders.mu
 func (q *Queue) Receive(ctx context.Context, mType int64, maxSize uint64, flags, pid int32) (*Message, error) {
@@ -433,11 +429,11 @@ func (q *Queue) Receive(ctx context.Context, mType int64, maxSize uint64, flags,
 // empty or no message of the specified type is available, a EWOULDBLOCK error
 // is returned, which can then be used as a signal to block the process or fail.
 //
-// +checklocksexclude:q.mu
+// +checklocksexclude:q.obj.Mu
 // +checklocksexclude:q.senders.mu
 func (q *Queue) pop(ctx context.Context, creds *auth.Credentials, mType int64, maxSize uint64, flags, pid int32) (*Message, error) {
-	q.mu.Lock()
-	defer q.mu.Unlock()
+	q.obj.Mu.Lock()
+	defer q.obj.Mu.Unlock()
 
 	if !q.obj.CheckPermissions(creds, vfs.MayRead) {
 		// The calling process does not have read permission on the message
@@ -504,7 +500,7 @@ func (q *Queue) pop(ctx context.Context, creds *auth.Credentials, mType int64, m
 // message is found. If except is true, the first message of a type not equal
 // to mType will be returned.
 //
-// +checklocks:q.mu
+// +checklocks:q.obj.Mu
 func (q *Queue) msgOfType(mType int64, except bool) *Message {
 	if except {
 		for msg := q.messages.Front(); msg != nil; msg = msg.Next() {
@@ -526,7 +522,7 @@ func (q *Queue) msgOfType(mType int64, except bool) *Message {
 // msgOfTypeLessThan return the first message with the lowest type less
 // than or equal to mType, nil if no such message exists.
 //
-// +checklocks:q.mu
+// +checklocks:q.obj.Mu
 func (q *Queue) msgOfTypeLessThan(mType int64) (m *Message) {
 	min := mType
 	for msg := q.messages.Front(); msg != nil; msg = msg.Next() {
@@ -540,7 +536,7 @@ func (q *Queue) msgOfTypeLessThan(mType int64) (m *Message) {
 
 // msgAtIndex returns a pointer to a message at given index, nil if non exits.
 //
-// +checklocks:q.mu
+// +checklocks:q.obj.Mu
 func (q *Queue) msgAtIndex(mType int64) *Message {
 	msg := q.messages.Front()
 	for ; mType != 0 && msg != nil; mType-- {
@@ -551,10 +547,10 @@ func (q *Queue) msgAtIndex(mType int64) *Message {
 
 // Set modifies some values of the queue. See msgctl(IPC_SET).
 //
-// +checklocksexclude:q.mu
+// +checklocksexclude:q.obj.Mu
 func (q *Queue) Set(ctx context.Context, ds *linux.MsqidDS) error {
-	q.mu.Lock()
-	defer q.mu.Unlock()
+	q.obj.Mu.Lock()
+	defer q.obj.Mu.Unlock()
 
 	creds := auth.CredentialsFromContext(ctx)
 	if ds.MsgQbytes > maxQueueBytes && !creds.HasCapabilityIn(linux.CAP_SYS_RESOURCE, q.obj.UserNS) {
@@ -576,7 +572,7 @@ func (q *Queue) Set(ctx context.Context, ds *linux.MsqidDS) error {
 // Stat returns a MsqidDS object filled with information about the queue. See
 // msgctl(IPC_STAT) and msgctl(MSG_STAT).
 //
-// +checklocksexclude:q.mu
+// +checklocksexclude:q.obj.Mu
 func (q *Queue) Stat(ctx context.Context) (*linux.MsqidDS, error) {
 	return q.stat(ctx, vfs.MayRead)
 }
@@ -584,7 +580,7 @@ func (q *Queue) Stat(ctx context.Context) (*linux.MsqidDS, error) {
 // StatAny is similar to Queue.Stat, but doesn't require read permission. See
 // msgctl(MSG_STAT_ANY).
 //
-// +checklocksexclude:q.mu
+// +checklocksexclude:q.obj.Mu
 func (q *Queue) StatAny(ctx context.Context) (*linux.MsqidDS, error) {
 	return q.stat(ctx, 0)
 }
@@ -592,10 +588,10 @@ func (q *Queue) StatAny(ctx context.Context) (*linux.MsqidDS, error) {
 // stat returns a MsqidDS object filled with information about the queue. An
 // error is returned if the user doesn't have the specified permissions.
 //
-// +checklocksexclude:q.mu
+// +checklocksexclude:q.obj.Mu
 func (q *Queue) stat(ctx context.Context, ats vfs.AccessTypes) (*linux.MsqidDS, error) {
-	q.mu.Lock()
-	defer q.mu.Unlock()
+	q.obj.Mu.Lock()
+	defer q.obj.Mu.Unlock()
 
 	creds := auth.CredentialsFromContext(ctx)
 	if !q.obj.CheckPermissions(creds, ats) {
@@ -624,20 +620,6 @@ func (q *Queue) stat(ctx context.Context, ats vfs.AccessTypes) (*linux.MsqidDS, 
 	}, nil
 }
 
-// Lock implements ipc.Mechanism.Lock.
-//
-// +checklocksacquire:q.mu
-func (q *Queue) Lock() {
-	q.mu.Lock()
-}
-
-// Unlock implements ipc.Mechanism.Unlock.
-//
-// +checklocksrelease:q.mu
-func (q *Queue) Unlock() {
-	q.mu.Unlock()
-}
-
 // Object implements ipc.Mechanism.Object.
 func (q *Queue) Object() *ipc.Object {
 	return q.obj
@@ -645,7 +627,7 @@ func (q *Queue) Object() *ipc.Object {
 
 // Destroy implements ipc.Mechanism.Destroy.
 //
-// +checklocks:q.mu
+// +checklocks:q.obj.Mu
 // +checklocksexclude:q.receivers.mu
 // +checklocksexclude:q.senders.mu
 func (q *Queue) Destroy() {

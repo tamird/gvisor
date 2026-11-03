@@ -70,10 +70,10 @@ func NewRegistry(userNS *auth.UserNamespace) *Registry {
 func (r *Registry) Find(ctx context.Context, key Key, mode linux.FileMode, create, exclusive bool) (Mechanism, error) {
 	if id, ok := r.keysToIDs[key]; ok {
 		mech := r.objects[id]
-		mech.Lock()
-		defer mech.Unlock()
-
 		obj := mech.Object()
+		obj.Mu.Lock()
+		defer obj.Mu.Unlock()
+
 		creds := auth.CredentialsFromContext(ctx)
 		if !obj.CheckPermissions(creds, vfs.AccessTypes(mode&linux.ModeOtherAll)) {
 			// The [calling process / user] does not have permission to access
@@ -98,22 +98,19 @@ func (r *Registry) Find(ctx context.Context, key Key, mode linux.FileMode, creat
 	return nil, nil
 }
 
-// Register adds m to r.objects, assigns it a new ID, and associates its key
-// with that ID in r.keysToIDs. It returns an error if all IDs are exhausted.
+// Register initializes m and indexes it by its ID and key. It returns an
+// error if all IDs are exhausted. m.Object() must point to a fresh Object
+// that has not been used or published.
 //
 // +checklocks:r.Mu
-func (r *Registry) Register(m Mechanism) error {
+func (r *Registry) Register(m Mechanism, key Key, creator *auth.Credentials, mode linux.FileMode) error {
 	id, err := r.newID()
 	if err != nil {
 		return err
 	}
-
-	obj := m.Object()
-	obj.ID = id
-
+	*m.Object() = newObject(r.UserNS, id, key, creator, mode)
+	r.keysToIDs[key] = id
 	r.objects[id] = m
-	r.keysToIDs[obj.Key] = id
-
 	return nil
 }
 
@@ -155,10 +152,9 @@ func (r *Registry) Remove(id ID, creds *auth.Credentials) error {
 		return linuxerr.EINVAL
 	}
 
-	mech.Lock()
-	defer mech.Unlock()
-
 	obj := mech.Object()
+	obj.Mu.Lock()
+	defer obj.Mu.Unlock()
 
 	// The effective user ID of the calling process must match the creator or
 	// owner of the [mechanism], or the caller must be privileged.

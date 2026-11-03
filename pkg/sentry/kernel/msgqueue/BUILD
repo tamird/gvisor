@@ -34,7 +34,6 @@ go_library(
         "//pkg/sentry/kernel/ipc",
         "//pkg/sentry/ktime",
         "//pkg/sentry/vfs",
-        "//pkg/sync",
         "//pkg/waiter",
     ],
 )
