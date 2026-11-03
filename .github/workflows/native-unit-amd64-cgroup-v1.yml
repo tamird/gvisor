@@ -1,0 +1,31 @@
+name: Native unit test on an AMD64 cgroup-v1 guest
+on:
+  push:
+    branches: [qualification/native-unit-amd64-cgroup-v1]
+permissions:
+  contents: read
+jobs:
+  unit:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 65
+    steps:
+      - name: Initialize the public verdict
+        run: echo '{"status":"INCOMPLETE","phase":"checkout"}' > "$RUNNER_TEMP/unit-cgroup-v1.json"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Run the original test against the mounted controllers
+        timeout-minutes: 60
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          cp .github/qualification/unit-cgroup-v1/check.py "$RUNNER_TEMP/verify-unit-v1.py"
+          python3 -B "$RUNNER_TEMP/verify-unit-v1.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: native-unit-amd64-cgroup-v1
+          path: ${{ runner.temp }}/unit-cgroup-v1.json
+          if-no-files-found: error
