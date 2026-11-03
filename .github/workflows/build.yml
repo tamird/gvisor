@@ -1,35 +1,175 @@
-name: CI
-
-"on":
+name: Verify checkpoint restore under a changed memory limit
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/gc-restore-limits-a48b7a12c]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  restore:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      PRODUCT: a48b7a12cb3bd615c48f9b36d353c02a6463a929
+      TEST_BLOB: 040c7dafa4a9e6286563c80bfda9dc07e6d68767
+      IMAGE: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      REPORTER: 38745c527784376e0b5d915fe5ebd85e1d1385fd
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 2, persist-credentials: false}
+    - name: Isolate the exact public source
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -euo pipefail
+        d=$RUNNER_TEMP/restore
+        mkdir -p "$d/src" "$d/data" "$d/verify" "$d/verified"
+        chmod a+w "$d/data" "$d/verified"
+        echo source > "$d/phase"
+        test "$(git rev-parse HEAD^)" = "$PRODUCT"
+        git -C "$d/src" init -q
+        git -C "$d/src" fetch -q --depth=1 "$GITHUB_WORKSPACE" "$PRODUCT"
+        git -C "$d/src" checkout -q --detach FETCH_HEAD
+        test "$(git -C "$d/src" rev-parse HEAD)" = "$PRODUCT"
+        test "$(git -C "$d/src" hash-object runsc/container/container_save_restore_test.go)" = "$TEST_BLOB"
+        test -z "$(git -C "$d/src" remote)"
+        chmod a+w "$d/src"
+        test -z "$(git -C "$d/src" config --local --get-regexp 'extraheader|credential' || :)"
+        git fetch -q --depth=1 https://github.com/tamird/gvisor.git "$REPORTER"
+        test "$(git rev-parse FETCH_HEAD)" = "$REPORTER"
+        for f in qualification_report.py unit_matrix.py; do
+          git show "$REPORTER:test/rbe/$f" > "$d/verify/$f"
+        done
+        cp test/rbe/resize_verdict.py "$d/verify/"
+        echo pull > "$d/phase"
+        docker pull "$IMAGE" > "$d/pull.log" 2>&1
+    - name: Check the private writable cgroup-v2 delegation before compiling
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        d=$RUNNER_TEMP/restore
+        echo cgroup-preflight > "$d/phase"
+        cat > "$d/verify/launch.sh" <<'LAUNCH'
+        set -euo pipefail
+        d=$RUNNER_TEMP/restore
+        docker run --rm --network=none --cgroupns=private --memory=5g --memory-swap=5g \
+          --cap-add SYS_ADMIN --cap-add NET_ADMIN --cap-add SYS_PTRACE --cap-add SYS_RESOURCE \
+          --security-opt apparmor=unconfined --security-opt seccomp=unconfined \
+          -v "$d/src:/src" -v bazel-build:/build -v bazel-cache:/root/.cache -v "$d/data:/evidence" \
+          --tmpfs /testtmp:rw,exec,suid,dev,mode=1777,size=2g -w /src \
+          -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/src \
+          -v "$d/verify:/verify:ro" --entrypoint /bin/bash "$IMAGE" /verify/runtime.sh "$@"
+        LAUNCH
+        cat > "$d/verify/runtime.sh" <<'INNER'
+        set -euo pipefail
+        test ! -S /var/run/docker.sock
+        echo namespace > "/evidence/step-$1"
+        test "$(cat /proc/self/cgroup)" = 0::/
+        echo mount > "/evidence/step-$1"
+        mount -t cgroup2 none /sys/fs/cgroup
+        test "$(stat -fc %T /sys/fs/cgroup)" = cgroup2fs
+        echo memory-limit > "/evidence/step-$1"
+        test "$(cat /sys/fs/cgroup/memory.max)" = 5368709120
+        echo page-size > "/evidence/step-$1"
+        test "$(getconf PAGESIZE)" = 4096
+        echo dedicated-leaf > "/evidence/step-$1"
+        mkdir /sys/fs/cgroup/test-client
+        echo $$ > /sys/fs/cgroup/test-client/cgroup.procs
+        echo controller > "/evidence/step-$1"
+        echo +memory > /sys/fs/cgroup/cgroup.subtree_control
+        grep -qw memory /sys/fs/cgroup/cgroup.subtree_control
+        test "$(cat /proc/self/cgroup)" = 0::/test-client
+        touch "/evidence/hierarchy-$1"
+        if [[ "$1" == preflight ]]; then exit 0; fi
+        test "$1" = restore
+        git cat-file commit HEAD > /evidence/commit_file
+        git status --porcelain --untracked-files=no > /evidence/source_before
+        args=(test --config=x86_64 --jobs=4 --spawn_strategy=local --nofetch --remote_cache=
+          --remote_executor= --bes_backend= --strategy=TestRunner=local --nocache_test_results
+          --test_sharding_strategy=disabled --test_timeout=900 --test_tmpdir=/testtmp
+          '--test_filter=^TestRestoreCgroupMemoryLimit$' --test_env=GO_TEST_WRAP_TESTV=1 --test_arg=-test.v
+          --build_event_json_file=/evidence/raw.jsonl //runsc/container:container_test)
+        printf '%s\n' "${args[@]}" > /evidence/executed_arguments
+        bazel --batch --output_user_root=/build "${args[@]}" || rc=$?
+        printf '%d\n' "${rc:-0}" > /evidence/native_exit
+        date -u +%FT%T.%NZ > /evidence/finished
+        git status --porcelain --untracked-files=no > /evidence/source_after
+        git rev-parse HEAD > /evidence/final_head
+        exit "${rc:-0}"
+        INNER
+        bash "$d/verify/launch.sh" preflight > "$d/preflight.log" 2>&1 || rc=$?
+        printf '%d\n' "${rc:-0}" > "$d/preflight.exit"
+        exit "${rc:-0}"
+    - name: Build the original test and its runfiles without credentials
+      timeout-minutes: 65
+      run: |
+        set -euo pipefail
+        d=$RUNNER_TEMP/restore
+        echo build > "$d/phase"
+        docker run --rm --cap-drop=ALL --security-opt no-new-privileges \
+          -v "$d/src:/src" -v bazel-build:/build -v bazel-cache:/root/.cache \
+          -w /src -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/src \
+          --entrypoint /bin/bash "$IMAGE" -c '
+          exec bazel --batch --output_user_root=/build build --config=x86_64 --jobs=4 \
+            --spawn_strategy=local --remote_cache= --remote_executor= --bes_backend= \
+            --test_sharding_strategy=disabled //runsc/container:container_test' > "$d/build.log" 2>&1 || rc=$?
+        echo "${rc:-0}" > "$d/build.exit"
+        exit "${rc:-0}"
+    - name: Run both restores offline in a private cgroup namespace
+      timeout-minutes: 20
+      run: |
+        set -euo pipefail
+        d=$RUNNER_TEMP/restore
+        echo runtime > "$d/phase"
+        bash "$d/verify/launch.sh" restore > "$d/runtime.log" 2>&1 || rc=$?
+        echo "${rc:-0}" > "$d/runtime.exit"
+        exit "${rc:-0}"
+    - name: Reconcile the original BEP and XML with the pinned shared reporter
+      if: always()
+      run: |
+        set -euo pipefail
+        d=$RUNNER_TEMP/restore
+        if test -f "$d/data/native_exit"; then
+          docker run --rm --network=none --read-only --cap-drop=ALL -v "$d/src:/src:ro" \
+            -v bazel-build:/build:ro -v "$d/verify:/verify:ro" -v "$d/data:/evidence" -v "$d/verified:/verified" -e PRODUCT \
+            --entrypoint python3 "$IMAGE" -B /verify/resize_verdict.py > "$d/report.log" 2>&1 || rc=$?
+        fi
+        python3 - <<'PY'
+        import json, os, re
+        from datetime import datetime, timezone
+        from pathlib import Path
+        d = Path(os.environ["RUNNER_TEMP"]) / "restore"
+        d.mkdir(exist_ok=True)
+        def read(path):
+            file = d / path
+            return file.read_text(errors="replace").strip() if file.is_file() else ""
+        def rc(path):
+            value = read(path)
+            return int(value) if value.isdecimal() else None
+        summary = json.loads(read("verified/summary.json") or '{"status":"INCOMPLETE"}')
+        phase = read("phase")
+        summary["phase"] = phase if phase in ("source", "pull", "build", "runtime", "cgroup-preflight") else "setup"
+        summary.update(product=os.environ["PRODUCT"], carrier=os.environ["GITHUB_SHA"], reporter=os.environ["REPORTER"],
+                       test_blob=os.environ["TEST_BLOB"], preflight_exit=rc("preflight.exit"), build_exit=rc("build.exit"),
+                       runtime_exit=rc("runtime.exit"), native_exit=rc("data/native_exit"),
+                       hierarchy_at_runtime=(d / "data/hierarchy-restore").is_file())
+        for mode in ("preflight", "restore"):
+            step = read("data/step-" + mode)
+            if step in {"namespace","mount","memory-limit","page-size","dedicated-leaf","controller"}: summary[mode + "_cgroup_step"] = step
+        finish = read("data/finished")
+        summary["native_finished_utc"] = finish if re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z", finish) else None
+        if any(summary[k] != 0 for k in ("preflight_exit", "build_exit", "runtime_exit", "native_exit")) or not summary["hierarchy_at_runtime"]:
+            summary["status"] = "FAIL" if summary["native_exit"] not in (None, 0) else "INCOMPLETE"
+        if summary["status"] != "PASS":
+            log = "\n".join(read(p + ".log") for p in ("pull", "preflight", "build", "runtime", "report"))
+            known = {"permission":"permission denied|operation not permitted", "disk-full":"no space left",
+                     "fetch":"error downloading|failed to download|repository .* did not", "readonly":"read-only file system",
+                     "compiler":"fatal error:|undefined reference", "timeout":"timed out", "missing-tool":"command not found"}
+            summary["failure_categories"] = [k for k,v in known.items() if re.search(v, log, re.I)]
+        summary["verified_utc"] = datetime.now(timezone.utc).isoformat()
+        (d / "verdict.json").write_text(json.dumps(summary, indent=2) + "\n")
+        PY
+        test "${rc:-0}" = 0 && grep -q '"status": "PASS"' "$d/verdict.json"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: checkpoint-restore-verdict
+        path: ${{ runner.temp }}/restore/verdict.json
+        if-no-files-found: error
