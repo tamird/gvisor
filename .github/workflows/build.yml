@@ -1,23 +1,24 @@
-name: Test the VFS package after removing Watch.OwnerID
+name: Check Nogo with source and archive-only Go rules
 on:
   push:
-    branches: [qualification/vfs-watch-owner-check]
+    branches: [qualification/nogo-build-adapter-check]
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.ref == 'refs/heads/qualification/vfs-watch-owner-check'
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.ref == 'refs/heads/qualification/nogo-build-adapter-check'
     runs-on: ubuntu-24.04
     timeout-minutes: 110
     env:
-      SUITE: vfs
-      SOURCE: 637158efcbee8244f5df020b57bb0296c0c15fe6
+      SUITE: nogo
+      SOURCE: cd5e5628a42fa74409864903aae50717b596f214
+      FIXTURE: fc8054e976c050a7bd73be113b7321e3249fadaa
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
         fetch-depth: 5
         persist-credentials: false
-    - name: Run the VFS package on the exact reviewed source
+    - name: Run public analyzers and the archive-only consumer
       timeout-minutes: 100
       id: compare
       env:
@@ -26,9 +27,9 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "8168bb6c33d45387d5ecfee78b186f6f3d1e7a28"
+        test "$(git rev-parse HEAD^1)" = "3d592e26922172694c51d85a93bbbdfeb41e8ac4"
         mkdir -p "$RUNNER_TEMP/checker"
-        for file in qualify.sh unit_matrix.py qualification_report.py vfs_review.py; do
+        for file in qualify.sh unit_matrix.py qualification_report.py nogo_review.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
         done
         python3 -m py_compile "$RUNNER_TEMP/checker/"*.py
@@ -114,38 +115,64 @@ jobs:
         SH
         chmod +x "$RUNNER_TEMP/fifo-bin/bazel"
         export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
-        source=$SOURCE
-        git fetch --no-tags --depth=1 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
-        git checkout --quiet --detach "$source"
-        test "$(git rev-parse HEAD)" = "$source"
-        export TCP_EVIDENCE="$RUNNER_TEMP/replay-private"
-        mkdir -p "$TCP_EVIDENCE" "$RUNNER_TEMP/replay-public" test/rbe
-        cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
-        git cat-file commit HEAD > "$TCP_EVIDENCE/commit_file"
-        git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_before"
-        test ! -s "$TCP_EVIDENCE/source_before"
-        test "$(cat images/default/bazelversion)" = "$USE_BAZEL_VERSION"
-        label=//pkg/sentry/vfs:vfs_test
-        echo "$label" > "$TCP_EVIDENCE/targets.txt"
-        raw="$TCP_EVIDENCE/raw.jsonl"
-        code=0
-        bash test/rbe/qualify.sh --arch=amd64 "--test-target=$label" \
-          "--bazel-option=--build_event_json_file=$raw" --bazel-option=--build_event_json_file_path_conversion=false \
-          --bazel-option=--test_sharding_strategy=disabled --bazel-option=--cache_test_results=no \
-          --bazel-option=--remote_download_outputs=toplevel '--bazel-option=--remote_download_regex=.*[/]test[.](log|xml)$' test || code=$?
-        echo "$code" > "$TCP_EVIDENCE/runner_exit"
-        git rev-parse HEAD > "$TCP_EVIDENCE/final_head"
-        git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
-        python3 -B "$RUNNER_TEMP/checker/vfs_review.py" "$TCP_EVIDENCE" "$source" "$RUNNER_TEMP/replay-public/summary.json"
+        for phase in public legacy; do
+          source=$SOURCE
+          if [[ $phase == legacy ]]; then source=$FIXTURE; fi
+          git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
+          git checkout --quiet --detach "$source"
+          test "$(git rev-parse HEAD)" = "$source"
+          if [[ $phase == legacy ]]; then test "$(git rev-parse HEAD^)" = "$SOURCE"; fi
+          export TCP_EVIDENCE="$RUNNER_TEMP/private-$phase"
+          mkdir -p "$TCP_EVIDENCE" "$RUNNER_TEMP/replay-public" test/rbe
+          cp "$RUNNER_TEMP/checker/qualify.sh" "$RUNNER_TEMP/checker/unit_matrix.py" test/rbe/
+          git cat-file commit HEAD > "$TCP_EVIDENCE/commit_file"
+          git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_before"
+          test ! -s "$TCP_EVIDENCE/source_before"
+          test "$(cat images/default/bazelversion)" = "$USE_BAZEL_VERSION"
+          if [[ $phase == public ]]; then
+            labels=(//tools/nogo/check:check_test_nogo //pkg/eventchannel:eventchannel_nogo //pkg/sync:sync_nogo)
+          else
+            labels=(//tools/nogo/qualification_legacy:legacy_test)
+          fi
+          printf '%s\n' "${labels[@]}" > "$TCP_EVIDENCE/targets.txt"
+          args=("${labels[@]/#/--test-target=}")
+          raw="$TCP_EVIDENCE/raw.jsonl"
+          code=0
+          bash test/rbe/qualify.sh --arch=amd64 "${args[@]}" \
+            "--bazel-option=--build_event_json_file=$raw" --bazel-option=--build_event_json_file_path_conversion=false \
+            --bazel-option=--test_sharding_strategy=disabled --bazel-option=--cache_test_results=no \
+            --bazel-option=--remote_download_outputs=toplevel '--bazel-option=--remote_download_regex=.*[/]test[.](log|xml)$' test || code=$?
+          echo "$code" > "$TCP_EVIDENCE/runner_exit"
+          git rev-parse HEAD > "$TCP_EVIDENCE/final_head"
+          git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
+          if [[ $code == 0 ]]; then
+            if [[ $phase == public ]]; then
+              query='outputs("runtime_constants_go_impl[.]go$",deps(//pkg/sync:sync_nogo))'
+            else
+              query='mnemonic("GoStaticAnalysis",deps(//tools/nogo/qualification_legacy:legacy_test))'
+            fi
+            docker exec gnu-coordinator /usr/local/bin/bazel --bazelrc="$FIFO_RC" aquery --config=rbe --config=x86_64 \
+              --include_aspects --noinclude_artifacts --output=jsonproto \
+              "$query" > "$TCP_EVIDENCE/actions.json" || true
+          fi
+          python3 -B "$RUNNER_TEMP/checker/nogo_review.py" "$TCP_EVIDENCE" "$source" "$RUNNER_TEMP/replay-public/$phase.json" "$phase" || result=1
+        done
+        exit "${result:-0}"
     - name: Preserve missing results if setup failed
       if: always()
       run: |
         dir="$RUNNER_TEMP/replay-public"
         mkdir -p "$dir"
-        if [[ ! -f "$dir/summary.json" ]]; then
-          printf '{"status":"INCOMPLETE","source":"%s","suite":"%s","missing":"no full reconciliation"}\n' "$SOURCE" "$SUITE" > "$dir/summary.json"
-          exit 1
-        fi
+        result=0
+        for phase in public legacy; do
+          if [[ ! -f "$dir/$phase.json" ]]; then
+            sha=$SOURCE
+            if [[ $phase == legacy ]]; then sha=$FIXTURE; fi
+            printf '{"status":"INCOMPLETE","source":"%s","missing":"no full reconciliation"}\n' "$sha" > "$dir/$phase.json"
+            result=1
+          fi
+        done
+        exit "$result"
     - name: Check the public reports
       id: scan
       if: always()
@@ -163,6 +190,6 @@ jobs:
       if: ${{ always() && steps.scan.outcome == 'success' }}
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: vfs-watch-owner
+        name: nogo-build-adapter
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
