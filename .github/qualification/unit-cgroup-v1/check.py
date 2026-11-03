@@ -471,6 +471,50 @@ def recover_capsules(prior):
         save()
 
 
+def recover_extract():
+    """Project the first setup failure from two original log objects only."""
+    from cas_inputs import blob
+
+    raw = (TMP / 'original.zip').read_bytes()
+    require(sha(raw) == '246205f121b70f5dc88889439a9b1528efcc33535699500e41e6931a1d2ba7f9', 'extraction receipt mismatch')
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+        require(archive.namelist() == ['container-native-result.json'], 'extraction receipt members')
+        prior = json.loads(archive.read('container-native-result.json'))
+    require(prior['carrier'] == 'a7d6b51bd83d8a9aedfcd58720aeedddad7308ed' and prior['source'] == SOURCE
+            and prior['product'] == PRODUCT and prior['status'] == 'FAIL'
+            and prior['commands']['guest']['exit'] == 3 and len(prior['attempts']) == 26
+            and prior['guest_invocation'] == '56ab66e9-6edf-4e9e-92f6-120fb4391276', 'extraction original identity')
+    DOC.update(original=dict(artifact=13253704387, zip_sha256=sha(raw), receipt=prior),
+               workload_repeated=False, scope='Two original setup logs only', extraction_logs=[])
+    save()
+    phrases = ('invalid tar magic', 'short read', 'truncated', 'unexpected EOF', 'invalid number',
+               'No such file or directory', 'not found', 'Permission denied', 'Operation not permitted',
+               'File exists', 'cannot create', "can't create", 'cannot open', "can't open",
+               'unrecognized archive format', 'unrecognized option', 'invalid option', 'unsupported',
+               "can't link", 'No space left on device', 'Read-only file system',
+               'Too many levels of symbolic links', 'Cannot allocate memory', 'not a tar archive')
+    for mode in ('v1', 'v2'):
+        old, = (r for r in prior['attempts'] if r['mode'] == mode and r['owner'] == '//runsc/container:boot_test')
+        require(old['status'] == 'FAILED' and old['shard'] == 0 and old['bep_shard'] == 1
+                and old['log']['setup_failures'] == [dict(stage='extract', exit=1)], 'wrong extraction attempt')
+        log = old['log']
+        require(0 < log['bytes'] < 64 * 1024, 'extraction log bound')
+        data = blob(dict(hash=log['sha256'], sizeBytes=log['bytes']), prior['guest_invocation'])
+        row = dict(mode=mode, configuration=old['configuration'], sha256=sha(data), bytes=len(data), diagnostics=[])
+        for line in data.decode(errors='replace').splitlines():
+            if not re.search(r'^(?:tar|mkdir|/bin/busybox):', line):
+                continue
+            row['diagnostics'].append(dict(line_sha256=sha(line.encode()),
+                classes=[phrase for phrase in phrases if phrase.lower() in line.lower()],
+                archive_names=[name + '.tar' for name in (*NAMES, 'erofs') if name + '.tar' in line]))
+        require(len(row['diagnostics']) <= 32, 'extraction diagnostic bound')
+        row['known_cause'] = any(r['classes'] for r in row['diagnostics'])
+        DOC['extraction_logs'].append(row)
+        save()
+    DOC['status'] = 'ORIGINAL_FAIL_DIAGNOSTIC_RECOVERED'
+    save()
+
+
 def main():
     original = (TMP / 'original.zip').read_bytes()
     require(sha(original) == '065c02f43387d0cdaa4c5417d2f89feec88202ebb9ca44c99d6225a1d4ce46e5', 'original ZIP mismatch')
@@ -519,7 +563,9 @@ def main():
 
 if __name__ == '__main__':
     try:
-        if sys.argv[1:] == ['--recover-build']:
+        if sys.argv[1:] == ['--recover-extract']:
+            recover_extract()
+        elif sys.argv[1:] == ['--recover-build']:
             recover_build()
         else:
             main()
