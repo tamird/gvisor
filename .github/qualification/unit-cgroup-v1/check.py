@@ -342,6 +342,42 @@ def guest(rc):
     require(all({'TestMinimalBoot/systrap', 'TestMinimalBoot/kvm', 'TestMountEROFS', 'TestMountEROFSConfig/image1'} <= names for names in passed.values()), 'required platform or EROFS case did not pass')
 
 
+def recover_build():
+    """Read the exact retained stderr, without invoking the workload."""
+    from cas_inputs import blob
+
+    original = (TMP / 'original.zip').read_bytes()
+    require(sha(original) == '3b973e531ad21fcb9051862551b435d1556b93eeecdef9e2c8c1bfcb36f2ff39', 'original ZIP mismatch')
+    with zipfile.ZipFile(io.BytesIO(original)) as archive:
+        require(archive.namelist() == ['container-native-result.json'], 'original members mismatch')
+        prior = json.loads(archive.read('container-native-result.json'))
+    require(prior['carrier'] == '9b79f6af77eb770b205bb12ff8588c8f75d8c1d1' and prior['status'] == 'FAIL'
+            and prior['source'] == SOURCE and prior['product'] == PRODUCT and not prior['attempts'], 'original source mismatch')
+    require(prior['commands']['native-build']['exit'] == 1, 'original build exit mismatch')
+    evidence = prior['native_build_evidence']
+    require(evidence['invocation'] == '92e35f5e-55d5-4d74-a922-b867bae9da00', 'invocation mismatch')
+    action, = evidence['failed_actions']
+    require(action['owner'] == '//tools/nogo:stdlib' and action['exit'] == 1
+            and action['configuration'] == '109b925577db5c4e66db055b0522b402102950532da954a8620c8c4c4d4329d3'
+            and action['mnemonic'] == 'GoStandardLibraryAnalysis'
+            and action['primary_output'] == 'bazel-out/k8-fastbuild/bin/tools/nogo/stdlib.facts', 'action mismatch')
+    stderr, = action['files']
+    require(stderr['name'] == 'stderr' and stderr['bytes'] == 96
+            and stderr['sha256'] == '9ae35684375799d6f9248bc76bc7095ef5123b3aad2d3170ff1c1c0e6bf6fce2', 'stderr mismatch')
+    DOC.update(original=dict(artifact=13248899435, zip_sha256=sha(original), receipt=prior),
+               scope='One original failed action stderr; no build or tests repeated', workload_repeated=False)
+    save()
+    data = blob(dict(hash=stderr['sha256'], sizeBytes=stderr['bytes']), evidence['invocation'])
+    require(len(data) == 96 and sha(data) == stderr['sha256'], 'recovered bytes differ')
+    # Selection is already the exact failed action's small stderr, so allow
+    # lowercase source-owned errors through the existing sanitization too.
+    lines = diagnostic_lines(b'Error: ' + data)
+    require(lines and all(len(line) <= 480 for line in lines), 'diagnostic not safely projectable')
+    DOC.update(status='ORIGINAL_FAIL_DIAGNOSTIC_RECOVERED', recovered_stderr=dict(
+        sha256=sha(data), bytes=len(data), diagnostics=lines))
+    save()
+
+
 def main():
     original = (TMP / 'original.zip').read_bytes()
     require(sha(original) == 'd138fc483e8a18f06b40438422edf3aedaa622f547390108e835c72aa2a38679', 'original ZIP mismatch')
@@ -391,8 +427,11 @@ def main():
 
 if __name__ == '__main__':
     try:
-        main()
+        if sys.argv[1:] == ['--recover-build']:
+            recover_build()
+        else:
+            main()
     except Exception as exc:
         DOC['error_class'] = type(exc).__name__
         save()
-    sys.exit(0 if DOC['status'] == 'PASS' else 1)
+    sys.exit(0 if DOC['status'] in ('PASS', 'ORIGINAL_FAIL_DIAGNOSTIC_RECOVERED') else 1)
