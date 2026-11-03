@@ -370,7 +370,7 @@ def guest(rc):
     require(all({'TestMinimalBoot/systrap', 'TestMinimalBoot/kvm', 'TestMountEROFS', 'TestMountEROFSConfig/image1'} <= names for names in passed.values()), 'required platform or EROFS case did not pass')
 
 
-def recover_guests():
+def recover_guests(setup_only=False):
     """Recover only the original guest attempts and bounded diagnostics."""
     from cas_inputs import blob, rpc
 
@@ -385,11 +385,22 @@ def recover_guests():
             'original execution mismatch')
     invocation = prior['guest_invocation']
     require(invocation == 'ec4bba4c-ce01-44ff-9b52-700d5446c588', 'original invocation mismatch')
-    require(git('rev-parse', 'HEAD^') == prior['carrier'], 'recovery ancestry mismatch')
+    require(git('rev-parse', 'HEAD~2' if setup_only else 'HEAD^') == prior['carrier'], 'recovery ancestry mismatch')
     DOC.update(original=dict(artifact=13253001262, zip_sha256=sha(raw), receipt=prior),
                scope='Original guest attempts and diagnostics only; no build or test rerun',
                workload_repeated=False, guest_invocation=invocation, targets={}, recovered_attempts=[])
     save()
+    previous = None
+    if setup_only:
+        recovered = (TMP / 'reports.zip').read_bytes()
+        require(sha(recovered) == '1f6929cfa8c8fecda9626a57bff3a139caba9ce73dd627e9a20ae00d8ba5d885', 'recovered reports ZIP mismatch')
+        with zipfile.ZipFile(io.BytesIO(recovered)) as archive:
+            require(archive.namelist() == ['container-native-result.json'], 'recovered reports members mismatch')
+            previous = json.loads(archive.read('container-native-result.json'))
+        require(previous['carrier'] == '0d0980f0a59a26b385424f8810356cbe84315c04'
+                and previous['original']['receipt'] == prior and previous['files_complete'], 'recovered reports identity mismatch')
+        DOC.update(scope='Two original boot-test setup logs and output inventories; no workload rerun',
+                   prior_reports=dict(artifact=13253356296, zip_sha256=sha(recovered)))
     known_tools = set('bash sh busybox tar mount mkfs.erofs stat awk sha256sum cut chmod ln cat qemu-system-x86_64'.split())
     known_tools.update(NAMES)
 
@@ -403,11 +414,13 @@ def recover_guests():
             'kernel_panic': r'Kernel panic|not syncing|VFS: Unable to mount root',
             'sharding': r'(?i)sharding.*(?:requested|support)|TEST_SHARD_STATUS_FILE',
             'erofs': r'(?i)mkfs[.]erofs.*(?:error|failed|invalid|usage)|erofs.*(?:not found|unsupported)',
-            'timeout': r'(?i)timed out|TIMEOUT|deadline exceeded',
+            'timeout': r'(?i)timed out|^TIMEOUT$|deadline exceeded',
             'disk': r'(?i)no space left on device',
         }
-        result = dict(diagnostics=[], host_phases=[], fixed_messages=[])
-        fixed = {'Guest did not report a completed test', 'Passing guest omitted test XML'}
+        result = dict(diagnostics=[], host_phases=[], fixed_messages=[], guest_phases=[], guest_observations=[])
+        fixed = {'Guest did not report a completed test', 'Passing guest omitted test XML',
+                 'The guest CPU does not expose VMX or SVM.', 'ARM64 guest KVM device unavailable',
+                 'Guest core scheduling unavailable', 'Guest CPUs are not SMT siblings'}
         for line in data.decode(errors='replace').splitlines():
             if re.search(r'(?i)authorization|x-buildbuddy-api-key|remote_header|bes_header|github_pat_|gh[pousr]_', line):
                 continue
@@ -421,15 +434,27 @@ def recover_guests():
             match = re.fullmatch(r'host_uptime_seconds=([0-9.]+) phase=([a-z_]{1,40}) status=(-|[0-9]{1,3}) outer_test_timeout_seconds=(unset|[0-9]{1,5})', line)
             if match:
                 result['host_phases'].append(dict(uptime=match[1], phase=match[2], status=match[3]))
+            match = re.fullmatch(r'guest_uptime_seconds=([0-9.]+) phase=(init_start|payload_mount_start|payload_mount_return|output_copy_start|poweroff_start)', line)
+            if match:
+                result['guest_phases'].append(dict(uptime=match[1], phase=match[2]))
+            for pattern in (
+                r'Guest KVM module: kvm_(?:intel|amd)',
+                r'Guest page size: [0-9]+',
+                r'Guest work filesystem: block_size=[0-9]+ blocks=[0-9]+',
+                r'Payload executable: uid=[0-9]+ gid=[0-9]+ mode=[0-7]+',
+            ):
+                if re.fullmatch(pattern, line):
+                    result['guest_observations'].append(line)
         return result
 
     require(project(b'Authorization: Bearer private')['diagnostics'] == [], 'header projection control')
     sample = project(b'/private/tool/mkfs.erofs: error while loading shared libraries: private.so')
     require(sample['diagnostics'][0]['classes'] == ['erofs', 'shared_library']
             and 'private' not in json.dumps(sample), 'diagnostic projection control')
+    require(not project(b'host_uptime_seconds=1.0 phase=launcher_start status=- outer_test_timeout_seconds=900')['diagnostics'], 'timeout field is not a timeout')
     DOC['projection_control'] = 'PASS'
     seen = set()
-    labels = ['//' + PKG + ':' + mode + '_' + name for mode in ('v1', 'v2') for name in NAMES]
+    labels = ['//' + PKG + ':' + mode + '_' + name for mode in ('v1', 'v2') for name in (('boot_test',) if setup_only else NAMES)]
 
     def target(label):
         response = rpc('GetTarget', dict(invocationId=invocation, targetLabel=label))
@@ -459,6 +484,12 @@ def recover_guests():
             require(run == attempt == 1 and 1 <= shard <= SHARDS[name] and key not in seen, 'unexpected attempt identity')
             seen.add(key)
             result = event['testResult']
+            previous_attempt = None
+            if setup_only:
+                previous_attempt, = (a for a in previous['recovered_attempts'] if a['guest_owner'] == label)
+                require(previous_attempt['configuration'] == configuration and previous_attempt['status'] == result['status'] == 'FAILED'
+                        and previous_attempt['run'] == run and previous_attempt['bep_shard'] == shard
+                        and previous_attempt['attempt'] == attempt, 'prior setup attempt mismatch')
             item = dict(owner='//runsc/container:' + name, guest_owner=label, configuration=configuration,
                 mode=mode, run=run, bep_shard=shard, shard_index=shard - 1, attempt=attempt,
                 status=result['status'], local_cache=bool(result.get('cachedLocally')),
@@ -475,7 +506,8 @@ def recover_guests():
             row['attempts'] += 1
             save()
             for entry in result.get('testActionOutput', []):
-                if entry.get('name') not in ('test.log', 'test.xml'):
+                allowed = ('test.log', 'test.xml', 'test.outputs__outputs.zip', 'test.outputs/outputs.zip') if setup_only else ('test.log', 'test.xml')
+                if entry.get('name') not in allowed:
                     continue
                 uri = entry.get('uri', '')
                 match = re.fullmatch(r'bytestream://remote\.buildbuddy\.io/(?:[^?#]*/)?blobs/([a-f0-9]{64})/(\d+)', uri)
@@ -491,7 +523,31 @@ def recover_guests():
                     save()
                     continue
                 data = blob(dict(hash=match[1], sizeBytes=match[2]), invocation)
-                if entry['name'] == 'test.xml':
+                if setup_only and entry['name'] in ('test.log', 'test.xml'):
+                    earlier, = (f for f in previous_attempt['files'] if f['name'] == entry['name'])
+                    require(earlier['sha256'] == sha(data) and earlier['bytes'] == len(data), 'original setup report bytes changed')
+                if entry['name'] in ('test.outputs__outputs.zip', 'test.outputs/outputs.zip'):
+                    # List only declared initializer/adapter outputs; never copy
+                    # arbitrary guest paths, logs, environment or checkpoint data.
+                    names = ('console.log', 'guest/exit_status', 'guest/kernel.txt', 'guest/kernel.config',
+                             'guest/root-image.txt', 'guest/page-size.txt', 'guest/kvm.txt',
+                             'guest/limits-before.txt', 'guest/limits.txt', 'guest/test.xml',
+                             'guest/outputs/proof', 'guest/shard_status')
+                    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+                        require(len(archive.infolist()) < 1024 and sum(i.file_size for i in archive.infolist()) < 8 * 1024**2, 'setup output ZIP bound')
+                        require(len(set(archive.namelist())) == len(archive.namelist()), 'duplicate setup output')
+                        file['known_members'] = []
+                        for member in names:
+                            if member not in archive.namelist():
+                                continue
+                            contents = archive.read(member)
+                            item_info = dict(name=member, bytes=len(contents), sha256=sha(contents))
+                            if member == 'guest/exit_status':
+                                require(re.fullmatch(rb'[0-9]{1,3}\n', contents), 'invalid retained guest status')
+                                item_info['exit'] = int(contents)
+                            file['known_members'].append(item_info)
+                        file['inventory_observation'] = 'KNOWN_MEMBERS_RECORDED' if file['known_members'] else 'ZIP_INSPECTED_NO_KNOWN_MEMBERS'
+                elif entry['name'] == 'test.xml':
                     cases = list(ET.fromstring(data).iter('testcase'))
                     file.update(cases=len(cases), failed=sum(c.find('failure') is not None or c.find('error') is not None for c in cases),
                         substantive_cases=sum(c.get('name', '').startswith('Test') for c in cases))
@@ -508,11 +564,15 @@ def recover_guests():
 
     for label in labels:
         phase(label, lambda label=label: target(label))
-    DOC['expected_attempts'] = 26
-    DOC['attempt_inventory_complete'] = len(seen) == 26 and all(p['status'] == 'PASS' for p in DOC['phases'].values())
+    DOC['expected_attempts'] = 2 if setup_only else 26
+    DOC['attempt_inventory_complete'] = len(seen) == DOC['expected_attempts'] and all(p['status'] == 'PASS' for p in DOC['phases'].values())
     DOC['files_complete'] = DOC['attempt_inventory_complete'] and all(
-        {f['name'] for f in a['files'] if f['disposition'] == 'recovered'} == {'test.log', 'test.xml'}
+        {'test.log', 'test.xml'} <= {f['name'] for f in a['files'] if f['disposition'] == 'recovered'}
         for a in DOC['recovered_attempts'])
+    if setup_only:
+        DOC['output_inventories_complete'] = DOC['attempt_inventory_complete'] and all(
+            any('known_members' in f and f['disposition'] == 'recovered' for f in a['files'])
+            for a in DOC['recovered_attempts'])
     DOC['status'] = 'ORIGINAL_FAIL_REPORTS_RECOVERED' if DOC['files_complete'] else 'ORIGINAL_FAIL_RECOVERY_INCOMPLETE'
     save()
 
@@ -696,7 +756,9 @@ def main():
 
 if __name__ == '__main__':
     try:
-        if sys.argv[1:] == ['--recover-guests']:
+        if sys.argv[1:] == ['--recover-guest-setup']:
+            recover_guests(setup_only=True)
+        elif sys.argv[1:] == ['--recover-guests']:
             recover_guests()
             DOC['container_recovery_status'] = DOC['status']
             phase('coretag_reports', recover_coretag)

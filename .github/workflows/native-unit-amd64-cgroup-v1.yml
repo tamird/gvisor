@@ -1,4 +1,4 @@
-name: Original native container guest reports
+name: Original native container setup diagnosis
 on:
   push:
     branches: [qualification/buildkite-container-native-reports]
@@ -15,31 +15,25 @@ jobs:
       SOURCE: 7e29426b047a41303652cfa9f0ae91e933302f5e
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 2, persist-credentials: false}
+      with: {fetch-depth: 3, persist-credentials: false}
     - name: Bind the original receipt and read-only helper
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
-        test "$(git rev-parse HEAD^)" = c90e30503332735ddb87d992588101661a7e2d1c
+        test "$(git rev-parse HEAD^)" = 0d0980f0a59a26b385424f8810356cbe84315c04
         printf '{"status":"INCOMPLETE","carrier":"%s"}\n' "$GITHUB_SHA" > "$RUNNER_TEMP/container-native-result.json"
         mkdir "$RUNNER_TEMP/controller"
         cp .github/qualification/unit-cgroup-v1/check.py test/rbe/{credential_artifacts,qualification_report,unit_matrix}.py "$RUNNER_TEMP/controller/"
         helper=680739b629229eb1c8fa91aa1147d1bca71eb04f
-        coretag=64fea59014b0104240a5e100095b60e51aa90bae
-        controller=aaed41e45c71fb16ddb3ec4b6f630e15a60df757
-        decoder=0a9bdf9bc331d6a66f35aefcbbb5cf466eb6f7f5
-        git fetch --no-tags origin "$helper" "$coretag" "$controller" "$decoder" --depth=1
+        git fetch --no-tags origin "$helper" --depth=1
         git show "$helper:test/rbe/cas_inputs.py" > "$RUNNER_TEMP/controller/cas_inputs.py"
-        git show "$coretag:.github/qualification/unit-cgroup-v1/check.py" > "$RUNNER_TEMP/controller/coretag_original.py"
-        git show "$controller:.github/qualification/unit-cgroup-v1/check.py" > "$RUNNER_TEMP/controller/unit_v1.py"
-        git show "$decoder:test/rbe/stdlib-provenance.py" > "$RUNNER_TEMP/controller/stdlib_provenance.py"
         gh api repos/tamird/gvisor/actions/artifacts/13253001262/zip > "$RUNNER_TEMP/original.zip"
-        gh api repos/tamird/gvisor/actions/artifacts/13252722859/zip > "$RUNNER_TEMP/coretag.zip"
+        gh api repos/tamird/gvisor/actions/artifacts/13253356296/zip > "$RUNNER_TEMP/reports.zip"
     - name: Recover original test metadata and projected diagnostics
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: python3 -B "$RUNNER_TEMP/controller/check.py" --recover-guests
+      run: python3 -B "$RUNNER_TEMP/controller/check.py" --recover-guest-setup
     - name: Validate sole public receipt
       id: scan
       if: always()
