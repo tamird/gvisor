@@ -1,0 +1,46 @@
+name: Check the original formatter review and three maintainer requests
+on:
+  push:
+    branches: [qualification/work-map-stateify-26224d8bf]
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Verify the replacement on the original open PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "26224d8bf07a75c5a7a70bb7b9e0d38e86e558be"
+          test "$(git rev-parse HEAD^^)" = "7043285f5eb18852e20432fbd4abe247a26765a8"
+          test -z "$(git diff --name-only HEAD^ HEAD -- ':!.github')"
+          test "$(sha256sum registry.json | cut -d' ' -f1)" = "23a6ea224a068f2e072d6e0cf49bf20be1f6ed6b2a2b5ea277819cd8d318d92b"
+          mkdir results
+          python3 update-status.py
+          python3 - <<'PYCHECK'
+          import json
+          from pathlib import Path
+          from work_states import record_states
+          p=Path('github-status.json');s=json.loads(p.read_bytes());r=json.loads(Path('registry.json').read_bytes());ns={n['id']:n for n in r['nodes']}
+          k='pr:16710';n=ns[k];pr,=[p for p in s['prs'] if p['url']==n['url']]
+          d=s['workStates'][k]['contributor-review']
+          assert pr['status']=='open' and pr['head']==n['head']==n['contributorReview']['baseHead']=='cd92efa5f06a504a5f6bb187519f482d4941b21f'
+          assert d['scope']==n['contributorReview']['head']=='50890dbbe59fbf3754de2b49168972e37f0e8478'
+          assert not ns['pr:hermeticbuild/hermetic-llvm:907'].get('contributorReview')
+          supplier=ns['pr:hermeticbuild/hermetic-llvm:907'];live,=[v for v in s['prs'] if v['url']==supplier['url']]
+          assert supplier['head']==live['head']=='15809f084e3c473b0e3fbcc57ce8dda167f24a6c' and live['status']=='open'
+          assert r['meta']['updatedAt']==s['registryDate']
+          PYCHECK
+          node metadata-preflight.mjs . > results/preflight.json
+          cp registry.json github-status.json results/
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with: {name: stateify-review-map, path: results, if-no-files-found: error}
