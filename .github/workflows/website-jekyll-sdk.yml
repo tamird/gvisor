@@ -1,0 +1,59 @@
+name: Observe the native website build entry point
+on:
+  push:
+    branches: [qualification/website-native-make]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  sdk:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: carrier, persist-credentials: false, fetch-depth: 2}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          path: source
+          ref: c75bc99990a381cd8cb8c428a1997d9ee98fa7c7
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Bind product, carrier and released website receipt
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git -C carrier rev-parse HEAD^)" = "$(git -C source rev-parse HEAD)"
+          test "$(git -C carrier diff --name-only HEAD^ HEAD)" = "$(printf '%s\n' .github/workflows/website-jekyll-sdk.yml test/rbe/website-jekyll/check_make.py)"
+          git -C source fetch --no-tags --depth=1 origin b70c5617a4ee7abe4f899fc1ad913864052f9710
+          gh api repos/tamird/gvisor/actions/artifacts/13201877206/zip > "$RUNNER_TEMP/release.zip"
+      - name: Select the same native GNU analysis configuration as the original
+        run: |
+          if ! command -v aarch64-linux-gnu-gcc; then
+            sudo apt-get -qq update
+            sudo apt-get -qq install --no-install-recommends build-essential crossbuild-essential-arm64
+          fi
+          python3 -c 'import yaml' || sudo apt-get -qq install --no-install-recommends python3-yaml
+      - name: Analyze the two actual pipeline commands and measure the Make query
+        working-directory: source
+        run: ../carrier/test/rbe/website-jekyll/check_make.py
+      - name: Validate the typed publication
+        if: always()
+        shell: python
+        run: |
+          import json, os, re
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'site-entry/result.json'
+          raw=p.read_bytes()
+          if re.search(rb'(?i)gh[pousr]_|github_pat_|x-buildbuddy-api-key|authorization[:=]|BEGIN [A-Z]+ PRIVATE KEY',raw):
+              p.unlink()
+              raise SystemExit('publication rejected')
+          result=json.loads(raw)
+          assert result['status']=='PASS',result['status']
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: native-website-entry
+          path: ${{ runner.temp }}/site-entry/result.json
+          if-no-files-found: error
