@@ -507,6 +507,13 @@ def recover_extract():
             row['diagnostics'].append(dict(line_sha256=sha(line.encode()),
                 classes=[phrase for phrase in phrases if phrase.lower() in line.lower()],
                 archive_names=[name + '.tar' for name in (*NAMES, 'erofs') if name + '.tar' in line]))
+            if sha(line.encode()) == 'beac200575706f03da4e99803edfb4a0fc5683c9a8a841b2734daa5e52db4a9a':
+                # Only the already retained, identical tar diagnostic is
+                # eligible. Strip quoted operands and paths even inside flags.
+                message = re.sub(r"(?<![A-Za-z])'[^']*'|\"[^\"]*\"", '[operand]', line)
+                message = re.sub(r'(?:https?|grpcs?)://\S+|[^\s\"\x27=]*/[^\s\"\x27]*', '[path]', message)
+                require(len(message) <= 256, 'exact diagnostic bound')
+                row['diagnostics'][-1]['message_template'] = re.sub(r'[^A-Za-z0-9 _.,:;!()\[\]+=?-]', '?', message)
         require(len(row['diagnostics']) <= 32, 'extraction diagnostic bound')
         row['known_cause'] = any(r['classes'] for r in row['diagnostics'])
         DOC['extraction_logs'].append(row)

@@ -21,7 +21,7 @@ jobs:
         GH_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
-        test "$(git rev-parse HEAD^)" = a7d6b51bd83d8a9aedfcd58720aeedddad7308ed
+        test "$(git rev-parse HEAD^)" = 11fecfa98d417a57cd6c262c6d2fe7587de3db5e
         printf '{"status":"INCOMPLETE","carrier":"%s"}\n' "$GITHUB_SHA" > "$RUNNER_TEMP/container-native-result.json"
         mkdir "$RUNNER_TEMP/controller"
         cp .github/qualification/unit-cgroup-v1/check.py test/rbe/{credential_artifacts,qualification_report,unit_matrix}.py "$RUNNER_TEMP/controller/"
