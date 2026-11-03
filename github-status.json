@@ -2,8 +2,8 @@
   "schema": 1,
   "repo": "google/gvisor",
   "owner": "tamird",
-  "checkedAt": "2026-11-03T20:40:53.920541+00:00",
-  "registryDate": "2026-11-03T20:40:16.868104+00:00",
+  "checkedAt": "2026-11-03T20:49:48.130334+00:00",
+  "registryDate": "2026-11-03T20:48:30.202545+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -279942,7 +279942,7 @@
       "branchHead": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-11-02T19:34:19.127360+00:00",
+      "mergeabilityCheckedAt": "2026-11-03T20:49:47.771009+00:00",
       "headCommittedAt": "2026-11-02T10:32:32Z",
       "headHistoryComplete": true,
       "headIntroducedAt": null,
@@ -280292,7 +280292,7 @@
       "reviewDecision": "APPROVED",
       "approvedHead": "bd7d2e4c3b3a57d1fd19da69ae3edc452aa2cc00",
       "approvedAt": "2026-11-02T18:28:21Z",
-      "checkedAt": "2026-11-02T19:34:19.127400+00:00",
+      "checkedAt": "2026-11-03T20:49:47.771055+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "bd7d2e4c3b3a57d1fd19da69ae3edc452aa2cc00",
@@ -294843,7 +294843,7 @@
         "disposition": "Published and replied to both review threads",
         "nextAction": "Await maintainer review of the amended build adapter. The transition and allocator replies are posted."
       },
-      "conflictObservedSince": null
+      "conflictObservedSince": "2026-11-03T20:40:53.418491+00:00"
     },
     {
       "repo": "google/gvisor",
@@ -301046,7 +301046,7 @@
         "since": "2026-11-03T20:35:54.663277+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "pr:16445": {
@@ -301691,7 +301691,7 @@
         "since": "2026-11-01T19:40:22.453604+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "pr:16664": {
@@ -302634,7 +302634,7 @@
         "since": "2026-11-03T20:35:54.663277+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "pr:16844": {
@@ -303213,7 +303213,7 @@
         "since": "2026-11-02T19:15:25Z",
         "basis": "transition",
         "qualifier": null,
-        "observedAt": "2026-11-02T19:34:19.127400+00:00"
+        "observedAt": "2026-11-03T20:49:47.771055+00:00"
       }
     },
     "pr:golang/tools:702": {
@@ -303441,7 +303441,7 @@
         "since": "2026-10-31T16:57:06.135+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:bazel-python-release": {
@@ -303450,7 +303450,7 @@
         "since": "2026-10-30T16:55:14.197497+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -303459,7 +303459,7 @@
         "since": "2026-11-03T07:06:47.467598+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:rules-img-hackbench-image": {
@@ -303468,7 +303468,7 @@
         "since": "2026-11-03T04:16:24.163353+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:rules-img-wrk2-image": {
@@ -303477,7 +303477,7 @@
         "since": "2026-10-31T07:18:55.041730+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:licensecheck-go-digest-notices": {
@@ -303486,7 +303486,7 @@
         "since": "2026-11-02T16:53:35.881136+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -303495,7 +303495,7 @@
         "since": "2026-11-02T08:21:11+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:declared-codespell": {
@@ -303504,7 +303504,7 @@
         "since": "2026-11-02T08:21:11+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:release-archives-versioned": {
@@ -303513,7 +303513,7 @@
         "since": "2026-10-31T10:28:33.920382+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:tcp-restore-send-deadlines": {
@@ -303522,7 +303522,7 @@
         "since": "2026-10-29T21:52:21.505470+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:mutable-overlay-poll-waiter": {
@@ -303531,7 +303531,7 @@
         "since": "2026-10-30T05:07:07.633004+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:proc-forwarding-mounts": {
@@ -303540,7 +303540,7 @@
         "since": "2026-10-30T17:32:27.326543+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -303549,7 +303549,7 @@
         "since": "2026-10-31T09:29:02.218795+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:tcp-sack-reneging": {
@@ -303558,7 +303558,7 @@
         "since": "2026-10-31T15:23:16.789097+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:native-gazelle-check": {
@@ -303567,7 +303567,7 @@
         "since": "2026-11-02T16:20:02.085486+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:checkpoint-memory-file-registration": {
@@ -303576,7 +303576,7 @@
         "since": "2026-10-31T18:05:07.150+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:buildkite-native-packages": {
@@ -303585,7 +303585,7 @@
         "since": "2026-11-03T09:40:14.321194+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:tcp-cookie-window-packets": {
@@ -303594,7 +303594,7 @@
         "since": "2026-10-31T19:36:28.936+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:tcp-retain-fixed-source-port": {
@@ -303603,7 +303603,7 @@
         "since": "2026-11-01T01:51:20.575751+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:hostinet-exit-linger": {
@@ -303612,7 +303612,7 @@
         "since": "2026-11-01T05:08:12.703055+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:rack-checkpoint-recovery": {
@@ -303621,7 +303621,7 @@
         "since": "2026-11-01T07:12:21.056431+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:tcp-cookie-accepted-sack": {
@@ -303630,7 +303630,7 @@
         "since": "2026-11-01T08:08:39.992196+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:tcp-consumed-socket-error": {
@@ -303639,7 +303639,7 @@
         "since": "2026-11-03T02:48:42.204681+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:tcp-established-icmp-errors": {
@@ -303648,7 +303648,7 @@
         "since": "2026-11-01T09:30:13.357522+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -303657,7 +303657,7 @@
         "since": "2026-11-01T11:45:39.922159+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:state-graph-object-frame-bounds": {
@@ -303666,7 +303666,7 @@
         "since": "2026-11-01T13:49:13.599008+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:tcp-report-read-hangups": {
@@ -303675,7 +303675,7 @@
         "since": "2026-11-01T13:56:22.287550+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:buildkite-native-nogo": {
@@ -303684,7 +303684,7 @@
         "since": "2026-11-03T07:06:47.467598+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:tcp-passive-syn-retry": {
@@ -303693,7 +303693,7 @@
         "since": "2026-11-02T00:04:15+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:futex-requeue-count": {
@@ -303702,7 +303702,7 @@
         "since": "2026-11-02T02:29:36+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:buildkite-direct-smoke": {
@@ -303711,7 +303711,7 @@
         "since": "2026-11-03T09:26:23.862437+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:buildkite-native-plugin": {
@@ -303720,7 +303720,7 @@
         "since": "2026-11-03T08:23:27.485264+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:state-graph-print-errors": {
@@ -303729,7 +303729,7 @@
         "since": "2026-11-02T22:54:43.336654+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:ipc-object-guard": {
@@ -303738,7 +303738,7 @@
         "since": "2026-11-03T06:24:21.015903+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     },
     "branch:buildkite-native-container-tests": {
@@ -303747,7 +303747,7 @@
         "since": "2026-11-03T20:35:54.663277+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:40:16.868104+00:00"
+        "observedAt": "2026-11-03T20:48:30.202545+00:00"
       }
     }
   },
@@ -303912,12 +303912,12 @@
     "retainedImports": 344,
     "curationRefresh": {
       "prs": [
-        16522
+        14022
       ],
       "issues": [],
       "requests": 2,
       "graphqlCost": 2,
-      "previousFullSnapshot": "2026-11-03T20:37:35.776856+00:00",
+      "previousFullSnapshot": "2026-11-03T20:40:53.920541+00:00",
       "repositoryObservation": {
         "scope": "registered-only",
         "registeredCount": 1,
@@ -303945,7 +303945,7 @@
       },
       "https://github.com/tamird/buildbuddy/commit/bd7d2e4c3": {
         "head": "bd7d2e4c3b3a57d1fd19da69ae3edc452aa2cc00",
-        "status": "Published"
+        "status": "Delivered and merged as #14022"
       },
       "https://github.com/tamird/gvisor/commit/b76315862": {
         "head": "b76315862da33f1ffe8fcba18740ae26b565f7b7",
