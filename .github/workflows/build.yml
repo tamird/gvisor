@@ -1,35 +1,63 @@
-name: CI
-
-"on":
+name: Observe ordinary short TCP connections inside the rtnetlink bridge fixture
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-short-bridge-16908]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    env:
+      CURRENT: 471d6dff5229b99208bf6fec985601067f1f9d69
+      JULY: 9f3e9a3fba9416ea1f5832d82923d95830479096
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Pin both upstream sources and the test-only patch
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$CURRENT"
+          git fetch --depth=1 https://github.com/google/gvisor.git refs/tags/release-20260727.0
+          test "$(git rev-parse 'FETCH_HEAD^{commit}')" = "$JULY"
+          git diff --quiet "$JULY" "$CURRENT" -- test/rtnetlink/BUILD test/rtnetlink/linux/{bridge_test,rtnetlink_test}.sh
+          git diff --binary "$CURRENT" HEAD -- test/rtnetlink/linux > "$RUNNER_TEMP/fixture.patch"
+          mkdir -p "$RUNNER_TEMP/bridge-receipts"
+          cp .github/qualification/short_bridge_receipt.py "$RUNNER_TEMP/receipt.py"
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends g++-aarch64-linux-gnu iproute2
+      - name: Exercise the identical fixture on native Linux and both unmodified runsc sources
+        run: |
+          set -euo pipefail
+          for src in "$CURRENT" "$JULY"; do
+            git switch --detach "$src"
+            git apply --index "$RUNNER_TEMP/fixture.patch"
+            test "$(git diff --cached --name-only)" = "$(printf '%s\n' test/rtnetlink/linux/{BUILD,bridge_test.sh,short_connections.py})"
+            test "$(git hash-object test/rtnetlink/linux/short_connections.py)" = "$(git rev-parse "$GITHUB_SHA:test/rtnetlink/linux/short_connections.py")"
+            test "$(git hash-object test/rtnetlink/linux/bridge_test.sh)" = "$(git rev-parse "$GITHUB_SHA:test/rtnetlink/linux/bridge_test.sh")"
+            targets=(//test/rtnetlink:bridge_test_runsc_systrap_overlay_directfs)
+            if [[ "$src" = "$CURRENT" ]]; then targets+=(//test/rtnetlink:bridge_test_native); fi
+            rc=0
+            sudo -n env -i HOME=/root PATH="$PATH" GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$PWD" \
+              "$(command -v bazel)" test --config=x86_64 -c opt --jobs=4 --local_test_jobs=1 --keep_going \
+              --strategy=TestRunner=local --nocache_test_results --flaky_test_attempts=1 --test_timeout=300 \
+              --build_tag_filters= --test_tag_filters= --build_event_json_file="$RUNNER_TEMP/$src.events" \
+              "${targets[@]}" > "$RUNNER_TEMP/$src.buildlog" 2>&1 || rc=$?
+            printf '%s\n' "$rc" > "$RUNNER_TEMP/bridge-receipts/$src.exit"
+            date --utc --iso-8601=ns > "$RUNNER_TEMP/bridge-receipts/$src.finished"
+            sudo -n env -i HOME=/root PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" \
+              GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$PWD" \
+              /usr/bin/python3 "$RUNNER_TEMP/receipt.py" "$src" "$rc" || echo "Original exit retained; receipt incomplete."
+            git restore --source=HEAD --staged --worktree -- test/rtnetlink/linux/{BUILD,bridge_test.sh,short_connections.py}
+          done
+      - name: Verify all three observations
+        if: ${{ !cancelled() }}
+        run: python3 "$RUNNER_TEMP/receipt.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: short-bridge-tcp-observations
+          path: ${{ runner.temp }}/bridge-receipts/
+          if-no-files-found: error

@@ -16,12 +16,9 @@
 
 set -xeo pipefail
 source "$(dirname "$0")/rtnetlink_test.sh"
-TCP_SRV="$(dirname "$0")/tcp_serv"
-if [[ ! -f "$TCP_SRV" ]]; then
-  TCP_SRV="$(dirname "$0")/tcp_serv_/tcp_serv"
-fi
-
 ip netns attach rootns "$$"
+for link in bridge loopback; do
+for closer in client server; do
 ip link add br0 type bridge
 ip netns add test0
 ip netns add test1
@@ -47,8 +44,13 @@ ip netns exec test1 ip link set up dev veth1
 ip netns exec test0 ip addr add 192.168.0.1/24 dev veth0
 ip netns exec test1 ip addr add 192.168.0.2/24 dev veth1
 
-check_connectivity test1 192.168.0.2 8800 test0 "ping from test0"
-check_connectivity test1 192.168.0.2 8801 rootns "ping from rootns"
+ip link set br0 mtu 1460
+ip link set hveth0 mtu 1460
+ip link set hveth1 mtu 1460
+ip -n test0 link set veth0 mtu 1460
+ip -n test1 link set veth1 mtu 1460
+ip -n test1 link set lo up
+python3 "$(dirname "$0")/short_connections.py" run "$link" "$closer"
 
 # Destroy namespaces and the bridge.
 ip netns del test0
@@ -63,3 +65,5 @@ fi
 if ! wait_for ! ip link show br0 2>/dev/null; then
   fail "br0 hasn't been destroyed"
 fi
+done
+done

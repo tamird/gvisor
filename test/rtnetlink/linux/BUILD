@@ -37,6 +37,7 @@ sh_binary(
     name = "bridge_test",
     srcs = ["bridge_test.sh"],
     data = [
+        "short_connections.py",
         ":tcp_serv",
     ],
     deps = [
