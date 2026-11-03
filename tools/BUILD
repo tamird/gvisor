@@ -39,6 +39,13 @@ bzl_library(
 )
 
 bzl_library(
+    name = "cc_compile_inputs_bzl",
+    srcs = ["cc_compile_inputs.bzl"],
+    visibility = ["//tools/clang_tidy:__pkg__"],
+    deps = ["@rules_cc//cc/common"],
+)
+
+bzl_library(
     name = "defs_bzl",
     srcs = ["defs.bzl"],
     visibility = [
