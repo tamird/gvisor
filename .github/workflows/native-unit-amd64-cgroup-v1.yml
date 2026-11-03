@@ -1,7 +1,7 @@
-name: Native container Make and KVM cgroup modes
+name: Original native container guest reports
 on:
   push:
-    branches: [qualification/buildkite-container-native-kvm]
+    branches: [qualification/buildkite-container-native-reports]
 permissions:
   contents: read
   actions: read
@@ -9,35 +9,37 @@ jobs:
   container:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
     runs-on: ubuntu-22.04
-    timeout-minutes: 115
+    timeout-minutes: 20
     env:
       PRODUCT: 1998f17f51aea3db192d9f1eeda076a8bedfd7a7
       SOURCE: 7e29426b047a41303652cfa9f0ae91e933302f5e
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 6, persist-credentials: false}
-    - name: Retain controller outside product checkout
+      with: {fetch-depth: 2, persist-credentials: false}
+    - name: Bind the original receipt and read-only helper
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
-        test "$(git rev-parse HEAD~5)" = 38745c527784376e0b5d915fe5ebd85e1d1385fd
+        test "$(git rev-parse HEAD^)" = c90e30503332735ddb87d992588101661a7e2d1c
         printf '{"status":"INCOMPLETE","carrier":"%s"}\n' "$GITHUB_SHA" > "$RUNNER_TEMP/container-native-result.json"
-        test -c /dev/kvm
         mkdir "$RUNNER_TEMP/controller"
         cp .github/qualification/unit-cgroup-v1/check.py test/rbe/{credential_artifacts,qualification_report,unit_matrix}.py "$RUNNER_TEMP/controller/"
-        git fetch --no-tags origin "$SOURCE" --depth=3
+        helper=680739b629229eb1c8fa91aa1147d1bca71eb04f
+        coretag=64fea59014b0104240a5e100095b60e51aa90bae
+        controller=aaed41e45c71fb16ddb3ec4b6f630e15a60df757
         decoder=0a9bdf9bc331d6a66f35aefcbbb5cf466eb6f7f5
-        git fetch --no-tags origin "$decoder" --depth=1
+        git fetch --no-tags origin "$helper" "$coretag" "$controller" "$decoder" --depth=1
+        git show "$helper:test/rbe/cas_inputs.py" > "$RUNNER_TEMP/controller/cas_inputs.py"
+        git show "$coretag:.github/qualification/unit-cgroup-v1/check.py" > "$RUNNER_TEMP/controller/coretag_original.py"
+        git show "$controller:.github/qualification/unit-cgroup-v1/check.py" > "$RUNNER_TEMP/controller/unit_v1.py"
         git show "$decoder:test/rbe/stdlib-provenance.py" > "$RUNNER_TEMP/controller/stdlib_provenance.py"
-        command -v zstd
-        gh api repos/tamird/gvisor/actions/artifacts/13251075654/zip > "$RUNNER_TEMP/diagnostic.zip"
-        gh api repos/tamird/gvisor/actions/artifacts/13248882573/zip > "$RUNNER_TEMP/original.zip"
-        printf '{"status":"INCOMPLETE","carrier":"%s"}\n' "$GITHUB_SHA" > "$RUNNER_TEMP/container-native-result.json"
-    - name: Native build and fresh isolated guests
+        gh api repos/tamird/gvisor/actions/artifacts/13253001262/zip > "$RUNNER_TEMP/original.zip"
+        gh api repos/tamird/gvisor/actions/artifacts/13252722859/zip > "$RUNNER_TEMP/coretag.zip"
+    - name: Recover original test metadata and projected diagnostics
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: python3 -B "$RUNNER_TEMP/controller/check.py"
+      run: python3 -B "$RUNNER_TEMP/controller/check.py" --recover-guests
     - name: Validate sole public receipt
       id: scan
       if: always()

@@ -370,6 +370,239 @@ def guest(rc):
     require(all({'TestMinimalBoot/systrap', 'TestMinimalBoot/kvm', 'TestMountEROFS', 'TestMountEROFSConfig/image1'} <= names for names in passed.values()), 'required platform or EROFS case did not pass')
 
 
+def recover_guests():
+    """Recover only the original guest attempts and bounded diagnostics."""
+    from cas_inputs import blob, rpc
+
+    raw = (TMP / 'original.zip').read_bytes()
+    require(sha(raw) == '065c02f43387d0cdaa4c5417d2f89feec88202ebb9ca44c99d6225a1d4ce46e5', 'original ZIP mismatch')
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+        require(archive.namelist() == ['container-native-result.json'], 'original members mismatch')
+        prior = json.loads(archive.read('container-native-result.json'))
+    require(prior['carrier'] == 'c90e30503332735ddb87d992588101661a7e2d1c'
+            and prior['source'] == SOURCE and prior['product'] == PRODUCT and prior['status'] == 'FAIL'
+            and prior['commands']['native-build']['exit'] == 0 and prior['commands']['guest']['exit'] == 3,
+            'original execution mismatch')
+    invocation = prior['guest_invocation']
+    require(invocation == 'ec4bba4c-ce01-44ff-9b52-700d5446c588', 'original invocation mismatch')
+    require(git('rev-parse', 'HEAD^') == prior['carrier'], 'recovery ancestry mismatch')
+    DOC.update(original=dict(artifact=13253001262, zip_sha256=sha(raw), receipt=prior),
+               scope='Original guest attempts and diagnostics only; no build or test rerun',
+               workload_repeated=False, guest_invocation=invocation, targets={}, recovered_attempts=[])
+    save()
+    known_tools = set('bash sh busybox tar mount mkfs.erofs stat awk sha256sum cut chmod ln cat qemu-system-x86_64'.split())
+    known_tools.update(NAMES)
+
+    def project(data):
+        patterns = {
+            'missing_file': r'(?i)no such file or directory|command not found|not found in .?PATH',
+            'permission': r'(?i)permission denied|operation not permitted',
+            'exec_format': r'(?i)exec format error|cannot execute binary file',
+            'shared_library': r'(?i)error while loading shared libraries|GLIBC_[0-9.]+.*not found',
+            'kvm': r'(?i)could not access KVM|failed to initialize kvm|KVM.*not supported',
+            'kernel_panic': r'Kernel panic|not syncing|VFS: Unable to mount root',
+            'sharding': r'(?i)sharding.*(?:requested|support)|TEST_SHARD_STATUS_FILE',
+            'erofs': r'(?i)mkfs[.]erofs.*(?:error|failed|invalid|usage)|erofs.*(?:not found|unsupported)',
+            'timeout': r'(?i)timed out|TIMEOUT|deadline exceeded',
+            'disk': r'(?i)no space left on device',
+        }
+        result = dict(diagnostics=[], host_phases=[], fixed_messages=[])
+        fixed = {'Guest did not report a completed test', 'Passing guest omitted test XML'}
+        for line in data.decode(errors='replace').splitlines():
+            if re.search(r'(?i)authorization|x-buildbuddy-api-key|remote_header|bes_header|github_pat_|gh[pousr]_', line):
+                continue
+            classes = sorted(k for k, pattern in patterns.items() if re.search(pattern, line))
+            if classes and len(result['diagnostics']) < 32:
+                result['diagnostics'].append(dict(classes=classes, line_sha256=sha(line.encode()),
+                    tools=sorted(tool for tool in known_tools if re.search(
+                        r'(?<![A-Za-z0-9_.+-])' + re.escape(tool) + r'(?![A-Za-z0-9_.+-])', line))))
+            if line in fixed:
+                result['fixed_messages'].append(line)
+            match = re.fullmatch(r'host_uptime_seconds=([0-9.]+) phase=([a-z_]{1,40}) status=(-|[0-9]{1,3}) outer_test_timeout_seconds=(unset|[0-9]{1,5})', line)
+            if match:
+                result['host_phases'].append(dict(uptime=match[1], phase=match[2], status=match[3]))
+        return result
+
+    require(project(b'Authorization: Bearer private')['diagnostics'] == [], 'header projection control')
+    sample = project(b'/private/tool/mkfs.erofs: error while loading shared libraries: private.so')
+    require(sample['diagnostics'][0]['classes'] == ['erofs', 'shared_library']
+            and 'private' not in json.dumps(sample), 'diagnostic projection control')
+    DOC['projection_control'] = 'PASS'
+    seen = set()
+    labels = ['//' + PKG + ':' + mode + '_' + name for mode in ('v1', 'v2') for name in NAMES]
+
+    def target(label):
+        response = rpc('GetTarget', dict(invocationId=invocation, targetLabel=label))
+        row = DOC['targets'][label] = dict(metadata_sha256=sha(json.dumps(response, sort_keys=True).encode()), attempts=0)
+        save()
+        groups = response.get('targetGroups', [])
+        require(groups and all(not g.get('nextPageToken') for g in groups), 'partial target metadata')
+        events_by_id = {}
+        for group in groups:
+            for value in group.get('targets', []):
+                require(value['metadata']['label'] == label, 'wrong returned owner')
+                for event in value.get('testResultEvents', []):
+                    ident = event['id']['testResult']
+                    require(ident['label'] == label, 'wrong attempt owner')
+                    configuration = ident['configuration']['id']
+                    require(re.fullmatch('[a-f0-9]{64}', configuration), 'invalid configuration')
+                    key = (label, configuration, int(ident.get('run', 0)), int(ident.get('shard', 0)), int(ident.get('attempt', 0)))
+                    if key in events_by_id:
+                        require(events_by_id[key] == event, 'conflicting repeated event')
+                    events_by_id[key] = event
+        mode, name = label.split(':')[1].split('_', 1)
+        require(len(events_by_id) == SHARDS[name], 'missing or extra original attempts')
+        require({key[3] for key in events_by_id} == set(range(1, SHARDS[name] + 1))
+                and len({key[1] for key in events_by_id}) == 1, 'incomplete shards or mixed configurations')
+        for key, event in sorted(events_by_id.items()):
+            _, configuration, run, shard, attempt = key
+            require(run == attempt == 1 and 1 <= shard <= SHARDS[name] and key not in seen, 'unexpected attempt identity')
+            seen.add(key)
+            result = event['testResult']
+            item = dict(owner='//runsc/container:' + name, guest_owner=label, configuration=configuration,
+                mode=mode, run=run, bep_shard=shard, shard_index=shard - 1, attempt=attempt,
+                status=result['status'], local_cache=bool(result.get('cachedLocally')),
+                remote_cache=bool(result.get('executionInfo', {}).get('cachedRemotely')),
+                strategy=result.get('executionInfo', {}).get('strategy'), timing={}, files=[])
+            for field, pattern in (
+                ('testAttemptStartMillis', r'[0-9]{1,16}'), ('testAttemptDurationMillis', r'[0-9]{1,16}'),
+                ('testAttemptStart', r'[0-9T:.+-]{10,40}Z?'), ('testAttemptDuration', r'[0-9.]{1,24}s'),
+            ):
+                value = result.get(field)
+                if isinstance(value, (str, int)) and re.fullmatch(pattern, str(value)):
+                    item['timing'][field] = value
+            DOC['recovered_attempts'].append(item)
+            row['attempts'] += 1
+            save()
+            for entry in result.get('testActionOutput', []):
+                if entry.get('name') not in ('test.log', 'test.xml'):
+                    continue
+                uri = entry.get('uri', '')
+                match = re.fullmatch(r'bytestream://remote\.buildbuddy\.io/(?:[^?#]*/)?blobs/([a-f0-9]{64})/(\d+)', uri)
+                file = dict(name=entry['name'], disposition='unavailable')
+                item['files'].append(file)
+                if not match:
+                    save()
+                    continue
+                file.update(sha256=match[1], bytes=int(match[2]))
+                save()
+                if not 0 < int(match[2]) < 2 * 1024**2:
+                    file['disposition'] = 'outside_size_bound'
+                    save()
+                    continue
+                data = blob(dict(hash=match[1], sizeBytes=match[2]), invocation)
+                if entry['name'] == 'test.xml':
+                    cases = list(ET.fromstring(data).iter('testcase'))
+                    file.update(cases=len(cases), failed=sum(c.find('failure') is not None or c.find('error') is not None for c in cases),
+                        substantive_cases=sum(c.get('name', '').startswith('Test') for c in cases))
+                    original = [a for a in prior['attempts'] if a['owner'] == item['owner'] and a['mode'] == mode and a['shard'] == shard]
+                    if original:
+                        old, = original
+                        require(old['xml']['sha256'] == sha(data) and old['status'] == item['status'], 'retained original attempt differs')
+                        file['matches_original_receipt'] = True
+                else:
+                    file.update(project(data))
+                file['disposition'] = 'recovered'
+                save()
+        require(row['attempts'] == SHARDS[name], 'incomplete attempt count')
+
+    for label in labels:
+        phase(label, lambda label=label: target(label))
+    DOC['expected_attempts'] = 26
+    DOC['attempt_inventory_complete'] = len(seen) == 26 and all(p['status'] == 'PASS' for p in DOC['phases'].values())
+    DOC['files_complete'] = DOC['attempt_inventory_complete'] and all(
+        {f['name'] for f in a['files'] if f['disposition'] == 'recovered'} == {'test.log', 'test.xml'}
+        for a in DOC['recovered_attempts'])
+    DOC['status'] = 'ORIGINAL_FAIL_REPORTS_RECOVERED' if DOC['files_complete'] else 'ORIGINAL_FAIL_RECOVERY_INCOMPLETE'
+    save()
+
+
+def recover_coretag():
+    """Read the two already-completed topology arms; never boot another VM."""
+    from cas_inputs import blob, rpc
+    import coretag_original
+    import unit_v1
+
+    raw = (TMP / 'coretag.zip').read_bytes()
+    require(sha(raw) == '6b7eb6df084a876265207777ae33dc5b1ad49a73053b3b1fbb99eb4017794128', 'coretag ZIP mismatch')
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+        require(archive.namelist() == ['verdict.json'], 'coretag members mismatch')
+        prior = json.loads(archive.read('verdict.json'))
+    require(prior['carrier'] == '64fea59014b0104240a5e100095b60e51aa90bae' and prior['status'] == 'FAIL'
+            and prior['product'] == '96fadde722e14d482a62276b80237398f8b62fbf'
+            and prior['guest_source'] == GUEST and prior['coordinator']['machine'] == 'x86_64'
+            and prior['coordinator']['vendor'] == 'AuthenticAMD', 'coretag original identity mismatch')
+    rows = [prior['phases'][name] for name in ('original_cpu', 'topoext_cpu')]
+    require([row['native_exit'] for row in rows] == [3, 0], 'coretag original exits mismatch')
+    require(rows[0]['suite_executed'][0]['execution_info']['hostname'] == rows[1]['suite_executed'][0]['execution_info']['hostname'], 'coretag workers differ')
+    DOC['coretag'] = dict(original=dict(artifact=13252722859, zip_sha256=sha(raw), receipt=prior),
+                         workload_repeated=False, whole_unit_suite_qualified=False, arms={})
+    save()
+    for name, old in zip(('original_cpu', 'topoext_cpu'), rows):
+        original, = old['suite_executed']
+        invocation, label = old['invocation'], original['owner']['label']
+        require(invocation == {'original_cpu': '0b7450ef-3e4d-4a99-816a-842ff90c63c0',
+                               'topoext_cpu': '85461e86-3bf6-4263-8b22-967a048f5a24'}[name], 'coretag invocation mismatch')
+        require(not original['cached_locally'] and not original['execution_info'].get('cachedRemotely')
+                and original['execution_info']['strategy'] == 'local', 'coretag original placement mismatch')
+        response = rpc('GetTarget', dict(invocationId=invocation, targetLabel=label))
+        arm = DOC['coretag']['arms'][name] = dict(invocation=invocation, owner=label,
+            metadata_sha256=sha(json.dumps(response, sort_keys=True).encode()), files=[])
+        save()
+        observed = {}
+        for group in response.get('targetGroups', []):
+            require(not group.get('nextPageToken'), 'partial coretag target')
+            for value in group.get('targets', []):
+                require(value['metadata']['label'] == label, 'wrong coretag owner')
+                for event in value.get('testResultEvents', []):
+                    observed[sha(json.dumps(event, sort_keys=True).encode())] = event
+        event, = observed.values()
+        ident, result = event['id']['testResult'], event['testResult']
+        require(ident['label'] == label and ident['configuration']['id'] == original['owner']['configuration']
+                and all(int(ident.get(key, 0)) == original[key] == 1 for key in ('run', 'shard', 'attempt')),
+                'coretag attempt identity mismatch')
+        require(result['status'] == original['status'] and not result.get('cachedLocally')
+                and not result.get('executionInfo', {}).get('cachedRemotely')
+                and result['executionInfo']['strategy'] == 'local', 'coretag attempt result mismatch')
+        files = {}
+        for entry in result.get('testActionOutput', []):
+            kind = entry.get('name')
+            if kind not in {'test.log', 'test.xml', 'test.outputs__outputs.zip', 'test.outputs/outputs.zip'}:
+                continue
+            match = re.fullmatch(r'bytestream://remote\.buildbuddy\.io/(?:[^?#]*/)?blobs/([a-f0-9]{64})/(\d+)', entry.get('uri', ''))
+            require(match and 0 < int(match[2]) < 4 * 1024**2, 'coretag file location or size')
+            kind = 'outputs.zip' if kind in {'test.outputs__outputs.zip', 'test.outputs/outputs.zip'} else kind
+            require(kind not in files, 'duplicate coretag file')
+            arm['files'].append(dict(name=kind, sha256=match[1], bytes=int(match[2])))
+            save()
+            files[kind] = blob(dict(hash=match[1], sizeBytes=match[2]), invocation)
+        require({'test.log', 'test.xml'} <= set(files), 'missing coretag reports')
+        arm['topology'] = coretag_original.topology(files['test.log'])
+        require(arm['topology'] == old['topology'], 'coretag original log changed')
+        cases = list(ET.fromstring(files['test.xml']).iter('testcase'))
+        arm['xml'] = dict(cases=len(cases), test_enable_count=sum(c.get('name') == 'TestEnable' for c in cases))
+        save()
+        if name == 'original_cpu':
+            require(arm['topology']['topology_rejected'] and arm['xml']['test_enable_count'] == 0, 'original topology boundary changed')
+            arm['observation'] = 'TOPOLOGY_REJECTED'
+            continue
+        require(len(cases) == 1 and cases[0].get('name') == 'TestEnable' and not list(cases[0])
+                and cases[0].get('status') != 'notrun' and cases[0].get('result') != 'suppressed', 'TestEnable not executed successfully')
+        topology = arm['topology']
+        require(topology['config_sched_core'] and topology['guest_completed'] and topology['topoext'] == [True]
+                and topology['online'] == ['0-1'] and topology['vendors'] == ['AuthenticAMD']
+                and topology['siblings'] == [dict(cpu=cpu, mask='0-1') for cpu in (0, 1)], 'native SMT proof differs')
+        require('outputs.zip' in files, 'missing coretag v1 proof')
+        path = TMP / 'coretag-outputs.zip'
+        path.write_bytes(files['outputs.zip'])
+        arm['guest'] = unit_v1.modes(path, 'guest/outputs/')
+        require(arm['guest'].get('mode') == 'false' and arm['guest'].get('machine') == 'x86_64'
+                and arm['guest'].get('elf_sha256') == coretag_original.ELF, 'coretag v1 or original ELF proof missing')
+        arm['observation'] = 'NATIVE_KVM_SMT_PASS'
+        DOC['coretag']['native_kvm_test_enable_passed'] = True
+        save()
+
+
 def recover_build():
     """Read the exact retained stderr, without invoking the workload."""
     from cas_inputs import blob
@@ -463,11 +696,18 @@ def main():
 
 if __name__ == '__main__':
     try:
-        if sys.argv[1:] == ['--recover-build']:
+        if sys.argv[1:] == ['--recover-guests']:
+            recover_guests()
+            DOC['container_recovery_status'] = DOC['status']
+            phase('coretag_reports', recover_coretag)
+            if DOC['phases']['coretag_reports']['status'] != 'PASS':
+                DOC['status'] = 'ORIGINAL_FAIL_RECOVERY_INCOMPLETE'
+            save()
+        elif sys.argv[1:] == ['--recover-build']:
             recover_build()
         else:
             main()
     except Exception as exc:
         DOC['error_class'] = type(exc).__name__
         save()
-    sys.exit(0 if DOC['status'] in ('PASS', 'ORIGINAL_FAIL_DIAGNOSTIC_RECOVERED') else 1)
+    sys.exit(0 if DOC['status'] in ('PASS', 'ORIGINAL_FAIL_DIAGNOSTIC_RECOVERED', 'ORIGINAL_FAIL_REPORTS_RECOVERED') else 1)
