@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import re
 import sys
+import subprocess
 from urllib.parse import unquote, urlsplit
 
 OWNER = "//tools/nogo:stdlib"
@@ -69,6 +70,45 @@ def diagnostics(data, action):
     return lines
 
 
+def producer_placements(path):
+    from stdlib_provenance import fields, first, number
+
+    directories = {}
+    spawns = []
+    with subprocess.Popen(["zstd", "-qdc", str(path)], stdout=subprocess.PIPE) as z:
+        while (size := number(z.stdout)) is not None:
+            if size > 64 << 20:
+                raise ValueError("oversized execution record")
+            record = z.stdout.read(size)
+            if len(record) != size:
+                raise ValueError("incomplete execution record")
+            entry = fields(record)
+            if 4 in entry:
+                directory = fields(first(entry, 4))
+                files = [first(fields(f), 1) for f in directory[2]]
+                archives = [f for f in files if f.endswith(b".a")]
+                if archives:
+                    directories[first(entry, 1)] = {
+                        "count": len(archives),
+                        "fmt": any(f.rsplit(b"/", 1)[-1] == b"fmt.a" for f in archives),
+                        "example2": any(f.endswith(b"reflect/internal/example2.a") for f in archives),
+                    }
+            if 7 not in entry:
+                continue
+            spawn = fields(first(entry, 7))
+            mnemonic = first(spawn, 8).decode()
+            if mnemonic not in {"GoStdlib", "GoStdlibList"}:
+                continue
+            ids = [first(fields(output), 5, 0) for output in spawn[6]]
+            spawns.append({"mnemonic": mnemonic, "runner": first(spawn, 11).decode(),
+                           "cache_hit": bool(first(spawn, 12, 0)), "exit": first(spawn, 9, 0),
+                           "status": first(spawn, 10).decode(),
+                           "archive_outputs": [directories[i] for i in ids if i in directories]})
+        if z.wait():
+            raise ValueError("invalid execution log")
+    return spawns
+
+
 def verdict():
     from handoff import regular
 
@@ -114,10 +154,23 @@ def verdict():
             with (d / "build.log").open("rb") as log:
                 log.seek(max(0, os.fstat(log.fileno()).st_size - 131072))
                 row["console_diagnostic"] = diagnostics(log.read(131072), False)
+        # Keep the original failing native status even if placement decoding fails.
         consistent = row["native_exit"] == row["container_exit"] == row.get("bep_exit")
         if consistent and row["native_exit"] != 0:
             row["status"] = "FAILED_BUILD"
-        elif (consistent and row["native_exit"] == 0 and row.get("target_success") and
+        compact = transfer / "build.compact"
+        with regular(compact, 512 << 20):
+            placements = row["producers"] = producer_placements(compact)
+        verified = ({s["mnemonic"] for s in placements} == {"GoStdlib", "GoStdlibList"} and
+                    all(s["runner"] == "processwrapper-sandbox" and not s["cache_hit"] and
+                        not s["status"] and s["exit"] == 0 for s in placements) and
+                    all(any(o["count"] >= 100 and o["fmt"] for o in s["archive_outputs"]) and
+                        not any(o["example2"] for o in s["archive_outputs"])
+                        for s in placements if s["mnemonic"] == "GoStdlib"))
+        row["verified_producers"] = verified
+        if consistent and row["native_exit"] != 0:
+            row["status"] = "FAILED_BUILD"
+        elif (consistent and verified and row["native_exit"] == 0 and row.get("target_success") and
               len(row["actions"]) == 1 and row["actions"][0]["success"] and "oom_kill" in row["memory_events_delta"]):
             row["status"] = "PASS_STDLIB_ONLY"
     finally:

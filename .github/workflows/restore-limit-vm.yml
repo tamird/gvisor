@@ -1,7 +1,7 @@
-name: Diagnose the standard-library producer on the upstream parent
+name: Check sandboxed standard-library inputs on the upstream parent
 on:
   push:
-    branches: [qualification/restore-limit-stdlib]
+    branches: [qualification/restore-limit-stdlib-sandbox]
 permissions: {contents: read}
 jobs:
   stdlib:
@@ -21,7 +21,7 @@ jobs:
     - name: Execute only the unmodified upstream standard-library analysis
       run: |
         set -euo pipefail
-        test "$(git rev-parse HEAD^)" = 4a22be3573539daf3599a62a3d979eec0c1c22b9
+        test "$(git rev-parse HEAD^)" = 7998b2948834512d15ef57c700dbd9193d30d7df
         d=$RUNNER_TEMP/restore-build
         mkdir -p "$d/src" "$d/output"
         chmod a+w "$d/src" "$d/output"
@@ -32,6 +32,8 @@ jobs:
         test -z "$(git -C "$d/src" remote)"
         test -z "$(git -C "$d/src" config --local --get-regexp 'extraheader|credential' || :)"
         cp "$PKG/stdlib.py" "$d/output/"
+        curl --fail --silent --show-error --proto '=https' https://raw.githubusercontent.com/tamird/gvisor/0a9bdf9bc331d6a66f35aefcbbb5cf466eb6f7f5/test/rbe/stdlib-provenance.py > "$PKG/stdlib_provenance.py"
+        echo "3bed14c6eb1f86208b669d1347fb63db392aa76102dce22ebee8853831f605d0  $PKG/stdlib_provenance.py" | sha256sum --check
         docker pull "$IMAGE" > "$d/pull.log" 2>&1
         docker run --rm --cap-drop=ALL --security-opt no-new-privileges \
           -v "$d/src:/src" -v "$d/output:/transfer" -w /src \
@@ -40,7 +42,8 @@ jobs:
           set -eu
           if test -r /sys/fs/cgroup/memory.events; then cp /sys/fs/cgroup/memory.events /transfer/before; fi
           bazel build --config=x86_64 --jobs=4 --spawn_strategy=local --remote_cache= --remote_executor= --bes_backend= \
-            --test_sharding_strategy=disabled --build_event_json_file_path_conversion=false \
+            --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox \
+            --execution_log_compact_file=/transfer/build.compact --test_sharding_strategy=disabled --build_event_json_file_path_conversion=false \
             --build_event_publish_all_actions --build_event_json_file=/transfer/build.bep \
             //tools/nogo:stdlib || rc=$?
           date --utc --iso-8601=ns > /transfer/finished
@@ -56,6 +59,6 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: upstream-stdlib-diagnostic
+        name: sandboxed-upstream-stdlib
         path: ${{ runner.temp }}/stdlib-result.json
         if-no-files-found: error
