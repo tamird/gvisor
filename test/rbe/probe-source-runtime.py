@@ -87,6 +87,19 @@ def command(name, args, *, env=None, timeout=180, expected=0):
         ('repository_fetch', r'Error downloading|error loading package|fetch of repository'),
         ('timeout', r'Timeout|timed out'),
     ) if re.search(pattern, text)]
+    row['diagnostics'] = []
+    for line in text.splitlines():
+        if not re.match(r'^(?:ERROR:|FATAL:|Error:|[A-Za-z]+Error:|make(?:\[\d+\])?: \*\*\*)', line):
+            continue
+        original_sha = hashlib.sha256(line.encode()).hexdigest()
+        line = re.sub(r'"(?:\\.|[^"\\])*"', '<quoted>', line)
+        line = re.sub(r'(?i)(?:https?|grpcs?)://\S+', '<url>', line)
+        line = re.sub(r'(?:[A-Za-z]:)?/[^\s,;]*', '<path>', line)
+        if SECRET in line or re.search(r'(?i)(?:authorization|x-buildbuddy-api-key|github_pat_|gh[pousr]_\w|Bearer\s+)', line):
+            line = '<diagnostic sha256=' + original_sha + '>'
+        row['diagnostics'].append({'message': line[:600], 'original_sha256': original_sha})
+        if len(row['diagnostics']) == 8:
+            break
     row['expected_exit'] = expected
     row['status'] = 'PASS' if code == expected else ('TIMEOUT' if code == 124 else 'FAIL')
     save()
@@ -246,6 +259,17 @@ if '--container-diagnostics' in sys.argv:
 
 
 try:
+    original_bytes = (TMP / 'original-source.zip').read_bytes()
+    assert hashlib.sha256(original_bytes).hexdigest() == '3034b139adeac9a33600a328672000dcd40a9d8c3a4c35ef4e46be264b425ba9'
+    with zipfile.ZipFile(io.BytesIO(original_bytes)) as archive:
+        assert archive.namelist() == ['source-verdict.json']
+        prior = json.loads(archive.read('source-verdict.json'))
+    assert prior['product'] == PRODUCT and prior['integration'] == INTEGRATION
+    assert prior['status'] == 'FAIL' and prior['phases']['source-empty']['exit'] == 2
+    assert not prior['invocations'] and not prior['observations']
+    record['original_qualification'] = {'artifact': 13264213121,
+        'zip_sha256': hashlib.sha256(original_bytes).hexdigest(), 'receipt': prior}
+    save()
     assert platform.system() == 'Linux' and platform.machine() == 'x86_64' and os.getuid() != 0
     assert captured(['git', 'rev-parse', 'HEAD']) == INTEGRATION
     record['host'] = {'os': 'Linux', 'architecture': platform.machine(), 'kernel': platform.release(), 'uid': os.getuid()}
@@ -286,7 +310,8 @@ f=p/(phase+'.argv.jsonl'); rows=f.read_text().splitlines() if f.exists() else []
 with f.open('a') as s:s.write(json.dumps(args)+'\\n')
 extra=[]
 if args and args[0] in ('build','cquery'):extra=['--build_event_json_file='+str(p/(phase+'-'+str(len(rows))+'.bep'))]
-r=subprocess.run([os.environ['REAL_BAZEL'],'--bazelrc='+str(p/'client.bazelrc'),*args,*extra],stdout=subprocess.PIPE)
+position=args.index('--') if '--' in args else len(args)
+r=subprocess.run([os.environ['REAL_BAZEL'],'--bazelrc='+str(p/'client.bazelrc'),*args[:position],*extra,*args[position:]],stdout=subprocess.PIPE)
 if args and args[0]=='cquery':(p/(phase+'.cquery')).write_bytes(r.stdout)
 sys.stdout.buffer.write(r.stdout);sys.stdout.buffer.flush()
 sys.exit(r.returncode if r.returncode>=0 else 128-r.returncode)
@@ -308,7 +333,8 @@ sys.exit(r.returncode if r.returncode>=0 else 128-r.returncode)
     assert len(rows) == 2 and [row[0] for row in rows] == ['build', 'cquery']
     for row in rows:
         assert row.count(CACHE) == 1 and row.count(METADATA) == 1
-        assert '--config=x86_64' in row and '//:release' in row
+    assert rows[0][-2:] == ['--', '//:release']
+    assert rows[1][-2:] == ['--', 'set() union "//:release"']
     files = inventory(source_dir)
     outputs = {}
     for line in (PRIVATE / 'source-empty.cquery').read_text().splitlines():
@@ -327,7 +353,8 @@ sys.exit(r.returncode if r.returncode>=0 else 128-r.returncode)
     record['observations']['source_install'] = {'files': files, 'runtime_args': installed.get('runtimeArgs', []),
         'docker_invocations_during_install': 0, 'native_make_build_and_cquery': True,
         'cache_argument_once_each': True, 'quoted_metadata_once_each': True,
-        'configured_architecture': 'x86_64', 'producer_files_match': True}
+        'executable_architecture': 'x86_64', 'producer_files_match': True,
+        'build_target': '//:release', 'cquery_expression': 'set() union "//:release"'}
     with tarfile.open(PRIVATE / 'runtime.tar.gz', 'w:gz') as archive:
         for name in sorted(EXPECTED):
             archive.add(source_dir / name, arcname=name, recursive=False)

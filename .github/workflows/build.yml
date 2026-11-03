@@ -16,23 +16,21 @@ jobs:
       COMPILER: a385bd2b0155b82faf4fc6a0c195a153ad57550c
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 3, persist-credentials: false}
+        with: {fetch-depth: 4, persist-credentials: false}
       - name: Bind the existing hooks and retained compiler source
         timeout-minutes: 7
         run: |
           set -euo pipefail
           test "$(uname -m)" = x86_64
           test "$(id -u)" != 0
-          test "$(git rev-parse HEAD^)" = "$INTEGRATION"
-          test "$(git rev-parse HEAD^^)" = "$COMPILER"
+          test "$(git rev-parse HEAD^)" = aaee741755b8c01c24c73a5a9b5f7d2359d6caf5
+          test "$(git rev-parse HEAD^^)" = "$INTEGRATION"
+          test "$(git rev-parse HEAD^^^)" = "$COMPILER"
           git diff --exit-code "$INTEGRATION" HEAD -- . ':!.github/workflows/build.yml' ':!test/rbe/probe-source-runtime.py'
           git fetch --depth=3 origin proposal/buildkite-source-runtime-native
           test "$(git rev-parse FETCH_HEAD)" = "$PRODUCT"
           git diff --exit-code "$PRODUCT" "$INTEGRATION" -- .buildkite/hooks/pre-command .buildkite/hooks/post-command tools/bazel.mk tools/release.bzl tools/show_paths.bzl runsc/cmd/install.go images/default/bazelversion
           cp test/rbe/probe-source-runtime.py "$RUNNER_TEMP/probe.py"
-          helper=680739b629229eb1c8fa91aa1147d1bca71eb04f
-          git fetch --depth=1 origin "$helper"
-          git show "$helper:test/rbe/cas_inputs.py" > "$RUNNER_TEMP/cas_inputs.py"
           git checkout --detach "$INTEGRATION"
           python3 - <<'PY'
           import os
@@ -54,20 +52,10 @@ jobs:
           BUILD
           sudo test -f /etc/docker/daemon.json || printf '%s\n' '{}' | sudo tee /etc/docker/daemon.json >/dev/null
           tar -C / -chf - bin/true lib/x86_64-linux-gnu/libc.so.6 lib64/ld-linux-x86-64.so.2 | docker import - hook-probe >/dev/null
-      - name: Recover only the two known original container failure logs
-        id: diagnostics
-        continue-on-error: true
-        timeout-minutes: 4
+      - name: Preserve the original observer failure without rereading container logs
         env:
           GH_TOKEN: ${{ github.token }}
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 -B "$RUNNER_TEMP/probe.py" --container-diagnostics
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: ${{ always() && steps.diagnostics.outcome != 'skipped' }}
-        with:
-          name: original-container-diagnostics
-          path: ${{ runner.temp }}/container-diagnostics.json
-          if-no-files-found: warn
+        run: gh api repos/tamird/gvisor/actions/artifacts/13264213121/zip > "$RUNNER_TEMP/original-source.zip"
       - name: Exercise native copy, durable Docker runtime and failure cleanup
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
