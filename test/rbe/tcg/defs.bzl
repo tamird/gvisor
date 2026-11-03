@@ -69,7 +69,7 @@ guest_host_tools = rule(
 )
 
 def _image_impl(ctx):
-    tar = ctx.toolchains["@tar.bzl//tar/toolchain:target_type"]
+    tar = ctx.toolchains[tar_lib.toolchain_type]
     kernel = ctx.actions.declare_file(ctx.label.name + ".Image")
     rootfs = ctx.actions.declare_file(ctx.label.name + ".ext4")
     ctx.actions.run(
@@ -102,7 +102,7 @@ def _image_impl(ctx):
 tcg_image = rule(
     implementation = _image_impl,
     attrs = {
-        "host_tools": attr.label(allow_single_file = True, mandatory = True),
+        "host_tools": attr.label(allow_single_file = True, cfg = "exec", mandatory = True),
         "guest": attr.label(allow_single_file = True, cfg = _guest_transition, mandatory = True),
         "_allowlist_function_transition": attr.label(default = transition_allowlist),
         "init": attr.label(allow_single_file = True, mandatory = True),
@@ -114,7 +114,7 @@ tcg_image = rule(
         "_zstd": attr.label(default = Label("@llvm_zstd//:zstd_cli"), executable = True, cfg = "exec"),
         "_builder": attr.label(default = Label(":build_image"), executable = True, cfg = "exec"),
     },
-    toolchains = ["@tar.bzl//tar/toolchain:target_type"],
+    toolchains = [tar_lib.toolchain_type],
 )
 
 def _payload_image_impl(ctx):
