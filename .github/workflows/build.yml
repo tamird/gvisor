@@ -22,7 +22,7 @@ jobs:
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/veth-public"
           printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/veth-public/verdict.json"
-          test "$(git rev-parse HEAD^)" = 7418e0ff3e05db3e7622fc199a8fd033da67630c
+          test "$(git rev-parse HEAD^)" = 02e158d332aee5e532015a2dba8b53df54710ac6
           cp .github/qualification/veth_mtu.py "$RUNNER_TEMP/"
           gh api repos/tamird/gvisor/actions/artifacts/13277699861/zip > "$RUNNER_TEMP/original.zip"
           helper=680739b629229eb1c8fa91aa1147d1bca71eb04f

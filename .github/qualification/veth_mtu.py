@@ -48,11 +48,20 @@ for arm, invocation in identifiers.items():
     record, = [v for v in row["reports"] if v["name"] == "test.log"]
     assert 0 < record["bytes"] < 12 * 1024
     data = blob({"hash": record["sha256"], "sizeBytes": record["bytes"]}, invocation)
+    phrases = (
+        "setting up network", "creating default loopback interface", "creating loopback link and routes",
+        "creating links and routes", "urpc method", "containerManager.SetNetworkArgs", "broken pipe",
+        "connection reset by peer", "connection refused", "EOF", "operation not permitted", "permission denied",
+        "the sandbox exited before the container started (see the sandbox logs)",
+    )
+    matched = []
     tokens = []
     for line in data.decode(errors="replace").splitlines():
+        if "setting up network" in line:
+            matched.extend(s for s in phrases if s in line)
         if marker.search(line):
             words = [w for w in re.findall(r"[a-z_][a-z0-9_.-]*", line.lower()) if w in vocabulary]
             if words:
                 tokens.append(words[:48])
-    result["originals"][arm] = {**record, "invocation": invocation, "diagnostic_words": tokens[-24:]}
+    result["originals"][arm] = {**record, "invocation": invocation, "diagnostic_words": tokens[-24:], "network_error_phrases": matched}
 (root / "veth-public/verdict.json").write_text(json.dumps(result, indent=2) + "\n")
