@@ -1,0 +1,126 @@
+name: Verify native CI qualifications and review decisions
+on:
+  push:
+    branches: [qualification/work-map-native-install-container]
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind collector to the curated records and published base
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = fb3295b3848cfdee4ce3760f162b357ba6d998f6
+          test "$(git rev-parse HEAD^^)" = 46f61d22452256a04ecb5065319ed9a155005334
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          test "$(git diff --name-only HEAD^^ HEAD^)" = registry.json
+          mkdir results
+          cp registry.json results/
+      - name: Refresh the affected public prerequisites and deliveries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PYTHON'
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import copy
+          import json
+          import runpy
+          u = runpy.run_path("update-status.py")
+          g = u["collect_repository"].__globals__
+          r = u["REGISTRY"]
+          saved = copy.deepcopy(r)
+          repo = "google/gvisor"
+          numbers = {15918, 16419, 16843, 16904, 16925}
+          p = Path("github-status.json")
+          old = json.loads(p.read_text())
+          prior = [x for x in old["prs"] if x.get("repo",repo) == repo and x["number"] in numbers]
+          assert {p["number"] for p in prior} <= numbers
+          try:
+              # The canonical collector supports registered-only repositories. For this
+              # publication, scope that existing path to exactly the changed nodes.
+              r["nodes"] = [n for n in r["nodes"] if n["id"] in
+                            {"pr:" + str(i) for i in numbers}]
+              r["meta"]["registeredOnlyRepositories"].append(repo)
+              g["PR_BATCH_SIZE"] = 1
+              rows, fresh, _, inventory = u["collect_repository"](repo, "copybara", {**old, "prs":prior})
+              issues = {}
+              assert len(rows) == len(numbers) and set(fresh).issuperset(numbers)
+              u["recheck_snapshot_mergeability"](list(fresh.values()), [p for s in rows for p in (s,*s["imports"])], repo)
+          finally:
+              r.clear()
+              r.update(saved)
+          maintainers = u["fetch_maintainers"]()
+          nodes = {n["id"]:n for n in r["nodes"]}
+          current = {}
+          for pr in rows:
+              key = "pr:"+str(pr["number"])
+              node = nodes[key]
+              if pr["status"] == "open":
+                  pr = u["with_maintainer_reviewers"](pr, maintainers)
+                  pr["publicImportDisposition"] = u["public_import_disposition"](pr,node.get("approvedPatch"),node.get("landedPatch"))
+              current[pr["url"]] = pr
+          prs = [current.pop(p["url"],p) for p in old["prs"]]
+          prs.extend(current[url] for url in sorted(current))
+          assert len({p["url"] for p in prs}) == len(prs)
+
+          now = datetime.now(timezone.utc).isoformat()
+          report = u["check_report"](prs,old)
+          snap = {**old,"checkedAt":now,"registryDate":r["meta"]["updatedAt"],"prs":prs,"issues":{**old["issues"],**issues},
+                  "reviewerHandoff":u["reviewer_handoff"](prs,old),
+                  "mergeabilityHandoff":u["mergeability_handoff"](report,old),"checkFailures":report["checkFailures"],
+                  "workStates":u["record_states"](prs,r,old,now)}
+          snap["limits"] = {**old["limits"],"curationRefresh":{"prs":sorted(numbers),"issues":sorted(issues),"requests":g["requests"],
+              "graphqlCost":g["query_cost"],"previousFullSnapshot":old["checkedAt"],"repositoryObservation":inventory}}
+          if sweep := u["feedback_sweep"](r,[*prs,*old["reviewPRs"]],old,now):
+              snap["projectFeedbackReview"] = sweep
+          p.write_text(json.dumps(snap,indent=2,ensure_ascii=False)+"\n")
+          PYTHON
+          cp github-status.json results/
+      - name: Check the data used to render the cards
+        run: |
+          node metadata-preflight.mjs . > results/preflight.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          nodes = {n["id"]: n for n in json.loads(Path("registry.json").read_text())["nodes"]}
+          snap = json.loads(Path("github-status.json").read_text())
+          observed = {p["url"]:p for p in snap["prs"]}
+          native = nodes["pr:16843"]
+          assert native["head"] == observed[native["url"]]["head"] == "e7e0d5319eb716c82471abf477c3acff9d63e9ca"
+          assert native["contributorReview"]["head"] == "88cf79c935336ff38f4a50cc9a7934f942828b28"
+          assert native["contributorReview"]["baseHead"] == native["head"]
+          assert any(d["head"] == native["head"] and d["outcome"] == "approved" for d in native["settledReviews"])
+          container = nodes["branch:buildkite-native-container-tests"]
+          assert container["head"] == container["contributorReview"]["head"] == "1998f17f51aea3db192d9f1eeda076a8bedfd7a7"
+          assert container["contributorReview"]["status"] == "pending"
+          n = nodes["pr:16419"]
+          pr = observed[n["url"]]
+          head = "67260334de03b62815627b85207fed41f9d15062"
+          assert n["head"] == pr["head"] == n["followup"]["sourceHead"] == head
+          assert n["contributorReview"]["head"] == "4a4e33cfc5dede7d3bfbfc8b43b7784578178eb6"
+          assert n["contributorReview"]["baseHead"] == head
+          assert any(d["head"] == head and d["outcome"] == "approved" for d in n["settledReviews"])
+          assert any(i["url"] == n["url"] + "#pullrequestreview-5758455453" for i in pr["feedback"]["items"])
+          published = nodes["pr:16925"]
+          assert published["head"] == observed[published["url"]]["head"] == "95960d6bebd547d64154de696c773486c3256376"
+          assert observed[published["url"]]["status"] == "open"
+          old = nodes["branch:multicast-device-before-bind"]
+          assert old["inactive"] is True and "contributorReview" not in old and "contributorReview" not in published
+          assert observed["https://github.com/google/gvisor/pull/15918"]["status"] == "merged"
+          assert observed["https://github.com/google/gvisor/pull/16904"]["head"] == "896acc45666c609ab05f92160f322f976a86cea1"
+          assert snap["limits"]["curationRefresh"]["prs"] == [15918, 16419, 16843, 16904, 16925]
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: published-work-map-pair
+          path: results/
+          if-no-files-found: error
