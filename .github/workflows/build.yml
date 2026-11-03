@@ -1,35 +1,36 @@
-name: CI
-
-"on":
+name: Compare three policies in the TCP processor on one Linux P
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-processor-contended-pass]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  measure:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Measure the real dispatcher in three configurations
+        run: python3 .github/workflows/tcp_owner_results.py measure
+      - name: Summarize the original timing and retry counts
+        run: |
+          set -euo pipefail
+          tgt=@org_golang_x_perf//cmd/benchstat
+          bazel build -c opt --config=x86_64 --jobs=4 "$tgt"
+          bazel cquery --config=x86_64 -c opt --output=files "$tgt" > "$RUNNER_TEMP/benchstat-paths"
+          mapfile -t tools < <(while IFS= read -r f; do if test -f "$f" && test -x "$f"; then echo "$f"; fi; done < "$RUNNER_TEMP/benchstat-paths")
+          test "${#tools[@]}" = 1
+          exe="$PWD/${tools[0]}"
+          cd "$RUNNER_TEMP/owner"
+          "$exe" stock.bench first.bench pass.bench | tee benchstat.txt
+          test "$(grep -c '^OwnerResume/' benchstat.txt)" = 4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: tcp-processor
+          path: ${{ runner.temp }}/owner/
+          if-no-files-found: error
