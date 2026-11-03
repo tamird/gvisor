@@ -23,6 +23,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 
 	"golang.org/x/sys/unix"
@@ -52,11 +53,39 @@ func runRunsc(args ...string) ([]byte, error) {
 
 func dumpCheckpointText(t *testing.T, imgPath string) string {
 	t.Helper()
-	out, err := runRunsc("statefile", imgPath)
-	if err != nil {
-		t.Fatalf("runsc statefile %s failed: %v\n%s", imgPath, err, out)
+	debugPath := filepath.Join(t.TempDir(), "statefile.debug.log")
+	cmd := exec.Command(specutils.ExePath, "--debug", "--debug-log="+debugPath, "statefile", imgPath)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	err := testutil.RunCmd(cmd)
+	exit, signal := -1, -1
+	if cmd.ProcessState != nil {
+		status := cmd.ProcessState.Sys().(syscall.WaitStatus)
+		exit, signal = status.ExitStatus(), int(status.Signal())
 	}
-	return string(out)
+	debugLog, debugErr := os.ReadFile(debugPath)
+	t.Logf("STATEFILE_CHILD exit=%d signal=%d stdout_bytes=%d stdout_sha256=%x stderr_bytes=%d stderr_sha256=%x debug_bytes=%d debug_sha256=%x", exit, signal, stdout.Len(), sha256.Sum256(stdout.Bytes()), stderr.Len(), sha256.Sum256(stderr.Bytes()), len(debugLog), sha256.Sum256(debugLog))
+	if debugErr != nil {
+		t.Fatalf("read statefile child diagnostic: %v", debugErr)
+	}
+	printed := 0
+	for _, text := range []string{stderr.String(), string(debugLog)} {
+		for _, line := range strings.Split(text, "\n") {
+			if i := strings.Index(line, "FATAL ERROR: "); i >= 0 {
+				line = line[i:]
+			} else if !strings.HasPrefix(line, "panic:") && !strings.HasPrefix(line, "fatal error:") && !strings.HasPrefix(line, "runtime:") {
+				continue
+			}
+			if printed < 8 {
+				t.Logf("STATEFILE_ERROR %s", line[:min(len(line), 1024)])
+				printed++
+			}
+		}
+	}
+	if err != nil {
+		t.Fatalf("runsc statefile failed: %v", err)
+	}
+	return stdout.String()
 }
 
 func TestStatefile(t *testing.T) {
