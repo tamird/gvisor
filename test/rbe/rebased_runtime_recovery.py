@@ -86,14 +86,15 @@ def original():
         assert invocation["invocationId"] == ARM_INVOCATION
         arm["invocation_metadata_sha256"] = sha(json.dumps(response, sort_keys=True).encode())
         state = invocation.get("invocationStatus")
-        assert state in (None, 0, 1, 2, 3, "UNKNOWN_INVOCATION_STATUS", "COMPLETE_INVOCATION", "PARTIAL_INVOCATION", "DISCONNECTED_INVOCATION")
+        assert state in (None, 0, 1, 2, 3, 4, "UNKNOWN_INVOCATION_STATUS", "COMPLETE_INVOCATION_STATUS",
+                         "PARTIAL_INVOCATION_STATUS", "DISCONNECTED_INVOCATION_STATUS", "MISSING_API_KEY_INVOCATION_STATUS")
         arm["invocation_status"] = state
         assert invocation.get("success") in (None, True, False)
         arm["success"] = invocation.get("success")
         # Never serialize arbitrary metadata or console fields.
-        code = invocation.get("exitCode")
-        assert code is None or isinstance(code, int)
-        arm["exit_code"] = code
+        code = invocation.get("bazelExitCode")
+        assert code is None or isinstance(code, str) and re.fullmatch(r"[A-Z_]{0,64}", code)
+        arm["bazel_exit_code"] = code
         save("recovery.json", result)
         response = json.loads(fetch("api/v1/GetAction", {"selector": {
             "invocation_id": ARM_INVOCATION, "target_label": ARM_OWNER}}))
@@ -113,6 +114,7 @@ def original():
                    test_attempts=attempts, lookup_complete=True)
         # Unexpected retained attempts need evidence reconciliation, never an automatic repeat.
         assert not attempts, "Original ARM64 test attempt exists; reconcile before executing"
+        assert state in (1, 3, "COMPLETE_INVOCATION_STATUS", "DISCONNECTED_INVOCATION_STATUS"), "Original invocation is not terminal"
         arm["missing_test_confirmed"] = True
     except Exception as error:
         arm["lookup_error"] = type(error).__name__
