@@ -10,6 +10,7 @@ import re
 import subprocess
 import sys
 import zipfile
+from xml.etree import ElementTree
 
 import qualification_report as report
 from stdlib_provenance import fields, first, number
@@ -18,6 +19,7 @@ from stdlib_provenance import fields, first, number
 TMP = Path(os.environ["RUNNER_TEMP"])
 OUT = TMP / "unit-results"
 SOURCE = os.environ["PRODUCT"]
+CGROUP = "//runsc/cgroup:cgroup_test"
 
 
 def git(*args: str) -> bytes:
@@ -64,7 +66,7 @@ def run(name: str, targets: Path) -> tuple[Path, int]:
     (directory / "source_before").write_bytes(git("status", "--porcelain", "--untracked-files=no"))
     (directory / "started_at").write_text(now())
     with (TMP / (name + ".console")).open("w") as console:
-        completed = subprocess.run(["timeout", "--signal=TERM", "--kill-after=30s", "90m", "bazel",
+        completed = subprocess.run(["timeout", "--signal=TERM", "--kill-after=30s", "25m", "bazel",
                                     f"--bazelrc={TMP / 'unit-resources.bazelrc'}", *command],
                                    stdout=console, stderr=subprocess.STDOUT)
     (directory / "execution_finished_at").write_text(now())
@@ -88,7 +90,7 @@ def run(name: str, targets: Path) -> tuple[Path, int]:
     return directory, completed.returncode
 
 
-def remaining() -> tuple[set[str], set[str]]:
+def remaining() -> tuple[set[str], list[dict]]:
     original = TMP / "original.zip"
     assert hashlib.sha256(original.read_bytes()).hexdigest() == "07c35476420c24269fdf87f792e6dfdafcbbb3ce5f452cb3d20cfdf2b9a84b10"
     with zipfile.ZipFile(original) as archive:
@@ -101,12 +103,22 @@ def remaining() -> tuple[set[str], set[str]]:
     assert eligible == set(execution["expected_labels"]) and len(eligible) == 355
     prior = {row["owner"]["label"] for row in execution["executed"]}
     assert len(prior) == 69 and prior <= eligible
-    return eligible - prior, prior
+    second = TMP / "remaining.zip"
+    assert hashlib.sha256(second.read_bytes()).hexdigest() == "0c2fbb08e99de4db89ec49e9b60355b977a6cfb91bb7f12c33b7e80570922df9"
+    with zipfile.ZipFile(second) as archive:
+        previous = json.loads(archive.read("full/verdict.json"))
+        selected = set(archive.read("expected-targets.txt").decode().splitlines())
+    assert previous["source"] == SOURCE and previous["native_exit"] == 1 and previous["status"] == "FAIL"
+    assert selected == eligible - prior and len(selected) == 286
+    attempted = {row["owner"]["label"] for row in previous["executed"]}
+    assert attempted == selected - {CGROUP}
+    return eligible - prior - attempted, [execution, previous]
 
 
 def compilation(path: Path) -> dict:
     counts = Counter()
     examples = []
+    local_owner = []
     with subprocess.Popen(["zstd", "-qdc", path], stdout=subprocess.PIPE) as proc:
         while (n := number(proc.stdout)) is not None:
             entry = fields(proc.stdout.read(n))
@@ -119,25 +131,29 @@ def compilation(path: Path) -> dict:
             cached = bool(first(spawn, 12, 0))
             succeeded = not first(spawn, 10) and first(spawn, 9, 0) == 0
             counts[(runner, cached, succeeded)] += 1
+            owner = first(spawn, 7).decode().lstrip("@")
+            if owner == CGROUP:
+                local_owner.append(dict(owner=owner, runner=runner, cached=cached, succeeded=succeeded))
             if runner == "remote" and not cached and succeeded and len(examples) < 10:
                 examples.append(first(spawn, 7).decode())
         assert proc.wait() == 0, "Incomplete execution log"
     return dict(runners=[dict(strategy=r, cached=c, succeeded=s, count=n)
-                         for (r, c, s), n in sorted(counts.items())], fresh_remote_examples=examples)
+                         for (r, c, s), n in sorted(counts.items())], fresh_remote_examples=examples,
+                owner_compiles=local_owner)
 
 
 def main() -> None:
-    receipt = dict(source=SOURCE, scope="Previously unattempted Buildkite unit labels on one native ARM64 host",
+    receipt = dict(source=SOURCE, scope="Single previously unattempted native ARM64 cgroup unit owner",
                    source_run=41513096230, source_artifact=13175395076, status="INCOMPLETE", errors=[], started_at=now())
     report.write_json(OUT / "verdict.json", receipt)
     try:
         assert git("rev-parse", "HEAD").decode().strip() == SOURCE
         host()
         selected, prior = remaining()
-        assert len(selected) == 286 and not selected & prior
+        assert selected == {CGROUP}
         targets = OUT / "expected-targets.txt"
         targets.write_text("\n".join(sorted(selected)) + "\n")
-        receipt.update(selected=len(selected), original_attempted=len(prior))
+        receipt.update(selected=len(selected), original_attempted=354, previous_run=41589548481, previous_artifact=13212422877)
         directory, code = run("full", targets)
         events = directory / "events.jsonl"
         v = report.verdict(events, report.manifest_path(events), directory / "context.json", targets, (),
@@ -167,8 +183,30 @@ def main() -> None:
         if invalid or selected != configured or not cpus or set(cpus.values()) != {"aarch64"} or attempted - selected:
             receipt["errors"].append("Source selection or native test placement disagrees; see detailed evidence")
         receipt["compiler"] = compilation(TMP / "full.compact")
-        if not receipt["compiler"]["fresh_remote_examples"]:
-            receipt["errors"].append("No fresh successful remote GoCompilePkg established")
+        compiles = receipt["compiler"]["owner_compiles"]
+        if not compiles or not all(x["runner"] == "local" and not x["cached"] and x["succeeded"] for x in compiles):
+            receipt["errors"].append("Missing fresh successful local GoCompilePkg for the local-tagged target")
+        if len(rows) != 1 or rows[0]["execution_info"].get("strategy") != "local":
+            receipt["errors"].append("Missing single native local cgroup TestRunner")
+        xml = list((directory / "reports").rglob("test.xml"))
+        passed = {case.get("name", "").split("/")[-1] for path in xml
+                  for case in ElementTree.parse(path).iter("testcase")
+                  if not any(case.find(tag) is not None for tag in ("failure", "error", "skipped"))
+                  and case.get("status") not in ("notrun", "suppressed") and case.get("result") != "suppressed"}
+        if not {"TestCountCpuset", "TestIO"} <= passed:
+            receipt["errors"].append("Missing passing named CPU-set and v2 I/O controls")
+        all_runs = [*prior, v]
+        union = {r["owner"]["label"] for run in all_runs for r in run["executed"]}
+        eligible = set(prior[0]["expected_labels"])
+        receipt["native_union"] = {
+            "status": "FAIL", "historical_native_exits": [r["native_exit"] for r in all_runs],
+            "unique_attempted": len(union), "remaining": sorted(eligible - union),
+            "case_counts": dict(sum((Counter(r["case_counts"]) for r in all_runs), Counter())),
+            **{field: sorted({o["label"] for r in all_runs for o in r[field]})
+               for field in ("zero_case_owners", "all_skipped_owners")},
+            "failed_test_owners": sorted({row["owner"]["label"] for r in all_runs for row in r["executed"]
+                                          if row["status"] != "PASSED"}),
+        }
     except Exception as error:
         receipt["errors"].append(str(error)[:2000])
     directory = OUT / "full"

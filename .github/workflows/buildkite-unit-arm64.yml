@@ -1,7 +1,7 @@
-name: Remaining native ARM64 Buildkite unit owners
+name: Finish the native ARM64 cgroup unit owner
 on:
   push:
-    branches: [qualification/buildkite-unit-arm64-remaining]
+    branches: [qualification/buildkite-unit-arm64-cgroup-owner]
 permissions:
   contents: read
   actions: read
@@ -9,7 +9,7 @@ jobs:
   unit:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.run_attempt == 1
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 110
+    timeout-minutes: 35
     env:
       DOCKER_BUILD: 'false'
       PRODUCT: 96fadde722e14d482a62276b80237398f8b62fbf
@@ -18,12 +18,14 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 2
+          fetch-depth: 3
           persist-credentials: false
       - name: Recover the original reconciled target inventory
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api repos/tamird/gvisor/actions/artifacts/13175395076/zip > "$RUNNER_TEMP/original.zip"
+        run: |
+          gh api repos/tamird/gvisor/actions/artifacts/13175395076/zip > "$RUNNER_TEMP/original.zip"
+          gh api repos/tamird/gvisor/actions/artifacts/13212422877/zip > "$RUNNER_TEMP/remaining.zip"
       - name: Configure bounded Go compilation on the ARM64 worker
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -42,12 +44,12 @@ jobs:
           build --remote_default_exec_properties=container-image=docker://docker.io/library/buildpack-deps@sha256:496160b38def7107f238785d58e3762c72341dd83533d54c1d1b84c3a6fbcad2
           build --remote_download_outputs=toplevel
           build --spawn_strategy=sandboxed,local
-          build --strategy=GoCompilePkg=remote,sandboxed
-          build --strategy=TestRunner=sandboxed
+          build --strategy=GoCompilePkg=remote,local
+          build --strategy=TestRunner=local
           build --remote_local_fallback
           build --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY
           EOF
-      - name: Run only native ARM64 owners with no original attempt
+      - name: Run only the local-tagged cgroup test on native ARM64
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/unit-results"
@@ -60,7 +62,8 @@ jobs:
           git fetch --quiet --depth=1 origin "$PROVENANCE"
           git show "$PROVENANCE:test/rbe/stdlib-provenance.py" > "$RUNNER_TEMP/stdlib_provenance.py"
           command -v zstd
-          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD^)" = 4d75b30b37891c77f6b42f54c2d452730af16aa2
+          test "$(git rev-parse HEAD^^)" = "$PRODUCT"
           git checkout --quiet --detach "$PRODUCT"
           sed -n '/^install_.*bazel() {$/,$p' .buildkite/hooks/pre-command > "$RUNNER_TEMP/unit-setup.bash"
           source "$RUNNER_TEMP/unit-setup.bash"
@@ -103,6 +106,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.scan.outcome == 'success'
         with:
-          name: native-arm64-unit-remaining
+          name: native-arm64-unit-cgroup
           path: ${{ runner.temp }}/unit-results/
           if-no-files-found: error
