@@ -378,12 +378,16 @@ steps:
     <<: *source_test
     label: ":golang: Nogo tests"
     command: make nogo-tests
+    env:
+      DOCKER_BUILD: "false"
     agents:
       queue: "default"
   - <<: *common
     <<: *source_test
     label: ":test_tube: Unit tests (cgroupv1)"
     command: make unit-tests
+    env:
+      DOCKER_BUILD: "false"
     agents:
       cgroup: "v1"
       arch: "amd64"
@@ -392,6 +396,8 @@ steps:
     <<: *source_test
     label: ":test_tube: Unit tests (cgroupv2)"
     command: make unit-tests
+    env:
+      DOCKER_BUILD: "false"
     agents:
       cgroup: "v2"
       arch: "amd64"
@@ -400,6 +406,8 @@ steps:
     <<: *source_test
     label: ":test_tube: Unit tests (ARM64)"
     command: make unit-tests
+    env:
+      DOCKER_BUILD: "false"
     agents:
       arch: "arm64"
       queue: "arm64"

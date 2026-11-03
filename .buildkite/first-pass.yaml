@@ -86,10 +86,14 @@ steps:
     <<: *source_test
     label: ":golang: Nogo tests"
     command: make nogo-tests
+    env:
+      DOCKER_BUILD: "false"
   - <<: *common
     <<: *source_test
     label: ":test_tube: Unit tests (cgroupv2)"
     command: make unit-tests
+    env:
+      DOCKER_BUILD: "false"
   - <<: *common
     <<: *docker
     # This variant is not really a source test, but we annotate it as such to
