@@ -2,8 +2,8 @@
   "schema": 1,
   "repo": "google/gvisor",
   "owner": "tamird",
-  "checkedAt": "2026-11-03T20:27:29.941620+00:00",
-  "registryDate": "2026-11-03T20:26:09.535763+00:00",
+  "checkedAt": "2026-11-03T20:37:35.776856+00:00",
+  "registryDate": "2026-11-03T20:35:54.663277+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -123065,25 +123065,25 @@
       "repo": "google/gvisor",
       "title": "Honor bound devices for IPv6 multicast selection",
       "url": "https://github.com/google/gvisor/pull/15918",
-      "status": "open",
+      "status": "merged",
       "ref": "ipv6-multicast-bound-device",
       "head": "29edee9cbe9321287548342acca1004c1d9e9c00",
-      "base": "dcae68e5407a8ce42a020a1bcd56e2680f04d816",
+      "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
       "branchHead": "29edee9cbe9321287548342acca1004c1d9e9c00",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
-      "mergeabilityCheckedAt": "2026-11-03T18:31:48.412729+00:00",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-11-03T20:37:24.970930+00:00",
       "headCommittedAt": "2026-10-25T12:37:39Z",
       "headHistoryComplete": true,
       "headIntroducedAt": "2026-10-25T12:40:09Z",
       "headOwner": "tamird",
       "headRepo": "tamird/gvisor",
       "authorLogin": "tamird",
-      "updatedAt": "2026-10-31T00:48:31Z",
+      "updatedAt": "2026-11-03T20:07:23Z",
       "createdAt": "2026-10-17T06:02:22Z",
-      "mergedAt": null,
-      "closedAt": null,
-      "mergeCommit": null,
+      "mergedAt": "2026-11-03T20:07:23Z",
+      "closedAt": "2026-11-03T20:07:23Z",
+      "mergeCommit": "5b40a50016210478f13e725d7c22bd09f71b5ea9",
       "githubReviewDecision": "APPROVED",
       "reviewsComplete": true,
       "commentsComplete": true,
@@ -123411,8 +123411,8 @@
               "url": "https://github.com/google/gvisor/pull/16892",
               "title": "Honor bound devices for IPv6 multicast selection",
               "body": "Honor bound devices for IPv6 multicast selection\n\nIPV6_MULTICAST_IF checked the interface recorded by a scoped address\nbind, but ignored SO_BINDTODEVICE. A socket bound to a global address\ncould therefore select a conflicting multicast interface even after\nbeing explicitly bound to another device.\n\nCheck the socket option binding as well as the scoped address binding.\nAllow zero to clear the multicast selection without changing either\nbinding, matching Linux. Extend the existing syscall regression to bind\nthe device explicitly and check selection state after errors and reset.\nAuto-fixed-by: [🤖] @EtiennePerot\nFUTURE_COPYBARA_INTEGRATE_REVIEW=https://github.com/google/gvisor/pull/15918 from tamird:ipv6-multicast-bound-device 29edee9cbe9321287548342acca1004c1d9e9c00\n",
-              "updatedAt": "2026-11-03T18:09:54Z",
-              "headRefOid": "ae99e79904ac52466e239dcade33812ba2e11934",
+              "updatedAt": "2026-11-03T20:07:21Z",
+              "headRefOid": "5b40a50016210478f13e725d7c22bd09f71b5ea9",
               "author": {
                 "login": "copybara-service"
               },
@@ -123427,7 +123427,7 @@
       "reviewDecision": "APPROVED",
       "approvedHead": "29edee9cbe9321287548342acca1004c1d9e9c00",
       "approvedAt": "2026-10-30T23:41:26Z",
-      "checkedAt": "2026-11-03T18:33:40.320422+00:00",
+      "checkedAt": "2026-11-03T20:37:34.821811+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "29edee9cbe9321287548342acca1004c1d9e9c00",
@@ -123445,11 +123445,11 @@
           "status": "open",
           "ref": "test/cl1010921581",
           "head": "c6f43b40ad179122e52253c5ba8d73856d2a0b42",
-          "base": "dcae68e5407a8ce42a020a1bcd56e2680f04d816",
+          "base": "9bcc02ce7168651f688513d996c371fc0c875197",
           "branchHead": "c6f43b40ad179122e52253c5ba8d73856d2a0b42",
           "mergeable": "MERGEABLE",
-          "mergeState": "BLOCKED",
-          "mergeabilityCheckedAt": "2026-11-03T18:33:33.350504+00:00",
+          "mergeState": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-11-03T20:37:35.318792+00:00",
           "headCommittedAt": "2026-11-02T21:10:44Z",
           "headHistoryComplete": true,
           "headIntroducedAt": "2026-11-02T21:10:52Z",
@@ -123747,12 +123747,12 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-11-03T18:33:40.320422+00:00",
+          "checkedAt": "2026-11-03T20:37:35.318792+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "c6f43b40ad179122e52253c5ba8d73856d2a0b42",
-            "base": "dcae68e5407a8ce42a020a1bcd56e2680f04d816",
-            "checkedAt": "2026-11-03T18:33:33.350504+00:00"
+            "base": "9bcc02ce7168651f688513d996c371fc0c875197",
+            "checkedAt": "2026-11-03T20:37:35.318792+00:00"
           },
           "sourceHead": "29edee9cbe9321287548342acca1004c1d9e9c00",
           "matchesSourceHead": true,
@@ -123763,25 +123763,25 @@
           "repo": "google/gvisor",
           "title": "Honor bound devices for IPv6 multicast selection",
           "url": "https://github.com/google/gvisor/pull/16892",
-          "status": "open",
+          "status": "merged",
           "ref": "test/cl1012568393",
-          "head": "ae99e79904ac52466e239dcade33812ba2e11934",
-          "base": "dcae68e5407a8ce42a020a1bcd56e2680f04d816",
-          "branchHead": "ae99e79904ac52466e239dcade33812ba2e11934",
-          "mergeable": "MERGEABLE",
-          "mergeState": "BLOCKED",
-          "mergeabilityCheckedAt": "2026-11-03T18:33:40.320376+00:00",
-          "headCommittedAt": "2026-11-03T18:09:23Z",
+          "head": "5b40a50016210478f13e725d7c22bd09f71b5ea9",
+          "base": "d541918e674216797081e386131f9de03a58fdc6",
+          "branchHead": null,
+          "mergeable": "UNKNOWN",
+          "mergeState": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-11-03T20:37:34.821790+00:00",
+          "headCommittedAt": "2026-11-03T20:06:32Z",
           "headHistoryComplete": true,
-          "headIntroducedAt": "2026-11-03T18:09:41Z",
+          "headIntroducedAt": "2026-11-03T20:07:07Z",
           "headOwner": "google",
           "headRepo": "google/gvisor",
           "authorLogin": "copybara-service",
-          "updatedAt": "2026-11-03T18:09:54Z",
+          "updatedAt": "2026-11-03T20:07:21Z",
           "createdAt": "2026-11-03T01:55:57Z",
-          "mergedAt": null,
-          "closedAt": null,
-          "mergeCommit": null,
+          "mergedAt": "2026-11-03T20:07:19Z",
+          "closedAt": "2026-11-03T20:07:19Z",
+          "mergeCommit": "5b40a50016210478f13e725d7c22bd09f71b5ea9",
           "githubReviewDecision": null,
           "reviewsComplete": true,
           "commentsComplete": true,
@@ -123822,199 +123822,270 @@
             "items": []
           },
           "checks": {
-            "state": "PENDING",
-            "total": 15,
-            "reportedTotal": 15,
-            "supersededContexts": [],
-            "complete": true,
-            "contexts": [
+            "state": "FAILURE",
+            "total": 17,
+            "reportedTotal": 20,
+            "supersededContexts": [
               {
-                "id": "CR_kwDOB9IlXs8AAAAdXLk2vw",
+                "id": "CR_kwDOB9IlXs8AAAAdYIw36g",
                 "name": "gazelle",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/41691127118/job/126109693631",
+                "url": "https://github.com/google/gvisor/actions/runs/41709589071/job/126173853674",
                 "kind": "check-run",
                 "app": "GitHub Actions",
                 "appSlug": "github-actions",
                 "appId": "MDM6QXBwMTUzNjg=",
                 "workflow": "Gazelle",
                 "workflowId": "W_kwDOB9IlXs4WaLny",
-                "runNumber": 4915,
+                "runNumber": 4941,
                 "runAttempt": 1,
                 "purpose": "validation"
               },
               {
-                "id": "CR_kwDOB9IlXs8AAAAdXLjuwg",
-                "name": "check-changes",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/41691121530/job/126109675202",
-                "kind": "check-run",
-                "app": "GitHub Actions",
-                "appSlug": "github-actions",
-                "appId": "MDM6QXBwMTUzNjg=",
-                "workflow": "GitHub Actions Scan",
-                "workflowId": "W_kwDOB9IlXs4QtptT",
-                "runNumber": 12959,
-                "runAttempt": 1,
-                "purpose": "validation"
-              },
-              {
-                "id": "CR_kwDOB9IlXs8AAAAdXLkyng",
+                "id": "CR_kwDOB9IlXs8AAAAdYIw4ig",
                 "name": "generate",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/41691126941/job/126109692574",
+                "url": "https://github.com/google/gvisor/actions/runs/41709589077/job/126173853834",
                 "kind": "check-run",
                 "app": "GitHub Actions",
                 "appSlug": "github-actions",
                 "appId": "MDM6QXBwMTUzNjg=",
                 "workflow": "Go",
                 "workflowId": "MDg6V29ya2Zsb3cxMjc5NTY5",
-                "runNumber": 64760,
+                "runNumber": 64786,
                 "runAttempt": 1,
                 "purpose": "validation"
               },
               {
-                "id": "CR_kwDOB9IlXs8AAAAdXLkv9w",
-                "name": "scan-pr",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/41691126881/job/126109691895",
-                "kind": "check-run",
-                "app": "GitHub Actions",
-                "appSlug": "github-actions",
-                "appId": "MDM6QXBwMTUzNjg=",
-                "workflow": "Google GitHub Admin: Actions Workflow Security Scan",
-                "workflowId": "W_kwDOB9IlXs4I314F",
-                "runNumber": 16057,
-                "runAttempt": 1,
-                "purpose": "validation"
-              },
-              {
-                "id": "CR_kwDOB9IlXs8AAAAdXLkyLA",
-                "name": "label",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/41691127052/job/126109692460",
-                "kind": "check-run",
-                "app": "GitHub Actions",
-                "appSlug": "github-actions",
-                "appId": "MDM6QXBwMTUzNjg=",
-                "workflow": "Labeler",
-                "workflowId": "MDg6V29ya2Zsb3cxMTAyMTgx",
-                "runNumber": 57924,
-                "runAttempt": 1,
-                "purpose": "validation"
-              },
-              {
-                "id": "CR_kwDOB9IlXs8AAAAdXLlJLw",
-                "name": "fileheader",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/41691127071/job/126109698351",
-                "kind": "check-run",
-                "app": "GitHub Actions",
-                "appSlug": "github-actions",
-                "appId": "MDM6QXBwMTUzNjg=",
-                "workflow": "License header",
-                "workflowId": "W_kwDOB9IlXs4U0Mzi",
-                "runNumber": 7615,
-                "runAttempt": 1,
-                "purpose": "validation"
-              },
-              {
-                "id": "CR_kwDOB9IlXs8AAAAdXLkxhQ",
+                "id": "CR_kwDOB9IlXs8AAAAdYIw0sA",
                 "name": "lint",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/41691126898/job/126109692293",
+                "url": "https://github.com/google/gvisor/actions/runs/41709588956/job/126173852848",
                 "kind": "check-run",
                 "app": "GitHub Actions",
                 "appSlug": "github-actions",
                 "appId": "MDM6QXBwMTUzNjg=",
                 "workflow": "Lint",
                 "workflowId": "W_kwDOB9IlXs4UkKPI",
-                "runNumber": 8322,
+                "runNumber": 8348,
+                "runAttempt": 1,
+                "purpose": "validation"
+              }
+            ],
+            "complete": true,
+            "contexts": [
+              {
+                "id": "CR_kwDOB9IlXs8AAAAdYI1FbA",
+                "name": "build",
+                "state": "CANCELLED",
+                "url": "https://github.com/google/gvisor/actions/runs/41709609878/job/126173922668",
+                "kind": "check-run",
+                "app": "GitHub Actions",
+                "appSlug": "github-actions",
+                "appId": "MDM6QXBwMTUzNjg=",
+                "workflow": "CI",
+                "workflowId": "MDg6V29ya2Zsb3cxMjk2OTc5",
+                "runNumber": 19176,
                 "runAttempt": 1,
                 "purpose": "validation"
               },
               {
-                "id": "CR_kwDOB9IlXs8AAAAdXMokLw",
+                "id": "CR_kwDOB9IlXs8AAAAdYI1B-Q",
+                "name": "generate",
+                "state": "CANCELLED",
+                "url": "https://github.com/google/gvisor/actions/runs/41709609708/job/126173921785",
+                "kind": "check-run",
+                "app": "GitHub Actions",
+                "appSlug": "github-actions",
+                "appId": "MDM6QXBwMTUzNjg=",
+                "workflow": "Go",
+                "workflowId": "MDg6V29ya2Zsb3cxMjc5NTY5",
+                "runNumber": 64787,
+                "runAttempt": 1,
+                "purpose": "validation"
+              },
+              {
+                "id": "CR_kwDOB9IlXs8AAAAdYI1ALQ",
+                "name": "gazelle",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/41709609702/job/126173921325",
+                "kind": "check-run",
+                "app": "GitHub Actions",
+                "appSlug": "github-actions",
+                "appId": "MDM6QXBwMTUzNjg=",
+                "workflow": "Gazelle",
+                "workflowId": "W_kwDOB9IlXs4WaLny",
+                "runNumber": 4942,
+                "runAttempt": 1,
+                "purpose": "validation"
+              },
+              {
+                "id": "CR_kwDOB9IlXs8AAAAdYIvqxw",
+                "name": "check-changes",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/41709583242/job/126173833927",
+                "kind": "check-run",
+                "app": "GitHub Actions",
+                "appSlug": "github-actions",
+                "appId": "MDM6QXBwMTUzNjg=",
+                "workflow": "GitHub Actions Scan",
+                "workflowId": "W_kwDOB9IlXs4QtptT",
+                "runNumber": 12985,
+                "runAttempt": 1,
+                "purpose": "validation"
+              },
+              {
+                "id": "CR_kwDOB9IlXs8AAAAdYIwtaQ",
+                "name": "scan-pr",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/41709588945/job/126173850985",
+                "kind": "check-run",
+                "app": "GitHub Actions",
+                "appSlug": "github-actions",
+                "appId": "MDM6QXBwMTUzNjg=",
+                "workflow": "Google GitHub Admin: Actions Workflow Security Scan",
+                "workflowId": "W_kwDOB9IlXs4I314F",
+                "runNumber": 16082,
+                "runAttempt": 1,
+                "purpose": "validation"
+              },
+              {
+                "id": "CR_kwDOB9IlXs8AAAAdYIwy8A",
+                "name": "label",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/41709589060/job/126173852400",
+                "kind": "check-run",
+                "app": "GitHub Actions",
+                "appSlug": "github-actions",
+                "appId": "MDM6QXBwMTUzNjg=",
+                "workflow": "Labeler",
+                "workflowId": "MDg6V29ya2Zsb3cxMTAyMTgx",
+                "runNumber": 57949,
+                "runAttempt": 1,
+                "purpose": "validation"
+              },
+              {
+                "id": "CR_kwDOB9IlXs8AAAAdYIwybQ",
+                "name": "fileheader",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/41709588845/job/126173852269",
+                "kind": "check-run",
+                "app": "GitHub Actions",
+                "appSlug": "github-actions",
+                "appId": "MDM6QXBwMTUzNjg=",
+                "workflow": "License header",
+                "workflowId": "W_kwDOB9IlXs4U0Mzi",
+                "runNumber": 7640,
+                "runAttempt": 1,
+                "purpose": "validation"
+              },
+              {
+                "id": "CR_kwDOB9IlXs8AAAAdYI1G_A",
+                "name": "lint",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/41709609986/job/126173923068",
+                "kind": "check-run",
+                "app": "GitHub Actions",
+                "appSlug": "github-actions",
+                "appId": "MDM6QXBwMTUzNjg=",
+                "workflow": "Lint",
+                "workflowId": "W_kwDOB9IlXs4UkKPI",
+                "runNumber": 8349,
+                "runAttempt": 1,
+                "purpose": "validation"
+              },
+              {
+                "id": "CR_kwDOB9IlXs8AAAAdYOG26w",
                 "name": "zizmor-config",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/41691121530/job/126110802991",
+                "url": "https://github.com/google/gvisor/actions/runs/41709583242/job/126179456747",
                 "kind": "check-run",
                 "app": "GitHub Actions",
                 "appSlug": "github-actions",
                 "appId": "MDM6QXBwMTUzNjg=",
                 "workflow": "GitHub Actions Scan",
                 "workflowId": "W_kwDOB9IlXs4QtptT",
-                "runNumber": 12959,
+                "runNumber": 12985,
                 "runAttempt": 1,
                 "purpose": "validation"
               },
               {
-                "id": "CR_kwDOB9IlXs8AAAAdXMop1w",
+                "id": "CR_kwDOB9IlXs8AAAAdYOG5NQ",
                 "name": "zizmor-scan",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/41691121530/job/126110804439",
+                "url": "https://github.com/google/gvisor/actions/runs/41709583242/job/126179457333",
                 "kind": "check-run",
                 "app": "GitHub Actions",
                 "appSlug": "github-actions",
                 "appId": "MDM6QXBwMTUzNjg=",
                 "workflow": "GitHub Actions Scan",
                 "workflowId": "W_kwDOB9IlXs4QtptT",
-                "runNumber": 12959,
+                "runNumber": 12985,
                 "runAttempt": 1,
                 "purpose": "validation"
               },
               {
-                "id": "CR_kwDOB9IlXs8AAAAdXMotuw",
+                "id": "CR_kwDOB9IlXs8AAAAdYOG5Ew",
                 "name": "zizmor-upload",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/41691121530/job/126110805435",
+                "url": "https://github.com/google/gvisor/actions/runs/41709583242/job/126179457299",
                 "kind": "check-run",
                 "app": "GitHub Actions",
                 "appSlug": "github-actions",
                 "appId": "MDM6QXBwMTUzNjg=",
                 "workflow": "GitHub Actions Scan",
                 "workflowId": "W_kwDOB9IlXs4QtptT",
-                "runNumber": 12959,
+                "runNumber": 12985,
                 "runAttempt": 1,
                 "purpose": "validation"
               },
               {
-                "id": "CR_kwDOB9IlXs8AAAAdXMosDA",
+                "id": "CR_kwDOB9IlXs8AAAAdYOG-WA",
                 "name": "zizmor-output",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/41691121530/job/126110805004",
+                "url": "https://github.com/google/gvisor/actions/runs/41709583242/job/126179458648",
                 "kind": "check-run",
                 "app": "GitHub Actions",
                 "appSlug": "github-actions",
                 "appId": "MDM6QXBwMTUzNjg=",
                 "workflow": "GitHub Actions Scan",
                 "workflowId": "W_kwDOB9IlXs4QtptT",
-                "runNumber": 12959,
+                "runNumber": 12985,
                 "runAttempt": 1,
                 "purpose": "validation"
               },
               {
-                "id": "SC_kwDOB9IlXs8AAAANfzhK5Q",
+                "id": "SC_kwDOB9IlXs8AAAANf-Aywg",
                 "name": "buildkite/internal",
                 "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/internal/builds/35116",
-                "description": "Build #35116 started",
+                "url": "https://buildkite.com/gvisor/internal/builds/35147",
+                "description": "Build #35147 started",
                 "app": null,
                 "kind": "status",
                 "purpose": "validation"
               },
               {
-                "id": "SC_kwDOB9IlXs8AAAANfzhIGw",
+                "id": "SC_kwDOB9IlXs8AAAANf-CElg",
+                "name": "buildkite/pgo-profiles",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/pgo-profiles/builds/3643",
+                "description": "Build #3643 started",
+                "app": null,
+                "kind": "status",
+                "purpose": "validation"
+              },
+              {
+                "id": "SC_kwDOB9IlXs8AAAANf-CE0g",
                 "name": "buildkite/pipeline",
                 "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/pipeline/builds/53373",
-                "description": "Build #53373 started",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/53397",
+                "description": "Build #53397 started",
                 "app": null,
                 "kind": "status",
                 "purpose": "validation"
               },
               {
-                "id": "CR_kwDOB9IlXs8AAAAdXLi8Gg",
+                "id": "CR_kwDOB9IlXs8AAAAdYIuTuw",
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
@@ -124029,7 +124100,7 @@
                 "purpose": "validation"
               },
               {
-                "id": "SC_kwDOB9IlXs8AAAANf1feqQ",
+                "id": "SC_kwDOB9IlXs8AAAANf_I42A",
                 "name": "go tests",
                 "state": "SUCCESS",
                 "url": null,
@@ -124043,7 +124114,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-11-03T18:33:40.320422+00:00",
+          "checkedAt": "2026-11-03T20:37:34.821811+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "ae99e79904ac52466e239dcade33812ba2e11934",
@@ -124054,90 +124125,7 @@
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/16892"
         }
-      ],
-      "maintainerReviewers": [
-        "kerumeto"
-      ],
-      "publicImportDisposition": {
-        "binding": {
-          "sourceHead": "29edee9cbe9321287548342acca1004c1d9e9c00",
-          "approvedHead": null,
-          "currentApproval": true,
-          "complete": true,
-          "labels": [
-            "ready to pull"
-          ],
-          "labelsComplete": true,
-          "labelHistory": {
-            "complete": true,
-            "items": [
-              {
-                "__typename": "LabeledEvent",
-                "id": "LE_lADOB9IlXs8AAAABX2YzK88AAAAIFsL5nw",
-                "createdAt": "2026-10-30T23:41:35Z",
-                "actor": {
-                  "login": "kerumeto",
-                  "__typename": "User"
-                },
-                "label": {
-                  "name": "ready to pull"
-                }
-              },
-              {
-                "__typename": "UnlabeledEvent",
-                "id": "UNLE_lADOB9IlXs8AAAABX2YzK88AAAAIFvHm4Q",
-                "createdAt": "2026-10-31T00:48:24Z",
-                "actor": {
-                  "login": "EtiennePerot",
-                  "__typename": "User"
-                },
-                "label": {
-                  "name": "ready to pull"
-                }
-              },
-              {
-                "__typename": "LabeledEvent",
-                "id": "LE_lADOB9IlXs8AAAABX2YzK88AAAAIFvH5mw",
-                "createdAt": "2026-10-31T00:48:31Z",
-                "actor": {
-                  "login": "EtiennePerot",
-                  "__typename": "User"
-                },
-                "label": {
-                  "name": "ready to pull"
-                }
-              }
-            ]
-          },
-          "imports": [
-            {
-              "number": 16774,
-              "head": "c6f43b40ad179122e52253c5ba8d73856d2a0b42",
-              "sourceHead": "29edee9cbe9321287548342acca1004c1d9e9c00",
-              "status": "open",
-              "mergeable": "MERGEABLE",
-              "conflicting": false
-            },
-            {
-              "number": 16892,
-              "head": "ae99e79904ac52466e239dcade33812ba2e11934",
-              "sourceHead": "29edee9cbe9321287548342acca1004c1d9e9c00",
-              "status": "open",
-              "mergeable": "MERGEABLE",
-              "conflicting": false
-            }
-          ],
-          "eligible": true
-        },
-        "scope": "exact",
-        "state": "open",
-        "action": null,
-        "trigger": {
-          "label": "ready to pull",
-          "state": "present"
-        },
-        "description": "Waiting for the public export; its checks remain separate."
-      }
+      ]
     },
     {
       "number": 15919,
@@ -198473,7 +198461,7 @@
       "branchHead": "67260334de03b62815627b85207fed41f9d15062",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
-      "mergeabilityCheckedAt": "2026-11-03T20:27:29.550141+00:00",
+      "mergeabilityCheckedAt": "2026-11-03T20:37:26.829802+00:00",
       "headCommittedAt": "2026-11-03T19:49:53Z",
       "headHistoryComplete": true,
       "headIntroducedAt": "2026-11-03T20:23:06Z",
@@ -199112,26 +199100,11 @@
       },
       "checks": {
         "state": "PENDING",
-        "total": 9,
-        "reportedTotal": 9,
+        "total": 13,
+        "reportedTotal": 13,
         "supersededContexts": [],
         "complete": true,
         "contexts": [
-          {
-            "id": "CR_kwDOB9IlXs8AAAAdYQ7u6w",
-            "name": "check-changes",
-            "state": "IN_PROGRESS",
-            "url": "https://github.com/google/gvisor/actions/runs/41712074388/job/126182420203",
-            "kind": "check-run",
-            "app": "GitHub Actions",
-            "appSlug": "github-actions",
-            "appId": "MDM6QXBwMTUzNjg=",
-            "workflow": "GitHub Actions Scan",
-            "workflowId": "W_kwDOB9IlXs4QtptT",
-            "runNumber": 12993,
-            "runAttempt": 1,
-            "purpose": "validation"
-          },
           {
             "id": "CR_kwDOB9IlXs8AAAAdYQ8lYQ",
             "name": "generate",
@@ -199159,6 +199132,21 @@
             "workflow": "Gazelle",
             "workflowId": "W_kwDOB9IlXs4WaLny",
             "runNumber": 4951,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdYQ7u6w",
+            "name": "check-changes",
+            "state": "SUCCESS",
+            "url": "https://github.com/google/gvisor/actions/runs/41712074388/job/126182420203",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "GitHub Actions Scan",
+            "workflowId": "W_kwDOB9IlXs4QtptT",
+            "runNumber": 12993,
             "runAttempt": 1,
             "purpose": "validation"
           },
@@ -199223,6 +199211,66 @@
             "purpose": "validation"
           },
           {
+            "id": "CR_kwDOB9IlXs8AAAAdYVqkpg",
+            "name": "zizmor-config",
+            "state": "SKIPPED",
+            "url": "https://github.com/google/gvisor/actions/runs/41712074388/job/126187381926",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "GitHub Actions Scan",
+            "workflowId": "W_kwDOB9IlXs4QtptT",
+            "runNumber": 12993,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdYVqt_w",
+            "name": "zizmor-scan",
+            "state": "SKIPPED",
+            "url": "https://github.com/google/gvisor/actions/runs/41712074388/job/126187384319",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "GitHub Actions Scan",
+            "workflowId": "W_kwDOB9IlXs4QtptT",
+            "runNumber": 12993,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdYVqx_Q",
+            "name": "zizmor-upload",
+            "state": "SKIPPED",
+            "url": "https://github.com/google/gvisor/actions/runs/41712074388/job/126187385341",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "GitHub Actions Scan",
+            "workflowId": "W_kwDOB9IlXs4QtptT",
+            "runNumber": 12993,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdYVqulw",
+            "name": "zizmor-output",
+            "state": "SKIPPED",
+            "url": "https://github.com/google/gvisor/actions/runs/41712074388/job/126187384471",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "GitHub Actions Scan",
+            "workflowId": "W_kwDOB9IlXs4QtptT",
+            "runNumber": 12993,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
             "id": "SC_kwDOB9IlXs8AAAANf_ZCow",
             "name": "buildkite/first-pass",
             "state": "PENDING",
@@ -199277,12 +199325,12 @@
       "reviewDecision": "CHANGES_REQUESTED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-11-03T20:27:29.550189+00:00",
+      "checkedAt": "2026-11-03T20:37:34.821811+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "67260334de03b62815627b85207fed41f9d15062",
         "base": "9bcc02ce7168651f688513d996c371fc0c875197",
-        "checkedAt": "2026-11-03T20:27:29.550141+00:00"
+        "checkedAt": "2026-11-03T20:37:26.829802+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -265629,11 +265677,11 @@
       "status": "open",
       "ref": "proposal/buildkite-source-release-staging",
       "head": "e7e0d5319eb716c82471abf477c3acff9d63e9ca",
-      "base": "dcae68e5407a8ce42a020a1bcd56e2680f04d816",
+      "base": "9bcc02ce7168651f688513d996c371fc0c875197",
       "branchHead": "e7e0d5319eb716c82471abf477c3acff9d63e9ca",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
-      "mergeabilityCheckedAt": "2026-11-03T18:33:12.361787+00:00",
+      "mergeabilityCheckedAt": "2026-11-03T20:37:29.458002+00:00",
       "headCommittedAt": "2026-11-01T05:44:26Z",
       "headHistoryComplete": true,
       "headIntroducedAt": null,
@@ -265914,12 +265962,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-11-03T18:33:40.320422+00:00",
+      "checkedAt": "2026-11-03T20:37:34.821811+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "e7e0d5319eb716c82471abf477c3acff9d63e9ca",
-        "base": "dcae68e5407a8ce42a020a1bcd56e2680f04d816",
-        "checkedAt": "2026-11-03T18:33:12.361787+00:00"
+        "base": "9bcc02ce7168651f688513d996c371fc0c875197",
+        "checkedAt": "2026-11-03T20:37:29.458002+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -274630,11 +274678,11 @@
       "status": "open",
       "ref": "proposal/buildkite-license-native",
       "head": "896acc45666c609ab05f92160f322f976a86cea1",
-      "base": "dcae68e5407a8ce42a020a1bcd56e2680f04d816",
+      "base": "9bcc02ce7168651f688513d996c371fc0c875197",
       "branchHead": "896acc45666c609ab05f92160f322f976a86cea1",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
-      "mergeabilityCheckedAt": "2026-11-03T18:33:26.144561+00:00",
+      "mergeabilityCheckedAt": "2026-11-03T20:37:31.350282+00:00",
       "headCommittedAt": "2026-11-03T11:12:34Z",
       "headHistoryComplete": true,
       "headIntroducedAt": null,
@@ -274915,12 +274963,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-11-03T18:33:40.320422+00:00",
+      "checkedAt": "2026-11-03T20:37:34.821811+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "896acc45666c609ab05f92160f322f976a86cea1",
-        "base": "dcae68e5407a8ce42a020a1bcd56e2680f04d816",
-        "checkedAt": "2026-11-03T18:33:26.144561+00:00"
+        "base": "9bcc02ce7168651f688513d996c371fc0c875197",
+        "checkedAt": "2026-11-03T20:37:31.350282+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -292435,6 +292483,266 @@
         },
         "description": "No matching public export was found in the complete lookup."
       }
+    },
+    {
+      "number": 16925,
+      "repo": "google/gvisor",
+      "title": "Exercise the IPv6 multicast device binding before binding an address",
+      "url": "https://github.com/google/gvisor/pull/16925",
+      "status": "open",
+      "ref": "proposal/multicast-device-before-bind",
+      "head": "95960d6bebd547d64154de696c773486c3256376",
+      "base": "9bcc02ce7168651f688513d996c371fc0c875197",
+      "branchHead": "95960d6bebd547d64154de696c773486c3256376",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
+      "mergeabilityCheckedAt": "2026-11-03T20:37:32.665957+00:00",
+      "headCommittedAt": "2026-11-03T20:33:02Z",
+      "headHistoryComplete": true,
+      "headIntroducedAt": null,
+      "headOwner": "tamird",
+      "headRepo": "tamird/gvisor",
+      "authorLogin": "tamird",
+      "updatedAt": "2026-11-03T20:33:39Z",
+      "createdAt": "2026-11-03T20:33:39Z",
+      "mergedAt": null,
+      "closedAt": null,
+      "mergeCommit": null,
+      "githubReviewDecision": null,
+      "reviewsComplete": true,
+      "commentsComplete": true,
+      "reviewDismissals": {
+        "complete": true,
+        "items": []
+      },
+      "reviewRequests": [],
+      "reviewRequestsComplete": true,
+      "labels": [],
+      "labelsComplete": true,
+      "labelHistory": {
+        "complete": true,
+        "items": []
+      },
+      "threads": {
+        "unresolved": 0,
+        "total": 0,
+        "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
+      },
+      "checks": {
+        "state": "PENDING",
+        "total": 11,
+        "reportedTotal": 11,
+        "supersededContexts": [],
+        "complete": true,
+        "contexts": [
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdYWV43A",
+            "name": "assign",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/google/gvisor/actions/runs/41713707263/job/126188091612",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Auto Assign",
+            "workflowId": "W_kwDOB9IlXs4SzK41",
+            "runNumber": 3008,
+            "runAttempt": 1,
+            "purpose": "reviewer-assignment"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdYWVywA",
+            "name": "gazelle",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/google/gvisor/actions/runs/41713707878/job/126188090048",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Gazelle",
+            "workflowId": "W_kwDOB9IlXs4WaLny",
+            "runNumber": 4953,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdYWV17g",
+            "name": "check-changes",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/google/gvisor/actions/runs/41713707413/job/126188090862",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "GitHub Actions Scan",
+            "workflowId": "W_kwDOB9IlXs4QtptT",
+            "runNumber": 12995,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdYWVuIA",
+            "name": "generate",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/google/gvisor/actions/runs/41713707519/job/126188088864",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Go",
+            "workflowId": "MDg6V29ya2Zsb3cxMjc5NTY5",
+            "runNumber": 64798,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdYWV7xg",
+            "name": "close",
+            "state": "SUCCESS",
+            "url": "https://github.com/google/gvisor/actions/runs/41713707774/job/126188092358",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Close Banned PRs",
+            "workflowId": "W_kwDOB9IlXs4UKTw0",
+            "runNumber": 2521,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdYWVrxg",
+            "name": "scan-pr",
+            "state": "SUCCESS",
+            "url": "https://github.com/google/gvisor/actions/runs/41713707647/job/126188088262",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Google GitHub Admin: Actions Workflow Security Scan",
+            "workflowId": "W_kwDOB9IlXs4I314F",
+            "runNumber": 16092,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdYWVtXw",
+            "name": "label",
+            "state": "SUCCESS",
+            "url": "https://github.com/google/gvisor/actions/runs/41713707643/job/126188088671",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Labeler",
+            "workflowId": "MDg6V29ya2Zsb3cxMTAyMTgx",
+            "runNumber": 57959,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdYWVthQ",
+            "name": "fileheader",
+            "state": "SUCCESS",
+            "url": "https://github.com/google/gvisor/actions/runs/41713707562/job/126188088709",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "License header",
+            "workflowId": "W_kwDOB9IlXs4U0Mzi",
+            "runNumber": 7650,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdYWV3cA",
+            "name": "lint",
+            "state": "SUCCESS",
+            "url": "https://github.com/google/gvisor/actions/runs/41713707895/job/126188091248",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Lint",
+            "workflowId": "W_kwDOB9IlXs4UkKPI",
+            "runNumber": 8360,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOB9IlXs8AAAANgATCJQ",
+            "name": "buildkite/first-pass",
+            "state": "PENDING",
+            "url": "https://buildkite.com/gvisor/first-pass/builds/528",
+            "description": "Build #528 scheduled",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdYWVVNg",
+            "name": "cla/google",
+            "state": "SUCCESS",
+            "url": "https://cla.developers.google.com/about",
+            "kind": "check-run",
+            "app": "Google CLA",
+            "appSlug": "google-cla",
+            "appId": "MDM6QXBwNDIyMDI=",
+            "workflow": null,
+            "workflowId": null,
+            "runNumber": null,
+            "runAttempt": null,
+            "purpose": "validation"
+          }
+        ]
+      },
+      "crossReferences": {
+        "complete": true,
+        "items": []
+      },
+      "reviewDecision": null,
+      "approvedHead": null,
+      "approvedAt": null,
+      "checkedAt": "2026-11-03T20:37:34.821811+00:00",
+      "mergeabilityObservation": {
+        "state": "MERGEABLE",
+        "head": "95960d6bebd547d64154de696c773486c3256376",
+        "base": "9bcc02ce7168651f688513d996c371fc0c875197",
+        "checkedAt": "2026-11-03T20:37:32.665957+00:00"
+      },
+      "importsComplete": true,
+      "importPolicy": "copybara",
+      "imports": [],
+      "maintainerReviewers": [],
+      "publicImportDisposition": {
+        "binding": {
+          "sourceHead": "95960d6bebd547d64154de696c773486c3256376",
+          "approvedHead": null,
+          "currentApproval": false,
+          "complete": true,
+          "labels": [],
+          "labelsComplete": true,
+          "labelHistory": {
+            "complete": true,
+            "items": []
+          },
+          "imports": [],
+          "eligible": false
+        },
+        "scope": "none",
+        "state": "absent",
+        "action": null,
+        "trigger": {
+          "label": "ready to pull",
+          "state": "unknown"
+        },
+        "description": "No matching public export was found in the complete lookup."
+      }
     }
   ],
   "issues": {
@@ -293574,7 +293882,7 @@
       "number": 16419,
       "head": "67260334de03b62815627b85207fed41f9d15062",
       "sourceNumber": 16419,
-      "owner": "TCP workstream",
+      "owner": "Contributor",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABUTON0A",
       "url": "https://github.com/google/gvisor/pull/16419#pullrequestreview-5657300432",
@@ -294080,23 +294388,6 @@
       "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
     },
     {
-      "repo": "google/gvisor",
-      "number": 16774,
-      "head": "c6f43b40ad179122e52253c5ba8d73856d2a0b42",
-      "sourceNumber": 15918,
-      "owner": "external_sweeps",
-      "kind": "comment",
-      "id": "IC_kwDOB9IlXs8AAAABhfjOrA",
-      "url": "https://github.com/google/gvisor/pull/16774#issuecomment-6542642860",
-      "author": "aetherxeg-source",
-      "updatedAt": "2026-10-31T11:12:47Z",
-      "newOrChanged": false,
-      "awaitingAuthor": false,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
       "repo": "bazelbuild/bazel-central-registry",
       "number": 11518,
       "head": "fe25c8ed035077d6f3afe56d9b0d0411a6455b99",
@@ -294560,7 +294851,7 @@
       "number": 16419,
       "head": "67260334de03b62815627b85207fed41f9d15062",
       "sourceNumber": 16419,
-      "owner": "TCP workstream",
+      "owner": "Contributor",
       "kind": "review",
       "id": "PRR_kwDOB9IlXs8AAAABVzsOnQ",
       "url": "https://github.com/google/gvisor/pull/16419#pullrequestreview-5758455453",
@@ -295037,44 +295328,6 @@
         "sourceHead": "0bf36f79214fa3be21b86435714026a0ed1b1c42",
         "disposition": "Standalone alternative published",
         "nextAction": "Follow #16868; no reply is pending on this draft."
-      }
-    },
-    {
-      "repo": "google/gvisor",
-      "source": 15918,
-      "sourceHead": "29edee9cbe9321287548342acca1004c1d9e9c00",
-      "sourceStatus": "open",
-      "number": 15918,
-      "url": "https://github.com/google/gvisor/pull/15918",
-      "head": "29edee9cbe9321287548342acca1004c1d9e9c00",
-      "status": "open",
-      "checkedAt": "2026-11-03T18:33:40.320422+00:00",
-      "branchHead": "29edee9cbe9321287548342acca1004c1d9e9c00",
-      "sourceBranchMismatch": false,
-      "base": "dcae68e5407a8ce42a020a1bcd56e2680f04d816",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
-      "mergeabilityCheckedAt": "2026-11-03T18:31:48.412729+00:00",
-      "scope": "source",
-      "checksState": "FAILURE",
-      "checksComplete": true,
-      "failedChecks": [
-        {
-          "id": "SC_kwDOB9IlXs8AAAANekdcsQ",
-          "name": "feedback/copybara",
-          "state": "FAILURE",
-          "url": null,
-          "description": "Google internal checks FAILED for runs with create time 2026-11-02T21:00:34.869547595Z.",
-          "app": null,
-          "kind": "status",
-          "purpose": "validation"
-        }
-      ],
-      "followup": {
-        "owner": "external_sweeps",
-        "sourceHead": "29edee9cbe9321287548342acca1004c1d9e9c00",
-        "disposition": "Contributor approval delivered; maintainer review pending",
-        "nextAction": "Follow exact-head public CI and incoming maintainer feedback. The approved delivery is complete."
       }
     },
     {
@@ -296769,13 +297022,13 @@
       "url": "https://github.com/google/gvisor/pull/16843",
       "head": "e7e0d5319eb716c82471abf477c3acff9d63e9ca",
       "status": "open",
-      "checkedAt": "2026-11-03T18:33:40.320422+00:00",
+      "checkedAt": "2026-11-03T20:37:34.821811+00:00",
       "branchHead": "e7e0d5319eb716c82471abf477c3acff9d63e9ca",
       "sourceBranchMismatch": false,
-      "base": "dcae68e5407a8ce42a020a1bcd56e2680f04d816",
+      "base": "9bcc02ce7168651f688513d996c371fc0c875197",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
-      "mergeabilityCheckedAt": "2026-11-03T18:33:12.361787+00:00",
+      "mergeabilityCheckedAt": "2026-11-03T20:37:29.458002+00:00",
       "scope": "source",
       "checksState": "FAILURE",
       "checksComplete": true,
@@ -296791,7 +297044,12 @@
           "purpose": "validation"
         }
       ],
-      "followup": {}
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "e7e0d5319eb716c82471abf477c3acff9d63e9ca",
+        "disposition": "New native-installation amendment ready for review; published fileset approval retained",
+        "nextAction": "Review 88cf79c935 before updating #16843. Keep the published e7e0d5319 head until approved; compose with #16904 and the declared compiler before delivery. No new upstream post is authorized by this evidence update."
+      }
     },
     {
       "repo": "google/gvisor",
@@ -299873,19 +300131,12 @@
       }
     },
     "pr:15918": {
-      "checks-pending": {
-        "scope": "16892:ae99e79904ac52466e239dcade33812ba2e11934",
-        "since": "2026-11-03T18:22:39.260889+00:00",
-        "basis": "observed",
+      "merged": {
+        "scope": "29edee9cbe9321287548342acca1004c1d9e9c00",
+        "since": "2026-11-03T20:07:23Z",
+        "basis": "transition",
         "qualifier": null,
-        "observedAt": "2026-11-03T18:33:40.320422+00:00"
-      },
-      "importing": {
-        "scope": "16774:c6f43b40ad179122e52253c5ba8d73856d2a0b42,16892:ae99e79904ac52466e239dcade33812ba2e11934",
-        "since": "2026-11-03T18:22:39.260889+00:00",
-        "basis": "observed",
-        "qualifier": "#16774: open, validation checks passed, no reported conflict; #16892: open, checks pending, no reported conflict",
-        "observedAt": "2026-11-03T18:33:40.320422+00:00"
+        "observedAt": "2026-11-03T20:37:34.821811+00:00"
       }
     },
     "pr:15919": {
@@ -300863,14 +301114,21 @@
         "since": "2026-11-03T20:27:29.550189+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:27:29.550189+00:00"
+        "observedAt": "2026-11-03T20:37:34.821811+00:00"
       },
       "changes-requested": {
         "scope": "67260334de03b62815627b85207fed41f9d15062",
         "since": "2026-11-03T20:27:29.550189+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:27:29.550189+00:00"
+        "observedAt": "2026-11-03T20:37:34.821811+00:00"
+      },
+      "contributor-review": {
+        "scope": "4a4e33cfc5dede7d3bfbfc8b43b7784578178eb6",
+        "since": "2026-11-03T20:35:54.663277+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "pr:16445": {
@@ -301159,7 +301417,7 @@
         "since": "2026-11-03T20:21:57.270287+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "pr:16539": {
@@ -301508,7 +301766,7 @@
         "since": "2026-11-01T19:40:22.453604+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "pr:16664": {
@@ -302437,14 +302695,21 @@
         "since": "2026-11-02T20:53:50.293204+00:00",
         "basis": "observed",
         "qualifier": "Source checks failing",
-        "observedAt": "2026-11-03T18:33:40.320422+00:00"
+        "observedAt": "2026-11-03T20:37:34.821811+00:00"
       },
       "maintainer-review": {
         "scope": "e7e0d5319eb716c82471abf477c3acff9d63e9ca",
         "since": "2026-11-02T20:53:50.293204+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T18:33:40.320422+00:00"
+        "observedAt": "2026-11-03T20:37:34.821811+00:00"
+      },
+      "contributor-review": {
+        "scope": "88cf79c935336ff38f4a50cc9a7934f942828b28",
+        "since": "2026-11-03T20:35:54.663277+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "pr:16844": {
@@ -302869,7 +303134,7 @@
         "since": "2026-11-03T14:12:53.229034+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T18:33:40.320422+00:00"
+        "observedAt": "2026-11-03T20:37:34.821811+00:00"
       }
     },
     "pr:16905": {
@@ -303229,13 +303494,29 @@
         "observedAt": "2026-11-03T18:33:57.480527+00:00"
       }
     },
+    "pr:16925": {
+      "checks-pending": {
+        "scope": "16925:95960d6bebd547d64154de696c773486c3256376",
+        "since": "2026-11-03T20:37:34.821811+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-03T20:37:34.821811+00:00"
+      },
+      "maintainer-review": {
+        "scope": "95960d6bebd547d64154de696c773486c3256376",
+        "since": "2026-11-03T20:37:34.821811+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-03T20:37:34.821811+00:00"
+      }
+    },
     "branch:builder-without-cross-compilers": {
       "contributor-review": {
         "scope": "c8bde107ba5507498fec6a91501942be21157f25",
         "since": "2026-10-31T16:57:06.135+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:bazel-python-release": {
@@ -303244,7 +303525,7 @@
         "since": "2026-10-30T16:55:14.197497+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -303253,7 +303534,7 @@
         "since": "2026-11-03T07:06:47.467598+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:rules-img-hackbench-image": {
@@ -303262,7 +303543,7 @@
         "since": "2026-11-03T04:16:24.163353+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:rules-img-wrk2-image": {
@@ -303271,7 +303552,7 @@
         "since": "2026-10-31T07:18:55.041730+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:licensecheck-go-digest-notices": {
@@ -303280,7 +303561,7 @@
         "since": "2026-11-02T16:53:35.881136+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -303289,7 +303570,7 @@
         "since": "2026-11-02T08:21:11+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:declared-codespell": {
@@ -303298,7 +303579,7 @@
         "since": "2026-11-02T08:21:11+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:release-archives-versioned": {
@@ -303307,7 +303588,7 @@
         "since": "2026-10-31T10:28:33.920382+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:tcp-restore-send-deadlines": {
@@ -303316,7 +303597,7 @@
         "since": "2026-10-29T21:52:21.505470+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:mutable-overlay-poll-waiter": {
@@ -303325,7 +303606,7 @@
         "since": "2026-10-30T05:07:07.633004+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:proc-forwarding-mounts": {
@@ -303334,7 +303615,7 @@
         "since": "2026-10-30T17:32:27.326543+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -303343,7 +303624,7 @@
         "since": "2026-10-31T09:29:02.218795+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:tcp-sack-reneging": {
@@ -303352,7 +303633,7 @@
         "since": "2026-10-31T15:23:16.789097+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:native-gazelle-check": {
@@ -303361,7 +303642,7 @@
         "since": "2026-11-02T16:20:02.085486+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:checkpoint-memory-file-registration": {
@@ -303370,7 +303651,7 @@
         "since": "2026-10-31T18:05:07.150+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:buildkite-native-packages": {
@@ -303379,7 +303660,7 @@
         "since": "2026-11-03T09:40:14.321194+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:tcp-cookie-window-packets": {
@@ -303388,7 +303669,7 @@
         "since": "2026-10-31T19:36:28.936+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:tcp-retain-fixed-source-port": {
@@ -303397,7 +303678,7 @@
         "since": "2026-11-01T01:51:20.575751+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:hostinet-exit-linger": {
@@ -303406,7 +303687,7 @@
         "since": "2026-11-01T05:08:12.703055+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:rack-checkpoint-recovery": {
@@ -303415,7 +303696,7 @@
         "since": "2026-11-01T07:12:21.056431+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:tcp-cookie-accepted-sack": {
@@ -303424,7 +303705,7 @@
         "since": "2026-11-01T08:08:39.992196+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:tcp-consumed-socket-error": {
@@ -303433,7 +303714,7 @@
         "since": "2026-11-03T02:48:42.204681+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:tcp-established-icmp-errors": {
@@ -303442,7 +303723,7 @@
         "since": "2026-11-01T09:30:13.357522+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -303451,7 +303732,7 @@
         "since": "2026-11-01T11:45:39.922159+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:state-graph-object-frame-bounds": {
@@ -303460,7 +303741,7 @@
         "since": "2026-11-01T13:49:13.599008+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:tcp-report-read-hangups": {
@@ -303469,7 +303750,7 @@
         "since": "2026-11-01T13:56:22.287550+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:buildkite-native-nogo": {
@@ -303478,7 +303759,7 @@
         "since": "2026-11-03T07:06:47.467598+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:tcp-passive-syn-retry": {
@@ -303487,7 +303768,7 @@
         "since": "2026-11-02T00:04:15+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:futex-requeue-count": {
@@ -303496,7 +303777,7 @@
         "since": "2026-11-02T02:29:36+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:buildkite-direct-smoke": {
@@ -303505,7 +303786,7 @@
         "since": "2026-11-03T09:26:23.862437+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:buildkite-native-plugin": {
@@ -303514,7 +303795,7 @@
         "since": "2026-11-03T08:23:27.485264+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:state-graph-print-errors": {
@@ -303523,7 +303804,7 @@
         "since": "2026-11-02T22:54:43.336654+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     },
     "branch:ipc-object-guard": {
@@ -303532,7 +303813,16 @@
         "since": "2026-11-03T06:24:21.015903+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T20:26:09.535763+00:00"
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
+      }
+    },
+    "branch:buildkite-native-container-tests": {
+      "contributor-review": {
+        "scope": "1998f17f51aea3db192d9f1eeda076a8bedfd7a7",
+        "since": "2026-11-03T20:35:54.663277+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-03T20:35:54.663277+00:00"
       }
     }
   },
@@ -303697,15 +303987,19 @@
     "retainedImports": 344,
     "curationRefresh": {
       "prs": [
-        16419
+        15918,
+        16419,
+        16843,
+        16904,
+        16925
       ],
       "issues": [],
-      "requests": 2,
-      "graphqlCost": 2,
-      "previousFullSnapshot": "2026-11-03T20:23:25.962164+00:00",
+      "requests": 9,
+      "graphqlCost": 9,
+      "previousFullSnapshot": "2026-11-03T20:27:29.941620+00:00",
       "repositoryObservation": {
         "scope": "registered-only",
-        "registeredCount": 1,
+        "registeredCount": 5,
         "openInventoryTotal": null,
         "retainedSources": 0,
         "retainedImports": 0
@@ -304575,6 +304869,22 @@
       "https://github.com/google/gvisor/pull/16419": {
         "head": "67260334de03b62815627b85207fed41f9d15062",
         "status": "open"
+      },
+      "https://github.com/google/gvisor/pull/15918": {
+        "head": "29edee9cbe9321287548342acca1004c1d9e9c00",
+        "status": "merged"
+      },
+      "https://github.com/google/gvisor/pull/16925": {
+        "head": "95960d6bebd547d64154de696c773486c3256376",
+        "status": "open"
+      },
+      "https://github.com/tamird/gvisor/compare/29edee9cb...3569e5c2f": {
+        "head": "3569e5c2f06baef228207bcbc21d49d3aad593ef",
+        "status": "Delivered as #16925"
+      },
+      "https://github.com/tamird/gvisor/commit/1998f17f51aea3db192d9f1eeda076a8bedfd7a7": {
+        "head": "1998f17f51aea3db192d9f1eeda076a8bedfd7a7",
+        "status": "Contributor review requested"
       }
     }
   }
