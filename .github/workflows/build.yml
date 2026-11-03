@@ -1,63 +1,64 @@
-name: Compare short Docker bridge connections on native Linux
+name: Measure both veth MTUs on native Linux
 on:
   push:
-    branches: [qualification/tcp-native-dind-closers]
+    branches: [qualification/tcp-veth-peer-mtu-native]
 permissions: {contents: read}
 jobs:
   compare:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {fetch-depth: 2, persist-credentials: false}
-      - name: Stage the same two digest-verified public Docker images
+      - name: Run one fresh native Linux MTU comparison in a private namespace
         run: |
           set -euo pipefail
-          phase=source
-          trap 'printf "%s %s\n" "$phase" "$?" > "$RUNNER_TEMP/dind-setup"' EXIT
-          test "$(git rev-parse HEAD^)" = b40e0eb54f6c36853b4a3ced7d3b663c92ba89ab
-          p=test/rtnetlink/linux
-          git diff --exit-code HEAD^ HEAD -- test/rtnetlink/linux/dind_socket.py
-          stage_image() {
-            local name="$1" manifest="$2" id="$3"; shift 3
-            for registry in mirror.gcr.io docker.io; do
-              if docker pull --platform linux/amd64 "$registry/library/$name@$manifest"; then
-                test "$(docker image inspect -f '{{.Id}}' "$registry/library/$name@$manifest")" = "$id"
-                return
-              fi
-            done
-            return 1
-          }
-          phase=docker-image
-          dind=sha256:d2dc198f7d839eae26b5a9cb0e7cdc4e2c97d9cb4ea66dbeb0a4c0c7f0b165f8
-          stage_image docker sha256:f649ef046008ca7f926a2571c32b0ac22e5c59eb61b959617f9acc2a4c638cf5 "$dind"
-          container="$(docker create --network none "$dind")"
-          docker export -o "$p/dind-rootfs.tar" "$container"
-          docker rm -v "$container"
-          phase=python-image
-          py=sha256:38fd5a425aa93b06d367e2e47e2da6a9bc0cabdaf5788fb1707d143fd1416e97
-          stage_image python sha256:69ebe56e2a764c399514a0a6117131cb730cc4d0e71e85c08deb9af74cbb9f41 "$py"
-          docker tag "$py" python:3.12-alpine
-          docker save -o "$p/python-image.tar" python:3.12-alpine
-          phase=ready
-      - name: Run the fresh local Bazel owner on the isolated Linux VM
-        run: |
-          set -eu
+          test "$(git rev-parse HEAD^)" = 2b35344a82f0d60280afca27b3516f26baef837c
           rc=0
           env -i HOME="$HOME" USER="$USER" PATH="$PATH" "$(command -v bazel)" test --config=x86_64 \
-            --strategy=TestRunner=local --nocache_test_results --flaky_test_attempts=1 --test_timeout=780 \
-            --build_tag_filters= --test_tag_filters= --build_event_json_file="$RUNNER_TEMP/dind.events" \
-            //test/rtnetlink/linux:nested_docker_native > "$RUNNER_TEMP/dind.buildlog" 2>&1 || rc=$?
-          printf '%s\n' "$rc" > "$RUNNER_TEMP/dind.exit"
+            --strategy=TestRunner=local --nocache_test_results --flaky_test_attempts=1 \
+            --remote_executor= --remote_cache= --build_tag_filters= --test_tag_filters= \
+            --build_event_json_file="$RUNNER_TEMP/veth.events" \
+            //test/rtnetlink/linux:veth_peer_mtu > "$RUNNER_TEMP/veth-build.log" 2>&1 || rc=$?
+          echo "$rc" > "$RUNNER_TEMP/veth.exit"
           exit "$rc"
-      - name: Preserve original setup and test evidence, including incomplete runs
+      - name: Preserve only the MTUs and original execution record
         if: always()
         run: |
-          python3 .github/qualification/nested_docker_receipt.py
+          python3 - <<'PYTHON'
+          import json, os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"])
+          label = "//test/rtnetlink/linux:veth_peer_mtu"
+          report = {"source": os.environ["GITHUB_SHA"], "owner": label, "status":"INCOMPLETE",
+                    "attempts":[], "reads":[], "remote_cache":"disabled", "remote_executor":"disabled"}
+          try:
+              report["bazel_exit"] = int((root/"veth.exit").read_text())
+              for line in (root/"veth.events").read_text().splitlines():
+                  e = json.loads(line)
+                  if e.get("id",{}).get("testResult",{}).get("label") == label:
+                      t = e["testResult"]
+                      execution = t.get("executionInfo",{})
+                      report["attempts"].append({"status":t["status"],"strategy":execution.get("strategy"),
+                          "cached":t.get("cachedLocally",False) or execution.get("cachedRemotely",False),
+                          "start":t.get("testAttemptStart"),"duration":t.get("testAttemptDuration")})
+              log = Path("bazel-testlogs/test/rtnetlink/linux/veth_peer_mtu/test.log")
+              for line in log.read_text().splitlines():
+                  if line.startswith("VETH_MTU "):
+                      report["reads"].append(json.loads(line.split(" ",1)[1]))
+                  if line.startswith("VETH_HOST "):
+                      report["host"] = json.loads(line.split(" ",1)[1])
+              attempt, = report["attempts"]
+              assert not report["bazel_exit"] and not attempt["cached"] and attempt["strategy"]=="local" and attempt["status"]=="PASSED"
+              assert [x["mtus"] for x in report["reads"]] == [[1500,1500],[3000,1500],[3000,1460]]
+              report["status"] = "PASS"
+          finally:
+              (root/"native-veth-mtu.json").write_text(json.dumps(report, indent=2)+"\n")
+          PYTHON
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: nested-docker-native
-          path: ${{ runner.temp }}/nested-docker.json
+          name: native-veth-mtu
+          path: ${{ runner.temp }}/native-veth-mtu.json
           if-no-files-found: error

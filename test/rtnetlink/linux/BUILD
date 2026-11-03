@@ -107,3 +107,9 @@ sh_test(
     tags = ["local", "manual"],
     timeout = "long",
 )
+
+sh_test(
+    name = "veth_peer_mtu",
+    srcs = ["veth_peer_mtu.py"],
+    tags = ["local", "manual"],
+)
