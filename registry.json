@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T21:32:54.012083+00:00",
+    "updatedAt": "2026-11-03T21:38:59.870561+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4692,8 +4692,8 @@
       "url": "https://github.com/tamird/gvisor/commit/a385bd2b0",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "The compiler migration replaces llvm-raw with the supplier’s source repository. The NVIDIA ABI parser linked and its owning test passed on AMD64 and ARM64. All 871 selected Nogo targets passed on the integration with the licensecheck fixture repair. The three runs covered every target on both architectures, with one cached test result. Static syscallbench ran all three modes on AMD64. Its x86-64 constraint excludes ARM64. Ordinary C binaries used GNU libc on both architectures. The parser’s two-backend configuration still needs a supplier release containing #892.",
-      "updatedAt": "2026-11-02T17:10:19.772540+00:00",
+      "summary": "Bazel 9.3.1 and the declared clang++ built the NVIDIA ABI parser for x86_64-linux-gnu and aarch64-linux-gnu. With supplier source 17f6a3008, the generated LLVM configuration contained exactly AArch64 and X86. TestParser passed uncached on each native architecture. The earlier compiler integration passed all 871 selected Nogo targets (one cached result); those tests were not rerun on Bazel 9. Ordinary C binaries used GNU libc on both architectures. Static syscallbench ran all three modes on AMD64; its constraint excludes ARM64.",
+      "updatedAt": "2026-11-03T21:38:59.870561+00:00",
       "head": "a385bd2b0155b82faf4fc6a0c195a153ad57550c",
       "evidence": [
         {
@@ -4783,6 +4783,14 @@
         {
           "label": "273 Nogo targets on the corrected compiler integration",
           "url": "https://github.com/tamird/gvisor/actions/runs/41371093548/artifacts/13110696516"
+        },
+        {
+          "label": "Bazel 9.3.1 with the declared compiler and the pinned supplier source",
+          "url": "https://github.com/tamird/gvisor/commit/a899bf908"
+        },
+        {
+          "label": "Two generated LLVM backends; matching compiler triples and ELF machines; both native TestParser runs passed uncached",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41717072807/artifacts/13273383359"
         }
       ],
       "refinement": {
@@ -4804,9 +4812,9 @@
       "followup": {
         "owner": "Compiler integration",
         "sourceHead": "a385bd2b0155b82faf4fc6a0c195a153ad57550c",
-        "disposition": "Qualify current compiler",
-        "observedAt": "2026-11-02T17:10:19.772540+00:00",
-        "nextAction": "Preserve the independent licensing prerequisites for compiler integration. When integrating on Bazel 9, remove tools/crosstool-bazel9.patch and tools/llvm-bazel9.patch with their consumers. Keep the independent Linux-header patch. To retain #15940’s AArch64/X86 restriction, use a supplier release containing 17f6a3008. Registry releases through 0.8.26 select nine backends. Recheck the selected backends and the NVIDIA parser under Bazel 9.",
+        "disposition": "Bazel 9 parser passed; waiting for release and licensing",
+        "observedAt": "2026-11-03T21:35:51.320819+00:00",
+        "nextAction": "Use the first BCR llvm release that includes 17f6a3008, then verify its published configuration. Version 0.8.26 still enables nine backends. Keep the 6.18 Linux-header setting; the tested supplier already contains its configuration hook, so that pin needs no backport. The compiler no longer uses Coral or llvm-raw. The LLVM license classifier (#15146) and source inventory (#16249) still need to land.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
@@ -4822,7 +4830,9 @@
           "https://bcr.bazel.build/modules/llvm/0.8.26/MODULE.bazel",
           "https://github.com/tamird/gvisor/actions/runs/41356396814/artifacts/13103082090",
           "https://github.com/tamird/gvisor/actions/runs/41356215600/artifacts/13103158395",
-          "https://github.com/tamird/gvisor/actions/runs/41357065776/artifacts/13104181385"
+          "https://github.com/tamird/gvisor/actions/runs/41357065776/artifacts/13104181385",
+          "https://github.com/tamird/gvisor/commit/a899bf908",
+          "https://github.com/tamird/gvisor/actions/runs/41717072807/artifacts/13273383359"
         ]
       }
     },
@@ -27320,21 +27330,22 @@
       "url": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T16:53:35.881136+00:00",
-      "summary": "Build the NVIDIA ABI parser against hermetic-llvm’s LLVM source using the GNU toolchain. The source change passed parser parity on AMD64 and ARM64 and the 201-entry license audit. A separate native run on each architecture verified that supplier commit 17f6a3008 selects only AArch64 and X86. Delivery needs a BCR release containing that commit, #15146 for the LLVM license terms, and #16249 to enumerate the repository. The independent go-digest notice applies to catalog regeneration with the new classifier.",
+      "updatedAt": "2026-11-03T21:38:59.870561+00:00",
+      "summary": "The source migration uses the supplier’s LLVM libraries with the GNU toolchain. It passed native parser parity on AMD64 and ARM64 and the 201-entry license audit. A separate Bazel 9.3.1 integration with the declared clang++ confirmed the same two backends and passed both native parser tests. The standalone source change does not depend on switching compilers. The supplier release and licensing prerequisites remain open.",
       "followup": {
         "owner": "root",
         "sourceHead": "17d37fc9ad63e02bd1e53862ae49136179ec11eb",
-        "observedAt": "2026-11-02T05:08:02+00:00",
-        "disposition": "Source and GNU parser checks passed; supplier change landed",
-        "nextAction": "Qualify the first BCR release containing backend selection 17f6a3008. Pick only the LLVM migration when rebasing. Keep the LLVM NCSA classifier and repository enumeration prerequisites; route go-digest, QEMU and LTP to the independent catalog work.",
+        "observedAt": "2026-11-03T21:35:51.320819+00:00",
+        "disposition": "Two backends verified; waiting for a registry release",
+        "nextAction": "Qualify the first BCR llvm release containing 17f6a3008; 0.8.26 predates it. Rebase the LLVM source migration independently once #15146 covers the license terms and #16249 inventories the source repository. Keep go-digest, QEMU and LTP policy work separate.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb",
           "https://app.buildbuddy.io/invocation/a0ed5b1c-6618-4291-9931-ec00d9183a9f",
           "https://app.buildbuddy.io/invocation/2476c02c-1d7a-4ecd-9ce5-9ed8c5635e55",
           "https://app.buildbuddy.io/invocation/9870c3d7-b09b-4281-a17d-4a9c71382da9",
           "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a300884d73de0b903316f85c420c45471268",
-          "https://app.buildbuddy.io/invocation/9f4b6536-8166-4896-9259-bce7f4f6b19b"
+          "https://app.buildbuddy.io/invocation/9f4b6536-8166-4896-9259-bce7f4f6b19b",
+          "https://tamird.github.io/gvisor/#branch%3Ahermetic-compiler-review"
         ]
       },
       "evidence": [
@@ -27401,6 +27412,10 @@
         {
           "label": "The two migration trees differ only in the independent go-digest policy and catalog record",
           "url": "https://github.com/tamird/gvisor/compare/6aa2df662..17d37fc9a"
+        },
+        {
+          "label": "Bazel 9 verification with the separately proposed compiler",
+          "url": "https://tamird.github.io/gvisor/#branch%3Ahermetic-compiler-review"
         }
       ],
       "refinement": {
