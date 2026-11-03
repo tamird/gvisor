@@ -1,35 +1,89 @@
-name: CI
-
-"on":
+name: Check uninstrumented TCP package and analysis
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-processor-clean-owners]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  owners:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      PRODUCT: 71733cfc7f2c9a7585403f4174b8f82b7b9d2be5
+      BASE: 471d6dff5229b99208bf6fec985601067f1f9d69
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Select the original production tree and native compiler
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD^^)" = "$BASE"
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/build.yml
+          git switch --detach "$PRODUCT"
+          git diff --quiet "$BASE" HEAD -- pkg/tcpip/transport/tcp/BUILD ':(glob)pkg/tcpip/transport/tcp/*_test.go'
+          test -z "$(git status --porcelain)"
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends g++-aarch64-linux-gnu
+      - name: Execute the full ordinary test and its package analyzer
+        run: |
+          set -euo pipefail
+          mkdir "$RUNNER_TEMP/owners"
+          test "$(git rev-parse HEAD)" = "$PRODUCT"
+          bazel test --config=x86_64 -c opt --jobs=4 --keep_going --build_tag_filters= --test_tag_filters= \
+            --strategy=TestRunner=sandboxed --nocache_test_results --flaky_test_attempts=1 \
+            --test_arg=-test.v --test_output=errors --build_event_json_file="$RUNNER_TEMP/events" \
+            //pkg/tcpip/transport/tcp:tcp_test //pkg/tcpip/transport/tcp:tcp_nogo || rc=$?
+          echo "${rc:-0}" > "$RUNNER_TEMP/owners/exit"
+          date --utc --iso-8601=ns > "$RUNNER_TEMP/owners/finished"
+          for owner in tcp_test tcp_nogo; do
+            file="bazel-testlogs/pkg/tcpip/transport/tcp/$owner/test.log"
+            if test -f "$file"; then cp "$file" "$RUNNER_TEMP/owners/$owner.log"; fi
+          done
+          exit "${rc:-0}"
+      - name: Verify named cases, analyzer sections and fresh owners
+        if: ${{ !cancelled() }}
+        run: |
+          python3 - <<'PY'
+          from collections import Counter
+          from datetime import datetime, timezone
+          import json, os, re, subprocess
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])
+          out = root/'owners'
+          out.mkdir(exist_ok=True)
+          def read(p): return p.read_text() if p.is_file() else ''
+          src = Path('pkg/tcpip/transport/tcp')
+          want = sorted(re.findall(r'^func (Test\w+)\(t \*testing.T\)', '\n'.join(read(f) for f in src.glob('*_test.go')), re.M))
+          unit = read(out/'tcp_test.log')
+          top = re.findall(r'^--- (PASS|SKIP|FAIL): (\w+) \(', unit, re.M)
+          cases = re.findall(r'^\s*--- (PASS|SKIP|FAIL): (\S+) \(', unit, re.M)
+          nogo = read(out/'tcp_nogo.log')
+          sections = re.findall(r'^(amd64|arm64)\.\.\.(PASS|FAIL)$', nogo, re.M)
+          labels = {'//pkg/tcpip/transport/tcp:'+name for name in ('tcp_test','tcp_nogo')}
+          attempts = []
+          for line in read(root/'events').splitlines():
+              e = json.loads(line)
+              if 'testResult' in e:
+                  r = e['testResult']; x = r.get('executionInfo',{})
+                  attempts.append(dict(label=e['id']['testResult']['label'], status=r['status'], strategy=x.get('strategy'),
+                                       cached=r.get('cachedLocally',False) or x.get('cachedRemotely',False)))
+          source = subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+          gates = dict(source=source==os.environ['PRODUCT'], exit=read(out/'exit').strip()=='0',
+                       attempts=Counter(a['label'] for a in attempts)==Counter(labels) and all(a['status']=='PASSED' and a['strategy']=='processwrapper-sandbox' and not a['cached'] for a in attempts),
+                       cases=len(want)>0 and Counter(n for _,n in top)==Counter(want) and all(s=='PASS' for s,_ in cases),
+                       analyzer=sorted(sections)==[('amd64','PASS'),('arm64','PASS')])
+          report = dict(source=source, attempts=attempts, named=cases, expected=want, sections=sections, gates=gates,
+                        finished=read(out/'finished').strip(), verified=datetime.now(timezone.utc).isoformat())
+          (out/'verdict.json').write_text(json.dumps(report,indent=2)+'\n')
+          print(gates, len(top), len(cases), sections)
+          raise SystemExit(not all(gates.values()))
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: tcp-clean-owners
+          path: ${{ runner.temp }}/owners/
+          if-no-files-found: error
