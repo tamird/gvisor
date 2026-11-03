@@ -1,29 +1,36 @@
 name: Compare veth endpoint MTUs with Linux
 on:
   push:
-    branches: [qualification/veth-port-mtu]
+    branches: [qualification/veth-port-mtu-coordinator]
 permissions:
   contents: read
+  actions: read
 jobs:
   compare:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
     runs-on: ubuntu-24.04
-    timeout-minutes: 70
+    timeout-minutes: 110
     env:
       REPORTER: 6b3fe9ab6c03facafe6340c85f8d60ca3591566b
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 4
+          fetch-depth: 5
           persist-credentials: false
-      - name: Run setlink on native Linux and both gVisor revisions, then test saved veth state
+      - name: Bind the prior state round trip
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/tamird/gvisor/actions/artifacts/13277699861/zip > "$RUNNER_TEMP/veth-original.zip"
+      - name: Run three setlink owners on the native coordinator and the package Nogo owner on RBE
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/veth-public" "$RUNNER_TEMP/veth-private"
           printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/veth-public/verdict.json"
-          test "$(git rev-parse HEAD^)" = e8489c86088a020aba72296a60c2be1c75648fbd
+          test "$(git rev-parse HEAD^)" = 7418e0ff3e05db3e7622fc199a8fd033da67630c
+          git fetch --quiet --depth=2 origin dfbc2ca7059c9f7606eab8777a7804c79e3f1427
           cp .github/qualification/veth_mtu.py "$RUNNER_TEMP/"
           git fetch --quiet --depth=1 origin "$REPORTER"
           for helper in unit_matrix qualification_report; do
@@ -67,7 +74,7 @@ jobs:
           GNU=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
           mkdir -p "$HOME/.cache/bazel"
           docker pull --platform linux/amd64 "$GNU"
-          docker run -d --name bridge-gnu --entrypoint /bin/bash --user "$(id -u):$(id -g)" \
+          docker run -d --runtime=runc --privileged --name bridge-gnu --entrypoint /bin/bash --user 0:0 \
             -e "HOME=$HOME" -e "USER=$USER" -v "$HOME/.cache/bazel:$HOME/.cache/bazel" \
             -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" \
             -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
@@ -99,6 +106,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
-          name: veth-port-mtu
+          name: veth-coordinator
           path: ${{ runner.temp }}/veth-public/verdict.json
           if-no-files-found: error
