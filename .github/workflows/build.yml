@@ -1,35 +1,44 @@
-name: CI
-
-"on":
+name: Static Go executable Nogo findings
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/compiler-static-runfiles-nogo]
+permissions: {contents: read, actions: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  runfiles:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 65
+    env:
+      COMPILER: a385bd2b0155b82faf4fc6a0c195a153ad57550c
+      PRIOR: ba5685f0275d2aaa3e3878ca9c9155c2c79a4c90
+      ORIGINAL: ee59b70a4f65376eeebbf1aadd2a93f929bb916c
+      FIXED: f3ad40b1048863299da6e09c0cdae02579aa1e0b
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 3, persist-credentials: false}
+    - name: Bind the two producer trees and retained runtime experiment
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        mkdir -m 700 "$RUNNER_TEMP/runfiles"
+        printf '{"status":"INCOMPLETE","stage":"source"}\n' > "$RUNNER_TEMP/runfiles/result.json"
+        test "$(git rev-parse HEAD^)" = "$FIXED"
+        test "$(git rev-parse HEAD^^)" = "$COMPILER"
+        git fetch -q --no-tags --depth=3 origin "$ORIGINAL"
+        test "$(git rev-parse "$ORIGINAL^")" = "$PRIOR"
+        test "$(git rev-parse "$PRIOR^")" = "$COMPILER"
+        test "$(git diff --name-only "$COMPILER" "$FIXED")" = tools/bazeldefs/static.bzl
+        test "$(git diff --name-only "$PRIOR" "$FIXED")" = tools/bazeldefs/static.bzl
+        test "$(git diff --name-only "$FIXED" HEAD)" = "$(printf '%s\n' .github/workflows/build.yml test/rbe/static_go_runfiles.py)"
+        cp test/rbe/static_go_runfiles.py "$RUNNER_TEMP/runfiles/"
+        test "$(bazel --version)" = 'bazel 8.8.1'
+    - name: Read only the original public runtime comparison
+      env: {GH_TOKEN: "${{ github.token }}"}
+      run: gh api repos/tamird/gvisor/actions/artifacts/13263795278/zip > "$RUNNER_TEMP/runfiles/original.zip"
+    - name: Check original and current Nogo filter inputs, then execute only the final owner
+      run: python3 -B "$RUNNER_TEMP/runfiles/static_go_runfiles.py"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/
+        name: static-go-runfiles-nogo
+        path: ${{ runner.temp }}/runfiles/result.json
+        if-no-files-found: error
