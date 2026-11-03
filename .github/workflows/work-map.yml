@@ -1,0 +1,41 @@
+name: Verify the website release and Nogo adapter decision on the live map
+on:
+  push:
+    branches: [qualification/work-map-website-e0a7766e9]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the live UI and the curated pair
+        id: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = e0a7766e9262747c7a1fcb5f3411bf950ee08a40
+          test "$(git rev-parse HEAD^^)" = 7a1e7e7e68947300ec77c413f69c04e896cfb522
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          test "$(git diff --name-only HEAD^^ HEAD^)" = "$(printf '%s\n' github-status.json registry.json)"
+          sha256sum -c <<'INPUTS'
+          e5d01ececbb039823104599713efd9082379b42e00b724e4580a0ffedf37230a  app.js
+          5f1868149ffc2d74709c354759934932cc09a165c8c44d4bda7391088a3e572f  registry.json
+          6390bb55c2f8f630ef55775027029368b158ddf75b60ce179fa68e6d57b62729  github-status.json
+          INPUTS
+          mkdir results
+      - name: Check the canonical metadata pair
+        id: metadata
+        if: always() && steps.source.outcome == 'success'
+        run: node metadata-preflight.mjs . > results/preflight.json
+      - name: Publish the bounded verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-map-website-and-nogo
+          path: results/preflight.json
+          if-no-files-found: error
