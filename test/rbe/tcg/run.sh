@@ -65,6 +65,12 @@ case "$machine" in
     # platform. Never fall back to emulation if this host cannot provide it.
     # https://docs.kernel.org/virt/kvm/x86/running-nested-guests.html
     machine_options=(-machine pc-i440fx-6.2 -cpu host -accel kvm)
+    # Qualification-only comparison: keep the existing KVM machine and SMP.
+    for setting in "${guest_env[@]}"; do
+      if [[ "$setting" == GVISOR_QUALIFICATION_TOPOEXT=true ]]; then
+        machine_options[3]=host,topoext=on
+      fi
+    done
     console=ttyS0
     ;;
   amd64_tcg)
@@ -205,11 +211,16 @@ host_phase scratch_ready
     # a guest configuration regression. Retain the observations in test.log.
     printf '%s\n' \
       'grep -Fx CONFIG_SCHED_CORE=y /etc/gvisor-test-kernel.config || { echo "Guest core scheduling unavailable" >&2; exit 1; }' \
+      'printf "Guest CPU vendor: "; sed -n "s/^vendor_id[[:space:]]*: //p" /proc/cpuinfo | head -1' \
+      'printf "Guest CPUs online: "; cat /sys/devices/system/cpu/online' \
+      'if grep -qw topoext /proc/cpuinfo; then echo "Guest topoext: true"; else echo "Guest topoext: false"; fi' \
+      'smt_valid=true' \
       'for cpu in 0 1; do' \
       '  siblings=$(cat "/sys/devices/system/cpu/cpu${cpu}/topology/thread_siblings_list") || exit 1' \
       '  printf "Guest CPU %s thread siblings: %s\n" "$cpu" "$siblings"' \
-      '  [[ "$siblings" == 0-1 ]] || { echo "Guest CPUs are not SMT siblings" >&2; exit 1; }' \
-      'done'
+      '  if [[ "$siblings" != 0-1 ]]; then smt_valid=false; fi' \
+      'done' \
+      '[[ "$smt_valid" == true ]] || { echo "Guest CPUs are not SMT siblings" >&2; exit 1; }'
   fi
   payload_executable="/work/payload/$payload.runfiles/$TEST_WORKSPACE/$payload"
   printf 'stat -L -c %q %q\n' 'Payload executable: uid=%u gid=%g mode=%a' "$payload_executable"

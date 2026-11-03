@@ -1,0 +1,61 @@
+name: Native coretag KVM topology comparison
+on:
+  push:
+    branches: [qualification/native-coretag-kvm-topology]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  coretag:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 70
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 2, persist-credentials: false}
+    - name: Stage the exact original receipt and existing controller
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD^)" = 38745c527784376e0b5d915fe5ebd85e1d1385fd
+        mkdir "$RUNNER_TEMP/controller" "$RUNNER_TEMP/unit-v1-public"
+        printf '{"status":"INCOMPLETE","carrier":"%s"}\n' "$GITHUB_SHA" > "$RUNNER_TEMP/unit-v1-public/verdict.json"
+        cp .github/qualification/unit-cgroup-v1/check.py "$RUNNER_TEMP/controller/check.py"
+        cp test/rbe/{credential_artifacts,qualification_report,unit_matrix}.py "$RUNNER_TEMP/controller/"
+        controller=aaed41e45c71fb16ddb3ec4b6f630e15a60df757
+        helper=680739b629229eb1c8fa91aa1147d1bca71eb04f
+        decoder=0a9bdf9bc331d6a66f35aefcbbb5cf466eb6f7f5
+        product=96fadde722e14d482a62276b80237398f8b62fbf
+        git fetch --no-tags origin "$controller" "$helper" "$decoder" "$product" --depth=1
+        git show "$controller:.github/qualification/unit-cgroup-v1/check.py" > "$RUNNER_TEMP/controller/unit_v1.py"
+        git show "$helper:test/rbe/cas_inputs.py" > "$RUNNER_TEMP/controller/cas_inputs.py"
+        git show "$decoder:test/rbe/stdlib-provenance.py" > "$RUNNER_TEMP/controller/stdlib_provenance.py"
+        gh api repos/tamird/gvisor/actions/artifacts/13238877799/zip > "$RUNNER_TEMP/original.zip"
+        command -v zstd
+    - name: Reuse original ELF and observe native KVM topology
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: python3 -B "$RUNNER_TEMP/controller/check.py"
+    - name: Validate the sole public receipt
+      id: scan
+      if: always()
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PY'
+        import json, os, re
+        from pathlib import Path
+        data = (Path(os.environ['RUNNER_TEMP']) / 'unit-v1-public/verdict.json').read_bytes()
+        assert len(data) < 2 * 1024**2
+        key = os.environ['BUILDBUDDY_API_KEY']
+        assert key and key.encode() not in data and json.dumps(key)[1:-1].encode() not in data
+        assert not re.search(rb'(?i)(github_pat_|gh[pousr]_[a-z0-9]{20}|(?:authorization|x-buildbuddy-api-key)\s*[:=]|Bearer\s+[a-z0-9])', data)
+        assert json.loads(data)['carrier'] == os.environ['GITHUB_SHA']
+        PY
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.scan.outcome == 'success'
+      with:
+        name: native-coretag-topology
+        path: ${{ runner.temp }}/unit-v1-public/verdict.json
+        if-no-files-found: error
