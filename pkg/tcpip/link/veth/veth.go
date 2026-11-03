@@ -36,6 +36,9 @@ type veth struct {
 
 	backlogQueue chan vethPacket `state:"nosave"`
 
+	// +checklocks:mu
+	mtu uint32
+
 	endpoints [2]Endpoint
 }
 
@@ -84,8 +87,6 @@ type Endpoint struct {
 
 	mu endpointRWMutex `state:"nosave"`
 	// +checklocks:mu
-	mtu uint32
-	// +checklocks:mu
 	dispatcher stack.NetworkDispatcher
 	// linkAddr is the local address of this endpoint.
 	//
@@ -99,13 +100,12 @@ type Endpoint struct {
 func NewPair(mtu, backlogQueueSize uint32) (*Endpoint, *Endpoint) {
 	veth := veth{
 		backlogQueue: make(chan vethPacket, backlogQueueSize),
+		mtu:          mtu,
 		endpoints: [2]Endpoint{
 			{
-				mtu:      mtu,
 				linkAddr: tcpip.GetRandMacAddr(),
 			},
 			{
-				mtu:      mtu,
 				linkAddr: tcpip.GetRandMacAddr(),
 			},
 		},
@@ -170,20 +170,20 @@ func (e *Endpoint) IsAttached() bool {
 
 // MTU implements stack.LinkEndpoint.MTU.
 //
-// +checklocksexclude:e.mu
+// +checklocksexclude:e.veth.mu
 func (e *Endpoint) MTU() uint32 {
-	e.mu.RLock()
-	defer e.mu.RUnlock()
-	return e.mtu
+	e.veth.mu.RLock()
+	defer e.veth.mu.RUnlock()
+	return e.veth.mtu
 }
 
 // SetMTU implements stack.LinkEndpoint.SetMTU.
 //
-// +checklocksexclude:e.mu
+// +checklocksexclude:e.veth.mu
 func (e *Endpoint) SetMTU(mtu uint32) {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	e.mtu = mtu
+	e.veth.mu.Lock()
+	defer e.veth.mu.Unlock()
+	e.veth.mtu = mtu
 }
 
 // Capabilities implements stack.LinkEndpoint.Capabilities.
