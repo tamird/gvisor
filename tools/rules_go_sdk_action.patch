@@ -1,0 +1,204 @@
+diff --git a/go/def.bzl b/go/def.bzl
+index f811b702..359e3791 100644
+--- a/go/def.bzl
++++ b/go/def.bzl
+@@ -35,6 +35,7 @@ load(
+ )
+ load(
+     "//go/private:go_toolchain.bzl",
++    _go_run_with_sdk = "go_run_with_sdk",
+     _go_toolchain = "go_toolchain",
+ )
+ load(
+@@ -144,6 +145,7 @@ RULES_GO_VERSION = "0.50.0"
+ 
+ go_context = _go_context
+ go_rule = _go_rule
++go_run_with_sdk = _go_run_with_sdk
+ gomock = _gomock
+ go_sdk = _go_sdk
+ go_tool_library = _go_tool_library
+diff --git a/go/private/go_toolchain.bzl b/go/private/go_toolchain.bzl
+index 8cbcadd8..5a82d23a 100644
+--- a/go/private/go_toolchain.bzl
++++ b/go/private/go_toolchain.bzl
+@@ -16,7 +16,7 @@ Toolchain rules used by go.
+ """
+ 
+ load("@bazel_skylib//lib:selects.bzl", "selects")
+-load("//go/private:common.bzl", "GO_TOOLCHAIN")
++load("//go/private:common.bzl", "GO_TOOLCHAIN", "GO_TOOLCHAIN_LABEL")
+ load("//go/private:platforms.bzl", "PLATFORMS")
+ load("//go/private:providers.bzl", "GoSDK")
+ load("//go/private/actions:archive.bzl", "emit_archive")
+@@ -26,6 +26,9 @@ load("//go/private/actions:stdlib.bzl", "emit_stdlib")
+ 
+ def _go_toolchain_impl(ctx):
+     sdk = ctx.attr.sdk[GoSDK]
++    name = "go.exe" if sdk.goos == "windows" else "go"
++    go_on_path = ctx.actions.declare_file(ctx.label.name + "/path/" + name)
++    ctx.actions.symlink(output = go_on_path, target_file = sdk.go, is_executable = True)
+     cross_compile = ctx.attr.goos != sdk.goos or ctx.attr.goarch != sdk.goarch
+     return [
+         ctx.attr.sdk[DefaultInfo],
+@@ -50,10 +53,40 @@ def _go_toolchain_impl(ctx):
+ 
+             # Internal fields -- may be read by emit functions.
+             _builder = ctx.executable.builder,
++            _go_on_path = go_on_path,
+             _pack = ctx.executable.pack,
+         ),
+     ]
+ 
++def go_run_with_sdk(ctx, *, executable, arguments = [], stdout = None, outputs = [], tools = [], **kwargs):
++    """Runs an action with only the execution platform's Go command on PATH.
++
++    If unset, GOROOT defaults to that SDK's root.
++
++    Args:
++        ctx: Rule context. The selected execution group must declare the Go toolchain.
++        executable: An executable File or FilesToRunProvider for that execution group.
++        arguments: Arguments to the executable, as for ctx.actions.run.
++        stdout: Optional File to declare as an output and write standard output to.
++        outputs: Other output Files.
++        tools: Additional action tools, as for ctx.actions.run.
++        **kwargs: Other ctx.actions.run arguments. PATH is set at execution time.
++    """
++    group = kwargs.get("exec_group")
++    tc = (ctx.exec_groups[group] if group else ctx).toolchains[GO_TOOLCHAIN_LABEL]
++    args = ctx.actions.args()
++    sdk = tc.sdk
++    args.add_all(["runwithsdk", tc._go_on_path, sdk.root_file, stdout or "", getattr(executable, "executable", executable)])
++    sdk_files = depset([sdk.go, sdk.root_file], transitive = [sdk.srcs, sdk.headers, sdk.tools, sdk.libs])
++    ctx.actions.run(
++        executable = tc._builder,
++        arguments = [args] + arguments,
++        outputs = outputs + ([stdout] if stdout else []),
++        tools = [executable, tc._go_on_path, sdk_files] + ([tools] if type(tools) == "depset" else tools),
++        toolchain = GO_TOOLCHAIN_LABEL,
++        **kwargs
++    )
++
+ go_toolchain = rule(
+     _go_toolchain_impl,
+     attrs = {
+diff --git a/go/tools/builders/BUILD.bazel b/go/tools/builders/BUILD.bazel
+index 93cfebeb..ea65ace6 100644
+--- a/go/tools/builders/BUILD.bazel
++++ b/go/tools/builders/BUILD.bazel
+@@ -145,6 +145,7 @@ filegroup(
+         "nogo_validation.go",
+         "read.go",
+         "replicate.go",
++        "runwithsdk.go",
+         "stdlib.go",
+         "stdliblist.go",
+     ] + select({
+diff --git a/go/tools/builders/builder.go b/go/tools/builders/builder.go
+index fdeda2d3..e7eada49 100644
+--- a/go/tools/builders/builder.go
++++ b/go/tools/builders/builder.go
+@@ -28,12 +28,20 @@ func main() {
+ 	log.SetFlags(0)
+ 	log.SetPrefix("builder: ")
+ 
++	verb := verbFromName(os.Args[0])
++	if verb == "" && len(os.Args) > 1 && os.Args[1] == "runwithsdk" {
++		// -param= belongs to the wrapped program, not to the builder.
++		if err := runWithSDK(os.Args[2:]); err != nil {
++			log.Fatal(err)
++		}
++		return
++	}
++
+ 	args, _, err := expandParamsFiles(os.Args[1:])
+ 	if err != nil {
+ 		log.Fatal(err)
+ 	}
+ 
+-	verb := verbFromName(os.Args[0])
+ 	if verb == "" && len(args) == 0 {
+ 		log.Fatalf("usage: %s verb options...", os.Args[0])
+ 	}
+diff --git a/go/tools/builders/runwithsdk.go b/go/tools/builders/runwithsdk.go
+new file mode 100644
+index 00000000..ef275113
+--- /dev/null
++++ b/go/tools/builders/runwithsdk.go
+@@ -0,0 +1,76 @@
++// Copyright 2026 The Bazel Go Rules Authors. All rights reserved.
++//
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//    http://www.apache.org/licenses/LICENSE-2.0
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++
++package main
++
++import (
++	"errors"
++	"fmt"
++	"os"
++	"os/exec"
++	"path/filepath"
++	"strings"
++	"syscall"
++)
++
++func runWithSDK(args []string) error {
++	if len(args) < 4 {
++		return errors.New("usage: runwithsdk go sdk-root-file stdout-or-empty executable [args...]")
++	}
++	dir, err := filepath.Abs(filepath.Dir(args[0]))
++	if err != nil {
++		return err
++	}
++	if strings.ContainsRune(dir, os.PathListSeparator) {
++		return fmt.Errorf("cannot put %q on PATH as a single directory", dir)
++	}
++	program, err := filepath.Abs(args[3])
++	if err != nil {
++		return err
++	}
++	cmd := exec.Command(program, args[4:]...)
++	cmd.Args[0] = args[3]
++	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
++	cmd.Env = append(os.Environ(), "PATH="+dir)
++	// A remote worker may materialize the go symlink as a regular file.
++	// In that location go cannot infer its SDK from its executable path.
++	if _, ok := os.LookupEnv("GOROOT"); !ok {
++		root, err := filepath.Abs(filepath.Dir(args[1]))
++		if err != nil {
++			return err
++		}
++		cmd.Env = append(cmd.Env, "GOROOT="+root)
++	}
++	var out *os.File
++	if args[2] != "" {
++		out, err = os.Create(args[2])
++		if err != nil {
++			return err
++		}
++		cmd.Stdout = out
++	}
++	err = cmd.Run()
++	if out != nil {
++		if closeErr := out.Close(); err == nil {
++			err = closeErr
++		}
++	}
++	if exit, ok := err.(*exec.ExitError); ok {
++		if status, ok := exit.Sys().(syscall.WaitStatus); ok && status.Signaled() {
++			os.Exit(128 + int(status.Signal()))
++		}
++		os.Exit(exit.ExitCode())
++	}
++	return err
++}
