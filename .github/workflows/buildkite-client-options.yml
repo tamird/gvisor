@@ -1,0 +1,63 @@
+name: Qualify the native plugin Make entry point
+on:
+  push:
+    branches: [qualification/buildkite-plugin-make]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      SOURCE: 0ec4753b7f28212e1faed1145d29d763f59e52f4
+      REVIEW: 3d576b2ffb5b3dce0e3ebc7651338d1de66f0e3a
+      DOCKER_BUILD: "false"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Preserve the exact product and existing comparison harness
+        run: |
+          set -euo pipefail
+          mkdir "$RUNNER_TEMP/client-options"
+          printf '{"status":"INCOMPLETE","source":"%s","stage":"bootstrap"}\n' "$SOURCE" > "$RUNNER_TEMP/client-options/result.json"
+          test "$(git rev-parse HEAD^)" = "$SOURCE"
+          test "$(git diff --name-only HEAD^ HEAD)" = "$(printf '%s\n' .github/qualification/buildkite-client-options.py .github/workflows/buildkite-client-options.yml)"
+          cp .github/qualification/buildkite-client-options.py "$RUNNER_TEMP/check-client-options.py"
+          git fetch --no-tags --depth=1 origin "$REVIEW"
+          git checkout --detach "$SOURCE"
+          test -z "$(git status --porcelain --untracked-files=no)"
+      - name: Retrieve the original plugin output receipt
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api repos/tamird/gvisor/actions/artifacts/13119417233/zip > "$RUNNER_TEMP/plugin-original.zip"
+      - name: Use the existing native GNU client and Buildkite Bazelisk setup
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = x86_64
+          python3 -c 'import yaml' || sudo apt-get -qq install --no-install-recommends python3-yaml
+          source <(sed -n '/^install_lint_bazel() {$/,$p' .buildkite/hooks/pre-command)
+          printf '%s\n' "$BUILDKITE_BAZEL_DIRECTORY" >> "$GITHUB_PATH"
+          "$BUILDKITE_BAZEL_DIRECTORY/bazel" --version
+      - name: Compare real options and build through native Make
+        run: timeout --signal=INT --kill-after=30s 50m "$RUNNER_TEMP/check-client-options.py" --plugin
+      - name: Check the bounded typed publication
+        id: scan
+        if: always()
+        shell: python
+        run: |
+          import json, os, re
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'client-options/result.json'
+          raw=p.read_bytes()
+          assert len(raw)<2_000_000
+          json.loads(raw)
+          assert not re.search(rb'(?i)gh[pousr]_|github_pat_|x-buildbuddy-api-key|authorization[:=]|BEGIN [A-Z]+ PRIVATE KEY',raw)
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.scan.outcome == 'success'
+        with:
+          name: native-plugin-client-options
+          path: ${{ runner.temp }}/client-options/result.json
+          if-no-files-found: error
