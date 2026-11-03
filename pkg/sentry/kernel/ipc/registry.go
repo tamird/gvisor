@@ -71,8 +71,6 @@ func (r *Registry) Find(ctx context.Context, key Key, mode linux.FileMode, creat
 	if id, ok := r.keysToIDs[key]; ok {
 		mech := r.objects[id]
 		obj := mech.Object()
-		obj.Mu.Lock()
-		defer obj.Mu.Unlock()
 
 		creds := auth.CredentialsFromContext(ctx)
 		if !obj.CheckPermissions(creds, vfs.AccessTypes(mode&linux.ModeOtherAll)) {
