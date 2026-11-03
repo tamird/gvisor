@@ -194,6 +194,9 @@ type sender struct {
 	// RFC3522 Section 3.2.
 	retransmitTS uint32
 
+	// startCork records for restore whether corkTimer was armed at save time.
+	startCork bool
+
 	// corkTimer is used to drain the segments which are held when TCP_CORK
 	// option is enabled.
 	corkTimer timer `state:"nosave"`
