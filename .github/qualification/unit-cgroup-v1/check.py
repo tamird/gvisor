@@ -7,7 +7,6 @@ import json
 import os
 from pathlib import Path
 import re
-import shlex
 import shutil
 import subprocess
 import sys
@@ -19,7 +18,6 @@ import zipfile
 
 from credential_artifacts import prepare
 from qualification_report import xml_cases
-from unit_matrix import configured_targets
 
 TMP = Path(os.environ['RUNNER_TEMP'])
 SOURCE = os.environ['SOURCE']
@@ -33,6 +31,7 @@ SHARDS = {name: 8 if name == 'container_test' else 1 for name in NAMES}
 META = '--build_metadata=NATIVE_CONTAINER=Buildkite container'
 CACHE = '--remote_cache=grpcs://remote.buildbuddy.io'
 RESULT = TMP / 'container-native-result.json'
+SECRETS = [value for key, value in os.environ.items() if re.search('TOKEN|SECRET|PASSWORD|CREDENTIAL|API_KEY', key) and len(value) > 16]
 DOC = dict(status='INCOMPLETE', product=PRODUCT, source=SOURCE, carrier=CARRIER, guest=GUEST,
            phases={}, commands={}, payloads={}, attempts=[], modes={}, scope='native Make analysis and unchanged native binaries in KVM')
 
@@ -54,6 +53,7 @@ def save():
     DOC['verdict_utc'] = now()
     data = (json.dumps(DOC, indent=2) + '\n').encode()
     require(len(data) < 2 * 1024 * 1024, 'receipt too large')
+    require(not any(value.encode() in data or json.dumps(value)[1:-1].encode() in data for value in SECRETS), 'secret in receipt')
     require(not re.search(rb'(?i)(?:gh[pousr]_[a-z0-9]{20}|github_pat_|(?:authorization|x-buildbuddy-api-key)\s*[:=]|Bearer\s+[a-z0-9])', data), 'publication scan')
     RESULT.write_bytes(data)
 
@@ -66,8 +66,78 @@ def events(path):
     return [json.loads(line) for line in path.read_text().splitlines() if line]
 
 
+def diagnostic_lines(data):
+    """Retain bounded compiler/packager errors, never commands or headers."""
+    result = []
+    for raw in data.decode(errors='replace').splitlines():
+        if re.search(r'(?i)authorization|x-buildbuddy-api-key|remote_header|bes_header|github_pat_|gh[pousr]_', raw):
+            continue
+        line = re.sub(r'\x1b\[[0-9;]*[A-Za-z]', '', raw)
+        if not re.search(r'^(?:ERROR:|Error in |[A-Za-z]*(?:Error|Exception):|compilepkg:)|[.](?:go|cc|cpp|h|bzl):[0-9]+:', line):
+            continue
+        line = line.split(' command ', 1)[0]
+        for secret in SECRETS:
+            line = line.replace(secret, '[redacted]')
+        line = line.replace(str(Path.cwd()) + '/', '')
+        line = re.sub(r'/[^\s\"\x27]*/execroot/_main/', '', line)
+        line = re.sub(r'(?:https?|grpcs?)://[^\s\"\x27]+', '[URL omitted]', line)
+        result.append(line[:480])
+        if len(result) == 16:
+            break
+    return result
+
+
+def build_evidence(path):
+    rows = events(path)
+    result = dict(invocation=next((e['started']['uuid'] for e in rows if 'started' in e), None),
+                  bep_sha256=sha(path.read_bytes()), failed_actions=[])
+    DOC['native_build_evidence'] = result
+    save()
+    for event in rows:
+        action = event.get('action')
+        if not action or action.get('success', False):
+            continue
+        identity = event['id']['actionCompleted']
+        owner = identity.get('label', '')
+        require(re.fullmatch(r'(?:(?:@@?)[A-Za-z0-9_+~.-]+)?//[A-Za-z0-9_./:+-]+', owner), 'invalid failed owner')
+        output = identity.get('primaryOutput')
+        if output is not None:
+            require(re.fullmatch(r'[A-Za-z0-9_./+@=-]{1,1024}', output)
+                    and not output.startswith('/') and '..' not in Path(output).parts, 'invalid primary output')
+        row = dict(owner=owner, configuration=identity.get('configuration', {}).get('id'),
+                   exit=action.get('exitCode'), mnemonic=action.get('type'), primary_output=output, files=[])
+        result['failed_actions'].append(row)
+        save()
+        for key in ('stderr', 'stdout'):
+            item = action.get(key)
+            if not item:
+                continue
+            uri = urlsplit(item.get('uri', ''))
+            entry = dict(name=key, disposition='not_materialized')
+            row['files'].append(entry)
+            match = re.fullmatch(r'/(?:[^?#]*/)?blobs/([a-f0-9]{64})/(\d+)', uri.path)
+            if uri.scheme != 'file':
+                if uri.scheme == 'bytestream' and uri.netloc == 'remote.buildbuddy.io' and match:
+                    entry.update(sha256=match[1], bytes=int(match[2]), disposition='CAS_only')
+                save()
+                continue
+            log = Path(unquote(uri.path))
+            try:
+                if not log.resolve().is_relative_to(Path('bazel-out').resolve()):
+                    entry['disposition'] = 'outside_output_root'
+                elif log.stat().st_size >= 4 * 1024**2:
+                    entry['disposition'] = 'over_size_bound'
+                else:
+                    data = log.read_bytes()
+                    entry.update(disposition='read', sha256=sha(data), bytes=len(data), diagnostics=diagnostic_lines(data))
+            except OSError as exc:
+                entry.update(disposition='unavailable', error_class=type(exc).__name__)
+            save()
+        require(len(result['failed_actions']) <= 24, 'failed-action bound')
+
+
 def execute(name, args, *, env=None, timeout=2400):
-    row = dict(started_utc=now(), exit=None)
+    row = dict(started_utc=now(), exit=None, kind='test' if name == 'guest' else 'build')
     DOC['commands'][name] = row
     save()
     log = TMP / (name + '.log')
@@ -82,8 +152,10 @@ def execute(name, args, *, env=None, timeout=2400):
     row['diagnostic_classes'] = [kind for kind, pattern in {
         'fetch': rb'(?i)error downloading|failed to fetch', 'compiler': rb'(?i)fatal error:|undefined reference',
         'disk': rb'(?i)no space left', 'permission': rb'(?i)permission denied|operation not permitted',
-        'test_failure': rb'(?i)tests fail|FAILED:|--- FAIL:',
+        'failure_marker': rb'(?i)tests fail|FAILED:|--- FAIL:',
     }.items() if re.search(pattern, content)]
+    if row['exit']:
+        row['diagnostics'] = diagnostic_lines(content)
     save()
     return row['exit']
 
@@ -110,34 +182,16 @@ def native(rc):
     DOC['bazel_version'] = subprocess.check_output(['bazel', '--version'], text=True).strip()
     require(DOC['bazel_version'] == 'bazel ' + Path('.bazelversion').read_text().strip(), 'wrong Bazel')
     bazel = ['bazel', '--bazelrc=' + str(rc)]
+    prior = DOC['original']['receipt']
+    require(prior['bazel_version'] == DOC['bazel_version'], 'changed analysis client')
     for mode in ('false', 'true'):
-        name = 'make-' + mode
-        bep = TMP / (name + '.bep')
-        env = dict(os.environ, DOCKER_BUILD='false', CGROUPV2=mode, RUNTIME='buildkite_runtime',
-                   BAZEL=shlex.join(bazel), BAZEL_REMOTE_CACHE=CACHE,
-                   BAZEL_OPTIONS=shlex.join(['--config=x86_64', '--jobs=4', '--nobuild', META,
-                                             '--build_event_json_file=' + str(bep)]))
-        code = execute(name, ['make', 'container-tests', 'CGROUPV2=' + mode,
-                             'BAZEL=' + shlex.join(bazel)], env=env, timeout=900)
-        # Make supplies its own later BEP argument. Preserve its actual output.
-        actual = Path('.build_events.json')
-        if actual.exists():
-            shutil.copyfile(actual, bep)
-        rows = events(bep)
-        options = next(e['optionsParsed']['explicitCmdLine'] for e in rows if 'optionsParsed' in e)
-        bazel_exit = next(e['finished']['exitCode'].get('code', 0) for e in rows if 'finished' in e)
-        selected = configured_targets(str(bep), tests=True, allow_test_no_build=True, expected_exit=bazel_exit)
-        filtered = {label: target for label, target in selected.items() if not {'manual', 'nogo'} & set(target.tags)}
-        DOC['modes'][mode] = dict(analysis_exit=code, bazel_exit=bazel_exit, owners=sorted(filtered),
-            configured=[dict(label=label, configuration=target.configuration, tags=target.tags) for label, target in sorted(selected.items())],
-            cgroup_option='--test_env=CGROUPV2=' + mode in options,
-            cache_count=options.count(CACHE), quoted_option_count=options.count(META), analysis_only=True)
-        save()
-        require((code, bazel_exit) in ((0, 0), (2, 1)) and set(filtered) == OWNERS, 'Make configured owner mismatch')
-        DOC['commands'][name]['disposition'] = 'VALIDATED_ANALYSIS_ONLY'
-        require(DOC['modes'][mode]['cgroup_option'] and options.count(CACHE) == options.count(META) == 1,
-                'Make lost cgroup/cache/quoted option')
-        require(not any('testResult' in e for e in rows), 'analysis unexpectedly ran tests')
+        row = prior['modes'][mode]
+        require(row['owners'] == sorted(OWNERS) and row['analysis_only'] and row['cgroup_option']
+                and row['cache_count'] == row['quoted_option_count'] == 1
+                and prior['commands']['make-' + mode]['disposition'] == 'VALIDATED_ANALYSIS_ONLY', 'invalid reused Make selection')
+        DOC['modes'][mode] = row
+    DOC['analysis_reused_from'] = '41671261499/13248882573'
+    save()
     # The native Make test command selects these exact six executables. Only
     # declare archive outputs; do not modify test source, arguments or runfiles.
     build = Path('runsc/container/BUILD')
@@ -147,7 +201,10 @@ def native(rc):
     flags = ['--config=x86_64', '--strip=never', '--jobs=6', CACHE, '--remote_executor=', '--keep_going']
     targets = ['//runsc/container:' + n + '_capsule' for n in NAMES]
     try:
-        code = execute('native-build', bazel + ['build', *flags, '--build_event_json_file=' + str(TMP / 'native-build.bep'), *targets])
+        bep = TMP / 'native-build.bep'
+        code = execute('native-build', bazel + ['build', *flags, '--nobuild_event_json_file_path_conversion', '--build_event_json_file=' + str(bep), *targets])
+        if bep.exists():
+            build_evidence(bep)
         require(code == 0, 'native capsule build failed')
         for name in NAMES:
             path = Path('bazel-bin/runsc/container/' + name + '_capsule.tar')
@@ -182,7 +239,7 @@ def native(rc):
 
 def guest(rc):
     git('switch', '--quiet', '--detach', CARRIER)
-    require(git('rev-parse', 'HEAD~2') == GUEST, 'guest source mismatch')
+    require(git('rev-parse', 'HEAD~3') == GUEST, 'guest source mismatch')
     package = Path(PKG)
     for name, row in DOC['payloads'].items():
         shutil.copyfile(TMP / (name + '.tar'), package / (name + '.tar'))
@@ -287,13 +344,18 @@ def guest(rc):
 
 def main():
     original = (TMP / 'original.zip').read_bytes()
-    require(sha(original) == 'c61979d846b430d8744189a46ab54274e954f31f24f3499fc94eff285977b917', 'original ZIP mismatch')
+    require(sha(original) == 'd138fc483e8a18f06b40438422edf3aedaa622f547390108e835c72aa2a38679', 'original ZIP mismatch')
     with zipfile.ZipFile(io.BytesIO(original)) as archive:
         require(archive.namelist() == ['container-native-result.json'], 'original members mismatch')
         prior = json.loads(archive.read('container-native-result.json'))
-    require(prior['carrier'] == '77779c356c947e90fe486e1a6a8fcb36ad6368d9' and prior['status'] == 'INCOMPLETE'
-            and not prior['commands'] and not prior['attempts'], 'unexpected original execution')
-    DOC['original'] = dict(artifact=13248405646, zip_sha256=sha(original), receipt=prior, workload_repeated=False)
+    require(prior['carrier'] == 'c063181c68d6228cb4d34e7d897c4fa8f485d2c0' and prior['status'] == 'FAIL'
+            and prior['source'] == SOURCE and prior['product'] == PRODUCT
+            and prior['commands']['native-build']['exit'] == 1 and not prior['attempts'], 'unexpected original execution')
+    DOC['original'] = dict(artifact=13248882573, zip_sha256=sha(original), receipt=prior,
+                          test_workload_repeated=False, build_failure_diagnostic='not retained')
+    sample = diagnostic_lines(b'ERROR: public/BUILD:1:2: missing input\nAuthorization: Bearer private\ncompilepkg: missing dependency https://private@example.test/x?token=private\nERROR: grpcs://private@example.test/x?token=private')
+    require(sample == ['ERROR: public/BUILD:1:2: missing input', 'compilepkg: missing dependency [URL omitted]', 'ERROR: [URL omitted]'], 'diagnostic projection control')
+    DOC['diagnostic_projection_control'] = 'PASS'
     DOC['host'] = dict(machine=os.uname().machine, kernel=os.uname().release, uid=os.getuid(),
                       caller_kvm_access=os.access('/dev/kvm', os.R_OK | os.W_OK))
     # The maintained local-root test route invokes QEMU through sudo. Check
@@ -310,6 +372,8 @@ def main():
         os.environ.pop('BUILDBUDDY_API_KEY', None)
         rc = credential / 'client.bazelrc'
         rc.write_text('common --credential_helper=remote.buildbuddy.io=' + str(credential / 'helper') + '\n'
+            'build --bes_backend=grpcs://remote.buildbuddy.io\n'
+            'build --bes_results_url=https://app.buildbuddy.io/invocation/\n'
             'build:buildbuddy_remote_executor --remote_executor=grpcs://remote.buildbuddy.io\n'
             'build:buildbuddy_remote_executor --remote_cache=grpcs://remote.buildbuddy.io\n'
             'build:buildbuddy_remote_executor --bes_backend=grpcs://remote.buildbuddy.io\n'
