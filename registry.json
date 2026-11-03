@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T04:01:33.808136+00:00",
+    "updatedAt": "2026-11-03T04:16:24.163353+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -20770,13 +20770,13 @@
       "id": "branch:rules-img-hackbench-image",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/official-hackbench-image",
-      "head": "07d32506a0dd8c7f0112c10d6b099fbee8f7f40e",
+      "ref": "review/hackbench-2.11-standalone",
+      "head": "e3ea0022cb30bf8f5646ef29955998501a425d8e",
       "title": "Build the hackbench image from pinned source",
-      "url": "https://github.com/tamird/gvisor/compare/8a84b240f...07d32506a",
+      "url": "https://github.com/tamird/gvisor/compare/471d6dff5...e3ea0022c",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-11-03T04:01:33.808136+00:00",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-03T04:16:24.163353+00:00",
       "summary": "The rt-tests 2.11 image passed pipe/thread and socket/process in both configurations: AMD64 natively under runc, and ARM64 via QEMU on AMD64 runc. Both Go test attempts were uncached and used the exact previously built image and context. The 221-dependency license verification is retained from the original run.",
       "evidence": [
         {
@@ -20848,25 +20848,24 @@
       ],
       "refinement": {
         "before": {
-          "base": "4094323ff5a37d180f904fb030b4ccce2d1435dd",
-          "head": "8e1dc1ed07d594d9703abd8be1f681fe3ef559e3"
-        },
-        "after": {
           "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25",
           "head": "07d32506a0dd8c7f0112c10d6b099fbee8f7f40e"
+        },
+        "after": {
+          "base": "471d6dff5229b99208bf6fec985601067f1f9d69",
+          "head": "e3ea0022cb30bf8f5646ef29955998501a425d8e"
         }
       },
-      "followup": {
-        "owner": "Workstream owner",
-        "sourceHead": "07d32506a0dd8c7f0112c10d6b099fbee8f7f40e",
-        "observedAt": "2026-11-03T04:01:33.808136+00:00",
-        "disposition": "rt-tests 2.11 qualified; original 95-minute timeout retained",
-        "nextAction": "Check that prerequisites have landed and reconcile the qualified source with the contributor-reviewed change before opening a PR.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41572311668/artifacts/13203361824",
-          "https://github.com/tamird/gvisor/commit/7c63124a2",
-          "https://github.com/tamird/gvisor/actions/runs/41522986904"
-        ]
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "e3ea0022cb30bf8f5646ef29955998501a425d8e",
+        "baseHead": "471d6dff5229b99208bf6fec985601067f1f9d69",
+        "url": "https://github.com/tamird/gvisor/compare/471d6dff5...e3ea0022c",
+        "title": "Build the Hackbench image from pinned source",
+        "requestedAt": "2026-11-03T04:16:24.163353+00:00",
+        "summary": "The standalone patch matches the qualified rt-tests 2.11 change byte for byte. All prerequisites have landed. Both benchmark modes passed on native AMD64 and emulated ARM64; the original 221-dependency license audit still applies.",
+        "body": "Build rt-tests 2.11 as a static executable and package it with COPYING\non pinned Alpine, replacing the Dockerfile’s Ubuntu package install. The\nexisting Make image name and both benchmark modes remain supported."
       }
     },
     {
@@ -36767,8 +36766,8 @@
       "title": "Check release staging without building runsc",
       "url": "https://github.com/tamird/gvisor/commit/a5627c731",
       "group": "release",
-      "status": "Awaiting contributor review",
-      "summary": "Buildkite verifies the staged release outputs directly. The checker has no configured runsc or Sentry dependencies; all eight actual archive payloads and metadata matched for both compression formats.",
+      "status": "Agent work",
+      "summary": "The staged-release Make target calls Bazel directly, bypassing the agent’s cache arguments. Buildkite verifies the staged release outputs directly. The checker has no configured runsc or Sentry dependencies; all eight actual archive payloads and metadata matched for both compression formats.",
       "evidence": [
         {
           "label": "Native checker, negative tests and configured dependencies",
@@ -36785,17 +36784,23 @@
         {
           "label": "Before and after archive payloads",
           "url": "https://github.com/tamird/gvisor/actions/runs/40970081968"
+        },
+        {
+          "label": "Buildkite agent injects remote-cache options before repository hooks",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53249"
         }
       ],
-      "updatedAt": "2026-10-30T01:33:59.333384+00:00",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "a5627c7311e6acaed4179f3ebd6a0694661336d9",
-        "url": "https://github.com/tamird/gvisor/commit/a5627c731",
-        "title": "Check release staging without building runsc",
-        "summary": "Buildkite verifies the staged release outputs directly. The checker has no configured runsc or Sentry dependencies; all eight actual archive payloads and metadata matched for both compression formats.",
-        "body": "Review for submission once the Buildkite Bazelisk prerequisite lands. The native checker, intentional failures, configured dependencies, and original archive writers were all exercised."
+      "updatedAt": "2026-11-03T04:16:24.163353+00:00",
+      "followup": {
+        "owner": "Workstream owner",
+        "sourceHead": "a5627c7311e6acaed4179f3ebd6a0694661336d9",
+        "observedAt": "2026-11-03T04:16:24.163353+00:00",
+        "disposition": "Needs cache-routing correction",
+        "nextAction": "Correct the Make helper itself and verify its staged output and agent-supplied options.",
+        "evidence": [
+          "https://buildkite.com/gvisor/pipeline/builds/53249",
+          "https://github.com/tamird/gvisor/commit/75c04f42d"
+        ]
       }
     },
     {
@@ -38879,26 +38884,17 @@
       "group": "bazel",
       "status": "Agent work",
       "url": "https://github.com/tamird/gvisor/tree/research/declared-jekyll-site",
-      "updatedAt": "2026-11-03T03:34:04.930459+00:00",
-      "summary": "The released rules_img 0.3.24 builds and serves the site without the Jekyll builder. All 278 public paths matched the stock inventory. Of those, 276 matched byte for byte; only the order of 84 sitemap records and CSS tar header ownership and timestamps differed. The image retained the logo hard link, and all five HTTP responses matched stock. The canonical license audit verified 226 entries.",
+      "updatedAt": "2026-11-03T04:16:24.163353+00:00",
+      "summary": "The proposed site job invokes Bazel without the agent’s cache arguments. The released rules_img 0.3.24 builds and serves the site without the Jekyll builder. All 278 public paths matched the stock inventory. Of those, 276 matched byte for byte; only the order of 84 sitemap records and CSS tar header ownership and timestamps differed. The image retained the logo hard link, and all five HTTP responses matched stock. The canonical license audit verified 226 entries.",
       "followup": {
-        "owner": "root",
+        "owner": "Workstream owner",
         "sourceHead": "757a452f9265d02a963203d1ccf7704e7d1ebc57",
-        "observedAt": "2026-11-03T03:34:04.930459+00:00",
-        "disposition": "Released OCI layer support verified on hosted Linux",
-        "nextAction": "The Buildkite release job still needs the Bazelisk bootstrap. This build used native AMD64 and ARM64 cross GNU compilers for the existing Go documentation and server; it did not qualify a worker without GNU tools or deploy the site.",
+        "observedAt": "2026-11-03T04:16:24.163353+00:00",
+        "disposition": "Needs cache-routing correction",
+        "nextAction": "Keep checking the released rules_img dependency; qualify the corrected website job with the agent cache arguments.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41571402230/artifacts/13201877206",
-          "https://github.com/tamird/gvisor/actions/runs/41148839163/artifacts/13021069904",
-          "https://github.com/tamird/gvisor/actions/runs/41144112084/artifacts/13019603780",
-          "https://github.com/tamird/gvisor/actions/runs/41127231437/artifacts/13011169580",
-          "https://github.com/tamird/gvisor/actions/runs/41122472914/artifacts/13009007947",
-          "https://github.com/tamird/gvisor/actions/runs/41120650004/artifacts/13008608480",
-          "https://github.com/tamird/gvisor/actions/runs/41115737834/artifacts/13005113336",
-          "https://github.com/tamird/gvisor/actions/runs/41118437298/artifacts/13007432076",
-          "https://github.com/bazel-contrib/rules_img/pull/811",
-          "https://github.com/bazelbuild/bazel-central-registry/pull/11511",
-          "https://bcr.bazel.build/modules/rules_img/0.3.24/source.json"
+          "https://buildkite.com/gvisor/pipeline/builds/53249",
+          "https://github.com/tamird/gvisor/commit/75c04f42d"
         ]
       },
       "refinement": {
@@ -38965,6 +38961,10 @@
         {
           "label": "BCR publication of rules_img 0.3.24 with the layer fix",
           "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11511"
+        },
+        {
+          "label": "Buildkite agent injects remote-cache options before repository hooks",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53249"
         }
       ],
       "links": [
@@ -41481,9 +41481,9 @@
       "title": "Build pkg and runsc directly with Bazel on Buildkite",
       "url": "https://github.com/tamird/gvisor/commit/d30816db3",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T21:41:54.604864+00:00",
-      "summary": "Build //pkg/... and //runsc/... with Bazelisk on the Buildkite agent, passing each job’s architecture and excluding the network plugin only for runsc. The two architecture-specific pkg wildcards built 1,948 and 1,946 targets; the two runsc wildcards built 389 each after composing the cgroup, coverage and musl prerequisites.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-03T04:16:24.163353+00:00",
+      "summary": "Six direct Bazel compile commands bypass the agent’s cache arguments. Build //pkg/... and //runsc/... with Bazelisk on the Buildkite agent, passing each job’s architecture and excluding the network plugin only for runsc. The two architecture-specific pkg wildcards built 1,948 and 1,946 targets; the two runsc wildcards built 389 each after composing the cgroup, coverage and musl prerequisites.",
       "evidence": [
         {
           "label": "Two passing pkg builds and the blocked runsc builds",
@@ -41516,18 +41516,22 @@
         {
           "label": "Master contains the cgroup tag removal and capability drop",
           "url": "https://github.com/google/gvisor/commit/3164fe6e0"
+        },
+        {
+          "label": "Buildkite agent injects remote-cache options before repository hooks",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53249"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "d30816db365b44801393af8fe721795897ab5a65",
-        "baseHead": "eafcb8392effca7769ef6e220d24feaadb3bdf17",
-        "url": "https://github.com/tamird/gvisor/commit/d30816db3",
-        "title": "Build pkg and runsc directly with Bazel on Buildkite",
-        "requestedAt": "2026-11-01T00:30:22.013294+00:00",
-        "summary": "Open after the native Bazelisk hook, declared LLVM/static toolchain, #16507 coverage changes and composed coverage/musl transition land. The cgroup fixture from #16496 is already on master.",
-        "body": "The compile jobs start a Docker builder and query the output paths of\nevery target. The jobs only need to know whether the builds succeeded.\nUse Bazelisk on the agent and build for the architecture of each job.\nKeep the network plugin exclusion scoped to runsc.\n\nOpen after the native Bazelisk hook, declared LLVM/static toolchain, #16507 coverage changes and composed coverage/musl transition land. The cgroup fixture from #16496 is already on master."
+      "followup": {
+        "owner": "Workstream owner",
+        "sourceHead": "d30816db365b44801393af8fe721795897ab5a65",
+        "observedAt": "2026-11-03T04:16:24.163353+00:00",
+        "disposition": "Needs cache-routing correction",
+        "nextAction": "Preserve the job’s compile scope and route the agent cache arguments into all six commands.",
+        "evidence": [
+          "https://buildkite.com/gvisor/pipeline/builds/53249",
+          "https://github.com/tamird/gvisor/commit/75c04f42d"
+        ]
       }
     },
     {
@@ -43756,9 +43760,9 @@
       "title": "Run Buildkite Nogo tests without the builder",
       "url": "https://github.com/tamird/gvisor/commit/6aa894aa1",
       "group": "analysis",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T01:55:01+00:00",
-      "summary": "Both Buildkite Nogo jobs use host Bazelisk. The declared compiler handles both target architectures, and Buildkite can collect a failed analyzer’s log. All 871 selected tests passed across three runs on a Linux client with remote execution. The duration of a single cold Buildkite job is still unknown.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-03T04:16:24.163353+00:00",
+      "summary": "The two direct Nogo invocations bypass the agent’s cache arguments. Both Buildkite Nogo jobs use host Bazelisk. The declared compiler handles both target architectures, and Buildkite can collect a failed analyzer’s log. All 871 selected tests passed across three runs on a Linux client with remote execution. The duration of a single cold Buildkite job is still unknown.",
       "evidence": [
         {
           "label": "597 original Nogo tests with both architecture reports",
@@ -43783,34 +43787,30 @@
         {
           "label": "Selected Nogo owners and deliberate analyzer failure",
           "url": "https://github.com/tamird/gvisor/actions/runs/41352375345/artifacts/13102300561"
+        },
+        {
+          "label": "Buildkite agent injects remote-cache options before repository hooks",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53249"
+        },
+        {
+          "label": "Four-line Nogo correction on the shared Buildkite bootstrap",
+          "url": "https://github.com/tamird/gvisor/commit/a19da812a"
+        },
+        {
+          "label": "Bounded positive and injected analyzer-failure qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41576928150"
         }
       ],
       "followup": {
-        "owner": "root",
+        "owner": "Workstream owner",
         "sourceHead": "6aa894aa1bce04a655c7064f15c9a7f43ac77c2d",
-        "observedAt": "2026-11-02T01:55:01+00:00",
-        "disposition": "Complete target coverage",
-        "nextAction": "Open after contributor approval and both existing prerequisites land.",
+        "observedAt": "2026-11-03T04:16:24.163353+00:00",
+        "disposition": "Needs cache-routing correction",
+        "nextAction": "Qualify both existing Make Nogo entry points on the shared bootstrap. Verify the original analysis failure and failed-log path; a bounded check does not establish full-suite coverage.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41353882134/artifacts/13101954456",
-          "https://github.com/tamird/gvisor/actions/runs/41355123970",
-          "https://github.com/tamird/gvisor/actions/runs/41356215600/artifacts/13103158395",
-          "https://github.com/tamird/gvisor/actions/runs/41357065776/artifacts/13104181385",
-          "https://github.com/tamird/gvisor/actions/runs/41363500730/artifacts/13107794911",
-          "https://github.com/tamird/gvisor/actions/runs/41370631971/artifacts/13109217470",
-          "https://github.com/tamird/gvisor/actions/runs/41371093548/artifacts/13110696516"
+          "https://buildkite.com/gvisor/pipeline/builds/53249",
+          "https://github.com/tamird/gvisor/commit/75c04f42d"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "6aa894aa1bce04a655c7064f15c9a7f43ac77c2d",
-        "baseHead": "e86e84eb839c0f691a227faa8e80406eb144f03c",
-        "url": "https://github.com/tamird/gvisor/commit/6aa894aa1",
-        "title": "Run Buildkite Nogo tests without the builder",
-        "summary": "Open after the host Bazelisk hook and declared compiler land.",
-        "body": "The previous proposal stripped some binaries differently from Make. This revision preserves the debug symbols. On the integrated source, all 871 targets had passing AMD64 and ARM64 analyzer logs. One result was cached. The final 273 took 38m45s; their verdict was ready in the same second. A single cold Buildkite job’s 55-minute deadline remains unverified.\n\ngit range-diff e86e84eb8^! 6aa894aa1^!",
-        "requestedAt": "2026-11-02T01:55:01+00:00"
       }
     },
     {
@@ -44039,9 +44039,9 @@
       "head": "fbe18a2bd8ff26d2d843776a74b2ceba6a13a925",
       "url": "https://github.com/tamird/gvisor/commit/fbe18a2bd",
       "title": "Run the Buildkite smoke guests directly with Bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T04:43:46+00:00",
-      "summary": "Five Buildkite steps now call two Bazel targets. On native AMD64, normal and race guests ran as UID 1001; on native ARM64, the normal guest did too. Each launcher used its matching Sentry and retained the eight-file release layout. Only the AMD64 race pair contained race instrumentation. These checks ran the production commands on GitHub-hosted Linux workers.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-03T04:16:24.163353+00:00",
+      "summary": "Five direct smoke commands bypass the agent’s cache arguments. Five Buildkite steps now call two Bazel targets. On native AMD64, normal and race guests ran as UID 1001; on native ARM64, the normal guest did too. Each launcher used its matching Sentry and retained the eight-file release layout. Only the AMD64 race pair contained race instrumentation. These checks ran the production commands on GitHub-hosted Linux workers.",
       "evidence": [
         {
           "label": "AMD64 normal and race guest receipts",
@@ -44086,6 +44086,10 @@
         {
           "label": "Earlier GoStdlib sandbox control for the same extra archive on both target architectures",
           "url": "https://github.com/tamird/gvisor/actions/runs/40960192898/artifacts/12936231116"
+        },
+        {
+          "label": "Buildkite agent injects remote-cache options before repository hooks",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53249"
         }
       ],
       "refinement": {
@@ -44096,13 +44100,16 @@
           "head": "fbe18a2bd8ff26d2d843776a74b2ceba6a13a925"
         }
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "fbe18a2bd8ff26d2d843776a74b2ceba6a13a925",
-        "url": "https://github.com/tamird/gvisor/commit/fbe18a2bd",
-        "title": "Open the native smoke PR after its four prerequisites land",
-        "summary": "Five Buildkite steps now call two Bazel targets. On native AMD64, normal and race guests ran as UID 1001; on native ARM64, the normal guest did too. Each launcher used its matching Sentry and retained the eight-file release layout. Only the AMD64 race pair contained race instrumentation. These checks ran the production commands on GitHub-hosted Linux workers."
+      "followup": {
+        "owner": "Workstream owner",
+        "sourceHead": "fbe18a2bd8ff26d2d843776a74b2ceba6a13a925",
+        "observedAt": "2026-11-03T04:16:24.163353+00:00",
+        "disposition": "Needs cache-routing correction",
+        "nextAction": "Preserve smoke test selection and make the agent cache options available to all five commands.",
+        "evidence": [
+          "https://buildkite.com/gvisor/pipeline/builds/53249",
+          "https://github.com/tamird/gvisor/commit/75c04f42d"
+        ]
       }
     },
     {
@@ -44265,9 +44272,9 @@
       "title": "Build the plugin runtime directly on Buildkite",
       "group": "bazel",
       "url": "https://github.com/tamird/gvisor/commit/89fed95c1",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T05:56:23+00:00",
-      "summary": "The AMD64 plugin runtime also builds an ARM64 cgo standard library. Give that input the declared LLVM cross-compiler and let the job run Bazelisk directly. DPDK and the optimized AMD64 runtime still use the worker’s GNU toolchain.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-03T04:16:24.163353+00:00",
+      "summary": "The native plugin command bypasses the agent’s cache arguments. The AMD64 plugin runtime also builds an ARM64 cgo standard library. Give that input the declared LLVM cross-compiler and let the job run Bazelisk directly. DPDK and the optimized AMD64 runtime still use the worker’s GNU toolchain.",
       "evidence": [
         {
           "label": "Native static AMD64 link, embedded plugin symbol, --version and architecture-specific compiler selection",
@@ -44280,17 +44287,22 @@
         {
           "label": "Qualified integration source",
           "url": "https://github.com/tamird/gvisor/commit/a490e1c09"
+        },
+        {
+          "label": "Buildkite agent injects remote-cache options before repository hooks",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53249"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "89fed95c14d3569acb4c895ae602983b7ce25d32",
-        "url": "https://github.com/tamird/gvisor/commit/89fed95c1",
-        "title": "Build the plugin runtime directly on Buildkite",
-        "requestedAt": "2026-11-02T05:56:23+00:00",
-        "summary": "Open the plugin-job change once the Bazelisk hook and GNU plugin build land?",
-        "body": "The identical command built a static AMD64 runsc with libpluginstack.a and its plugin_preinitstack symbol, then ran its version command. Only the cross-compiler for ARM64 changes. This job checks compilation; device-backed traffic runs separately."
+      "followup": {
+        "owner": "Workstream owner",
+        "sourceHead": "89fed95c14d3569acb4c895ae602983b7ce25d32",
+        "observedAt": "2026-11-03T04:16:24.163353+00:00",
+        "disposition": "Needs cache-routing correction",
+        "nextAction": "Route the existing plugin checks through the agent’s cache settings and verify the original output.",
+        "evidence": [
+          "https://buildkite.com/gvisor/pipeline/builds/53249",
+          "https://github.com/tamird/gvisor/commit/75c04f42d"
+        ]
       }
     },
     {
@@ -46654,6 +46666,45 @@
           "url": "https://app.buildbuddy.io/invocation/1decea9a-144d-4a37-9dcb-2816f1336c49"
         }
       ]
+    },
+    {
+      "id": "branch:buildkite-native-governance",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "targetRepo": "google/gvisor",
+      "ref": "research/buildkite-native-governance",
+      "head": "75c04f42d5b7346e4a54a5991dfaf31b043b6769",
+      "title": "Run the governance check on the Buildkite agent",
+      "url": "https://github.com/tamird/gvisor/commit/75c04f42d",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-03T04:16:24.163353+00:00",
+      "summary": "Run the existing Make comparison without the Docker builder, preserving the agent’s remote-cache arguments and failed-log paths. Both AMD64 job definitions passed cleanly. Making just CODEOWNERS stale failed its comparison; the post-command hook selected that same log by digest. The native Bazel server stopped. The hosted Linux test intercepted the Buildkite upload.",
+      "evidence": [
+        {
+          "label": "Clean and stale comparison results and Buildkite log handoff",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41576727191/artifacts/13204040543"
+        },
+        {
+          "label": "Original job, including its diagnostic guard failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41575809809/artifacts/13203617553"
+        },
+        {
+          "label": "Agent provides the remote cache before repository hooks",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53249"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "75c04f42d5b7346e4a54a5991dfaf31b043b6769",
+        "baseHead": "471d6dff5229b99208bf6fec985601067f1f9d69",
+        "url": "https://github.com/tamird/gvisor/commit/75c04f42d",
+        "title": "Run the governance check on the Buildkite agent",
+        "requestedAt": "2026-11-03T04:16:24.163353+00:00",
+        "summary": "Run the existing Make comparison without the Docker builder, preserving the agent’s remote-cache arguments and failed-log paths. Both AMD64 job definitions passed cleanly. Making just CODEOWNERS stale failed its comparison; the post-command hook selected that same log by digest. The native Bazel server stopped. The hosted Linux test intercepted the Buildkite upload.",
+        "body": "The governance job starts the builder to compare CODEOWNERS and\nMAINTAINERS.md with files generated by a Go program. Set DOCKER_BUILD\nto false for this job. Keep the Make recipe so the agent-provided\nremote cache options reach Bazel unchanged.\n\nSelect Bazelisk for both the test and its cleanup, and stop the native\nserver after successful jobs just as the Docker cleanup did. Record\nlocal paths in the build event file so make testlogs can locate a\nfailed comparison even when using a remote cache."
+      }
     }
   ],
   "edges": [
@@ -49662,9 +49713,10 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:buildkite-source-lint-native",
+      "from": "branch:buildkite-native-governance",
       "to": "branch:release-archives-versioned",
-      "reason": "The Buildkite hook supplies Bazelisk when these release jobs request a native build."
+      "reason": "The native job needs the Bazelisk launcher and cleanup supplied by the governance change.",
+      "evidence": "https://github.com/tamird/gvisor/commit/75c04f42d"
     },
     {
       "type": "depends_on",
@@ -49721,10 +49773,10 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:buildkite-source-lint-native",
+      "from": "branch:buildkite-native-governance",
       "to": "branch:declared-staged-release-check",
-      "reason": "The staged Buildkite validation uses the approved Bazelisk setup.",
-      "evidence": "https://github.com/tamird/gvisor/commit/a5627c731"
+      "reason": "The native job needs the Bazelisk launcher and cleanup supplied by the governance change.",
+      "evidence": "https://github.com/tamird/gvisor/commit/75c04f42d"
     },
     {
       "to": "branch:hermetic-compiler-review",
@@ -49839,11 +49891,11 @@
       ]
     },
     {
-      "from": "branch:buildkite-source-lint-native",
+      "from": "branch:buildkite-native-governance",
       "to": "branch:declared-jekyll-site",
       "type": "depends_on",
-      "reason": "The native Buildkite job uses the same Bazelisk hook and Make environment override as the source-lint jobs.",
-      "evidence": "https://github.com/tamird/gvisor/commit/eafcb8392"
+      "reason": "The native job needs the Bazelisk launcher and cleanup supplied by the governance change.",
+      "evidence": "https://github.com/tamird/gvisor/commit/75c04f42d"
     },
     {
       "type": "depends_on",
@@ -49927,11 +49979,11 @@
       "evidence": "https://github.com/tamird/gvisor/commit/211a9e3b9"
     },
     {
-      "from": "branch:buildkite-source-lint-native",
+      "from": "branch:buildkite-native-governance",
       "to": "branch:buildkite-native-packages",
       "type": "depends_on",
-      "reason": "The compile commands reuse the Bazelisk installation supplied by the source lint change.",
-      "evidence": "https://github.com/tamird/gvisor/commit/aa354f7c5"
+      "reason": "The native job needs the Bazelisk launcher and cleanup supplied by the governance change.",
+      "evidence": "https://github.com/tamird/gvisor/commit/75c04f42d"
     },
     {
       "from": "branch:hermetic-compiler-review",
@@ -50079,12 +50131,10 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:buildkite-source-lint-native",
+      "from": "branch:buildkite-native-governance",
       "to": "branch:buildkite-native-nogo",
-      "reason": "The native Buildkite steps use the shared Bazelisk hook.",
-      "evidence": [
-        "https://github.com/tamird/gvisor/commit/e86e84eb8"
-      ]
+      "reason": "The native job needs the Bazelisk launcher and cleanup supplied by the governance change.",
+      "evidence": "https://github.com/tamird/gvisor/commit/75c04f42d"
     },
     {
       "type": "depends_on",
@@ -50143,12 +50193,10 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:buildkite-source-lint-native",
+      "from": "branch:buildkite-native-governance",
       "to": "branch:buildkite-direct-smoke",
-      "reason": "The Buildkite source hook provisions the pinned Bazelisk on a native worker.",
-      "evidence": [
-        "https://github.com/tamird/gvisor/commit/eafcb8392"
-      ]
+      "reason": "The native job needs the Bazelisk launcher and cleanup supplied by the governance change.",
+      "evidence": "https://github.com/tamird/gvisor/commit/75c04f42d"
     },
     {
       "type": "depends_on",
@@ -50167,11 +50215,11 @@
       "evidence": "https://github.com/tamird/gvisor/actions/runs/41395191771/artifacts/13119417233"
     },
     {
-      "from": "branch:buildkite-source-lint-native",
+      "from": "branch:buildkite-native-governance",
       "to": "branch:buildkite-native-plugin",
       "type": "depends_on",
-      "reason": "The shared hook supplies Bazelisk when DOCKER_BUILD is false.",
-      "evidence": "https://github.com/tamird/gvisor/actions/runs/41395191771/artifacts/13119417233"
+      "reason": "The native job needs the Bazelisk launcher and cleanup supplied by the governance change.",
+      "evidence": "https://github.com/tamird/gvisor/commit/75c04f42d"
     },
     {
       "type": "depends_on",
@@ -50227,6 +50275,13 @@
       "evidence": [
         "https://github.com/tamird/gvisor/commit/6aa894aa1"
       ]
+    },
+    {
+      "from": "branch:buildkite-native-governance",
+      "to": "branch:buildkite-source-lint-native",
+      "type": "depends_on",
+      "reason": "The native source-lint job uses the shared Bazelisk launcher and Make environment override.",
+      "evidence": "https://github.com/tamird/gvisor/commit/75c04f42d"
     }
   ],
   "investigations": [
