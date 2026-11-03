@@ -91,13 +91,14 @@ steps:
     env:
       DOCKER_BUILD: "false"
   - <<: *common
-    <<: *docker
     # This variant is not really a source test, but we annotate it as such to
     # avoid running binary-only tests for all variants of cgroups. It is
     # sufficient to run cgroupv2 variants only for source changes.
     <<: *source_test
     label: ":test_tube: Container tests (cgroupv2)"
     command: make container-tests
+    env:
+      DOCKER_BUILD: "false"
 
   # System call tests.
   - <<: *common
