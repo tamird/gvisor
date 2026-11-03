@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T15:12:55.022550+00:00",
+    "updatedAt": "2026-11-03T16:50:02.468339+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36637,9 +36637,9 @@
       "head": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
       "title": "Format stateify output in the generator",
       "url": "https://github.com/google/gvisor/pull/16710",
-      "status": "open",
-      "summary": "The replacement uses upstream goimports with a reusable rules_go action. Twelve uncached formatting actions reproduced all twelve generated files on the shell-free AMD64 worker. Nine target builds passed; the same three synthetic alias fixtures failed on both versions. The tool-independent stateify and Blaze adapter sources are unchanged. Publishing the amendment requires a rules_go release containing the launcher.",
-      "updatedAt": "2026-11-03T14:47:30.598669+00:00",
+      "status": "Agent work",
+      "summary": "Replace the generated shell script that runs goimports with a gVisor-local launcher. The formatter needs the declared Go tool on an absolute PATH.",
+      "updatedAt": "2026-11-03T16:50:02.468339+00:00",
       "evidence": [
         {
           "label": "Seven identical production outputs and scratch qualification",
@@ -36690,16 +36690,6 @@
           "url": "https://github.com/tamird/rules_go/actions/runs/41657052068/artifacts/13241010279"
         }
       ],
-      "refinement": {
-        "before": {
-          "base": "c3d3fd4a3844b46529b6d15216b3410b872df735",
-          "head": "50890dbbe59fbf3754de2b49168972e37f0e8478"
-        },
-        "after": {
-          "base": "c3d3fd4a3844b46529b6d15216b3410b872df735",
-          "head": "7cbb007c3febee15d1904c7faaf3bb21f34a3ae5"
-        }
-      },
       "settledReviews": [
         {
           "kind": "amendment",
@@ -36707,14 +36697,21 @@
           "outcome": "changes-requested",
           "at": "2026-11-03T14:33:29.484586+00:00",
           "url": "https://github.com/tamird/gvisor/commit/50890dbbe"
+        },
+        {
+          "kind": "amendment",
+          "head": "7cbb007c3febee15d1904c7faaf3bb21f34a3ae5",
+          "outcome": "changes-requested",
+          "at": "2026-11-03T16:50:02.468339+00:00",
+          "url": "https://github.com/tamird/gvisor/commit/7cbb007c3"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
-        "observedAt": "2026-11-03T14:48:57.209577+00:00",
-        "disposition": "Replacement qualified; supplier release needed before publication",
-        "nextAction": "Publish only when an available rules_go release contains the reviewed launcher.",
+        "observedAt": "2026-11-03T16:50:02.468339+00:00",
+        "disposition": "Contributor requested the gVisor-local fix",
+        "nextAction": "Qualify the local launcher against the existing action and prepare the revision for review.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16710#pullrequestreview-5744331855",
           "https://github.com/tamird/gvisor/commit/50890dbbe"
@@ -36725,17 +36722,6 @@
           "commentId": "PRR_kwDOB9IlXs8AAAABVmOMTw",
           "url": "https://github.com/google/gvisor/pull/16710#pullrequestreview-5744331855"
         }
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "7cbb007c3febee15d1904c7faaf3bb21f34a3ae5",
-        "baseHead": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
-        "url": "https://github.com/tamird/gvisor/commit/7cbb007c3",
-        "title": "Run goimports with the Go toolchain on PATH",
-        "summary": "Approve this amendment for publication after a rules_go release contains the launcher? All twelve generated files matched on the shell-free worker.",
-        "body": "goimports invokes the go command to resolve imports. Building PATH in a generated shell script makes formatting stateify output depend on /bin/sh on the execution platform.\n\nRun the upstream goimports executable with rules_go’s SDK launcher and write its stdout to the declared output. Keep the SDK files and build environment selected for the generator.",
-        "requestedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     {
@@ -47440,9 +47426,9 @@
       "title": "Run build tools with the selected Go SDK on PATH",
       "url": "https://github.com/tamird/rules_go/tree/proposal/action-go-path",
       "group": "rbe",
-      "status": "Ready for contributor review",
-      "summary": "Run a declared build tool with only the execution SDK’s go command on PATH and optionally write its stdout to a declared file. All five final supplier cases passed. The first workflow then failed to analyze goimports without the consumer’s telemetry dependency. A separate supported list caller had identical arguments, output, environment, execution platform and action key before and after the tuple refinement. gVisor independently exercised goimports twelve times on the earlier list implementation. No Windows execution was measured.",
-      "updatedAt": "2026-11-03T14:47:30.598669+00:00",
+      "status": "Deferred",
+      "summary": "The contributor deferred the general rules_go launcher. The gVisor formatter is being handled in #16710.",
+      "updatedAt": "2026-11-03T16:50:02.468339+00:00",
       "evidence": [
         {
           "label": "Supplier proposal",
@@ -47468,26 +47454,25 @@
       "followup": {
         "owner": "root",
         "sourceHead": "1e46f02a9c4862f8d303bd18bcb6dd2da9230a4f",
-        "observedAt": "2026-11-03T14:48:57.209577+00:00",
-        "disposition": "Five final cases pass; list-call action identity verified",
-        "nextAction": "Open the upstream PR after contributor review.",
+        "observedAt": "2026-11-03T16:50:02.468339+00:00",
+        "disposition": "Deferred by contributor",
+        "nextAction": "Revisit the general launcher if another caller needs it.",
         "evidence": [
           "https://github.com/tamird/rules_go/actions/runs/41656196227/artifacts/13239628082",
           "https://github.com/tamird/rules_go/actions/runs/41657052068/artifacts/13241010279",
           "https://github.com/tamird/gvisor/actions/runs/41655395579/artifacts/13239008072"
         ]
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "1e46f02a9c4862f8d303bd18bcb6dd2da9230a4f",
-        "baseHead": "f9689452ce5999237c187346ea2ad62207015d99",
-        "url": "https://github.com/tamird/rules_go/commit/1e46f02a9",
-        "title": "Run build tools with the selected Go SDK on PATH",
-        "summary": "Open the new PR in bazel-contrib/rules_go? Five final-source cases pass, including tuple arguments and forwarding child exit 37.",
-        "body": "Tools such as goimports invoke go by name. Bazel supplies the path to the SDK relative to the execution root, but Go rejects a PATH lookup that resolves to a relative executable. Putting the SDK bin directory on PATH also exposes unrelated programs such as gofmt.\n\nAdd go_run_with_sdk to run the declared tool with a private directory containing only the execution SDK go command. Resolve that directory when the existing builder runs and forward the tool arguments intact. The caller can capture stdout in a declared output without a shell.",
-        "requestedAt": "2026-11-03T14:48:57.209577+00:00"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "1e46f02a9c4862f8d303bd18bcb6dd2da9230a4f",
+          "outcome": "changes-requested",
+          "at": "2026-11-03T16:50:02.468339+00:00",
+          "url": "https://github.com/tamird/rules_go/commit/1e46f02a9"
+        }
+      ],
+      "inactive": true
     },
     {
       "id": "pr:16905",
@@ -51141,13 +51126,6 @@
         "https://github.com/bazel-contrib/rules_distroless/pull/294",
         "https://github.com/tamird/gvisor/actions/runs/41540964289/artifacts/13186473194"
       ]
-    },
-    {
-      "from": "branch:rules-go-run-with-sdk",
-      "to": "pr:16710",
-      "type": "blocked_by",
-      "reason": "The formatting action is supplied by rules_go; the gVisor change needs a released version containing it.",
-      "evidence": "https://github.com/tamird/rules_go/commit/1e46f02a9"
     },
     {
       "type": "includes",
