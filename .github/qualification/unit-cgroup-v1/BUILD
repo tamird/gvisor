@@ -39,5 +39,5 @@ copy_file(
         guest_env = {"GO_TEST_WRAP_TESTV": "true"},
         tags = [],
     )
-    for mode, selection in [("v1", "annotation"), ("v2", "annotation"), ("v1", "missing-shard-4")]
+    for mode, selection in [("v1", "missing-shard-4")]
 ]

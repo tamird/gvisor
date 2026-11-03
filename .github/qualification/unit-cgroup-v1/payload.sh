@@ -90,6 +90,10 @@ else
   test "$selection" = missing-shard-4
   test "$mode" = v1
   export TEST_SHARD_INDEX=4 TEST_TOTAL_SHARDS=8
+  # This inner shard runs under an unsharded outer wrapper. rules_go requires
+  # its own writable marker before selecting any test from the original ELF.
+  export TEST_SHARD_STATUS_FILE="$TEST_UNDECLARED_OUTPUTS_DIR/inner-shard-status"
+  test ! -e "$TEST_SHARD_STATUS_FILE"
 fi
 stage=proof
 printf '%s\n' "$mode" "$actual" "${expected[3]}" docker_absent kvm_present \

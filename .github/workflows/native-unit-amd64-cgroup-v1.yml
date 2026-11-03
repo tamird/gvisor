@@ -1,4 +1,4 @@
-name: Remaining native container guests with declared strings
+name: Remaining native container shard with its Bazel status file
 on:
   push:
     branches: [qualification/buildkite-container-remaining-guests]
@@ -15,14 +15,14 @@ jobs:
       SOURCE: 45e2b205ea018f69e9f3bc80e162ba07d88fd768
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 11, persist-credentials: false}
+      with: {fetch-depth: 12, persist-credentials: false}
     - name: Retain controller outside product checkout
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
-        test "$(git rev-parse HEAD^)" = 312a88ac731277a0e435ec4044432605342a1f51
-        test "$(git rev-parse HEAD~10)" = 38745c527784376e0b5d915fe5ebd85e1d1385fd
+        test "$(git rev-parse HEAD^)" = bf85d5d1740d24d251eccb16171f0dd4f7718ebf
+        test "$(git rev-parse HEAD~11)" = 38745c527784376e0b5d915fe5ebd85e1d1385fd
         printf '{"status":"INCOMPLETE","carrier":"%s"}\n' "$GITHUB_SHA" > "$RUNNER_TEMP/container-native-result.json"
         test -c /dev/kvm
         mkdir "$RUNNER_TEMP/controller"
@@ -33,8 +33,9 @@ jobs:
         gh api repos/tamird/gvisor/actions/artifacts/13262889422/zip > "$RUNNER_TEMP/original.zip"
         gh api repos/tamird/gvisor/actions/artifacts/13264433003/zip > "$RUNNER_TEMP/diagnostics.zip"
         gh api repos/tamird/gvisor/actions/artifacts/13267680388/zip > "$RUNNER_TEMP/fetch-failure.zip"
+        gh api repos/tamird/gvisor/actions/artifacts/13266307038/zip > "$RUNNER_TEMP/shard-failure.zip"
         printf '{"status":"INCOMPLETE","carrier":"%s"}\n' "$GITHUB_SHA" > "$RUNNER_TEMP/container-native-result.json"
-    - name: Reuse the original container capsule for exactly three remaining checks
+    - name: Read the original startup error and conditionally execute only the missing shard
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: python3 -B "$RUNNER_TEMP/controller/check.py"

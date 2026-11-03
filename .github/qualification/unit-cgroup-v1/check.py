@@ -280,8 +280,8 @@ def native(rc):
 
 def guest(rc):
     git('switch', '--quiet', '--detach', CARRIER)
-    require(git('rev-parse', 'HEAD^') == '312a88ac731277a0e435ec4044432605342a1f51'
-            and git('rev-parse', 'HEAD~10') == GUEST, 'guest source mismatch')
+    require(git('rev-parse', 'HEAD^') == 'bf85d5d1740d24d251eccb16171f0dd4f7718ebf'
+            and git('rev-parse', 'HEAD~11') == GUEST, 'guest source mismatch')
     package = Path(PKG)
     for name, row in DOC['payloads'].items():
         shutil.copyfile(TMP / (name + '.tar'), package / (name + '.tar'))
@@ -292,8 +292,6 @@ def guest(rc):
         require(all(re.fullmatch(r'[A-Za-z0-9_./+-]+', row[key]) for key in ('binary', 'runfiles')), 'invalid archive path')
         (package / (name + '.inputs')).write_text('\n'.join(row[key] or '-' for key in ('sha256', 'binary', 'runfiles', 'elf_sha256', 'runsc_sha256')) + '\n')
     selections = {
-        '//' + PKG + ':v1_annotation': ('v1', 'annotation', 0, 1),
-        '//' + PKG + ':v2_annotation': ('v2', 'annotation', 0, 1),
         '//' + PKG + ':v1_missing_shard_4': ('v1', 'missing-shard-4', 4, 8),
     }
     labels = sorted(selections)
@@ -385,17 +383,19 @@ def guest(rc):
                 info = archive.getinfo('guest/outputs/proof')
                 require(info.file_size < 4096, 'guest proof size')
                 proof = archive.read(info).decode().splitlines()
+                require(archive.getinfo('guest/outputs/inner-shard-status').file_size == 0,
+                        'original Go runner did not acknowledge inner sharding')
             require(proof[:5] == [mode, DOC['payloads'][name]['sha256'], DOC['payloads'][name]['elf_sha256'], 'docker_absent', 'kvm_present'], 'guest identity mismatch')
             require(len(proof) == 16 and proof[5] == 'CGROUPV2=' + ('false' if mode == 'v1' else 'true') and proof[6] == '6.8.0-138-generic' and all(re.fullmatch(r'[0-9a-f]{64}', h) for h in (proof[7], proof[8], proof[11])), 'guest capability proof mismatch')
             require(proof[9:11] == [str(shard), str(total_shards)], 'guest shard environment mismatch')
             require(re.fullmatch('[0-9a-f]{64}', proof[12]) and proof[13] == sha(b'native-string-control\ntail-check\n')
                     and proof[14:] == ['strings_original_absent', selection], 'strings or selection proof mismatch')
-            row['guest_proof'] = dict(busybox_sha256=proof[12], strings_control_sha256=proof[13], strings_original_absent=True, cgroup_v2=mode == 'v2', kernel=proof[6], mkfs_sha256=proof[7], loader_sha256=proof[8], erofs_archive_sha256=proof[11], shard_index=int(proof[9]), total_shards=int(proof[10]), docker_absent=True, kvm_present=True)
+            row['guest_proof'] = dict(shard_status_file_created=True, busybox_sha256=proof[12], strings_control_sha256=proof[13], strings_original_absent=True, cgroup_v2=mode == 'v2', kernel=proof[6], mkfs_sha256=proof[7], loader_sha256=proof[8], erofs_archive_sha256=proof[11], shard_index=int(proof[9]), total_shards=int(proof[10]), docker_absent=True, kvm_present=True)
             save()
         except Exception as exc:
             row['report_error_class'] = type(exc).__name__
             save()
-    expected = {('v1', 'annotation'), ('v2', 'annotation'), ('v1', 'missing-shard-4')}
+    expected = {('v1', 'missing-shard-4')}
     DOC['missing_attempts'] = [list(v) for v in sorted(expected - seen)]
     save()
     require(seen == expected, 'incomplete guest attempts')
@@ -413,11 +413,12 @@ def guest(rc):
             require(not retained_v1.intersection(row['xml']['leaf_cases']), 'missing shard repeated an original leaf')
             require('TestMountEROFS' in passed['v1'], 'missing EROFS case did not pass')
     DOC['joined_coverage'] = dict(original_attempts=25, original_passed_attempts=23, original_failed_attempts=2,
-        newly_executed_focused_cases=2, newly_executed_original_shards=[['v1', 'container_test', 4]],
+        retained_focused_passes=2, newly_executed_focused_cases=0,
+        newly_executed_original_shards=[['v1', 'container_test', 4]],
         unresolved_original_failure_cases=[], missing_original_attempts=[],
         original_skips=sum(row['xml']['skipped'] for row in original),
         new_skips=sum(row['xml']['skipped'] for row in DOC['attempts']),
-        scope='Original passing cases plus two corrected-guest annotation leaves and the missing v1 shard; original failed attempts remain unchanged')
+        scope='Original passing cases and two retained corrected-guest annotation passes plus the newly executed missing v1 shard; original failures remain unchanged')
     save()
 
 
@@ -546,6 +547,53 @@ def recover_guest_downloads():
     return directory
 
 
+def recover_shard_diagnostic():
+    """Require the original startup failure before replaying its sole shard."""
+    from cas_inputs import blob
+
+    raw = (TMP / 'shard-failure.zip').read_bytes()
+    require(sha(raw) == '520252bb38414e8c41cf873215db75b8b950df171da5fb100b760f83c0209dd3', 'shard failure ZIP mismatch')
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+        require(archive.namelist() == ['container-native-result.json'], 'shard failure members mismatch')
+        prior = json.loads(archive.read('container-native-result.json'))
+    require(prior['carrier'] == 'bf85d5d1740d24d251eccb16171f0dd4f7718ebf'
+            and prior['source'] == SOURCE and prior['product'] == PRODUCT and prior['guest'] == GUEST
+            and prior['status'] == 'FAIL' and prior['commands']['guest-remaining']['exit'] == 3
+            and prior['payloads'] == {'container_test': DOC['original']['receipt']['payloads']['container_test']},
+            'unexpected remaining-shard source or result')
+    attempts = prior['attempts']
+    require(len(attempts) == 3 and {(r['mode'], r['selection']) for r in attempts} == {
+        ('v1', 'annotation'), ('v2', 'annotation'), ('v1', 'missing-shard-4')}, 'remaining-shard census mismatch')
+    require(all(r['owner'] == '//runsc/container:container_test' and r['strategy'] == 'local'
+                and not r['local_cache'] and not r['remote_cache']
+                and r['invocation'] == 'c995c774-a3b0-42ec-8f8f-1aad4b836a28' for r in attempts), 'remaining-shard attempt identity')
+    for row in attempts:
+        if row['selection'] == 'annotation':
+            require(row['status'] == 'PASSED' and row['xml']['leaf_cases'] == ['TestCheckpointRestoreAnnotation']
+                    and row['xml']['passed'] == 1 and row['xml']['failed'] == row['xml']['skipped'] == 0
+                    and row['guest_proof']['strings_original_absent']
+                    and row['guest_proof']['strings_control_sha256'] == sha(b'native-string-control\ntail-check\n')
+                    and row['guest_proof']['cgroup_v2'] == (row['mode'] == 'v2'), 'retained annotation did not pass')
+    failed, = [row for row in attempts if row['selection'] == 'missing-shard-4']
+    require(failed['status'] == 'FAILED' and failed['shard'] == 4
+            and failed['xml']['passed'] == failed['xml']['failed'] == failed['xml']['skipped'] == 0
+            and failed['log']['sha256'] == '18848cefefefc4f19800bce64f0b8763fbad1bfb6edd1a7bf5a9e7e5b3f2a4f1'
+            and failed['log']['bytes'] == 36093, 'unexpected missing-shard failure')
+    DOC['remaining_original'] = dict(artifact=13266307038, zip_sha256=sha(raw),
+        receipt={key: prior[key] for key in ('carrier', 'status', 'commands', 'attempts', 'guest_archive_mirrors',
+                                            'guest_invocations', 'execution_finished_utc', 'verdict_utc')})
+    diagnostic = DOC['shard_startup_diagnostic'] = dict(status='UNKNOWN', sha256=failed['log']['sha256'], bytes=36093)
+    save()
+    data = blob(dict(hash=failed['log']['sha256'], sizeBytes=36093), failed['invocation'])
+    require(len(data) == 36093 and sha(data) == failed['log']['sha256'], 'original shard log differs')
+    message = b'Failed to touch TEST_SHARD_STATUS_FILE: open : no such file or directory'
+    diagnostic.update(recovered_utc=now(), expected_message_count=data.count(message))
+    if message in data:
+        diagnostic.update(status='MISSING_SHARD_STATUS_FILE', message=message.decode())
+    save()
+    require(message in data, 'original shard startup error not identified; no replay')
+
+
 def main():
     # Read and bind both immutable originals before using any retained binary.
     import cas_inputs  # Captures the key before prepare removes it from children.
@@ -586,9 +634,10 @@ def main():
             and diagnostic['original_zip_sha256'] == sha(original), 'diagnostic source mismatch')
     DOC.update(original=dict(artifact=13262889422, zip_sha256=sha(original), receipt=prior),
         original_diagnostics=dict(artifact=13264433003, zip_sha256=sha(diagnostic_zip), receipt=diagnostic),
-        scope='Only two original failed annotation leaves and the missing v1 shard, using original binaries with a guest-only strings applet alias',
+        scope='Only the missing v1 shard, gated on its original startup diagnostic; retain both annotation passes and original binaries',
         product_build_repeated=False, modes=prior['modes'])
     save()
+    recover_shard_diagnostic()
     phase('original_capsule', lambda: recover_capsules(prior))
     require(DOC['phases']['original_capsule']['status'] == 'PASS', 'original capsule unavailable')
     DOC['bazel_version'] = subprocess.check_output(['bazel', '--version'], text=True).strip()
