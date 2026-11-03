@@ -27,7 +27,7 @@ source = os.environ["SOURCE"]
 expected = {"runsc", "containerd-shim-runsc-v1", "gvisor-bin/checkpointgofer", "gvisor-bin/runsc-metric-server", "gvisor-bin/runsc-fd-parking", "gvisor-bin/gvisor_sentry", "gvisor-bin/gvisor-sentry-prewarmer", "gvisor-bin/gvisor-proc-umounter"}
 cpu = {"x86_64": 62, "aarch64": 183}[machine]
 arch = "AMD64" if cpu == 62 else "ARM64"
-labels = [f":fire: Smoke tests ({arch})"] + ([":fire: Smoke race tests"] if cpu == 62 else [])
+labels = [":fire: Smoke race tests"]
 bazel = ["bazel", f"--bazelrc={facts}/cache.rc"]
 
 
@@ -155,6 +155,23 @@ for step in pipelines["pipeline"]:
                         "toolchain": "no matching toolchains", "cache-unavailable": "remote cache",
                         "missing-file": "no such file or directory", "fetch-error": "error downloading",
                     }.items() if pattern in text]
+                    # Record only fixed categories found in download diagnostics.
+                    # URLs, filenames, repository names and headers stay private.
+                    downloads = "\n".join(s for s in text.splitlines() if "error downloading" in s or "failed to download" in s)
+                    if downloads:
+                        fixed = {
+                            "llvm-distribution": "github.com/llvm/llvm-project/",
+                            "hermetic-llvm": "github.com/hermeticbuild/hermetic-llvm/",
+                            "musl-libc": "musl.libc.org/",
+                            "go-sdk": "dl.google.com/go/",
+                            "http-403": "403 forbidden", "http-404": "404 not found",
+                            "http-429": "429 too many requests", "http-502": "502 bad gateway",
+                            "http-503": "503 service unavailable", "http-504": "504 gateway timeout",
+                            "tls-validation": "pkix path building failed",
+                            "dns-failure": "unknownhostexception", "timeout": "timed out",
+                            "connection-reset": "connection reset",
+                        }
+                        entry["stages"][name]["downloadCategories"] = [code for code, marker in fixed.items() if marker in downloads]
             (report / f"{flavor}.json").write_text(json.dumps(entry, indent=2) + "\n")
         assert not failed
         assert len({r["invocation"] for r in entry["tests"]}) == len({r["testStart"] for r in entry["tests"]}) == 2

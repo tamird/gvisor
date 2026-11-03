@@ -1,24 +1,18 @@
-name: Execute the assembled source release on its native CPU
+name: Qualify the default AMD64 race release
 on:
   push:
-    branches: [qualification/buildkite-smoke-default-tests]
+    branches: [qualification/buildkite-smoke-default-race-recovery]
 permissions:
   contents: read
 jobs:
   smoke:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - {host: ubuntu-22.04, machine: x86_64}
-          - {host: ubuntu-22.04-arm, machine: aarch64}
-    runs-on: ${{ matrix.host }}
+    runs-on: ubuntu-22.04
     timeout-minutes: 118
     env:
       SOURCE: 5b7afbced7307cdf9f90dff013c4acb77707054d
       PROPOSAL: 3ab02c201d1842c00081552221fa8fe37fe3c884
-      MACHINE: ${{ matrix.machine }}
+      MACHINE: x86_64
       DOCKER_BUILD: "false"
       BAZEL_REMOTE_CACHE: --remote_cache=grpcs://remote.buildbuddy.io
       BAZEL_OPTIONS: "'--build_metadata=SMOKE_QUALIFIER=native smoke'"
@@ -29,19 +23,20 @@ jobs:
           python3 - <<'PYTHON'
           import json, os
           from pathlib import Path
-          targets = ["release"] + (["release-race"] if os.environ["MACHINE"] == "x86_64" else [])
+          targets = ["release-race"]
           Path(os.environ["RUNNER_TEMP"], "direct-smoke", "records", "expected.json").write_text(json.dumps({
               "source": os.environ["SOURCE"], "carrier": os.environ["GITHUB_SHA"], "architecture": os.environ["MACHINE"],
               "expected": targets, "requiredFreshPerTarget": 2, "status": "INCOMPLETE"}))
           PYTHON
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 2, persist-credentials: false}
+        with: {fetch-depth: 3, persist-credentials: false}
       - name: Select source and check the existing namespace policy
         run: |
           set -euo pipefail
           d="$RUNNER_TEMP/direct-smoke"
           cp test/rbe/direct-release-smoke.py "$d/"
-          [[ "$(git rev-parse HEAD^)" == "$SOURCE" ]]
+          [[ "$(git rev-parse HEAD^)" == ef9973bbd0838dc2c30310d64f0c81ba30e33a54 ]]
+          [[ "$(git rev-parse HEAD^^)" == "$SOURCE" ]]
           git checkout --detach "$SOURCE"
           git diff --quiet
           [[ "$(uname -m)" == "$MACHINE" && "$(id -u)" != 0 ]]
@@ -109,6 +104,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.sanitize.outcome == 'success'
         with:
-          name: native-smoke-targets-${{ matrix.machine }}
+          name: native-smoke-targets-x86_64
           path: ${{ runner.temp }}/direct-smoke/records/
           if-no-files-found: error
