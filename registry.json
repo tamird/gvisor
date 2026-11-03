@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T22:12:12.298157+00:00",
+    "updatedAt": "2026-11-03T22:22:19.360070+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -44382,8 +44382,8 @@
       "url": "https://github.com/tamird/gvisor/commit/a19da812a",
       "group": "analysis",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-03T22:12:12.298157+00:00",
-      "summary": "Both Buildkite jobs run make nogo-tests on the agent. On the proposed pipeline change, the failure hook found an injected analyzer error. On a separate Linux integration source with the proposed compiler, native Make exited successfully and all 871 selected analyzer tests ran. Their reports cover AMD64 and ARM64. The four pipeline lines still depend on the compiler and the shared Bazelisk setup. The execution records identify the compiler for all 9,894 C++ actions, including both ioctl_sniffer wrapper symlinks.",
+      "updatedAt": "2026-11-03T22:22:19.360070+00:00",
+      "summary": "Both Buildkite jobs run make nogo-tests on the agent. On the proposed pipeline change, the failure hook found an injected analyzer error. On a separate Linux integration source with the proposed compiler, native Make exited successfully and all 871 selected analyzer tests ran. Their reports cover AMD64 and ARM64. The four pipeline lines still depend on the compiler and the shared Bazelisk setup. The execution records identify the compiler for all 9,894 C++ actions, including both ioctl_sniffer wrapper symlinks. A separate fork change lets developers select Nogo in a package tree with bazel test --config=nogo. The four Buildkite lines do not depend on that change.",
       "evidence": [
         {
           "label": "597 original Nogo tests with both architecture reports",
@@ -44452,6 +44452,14 @@
         {
           "label": "Combined pipeline preserves the two Nogo jobs and the prior analyzer positive and negative controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/41726017655/artifacts/13273977360"
+        },
+        {
+          "label": "Optional package-scoped Bazel preset used by make nogo-tests",
+          "url": "https://github.com/tamird/gvisor/commit/e288d9db4"
+        },
+        {
+          "label": "Both Bazel filter orders: three fresh Nogo tests, then five ordinary cases; Make arguments match",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41729352453/artifacts/13274864093"
         }
       ],
       "followup": {
@@ -46072,7 +46080,7 @@
       "url": "https://github.com/google/gvisor/pull/16809",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T22:12:12.298157+00:00",
+      "updatedAt": "2026-11-03T22:22:19.360070+00:00",
       "summary": "Expose the socket’s lifetime retransmission count to applications diagnosing packet loss.",
       "evidence": [
         {
@@ -46100,7 +46108,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41361977602/artifacts/13106036446"
         },
         {
-          "label": "Copybara export of the approved bc9ffcc0d head",
+          "label": "Copybara export for the approved TCP_INFO change",
           "url": "https://github.com/google/gvisor/pull/16915"
         },
         {
@@ -46122,6 +46130,10 @@
         {
           "label": "Copybara export head whose trailer identifies bc9ffcc0d",
           "url": "https://github.com/google/gvisor/commit/236615441"
+        },
+        {
+          "label": "November 3: export 17e0affe9 identifies f1dbaa4d1 and returns the SYN-cookie send error",
+          "url": "https://github.com/google/gvisor/commit/17e0affe9"
         }
       ],
       "settledReviews": [
@@ -46155,25 +46167,6 @@
           "postedURL": "https://github.com/google/gvisor/pull/16809#issuecomment-6615907851"
         }
       ],
-      "followup": {
-        "owner": "TCP workstream",
-        "sourceHead": "f1dbaa4d1e2cfb522fa03197ed36f21df9a74a3b",
-        "observedAt": "2026-11-03T22:12:12.298157+00:00",
-        "disposition": "Parth approved the corrected squash; Copybara still carries the previous source",
-        "nextAction": "Check the next Copybara export for the failed SYN-cookie send returned to the listener. Parth approved f1dbaa4d1 at 21:57:41 UTC on November 3. Open export #16915 at 236615441 identifies bc9ffcc0d in its source trailer.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/16809",
-          "https://github.com/google/gvisor/pull/16915",
-          "https://github.com/tamird/gvisor/commit/bbdb2f8a2",
-          "https://github.com/google/gvisor/pull/16809#issuecomment-6614296745",
-          "https://github.com/tamird/gvisor/compare/bc9ffcc0d...bbdb2f8a2",
-          "https://github.com/google/gvisor/pull/16809#issuecomment-6615654449",
-          "https://github.com/tamird/gvisor/commit/f1dbaa4d1e2cfb522fa03197ed36f21df9a74a3b",
-          "https://github.com/google/gvisor/pull/16809#issuecomment-6615907851",
-          "https://github.com/google/gvisor/pull/16809#pullrequestreview-5760056940",
-          "https://github.com/google/gvisor/commit/236615441"
-        ]
-      },
       "refinement": {
         "before": {
           "head": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689"
@@ -48115,7 +48108,7 @@
       "url": "https://github.com/google/gvisor/issues/16908",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T19:43:08.796751+00:00",
+      "updatedAt": "2026-11-03T22:22:19.360070+00:00",
       "summary": "Docker 27.5.1 inside public runsc 20260727.0 returned ECONNRESET in 3 of 2,000 client-first exchanges and 2 of 2,000 server-first exchanges. The reporter has been asked which socket call and errno they observed on GKE.",
       "evidence": [
         {
@@ -48133,6 +48126,10 @@
         {
           "label": "Posted results and question for the reporter",
           "url": "https://github.com/google/gvisor/issues/16908#issuecomment-6613679645"
+        },
+        {
+          "label": "Same Docker 27.5.1 fixture on Linux runc 1.5.2: 2,000 exchanges per close order, zero errors; Linux retained zero SNAT hits",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41729636045/artifacts/13274284389"
         }
       ],
       "settledReviews": [
