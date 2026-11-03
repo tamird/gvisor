@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T19:22:46.745532+00:00",
+    "updatedAt": "2026-11-03T19:43:08.796751+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1827,13 +1827,13 @@
       "summary": "The GNU-only change builds both static binaries. On a host with /dev/vhost-net, the published plugin initialized but its Sentry exited before the guest opened either socket. Native Linux exchanged both TCP and UDP payloads on the same Docker bridge. Earlier diagnostics traced the startup failure to a glibc allocator call blocked by seccomp and reproduced it on the unchanged parent. The separate musl binaries passed the bridge test.",
       "number": 15153,
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-11-02T11:39:07.762322+00:00",
+      "updatedAt": "2026-11-03T19:43:08.796751+00:00",
       "followup": {
-        "disposition": "Equivalent conflict repair published; existing review requirements retained",
+        "disposition": "Address the external toolchain packaging review",
         "owner": "root",
-        "nextAction": "Follow current-head public checks and substantive maintainer review through the existing intake; no repeat rebase or reapproval request for this equivalent change.",
-        "sourceHead": "e22d4ffb69d6f40ab3eb498435d918789da14fdb",
-        "reviewedAt": "2026-10-16T08:57:33Z",
+        "nextAction": "Qualify the local package query and the linked DPDK plugin. Then publish the reviewed amendment and reply on the original thread.",
+        "sourceHead": "675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa",
+        "reviewedAt": "2026-11-03T19:17:53Z",
         "reviewDecision": null,
         "mergeable": "MERGEABLE",
         "evidence": [
@@ -1841,10 +1841,13 @@
           "https://github.com/tamird/gvisor/commit/85c742f25194e6198c292e099754f09549f09cdf",
           "https://app.buildbuddy.io/invocation/b3eaa3ec-3f47-4d1d-b778-1ab7c76958bc",
           "https://app.buildbuddy.io/invocation/3adc7f41-8aef-4247-bc0a-1f78a05f2e7a",
-          "https://github.com/tamird/gvisor/commit/e22d4ffb69d6f40ab3eb498435d918789da14fdb"
+          "https://github.com/tamird/gvisor/commit/e22d4ffb69d6f40ab3eb498435d918789da14fdb",
+          "https://github.com/google/gvisor/pull/15153#discussion_r4459362810",
+          "https://github.com/tamird/gvisor/commit/c7c5dce62",
+          "https://github.com/tamird/gvisor/actions/runs/41705510705"
         ],
-        "observedAt": "2026-10-27T18:54:54+00:00",
-        "providerHead": "e22d4ffb69d6f40ab3eb498435d918789da14fdb"
+        "observedAt": "2026-11-03T19:43:08.796751+00:00",
+        "providerHead": "675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa"
       },
       "head": "675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa",
       "refinement": {
@@ -47694,8 +47697,8 @@
       "url": "https://github.com/google/gvisor/issues/16908",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T19:07:32.229433+00:00",
-      "summary": "The GKE client counts connection, send and receive errors together. An isolated bridge completed all exchanges even when post-close resets were captured; the failing GKE syscall and its packet tuple are still needed.",
+      "updatedAt": "2026-11-03T19:43:08.796751+00:00",
+      "summary": "Docker 27.5.1 inside public runsc 20260727.0 returned ECONNRESET in 3 of 2,000 client-first exchanges and 2 of 2,000 server-first exchanges. The reporter has been asked which socket call and errno they observed on GKE.",
       "evidence": [
         {
           "label": "Public July release: client-first and server-first close orders",
@@ -47704,17 +47707,25 @@
         {
           "label": "Forwarding controls on July and current public gVisor",
           "url": "https://github.com/tamird/gvisor/actions/runs/41681641439/artifacts/13253085882"
+        },
+        {
+          "label": "Docker-in-gVisor results for both close orders",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41704494513/artifacts/13265691217"
+        },
+        {
+          "label": "Posted results and question for the reporter",
+          "url": "https://github.com/google/gvisor/issues/16908#issuecomment-6613679645"
         }
       ],
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "requestedAt": "2026-11-03T19:07:32.229433+00:00",
-        "title": "Ask for the failing client call and its packet trace",
-        "summary": "Post the completed close-order comparison and ask which GKE syscall first saw the reset?",
-        "body": "Could you share which call first raises `ConnectionResetError` on GKE (`create_connection`, `sendall`, or `recv`), along with the errno? The client currently counts all three under the same exception. If you have a trace for that connection, its client port and the SYN/RST sequence would let us match it to the failing call.\n\nOn public runsc 20260727.0 I connected two network namespaces across a bridge inside the sandbox. All 2,000 exchanges finished in each close order. The first reset I captured in each run followed both FINs, after the exchange succeeded. [Run and packet observations](https://github.com/tamird/gvisor/actions/runs/41696247019/artifacts/13262175985).\n\nPosted by Codex on behalf of @tamird.",
-        "url": "https://github.com/google/gvisor/issues/16908"
-      }
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "body": "I reproduced `ConnectionResetError` outside GKE with Docker 27.5.1 inside public runsc 20260727.0, using your Python close sequence over the `t1` bridge with `srv` as the hostname. The client saw `ECONNRESET` on 3/2,000 client-first exchanges and 2/2,000 server-first exchanges. The first failure in each run was `recv(1)` after `sendall`; other calls also reported resets. [Per-operation results and setup](https://github.com/tamird/gvisor/actions/runs/41704494513/artifacts/13265691217).\n\nOn your GKE build, could you record which call first raises the exception (`create_connection`, `sendall`, or `recv`) and its errno? That would let us compare the failure you see with this public release. If you already have a trace, the client port for that failed exchange would help match it.\n\nPosted by Codex on behalf of @tamird.\n",
+          "at": "2026-11-03T19:39:33Z",
+          "outcome": "approved",
+          "url": "https://github.com/google/gvisor/issues/16908#issuecomment-6613679645"
+        }
+      ]
     },
     {
       "id": "branch:tcp-info-cookie-send-error",
@@ -67638,7 +67649,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-03T19:07:32.229433+00:00",
+      "updatedAt": "2026-11-03T19:43:08.796751+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the packet-socket reply on #16793 and the duplicate reconnect reply on #15019.",
       "findings": [
@@ -68345,7 +68356,7 @@
           ]
         },
         {
-          "text": "For #16908, 2,000 exchanges completed in each close order on public runsc 20260727.0 with two network namespaces connected by a veth bridge inside the sandbox. The passive closer sent a sequence-matched reset on 1,844 client-first and 1,988 server-first connections. In each run the first such reset followed both FINs. The client-first control on 471d6dff5 had no matching resets with forwarding on; neither revision had one with forwarding off. This fixture used neither GKE nor a Docker daemon. The failing GKE client call, errno and trace for that tuple remain unknown.",
+          "text": "For #16908, 2,000 exchanges completed in each close order on public runsc 20260727.0 with two network namespaces connected by a veth bridge inside the sandbox. The passive closer sent a sequence-matched reset on 1,844 client-first and 1,988 server-first connections. In each run the first such reset followed both FINs. The client-first control on 471d6dff5 had no matching resets with forwarding on; neither revision had one with forwarding off. This fixture used neither GKE nor a Docker daemon. The failing GKE client call, errno and trace for that tuple remain unknown. With Docker 27.5.1 running its own bridge on the same public July release, the client saw ECONNRESET in 3/2,000 client-first exchanges and 2/2,000 server-first exchanges. The first error in each run came from recv(1) after sendall. The reporter has been asked to identify the failing call on GKE.",
           "evidence": [
             {
               "label": "Four-cell comparison and packet evidence",
@@ -68358,6 +68369,14 @@
             {
               "label": "Public release, both close orders: completed exchanges and sequence-matched resets",
               "url": "https://github.com/tamird/gvisor/actions/runs/41696247019/artifacts/13262175985"
+            },
+            {
+              "label": "Docker-in-gVisor results for both close orders",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41704494513/artifacts/13265691217"
+            },
+            {
+              "label": "Reply to the GKE reporter",
+              "url": "https://github.com/google/gvisor/issues/16908#issuecomment-6613679645"
             }
           ]
         }
