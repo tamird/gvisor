@@ -57,6 +57,7 @@ _templates:
     env:
       <<: *benchmarks_env
       BUILDKITE_PIPELINE_INSTALL_RUNTIME: false
+      DOCKER_BUILD: "false"
   netstack_test: &netstack_test
     env:
       PACKAGES: >
