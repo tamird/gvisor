@@ -60,39 +60,28 @@ def _clang_tidy_impl(target, ctx):
             if source == None or not source.is_source or source.owner.workspace_name:
                 continue
             output_dir = "{}.clang_tidy/{}".format(ctx.label.name, index)
-            report = ctx.actions.declare_file(output_dir + "/report.txt")
+            report = ctx.actions.declare_file(output_dir + "/diagnostics.dia")
 
             # Bazel exposes the actual, expanded compiler arguments, including
             # toolchain flags; do not reconstruct them from rule attributes.
             # https://github.com/bazelbuild/bazel/blob/d84820503/src/main/java/com/google/devtools/build/lib/rules/cpp/CppCompileAction.java#L889-L893
-            # Keep a report even when there are no diagnostics: clang-tidy
-            # only writes --export-fixes output when there are findings.
-            ctx.actions.run_shell(
-                command = """
-report="$1"
-shift
-"$@" >"$report" 2>&1 || {
-    status=$?
-    cat "$report" >&2
-    exit "$status"
-}
-""",
+            # The frontend writes serialized diagnostics even for clean sources.
+            # clang-tidy reports failed checks directly in the action log.
+            ctx.actions.run(
+                executable = ctx.attr._clang_tidy[DefaultInfo].files_to_run,
                 inputs = depset(
                     [ctx.file._config],
                     # clang-tidy needs builtin headers from its own LLVM installation.
                     transitive = [action.inputs, headers, resource_dir.transitive_files],
                 ),
-                tools = [ctx.attr._clang_tidy[DefaultInfo].files_to_run],
                 outputs = [report],
                 arguments = [
-                    report.path,
-                    ctx.executable._clang_tidy.path,
                     "--config-file=" + ctx.file._config.path,
                     "--quiet",
                     "--warnings-as-errors=*",
                     source.path,
                     "--",
-                ] + action.argv[1:] + ["-resource-dir", resource_dir.path],
+                ] + action.argv[1:] + ["-resource-dir", resource_dir.path, "-serialize-diagnostics", report.path],
                 env = action.env,
                 mnemonic = "ClangTidy",
                 progress_message = "Checking {} with clang-tidy".format(source.short_path),
