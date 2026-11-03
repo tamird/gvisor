@@ -15,7 +15,11 @@
 # limitations under the License.
 
 set -xeo pipefail
-source "$(dirname "$0")/rtnetlink_test.sh"
+fixture="$(dirname "$0")"
+if [[ ! -f "$fixture/rtnetlink_test.sh" ]]; then
+  fixture="$(dirname "$(readlink -f "$0")")"
+fi
+source "$fixture/rtnetlink_test.sh"
 ip netns attach rootns "$$"
 for link in bridge loopback; do
 for closer in client server; do
@@ -50,7 +54,7 @@ ip link set hveth1 mtu 1460
 ip -n test0 link set veth0 mtu 1460
 ip -n test1 link set veth1 mtu 1460
 ip -n test1 link set lo up
-python3 "$(dirname "$0")/short_connections.py" run "$link" "$closer"
+python3 "$fixture/short_connections.py" run "$link" "$closer"
 
 # Destroy namespaces and the bridge.
 ip netns del test0

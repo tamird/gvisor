@@ -1,4 +1,5 @@
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("@rules_shell//shell:sh_library.bzl", "sh_library")
 load("//tools:defs.bzl", "go_binary")
 
@@ -52,4 +53,22 @@ go_binary(
     deps = [
         "@org_golang_x_sys//unix:go_default_library",
     ],
+)
+
+
+# Validate error capture before spending time on either runsc binary.
+genrule(
+    name = "short_bridge_error_canary",
+    outs = ["short_bridge_canary_output"],
+    cmd = "echo SHORT_BRIDGE_EXPECTED_FAILURE >&2; exit 41",
+    tags = ["local", "manual"],
+)
+
+# The native control does not need the ordinary syscall runner's //:release.
+sh_test(
+    name = "short_bridge_native_canary",
+    srcs = ["bridge_test.sh"],
+    data = ["short_connections.py"],
+    deps = [":rtnetlink_test"],
+    timeout = "long",
 )

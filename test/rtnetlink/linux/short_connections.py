@@ -233,7 +233,7 @@ def client(link, closer):
             pass
         sensor.close()
     config = {}
-    for name in ("tcp_timestamps", "tcp_rfc1337", "ip_local_port_range"):
+    for name in ("tcp_timestamps", "tcp_rfc1337", "ip_local_port_range", "ip_forward"):
         path = Path("/proc/sys/net/ipv4") / name
         try:
             config[name] = path.read_text().strip()
@@ -259,7 +259,11 @@ def run(link, closer):
             server_result = srv.communicate(timeout=8)[0]
             if srv.returncode:
                 raise RuntimeError("server exit")
-            row = {"link": link, "active_closer": closer, "client": json.loads(raw), "server": json.loads(server_result)}
+            try:
+                router_forward = Path("/proc/sys/net/ipv4/ip_forward").read_text().strip()
+            except OSError:
+                router_forward = None
+            row = {"root_bridge_ip_forward": router_forward, "link": link, "active_closer": closer, "client": json.loads(raw), "server": json.loads(server_result)}
             print("TCP16908 " + json.dumps(row, separators=(",", ":")), flush=True)
         finally:
             if srv.poll() is None:
