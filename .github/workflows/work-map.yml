@@ -1,0 +1,117 @@
+name: Verify the Bazel 9 compiler records and open LLVM prerequisites
+on:
+  push:
+    branches: [qualification/work-map-bazel9-llvm-pair]
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind collector to the curated records and published base
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 17c3553a8d0a3c8430d5acd15618cb5f158b112e
+          test "$(git rev-parse HEAD^^)" = 8c80ccee3d1947a0d9cec2364de33eb1b40d4c13
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          test "$(git diff --name-only HEAD^^ HEAD^)" = registry.json
+          mkdir results
+          cp registry.json results/
+      - name: Refresh the two open LLVM license prerequisites
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PYTHON'
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import copy
+          import json
+          import runpy
+          u = runpy.run_path("update-status.py")
+          g = u["collect_repository"].__globals__
+          r = u["REGISTRY"]
+          saved = copy.deepcopy(r)
+          repo = "google/gvisor"
+          numbers = {15146,16249}
+          p = Path("github-status.json")
+          old = json.loads(p.read_text())
+          prior = [x for x in old["prs"] if x.get("repo",repo) == repo and x["number"] in numbers]
+          assert {p["number"] for p in prior} == numbers
+          try:
+              # The canonical collector supports registered-only repositories. For this
+              # publication, scope that existing path to exactly the changed nodes.
+              r["nodes"] = [n for n in r["nodes"] if n["id"] in
+                            {"pr:" + str(i) for i in numbers}]
+              r["meta"]["registeredOnlyRepositories"].append(repo)
+              g["PR_BATCH_SIZE"] = 1
+              rows, fresh, _, inventory = u["collect_repository"](repo, "copybara", {**old, "prs":prior})
+              issues = {}
+              assert len(rows) == len(numbers) and set(fresh).issuperset(numbers)
+              u["recheck_snapshot_mergeability"](list(fresh.values()), [p for s in rows for p in (s,*s["imports"])], repo)
+          finally:
+              r.clear()
+              r.update(saved)
+          maintainers = u["fetch_maintainers"]()
+          nodes = {n["id"]:n for n in r["nodes"]}
+          current = {}
+          for pr in rows:
+              key = "pr:"+str(pr["number"])
+              node = nodes[key]
+              if pr["status"] == "open":
+                  pr = u["with_maintainer_reviewers"](pr, maintainers)
+                  pr["publicImportDisposition"] = u["public_import_disposition"](pr,node.get("approvedPatch"),node.get("landedPatch"))
+              current[pr["url"]] = pr
+          prs = [current.get(p["url"],p) for p in old["prs"]]
+          assert len({p["url"] for p in prs}) == len(prs)
+
+          now = datetime.now(timezone.utc).isoformat()
+          report = u["check_report"](prs,old)
+          snap = {**old,"checkedAt":now,"registryDate":r["meta"]["updatedAt"],"prs":prs,"issues":{**old["issues"],**issues},
+                  "reviewerHandoff":u["reviewer_handoff"](prs,old),
+                  "mergeabilityHandoff":u["mergeability_handoff"](report,old),"checkFailures":report["checkFailures"],
+                  "workStates":u["record_states"](prs,r,old,now)}
+          snap["limits"] = {**old["limits"],"curationRefresh":{"prs":sorted(numbers),"issues":sorted(issues),"requests":g["requests"],
+              "graphqlCost":g["query_cost"],"previousFullSnapshot":old["checkedAt"],"repositoryObservation":inventory}}
+          if sweep := u["feedback_sweep"](r,[*prs,*old["reviewPRs"]],old,now):
+              snap["projectFeedbackReview"] = sweep
+          p.write_text(json.dumps(snap,indent=2,ensure_ascii=False)+"\n")
+          PYTHON
+          cp github-status.json results/
+      - name: Check the data used to render the cards
+        run: |
+          node metadata-preflight.mjs . > results/preflight.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          registry = json.loads(Path("registry.json").read_text())
+          nodes = {n["id"]:n for n in registry["nodes"]}
+          snap = json.loads(Path("github-status.json").read_text())
+          observed = {p["number"]:p for p in snap["prs"] if p.get("repo","google/gvisor") == "google/gvisor"}
+          assert snap["limits"]["curationRefresh"]["prs"] == [15146,16249]
+          for number in (15146,16249):
+              assert observed[number]["status"] == "open"
+              assert observed[number]["head"] == nodes[f"pr:{number}"]["head"]
+          compiler = nodes["branch:hermetic-compiler-review"]
+          source = nodes["branch:hermetic-llvm-project"]
+          assert compiler["head"].startswith("a385bd2b0") and source["head"].startswith("17d37fc9a")
+          assert all(n["status"] == "Agent work" and "contributorReview" not in n for n in (compiler,source))
+          artifact = "https://github.com/tamird/gvisor/actions/runs/41717072807/artifacts/13273383359"
+          assert sum(e["url"] == artifact for e in compiler["evidence"]) == 1
+          assert "871" in compiler["summary"] and "not rerun on Bazel 9" in compiler["summary"]
+          assert "does not depend on switching compilers" in source["summary"] and "201-entry" in source["summary"]
+          for node in (compiler,source):
+              assert "0.8.26" in node["followup"]["nextAction"] and "17f6a3008" in node["followup"]["nextAction"]
+          assert snap["registryDate"] == registry["meta"]["updatedAt"]
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: published-work-map-pair
+          path: results/
+          if-no-files-found: error
