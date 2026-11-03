@@ -299,6 +299,8 @@ steps:
   - <<: *common
     label: ":package: Staged binaries consistency check"
     if: build.env("STAGED_BINARIES") != null
+    env:
+      DOCKER_BUILD: "false"
     commands:
       - make staged-binaries-check
     agents:
