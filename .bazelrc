@@ -23,6 +23,9 @@ build --@rules_python//python/config_settings:bootstrap_impl=script
 build --conlyopt=-std=gnu17 --cxxopt=-std=c++17
 build --host_conlyopt=-std=gnu17 --host_cxxopt=-std=c++17
 
+# Use system include paths for directories exported by third-party libraries.
+build --features=system_include_paths --host_features=system_include_paths
+
 # Display the current git revision in the info block.
 build --stamp --workspace_status_command tools/workspace_status.sh
 

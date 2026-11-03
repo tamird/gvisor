@@ -54,11 +54,13 @@ single_version_override(
     patches = ["//tools:benchmark-umbrella-exports.patch"],
 )
 
-# Drop the backport when the llvm module includes kernel_headers.configure.
-single_version_override(
+# Qualify the merged two-backend default before it is available through BCR.
+# This revision also includes kernel_headers.configure (3dd710dd9).
+archive_override(
     module_name = "llvm",
-    patch_strip = 1,
-    patches = ["//tools:llvm-linux-header-default.patch"],
+    integrity = "sha256-0jY4Xc0tIRFX1/MjTny70DUvMMAvOLM0jaCaCa2X1wA=",
+    strip_prefix = "hermetic-llvm-17f6a300884d73de0b903316f85c420c45471268",
+    urls = ["https://github.com/hermeticbuild/hermetic-llvm/archive/17f6a300884d73de0b903316f85c420c45471268.tar.gz"],
 )
 
 ### LLVM
