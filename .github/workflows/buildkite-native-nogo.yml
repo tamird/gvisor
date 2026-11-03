@@ -1,0 +1,112 @@
+name: Check the two cgroup-v1 fastbuild compile actions
+on:
+  push:
+    branches: [qualification/cgroup-unit-v1-import]
+permissions: {contents: read, actions: read}
+jobs:
+  cgroup:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
+    env:
+      BASE: 96fadde722e14d482a62276b80237398f8b62fbf
+      PRODUCT: af1f1b88c119f3294069a4d3b89bd685ea6a820b
+      IMPORT: 3164fe6e00debd4c788af33a274d77ad971edb97
+      ORIGINAL: aaed41e45c71fb16ddb3ec4b6f630e15a60df757
+      GUEST: 38745c527784376e0b5d915fe5ebd85e1d1385fd
+      READER: 0f111320d2a46ac75adf4f424c9c75b5ac839b00
+      PROTO: 0a9bdf9bc331d6a66f35aefcbbb5cf466eb6f7f5
+    steps:
+      - run: echo '{"verdict":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/cgroup.json"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Restore only the original failed-action receipt
+        env: {GH_TOKEN: "${{ github.token }}"}
+        run: gh api repos/tamird/gvisor/actions/artifacts/13240828737/zip > "$RUNNER_TEMP/old-actions.zip"
+      - name: Restore the original unit worker and apply exactly the merged import
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD~2)" = "$BASE"
+          test "$(git diff --name-only "$PRODUCT" HEAD)" = "$(printf '%s\n' .github/qualification/cgroup-nogo.py .github/workflows/buildkite-native-nogo.yml)"
+          test "$(git diff --full-index --binary "$BASE" "$PRODUCT" | sha256sum | cut -d' ' -f1)" = acd1ea94db9a4e33930bd1a42e59fe655458b1a698ad28be8ccee59b89d27b1e
+          git fetch --quiet --depth=2 origin "$IMPORT"
+          test "$(git diff --full-index --binary "$IMPORT^1" "$IMPORT" | sha256sum | cut -d' ' -f1)" = acd1ea94db9a4e33930bd1a42e59fe655458b1a698ad28be8ccee59b89d27b1e
+          cp .github/qualification/cgroup-nogo.py "$RUNNER_TEMP/"
+          git fetch --quiet --depth=1 origin "$ORIGINAL" "$GUEST" "$READER" "$PROTO"
+          git show "$READER:.github/qualification/native-nogo-placement.py" > "$RUNNER_TEMP/placement.py"
+          git show "$PROTO:test/rbe/stdlib-provenance.py" > "$RUNNER_TEMP/stdlib_provenance.py"
+          git show "$GUEST:test/rbe/credential_artifacts.py" > "$RUNNER_TEMP/credential_artifacts.py"
+          git switch --quiet --detach "$PRODUCT"
+          test -z "$(git status --porcelain)"
+          package=.github/qualification/unit-cgroup-v1
+          mkdir -p "$package/worker"
+          git show "$ORIGINAL:$package/worker.BUILD" > "$package/worker/BUILD"
+          git show "$ORIGINAL:$package/payload.sh" > "$package/worker/payload.sh"
+          git show "$GUEST:test/rbe/cgroup_v1.sh" > "$package/worker/cgroup_v1.sh"
+          sed -n '/^  if \[\[ -f \/sys\/fs\/cgroup\/cgroup.controllers \]\]; then$/,/^  fi$/p' .buildkite/hooks/pre-command > "$package/worker/hook.bash"
+          echo "399816e7c61acc27168b85a5a4d189e95bf86ea6e2eaaf46ffa17da447c916dd  $package/worker/hook.bash" | sha256sum -c
+          chmod 755 "$package/worker/"{cgroup_v1,payload}.sh
+          mkdir "$RUNNER_TEMP/v1-distdir"
+          curl --fail --silent --show-error --max-time 60 https://deb.debian.org/debian/pool/main/m/musl/musl_1.2.6.orig.tar.gz -o "$RUNNER_TEMP/v1-distdir/musl-1.2.6.tar.gz"
+          echo "d585fd3b613c66151fc3249e8ed44f77020cb5e6c1e635a616d3f9f82460512a  $RUNNER_TEMP/v1-distdir/musl-1.2.6.tar.gz" | sha256sum -c
+          test "$(cat .bazelversion)" = 8.8.1
+          test "$(bazel --version)" = 'bazel 8.8.1'
+          test "$(uname -m)" = x86_64
+          test "$(gcc -dumpversion)" = 11
+          command -v zstd >/dev/null
+          printf '%s\n' '//runsc/cgroup:cgroup_test_nogo' > "$RUNNER_TEMP/remaining.targets"
+          python3 -B -c 'import importlib; import os, sys; sys.path.insert(0,os.environ["RUNNER_TEMP"]); assert len(importlib.import_module("cgroup-nogo").original()) == 2'
+      - name: Build the previously excluded analyzer root, preserving the native unit test filter
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+          CGROUPV2: 'false'
+        run: |
+          set -euo pipefail
+          umask 077
+          credentials=$(mktemp -d)
+          rcfile="$RUNNER_TEMP/v1.bazelrc"
+          trap 'rm -rf -- "$credentials"; rm -f -- "$rcfile"' EXIT
+          PYTHONPATH="$RUNNER_TEMP" python3 -B -c 'import sys; from pathlib import Path; from credential_artifacts import prepare; prepare(Path(sys.argv[1]))' "$credentials"
+          unset BUILDBUDDY_API_KEY
+          {
+            printf 'common --credential_helper=remote.buildbuddy.io=%s/helper\ncommon --distdir=%s/v1-distdir\n' "$credentials" "$RUNNER_TEMP"
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build:buildbuddy_remote_executor --remote_executor=grpcs://remote.buildbuddy.io'
+          } > "$rcfile"
+          worker=//.github/qualification/unit-cgroup-v1/worker
+          bazel --bazelrc="$rcfile" test --config=buildkite-unit \
+            --extra_execution_platforms="$worker:worker" --jobs=16 --spawn_strategy=remote --strategy=TestRunner=remote \
+            --noremote_local_fallback --remote_download_outputs=toplevel '--remote_download_regex=.*test.outputs/outputs.zip' \
+            --test_env=GVISOR_CGROUP_TEST_USER=nobody --run_under="$worker:wrapper" --target_pattern_file="$RUNNER_TEMP/remaining.targets" \
+            --nocache_test_results --flaky_test_attempts=1 --runs_per_test=1 --test_env=GO_TEST_WRAP_TESTV=true --zip_undeclared_test_outputs \
+            --build_event_publish_all_actions --build_event_json_file="$RUNNER_TEMP/cgroup.bep" \
+            --execution_log_compact_file="$RUNNER_TEMP/cgroup.compact" > "$RUNNER_TEMP/cgroup.console" 2>&1 || rc=$?
+          date --utc --iso-8601=ns > "$RUNNER_TEMP/cgroup.finished"
+          echo "${rc:-0}" > "$RUNNER_TEMP/cgroup.exit"
+          case "${rc:-0}" in 0|4) ;; *) exit "$rc" ;; esac
+      - name: Verify the exact two configurations, output digests and worker placement
+        if: ${{ !cancelled() && hashFiles('.bazelversion') != '' }}
+        run: python3 -B "$RUNNER_TEMP/cgroup-nogo.py"
+      - name: Scan the only public file
+        id: scan
+        if: ${{ !cancelled() }}
+        env: {BUILDBUDDY_API_KEY: "${{ secrets.BUILDBUDDY_API_KEY }}"}
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          path = Path(os.environ["RUNNER_TEMP"], "cgroup.json")
+          assert path.is_file() and not path.is_symlink() and 0 < path.stat().st_size < 256 * 1024
+          data = path.read_bytes()
+          assert isinstance(json.loads(data), dict)
+          for key, value in os.environ.items():
+              if len(value) > 16 and re.search("TOKEN|SECRET|PASSWORD|CREDENTIAL|API_KEY", key):
+                  assert value.encode() not in data and json.dumps(value)[1:-1].encode() not in data
+          assert not re.search(rb"(?i)x-buildbuddy-api-key|authorization\s*[:=]|github_pat_|gh[pousr]_[a-z0-9]{30,}|BEGIN .*PRIVATE KEY", data)
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: ${{ !cancelled() && steps.scan.outcome == 'success' }}
+        with:
+          name: cgroup-v1-matched-fastbuild
+          path: ${{ runner.temp }}/cgroup.json
+          if-no-files-found: error
