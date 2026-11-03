@@ -1,35 +1,69 @@
-name: CI
-
-"on":
+name: Qualify direct clang-tidy diagnostics
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/clang-tidy-scratch-direct]
+permissions:
+  actions: read
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  qualify:
+    if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Initialize verdict
+        run: printf '%s\n' '{"status":"INCOMPLETE","stage":"setup"}' > "$RUNNER_TEMP/clang-tidy-direct.json"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Fetch the retained original action results
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api repos/tamird/gvisor/actions/artifacts/13211235097/zip > "$RUNNER_TEMP/original-direct.zip"
+      - name: Prepare pinned GNU coordinator and libclang reader
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --remote_download_outputs=toplevel' 'build --noannounce_rc'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$RUNNER_TEMP/review.bazelrc"
+          if ! python3 -c 'import ctypes.util,sys;sys.exit(not ctypes.util.find_library("clang-18"))'; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends libclang1-18
+          fi
+          docker pull --platform=linux/amd64 "$GNU"
+          docker run -d --name tidy-client --entrypoint sleep --user root \
+            -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" \
+            -w "$GITHUB_WORKSPACE" -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory \
+            -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" "$GNU" infinity
+      - name: Check clean and diagnostic inputs on Bazel 8
+        run: python3 -B .github/qualification/clang-tidy-direct/check.py
+      - name: Scan the only public output before upload
+        id: scan
+        if: always()
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'clang-tidy-direct.json'
+          data=p.read_bytes()
+          json.loads(data)
+          for key in ('BUILDBUDDY_API_KEY','GH_TOKEN'):
+              value=os.environ.get(key,'').encode()
+              if value and value in data: raise SystemExit('credential found in report')
+          if any(s in data for s in (b'ghs_',b'ghp_',b'github_pat_',b'x-buildbuddy-api-key=')): raise SystemExit('credential marker found')
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: ${{ always() && steps.scan.outcome == 'success' }}
+        with:
+          name: clang-tidy-direct
+          path: ${{ runner.temp }}/clang-tidy-direct.json
+          if-no-files-found: error
