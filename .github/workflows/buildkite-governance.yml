@@ -1,0 +1,98 @@
+name: Qualify the native Buildkite governance check
+on:
+  push:
+    branches: [qualification/buildkite-governance-native]
+permissions:
+  contents: read
+jobs:
+  governance:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == '1'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 38
+    env:
+      SOURCE: 75c04f42d5b7346e4a54a5991dfaf31b043b6769
+      ARCH: amd64
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: carrier, persist-credentials: false, fetch-depth: 2}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {path: source, ref: '${{ env.SOURCE }}', persist-credentials: false, fetch-depth: 2}
+      - name: Prepare the original hook, runner and report reader
+        run: |
+          set -euo pipefail
+          test "$(git -C carrier rev-parse HEAD^)" = "$SOURCE"
+          test "$(git -C source rev-parse HEAD)" = "$SOURCE"
+          reader=05cf00d9d26a5beb8a9af8011375644b8b37a086
+          lint=3406af3d2792723e45bb9847fe60af86ee900ce8
+          hooks=5a7d029eb178c85cb0710166b314779c3e6c5bab
+          git -C carrier fetch -q --depth=1 origin "$reader" "$lint" "$hooks"
+          for module in qualification_report unit_matrix; do
+            git -C carrier show "$reader:test/rbe/$module.py" > "$RUNNER_TEMP/$module.py"
+          done
+          git -C carrier show "$lint:.github/qualification/codespell/check.py" > "$RUNNER_TEMP/lint_donor.py"
+          # Two real job pre/post pairs rather than the old bootstrap matrix.
+          git -C carrier show "$hooks:.github/qualification/buildkite-lint/check.py" |
+            sed 's/inventories==\["inventory"\]\*5/inventories==["inventory"]*4/' > "$RUNNER_TEMP/lint_hooks.py"
+          # Keep the shipped post-command's log selection and cleanup. Replace
+          # only the original intercepted Buildkite upload boundary.
+          # Expand the workspace path in the job hook, not while generating it.
+          # shellcheck disable=SC2016
+          git -C carrier show "$hooks:.github/qualification/buildkite-lint/hooks.sh" |
+            sed '/^buildkite-agent()/c\source "$GITHUB_WORKSPACE/carrier/.github/qualification/buildkite-governance/agent.sh"' > "$RUNNER_TEMP/hooks.sh"
+          mkdir "$RUNNER_TEMP/bin" "$RUNNER_TEMP/codespell"
+          if ! command -v strace; then
+            sudo apt-get update -q && sudo apt-get install -qy strace
+          fi
+          if ! command -v bazelisk; then
+            mkdir "$RUNNER_TEMP/launcher"
+            GOBIN="$RUNNER_TEMP/launcher" go install github.com/bazelbuild/bazelisk@v1.30.0
+            echo "$RUNNER_TEMP/launcher" >> "$GITHUB_PATH"
+          fi
+      - name: Configure remote Bazel for the native AMD64 worker
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          p="$RUNNER_TEMP/lint_platform"
+          mkdir "$p"
+          echo 'module(name="lint_platform")' > "$p/MODULE.bazel"
+          cpu=x86_64
+          cat > "$p/BUILD" <<BUILD
+          platform(name="ubuntu", constraint_values=["@platforms//cpu:${cpu}","@platforms//os:linux"],
+                   exec_properties={"Arch":"${ARCH}","OSFamily":"linux","workload-isolation-type":"oci","container-image":"docker://mirror.gcr.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"}, visibility=["//visibility:public"])
+          BUILD
+          : "${BUILDBUDDY_API_KEY:?BuildBuddy key not supplied}"
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=lint_platform=$p" 'build --host_platform=@lint_platform//:ubuntu' 'build --extra_execution_platforms=@lint_platform//:ubuntu' "build --platforms=//tools/bazeldefs:linux_${ARCH}" 'test --nocache_test_results'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$RUNNER_TEMP/lint.bazelrc"
+          printf '\nimport %s\n' "$RUNNER_TEMP/lint.bazelrc" >> "$HOME/.bazelrc"
+      - name: Run both source steps and the stale governance comparison
+        working-directory: source
+        run: |
+          set -euo pipefail
+          export BAZELISK_HOME="$RUNNER_TEMP/bazelisk" HOOK="$RUNNER_TEMP/hooks.sh"
+          PYTHONPATH="$RUNNER_TEMP" python3 ../carrier/.github/qualification/buildkite-governance/check.py
+      - name: Check the single result before publication
+        id: public
+        if: always()
+        env:
+          KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, re
+          root=pathlib.Path(os.environ["RUNNER_TEMP"])
+          data=(root/"codespell/result.json").read_bytes()
+          assert os.environ["KEY"] and os.environ["KEY"].encode() not in data
+          assert not re.search(rb'(?i)x-buildbuddy-api-key|authorization:|github_pat_|gh[pousr]_',data)
+          assert json.loads(data)["source"]==os.environ["SOURCE"]
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.public.outcome == 'success'
+        with:
+          name: governance-original-amd64
+          path: ${{ runner.temp }}/codespell/result.json
+          if-no-files-found: error
