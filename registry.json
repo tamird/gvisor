@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T14:48:57.209577+00:00",
+    "updatedAt": "2026-11-03T15:02:34.190043+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38705,9 +38705,17 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T05:15:56.968656+00:00",
-      "summary": "At a48b7a12c the checkpoint and restore RPCs read the current cgroup limit before suspending GC. The test stats memory.max and memory.swap.max and reads memory.events. The boot path still needs #16767 to respect a tighter ancestor. On the earlier 5068ecb10, resizing from 2 GiB to 200 MiB left Go with a 1,023 MiB limit and Linux killed the Sentry. The performance figures also belong to 5068ecb10: over 12 balanced triplets at 2 GiB/4 vCPUs, median save time fell from 2.011 s to 1.817 s and peak sampled Sentry RSS rose from 630.9 MiB to 735.4 MiB. In the same comparison #16152 took 1.968 s and used 650.1 MiB. All 39 archives restored the 100,000 files. No new pressure or performance run is recorded for a48b7a12c.",
+      "updatedAt": "2026-11-03T15:02:34.190043+00:00",
+      "summary": "Parth’s unchanged TestRestoreCgroupMemoryLimit passed on a48b7a12c with no skips in an isolated Linux VM. Both creating the sandbox at 200 MiB and lowering it from 2 GiB to 200 MiB immediately before restore finished with zero OOM kills. The restored process could access /tmpfs in both cases. The checkpoint and restore RPCs read the current cgroup limit before suspending GC. The test used direct limits; boot with a tighter ancestor remains a separate concern tracked in #16767. On the earlier 5068ecb10, resizing from 2 GiB to 200 MiB left Go with a 1,023 MiB limit and Linux killed the Sentry. The performance figures also belong to 5068ecb10: over 12 balanced triplets at 2 GiB/4 vCPUs, median save time fell from 2.011 s to 1.817 s and peak sampled Sentry RSS rose from 630.9 MiB to 735.4 MiB. In the same comparison #16152 took 1.968 s and used 650.1 MiB. All 39 archives restored the 100,000 files. No performance comparison was rerun on a48b7a12c.",
       "evidence": [
+        {
+          "label": "Unmodified createAtLimit and lowerBeforeRestore: both passed on a48b7a12c, oom_kill 0",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41656648310/artifacts/13240389451"
+        },
+        {
+          "label": "Original resize finding and the matched failing control",
+          "url": "https://github.com/google/gvisor/pull/16735#discussion_r4444409862"
+        },
         {
           "label": "Matched save time and sampled memory for all three GC policies",
           "url": "https://github.com/tamird/gvisor/actions/runs/41359437246/artifacts/13105345948"
@@ -38819,7 +38827,17 @@
           "at": "2026-11-02T15:46:59.054342+00:00",
           "url": "https://github.com/google/gvisor/pull/16735#discussion_r4444409895"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "a48b7a12cb3bd615c48f9b36d353c02a6463a929",
+        "url": "https://github.com/google/gvisor/pull/16735#discussion_r4444409862",
+        "title": "Confirm the restore-after-resize fix to Parth",
+        "summary": "Post the two measured restore results on our original thread?",
+        "body": "@parth-opensrc, I reran your unchanged `TestRestoreCgroupMemoryLimit` on [a48b7a12c](https://github.com/google/gvisor/commit/a48b7a12c). Both `createAtLimit` (200 MiB at creation) and `lowerBeforeRestore` (2 GiB lowered to 200 MiB) passed. In each case `memory.events` reported `oom_kill 0`, and the restored process could access `/tmpfs`. That addresses the resize failure I reported here. [Test results](https://github.com/tamird/gvisor/actions/runs/41656648310/artifacts/13240389451).\n\nPosted by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-03T15:02:34.190043+00:00"
+      }
     },
     {
       "id": "pr:hermeticbuild/rules_rs:333",
