@@ -1,0 +1,139 @@
+name: Verify the sidecar review and SYN-cookie reapproval
+on:
+  push:
+    branches: [qualification/work-map-sidecar-backend-review]
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind collector to the curated records and published base
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 3e80191e8fde6a3a66320dc475ee4f32255769b3
+          test "$(git rev-parse HEAD^^)" = 23a8b51c52c2e688f0c91d99bbe13bb0d1f0fc15
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          test "$(git diff --name-only HEAD^^ HEAD^)" = registry.json
+          mkdir results
+          cp registry.json results/
+      - name: Refresh the two changed PRs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PYTHON'
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import copy
+          import json
+          import runpy
+          u = runpy.run_path("update-status.py")
+          g = u["collect_repository"].__globals__
+          r = u["REGISTRY"]
+          saved = copy.deepcopy(r)
+          repo = "google/gvisor"
+          numbers = {16522, 16809}
+          p = Path("github-status.json")
+          old = json.loads(p.read_text())
+          prior = [x for x in old["prs"] if x.get("repo",repo) == repo and x["number"] in numbers]
+          assert {p["number"] for p in prior} == numbers
+          try:
+              # The canonical collector supports registered-only repositories. For this
+              # publication, scope that existing path to exactly the changed nodes.
+              r["nodes"] = [n for n in r["nodes"] if n["id"] in
+                            {"pr:" + str(i) for i in numbers}]
+              r["meta"]["registeredOnlyRepositories"].append(repo)
+              g["PR_BATCH_SIZE"] = 2
+              rows, fresh, _, inventory = u["collect_repository"](repo, "copybara", {**old, "prs":prior})
+              issues = {}
+              assert len(rows) == len(numbers) and set(fresh).issuperset(numbers)
+              u["recheck_snapshot_mergeability"](list(fresh.values()), [p for s in rows for p in (s,*s["imports"])], repo)
+          finally:
+              r.clear()
+              r.update(saved)
+          maintainers = u["fetch_maintainers"]()
+          nodes = {n["id"]:n for n in r["nodes"]}
+          current = {}
+          for pr in rows:
+              key = "pr:"+str(pr["number"])
+              node = nodes[key]
+              if pr["status"] == "open":
+                  pr = u["with_maintainer_reviewers"](pr, maintainers)
+                  pr["publicImportDisposition"] = u["public_import_disposition"](pr,node.get("approvedPatch"),node.get("landedPatch"))
+              current[pr["url"]] = pr
+          prs = [current.get(p["url"],p) for p in old["prs"]]
+          assert len({p["url"] for p in prs}) == len(prs)
+
+          now = datetime.now(timezone.utc).isoformat()
+          report = u["check_report"](prs,old)
+          snap = {**old,"checkedAt":now,"registryDate":r["meta"]["updatedAt"],"prs":prs,"issues":{**old["issues"],**issues},
+                  "reviewerHandoff":u["reviewer_handoff"](prs,old),
+                  "mergeabilityHandoff":u["mergeability_handoff"](report,old),"checkFailures":report["checkFailures"],
+                  "workStates":u["record_states"](prs,r,old,now)}
+          snap["limits"] = {**old["limits"],"curationRefresh":{"prs":sorted(numbers),"issues":sorted(issues),"requests":g["requests"],
+              "graphqlCost":g["query_cost"],"previousFullSnapshot":old["checkedAt"],"repositoryObservation":inventory}}
+          if sweep := u["feedback_sweep"](r,[*prs,*old["reviewPRs"]],old,now):
+              snap["projectFeedbackReview"] = sweep
+          p.write_text(json.dumps(snap,indent=2,ensure_ascii=False)+"\n")
+          # Forecast from the live review, export and posted marker; never send.
+          from reapproval import MARKER, PACIFIC, REMINDER_INTERVAL, reminder_plan
+          from datetime import timedelta
+          node = nodes["pr:16809"]
+          pr = current[node["url"]]
+          assert pr["head"] == node["reapproval"]["head"]
+          moment = datetime.fromisoformat(now)
+          comments = [i for i in pr["feedback"]["items"] if i.get("kind") == "comment"
+                      and i.get("author",{}).get("login") == "tamird" and MARKER in i.get("body","")
+                      and pr["head"] in i["body"]]
+          assert comments, "No existing posted reminder marker on the amended head"
+          sent = max(datetime.fromisoformat(i["createdAt"].replace("Z","+00:00")) for i in comments)
+          later = (sent + REMINDER_INTERVAL).astimezone(PACIFIC)
+          if later.hour >= 17:
+              later = (later+timedelta(days=1)).replace(hour=9,minute=0,second=0,microsecond=0)
+          while later.weekday() >= 5:
+              later += timedelta(days=1)
+          if later.hour < 9:
+              later = later.replace(hour=9,minute=0,second=0,microsecond=0)
+          first = reminder_plan(pr,node,moment,"tamird",maintainers)
+          second = reminder_plan(pr,node,later,"tamird",maintainers)
+          prior = any(i["number"] == 16915 and i["sourceHead"] == node["reapproval"]["approvedHead"]
+                      and i["status"] == "open" for i in pr["imports"])
+          projection = {"receipt":sent.isoformat(),"now":moment.isoformat(),"forecast":later.isoformat(),
+                        "priorExportOpen":prior, "current":{k:first[k] for k in ("status","reason") if k in first},
+                        "future":{k:second[k] for k in ("status","reason","action","approvers") if k in second}}
+          Path("results/alarm-plan.json").write_text(json.dumps(projection,indent=2)+"\n")
+          if first.get("reason") not in {"current-head-approved","patch-already-on-master"} and prior:
+              assert first.get("reason") == "reminded-within-three-hours", projection
+              assert second["status"] == "due" and second["action"] == "reapprove-amendment", projection
+              assert second["approvers"] == ["parth-opensrc"], projection
+          PYTHON
+          cp github-status.json results/
+      - name: Check the data used to render the cards
+        run: |
+          node metadata-preflight.mjs . > results/preflight.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          nodes = {n["id"]: n for n in json.loads(Path("registry.json").read_text())["nodes"]}
+          snap = json.loads(Path("github-status.json").read_text())
+          observed = {p["url"]:p for p in snap["prs"]}
+          n = nodes["pr:16522"]
+          decision = n["contributorReview"]
+          assert decision["status"] == "pending" and decision["kind"] == "amendment"
+          assert decision["head"] == "74aa42d5fb36b5efa0c92f269a4360e7a7caf4b2"
+          assert decision["baseHead"] == observed[n["url"]]["head"] == n["head"] == "e482579e11a4e098f069bdeb4c66677b36bc93ff"
+          assert decision["body"].count("Posted by Codex on behalf of @tamird.") == 2
+          assert snap["limits"]["curationRefresh"]["prs"] == [16522,16809]
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: published-work-map-pair
+          path: results/
+          if-no-files-found: error
