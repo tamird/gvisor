@@ -1,4 +1,4 @@
-name: Verify checkpoint loader race tests with the native compiler
+name: Verify the rebased checkpoint, shared memory and filesystem PRs
 on:
   workflow_dispatch:
 permissions:
@@ -6,7 +6,7 @@ permissions:
   actions: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/pgalloc-checkpoint-race'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/rebased-runtime-owners-471d6dff5'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
@@ -14,29 +14,18 @@ jobs:
       with:
         fetch-depth: 5
         persist-credentials: false
-    - name: Retain the three original verified results
-      env:
-        GH_TOKEN: ${{ github.token }}
+    - name: Initialize the bundle
       run: |
-        set -euo pipefail
-        cd "$RUNNER_TEMP"
-        gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/13051463182/zip" > pgalloc-final.zip
-        unzip -q pgalloc-final.zip -d original
-        mkdir -p replay-public
-        for arm in package stock analyzers; do
-          jq -e '.verified == true and (.missing | length) == 0 and (.errors | length) == 0' "original/$arm.json" >/dev/null
-          cp "original/$arm.json" replay-public/
-        done
-        jq -e '.status == "PASS"' original/originals.json >/dev/null
-        cp original/originals.json replay-public/
-    - name: Run the race-instrumented checkpoint suite
+        mkdir -p "$RUNNER_TEMP/replay-public"
+        printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/replay-public/summary.json"
+    - name: Run the owning suites and analyzers on the exact product commits
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "b056cadfdf1e6299deb5d6de4e826c37e5b50380"
+        test "$(git rev-parse HEAD^1)" = "28a3cad3e87ad8bfdf30d5bd8b0d3ef387062d18"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -115,10 +104,12 @@ jobs:
         export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in race; do
-          case $arm in
-            stock) source=e5f665c154a409aeb0adbcbacf9760214537f38a; parent=aa767e4c43d011121271551fe24da501a56f729d ;;
-            *) source=3adb1aa3b346842b1ac4bc6778c538828b0f12fb; parent=aa767e4c43d011121271551fe24da501a56f729d ;;
+        parent=471d6dff5229b99208bf6fec985601067f1f9d69
+        for arm in race pgalloc-analysis shm-syscalls shm-amd64 shm-arm64 vfs-tests vfs-amd64 vfs-arm64; do
+          case "$arm" in
+            race|pgalloc-analysis) source=2d5231b4534aa645cdb759521e6d3842b3b0a9a0 ;;
+            shm-*) source=1e2c3bce4cbcd408e303e322cbe97fc11caa585d ;;
+            vfs-*) source=54c5f85b3d8f32380e35d0a7c2382ad576ebaa88 ;;
           esac
           if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
             git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
@@ -135,12 +126,17 @@ jobs:
           raw="$RUNNER_TEMP/replay-private/$arm.raw.jsonl"
           code=0
           opts=()
-          case $arm in
-            stock) labels=(//pkg/sentry/pgalloc:pgalloc_test); opts+=(--bazel-option=--test_filter=^TestAsyncLoadShortRead --bazel-option=--test_arg=-test.v) ;;
+          case "$arm" in
             race) labels=(//pkg/sentry/pgalloc:pgalloc_test); opts+=(--bazel-option=--config=race) ;;
-            package) labels=(//pkg/sentry/pgalloc:pgalloc_test) ;;
-            analyzers) labels=(//pkg/sentry/pgalloc:pgalloc_nogo //pkg/sentry/pgalloc:pgalloc_test_nogo) ;;
+            pgalloc-analysis) labels=(//pkg/sentry/pgalloc:pgalloc_nogo //pkg/sentry/pgalloc:pgalloc_test_nogo) ;;
+            shm-syscalls) labels=(//test/syscalls:shm_test_native //test/syscalls:shm_test_runsc_systrap_directfs)
+              opts+=(--bazel-option=--test_env=GTEST_FILTER=ShmTest.RemovedSegmentsAreMarkedDeleted:ShmTest.RemovedSegmentsAreDestroyed:ShmTest.AllowsAttachToRemovedSegmentWithRefs:ShmTest.RemovedSegmentsAreNotDiscoverable:ShmTest.NoDestructionOfAttachedSegmentWithMultipleRmid:ShmTest.RmidOwnershipPermissionDenied) ;;
+            shm-amd64|shm-arm64) labels=(//pkg/sentry/kernel/shm:shm_nogo) ;;
+            vfs-tests) labels=(//pkg/sentry/fsimpl/tmpfs:tmpfs_test //pkg/sentry/vfs:vfs_test) ;;
+            vfs-amd64|vfs-arm64) labels=(//pkg/sentry/fsimpl/tmpfs:tmpfs_nogo //pkg/sentry/fsimpl/tmpfs:tmpfs_test_nogo //pkg/sentry/vfs:vfs_nogo //pkg/sentry/vfs:vfs_test_nogo) ;;
           esac
+          # Both Nogo runners execute on AMD64. Analyze ARM64 target sources in the second arm.
+          if [[ "$arm" == *-arm64 ]]; then opts+=(--bazel-option=--config=aarch64); fi
           selection=()
           for target in "${labels[@]}"; do selection+=("--test-target=$target"); done
           bash test/rbe/qualify.sh --arch=amd64 "${selection[@]}" "${opts[@]}" \
@@ -148,6 +144,10 @@ jobs:
             --bazel-option=--test_sharding_strategy=disabled --bazel-option=--cache_test_results=no \
             --bazel-option=--remote_download_outputs=toplevel test || code=$?
           printf '%s\n' "$code" > "$TCP_EVIDENCE/runner_exit"
+          printf '%s\n' "$code" > "$RUNNER_TEMP/replay-public/$arm-runner-exit.json"
+          if [[ -f "$TCP_EVIDENCE/native_exit" ]]; then
+            cp "$TCP_EVIDENCE/native_exit" "$RUNNER_TEMP/replay-public/$arm-native-exit.json"
+          fi
           git rev-parse HEAD > "$TCP_EVIDENCE/final_head"
           git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
           python3 -B "$RUNNER_TEMP/checker/tcp_long_replay.py" "$TCP_EVIDENCE" "$arm" "$source" "${labels[*]}" "$raw" "$RUNNER_TEMP/replay-public" || overall=1
@@ -156,7 +156,7 @@ jobs:
         import json, sys
         from pathlib import Path
         root = Path(sys.argv[1])
-        arms = ["stock","package","race","analyzers"]
+        arms = "race pgalloc-analysis shm-syscalls shm-amd64 shm-arm64 vfs-tests vfs-amd64 vfs-arm64".split()
         verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
         missing = [a for a in arms if a not in verdicts]
         result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["verified"] for v in verdicts.values()) else "FAIL"}
@@ -169,6 +169,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: checkpoint-page-read-complete
+        name: rebased-runtime-owner-results
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
