@@ -1,18 +1,16 @@
-name: Qualify the LLVM supplier instrumentor header
+name: Check the instrumentor backport on LLVM 23 and 24
 on:
   push:
-    branches: [qualification/scratch-llvm-instrumentor-supplier]
+    branches: [qualification/llvm-instrumentor-version-selection]
 permissions:
   contents: read
 jobs:
   compare:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 20
     env:
       EXEC_CPU: amd64
-      BB_ARCH: x86_64
-      BB_HASH: bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224
       BAZELISK_HASH: e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -20,10 +18,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: tamird/hermetic-llvm
-          ref: bdd158a6b8ddecb97fd226e416dcf1440b3595fb
+          ref: 15809f084e3c473b0e3fbcc57ce8dda167f24a6c
+          fetch-depth: 2
           path: supplier
           persist-credentials: false
-      - name: Pin Bazel and the compact action log reader
+      - name: Pin Bazel
         run: |
           set -eu
           export USE_BAZEL_VERSION=$(cat supplier/.bazelversion)
@@ -33,28 +32,13 @@ jobs:
           echo "$BAZELISK_HASH  $RUNNER_TEMP/bazelisk-bin/bazel" | sha256sum -c -
           chmod +x "$RUNNER_TEMP/bazelisk-bin/bazel"
           echo "$RUNNER_TEMP/bazelisk-bin" >> "$GITHUB_PATH"
-          command -v objcopy nm jq
-          curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-$BB_ARCH -o "$RUNNER_TEMP/bb"
-          echo "$BB_HASH  $RUNNER_TEMP/bb" | sha256sum -c -
-          chmod 0755 "$RUNNER_TEMP/bb"
-      - name: Check the upstream-based supplier and editing a local LLVM checkout
+      - name: Select source patches and apply them to the released and upstream overlays
         env:
-          PRODUCT: bdd158a6b8ddecb97fd226e416dcf1440b3595fb
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: |
-          set -eu
-          test -n "$BUILDBUDDY_API_KEY"
-          umask 077
-          {
-            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --action_env=TMPDIR=.' 'build --host_action_env=TMPDIR=.'
-            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          } > "$RUNNER_TEMP/sidecar.bazelrc"
-          unset BUILDBUDDY_API_KEY
-          python3 test/rbe/llvm_scratch/verify-supplier.py
+          PRODUCT: 15809f084e3c473b0e3fbcc57ce8dda167f24a6c
+        run: python3 test/rbe/llvm_scratch/verify-selection.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
           name: llvm-supplier-verdict
-          path: ${{ runner.temp }}/package-evidence
+          path: ${{ runner.temp }}/package-evidence/verdict.json
           if-no-files-found: error
