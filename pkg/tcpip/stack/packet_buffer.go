@@ -662,8 +662,8 @@ func (d PacketData) ReadTo(dst io.Writer, peek bool) (int, error) {
 			panic(fmt.Sprintf("io.Writer.Write succeeded with incomplete write: %d != %d", n, v.Size()))
 		}
 	})
-	if !peek {
-		d.pk.buf.TrimFront(int64(done))
+	if !peek && done != 0 {
+		d.TrimFront(done)
 	}
 	return done, err
 }
@@ -733,8 +733,9 @@ func (d PacketData) Merge(oth PacketData) {
 
 // TrimFront removes up to count bytes from the front of d's payload.
 func (d PacketData) TrimFront(count int) {
-	if count > d.Size() {
-		count = d.Size()
+	if count >= d.Size() {
+		d.pk.buf.Truncate(int64(d.pk.dataOffset()))
+		return
 	}
 	buf := d.pk.Data().ToBuffer()
 	buf.TrimFront(int64(count))
