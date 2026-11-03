@@ -1,335 +1,199 @@
-"""Verify the published release, declared inputs and import binding controls."""
+"""Project the original failing actions from two verified invocations."""
 
-from contextlib import contextmanager
+from collections import Counter
 import io
 import json
 import os
 from pathlib import Path
 import re
-import shutil
-import subprocess
 import sys
-import uuid
-import xml.etree.ElementTree as ET
 import zipfile
 
-import check as harness
+import check as h
 
-SOURCE = "778375bc602d883faf89a2f5b7bdf4016804da10"
-BASE = "471d6dff5229b99208bf6fec985601067f1f9d69"
-EXPORT = "1899f71d79be9b78ed439313ee050ff6b8d62a5d"
-STOCK_ZIP = "5161da9ab19357a8434690839579212cddeb6179635a23cd2766383b5f72415e"
-ROOT = harness.ROOT
-REPORT = ROOT / "stateify-native-review.json"
-OUT = {"source": SOURCE, "base": BASE, "export": EXPORT, "started": harness.utc(),
-       "verdict": "INCOMPLETE", "phases": {}}
-OLD = ("generated", "imports", "unaliased", "declared", "versioned")
-EXTRA = ("odd_implicit", "odd_declared", "odd_aliased", "generic", "literal", "identtype", "ambiguous")
-EXPECTED_BAD = {"odd_implicit", "odd_declared", "ambiguous"}
-OLD_PRODUCTION = ("//pkg/bpf:bpf", "//pkg/ebpf:ebpf", "//pkg/sentry/fsimpl/overlay:overlay",
-                  "//pkg/sentry/fsimpl/tmpfs:tmpfs", "//pkg/sentry/kernel:kernel", "//pkg/sentry/mm:mm",
-                  "//pkg/sentry/socket/netstack:netstack")
-check = harness.check
+sys.path.insert(0, str(h.ROOT))
+from cas_inputs import blob, fetch, rpc
+
+PRODUCT = '778375bc602d883faf89a2f5b7bdf4016804da10'
+CARRIER = '674c9bf24453910174c718b2fcc4365bbab248c6'
+INV = {'candidate_imports': '97df76f6-fe2c-4ec1-9864-8b75fcee554f',
+       'five_with_seccomp_inputs': '602e0b38-0fdb-4ba7-b747-4ff3075eee95'}
+REPORT = h.ROOT / 'stateify-native-review.json'
+OUT = dict(verdict='INCOMPLETE', product=PRODUCT, source=CARRIER, workload_repeated=False,
+           started=h.utc(), original_artifact=13255863288, invocations={})
+ROOTS = ('pkg/', 'runsc/', 'tools/', 'external/', 'test/', 'bazel-out/')
+PAT = re.compile(r'(?<![a-zA-Z0-9_/.+-])(?://|@@?[A-Za-z0-9_+.-]+//)[A-Za-z0-9_./+-]*:[A-Za-z0-9_.+-]+')
+CODES = ('NO_USABLE_STRATEGY_FOUND', 'NON_ZERO_EXIT', 'EXECUTION_DENIED', 'REMOTE_EXECUTOR_OVERLOADED',
+         'REMOTE_ERROR', 'UNAVAILABLE', 'OUT_OF_MEMORY', 'MISSING_INPUT', 'MISSING_DEPENDENCY',
+         'SOURCE_INPUT_MISSING', 'UNDECLARED_INCLUDE', 'PERMISSION_DENIED', 'PACKAGE_LOADING_FAILURE',
+         'REPOSITORY_FETCH_FAILED', 'ACTION_NOT_UP_TO_DATE', 'OUTPUT_MISSING', 'UNKNOWN')
+TOOLS = ('GoStateify', 'PrecompileSeccomp', 'GoStdlib', 'GoStdlibList', 'GoCompilePkg', 'GoLink', 'GoAsm',
+         'GoCompile', 'GoPack', 'GoStaticAnalysis', 'GoNogo', 'GoMarshal', 'GoImports', 'Genrule',
+         'GoTemplate', 'GoToolBinary', 'CppCompile', 'CppLink', 'TemplateExpand', 'CheckDeps')
+PHRASES = ('ERROR:', 'FAILED:', 'error executing', 'failed to execute', 'Exec format error', 'could not import',
+           'undefined:', 'no such package', 'no such target', 'not visible', 'cannot find package',
+           'missing strict dependencies', 'missing strict deps', 'no matching toolchains', 'No usable strategy',
+           'execvp(', 'No such file or directory', 'not found', 'Permission denied', 'Operation not permitted',
+           'internal compiler error', 'no space left on device', 'Cannot allocate memory', 'Killed',
+           'error running subcommand', 'error running the compiler', 'error running the linker',
+           'wrong ELF class', 'syntax error', 'could not load', 'invalid import path', 'not used',
+           'does not implement', 'cannot convert', 'mismatched types', 'has no field or method',
+           'out of memory', 'signal:', 'undeclared inclusion', 'not declared', 'not a package',
+           'build constraints exclude', 'incompatible', 'cannot use', 'too many arguments',
+           'not enough arguments', 'not in std', 'missing tool', 'inconsistent vendoring', 'exec format',
+           'no import for', 'generated code uses', 'cannot refer to unexported', 'expected',
+           'finding', 'FileNotFoundError', 'fatal error:', 'Toolchain', 'unrecognized command-line',
+           'conflicts with', 'is not allowed', 'invalid reference', 'duplicate', 'import cycle',
+           'not supported', 'deadline exceeded', 'connection refused', 'failed to find', 'failed to open',
+           'not an executable', 'go:embed', 'failed to resolve', 'not under', 'not available', 'No source files')
+WORDS = set(TOOLS + CODES + ('internal/testpty','clock','shapes','peer','Record','StateFields','RegisterIdent',
+             'StateSave','StateLoad','StateTypeName','BPFInstruction','nogo','testpty','filterStdPackages',
+             'FilterStdPackages','source','sourceFiles','stdlib','goimports','go','compilepkg','compile','go_marshal',
+             'gcc','clang','aarch64-linux-gnu-gcc','x86_64-linux-gnu-gcc','bash','cat','sh','grep','qemu',
+             'gvisor.dev/gvisor/pkg/abi/linux','gvisor.dev/gvisor/pkg/state','example.invalid/unrelated/peer',
+             'archive','GoArchive','buildifier','analysis','analyzing','analyzer','config','stateify','GOCACHE',
+             'GOARCH','GOOS','GOROOT','toolchain','amd64','arm64','linux','state','reference','plugin',
+             'srcs','importpath','compilepkg','sdk','x86_64-linux-gnu-as','go_asm','cc','cc1','cgo','ld',
+             'marshal','types','link','linker','builder','strict','deps','export','data','precompile','go_deps',
+             'failed','cannot','error','missing','shell','file','package','directory','format','platform','worker'))
+# Only source-known package paths are public; external labels can be queried but their
+# original spelling never leaves the reader.
+PKGS = {str(Path(p).parent) for p in h.git('ls-tree','-r','--name-only',CARRIER).decode().splitlines()
+        if Path(p).name in ('BUILD','BUILD.bazel')}
+SYMBOLS = set(re.findall(r'[A-Za-z_]\w{2,}', h.git('show',PRODUCT+':tools/go_stateify/main.go').decode()))
+TOKEN = re.compile(r'[A-Za-z0-9_./+-]+')
+ANSI = re.compile(r'\x1b\[[0-9;]*[A-Za-z]')
 
 
 def save():
-    REPORT.write_text(json.dumps(OUT, indent=2, sort_keys=True) + "\n")
+    REPORT.write_text(json.dumps(OUT,sort_keys=True,indent=2)+'\n')
 
 
-def phase(name, fn):
-    row = OUT["phases"][name] = {"verdict": "INCOMPLETE", "started": harness.utc()}
+def safe_label(label):
+    if label.startswith('//') and label[2:].split(':')[0] in PKGS and PAT.fullmatch(label):
+        # Rule names are compiler-generated or source-owned; require static identifier characters.
+        return label
+    return 'external-or-unknown:'+h.digest(label.encode())[:16]
+
+
+def project(data):
+    text=ANSI.sub('',data.decode(errors='replace'))
+    rows=[]
+    for line in text.splitlines():
+        line=line[:8192]
+        marks=[p for p in PHRASES if p.casefold() in line.casefold()]
+        codes=[v for v in CODES if v in line]
+        if not marks and not codes:
+            continue
+        labels=sorted({safe_label(l) for l in PAT.findall(line)})[:8]
+        words=[w for w in TOKEN.findall(line) if w in WORDS or w in SYMBOLS][:40]
+        rows.append(dict(sha256=h.digest(line.encode()),classes=marks,codes=codes,owners=labels,words=words))
+        if len(rows)==48:
+            break
+    return dict(bytes=len(data),sha256=h.digest(data),lines=rows)
+
+
+def inspect(original,name,uid):
+    prior=original['phases'][name]
+    assert prior['invocation']==uid and prior['exit']==1
+    targets={l for l,ok in prior['completed'].items() if not ok}
+    if name=='candidate_imports':
+        targets={l for l in targets if l.endswith(':qualification_identtype')}
+    assert len(targets)==(1 if name=='candidate_imports' else 5)
+    row=OUT['invocations'][name]=dict(invocation=uid,original_exit=1,original_failures=sorted(targets),console={},actions=[])
     save()
-    try:
-        fn(row)
-        row["verdict"] = "PASS"
-    except Exception as exc:
-        row["verdict"] = "FAIL"
-        row["exception"] = type(exc).__name__
-        if isinstance(exc, (AssertionError, ValueError)):
-            row["reason"] = str(exc)[:200]
-    finally:
-        row["verified_at"] = harness.utc()
+    def guard(tag,func):
+        try:
+            func()
+        except Exception as exc:
+            row.setdefault('unavailable',{})[tag]=type(exc).__name__
         save()
 
+    def logs():
+        # API tail and full forward stream have distinct semantics.
+        seq=[]
+        for tail in (True,False):
+            token=None if tail else '0'
+            chunks=[]
+            complete=False
+            for _ in range(1 if tail else 96):
+                payload={'selector':{'invocation_id':uid}}
+                if token is not None: payload['page_token']=token
+                page=json.loads(fetch('api/v1/GetLog',payload))
+                chunk=page.get('log',{}).get('contents','').encode()
+                chunks.append(chunk)
+                assert sum(map(len,chunks)) <= 12*1024**2
+                token=page.get('next_page_token',page.get('nextPageToken'))
+                if not token:
+                    complete=True
+                    break
+            data=b''.join(chunks)
+            row['console']['tail' if tail else 'forward']=dict(complete=complete, pages=len(chunks),**project(data))
+            for line in ANSI.sub('',data.decode(errors='replace')).splitlines():
+                if 'failed' in line.lower() or 'error:' in line.lower():
+                    seq.extend(PAT.findall(line[:8192]))
+            save()
+        return seq
+    captured=[]
+    guard('console',lambda:captured.extend(logs()))
+    def roots():
+        res=rpc('GetTarget',dict(invocationId=uid,status=3))
+        for gr in res.get('targetGroups',[]):
+            for target in gr.get('targets',[]):
+                if target.get('rootCause') or target.get('metadata',{}).get('rootCause'):
+                    captured.append(target['metadata']['label'])
+            row['root_list_more']=bool(gr.get('nextPageToken'))
+    guard('roots',roots)
 
-def label(short):
-    name = "qualification_" + short
-    return "//tools/go_stateify/" + name + ":" + name
-
-
-def setup(row):
-    carrier = Path(os.environ["CARRIER_DIR"]) / "tools/go_stateify"
-    for path in sorted(carrier.glob("qualification_*")):
-        shutil.copytree(path, Path("tools/go_stateify") / path.name)
-    files = {str(p.relative_to(carrier.parent.parent)): harness.digest(p.read_bytes())
-             for p in carrier.rglob("*") if p.is_file()}
-    archive = ROOT / "stateify-control.zip"
-    check(harness.digest(archive.read_bytes()) == STOCK_ZIP, "wrong retained ZIP")
-    with zipfile.ZipFile(archive) as bundle:
-        retained = json.loads(bundle.read("stateify-native-review.json"))
-    check(retained["verdict"] == "PASS" and retained["base"] == BASE
-          and retained["phases"]["stock_gnu"]["source"] == BASE, "incompatible stock")
-    check(all(files.get(p) == digest for p, digest in retained["fixture_files"].items()), "old fixture changed")
-    row.update(stock_artifact=13251728088, zip_sha256=STOCK_ZIP, fixture_hashes=files,
-               gnu=retained["phases"]["stock_gnu"]["completed"],
-               stock_outputs={label: a["digest"] for label, a in retained["phases"]["stock_gnu"]["actions"].items()})
-    check(harness.git("rev-parse", SOURCE+"^").decode().strip() == BASE, "wrong base")
-    check("471d6dff5" in harness.git("show", "-s", "--format=%s", EXPORT).decode(), "wrong Go release")
-    check(len(row["stock_outputs"]) == 12 and len(row["gnu"]) == 12, "missing stock results")
-
-
-def first():
-    data = (ROOT / "first.zip").read_bytes()
-    check(harness.digest(data) == "88d331cf2fbb3f43f40a998aff9a1c83e64ac8c612524dfeccd90b9519454a40", "wrong first report")
-    with zipfile.ZipFile(io.BytesIO(data)) as archive:
-        return json.loads(archive.read("stateify-native-review.json"))
-
-
-def original_console():
-    sys.path.insert(0, str(ROOT))
-    from cas_inputs import fetch
-
-    previous = first()["phases"]["exported_tree"]
-    identifier = previous["invocation"]
-    check(identifier == "da8b6ac2-7814-491c-9bb8-7e4ef7337838" and previous["exact"] == 480
-          and len(previous["missing"]) == 5 and not previous["changed"], "wrong original failure")
-    result = {"invocation": identifier, "original_exit": previous["exit"], "diagnostic_available": False, "classes": []}
-    try:
-        token = "0"
-        pieces = []
-        for _ in range(8):
-            page = json.loads(fetch("api/v1/GetLog", {"selector": {"invocation_id": identifier}, "page_token": token}))
-            pieces.append(page.get("log", {}).get("contents", ""))
-            check(sum(map(len, pieces)) < 8 * 1024**2, "original console exceeds limit")
-            token = page.get("next_page_token", page.get("nextPageToken"))
-            if not token:
-                break
-        log = "".join(pieces)
-        result.update(diagnostic_available=bool(log), complete=not token, digest=harness.digest(log.encode()),
-                      classes=diagnoses(log))
-    except Exception as exc:
-        result["unavailable"] = type(exc).__name__
-    (ROOT / "original-diagnostics.json").write_text(json.dumps(result))
-
-
-def diagnoses(log):
-    classes = {"stdlib_undeclared_testpty": r"internal/testpty", "no_strategy": r"NO_USABLE_STRATEGY_FOUND|No usable strategy",
-               "nospace": r"No space left on device", "oom": r"OutOfMemoryError|Cannot allocate memory|oom.kill|Killed signal",
-               "sandbox": r"sandbox violation|Operation not permitted|Permission denied",
-               "bash_absent": r"(?:/bin/bash|/bin/sh).*?(?:not found|No such file)|(?:not found|No such file).*?(?:/bin/bash|/bin/sh)",
-               "abi_input": r"cannot find package|could not import", "exec_format": r"Exec format error",
-               "qemu": r"qemu[^\s]*: (?:error|Could not|failed)", "remote_env": r"FailedPrecondition|remote executor",
-               "compiler_missing": r"gcc.*(?:not found|No such file)|clang.*(?:not found|No such file)",
-               "remote_fetch": r"Error downloading|UNAVAILABLE|HTTP (?:429|503)", "genrule": r"Executing genrule.*failed",
-               "go_compile": r"GoCompilePkg.*failed|compilepkg: error", "go_link": r"GoLink.*failed|link: error",
-               "nogo": r"GoStaticAnalysis.*failed|nogo:|FilterStdPackages",
-               "process_setup": r"process-wrapper:.*(?:error|failed)|error executing command",
-               "action_input_missing": r"missing input file|does not exist", "opt_visibility": r"not visible from target"}
-    return sorted(name for name, pattern in classes.items() if re.search(pattern, log, re.I))
-
-
-def build(row, phase_name, source, labels, *, minimal, focused=False, changed=(), test=False):
-    subprocess.run(["git", "checkout", "--detach", source], check=True, stdout=subprocess.DEVNULL)
-    check(harness.git("rev-parse", "HEAD").decode().strip() == source and set(harness.git("diff", "--name-only").decode().splitlines()) == set(changed),
-          "incorrect product source")
-    bep = ROOT / (phase_name + ".bep")
-    spawns = ROOT / (phase_name + ".exec")
-    row.update(source=source, invocation=str(uuid.uuid4()), expected=len(labels))
-    image = harness.IMAGE if minimal else harness.GNU_IMAGE
-    args = ["bazel", "--bazelrc=" + os.environ["QA_RC"], "test" if test else "build", "--config=x86_64", "--jobs=16", "--keep_going",
-            "--extra_execution_platforms=//tools/bazeldefs:linux_amd64", "--spawn_strategy=local",
-            "--strategy=GoStateify=remote", "--strategy=GoImports=remote", "--remote_default_exec_properties=Arch=amd64",
-            "--remote_default_exec_properties=OSFamily=linux", "--remote_default_exec_properties=recycle-runner=false",
-            "--remote_default_exec_properties=workload-isolation-type=" + ("oci" if minimal else "firecracker"),
-            "--remote_default_exec_properties=container-image=" + image, "--remote_download_regex=.*_state_autogen.*[.]go$",
-            "--invocation_id="+row["invocation"], "--build_event_json_file="+str(bep)]
-    if test:
-        args.extend(["--test_filter=^TestLoadHooks$", "--nocache_test_results", "--strategy=TestRunner=local",
-                     "--test_output=errors", "--test_arg=-test.v", "--nobuild_event_json_file_path_conversion"])
-    if phase_name == "release5":
-        # These targets also build the tool that generates precompiled seccomp code.
-        # Select its normal GNU execution platform. If the original emitted the SDK
-        # mismatch, use the established declared-input strategies only for those SDK actions.
-        args.extend(["--spawn_strategy=remote", "--strategy=GoStateify=remote"])
-        if "stdlib_undeclared_testpty" in OUT["original_diagnostics"]["classes"]:
-            args.extend(["--strategy=GoStdlib=processwrapper-sandbox", "--strategy=GoStdlibList=processwrapper-sandbox",
-                         "--modify_execution_info=GoStdlib(List)?=+no-remote-cache"])
-    if focused:
-        args.extend(["--modify_execution_info=^GoStateify$=+no-cache", "--execution_log_json_file="+str(spawns)])
-    cmd = subprocess.run(args + sorted(labels), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    row.update(exit=cmd.returncode, finished=harness.utc(), log_sha256=harness.digest(cmd.stdout))
-    log = cmd.stdout.decode(errors="replace")
-    row["classes"] = diagnoses(log)
-    row["diagnostics"] = [line[:400] for line in log.splitlines()
-                          if re.search(r"undefined:|no import for|generated code uses|no such target|no such package|syntax error|not used|invalid import path|cannot use|cannot find package", line)
-                          and not re.search(r"(?i)(token|key=|authorization|credential|://)", line)][:30]
-    row["completed"] = {event["id"]["targetCompleted"]["label"]: event["completed"].get("success", False)
-                        for event in harness.rows(bep) if "targetCompleted" in event.get("id", {})}
+    seen=set()
+    candidates=sorted(targets)+list(dict.fromkeys(captured))
+    for label in candidates:
+        if label in seen or len(seen)>=25 or not PAT.fullmatch(label): continue
+        seen.add(label)
+        def actions():
+            res=rpc('GetTarget',dict(invocationId=uid,targetLabel=label,status=3))
+            for group in res.get('targetGroups',[]):
+                for target in group.get('targets',[]):
+                    assert target['metadata']['label']==label
+                    for event in target.get('actionEvents',[]):
+                        ident=event['id']['actionCompleted']; act=event['action']
+                        assert ident['label']==label and re.fullmatch('[a-f0-9]{64}',ident['configuration']['id'])
+                        code=act.get('exitCode',0)
+                        if not code: continue
+                        rec=dict(label=safe_label(label),config=ident['configuration']['id'],exit=code,
+                                 mnemonic=act['type'] if act.get('type') in TOOLS else 'other',streams=[])
+                        row['actions'].append(rec);save()
+                        for key in ('failureDetail','failure_detail'):
+                            if key in act: rec['failure']=project(json.dumps(act[key],sort_keys=True).encode())
+                        for stream in ('stderr','stdout'):
+                            f=act.get(stream,{})
+                            m=re.fullmatch(r'bytestream://remote\.buildbuddy\.io/(?:[^?#]*/)?blobs/([a-f0-9]{64})/(\d+)',f.get('uri',''))
+                            if m and 0<int(m[2])<=2*1024**2:
+                                data=blob({'hash':m[1],'sizeBytes':m[2]},uid)
+                                assert len(data)==int(m[2]) and h.digest(data)==m[1]
+                                rec['streams'].append(dict(kind=stream,**project(data)))
+                        save()
+        guard(safe_label(label),actions)
+    row['owners_queried']=len(seen)
+    row['observed_diagnostic']=any(rec.get('failure',{}).get('lines') or any(s['lines'] for s in rec['streams'])
+                                   for rec in row['actions']) or any(c['lines'] for c in row['console'].values())
     save()
-    if focused:
-        actions = row["generator_actions"] = {}
-        for spawn in harness.rows(spawns):
-            check(spawn.get("mnemonic") != "GoImports", "formatter executed")
-            if spawn.get("mnemonic") != "GoStateify" or spawn.get("targetLabel") not in ({l+"_state_autogen" for l in labels} | labels):
-                continue
-            target = spawn["targetLabel"]
-            command = spawn["commandArgs"]
-            props = {p["name"]: p["value"] for p in spawn.get("platform", {}).get("properties", [])}
-            outputs = spawn.get("actualOutputs", [])
-            row2 = actions[target] = {"runner": spawn.get("runner"), "cached": spawn.get("cacheHit", False),
-                                      "exit": spawn.get("exitCode", 0), "tool": command[0], "image": props.get("container-image")}
-            check(row2["runner"] == "remote" and not row2["cached"] and props.get("container-image") == image
-                  and props.get("workload-isolation-type") == "oci" and Path(command[0]).name == "stateify",
-                  "generator did not run directly on shell-free worker")
-            if row2["exit"] == 0:
-                generated, = outputs
-                content = Path(generated["path"]).read_bytes()
-                row2["digest"] = harness.digest(content)
-                if target == label("identtype")+"_state_autogen":
-                    check(b'peer "gvisor.dev/gvisor/pkg/abi/linux"' in content
-                          and b'example.invalid' not in content and b'peer.BPFInstruction' in content,
-                          "identtype retargeted its Go source import")
-                check(row2["digest"] == generated["digest"]["hash"], "wrong materialized generator output")
-        save()
-    return log
 
 
-def fixtures(row):
-    production = {p+"_state_autogen" for p in OLD_PRODUCTION}
-    libs = {label(k) for k in OLD + EXTRA}
-    log = build(row, "candidate", SOURCE, production | libs, minimal=True, focused=True)
-    check(set(row["completed"]) == production | libs and row["exit"] == 1, "candidate owners missing")
-    bad = {label(k) for k in EXPECTED_BAD}
-    check({l for l, v in row["completed"].items() if not v} == bad, "unexpected candidate dispositions")
-    check("generated code uses \"peer\" for both" in log and "no import for \"shapes\"" in log, "wrong negative")
-    actions = row["generator_actions"]
-    expected = production | {l+"_state_autogen" for l in libs}
-    check(expected == set(actions), "missing or unexpected generator action")
-    before = OUT["phases"]["retained"]["stock_outputs"]
-    identical = production | {label(k)+"_state_autogen" for k in ("declared", "unaliased")}
-    check(all(actions[l]["digest"] == before[l] for l in identical), "previously correct output changed")
-    row["unchanged_from_stock"] = sorted(identical)
-    old = OUT["phases"]["stock_unusual_names"].get("completed", {})
-    row["stock_name_regressions"] = [l for l, passed in old.items() if passed and not row["completed"].get(l)]
-    check(old and not row["stock_name_regressions"], "an unaliased name accepted by stock needs compatibility")
-
-
-FIXTURE_SOURCES = ("pkg/state/tests/load.go", "pkg/state/tests/struct.go")
-SECCOMP = {"pkg/sentry/platform/kvm": "mmapfilter_precompiled.go",
-           "pkg/sentry/platform/ptrace": "stubfilter_precompiled.go",
-           "pkg/sentry/platform/systrap": "stubfilter_precompiled.go",
-           "runsc/boot/filter": "filter_precompiled.go", "runsc/gofer/fs/filter": "filter_precompiled.go"}
-
-
-def test_hook(row):
-    sys.path.insert(0, str(ROOT))
-    from qualification_report import xml_cases
-
-    owner = "//pkg/state/tests:tests_test"
-    build(row, "hook", SOURCE, {owner}, minimal=True, test=True)
-    check(row["exit"] == 0 and row["completed"].get(owner), "state test owner failed")
-    results = [e for e in harness.rows(ROOT / "hook.bep") if e.get("id", {}).get("testResult", {}).get("label") == owner]
-    attempt, = results
-    result = attempt["testResult"]
-    row["attempt"] = attempt["id"]["testResult"]
-    row["status"] = result["status"]
-    row["cached"] = result.get("cachedLocally", False) or result.get("executionInfo", {}).get("cachedRemotely", False)
-    check(row["status"] == "PASSED" and not row["cached"], "named test did not execute")
-    xml = Path("bazel-testlogs/pkg/state/tests/tests_test/test.xml")
-    names = {"/".join(filter(None, (c.get("classname"), c.get("name")))) for c in ET.parse(xml).iter("testcase")
-             if "TestLoadHooks" in c.get("name", "").split("/")}
-    counts = xml_cases(xml, frozenset(names))
-    log = xml.with_name("test.log").read_bytes()
-    started = bool(re.search(rb"(?m)^=== RUN\s+TestLoadHooks\s*$", log))
-    passed = bool(re.search(rb"(?m)^--- PASS: TestLoadHooks \(", log))
-    row.update(xml_sha256=harness.digest(xml.read_bytes()), log_sha256=harness.digest(log), cases=counts["passed"],
-               load_hook_xml_cases=len(names), go_run=started, go_pass=passed)
-    check(counts["passed"] > 0 and counts["failed"] == 0 and counts["skipped"] == 0 and
-          (names and set(counts["required_passed"]) == names or started and passed), "missing executed Go load hook cases")
-
-
-@contextmanager
-def reference_inputs(row, files=(), packages=()):
-    # Hold the inputs fixed for release byte comparisons. The one intentionally
-    # changed test fixture is also tested separately on its actual product source.
-    changed, originals, created = [], {}, []
-    try:
-        for name in files:
-            p = Path(name)
-            originals[p] = p.read_bytes()
-            p.write_bytes(harness.git("show", BASE + ":" + name))
-            changed.append(name)
-        row["original_fixture_inputs"] = {name: harness.digest(Path(name).read_bytes()) for name in files}
-        for pkg in packages:
-            filename = SECCOMP[pkg]
-            b = Path(pkg) / "BUILD"
-            ref = Path(pkg) / filename
-            check(not ref.exists(), "unexpected existing seccomp input")
-            originals[b] = b.read_bytes()
-            def remove_macro(match):
-                check('out = "'+filename+'"' in match.group(), "incorrect seccomp output")
-                return ""
-            text, n = re.subn(r"(?ms)^precompiled_seccomp_rules\(\n.*?^\)\n", remove_macro, b.read_text())
-            check(n == 1 and '"'+filename+'"' in text, "incorrect seccomp declaration")
-            b.write_text(text)
-            changed.append(str(b))
-            data = harness.git("show", EXPORT+":"+str(ref))
-            ref.write_bytes(data)
-            created.append(ref)
-            row.setdefault("exported_generated_inputs", {})[str(ref)] = harness.digest(data)
-        yield changed
-    finally:
-        for p in created:
-            p.unlink()
-        for p, data in originals.items():
-            p.write_bytes(data)
-
-
-def all_outputs(row, failed, supplied=False):
-    paths = [s for s in harness.git("ls-tree", "-r", "--name-only", EXPORT).decode().splitlines()
-             if s.endswith("_state_autogen.go")]
-    check(len(paths) == 485, "wrong exported census")
-    targets = {"//"+str(Path(p).parent)+":"+Path(p).stem: p for p in paths}
-    prior = set(first()["phases"]["exported_tree"]["missing"])
-    targets = {t: p for t, p in targets.items() if (t in prior) == failed}
-    if supplied:
-        missing = set(OUT["phases"]["five_with_seccomp_inputs"]["missing"])
-        targets = {t: p for t, p in targets.items() if t in missing}
-    packages = sorted(str(Path(p).parent) for p in targets.values()) if supplied else []
-    with reference_inputs(row, () if failed else FIXTURE_SOURCES, packages) as changed:
-        name = "supplied5" if supplied else ("release5" if failed else "release480")
-        build(row, name, SOURCE, targets, minimal=not failed or supplied, changed=changed)
-
-    rows = row["files"] = {}
-    for target, path in targets.items():
-        content = harness.git("show", EXPORT+":"+path)
-        check(b"stateify" in content.splitlines()[0], "wrong reference generator")
-        actual = Path("bazel-bin") / path
-        rows[target] = {"reference": harness.digest(content), "generated": harness.digest(actual.read_bytes())
-                        if row["completed"].get(target) and actual.is_file() else None}
-    row["exact"] = sum(d["generated"] == d["reference"] for d in rows.values())
-    row["missing"] = [l for l, d in rows.items() if d["generated"] is None]
-    row["changed"] = [l for l, d in rows.items() if d["generated"] and d["generated"] != d["reference"]]
-    save()
-    check(row["exit"] == 0 and set(row["completed"]) == set(targets) and row["exact"] == len(targets),
-          "exported bytes or coverage differs")
-
-
-if len(sys.argv) == 2 and sys.argv[1] == "original":
-    original_console()
-    raise SystemExit(0)
-OUT["original_diagnostics"] = json.loads((ROOT / "original-diagnostics.json").read_bytes())
-phase("retained", setup)
-if OUT["phases"]["retained"]["verdict"] == "PASS":
-    OUT["phases"]["stock_unusual_names"] = first()["phases"]["stock_unusual_names"]
-    OUT["phases"]["stock_unusual_names"]["retained_artifact"] = 13253469180
-    phase("candidate_imports", fixtures)
-    phase("in_tree_sibling_hook", test_hook)
-    phase("exported_tree_480", lambda r: all_outputs(r, False))
-    phase("five_with_seccomp_inputs", lambda r: all_outputs(r, True))
-    if OUT["phases"]["five_with_seccomp_inputs"].get("missing"):
-        phase("seccomp_exported_inputs_only", lambda r: all_outputs(r, True, True))
-OUT["verdict"] = "PASS" if all(p["verdict"] == "PASS" for p in OUT["phases"].values()) else "FAIL"
-OUT["finished"] = harness.utc()
-save()
-raise SystemExit(OUT["verdict"] != "PASS")
+try:
+    raw=(h.ROOT/'original.zip').read_bytes();assert h.digest(raw)=='6fea03c7b4adfccecd0fd4ad524fefcaa4ff58897ab5c90a48f7c6d88b96436e'
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+        member,=archive.namelist();assert member=='stateify-native-review.json'
+        original=json.loads(archive.read(member))
+    assert original['source']==PRODUCT and original['verdict']=='FAIL'
+    assert original['phases']['exported_tree_480']['exact']==480 and original['phases']['seccomp_exported_inputs_only']['exact']==5
+    assert original['phases']['in_tree_sibling_hook']['load_hook_xml_cases']==16
+    assert 'SECRET_EXAMPLE' not in json.dumps(project(b'ERROR: Authorization: Bearer SECRET_EXAMPLE'))
+    OUT['original_zip_sha256']=h.digest(raw)
+    for name, uid in INV.items(): inspect(original,name,uid)
+    OUT['verdict']='ORIGINAL_RECORDS_READ' if all(r.get('observed_diagnostic') for r in OUT['invocations'].values()) else 'INCOMPLETE'
+except Exception as exc:
+    OUT['reader_error']=type(exc).__name__
+finally:
+    OUT['finished']=h.utc();save()
+sys.exit(OUT['verdict']!='ORIGINAL_RECORDS_READ')
