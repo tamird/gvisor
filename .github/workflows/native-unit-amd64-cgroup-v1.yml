@@ -1,7 +1,7 @@
-name: Recover original native cgroup-v1 diagnostics
+name: Read two original cgroup action failures
 on:
   push:
-    branches: [qualification/buildkite-unit-amd64-v1-complete]
+    branches: [qualification/native-unit-cgroup-nogo-details]
 permissions:
   contents: read
   actions: read
@@ -9,7 +9,7 @@ jobs:
   unit:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.run_attempt == 1
     runs-on: ubuntu-22.04
-    timeout-minutes: 20
+    timeout-minutes: 5
     steps:
       - name: Initialize the bounded receipt
         run: |
@@ -17,33 +17,89 @@ jobs:
           echo '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/unit-v1-public/verdict.json"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 4
+          fetch-depth: 2
           persist-credentials: false
-      - name: Recover the original failed aggregate
+      - name: Bind the previous two-action receipt and stage the existing reader
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api repos/tamird/gvisor/actions/artifacts/13234271430/zip > "$RUNNER_TEMP/original.zip"
-          gh api repos/tamird/gvisor/actions/artifacts/13238084338/zip > "$RUNNER_TEMP/prior-diagnostics.zip"
-      - name: Stage the existing read-only evidence helpers
-        run: |
           set -euo pipefail
-          guest=38745c527784376e0b5d915fe5ebd85e1d1385fd
-          decoder=0a9bdf9bc331d6a66f35aefcbbb5cf466eb6f7f5
-          cas_helper=680739b629229eb1c8fa91aa1147d1bca71eb04f
-          product=96fadde722e14d482a62276b80237398f8b62fbf
-          git fetch --quiet --depth=1 origin "$guest" "$decoder" "$cas_helper" "$product"
-          for tool in qualification_report unit_matrix credential_artifacts; do
-            git show "$guest:test/rbe/$tool.py" > "$RUNNER_TEMP/$tool.py"
-          done
-          git show "$decoder:test/rbe/stdlib-provenance.py" > "$RUNNER_TEMP/stdlib_provenance.py"
-          git show "$cas_helper:test/rbe/cas_inputs.py" > "$RUNNER_TEMP/cas_inputs.py"
-          cp .github/qualification/unit-cgroup-v1/check.py "$RUNNER_TEMP/check-v1.py"
-      - name: Read original invocation diagnostics and timing
-        timeout-minutes: 15
+          test "$(git rev-parse HEAD^)" = e63f7214f134d91caf93d58d0047582e2a502612
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/native-unit-amd64-cgroup-v1.yml
+          gh api repos/tamird/gvisor/actions/artifacts/13238877799/zip > "$RUNNER_TEMP/prior.zip"
+          cas=680739b629229eb1c8fa91aa1147d1bca71eb04f
+          git fetch --quiet --depth=1 origin "$cas"
+          git show "$cas:test/rbe/cas_inputs.py" > "$RUNNER_TEMP/cas_inputs.py"
+      - name: Read only the failed target's two ActionCompleted records
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 -B "$RUNNER_TEMP/check-v1.py" --recover-original
+        run: |
+          cd "$RUNNER_TEMP"
+          python3 -B - <<'PY'
+          import hashlib, json, os, re, zipfile
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from urllib.error import HTTPError
+          from cas_inputs import rpc
+
+          uid, target = "c71a84d9-9d4c-44f1-814e-2845e89dd55a", "//runsc/cgroup:cgroup_test_nogo"
+          owner = "//runsc/cgroup:cgroup_test"
+          configs = {
+              "2f0ab5cf598f6e5037afe94c8cbcddc395ed87c1a4777f4214bfb444f92e922b",
+              "8ccf02dfc33de5917337f5f6795f3d4a82f4c49d711407b86e49a4f2f92441f6",
+          }
+          raw = Path("prior.zip").read_bytes()
+          assert hashlib.sha256(raw).hexdigest() == "9306c56cdfd525fb1038012e3436ffb016109747f2f746fd2e0cee42f09f842b"
+          with zipfile.ZipFile("prior.zip") as z:
+              old = json.loads(z.read("verdict.json"))
+          product = "96fadde722e14d482a62276b80237398f8b62fbf"
+          prev = old["phases"]["nogo_target"]
+          assert old["product"] == product and old["original"]["status"] == "FAIL"
+          assert prev["owner"] == target and prev["invocation"] == uid
+          assert sorted((a["owner"],a["configuration"],a["exit_code"],a["files"]) for a in prev["actions"]) == sorted((owner,c,1,[]) for c in configs)
+          out = dict(invocation=uid, source=product, original_status="FAIL", target=target, owner=owner,
+                     prior_artifact=13238877799, status="INCONCLUSIVE", actions=[])
+          phases = ("spawn", "execution", "remoteExecution", "includeScanning", "analysis", "crash")
+          mnemonics = {"GoCompilePkg", "GoStaticAnalysis", "GoLink", "GoTestGenTest", "GoCompileInternalTest",
+                       "GoArchive", "GoPack", "GoToolchainBinaryBuild", "GoCover", "FileWrite", "Symlink"}
+          # Only report these fixed substrings from the Bazel message. Never include commands, URIs or headers.
+          messages = ("cannot be executed with any of the available strategies", "available strategies: [remote]",
+                      "which requires sandboxing due to path mapping", "No usable spawn strategy", "Permission denied",
+                      "Operation not permitted", "No such file or directory", "Out of memory", "out of memory",
+                      "remote execution failed", "deadline exceeded", "error running subcommand", "exec format error")
+          def project(event):
+              identity, action = event["id"]["actionCompleted"], event["action"]
+              assert identity["label"] == owner and identity["configuration"]["id"] in configs and action["exitCode"] == 1
+              output = identity.get("primaryOutput", "") or action.get("primaryOutput", {}).get("name", "")
+              path_pattern = r"bazel-out/[a-zA-Z0-9_+.-]{1,140}/(?:bin|genfiles)/runsc/cgroup/cgroup_test(?:[._/-](?:internal|external|test|cgroup|a|x|findings|facts|out|go|exe|params|binary|testmain|_)){0,12}"
+              failure = action.get("failureDetail", {})
+              codes = {}
+              for group in phases:
+                  code = failure.get(group, {}).get("code")
+                  if isinstance(code, int) and 0 <= code < 10000 or isinstance(code, str) and re.fullmatch(r"[A-Z][A-Z0-9_]{0,79}",code):
+                      codes[group] = code
+              text = failure.get("message", "")
+              return dict(configuration=identity["configuration"]["id"], exit_code=1,
+                          mnemonic=action.get("type") if action.get("type") in mnemonics else None,
+                          primary_output=output if re.fullmatch(path_pattern, output) else None,
+                          failure_code=codes, diagnostic=[m for m in messages if m in text])
+          try:
+              groups = rpc("GetTarget", {"invocationId":uid, "targetLabel":target, "status":3}).get("targetGroups", [])
+              if len(groups) == 1 and not groups[0].get("nextPageToken"):
+                  targets = [t for t in groups[0].get("targets",[]) if t["metadata"]["label"] == target]
+                  if len(targets) == 1:
+                      rows = [project(e) for e in targets[0].get("actionEvents",[])]
+                      if len(rows) == 2 and {r["configuration"] for r in rows} == configs:
+                          out["actions"] = sorted(rows, key=lambda r:r["configuration"])
+                          if all(r["failure_code"] or r["diagnostic"] for r in rows):
+                              out["status"] = "ORIGINAL_DETAILS_RECORDED"
+          except HTTPError as e:
+              out["lookup_error"] = "HTTP_%d" % e.code
+          except Exception as e:
+              out["lookup_error"] = type(e).__name__
+          out["verified_at"] = datetime.now(timezone.utc).isoformat()
+          Path("unit-v1-public/verdict.json").write_text(json.dumps(out, sort_keys=True))
+          PY
       - name: Check the sole public artifact
         id: scan
         if: always()
@@ -56,7 +112,7 @@ jobs:
           root = Path(os.environ['RUNNER_TEMP']) / 'unit-v1-public'
           assert [p.name for p in root.iterdir()] == ['verdict.json']
           path = root / 'verdict.json'
-          assert not path.is_symlink() and path.stat().st_size < 8 * 1024**2
+          assert not path.is_symlink() and path.stat().st_size < 8 * 1024
           data = path.read_bytes()
           assert isinstance(json.loads(data), dict)
           secrets = [v.encode() for k, v in os.environ.items()
@@ -67,6 +123,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.scan.outcome == 'success'
         with:
-          name: native-amd64-unit-cgroup-v1-diagnostics
+          name: original-cgroup-action-details
           path: ${{ runner.temp }}/unit-v1-public/verdict.json
           if-no-files-found: error
