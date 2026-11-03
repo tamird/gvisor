@@ -70,9 +70,6 @@ func NewRegistry(userNS *auth.UserNamespace) *Registry {
 func (r *Registry) Find(ctx context.Context, key Key, mode linux.FileMode, create, exclusive bool) (Mechanism, error) {
 	if id, ok := r.keysToIDs[key]; ok {
 		mech := r.objects[id]
-		mech.Lock()
-		defer mech.Unlock()
-
 		obj := mech.Object()
 		creds := auth.CredentialsFromContext(ctx)
 		if !obj.CheckPermissions(creds, vfs.AccessTypes(mode&linux.ModeOtherAll)) {
