@@ -1,66 +1,135 @@
-name: Verify original Nogo wrapper producer links
+name: Complete native Nogo with declared cross-compilers
 on:
   push:
-    branches: [qualification/buildkite-nogo-wrapper-links]
+    branches: [qualification/buildkite-nogo-llvm-full]
 permissions:
   contents: read
   actions: read
 jobs:
-  recover:
+  native:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 180
     env:
       PRODUCT: f1e943169a0bfd6439a31585896f031c7314721e
-      ORIGINAL: a71a698e9367395314448d19087e097087ee81ee
+      BASE: 8e13db5ad62802add68356df383e4a581e8eb303
       CODEC: 0a9bdf9bc331d6a66f35aefcbbb5cf466eb6f7f5
       CAS_HELPER: 680739b629229eb1c8fa91aa1147d1bca71eb04f
+      CHECKER: 51f58a30a4b652bc0e364fdac427b72e0109ef52
+      IMAGE: docker://mirror.gcr.io/library/ubuntu@sha256:78d4744ead1f5b19b04d0df558ab182a5300903900755e515b2ca4d10eb2044d
+      DOCKER_BUILD: 'false'
+      DOCKER_HOST: unix:///nonexistent-gvisor-builder.sock
+      BUILDKITE_LABEL: ':golang: Nogo tests'
+      BAZEL_REMOTE_CACHE: '--remote_cache=grpcs://remote.buildbuddy.io --define="nogo_agent=quoted value"'
+      NOGO_FRESH_RESULTS: '1'
+      NOGO_TIMEOUT: 150m
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {fetch-depth: 2, persist-credentials: false}
-      - name: Bind the original reader and read-only recovery
+      - name: Retain the exact source and original full selection
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "aec8da9e2ba3c2c1ceb17f70eddbbf5e9050607d"
-          git fetch --quiet --depth=2 origin "$ORIGINAL"
-          test "$(git rev-parse "$ORIGINAL^")" = "$PRODUCT"
-          git diff --exit-code "$ORIGINAL" HEAD -- . ':!.github/qualification/native-nogo-placement.py' ':!.github/workflows/buildkite-native-nogo.yml'
-          mkdir "$RUNNER_TEMP/nogo-receipts"
-          cp .github/qualification/native-nogo-placement.py "$RUNNER_TEMP/recover.py"
-          git show "$ORIGINAL:.github/qualification/native-nogo-placement.py" > "$RUNNER_TEMP/original_placement.py"
+          mkdir -p "$RUNNER_TEMP/nogo-receipts" "$RUNNER_TEMP/nogo-platform"
+          printf '{"verified":false,"reason":"qualification incomplete"}\n' > "$RUNNER_TEMP/nogo-receipts/verdict.json"
+          test "$(git rev-parse HEAD^)" = "$CHECKER"
+          git diff --exit-code "$CHECKER" HEAD -- .github/qualification/native-nogo.py .github/qualification/native-nogo-placement.py
+          git fetch --quiet --depth=2 origin "$PRODUCT"
+          test "$(git rev-parse "$PRODUCT^")" = "$BASE"
+          git diff --exit-code "$PRODUCT" HEAD -- . ':!.github/qualification/native-nogo.py' ':!.github/qualification/native-nogo-placement.py' ':!.github/workflows/buildkite-native-nogo.yml'
+          cp .github/qualification/native-nogo{,-placement}.py "$RUNNER_TEMP"
           git fetch --quiet --depth=1 origin "$CODEC" "$CAS_HELPER"
           git show "$CODEC:test/rbe/stdlib-provenance.py" > "$RUNNER_TEMP/stdlib_provenance.py"
           git show "$CAS_HELPER:test/rbe/cas_inputs.py" > "$RUNNER_TEMP/cas_inputs.py"
-          command -v zstd
-      - name: Recover original receipts, compact actions and ELF bytes
+          gh api repos/tamird/gvisor/actions/artifacts/13107794911/zip > "$RUNNER_TEMP/original-wildcard.zip"
+          git checkout --quiet --detach "$PRODUCT"
+          python3 - <<'PY'
+          import hashlib,json,os,subprocess
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])
+          assert hashlib.sha256((root/'original-wildcard.zip').read_bytes()).hexdigest()=='33eedc60a54fd155ccc34b0e53ca984855e87d6c95614f0c7d4f1bf298859b7f'
+          names=subprocess.check_output(['git','diff','--name-only',os.environ['BASE'],'HEAD'],text=True).splitlines()
+          assert names==['.buildkite/first-pass.yaml','.buildkite/pipeline.yaml']
+          (root/'nogo-receipts/source.json').write_text(json.dumps({'source':os.environ['PRODUCT'],'base':os.environ['BASE'],'changes':names,'original_artifact':13107794911,'original_zip_sha256':'33eedc60a54fd155ccc34b0e53ca984855e87d6c95614f0c7d4f1bf298859b7f','host':os.uname().machine},indent=2)+'\n')
+          PY
+      - name: Set up the native client and pinned compiler-free worker
         env:
-          GH_TOKEN: ${{ github.token }}
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 "$RUNNER_TEMP/recover.py" recover
-      - name: Validate the compact public receipt independently
+        run: |
+          set -euo pipefail
+          sed -n '/^install_.*bazel() {$/,$p' .buildkite/hooks/pre-command > "$RUNNER_TEMP/nogo-setup.bash"
+          source "$RUNNER_TEMP/nogo-setup.bash"
+          test "$(bazel --version)" = "bazel $(cat .bazelversion)"
+          echo "$BUILDKITE_BAZEL_DIRECTORY" >> "$GITHUB_PATH"
+          command -v zstd
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'nogo-platform'
+          (p/'MODULE.bazel').write_text('module(name="native_nogo_worker")\n')
+          (p/'BUILD').write_text('''platform(name="worker", constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"], exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"oci","recycle-runner":"false","container-image":"'''+os.environ['IMAGE']+'''"}, visibility=["//visibility:public"])
+          genrule(name="no_compiler", outs=["worker.txt"], cmd="set -eu; for tool in cc c++ gcc g++ clang clang++ aarch64-linux-gnu-gcc x86_64-linux-gnu-gcc; do if command -v $$tool >/dev/null 2>&1; then exit 1; fi; done; test -x /bin/bash; command -v awk >/dev/null; printf 'no host compiler; bash and awk available\\\\n' > $@", visibility=["//visibility:public"])
+          ''')
+          PY
+          umask 077
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'test --strategy=GoCompilePkg=remote,local' 'test --strategy=GoStaticAnalysis=remote,local' 'test --nocache_test_results' 'build --noremote_local_fallback' 'build --remote_download_outputs=toplevel' 'build --jobs=64' "build --inject_repository=native_nogo_worker=$RUNNER_TEMP/nogo-platform" 'build --extra_execution_platforms=@native_nogo_worker//:worker' 'build --host_platform=@native_nogo_worker//:worker' 'test --strategy=TestRunner=sandboxed' 'test --local_test_jobs=4' 'build --modify_execution_info=^Genrule$=+no-cache'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$RUNNER_TEMP/nogo-resources.bazelrc"
+      - name: Require actual remote execution with no host compiler
+        id: probe
+        run: |
+          set -uo pipefail
+          bazel --bazelrc="$RUNNER_TEMP/nogo-resources.bazelrc" build --execution_log_compact_file="$RUNNER_TEMP/probe.compact" @native_nogo_worker//:no_compiler > "$RUNNER_TEMP/probe.console" 2>&1
+          rc=$?
+          printf '%s\n' "$rc" > "$RUNNER_TEMP/nogo-receipts/probe-exit.txt"
+          python3 "$RUNNER_TEMP/native-nogo-placement.py" probe
+          checked=$?
+          test "$rc" -eq 0 && test "$checked" -eq 0
+      - name: Execute the complete existing Make selection once
+        if: steps.probe.outcome == 'success'
+        run: |
+          set -euo pipefail
+          printf '%s\n' "test --execution_log_compact_file=$RUNNER_TEMP/nogo.compact" 'build --remote_download_regex=.*(vdso/vdso[.]so|sysmsg/(sighandler|syshandler|sysrestorer|sysmsg_lib)[.]o)$' >> "$RUNNER_TEMP/nogo-resources.bazelrc"
+          python3 "$RUNNER_TEMP/native-nogo.py"
+      - name: Inspect actual compiler inputs, both embedded ELF architectures and local placement
+        if: always() && steps.probe.outcome == 'success'
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 "$RUNNER_TEMP/native-nogo-placement.py" compiler
+      - name: Check the bounded evidence before upload
         id: privacy
         if: always()
         env:
-          GH_TOKEN: ${{ github.token }}
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
-          import json,os,re
+          import os,re
           from pathlib import Path
-          p=Path(os.environ['RUNNER_TEMP'])/'nogo-receipts'/'recovery.json'
-          data=p.read_bytes()
-          assert len(data)<4*1024*1024
-          assert not any(os.environ[k].encode() in data for k in ('GH_TOKEN','BUILDBUDDY_API_KEY') if os.environ.get(k))
-          assert not re.search(rb'(?:gh[pousr]_[a-zA-Z0-9]{20}|github_pat_|x-buildbuddy-api-key[=:]|Authorization:|Bearer )',data,re.I)
-          value=json.loads(data)
-          assert value['workload_repeated'] is False
-          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
-              f.write('Original workload verified: '+str(value.get('workload_verified',False))+'\n\n')
-              f.write('Original-only recovery verified: '+str(value.get('verified',False))+'\n')
+          root=Path(os.environ['RUNNER_TEMP'])/'nogo-receipts'
+          allowed={'verdict.json','owners.json','execution.json','source.json','probe.json','probe-error.json','probe-exit.txt','compiler.json','compiler-error.json','collection-error.json'}
+          for p in root.iterdir():
+            assert p.name in allowed and p.is_file() and p.stat().st_size < 8*1024*1024
+            raw=p.read_bytes()
+            assert not any(os.environ[k].encode() in raw for k in ('BUILDBUDDY_API_KEY','GH_TOKEN') if os.environ.get(k))
+            assert not re.search(rb'(?:gh[pousr]_|github_pat_|x-buildbuddy-api-key[=:]|Authorization:|Bearer )',raw,re.I)
           PY
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
-          name: native-nogo-wrapper-links
-          path: ${{ runner.temp }}/nogo-receipts/recovery.json
+          name: native-nogo-declared-llvm
+          path: ${{ runner.temp }}/nogo-receipts/
           if-no-files-found: error
+      - name: Require complete functional and compiler coverage
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'nogo-receipts'
+          assert all(json.loads((p/(n+'.json')).read_text())['verified'] for n in ('probe','verdict','compiler'))
+          assert not list(p.glob('*-error.json'))
+          PY
