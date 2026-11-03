@@ -12,22 +12,75 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          fetch-depth: 3
+          fetch-depth: 4
           persist-credentials: false
       - name: Bind collector to the curated records and published base
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = bcdaca91e10b839ab30f71ca42dd3d9e4f8ff1fb
-          test "$(git rev-parse HEAD^^)" = fe9856fc8294fd975c8d1f8e248b2138a7617c5b
+          test "$(git rev-parse HEAD^^)" = bcdaca91e10b839ab30f71ca42dd3d9e4f8ff1fb
+          test "$(git rev-parse HEAD^^^)" = fe9856fc8294fd975c8d1f8e248b2138a7617c5b
           test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
-          test "$(git diff --name-only HEAD^^ HEAD^)" = registry.json
+          test "$(git diff --name-only HEAD^^^ HEAD^^)" = registry.json
           mkdir results
           cp registry.json results/
-      - name: Collect current GitHub status using the maintained collector
+      - name: Refresh the seven changed PRs, their imports and the new issue
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python3 update-status.py
+          python3 - <<'PYTHON'
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import copy
+          import json
+          import runpy
+          u = runpy.run_path("update-status.py")
+          g = u["collect_repository"].__globals__
+          r = u["REGISTRY"]
+          saved = copy.deepcopy(r)
+          repo = "google/gvisor"
+          numbers = {16588,16618,16098,16841,16801,16803,16710}
+          p = Path("github-status.json")
+          old = json.loads(p.read_text())
+          prior = [x for x in old["prs"] if x.get("repo",repo) == repo and x["number"] in numbers]
+          assert len(prior) == len(numbers)
+          try:
+              # The canonical collector supports registered-only repositories. For this
+              # one recovery, scope that existing path to exactly the changed nodes.
+              r["nodes"] = [n for n in r["nodes"] if n["id"] in
+                            ({"pr:" + str(i) for i in numbers} | {"issue:16878"})]
+              r["meta"]["registeredOnlyRepositories"].append(repo)
+              g["PR_BATCH_SIZE"] = 3
+              rows, fresh, _, inventory = u["collect_repository"](repo, "copybara", {**old, "prs":prior})
+              issues = u["collect_issues"](old)
+              assert set(issues) == {"issue:16878"} and issues["issue:16878"]["githubState"] == "open"
+              assert len(rows) == len(numbers) and set(fresh).issuperset(numbers)
+              u["recheck_snapshot_mergeability"](list(fresh.values()), [p for s in rows for p in (s,*s["imports"])], repo)
+          finally:
+              r.clear()
+              r.update(saved)
+          maintainers = u["fetch_maintainers"]()
+          nodes = {n["id"]:n for n in r["nodes"]}
+          current = {}
+          for pr in rows:
+              key = "pr:"+str(pr["number"])
+              node = nodes[key]
+              if pr["status"] == "open":
+                  pr = u["with_maintainer_reviewers"](pr, maintainers)
+                  pr["publicImportDisposition"] = u["public_import_disposition"](pr,node.get("approvedPatch"),node.get("landedPatch"))
+              current[pr["url"]] = pr
+          prs = [current.get(p["url"],p) for p in old["prs"]]
+          now = datetime.now(timezone.utc).isoformat()
+          report = u["check_report"](prs,old)
+          snap = {**old,"checkedAt":now,"registryDate":r["meta"]["updatedAt"],"prs":prs,"issues":{**old["issues"],**issues},
+                  "reviewerHandoff":u["reviewer_handoff"](prs,old),
+                  "mergeabilityHandoff":u["mergeability_handoff"](report,old),"checkFailures":report["checkFailures"],
+                  "workStates":u["record_states"](prs,r,old,now)}
+          snap["limits"] = {**old["limits"],"curationRefresh":{"prs":sorted(numbers),"issue":16878,"requests":g["requests"],
+              "graphqlCost":g["query_cost"],"previousFullSnapshot":old["checkedAt"],"repositoryObservation":inventory}}
+          if sweep := u["feedback_sweep"](r,[*prs,*old["reviewPRs"]],old,now):
+              snap["projectFeedbackReview"] = sweep
+          p.write_text(json.dumps(snap,indent=2,ensure_ascii=False)+"\n")
+          PYTHON
           cp github-status.json results/
       - name: Check the data used to render the cards
         run: |
@@ -37,19 +90,20 @@ jobs:
           from pathlib import Path
           nodes = {n["id"]: n for n in json.loads(Path("registry.json").read_text())["nodes"]}
           snap = json.loads(Path("github-status.json").read_text())
+          observed = {p["url"]:p for p in snap["prs"]}
           for number, head in [(16588,"1dbbcd676"), (16618,"da05e74d9"), (16098,"cd5e5628a"), (16841,"f8ca88ad9"), (16801,"514a1ce4f"), (16803,"c58f36d4e")]:
               key = f"pr:{number}"
               n = nodes[key]
-              assert n["head"].startswith(head) and snap["prs"][key]["head"] == n["head"], key
+              assert n["head"].startswith(head) and observed[n["url"]]["head"] == n["head"], key
               assert any(r["kind"] == "amendment" and r["outcome"] == "approved" and r["head"] == n["head"] for r in n["settledReviews"]), key
               assert n.get("contributorReview", {}).get("kind") != "amendment", key
           for key, count in [("pr:16588",3),("pr:16618",2),("issue:16878",1)]:
               r = nodes[key]["contributorReview"]
               assert r["kind"] == "reply" and r["status"] == "pending" and r["body"].count("Posted by Codex on behalf of @tamird.") == count, key
           n = nodes["pr:16710"]
-          assert "contributorReview" not in n and n["head"] == snap["prs"]["pr:16710"]["head"] and n["head"].startswith("cd92efa5f")
+          assert "contributorReview" not in n and n["head"] == observed[n["url"]]["head"] and n["head"].startswith("cd92efa5f")
           assert any(s["head"].startswith("50890dbbe") and s["outcome"] == "changes-requested" for s in n["settledReviews"])
-          assert n["followup"]["actionableComment"]["url"] in [n["followup"]["evidence"][0]]
+          assert n["followup"]["actionableComment"]["url"] == n["followup"]["evidence"][0]
           PY
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
