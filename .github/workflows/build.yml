@@ -1,29 +1,23 @@
-name: Check FIFO readiness and F_GETLK results
+name: Test the VFS package after removing Watch.OwnerID
 on:
   push:
-    branches: [qualification/fifo-record-lock-review-run]
+    branches: [qualification/vfs-watch-owner-check]
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.ref == 'refs/heads/qualification/fifo-record-lock-review-run'
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.ref == 'refs/heads/qualification/vfs-watch-owner-check'
     runs-on: ubuntu-24.04
     timeout-minutes: 110
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - {suite: fifo, source: 8d81e45526dac7be303b1caf5208ace6320ffb38}
-          - {suite: fcntl, source: da05e74d9febb9c6430bfc94d6406684eaab66df}
     env:
-      SUITE: ${{ matrix.suite }}
-      SOURCE: ${{ matrix.source }}
+      SUITE: vfs
+      SOURCE: 637158efcbee8244f5df020b57bb0296c0c15fe6
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
         fetch-depth: 5
         persist-credentials: false
-    - name: Run the exact reviewed source on Linux and gVisor
+    - name: Run the VFS package on the exact reviewed source
       timeout-minutes: 100
       id: compare
       env:
@@ -32,7 +26,7 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "ff66706ef9e9505ca690a837f17e4a81eaad47f2"
+        test "$(git rev-parse HEAD^1)" = "8168bb6c33d45387d5ecfee78b186f6f3d1e7a28"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py vfs_review.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -130,33 +124,13 @@ jobs:
         git cat-file commit HEAD > "$TCP_EVIDENCE/commit_file"
         git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_before"
         test ! -s "$TCP_EVIDENCE/source_before"
-        targets=(native runsc_systrap_directfs runsc_systrap_shared)
-        case "$SUITE" in
-          fifo)
-            filter=FifoTest.HangupDependsOnWhenReaderOpened
-            ;;
-          fcntl)
-            filter=FcntlLockTest.TestOFDGetLkReturnsNegPID:FcntlLockTest.GetLockWithMixedReaders
-            targets+=(runsc_systrap_directfs_save)
-            ;;
-          *) exit 2 ;;
-        esac
-        args=()
-        for target in "${targets[@]}"; do
-          label="//test/syscalls:${SUITE}_test_${target}"
-          args+=("--test-target=$label")
-          echo "$label" >> "$TCP_EVIDENCE/targets.txt"
-        done
-        if [[ $SUITE == fcntl ]]; then
-          label=//pkg/sentry/fsimpl/lock:lock_test
-          args+=("--test-target=$label")
-          echo "$label" >> "$TCP_EVIDENCE/targets.txt"
-        fi
+        test "$(cat images/default/bazelversion)" = "$USE_BAZEL_VERSION"
+        label=//pkg/sentry/vfs:vfs_test
+        echo "$label" > "$TCP_EVIDENCE/targets.txt"
         raw="$TCP_EVIDENCE/raw.jsonl"
         code=0
-        bash test/rbe/qualify.sh --arch=amd64 "${args[@]}" \
+        bash test/rbe/qualify.sh --arch=amd64 "--test-target=$label" \
           "--bazel-option=--build_event_json_file=$raw" --bazel-option=--build_event_json_file_path_conversion=false \
-          "--bazel-option=--test_env=GTEST_FILTER=$filter" \
           --bazel-option=--test_sharding_strategy=disabled --bazel-option=--cache_test_results=no \
           --bazel-option=--remote_download_outputs=toplevel '--bazel-option=--remote_download_regex=.*[/]test[.](log|xml)$' test || code=$?
         echo "$code" > "$TCP_EVIDENCE/runner_exit"
@@ -189,6 +163,6 @@ jobs:
       if: ${{ always() && steps.scan.outcome == 'success' }}
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: fifo-record-lock-review
+        name: vfs-watch-owner
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
