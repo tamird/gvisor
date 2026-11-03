@@ -678,6 +678,8 @@ type Task struct {
 
 	// robustList is a pointer to the head of the tasks's robust futex
 	// list.
+	//
+	// +checklocks:mu
 	robustList hostarch.Addr
 
 	// startTime is the real time at which the task started. It is set when
