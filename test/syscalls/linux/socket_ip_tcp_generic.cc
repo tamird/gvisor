@@ -1575,14 +1575,21 @@ TEST_P(TCPSocketPairTest, WaitTillTimeoutWithCorkOption) {
                          &kTCPMaxSeg, sizeof(kTCPMaxSeg)),
               SyscallSucceedsWithValue(0));
 
-  // Use buffer size less than MSS.
-  char buffer[512] = {};
-  EXPECT_THAT(RetryEINTR(send)(sockets->first_fd(), buffer, sizeof(buffer), 0),
-              SyscallSucceedsWithValue(sizeof(buffer)));
+  // Keep TCP_CORK enabled. Each short write needs its own timeout.
+  for (int i = 0; i < 2; ++i) {
+    SCOPED_TRACE(i);
+    char byte = 'a' + i;
+    ASSERT_THAT(RetryEINTR(send)(sockets->first_fd(), &byte, 1, 0),
+                SyscallSucceedsWithValue(1));
 
-  char buf[512] = {};
-  EXPECT_THAT(RetryEINTR(recv)(sockets->second_fd(), buf, sizeof(buf), 0),
-              SyscallSucceedsWithValue(sizeof(buf)));
+    struct pollfd pfd = {sockets->second_fd(), POLLIN, 0};
+    ASSERT_THAT(RetryEINTR(poll)(&pfd, 1, kPositiveTimeoutMs),
+                SyscallSucceedsWithValue(1));
+    char got;
+    ASSERT_THAT(RetryEINTR(recv)(sockets->second_fd(), &got, 1, MSG_DONTWAIT),
+                SyscallSucceedsWithValue(1));
+    EXPECT_EQ(got, byte);
+  }
 }
 
 }  // namespace testing
