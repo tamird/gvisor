@@ -376,6 +376,8 @@ steps:
     <<: *source_test
     label: ":golang: Nogo tests"
     command: make nogo-tests
+    env:
+      DOCKER_BUILD: "false"
     agents:
       queue: "default"
   - <<: *common
