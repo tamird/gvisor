@@ -128,17 +128,25 @@ def execute(arm, cmd, env):
     return row
 
 
-def producer(arm, env, target):
+def producer(arm, env, target, owners):
     args = json.loads((TMP / f'{arm}-build.json').read_text())['args']
     assert args[-1] in ('//pkg/...', '//runsc/...'), args
     args = args[:-1]
     if args[-1] == '--':
         args.pop()
-    graph = json.loads(call([env['REAL_BAZEL'], '--host_jvm_args=-Xmx4g', 'aquery', *args, '--output=jsonproto', '--noinclude_artifacts', target], env))
+    graph = json.loads(call([env['REAL_BAZEL'], '--host_jvm_args=-Xmx4g', 'aquery', *args, '--output=jsonproto', '--noinclude_artifacts', '--noinclude_commandline', target], env))
     labels = {t['id']: t['label'].removeprefix('@@') for t in graph['targets']}
-    actions = sorted((labels[a['targetId']], a['mnemonic'], a['actionKey']) for a in graph['actions'] if a['mnemonic'] in ('GoLink', 'GoCompilePkg'))
-    assert actions and all(row[0] == target for row in actions), actions
-    return actions
+    configurations = {c['id']: c['checksum'] for c in graph['configuration']}
+    # A label can have several configured instances on this Bazel server.
+    # Use the configuration selected by this build's target-completed event.
+    selected, = {cfg for label, aspect, _, _, cfg in owners if label == target and not aspect}
+    actions = sorted((labels[a['targetId']], configurations[a['configurationId']], a['mnemonic'], a['actionKey'])
+                     for a in graph['actions'] if a['mnemonic'] in ('GoLink', 'GoCompilePkg'))
+    assert actions and all(label == target and len(key) == 64 for label, _, _, key in actions)
+    matched = [action for action in actions if action[1] == selected]
+    expected = ['GoCompilePkg', 'GoLink'] if target == '//runsc:runsc' else ['GoCompilePkg']
+    assert [action[2] for action in matched] == expected, (target, selected, actions)
+    return matched, [action for action in actions if action[1] != selected]
 
 
 def compile_pair(key, old, new, env, row):
@@ -157,7 +165,8 @@ def compile_pair(key, old, new, env, row):
                 assert pairs and all(len(pair) == 2 and not pair[0].startswith('/') for pair in pairs)
                 current['cquery'].update(enumerated_outputs=len(pairs), generated_outputs=sum(pair[0].startswith('bazel-out/') for pair in pairs), output_sha256=sha256(raw).hexdigest(), materialized_outputs_claimed=False)
             target = '//pkg/abi/linux:linux' if key.endswith('pkg') else '//runsc:runsc'
-            current['selected_producer_actions'] = producer(arm, env, target)
+            current['selected_producer_actions'], current['other_configurations'] = producer(
+                arm, env, target, current['configured'])
         except Exception as exc:
             failures.append(arm)
             row.setdefault(arm, {})['error'] = f'{type(exc).__name__}: {exc}'[:1000]
@@ -167,6 +176,7 @@ def compile_pair(key, old, new, env, row):
     assert sorted(a.values()) == sorted(b.values()), key
     row['configuration_correspondence'] = {old_id: [new_id for new_id, members in b.items() if members == owners] for old_id, owners in a.items()}
     assert all(len(matches) == 1 for matches in row['configuration_correspondence'].values()), row
+    assert left['configured'] == right['configured'], key
     assert left['selected_producer_actions'] == right['selected_producer_actions'], key
 
 
@@ -277,8 +287,6 @@ def main(result):
     Thread(target=server.serve_forever, daemon=True).start()
     env = os.environ | {'REAL_BAZEL': real, 'PATH': str(bindir) + ':' + os.environ['PATH'], 'DOCKER_BUILD': 'false', 'DOCKER_HOST': 'unix:///absent-buildkite-docker', 'BAZEL_REMOTE_CACHE': f'--remote_cache=http://127.0.0.1:{server.server_port}', 'BAZEL_OPTIONS': shlex.quote(META) + ' --noremote_upload_local_results'}
     result['host'] = {'architecture': platform.machine(), 'kernel': platform.release(), 'cpu_count': os.cpu_count(), 'bazel': call([real, '--version']).strip(), 'gcc': call(['gcc', '--version']).splitlines()[0], 'arm_gcc': call(['aarch64-linux-gnu-gcc', '--version']).splitlines()[0]}
-    phase('retained_archives', previous, result)
-    phase('staged_checker', lambda row: staged(env, row), result)
     for architecture in ('AMD64', 'ARM64'):
         label = f':world_map: Build runsc and pkg ({architecture})'
         old = pipeline(OLD_PKG, '.buildkite/pipeline.yaml', label)
@@ -303,6 +311,8 @@ def main(result):
     result['execution_finished'] = now()
     server.shutdown()
     assert git('status', '--porcelain', '--untracked-files=no') == ''
+    expected = {'amd64-pkg', 'amd64-runsc', 'arm64-pkg', 'arm64-runsc', 'invalid_build_option'}
+    assert result['phases'].keys() == expected
     result['status'] = 'PASS' if all(row['status'] == 'PASS' for row in result['phases'].values()) else 'FAIL'
 
 
