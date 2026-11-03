@@ -1,0 +1,45 @@
+name: Qualify the native website release job
+on:
+  push:
+    branches: [qualification/website-deploy-native]
+permissions:
+  contents: read
+jobs:
+  deploy:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 50
+    steps:
+      - run: echo '{"status":"INCOMPLETE","phase":"setup"}' > "$RUNNER_TEMP/website-release.json"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 3
+      - name: Run the selected Release job with a loopback publication target
+        run: |
+          set -eu
+          cp test/rbe/website-jekyll/check_deploy.py "$RUNNER_TEMP/check-deploy.py"
+          git switch --quiet --detach HEAD^
+          # Run the production Bazel bootstrap with the original and amended job environments.
+          old="$(git show HEAD^:.buildkite/release.yaml | sed -n '/label: ":ship: Website Deploy"/,/queue: "release"/p')"
+          [[ "$old" != *DOCKER_BUILD* ]]
+          sed -n '/^install_bazelisk() {/,/^fi$/p' .buildkite/hooks/pre-command > "$RUNNER_TEMP/bootstrap"
+          unset DOCKER_BUILD BUILDKITE_BAZEL_DIRECTORY
+          source "$RUNNER_TEMP/bootstrap"
+          test -z "${BUILDKITE_BAZEL_DIRECTORY:-}"
+          DOCKER_BUILD="$(sed -n '/label: ":ship: Website Deploy"/,/queue: "release"/p' .buildkite/release.yaml | sed -n 's/^      DOCKER_BUILD: "\(false\)"$/\1/p')"
+          export DOCKER_BUILD
+          test "$DOCKER_BUILD" = false
+          source "$RUNNER_TEMP/bootstrap"
+          digest='sha256:46faa9a1ae6813194b53921a370f2f4f8c5e1aae228a89bceafef5847a6a3278'
+          if docker pull "mirror.gcr.io/library/registry@$digest"; then image="mirror.gcr.io/library/registry@$digest"; else image="registry@$digest"; docker pull "$image"; fi
+          REGISTRY_CONTAINER="$(docker run -d --rm -p 127.0.0.1::5000 "$image")"
+          export REGISTRY_CONTAINER
+          trap 'docker stop "$REGISTRY_CONTAINER" >/dev/null' EXIT
+          python3 "$RUNNER_TEMP/check-deploy.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: website-release
+          path: ${{ runner.temp }}/website-release.json
+          if-no-files-found: error
