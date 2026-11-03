@@ -1,0 +1,37 @@
+name: Qualify the website with its declared compiler
+on:
+  push:
+    branches: [qualification/website-declared-compiler]
+permissions:
+  contents: read
+jobs:
+  site:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
+    env:
+      DOCKER_BUILD: 'false'
+    steps:
+      - name: Initialize the public verdict
+        run: echo '{"status":"INCOMPLETE","phase":"setup"}' > "$RUNNER_TEMP/website-toolchain.json"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Use the native Buildkite Bazelisk and build the website
+        run: |
+          cp test/rbe/website-jekyll/check_toolchain.py "$RUNNER_TEMP/check-site.py"
+          git switch --quiet --detach HEAD^
+          # Exercise the same installer and PATH selection without running the
+          # unrelated Docker, apt and Buildkite daemon setup on this worker.
+          sed -n '/^install_bazelisk() {/,/^fi$/p' .buildkite/hooks/pre-command > "$RUNNER_TEMP/site-bazelisk.sh"
+          source "$RUNNER_TEMP/site-bazelisk.sh"
+          test -n "$BUILDKITE_BAZEL_DIRECTORY"
+          test "$(command -v bazel)" = "$BUILDKITE_BAZEL_DIRECTORY/bazel"
+          python3 "$RUNNER_TEMP/check-site.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: website-declared-compiler
+          path: ${{ runner.temp }}/website-toolchain.json
+          if-no-files-found: error
