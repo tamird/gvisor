@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T02:30:53.096288+00:00",
+    "updatedAt": "2026-11-03T02:48:42.204681+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -24368,14 +24368,14 @@
       "url": "https://github.com/google/gvisor/pull/16336",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T02:30:53.096288+00:00",
+      "updatedAt": "2026-11-03T02:48:42.204681+00:00",
       "summary": "The reviewed amendment is published as #16336 at 0b06fce45. It documents the Linux timestamp-cookie analogue and the peer-controlled SACK bit, makes the protocol-lock contract explicit, and extends negotiation checks for missing peer SACK and timestamps. The verified remote result includes both TestSynCookieSACK executions. All six review threads are answered and resolved; no contributor decision remains. Current checks and maintainer review come from the provider snapshot.\n\nEarlier source-specific record:\n\nThe approved SACK timestamp-negotiation change is published at exact 8757001b. Initial readback is open/non-draft and mergeable, with public checks starting. The retained Linux/netstack controls and full e2e timestamp-owner validation remain tied to their source identities; no current-head maintainer approval or import is inferred. The window-scaling child still awaits its distinct contributor decision.",
       "followup": {
         "owner": "TCP PacketImpact",
         "sourceHead": "0b06fce451fe2bff770f870740690f3e1772b859",
-        "observedAt": "2026-11-03T02:30:53.096288+00:00",
-        "disposition": "Merged product; packet regression remains fork-only",
-        "nextAction": "Reuse the asserted backlog boundary from #16841 for a separate check that the accepted socket sends the negotiated SACK block. The merged e2e tests cover the product; the original Linux and netstack wire validation remains available.",
+        "observedAt": "2026-11-03T02:48:42.204681+00:00",
+        "disposition": "Merged product; separate wire regression qualified for #16841",
+        "nextAction": "The #16841 amendment card owns the accepted-socket check; no action on this merged PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/8757001bc5c1d0a2fc14b87e622b82a1aa4cae37",
           "https://app.buildbuddy.io/invocation/098f63cd-c41f-498e-9d44-abf1fd9967de",
@@ -24403,6 +24403,10 @@
         {
           "label": "Existing packet-test backlog boundary",
           "url": "https://github.com/google/gvisor/pull/16841"
+        },
+        {
+          "label": "Qualified wire regression on the open cookie test",
+          "url": "https://tamird.github.io/gvisor/#pr%3A16841"
         }
       ]
     },
@@ -38257,12 +38261,12 @@
       "number": 16745,
       "group": "runtime",
       "ref": "proc-mount-sack-owned-pidns",
-      "head": "db2a858e8c6cceba5324a10a457327d5f23fa888",
+      "head": "96a1736286d070d1d0c711086ed309f66fd10b57",
       "title": "Test that proc mounts share TCP SACK and the local port range",
       "url": "https://github.com/google/gvisor/pull/16745",
-      "status": "open",
-      "summary": "Write ip_local_port_range through a fresh proc mount and read it through the original one. Linux and current gVisor saw 40000–50001; with the historical per-inode cache gVisor still read 16000–65535. Reusing the SACK syscall fixture removes a 37-line Go test and fake stack. All 56 proc package cases passed without skips.",
-      "updatedAt": "2026-10-30T16:28:53.467944+00:00",
+      "status": "Open; reviewer feedback applied",
+      "summary": "Write ip_local_port_range through a fresh proc mount and read it through the original one. Linux and current gVisor saw 40000–50001; with the historical per-inode cache gVisor still read 16000–65535. Reusing the SACK syscall fixture removes a 37-line Go test and fake stack. All 56 proc package cases passed without skips. The original PR now adds the logging header and its BUILD dependency. Its native qualification passed.",
+      "updatedAt": "2026-11-03T02:48:42.204681+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -38309,8 +38313,32 @@
         {
           "label": "Remove the duplicate two-instance Go test; keep the rejected setter case",
           "url": "https://github.com/tamird/gvisor/compare/17b24a03b...422d2cb0c"
+        },
+        {
+          "label": "Published source",
+          "url": "https://github.com/google/gvisor/pull/16745/commits/96a1736286d070d1d0c711086ed309f66fd10b57"
+        },
+        {
+          "label": "Original source and validation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41566292663/artifacts/13199186530"
+        },
+        {
+          "label": "Replies on the original PR",
+          "url": "https://github.com/google/gvisor/pull/16745#pullrequestreview-5746547933"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "Source PR owner",
+        "sourceHead": "96a1736286d070d1d0c711086ed309f66fd10b57",
+        "observedAt": "2026-11-03T02:48:42.204681+00:00",
+        "disposition": "Open; reviewer feedback applied",
+        "nextAction": "Follow the original PR. No contributor decision is pending.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16745/commits/96a1736286d070d1d0c711086ed309f66fd10b57",
+          "https://github.com/tamird/gvisor/actions/runs/41566292663/artifacts/13199186530",
+          "https://github.com/google/gvisor/pull/16745#pullrequestreview-5746547933"
+        ]
+      }
     },
     {
       "id": "pr:16746",
@@ -41521,7 +41549,7 @@
       "url": "https://github.com/google/gvisor/pull/16841",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
+      "updatedAt": "2026-11-03T02:48:42.204681+00:00",
       "summary": "The old packet test accepted six unexpected Linux SYN-ACK retransmissions. The revised test identified the third SYN on Linux and the second on gVisor as the first cookie. Its 12 retransmission checks ran on each, and both suites passed all 31 cases.",
       "evidence": [
         {
@@ -41539,6 +41567,18 @@
         {
           "label": "31 gVisor cases",
           "url": "https://app.buildbuddy.io/invocation/280e92d7-d76a-43bd-8dde-ceafabe59359"
+        },
+        {
+          "label": "Lucas’s request on the merged source",
+          "url": "https://github.com/google/gvisor/pull/16336#pullrequestreview-5689637781"
+        },
+        {
+          "label": "Both complete 32-case wire suites",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41567717145/artifacts/13199644174"
+        },
+        {
+          "label": "Earlier run stopped before tests: both workers lacked IPv6 interface controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41566386132/artifacts/13199117130"
         }
       ],
       "settledReviews": [
@@ -41549,7 +41589,28 @@
           "at": "2026-11-02T20:32:31Z"
         }
       ],
-      "number": 16841
+      "number": 16841,
+      "refinement": {
+        "before": {
+          "base": "aa767e4c43d011121271551fe24da501a56f729d",
+          "head": "e62e48e9a8ba9523323071f011c1390b7873852f"
+        },
+        "after": {
+          "base": "aa767e4c43d011121271551fe24da501a56f729d",
+          "head": "f8ca88ad9ab4d8fb4b11db0e7376e2f49b213f58"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "f8ca88ad9ab4d8fb4b11db0e7376e2f49b213f58",
+        "baseHead": "e62e48e9a8ba9523323071f011c1390b7873852f",
+        "title": "Check SACK on sockets accepted with SYN cookies",
+        "url": "https://github.com/tamird/gvisor/commit/f8ca88ad9",
+        "requestedAt": "2026-11-03T02:48:42.204681+00:00",
+        "summary": "Add the permanently observed, accepted-socket SACK check requested on merged #16336 to the open cookie test PR? A cookie SYN-ACK can advertise SACK even if the accepted child has lost the option. Both Linux and gVisor ACKed the hole and SACKed just the out-of-order byte. Each passed all 32 named cases, including the existing 31 controls.",
+        "body": "The cookie SYN-ACK can advertise SACK even if the accepted socket loses\nthe option. After negotiating timestamps and SACK, send one byte beyond\na hole and check the cumulative ACK and exact SACK block.\n\nUse the same full-listener check as the handshake flag tests: without\ntimestamps, the first SYN-ACK permits SACK and a cookie SYN-ACK does\nnot. This works even when Linux and gVisor save different numbers of\nhalf-open connections."
+      }
     },
     {
       "id": "pr:16852",
@@ -42458,14 +42519,14 @@
       "id": "branch:tcp-consumed-socket-error",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "proposal/tcp-terminal-poll-after-socket-error",
-      "head": "c1bf3ee9af94ee5e6380252e28dfe6e8fb7f7d46",
+      "ref": "proposal/tcp-terminal-poll-after-refusal",
+      "head": "a795edf944519fde538e137b44875d852fe66e96",
       "title": "Clear TCP poll errors after the socket error is consumed",
-      "url": "https://github.com/tamird/gvisor/commit/c1bf3ee9a",
+      "url": "https://github.com/tamird/gvisor/commit/a795edf94",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-02T21:30:10.580114+00:00",
-      "summary": "After a refused nonblocking connect, Linux reports a hangup after the program reads ECONNREFUSED from SO_ERROR. gVisor still reported POLLERR and claimed urgent data was available. The fix checks the pending socket error and extended error queue. Poll can do that without acquiring the endpoint mutex. The established-connection ICMP soft-error case from #6666 is tracked separately.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-03T02:48:42.204681+00:00",
+      "summary": "After a refused nonblocking connect, Linux and the fix stop reporting POLLERR once SO_ERROR is consumed. Stock still reported POLLERR for both IPv4 and IPv6. The change preserves the merged single-refusal behavior: all five socket cases passed on native Linux and the fix. The analyzer checked both architecture configurations.",
       "evidence": [
         {
           "label": "Four socket cases, 11 TCP suites, race checks and both analyzer targets",
@@ -42474,30 +42535,44 @@
         {
           "label": "Earlier ARM64 package results on the preceding lock implementation",
           "url": "https://github.com/tamird/gvisor/actions/runs/41287543512/artifacts/13077550587"
+        },
+        {
+          "label": "Native, stock, fixed and original analyzer launches",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41565161188/artifacts/13198748523"
+        },
+        {
+          "label": "Original log: both analysis filters passed; the redundant cross-built wrapper could not execute on AMD64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41568125694/artifacts/13199364993"
+        },
+        {
+          "label": "Original pre-test worker resource failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41564453087/artifacts/13198617926"
+        },
+        {
+          "label": "Merged single-refusal change",
+          "url": "https://github.com/google/gvisor/pull/16817"
         }
       ],
       "refinement": {
         "before": {
-          "head": "31698e51e22cdf8ba72fbc117edda9bbec5a8d3c",
-          "base": "9940ecdc2dd3651121dd468889cc094f0ec84247"
+          "base": "9940ecdc2dd3651121dd468889cc094f0ec84247",
+          "head": "c1bf3ee9af94ee5e6380252e28dfe6e8fb7f7d46"
         },
         "after": {
-          "head": "c1bf3ee9af94ee5e6380252e28dfe6e8fb7f7d46",
-          "base": "9940ecdc2dd3651121dd468889cc094f0ec84247"
+          "base": "5b317311427fabfc62ffeca7d76b1622ff83f7b4",
+          "head": "a795edf944519fde538e137b44875d852fe66e96"
         }
       },
-      "followup": {
-        "owner": "TCP sockets",
-        "sourceHead": "c1bf3ee9af94ee5e6380252e28dfe6e8fb7f7d46",
-        "disposition": "Compose the poll fix with the merged single-refusal behavior",
-        "observedAt": "2026-11-02T21:30:10.580114+00:00",
-        "nextAction": "The lock change #16667 landed. The prior review request no longer applies: #16817 removes the handshakeFailed write to lastError that this branch still uses, and the two patches conflict. Preserve the single refusal, rerun the blocking/nonblocking SO_ERROR and terminal poll controls on the composed source, then present the revised change.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/16667",
-          "https://github.com/google/gvisor/pull/16817",
-          "https://github.com/tamird/gvisor/commit/c1bf3ee9a",
-          "https://github.com/tamird/gvisor/actions/runs/41289554960/artifacts/13077348405"
-        ]
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "a795edf944519fde538e137b44875d852fe66e96",
+        "baseHead": "5b317311427fabfc62ffeca7d76b1622ff83f7b4",
+        "title": "Clear TCP poll errors after the socket error is consumed",
+        "url": "https://github.com/tamird/gvisor/commit/a795edf94",
+        "requestedAt": "2026-11-03T02:48:42.204681+00:00",
+        "summary": "Open the terminal poll correction composed with the merged single-refusal behavior?",
+        "body": "After a refused nonblocking connect, applications can read ECONNREFUSED\nfrom SO_ERROR and poll again. Linux reports a hangup. gVisor also\nreported POLLERR because a terminal TCP socket claimed every requested\nevent, including urgent data.\n\nReport the normal terminal events and check the pending hard error or\nextended error queue before reporting POLLERR, as tcp_poll does [1].\nProtect both socket errors with their own mutex so poll can inspect the\nhard error without acquiring the endpoint lock.\n\nUpdates #6666\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp.c#L608-L611"
       }
     },
     {
@@ -45075,13 +45150,13 @@
       "repo": "google/gvisor",
       "number": 16812,
       "ref": "review/inotify-instance-locks",
-      "head": "b79fa85f739884e7544fb47a248640073f22d8c2",
+      "head": "637158efcbee8244f5df020b57bb0296c0c15fe6",
       "title": "Check the instance lock when changing inotify watch indexes",
       "url": "https://github.com/google/gvisor/pull/16812",
       "group": "analysis",
-      "status": "open",
-      "updatedAt": "2026-11-02T16:31:46.423209+00:00",
-      "summary": "Adding or removing an inotify watch changes two indexes. Passing the instance lets checklocks identify its mutex. An unlocked removal failed the VFS owner on AMD64 and ARM64; three existing syscall controls passed. The change preserves the existing lock order and makes no Linux behavior change.",
+      "status": "Open; reviewer feedback applied",
+      "updatedAt": "2026-11-03T02:48:42.204681+00:00",
+      "summary": "Adding or removing an inotify watch changes two indexes. Passing the instance lets checklocks identify its mutex. An unlocked removal failed the VFS owner on AMD64 and ARM64; three existing syscall controls passed. The change preserves the existing lock order and makes no Linux behavior change. The original PR removes the unused inotify Watch.OwnerID accessor as requested. All 40 VFS case records passed with no skips.",
       "evidence": [
         {
           "label": "VFS analyzer: product passes",
@@ -45094,6 +45169,22 @@
         {
           "label": "gVisor: duplicate watch, mask-add and one-shot syscall cases",
           "url": "https://app.buildbuddy.io/invocation/805676b8-a808-4bbb-9bde-e458da8a30c1"
+        },
+        {
+          "label": "Published source",
+          "url": "https://github.com/google/gvisor/pull/16812/commits/637158efcbee8244f5df020b57bb0296c0c15fe6"
+        },
+        {
+          "label": "Qualified VFS package",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41566873882/artifacts/13199093632"
+        },
+        {
+          "label": "Reply on the original PR",
+          "url": "https://github.com/google/gvisor/pull/16812#issuecomment-6594039363"
+        },
+        {
+          "label": "Prior maintainer approval",
+          "url": "https://github.com/google/gvisor/pull/16812#pullrequestreview-5744328851"
         }
       ],
       "settledReviews": [
@@ -45103,7 +45194,29 @@
           "outcome": "approved",
           "at": "2026-11-02T16:31:46.423209+00:00"
         }
-      ]
+      ],
+      "reapproval": {
+        "kind": "content-amendment",
+        "method": "reviewed-source-diff",
+        "head": "637158efcbee8244f5df020b57bb0296c0c15fe6",
+        "approvedHead": "b79fa85f739884e7544fb47a248640073f22d8c2",
+        "diffSha256": "0fe6a05140507663be50b5a42eb21b46e2afe6f7ead1eaea8ee1c0db5c551e75",
+        "summary": "The original PR removes the unused inotify Watch.OwnerID accessor as requested. All 40 VFS case records passed with no skips.",
+        "evidence": "https://github.com/google/gvisor/compare/b79fa85f739884e7544fb47a248640073f22d8c2..637158efcbee8244f5df020b57bb0296c0c15fe6"
+      },
+      "followup": {
+        "owner": "Source PR owner",
+        "sourceHead": "637158efcbee8244f5df020b57bb0296c0c15fe6",
+        "observedAt": "2026-11-03T02:48:42.204681+00:00",
+        "disposition": "Open; reviewer feedback applied",
+        "nextAction": "Follow the original PR. Apply the established reapproval check to the changed head.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16812/commits/637158efcbee8244f5df020b57bb0296c0c15fe6",
+          "https://github.com/tamird/gvisor/actions/runs/41566873882/artifacts/13199093632",
+          "https://github.com/google/gvisor/pull/16812#issuecomment-6594039363",
+          "https://github.com/google/gvisor/pull/16812#pullrequestreview-5744328851"
+        ]
+      }
     },
     {
       "id": "pr:16813",
