@@ -1,0 +1,99 @@
+name: Build and serve the declared website through its normal entry points
+on:
+  push:
+    branches: [qualification/website-rules-img-release]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  sdk:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 105
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Verify the qualification source
+        run: |
+          test "$(git rev-parse HEAD^)" = b70c5617a4ee7abe4f899fc1ad913864052f9710
+          test -z "$(git diff --name-only HEAD^ HEAD -- . ':!.github/workflows/website-jekyll-sdk.yml' ':!test/rbe/website-jekyll/check_product.py')"
+      - name: Restore the independently generated stock artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 41109579937 --repo tamird/gvisor -n original-site-reference -D "$RUNNER_TEMP/stock-site"
+      - name: Provide the GNU C and C++ compilers used by the existing syscall-reference binary
+        run: |
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          sudo apt-get -qq update
+          sudo apt-get -qq install --no-install-recommends build-essential crossbuild-essential-arm64
+      - name: Build the full website and its preview with normal GNU Bazel execution
+        id: site
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 test/rbe/website-jekyll/check_product.py
+      - name: Load and serve the declared image using the normal Make entry
+        id: serve
+        if: ${{ !cancelled() }}
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+          QUALIFY_PHASE: serve
+        run: |
+          if [[ -s "$RUNNER_TEMP/declared-website-sdk/verified-layer.tgz" ]]; then
+            python3 test/rbe/website-jekyll/check_product.py
+          else
+            echo 'No successfully built source image was available to load.'
+            exit 1
+          fi
+      - name: Generate and verify the license catalog
+        if: ${{ !cancelled() }}
+        id: audit
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}
+          QUALIFY_PHASE: audit
+        run: python3 test/rbe/website-jekyll/check_product.py
+      - name: Reconcile every expected command and output
+        if: always()
+        shell: python
+        env:
+          SITE: ${{ steps.site.outcome }}
+          SERVE: ${{ steps.serve.outcome }}
+          AUDIT: ${{ steps.audit.outcome }}
+        run: |
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import json, os, subprocess
+          p=Path(os.environ["RUNNER_TEMP"])/"declared-website-sdk"
+          p.mkdir(exist_ok=True)
+          expected="normal-build rootfs preview normal-make start port stop fetch verify".split()
+          executed=[n for n in expected if (p/f"start-{n}.json").is_file()]
+          completed={n:json.loads((p/f"exit-{n}.json").read_text()) for n in executed if (p/f"exit-{n}.json").is_file()}
+          failed=[n for n,r in completed.items() if r["returncode"]]
+          missing=[n for n in expected if n not in completed]
+          outputs=["normal-build","layer-logo","preview","served","audit"]
+          unavailable=[n for n in outputs if not (p/f"{n}.json").is_file()]
+          steps={n:os.environ[n.upper()] for n in ("site","serve","audit")}
+          skipped=[name for name in ("site","serve","audit") if steps[name]=="skipped"]
+          errors=[name for name in ("site","serve","audit") if steps[name]!="success"]
+          finish=datetime.now(timezone.utc).isoformat()
+          targets=["//website:site_image","//website:files","//website:site","website-build","//tools/licensecheck/main:licensecheck"]
+          attempted=sorted({target for n in executed for target in json.loads((p/f"start-{n}.json").read_text())["targets"]})
+          passed=not(failed or missing or unavailable or skipped or errors or set(targets)-set(attempted))
+          audit={"source":subprocess.check_output(["git","rev-parse","HEAD^"],text=True).strip(),
+              "expectedTargets":targets,"executedTargets":attempted,"expected":expected,"executed":executed,"completed":completed,"failed":failed,"missing":missing,
+              "skipped":skipped,"missingOutputs":unavailable,"phaseErrors":errors,"verdict":"PASS" if passed else "FAIL",
+              "executionFinishedAt":max((datetime.fromtimestamp(f.stat().st_mtime,timezone.utc).isoformat() for f in p.glob("*.json")),default=finish),
+              "verifiedAt":finish}
+          (p/"verdict.json").write_text(json.dumps(audit,indent=2)+"\n")
+          if not passed: raise SystemExit(1)
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: declared-website-sdk
+          path: |
+            ${{ runner.temp }}/declared-website-sdk/*.json
+            ${{ runner.temp }}/declared-website-sdk/catalog.yaml
+          if-no-files-found: error
