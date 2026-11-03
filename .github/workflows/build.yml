@@ -16,7 +16,7 @@ jobs:
           set -euo pipefail
           phase=source
           trap 'printf "%s %s\n" "$phase" "$?" > "$RUNNER_TEMP/dind-setup"' EXIT
-          test "$(git rev-parse HEAD^)" = 4dca58593676fd8526a46c60d2a64a0b6211bd90
+          test "$(git rev-parse HEAD^)" = f68411b153ea83d6906f4232f1bd48859642ade7
           p=test/rtnetlink/linux
           phase=july-package
           base=https://storage.googleapis.com/gvisor/releases/pool/20260727.0/binary-amd64

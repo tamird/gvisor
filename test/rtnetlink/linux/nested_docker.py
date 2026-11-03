@@ -38,11 +38,26 @@ def main():
         qa.mkdir()
         for name in ("dind_socket.py", "dind_guest.sh", "python-image.tar"):
             shutil.copyfile(FILES / name, qa / name)
+        # Use the same Linux iproute2 as the prior receipt. Alpine BusyBox uses
+        # SIOCSIFMTU (ENOTTY on this Sentry); iproute2 uses IFLA_MTU instead.
+        iptool = WORK / "iproute2"
+        iptool.mkdir()
+        ip = Path(shutil.which("ip", path=ENV["PATH"])).resolve(strict=True)
+        assert ip.is_relative_to("/usr") and ip.is_file()
+        libs = [Path(w) for w in text("ldd",ip).split() if w.startswith("/")]
+        assert libs and any(p.name == "ld-linux-x86-64.so.2" for p in libs)
+        for lib in [ip, *libs]:
+            resolved = lib.resolve(strict=True)
+            assert resolved.is_relative_to("/usr") and resolved.is_file()
+            shutil.copy2(resolved, iptool/lib.name)
+        record["iproute2"] = dict(version=text("dpkg-query","-W","-f=${Version}","iproute2"),
+                                  sha256=digest(iptool/"ip"))
         mounts = [dict(destination=d, type=t, source=t, options=opts) for d,t,opts in (
             ("/proc","proc",[]), ("/sys","sysfs",[]), ("/sys/fs/cgroup","cgroup",["rw"]),
             ("/tmp","tmpfs",["mode=1777"]), ("/run","tmpfs",["mode=0755"]),
             ("/dev/shm","tmpfs",["mode=1777"]), ("/var/lib/docker","tmpfs",["size=2g","mode=0711"]))]
         mounts.append(dict(destination="/qa",type="bind",source=str(qa),options=["bind","ro","nosuid","nodev","noexec"]))
+        mounts.append(dict(destination="/iproute2",type="bind",source=str(iptool),options=["bind","ro","nosuid","nodev"]))
         spec = dict(ociVersion="1.0.2",root=dict(path="rootfs",readonly=False),hostname="dind",
                     process=dict(args=["/bin/sh","/qa/dind_guest.sh"],cwd="/",user=dict(uid=0,gid=0),
                                  env=["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin","HOME=/root"],

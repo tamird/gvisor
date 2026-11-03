@@ -3,6 +3,7 @@ set -eu
 # The Sentry has --network=none. This empty in-sandbox bridge supplies the default
 # route sought by start-dockerd.sh and has no uplink.
 step() { echo "DIND_STEP $1"; }
+ip() { /iproute2/ld-linux-x86-64.so.2 --library-path /iproute2 /iproute2/ip "$@"; }
 step isolated-route
 ip link add name eth0 type bridge
 ip link set dev eth0 mtu 1460 up
