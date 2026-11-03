@@ -579,7 +579,7 @@ def recover_original() -> None:
     from cas_inputs import blob, fetch, rpc
 
     original = "aaed41e45c71fb16ddb3ec4b6f630e15a60df757"
-    assert git("rev-parse", "HEAD^").decode().strip() == original
+    assert git("rev-parse", "HEAD^^").decode().strip() == original
     assert set(git("diff", "--name-only", original, SOURCE).decode().splitlines()) == {
         PACKAGE + "/check.py", ".github/workflows/native-unit-amd64-cgroup-v1.yml"}
     raw = (TMP / "original.zip").read_bytes()
@@ -603,7 +603,7 @@ def recover_original() -> None:
         # never arbitrary messages, commands, environment or checkpoint text.
         patterns = {
             "permission_denied": r"(?i)permission denied|operation not permitted|EACCES",
-            "missing_file": r"(?i)no such file or directory|file not found|not found in .?PATH",
+            "missing_file": r"(?i)no such file or directory|file not found|command not found|not found in .?PATH",
             "exec_format": r"(?i)exec format error|cannot execute binary file",
             "kvm_unavailable": r"(?i)could not access KVM|failed to initialize kvm|KVM.*not supported",
             "cpu_topology": r"(?i)CPU topology|thread siblings|requires.*SMT|doesn't support requested feature",
@@ -650,33 +650,52 @@ def recover_original() -> None:
 
     def invocation(row, source):
         identifier = source['invocation']
-        result = rpc('GetInvocation', {'lookup': {'invocationId': identifier}})
-        inv, = result['invocation']
-        assert inv['invocationId'] == identifier
-        entries = [e['buildEvent'] for e in inv['event']]
         owners = {a['owner']['label'] for a in source['suite_executed']}
-        summaries = [e for e in entries if 'testSummary' in e and e['id']['testSummary']['label'] in owners]
-        row.update(invocation=identifier, metadata_sha256=sha(json.dumps(result, sort_keys=True).encode()),
-                   summary_count=len(summaries), expected_owners=len(owners), last_test_finish=None)
-        if owners and len(summaries) == len(owners) and {e['id']['testSummary']['label'] for e in summaries} == owners:
+        summaries = {}
+        row.update(invocation=identifier, metadata_sha256=[], expected_owners=len(owners), last_test_finish=None,
+                   owner_configurations=sorted({(a['owner']['label'], a['owner']['configuration']) for a in source['suite_executed']}))
+        for status in sorted({{'PASSED': 5, 'FAILED': 6}[a['status']] for a in source['suite_executed']}):
+            token = ''
+            for _ in range(32):
+                result = rpc('GetTarget', {'invocationId': identifier, 'status': status, 'pageToken': token})
+                row['metadata_sha256'].append(sha(json.dumps(result, sort_keys=True).encode()))
+                group, = result['targetGroups']
+                assert group['status'] in (status, str(status), {5: 'PASSED', 6: 'FAILED'}[status])
+                for target in group.get('targets', []):
+                    label = target['metadata']['label']
+                    assert label in owners and label not in summaries
+                    summaries[label] = target.get('testSummary', {})
+                token = group.get('nextPageToken', '')
+                if not token:
+                    break
+            if token:
+                row['partial'] = True
+        row['summary_count'] = len(summaries)
+        if owners and set(summaries) == owners and not row.get('partial'):
             values = []
-            for entry in summaries:
-                summary = entry['testSummary']
+            row['missing_summary_times'] = []
+            for label, summary in summaries.items():
                 value = summary.get('lastStopTime')
                 if value is None:
+                    if 'lastStopTimeMillis' not in summary:
+                        row['missing_summary_times'].append(label)
+                        continue
                     value = datetime.fromtimestamp(int(summary['lastStopTimeMillis']) / 1000, timezone.utc).isoformat()
                 if isinstance(value, dict):
                     value = datetime.fromtimestamp(int(value['seconds']) + int(value.get('nanos', 0)) / 10**9, timezone.utc).isoformat()
                 stamp = datetime.fromisoformat(value.replace('Z', '+00:00'))
                 assert stamp.tzinfo is not None
                 values.append(stamp)
-            row['last_test_finish'] = max(values).isoformat()
+            if values:
+                row['last_observed_test_finish'] = max(values).isoformat()
+                if not row['missing_summary_times']:
+                    row['last_test_finish'] = row['last_observed_test_finish']
         row['timing_complete'] = row['last_test_finish'] is not None
         row['coverage_complete'] = row['timing_complete']
 
     def console(row, source):
         identifier = source['invocation']
-        token = ''; chunks = []
+        token = '0'; chunks = []
         for _ in range(8):
             value = json.loads(fetch('api/v1/GetLog', {'selector': {'invocation_id': identifier}, 'page_token': token}))
             chunks.append(value.get('log', {}).get('contents', ''))
@@ -695,16 +714,21 @@ def recover_original() -> None:
         actions = response.get('action', [])
         assert len(actions) <= 8
         selected = row['files'] = []
-        row.update(invocation=identifier, owner=label, action_count=len(actions))
+        row.update(invocation=identifier, owner=label, action_count=len(actions), skipped_build_rows=0)
+        attempts = [a for a in source['suite_executed'] if a['owner']['label'] == label]
+        matched_attempts = 0
         for action in actions:
             assert action.get('target_label', action.get('targetLabel')) == label
             identity = action['id']
             assert identity.get('invocation_id', identity.get('invocationId')) == identifier
-            attempts = [a for a in source['suite_executed'] if a['owner']['label'] == label]
             if attempts:
+                if not any(int(action.get(key, 0)) for key in ('run', 'shard', 'attempt')):
+                    row['skipped_build_rows'] += 1
+                    continue
                 attempt, = attempts
                 assert identity.get('configuration_id', identity.get('configurationId')) == attempt['owner']['configuration']
                 assert all(int(action.get(key, 0)) == attempt[key] == 1 for key in ('run', 'shard', 'attempt'))
+                matched_attempts += 1
             for item in action.get('file', []):
                 if item['name'] not in {'test.log', 'test.xml', 'stderr', 'stdout'}:
                     continue
@@ -719,18 +743,46 @@ def recover_original() -> None:
                 selected.append(dict(name=item['name'], action_id={key: value for key, value in identity.items()
                     if key in {'invocation_id', 'invocationId', 'target_id', 'targetId',
                                'configuration_id', 'configurationId', 'action_id', 'actionId'}}, **project(data)))
+        if attempts:
+            assert matched_attempts == 1
         assert selected, 'no original files available for selected owner'
         row['coverage_complete'] = True
+
+    def nogo_target(row):
+        identifier = bulk['invocation']
+        label = '//runsc/cgroup:cgroup_test_nogo'
+        failure, = [f for f in bulk['suite_failures'] if f.get('label') == label]
+        result = rpc('GetTarget', {'invocationId': identifier, 'targetLabel': label, 'status': 3})
+        group, = result['targetGroups']
+        target, = group['targets']
+        assert not group.get('nextPageToken') and target['metadata']['label'] == label
+        row.update(invocation=identifier, owner=label, configuration=failure['configuration'],
+                   metadata_sha256=sha(json.dumps(result, sort_keys=True).encode()), actions=[])
+        for event in target.get('actionEvents', []):
+            identity = event['id']['actionCompleted']
+            assert identity['label'] == label and identity['configuration']['id'] == failure['configuration']
+            action = event['action']
+            item = dict(exit_code=action.get('exitCode'), files=[])
+            row['actions'].append(item)
+            for name in ('stderr', 'stdout'):
+                if name not in action:
+                    continue
+                match = re.fullmatch(r'bytestream://remote\.buildbuddy\.io/(?:[^?#]*/)?blobs/([a-f0-9]{64})/(\d+)', action[name].get('uri', ''))
+                assert match and 0 <= int(match[2]) < 2 * 1024**2
+                data = blob({'hash': match[1], 'sizeBytes': match[2]}, identifier) if int(match[2]) else b''
+                assert len(data) == int(match[2]) and sha(data) == match[1]
+                item['files'].append(dict(name=name, **project(data)))
+        row['coverage_complete'] = bool(row['actions']) and all(a['files'] for a in row['actions'])
 
     phase('projection_controls', controls)
     for name, source in (('bulk', bulk), ('coretag', guest)):
         phase(name + '_timing', lambda row, s=source: invocation(row, s))
         phase(name + '_console', lambda row, s=source: console(row, s))
     for name, source, label in (
-            ('nogo_files', bulk, '//runsc/cgroup:cgroup_test_nogo'),
             ('license_files', bulk, '//tools/licensecheck:licensecheck_test'),
             ('coretag_files', guest, '//' + WORKER + ':guest_test')):
         phase(name, lambda row, s=source, l=label: files(row, s, l))
+    phase('nogo_target', nogo_target)
     record['status'] = 'ORIGINAL_FAIL_DIAGNOSTICS_RECORDED'
     record['lookups_succeeded'] = all(p['status'] == 'PASS' for p in record['phases'].values())
     record['diagnostics_complete'] = record['lookups_succeeded'] and all(

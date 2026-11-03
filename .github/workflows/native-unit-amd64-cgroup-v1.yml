@@ -17,7 +17,7 @@ jobs:
           echo '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/unit-v1-public/verdict.json"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 2
+          fetch-depth: 3
           persist-credentials: false
       - name: Recover the original failed aggregate
         env:
