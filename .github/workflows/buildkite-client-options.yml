@@ -1,0 +1,89 @@
+name: Native Buildkite lifecycle benchmark entry points
+on:
+  push:
+    branches: [qualification/buildkite-benchmarks-native-make]
+permissions:
+  contents: read
+jobs:
+  lifecycle:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 85
+    env:
+      PRODUCT: b3d4e84a076711ed21508b9022303f77abe370d1
+      MASTER: 471d6dff5229b99208bf6fec985601067f1f9d69
+      REPORTER: 3731120a4fb306ee37126760bae54a4da38e18f8
+      DOCKER_BUILD: "false"
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 2, persist-credentials: false}
+    - name: Select the published Buildkite source and prior native reporter
+      run: |
+        set -euo pipefail
+        d="$RUNNER_TEMP/lifecycle"
+        mkdir "$d"
+        printf '{"status":"INCOMPLETE","stage":"source"}\n' > "$d/result.json"
+        test "$(git rev-parse HEAD^)" = "$PRODUCT"
+        cp .github/qualification/buildkite-lifecycle.py "$d/"
+        git fetch -q --no-tags --depth=1 origin "$REPORTER" "$MASTER"
+        for name in qualification_report unit_matrix; do git show "$REPORTER:test/rbe/$name.py" > "$d/$name.py"; done
+        git show "$REPORTER:test/benchmarks/lifecycle.json" > "$d/manifest.json"
+        git switch --quiet --detach "$PRODUCT"
+        test "$(git diff --name-only "$MASTER" HEAD | sort)" = "$(printf '%s\n' .buildkite/first-pass.yaml .buildkite/hooks/post-command .buildkite/hooks/pre-command .buildkite/pipeline.yaml tools/bazel.mk)"
+        git diff --quiet "$MASTER" HEAD -- Makefile tools/parsers tools/bigquery pkg runsc shim sandboxexec
+        test -z "$(git status --porcelain --untracked-files=no)"
+    - name: Verify original 94 measured rows and Buildkite parser counts
+      run: python3 -B "$RUNNER_TEMP/lifecycle/buildkite-lifecycle.py" originals
+    - name: Provision Bazelisk using the native Buildkite hook
+      run: |
+        set -euo pipefail
+        grep -q '^install_bazelisk() {' .buildkite/hooks/pre-command
+        source <(sed -n '/^install_bazelisk() {/,$p' .buildkite/hooks/pre-command)
+        printf '%s\n' "$BUILDKITE_BAZEL_DIRECTORY" >> "$GITHUB_PATH"
+        printf 'BUILDKITE_BAZEL_DIRECTORY=%s\n' "$BUILDKITE_BAZEL_DIRECTORY" >> "$GITHUB_ENV"
+        "$BUILDKITE_BAZEL_DIRECTORY/bazel" --version
+        command -v python3
+        python3 -c 'import yaml'
+        sudo -n test -r /dev/kvm
+        sudo -n test -w /dev/kvm
+        test -r /proc/self/mountinfo
+    - name: Run four real Make commands and replay original parser inputs
+      id: native
+      run: timeout --signal=INT --kill-after=30s 70m python3 -B "$RUNNER_TEMP/lifecycle/buildkite-lifecycle.py" native
+    - name: Exercise the Buildkite successful-shutdown path
+      id: cleanup
+      if: always() && env.BUILDKITE_BAZEL_DIRECTORY != ''
+      run: |
+        set -euo pipefail
+        test "$(command -v bazel)" = "$BUILDKITE_BAZEL_DIRECTORY/bazel"
+        export BUILDKITE_COMMAND_EXIT_STATUS=0
+        grep -Fq 'if [[ -n "${BUILDKITE_BAZEL_DIRECTORY:-}"' .buildkite/hooks/post-command
+        source <(sed -n '/^if \[\[ -n "${BUILDKITE_BAZEL_DIRECTORY:-}"/,$p' .buildkite/hooks/post-command)
+        test ! -e "$BUILDKITE_BAZEL_DIRECTORY"
+    - name: Check the bounded evidence for publication
+      if: always()
+      id: scan
+      shell: python
+      env:
+        CLEANUP: ${{ steps.cleanup.outcome }}
+      run: |
+        from datetime import datetime, timezone
+        import json, os, re
+        from pathlib import Path
+        path = Path(os.environ['RUNNER_TEMP']) / 'lifecycle/result.json'
+        doc = json.loads(path.read_text())
+        doc['cleanup'] = os.environ['CLEANUP']
+        if doc['status'] == 'PASS' and doc['cleanup'] != 'success':
+            doc['status'] = 'FAIL'
+        doc['finished_utc'] = datetime.now(timezone.utc).isoformat()
+        raw = (json.dumps(doc, indent=2)+'\n').encode()
+        assert len(raw) < 160000
+        assert json.loads(raw)['status'] in ('PASS', 'FAIL', 'INCOMPLETE')
+        assert not re.search(rb'(?i)gh[pousr]_|github_pat_|x-buildbuddy-api-key|authorization[:=]|BEGIN [A-Z]+ PRIVATE KEY', raw)
+        path.write_bytes(raw)
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.scan.outcome == 'success'
+      with:
+        name: native-lifecycle-benchmarks
+        path: ${{ runner.temp }}/lifecycle/result.json
+        if-no-files-found: error
