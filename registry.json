@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T23:01:26.342761+00:00",
+    "updatedAt": "2026-11-03T23:08:02.164545+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35745,7 +35745,7 @@
       "title": "Flush corked TCP data when a FIN is queued",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T23:01:26.342761+00:00",
+      "updatedAt": "2026-11-03T23:08:02.164545+00:00",
       "reviewDecision": null,
       "url": "https://github.com/google/gvisor/pull/16671",
       "summary": "Close and SHUT_WR flush a corked short write before FIN instead of waiting 200 ms.",
@@ -35820,6 +35820,15 @@
           "head": "c336db121f61914f6f2a761dc005bf4293f67e09",
           "outcome": "approved",
           "at": "2026-10-30T15:06:49.038409+00:00"
+        },
+        {
+          "kind": "amendment",
+          "head": "8c163432bc4c380e6df07501350db84de8d0bd3a",
+          "baseHead": "c336db121f61914f6f2a761dc005bf4293f67e09",
+          "outcome": "approved",
+          "at": "2026-11-03T23:08:02.164545+00:00",
+          "url": "https://github.com/tamird/gvisor/commit/8c163432b",
+          "body": "Conditionally approved for publication and reply after the Linux, published-sender, amended-sender and manual-clock checks pass. This approval covers 8c163432b only. Restore-specific qualification remains agent work before preparing a replacement amendment."
         }
       ]
     },
@@ -43197,8 +43206,8 @@
       "title": "Clear TCP poll errors after the socket error is consumed",
       "url": "https://github.com/tamird/gvisor/commit/a795edf94",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-03T02:48:42.204681+00:00",
+      "status": "Delivered as #16933",
+      "updatedAt": "2026-11-03T23:08:02.164545+00:00",
       "summary": "After a refused nonblocking connect, Linux and the fix stop reporting POLLERR once SO_ERROR is consumed. Stock still reported POLLERR for both IPv4 and IPv6. The change preserves the merged single-refusal behavior: all five socket cases passed on native Linux and the fix. The analyzer checked both architecture configurations.",
       "evidence": [
         {
@@ -43224,6 +43233,10 @@
         {
           "label": "Merged single-refusal change",
           "url": "https://github.com/google/gvisor/pull/16817"
+        },
+        {
+          "label": "Approved exact source published as #16933",
+          "url": "https://github.com/google/gvisor/pull/16933"
         }
       ],
       "refinement": {
@@ -43236,17 +43249,16 @@
           "head": "a795edf944519fde538e137b44875d852fe66e96"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "a795edf944519fde538e137b44875d852fe66e96",
-        "baseHead": "5b317311427fabfc62ffeca7d76b1622ff83f7b4",
-        "title": "Clear TCP poll errors after the socket error is consumed",
-        "url": "https://github.com/tamird/gvisor/commit/a795edf94",
-        "requestedAt": "2026-11-03T02:48:42.204681+00:00",
-        "summary": "Open the terminal poll correction composed with the merged single-refusal behavior?",
-        "body": "After a refused nonblocking connect, applications can read ECONNREFUSED\nfrom SO_ERROR and poll again. Linux reports a hangup. gVisor also\nreported POLLERR because a terminal TCP socket claimed every requested\nevent, including urgent data.\n\nReport the normal terminal events and check the pending hard error or\nextended error queue before reporting POLLERR, as tcp_poll does [1].\nProtect both socket errors with their own mutex so poll can inspect the\nhard error without acquiring the endpoint lock.\n\nUpdates #6666\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp.c#L608-L611"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "a795edf944519fde538e137b44875d852fe66e96",
+          "outcome": "approved",
+          "at": "2026-11-03T23:08:02.164545+00:00",
+          "url": "https://github.com/tamird/gvisor/commit/a795edf94"
+        }
+      ],
+      "inactive": true
     },
     {
       "id": "branch:tcp-established-icmp-errors",
@@ -48434,6 +48446,80 @@
         }
       ],
       "number": 16928
+    },
+    {
+      "id": "pr:16933",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "proposal/tcp-terminal-poll-after-refusal",
+      "head": "a795edf944519fde538e137b44875d852fe66e96",
+      "title": "Clear TCP poll errors after the socket error is consumed",
+      "url": "https://github.com/google/gvisor/pull/16933",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-03T23:08:02.164545+00:00",
+      "summary": "After a refused nonblocking connect, Linux and the fix stop reporting POLLERR once SO_ERROR is consumed. Stock still reported POLLERR for both IPv4 and IPv6. The change preserves the merged single-refusal behavior: all five socket cases passed on native Linux and the fix. The analyzer checked both architecture configurations.",
+      "evidence": [
+        {
+          "label": "Four socket cases, 11 TCP suites, race checks and both analyzer targets",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41289554960/artifacts/13077348405"
+        },
+        {
+          "label": "Earlier ARM64 package results on the preceding lock implementation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41287543512/artifacts/13077550587"
+        },
+        {
+          "label": "Native, stock, fixed and original analyzer launches",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41565161188/artifacts/13198748523"
+        },
+        {
+          "label": "Original log: both analysis filters passed; the redundant cross-built wrapper could not execute on AMD64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41568125694/artifacts/13199364993"
+        },
+        {
+          "label": "Original pre-test worker resource failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41564453087/artifacts/13198617926"
+        },
+        {
+          "label": "Merged single-refusal change",
+          "url": "https://github.com/google/gvisor/pull/16817"
+        },
+        {
+          "label": "Approved exact source published as #16933",
+          "url": "https://github.com/google/gvisor/pull/16933"
+        }
+      ],
+      "refinement": {
+        "before": {
+          "base": "9940ecdc2dd3651121dd468889cc094f0ec84247",
+          "head": "c1bf3ee9af94ee5e6380252e28dfe6e8fb7f7d46"
+        },
+        "after": {
+          "base": "5b317311427fabfc62ffeca7d76b1622ff83f7b4",
+          "head": "a795edf944519fde538e137b44875d852fe66e96"
+        }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "a795edf944519fde538e137b44875d852fe66e96",
+          "outcome": "approved",
+          "at": "2026-11-03T23:08:02.164545+00:00",
+          "url": "https://github.com/tamird/gvisor/commit/a795edf94"
+        }
+      ],
+      "number": 16933,
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "a795edf944519fde538e137b44875d852fe66e96",
+        "providerHead": "a795edf944519fde538e137b44875d852fe66e96",
+        "observedAt": "2026-11-03T23:08:02.164545+00:00",
+        "disposition": "Approved source published; public checks and review remain",
+        "nextAction": "Follow #16933 checks and maintainer feedback without requesting another decision for this unchanged source.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16933"
+        ]
+      }
     }
   ],
   "edges": [
@@ -51792,14 +51878,14 @@
     },
     {
       "from": "pr:16667",
-      "to": "branch:tcp-consumed-socket-error",
+      "to": "pr:16933",
       "type": "depends_on",
       "reason": "Uses the checked lock ownership for hardError and lastError from #16667.",
       "evidence": "https://github.com/tamird/gvisor/commit/31698e51e"
     },
     {
       "type": "depends_on",
-      "from": "branch:tcp-consumed-socket-error",
+      "from": "pr:16933",
       "to": "branch:tcp-established-icmp-errors",
       "reason": "Uses the corrected handling of pending socket errors when TCP reports readiness.",
       "evidence": "https://github.com/tamird/gvisor/commit/c5c3a66ce"
