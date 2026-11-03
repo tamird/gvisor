@@ -1,0 +1,59 @@
+name: Confirm reviewed PR publications on the work map
+on:
+  push:
+    branches: [qualification/work-map-nov3-publications]
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind collector to the curated records and published base
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = bcdaca91e10b839ab30f71ca42dd3d9e4f8ff1fb
+          test "$(git rev-parse HEAD^^)" = fe9856fc8294fd975c8d1f8e248b2138a7617c5b
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          test "$(git diff --name-only HEAD^^ HEAD^)" = registry.json
+          mkdir results
+          cp registry.json results/
+      - name: Collect current GitHub status using the maintained collector
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 update-status.py
+          cp github-status.json results/
+      - name: Check the data used to render the cards
+        run: |
+          node metadata-preflight.mjs . > results/preflight.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          nodes = {n["id"]: n for n in json.loads(Path("registry.json").read_text())["nodes"]}
+          snap = json.loads(Path("github-status.json").read_text())
+          for number, head in [(16588,"1dbbcd676"), (16618,"da05e74d9"), (16098,"cd5e5628a"), (16841,"f8ca88ad9"), (16801,"514a1ce4f"), (16803,"c58f36d4e")]:
+              key = f"pr:{number}"
+              n = nodes[key]
+              assert n["head"].startswith(head) and snap["prs"][key]["head"] == n["head"], key
+              assert any(r["kind"] == "amendment" and r["outcome"] == "approved" and r["head"] == n["head"] for r in n["settledReviews"]), key
+              assert n.get("contributorReview", {}).get("kind") != "amendment", key
+          for key, count in [("pr:16588",3),("pr:16618",2),("issue:16878",1)]:
+              r = nodes[key]["contributorReview"]
+              assert r["kind"] == "reply" and r["status"] == "pending" and r["body"].count("Posted by Codex on behalf of @tamird.") == count, key
+          n = nodes["pr:16710"]
+          assert "contributorReview" not in n and n["head"] == snap["prs"]["pr:16710"]["head"] and n["head"].startswith("cd92efa5f")
+          assert any(s["head"].startswith("50890dbbe") and s["outcome"] == "changes-requested" for s in n["settledReviews"])
+          assert n["followup"]["actionableComment"]["url"] in [n["followup"]["evidence"][0]]
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: published-work-map-pair
+          path: results/
+          if-no-files-found: error
