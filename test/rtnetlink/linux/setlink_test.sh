@@ -17,10 +17,22 @@
 set -xeo pipefail
 source "$(dirname "$0")/rtnetlink_test.sh"
 
-# Create a new veth pair in the current namespace and change the MTU.
+# Setting one veth's MTU leaves its peer's MTU unchanged.
+mtu() {
+  ip -o link show dev "$1" | sed -n 's/.* mtu \([0-9][0-9]*\) .*/\1/p'
+}
 ip link add name test_veth01 type veth peer name test_veth02
+initial_peer_mtu="$(mtu test_veth02)"
 ip link set test_veth01 mtu 3000
-ip link show test_veth01 | grep -E "mtu (2986|3000)"
+first_mtu="$(mtu test_veth01)"
+peer_after_first="$(mtu test_veth02)"
+ip link set test_veth02 mtu 1460
+first_after_peer="$(mtu test_veth01)"
+peer_mtu="$(mtu test_veth02)"
+[[ "$first_mtu" == 2986 || "$first_mtu" == 3000 ]]
+[[ "$peer_mtu" == 1446 || "$peer_mtu" == 1460 ]]
+[[ "$peer_after_first" == "$initial_peer_mtu" ]]
+[[ "$first_after_peer" == "$first_mtu" ]]
 ip link del name test_veth01
 # Check that test_veth02 has been destroyed.
 if ! wait_for ! ip link show test_veth02; then
