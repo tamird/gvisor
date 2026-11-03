@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T19:07:32.229433+00:00",
+    "updatedAt": "2026-11-03T19:22:46.745532+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -43233,7 +43233,7 @@
       "url": "https://github.com/google/gvisor/pull/16857",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
+      "updatedAt": "2026-11-03T19:22:46.745532+00:00",
       "summary": "After a timeout, RACK can retransmit the oldest segment even though only a later hole was marked lost. The change avoided one duplicate when both earlier repairs were delayed. Dropping them instead let stock advance 144 ms sooner. With no further ACK, Linux and the change repaired later data first, then recovered the head on their next timeout. All three sent new data afterward.",
       "evidence": [
         {
@@ -43267,6 +43267,10 @@
         {
           "label": "Linux and both gVisor senders recover a genuinely lost head without another ACK",
           "url": "https://github.com/tamird/gvisor/actions/runs/41381334602/artifacts/13113985160"
+        },
+        {
+          "label": "Automated review from @rexren-gif on retransmissions beyond the timeout repair",
+          "url": "https://github.com/google/gvisor/pull/16857#discussion_r4459290531"
         }
       ],
       "settledReviews": [
@@ -43277,7 +43281,18 @@
           "at": "2026-11-02T20:41:28Z"
         }
       ],
-      "number": 16857
+      "number": 16857,
+      "followup": {
+        "owner": "TCP workstream",
+        "sourceHead": "2d59045da5c29f2f6bc62dacd9457591367c9498",
+        "observedAt": "2026-11-03T19:11:54Z",
+        "disposition": "Investigate the automated review on which segments are retransmitted after timeout",
+        "nextAction": "Trace the RACK timer after the send cursor rewinds. Check whether it skips a later segment marked lost or sends another copy of the tail probe, including packets the existing test might skip.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16857#discussion_r4459290531",
+          "https://github.com/tamird/gvisor/actions/runs/41308452751/artifacts/13084512434"
+        ]
+      }
     },
     {
       "id": "pr:16846",
@@ -45759,7 +45774,7 @@
       "url": "https://github.com/google/gvisor/pull/16809",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
+      "updatedAt": "2026-11-03T19:22:46.745532+00:00",
       "summary": "Expose the socket’s lifetime retransmission count to applications diagnosing packet loss.",
       "evidence": [
         {
@@ -45773,6 +45788,10 @@
         {
           "label": "SYN-cookie accounting when the link refuses the SYN-ACK, and final TCP analyzer",
           "url": "https://github.com/tamird/gvisor/actions/runs/41361977602/artifacts/13106036446"
+        },
+        {
+          "label": "Copybara export of the approved bc9ffcc0d head",
+          "url": "https://github.com/google/gvisor/pull/16915"
         }
       ],
       "settledReviews": [
@@ -45782,7 +45801,19 @@
           "outcome": "approved",
           "at": "2026-11-02T16:25:23.256481+00:00"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "TCP workstream",
+        "sourceHead": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689",
+        "observedAt": "2026-11-03T19:22:46.745532+00:00",
+        "disposition": "Approved head matches open Copybara export #16915",
+        "nextAction": "Follow the export; the change to return a failed cookie send is under separate review.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16809",
+          "https://github.com/google/gvisor/pull/16915",
+          "https://github.com/tamird/gvisor/commit/bbdb2f8a2"
+        ]
+      }
     },
     {
       "id": "pr:bazel-contrib/rules_go:4772",
@@ -47683,6 +47714,48 @@
         "summary": "Post the completed close-order comparison and ask which GKE syscall first saw the reset?",
         "body": "Could you share which call first raises `ConnectionResetError` on GKE (`create_connection`, `sendall`, or `recv`), along with the errno? The client currently counts all three under the same exception. If you have a trace for that connection, its client port and the SYN/RST sequence would let us match it to the failing call.\n\nOn public runsc 20260727.0 I connected two network namespaces across a bridge inside the sandbox. All 2,000 exchanges finished in each close order. The first reset I captured in each run followed both FINs, after the exchange succeeded. [Run and packet observations](https://github.com/tamird/gvisor/actions/runs/41696247019/artifacts/13262175985).\n\nPosted by Codex on behalf of @tamird.",
         "url": "https://github.com/google/gvisor/issues/16908"
+      }
+    },
+    {
+      "id": "branch:tcp-info-cookie-send-error",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/tcp-info-cookie-send-error",
+      "head": "bbdb2f8a254b4f51e5bf1fa96eaf4872be190d63",
+      "title": "Return SYN-cookie send errors to the TCP listener",
+      "url": "https://github.com/tamird/gvisor/commit/bbdb2f8a2",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-03T19:22:46.745532+00:00",
+      "summary": "When the link rejects a SYN-cookie reply, #16809 counts the generated cookie but returns success to the listener. This follow-up keeps that count and returns the send error so the listener can log it.",
+      "evidence": [
+        {
+          "label": "One insertion and two deletions on the published bc9ffcc0d head",
+          "url": "https://github.com/tamird/gvisor/compare/bc9ffcc0d...bbdb2f8a2"
+        },
+        {
+          "label": "Original link-refusal fixture and cookie counters",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41361977602/artifacts/13106036446"
+        },
+        {
+          "label": "Refused SYN-ACK: one generated cookie, one send failure and exactly one listener warning; AMD64 and ARM64 TCP analysis passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41702202296/artifacts/13264951278"
+        },
+        {
+          "label": "Exact parent awaiting import",
+          "url": "https://github.com/google/gvisor/pull/16915"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "bbdb2f8a254b4f51e5bf1fa96eaf4872be190d63",
+        "baseHead": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689",
+        "url": "https://github.com/tamird/gvisor/compare/bc9ffcc0d...bbdb2f8a2",
+        "title": "Return SYN-cookie send errors to the TCP listener",
+        "requestedAt": "2026-11-03T19:22:46.745532+00:00",
+        "summary": "Open this follow-up after #16915 lands and the author’s open-PR limit allows?",
+        "body": "The listener logs a rate-limited warning when it cannot send a packet.\nReturning success after a failed SYN-cookie reply hides that diagnostic.\nCount the generated cookie before sending the SYN-ACK so a failed write\nboth contributes to the cookie count and reaches the listener."
       }
     }
   ],
@@ -51308,6 +51381,16 @@
       "to": "pr:16905",
       "reason": "The approved fork source is the head of the published keepalive PR.",
       "evidence": "https://github.com/google/gvisor/pull/16905"
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:16809",
+      "to": "branch:tcp-info-cookie-send-error",
+      "reason": "The follow-up returns the SYN-cookie send error on top of the approved accounting change, currently exported in #16915.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16915",
+        "https://github.com/tamird/gvisor/commit/bbdb2f8a2"
+      ]
     }
   ],
   "investigations": [
