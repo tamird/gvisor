@@ -101,6 +101,15 @@ jobs:
             ${{ runner.temp }}/plugin-evidence/result.json
             ${{ runner.temp }}/plugin-evidence/image.json
           if-no-files-found: error
-      - name: Require the native-helper verdict
+      - name: Require a zero-layer worker and a verified archive
         if: always()
-        run: jq -e '.status == "PASS" and .build_exit == 0 and .source_clean and .selection.verified and .proof.byte_identical_archive and .proof.verified and .launch.verified and .source_matches' "$RUNNER_TEMP/plugin-evidence/result.json"
+        run: |
+          cd "$RUNNER_TEMP/plugin-evidence"
+          jq -e --slurpfile image image.json '
+            .status == "PASS" and .build_exit == 0 and .source_clean and .source_matches
+            and .executed_targets == [.expected_target]
+            and .selection.verified and .proof.byte_identical_archive and .proof.verified and .launch.verified
+            and $image[0].selected == "no_layers"
+            and ($image[0].probes.no_layers | .verified and .inventory.layers == [] and .inventory.files == {})
+            and .image == $image[0].probes.no_layers.inventory.image
+          ' result.json

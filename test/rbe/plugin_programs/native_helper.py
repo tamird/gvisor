@@ -62,7 +62,7 @@ def check_selection(r, bazel, flags, platform, control):
 
 
 def build(r):
-    from scratch_root import choose, ZERO
+    from scratch_root import ZERO, checkpoint, run_probe
     r.update(source=git("rev-parse", "HEAD"), product=PRODUCT, base=BASE, target=TARGET, started=now(),
              original={"invocation": "9ac98d9c-7337-4b54-a37d-5276517a46ab", "run": 41426238851, "artifact": 13132865042},
              arm="native-empty-worker")
@@ -84,19 +84,23 @@ def build(r):
              "--noremote_local_fallback", "--spawn_strategy=remote", "--remote_download_outputs=toplevel",
              "--jobs=400", "--color=no", "--curses=no", "--registry=" + (Path(os.environ["GITHUB_WORKSPACE"]) / "registry").as_uri(),
              "--registry=https://bcr.bazel.build"]
-    image = choose(bazel, flags)
-    # Direct only this foreign action onto the zero-layer root. Common compiler
-    # dependencies keep their original execution and cache keys. The one-file
-    # fallback is the unmodified product on the registered musl platform.
-    current = original
-    if image == ZERO:
-        key = b"_EXEC_PROPERTIES = {\n"
-        assert original.count(key) == 1
-        current = original.replace(key, key + ('    "container-image": "' + image + '",\n').encode())
-        Path(src).write_bytes(current)
-    r["image"] = image
+    probe = {"probes": {}, "selected": None}
+    r.update(phase="worker-probe", image=ZERO, expected_target=TARGET, executed_targets=[])
+    save(r)
+    if not run_probe(probe, "no_layers", bazel, flags):
+        row = probe["probes"]["no_layers"]
+        r["worker_mount_failed"] = row.get("bound_instantiation_failure", False)
+        save(r)
+        return
+    probe["selected"] = "no_layers"
+    checkpoint(probe)
+    # Set the image on the two DPDK rules. Other actions retain their cache keys.
+    key = b"_EXEC_PROPERTIES = {\n"
+    assert original.count(key) == 1
+    current = original.replace(key, key + ('    "container-image": "' + ZERO + '",\n').encode())
+    Path(src).write_bytes(current)
     r["consumer"] = {"product_sha256": sha256(original).hexdigest(), "qualified_sha256": sha256(current).hexdigest(),
-                     "only_delta": "container-image" if current != original else None}
+                     "only_delta": "container-image"}
     save(r)
     check_selection(r, bazel, flags, platform, False)
     query = TARGET + ' + filter("(:(pmd_config|pmdinfogen|make_built)$|^@@?make[+]?//:make$)", deps(' + TARGET + '))'
@@ -126,6 +130,7 @@ def build(r):
     save(r)
     with log.open("w") as dst:
         rc = subprocess.run(["timeout", "--kill-after=20s", "16m", *bazel, "build", *flags,
+                             "--modify_execution_info=CcMakeMakeRule=+no-remote-cache",
                              "--execution_log_compact_file=" + str(compact), "--build_event_json_file=" + str(bep),
                              "--build_event_json_file_path_conversion=false", TARGET], stdout=dst, stderr=subprocess.STDOUT).returncode
     r.update(build_exit=rc, status="FAIL" if rc else "INCOMPLETE", build_finished=now())
@@ -145,14 +150,14 @@ def build(r):
         return
     owner, = [a for a in r["actions"] if a["targetLabel"] == OWNER and a["mnemonic"] == "CcMakeMakeRule"]
     props = {p["name"]: p["value"] for p in owner["platform"]}
-    assert props == {"Arch": "amd64", "OSFamily": "linux", "container-image": image,
+    assert props == {"Arch": "amd64", "OSFamily": "linux", "container-image": ZERO,
                      "recycle-runner": "false", "workload-isolation-type": "oci"}
     assert owner["runner"] == "remote" and not owner["cacheHit"]
     assert owner["args"][0].endswith("plugin_programs/bin/bash")
     assert not owner["exitCode"] and not owner["status"]
     assert not any(a["targetLabel"] in (CONFIG, HELPER) for a in r["actions"])
     assert r["target_completed"] and r["source_matches"]
-    r.update(build_verified=True, phase="original-outputs")
+    r.update(build_verified=True, executed_targets=[TARGET], phase="original-outputs")
     save(r)
 
 
@@ -292,7 +297,15 @@ if __name__ == "__main__":
                     failure(r, key, exc)
         passed = all((r.get("source_clean"), r.get("source_matches"), r.get("build_verified"), r.get("selection", {}).get("verified"),
                       r.get("proof", {}).get("verified"), r.get("launch", {}).get("verified")))
-        r.update(status="PASS" if passed else "FAIL" if r.get("build_exit") else "INCOMPLETE", verdict_time=now())
+        if passed:
+            status = "PASS"
+        elif r.get("worker_mount_failed"):
+            status = "WORKER_MOUNT_FAILED"
+        elif r.get("build_exit"):
+            status = "FAIL"
+        else:
+            status = "INCOMPLETE"
+        r.update(status=status, verdict_time=now())
         save(r)
         raise SystemExit(0 if passed else 1)
 

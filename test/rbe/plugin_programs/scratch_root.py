@@ -146,16 +146,3 @@ def run_probe(record, name, bazel, flags):
     row["verified"] = True
     checkpoint(record)
     return True
-
-
-def choose(bazel, flags):
-    record = {"probes": {}, "selected": None}
-    for name in IMAGES:
-        if run_probe(record, name, bazel, flags):
-            record["selected"] = name
-            checkpoint(record)
-            return IMAGES[name][0]
-        if name == "no_layers" and record["probes"][name].get("bound_instantiation_failure"):
-            continue
-        raise RuntimeError("Worker preflight incomplete; no alternate image is justified")
-    raise RuntimeError("No worker preflight passed")
