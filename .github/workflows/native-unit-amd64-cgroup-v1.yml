@@ -17,7 +17,7 @@ jobs:
           echo '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/unit-v1-public/verdict.json"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 2
+          fetch-depth: 3
           persist-credentials: false
       - name: Recover authoritative selection and the already completed v1 owner
         env:
@@ -25,6 +25,7 @@ jobs:
         run: |
           gh api repos/tamird/gvisor/actions/artifacts/13166333421/zip > "$RUNNER_TEMP/old-selection.zip"
           gh api repos/tamird/gvisor/actions/artifacts/13220747324/zip > "$RUNNER_TEMP/old-cgroup.zip"
+          gh api repos/tamird/gvisor/actions/artifacts/13225283923/zip > "$RUNNER_TEMP/old-preflight.zip"
       - name: Stage the existing verifier and native client
         run: |
           set -euo pipefail

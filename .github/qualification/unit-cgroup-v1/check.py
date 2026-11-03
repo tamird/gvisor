@@ -1,6 +1,7 @@
 """Complete the source-bound unit selection using the existing native v1 runners."""
 
 import ast
+import base64
 from collections import Counter
 from dataclasses import asdict
 from datetime import datetime, timezone
@@ -16,6 +17,7 @@ import sys
 import tempfile
 import traceback
 from urllib.parse import unquote, urlsplit
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 from xml.etree import ElementTree
 from zipfile import ZipFile
 
@@ -25,6 +27,7 @@ from credential_artifacts import prepare
 from stdlib_provenance import digest, fields, first, number
 
 PRODUCT = "96fadde722e14d482a62276b80237398f8b62fbf"
+ORIGINAL = "079301e2078f436c47e55cc6ef4815d0bcbc25c3"
 GUEST = "38745c527784376e0b5d915fe5ebd85e1d1385fd"
 SOURCE = os.environ["GITHUB_SHA"]
 TMP = Path(os.environ["RUNNER_TEMP"])
@@ -50,6 +53,71 @@ def now() -> str:
 
 def sha(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def diagnostics(data: bytes) -> list[dict]:
+    """Project repository failures without publishing raw lines or URL secrets."""
+    result = []
+    patterns = {"download": r"Error downloading", "timeout": r"timed out|TimeoutException",
+                "dns": r"UnknownHostException", "tls": r"SSLHandshakeException|PKIX",
+                "checksum": r"[Cc]hecksum.*(?:match|expected)", "package": r"no such package",
+                "http": r"(?i)(?:HTTP|status|response code)[^\n]{0,30}\b[45][0-9]{2}\b"}
+    for line in data.decode(errors="replace").splitlines():
+        if re.search(r"(?i)\b(?:authorization|x-buildbuddy-api-key)[\"']?\s*[:=]", line):
+            continue
+        classes = [name for name, pattern in patterns.items() if re.search(pattern, line)]
+        if not classes:
+            continue
+        urls = []
+        for value in re.findall(r"https?://[^\s\]\"']+", line):
+            try:
+                url = urlsplit(value)
+            except ValueError:
+                continue
+            basename = Path(url.path).name
+            if url.hostname and re.fullmatch(r"[A-Za-z0-9.-]{1,200}", url.hostname):
+                archive_name = re.fullmatch(r"[A-Za-z0-9._+-]{1,110}\.(?:tar(?:\.(?:gz|xz|bz2|zst))?|tgz|zip|whl|gz|xz|json|mod|sum|bazel)", basename)
+                urls.append(dict(host=url.hostname, filename=basename if archive_name else None))
+        result.append(dict(classes=classes, line_sha256=sha(line.encode()), urls=urls,
+                           repositories=re.findall(r"no such package ['\"](@@[A-Za-z0-9_+~.-]+)//", line),
+                           http_codes=re.findall(r"(?i)(?:HTTP|status|response code)[^\n]{0,30}\b([45][0-9]{2})\b", line)))
+        if len(result) == 8:
+            break
+    return result
+
+
+def original_diagnostic() -> None:
+    """Read one uniquely identified old analysis; availability is not a gate."""
+    row = record["original_analysis_lookup"] = dict(status="INCOMPLETE")
+    class NoRedirect(HTTPRedirectHandler):
+        def redirect_request(self, *args, **kwargs):
+            return None
+    opener = build_opener(NoRedirect())
+    def rpc(method, body):
+        request = Request("https://app.buildbuddy.io/rpc/BuildBuddyService/" + method,
+                          data=json.dumps(body).encode(), headers={"Content-Type": "application/json",
+                          "x-buildbuddy-api-key": os.environ["BUILDBUDDY_API_KEY"]})
+        with opener.open(request, timeout=30) as response:
+            data = response.read(4 * 1024**2 + 1)
+            assert len(data) <= 4 * 1024**2
+            return json.loads(data)
+    try:
+        query = dict(commit_sha=PRODUCT, command="test", updated_after="2026-11-03T11:13:40Z",
+                     updated_before="2026-11-03T11:17:33Z")
+        response = rpc("SearchInvocation", dict(query=query, count=2))
+        assert not response.get("nextPageToken")
+        invocation, = response["invocation"]
+        assert invocation["commitSha"] == PRODUCT and invocation["command"] == "test"
+        identifier = invocation["invocationId"]
+        assert re.fullmatch(r"[0-9a-f-]{36}", identifier)
+        response = rpc("GetEventLogChunk", dict(invocation_id=identifier, min_lines=1000))
+        data = base64.b64decode(response["buffer"], validate=True)
+        row.update(status="OBSERVED", invocation=identifier, log_sha256=sha(data), log_bytes=len(data),
+                   partial=bool(response.get("previousChunkId") or response.get("nextChunkId") or response.get("live")),
+                   diagnostics=diagnostics(data))
+    except Exception as error:
+        row.update(error_class=type(error).__name__, error_sha256=sha(str(error).encode()))
+    save()
 
 
 def native_disposition(kind: str, code: int) -> str:
@@ -91,6 +159,12 @@ def classification_controls(row: dict) -> None:
         actual = outcome({"control": dict(status=status, commands={"original": dict(kind=kind, native_exit=code)})})
         row["cases"].append(dict(name=name, actual=actual, expected=expected))
         assert actual == expected, "native failure classification changed"
+    observed = diagnostics(b"Error downloading https://user:private@github.com/org/repo/archive.tar.gz?token=private: Read timed out\nAuthorization: Bearer private\nno such package '@@module+//path?private'\n")
+    assert len(observed) == 2 and observed[0]["classes"] == ["download", "timeout"]
+    assert observed[0]["urls"] == [dict(host="github.com", filename="archive.tar.gz")]
+    assert observed[1]["repositories"] == ["@@module+"]
+    assert "private" not in json.dumps(observed) and "user" not in json.dumps(observed)
+    row["diagnostic_projection_control"] = "PASS"
 
 
 def git(*args: str) -> bytes:
@@ -132,16 +206,18 @@ def command(row: dict, name: str, args: list[str], minutes: int) -> int:
         proc = subprocess.run(["timeout", "--signal=INT", "--kill-after=30s", f"{minutes}m", *args],
                               stdout=stream, stderr=subprocess.STDOUT)
     row.update(native_exit=proc.returncode, execution_finished_at=now())
+    kind = "analysis" if "--nobuild" in args else next(arg for arg in args if arg in ("test", "build"))
+    native = row.setdefault("commands", {})[name] = dict(started_at=started_at, kind=kind,
+        native_exit=proc.returncode, execution_finished_at=row["execution_finished_at"],
+        native_disposition=native_disposition(kind, proc.returncode))
+    save()
     console = (TMP / (name + ".console")).read_bytes()
     markers = {"fetch": b"Error downloading", "permission": b"Permission denied", "disk": b"No space left on device",
                "memory": b"out of memory", "timeout": b"timed out", "test_failed": b"FAILED",
                "analysis": b"Analysis of target", "missing_package": b"no such package"}
     row.update(console_sha256=sha(console), console_bytes=len(console),
-               diagnostic_classes=[k for k, v in markers.items() if v in console])
-    row.setdefault("commands", {})[name] = dict(started_at=started_at, **{
-        key: row[key] for key in ("native_exit", "execution_finished_at", "console_sha256", "console_bytes", "diagnostic_classes")})
-    row["commands"][name]["kind"] = "analysis" if "--nobuild" in args else next(arg for arg in args if arg in ("test", "build"))
-    row["commands"][name]["native_disposition"] = native_disposition(row["commands"][name]["kind"], proc.returncode)
+               diagnostic_classes=[k for k, v in markers.items() if v in console], diagnostics=diagnostics(console))
+    native.update({key: row[key] for key in ("console_sha256", "console_bytes", "diagnostic_classes")})
     save()
     return proc.returncode
 
@@ -182,6 +258,27 @@ def originals(row: dict) -> None:
 def configured(path: Path, code: int) -> dict:
     all_tests = unit_matrix.configured_targets(str(path), tests=True, allow_test_no_build=True, expected_exit=code)
     return {label: target for label, target in all_tests.items() if unit_tags(target.tags)}
+
+
+def reuse_preflight(row: dict) -> None:
+    data = (TMP / "old-preflight.zip").read_bytes()
+    assert sha(data) == "dfccf150c539a0c8a235f22947e22bb453abbd5b5011a488d761863090507143"
+    with ZipFile(BytesIO(data)) as archive:
+        assert archive.namelist() == ["verdict.json"]
+        old = json.loads(archive.read("verdict.json"))
+    assert old["carrier"] == ORIGINAL and old["product"] == PRODUCT and old["status"] == "INCOMPLETE"
+    assert old["wrapper_sha256"] == record["wrapper_sha256"]
+    proof = old["phases"]["firecracker_preflight"]
+    assert proof["status"] == proof["suite_status"] == "PASS" and proof["native_exit"] == 0
+    assert proof["suite_case_counts"] == dict(passed=1, failed=0, skipped=0)
+    placement, = proof["placements"]
+    assert placement["verified"] and placement["platform"] == PROPS and not placement["cached"]
+    assert placement["runner"] == "remote" and placement["exit"] == 0 and not placement["status"]
+    mounted, = proof["mounted"]
+    assert mounted["mode"] == "false" and mounted["machine"] == "x86_64" and mounted["uid"] > 0
+    assert set(mounted["mounts"]) == CONTROLLERS | {"name=systemd"} and len(set(mounted["mounts"].values())) == 13
+    row.update(original_zip_sha256=sha(data), original_verdict=old["status"], original_analysis=old["phases"]["analysis"],
+               original_preflight=proof, workload_repeated=False)
 
 
 def python_cases(directory: Path, reports: list[dict]) -> dict:
@@ -387,7 +484,8 @@ def execute(row: dict, name: str, options: list[str], expected: set[str], minute
 
 
 def run() -> None:
-    assert git("rev-parse", "HEAD").decode().strip() == SOURCE and git("rev-parse", "HEAD^").decode().strip() == PRODUCT
+    assert git("rev-parse", "HEAD").decode().strip() == SOURCE and git("rev-parse", "HEAD^").decode().strip() == ORIGINAL
+    assert set(git("diff", "--name-only", ORIGINAL, SOURCE).decode().splitlines()) == {PACKAGE + "/check.py", ".github/workflows/native-unit-amd64-cgroup-v1.yml"}
     assert set(git("diff", "--name-only", PRODUCT, SOURCE).decode().splitlines()) == {PACKAGE + "/" + n for n in ("check.py", "worker.BUILD", "guest.BUILD", "payload.sh")} | {".github/workflows/native-unit-amd64-cgroup-v1.yml"}
     assert os.uname().machine == "x86_64" and os.getuid() != 0
     assert subprocess.run(["sudo", "-n", "sh", "-c", "test -c /dev/kvm && test -r /dev/kvm && test -w /dev/kvm"]).returncode == 0
@@ -421,13 +519,16 @@ def run() -> None:
         raw = TMP / "analysis.events"
         code = command(row, "analysis", ["bazel", f"--bazelrc={TMP}/v1.bazelrc", "test", "--config=buildkite-unit", *common,
                                           "--nobuild", f"--build_event_json_file={raw}"], 20)
+        raw_events = events(raw)
+        row.update(events_sha256=sha(raw.read_bytes()),
+                   invocations=[event["started"]["uuid"] for event in raw_events if "started" in event])
+        save()
         selected = configured(raw, code)
         row.update(selected={k: asdict(v) for k, v in sorted(selected.items())}, events_sha256=sha(raw.read_bytes()),
                    analysis_only=True, no_build_exit_accepted=(code == 1))
         assert set(selected) == expected, "original 355-owner selection changed"
     selection_ok = phase("analysis", analysis)
-    preflight = "//" + WORKER + ":preflight"
-    preflight_ok = phase("firecracker_preflight", lambda row: execute(row, "preflight", ["--config=buildkite", *common, preflight], {preflight}, 15, remote=True))
+    preflight_ok = phase("reused_firecracker_preflight", reuse_preflight)
     if selection_ok and preflight_ok:
         roots = Path("tools/unit_test_targets.txt").read_text()
         targets = TMP / "remaining.targets"
@@ -479,6 +580,7 @@ if __name__ == "__main__":
     save()
     try:
         with tempfile.TemporaryDirectory(dir=TMP) as directory:
+            original_diagnostic()
             prepare(Path(directory))
             del os.environ["BUILDBUDDY_API_KEY"]
             rc = TMP / "v1.bazelrc"
