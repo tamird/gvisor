@@ -118,6 +118,8 @@ steps:
   - <<: *common
     <<: *source_test
     label: ":speedboat: Compile runsc-plugin-stack (AMD64)"
+    env:
+      DOCKER_BUILD: "false"
     command: make runsc-plugin-stack
     agents:
       arch: "amd64"
