@@ -1289,13 +1289,6 @@ func (s *sender) shouldEnterRecovery() bool {
 func (s *sender) detectLoss(seg *segment) (fastRetransmit bool) {
 	// We're not in fast recovery yet.
 
-	// Preserve timeout recovery until the pre-RTO flight is acknowledged.
-	// In particular, a duplicate ACK must not change the state to Disorder.
-	// See RFC 6675, section 5.1.
-	if s.state == tcpip.RTORecovery {
-		return false
-	}
-
 	// If RACK is enabled and there is no reordering we should honor the
 	// three duplicate ACK rule to enter recovery.
 	// See: https://tools.ietf.org/html/draft-ietf-tcpm-rack-08#section-4
