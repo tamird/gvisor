@@ -1,7 +1,6 @@
 """Complete the source-bound unit selection using the existing native v1 runners."""
 
 import ast
-import base64
 from collections import Counter
 from dataclasses import asdict
 from datetime import datetime, timezone
@@ -17,7 +16,7 @@ import sys
 import tempfile
 import traceback
 from urllib.parse import unquote, urlsplit
-from urllib.request import HTTPRedirectHandler, Request, build_opener
+from urllib.request import urlopen
 from xml.etree import ElementTree
 from zipfile import ZipFile
 
@@ -28,6 +27,7 @@ from stdlib_provenance import digest, fields, first, number
 
 PRODUCT = "96fadde722e14d482a62276b80237398f8b62fbf"
 ORIGINAL = "079301e2078f436c47e55cc6ef4815d0bcbc25c3"
+PARENT = "6c53cad9aa6f059858196cda65643cd623580700"
 GUEST = "38745c527784376e0b5d915fe5ebd85e1d1385fd"
 SOURCE = os.environ["GITHUB_SHA"]
 TMP = Path(os.environ["RUNNER_TEMP"])
@@ -61,7 +61,7 @@ def diagnostics(data: bytes) -> list[dict]:
     patterns = {"download": r"Error downloading", "timeout": r"timed out|TimeoutException",
                 "dns": r"UnknownHostException", "tls": r"SSLHandshakeException|PKIX",
                 "checksum": r"[Cc]hecksum.*(?:match|expected)", "package": r"no such package",
-                "http": r"(?i)(?:HTTP|status|response code)[^\n]{0,30}\b[45][0-9]{2}\b"}
+                "http": r"(?i)(?:HTTP(?:/[0-9.]+)?\s+|(?:status(?:\s+code)?|response code)\s*[:=]?\s*)[45][0-9]{2}\b"}
     for line in data.decode(errors="replace").splitlines():
         if re.search(r"(?i)\b(?:authorization|x-buildbuddy-api-key)[\"']?\s*[:=]", line):
             continue
@@ -80,44 +80,38 @@ def diagnostics(data: bytes) -> list[dict]:
                 urls.append(dict(host=url.hostname, filename=basename if archive_name else None))
         result.append(dict(classes=classes, line_sha256=sha(line.encode()), urls=urls,
                            repositories=re.findall(r"no such package ['\"](@@[A-Za-z0-9_+~.-]+)//", line),
-                           http_codes=re.findall(r"(?i)(?:HTTP|status|response code)[^\n]{0,30}\b([45][0-9]{2})\b", line)))
+                           http_codes=re.findall(r"(?i)(?:HTTP(?:/[0-9.]+)?\s+|(?:status(?:\s+code)?|response code)\s*[:=]?\s*)([45][0-9]{2})\b", line)))
         if len(result) == 8:
             break
     return result
 
 
-def original_diagnostic() -> None:
-    """Read one uniquely identified old analysis; availability is not a gate."""
-    row = record["original_analysis_lookup"] = dict(status="INCOMPLETE")
-    class NoRedirect(HTTPRedirectHandler):
-        def redirect_request(self, *args, **kwargs):
-            return None
-    opener = build_opener(NoRedirect())
-    def rpc(method, body):
-        request = Request("https://app.buildbuddy.io/rpc/BuildBuddyService/" + method,
-                          data=json.dumps(body).encode(), headers={"Content-Type": "application/json",
-                          "x-buildbuddy-api-key": os.environ["BUILDBUDDY_API_KEY"]})
-        with opener.open(request, timeout=30) as response:
-            data = response.read(4 * 1024**2 + 1)
-            assert len(data) <= 4 * 1024**2
-            return json.loads(data)
-    try:
-        query = dict(commit_sha=PRODUCT, command="test", updated_after="2026-11-03T11:13:40Z",
-                     updated_before="2026-11-03T11:17:33Z")
-        response = rpc("SearchInvocation", dict(query=query, count=2))
-        assert not response.get("nextPageToken")
-        invocation, = response["invocation"]
-        assert invocation["commitSha"] == PRODUCT and invocation["command"] == "test"
-        identifier = invocation["invocationId"]
-        assert re.fullmatch(r"[0-9a-f-]{36}", identifier)
-        response = rpc("GetEventLogChunk", dict(invocation_id=identifier, min_lines=1000))
-        data = base64.b64decode(response["buffer"], validate=True)
-        row.update(status="OBSERVED", invocation=identifier, log_sha256=sha(data), log_bytes=len(data),
-                   partial=bool(response.get("previousChunkId") or response.get("nextChunkId") or response.get("live")),
-                   diagnostics=diagnostics(data))
-    except Exception as error:
-        row.update(error_class=type(error).__name__, error_sha256=sha(str(error).encode()))
+def musl_archive(row: dict) -> None:
+    """Seed only the failed archive; Bazel still verifies its supplier SRI."""
+    data = (TMP / "prior-analysis.zip").read_bytes()
+    assert sha(data) == "2cb45232ed46c1d2ac45e9451afc95444182ba56caf66f289024f47ef2d6f833"
+    with ZipFile(BytesIO(data)) as archive:
+        assert archive.namelist() == ["verdict.json"]
+        old = json.loads(archive.read("verdict.json"))
+    assert old["carrier"] == PARENT and old["product"] == PRODUCT and old["status"] == "INCOMPLETE"
+    assert old["phases"]["analysis"]["native_exit"] == 1
+    assert old["phases"]["remaining353"]["status"] == old["phases"]["coretag_native_kvm"]["status"] == "NOT_RUN"
+    row.update(prior_zip_sha256=sha(data), prior_analysis=old["phases"]["analysis"],
+               prior_lookup=old["original_analysis_lookup"], prior_verdict=old["status"])
     save()
+    url = "https://deb.debian.org/debian/pool/main/m/musl/musl_1.2.6.orig.tar.gz"
+    with urlopen(url, timeout=60) as response:
+        data = response.read(2 * 1024**2 + 1)
+    expected = "d585fd3b613c66151fc3249e8ed44f77020cb5e6c1e635a616d3f9f82460512a"
+    assert sha(data) == expected and len(data) == 1082499, "mirror differs from llvm v0.8.24 musl archive"
+    destination = TMP / "v1-distdir"
+    destination.mkdir()
+    (destination / "musl-1.2.6.tar.gz").write_bytes(data)
+    with (TMP / "v1.bazelrc").open("a") as rc:
+        rc.write(f"common --distdir={destination}\n")
+    row.update(mirror=url, original_url="https://musl.libc.org/releases/musl-1.2.6.tar.gz",
+               supplier="llvm@0.8.24", supplier_integrity="sha256-1YX9O2E8ZhUfwySejtRPdwIMtebB5jWmFtP5+CRgUSo=",
+               sha256=expected, bytes=len(data), mechanism="Bazel --distdir; unchanged repository declaration")
 
 
 def native_disposition(kind: str, code: int) -> str:
@@ -164,6 +158,7 @@ def classification_controls(row: dict) -> None:
     assert observed[0]["urls"] == [dict(host="github.com", filename="archive.tar.gz")]
     assert observed[1]["repositories"] == ["@@module+"]
     assert "private" not in json.dumps(observed) and "user" not in json.dumps(observed)
+    assert diagnostics(b"external/bazel_tools/tools/build_defs/repo/http.bzl:444:45") == []
     row["diagnostic_projection_control"] = "PASS"
 
 
@@ -484,7 +479,7 @@ def execute(row: dict, name: str, options: list[str], expected: set[str], minute
 
 
 def run() -> None:
-    assert git("rev-parse", "HEAD").decode().strip() == SOURCE and git("rev-parse", "HEAD^").decode().strip() == ORIGINAL
+    assert git("rev-parse", "HEAD").decode().strip() == SOURCE and git("rev-parse", "HEAD^").decode().strip() == PARENT
     assert set(git("diff", "--name-only", ORIGINAL, SOURCE).decode().splitlines()) == {PACKAGE + "/check.py", ".github/workflows/native-unit-amd64-cgroup-v1.yml"}
     assert set(git("diff", "--name-only", PRODUCT, SOURCE).decode().splitlines()) == {PACKAGE + "/" + n for n in ("check.py", "worker.BUILD", "guest.BUILD", "payload.sh")} | {".github/workflows/native-unit-amd64-cgroup-v1.yml"}
     assert os.uname().machine == "x86_64" and os.getuid() != 0
@@ -527,7 +522,10 @@ def run() -> None:
         row.update(selected={k: asdict(v) for k, v in sorted(selected.items())}, events_sha256=sha(raw.read_bytes()),
                    analysis_only=True, no_build_exit_accepted=(code == 1))
         assert set(selected) == expected, "original 355-owner selection changed"
-    selection_ok = phase("analysis", analysis)
+    archive_ok = phase("musl_archive", musl_archive)
+    selection_ok = archive_ok and phase("analysis", analysis)
+    if not archive_ok:
+        record["phases"]["analysis"] = dict(status="NOT_RUN", reason="pinned archive unavailable")
     preflight_ok = phase("reused_firecracker_preflight", reuse_preflight)
     if selection_ok and preflight_ok:
         roots = Path("tools/unit_test_targets.txt").read_text()
@@ -564,7 +562,7 @@ def run() -> None:
         row["guest"] = modes(directory / "test.outputs/outputs.zip", "guest/outputs/")
         assert row["guest"]["elf_sha256"] == row["original_elf"]["sha256"]
         row["native_kvm_smt"] = True
-    if selection_ok and preflight_ok:
+    if preflight_ok:
         phase("coretag_native_kvm", coretag)
     else:
         record["phases"]["coretag_native_kvm"] = dict(status="NOT_RUN", missing=[CORETAG])
@@ -580,7 +578,6 @@ if __name__ == "__main__":
     save()
     try:
         with tempfile.TemporaryDirectory(dir=TMP) as directory:
-            original_diagnostic()
             prepare(Path(directory))
             del os.environ["BUILDBUDDY_API_KEY"]
             rc = TMP / "v1.bazelrc"
