@@ -1,0 +1,64 @@
+name: Verify the Bazel 9 amendment and native build results
+on:
+  push:
+    branches: [qualification/work-map-bazel9-plugin]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the live UI and the curated pair
+        id: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = bbb1341b1eb3e1a636f3489672ff3126981e1d72
+          test "$(git rev-parse HEAD^^)" = 70d3236a043dd1599a3dbac6ed7956b86a207757
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          test "$(git diff --name-only HEAD^^ HEAD^)" = "$(printf '%s\n' github-status.json registry.json)"
+          sha256sum -c <<'INPUTS'
+          e5d01ececbb039823104599713efd9082379b42e00b724e4580a0ffedf37230a  app.js
+          9e2cb823df9fac8167a0fdeef9628ed8e7ef5c9c7062d46e4caa10f6216b4d34  registry.json
+          d246443e59ee4a084eebc6e631df6b84ebda1bc8e4fee93ac3a1e44caf080b1a  github-status.json
+          INPUTS
+          mkdir results
+      - name: Check the canonical metadata pair
+        id: metadata
+        if: always() && steps.source.outcome == 'success'
+        run: node metadata-preflight.mjs . > results/preflight.json
+      - name: Verify previous observations and outstanding owner work
+        run: |
+          python3 - <<'PYTHON'
+          import json, subprocess
+          from pathlib import Path
+          from work_states import derive_states, record_states
+          def before(f):return json.loads(subprocess.check_output(['git','show','HEAD^^:'+f]))
+          r=json.loads(Path('registry.json').read_bytes()); s=json.loads(Path('github-status.json').read_bytes())
+          old=before('github-status.json'); prior=before('registry.json')
+          ids={'pr:16735','pr:16801','branch:buildkite-native-packages','branch:declared-staged-release-check'}
+          nodes={n['id']:n for n in r['nodes']}; prev={n['id']:n for n in prior['nodes']}
+          assert set(nodes)==set(prev) and {k for k in nodes if nodes[k]!=prev[k]}==ids
+          assert all(s[k]==v for k,v in old.items() if k not in {'registryDate','workStates'})
+          assert s['registryDate']==r['meta']['updatedAt']
+          expected=record_states(s['prs'],r,old,s['checkedAt'])
+          curr=s['workStates']['pr:16801']['contributor-review']
+          assert curr==expected['pr:16801']['contributor-review'] and curr['scope']==nodes['pr:16801']['contributorReview']['head']
+          assert derive_states(s['prs'],r)['pr:16801']['contributor-review']['scope']==curr['scope']
+          rest=json.loads(json.dumps(s['workStates']));del rest['pr:16801']['contributor-review'];assert rest==old['workStates']
+          assert all(nodes[k]['status']=='Agent work' and not nodes[k].get('contributorReview') for k in ids if k.startswith('branch:'))
+          assert nodes['pr:16735']['settledReviews']==prev['pr:16735']['settledReviews']
+          assert {str(x) for x in prior['edges']}.issubset({str(x) for x in r['edges']})
+          PYTHON
+      - name: Publish the bounded verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-map-bazel9-evidence
+          path: results/preflight.json
+          if-no-files-found: error
