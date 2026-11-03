@@ -1,0 +1,42 @@
+name: Check verified packet and poll review decisions
+on:
+  push:
+    branches: [qualification/work-map-tcp-250494ed8]
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Verify exact curation and collect current original PRs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "250494ed86295553452da70fdba5d395cf9c1902"
+          test "$(git rev-parse HEAD^^)" = "23fe8949d6b4aba2816ad6b34c827fadc38c65a7"
+          test -z "$(git diff --name-only HEAD^ HEAD -- ':!.github')"
+          test "$(sha256sum registry.json | cut -d' ' -f1)" = "95da11d3c86c478c2bf4c4b1a5161b653b656d5f2c9d13b65329bd0c0b009a27"
+          mkdir results
+          python3 update-status.py
+          node metadata-preflight.mjs . > results/preflight.json
+          python3 - <<'GATE'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('registry.json').read_bytes());s=json.loads(Path('github-status.json').read_bytes());ns={n['id']:n for n in r['nodes']}
+          assert s['registryDate']==r['meta']['updatedAt']
+          for k,h in [('pr:16841','f8ca88ad9'),('branch:tcp-consumed-socket-error','a795edf94'),('pr:16588','1dbbcd676'),('pr:16618','da05e74d9'),('pr:16803','c58f36d4e'),('branch:tcp-keepalive-user-timeout','1b56b8506')]:
+              assert ns[k]['contributorReview']['head']==s['workStates'][k]['contributor-review']['scope'] and ns[k]['contributorReview']['head'].startswith(h)
+          for k in ('pr:16841','pr:16745','pr:16812'):
+              row,=[p for p in s['prs'] if p['url']==ns[k]['url']];assert row['head']==ns[k]['head'] and row['status']=='open'
+          GATE
+          cp registry.json github-status.json results/
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with: {name: tcp-review-map, path: results, if-no-files-found: error}
