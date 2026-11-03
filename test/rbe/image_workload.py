@@ -1,12 +1,28 @@
 """Qualify the existing complete clang-tidy selection on both target CPUs."""
+import hashlib
 import json
 import os
 from pathlib import Path
 
-import qualification_report as report
+
+
+def frontend_record(path, expected, read_bytes):
+    """Read the output of one configured ClangTidy action."""
+    relative = Path(path)
+    if relative.is_absolute() or ".." in relative.parts or relative.parts[:1] != ("bazel-out",) or relative.name != "frontend.dia":
+        raise ValueError("Unexpected Clang frontend diagnostics path: " + path)
+    data = read_bytes(relative)
+    if not data.startswith(b"DIAG"):
+        raise ValueError("Not serialized Clang frontend diagnostics: " + path)
+    actual = {"sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data)}
+    if actual != expected:
+        raise ValueError("Frontend diagnostics differ from native output: " + path)
+    return actual
 
 
 def run(invoke, record_execution, evidence: Path, private: Path, output_root: Path) -> None:
+    import qualification_report as report
+
     config = json.loads(os.environ["APPLICABILITY_QUALIFICATION_CONFIG"])
     patterns = ["//test/...", "//tools/..."]
     options = ["--compilation_mode=opt", "--lockfile_mode=error",
@@ -64,13 +80,8 @@ def run(invoke, record_execution, evidence: Path, private: Path, output_root: Pa
                         case [{"path": str(path), "digest": {"hash": str(digest), **details}}]:
                             expected_output = {"sha256": digest, "bytes": int(details.get("sizeBytes", 0))}
                         case _:
-                            raise ValueError("Expected exactly one declared clang-tidy report")
-                    relative = Path(path)
-                    if relative.is_absolute() or ".." in relative.parts or relative.parts[:1] != ("bazel-out",):
-                        raise ValueError("Unexpected configured clang-tidy report: " + path)
-                    actual = report.file_record(root / relative)
-                    if actual != expected_output:
-                        raise ValueError("Clang-tidy report differs from native action identity: " + path)
+                            raise ValueError("Expected exactly one declared Clang frontend diagnostics file")
+                    actual = frontend_record(path, expected_output, lambda relative: (root / relative).read_bytes())
                     row["reports"].append({"owner": action["targetLabel"], "action_digest": action["digest"],
                                            "cache_hit": action["cacheHit"], "runner": action["runner"],
                                            "path": path, **actual})
