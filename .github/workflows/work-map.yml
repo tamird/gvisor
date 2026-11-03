@@ -1,0 +1,120 @@
+name: Verify the matching Bazel export and TCP reply decision
+on:
+  push:
+    branches: [qualification/work-map-tcp-close-reply]
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind collector to the curated records and published base
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = ee048ca67dac568680c56d63323ae23b5a01a7a3
+          test "$(git rev-parse HEAD^^)" = 2122578dd73647a841b1d86e0a9d6db5c38108a8
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          test "$(git diff --name-only HEAD^^ HEAD^)" = registry.json
+          mkdir results
+          cp registry.json results/
+      - name: Refresh the Bazel PR, its exports and the reported issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PYTHON'
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import copy
+          import json
+          import runpy
+          u = runpy.run_path("update-status.py")
+          g = u["collect_repository"].__globals__
+          r = u["REGISTRY"]
+          saved = copy.deepcopy(r)
+          repo = "google/gvisor"
+          numbers = {16801}
+          p = Path("github-status.json")
+          old = json.loads(p.read_text())
+          prior = [x for x in old["prs"] if x.get("repo",repo) == repo and x["number"] in numbers]
+          assert {p["number"] for p in prior} == numbers
+          try:
+              # The canonical collector supports registered-only repositories. For this
+              # publication, scope that existing path to exactly the changed nodes.
+              r["nodes"] = [n for n in r["nodes"] if n["id"] in
+                            ({"pr:" + str(i) for i in numbers} | {"issue:16908"})]
+              r["meta"]["registeredOnlyRepositories"].append(repo)
+              g["PR_BATCH_SIZE"] = 3
+              rows, fresh, _, inventory = u["collect_repository"](repo, "copybara", {**old, "prs":prior})
+              issues = u["collect_issues"](old)
+              assert set(issues) == {"issue:16908"}
+              assert len(rows) == len(numbers) and set(fresh).issuperset(numbers)
+              u["recheck_snapshot_mergeability"](list(fresh.values()), [p for s in rows for p in (s,*s["imports"])], repo)
+          finally:
+              r.clear()
+              r.update(saved)
+          maintainers = u["fetch_maintainers"]()
+          nodes = {n["id"]:n for n in r["nodes"]}
+          current = {}
+          for pr in rows:
+              key = "pr:"+str(pr["number"])
+              node = nodes[key]
+              if pr["status"] == "open":
+                  pr = u["with_maintainer_reviewers"](pr, maintainers)
+                  pr["publicImportDisposition"] = u["public_import_disposition"](pr,node.get("approvedPatch"),node.get("landedPatch"))
+              current[pr["url"]] = pr
+          prs = [current.get(p["url"],p) for p in old["prs"]]
+          assert len({p["url"] for p in prs}) == len(prs)
+
+          now = datetime.now(timezone.utc).isoformat()
+          report = u["check_report"](prs,old)
+          snap = {**old,"checkedAt":now,"registryDate":r["meta"]["updatedAt"],"prs":prs,"issues":{**old["issues"],**issues},
+                  "reviewerHandoff":u["reviewer_handoff"](prs,old),
+                  "mergeabilityHandoff":u["mergeability_handoff"](report,old),"checkFailures":report["checkFailures"],
+                  "workStates":u["record_states"](prs,r,old,now)}
+          snap["limits"] = {**old["limits"],"curationRefresh":{"prs":sorted(numbers),"issues":sorted(issues),"requests":g["requests"],
+              "graphqlCost":g["query_cost"],"previousFullSnapshot":old["checkedAt"],"repositoryObservation":inventory}}
+          if sweep := u["feedback_sweep"](r,[*prs,*old["reviewPRs"]],old,now):
+              snap["projectFeedbackReview"] = sweep
+          p.write_text(json.dumps(snap,indent=2,ensure_ascii=False)+"\n")
+          PYTHON
+          cp github-status.json results/
+      - name: Check the data used to render the cards
+        run: |
+          node metadata-preflight.mjs . > results/preflight.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          nodes = {n["id"]: n for n in json.loads(Path("registry.json").read_text())["nodes"]}
+          snap = json.loads(Path("github-status.json").read_text())
+          observed = {p["url"]:p for p in snap["prs"]}
+          from hashlib import sha256
+          q=nodes["pr:16801"]
+          pr=observed[q["url"]]
+          exports=[n for n in pr["imports"] if n["number"]==16913]
+          assert len(exports)==1 and exports[0]["sourceHead"]==q["head"]==pr["approvedHead"]
+          assert exports[0]["head"].startswith("2b8dfbe8f") and exports[0]["matchesSourceHead"]
+          assert "contributorReview" not in q
+          n=nodes["issue:16908"]
+          c=n["contributorReview"]
+          assert c["kind"]=="reply" and c["status"]=="pending" and c["url"]==n["url"]
+          assert sha256(c["body"].encode()).hexdigest()=="dd17552a4cd630f82a4b7aa31356bdb9fdc4b12a4477c6ca06bf7b55e12b45d3"
+          assert snap["issues"][n["id"]]["githubState"]=="OPEN"
+          assert snap["workStates"][n["id"]]["contributor-review"]["scope"]==n["url"]
+          assert "pr:16886" not in nodes and len(snap["limits"]["curationRefresh"]["prs"])==1
+          assert any(e["url"].endswith("/13261282119") for e in nodes["branch:goimports-in-process-diff"]["evidence"])
+          assert any(e["url"].endswith("/13256418500") for e in nodes["pr:16864"]["evidence"])
+          i=next(i for i in json.loads(Path("registry.json").read_text())["investigations"] if i["id"]=="investigation:tcp-issues-and-reviews")
+          assert any("1,844" in f["text"] and "1,988" in f["text"] and "both FINs" in f["text"] for f in i["findings"])
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: published-work-map-pair
+          path: results/
+          if-no-files-found: error
