@@ -1,4 +1,4 @@
-name: Verify the rebased checkpoint, shared memory and filesystem PRs
+name: Complete the missing rebased runtime owners
 on:
   workflow_dispatch:
 permissions:
@@ -6,31 +6,53 @@ permissions:
   actions: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/rebased-runtime-owners-471d6dff5'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/rebased-runtime-missing-471d6dff5'
     runs-on: ubuntu-24.04
-    timeout-minutes: 85
+    timeout-minutes: 125
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-        fetch-depth: 5
+        fetch-depth: 6
         persist-credentials: false
     - name: Initialize the bundle
       run: |
         mkdir -p "$RUNNER_TEMP/replay-public"
         printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/replay-public/summary.json"
-    - name: Run the owning suites and analyzers on the exact product commits
+    - name: Recover the original missing analyzer and native syscall diagnostic
+      env:
+        GH_TOKEN: ${{ github.token }}
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD^)" = d46ece07b13efa292e3f196fada41725392de5bc
+        mkdir -p "$RUNNER_TEMP/checker"
+        git show 680739b629229eb1c8fa91aa1147d1bca71eb04f:test/rbe/cas_inputs.py > "$RUNNER_TEMP/checker/cas_inputs.py" || {
+          git fetch --no-tags --depth=1 "https://github.com/$GITHUB_REPOSITORY.git" 680739b629229eb1c8fa91aa1147d1bca71eb04f
+          git show 680739b629229eb1c8fa91aa1147d1bca71eb04f:test/rbe/cas_inputs.py > "$RUNNER_TEMP/checker/cas_inputs.py"
+        }
+        cp test/rbe/{rebased_runtime_recovery.py,qualification_report.py,unit_matrix.py} "$RUNNER_TEMP/checker/"
+        python3 -B "$RUNNER_TEMP/checker/rebased_runtime_recovery.py" original
+    - name: Preserve original recovery before workloads
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: rebased-runtime-original-recovery
+        path: ${{ runner.temp }}/replay-public/*.json
+        if-no-files-found: error
+    - name: Run only the missing owning suites and native identity control
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "28a3cad3e87ad8bfdf30d5bd8b0d3ef387062d18"
+        test "$(git rev-parse HEAD^1)" = "d46ece07b13efa292e3f196fada41725392de5bc"
         mkdir -p "$RUNNER_TEMP/checker"
-        for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
+        for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py rebased_runtime_recovery.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
         done
         python3 -m py_compile "$RUNNER_TEMP/checker/"*.py
+        cp -r test/rbe/shm_native_ids "$RUNNER_TEMP/checker/"
         mkdir -p "$RUNNER_TEMP/fifo_platform" "$RUNNER_TEMP/fifo"
         GNU=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
         platform=$RUNNER_TEMP/fifo_platform
@@ -92,7 +114,7 @@ jobs:
             # Capture the actual argv and Bazel exit, independent of the qualifier's exit.
             printf '%s\n' "$@" > "$TCP_EVIDENCE/executed_arguments"
             status=0
-            docker exec tcp-gnu bazel --output_user_root="$TCP_BAZEL_ROOT" --bazelrc="$FIFO_RC" "$@" || status=$?
+            docker exec tcp-gnu timeout --signal=INT --kill-after=30s "$ARM_TIMEOUT" bazel --output_user_root="$TCP_BAZEL_ROOT" --bazelrc="$FIFO_RC" "$@" || status=$?
             printf '%s\n' "$status" > "$TCP_EVIDENCE/native_exit"
             date -u '+%Y-%m-%dT%H:%M:%S.%3N+00:00' > "$TCP_EVIDENCE/finished"
             exit "$status"
@@ -105,9 +127,17 @@ jobs:
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
         parent=471d6dff5229b99208bf6fec985601067f1f9d69
-        for arm in race pgalloc-analysis shm-syscalls shm-amd64 shm-arm64 vfs-tests vfs-amd64 vfs-arm64; do
+        for arm in shm-arm64 vfs-tests vfs-amd64 vfs-arm64 shm-native-ids; do
+          if [[ "$arm" == shm-arm64 ]] && ! python3 - "$RUNNER_TEMP/replay-public/recovery.json" <<'PY'
+        import json, sys
+        sys.exit(not json.load(open(sys.argv[1]))['arm64'].get('missing_test_confirmed'))
+        PY
+          then
+            # Missing original metadata must not cause an automatic duplicate.
+            overall=1
+            continue
+          fi
           case "$arm" in
-            race|pgalloc-analysis) source=2d5231b4534aa645cdb759521e6d3842b3b0a9a0 ;;
             shm-*) source=1e2c3bce4cbcd408e303e322cbe97fc11caa585d ;;
             vfs-*) source=54c5f85b3d8f32380e35d0a7c2382ad576ebaa88 ;;
           esac
@@ -126,12 +156,14 @@ jobs:
           raw="$RUNNER_TEMP/replay-private/$arm.raw.jsonl"
           code=0
           opts=()
+          export ARM_TIMEOUT=1320
+          if [[ "$arm" == shm-native-ids ]]; then
+            ARM_TIMEOUT=600
+            cp -r "$RUNNER_TEMP/checker/shm_native_ids" test/rbe/
+          fi
           case "$arm" in
-            race) labels=(//pkg/sentry/pgalloc:pgalloc_test); opts+=(--bazel-option=--config=race) ;;
-            pgalloc-analysis) labels=(//pkg/sentry/pgalloc:pgalloc_nogo //pkg/sentry/pgalloc:pgalloc_test_nogo) ;;
-            shm-syscalls) labels=(//test/syscalls:shm_test_native //test/syscalls:shm_test_runsc_systrap_directfs)
-              opts+=(--bazel-option=--test_env=GTEST_FILTER=ShmTest.RemovedSegmentsAreMarkedDeleted:ShmTest.RemovedSegmentsAreDestroyed:ShmTest.AllowsAttachToRemovedSegmentWithRefs:ShmTest.RemovedSegmentsAreNotDiscoverable:ShmTest.NoDestructionOfAttachedSegmentWithMultipleRmid:ShmTest.RmidOwnershipPermissionDenied) ;;
-            shm-amd64|shm-arm64) labels=(//pkg/sentry/kernel/shm:shm_nogo) ;;
+            shm-native-ids) labels=(//test/rbe/shm_native_ids:ownership_test) ;;
+            shm-arm64) labels=(//pkg/sentry/kernel/shm:shm_nogo) ;;
             vfs-tests) labels=(//pkg/sentry/fsimpl/tmpfs:tmpfs_test //pkg/sentry/vfs:vfs_test) ;;
             vfs-amd64|vfs-arm64) labels=(//pkg/sentry/fsimpl/tmpfs:tmpfs_nogo //pkg/sentry/fsimpl/tmpfs:tmpfs_test_nogo //pkg/sentry/vfs:vfs_nogo //pkg/sentry/vfs:vfs_test_nogo) ;;
           esac
@@ -152,23 +184,19 @@ jobs:
           git status --porcelain --untracked-files=no > "$TCP_EVIDENCE/source_after"
           python3 -B "$RUNNER_TEMP/checker/tcp_long_replay.py" "$TCP_EVIDENCE" "$arm" "$source" "${labels[*]}" "$raw" "$RUNNER_TEMP/replay-public" || overall=1
         done
-        python3 - "$RUNNER_TEMP/replay-public" <<'PYRESULT'
-        import json, sys
-        from pathlib import Path
-        root = Path(sys.argv[1])
-        arms = "race pgalloc-analysis shm-syscalls shm-amd64 shm-arm64 vfs-tests vfs-amd64 vfs-arm64".split()
-        verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
-        missing = [a for a in arms if a not in verdicts]
-        result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["verified"] for v in verdicts.values()) else "FAIL"}
-        (root / "summary.json").write_text(json.dumps(result, indent=2) + "\n")
-        print(result)
-        sys.exit(result["status"] != "PASS")
-        PYRESULT
+        python3 -B "$RUNNER_TEMP/checker/rebased_runtime_recovery.py" complete || overall=1
         exit "$overall"
-    - name: Save only the typed results
+    - name: Check the final artifact allowlist and credential patterns
+      id: scan
       if: always()
+      env:
+        GH_TOKEN: ${{ github.token }}
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: python3 -B "$RUNNER_TEMP/checker/rebased_runtime_recovery.py" scan
+    - name: Save only the typed results
+      if: always() && steps.scan.outcome == 'success'
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: rebased-runtime-owner-results
+        name: rebased-runtime-missing-results
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
