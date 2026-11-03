@@ -87,6 +87,21 @@ def add_rule(directory, load, rule):
 def recover():
     from cas_inputs import blob, fetch, rpc
 
+    iid = "f6b847ae-7000-4bbe-adf0-e04fc051ce01"
+    response = rpc("GetEventLogChunk", {"invocationId": iid, "minLines": 4000})
+    raw = base64.b64decode(response["buffer"])
+    require(sha(raw) == "54de98656f2076cf9d7b522679da8ff4bfc032569ad8a3220037fbf3c7f66c85",
+            "different original guest console")
+    log = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", raw.decode(errors="replace"))
+    failed = [line for line in log.splitlines() if re.search(r"does(?:n't| not) match this configuration", line)]
+    report["original_selects"] = {repo: {attr: sum(repo + "//:packages" in line and
+                                                re.search(r"attribute ['\"]?" + attr + r"['\"]? in", line) is not None
+                                                for line in failed) for attr in ("srcs", "deps")}
+                                  for repo in ("tcg_host_tools", "tcg_arm64_host_tools", "tcg_arm64_guest")}
+    report["original_failure_invocation"] = iid
+    save()
+    require(report["original_selects"]["tcg_host_tools"]["srcs"] > 0, "original was not the AMD64 host-tools srcs select")
+
     # Recover outputs of the successful original build, without another build.
     original = TMP / "original.zip"
     require(sha(original.read_bytes()) == "99a944ccc9039c43175dd69067afc0f6699e4e3f1f978b41ed953fad4590b8c3",
@@ -149,6 +164,11 @@ def guest():
     git("checkout", "--quiet", "--detach", GUEST)
     require(git("rev-parse", "HEAD") == GUEST and not git("diff", "--name-only", "HEAD"),
             "unclean guest source")
+    image_rule = Path("test/rbe/tcg/defs.bzl")
+    before = '        "host_tools": attr.label(allow_single_file = True, mandatory = True),'
+    old_rule = image_rule.read_text()
+    require(old_rule.count(before) == 1, "image tool declaration changed")
+    image_rule.write_text(old_rule.replace(before, before[:-2] + ', cfg = "exec"),'))
     # Match the Go test XML settings in the native unit run. The donor exports
     # selected test-harness variables into the private guest at this point.
     launch = Path("test/rbe/tcg/run.sh")
@@ -183,6 +203,24 @@ arm64_tcg_test(
 )
 """)
         targets.append(f"//{directory}:private_guest_test")
+    # Read Bazel's actual configuration of the image and both test actions.
+    query = 'mnemonic("TcgGuestImage|TestRunner", deps(set(' + " ".join(targets) + ')))'
+    cmd = ["bazel", "--bazelrc=" + str(TMP / "guest.bazelrc"), "aquery", "--config=rbe-arm64",
+           "--config=aarch64", "--include_commandline=false", "--include_artifacts=false", "--output=jsonproto", query]
+    with (TMP / "selection.aquery").open("wb") as out, (TMP / "selection.log").open("wb") as err:
+        rc = subprocess.run(cmd, stdout=out, stderr=err).returncode
+    report["selection"] = {"exit": rc, "diagnostics": diagnostic(TMP / "selection.log")}
+    save()
+    require(rc == 0, "configured guest actions unavailable after image tool fix")
+    graph = json.loads((TMP / "selection.aquery").read_bytes())
+    labels = {str(t["id"]): "//" + t["label"].split("//")[-1] for t in graph.get("targets", [])}
+    expected = {("//test/rbe/tcg:rc_guest", "TcgGuestImage"): "//tools/bazeldefs:rbe_linux_amd64",
+                **{(target, "TestRunner"): "//tools/bazeldefs:rbe_linux_arm64" for target in targets}}
+    actual = {(labels[str(a["targetId"])], a["mnemonic"], "//" + a.get("executionPlatform", "").split("//")[-1])
+              for a in graph.get("actions", []) if (labels[str(a["targetId"])], a["mnemonic"]) in expected}
+    report["selection"]["actions"] = sorted(actual)
+    save()
+    require(actual == {(l, m, p) for (l, m), p in expected.items()}, "unexpected configured image or test executor")
     status, events = bazel("guest", "test", ["--config=rbe-arm64", "--config=aarch64", "--keep_going",
                            "--nocache_test_results", "--flaky_test_attempts=1", "--runs_per_test=1",
                            "--strategy=TestRunner=remote", "--noremote_local_fallback",
@@ -224,102 +262,11 @@ arm64_tcg_test(
     require(status == 0 and all(v["verified"] for v in report["payloads"].values()), "guest gates incomplete")
 
 
-def diagnose():
-    from cas_inputs import rpc
-
-    original = TMP / "original.zip"
-    require(sha(original.read_bytes()) == "99da11183d4286be9d97748ceecc0a6374c214a2ebd1c2335177ee1cefd1f65f", "wrong original ZIP")
-    with zipfile.ZipFile(original) as z:
-        prior = json.loads(z.read("receipt.json"))
-    iid = "f6b847ae-7000-4bbe-adf0-e04fc051ce01"
-    require(prior["carrier"] == "993c59719c5aabac80afd4a4b25aadf33ccc104e" and prior["guest"]["exit"] == 1
-            and prior["guest"]["invocations"] == [iid] and prior["status"] == "INCOMPLETE"
-            and all(v["results"] == [] for v in prior["payloads"].values()), "original failure shape differs")
-    report.update(original_run=41601660718, original_artifact=13214466632, original_invocation=iid,
-                  original_bazel_exit=1, original_guest_attempts=0)
-    save()
-    inv, = rpc("GetInvocation", {"lookup": {"invocationId": iid}})["invocation"]
-    require(inv["invocationId"] == iid, "wrong invocation")
-    events = [e["buildEvent"] for e in inv.get("event", []) if "buildEvent" in e]
-    def code(value):
-        return value if isinstance(value, str) and re.fullmatch("[A-Z_]{2,70}", value) else None
-    details = []
-    messages = []
-    for e in events:
-        for k in ("aborted", "action", "finished"):
-            if k not in e:
-                continue
-            row = e[k]
-            fd = row.get("failureDetail", {})
-            messages.extend(x for x in (row.get("description"), fd.get("message")) if x)
-            enums = [code(v.get("code")) for v in fd.values() if isinstance(v, dict) and code(v.get("code"))]
-            if enums or k == "aborted":
-                details.append({"kind": k, "reason": code(row.get("reason")), "codes": enums})
-    report["failure_codes"] = details[:24]
-    chunk = rpc("GetEventLogChunk", {"invocationId": iid, "minLines": 4000})
-    raw = base64.b64decode(chunk["buffer"])
-    report["original_log_hash"] = sha(raw)
-    report["original_log_size"] = len(raw)
-    log = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", raw.decode(errors="replace"))
-    # Never export raw command lines or arguments from the authenticated log.
-    # Recognized text/positions are from the public project and tool messages.
-    vocab = set("""error errors failed failure to no not cannot can't could couldn't unable missing found such file files
-        directory directories directoryentry or of the in for with is are invalid unknown package packages target
-        repository external main mapping label dependency dependencies repositories visibility visible does still exist
-        load loading loaded fetch fetching download downloading checksum archive extract extracting while resolving
-        registered toolchain toolchains execution platform platforms architecture cpu host arm64 aarch64 amd64 x86_64
-        exception transient analysis analyzing build building buildfile tool tools test tests testing action actions
-        command line option flag unrecognized config configuration defined definition function parameter expected
-        rule rules attribute use from name already conflict source output input original generated symlink
-        symbols symbol unsupported support implementation available found execution failed non-zero status code
-        running driver process launcher spawn remote worker workers executor scheduler container image pulling
-        exec format permission denied denied readonly read-only user unprivileged mount operation permitted
-        no-local shell bash sh grep sed mkdir cp ln cat chmod tar zstd gzip clang gcc linker python3 qemu
-        timed out deadline exceeded unavailable unauthenticated unauthorized key expired quota retry resources
-        memory disk space checksum integrity digest mismatch error reading connection reset timed incomplete
-        amdgpu elf readelf no matching label definitions extension generated files copied without
-        deps srcs outs name executable testonly includes incompatible mandatory implicit attribute
-        not a file a valid value duplicate target label path relative suffix system provider goinfo runfiles
-        arm64_tcg_test tcgguestimage rc_guest private_guest_capsule private_guest_test procumounter_test
-        safemount_test runsc procumounter specutils test tcg defs.bzl init.sh run.sh build.bazel
-        info warning deprecation attribute must contain a single declared executable binary
-        analysis_failed action_failed test_failure complete requested targets remote_cache
-        connection refused unexpected argument default properties execution_group exec_group
-        requires compatible cpu architecture restricted no eligible matching command failed compiling
-        dlopen standard library libcxx compiler binary filegroup symlinks goarch goos.""".lower().split())
-    locations = re.compile(r"(?:^|/)((?:test/rbe|runsc/(?:procumounter|specutils)|tools/bazeldefs)/[a-zA-Z0-9_.+/-]{1,125}:(?:[0-9]+)(?::[0-9]+)?)")
-    # Keep the error and its immediate context; an ellipsis represents any
-    # non-allowlisted token, so these rows are not verbatim quotation.
-    rows = list(dict.fromkeys(messages))
-    lines = log.splitlines()
-    for i, line in enumerate(lines):
-        if re.search(r"(?i)error[: ]|failed|failure|denied|does not|no such|cannot|incompatible|not found|undefined|traceback", line):
-            rows.extend(lines[max(0, i-1):i+3])
-    projected = []
-    for row in rows:
-        words = re.findall(r"[A-Za-z_][A-Za-z0-9_.-]*", row)
-        shown = []
-        for word in words[:85]:
-            token = word.lower() if word.lower() in vocab else "…"
-            if token != "…" or not shown or shown[-1] != "…":
-                shown.append(token)
-        text = " ".join(shown)
-        if text and text != "…" and text not in projected:
-            projected.append(text)
-    report["projected_diagnostic"] = projected[:28]
-    report["source_locations"] = sorted(set(locations.findall(log+"\n"+"\n".join(messages))))[:12]
-    require(report["failure_codes"] or report["source_locations"] or projected, "no original diagnostic evidence")
-    report["status"] = "ORIGINAL_DIAGNOSTIC"
-
-
 OUT.mkdir(exist_ok=True)
 report = dict(status="INCOMPLETE", carrier=os.environ["GITHUB_SHA"], product_source=PRODUCT,
               guest_source=GUEST, prior_host_run="41589548481", started=now())
 try:
-    if sys.argv[1:] == ["diagnose"]:
-        save()
-        diagnose()
-    elif sys.argv[1:] == ["recover"]:
+    if sys.argv[1:] == ["recover"]:
         save()
         recover()
     else:
