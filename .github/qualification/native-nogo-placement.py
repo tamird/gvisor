@@ -214,23 +214,9 @@ def recover():
         inv, = result["invocation"]
         require(inv["invocationId"] == invocation, "different invocation returned")
         entries = [entry["buildEvent"] for entry in inv["event"]]
-        results = [entry for entry in entries if "testResult" in entry]
-        expected = set(report["phases"]["original"]["original_verdict"]["expected"])
-        selected = {}
-        for entry in results:
-            identity, value = entry["id"]["testResult"], entry["testResult"]
-            label = identity["label"]
-            require(label not in selected, "duplicate original test attempt")
-            execution = value.get("executionInfo", {})
-            selected[label] = {"identity": identity, "status": {1: "PASSED", "PASSED": "PASSED"}.get(value.get("status"), value.get("status")),
-                               "cachedLocally": value.get("cachedLocally", False),
-                               "cachedRemotely": execution.get("cachedRemotely", False),
-                               "strategy": execution.get("strategy")}
-        row["attempts"] = selected
-        require(set(selected) == expected and len(selected) == 871, "original owner set differs")
-        require(all(value["status"] == "PASSED" and not value["cachedLocally"]
-                    and not value["cachedRemotely"] and value["strategy"] == "processwrapper-sandbox"
-                    for value in selected.values()), "original test execution differs")
+        # GetInvocation's metadata projection can omit individual test events.
+        # Read attempts from the original compact stream, independently of it.
+        row["api_test_result_events"] = sum("testResult" in entry for entry in entries)
         logs = [item for entry in entries for item in entry.get("buildToolLogs", {}).get("log", [])
                 if item.get("name") == "execution_log.binpb.zst"]
         require(len(logs) == 1, "missing unique original compact log")
@@ -243,6 +229,34 @@ def recover():
         data = blob(key, invocation)
         (ROOT / "nogo.compact").write_bytes(data)
         records["compact"] = data
+        selected, xml_generators = {}, {}
+        with subprocess.Popen(["zstd", "-qdc", str(ROOT / "nogo.compact")], stdout=subprocess.PIPE) as process:
+            while (size := number(process.stdout)) is not None:
+                entry = fields(process.stdout.read(size))
+                if 7 not in entry:
+                    continue
+                action = fields(first(entry, 7))
+                if first(action, 8) != b"TestRunner":
+                    continue
+                owner = first(action, 7).decode().removeprefix("@@").removeprefix("@")
+                args = [item.decode() for item in action.get(1, [])]
+                scripts = [name for name in ("test-setup.sh", "generate-xml.sh")
+                           if any(arg.endswith("/tools/test/" + name) for arg in args)]
+                require(len(scripts) == 1, "unknown original TestRunner entry point")
+                destination = selected if scripts[0] == "test-setup.sh" else xml_generators
+                require(owner not in destination, "duplicate original TestRunner role")
+                destination[owner] = {"runner": first(action, 11).decode(),
+                                      "cached": bool(first(action, 12, 0)),
+                                      "status": first(action, 10).decode(),
+                                      "exit": first(action, 9, 0)}
+            require(process.wait() == 0, "incomplete original compact test stream")
+        row["attempts"] = selected
+        row["xml_generators"] = xml_generators
+        expected = set(report["phases"]["original"]["original_verdict"]["expected"])
+        require(set(selected) == expected and len(selected) == 871, "original owner set differs")
+        require(all(value == {"runner": "processwrapper-sandbox", "cached": False, "status": "", "exit": 0}
+                    for value in selected.values()), "original TestRunner execution differs")
+
 
     def compiler(row):
         require("compact" in records, "original compact log unavailable")

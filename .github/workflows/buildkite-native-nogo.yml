@@ -17,11 +17,12 @@ jobs:
       CAS_HELPER: 680739b629229eb1c8fa91aa1147d1bca71eb04f
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 3, persist-credentials: false}
+        with: {fetch-depth: 4, persist-credentials: false}
       - name: Bind the original reader and read-only recovery
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "$ORIGINAL"
+          test "$(git rev-parse HEAD^)" = "4cb78220996a2077e6bc40401ad5eacd1ba529e1"
+          test "$(git rev-parse HEAD^^)" = "$ORIGINAL"
           test "$(git rev-parse "$ORIGINAL^")" = "$PRODUCT"
           git diff --exit-code "$ORIGINAL" HEAD -- . ':!.github/qualification/native-nogo-placement.py' ':!.github/workflows/buildkite-native-nogo.yml'
           mkdir "$RUNNER_TEMP/nogo-receipts"
