@@ -22,23 +22,22 @@ copy_file(
         srcs = ["payload.sh"],
         data = [name + ".tar", name + ".inputs", ":erofs_archive"],
     )
-    for name in ["container_test", "boot_test", "gofer_env_test", "gofer_maxprocs_test", "modify_test", "serialization_test"]
+    for name in ["container_test"]
 ]
 
 [
     amd64_kvm_test(
-        name = mode + "_" + name,
+        name = mode + "_" + selection.replace("-", "_"),
         size = "large",
-        payload = ":" + name + "_payload",
-        args = [mode, name],
+        payload = ":container_test_payload",
+        args = [mode, "container_test", selection],
         image = "//test/rbe/tcg:amd64_cgroup_v1_guest",
         run_under = "//test/rbe:cgroup_v1" if mode == "v1" else None,
         memory_mib = 6144,
         scratch_gib = 4,
-        shard_count = 8 if name == "container_test" else 1,
+        shard_count = 1,
         guest_env = {"GO_TEST_WRAP_TESTV": "true"},
         tags = [],
     )
-    for mode in ["v1", "v2"]
-    for name in ["container_test", "boot_test", "gofer_env_test", "gofer_maxprocs_test", "modify_test", "serialization_test"]
+    for mode, selection in [("v1", "annotation"), ("v2", "annotation"), ("v1", "missing-shard-4")]
 ]

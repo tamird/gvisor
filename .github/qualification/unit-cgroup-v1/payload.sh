@@ -3,6 +3,7 @@
 set -euo pipefail
 mode=$1
 name=$2
+selection=$3
 stage=capsule_identity
 trap 'code=$?; printf "NATIVE_CONTAINER_SETUP stage=%s exit=%s\n" "$stage" "$code" >&2' ERR
 pkg=$TEST_SRCDIR/$TEST_WORKSPACE/.github/qualification/unit-cgroup-v1
@@ -63,17 +64,43 @@ test "$old_status" = 1
 grep -F -- "invalid option -- 'V'" "$TEST_UNDECLARED_OUTPUTS_DIR/erofs-rejected-version" >/dev/null
 LC_ALL=C mkfs.erofs --help > "$TEST_UNDECLARED_OUTPUTS_DIR/erofs-help" 2>&1
 printf 'NATIVE_CONTAINER_EROFS rejected_version_exit=1 help_exit=0\n'
+stage=strings
+# The retained failure executes this absolute path after restore. The maintained
+# guest already declares BusyBox; check its actual applet before installing the
+# guest-only alias, without changing the original test or runtime bytes.
+test ! -e /usr/bin/strings
+printf '\000native-string-control\000xx\000tail-check\000' > /work/strings-input
+printf 'native-string-control\ntail-check\n' > /work/strings-expected
+/bin/busybox strings /work/strings-input > /work/strings-actual
+cmp /work/strings-expected /work/strings-actual
+ln -s /bin/busybox /usr/bin/strings
+/usr/bin/strings /work/strings-input > /work/strings-alias
+cmp /work/strings-expected /work/strings-alias
+printf 'NATIVE_CONTAINER_STRINGS original_absent=1 applet=PASS alias=PASS\n'
+stage=selection
+test "$name" = container_test
+test "${TEST_SHARD_INDEX:-0}" = 0
+test "${TEST_TOTAL_SHARDS:-1}" = 1
+unset TESTBRIDGE_TEST_ONLY
+args=(--test_platforms=ptrace,kvm,systrap)
+if [[ $selection == annotation ]]; then
+  export TEST_SHARD_INDEX=0 TEST_TOTAL_SHARDS=1
+  args+=(-test.run '^TestCheckpointRestoreAnnotation$')
+else
+  test "$selection" = missing-shard-4
+  test "$mode" = v1
+  export TEST_SHARD_INDEX=4 TEST_TOTAL_SHARDS=8
+fi
 stage=proof
 printf '%s\n' "$mode" "$actual" "${expected[3]}" docker_absent kvm_present \
   "CGROUPV2=$CGROUPV2" "$(uname -r)" "$(sha256sum /work/erofs/usr/bin/mkfs.erofs | cut -d' ' -f1)" \
   "$(sha256sum "$loader" | cut -d' ' -f1)" "${TEST_SHARD_INDEX:-0}" "${TEST_TOTAL_SHARDS:-1}" \
-  "$(sha256sum "$pkg/erofs.tar" | cut -d' ' -f1)" > "$TEST_UNDECLARED_OUTPUTS_DIR/proof"
+  "$(sha256sum "$pkg/erofs.tar" | cut -d' ' -f1)" \
+  "$(sha256sum /bin/busybox | cut -d' ' -f1)" "$(sha256sum /work/strings-alias | cut -d' ' -f1)" \
+  strings_original_absent "$selection" > "$TEST_UNDECLARED_OUTPUTS_DIR/proof"
 export TEST_SRCDIR=$runfiles RUNFILES_DIR=$runfiles TEST_WORKSPACE=_main
 export TEST_TARGET=//runsc/container:$name TEST_BINARY=${expected[1]}
 export GO_TEST_RUN_FROM_BAZEL=1 GO_TEST_WRAP_TESTV=true RUNTIME=buildkite_runtime
 cd "$runfiles/_main"
 stage=exec
-if [[ $name == container_test || $name == boot_test ]]; then
-  exec "$binary" --test_platforms=ptrace,kvm,systrap
-fi
-exec "$binary"
+exec "$binary" "${args[@]}"
