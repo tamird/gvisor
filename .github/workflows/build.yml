@@ -1,32 +1,32 @@
-name: Check SysV IPC permission locking
+name: Restore live SysV IPC objects
 on:
   push:
-    branches: [qualification/ipc-object-guard-run]
+    branches: [qualification/ipc-object-restore]
 permissions:
   contents: read
   actions: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/ipc-object-guard-run'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/ipc-object-restore'
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     steps:
     - name: Initialize the original evidence status
       run: |
         mkdir -p "$RUNNER_TEMP/replay-public"
-        printf '%s\n' '{"status":"INCOMPLETE","expected":["control","negative","fixed"],"missing":["control","negative","fixed"]}' > "$RUNNER_TEMP/replay-public/summary.json"
+        printf '%s\n' '{"status":"INCOMPLETE","expected":["restore"],"missing":["restore"]}' > "$RUNNER_TEMP/replay-public/summary.json"
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
         fetch-depth: 5
         persist-credentials: false
-    - name: Check the unlocked access, all registry owners and their syscall suites
+    - name: Run IPC mode and mapping changes across actual checkpoints
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "ac102b1f70ce44f4c1765d4ea03ee548361b5ead"
+        test "$(git rev-parse HEAD^1)" = "4c551cdac61113383b167697884c7ac92355821d"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py verify_registry_lock.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -105,12 +105,9 @@ jobs:
         export PATH="$RUNNER_TEMP/fifo-bin:$PATH"
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
-        for arm in control negative fixed; do
-          case $arm in
-            control) source=1b5592c427a4be7a65379c52cec233d6f59d62c2; parent=471d6dff5229b99208bf6fec985601067f1f9d69 ;;
-            negative) source=ac102b1f70ce44f4c1765d4ea03ee548361b5ead; parent=662f1c148a155cb603bc2e6577fa79fae1dd1407 ;;
-            fixed) source=662f1c148a155cb603bc2e6577fa79fae1dd1407; parent=471d6dff5229b99208bf6fec985601067f1f9d69 ;;
-          esac
+        for arm in restore; do
+          source=662f1c148a155cb603bc2e6577fa79fae1dd1407
+          parent=471d6dff5229b99208bf6fec985601067f1f9d69
           if ! git cat-file -e "$source^{commit}" 2>/dev/null; then
             git fetch --no-tags --depth=2 "https://github.com/$GITHUB_REPOSITORY.git" "$source"
           fi
@@ -125,12 +122,8 @@ jobs:
           git cat-file commit HEAD > "$TCP_EVIDENCE/commit_file"
           raw="$RUNNER_TEMP/replay-private/$arm.raw.jsonl"
           code=0
-          opts=()
-          labels=(//pkg/sentry/kernel/ipc:ipc_nogo)
-          if [[ $arm == fixed ]]; then
-            labels+=(//pkg/sentry/kernel/{msgqueue:msgqueue,shm:shm,semaphore:semaphore}_nogo //pkg/sentry/kernel/semaphore:semaphore_test)
-            labels+=(//test/syscalls:{shm,msgqueue,semaphore}_test_runsc_systrap_directfs)
-          fi
+          opts=('--bazel-option=--test_env=GTEST_FILTER=SemaphoreTest.SemIpcSet:MsgqueueTest.MsgCtlIpcSet:ShmTest.MprotectWriteOnWritableSegmentSucceeds')
+          labels=(//test/syscalls:{shm,msgqueue,semaphore}_test_runsc_systrap_directfs_save)
           selection=()
           for target in "${labels[@]}"; do selection+=("--test-target=$target"); done
           bash test/rbe/qualify.sh --arch=amd64 "${selection[@]}" "${opts[@]}" \
@@ -146,7 +139,7 @@ jobs:
         import json, sys
         from pathlib import Path
         root = Path(sys.argv[1])
-        arms = ["control", "negative", "fixed"]
+        arms = ["restore"]
         verdicts = {a: json.loads((root / (a + ".json")).read_text()) for a in arms if (root / (a + ".json")).is_file()}
         missing = [a for a in arms if a not in verdicts]
         result = {"expected":arms,"executed":list(verdicts),"missing":missing,"status":"PASS" if not missing and all(v["verified"] for v in verdicts.values()) else "FAIL"}
@@ -168,13 +161,13 @@ jobs:
         root = Path(os.environ["RUNNER_TEMP"], "replay-public")
         for p in root.iterdir():
             data = p.read_bytes()
-            assert p.name in {"control.json","fixed.json","negative.json","summary.json"} and len(data) < 3000000
+            assert p.name in {"restore.json","summary.json"} and len(data) < 3000000
             assert all(os.environ[k].encode() not in data for k in ("BUILDBUDDY_API_KEY","GH_TOKEN"))
         PYSAFE
     - name: Save only the typed results
       if: always() && steps.safe.outcome == 'success'
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: ipc-object-guard-results
+        name: ipc-object-restore-results
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error

@@ -1,5 +1,4 @@
 import json
-import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 import sys
@@ -27,45 +26,28 @@ if verdict["errors"] or verdict["missing"] or set(labels) != set(verdict["expect
 if len(results) != len(labels) or any(item.get("cachedLocally") or item.get("executionInfo", {}).get("cachedRemotely") or item.get("executionInfo", {}).get("strategy") != "remote" for item in results):
     why.append("expected one uncached remote original per target")
 runner_exit = int((out/"runner_exit").read_text())
-architectures = ("amd64", "arm64")
-sections = {}
+wanted = {f"//test/syscalls:{name}_test_runsc_systrap_directfs_save": case for name, case in
+          (("shm", "MprotectWriteOnWritableSegmentSucceeds"), ("msgqueue", "MsgCtlIpcSet"), ("semaphore", "SemIpcSet"))}
+restores = {}
 case_names = {}
 for item in captured["reports"]:
     label = item["identity"]["label"]
     path = out / item["path"]
-    if label.endswith("_nogo") and item["name"] == "test.log":
-        parts = re.split(r"(?m)^(amd64|arm64)\.\.\.", path.read_text())
-        sections[label] = {arch: body.strip().splitlines() for arch, body in zip(parts[1::2], parts[2::2])}
-        if len(parts) != 5 or set(sections[label]) != set(architectures):
-            why.append("missing original architecture results for "+label)
-    if not label.endswith("_nogo") and item["name"] == "test.xml":
-        case_names[label] = [
-            node.get("name","") for node in ET.parse(path).iter("testcase")
-            if node.find("skipped") is None and node.get("status")!="notrun" and node.get("result")!="suppressed"]
-if set(sections) != {label for label in labels if label.endswith("_nogo")}:
-    why.append("missing analyzer report")
-for label, logs in sections.items():
-    for arch, lines in logs.items():
-        if arm == "negative":
-            pattern = r"checklocks: pkg/sentry/kernel/ipc/registry\.go:\d+:\d+: must hold .+\.Mu exclusively .* to call CheckPermissions, but not held .*GOOARCH=" + arch + r", GOOS=linux\)"
-            if len(lines) != 1 or not re.fullmatch(pattern,lines[0]):
-                why.append("expected the unlocked ObjectCount call: "+arch)
-        elif lines != ["PASS"]:
-            why.append("unexpected analyzer output: "+label+" "+arch)
-if arm == "negative":
-    if verdict["status"] != "FAIL" or verdict["native_exit"] != 3 or runner_exit != 1 or not verdict["failures"]:
-        why.append("the deliberately unguarded call did not fail its analyzer")
-elif verdict["status"] != "PASS" or runner_exit:
-    why.append("expected passing original results")
-if arm == "fixed":
-    samples = {":semaphore_test":"TestBasic", ":semaphore_test_runsc_systrap_directfs":"SemIpcSet",
-               ":msgqueue_test_runsc_systrap_directfs":"MsgOpPermissions", ":shm_test_runsc_systrap_directfs":"ShmCtlSet"}
-    for suffix, sample in samples.items():
-        if not any(label.endswith(suffix) and any(name.rsplit(".",1)[-1]==sample for name in names)
-                   for label, names in case_names.items()):
-            why.append("missing executed test "+sample)
+    if item["name"] == "test.log":
+        # The runner logs each command just before it executes it and fails if
+        # restore exits nonzero. Native PASS below confirms they all completed.
+        restores[label] = sum("Executing: [" in line and " restore " in line and " --image-path " in line
+                              for line in path.read_text().splitlines())
+    if item["name"] == "test.xml":
+        case_names[label] = [node.get("name", "").rsplit(".", 1)[-1] for node in ET.parse(path).iter("testcase")
+                             if node.find("skipped") is None and node.get("status") != "notrun" and node.get("result") != "suppressed"]
+if set(labels) != set(wanted) or verdict["status"] != "PASS" or runner_exit or verdict["case_counts"].get("skipped",0):
+    why.append("restore command, selection or skip")
+for label, name in wanted.items():
+    if case_names.get(label) != [name] or restores.get(label,0) < 2:
+        why.append("missing exact case and multiple completed restore commands: " + label)
 verdict.update(arm=arm, invocation=next(r["started"]["uuid"] for r in records if "started" in r),
-               observed={"sections":sections, "executed_cases":case_names}, verified=not why, verification_errors=why)
+               observed={"restore_commands":restores, "executed_cases":case_names}, verified=not why, verification_errors=why)
 reporting.write_json(proof / (arm+".json"), verdict)
 print(json.dumps({k:verdict[k] for k in ("arm","invocation","status","case_counts","verified","verification_errors","execution_to_verdict_seconds")}))
 sys.exit(bool(why))
