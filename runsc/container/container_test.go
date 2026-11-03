@@ -1292,7 +1292,7 @@ func TestExecProcList(t *testing.T) {
 func TestKillPid(t *testing.T) {
 	for name, conf := range configs(t, false /* noOverlay */) {
 		t.Run(name, func(t *testing.T) {
-			app, err := testutil.FindFile("test/cmd/test_app/test_app")
+			app, err := testutil.FindTestApp()
 			if err != nil {
 				t.Fatal("error finding test_app:", err)
 			}
@@ -1372,7 +1372,7 @@ func TestKillPid(t *testing.T) {
 func TestSignalProcessGroup(t *testing.T) {
 	for name, conf := range configs(t, false /* noOverlay */) {
 		t.Run(name, func(t *testing.T) {
-			app, err := testutil.FindFile("test/cmd/test_app/test_app")
+			app, err := testutil.FindTestApp()
 			if err != nil {
 				t.Fatal("error finding test_app:", err)
 			}
@@ -1857,7 +1857,7 @@ func TestNoRootContainerRejectsRootArgs(t *testing.T) {
 // which ends the protection of the init process, analogous to Linux's
 // kernel/signal.c:force_sig_info_to_task().
 func TestSignalUnkillablePolicyFaultKillsInit(t *testing.T) {
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("error finding test_app:", err)
 	}
@@ -2037,7 +2037,7 @@ func TestUnixDomainSockets(t *testing.T) {
 			}
 			defer outputFile.Close()
 
-			app, err := testutil.FindFile("test/cmd/test_app/test_app")
+			app, err := testutil.FindTestApp()
 			if err != nil {
 				t.Fatal("error finding test_app:", err)
 			}
@@ -2499,7 +2499,7 @@ func TestBindMountCharDevice(t *testing.T) {
 	if _, err := os.Stat(unimplementedCharDevSrc); err != nil {
 		t.Skipf("%s not available to bind mount: %v", unimplementedCharDevSrc, err)
 	}
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("error finding test_app:", err)
 	}
@@ -3491,7 +3491,7 @@ func TestGoferExits(t *testing.T) {
 }
 
 func TestRootNotMount(t *testing.T) {
-	appSym, err := testutil.FindFile("test/cmd/test_app/test_app")
+	appSym, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("error finding test_app:", err)
 	}
@@ -3528,7 +3528,7 @@ func TestRootNotMount(t *testing.T) {
 }
 
 func TestUserLog(t *testing.T) {
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("error finding test_app:", err)
 	}
@@ -3581,7 +3581,7 @@ func TestUserLog(t *testing.T) {
 // clone3(2) to clone(2): it only does so when clone3 fails with ENOSYS.
 // See gvisor.dev/issue/14688.
 func TestOCISeccompErrnoRet(t *testing.T) {
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("error finding test_app:", err)
 	}
@@ -3777,7 +3777,7 @@ func TestSignalCreated(t *testing.T) {
 // liveness signal. A single transient "stopped" answer from `runsc state` is
 // treated as terminal by container shims, permanently wedging teardown.
 func TestStateNonLeaderExec(t *testing.T) {
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("error finding test_app:", err)
 	}
@@ -4049,7 +4049,7 @@ func TestMountSymlink(t *testing.T) {
 // Check that --net-raw disables the CAP_NET_RAW capability.
 func TestNetRaw(t *testing.T) {
 	capNetRaw := strconv.FormatUint(uint64(auth.CapabilitySetOf(linux.CAP_NET_RAW)), 10)
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("error finding test_app:", err)
 	}
@@ -4075,7 +4075,7 @@ func TestTTYField(t *testing.T) {
 	stop := testutil.StartReaper()
 	defer stop()
 
-	testApp, err := testutil.FindFile("test/cmd/test_app/test_app")
+	testApp, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("error finding test_app:", err)
 	}
@@ -5065,7 +5065,7 @@ func setupEROFS() (*erofsTestEnv, func(), error) {
 			return nil, nil, fmt.Errorf("error creating %q: %v", name, err)
 		}
 	}
-	testApp, err := testutil.FindFile("test/cmd/test_app/test_app")
+	testApp, err := testutil.FindTestApp()
 	if err != nil {
 		return nil, nil, fmt.Errorf("error finding test_app: %v", err)
 	}
@@ -5825,7 +5825,7 @@ func TestSpecValidation(t *testing.T) {
 }
 
 func snapshotRootfsUpperLayer(conf *config.Config, spec *specs.Spec) (string, error) {
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		return "", fmt.Errorf("error finding test_app: %v", err)
 	}
@@ -6099,7 +6099,7 @@ func TestTarRootfsUpperLayerACL(t *testing.T) {
 	spec, _ := sleepSpecConf(t)
 	spec.Root.Readonly = false
 
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatalf("error finding test_app: %v", err)
 	}
@@ -6455,7 +6455,7 @@ func TestSaveRestoreExecReconfigure(t *testing.T) {
 }
 
 func TestMarkerFile(t *testing.T) {
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("error finding test_app:", err)
 	}

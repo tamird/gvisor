@@ -145,6 +145,33 @@ func ImageByName(name string) string {
 	return fmt.Sprintf("gvisor.dev/images/%s", name)
 }
 
+// findExecutable locates a binary without resolving its runfiles symlink.
+func findExecutable(path string) (string, error) {
+	file, err := FindFile(path)
+	if err != nil {
+		return "", err
+	}
+	return runfileExecutable(file)
+}
+
+func runfileExecutable(file string) (string, error) {
+	info, err := os.Stat(file)
+	if err != nil {
+		return "", err
+	}
+	if info.IsDir() {
+		// An executable target may put its binary in a directory named
+		// after the target, e.g. test_app/test_app.
+		file = filepath.Join(file, filepath.Base(file))
+	}
+	return exec.LookPath(file)
+}
+
+// FindTestApp returns the path to the container test application's executable.
+func FindTestApp() (string, error) {
+	return findExecutable("test/cmd/test_app/test_app")
+}
+
 // FindRunsc returns the path to the runsc binary.
 // As a side effect, it sets the GVISOR_SIDECAR_BINARIES_DIR environment
 // variable needed to properly aim `runsc` at its sidecar binaries in
@@ -152,7 +179,7 @@ func ImageByName(name string) string {
 // which can use `runsc` to be placed in a far-away directory from the
 // rest of the sidecar binaries.
 func FindRunsc() (string, error) {
-	path, err := FindFile("release/runsc")
+	path, err := findExecutable("release/runsc")
 	if err != nil {
 		return "", err
 	}
