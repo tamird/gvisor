@@ -10,6 +10,7 @@ import shlex
 import shutil
 import subprocess
 import time
+import zipfile
 
 import lint_hooks as hooks
 
@@ -107,7 +108,7 @@ def job(file, index):
     require(info.returncode==0 and info.stdout.splitlines()[-1] == b"bazel "+Path(".bazelversion").read_bytes().strip(), "checkout pin")
     status=0
     try:
-        comparison(f"clean_{index}",cmd,False)
+        # Both pristine runs are retained from the pinned original.
         if index==1:
             path=Path(names[0]); clean=path.read_bytes()
             try:
@@ -131,11 +132,33 @@ def job(file, index):
         os.environ["PATH"]=os.environ["PATH"].removeprefix(str(launcher.parent)+os.pathsep)
 
 
+def retain_original():
+    archive=hooks.root/"original.zip"
+    sha=hashlib.sha256(archive.read_bytes()).hexdigest()
+    require(sha=="b3d24cd98ffe052a29a24ec346629976b0b62084e16feb5c4f44b8b77e236b7e","original ZIP")
+    with zipfile.ZipFile(archive) as z:
+        original=json.loads(z.read("result.json"))
+    require(original["source"]==hooks.source and original["carrier"]=="4fc72bf0ce619b8e6fd54db12a0c3d53fffe5fc2" and
+            original["status"]=="FAIL" and original["error"]["check"]=="unexpected Docker or Bazel","original red")
+    require(set(original["comparisons"])=={"clean_0","clean_1","stale_CODEOWNERS"},"original comparison set")
+    for name,row in original["comparisons"].items():
+        neg=name=="stale_CODEOWNERS"
+        require(set(row["owners"])==set(owners) and not row["capture_errors"] and row["agent_options_received"] and
+                row["exit"]==(2 if neg else 0) and row["bazel_exit"]==(3 if neg else 0),"original comparison")
+        for label,r in row["owners"].items():
+            require(r["file"]==owners[label] and r["status"]==("FAILED" if neg and r["file"]==names[0] else "PASSED") and
+                    r["runner"]=="remote" and not r["cached"] and r["test.log"]["bytes"] and r["test.xml"]["bytes"],"original named results")
+    require(original["jobs"][steps[0]]["server_stopped"] and original["jobs"][steps[0]]["launcher_directory_removed"],"original success cleanup")
+    facts["original"]={"sha256":sha,"artifact":13203617553,"run":41575809809,"status":original["status"],"error":original["error"],
+                       "comparisons":original["comparisons"],"jobs":original["jobs"],"cleanup":original["cleanup"],"finish":original["finish"]}
+
+
 def main():
+    retain_original()
     require(state()=="" and git("rev-parse","HEAD")==hooks.source and platform.machine()=="x86_64","clean source and AMD64 host")
     require(git("rev-parse","HEAD^").startswith("471d6dff5"),"source base")
     facts["files"]={name:hashlib.sha256(Path(name).read_bytes()).hexdigest() for name in names}
-    hooks.guard("docker",'echo invoked >> "$PROBE_OUT/docker-calls"; exit 87\n')
+    hooks.guard("docker",'echo "$1" >> "$PROBE_OUT/docker-calls"; exit 87\n')
     hooks.guard("bazel",'echo invoked >> "$PROBE_OUT/unselected-bazel"; exit 87\n')
     os.environ["PATH"]=str(hooks.root/"bin")+os.pathsep+os.environ["PATH"]
     require(shutil.which("bazelisk"), "provisioned native Bazelisk")
@@ -149,6 +172,17 @@ def main():
             argv+=["-o","bazel-server-inc"]
         r=hooks.run(name,[*argv,"help",*opts],env={**os.environ,"DOCKER_BUILD":"true"})
         require(r.returncode==0 and f"EFFECTIVE_DOCKER_BUILD={want}".encode() in r.stdout.splitlines(),"Make precedence")
+        guard=out/"docker-calls"
+        calls=guard.read_text().splitlines() if guard.exists() else []
+        facts.setdefault("help_docker_subcommands",{})[name]=calls
+        hooks.donor.record()
+        if opts:
+            require("version" in calls and set(calls) <= {"version","exec"},"explicit Docker help")
+            # Attribute these independently observed calls to the deliberate
+            # command-line Docker control, before ANY native governance step.
+            guard.rename(out/"explicit-help-docker-calls")
+        else:
+            require(not calls,"environment true incorrectly requested Docker")
     token = secrets.token_hex(24)
     os.environ.update(BAZEL_REMOTE_CACHE=f"--remote_cache=grpcs://remote.buildbuddy.io --remote_cache_header=x-governance-test={token}",
                       BAZEL_OPTIONS='--define="governance_probe=agent value"')
@@ -158,13 +192,14 @@ def main():
         require(token.encode() not in result.stdout, "agent cache header was printed")
         return result
     hooks.run=check_output
-    for index,file in enumerate(steps):
-        job(file,index)
+    command(steps[0])
+    job(steps[1],1)
     failed=facts["comparisons"]["stale_CODEOWNERS"]["failed_log"]
     uploads=(out/"upload.tsv").read_text().splitlines()
     require(uploads==[failed["sha256"]+"\t"+failed["local_path"]], "post hook did not request exact failed test log")
     facts["post_upload"]=failed
     facts["agent_header_not_printed"]=True
+    facts["last_phase_finished"]=time.time()
     require(not state(), "stale file not restored")
     facts["status"]="PASS"
 

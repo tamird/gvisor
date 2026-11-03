@@ -1,9 +1,10 @@
-name: Qualify the native Buildkite governance check
+name: Recover the native governance failed-log handoff
 on:
   push:
-    branches: [qualification/buildkite-governance-native]
+    branches: [qualification/buildkite-governance-hook-recovery]
 permissions:
   contents: read
+  actions: read
 jobs:
   governance:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == '1'
@@ -15,13 +16,14 @@ jobs:
       PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {path: carrier, persist-credentials: false, fetch-depth: 2}
+        with: {path: carrier, persist-credentials: false, fetch-depth: 3}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: source, ref: '${{ env.SOURCE }}', persist-credentials: false, fetch-depth: 2}
       - name: Prepare the original hook, runner and report reader
         run: |
           set -euo pipefail
-          test "$(git -C carrier rev-parse HEAD^)" = "$SOURCE"
+          test "$(git -C carrier rev-parse HEAD~2)" = "$SOURCE"
+          test "$(git -C carrier rev-parse HEAD^)" = 4fc72bf0ce619b8e6fd54db12a0c3d53fffe5fc2
           test "$(git -C source rev-parse HEAD)" = "$SOURCE"
           reader=05cf00d9d26a5beb8a9af8011375644b8b37a086
           lint=3406af3d2792723e45bb9847fe60af86ee900ce8
@@ -31,9 +33,9 @@ jobs:
             git -C carrier show "$reader:test/rbe/$module.py" > "$RUNNER_TEMP/$module.py"
           done
           git -C carrier show "$lint:.github/qualification/codespell/check.py" > "$RUNNER_TEMP/lint_donor.py"
-          # Two real job pre/post pairs rather than the old bootstrap matrix.
+          # Only the failed-step pre/post pair is missing from the prior receipt.
           git -C carrier show "$hooks:.github/qualification/buildkite-lint/check.py" |
-            sed 's/inventories==\["inventory"\]\*5/inventories==["inventory"]*4/' > "$RUNNER_TEMP/lint_hooks.py"
+            sed 's/inventories==\["inventory"\]\*5/inventories==["inventory"]*2/' > "$RUNNER_TEMP/lint_hooks.py"
           # Keep the shipped post-command's log selection and cleanup. Replace
           # only the original intercepted Buildkite upload boundary.
           # Expand the workspace path in the job hook, not while generating it.
@@ -70,7 +72,11 @@ jobs:
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$RUNNER_TEMP/lint.bazelrc"
           printf '\nimport %s\n' "$RUNNER_TEMP/lint.bazelrc" >> "$HOME/.bazelrc"
-      - name: Run both source steps and the stale governance comparison
+      - name: Recover the immutable three original comparisons
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api repos/tamird/gvisor/actions/artifacts/13203617553/zip > "$RUNNER_TEMP/original.zip"
+      - name: Check Make precedence and the failed-step handoff
         working-directory: source
         run: |
           set -euo pipefail
