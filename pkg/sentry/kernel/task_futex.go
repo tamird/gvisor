@@ -52,27 +52,21 @@ func (t *Task) GetSharedKey(addr hostarch.Addr) (futex.Key, error) {
 
 // GetRobustList sets the robust futex list for the task.
 func (t *Task) GetRobustList() hostarch.Addr {
-	t.mu.Lock()
 	addr := t.robustList
-	t.mu.Unlock()
 	return addr
 }
 
 // SetRobustList sets the robust futex list for the task.
 func (t *Task) SetRobustList(addr hostarch.Addr) {
-	t.mu.Lock()
 	t.robustList = addr
-	t.mu.Unlock()
 }
 
 // exitRobustList walks the robust futex list, marking locks dead and notifying
 // wakers. It corresponds to Linux's exit_robust_list(). Following Linux,
 // errors are silently ignored.
 func (t *Task) exitRobustList() {
-	t.mu.Lock()
 	addr := t.robustList
 	t.robustList = 0
-	t.mu.Unlock()
 
 	if addr == 0 {
 		return
