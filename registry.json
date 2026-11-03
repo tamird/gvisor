@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T11:30:39.851157+00:00",
+    "updatedAt": "2026-11-03T14:10:33.767303+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39535,9 +39535,13 @@
       "url": "https://github.com/google/gvisor/pull/15019",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T06:16:06.081403+00:00",
+      "updatedAt": "2026-11-03T14:10:33.767303+00:00",
       "summary": "The author applied the tested guard: an unexpected SYN-ACK and a repeated FIN are ACKed with the old sequence numbers in TIME_WAIT. Only a bare SYN may reopen through the forwarder. The revised tests also cover a forwarder that declines the connection.",
       "evidence": [
+        {
+          "label": "Reply to Carsten about duplicate reconnect SYNs",
+          "url": "https://github.com/google/gvisor/pull/15019#discussion_r4454183520"
+        },
         {
           "label": "Packet traces: native Linux, proposed forwarder, and correction",
           "url": "https://github.com/tamird/gvisor/actions/runs/41153077876/artifacts/13024367271"
@@ -39571,18 +39575,16 @@
           "outcome": "approved",
           "at": "2026-11-02T15:46:59.054342+00:00",
           "url": "https://github.com/google/gvisor/pull/15019#pullrequestreview-5739193389"
+        },
+        {
+          "kind": "reply",
+          "body": "I tried delivering the first SYN before draining the queue. The client still got `ECONNREFUSED`: the forwarder records the request before its goroutine registers an endpoint.\n\n[This change](https://github.com/tamird/gvisor/commit/936ad90db) tries the registered endpoint first and, if there is none, offers the queued packet to the handler that accepted the opening SYN. Both the client and the forwarder completed the handshake. The single-SYN and declined-SYN cases still passed. I’d limit the fallback to this unlocked path because [outgoing port reuse](https://github.com/google/gvisor/blob/ed8a800c0/pkg/tcpip/transport/tcp/endpoint.go#L2419-L2434) drains the same queue while holding two endpoint locks. [Packet traces](https://github.com/tamird/gvisor/actions/runs/41588109156/artifacts/13208872158).\n\nPosted by Codex on behalf of @tamird.",
+          "head": "ed8a800c0c2d10916616ad2e0a791976fbd60274",
+          "outcome": "approved",
+          "at": "2026-11-03T11:41:38Z",
+          "url": "https://github.com/google/gvisor/pull/15019#discussion_r4454183520"
         }
-      ],
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "ed8a800c0c2d10916616ad2e0a791976fbd60274",
-        "url": "https://github.com/google/gvisor/pull/15019#discussion_r4449581574",
-        "title": "Reply to Carsten about duplicate TIME_WAIT reconnects",
-        "summary": "Reordering delivery still refused the connection. Forwarding the queued copy to the handler that accepted the first SYN let the client and forwarder complete the handshake.",
-        "body": "I tried delivering the first SYN before draining the queue. The client still got `ECONNREFUSED`: the forwarder records the request before its goroutine registers an endpoint.\n\n[This change](https://github.com/tamird/gvisor/commit/936ad90db) tries the registered endpoint first and, if there is none, offers the queued packet to the handler that accepted the opening SYN. Both the client and the forwarder completed the handshake. The single-SYN and declined-SYN cases still passed. I’d limit the fallback to this unlocked path because [outgoing port reuse](https://github.com/google/gvisor/blob/ed8a800c0/pkg/tcpip/transport/tcp/endpoint.go#L2419-L2434) drains the same queue while holding two endpoint locks. [Packet traces](https://github.com/tamird/gvisor/actions/runs/41588109156/artifacts/13208872158).\n\nPosted by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-03T06:16:06.081403+00:00"
-      }
+      ]
     },
     {
       "id": "pr:16865",
@@ -43624,8 +43626,12 @@
       "group": "runtime",
       "status": "open",
       "summary": "The author fixed the TCP reconnect and synchronized publication of the accepted fd. In a separate AF_PACKET comparison, Linux timed out with EAGAIN after shutdown returned EOPNOTSUPP. Hostinet returned EOF in under 0.1 ms on both SOCK_DGRAM and SOCK_RAW; both waited normally before shutdown.",
-      "updatedAt": "2026-11-03T04:01:33.808136+00:00",
+      "updatedAt": "2026-11-03T14:10:33.767303+00:00",
       "evidence": [
+        {
+          "label": "Reply about packet socket reads after shutdown fails",
+          "url": "https://github.com/google/gvisor/pull/16793#discussion_r4455752167"
+        },
         {
           "label": "Native Linux, stock and proposed head",
           "url": "https://github.com/tamird/gvisor/actions/runs/41327870699/artifacts/13092287012"
@@ -43663,18 +43669,16 @@
           "outcome": "approved",
           "at": "2026-11-02T15:46:59.054342+00:00",
           "url": "https://github.com/google/gvisor/pull/16793#discussion_r4444407246"
+        },
+        {
+          "kind": "reply",
+          "body": "Thanks, the stream path now handles the reconnect. Could we also exclude AF_PACKET from synthetic EOF? On a packet socket, shutdown(SHUT_RD) returns EOPNOTSUPP. With protocol 0 and a 150 ms receive timeout, Linux still waited and returned EAGAIN on both SOCK_DGRAM and SOCK_RAW. Hostinet returned EOF in 92 and 87 µs respectively. Both timed out normally before shutdown.\n\n[Shared syscall test](https://github.com/tamird/gvisor/blob/c72e091cd/test/syscalls/linux/packet_socket.cc#L97-L129) · [Linux and hostinet results](https://github.com/tamird/gvisor/actions/runs/41575061199/artifacts/13202768324).",
+          "head": "d47997f8e4c48b4e608436e92c6566d6e03bf76e",
+          "outcome": "approved",
+          "at": "2026-11-03T14:06:49Z",
+          "url": "https://github.com/google/gvisor/pull/16793#discussion_r4455752167"
         }
-      ],
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "d47997f8e4c48b4e608436e92c6566d6e03bf76e",
-        "url": "https://github.com/google/gvisor/pull/16793#discussion_r4450618289",
-        "title": "Reply about AF_PACKET reads after rejected shutdown",
-        "summary": "The author fixed the TCP reconnect and synchronized publication of the accepted fd. In a separate AF_PACKET comparison, Linux timed out with EAGAIN after shutdown returned EOPNOTSUPP. Hostinet returned EOF in under 0.1 ms on both SOCK_DGRAM and SOCK_RAW; both waited normally before shutdown.",
-        "body": "Thanks, the stream path now handles the reconnect. Could we also exclude AF_PACKET from synthetic EOF? On a packet socket, shutdown(SHUT_RD) returns EOPNOTSUPP. With protocol 0 and a 150 ms receive timeout, Linux still waited and returned EAGAIN on both SOCK_DGRAM and SOCK_RAW. Hostinet returned EOF in 92 and 87 µs respectively. Both timed out normally before shutdown.\n\n[Shared syscall test](https://github.com/tamird/gvisor/blob/c72e091cd/test/syscalls/linux/packet_socket.cc#L97-L129) · [Linux and hostinet results](https://github.com/tamird/gvisor/actions/runs/41575061199/artifacts/13202768324).",
-        "requestedAt": "2026-11-03T04:01:33.808136+00:00"
-      }
+      ]
     },
     {
       "id": "pr:15867",
@@ -45505,9 +45509,13 @@
       "url": "https://github.com/bazel-contrib/rules_go/pull/4772",
       "group": "rbe",
       "status": "open",
-      "updatedAt": "2026-11-03T10:35:38.185367+00:00",
+      "updatedAt": "2026-11-03T14:10:33.767303+00:00",
       "summary": "An action that calls go tool objdump can compile objdump inside its private cache. A declared SDK executable lets all analyzers reuse one build, or the prebuilt command when the selected Go SDK ships it. The Linux presubmit ran all 508 applicable targets across the original run and one isolated timeout recovery.",
       "evidence": [
+        {
+          "label": "Reply to Fabian about declaring the SDK objdump tool",
+          "url": "https://github.com/bazel-contrib/rules_go/pull/4772#issuecomment-6602869919"
+        },
         {
           "label": "Go 1.26.7 objdump compiled 18 packages with the bootstrap cache and 113 with an empty cache",
           "url": "https://github.com/tamird/rules_go/actions/runs/41620131612/artifacts/13222458262"
@@ -45535,18 +45543,16 @@
           "head": "aec31ccc81c407a63d5f6f5a3bdd7840f2d35bde",
           "outcome": "approved",
           "at": "2026-11-02T16:25:23.256481+00:00"
+        },
+        {
+          "kind": "reply",
+          "body": "Yes. With Go 1.26.7 on linux/amd64, building `cmd/objdump` with an empty cache compiled 113 packages. After building `pack`, `covdata`, and the rules_go builder, it compiled 18. Both runs produced byte-identical executables. [Package lists](https://github.com/tamird/rules_go/actions/runs/41620131612/artifacts/13222458262)\n\nI'd keep the executable rule either way. A reusable analyzer can depend on `objdump` without asking each consumer to configure its SDK, and a cross-compiled test can request `buildid` for its own platform. An SDK option could supply the host tool ahead of time. That would save those 95 compilations when the analyzer runs, but an ordinary Go build using that SDK would build `objdump` even if it never runs the analyzer. Would you prefer to include that option here?\n\nPosted by Codex on behalf of @tamird.",
+          "head": "aec31ccc81c407a63d5f6f5a3bdd7840f2d35bde",
+          "outcome": "approved",
+          "at": "2026-11-03T11:41:49Z",
+          "url": "https://github.com/bazel-contrib/rules_go/pull/4772#issuecomment-6602869919"
         }
-      ],
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "aec31ccc81c407a63d5f6f5a3bdd7840f2d35bde",
-        "url": "https://github.com/bazel-contrib/rules_go/pull/4772#issuecomment-6597471154",
-        "title": "Answer Fabian about building objdump alongside pack",
-        "summary": "Sharing the bootstrap cache reduced the number of packages compiled for objdump from 113 to 18. An opt-in would also build it for targets that only need the builder.",
-        "body": "Yes. With Go 1.26.7 on linux/amd64, building `cmd/objdump` with an empty cache compiled 113 packages. After building `pack`, `covdata`, and the rules_go builder, it compiled 18. Both runs produced byte-identical executables. [Package lists](https://github.com/tamird/rules_go/actions/runs/41620131612/artifacts/13222458262)\n\nI'd keep the executable rule either way. A reusable analyzer can depend on `objdump` without asking each consumer to configure its SDK, and a cross-compiled test can request `buildid` for its own platform. An SDK option could supply the host tool ahead of time. That would save those 95 compilations when the analyzer runs, but an ordinary Go build using that SDK would build `objdump` even if it never runs the analyzer. Would you prefer to include that option here?\n\nPosted by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-03T10:35:38.185367+00:00"
-      }
+      ]
     },
     {
       "id": "pr:16810",
@@ -47072,10 +47078,14 @@
       "title": "Run governance and license checks on the Buildkite agent",
       "url": "https://github.com/tamird/gvisor/compare/471d6dff5...896acc456",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-03T11:30:39.851157+00:00",
-      "summary": "Both pipelines can check generated governance files and the license catalog using the agent’s Bazelisk installation. On native Linux, the governance check rejected stale CODEOWNERS and preserved its failure log. The license check verified 220 entries with Docker unavailable and rejected a catalog missing abseil-cpp. Its build recorded 52 remote actions.",
+      "status": "Delivered",
+      "updatedAt": "2026-11-03T14:10:33.767303+00:00",
+      "summary": "The governance and license checks use the same native Bazelisk installation. The combined change is open as #16904.",
       "evidence": [
+        {
+          "label": "Combined upstream PR",
+          "url": "https://github.com/google/gvisor/pull/16904"
+        },
         {
           "label": "220 license records, 52 remote build actions and a missing-entry control",
           "url": "https://github.com/tamird/gvisor/actions/runs/41627211531/artifacts/13226093514"
@@ -47093,17 +47103,6 @@
           "url": "https://buildkite.com/gvisor/pipeline/builds/53249"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "896acc45666c609ab05f92160f322f976a86cea1",
-        "baseHead": "471d6dff5229b99208bf6fec985601067f1f9d69",
-        "url": "https://github.com/tamird/gvisor/compare/471d6dff5...896acc456",
-        "title": "Run governance and license checks on the Buildkite agent",
-        "requestedAt": "2026-11-03T11:30:39.851157+00:00",
-        "summary": "Both pipelines can check generated governance files and the license catalog using the agent’s Bazelisk installation. On native Linux, the governance check rejected stale CODEOWNERS and preserved its failure log. The license check verified 220 entries with Docker unavailable and rejected a catalog missing abseil-cpp. Its build recorded 52 remote actions.",
-        "body": "Buildkite starts the Docker builder to compare generated governance\nfiles and verify the dependency license catalog. Both jobs can run\ntheir existing Make targets with Bazelisk on the agent. The license\nchecker’s nested module queries use the same Bazel installation.\n\nKeep the agent’s remote-cache options and record local paths in the\nbuild events so Make can find failed comparison logs. Shut down the\nnative Bazel server when the job finishes."
-      },
       "refinement": {
         "before": {
           "base": "471d6dff5229b99208bf6fec985601067f1f9d69",
@@ -47113,7 +47112,15 @@
           "base": "471d6dff5229b99208bf6fec985601067f1f9d69",
           "head": "896acc45666c609ab05f92160f322f976a86cea1"
         }
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "outcome": "approved",
+          "head": "896acc45666c609ab05f92160f322f976a86cea1",
+          "at": "2026-11-03T14:10:33.767303+00:00"
+        }
+      ]
     },
     {
       "id": "branch:ipc-object-guard",
@@ -47160,6 +47167,46 @@
         "summary": "Open after the shared-memory and semaphore prerequisites land?",
         "body": "Removing the lookup lock now fails analysis on AMD64 and ARM64. The integrated change passed the four owning analyzers, 97 unit and syscall cases, and 18 restores covering message queues, semaphores and shared memory."
       }
+    },
+    {
+      "id": "pr:16904",
+      "number": 16904,
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "proposal/buildkite-license-native",
+      "head": "896acc45666c609ab05f92160f322f976a86cea1",
+      "title": "Run governance and license checks on the Buildkite agent",
+      "url": "https://github.com/google/gvisor/pull/16904",
+      "group": "bazel",
+      "status": "open",
+      "summary": "Both pipelines can check generated governance files and the license catalog using the agent’s Bazelisk installation. On native Linux, the governance check rejected stale CODEOWNERS and preserved its failure log. The license check verified 220 entries with Docker unavailable and rejected a catalog missing abseil-cpp. Its build recorded 52 remote actions.",
+      "updatedAt": "2026-11-03T14:10:33.767303+00:00",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "outcome": "approved",
+          "head": "896acc45666c609ab05f92160f322f976a86cea1",
+          "at": "2026-11-03T14:10:33.767303+00:00"
+        }
+      ],
+      "evidence": [
+        {
+          "label": "220 license records, 52 remote build actions and a missing-entry control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41627211531/artifacts/13226093514"
+        },
+        {
+          "label": "Clean and stale comparison results and Buildkite log handoff",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41576727191/artifacts/13204040543"
+        },
+        {
+          "label": "Original job, including its diagnostic guard failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41575809809/artifacts/13203617553"
+        },
+        {
+          "label": "Agent provides the remote cache before repository hooks",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53249"
+        }
+      ]
     }
   ],
   "edges": [
@@ -50168,7 +50215,7 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:buildkite-native-governance",
+      "from": "pr:16904",
       "to": "branch:release-archives-versioned",
       "reason": "The native job needs the Bazelisk launcher and cleanup supplied by the governance change.",
       "evidence": "https://github.com/tamird/gvisor/commit/75c04f42d"
@@ -50228,7 +50275,7 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:buildkite-native-governance",
+      "from": "pr:16904",
       "to": "branch:declared-staged-release-check",
       "reason": "The native job needs the Bazelisk launcher and cleanup supplied by the governance change.",
       "evidence": "https://github.com/tamird/gvisor/commit/75c04f42d"
@@ -50346,7 +50393,7 @@
       ]
     },
     {
-      "from": "branch:buildkite-native-governance",
+      "from": "pr:16904",
       "to": "branch:declared-jekyll-site",
       "type": "depends_on",
       "reason": "The native job needs the Bazelisk launcher and cleanup supplied by the governance change.",
@@ -50434,7 +50481,7 @@
       "evidence": "https://github.com/tamird/gvisor/commit/211a9e3b9"
     },
     {
-      "from": "branch:buildkite-native-governance",
+      "from": "pr:16904",
       "to": "branch:buildkite-native-packages",
       "type": "depends_on",
       "reason": "The native job needs the Bazelisk launcher and cleanup supplied by the governance change.",
@@ -50588,7 +50635,7 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:buildkite-native-governance",
+      "from": "pr:16904",
       "to": "branch:buildkite-native-nogo",
       "reason": "The native job needs the Bazelisk launcher and cleanup supplied by the governance change.",
       "evidence": "https://github.com/tamird/gvisor/commit/75c04f42d"
@@ -50650,7 +50697,7 @@
     },
     {
       "type": "depends_on",
-      "from": "branch:buildkite-native-governance",
+      "from": "pr:16904",
       "to": "branch:buildkite-direct-smoke",
       "reason": "The native job needs the Bazelisk launcher and cleanup supplied by the governance change.",
       "evidence": "https://github.com/tamird/gvisor/commit/75c04f42d"
@@ -50672,7 +50719,7 @@
       "evidence": "https://github.com/tamird/gvisor/actions/runs/41395191771/artifacts/13119417233"
     },
     {
-      "from": "branch:buildkite-native-governance",
+      "from": "pr:16904",
       "to": "branch:buildkite-native-plugin",
       "type": "depends_on",
       "reason": "The native job needs the Bazelisk launcher and cleanup supplied by the governance change.",
@@ -50734,7 +50781,7 @@
       ]
     },
     {
-      "from": "branch:buildkite-native-governance",
+      "from": "pr:16904",
       "to": "branch:buildkite-source-lint-native",
       "type": "depends_on",
       "reason": "The native source-lint job uses the shared Bazelisk launcher and Make environment override.",
@@ -67024,13 +67071,17 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-03T11:27:48.546911+00:00",
+      "updatedAt": "2026-11-03T14:10:33.767303+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. The #16793 reconnect review awaits a contributor decision.",
+      "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the packet-socket reply on #16793 and the duplicate reconnect reply on #15019.",
       "findings": [
         {
-          "text": "On Linux with one Go scheduler P, stock gVisor drained 201 packets on a ready peer but made a contended endpoint’s lock owner wait 20 ms. Yielding on the first miss left all 201 queued. The full-pass prototype drained the peer and let the owner run in 75 µs. A peer joining during the last miss waited until the owner resumed. A continuously busy peer and cross-processor listener handoff still need coverage before proposing a fix.",
+          "text": "On Linux with one Go scheduler P, stock gVisor drained 201 ready packets but made a contended endpoint’s lock owner wait 20 ms. Yielding on the first miss left all 201 queued. For a replenishing peer, the revised dispatcher snapshots the actual queue tail and yields after one 100-packet batch. When a second processor claimed a listener, it yielded after two misses. All 20 cases drained across normal and disabled asynchronous preemption. End-to-end throughput and TamaGo remain unmeasured.",
           "evidence": [
+            {
+              "label": "Continuous backlog, cross-processor handoff and late arrivals",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41628817215/artifacts/13226843881"
+            },
             {
               "label": "Actual dispatcher, three policies, 72 trials and benchstat",
               "url": "https://github.com/tamird/gvisor/actions/runs/41626190812/artifacts/13225822564"
