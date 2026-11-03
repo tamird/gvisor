@@ -194,6 +194,9 @@ type sender struct {
 	// RFC3522 Section 3.2.
 	retransmitTS uint32
 
+	// startCork start corking the segments.
+	startCork bool
+
 	// corkTimer is used to drain the segments which are held when TCP_CORK
 	// option is enabled.
 	corkTimer timer `state:"nosave"`
@@ -890,23 +893,27 @@ func (s *sender) maybeSendSegment(seg *segment, limit int, end seqnum.Value) (se
 					switch {
 					case full != 0:
 						limit = min(limit, full)
+						if cork {
+							s.startCork = false
+							s.corkTimer.disable()
+						}
 					case seg.payloadSize() < available:
 						// Preserve the exception for a short segment that fills
 						// the available window, and Nagle's precedence over CORK.
 						if nagle {
 							return false
 						}
-						if !s.corkTimer.enabled() {
-							// Flush a partial segment after 200 ms.
+						if !s.startCork {
+							s.startCork = true
+							// Enable the timer for
+							// 200ms, after which
+							// the segments are drained.
 							s.corkTimer.enable(MinRTO)
 						}
 						return false
 					}
 				}
 			}
-			// This segment is no longer waiting for more data. A later
-			// short write must not inherit its cork deadline.
-			s.corkTimer.disable()
 		}
 
 		// Window calculations need the prospective sequence number. Leave
