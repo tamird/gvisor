@@ -1,0 +1,73 @@
+name: Qualify hostinet review and ARM64 unit results
+on:
+  push:
+    branches: [qualification/work-map-hostinet-arm-unit-final]
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the exact curation
+        id: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 719e4b2f3fb4669ae1e06e9b4fe37d9a0fabdef3
+          test "$(git rev-parse HEAD^^)" = e0a7766e9262747c7a1fcb5f3411bf950ee08a40
+          test -z "$(git diff --name-only HEAD^ HEAD -- ':!.github')"
+          test "$(git diff --name-only HEAD^^ HEAD^)" = registry.json
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          mkdir results
+      - name: Check collector and client behavior
+        run: |
+          node --test app_test.mjs
+          python3 -m unittest discover -p '*_test.py'
+      - name: Collect the canonical snapshot independently
+        if: always() && steps.source.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          status=0
+          python3 update-status.py || status=$?
+          jq -n --arg source "$GITHUB_SHA" --arg product "$(git rev-parse HEAD^)" \
+            --arg curation "$(git rev-parse HEAD^^)" --argjson exit "$status" \
+            '{source:$source,curation:$product,base:$curation,collector_exit:$exit}' > results/source.json
+          test "$status" = 0
+          node metadata-preflight.mjs . > results/preflight.json
+          cp registry.json github-status.json results/
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          registry = json.loads(Path('registry.json').read_text())
+          snapshot = json.loads(Path('github-status.json').read_text())
+          nodes = {node['id']: node for node in registry['nodes']}
+          tcp=nodes['pr:16793']
+          assert tcp['head']=='d47997f8e4c48b4e608436e92c6566d6e03bf76e'
+          assert tcp['contributorReview']['head'] == snapshot['workStates']['pr:16793']['contributor-review']['scope'] == tcp['head']
+          assert any(e['url'].endswith('13202768324') for e in tcp['evidence'])
+          assert any(e['url'].endswith('13203361824') for e in nodes['branch:rules-img-hackbench-image']['evidence'])
+          assert any(p["url"]==tcp["url"] and p["head"]==tcp["head"] for p in snapshot["prs"])
+          assert any(e['url'].endswith('issuecomment-6594693251') for e in nodes['pr:16787']['evidence'])
+          unit=nodes['branch:buildkite-native-unit-tests']
+          assert unit['followup']['disposition'].startswith('Incomplete: 286 ')
+          assert all(t in unit['summary'] for t in ('69 owners','14,397','110 skips','QEMU fetch test passed','AppArmor'))
+          assert snapshot['registryDate']==registry['meta']['updatedAt']
+          PY
+      - name: Publish the read-only snapshot pair and verifier
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-map-hostinet-arm-unit
+          path: |
+            results/source.json
+            results/preflight.json
+            results/registry.json
+            results/github-status.json
+          if-no-files-found: error
