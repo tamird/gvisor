@@ -1,64 +1,49 @@
-name: Qualify direct clang-tidy diagnostics
+name: Read the four original compiler prerequisite failures
 on:
   push:
-    branches: [qualification/clang-tidy-direct-diagnostics]
-permissions:
-  contents: read
+    branches: [qualification/clang-tidy-prerequisite-logs]
+permissions: {contents: read}
 jobs:
-  qualify:
+  original:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 50
-    env:
-      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+    timeout-minutes: 5
     steps:
-      - name: Initialize verdict
-        run: printf '%s\n' '{"status":"INCOMPLETE","stage":"setup"}' > "$RUNNER_TEMP/clang-tidy-direct.json"
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 3, persist-credentials: false}
-      - name: Prepare pinned GNU coordinator and libclang reader
+      - name: Get the failed original command diagnostics
         env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: |
-          set -euo pipefail
-          umask 077
-          {
-            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --remote_download_outputs=toplevel' 'build --noannounce_rc'
-            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-          } > "$RUNNER_TEMP/review.bazelrc"
-          if ! python3 -c 'import ctypes.util,sys;sys.exit(not ctypes.util.find_library("clang-18"))'; then
-            sudo apt-get update -qq
-            sudo apt-get install -y --no-install-recommends libclang1-18
-          fi
-          docker pull --platform=linux/amd64 "$GNU"
-          docker run -d --name tidy-client --entrypoint sleep --user root \
-            -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" \
-            -w "$GITHUB_WORKSPACE" -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory \
-            -e GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" "$GNU" infinity
-      - name: Check clean and diagnostic inputs on Bazel 8
-        run: python3 -B .github/qualification/clang-tidy-direct/check.py
-      - name: Scan the only public output before upload
-        id: scan
-        if: always()
-        env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-          GH_TOKEN: ${{ github.token }}
+          BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           python3 - <<'PY'
-          import json, os
+          import hashlib,json,os,re,urllib.request
           from pathlib import Path
-          p=Path(os.environ['RUNNER_TEMP'])/'clang-tidy-direct.json'
-          data=p.read_bytes()
-          json.loads(data)
-          for key in ('BUILDBUDDY_API_KEY','GH_TOKEN'):
-              value=os.environ.get(key,'').encode()
-              if value and value in data: raise SystemExit('credential found in report')
-          if any(s in data for s in (b'ghs_',b'ghp_',b'github_pat_',b'x-buildbuddy-api-key=')): raise SystemExit('credential marker found')
+          class FixedOrigin(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self,*a): return None
+          req=urllib.request.build_opener(FixedOrigin)
+          rows={}
+          for uid in ("69c29805-5e55-4d0a-9a67-ebca72abf157","10a68c32-47d4-489a-b5ea-6b59535aaeb4","27ecc6ec-3262-44d6-b542-c64bf0489d33","17fbb658-c93c-4528-9822-fbc6d84a2b8e"):
+              text=""; token=""
+              for _ in range(4):
+                  selector=json.dumps({"selector":{"invocation_id":uid},"page_token":token}).encode()
+                  request=urllib.request.Request("https://app.buildbuddy.io/api/v1/GetLog",data=selector,headers={"x-buildbuddy-api-key":os.environ["BB_KEY"],"Content-Type":"application/json"})
+                  with req.open(request,timeout=25) as result: page=json.load(result)
+                  text+=page.get("log",{}).get("contents","")
+                  token=page.get("next_page_token",page.get("nextPageToken",""))
+                  if not token: break
+              log=re.sub(r"\x1b\[[0-9;?]*[a-zA-Z]","",text)
+              lines=log.splitlines()
+              projected=[]
+              for i,line in enumerate(lines):
+                  if not re.search(r"failed: \(Exit|permission denied|no such file|exec format|execve|denied|executable file|FailedPrecondition|rpc error|cannot execute|executable not found",line,re.I): continue
+                  for val in lines[i:i+7]:
+                      if len(val)>650 or re.search(r"token|authorization|api-key|remote_header|bes_header|gh[pous]_|github_pat_|://[^/ ]+@",val,re.I): continue
+                      if val and val not in projected: projected.append(val)
+              rows[uid]={"chars":len(text),"sha256":hashlib.sha256(text.encode()).hexdigest(),"partial":bool(token),"cause_excerpt":projected[:28]}
+          out=json.dumps(rows,indent=2).encode()
+          assert os.environ["BB_KEY"] and os.environ["BB_KEY"].encode() not in out
+          Path(os.environ["RUNNER_TEMP"],"original-prerequisites.json").write_bytes(out)
           PY
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: ${{ always() && steps.scan.outcome == 'success' }}
         with:
-          name: clang-tidy-direct
-          path: ${{ runner.temp }}/clang-tidy-direct.json
+          name: original-prerequisites
+          path: ${{ runner.temp }}/original-prerequisites.json
           if-no-files-found: error
