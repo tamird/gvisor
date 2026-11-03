@@ -5,7 +5,7 @@ automagically creating cc_ and go_ proto targets) and act as a single point of
 change for Google-internal and bazel-compatible rules.
 """
 
-load("//tools:arch.bzl", "arch_genrule", "arch_transition_impl")
+load("//tools:arch.bzl", "arch_genrule", "arch_transition_impl", "transition_allowlist")
 load("//tools/bazeldefs:cc.bzl", _cc_binary = "cc_binary", _cc_flags_supplier = "cc_flags_supplier", _cc_grpc_library = "cc_grpc_library", _cc_library = "cc_library", _cc_proto_library = "cc_proto_library", _cc_test = "cc_test", _cc_toolchain = "cc_toolchain", _gbenchmark = "gbenchmark", _gbenchmark_internal = "gbenchmark_internal", _grpcpp = "grpcpp", _gtest = "gtest", _select_gtest = "select_gtest")
 load("//tools/bazeldefs:defs.bzl", _BuildSettingInfo = "BuildSettingInfo", _bool_flag = "bool_flag", _bpf_program = "bpf_program", _build_test = "build_test", _bzl_library = "bzl_library", _coreutil = "coreutil", _default_net_util = "default_net_util", _expand_template = "expand_template", _more_shards = "more_shards", _most_shards = "most_shards", _proto_library = "proto_library", _select_arch = "select_arch", _select_system = "select_system", _short_path = "short_path", _string_flag = "string_flag", _target_emulator = "target_emulator", _target_emulators = "target_emulators", _version = "version")
 load("//tools/bazeldefs:go.bzl", _cov_available = "cov_available", _gazelle = "gazelle", _go_binary = "go_binary", _go_binary_nogo_dep = "go_binary_nogo_dep", _go_cov = "go_cov", _go_grpc_and_proto_libraries = "go_grpc_and_proto_libraries", _go_imports = "go_imports", _go_library = "go_library", _go_path = "go_path", _go_proto_library = "go_proto_library", _go_reset_target = "go_reset_target", _go_test = "go_test", _gotsan_flag_values = "gotsan_flag_values", _gotsan_values = "gotsan_values", _select_goarch = "select_goarch", _select_goos = "select_goos")
@@ -47,6 +47,42 @@ gbenchmark_internal = _gbenchmark_internal
 gtest = _gtest
 grpcpp = _grpcpp
 select_gtest = _select_gtest
+
+def _freestanding_options(_settings, _attr):
+    # Restore the allocator selected by the binary instead of a --custom_malloc
+    # override. A freestanding executable also supplies its own link options;
+    # a hosted feature or --linkopt can add a runtime even with -nostdlib.
+    return {
+        "//command_line_option:custom_malloc": None,
+        "//command_line_option:features": [],
+        "//command_line_option:linkopt": [],
+    }
+
+_freestanding_transition = transition(
+    implementation = _freestanding_options,
+    inputs = [],
+    outputs = [
+        "//command_line_option:custom_malloc",
+        "//command_line_option:features",
+        "//command_line_option:linkopt",
+    ],
+)
+
+def _freestanding_executable_impl(ctx):
+    [binary] = ctx.files.binary
+    ctx.actions.symlink(output = ctx.outputs.out, target_file = binary, is_executable = True)
+    return [DefaultInfo(executable = ctx.outputs.out)]
+
+freestanding_executable = rule(
+    doc = "Install a freestanding binary without linking a hosted runtime.",
+    implementation = _freestanding_executable_impl,
+    executable = True,
+    attrs = {
+        "binary": attr.label(allow_single_file = True, cfg = _freestanding_transition, mandatory = True),
+        "out": attr.output(mandatory = True),
+        "_allowlist_function_transition": attr.label(default = transition_allowlist),
+    },
+)
 
 # Go rules.
 cov_available = _cov_available
