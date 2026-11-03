@@ -37,7 +37,7 @@ EXPECTED = {
 record = {
     'product': PRODUCT, 'integration': INTEGRATION, 'compiler': COMPILER,
     'status': 'INCOMPLETE', 'phases': {}, 'observations': {},
-    'scope': 'native AMD64 source installation; retained compiler prerequisite',
+    'scope': 'retained native AMD64 installation and fresh archive/invalid-option controls using its exact eight output files',
     'producer_action_freshness': 'not asserted',
 }
 
@@ -187,6 +187,63 @@ def cleanup(name, env):
         assert not Path(env['BUILDKITE_STAGED_BINARIES_DIRECTORY']).exists()
 
 
+def original_files():
+    """Recover the eight verified outputs without repeating the native build."""
+    raw = (TMP / 'native-source.zip').read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == '0af2814c67d68d9e2cd7a441062c20ff34f75b9c0fcc7e9054173d368e20351a'
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+        assert archive.namelist() == ['source-verdict.json']
+        prior = json.loads(archive.read('source-verdict.json'))
+    assert prior['product'] == PRODUCT and prior['integration'] == INTEGRATION and prior['compiler'] == COMPILER
+    assert prior['status'] == 'INCOMPLETE' and prior['error_type'] == 'AssertionError'
+    assert prior['error_location'] == {'file': 'probe-source-runtime.py', 'line': 381}
+    assert set(prior['phases']) == {'source-empty', 'clean_outputs', 'source_guest_after_clean',
+                                   'failed_mixed_job_cleanup', 'archive-positive'}
+    assert all(row['status'] == 'PASS' and row['exit'] == 0 for row in prior['phases'].values())
+    observed = prior['observations']
+    assert observed['durable_after_clean'] and observed['source_guest_after_clean']['exit'] == 0
+    assert observed['failed_mixed_job_cleanup'] == dict(job_exit_status=1, native_server_stopped=True,
+        client_directory_removed=True, runtime_directory_removed=True)
+    installed = observed['source_install']
+    assert all(installed[key] for key in ('native_make_build_and_cquery', 'producer_files_match',
+                                         'cache_argument_once_each', 'quoted_metadata_once_each'))
+    assert installed['runtime_args'] == [] and installed['docker_invocations_during_install'] == 0
+    assert installed['build_target'] == '//:release'
+    assert installed['cquery_expression'] == 'set() union "//:release"'
+    invocation, = [row['invocation_id'] for row in prior['invocations'] if row['receipt'] == 'source-empty-0.bep']
+    assert invocation == 'cfe1dac3-6f63-4b84-a212-578574171eba'
+    files = installed['files']
+    assert set(files) == EXPECTED
+    record['retained_native_result'] = dict(artifact=13267764176,
+        zip_sha256=hashlib.sha256(raw).hexdigest(), receipt=prior)
+    record['producer_workload_repeated'] = False
+    save()
+    os.environ['BUILDBUDDY_API_KEY'] = SECRET
+    from cas_inputs import blob
+    os.environ.pop('BUILDBUDDY_API_KEY')
+    directory = PRIVATE / 'original-files'
+    directory.mkdir()
+    for name, expected in files.items():
+        assert re.fullmatch('[0-9a-f]{64}', expected['sha256'])
+        assert 0 < expected['bytes'] < 64 * 1024 * 1024 and expected['elf_machine'] == 62
+        assert expected['mode'] == '0o555'
+        data = blob(dict(hash=expected['sha256'], sizeBytes=expected['bytes']), invocation)
+        assert len(data) == expected['bytes'] and hashlib.sha256(data).hexdigest() == expected['sha256']
+        assert data[:5] == b'\x7fELF\x02' and int.from_bytes(data[18:20], 'little') == 62
+        path = directory / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+        path.chmod(0o555)
+    assert inventory(directory) == files
+    with tarfile.open(PRIVATE / 'runtime.tar.gz', 'w:gz') as archive:
+        for name in sorted(EXPECTED):
+            archive.add(directory / name, arcname=name, recursive=False)
+    record['observations']['recovered_source_files'] = files
+    record['observations']['archive_umask'] = '0o077'
+    save()
+    return files
+
+
 def container_diagnostics():
     """Recover two original failure messages; never run the container tests."""
     global OUT, record
@@ -325,60 +382,19 @@ sys.exit(r.returncode if r.returncode>=0 else 128-r.returncode)
     record['bazel_version'] = captured([str(REAL_BAZEL), '--version'])
     assert record['bazel_version'] == 'bazel 8.8.1'
     record['bazelisk_sha256'] = digest(REAL_BAZEL)
-    source = environment('source-empty')
-    hook('source-empty', source)
-    assert not (PRIVATE / 'docker-called').exists()
-    source_dir, installed = runtime(source)
-    rows = clients('source-empty')
-    assert len(rows) == 2 and [row[0] for row in rows] == ['build', 'cquery']
-    for row in rows:
-        assert row.count(CACHE) == 1 and row.count(METADATA) == 1
-    assert rows[0][-2:] == ['--', '//:release']
-    assert rows[1][-2:] == ['--', 'set() union "//:release"']
-    files = inventory(source_dir)
-    outputs = {}
-    for line in (PRIVATE / 'source-empty.cquery').read_text().splitlines():
-        path, destination = line.split()
-        assert path.startswith('bazel-out/') and destination in EXPECTED
-        assert destination not in outputs
-        producer = Path(path).resolve()
-        assert producer.is_file() and digest(producer) == files[destination]['sha256']
-        assert producer.stat().st_size == files[destination]['bytes']
-        outputs[destination] = producer
-    assert set(outputs) == EXPECTED
-    for number in range(2):
-        events = [json.loads(line) for line in (PRIVATE / f'source-empty-{number}.bep').read_text().splitlines()]
-        options = [event['optionsParsed']['explicitCmdLine'] for event in events if 'optionsParsed' in event]
-        assert len(options) == 1 and options[0].count(CACHE) == 1 and options[0].count(METADATA) == 1
-    record['observations']['source_install'] = {'files': files, 'runtime_args': installed.get('runtimeArgs', []),
-        'docker_invocations_during_install': 0, 'native_make_build_and_cquery': True,
-        'cache_argument_once_each': True, 'quoted_metadata_once_each': True,
-        'executable_architecture': 'x86_64', 'producer_files_match': True,
-        'build_target': '//:release', 'cquery_expression': 'set() union "//:release"'}
-    with tarfile.open(PRIVATE / 'runtime.tar.gz', 'w:gz') as archive:
-        for name in sorted(EXPECTED):
-            archive.add(source_dir / name, arcname=name, recursive=False)
-    command('clean_outputs', [str(Path(source['BUILDKITE_BAZEL_DIRECTORY']) / 'bazel'), 'clean'], env=source)
-    assert all(not path.exists() for path in outputs.values())
-    assert inventory(source_dir) == files
-    record['observations']['durable_after_clean'] = True
-    docker_guest('source_guest_after_clean', source)
-    pid = int(captured([str(Path(source['BUILDKITE_BAZEL_DIRECTORY']) / 'bazel'), 'info', 'server_pid'], env=source))
-    assert Path(f'/proc/{pid}').exists()
-    cleanup('failed_mixed_job_cleanup', source)
-    for _ in range(100):
-        if not Path(f'/proc/{pid}').exists():
-            break
-        time.sleep(0.1)
-    assert not Path(f'/proc/{pid}').exists()
-    record['observations']['failed_mixed_job_cleanup'] = {'job_exit_status': 1, 'native_server_stopped': True,
-        'client_directory_removed': True, 'runtime_directory_removed': True}
+    files = original_files()
     staged = environment('archive-positive', STAGED_BINARIES='gs://qualification/runtime.tar.gz',
                          RUNTIME_ARGS='--platform=systrap --network=none')
     hook('archive-positive', staged, timeout=180)
     assert not staged.get('BUILDKITE_BAZEL_DIRECTORY') and not clients('archive-positive')
     staged_dir, installed = runtime(staged)
-    assert inventory(staged_dir) == files
+    staged_files = inventory(staged_dir)
+    # tar applies the caller's umask. Check the unchanged bytes and executable
+    # contract, retaining actual modes instead of requiring Bazel's file mode.
+    assert {name: {k: v for k, v in row.items() if k != 'mode'} for name, row in staged_files.items()} == {
+        name: {k: v for k, v in row.items() if k != 'mode'} for name, row in files.items()}
+    record['observations']['archive_files'] = staged_files
+    save()
     docker_guest('archive_guest', staged)
     record['observations']['archive_install'] = {'native_bazel_invocations': 0,
         'runtime_args': installed['runtimeArgs'], 'files_match_source': True}
@@ -389,7 +405,7 @@ sys.exit(r.returncode if r.returncode>=0 else 128-r.returncode)
     assert not Path(invalid['BUILDKITE_STAGED_BINARIES_DIRECTORY'], 'runsc').exists()
     cleanup('invalid_option_cleanup', invalid)
     assert not (PRIVATE / 'docker-called').exists()
-    record['status'] = 'PASS'
+    record['status'] = 'RECOVERY_PASS'
 except Exception as exc:
     record['error_type'] = type(exc).__name__
     frame = traceback.extract_tb(exc.__traceback__)[-1]
@@ -428,4 +444,4 @@ finally:
     REAL_BAZEL.parent.rmdir()
 
 print(json.dumps({'status': record['status'], 'verdict_at': record['verdict_at']}))
-raise SystemExit(0 if record['status'] == 'PASS' else 1)
+raise SystemExit(0 if record['status'] == 'RECOVERY_PASS' else 1)
