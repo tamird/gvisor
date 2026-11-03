@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T18:20:41.879593+00:00",
+    "updatedAt": "2026-11-03T18:31:23.952068+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36638,8 +36638,8 @@
       "title": "Format stateify output in the generator",
       "url": "https://github.com/google/gvisor/pull/16710",
       "status": "open",
-      "summary": "Stateify emits the imports its generated code uses and formats the output with go/format. The separate goimports action and its launcher can be removed.",
-      "updatedAt": "2026-11-03T18:20:41.879593+00:00",
+      "summary": "A worker without /bin/sh cannot build //pkg/bpf:bpf_state_autogen. Stateify emits imports that its generated code might use, then Bazel runs goimports to remove the unused ones. The launcher uses the shell to put the declared Go executable on PATH (a35e9e804), so the action fails before goimports can read the file.",
+      "updatedAt": "2026-11-03T18:31:23.952068+00:00",
       "evidence": [
         {
           "label": "Seven identical production outputs and scratch qualification",
@@ -36708,6 +36708,14 @@
         {
           "label": "Original Nogo prerequisite failures",
           "url": "https://github.com/tamird/gvisor/actions/runs/41691859689/artifacts/13256054232"
+        },
+        {
+          "label": "Message-only revision (same approved source tree)",
+          "url": "https://github.com/tamird/gvisor/commit/4bbf4d718"
+        },
+        {
+          "label": "Six-target verification and Nogo SDK archive mismatch",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41693546638/artifacts/13260765532"
         }
       ],
       "settledReviews": [
@@ -36730,19 +36738,28 @@
           "head": "ea9eef3eb688b6b22b6567d68a0314f43005ed1a",
           "outcome": "changes-requested",
           "at": "2026-11-03T17:14:59.055459+00:00"
+        },
+        {
+          "kind": "amendment",
+          "head": "778375bc602d883faf89a2f5b7bdf4016804da10",
+          "outcome": "changes-requested",
+          "at": "2026-11-03T18:31:23.952068+00:00",
+          "url": "https://github.com/tamird/gvisor/commit/778375bc6"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
-        "observedAt": "2026-11-03T18:20:41.879593+00:00",
-        "disposition": "Contributor review requested",
-        "nextAction": "Qualify the six outstanding full targets. Publish the generator amendment after contributor review and verification.",
+        "observedAt": "2026-11-03T18:31:23.952068+00:00",
+        "disposition": "Code approved; revised change record ready",
+        "nextAction": "After message review and targeted qualification, publish and answer Lucas. Six full builds stopped in Nogo; two AMD64 analyses rejected cached SDK archives with extra packages. All 485 independent generator comparisons matched.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/778375bc6",
           "https://github.com/tamird/gvisor/actions/runs/41688337023/artifacts/13255863288",
           "https://github.com/tamird/gvisor/actions/runs/41691859689/artifacts/13256054232",
-          "https://github.com/google/gvisor/pull/16710#discussion_r4448555404"
+          "https://github.com/google/gvisor/pull/16710#discussion_r4448555404",
+          "https://github.com/tamird/gvisor/commit/4bbf4d718",
+          "https://github.com/tamird/gvisor/actions/runs/41693546638/artifacts/13260765532"
         ],
         "actionableComment": {
           "head": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
@@ -36754,21 +36771,21 @@
       "contributorReview": {
         "status": "pending",
         "kind": "amendment",
-        "head": "778375bc602d883faf89a2f5b7bdf4016804da10",
+        "head": "4bbf4d71809d8a03442d1ce149600c3b823b10e1",
         "baseHead": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
-        "url": "https://github.com/tamird/gvisor/commit/778375bc6",
-        "title": "Remove goimports from stateify generation",
-        "requestedAt": "2026-11-03T18:20:41.879593+00:00",
-        "summary": "Publish this amendment to #16710 after the remaining full-target checks pass?",
-        "body": "Stateify resolves conversion tags from the declared imports and input source files, including a package alias imported by a sibling save/load method. With the original source inputs, all 485 generated files matched the official Go export byte for byte. Full builds produced 480; the five others matched using the official precompiled seccomp inputs. All 16 cases of the sibling-hook test passed. The full builds of those five packages and one synthetic library stopped in the Nogo standard-library prerequisite. Their targeted check is separate from the generator result."
+        "url": "https://github.com/tamird/gvisor/commit/4bbf4d718",
+        "title": "Generate checkpoint methods without a host shell",
+        "requestedAt": "2026-11-03T18:31:23.952068+00:00",
+        "summary": "Review the rewritten commit message and PR description. The contributor approved the code.",
+        "body": "A worker without /bin/sh cannot build //pkg/bpf:bpf_state_autogen. Stateify emits imports that its generated code might use, then Bazel runs goimports to remove the unused ones. The launcher uses the shell to put the declared Go executable on PATH (a35e9e804), so the action fails before goimports can read the file.\n\nRecord the packages stateify references as it generates code, then format the file with go/format in the same action. Resolve names in conversion tags from the rule's imports and the input files. A tag can use a package alias imported only in the file that defines its save or load method."
       },
       "refinement": {
         "before": {
-          "head": "ea9eef3eb688b6b22b6567d68a0314f43005ed1a",
+          "head": "778375bc602d883faf89a2f5b7bdf4016804da10",
           "base": "471d6dff5229b99208bf6fec985601067f1f9d69"
         },
         "after": {
-          "head": "778375bc602d883faf89a2f5b7bdf4016804da10",
+          "head": "4bbf4d71809d8a03442d1ce149600c3b823b10e1",
           "base": "471d6dff5229b99208bf6fec985601067f1f9d69"
         }
       }
@@ -45574,13 +45591,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "checkpoint-page-read-error",
-      "head": "3adb1aa3b346842b1ac4bc6778c538828b0f12fb",
+      "head": "2d5231b4534aa645cdb759521e6d3842b3b0a9a0",
       "number": 16807,
       "title": "Release waiters and page references after a checkpoint read error",
       "url": "https://github.com/google/gvisor/pull/16807",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T18:16:18.353168+00:00",
+      "updatedAt": "2026-11-03T18:31:23.952068+00:00",
       "summary": "A short checkpoint read can strand a task in MapInternal after restore reports EIO. Unfinished background reads can also retain page references. The fix stops I/O, clears the in-flight markers, wakes queued waiters and drops the loader’s references. On the exact head, all 69 package cases and both Nogo targets passed. The initial race test did not build. On a GNU worker all 69 race cases passed with zero skips.",
       "evidence": [
         {
@@ -45626,19 +45643,15 @@
           "head": "3adb1aa3b346842b1ac4bc6778c538828b0f12fb",
           "outcome": "approved",
           "at": "2026-11-02T16:25:23.256481+00:00"
+        },
+        {
+          "kind": "amendment",
+          "head": "2d5231b4534aa645cdb759521e6d3842b3b0a9a0",
+          "outcome": "approved",
+          "at": "2026-11-03T18:31:23.952068+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16807"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "2d5231b4534aa645cdb759521e6d3842b3b0a9a0",
-        "baseHead": "3adb1aa3b346842b1ac4bc6778c538828b0f12fb",
-        "url": "https://github.com/tamird/gvisor/commit/2d5231b45",
-        "title": "Adapt the checkpoint read-error tests to the new memory-file helper",
-        "requestedAt": "2026-11-03T18:16:18.353168+00:00",
-        "summary": "Publish the rebased fix on #16807?",
-        "body": "The only amendment to the earlier patch passes an empty directory argument at two calls to the upstream test helper. Both still exercise the in-memory backing file. On this exact commit all 69 race-test cases and both owning analyzers passed, with zero skips. The combined job timed out later while checking separate PRs."
-      },
       "refinement": {
         "before": {
           "head": "3adb1aa3b346842b1ac4bc6778c538828b0f12fb",
@@ -45651,10 +45664,10 @@
       },
       "followup": {
         "owner": "root",
-        "sourceHead": "3adb1aa3b346842b1ac4bc6778c538828b0f12fb",
-        "observedAt": "2026-11-03T18:16:18.353168+00:00",
-        "disposition": "Contributor review requested",
-        "nextAction": "Publish the rebased checkpoint fix after contributor review.",
+        "sourceHead": "2d5231b4534aa645cdb759521e6d3842b3b0a9a0",
+        "observedAt": "2026-11-03T18:31:23.952068+00:00",
+        "disposition": "Approved amendment published",
+        "nextAction": "Follow upstream review and CI on the rebased head.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/2d5231b45",
           "https://github.com/tamird/gvisor/actions/runs/41677508668/artifacts/13256418500"
