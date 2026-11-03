@@ -998,6 +998,7 @@ func (e *Endpoint) Readiness(mask waiter.EventMask) waiter.EventMask {
 }
 
 // Purging pending rcv segments is only necessary on RST.
+// +checklocks:e.mu
 func (e *Endpoint) purgePendingRcvQueue() {
 	if e.rcv != nil {
 		for e.rcv.pendingRcvdSegments.Len() > 0 {

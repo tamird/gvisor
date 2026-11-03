@@ -45,6 +45,7 @@ type receiver struct {
 
 	// pendingRcvdSegments is bounded by the receive buffer size of the
 	// endpoint.
+	// +checklocks:ep.mu
 	pendingRcvdSegments segmentHeap
 
 	// Time when the last ack was received.
