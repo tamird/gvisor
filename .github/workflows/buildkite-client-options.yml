@@ -1,9 +1,10 @@
 name: Native Buildkite lifecycle benchmark entry points
 on:
   push:
-    branches: [qualification/buildkite-benchmarks-native-make]
+    branches: [qualification/buildkite-lifecycle-native-recover]
 permissions:
   contents: read
+  actions: read
 jobs:
   lifecycle:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
@@ -16,14 +17,14 @@ jobs:
       DOCKER_BUILD: "false"
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 2, persist-credentials: false}
+      with: {fetch-depth: 3, persist-credentials: false}
     - name: Select the published Buildkite source and prior native reporter
       run: |
         set -euo pipefail
         d="$RUNNER_TEMP/lifecycle"
         mkdir "$d"
         printf '{"status":"INCOMPLETE","stage":"source"}\n' > "$d/result.json"
-        test "$(git rev-parse HEAD^)" = "$PRODUCT"
+        test "$(git rev-parse HEAD~2)" = "$PRODUCT"
         cp .github/qualification/buildkite-lifecycle.py "$d/"
         git fetch -q --no-tags --depth=1 origin "$REPORTER" "$MASTER"
         for name in qualification_report unit_matrix; do git show "$REPORTER:test/rbe/$name.py" > "$d/$name.py"; done
@@ -32,8 +33,12 @@ jobs:
         test "$(git diff --name-only "$MASTER" HEAD | sort)" = "$(printf '%s\n' .buildkite/first-pass.yaml .buildkite/hooks/post-command .buildkite/hooks/pre-command .buildkite/pipeline.yaml tools/bazel.mk)"
         git diff --quiet "$MASTER" HEAD -- Makefile tools/parsers tools/bigquery pkg runsc shim sandboxexec
         test -z "$(git status --porcelain --untracked-files=no)"
-    - name: Verify original 94 measured rows and Buildkite parser counts
-      run: python3 -B "$RUNNER_TEMP/lifecycle/buildkite-lifecycle.py" originals
+    - name: Reuse the verified 94 original rows and seven offline parser replays
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh api repos/tamird/gvisor/actions/artifacts/13250084690/zip > "$RUNNER_TEMP/lifecycle/original.zip"
+        python3 -B "$RUNNER_TEMP/lifecycle/buildkite-lifecycle.py" originals
     - name: Provision Bazelisk using the native Buildkite hook
       run: |
         set -euo pipefail
@@ -47,7 +52,7 @@ jobs:
         sudo -n test -r /dev/kvm
         sudo -n test -w /dev/kvm
         test -r /proc/self/mountinfo
-    - name: Run four real Make commands and replay original parser inputs
+    - name: Retry only the four native Make samples
       id: native
       run: timeout --signal=INT --kill-after=30s 70m python3 -B "$RUNNER_TEMP/lifecycle/buildkite-lifecycle.py" native
     - name: Exercise the Buildkite successful-shutdown path
@@ -80,6 +85,9 @@ jobs:
         assert len(raw) < 160000
         assert json.loads(raw)['status'] in ('PASS', 'FAIL', 'INCOMPLETE')
         assert not re.search(rb'(?i)gh[pousr]_|github_pat_|x-buildbuddy-api-key|authorization[:=]|BEGIN [A-Z]+ PRIVATE KEY', raw)
+        for key, value in os.environ.items():
+            if value and re.search(r'(?i)(?:TOKEN|PASSWORD|API_KEY|SECRET)$', key):
+                assert value.encode() not in raw and json.dumps(value)[1:-1].encode() not in raw
         path.write_bytes(raw)
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always() && steps.scan.outcome == 'success'

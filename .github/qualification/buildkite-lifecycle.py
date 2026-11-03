@@ -10,6 +10,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import zipfile
 from urllib.request import urlopen
 
 from qualification_report import benchmark_rows
@@ -79,17 +80,45 @@ def inspect_inputs(suite, console, prefix, narrow):
 
 
 def originals():
-    DOC.update(product=os.environ['PRODUCT'], original_source=os.environ['MASTER'], buildkite_build=53366, originals={})
-    for suite, (job, digest, _, _) in JOBS.items():
-        with urlopen(BASE+job+'/log.json', timeout=25) as response:
-            raw = response.read(2*1024*1024+1)
-        require(len(raw) <= 2*1024*1024, 'oversized original')
-        data = json.loads(raw)
-        require(not data['truncated'] and sha256(data['output'].encode()).hexdigest() == digest, 'wrong original log')
-        body = html.unescape(re.sub('<[^>]+>', '', re.sub(r'<time\b[^>]*>.*?</time>', '', data['output'])))
-        DOC['originals'][suite] = dict(job=job, output_sha256=digest, completed=data['finished_at_from_agent'],
-                                      results=inspect_inputs(suite,body,'original',False))
-        save()
+    archive = TMP/'original.zip'
+    digest = sha256(archive.read_bytes()).hexdigest()
+    require(digest == 'adb608c2827633f219f015edd10d97f901036474e705b336814e4b7794609890', 'wrong original')
+    with zipfile.ZipFile(archive) as z:
+        prior = json.loads(z.read('result.json'))
+    require(prior['product'] == os.environ['PRODUCT'] and prior['original_source'] == os.environ['MASTER']
+            and prior['status'] == 'FAIL' and prior['cleanup'] == 'success' and prior['reason'] == 'native producer missing',
+            'wrong original result')
+    for suite, (job, digest0, _, _) in JOBS.items():
+        owner = prior['originals'][suite]
+        require(owner['job'] == job and owner['output_sha256'] == digest0, 'wrong original job')
+        for platform in platforms(suite):
+            names = expected(suite, platform)
+            measurement = owner['results'][platform]
+            replay = prior['replay'][suite+'/'+platform]
+            require(set(measurement['rows']) == names and measurement['parser_count'] == len(names)
+                    and measurement['iterations'] == 30 and replay['native_exit'] == 1 and replay['missing_adc']
+                    and replay['counts'] == [str(len(names))], 'wrong retained parser result')
+    DOC.update(product=prior['product'], original_source=prior['original_source'], originals=prior['originals'],
+               replay=prior['replay'], original=dict(artifact=13250084690, sha256=digest, status=prior['status'],
+               failed_native=prior['native'], parser_sha256=prior['parser_sha256']))
+    save()
+
+
+def error_lines(log):
+    # Only compiler / Make diagnostic lines from an anonymous workspace. Keep
+    # URLs, flags, environment assignments and quoted command lines private.
+    lines = []
+    for text in log.splitlines():
+        if len(text) > 2400 or re.search(r'(?i)token|credential|authoriz|secret|signature|api.key|password|--|/bin/(?:ba)?sh -c',text):
+            continue
+        if not re.search(r'(?i)^error:|error |error:|fatal:|failed to |no such file|not found|permission denied|cannot |command not found|make: \*\*\*|exec format|operation not permitted|^cp:|^xargs:', text):
+            continue
+        text = re.sub(r'(?i)(?:[a-z][a-z0-9+.-]*://|/home/runner/_work/_actions/)[^\s]+','[location]', text)
+        if len(text) <= 510 and text not in lines:
+            lines.append(text)
+        if len(lines) == 14:
+            break
+    return lines
 
 
 def native():
@@ -110,20 +139,21 @@ def native():
     # This wrapper records the actual build/query labels, then execs exactly
     # the auto-provisioned launcher from pre-command. No secrets in this job.
     wrapper('bazel', """#!/usr/bin/python3
-import json, os, sys
+import json, os, subprocess, sys
 from pathlib import Path
 args=sys.argv[1:]
-with (Path(os.environ['RUNNER_TEMP'])/'lifecycle'/'bazel-calls').open('a') as f:
-    f.write(json.dumps([args[0], args[-1], args.count('--remote_cache=grpcs://remote.buildbuddy.io'), args.count('--build_metadata=NATIVE_LIFECYCLE=Buildkite benchmark'), os.getuid()])+'\\n')
 p=os.environ['BUILDKITE_BAZEL_DIRECTORY']+'/bazel'
-os.execv(p,[p,*args])
+result=subprocess.run([p,*args])
+with (Path(os.environ['RUNNER_TEMP'])/'lifecycle'/'bazel-calls').open('a') as f:
+    f.write(json.dumps([args[0], args[-1], args.count('--remote_cache=grpcs://remote.buildbuddy.io'), args.count('--build_metadata=NATIVE_LIFECYCLE=Buildkite benchmark'), os.getuid(), result.returncode])+'\\n')
+raise SystemExit(result.returncode)
 """)
     wrapper('docker', '#!/bin/sh\ntouch "$RUNNER_TEMP/lifecycle/docker.called"\nexit 125\n')
     env = dict(os.environ, PATH=str(guards)+':'+os.environ['PATH'],
                GOOGLE_APPLICATION_CREDENTIALS=str(TMP/'deliberately-absent-adc.json'),
                GCE_METADATA_HOST='127.0.0.1:1', BAZEL_REMOTE_CACHE=CACHE, BAZEL_OPTIONS="'"+QUOTED+"'")
     require(not Path(env['GOOGLE_APPLICATION_CREDENTIALS']).exists(), 'unexpected Google credentials')
-    DOC.update(native={}, replay={}, docker_calls=None)
+    DOC.update(native={}, docker_calls=None, probes={n: bool(shutil.which(n)) for n in ('gcc','aarch64-linux-gnu-gcc','qemu-aarch64','objcopy','ld')})
     save()
     for step in selected:
         args=shlex.split(step['command'])
@@ -135,12 +165,20 @@ os.execv(p,[p,*args])
         # Keep the actual parser path. ADC discovery must fail before creating
         # a client; supply a non-production project as a second independent bound.
         args += ['BENCHMARKS_FILTER='+JOBS[suite][2], 'BENCHMARKS_PROJECT=local-qualification-only']
+        callfile=TMP/'bazel-calls'
+        previous=len(callfile.read_text().splitlines()) if callfile.exists() else 0
         with (TMP/f'native-{suite}.console').open('wb') as log:
             rc=subprocess.run(args,env=env|configured,stdout=log,stderr=subprocess.STDOUT).returncode
         log=(TMP/f'native-{suite}.console').read_text(errors='replace')
         row=DOC['native'][suite] = dict(make_exit=rc, input_count=len(INPUT.findall(log)), counts=COUNT.findall(log),
           stopped_at_missing_adc=log.count('failed to initialize client on project: local-qualification-only:'),
           diagnostics=[c for c,s in {'no_target':'no such target','compile':'compilepkg:', 'kvm':'failed to create KVM','permission':'permission denied','fetch':'Error downloading','stdlib':'GoStdlib','sandbox':'cannot create gofer','missing_file':'no such file'}.items() if s.lower() in log.lower()])
+        calls=[json.loads(line) for line in callfile.read_text().splitlines()[previous:]] if callfile.exists() else []
+        row['bazel_calls'] = calls
+        row['errors'] = error_lines(log)
+        row['console_sha256'] = sha256(log.encode()).hexdigest()
+        row['docker_called'] = (TMP/'docker.called').exists()
+        save()
         try:
             require(rc == 2 and row['stopped_at_missing_adc'] == len(platforms(suite))
                     and env['GOOGLE_APPLICATION_CREDENTIALS'] in log, 'wrong reporting boundary')
@@ -148,24 +186,13 @@ os.execv(p,[p,*args])
         except ValueError as e:
             row['error']=str(e)
         save()
-    path=subprocess.check_output([str(actual),'cquery','--output=files','//tools/parsers:parser'],text=True).strip()
-    parser=Path(path).resolve()
-    require(parser.is_file() and os.access(parser,os.X_OK), 'missing native parser')
-    DOC['parser_sha256']=sha256(parser.read_bytes()).hexdigest()
-    for suite in JOBS:
-        for platform in platforms(suite):
-            path=TMP/f'original-{suite}-{platform}.log'
-            cmd=['sudo','-n','unshare','--net','--','env','-i','GOOGLE_APPLICATION_CREDENTIALS='+env['GOOGLE_APPLICATION_CREDENTIALS'],str(parser),'parse','--debug','--project=local-qualification-only','--dataset=offline','--table=offline','--runtime='+platform,'--suite_name='+suite,'--file='+str(path)]
-            run=subprocess.run(cmd,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=30)
-            counts=COUNT.findall(run.stdout)
-            row=dict(native_exit=run.returncode, counts=counts, missing_adc='failed to initialize client on project: local-qualification-only:' in run.stdout and env['GOOGLE_APPLICATION_CREDENTIALS'] in run.stdout)
-            DOC['replay'][suite+'/'+platform]=row
-            save()
     calls=[json.loads(line) for line in (TMP/'bazel-calls').read_text().splitlines()]
     targets=[row[1] for row in calls if row[0]=='build']
     normalized=lambda s:s.lstrip('/')
+    DOC['observed_build_targets']=targets
+    save()
     require({normalized(target) for target in targets} >= {x[3] for x in JOBS.values()} | {'tools/parsers:parser', ':release'}, 'native producer missing')
-    require(all(a[0] in ('cquery','build') and a[2:4]==[1,1] and a[4]==os.getuid() for a in calls), 'wrong Make Bazel options/user')
+    require(all(a[0] in ('cquery','build') and a[2:4]==[1,1] and a[4]==os.getuid() and a[5]==0 for a in calls), 'wrong Make Bazel options/user')
     DOC['native_bazel']=dict(builds=targets, queries=sum(c[0]=='cquery' for c in calls),all_cache_and_quoted_options=True,caller_uid=os.getuid(),hook_command=str(actual.name))
     DOC['docker_calls']=int((TMP/'docker.called').exists())
     require(not DOC['docker_calls'] and set(DOC['native']) == set(JOBS), 'unexpected builder or suite')
