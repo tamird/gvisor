@@ -6,8 +6,9 @@ import json
 import os
 import re
 import shutil
+import sys
+import urllib.error
 import subprocess
-import tarfile
 import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
@@ -28,9 +29,13 @@ def now():
     return datetime.datetime.now(datetime.timezone.utc).isoformat()
 
 
+class GateError(ValueError):
+    """A fixed public validation diagnostic."""
+
+
 def require(condition, reason):
     if not condition:
-        raise ValueError(reason)
+        raise GateError(reason)
 
 
 def sha(data):
@@ -78,44 +83,65 @@ def add_rule(directory, load, rule):
     path.write_text(load + "\n" + path.read_text() + "\n" + rule + "\n")
 
 
-def product():
-    require(git("rev-parse", "HEAD") == PRODUCT and not git("diff", "--name-only", "HEAD"),
-            "unclean product or unexpected source")
-    targets = []
-    for directory, (name, _, _) in OWNERS.items():
-        add_rule(directory, 'load("@rules_pkg//pkg:pkg.bzl", _test_tar = "pkg_tar")', f"""
-_test_tar(
-    name = "private_guest_capsule",
-    testonly = True,
-    srcs = [":{name}"],
-    include_runfiles = True,
-    strip_prefix = "/",
-    allow_duplicates_with_different_content = False,
-)
-""")
-        targets.append(f"//{directory}:private_guest_capsule")
-    status, _ = bazel("product", "build", ["--strip=never"], targets)
-    require(status == 0, "product build failed")
-    require(set(git("diff", "--name-only", "HEAD").splitlines()) == {d + "/BUILD" for d in OWNERS},
-            "product source changed beyond capsule declarations")
-    report["payloads"] = {}
-    for directory, (name, sidecar, _) in OWNERS.items():
-        archive = Path("bazel-bin") / directory / "private_guest_capsule.tar"
-        target = TMP / (name + ".tar")
-        shutil.copyfile(archive, target)
-        with tarfile.open(target) as tar:
-            parts = {}
-            for basename in (name, sidecar):
-                found = {m.name: sha(content)
-                         for m in tar if Path(m.name).name == basename and (m.isfile() or m.islnk())
-                         if (content := tar.extractfile(m).read())
-                         and content[:6] == b"\x7fELF\x02\x01" and int.from_bytes(content[18:20], "little") == 183}
-                require(found and len(set(found.values())) == 1, "missing or conflicting ARM64 ELF: " + basename)
-                parts[basename] = found
-        report["payloads"][name] = dict(owner=f"//{directory}:{name}", sha256=sha(target.read_bytes()),
-                                        elfs=parts)
+def recover():
+    from cas_inputs import blob, fetch, rpc
+
+    # Recover outputs of the successful original build, without another build.
+    original = TMP / "original.zip"
+    require(sha(original.read_bytes()) == "99a944ccc9039c43175dd69067afc0f6699e4e3f1f978b41ed953fad4590b8c3",
+            "different original ZIP")
+    with zipfile.ZipFile(original) as z:
+        prior = json.loads(z.read("receipt.json"))
+    invocation = "1ce072c4-b169-40a4-b62b-23b52f86b647"
+    require(prior["carrier"] == "9c3aa589b0ef6195bd203d26ac730a8cc24c7f3d"
+            and prior["product_source"] == PRODUCT and prior["guest_source"] == GUEST
+            and prior["status"] == "INCOMPLETE" and prior["reason"].endswith("runsc/procumounter/private_guest_capsule.tar'")
+            and prior["product"]["exit"] == 0 and prior["product"]["invocations"] == [invocation],
+            "original build or guest failure differs")
+    report.update(product=prior["product"], payloads=prior["payloads"],
+                  original_artifact="13214038729", original_guest_failure=prior["reason"])
     save()
-    git("restore", "--", *(d + "/BUILD" for d in OWNERS))
+    for directory, (name, _, _) in OWNERS.items():
+        payload = report["payloads"][name]
+        require(payload["owner"] == f"//{directory}:{name}", "wrong source owner")
+        label = f"//{directory}:private_guest_capsule"
+        try:
+            target = rpc("GetTarget", {"invocationId": invocation, "targetLabel": label, "status": 0})
+        except urllib.error.HTTPError as exc:
+            payload["target_lookup_http"] = exc.code
+            target = {}
+        files = [f for group in target.get("targetGroups", []) for t in group.get("targets", [])
+                 if t.get("metadata", {}).get("label") == label for f in t.get("files", [])]
+        pattern = r"bytestream://[^/]+/(?:[^/]+/)*blobs/" + payload["sha256"] + r"/([1-9][0-9]*)"
+        def sizes(files):
+            found = set()
+            for f in files:
+                if not f.get("name", "").endswith("private_guest_capsule.tar"):
+                    continue
+                m = re.fullmatch(pattern, f.get("uri", ""))
+                if m:
+                    found.add(int(m.group(1)))
+                if f.get("digest", f.get("hash")) == payload["sha256"]:
+                    length = f.get("length", f.get("sizeBytes", f.get("size_bytes", 0)))
+                    if int(length) > 0:
+                        found.add(int(length))
+            return found
+        matches = sizes(files)
+        if not matches:
+            original_inv = json.loads(fetch("api/v1/GetInvocation", {
+                "selector": {"invocationId": invocation}, "includeArtifacts": True}))
+            row, = original_inv["invocation"]
+            require(row["id"].get("invocationId", row["id"].get("invocation_id")) == invocation,
+                    "wrong original artifact list")
+            matches = sizes(row.get("artifacts", []))
+        require(len(matches) == 1, "could not resolve original capsule size")
+        size, = matches
+        payload["size"] = size
+        save()
+        require(0 < size <= 64 * 1024 ** 2, "original capsule exceeds 64 MiB")
+        data = blob({"hash": payload["sha256"], "sizeBytes": str(size)}, invocation)
+        require(len(data) == size and sha(data) == payload["sha256"], "different original capsule bytes")
+        (TMP / (name + ".tar")).write_bytes(data)
 
 
 def guest():
@@ -131,6 +157,16 @@ def guest():
     launch.write_text(source.replace(old, "  printf 'export GO_TEST_RUN_FROM_BAZEL=1 GO_TEST_WRAP_TESTV=true\\n'\n" + old))
     targets = []
     for directory, (name, _, _) in OWNERS.items():
+        # This donor predates the procumounter package. Supply only its real
+        # executable path to the test rule, which runs the archived binary.
+        # Any attempt to build a donor substitute fails deliberately.
+        if directory == "runsc/procumounter":
+            path, = (p for p in report["payloads"][name]["elfs"][name] if ".runfiles/" not in p)
+            relative = Path(path).relative_to(directory).as_posix()
+            require(relative == "procumounter_test_/procumounter_test", "unexpected original payload path")
+            Path(directory).mkdir()
+            (Path(directory) / "BUILD").write_text(
+                f'genrule(name = "{name}", outs = ["{relative}"], executable = True, cmd = "false")\n')
         capsule = Path(directory) / "private_guest_capsule.tar"
         shutil.copyfile(TMP / (name + ".tar"), capsule)
         require(sha(capsule.read_bytes()) == report["payloads"][name]["sha256"], "capsule substitution")
@@ -190,14 +226,24 @@ arm64_tcg_test(
 OUT.mkdir(exist_ok=True)
 report = dict(status="INCOMPLETE", carrier=os.environ["GITHUB_SHA"], product_source=PRODUCT,
               guest_source=GUEST, prior_host_run="41589548481", started=now())
-save()
 try:
-    product()
-    guest()
-    report["status"] = "PASS"
+    if sys.argv[1:] == ["recover"]:
+        save()
+        recover()
+    else:
+        require(sys.argv[1:] == ["guest"], "unexpected phase")
+        data = json.loads((OUT / "receipt.json").read_text())
+        require(data["carrier"] == report["carrier"] and data["original_artifact"] == "13214038729",
+                "wrong recovery receipt")
+        report.update(data)
+        guest()
+        report["status"] = "PASS"
 except Exception as exc:
-    report["reason"] = str(exc)[:500]
-    raise
+    report["reason"] = str(exc) if isinstance(exc, GateError) else type(exc).__name__
+    if isinstance(exc, urllib.error.HTTPError):
+        report["http_status"] = exc.code
+    print(report["reason"])
+    raise SystemExit(1) from None
 finally:
     report["verified_at"] = now()
     save()

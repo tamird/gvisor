@@ -4,6 +4,7 @@ on:
     branches: [qualification/arm64-unit-private-guest]
 permissions:
   contents: read
+  actions: read
 jobs:
   guest:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.run_attempt == 1
@@ -16,47 +17,43 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 2
+          fetch-depth: 3
           persist-credentials: false
       - name: Bind the two existing source trees and install their pinned Bazel
         run: |
-          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD^)" = 9c3aa589b0ef6195bd203d26ac730a8cc24c7f3d
+          test "$(git rev-parse HEAD^^)" = "$PRODUCT"
           test "$(uname -m)" = aarch64
           git diff --name-only "$PRODUCT" HEAD > "$RUNNER_TEMP/carrier-files"
           diff -u <(printf '%s\n' .github/qualification/arm64-unit-private-guest.py .github/workflows/build.yml) "$RUNNER_TEMP/carrier-files"
           cp .github/qualification/arm64-unit-private-guest.py "$RUNNER_TEMP/"
           git fetch --quiet --depth=1 origin "$GUEST"
+          git fetch --quiet --depth=1 origin 93de62e8d3573407bfc1ded722a0a73d80cabedc
+          git show 93de62e8d3573407bfc1ded722a0a73d80cabedc:test/rbe/plugin_programs/cas_inputs.py > "$RUNNER_TEMP/cas_inputs.py"
           git checkout --quiet --detach "$PRODUCT"
           sed -n '/^install_.*bazel() {$/,$p' .buildkite/hooks/pre-command > "$RUNNER_TEMP/unit-setup.bash"
           source "$RUNNER_TEMP/unit-setup.bash"
           test "$(bazel --version)" = "bazel 8.8.1"
           echo "$BUILDKITE_BAZEL_DIRECTORY" >> "$GITHUB_PATH"
-      - name: Configure ARM64 product builds and the existing multiarch guest executor
+      - name: Read the original paired capsule manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api repos/tamird/gvisor/actions/artifacts/13214038729/zip > "$RUNNER_TEMP/original.zip"
+      - name: Recover only the original capsule bytes and the existing executor configuration
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -eu
           test -n "$BUILDBUDDY_API_KEY"
           umask 077
-          for name in product guest; do
-            rc="$RUNNER_TEMP/$name.bazelrc"
-            base=build
-            if [[ $name = guest ]]; then base=build:buildbuddy_remote_executor; fi
-            for option in remote_cache remote_executor bes_backend; do echo "$base --$option=grpcs://remote.buildbuddy.io"; done > "$rc"
-            echo "$base --bes_results_url=https://app.buildbuddy.io/invocation/" >> "$rc"
-            for option in remote_header bes_header; do echo "$base --$option=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY"; done >> "$rc"
-          done
-          cat >> "$RUNNER_TEMP/product.bazelrc" <<'EOF'
-          build --remote_default_exec_properties=OSFamily=linux
-          build --remote_default_exec_properties=Arch=arm64
-          build --remote_default_exec_properties=workload-isolation-type=oci
-          build --remote_default_exec_properties=container-image=docker://docker.io/library/buildpack-deps@sha256:496160b38def7107f238785d58e3762c72341dd83533d54c1d1b84c3a6fbcad2
-          build --spawn_strategy=sandboxed,local
-          build --strategy=GoCompilePkg=remote,local
-          build --remote_local_fallback
-          EOF
-      - name: Build original ARM64 payloads and run only those owners in private guests
-        run: python3 "$RUNNER_TEMP/arm64-unit-private-guest.py"
+          rc="$RUNNER_TEMP/guest.bazelrc"
+          base=build:buildbuddy_remote_executor
+          for option in remote_cache remote_executor bes_backend; do echo "$base --$option=grpcs://remote.buildbuddy.io"; done > "$rc"
+          echo "$base --bes_results_url=https://app.buildbuddy.io/invocation/" >> "$rc"
+          for option in remote_header bes_header; do echo "$base --$option=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY"; done >> "$rc"
+          python3 "$RUNNER_TEMP/arm64-unit-private-guest.py" recover
+      - name: Run only the two previously unexecuted private guests
+        run: python3 "$RUNNER_TEMP/arm64-unit-private-guest.py" guest
       - name: Check the small publication allowlist
         id: safe
         if: always()
