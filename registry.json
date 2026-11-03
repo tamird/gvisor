@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T04:32:11.975385+00:00",
+    "updatedAt": "2026-11-03T05:15:56.968656+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36761,13 +36761,13 @@
       "id": "branch:declared-staged-release-check",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/declared-staged-release-check",
-      "head": "a5627c7311e6acaed4179f3ebd6a0694661336d9",
+      "ref": "review/staged-check-make",
+      "head": "8a6244298d8858f8984ab18b58532a0a64d3053b",
       "title": "Check release staging without building runsc",
-      "url": "https://github.com/tamird/gvisor/commit/a5627c731",
+      "url": "https://github.com/tamird/gvisor/commit/8a6244298",
       "group": "release",
       "status": "Agent work",
-      "summary": "The staged-release Make target calls Bazel directly, bypassing the agent’s cache arguments. Buildkite verifies the staged release outputs directly. The checker has no configured runsc or Sentry dependencies; all eight actual archive payloads and metadata matched for both compression formats.",
+      "summary": "The staged-release checker now receives the agent cache and quoted options through Make. The unchanged input was accepted; missing, corrupt and truncated data and a failed download produced the expected failures. Empty input remains a no-op. Earlier checks matched all eight archive payloads and metadata in both compression formats. The checker has no configured runsc or Sentry dependencies; this comparison did not rebuild archives.",
       "evidence": [
         {
           "label": "Native checker, negative tests and configured dependencies",
@@ -36788,18 +36788,30 @@
         {
           "label": "Buildkite agent injects remote-cache options before repository hooks",
           "url": "https://buildkite.com/gvisor/pipeline/builds/53249"
+        },
+        {
+          "label": "Revised Make entry",
+          "url": "https://github.com/tamird/gvisor/commit/8a6244298"
+        },
+        {
+          "label": "Original package/staged comparison, including its failed action-set assertion",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41579868653/artifacts/13205600447"
+        },
+        {
+          "label": "Verified command forwarding, configured owners and staged-checker results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41580886089/artifacts/13205442287"
         }
       ],
-      "updatedAt": "2026-11-03T04:16:24.163353+00:00",
+      "updatedAt": "2026-11-03T05:15:56.968656+00:00",
       "followup": {
         "owner": "Workstream owner",
-        "sourceHead": "a5627c7311e6acaed4179f3ebd6a0694661336d9",
-        "observedAt": "2026-11-03T04:16:24.163353+00:00",
-        "disposition": "Needs cache-routing correction",
-        "nextAction": "Correct the Make helper itself and verify its staged output and agent-supplied options.",
+        "sourceHead": "8a6244298d8858f8984ab18b58532a0a64d3053b",
+        "observedAt": "2026-11-03T05:15:56.968656+00:00",
+        "disposition": "Cache forwarding and failure handling verified",
+        "nextAction": "Deliver after the shared native bootstrap and existing staged-release producers. Preserve the earlier archive evidence; no new archive build was requested.",
         "evidence": [
-          "https://buildkite.com/gvisor/pipeline/builds/53249",
-          "https://github.com/tamird/gvisor/commit/75c04f42d"
+          "https://github.com/tamird/gvisor/actions/runs/41580886089/artifacts/13205442287",
+          "https://github.com/tamird/gvisor/commit/8a6244298"
         ]
       }
     },
@@ -38540,8 +38552,8 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
-      "summary": "Both restores on 5068ecb10 ran at a 200 MiB kernel limit. Starting at 200 MiB selected a 99.93 MiB Go limit and succeeded. Shrinking from 2 GiB selected 1,023 MiB and the kernel OOM-killed the Sentry. The review also identifies the cgroup directory reads in the fixture. The ancestor limit at boot is a separate finding. On a 4-vCPU worker with a 2 GiB limit, the proposed GC policy reduced median save time from 2.011 s to 1.817 s and increased peak sampled Sentry RSS during save through exit from 630.9 MiB to 735.4 MiB. The earlier #16152 policy took 1.968 s and used 650.1 MiB. The comparison used 12 balanced triplets. All 39 archives, including three warmups, restored all 100,000 files.",
+      "updatedAt": "2026-11-03T05:15:56.968656+00:00",
+      "summary": "At a48b7a12c the checkpoint and restore RPCs read the current cgroup limit before suspending GC. The test stats memory.max and memory.swap.max and reads memory.events. The boot path still needs #16767 to respect a tighter ancestor. On the earlier 5068ecb10, resizing from 2 GiB to 200 MiB left Go with a 1,023 MiB limit and Linux killed the Sentry. The performance figures also belong to 5068ecb10: over 12 balanced triplets at 2 GiB/4 vCPUs, median save time fell from 2.011 s to 1.817 s and peak sampled Sentry RSS rose from 630.9 MiB to 735.4 MiB. In the same comparison #16152 took 1.968 s and used 650.1 MiB. All 39 archives restored the 100,000 files. No new pressure or performance run is recorded for a48b7a12c.",
       "evidence": [
         {
           "label": "Matched save time and sampled memory for all three GC policies",
@@ -38588,11 +38600,11 @@
           "url": "https://github.com/google/gvisor/blob/874db9fce/runsc/container/container_save_restore_test.go#L2940"
         },
         {
-          "label": "Latest revision changes only the GC ownership comment",
+          "label": "GC ownership comment at 7eccf7436",
           "url": "https://github.com/google/gvisor/compare/dba98301b...7eccf7436"
         },
         {
-          "label": "Actual Go memory limits on the current PR and with #16767",
+          "label": "Earlier boot-time Go limits with and without #16767",
           "url": "https://github.com/tamird/gvisor/actions/runs/41139612961/artifacts/13018007034"
         },
         {
@@ -38630,9 +38642,13 @@
         {
           "label": "Posted review",
           "url": "https://github.com/google/gvisor/pull/16735#discussion_r4444409895"
+        },
+        {
+          "label": "Checkpoint and restore RPCs and updated cgroup fixture",
+          "url": "https://github.com/google/gvisor/commit/a48b7a12c"
         }
       ],
-      "head": "5068ecb10e0ca383cc00791cc4a655b7a90a626f",
+      "head": "a48b7a12cb3bd615c48f9b36d353c02a6463a929",
       "settledReviews": [
         {
           "kind": "review",
@@ -41482,14 +41498,14 @@
       "id": "branch:buildkite-native-packages",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "proposal/buildkite-native-packages",
-      "head": "d30816db365b44801393af8fe721795897ab5a65",
+      "ref": "review/buildkite-pkg-make",
+      "head": "bcec52ddaaddedf04de03988486d72647187e309",
       "title": "Build pkg and runsc directly with Bazel on Buildkite",
-      "url": "https://github.com/tamird/gvisor/commit/d30816db3",
+      "url": "https://github.com/tamird/gvisor/commit/bcec52dda",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-03T04:16:24.163353+00:00",
-      "summary": "Six direct Bazel compile commands bypass the agent’s cache arguments. Build //pkg/... and //runsc/... with Bazelisk on the Buildkite agent, passing each job’s architecture and excluding the network plugin only for runsc. The two architecture-specific pkg wildcards built 1,948 and 1,946 targets; the two runsc wildcards built 389 each after composing the cgroup, coverage and musl prerequisites.",
+      "updatedAt": "2026-11-03T05:15:56.968656+00:00",
+      "summary": "The pkg and runsc jobs use the existing Make build entry, which forwards the agent cache and quoted options to Bazel. On 9ae6638ae the old and revised build commands selected exactly the same configured labels and IDs on AMD64 and ARM64: 1,951 pkg and 391 runsc per architecture. Earlier composed builds produced 1,948 and 1,946 pkg targets and 389 runsc targets on each architecture, excluding the plugin for runsc. No packages or runsc binaries were rebuilt in the command comparison. The original action query retained the earlier keys and found additional instances without configuration IDs; complete producer-action identity is unverified.",
       "evidence": [
         {
           "label": "Two passing pkg builds and the blocked runsc builds",
@@ -41526,17 +41542,29 @@
         {
           "label": "Buildkite agent injects remote-cache options before repository hooks",
           "url": "https://buildkite.com/gvisor/pipeline/builds/53249"
+        },
+        {
+          "label": "Revised Make entry",
+          "url": "https://github.com/tamird/gvisor/commit/bcec52dda"
+        },
+        {
+          "label": "Original package/staged comparison, including its failed action-set assertion",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41579868653/artifacts/13205600447"
+        },
+        {
+          "label": "Verified command forwarding, configured owners and staged-checker results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41580886089/artifacts/13205442287"
         }
       ],
       "followup": {
         "owner": "Workstream owner",
-        "sourceHead": "d30816db365b44801393af8fe721795897ab5a65",
-        "observedAt": "2026-11-03T04:16:24.163353+00:00",
-        "disposition": "Needs cache-routing correction",
-        "nextAction": "Preserve the job’s compile scope and route the agent cache arguments into all six commands.",
+        "sourceHead": "bcec52ddaaddedf04de03988486d72647187e309",
+        "observedAt": "2026-11-03T05:15:56.968656+00:00",
+        "disposition": "Cache forwarding verified; producer prerequisites remain",
+        "nextAction": "Deliver after the listed native bootstrap, compiler and package prerequisites. The scoped command check does not establish complete producer action identity or fresh package builds.",
         "evidence": [
-          "https://buildkite.com/gvisor/pipeline/builds/53249",
-          "https://github.com/tamird/gvisor/commit/75c04f42d"
+          "https://github.com/tamird/gvisor/actions/runs/41580886089/artifacts/13205442287",
+          "https://github.com/tamird/gvisor/commit/bcec52dda"
         ]
       }
     },
@@ -44702,9 +44730,9 @@
       "title": "Build gVisor with Bazel 9.3.1",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-02T14:59:52.193384+00:00",
+      "updatedAt": "2026-11-03T05:15:56.968656+00:00",
       "url": "https://github.com/google/gvisor/pull/16801",
-      "summary": "Upgrade the shared Bazel pin to 9.3.1. Two compatibility patches keep gVisor’s existing Coral compiler and LLVM parser. The upgrade includes the directory-watch fix needed by the lint migration.",
+      "summary": "Bazel 9.3.1 includes the directory-watch fix for the lint migration; two patches keep the existing Coral compiler and LLVM parser. The approved head is 8c224f822. Its imports failed when Bazel removed the native cc_library rule and changed dependency include directories to -I. The proposed amendment corrects both in #16801; no separate plugin PR is needed.",
       "evidence": [
         {
           "label": "Published Bazel 9.3.1 upgrade",
@@ -44749,8 +44777,65 @@
         {
           "label": "The same downstream waiter target on Bazel 8.8.1 and 9.3.1, and with root-owned Gazelle overrides",
           "url": "https://github.com/tamird/gvisor/actions/runs/41398089026/artifacts/13120208022"
+        },
+        {
+          "label": "Previous Copybara import: removed cc_library at the plugin overlay",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53288#01a19df0-eca5-40c0-ac0f-8cbfa0e9af04"
+        },
+        {
+          "label": "Latest Copybara import: removed cc_library at the plugin overlay",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53342#01a19f19-fcfd-410b-b076-99dfc7736b26"
+        },
+        {
+          "label": "Both target compilers: syscall binaries and first-party warning control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41580834566/artifacts/13206151106"
+        },
+        {
+          "label": "Stock plugin failure and corrected runtime/sidecar links on the import",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41580322219/artifacts/13205762110"
+        },
+        {
+          "label": "Actual AMD64 plugin binary and sidecar links on the combined amendment",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41581711656/artifacts/13205624762"
+        },
+        {
+          "label": "Proposed amendment",
+          "url": "https://github.com/tamird/gvisor/commit/514a1ce4f"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "514a1ce4f7dfeca8077048be5d1f321f72a7e2bd",
+        "baseHead": "8c224f822451f7e0c4ac7047b3f005e69097f4e5",
+        "title": "Build gVisor with Bazel 9.3.1",
+        "url": "https://github.com/tamird/gvisor/commit/514a1ce4f",
+        "requestedAt": "2026-11-03T05:15:56.968656+00:00",
+        "summary": "Publish the amendment to #16801 and request reapproval? It loads the network plugin’s C++ rule and restores -isystem for dependency include directories. The AMD64 plugin binaries link on the exact amendment. Both syscall test binaries build with each target compiler; an injected warning in gVisor source still fails.\n\ngit -C ~/code/gvisor range-diff 8c224f822^! 514a1ce4f^!",
+        "body": "Bazel 9.3.1 includes the fix for invalidating a repository rule when a\nwatched directory is removed and recreated. Select that release for\nBazelisk and the gVisor builder. [1][2]\n\nIf a Make builder is already running for this checkout, run\n`make bazel-shutdown` once so the next Make invocation starts the\nversion-pinned builder image.\n\nBazel 9 removed implicit C++ and shell rules and providers used by two\npinned dependencies. Load them explicitly in the Coral toolchain\ntemplates. Coral's crosstool is archived, so carry the patch locally\nuntil hermetic-llvm replaces it. Load cc_library explicitly in the\nnetwork plugin BUILD file as well.\n\nBackport the corresponding LLVM loads for protobuf, shell rules, CcInfo\nand zlib so the NVIDIA driver parser keeps its existing Clang API.\n[3][4][5][6]\n\nBazel 9 also passes directories from cc_library.includes with -I.\nUse -isystem for those directories so warnings in GoogleTest headers\ndo not fail syscall builds under -Werror. [7]\n\n[1]: https://github.com/bazelbuild/bazel/releases/tag/9.3.1\n[2]: https://github.com/bazelbuild/bazel/commit/923188d6f\n[3]: https://github.com/llvm/llvm-project/commit/930066f6e\n[4]: https://github.com/llvm/llvm-project/commit/f645d209d\n[5]: https://github.com/llvm/llvm-project/commit/fb4450c45\n[6]: https://github.com/llvm/llvm-project/commit/9626c90c3\n[7]: https://github.com/bazelbuild/rules_cc/commit/c809f4418"
+      },
+      "refinement": {
+        "before": {
+          "base": "aa767e4c43d011121271551fe24da501a56f729d",
+          "head": "8c224f822451f7e0c4ac7047b3f005e69097f4e5"
+        },
+        "after": {
+          "base": "aa767e4c43d011121271551fe24da501a56f729d",
+          "head": "514a1ce4f7dfeca8077048be5d1f321f72a7e2bd"
+        }
+      },
+      "followup": {
+        "owner": "Workstream owner",
+        "sourceHead": "8c224f822451f7e0c4ac7047b3f005e69097f4e5",
+        "observedAt": "2026-11-03T05:15:56.968656+00:00",
+        "disposition": "Qualified amendment awaiting contributor review",
+        "nextAction": "Publish the amendment to #16801 and request reapproval? It loads the network plugin’s C++ rule and restores -isystem for dependency include directories. The AMD64 plugin binaries link on the exact amendment. Both syscall test binaries build with each target compiler; an injected warning in gVisor source still fails.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41581711656/artifacts/13205624762",
+          "https://github.com/tamird/gvisor/actions/runs/41580834566/artifacts/13206151106",
+          "https://github.com/tamird/gvisor/actions/runs/41580322219/artifacts/13205762110"
+        ]
+      }
     },
     {
       "id": "pr:16802",
@@ -50308,6 +50393,16 @@
       "type": "depends_on",
       "reason": "The native source-lint job uses the shared Bazelisk launcher and Make environment override.",
       "evidence": "https://github.com/tamird/gvisor/commit/75c04f42d"
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:16767",
+      "to": "pr:16735",
+      "reason": "Boot-time GC suspension relies on the effective cgroup limit. The shared reader in #16767 accounts for a tighter ancestor.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16735#discussion_r4444409895",
+        "https://github.com/google/gvisor/pull/16767"
+      ]
     }
   ],
   "investigations": [
