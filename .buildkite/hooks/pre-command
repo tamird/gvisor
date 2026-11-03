@@ -87,24 +87,48 @@ else
   export DOCKER_RELOAD_COMMAND='sudo systemctl reload docker'
 fi
 
+# The job and its post-command cleanup must use the same Bazel server.
+install_bazelisk() {
+  local dir="$1" bazelisk
+  if bazelisk="$(command -v bazelisk)"; then
+    ln -s -- "$bazelisk" "$dir/bazel"
+  else
+    GOBIN="$dir" go install github.com/bazelbuild/bazelisk@v1.30.0 &&
+      mv -- "$dir/bazelisk" "$dir/bazel"
+  fi
+}
+
+if [[ "${DOCKER_BUILD:-}" == false ||
+      ( "${BUILDKITE_PIPELINE_INSTALL_RUNTIME:-}" == true && -z "${STAGED_BINARIES:-}" ) ]]; then
+  BUILDKITE_BAZEL_DIRECTORY="$(mktemp -d)"
+  if ! install_bazelisk "$BUILDKITE_BAZEL_DIRECTORY"; then
+    rm -f -- "$BUILDKITE_BAZEL_DIRECTORY"/{bazel,bazelisk}
+    rmdir -- "$BUILDKITE_BAZEL_DIRECTORY"
+    exit 1
+  fi
+  export BUILDKITE_BAZEL_DIRECTORY
+  export PATH="$BUILDKITE_BAZEL_DIRECTORY:$PATH"
+  unset USE_BAZEL_VERSION
+  export USE_BAZEL_FALLBACK_VERSION=error:
+fi
+
 if [[ "${BUILDKITE_PIPELINE_INSTALL_RUNTIME:-}" == "true" ]]; then
   # Ensure Docker has experimental enabled, install runtimes.
   echo 'Current Docker daemon configuration:' >&2
   cat /etc/docker/daemon.json >&2
   HAD_EXPERIMENTAL="$(cat /etc/docker/daemon.json | jq '.experimental')"
+  export BUILDKITE_STAGED_BINARIES_DIRECTORY="$(mktemp -d)"
   if [[ -n "${STAGED_BINARIES:-}" ]]; then
-    # Used `runsc` from STAGED_BINARIES instead of building it from scratch.
-    export BUILDKITE_STAGED_BINARIES_DIRECTORY="$(mktemp -d)"
     gcloud storage cat "$STAGED_BINARIES" \
       | tar -C "$BUILDKITE_STAGED_BINARIES_DIRECTORY" -zxvf -
     chmod -R +x "$BUILDKITE_STAGED_BINARIES_DIRECTORY"
-    sudo "$BUILDKITE_STAGED_BINARIES_DIRECTORY/runsc" install \
-      --experimental=true --runtime="${RUNTIME}" \
-      -- "${RUNTIME_ARGS:-}"
   else
-    make sudo TARGETS=//runsc:runsc \
-      ARGS="install --experimental=true --runtime=${RUNTIME} -- ${RUNTIME_ARGS:-}"
+    make copy DOCKER_BUILD=false TARGETS=//:release \
+      DESTINATION="$BUILDKITE_STAGED_BINARIES_DIRECTORY"
   fi
+  read -r -a runtime_args <<< "${RUNTIME_ARGS:-}"
+  sudo "$BUILDKITE_STAGED_BINARIES_DIRECTORY/runsc" install \
+    --experimental=true --runtime="${RUNTIME}" -- "${runtime_args[@]}"
   if [[ "$HAD_EXPERIMENTAL" != true ]]; then
     # WARNING: We may be running in a container when this command executes.
     # This only makes sense if Docker's `live-restore` feature is enabled.

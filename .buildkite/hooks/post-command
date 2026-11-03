@@ -134,3 +134,14 @@ fi
 if [[ -n "${BUILDKITE_STAGED_BINARIES_DIRECTORY:-}" ]]; then
   rm -rf "$BUILDKITE_STAGED_BINARIES_DIRECTORY" || true
 fi
+
+if [[ -n "${BUILDKITE_BAZEL_DIRECTORY:-}" ]]; then
+  # Source runtime installation can use native Bazel even when the job uses Docker.
+  shutdown_status=0
+  bazel shutdown || shutdown_status=$?
+  rm -f -- "$BUILDKITE_BAZEL_DIRECTORY/bazel"
+  rmdir -- "$BUILDKITE_BAZEL_DIRECTORY"
+  if [[ "$shutdown_status" != 0 ]]; then
+    exit "$shutdown_status"
+  fi
+fi
