@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T04:16:24.163353+00:00",
+    "updatedAt": "2026-11-03T04:32:11.975385+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38878,31 +38878,33 @@
       "id": "branch:declared-jekyll-site",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/declared-jekyll-site",
-      "head": "757a452f9265d02a963203d1ccf7704e7d1ebc57",
+      "ref": "revision/website-native-make",
+      "head": "c75bc99990a381cd8cb8c428a1997d9ee98fa7c7",
       "title": "Render the gVisor website without its Jekyll builder",
       "group": "bazel",
       "status": "Agent work",
-      "url": "https://github.com/tamird/gvisor/tree/research/declared-jekyll-site",
-      "updatedAt": "2026-11-03T04:16:24.163353+00:00",
-      "summary": "The proposed site job invokes Bazel without the agent’s cache arguments. The released rules_img 0.3.24 builds and serves the site without the Jekyll builder. All 278 public paths matched the stock inventory. Of those, 276 matched byte for byte; only the order of 84 sitemap records and CSS tar header ownership and timestamps differed. The image retained the logo hard link, and all five HTTP responses matched stock. The canonical license audit verified 226 entries.",
+      "url": "https://github.com/tamird/gvisor/commit/c75bc9999",
+      "updatedAt": "2026-11-03T04:32:11.975385+00:00",
+      "summary": "The native website job builds the same image through Make. The cache and quoted options reached both Bazel commands; no Docker call occurred. The five image-producing action keys matched the direct build. Make added one cquery (2.39 seconds, two output paths). The earlier render, HTTP responses and 226-entry license audit still apply; this client check did not execute a fresh render.",
       "followup": {
         "owner": "Workstream owner",
-        "sourceHead": "757a452f9265d02a963203d1ccf7704e7d1ebc57",
-        "observedAt": "2026-11-03T04:16:24.163353+00:00",
-        "disposition": "Needs cache-routing correction",
-        "nextAction": "Keep checking the released rules_img dependency; qualify the corrected website job with the agent cache arguments.",
+        "sourceHead": "c75bc99990a381cd8cb8c428a1997d9ee98fa7c7",
+        "observedAt": "2026-11-03T04:32:11.975385+00:00",
+        "disposition": "Cache verified; GNU worker and shared bootstrap still pending",
+        "nextAction": "Identify the Buildkite host provision that meets the tested GNU AMD64 requirements. Delivery also depends on the shared native Bazelisk setup. rules_img 0.3.24 already contains the released layer fix.",
         "evidence": [
           "https://buildkite.com/gvisor/pipeline/builds/53249",
-          "https://github.com/tamird/gvisor/commit/75c04f42d"
+          "https://github.com/tamird/gvisor/commit/75c04f42d",
+          "https://github.com/tamird/gvisor/actions/runs/41577950028/artifacts/13204477647",
+          "https://github.com/tamird/gvisor/actions/runs/41571402230/artifacts/13201877206"
         ]
       },
       "refinement": {
         "before": {
-          "head": "2d59e8489625bcc700c22ed572d4160ffff0a1fd"
+          "head": "757a452f9265d02a963203d1ccf7704e7d1ebc57"
         },
         "after": {
-          "head": "757a452f9265d02a963203d1ccf7704e7d1ebc57"
+          "head": "c75bc99990a381cd8cb8c428a1997d9ee98fa7c7"
         }
       },
       "evidence": [
@@ -38965,6 +38967,10 @@
         {
           "label": "Buildkite agent injects remote-cache options before repository hooks",
           "url": "https://buildkite.com/gvisor/pipeline/builds/53249"
+        },
+        {
+          "label": "Native Make/cache, matching action keys and extra query measurement",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41577950028/artifacts/13204477647"
         }
       ],
       "links": [
@@ -43755,14 +43761,14 @@
       "id": "branch:buildkite-native-nogo",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/buildkite-native-nogo",
-      "head": "6aa894aa1bce04a655c7064f15c9a7f43ac77c2d",
-      "title": "Run Buildkite Nogo tests without the builder",
-      "url": "https://github.com/tamird/gvisor/commit/6aa894aa1",
+      "ref": "proposal/buildkite-nogo-make-cache",
+      "head": "a19da812a7d6abefcb48cdddf5dba24f0e178e02",
+      "title": "Run Buildkite Nogo tests without starting the builder",
+      "url": "https://github.com/tamird/gvisor/commit/a19da812a",
       "group": "analysis",
       "status": "Agent work",
-      "updatedAt": "2026-11-03T04:16:24.163353+00:00",
-      "summary": "The two direct Nogo invocations bypass the agent’s cache arguments. Both Buildkite Nogo jobs use host Bazelisk. The declared compiler handles both target architectures, and Buildkite can collect a failed analyzer’s log. All 871 selected tests passed across three runs on a Linux client with remote execution. The duration of a single cold Buildkite job is still unknown.",
+      "updatedAt": "2026-11-03T04:32:11.975385+00:00",
+      "summary": "Both native Buildkite Nogo jobs keep make nogo-tests and the original target selection. Three analyzer owners ran for AMD64 and ARM64; the ordinary Go test was excluded. An intentional self-assignment failed only the selected owner (Bazel exit 3, Make exit 2). The hook located its original diagnostic. This did not rerun the full wildcard. The historical 871-owner qualification used different sources.",
       "evidence": [
         {
           "label": "597 original Nogo tests with both architecture reports",
@@ -43799,18 +43805,33 @@
         {
           "label": "Bounded positive and injected analyzer-failure qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/41576928150"
+        },
+        {
+          "label": "Native Make, both architecture reports, and the failed-log handoff",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41576928150/artifacts/13205005426"
         }
       ],
       "followup": {
         "owner": "Workstream owner",
-        "sourceHead": "6aa894aa1bce04a655c7064f15c9a7f43ac77c2d",
-        "observedAt": "2026-11-03T04:16:24.163353+00:00",
-        "disposition": "Needs cache-routing correction",
-        "nextAction": "Qualify both existing Make Nogo entry points on the shared bootstrap. Verify the original analysis failure and failed-log path; a bounded check does not establish full-suite coverage.",
+        "sourceHead": "a19da812a7d6abefcb48cdddf5dba24f0e178e02",
+        "observedAt": "2026-11-03T04:32:11.975385+00:00",
+        "disposition": "Cache and diagnostics verified; cross-compiler owners still need qualification",
+        "nextAction": "Qualify the selected vdsodata_nogo and sysmsg_nogo owners with the proposed compiler on the actual worker configuration; both fail without the ARM cross compiler. The shared native Bazelisk setup is a separate delivery prerequisite.",
         "evidence": [
           "https://buildkite.com/gvisor/pipeline/builds/53249",
-          "https://github.com/tamird/gvisor/commit/75c04f42d"
+          "https://github.com/tamird/gvisor/commit/75c04f42d",
+          "https://github.com/tamird/gvisor/actions/runs/41576928150/artifacts/13205005426",
+          "https://github.com/tamird/gvisor/actions/runs/41353178606/artifacts/13101943112",
+          "https://github.com/tamird/gvisor/actions/runs/41353882134/artifacts/13101954456"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "6aa894aa1bce04a655c7064f15c9a7f43ac77c2d"
+        },
+        "after": {
+          "head": "a19da812a7d6abefcb48cdddf5dba24f0e178e02"
+        }
       }
     },
     {
@@ -45640,8 +45661,8 @@
       "url": "https://github.com/tamird/gvisor/commit/22b87677f",
       "group": "analysis",
       "status": "Agent work",
-      "updatedAt": "2026-11-03T03:56:47.255728+00:00",
-      "summary": "AMD64 and ARM64 selected the same 355 test owners at 96fadde72: 1,069 configured rules less 711 Nogo and three KVM rules. On ARM64 the full run timed out after attempting 69 owners; 286 did not run. Original XML recorded 14,397 passed cases, two failures and 110 skips. TestLicensePolicy found LTP/QEMU catalog mismatches; the QEMU fetch test passed. The Python sandbox test failed to create its guest. Both stock and new invocations on the same ARM64 host hit the same gofer EACCES and AppArmor user-namespace exec denial. The AMD64 focused checks passed 471 cases.",
+      "updatedAt": "2026-11-03T04:32:11.975385+00:00",
+      "summary": "AMD64 and ARM64 selected the same 355 test owners at 96fadde72: 1,069 configured rules less 711 Nogo and three KVM rules. On ARM64 the full run timed out after attempting 69 owners; 286 did not run. Original XML recorded 14,397 passed cases, two failures and 110 skips. TestLicensePolicy found LTP/QEMU catalog mismatches; the QEMU fetch test passed. The Python sandbox test failed to create its guest. Both stock and new invocations on the same ARM64 host hit the same gofer EACCES and AppArmor user-namespace exec denial. The AMD64 focused checks passed 471 cases. On 5555ba1f2, the unchanged license policy test passed in a fresh native ARM64 run: all 35 license cases passed, with no skips. This resolves the license case only.",
       "evidence": [
         {
           "label": "Three matching AMD64 selections and 471 named buffer/cgroup cases",
@@ -45674,18 +45695,23 @@
         {
           "label": "Selected source at 96fadde72",
           "url": "https://github.com/tamird/gvisor/commit/96fadde72"
+        },
+        {
+          "label": "Fresh ARM64 license owner: 35 passed, including TestLicensePolicy",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41577341947/artifacts/13204601108"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "22b87677f7ae1fa27ebee5b4eb95ab9cfe966761",
-        "observedAt": "2026-11-03T03:56:47.255728+00:00",
-        "disposition": "Incomplete: 286 ARM64 owners did not execute",
-        "nextAction": "Reconcile the LTP/QEMU license policy; use a compatible ARM64 guest host for the sandbox case. Native cgroup-v1 qualification still needs an upstream worker. The timed-out job is finished; the 286 unexecuted owners remain unqualified.",
+        "observedAt": "2026-11-03T04:32:11.975385+00:00",
+        "disposition": "Incomplete: 286 ARM64 owners did not execute; license owner now passes",
+        "nextAction": "Use an ARM64 worker that permits gofer user-namespace exec for sandbox_py_test, and obtain native cgroup-v1 coverage. The 286 unexecuted owners in the timed-out aggregate remain unqualified.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41497682946/artifacts/13172754926",
           "https://github.com/tamird/gvisor/actions/runs/41513096230/artifacts/13175395076",
-          "https://github.com/tamird/gvisor/actions/runs/41516374236/artifacts/13175549051"
+          "https://github.com/tamird/gvisor/actions/runs/41516374236/artifacts/13175549051",
+          "https://github.com/tamird/gvisor/actions/runs/41577341947/artifacts/13204601108"
         ]
       }
     },
