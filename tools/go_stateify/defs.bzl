@@ -37,8 +37,8 @@ that need to be saved.
         ),
         "imports": attr.string_list(
             doc = """
-An optional list of extra non-aliased, Go-style absolute import paths required
-for statified types.
+Extra imports required by generated types. Each entry is an import path
+or name=path to specify the package qualifier.
 """,
             mandatory = False,
         ),
