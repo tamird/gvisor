@@ -373,7 +373,7 @@ steps:
   - <<: *common
     <<: *source_test
     label: ":golang: Nogo tests"
-    command: bazel test --config=buildkite --config=nogo //...
+    command: make nogo-tests
     env:
       DOCKER_BUILD: "false"
     agents:
