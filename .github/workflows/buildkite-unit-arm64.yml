@@ -1,0 +1,61 @@
+name: Locate GPL matches in pinned notices
+on:
+  push:
+    branches: [qualification/license-gpl-pinned-notices]
+permissions:
+  contents: read
+jobs:
+  owner:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 50
+    env:
+      DOCKER_BUILD: 'false'
+      PRODUCT: f22f9f78759926b4a518190ba68450c45436d655
+      BASELINE: 96fadde722e14d482a62276b80237398f8b62fbf
+      BOOTSTRAP: 5555ba1f24f319f77ad240a0e0f5aa8ef08a1d57
+      VERIFIER: 6b3fe9ab6c03facafe6340c85f8d60ca3591566b
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Run the scanner on the pinned notices on ARM64
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/unit-results"
+          printf '{"status":"INCOMPLETE","reason":"bootstrap"}\n' > "$RUNNER_TEMP/unit-results/verdict.json"
+          cp .github/qualification/buildkite-unit-arm64.py "$RUNNER_TEMP"
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          git fetch --quiet --depth=1 origin "$VERIFIER" "$BASELINE" "$BOOTSTRAP"
+          for helper in unit_matrix qualification_report; do
+            git show "$VERIFIER:test/rbe/$helper.py" > "$RUNNER_TEMP/$helper.py"
+          done
+          git checkout --quiet --detach "$PRODUCT"
+          git show "$BOOTSTRAP:.buildkite/hooks/pre-command" | sed -n '/^install_bazelisk() {$/,$p' > "$RUNNER_TEMP/unit-setup.bash"
+          source "$RUNNER_TEMP/unit-setup.bash"
+          test -n "$BUILDKITE_BAZEL_DIRECTORY"
+          test "$(bazel --version)" = "bazel $(cat .bazelversion)"
+          printf '%s\n' 'build --jobs=4' 'build --remote_cache=' 'build --remote_executor=' > "$RUNNER_TEMP/unit-resources.bazelrc"
+          python3 "$RUNNER_TEMP/buildkite-unit-arm64.py"
+      - name: Check bounded original evidence
+        id: scan
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, re
+          root = pathlib.Path(os.environ["RUNNER_TEMP"]) / "unit-results"
+          secrets = [v.encode() for k,v in os.environ.items() if re.search(r'TOKEN|SECRET|KEY',k) and len(v)>12]
+          for path in root.iterdir():
+              assert path.name in {"verdict.json", "test.xml", "test.log"} and path.is_file() and not path.is_symlink()
+              data = path.read_bytes()
+              assert len(data) < 2*1024**2
+              assert not any(value in data for value in secrets)
+              assert not re.search(rb"gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|BEGIN (RSA |OPENSSH )?PRIVATE KEY|x-buildbuddy-api-key=", data, re.I)
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.scan.outcome == 'success'
+        with:
+          name: license-notice-match-ranges
+          path: ${{ runner.temp }}/unit-results/
+          if-no-files-found: error
