@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T10:02:07.513121+00:00",
+    "updatedAt": "2026-11-03T10:35:38.185367+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2054,8 +2054,8 @@
       "url": "https://github.com/tamird/gvisor/commit/b5bd72431",
       "group": "release",
       "status": "Agent work",
-      "summary": "The large Bazel release action at b5bd72431 and the wheel scanner amendment at d67495aac are withheld after contributor feedback. The existing setuptools release produced identical file contents across workers, but gzip and tar metadata differed. No catalog amendment is needed for the backend-only experiment. The native uv_build backend requires Python 3.8 or newer, which excludes the package’s supported Python 3.7 source installs.\n\nWith Flit 3.12 and a fixed SOURCE_DATE_EPOCH, both existing release frontends produced byte-identical wheel and source archives on one Linux worker. Each installed offline on actual CPython 3.7.17 with stock-equivalent modules and README. License-Expression preserves Apache-2.0, replacing the legacy License field and classifier. The old setuptools-generated files drop out of the source archive. The overall comparison failed on two other checks. uv left two lockfiles in the stock temporary directory, and Hatchling included a parent .gitignore symlink that uv rejected in this Bazel fixture. The original cross-worker results remain below.\n\nOn feab64aff Bazel calls Flit’s two public build hooks with one pinned build dependency. AMD64 and ARM64 scratch actions produced the wheel and source archive previously installed offline on CPython 3.7.17. Make staged the same bytes with Docker disabled. The default registered Python and standalone license check passed. The wheel has three license paths containing two distinct texts, both cataloged. The versioned Buildkite command at 11013b7d6 ran without Docker and staged the same wheel and source archive. The original caller tried Docker 13 times and failed before creating either file. The comparison supplied a fixed version and registry reply. With the Buildkite Bazelisk prerequisite, the plain make artifacts-python command takes DOCKER_BUILD=false from the job environment. GNU Make selected the same build and copy commands as the tested explicit override.",
-      "updatedAt": "2026-11-01T23:12:46+00:00",
+      "summary": "The large Bazel release action at b5bd72431 and the wheel scanner amendment at d67495aac are withheld after contributor feedback. The existing setuptools release produced identical file contents across workers, but gzip and tar metadata differed. No catalog amendment is needed for the backend-only experiment. The native uv_build backend requires Python 3.8 or newer, which excludes the package’s supported Python 3.7 source installs.\n\nWith Flit 3.12 and a fixed SOURCE_DATE_EPOCH, both existing release frontends produced byte-identical wheel and source archives on one Linux worker. Each installed offline on actual CPython 3.7.17 with stock-equivalent modules and README. License-Expression preserves Apache-2.0, replacing the legacy License field and classifier. The old setuptools-generated files drop out of the source archive. The overall comparison failed on two other checks. uv left two lockfiles in the stock temporary directory, and Hatchling included a parent .gitignore symlink that uv rejected in this Bazel fixture. The original cross-worker results remain below.\n\nOn feab64aff Bazel calls Flit’s two public build hooks with one pinned build dependency. AMD64 and ARM64 scratch actions produced the wheel and source archive previously installed offline on CPython 3.7.17. Make staged the same bytes with Docker disabled. The default registered Python and standalone license check passed. The wheel has three license paths containing two distinct texts, both cataloged. The versioned Buildkite command at 11013b7d6 ran without Docker and staged the same wheel and source archive. The original caller tried Docker 13 times and failed before creating either file. The comparison supplied a fixed version and registry reply. With the Buildkite Bazelisk prerequisite, the plain make artifacts-python command takes DOCKER_BUILD=false from the job environment. GNU Make selected the same build and copy commands as the tested explicit override.\n\nrules_python 2.4.5 selects uv for the target platform and keeps its toolchain executable alias private. Using uv for a cross build would require another execution-platform adapter. Replacing a literal version in pyproject.toml can also silently lose a release override. The uv experiment did not replace the qualified Flit producer.",
+      "updatedAt": "2026-11-03T10:35:38.185367+00:00",
       "head": "b5bd72431940ce903fe7521e2498811d8420f750",
       "evidence": [
         {
@@ -38955,15 +38955,16 @@
       "group": "bazel",
       "status": "Agent work",
       "url": "https://github.com/tamird/gvisor/commit/c75bc9999",
-      "updatedAt": "2026-11-03T04:32:11.975385+00:00",
-      "summary": "The native website job builds the same image through Make. The cache and quoted options reached both Bazel commands; no Docker call occurred. The five image-producing action keys matched the direct build. Make added one cquery (2.39 seconds, two output paths). The earlier render, HTTP responses and 226-entry license audit still apply; this client check did not execute a fresh render.",
+      "updatedAt": "2026-11-03T10:35:38.185367+00:00",
+      "summary": "The native Buildkite Make command rendered 278 website files on Ubuntu 22.04 with the shared Bazelisk bootstrap and the proposed LLVM toolchain. The runner had no ARM GNU cross tools. Bazel built AMD64 and ARM64 vDSOs and rendered syscall tables for both architectures. The earlier HTTP and license checks cover the original website source.",
       "followup": {
         "owner": "Workstream owner",
         "sourceHead": "c75bc99990a381cd8cb8c428a1997d9ee98fa7c7",
-        "observedAt": "2026-11-03T04:32:11.975385+00:00",
-        "disposition": "Cache verified; GNU worker and shared bootstrap still pending",
-        "nextAction": "Identify the Buildkite host provision that meets the tested GNU AMD64 requirements. Delivery also depends on the shared native Bazelisk setup. rules_img 0.3.24 already contains the released layer fix.",
+        "observedAt": "2026-11-03T10:35:38.185367+00:00",
+        "disposition": "Native cross build verified with shared Bazelisk and LLVM",
+        "nextAction": "Land the shared native Bazelisk setup and full LLVM toolchain. The toolchain needs a supplier release containing hermetic-llvm #892. Reconcile the license catalog against the version selected for delivery.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41618830995/artifacts/13222892486",
           "https://buildkite.com/gvisor/pipeline/builds/53249",
           "https://github.com/tamird/gvisor/commit/75c04f42d",
           "https://github.com/tamird/gvisor/actions/runs/41577950028/artifacts/13204477647",
@@ -38979,6 +38980,10 @@
         }
       },
       "evidence": [
+        {
+          "label": "Native Make build on Jammy with both vDSOs, both syscall tables and 278 website files",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41618830995/artifacts/13222892486"
+        },
         {
           "label": "Released BCR modules: full site, hard link, preview, five HTTP routes and license audit",
           "url": "https://github.com/tamird/gvisor/actions/runs/41571402230/artifacts/13201877206"
@@ -45489,9 +45494,13 @@
       "url": "https://github.com/bazel-contrib/rules_go/pull/4772",
       "group": "rbe",
       "status": "open",
-      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
+      "updatedAt": "2026-11-03T10:35:38.185367+00:00",
       "summary": "An action that calls go tool objdump can compile objdump inside its private cache. A declared SDK executable lets all analyzers reuse one build, or the prebuilt command when the selected Go SDK ships it. The Linux presubmit ran all 508 applicable targets across the original run and one isolated timeout recovery.",
       "evidence": [
+        {
+          "label": "Go 1.26.7 objdump compiled 18 packages with the bootstrap cache and 113 with an empty cache",
+          "url": "https://github.com/tamird/rules_go/actions/runs/41620131612/artifacts/13222458262"
+        },
         {
           "label": "Upstream issue",
           "url": "https://github.com/bazel-contrib/rules_go/issues/4535"
@@ -45516,7 +45525,17 @@
           "outcome": "approved",
           "at": "2026-11-02T16:25:23.256481+00:00"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "aec31ccc81c407a63d5f6f5a3bdd7840f2d35bde",
+        "url": "https://github.com/bazel-contrib/rules_go/pull/4772#issuecomment-6597471154",
+        "title": "Answer Fabian about building objdump alongside pack",
+        "summary": "Sharing the bootstrap cache reduced the number of packages compiled for objdump from 113 to 18. An opt-in would also build it for targets that only need the builder.",
+        "body": "Yes. With Go 1.26.7 on linux/amd64, building `cmd/objdump` with an empty cache compiled 113 packages. After building `pack`, `covdata`, and the rules_go builder, it compiled 18. Both runs produced byte-identical executables. [Package lists](https://github.com/tamird/rules_go/actions/runs/41620131612/artifacts/13222458262)\n\nI'd keep the executable rule either way. A reusable analyzer can depend on `objdump` without asking each consumer to configure its SDK, and a cross-compiled test can request `buildid` for its own platform. An SDK option could supply the host tool ahead of time. That would save those 95 compilations when the analyzer runs, but an ordinary Go build using that SDK would build `objdump` even if it never runs the analyzer. Would you prefer to include that option here?\n\nPosted by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-03T10:35:38.185367+00:00"
+      }
     },
     {
       "id": "pr:16810",
@@ -66980,10 +66999,23 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-02T15:23:48.025870+00:00",
+      "updatedAt": "2026-11-03T10:35:38.185367+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "Compare the remaining recovery proposals on the burst-loss and lost-repair cases in #16670. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. The #16793 reconnect review awaits a contributor decision.",
+      "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. The #16793 reconnect review awaits a contributor decision.",
       "findings": [
+        {
+          "text": "On the real Newt proxy with a Linux TCP receiver, all five stock 2.8 MB downloads stopped at the 120-second cutoff after a scripted loss burst. With RACK enabled in both arms, #16081 alone completed five of five in 0.953–0.954 seconds. All ten transfers encountered a burst. This identifies the first PR to review for the pinned wireguard-go Reno/SACK/RACK path. The Windows slowdown still needs its own onset trace.",
+          "evidence": [
+            {
+              "label": "Newt per-transfer receiver counts and drops on native ARM64",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41618271335/artifacts/13223281770"
+            },
+            {
+              "label": "Reviewer guide by workload and configuration",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            }
+          ]
+        },
         {
           "text": "A Linux receiver read all 7,372,800 bytes from a gVisor CUBIC sender after ten injected packet drops. Its first partial ACK repeated the same SACK block after the retransmission timeout. Stock reentered fast recovery and needed two more timeouts. Its last application read came 1.243 s after the first timeout. With the ACK guard from #16081, the last read came 38.7 ms after the first and only timeout. Both lossless controls delivered every byte without a timeout. The experiment used SACK with timestamps and GSO disabled. A matching Windows trace is still needed for #10343.",
           "evidence": [
