@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T02:48:42.204681+00:00",
+    "updatedAt": "2026-11-03T03:00:43.613804+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36484,8 +36484,8 @@
       "title": "Format stateify output in the generator",
       "url": "https://github.com/google/gvisor/pull/16710",
       "status": "open",
-      "summary": "Stateify formats the generated Go file in the generator. Giving the formatter the output file’s path preserves how it resolves imports without inventing aliases.",
-      "updatedAt": "2026-10-29T22:24:19.679728+00:00",
+      "summary": "The current PR has three internal-build objections. The proposed replacement keeps x/tools and SDK lookup out of the shared generator and Starlark rules. It preserves resolution of math/rand/v2 as rand and the missing time import. Of the five caller layouts tested, nine requested targets passed and three alias/sibling controls failed identically on both sides. Twelve generated files matched byte for byte. On the pinned one-file worker, stock failed to start /bin/sh; all twelve candidate formatter actions ran. The exact measured commit was 188353594; the reviewed 50890dbbe only renames a local Starlark variable, changes how equivalent progress text is expressed, and tidies comments. The internal Blaze build was not exercised.",
+      "updatedAt": "2026-11-03T03:00:43.613804+00:00",
       "evidence": [
         {
           "label": "Seven identical production outputs and scratch qualification",
@@ -36498,15 +36498,48 @@
         {
           "label": "Previous generator proposal",
           "url": "https://github.com/tamird/gvisor/commit/250f1a644"
+        },
+        {
+          "label": "Keep x/tools outside the shared generator",
+          "url": "https://github.com/google/gvisor/pull/16710#discussion_r4448555387"
+        },
+        {
+          "label": "Preserve Copybara paths and the shared rule interface",
+          "url": "https://github.com/google/gvisor/pull/16710#discussion_r4448555396"
+        },
+        {
+          "label": "Retain non-basename and missing-import resolution",
+          "url": "https://github.com/google/gvisor/pull/16710#discussion_r4448555404"
+        },
+        {
+          "label": "Original comparison of the twelve files and shell-free actions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41568122298/artifacts/13200360924"
+        },
+        {
+          "label": "Exact qualification source to final review source",
+          "url": "https://github.com/tamird/gvisor/compare/188353594..50890dbbe"
         }
       ],
       "refinement": {
         "before": {
-          "head": "250f1a64449754e811e33111090736ad6db8d727"
+          "base": "247a7b4fab5d1964f4915c3b492f207e2f8b4643",
+          "head": "cd92efa5f06a504a5f6bb187519f482d4941b21f"
         },
         "after": {
-          "head": "cd92efa5f06a504a5f6bb187519f482d4941b21f"
+          "base": "c3d3fd4a3844b46529b6d15216b3410b872df735",
+          "head": "50890dbbe59fbf3754de2b49168972e37f0e8478"
         }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "50890dbbe59fbf3754de2b49168972e37f0e8478",
+        "baseHead": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
+        "title": "Run goimports without a host shell",
+        "url": "https://github.com/tamird/gvisor/commit/50890dbbe",
+        "requestedAt": "2026-11-03T03:00:43.613804+00:00",
+        "summary": "Replace the generator change on #16710 with a Bazel-only goimports launcher? The shared generator and rule keep their internal interface; the formatter still resolves package names independently of path basenames and discovers missing imports.",
+        "body": "The Bazel stateify pipeline launches goimports through /bin/sh to put the\nGo SDK on PATH. A worker without a shell fails before import resolution.\nCompute the absolute PATH in a small Go launcher instead and call the\nsame imports.Process implementation with the declared SDK.\n\nKeep the two-action generator and formatter pipeline, including inference\nof undeclared and non-basename package imports. The formatter dependency\nand SDK lookup stay under tools/bazeldefs; the shared stateify generator\nand rule definitions retain their existing internal-build interface."
       }
     },
     {
@@ -45445,13 +45478,13 @@
       "repo": "hermeticbuild/hermetic-llvm",
       "number": 907,
       "ref": "proposal/instrumentor-template",
-      "head": "21a5215f89afe39a50bfab5f5ff10a75fffa614a",
+      "head": "15809f084e3c473b0e3fbcc57ce8dda167f24a6c",
       "title": "Generate the LLVM instrumentor header without a shell",
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/907",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-02T17:00:21.324445+00:00",
-      "summary": "The LLVM 23 overlay expands the instrumentor template using the runtime header text supplied by the repository rule. The corresponding change to LLVM’s own Bazel configuration is open upstream.",
+      "updatedAt": "2026-11-03T03:00:43.613804+00:00",
+      "summary": "LLVM 23 needs the overlay change to consume the shared Instrumentor template. Newer LLVM already carries the Bazel fix. The original supplier PR now limits the adjustment to LLVM 23; four source/release comparisons verified the boundary.",
       "evidence": [
         {
           "label": "LLVM implementation",
@@ -45476,8 +45509,27 @@
         {
           "label": "LLVM upstream candidate",
           "url": "https://github.com/tamird/llvm-project/commit/47a6f5568"
+        },
+        {
+          "label": "Verified LLVM version correction: four source/release comparisons",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41568973376/artifacts/13199584666"
+        },
+        {
+          "label": "Upstream Bazel change",
+          "url": "https://github.com/llvm/llvm-project/commit/8cb8b5767"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "Supplier PR owner",
+        "sourceHead": "15809f084e3c473b0e3fbcc57ce8dda167f24a6c",
+        "observedAt": "2026-11-03T03:00:43.613804+00:00",
+        "disposition": "Version correction published on original supplier PR",
+        "nextAction": "Track upstream review of the published source.",
+        "evidence": [
+          "https://github.com/hermeticbuild/hermetic-llvm/pull/907",
+          "https://github.com/tamird/gvisor/actions/runs/41568973376/artifacts/13199584666"
+        ]
+      }
     },
     {
       "id": "branch:buildkite-native-unit-tests",
