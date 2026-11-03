@@ -1,0 +1,127 @@
+name: Verify ARM64 qualifications and TCP reapproval
+on:
+  push:
+    branches: [qualification/work-map-arm64-runtime-unit-approval]
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind collector to the curated records and published base
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 2e0374e752787dfc9f8785fff3bf187d4ed909c7
+          test "$(git rev-parse HEAD^^)" = 149fc9e842a03d43981486e05a70979f1aa66d41
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          test "$(git diff --name-only HEAD^^ HEAD^)" = registry.json
+          mkdir results
+          cp registry.json results/
+      - name: Refresh the TCP approval, its Copybara export and the source-runtime PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PYTHON'
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import copy
+          import json
+          import runpy
+          u = runpy.run_path("update-status.py")
+          g = u["collect_repository"].__globals__
+          r = u["REGISTRY"]
+          saved = copy.deepcopy(r)
+          repo = "google/gvisor"
+          numbers = {16809,16843}
+          p = Path("github-status.json")
+          old = json.loads(p.read_text())
+          prior = [x for x in old["prs"] if x.get("repo",repo) == repo and x["number"] in numbers]
+          assert {p["number"] for p in prior} == numbers
+          try:
+              # The canonical collector supports registered-only repositories. For this
+              # publication, scope that existing path to exactly the changed nodes.
+              r["nodes"] = [n for n in r["nodes"] if n["id"] in
+                            {"pr:" + str(i) for i in numbers}]
+              r["meta"]["registeredOnlyRepositories"].append(repo)
+              g["PR_BATCH_SIZE"] = 1
+              rows, fresh, _, inventory = u["collect_repository"](repo, "copybara", {**old, "prs":prior})
+              issues = {}
+              assert len(rows) == len(numbers) and set(fresh).issuperset(numbers)
+              u["recheck_snapshot_mergeability"](list(fresh.values()), [p for s in rows for p in (s,*s["imports"])], repo)
+          finally:
+              r.clear()
+              r.update(saved)
+          maintainers = u["fetch_maintainers"]()
+          nodes = {n["id"]:n for n in r["nodes"]}
+          current = {}
+          for pr in rows:
+              key = "pr:"+str(pr["number"])
+              node = nodes[key]
+              if pr["status"] == "open":
+                  pr = u["with_maintainer_reviewers"](pr, maintainers)
+                  pr["publicImportDisposition"] = u["public_import_disposition"](pr,node.get("approvedPatch"),node.get("landedPatch"))
+              current[pr["url"]] = pr
+          prs = [current.get(p["url"],p) for p in old["prs"]]
+          prior_urls = {p["url"] for p in old["prs"]}
+          prs.extend(p for url,p in current.items() if url not in prior_urls)
+          assert len({p["url"] for p in prs}) == len(prs)
+
+          now = datetime.now(timezone.utc).isoformat()
+          report = u["check_report"](prs,old)
+          snap = {**old,"checkedAt":now,"registryDate":r["meta"]["updatedAt"],"prs":prs,"issues":{**old["issues"],**issues},
+                  "reviewerHandoff":u["reviewer_handoff"](prs,old),
+                  "mergeabilityHandoff":u["mergeability_handoff"](report,old),"checkFailures":report["checkFailures"],
+                  "workStates":u["record_states"](prs,r,old,now)}
+          snap["limits"] = {**old["limits"],"curationRefresh":{"prs":sorted(numbers),"issues":sorted(issues),"requests":g["requests"],
+              "graphqlCost":g["query_cost"],"previousFullSnapshot":old["checkedAt"],"repositoryObservation":inventory}}
+          if sweep := u["feedback_sweep"](r,[*prs,*old["reviewPRs"]],old,now):
+              snap["projectFeedbackReview"] = sweep
+          p.write_text(json.dumps(snap,indent=2,ensure_ascii=False)+"\n")
+          PYTHON
+          cp github-status.json results/
+      - name: Check the data used to render the cards
+        run: |
+          node metadata-preflight.mjs . > results/preflight.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          import subprocess
+          registry = json.loads(Path("registry.json").read_text())
+          nodes = {n["id"]:n for n in registry["nodes"]}
+          original = json.loads(subprocess.check_output(["git","show","HEAD^^:registry.json"]))
+          before = {n["id"]:n for n in original["nodes"]}
+          snap = json.loads(Path("github-status.json").read_text())
+          changed = {"pr:16809", "pr:16843", "branch:buildkite-native-unit-tests", "branch:buildkite-native-nogo"}
+          assert nodes.keys() == before.keys()
+          assert {k for k in before if before[k] != nodes[k]} == changed
+          assert registry["edges"] == original["edges"]
+          for k in changed:
+              assert nodes[k]["head"] == before[k]["head"]
+              assert all(e in nodes[k]["evidence"] for e in before[k]["evidence"])
+              assert nodes[k].get("settledReviews") == before[k].get("settledReviews")
+          observed = {p["number"]:p for p in snap["prs"] if p.get("repo") == "google/gvisor"}
+          tcp = observed[16809]
+          assert tcp["head"] == tcp["approvedHead"] == nodes["pr:16809"]["head"]
+          export, = [i for i in tcp["imports"] if i["number"] == 16915]
+          assert export["sourceHead"] == "bc9ffcc0dab81dacb713ea60879fa5bde6e31689"
+          assert export["head"] == "23661544141b736b23e50ee4ae721cc1411f0c92" and not export["matchesSourceHead"]
+          assert observed[16843]["head"] == nodes["pr:16843"]["followup"]["providerHead"]
+          assert nodes["pr:16843"]["followup"]["providerHead"] == "e7e0d5319eb716c82471abf477c3acff9d63e9ca"
+          assert "waiting for prerequisites" in nodes["pr:16843"]["status"]
+          assert any("13275712796" in e["url"] for e in nodes["pr:16843"]["evidence"])
+          for k in ("branch:buildkite-native-unit-tests", "branch:buildkite-native-nogo"):
+              assert any("13273977360" in e["url"] for e in nodes[k]["evidence"])
+          assert snap["limits"]["curationRefresh"]["prs"] == [16809,16843]
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: published-work-map-pair
+          path: results/
+          if-no-files-found: error
