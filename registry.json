@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T15:02:34.190043+00:00",
+    "updatedAt": "2026-11-03T15:12:55.022550+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38705,7 +38705,7 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T15:02:34.190043+00:00",
+      "updatedAt": "2026-11-03T15:12:55.022550+00:00",
       "summary": "Parth’s unchanged TestRestoreCgroupMemoryLimit passed on a48b7a12c with no skips in an isolated Linux VM. Both creating the sandbox at 200 MiB and lowering it from 2 GiB to 200 MiB immediately before restore finished with zero OOM kills. The restored process could access /tmpfs in both cases. The checkpoint and restore RPCs read the current cgroup limit before suspending GC. The test used direct limits; boot with a tighter ancestor remains a separate concern tracked in #16767. On the earlier 5068ecb10, resizing from 2 GiB to 200 MiB left Go with a 1,023 MiB limit and Linux killed the Sentry. The performance figures also belong to 5068ecb10: over 12 balanced triplets at 2 GiB/4 vCPUs, median save time fell from 2.011 s to 1.817 s and peak sampled Sentry RSS rose from 630.9 MiB to 735.4 MiB. In the same comparison #16152 took 1.968 s and used 650.1 MiB. All 39 archives restored the 100,000 files. No performance comparison was rerun on a48b7a12c.",
       "evidence": [
         {
@@ -38807,6 +38807,10 @@
         {
           "label": "Checkpoint and restore RPCs and updated cgroup fixture",
           "url": "https://github.com/google/gvisor/commit/a48b7a12c"
+        },
+        {
+          "label": "Posted confirmation of both direct-limit restores",
+          "url": "https://github.com/google/gvisor/pull/16735#discussion_r4456530300"
         }
       ],
       "head": "a48b7a12cb3bd615c48f9b36d353c02a6463a929",
@@ -38826,18 +38830,16 @@
           "outcome": "approved",
           "at": "2026-11-02T15:46:59.054342+00:00",
           "url": "https://github.com/google/gvisor/pull/16735#discussion_r4444409895"
+        },
+        {
+          "kind": "reply",
+          "head": "a48b7a12cb3bd615c48f9b36d353c02a6463a929",
+          "body": "@parth-opensrc, I reran your unchanged `TestRestoreCgroupMemoryLimit` on [a48b7a12c](https://github.com/google/gvisor/commit/a48b7a12c). Both `createAtLimit` (200 MiB at creation) and `lowerBeforeRestore` (2 GiB lowered to 200 MiB) passed. In each case `memory.events` reported `oom_kill 0`, and the restored process could access `/tmpfs`. That addresses the resize failure I reported here. [Test results](https://github.com/tamird/gvisor/actions/runs/41656648310/artifacts/13240389451).\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-03T15:10:18Z",
+          "url": "https://github.com/google/gvisor/pull/16735#discussion_r4456530300"
         }
-      ],
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "a48b7a12cb3bd615c48f9b36d353c02a6463a929",
-        "url": "https://github.com/google/gvisor/pull/16735#discussion_r4444409862",
-        "title": "Confirm the restore-after-resize fix to Parth",
-        "summary": "Post the two measured restore results on our original thread?",
-        "body": "@parth-opensrc, I reran your unchanged `TestRestoreCgroupMemoryLimit` on [a48b7a12c](https://github.com/google/gvisor/commit/a48b7a12c). Both `createAtLimit` (200 MiB at creation) and `lowerBeforeRestore` (2 GiB lowered to 200 MiB) passed. In each case `memory.events` reported `oom_kill 0`, and the restored process could access `/tmpfs`. That addresses the resize failure I reported here. [Test results](https://github.com/tamird/gvisor/actions/runs/41656648310/artifacts/13240389451).\n\nPosted by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-03T15:02:34.190043+00:00"
-      }
+      ]
     },
     {
       "id": "pr:hermeticbuild/rules_rs:333",
@@ -46140,8 +46142,8 @@
       "url": "https://github.com/tamird/gvisor/commit/22b87677f",
       "group": "analysis",
       "status": "Agent work",
-      "updatedAt": "2026-11-03T10:02:07.513121+00:00",
-      "summary": "The native ARM64 selection ran all 355 targets. Nine failed. XML reported 101,777 passes, 26 failures and 138 skips. Eight failed targets passed in follow-ups. The full cmd rerun exercised the original 171 cases (164 passed, seven skipped); the checkpoint printer’s exit 128 did not recur. The fork catalog still disagrees on 20 QEMU entries and one LTP entry. On AMD64, the original cgroup binary passed all 156 cases in a KVM guest with 12 v1 controllers. The subsequent host selector exited before its configured-target count was recorded. Separate same-source runs of two targets verified that switching the cgroup mode prevents cache reuse.",
+      "updatedAt": "2026-11-03T15:12:55.022550+00:00",
+      "summary": "The native ARM64 selection ran all 355 targets. Nine failed. XML reported 101,777 passes, 26 failures and 138 skips. Eight failed targets passed in follow-ups. The full cmd rerun exercised the original 171 cases (164 passed, seven skipped); the checkpoint printer’s exit 128 did not recur. The fork catalog still disagrees on 20 QEMU entries and one LTP entry. On AMD64, the original cgroup binary passed all 156 cases in a KVM guest with 12 v1 controllers. The subsequent host selector exited before its configured-target count was recorded. Separate same-source runs of two targets verified that switching the cgroup mode prevents cache reuse. In the separate AMD64 cgroup-v1 run, the auxiliary cgroup_test_nogo target failed while compiling the test package: both GoCompilePkg actions (AMD64 and ARM64) reported NO_USABLE_STRATEGY_FOUND. Its cgroup_test rule was tagged local and remote was the only enabled strategy. Upstream dropped that tag in #16835. The original failed run remains on record.",
       "evidence": [
         {
           "label": "Three matching AMD64 selections and 471 named buffer/cgroup cases",
@@ -46218,12 +46220,24 @@
         {
           "label": "Host selector exited before its build events were inspected",
           "url": "https://github.com/tamird/gvisor/blob/14544cdb9/.github/qualification/unit-cgroup-v1/check.py#L191-L210"
+        },
+        {
+          "label": "Complete cgroup-v1 selection and original failed attempt",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41629769539/artifacts/13234271430"
+        },
+        {
+          "label": "Original AMD64 and ARM64 compile failures: NO_USABLE_STRATEGY_FOUND",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41659915699/artifacts/13240828737"
+        },
+        {
+          "label": "Merged upstream change removing the local test tag",
+          "url": "https://github.com/google/gvisor/pull/16835"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "22b87677f7ae1fa27ebee5b4eb95ab9cfe966761",
-        "observedAt": "2026-11-03T10:02:07.513121+00:00",
+        "observedAt": "2026-11-03T15:12:55.022550+00:00",
         "disposition": "Eight of nine original owners have passing follow-ups. The intermittent ARM64 exit 128 remains unexplained and the catalog mismatch remains open.",
         "nextAction": "Resolve the fork catalog mismatch with the license owner. Full native AMD64 cgroup-v1 CI remains unqualified. Keep the original ARM64 failure alongside the passing full cmd rerun; revisit the checkpoint only if the failure recurs.",
         "evidence": [
@@ -46240,7 +46254,10 @@
           "https://github.com/tamird/gvisor/actions/runs/41613495777/artifacts/13220747324",
           "https://github.com/tamird/gvisor/actions/runs/41615129815/artifacts/13220514134",
           "https://github.com/tamird/gvisor/actions/runs/41493261450/artifacts/13166725105",
-          "https://github.com/tamird/gvisor/blob/14544cdb9/.github/qualification/unit-cgroup-v1/check.py#L191-L210"
+          "https://github.com/tamird/gvisor/blob/14544cdb9/.github/qualification/unit-cgroup-v1/check.py#L191-L210",
+          "https://github.com/tamird/gvisor/actions/runs/41629769539/artifacts/13234271430",
+          "https://github.com/tamird/gvisor/actions/runs/41659915699/artifacts/13240828737",
+          "https://github.com/google/gvisor/pull/16835"
         ]
       }
     },
@@ -47189,20 +47206,9 @@
       "title": "Honor TCP_USER_TIMEOUT after reaching the keepalive probe count",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/1b56b8506",
-      "updatedAt": "2026-11-03T02:30:53.096288+00:00",
-      "status": "Contributor review requested",
+      "updatedAt": "2026-11-03T15:12:55.022550+00:00",
+      "status": "Published",
       "summary": "With TCP_KEEPCNT set to one, stock gVisor closed the socket before a second probe even when TCP_USER_TIMEOUT granted it more time. Linux and the fix respected that timeout, and all three passed the ordinary probe-count control.",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "1b56b8506d2eb230d46bf8f95ab1242c9a81298a",
-        "baseHead": "5b317311427fabfc62ffeca7d76b1622ff83f7b4",
-        "title": "Honor TCP_USER_TIMEOUT after reaching the keepalive probe count",
-        "url": "https://github.com/tamird/gvisor/commit/1b56b8506",
-        "requestedAt": "2026-11-03T02:30:53.096288+00:00",
-        "summary": "Open the fix that honors the application’s TCP_USER_TIMEOUT while probing an idle peer?",
-        "body": "A socket with TCP_KEEPCNT set to one can close after its first\nunanswered keepalive probe even when the application has asked TCP to\nwait longer. Linux uses the user timeout to decide when to close such\na socket [1].\n\nUse the probe count only when TCP_USER_TIMEOUT is zero. Exercise both\nconfigurations on the wire with an idle peer that never answers probes.\n\n[1] https://github.com/torvalds/linux/blob/7d0a66e4b/net/ipv4/tcp_timer.c#L825-L839"
-      },
       "evidence": [
         {
           "label": "Original packet traces and named controls",
@@ -47219,8 +47225,23 @@
         {
           "label": "Fixed gVisor",
           "url": "https://app.buildbuddy.io/invocation/1decea9a-144d-4a37-9dcb-2816f1336c49"
+        },
+        {
+          "label": "Published gVisor PR",
+          "url": "https://github.com/google/gvisor/pull/16905"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "1b56b8506d2eb230d46bf8f95ab1242c9a81298a",
+          "body": "A socket with TCP_KEEPCNT set to one can close after its first\nunanswered keepalive probe even when the application has asked TCP to\nwait longer. Linux uses the user timeout to decide when to close such\na socket [1].\n\nUse the probe count only when TCP_USER_TIMEOUT is zero. Exercise both\nconfigurations on the wire with an idle peer that never answers probes.\n\n[1] https://github.com/torvalds/linux/blob/7d0a66e4b/net/ipv4/tcp_timer.c#L825-L839",
+          "outcome": "approved",
+          "at": "2026-11-03T15:10:54Z",
+          "url": "https://github.com/google/gvisor/pull/16905"
+        }
+      ],
+      "inactive": true
     },
     {
       "id": "branch:buildkite-native-governance",
@@ -47467,6 +47488,42 @@
         "body": "Tools such as goimports invoke go by name. Bazel supplies the path to the SDK relative to the execution root, but Go rejects a PATH lookup that resolves to a relative executable. Putting the SDK bin directory on PATH also exposes unrelated programs such as gofmt.\n\nAdd go_run_with_sdk to run the declared tool with a private directory containing only the execution SDK go command. Resolve that directory when the existing builder runs and forward the tool arguments intact. The caller can capture stdout in a declared output without a shell.",
         "requestedAt": "2026-11-03T14:48:57.209577+00:00"
       }
+    },
+    {
+      "id": "pr:16905",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16905,
+      "ref": "proposal/tcp-keepalive-user-timeout",
+      "title": "Honor TCP_USER_TIMEOUT after reaching the keepalive probe count",
+      "url": "https://github.com/google/gvisor/pull/16905",
+      "group": "runtime",
+      "head": "1b56b8506d2eb230d46bf8f95ab1242c9a81298a",
+      "updatedAt": "2026-11-03T15:12:55.022550+00:00",
+      "status": "open",
+      "summary": "With TCP_KEEPCNT set to one, stock gVisor closed the socket before a second probe even when TCP_USER_TIMEOUT granted it more time. Linux and the fix respected that timeout, and all three passed the ordinary probe-count control.",
+      "evidence": [
+        {
+          "label": "Published source",
+          "url": "https://github.com/tamird/gvisor/commit/1b56b8506"
+        },
+        {
+          "label": "Original packet traces and named controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41563737957/artifacts/13198730138"
+        },
+        {
+          "label": "Linux",
+          "url": "https://app.buildbuddy.io/invocation/3a2fef35-06ae-4290-afb7-a3e856de697b"
+        },
+        {
+          "label": "Stock gVisor",
+          "url": "https://app.buildbuddy.io/invocation/07097c1e-f0a9-4da9-9433-2cd8da30baa9"
+        },
+        {
+          "label": "Fixed gVisor",
+          "url": "https://app.buildbuddy.io/invocation/1decea9a-144d-4a37-9dcb-2816f1336c49"
+        }
+      ]
     }
   ],
   "edges": [
@@ -51091,6 +51148,13 @@
       "type": "blocked_by",
       "reason": "The formatting action is supplied by rules_go; the gVisor change needs a released version containing it.",
       "evidence": "https://github.com/tamird/rules_go/commit/1e46f02a9"
+    },
+    {
+      "type": "includes",
+      "from": "branch:tcp-keepalive-user-timeout",
+      "to": "pr:16905",
+      "reason": "The approved fork source is the head of the published keepalive PR.",
+      "evidence": "https://github.com/google/gvisor/pull/16905"
     }
   ],
   "investigations": [
