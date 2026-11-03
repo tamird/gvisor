@@ -1,0 +1,54 @@
+name: Native container Make and KVM cgroup modes
+on:
+  push:
+    branches: [qualification/buildkite-container-native-kvm]
+permissions:
+  contents: read
+jobs:
+  container:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 115
+    env:
+      PRODUCT: 1998f17f51aea3db192d9f1eeda076a8bedfd7a7
+      SOURCE: 7e29426b047a41303652cfa9f0ae91e933302f5e
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 2, persist-credentials: false}
+    - name: Retain controller outside product checkout
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD^)" = 38745c527784376e0b5d915fe5ebd85e1d1385fd
+        printf '{"status":"INCOMPLETE","carrier":"%s"}\n' "$GITHUB_SHA" > "$RUNNER_TEMP/container-native-result.json"
+        test -c /dev/kvm
+        mkdir "$RUNNER_TEMP/controller"
+        cp .github/qualification/unit-cgroup-v1/check.py test/rbe/{credential_artifacts,qualification_report,unit_matrix}.py "$RUNNER_TEMP/controller/"
+        git fetch --no-tags origin "$SOURCE" --depth=3
+        printf '{"status":"INCOMPLETE","carrier":"%s"}\n' "$GITHUB_SHA" > "$RUNNER_TEMP/container-native-result.json"
+    - name: Native build and fresh isolated guests
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: python3 -B "$RUNNER_TEMP/controller/check.py"
+    - name: Validate sole public receipt
+      id: scan
+      if: always()
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PY'
+        import json, os, re
+        from pathlib import Path
+        p = Path(os.environ['RUNNER_TEMP']) / 'container-native-result.json'
+        data = p.read_bytes()
+        assert len(data) < 2 * 1024 * 1024
+        key = os.environ['BUILDBUDDY_API_KEY']
+        assert key and key.encode() not in data and json.dumps(key)[1:-1].encode() not in data
+        assert not re.search(rb'(?i)(github_pat_|gh[pousr]_[a-z0-9]{20}|(?:authorization|x-buildbuddy-api-key)\s*[:=]|Bearer\s+[a-z0-9])', data)
+        assert json.loads(data)['carrier'] == os.environ['GITHUB_SHA']
+        PY
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.scan.outcome == 'success'
+      with:
+        name: native-container-cgroup-result
+        path: ${{ runner.temp }}/container-native-result.json
+        if-no-files-found: error
