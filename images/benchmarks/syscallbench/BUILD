@@ -1,18 +1,18 @@
 load("@rules_img//img:image.bzl", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//images:img.bzl", "image_outputs")
-load("//tools:defs.bzl", "cc_binary")
+load("//tools/bazeldefs:static.bzl", "musl_cc_binary")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
 )
 
-cc_binary(
+musl_cc_binary(
     name = "syscallbench",
     srcs = ["syscallbench.c"],
     copts = ["-O2"],
-    static = True,
+    features = ["fully_static_link"],
     # The assembly loop and seccomp filters use the Linux x86-64 ABI.
     target_compatible_with = [
         "@platforms//cpu:x86_64",

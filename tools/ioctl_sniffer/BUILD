@@ -1,4 +1,5 @@
-load("//tools:defs.bzl", "cc_binary", "go_binary", "proto_library")
+load("//tools:defs.bzl", "bzl_library", "cc_binary", "go_binary", "proto_library")
+load(":defs.bzl", "gnu_filegroup")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -9,6 +10,15 @@ proto_library(
     name = "ioctl",
     srcs = ["ioctl.proto"],
     visibility = ["//tools/ioctl_sniffer:__subpackages__"],
+)
+
+bzl_library(
+    name = "defs_bzl",
+    srcs = ["defs.bzl"],
+    deps = [
+        "//tools:defs_bzl",
+        "@with_cfg.bzl//:with_cfg",
+    ],
 )
 
 cc_binary(
@@ -30,6 +40,11 @@ cc_binary(
     ],
 )
 
+gnu_filegroup(
+    name = "ioctl_hook_gnu",
+    srcs = [":ioctl_hook"],
+)
+
 go_binary(
     name = "run_sniffer",
     srcs = [
@@ -37,13 +52,9 @@ go_binary(
         "run_sniffer.go",
     ],
     embedsrcs = [
-        # The 'keep' comment is needed to prevent glaze from removing this
-        # dependency. This is because the `:ioctl_hook` `cc_binary` rule
-        # output file is 'libioctl_hook.so' (because of `linkshared = True`),
-        # but glaze assumes that the output file is just `ioctl_hook`, so it
-        # can't associate the `go:embed` statement in `run_sniffer.go` with
-        # `:ioctl_hook`'s actual output file.
-        ":ioctl_hook",  # keep
+        # Gazelle cannot infer the transitioned dependency from the embedded
+        # filename, libioctl_hook.so.
+        ":ioctl_hook_gnu",  # keep
     ],
     features = ["fully_static_link"],
     # Disable nogo tests because this has C++ dependencies.
