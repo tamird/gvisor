@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T09:26:23.862437+00:00",
+    "updatedAt": "2026-11-03T09:40:14.321194+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41554,12 +41554,12 @@
       "repo": "tamird/gvisor",
       "ref": "review/buildkite-pkg-make",
       "head": "bcec52ddaaddedf04de03988486d72647187e309",
-      "title": "Build pkg and runsc directly with Bazel on Buildkite",
+      "title": "Build pkg and runsc on the Buildkite agent",
       "url": "https://github.com/tamird/gvisor/commit/bcec52dda",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-11-03T09:04:47.148432+00:00",
-      "summary": "The Buildkite pkg and runsc jobs pass the agent cache and quoted options through Make. Both entry points selected the same 1,951 pkg and 391 runsc target configurations per architecture. For the Linux ABI library and runsc, all six selected compile and link action keys matched; the extra query rows belonged to other configurations. The comparison used Bazel analysis. The earlier builds covered 1,948 AMD64 and 1,946 ARM64 pkg targets and 389 runsc targets per architecture.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-03T09:39:14.090648+00:00",
+      "summary": "The three Buildkite compile jobs run Make on the agent and pass the architecture, cache and quoted options to Bazel. Both command paths selected the same 1,951 pkg and 391 runsc configurations per architecture. Earlier builds covered the common targets. All five newly added targets built for AMD64 and ARM64 on the same AMD64 Linux worker. Bazel skipped the two x86-only slimvm targets on ARM64.",
       "evidence": [
         {
           "label": "Two passing pkg builds and the blocked runsc builds",
@@ -41612,19 +41612,48 @@
         {
           "label": "Configured owners and six selected compile/link actions on AMD64 and ARM64",
           "url": "https://github.com/tamird/gvisor/actions/runs/41607225379/artifacts/13217262560"
+        },
+        {
+          "label": "Four successful Make/Bazel builds for all ten compatible target configurations",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41609986575/artifacts/13218099399"
+        },
+        {
+          "label": "Verified target outputs and two ARM64 exclusions from the original build events",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41612428442/artifacts/13218859862"
         }
       ],
       "followup": {
         "owner": "Workstream owner",
         "sourceHead": "bcec52ddaaddedf04de03988486d72647187e309",
-        "observedAt": "2026-11-03T09:04:47.148432+00:00",
-        "disposition": "Agent options, target selection and representative producers verified",
-        "nextAction": "Close the build coverage difference before requesting review. The added targets are the capabilitytest library and generated sources, and gofer_maxprocs_test and its analyzer. The ARM64 configured list also includes two AMD64-only slimvm rules.",
+        "observedAt": "2026-11-03T09:39:14.090648+00:00",
+        "disposition": "Contributor review requested",
+        "nextAction": "Open after contributor review, the native compiler and agent bootstrap, and #16507. The cgroup prerequisite landed in #16835.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41580886089/artifacts/13205442287",
           "https://github.com/tamird/gvisor/commit/bcec52dda",
-          "https://github.com/tamird/gvisor/actions/runs/41607225379/artifacts/13217262560"
+          "https://github.com/tamird/gvisor/actions/runs/41607225379/artifacts/13217262560",
+          "https://github.com/tamird/gvisor/actions/runs/41609986575/artifacts/13218099399",
+          "https://github.com/tamird/gvisor/actions/runs/41612428442/artifacts/13218859862"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "d30816db365b44801393af8fe721795897ab5a65"
+        },
+        "after": {
+          "head": "bcec52ddaaddedf04de03988486d72647187e309"
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "bcec52ddaaddedf04de03988486d72647187e309",
+        "baseHead": "75c04f42d5b7346e4a54a5991dfaf31b043b6769",
+        "title": "Build pkg and runsc on the Buildkite agent",
+        "summary": "The three Buildkite compile jobs run Make on the agent and pass the architecture, cache and quoted options to Bazel. Both command paths selected the same 1,951 pkg and 391 runsc configurations per architecture. Earlier builds covered the common targets. All five newly added targets built for AMD64 and ARM64 on the same AMD64 Linux worker. Bazel skipped the two x86-only slimvm targets on ARM64.",
+        "body": "Use the native Bazel client for the three compile jobs. Keep their\ncommands on the existing Make build path so the agent's remote cache\nand quoted build options reach Bazel.\n\nSelect each job's architecture explicitly and keep the network plugin\nexclusion scoped to runsc.",
+        "url": "https://github.com/tamird/gvisor/commit/bcec52dda",
+        "requestedAt": "2026-11-03T09:39:14.090648+00:00"
       }
     },
     {
@@ -45902,8 +45931,8 @@
       "url": "https://github.com/tamird/gvisor/commit/22b87677f",
       "group": "analysis",
       "status": "Agent work",
-      "updatedAt": "2026-11-03T09:26:23.862437+00:00",
-      "summary": "All 355 selected unit targets on 96fadde72 ran under native ARM64 across three disjoint attempts. Nine targets failed. The XML reports contain 101,777 passed cases, 26 failed and 138 skipped. Of the 355 targets, 36 reported zero cases and two skipped every case. Seven targets reported EACCES executing /proc/self/exe, including three gofer launches. One target failed to mount, and TestLicensePolicy reported mismatched license entries for 20 QEMU dependencies and one LTP dependency. All 35 license cases passed separately on native-Make proposal 5555ba1f2, which uses the stock catalog and policy. The fork catalog comparison in 72470ec60 retained these mismatches after integrating the classifier from #15146. The same entries and policy remain on integration f1e943169. In separate 4 KiB ARM64 guests, the original procumounter and safemount binaries passed all six cases. All 156 cgroup unit cases ran on an ARM64 cgroup-v2 host; the v1 unit cases use fixture hierarchies. On native Ubuntu 22.04, five of the six remaining permission-sensitive targets passed. The sixth reached checkpoint inspection and failed when runsc statefile exited 128. The six XML reports recorded 225 passed, two failed (the subtest and its parent), and seven skipped. The Python suite reported all 39 tests passed.",
+      "updatedAt": "2026-11-03T09:40:14.321194+00:00",
+      "summary": "All 355 selected unit targets on 96fadde72 ran under native ARM64 across three disjoint attempts. Nine targets failed. The XML reports contain 101,777 passed cases, 26 failed and 138 skipped. Of the 355 targets, 36 reported zero cases and two skipped every case. Seven targets reported EACCES executing /proc/self/exe, including three gofer launches. One target failed to mount, and TestLicensePolicy reported mismatched license entries for 20 QEMU dependencies and one LTP dependency. All 35 license cases passed separately on native-Make proposal 5555ba1f2, which uses the stock catalog and policy. The fork catalog comparison in 72470ec60 retained these mismatches after integrating the classifier from #15146. The same entries and policy remain on integration f1e943169. In separate 4 KiB ARM64 guests, the original procumounter and safemount binaries passed all six cases. All 156 cgroup unit cases ran on an ARM64 cgroup-v2 host; the v1 unit cases use fixture hierarchies. On native Ubuntu 22.04, five of the six remaining permission-sensitive targets passed. The sixth reached checkpoint inspection and failed when runsc statefile exited 128. The six XML reports recorded 225 passed, two failed (the subtest and its parent), and seven skipped. The Python suite reported all 39 tests passed. The isolated checkpoint subtest passed with child diagnostics enabled. Both the graph and wire printer exited 0. The earlier exit 128 remains unexplained.",
       "evidence": [
         {
           "label": "Three matching AMD64 selections and 471 named buffer/cgroup cases",
@@ -45964,14 +45993,18 @@
         {
           "label": "Six fresh ARM64 unit targets on Ubuntu 22.04; five passed and one checkpoint subtest failed",
           "url": "https://github.com/tamird/gvisor/actions/runs/41608714830/artifacts/13218491847"
+        },
+        {
+          "label": "Isolated checkpoint test passed with diagnostic logging on native ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41612310644/artifacts/13219393523"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "22b87677f7ae1fa27ebee5b4eb95ab9cfe966761",
-        "observedAt": "2026-11-03T09:26:23.862437+00:00",
+        "observedAt": "2026-11-03T09:40:14.321194+00:00",
         "disposition": "Seven of the nine original failures passed in follow-ups; one checkpoint subtest and the catalog mismatch remain",
-        "nextAction": "Diagnose the failing checkpoint inspection in runsc/cmd. Track the QEMU and LTP license differences separately. The AMD64 Buildkite lane still needs a native cgroup-v1 worker.",
+        "nextAction": "Check the original cmd suite’s failure output with its original child flags and combined stream. Track the license differences separately. Qualify the native AMD64 cgroup-v1 lane.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41497682946/artifacts/13172754926",
           "https://github.com/tamird/gvisor/actions/runs/41513096230/artifacts/13175395076",
@@ -45981,7 +46014,8 @@
           "https://github.com/tamird/gvisor/actions/runs/41597716559/artifacts/13212788996",
           "https://buildkite.com/gvisor/pipeline/builds/53249#01a19c21-d0a1-4e8b-8dca-646db0259dc6",
           "https://github.com/tamird/gvisor/actions/runs/41605938071/artifacts/13216413222",
-          "https://github.com/tamird/gvisor/actions/runs/41608714830/artifacts/13218491847"
+          "https://github.com/tamird/gvisor/actions/runs/41608714830/artifacts/13218491847",
+          "https://github.com/tamird/gvisor/actions/runs/41612310644/artifacts/13219393523"
         ]
       }
     },
@@ -50359,9 +50393,11 @@
       "type": "depends_on",
       "from": "pr:16496",
       "to": "branch:buildkite-native-packages",
-      "reason": "The runsc wildcard requires the corrected cgroup fixture.",
+      "reason": "The cgroup fixture needed by the runsc wildcard landed through #16835.",
       "evidence": [
-        "https://github.com/tamird/gvisor/actions/runs/41252118749/artifacts/13063861013"
+        "https://github.com/tamird/gvisor/actions/runs/41252118749/artifacts/13063861013",
+        "https://github.com/google/gvisor/pull/16835",
+        "https://github.com/google/gvisor/commit/3164fe6e0"
       ]
     },
     {
