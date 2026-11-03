@@ -44,7 +44,7 @@ def integers(values):
     return result
 
 
-def inspect(path):
+def inspect(path, commands=False):
     files, inputs, selected = {}, {}, []
     counts = Counter()
     invocation = None
@@ -88,11 +88,25 @@ def inspect(path):
                        if (i := first(fields(v), 5, 0)) in files]
             row = {"owner": owner, "mnemonic": mnemonic, "runner": runner,
                    "cached": bool(first(spawn, 12, 0)), "exit": first(spawn, 9, 0),
+                   "status": first(spawn, 10).decode(),
                    "digest": digest(first(spawn, 16)), "platform": {k: props.get(k) for k in PROPS},
                    "argv_sha256": hashlib.sha256(json.dumps(args).encode()).hexdigest(),
                    "tools": [{"path": tool, "digest": declared.get(tool)} for tool in tools],
                    "target_triples": sorted(set(re.findall(r"(?:x86_64|aarch64)[-a-z0-9]*linux[-a-z0-9]*", " ".join(args)))),
                    "outputs": outputs}
+            if commands and mnemonic in {"CppCompile", "CppLink"} and not tools:
+                # Only file identities from the two unmatched original commands;
+                # never their environment or arbitrary command-line strings.
+                row["command_files"] = [
+                    {"index": index, "path": arg.removeprefix("@"),
+                     "response_file": arg.startswith("@"),
+                     "digest": declared.get(arg.removeprefix("@"))}
+                    for index, arg in enumerate(args)
+                    if re.fullmatch(r"@?(?:external|bazel-out)/[a-zA-Z0-9_+./-]+", arg)]
+                row["argument_count"] = len(args)
+                row["declared_compiler_tools"] = [
+                    {"path": path, "digest": key} for path, key in sorted(declared.items())
+                    if TOOLS.fullmatch(path)]
             selected.append(row)
         require(process.wait() == 0, "incomplete compact log")
     return {"invocation": invocation, "actions": selected,
@@ -194,6 +208,11 @@ def recover():
                 and value["amd64Markers"] == value["arm64Markers"] == 871
                 and not value["missing"] and not value["unexpected"] and not value["skipped"],
                 "original workload did not pass the complete selection")
+        summaries = [line for line in value["consoleTail"]
+                     if re.fullmatch(r"Executed [0-9]+ out of [0-9]+ tests: [0-9]+ tests pass\.", line)]
+        require(summaries == ["Executed 871 out of 871 tests: 871 tests pass."],
+                "original Bazel console test count differs")
+        row["bazel_test_summary"] = summaries[0]
         keys = ("verified", "source", "host", "status", "bazel_exit", "invocation",
                 "configured", "testRunners", "summaries", "amd64Markers", "arm64Markers",
                 "expected", "missing", "unexpected", "skipped", "agent_options",
@@ -271,6 +290,8 @@ def recover():
                    original_compiler_json_sha256=hashlib.sha256(projected).hexdigest(),
                    original_8MiB_bound_satisfied=len(projected) < 8 * 1024 * 1024,
                    counts=value["counts"])
+        value = inspect(ROOT / "nogo.compact", commands=True)
+        require(value["invocation"] == invocation, "command inspection invocation differs")
         compiled = [action for action in value["actions"] if action["owner"] in COWNERS]
         local = [action for action in value["actions"] if action["owner"] == "//runsc/cgroup:cgroup_test"
                  and action["mnemonic"] in {"GoCompilePkg", "GoStaticAnalysis"}]
@@ -304,7 +325,49 @@ def recover():
         for owner in COWNERS:
             require({o["machine"] for a in compiled if a["owner"] == owner for o in a["outputs"]} == {62, 183},
                     "missing embedded target architecture")
-        require(cpp and not row["cpp_summary"]["wrong_placement"] and not row["cpp_summary"]["missing_compact_tool_digest"],
+        # rules_cc 0.2.25's declared shared-library wrapper reads its linker
+        # from line five of an input parameter file. Verify those original bytes
+        # before treating an indirect command as a declared linker invocation.
+        row["indirect_links"] = [a for a in cpp if not a["tools"]]
+        for action in row["indirect_links"]:
+            action["indirection_verified"] = False
+            save()
+            command = action.get("command_files", [])
+            if (action["mnemonic"] != "CppLink" or len(action["outputs"]) != 1
+                    or not valid_digest(action["outputs"][0]["digest"])
+                    or action.get("argument_count") != 2
+                    or [item["index"] for item in command] != [0, 1]):
+                continue
+            driver, params = command
+            if (driver["response_file"] or not params["response_file"]
+                    or not driver["path"].endswith("/link_dynamic_library.sh")
+                    or driver["digest"] != ["410914e519a1d309961ba77f4549a8c92da307ce1f596c10f8284da904b17a77", 4125]
+                    or not valid_digest(params["digest"])):
+                continue
+            blob({"hash": driver["digest"][0], "sizeBytes": driver["digest"][1]}, invocation)
+            data = blob({"hash": params["digest"][0], "sizeBytes": params["digest"][1]}, invocation)
+            lines = data.decode().splitlines()
+            params["compiler_paths"] = sorted(set(TOOLS.findall(data.decode())))
+            if len(lines) < 5 or lines[0] != "no" or not TOOLS.fullmatch(lines[4]):
+                continue
+            linker = [tool for tool in action["declared_compiler_tools"] if tool["path"] == lines[4]]
+            outputs = [lines[i + 1] for i in range(5, len(lines) - 1) if lines[i] == "-o"]
+            if (len(linker) != 1 or not valid_digest(linker[0]["digest"])
+                    or outputs != [output["path"] for output in action["outputs"]]):
+                continue
+            action.update(tools=linker, indirection_verified=True,
+                          classification="shared_library_link", interface_library=False)
+            save()
+        row["cpp_summary"].update(
+            unresolved_tools=sum(not a["tools"] or not all(valid_digest(t["digest"]) for t in a["tools"]) for a in cpp),
+            non_success_results=sum(a["exit"] != 0 or a["status"] != "" for a in cpp),
+            cache_hits=sum(a["cached"] for a in cpp),
+            verified_indirect_links=sum(a["indirection_verified"] for a in row["indirect_links"]))
+        save()
+        require(cpp and not row["cpp_summary"]["wrong_placement"]
+                and not row["cpp_summary"]["unresolved_tools"]
+                and not row["cpp_summary"]["non_success_results"]
+                and not row["cpp_summary"]["cache_hits"],
                 "C++ action placement or input evidence incomplete")
         require(local and all(a["runner"] == "local" and a["exit"] == 0 for a in local)
                 and {a["mnemonic"] for a in local} == {"GoCompilePkg", "GoStaticAnalysis"},
