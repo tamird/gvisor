@@ -1,4 +1,4 @@
-name: Complete the missing rebased runtime owners
+name: Complete the unobserved ARM64 SHM analyzer
 on:
   workflow_dispatch:
 permissions:
@@ -6,9 +6,9 @@ permissions:
   actions: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/rebased-runtime-missing-471d6dff5'
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/rebased-runtime-arm-status'
     runs-on: ubuntu-24.04
-    timeout-minutes: 125
+    timeout-minutes: 35
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
@@ -18,13 +18,13 @@ jobs:
       run: |
         mkdir -p "$RUNNER_TEMP/replay-public"
         printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/replay-public/summary.json"
-    - name: Recover the original missing analyzer and native syscall diagnostic
+    - name: Correct the original analyzer status lookup
       env:
         GH_TOKEN: ${{ github.token }}
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
         set -euo pipefail
-        test "$(git rev-parse HEAD^)" = d46ece07b13efa292e3f196fada41725392de5bc
+        test "$(git rev-parse HEAD^)" = ffab471c350a7d588a5583c80466edd4fdaada8b
         mkdir -p "$RUNNER_TEMP/checker"
         git show 680739b629229eb1c8fa91aa1147d1bca71eb04f:test/rbe/cas_inputs.py > "$RUNNER_TEMP/checker/cas_inputs.py" || {
           git fetch --no-tags --depth=1 "https://github.com/$GITHUB_REPOSITORY.git" 680739b629229eb1c8fa91aa1147d1bca71eb04f
@@ -36,17 +36,25 @@ jobs:
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: rebased-runtime-original-recovery
+        name: rebased-runtime-arm-original-recovery
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error
-    - name: Run only the missing owning suites and native identity control
+    - name: Run only the unobserved ARM64 SHM analyzer
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       shell: bash
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "d46ece07b13efa292e3f196fada41725392de5bc"
+        test "$(git rev-parse HEAD^1)" = "ffab471c350a7d588a5583c80466edd4fdaada8b"
+        if ! python3 - "$RUNNER_TEMP/replay-public/recovery.json" <<'PY'
+        import json, sys
+        sys.exit(not json.load(open(sys.argv[1]))['arm64'].get('missing_test_confirmed'))
+        PY
+        then
+          python3 -B "$RUNNER_TEMP/checker/rebased_runtime_recovery.py" complete
+          exit 1
+        fi
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py rebased_runtime_recovery.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -127,7 +135,7 @@ jobs:
         overall=0
         mkdir -p "$RUNNER_TEMP/replay-private" "$RUNNER_TEMP/replay-public"
         parent=471d6dff5229b99208bf6fec985601067f1f9d69
-        for arm in shm-arm64 vfs-tests vfs-amd64 vfs-arm64 shm-native-ids; do
+        for arm in shm-arm64; do
           if [[ "$arm" == shm-arm64 ]] && ! python3 - "$RUNNER_TEMP/replay-public/recovery.json" <<'PY'
         import json, sys
         sys.exit(not json.load(open(sys.argv[1]))['arm64'].get('missing_test_confirmed'))
@@ -197,6 +205,6 @@ jobs:
       if: always() && steps.scan.outcome == 'success'
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: rebased-runtime-missing-results
+        name: rebased-runtime-arm-results
         path: ${{ runner.temp }}/replay-public/*.json
         if-no-files-found: error

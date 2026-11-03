@@ -20,7 +20,7 @@ LOG_SHA = "9735bbe867f6937c40fefa8e8b4ed38162d17e2dc1e8c83af9aa3bca9fd90514"
 SHM = "1e2c3bce4cbcd408e303e322cbe97fc11caa585d"
 ARM_INVOCATION = "473c2294-c93f-41af-8f64-070afd860619"
 ARM_OWNER = "//pkg/sentry/kernel/shm:shm_nogo"
-ARMS = ("shm-arm64", "vfs-tests", "vfs-amd64", "vfs-arm64", "shm-native-ids")
+ARMS = ("shm-arm64",)
 SECRETS = [os.environ[k] for k in ("GH_TOKEN", "BUILDBUDDY_API_KEY") if os.environ.get(k)]
 
 
@@ -43,6 +43,13 @@ def save(name, value):
 def original():
     from cas_inputs import fetch, rpc
 
+    failed_lookup = subprocess.check_output(["gh", "api", "repos/tamird/gvisor/actions/artifacts/13258156382/zip"])
+    assert sha(failed_lookup) == "e5bdea294284a8aa5f8aa7372003e3e3144bec8631cfa52c1295c34f30784a04"
+    with zipfile.ZipFile(io.BytesIO(failed_lookup)) as archive:
+        previous = json.loads(archive.read("recovery.json"))
+    assert previous["status"] == "INCOMPLETE" and previous["arm64"]["invocation"] == ARM_INVOCATION
+    assert previous["arm64"]["lookup_error"] == "AssertionError" and "invocation_status" not in previous["arm64"]
+    save("prior-lookup-recovery.json", previous)
     raw = subprocess.check_output(["gh", "api", "repos/tamird/gvisor/actions/artifacts/13256418500/zip"])
     assert sha(raw) == ORIGINAL_SHA
     with zipfile.ZipFile(io.BytesIO(raw)) as archive:
@@ -126,7 +133,8 @@ def original():
 def _complete():
     rows = {a: json.loads((PUBLIC / (a + ".json")).read_text()) for a in ARMS if (PUBLIC / (a + ".json")).is_file()}
     result = dict(expected=list(ARMS), executed=list(rows), missing=sorted(set(ARMS) - rows.keys()),
-                  original_zip_sha256=ORIGINAL_SHA, original_shm_syscall_verdict="FAIL", verdict_available_at=utc())
+                  original_zip_sha256=ORIGINAL_SHA, original_shm_syscall_verdict="FAIL", verdict_available_at=utc(),
+                  scope="Only the unobserved ARM64 SHM analyzer; VFS and the native identity control retain their separate receipts")
     errors = []
     if "shm-native-ids" in rows:
         row = rows["shm-native-ids"]
