@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T18:31:23.952068+00:00",
+    "updatedAt": "2026-11-03T18:50:22.524457+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36634,12 +36634,12 @@
       "number": 16710,
       "group": "bazel",
       "ref": "review/stateify-output-path",
-      "head": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
-      "title": "Format stateify output in the generator",
+      "head": "4bbf4d71809d8a03442d1ce149600c3b823b10e1",
+      "title": "Generate checkpoint methods without a host shell",
       "url": "https://github.com/google/gvisor/pull/16710",
       "status": "open",
-      "summary": "A worker without /bin/sh cannot build //pkg/bpf:bpf_state_autogen. Stateify emits imports that its generated code might use, then Bazel runs goimports to remove the unused ones. The launcher uses the shell to put the declared Go executable on PATH (a35e9e804), so the action fails before goimports can read the file.",
-      "updatedAt": "2026-11-03T18:31:23.952068+00:00",
+      "summary": "Stateify selects the imports used by its generated methods and formats the result with go/format. It no longer needs goimports or a host shell. The public revision matches all 485 official generated files, including the five seccomp-dependent outputs. The sibling-file alias fixture passes.",
+      "updatedAt": "2026-11-03T18:50:22.524457+00:00",
       "evidence": [
         {
           "label": "Seven identical production outputs and scratch qualification",
@@ -36716,6 +36716,22 @@
         {
           "label": "Six-target verification and Nogo SDK archive mismatch",
           "url": "https://github.com/tamird/gvisor/actions/runs/41693546638/artifacts/13260765532"
+        },
+        {
+          "label": "Six remaining targets built, including the identtype fixture; five generated files matched the official Go export",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41694952054/artifacts/13260638404"
+        },
+        {
+          "label": "Answered Lucas on removing x/tools",
+          "url": "https://github.com/google/gvisor/pull/16710#discussion_r4459026110"
+        },
+        {
+          "label": "Answered Lucas on preserving the shared macro",
+          "url": "https://github.com/google/gvisor/pull/16710#discussion_r4459026564"
+        },
+        {
+          "label": "Answered Lucas on tracking imports in the generator",
+          "url": "https://github.com/google/gvisor/pull/16710#discussion_r4459027083"
         }
       ],
       "settledReviews": [
@@ -36745,49 +36761,29 @@
           "outcome": "changes-requested",
           "at": "2026-11-03T18:31:23.952068+00:00",
           "url": "https://github.com/tamird/gvisor/commit/778375bc6"
+        },
+        {
+          "kind": "amendment",
+          "head": "4bbf4d71809d8a03442d1ce149600c3b823b10e1",
+          "at": "2026-11-03T18:46:47Z",
+          "outcome": "approved",
+          "url": "https://github.com/tamird/gvisor/commit/4bbf4d718"
         }
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
-        "observedAt": "2026-11-03T18:31:23.952068+00:00",
-        "disposition": "Code approved; revised change record ready",
-        "nextAction": "After message review and targeted qualification, publish and answer Lucas. Six full builds stopped in Nogo; two AMD64 analyses rejected cached SDK archives with extra packages. All 485 independent generator comparisons matched.",
+        "sourceHead": "4bbf4d71809d8a03442d1ce149600c3b823b10e1",
+        "observedAt": "2026-11-03T18:50:22.524457+00:00",
+        "disposition": "Approved revision published; all three review threads answered",
+        "nextAction": "Follow maintainer review and public import checks on the published revision.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/778375bc6",
-          "https://github.com/tamird/gvisor/actions/runs/41688337023/artifacts/13255863288",
-          "https://github.com/tamird/gvisor/actions/runs/41691859689/artifacts/13256054232",
-          "https://github.com/google/gvisor/pull/16710#discussion_r4448555404",
+          "https://github.com/google/gvisor/pull/16710",
           "https://github.com/tamird/gvisor/commit/4bbf4d718",
-          "https://github.com/tamird/gvisor/actions/runs/41693546638/artifacts/13260765532"
-        ],
-        "actionableComment": {
-          "head": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
-          "kind": "review",
-          "commentId": "PRR_kwDOB9IlXs8AAAABVmOMTw",
-          "url": "https://github.com/google/gvisor/pull/16710#pullrequestreview-5744331855"
-        }
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "4bbf4d71809d8a03442d1ce149600c3b823b10e1",
-        "baseHead": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
-        "url": "https://github.com/tamird/gvisor/commit/4bbf4d718",
-        "title": "Generate checkpoint methods without a host shell",
-        "requestedAt": "2026-11-03T18:31:23.952068+00:00",
-        "summary": "Review the rewritten commit message and PR description. The contributor approved the code.",
-        "body": "A worker without /bin/sh cannot build //pkg/bpf:bpf_state_autogen. Stateify emits imports that its generated code might use, then Bazel runs goimports to remove the unused ones. The launcher uses the shell to put the declared Go executable on PATH (a35e9e804), so the action fails before goimports can read the file.\n\nRecord the packages stateify references as it generates code, then format the file with go/format in the same action. Resolve names in conversion tags from the rule's imports and the input files. A tag can use a package alias imported only in the file that defines its save or load method."
-      },
-      "refinement": {
-        "before": {
-          "head": "778375bc602d883faf89a2f5b7bdf4016804da10",
-          "base": "471d6dff5229b99208bf6fec985601067f1f9d69"
-        },
-        "after": {
-          "head": "4bbf4d71809d8a03442d1ce149600c3b823b10e1",
-          "base": "471d6dff5229b99208bf6fec985601067f1f9d69"
-        }
+          "https://github.com/tamird/gvisor/actions/runs/41694952054/artifacts/13260638404",
+          "https://github.com/google/gvisor/pull/16710#discussion_r4459026110",
+          "https://github.com/google/gvisor/pull/16710#discussion_r4459026564",
+          "https://github.com/google/gvisor/pull/16710#discussion_r4459027083"
+        ]
       }
     },
     {
@@ -44797,11 +44793,11 @@
       "ref": "proposal/goimports-in-process-diff",
       "head": "d140e4d63b51cb5053d57cde308379069b5a6436",
       "title": "Let goimports print a unified diff without a system diff program",
-      "url": "https://github.com/tamird/tools/commit/d140e4d63",
+      "url": "https://go-review.googlesource.com/c/tools/+/858482",
       "group": "analysis",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-11-02T16:03:52.160242+00:00",
-      "summary": "goimports -d can produce a unified diff in process. Nearby edits expose a hunk line-count bug in golang.org/x/tools/internal/diff. Go CL 834825 corrects a vendored copy. goimports needs the correction in x/tools itself.",
+      "status": "Published for upstream review",
+      "updatedAt": "2026-11-03T18:50:22.524457+00:00",
+      "summary": "Go Gerrit CL 858481 corrects the new-file line number for adjacent edits in x/tools/internal/diff, the source vendored by Go. Its child CL 858482 uses that implementation in goimports -d so it can print a patch without invoking an external diff program.",
       "evidence": [
         {
           "label": "Original hunk headers, forward and reverse patch application, and syntax controls",
@@ -44822,6 +44818,18 @@
         {
           "label": "Reported the line-18 reproduction and requested the correction in x/tools",
           "url": "https://go-review.googlesource.com/c/go/+/834825#message-ea3ef943d4e1243ac197a81618999be41bec558f"
+        },
+        {
+          "label": "Original contributor-approved fork revision",
+          "url": "https://github.com/tamird/tools/commit/d140e4d63"
+        },
+        {
+          "label": "Parent CL: correct unified hunk positions in the x/tools source",
+          "url": "https://go-review.googlesource.com/c/tools/+/858481"
+        },
+        {
+          "label": "Child CL: generate goimports diffs in process",
+          "url": "https://go-review.googlesource.com/c/tools/+/858482"
         }
       ],
       "settledReviews": [
@@ -44833,14 +44841,14 @@
         }
       ],
       "followup": {
-        "owner": "coordinator",
+        "owner": "root",
         "sourceHead": "d140e4d63b51cb5053d57cde308379069b5a6436",
-        "disposition": "Approved for submission once x/tools has the hunk correction",
-        "observedAt": "2026-11-02T16:03:52.160242+00:00",
-        "nextAction": "Follow golang/go#81453 and CL 834825 for a change to golang.org/x/tools/internal/diff. Verify the new-file line number in x/tools, then send the approved goimports change.",
+        "observedAt": "2026-11-03T18:50:22.524457+00:00",
+        "disposition": "Two dependent changes published to Go Gerrit",
+        "nextAction": "Follow review of the x/tools hunk correction and its dependent goimports change on Gerrit.",
         "evidence": [
-          "https://go-review.googlesource.com/c/go/+/834825#message-ea3ef943d4e1243ac197a81618999be41bec558f",
-          "https://github.com/golang/go/issues/81453"
+          "https://go-review.googlesource.com/c/tools/+/858481",
+          "https://go-review.googlesource.com/c/tools/+/858482"
         ]
       }
     },
@@ -45135,9 +45143,9 @@
       "title": "Build gVisor with Bazel 9.3.1",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-03T14:33:29.484586+00:00",
+      "updatedAt": "2026-11-03T18:50:22.524457+00:00",
       "url": "https://github.com/google/gvisor/pull/16801",
-      "summary": "Bazel 9.3.1 includes the directory-watch fix for the lint migration; two patches keep the existing Coral compiler and LLVM parser. The approved head is 8c224f822. Its imports failed when Bazel removed the native cc_library rule and changed dependency include directories to -I. The proposed amendment corrects both in #16801; no separate plugin PR is needed.",
+      "summary": "Bazel 9.3.1 includes the directory-watching fix. The plugin BUILD file loads cc_library explicitly, and the Coral toolchain treats dependency includes as system headers. Maintainer approval and both Copybara statuses refer to the current revision.",
       "evidence": [
         {
           "label": "Published Bazel 9.3.1 upgrade",
@@ -45210,28 +45218,26 @@
         {
           "label": "Fresh approval requested from relkochta",
           "url": "https://github.com/google/gvisor/pull/16801#issuecomment-6606468878"
+        },
+        {
+          "label": "Relkochta approved the published revision",
+          "url": "https://github.com/google/gvisor/pull/16801#pullrequestreview-5757342721"
+        },
+        {
+          "label": "First-pass build 513 failed; the responsible job has not been established",
+          "url": "https://buildkite.com/gvisor/first-pass/builds/513"
         }
       ],
-      "refinement": {
-        "before": {
-          "base": "aa767e4c43d011121271551fe24da501a56f729d",
-          "head": "8c224f822451f7e0c4ac7047b3f005e69097f4e5"
-        },
-        "after": {
-          "base": "aa767e4c43d011121271551fe24da501a56f729d",
-          "head": "514a1ce4f7dfeca8077048be5d1f321f72a7e2bd"
-        }
-      },
       "followup": {
         "owner": "root",
         "sourceHead": "514a1ce4f7dfeca8077048be5d1f321f72a7e2bd",
-        "observedAt": "2026-11-03T14:33:29.484586+00:00",
-        "disposition": "Amendment published; fresh approval requested in the PR",
-        "nextAction": "Follow the public checks and maintainer review on the published revision.",
+        "observedAt": "2026-11-03T18:50:22.524457+00:00",
+        "disposition": "Current head approved; Copybara import and feedback succeeded",
+        "nextAction": "Identify the failed job in Buildkite first-pass 513 before attributing a failure to the change.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16801",
-          "https://github.com/tamird/gvisor/commit/514a1ce4f",
-          "https://github.com/google/gvisor/pull/16801#issuecomment-6606468878"
+          "https://github.com/google/gvisor/pull/16801#pullrequestreview-5757342721",
+          "https://buildkite.com/gvisor/first-pass/builds/513",
+          "https://github.com/google/gvisor/pull/16801"
         ]
       },
       "settledReviews": [
