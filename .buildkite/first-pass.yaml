@@ -33,14 +33,14 @@ steps:
   # Run smoke tests before the other tests.
   - <<: *common
     <<: *source_test
-    env:
+    env: &source_smoke_env
       DOCKER_BUILD: "false"
+      BAZEL_TEST_STRIP: ""
     label: ":fire: Smoke tests (AMD64)"
     command: make test TARGETS=//:smoke
   - <<: *common
     <<: *source_test
-    env:
-      DOCKER_BUILD: "false"
+    env: *source_smoke_env
     label: ":fire: Smoke race tests"
     command: make test TARGETS=//:smoke-race
 

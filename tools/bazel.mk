@@ -114,6 +114,8 @@ GOMODCACHE ?=
 ##     BAZEL_TEST_OUTPUT - Test output policy; shown on failures only by
 ##                         default, set to "streamed" to show test logs as
 ##                         they happen.
+##     BAZEL_TEST_STRIP - Bazel's strip mode for tests. Leave it empty to
+##                        test the binaries produced by an ordinary build.
 ##
 STARTUP_OPTIONS    :=
 BAZEL_OPTIONS      ?=
@@ -121,6 +123,7 @@ BAZEL_REMOTE_CACHE ?=
 BAZEL              := bazel $(STARTUP_OPTIONS)
 BASE_OPTIONS       := --color=no --curses=no $(BAZEL_REMOTE_CACHE)
 BAZEL_TEST_OUTPUT  ?= errors
+BAZEL_TEST_STRIP   ?= never
 TEST_OPTIONS       += $(BASE_OPTIONS) \
   --sandbox_add_mount_pair=/tmp \
   --test_output=$(BAZEL_TEST_OUTPUT) \
@@ -392,7 +395,7 @@ build = $(call header,BUILD $(1)) && $(call build_paths,$(1),echo "$$0",$(2))
 copy  = $(call header,COPY $(1) $(2)) && $(call build_paths,$(1),if test -d "$(2)"; then dest="$(2)/$$1"; else dest="$(2)"; fi; mkdir -p -m 0755 "$$(dirname "$${dest}")" && chmod a+rx "$$(dirname "$${dest}")" && cp -fa "$$0" "$${dest}" && if test -d "$$0"; then chmod -R u+w "$${dest}"; fi,$(3))
 run   = $(call header,RUN $(1) $(2)) && $(call build_paths,$(1),"$$0" $(2))
 sudo  = $(call header,SUDO $(1) $(2)) && $(call build_paths,$(1),sudo -E "$$0" $(2))
-test  = $(call header,TEST $(1)) && $(call wrapper,$(BAZEL) test --strip=never $(BAZEL_OPTIONS) $(TEST_OPTIONS) $(1))
+test  = $(call header,TEST $(1)) && $(call wrapper,$(BAZEL) test $(addprefix --strip=,$(BAZEL_TEST_STRIP)) $(BAZEL_OPTIONS) $(TEST_OPTIONS) $(1))
 query = $(call wrapper,$(BAZEL) query $(BAZEL_OPTIONS) $(1))
 mod   = $(call wrapper,$(BAZEL) mod $(BASE_OPTIONS) $(BAZEL_OPTIONS) $(1))
 

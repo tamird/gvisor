@@ -84,8 +84,9 @@ steps:
   # Run basic AMD64 smoke tests before preceding to other tests.
   - <<: *common
     <<: *source_test
-    env:
+    env: &source_smoke_env
       DOCKER_BUILD: "false"
+      BAZEL_TEST_STRIP: ""
     label: ":fire: Smoke tests (AMD64)"
     command: make test TARGETS=//:smoke
     agents:
@@ -93,8 +94,7 @@ steps:
       queue: "default"
   - <<: *common
     <<: *source_test
-    env:
-      DOCKER_BUILD: "false"
+    env: *source_smoke_env
     label: ":fire: Smoke race tests"
     command: make test TARGETS=//:smoke-race
     agents:
@@ -111,8 +111,7 @@ steps:
   # we are severely limited in ARM64 agent capacity.
   - <<: *common
     <<: *source_test
-    env:
-      DOCKER_BUILD: "false"
+    env: *source_smoke_env
     label: ":fire: Smoke tests (ARM64)"
     command: make test TARGETS=//:smoke
     agents:
