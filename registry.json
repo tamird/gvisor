@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T21:28:21.302894+00:00",
+    "updatedAt": "2026-11-03T21:32:54.012083+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -43427,14 +43427,18 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/tcp-rack-fresh-timeout-head",
-      "head": "2d59045da5c29f2f6bc62dacd9457591367c9498",
+      "head": "85b67686f3cd61965db6393190969dab98c8d5c3",
       "title": "Keep RACK from repeating a fresh timeout repair",
       "url": "https://github.com/google/gvisor/pull/16857",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T21:02:38.092566+00:00",
-      "summary": "After a retransmission timeout, a SACK can reveal a hole beyond the freshly retransmitted head. The published fix avoids resending the head, but its send cursor can still replay the tail on an ACK or leave later holes unrepaired when the reordering timer fires. The fork amendment leaves ordinary sends at the first unsent segment so RACK can repair the holes.",
+      "updatedAt": "2026-11-03T21:32:54.012083+00:00",
+      "summary": "After a retransmission timeout, a SACK can reveal a hole beyond the freshly retransmitted head. The published amendment leaves ordinary sends at the first unsent segment so RACK can repair those holes without replaying the tail. The wire regression and separate controlled-clock check passed, and the approved reply is posted on the original review thread.",
       "evidence": [
+        {
+          "label": "Approved reviewer reply published",
+          "url": "https://github.com/google/gvisor/pull/16857#discussion_r4460678584"
+        },
         {
           "label": "Linux repaired segment 2, revised gVisor repaired 2 and 3, and the published head also replayed 7",
           "url": "https://github.com/tamird/gvisor/actions/runs/41715359654/artifacts/13270178626"
@@ -43494,33 +43498,41 @@
           "head": "2d59045da5c29f2f6bc62dacd9457591367c9498",
           "outcome": "approved",
           "at": "2026-11-02T20:41:28Z"
+        },
+        {
+          "kind": "amendment",
+          "head": "85b67686f3cd61965db6393190969dab98c8d5c3",
+          "outcome": "approved",
+          "at": "2026-11-03T21:31:33Z",
+          "body": "The original approved commit stays unchanged; 85b67686f advances the send cursor past data already sent and checks the repairs on the wire. The packet test accepts a repair of either later hole during half a timeout. It failed on the published gVisor head when that head also sent segment 7. The separate timer-only measurement used gVisor’s controlled clock. The earlier transfer timings apply to the original head-selection change.\n\ngit -C ~/code/gvisor range-diff aa767e4c4..2d59045da aa767e4c4..85b67686f\n\nProposed reply to @rexren-gif:\n\nConfirmed both paths. With segments 4–6 SACKed, the packet test saw segment 2 on Linux, segments 2 and 3 with 85b67686f, and segments 2, 3 and 7 on the previous head. The test now requires a repair from the holes and rejects a replay of the tail. With only segment 4 SACKed and no further ACK, the controlled gVisor clock showed the previous head waiting until the next timeout; the change repaired segments 2 and 3 after 20 ms. The change leaves the ordinary send cursor at the first unsent segment when RACK takes over.\n\nPosted by Codex on behalf of @tamird.",
+          "url": "https://github.com/tamird/gvisor/commit/85b67686f3cd61965db6393190969dab98c8d5c3",
+          "postedURL": "https://github.com/google/gvisor/pull/16857#discussion_r4460678584"
+        },
+        {
+          "kind": "reply",
+          "head": "85b67686f3cd61965db6393190969dab98c8d5c3",
+          "outcome": "approved",
+          "at": "2026-11-03T21:31:33Z",
+          "body": "Confirmed both paths. With segments 4–6 SACKed, the packet test saw segment 2 on Linux, segments 2 and 3 with 85b67686f, and segments 2, 3 and 7 on the previous head. The test now requires a repair from the holes and rejects a replay of the tail. With only segment 4 SACKed and no further ACK, the controlled gVisor clock showed the previous head waiting until the next timeout; the change repaired segments 2 and 3 after 20 ms. The change leaves the ordinary send cursor at the first unsent segment when RACK takes over.\n\nPosted by Codex on behalf of @tamird.",
+          "url": "https://github.com/google/gvisor/pull/16857#discussion_r4459290531",
+          "postedURL": "https://github.com/google/gvisor/pull/16857#discussion_r4460678584"
         }
       ],
       "number": 16857,
       "followup": {
         "owner": "TCP workstream",
-        "sourceHead": "2d59045da5c29f2f6bc62dacd9457591367c9498",
-        "providerHead": "2d59045da5c29f2f6bc62dacd9457591367c9498",
-        "observedAt": "2026-11-03T21:02:38.092566+00:00",
-        "disposition": "Packet test and controlled clock verified the requested RACK amendment",
-        "nextAction": "Review the two-commit revision and proposed reply together before updating #16857.",
+        "sourceHead": "85b67686f3cd61965db6393190969dab98c8d5c3",
+        "providerHead": "85b67686f3cd61965db6393190969dab98c8d5c3",
+        "observedAt": "2026-11-03T21:32:54.012083+00:00",
+        "disposition": "Approved amendment and reviewer reply published",
+        "nextAction": "Follow current-head checks and substantive reviewer responses. No contributor decision or outgoing reply remains.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16857#discussion_r4459290531",
           "https://github.com/tamird/gvisor/commit/85b67686f3cd61965db6393190969dab98c8d5c3",
           "https://github.com/tamird/gvisor/actions/runs/41715359654/artifacts/13270178626",
-          "https://github.com/tamird/gvisor/actions/runs/41711895058/artifacts/13269905741"
+          "https://github.com/tamird/gvisor/actions/runs/41711895058/artifacts/13269905741",
+          "https://github.com/google/gvisor/pull/16857#discussion_r4460678584"
         ]
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "85b67686f3cd61965db6393190969dab98c8d5c3",
-        "baseHead": "2d59045da5c29f2f6bc62dacd9457591367c9498",
-        "url": "https://github.com/tamird/gvisor/commit/85b67686f3cd61965db6393190969dab98c8d5c3",
-        "title": "Leave the send cursor at unsent data when RACK takes over",
-        "requestedAt": "2026-11-03T21:02:38.092566+00:00",
-        "summary": "Approve updating #16857 to 85b67686f and replying on the existing review thread.",
-        "body": "The original approved commit stays unchanged; 85b67686f advances the send cursor past data already sent and checks the repairs on the wire. The packet test accepts a repair of either later hole during half a timeout. It failed on the published gVisor head when that head also sent segment 7. The separate timer-only measurement used gVisor’s controlled clock. The earlier transfer timings apply to the original head-selection change.\n\ngit -C ~/code/gvisor range-diff aa767e4c4..2d59045da aa767e4c4..85b67686f\n\nProposed reply to @rexren-gif:\n\nConfirmed both paths. With segments 4–6 SACKed, the packet test saw segment 2 on Linux, segments 2 and 3 with 85b67686f, and segments 2, 3 and 7 on the previous head. The test now requires a repair from the holes and rejects a replay of the tail. With only segment 4 SACKed and no further ACK, the controlled gVisor clock showed the previous head waiting until the next timeout; the change repaired segments 2 and 3 after 20 ms. The change leaves the ordinary send cursor at the first unsent segment when RACK takes over.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -46028,9 +46040,13 @@
       "url": "https://github.com/google/gvisor/pull/16809",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T21:24:20.813219+00:00",
+      "updatedAt": "2026-11-03T21:32:54.012083+00:00",
       "summary": "Expose the socket’s lifetime retransmission count to applications diagnosing packet loss.",
       "evidence": [
+        {
+          "label": "Approved reviewer reply published",
+          "url": "https://github.com/google/gvisor/pull/16809#issuecomment-6615907851"
+        },
         {
           "label": "Parth requested a single squashed commit",
           "url": "https://github.com/google/gvisor/pull/16809#issuecomment-6615654449"
@@ -46088,14 +46104,23 @@
           "outcome": "approved",
           "at": "2026-11-03T21:24:20.813219+00:00",
           "summary": "Squash of the identical reviewed source tree; no new source change."
+        },
+        {
+          "kind": "reply",
+          "head": "f1dbaa4d1e2cfb522fa03197ed36f21df9a74a3b",
+          "outcome": "approved",
+          "at": "2026-11-03T21:30:43Z",
+          "body": "@parth-opensrc, squashed into f1dbaa4d1. Could you re-approve it? #16915 still drops the SYN-cookie send error.",
+          "url": "https://github.com/google/gvisor/pull/16809#issuecomment-6615654449",
+          "postedURL": "https://github.com/google/gvisor/pull/16809#issuecomment-6615907851"
         }
       ],
       "followup": {
         "owner": "TCP workstream",
         "sourceHead": "f1dbaa4d1e2cfb522fa03197ed36f21df9a74a3b",
-        "observedAt": "2026-11-03T21:24:20.813219+00:00",
-        "disposition": "Requested squash published; reply awaits authorization",
-        "nextAction": "Post the exact pending reply only after authorization, then follow re-approval and the corrected Copybara export. No further source amendment or duplicate request is needed.",
+        "observedAt": "2026-11-03T21:32:54.012083+00:00",
+        "disposition": "Requested squash and re-approval reply published",
+        "nextAction": "Follow Parth’s re-approval and check that the Copybara export returns the failed SYN-cookie send to the listener. No outgoing reply remains.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16809",
           "https://github.com/google/gvisor/pull/16915",
@@ -46103,7 +46128,8 @@
           "https://github.com/google/gvisor/pull/16809#issuecomment-6614296745",
           "https://github.com/tamird/gvisor/compare/bc9ffcc0d...bbdb2f8a2",
           "https://github.com/google/gvisor/pull/16809#issuecomment-6615654449",
-          "https://github.com/tamird/gvisor/commit/f1dbaa4d1e2cfb522fa03197ed36f21df9a74a3b"
+          "https://github.com/tamird/gvisor/commit/f1dbaa4d1e2cfb522fa03197ed36f21df9a74a3b",
+          "https://github.com/google/gvisor/pull/16809#issuecomment-6615907851"
         ]
       },
       "refinement": {
@@ -46122,16 +46148,6 @@
         "diffSha256": "348233ce13cdf1abaa4a22b8bf35b61b3314b0621861436777a5d6af2fc5f197",
         "summary": "The listener now reports a failed SYN-cookie send while still counting the cookie that was generated.",
         "evidence": "https://github.com/tamird/gvisor/compare/bc9ffcc0d...bbdb2f8a2"
-      },
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "f1dbaa4d1e2cfb522fa03197ed36f21df9a74a3b",
-        "url": "https://github.com/google/gvisor/pull/16809#issuecomment-6615654449",
-        "title": "Confirm the squash and request re-approval",
-        "requestedAt": "2026-11-03T21:24:20.813219+00:00",
-        "summary": "The reviewed correction is published as one commit. The earlier Copybara export still omits the SYN-cookie send-error return.",
-        "body": "@parth-opensrc, squashed into f1dbaa4d1. Could you re-approve it? #16915 still drops the SYN-cookie send error."
       }
     },
     {
