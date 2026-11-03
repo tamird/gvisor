@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T03:34:04.930459+00:00",
+    "updatedAt": "2026-11-03T04:01:33.808136+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -20776,8 +20776,8 @@
       "url": "https://github.com/tamird/gvisor/compare/8a84b240f...07d32506a",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
-      "summary": "Hackbench now builds from pinned rt-tests 2.2 on the Alpine base that supplies sleep for the benchmark. The Go harness completed pipe/thread and socket/process on AMD64 and on emulated ARM64. Removing a duplicate executable saved 497,289 and 383,553 compressed bytes respectively. All 221 catalog entries verified. The kernel.org rt-tests entry was checked against its archive and retained on both Fetch runs.",
+      "updatedAt": "2026-11-03T04:01:33.808136+00:00",
+      "summary": "The rt-tests 2.11 image passed pipe/thread and socket/process in both configurations: AMD64 natively under runc, and ARM64 via QEMU on AMD64 runc. Both Go test attempts were uncached and used the exact previously built image and context. The 221-dependency license verification is retained from the original run.",
       "evidence": [
         {
           "label": "Revised fork source",
@@ -20822,6 +20822,14 @@
         {
           "label": "Final audited proposal and description",
           "url": "https://github.com/tamird/gvisor/commit/8e1dc1ed0"
+        },
+        {
+          "label": "Two fresh benchmark attempts, image identities and static Go ELF",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41572311668/artifacts/13203361824"
+        },
+        {
+          "label": "Source update from the reviewed 2.2 image to rt-tests 2.11",
+          "url": "https://github.com/tamird/gvisor/compare/07d32506a...7c63124a2"
         }
       ],
       "settledReviews": [
@@ -20851,11 +20859,13 @@
       "followup": {
         "owner": "Workstream owner",
         "sourceHead": "07d32506a0dd8c7f0112c10d6b099fbee8f7f40e",
-        "observedAt": "2026-11-02T20:50:09.856350+00:00",
-        "disposition": "Update hackbench to rt-tests 2.11; the benchmark command and COPYING are unchanged.",
-        "nextAction": "Finish the AMD64 and ARM64 image checks on the revised source.",
+        "observedAt": "2026-11-03T04:01:33.808136+00:00",
+        "disposition": "rt-tests 2.11 qualified; original 95-minute timeout retained",
+        "nextAction": "Check that prerequisites have landed and reconcile the qualified source with the contributor-reviewed change before opening a PR.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/7c63124a2"
+          "https://github.com/tamird/gvisor/actions/runs/41572311668/artifacts/13203361824",
+          "https://github.com/tamird/gvisor/commit/7c63124a2",
+          "https://github.com/tamird/gvisor/actions/runs/41522986904"
         ]
       }
     },
@@ -42181,8 +42191,8 @@
       "title": "netstack: end a lingering close when the peer acknowledges the FIN",
       "url": "https://github.com/google/gvisor/pull/16787",
       "status": "open",
-      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
-      "summary": "Aditya Merchant’s netstack PR wakes a lingering close when the peer acknowledges the FIN and skips the wait on process exit. It introduces the shared process-exit syscall fixture used by the host-network follow-up.",
+      "updatedAt": "2026-11-03T03:56:47.255728+00:00",
+      "summary": "Aditya’s netstack change wakes a lingering close when the peer acknowledges the FIN and skips the wait on process exit. He agreed to keep the measured waiter-registration optimization in a separate PR after this one merges.",
       "evidence": [
         {
           "label": "Author’s offer to include the tested commit",
@@ -42203,6 +42213,10 @@
         {
           "label": "Tamir’s reply to Aditya",
           "url": "https://github.com/google/gvisor/pull/16787#issuecomment-6575934131"
+        },
+        {
+          "label": "Author agrees to a separate follow-up after merge",
+          "url": "https://github.com/google/gvisor/pull/16787#issuecomment-6594693251"
         }
       ],
       "settledReviews": [
@@ -43443,13 +43457,13 @@
       "repo": "google/gvisor",
       "number": 16793,
       "ref": "hostinet-shutdown-rd-recv",
-      "head": "c16f3c5e55d1740154b7ddfa0300ef0dff0202ce",
+      "head": "d47997f8e4c48b4e608436e92c6566d6e03bf76e",
       "title": "Review hostinet read shutdown across TCP reconnect",
       "url": "https://github.com/google/gvisor/pull/16793",
       "group": "runtime",
       "status": "open",
-      "summary": "After a failed SHUT_RD, AF_UNSPEC and reconnect, Linux waited for the receive timeout. The proposed change returned EOF on both IPv4 and IPv6, then received the next byte.",
-      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
+      "summary": "The author fixed the TCP reconnect and synchronized publication of the accepted fd. In a separate AF_PACKET comparison, Linux timed out with EAGAIN after shutdown returned EOPNOTSUPP. Hostinet returned EOF in under 0.1 ms on both SOCK_DGRAM and SOCK_RAW; both waited normally before shutdown.",
+      "updatedAt": "2026-11-03T04:01:33.808136+00:00",
       "evidence": [
         {
           "label": "Native Linux, stock and proposed head",
@@ -43462,6 +43476,22 @@
         {
           "label": "Posted review",
           "url": "https://github.com/google/gvisor/pull/16793#discussion_r4444407246"
+        },
+        {
+          "label": "Author’s TCP regression and accepted-fd publication changes",
+          "url": "https://github.com/google/gvisor/pull/16793#discussion_r4450618289"
+        },
+        {
+          "label": "Linux and hostinet packet socket comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41575061199"
+        },
+        {
+          "label": "Packet-socket fixture with and without a rejected read shutdown",
+          "url": "https://github.com/tamird/gvisor/blob/c72e091cd/test/syscalls/linux/packet_socket.cc#L97-L129"
+        },
+        {
+          "label": "Original timed Linux and hostinet syscall results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41575061199/artifacts/13202768324"
         }
       ],
       "settledReviews": [
@@ -43473,7 +43503,17 @@
           "at": "2026-11-02T15:46:59.054342+00:00",
           "url": "https://github.com/google/gvisor/pull/16793#discussion_r4444407246"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "d47997f8e4c48b4e608436e92c6566d6e03bf76e",
+        "url": "https://github.com/google/gvisor/pull/16793#discussion_r4450618289",
+        "title": "Reply about AF_PACKET reads after rejected shutdown",
+        "summary": "The author fixed the TCP reconnect and synchronized publication of the accepted fd. In a separate AF_PACKET comparison, Linux timed out with EAGAIN after shutdown returned EOPNOTSUPP. Hostinet returned EOF in under 0.1 ms on both SOCK_DGRAM and SOCK_RAW; both waited normally before shutdown.",
+        "body": "Thanks, the stream path now handles the reconnect. Could we also exclude AF_PACKET from synthetic EOF? On a packet socket, shutdown(SHUT_RD) returns EOPNOTSUPP. With protocol 0 and a 150 ms receive timeout, Linux still waited and returned EAGAIN on both SOCK_DGRAM and SOCK_RAW. Hostinet returned EOF in 92 and 87 µs respectively. Both timed out normally before shutdown.\n\n[Shared syscall test](https://github.com/tamird/gvisor/blob/c72e091cd/test/syscalls/linux/packet_socket.cc#L97-L129) · [Linux and hostinet results](https://github.com/tamird/gvisor/actions/runs/41575061199/artifacts/13202768324).",
+        "requestedAt": "2026-11-03T04:01:33.808136+00:00"
+      }
     },
     {
       "id": "pr:15867",
@@ -44075,8 +44115,8 @@
       "title": "Measure waiter allocation on ordinary TCP and UDP close",
       "url": "https://github.com/tamird/gvisor/commit/fd2a30841",
       "status": "validated",
-      "updatedAt": "2026-11-02T04:11:55+00:00",
-      "summary": "Registering the waiter inside the positive-linger branch cut unconnected TCP close from 1.563 to 1.300 µs and UDP close from 1.141 to 0.957 µs in 16 paired AMD64 systrap runs. The Unix socket control and 28 linger cases on each of Linux and the two gVisor builds stayed consistent.",
+      "updatedAt": "2026-11-03T03:56:47.255728+00:00",
+      "summary": "Registering the waiter inside the positive-linger branch cut unconnected TCP close from 1.563 to 1.300 µs and UDP close from 1.141 to 0.957 µs in 16 paired AMD64 systrap runs. The Unix socket control and 28 linger cases on each of Linux and the two gVisor builds stayed consistent. Aditya agreed to a separate follow-up after #16787 merges.",
       "evidence": [
         {
           "label": "Sixteen paired socket-close measurements and 28 selected Linux and gVisor linger tests",
@@ -44085,6 +44125,10 @@
         {
           "label": "The first comparison stopped before timing because it built identical launchers",
           "url": "https://github.com/tamird/gvisor/actions/runs/41385226798"
+        },
+        {
+          "label": "Author and contributor agree to keep the optimization separate",
+          "url": "https://github.com/google/gvisor/pull/16787#issuecomment-6594693251"
         }
       ]
     },
@@ -45584,8 +45628,8 @@
       "url": "https://github.com/tamird/gvisor/commit/22b87677f",
       "group": "analysis",
       "status": "Agent work",
-      "updatedAt": "2026-11-02T18:10:24.680607+00:00",
-      "summary": "Four Buildkite jobs can share the Make unit suite and run Bazel directly. On AMD64 all three entry points selected the same 355 runnable tests. The two focused targets passed all 471 cases, and changing cgroup mode invalidated both cached results.",
+      "updatedAt": "2026-11-03T03:56:47.255728+00:00",
+      "summary": "AMD64 and ARM64 selected the same 355 test owners at 96fadde72: 1,069 configured rules less 711 Nogo and three KVM rules. On ARM64 the full run timed out after attempting 69 owners; 286 did not run. Original XML recorded 14,397 passed cases, two failures and 110 skips. TestLicensePolicy found LTP/QEMU catalog mismatches; the QEMU fetch test passed. The Python sandbox test failed to create its guest. Both stock and new invocations on the same ARM64 host hit the same gofer EACCES and AppArmor user-namespace exec denial. The AMD64 focused checks passed 471 cases.",
       "evidence": [
         {
           "label": "Three matching AMD64 selections and 471 named buffer/cgroup cases",
@@ -45602,19 +45646,34 @@
         {
           "label": "Public Buildkite unit queues on master",
           "url": "https://buildkite.com/gvisor/pipeline/builds/53249"
+        },
+        {
+          "label": "Full ARM64 run: original XML and partial execution",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41497682946/artifacts/13172754926"
+        },
+        {
+          "label": "ARM64 owner and XML reconciliation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41513096230/artifacts/13175395076"
+        },
+        {
+          "label": "Stock and proposed invocations on the same ARM64 host",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41516374236/artifacts/13175549051"
+        },
+        {
+          "label": "Selected source at 96fadde72",
+          "url": "https://github.com/tamird/gvisor/commit/96fadde72"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "22b87677f7ae1fa27ebee5b4eb95ab9cfe966761",
-        "observedAt": "2026-11-02T18:10:24.680607+00:00",
-        "disposition": "ARM64 full suite in progress",
-        "nextAction": "Verify the uncached ARM64 run and record any host restrictions. Correct the report’s 1,069 configured test rules to distinguish the 355 runnable tests from 711 Nogo and three KVM exclusions. A native cgroup v1 run still needs the upstream worker.",
+        "observedAt": "2026-11-03T03:56:47.255728+00:00",
+        "disposition": "Incomplete: 286 ARM64 owners did not execute",
+        "nextAction": "Reconcile the LTP/QEMU license policy; use a compatible ARM64 guest host for the sandbox case. Native cgroup-v1 qualification still needs an upstream worker. The timed-out job is finished; the 286 unexecuted owners remain unqualified.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41495497730/artifacts/13166333421",
-          "https://github.com/tamird/gvisor/actions/runs/41493261450/artifacts/13166725105",
-          "https://github.com/tamird/gvisor/actions/runs/41497682946",
-          "https://buildkite.com/gvisor/pipeline/builds/53249"
+          "https://github.com/tamird/gvisor/actions/runs/41497682946/artifacts/13172754926",
+          "https://github.com/tamird/gvisor/actions/runs/41513096230/artifacts/13175395076",
+          "https://github.com/tamird/gvisor/actions/runs/41516374236/artifacts/13175549051"
         ]
       }
     },
