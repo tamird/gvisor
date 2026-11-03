@@ -1,0 +1,73 @@
+name: Complete native AMD64 unit coverage on cgroup v1
+on:
+  push:
+    branches: [qualification/buildkite-unit-amd64-v1-complete]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  unit:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 210
+    steps:
+      - name: Initialize the bounded receipt
+        run: |
+          mkdir "$RUNNER_TEMP/unit-v1-public"
+          echo '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/unit-v1-public/verdict.json"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Recover authoritative selection and the already completed v1 owner
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/tamird/gvisor/actions/artifacts/13166333421/zip > "$RUNNER_TEMP/old-selection.zip"
+          gh api repos/tamird/gvisor/actions/artifacts/13220747324/zip > "$RUNNER_TEMP/old-cgroup.zip"
+      - name: Stage the existing verifier and native client
+        run: |
+          set -euo pipefail
+          guest=38745c527784376e0b5d915fe5ebd85e1d1385fd
+          decoder=0a9bdf9bc331d6a66f35aefcbbb5cf466eb6f7f5
+          git fetch --quiet --depth=1 origin "$guest" "$decoder"
+          for tool in qualification_report unit_matrix credential_artifacts; do
+            git show "$guest:test/rbe/$tool.py" > "$RUNNER_TEMP/$tool.py"
+          done
+          git show "$decoder:test/rbe/stdlib-provenance.py" > "$RUNNER_TEMP/stdlib_provenance.py"
+          cp .github/qualification/unit-cgroup-v1/check.py "$RUNNER_TEMP/check-v1.py"
+          sed -n '/^install_.*bazel() {$/,$p' .buildkite/hooks/pre-command > "$RUNNER_TEMP/unit-setup.bash"
+          source "$RUNNER_TEMP/unit-setup.bash"
+          test "$(bazel --version)" = "bazel $(cat .bazelversion)"
+          command -v zstd
+      - name: Execute the remaining original owners on capable native workers
+        timeout-minutes: 200
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -B "$RUNNER_TEMP/check-v1.py"
+      - name: Check the sole public artifact
+        id: scan
+        if: always()
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP']) / 'unit-v1-public'
+          assert [p.name for p in root.iterdir()] == ['verdict.json']
+          path = root / 'verdict.json'
+          assert not path.is_symlink() and path.stat().st_size < 8 * 1024**2
+          data = path.read_bytes()
+          assert isinstance(json.loads(data), dict)
+          secrets = [v.encode() for k, v in os.environ.items()
+                     if re.search('TOKEN|SECRET|PASSWORD|CREDENTIAL|API_KEY', k) and len(v) > 16]
+          assert not any(v in data for v in secrets)
+          assert not re.search(rb'(?i)\b(?:authorization|x-buildbuddy-api-key)["\x27]?\s*[:=]|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|BEGIN (RSA |OPENSSH )?PRIVATE KEY', data)
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.scan.outcome == 'success'
+        with:
+          name: native-amd64-unit-cgroup-v1-complete
+          path: ${{ runner.temp }}/unit-v1-public/verdict.json
+          if-no-files-found: error
