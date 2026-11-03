@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 3
+          fetch-depth: 4
           persist-credentials: false
       - name: Run the scanner on the pinned notices on ARM64
         run: |
@@ -26,7 +26,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/unit-results"
           printf '{"status":"INCOMPLETE","reason":"bootstrap"}\n' > "$RUNNER_TEMP/unit-results/verdict.json"
           cp .github/qualification/buildkite-unit-arm64.py "$RUNNER_TEMP"
-          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD~2)" = "$PRODUCT"
           git fetch --quiet --depth=1 origin "$VERIFIER" "$BASELINE" "$BOOTSTRAP"
           for helper in unit_matrix qualification_report; do
             git show "$VERIFIER:test/rbe/$helper.py" > "$RUNNER_TEMP/$helper.py"
@@ -57,5 +57,5 @@ jobs:
         if: always() && steps.scan.outcome == 'success'
         with:
           name: license-notice-match-ranges
-          path: ${{ runner.temp }}/unit-results/verdict.json
+          path: ${{ runner.temp }}/unit-results/
           if-no-files-found: error

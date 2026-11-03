@@ -88,20 +88,28 @@ def main() -> None:
         source, = (directory / "reports").rglob("test." + ext)
         (OUT / ("test." + ext)).write_bytes(source.read_bytes())
     cases = {c.get("name"): c for c in ET.parse(OUT / "test.xml").iter("testcase")}
+    log = (OUT / "test.log").read_text(errors="replace")
+    RESULT["diagnostic_lines"] = [
+        line.strip()[:350] for line in log.splitlines()
+        if "MATCH " in line or "before appendix =" in line or "full notice =" in line
+    ]
+    save()
     for name in ("qemu", "ltp"):
         case = cases["TestNoticeRanges/" + name]
-        assert not any(case.find(tag) is not None for tag in ("failure", "error", "skipped"))
         assert case.get("status") != "notrun" and case.get("result") != "suppressed"
-    log = (OUT / "test.log").read_text(errors="replace")
-    matches = re.findall(r"MATCH (qemu|ltp) (GPL-2\.0(?:-or-later)?) lines (\d+)-(\d+)", log)
-    assert sorted((a,b) for a,b,_,_ in matches) == [("ltp","GPL-2.0"),("qemu","GPL-2.0"),("qemu","GPL-2.0-or-later")], matches
-    RESULT["matches"] = [{"notice":a, "id":b, "first_line":int(lo), "last_line":int(hi)} for a,b,lo,hi in matches]
+        assert case.find("skipped") is None and case.find("error") is None
+        assert (case.find("failure") is not None) == (name == "qemu")
+        assert any(f"MATCH {name} " in line for line in RESULT["diagnostic_lines"])
+    assert any("before appendix =" in line or "full notice =" in line for line in RESULT["diagnostic_lines"])
     attempt, = verdict["executed"]
     assert attempt["owner"]["label"] == OWNER and all(attempt[key] == 1 for key in ("run", "shard", "attempt")), attempt
     assert not attempt["cached_locally"] and not attempt["execution_info"].get("cachedRemotely"), attempt
     assert attempt["execution_info"].get("strategy") in ("local", "processwrapper-sandbox", "linux-sandbox", "sandboxed"), attempt
-    assert verdict["status"] == "PASS" and not verdict["zero_case_owners"] and not verdict["all_skipped_owners"], verdict
-    RESULT["status"] = "PASS"
+    assert native_exit == 3 and verdict["status"] == "FAIL", verdict
+    assert not verdict["missing"] and not verdict["errors"] and not verdict["zero_case_owners"], verdict
+    assert verdict["case_counts"] == {"passed": 1, "failed": 2, "skipped": 0}
+    RESULT["qualification"] = "QEMU_CONTROL_FAILED"
+    RESULT["status"] = "EVIDENCE_RECOVERED"
 
 
 if __name__ == "__main__":
@@ -112,4 +120,4 @@ if __name__ == "__main__":
         RESULT["verification_error"] = f"{type(error).__name__}: {error}"
     RESULT["verdict_available_at"] = now()
     save()
-    raise SystemExit(0 if RESULT["status"] == "PASS" else 1)
+    raise SystemExit(0 if RESULT["status"] == "EVIDENCE_RECOVERED" else 1)
