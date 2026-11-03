@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Compare native Buildkite entry points without executing package builds."""
 from datetime import datetime, timezone
-from hashlib import sha256
+from hashlib import file_digest, sha256
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import io
 import json
@@ -16,6 +16,7 @@ import tarfile
 from threading import Thread
 import time
 from zipfile import ZipFile
+from urllib.parse import unquote, urlsplit
 
 import yaml
 
@@ -66,7 +67,7 @@ def wrapped():
     event = TMP / f'{arm}-{cmd}.bep'
     flags = ['--jobs=4', '--build_event_json_file=' + str(event)]
     if cmd == 'build':
-        flags.append('--nobuild')
+        flags.append('--build_event_publish_all_actions' if os.environ.get('CHECK_ADDED_BUILD') else '--nobuild')
     start = time.monotonic()
     with (TMP / f'{arm}-{cmd}.out').open('wb') as out, (TMP / f'{arm}-{cmd}.err').open('wb') as err:
         p = subprocess.run([os.environ['REAL_BAZEL'], '--host_jvm_args=-Xmx4g', cmd, *flags, *args], stdout=out, stderr=err)
@@ -316,13 +317,202 @@ def main(result):
     result['status'] = 'PASS' if all(row['status'] == 'PASS' for row in result['phases'].values()) else 'FAIL'
 
 
+# Compare prior *successful* build inventories to current configured owners.
+ORIGINALS = {
+    'pkg': ('13055965081', 'a8aeca9e58b43bfa87faa1b1c09ea6b801530d9efb231cd6b2898dc044169143', 'aa354f7c5b18f72fd033f9a1dc553c21673296f3'),
+    'runsc': ('13063861013', '43133be1e6887b7b8613741b80a500cd198d7b46805388af04728b7152d0ecc1', '022894f6b57bac7ed55c741ea07a3611dc256da9'),
+    'configured': ('13217262560', '98db028dd3080dcb2b76e4cffb2139194f0755f46acd2d0663340d38b326ee9a', SOURCE),
+}
+CAP = '//pkg/test/capabilitytest:capabilitytest'
+GOFER = '//runsc/container:gofer_maxprocs_test'
+OWNERS = {'pkg': [CAP, CAP + '_state_autogen', CAP + '_state_autogen_with_imports'], 'runsc': [GOFER, GOFER + '_nogo']}
+SLIM = ['//pkg/sentry/platform/slimvm:slimvm', '//pkg/sentry/platform/slimvm/testutil:testutil']
+
+
+def original_file(scope):
+    artifact, expected, _ = ORIGINALS[scope]
+    data = (TMP / (artifact + '.zip')).read_bytes()
+    assert sha256(data).hexdigest() == expected
+    return ZipFile(io.BytesIO(data))
+
+
+def inventory(arch):
+    cur = json.loads(original_file('configured').read('result.json'))
+    assert cur['status'] == 'PASS' and cur['source'] == SOURCE
+    result = {}
+    for scope, count in [('pkg', 1948 if arch == 'amd64' else 1946), ('runsc', 389)]:
+        name = arch + '-' + scope
+        with tarfile.open(fileobj=io.BytesIO(original_file(scope).read('native-packages.tgz'))) as tar:
+            prior = json.load(tar.extractfile(name + '/verdict.json'))
+            assert tar.extractfile(name + '/final_head').read().decode().strip() == ORIGINALS[scope][2]
+        assert prior['status'] == 'PASS'
+        old = {r['label'] for r in prior['expected']}
+        phase = cur['phases'][name]
+        assert phase['status'] == 'PASS'
+        selected = {r[0] for r in phase[name + '-make']['configured']}
+        extra = SLIM if (arch, scope) == ('arm64', 'pkg') else []
+        assert len(old) == count and old <= selected and selected-old == set(OWNERS[scope] + extra)
+        result[scope] = {'old_source': ORIGINALS[scope][2], 'old_count': count, 'configured_count': len(selected),
+                         'added': sorted(selected-old), 'removed': [], 'source_artifact': ORIGINALS[scope][:2]}
+    return result
+
+
+def file_info(p):
+    with p.open('rb') as f:
+        header = f.read(64)
+        f.seek(0)
+        digest = file_digest(f, 'sha256').hexdigest()
+    data = {'name': p.name, 'size': p.stat().st_size, 'sha256': digest}
+    if header.startswith(b'\x7fELF'):
+        assert header[4:6] == bytes([2, 1])
+        data['elf_machine'] = int.from_bytes(header[18:20], 'little')
+    elif header.startswith(b'!<arch>'):
+        data['archive'] = True
+    return data
+
+
+def build_added(arch, scope, env, row):
+    conf = 'x86_64' if arch == 'amd64' else 'aarch64'
+    labels = SLIM if scope == 'incompatible' else OWNERS[scope]
+    name = arch + '-' + scope
+    if scope == 'incompatible':
+        assert arch == 'arm64'
+        argv = ['bazel', 'build', '--config=' + conf, '--skip_incompatible_explicit_targets', *labels]
+    else:
+        expected = pipeline(SOURCE, '.buildkite/pipeline.yaml', f':world_map: Build runsc and pkg ({arch.upper()})')['commands']
+        argv = shlex.split(expected[['pkg', 'runsc'].index(scope)])
+        assert argv == ['make','build','OPTIONS=--config=' + conf + (' --build_tag_filters=-network_plugins' if scope == 'runsc' else ''),'TARGETS=//' + scope + '/...']
+        argv[-1] = 'TARGETS=' + ' '.join(labels)
+    row.update(execute(name, argv, env))
+    build = json.loads((TMP / f'{name}-build.json').read_text())
+    row['build'] = build
+    assert build['args'][-len(labels):] == labels and '--config=' + conf in build['args']
+    comp, skipped, sets, actions, configs = {}, {}, {}, {}, {}
+    witness = TMP/'added-producers.json'
+    history = json.loads(witness.read_text()) if witness.exists() else {}
+    expected = {CAP: 'GoCompilePkg', CAP + '_state_autogen': 'GoImports', CAP + '_state_autogen_with_imports': 'GoStateify',
+                GOFER: 'GoLink', GOFER + '_nogo': 'GoStaticAnalysis'}
+    with (TMP / f'{name}-build.bep').open() as f:
+        for line in f:
+            e = json.loads(line); key = e['id']
+            if 'configuration' in key and 'configuration' in e:
+                configs[key['configuration']['id']] = e['configuration'].get('cpu')
+            if 'started' in e:
+                row['invocation'] = e['started']['uuid']
+            if 'finished' in e:
+                row['build_finished'] = e['finished'].get('finishTime')
+            if 'namedSetOfFiles' in key and 'namedSetOfFiles' in e:
+                sets[key['namedSetOfFiles']['id']] = e['namedSetOfFiles']
+            target = key.get('targetCompleted', {})
+            if target.get('label') in labels and not target.get('aspect'):
+                if 'aborted' in e:
+                    skipped[target['label']] = e['aborted'].get('reason')
+                elif 'completed' in e:
+                    comp[target['label']] = (target['configuration']['id'], e['completed'])
+            if 'aborted' in e and key.get('targetConfigured', {}).get('label') in labels:
+                skipped[key['targetConfigured']['label']] = e['aborted'].get('reason')
+            a = key.get('actionCompleted', {})
+            if a.get('label') in expected and 'action' in e:
+                cfg = a.get('configuration', {}).get('id')
+                kind = e['action']['type']
+                path = a['primaryOutput']
+                ok = bool(e['action'].get('success'))
+                if a['label'] in labels:
+                    actions.setdefault(a['label'], []).append([cfg, kind, path, ok])
+                if kind == expected[a['label']] and ok and Path(path).is_file():
+                    key = json.dumps([a['label'], cfg, kind, path])
+                    history[key] = [name, file_info(Path(path))]
+    write(witness, history)
+    row['actions'], row['skipped'] = actions, skipped
+    row['completed'] = {label: [cfg, configs.get(cfg), bool(event.get('success'))] for label, (cfg, event) in comp.items()}
+    if build['exit'] or row['exit']:
+        errors = (TMP / f'{name}-build.err').read_text(errors='replace')
+        row['diagnostics'] = [line[:550] for line in errors.splitlines() if line.startswith(('ERROR:', 'fatal error:')) or ': error:' in line][:12]
+    assert build['exit'] == row['exit'] == 0, (build['exit'], row['exit'])
+    if scope == 'incompatible':
+        assert not comp and skipped == dict.fromkeys(labels, 'SKIPPED')
+        return
+    assert comp.keys() == set(labels) and not skipped and all(c[1].get('success') for c in comp.values())
+    cquery = json.loads((TMP / f'{name}-cquery.json').read_text())
+    assert cquery['exit'] == 0
+    row['outputs'] = {}
+    for label, (cfg, event) in comp.items():
+        groups = [g for g in event.get('outputGroup', []) if g['name'] == 'default']
+        pending = [v['id'] for g in groups for v in g.get('fileSets', [])]
+        files, seen = [], set()
+        while pending:
+            node = pending.pop()
+            if node in seen: continue
+            seen.add(node)
+            files.extend(sets[node].get('files', []))
+            pending.extend(x['id'] for x in sets[node].get('fileSets', []))
+        paths = [Path(unquote(urlsplit(v['uri']).path)) for v in files if v.get('uri','').startswith('file:')]
+        outputs = [file_info(p) for p in paths if p.is_file()]
+        row['outputs'][label] = outputs
+        assert outputs and all(o['size'] > 0 for o in outputs)
+        namepart = label.split(':')[1]
+        if label == GOFER + '_nogo':
+            runner, = [p for p in paths if p.name == namepart]
+            findings = sorted(Path(str(runner) + '.runfiles').glob('*/runsc/container/' + namepart + '.*.findings'))
+            row['findings'] = [file_info(p) for p in findings]
+            assert {p.name for p in findings} == {namepart + '.' + arch + '.findings' for arch in ('amd64','arm64')}
+            # The emitted runner and its split filter outputs were built; we did not execute the test.
+            assert all(a.encode() + b'...' in runner.read_bytes() for a in ('amd64','arm64'))
+        elif label == GOFER:
+            assert any(o.get('elf_machine') == (62 if arch == 'amd64' else 183) for o in outputs)
+        elif label == CAP:
+            assert any(o.get('archive') for o in outputs)
+        else:
+            assert any(o['name'] == namepart + '.go' for o in outputs)
+        assert not any(not ok for _, _, _, ok in actions.get(label, []))
+        # Split transitions and local action-cache reuse can share action outputs.
+        # Attribute only actions with this actual configured target identity.
+        row.setdefault('executed_mnemonics', {})[label] = sorted({a[1] for a in actions.get(label, []) if a[0] == cfg})
+        prior = []
+        if expected[label] not in row['executed_mnemonics'][label]:
+            for key, (first, info) in history.items():
+                owner, configuration, kind, path = json.loads(key)
+                if (owner, configuration, kind) == (label, cfg, expected[label]) and first != name and Path(path).is_file() and file_info(Path(path)) == info:
+                    prior.append([first, cfg, kind, path, info])
+            assert prior, (label, 'missing actual producer action')
+        row.setdefault('matching_prior_actions', {})[label] = prior
+
+
+def added(result):
+    arch = sys.argv[2]
+    assert arch in ('amd64', 'arm64') and (platform.system(), platform.machine()) == ('Linux', 'x86_64')
+    assert git('rev-parse','HEAD') == SOURCE and git('status','--porcelain','--untracked-files=no') == ''
+    result.update(source=SOURCE, target_arch=arch, host_arch=platform.machine(), configured_artifact=ORIGINALS['configured'][:2], inventory=inventory(arch))
+    real = shutil.which('bazel')
+    assert real and call([real,'--version']).strip() == 'bazel ' + Path('.bazelversion').read_text().strip()
+    result['tools'] = {t: call([t,'--version']).splitlines()[0] for t in [real,'gcc','aarch64-linux-gnu-gcc']}
+    bindir = TMP/('bin-' + arch); bindir.mkdir()
+    for name in ('bazel','docker'):
+        (bindir/name).symlink_to(Path(__file__).resolve())
+    env = os.environ | {'PATH':str(bindir)+':'+os.environ['PATH'],'REAL_BAZEL':real,'DOCKER_BUILD':'false','CHECK_ADDED_BUILD':'1'}
+    assert 'BUILDBUDDY_API_KEY' not in env
+    phases = (['incompatible'] if arch == 'arm64' else []) + list(OWNERS)
+    for scope in phases:
+        phase(scope, lambda row, scope=scope: build_added(arch, scope, env, row), result)
+    result['execution_finished'] = now()
+    assert git('status','--porcelain','--untracked-files=no') == ''
+    rows = list(result['phases'].values())
+    for row in rows:
+        if row['status'] != 'PASS' and not (row.get('exit') or row.get('build', {}).get('exit')):
+            row['status'] = 'INCOMPLETE'
+    result['status'] = 'FAIL' if any(row['status']=='FAIL' for row in rows) else ('PASS' if all(row['status']=='PASS' for row in rows) else 'INCOMPLETE')
+
+
 if __name__ == '__main__':
     if Path(sys.argv[0]).name in ('bazel', 'docker', 'gcloud'):
         raise SystemExit(wrapped())
     TMP.mkdir(exist_ok=True)
     result = {'source': SOURCE, 'package': PKG, 'staged': STAGED, 'status': 'FAIL', 'phases': {}}
     try:
-        main(result)
+        if sys.argv[1:2] == ['--added']:
+            added(result)
+        else:
+            main(result)
     except Exception as exc:
         result['error'] = f'{type(exc).__name__}: {exc}'[:2000]
     finally:

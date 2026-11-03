@@ -1,32 +1,40 @@
-name: Compare the configured Buildkite package producers
+name: Build the newly configured Buildkite package owners
 on:
   push:
     branches: [qualification/buildkite-package-action-owners]
 permissions:
+  actions: read
   contents: read
 jobs:
-  compare:
+  build:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 220
     env:
       SOURCE: 9ae6638ae6d1916725b10f45a5cad76f022d9d7e
       DOCKER_BUILD: "false"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 4, persist-credentials: false}
-      - name: Preserve exact source and the existing comparison
+        with: {fetch-depth: 5, persist-credentials: false}
+      - name: Restore the exact source and authenticated selection receipts
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           mkdir "$RUNNER_TEMP/client-options"
-          printf '{"status":"INCOMPLETE","source":"%s","stage":"bootstrap"}\n' "$SOURCE" > "$RUNNER_TEMP/client-options/result.json"
-          test "$(git rev-parse HEAD^^)" = "$SOURCE"
+          for arch in amd64 arm64; do
+            printf '{"status":"INCOMPLETE","source":"%s","target_arch":"%s","stage":"bootstrap"}\n' "$SOURCE" "$arch" > "$RUNNER_TEMP/client-options/$arch.json"
+          done
+          test "$(git rev-parse HEAD^)" = 1c7b642b1fe2958ade7db1dfb0d370841344ba47
+          test "$(git rev-parse HEAD^^^)" = "$SOURCE"
           test "$(git diff --name-only "$SOURCE" HEAD)" = "$(printf '%s\n' .github/qualification/buildkite-client-options.py .github/workflows/buildkite-client-options.yml)"
           cp .github/qualification/buildkite-client-options.py "$RUNNER_TEMP/check-client-options.py"
-          git fetch --no-tags --depth=2 origin d30816db365b44801393af8fe721795897ab5a65 a5627c7311e6acaed4179f3ebd6a0694661336d9 bcec52ddaaddedf04de03988486d72647187e309
+          for artifact in 13055965081 13063861013 13217262560; do
+            gh api "repos/tamird/gvisor/actions/artifacts/$artifact/zip" > "$RUNNER_TEMP/client-options/$artifact.zip"
+          done
           git checkout --detach "$SOURCE"
           test -z "$(git status --porcelain --untracked-files=no)"
-      - name: Use the current native GNU client setup
+      - name: Use the native GNU and cross GNU client setup
         run: |
           set -euo pipefail
           if ! command -v aarch64-linux-gnu-gcc; then
@@ -36,8 +44,16 @@ jobs:
           python3 -c 'import yaml' || sudo apt-get -qq install --no-install-recommends python3-yaml
           source <(sed -n '/^install_bazelisk() {$/,$p' .buildkite/hooks/pre-command)
           printf '%s\n' "$BUILDKITE_BAZEL_DIRECTORY" >> "$GITHUB_PATH"
-      - name: Compare the package and runsc producers on both target architectures
-        run: timeout --signal=INT --kill-after=30s 50m "$RUNNER_TEMP/check-client-options.py"
+      - name: Build the selected additional owners
+        run: |
+          set -u
+          status=0
+          for arch in amd64 arm64; do
+            cp "$RUNNER_TEMP/client-options/$arch.json" "$RUNNER_TEMP/client-options/result.json"
+            timeout --signal=INT --kill-after=30s 95m "$RUNNER_TEMP/check-client-options.py" --added "$arch" || status=1
+            cp "$RUNNER_TEMP/client-options/result.json" "$RUNNER_TEMP/client-options/$arch.json"
+          done
+          exit "$status"
       - name: Check the bounded typed publication
         id: scan
         if: always()
@@ -45,14 +61,19 @@ jobs:
         run: |
           import json, os, re
           from pathlib import Path
-          p=Path(os.environ['RUNNER_TEMP'])/'client-options/result.json'
-          raw=p.read_bytes()
-          assert len(raw)<8_000_000
-          json.loads(raw)
-          assert not re.search(rb'(?i)gh[pousr]_|github_pat_|x-buildbuddy-api-key|authorization[:=]|BEGIN [A-Z]+ PRIVATE KEY',raw)
+          root=Path(os.environ['RUNNER_TEMP'])/'client-options'
+          rows=[]
+          for arch in ['amd64','arm64']:
+              raw=(root/(arch+'.json')).read_bytes()
+              assert len(raw)<500_000
+              row=json.loads(raw)
+              assert row['source'] == os.environ['SOURCE']
+              assert not re.search(rb'(?i)gh[pousr]_|github_pat_|x-buildbuddy-api-key|authorization[:=]|BEGIN [A-Z]+ PRIVATE KEY',raw)
+              rows.append(row)
+          (root/'result.json').write_text(json.dumps({'status':'FAIL' if any(row['status']=='FAIL' for row in rows) else ('PASS' if all(row['status']=='PASS' for row in rows) else 'INCOMPLETE'),'architectures':dict(zip(['amd64','arm64'],rows,strict=True))},indent=2))
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.scan.outcome == 'success'
         with:
-          name: native-buildkite-client-options
+          name: native-buildkite-added-owners
           path: ${{ runner.temp }}/client-options/result.json
           if-no-files-found: error
