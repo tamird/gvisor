@@ -1,0 +1,56 @@
+name: Check original review dispositions and current decision scopes
+on:
+  push:
+    branches: [qualification/work-map-lucas-b63fec629]
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Collect the canonical snapshot on the exact registry
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "b63fec629ca021e1a8b0da621b8378e02f6a3b1d"
+          test "$(git rev-parse HEAD^^)" = "77261c5278e6298dbf5fee71cc7446c2d8a9ff72"
+          test -z "$(git diff --name-only HEAD^ HEAD -- ':!.github')"
+          test "$(sha256sum registry.json | cut -d' ' -f1)" = "b8afd96a2ae2eba6be9a002633ed171bcc8292ca33c71eefadb52bcfbd99ea85"
+          mkdir results
+          # Use the just-collected, current GitHub observations. Only the four
+          # contributor decisions have new timestamps and authorization scopes.
+          python3 - <<'OBS'
+          import json
+          from pathlib import Path
+          from work_states import record_states
+          p=Path('github-status.json');s=json.loads(p.read_bytes());r=json.loads(Path('registry.json').read_bytes())
+          states=record_states(s['prs'],r,s,s['checkedAt'])
+          for k in ('pr:16588','pr:16618','pr:16803','branch:tcp-keepalive-user-timeout'):
+              s['workStates'].setdefault(k,{})['contributor-review']=states[k]['contributor-review']
+          s['registryDate']=r['meta']['updatedAt']
+          p.write_text(json.dumps(s,ensure_ascii=False,indent=2)+'\n')
+          OBS
+          node metadata-preflight.mjs . > results/preflight.json
+          python3 - <<'PYTHON'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('registry.json').read_bytes());s=json.loads(Path('github-status.json').read_bytes()); ns={n['id']:n for n in r['nodes']}
+          assert s['registryDate']==r['meta']['updatedAt']
+          for k,h in [('pr:16588','1dbbcd676'),('pr:16618','da05e74d9'),('pr:16803','c58f36d4e'),('branch:tcp-keepalive-user-timeout','1b56b8506')]:
+              assert ns[k]['contributorReview']['head']==s['workStates'][k]['contributor-review']['scope'] and ns[k]['contributorReview']['head'].startswith(h)
+          for k in ('pr:16506','pr:16594','pr:16596','pr:16605','pr:16522','pr:16345'):
+              actual,=[p for p in s['prs'] if p['url']==ns[k]['url']]
+              assert actual['head']==ns[k]['head'] and 'contributor-review' not in s['workStates'].get(k,{})
+          assert any(p['url']=='https://github.com/google/gvisor/pull/16893' for p in s['prs'])
+          PYTHON
+          cp registry.json github-status.json results/
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with: {name: original-review-map, path: results, if-no-files-found: error}
