@@ -39,6 +39,8 @@ test --@io_bazel_rules_go//go/config:pure
 
 # Set bazel_rule as non-pure when cgo is used.
 build:plugin-tldk --@io_bazel_rules_go//go/config:pure=false --define=plugin_tldk=true --define=network_plugins=true
+# The embedded ARM64 code also needs a cgo standard library when pure is false.
+build:plugin-tldk --extra_toolchains=@llvm//toolchain:linux_x86_64_to_linux_aarch64
 
 # By default, exclude nogo targets from building. They will still be included
 # by default for all tests.
