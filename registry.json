@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T10:35:38.185367+00:00",
+    "updatedAt": "2026-11-03T10:58:22.926125+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38949,21 +38949,22 @@
       "id": "branch:declared-jekyll-site",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "revision/website-native-make",
-      "head": "c75bc99990a381cd8cb8c428a1997d9ee98fa7c7",
+      "ref": "review/website-deploy-native",
+      "head": "bb040106f370ea27c513a984a51995a08da69f26",
       "title": "Render the gVisor website without its Jekyll builder",
       "group": "bazel",
       "status": "Agent work",
-      "url": "https://github.com/tamird/gvisor/commit/c75bc9999",
-      "updatedAt": "2026-11-03T10:35:38.185367+00:00",
-      "summary": "The native Buildkite Make command rendered 278 website files on Ubuntu 22.04 with the shared Bazelisk bootstrap and the proposed LLVM toolchain. The runner had no ARM GNU cross tools. Bazel built AMD64 and ARM64 vDSOs and rendered syscall tables for both architectures. The earlier HTTP and license checks cover the original website source.",
+      "url": "https://github.com/tamird/gvisor/commit/bb040106f",
+      "updatedAt": "2026-11-03T10:58:22.926125+00:00",
+      "summary": "The Website Deploy step now selects the native Bazel bootstrap and shutdown hooks. On Ubuntu 22.04 the release Make command loaded the AMD64 image and pushed it to a loopback registry. A failed push stopped deployment. The renderer also built both vDSOs and 278 site files without host ARM GNU tools.",
       "followup": {
         "owner": "Workstream owner",
-        "sourceHead": "c75bc99990a381cd8cb8c428a1997d9ee98fa7c7",
-        "observedAt": "2026-11-03T10:35:38.185367+00:00",
-        "disposition": "Native cross build verified with shared Bazelisk and LLVM",
-        "nextAction": "Land the shared native Bazelisk setup and full LLVM toolchain. The toolchain needs a supplier release containing hermetic-llvm #892. Reconcile the license catalog against the version selected for delivery.",
+        "sourceHead": "bb040106f370ea27c513a984a51995a08da69f26",
+        "observedAt": "2026-11-03T10:58:22.926125+00:00",
+        "disposition": "Native release job verified on a loopback registry",
+        "nextAction": "Land the shared native Bazelisk setup and full LLVM toolchain. The toolchain needs a supplier release containing hermetic-llvm #892. Reconcile the license catalog against the version selected for delivery. Keep the website profile viewer’s Google trust roots when making the image reproducible. The pinned gRPC bundle omits two of Google’s 21 roots and adds 96 others.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41622324026/artifacts/13224416963",
           "https://github.com/tamird/gvisor/actions/runs/41618830995/artifacts/13222892486",
           "https://buildkite.com/gvisor/pipeline/builds/53249",
           "https://github.com/tamird/gvisor/commit/75c04f42d",
@@ -38973,13 +38974,19 @@
       },
       "refinement": {
         "before": {
-          "head": "757a452f9265d02a963203d1ccf7704e7d1ebc57"
+          "base": "757a452f9265d02a963203d1ccf7704e7d1ebc57",
+          "head": "c75bc99990a381cd8cb8c428a1997d9ee98fa7c7"
         },
         "after": {
-          "head": "c75bc99990a381cd8cb8c428a1997d9ee98fa7c7"
+          "base": "757a452f9265d02a963203d1ccf7704e7d1ebc57",
+          "head": "bb040106f370ea27c513a984a51995a08da69f26"
         }
       },
       "evidence": [
+        {
+          "label": "Release Make command, registry round trip, rejected push and native Bazel shutdown",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41622324026/artifacts/13224416963"
+        },
         {
           "label": "Native Make build on Jammy with both vDSOs, both syscall tables and 278 website files",
           "url": "https://github.com/tamird/gvisor/actions/runs/41618830995/artifacts/13222892486"
@@ -39069,6 +39076,10 @@
         {
           "label": "Source notice for jekyll-relative-links 0.6.1",
           "url": "https://github.com/benbalter/jekyll-relative-links/blob/493d6333b/LICENSE.md"
+        },
+        {
+          "label": "Google’s rotation guidance for the profile viewer’s trust bundle",
+          "url": "https://pki.goog/faq/"
         }
       ]
     },
