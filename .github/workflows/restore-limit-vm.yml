@@ -1,123 +1,61 @@
-name: Check both restores in an isolated cgroup-v2 VM
+name: Diagnose the standard-library producer on the upstream parent
 on:
   push:
-    branches: [qualification/gc-restore-limits-kvm]
-permissions:
-  contents: read
-  actions: read
+    branches: [qualification/restore-limit-stdlib]
+permissions: {contents: read}
 jobs:
-  restore:
+  stdlib:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
     runs-on: ubuntu-22.04
-    timeout-minutes: 105
+    timeout-minutes: 45
     env:
       IMAGE: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      PRODUCT: a48b7a12cb3bd615c48f9b36d353c02a6463a929
-      TEST_BLOB: 040c7dafa4a9e6286563c80bfda9dc07e6d68767
+      PRODUCT: 0bbcbf9de7626fcecba97f37723dce80b435d73d
       PKG: .github/qualification/restore-limit-vm
     steps:
     - name: Initialize an incomplete result
       run: |
-        printf '{"status":"INCOMPLETE","stages":{},"product":"%s","carrier":"%s","test_blob":"%s"}\n' \
-          "$PRODUCT" "$GITHUB_SHA" "$TEST_BLOB" > "$RUNNER_TEMP/restore-vm-verdict.json"
+        printf '{"status":"INCOMPLETE","product":"%s","carrier":"%s","restore_attempts":0}\n' "$PRODUCT" "$GITHUB_SHA" > "$RUNNER_TEMP/stdlib-result.json"
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with: {fetch-depth: 2, persist-credentials: false}
-    - name: Verify the original six-GiB KVM delegation and unchanged fixture
-      env:
-        GH_TOKEN: ${{ github.token }}
+    - name: Execute only the unmodified upstream standard-library analysis
       run: |
         set -euo pipefail
-        test -c /dev/kvm
-        gh api repos/tamird/gvisor/actions/artifacts/13226626592/zip > "$RUNNER_TEMP/preflight.zip"
-        python3 -B "$PKG/check.py" preflight
-    - name: Build just the original test and runfiles without credentials
-      timeout-minutes: 60
-      run: |
-        set -euo pipefail
+        test "$(git rev-parse HEAD^)" = 4a22be3573539daf3599a62a3d979eec0c1c22b9
         d=$RUNNER_TEMP/restore-build
         mkdir -p "$d/src" "$d/output"
         chmod a+w "$d/src" "$d/output"
         git -C "$d/src" init -q
-        git -C "$d/src" fetch -q --depth=1 https://github.com/tamird/gvisor.git "$PRODUCT"
+        git -C "$d/src" fetch -q --depth=1 https://github.com/google/gvisor.git "$PRODUCT"
         git -C "$d/src" checkout -q --detach FETCH_HEAD
         test "$(git -C "$d/src" rev-parse HEAD)" = "$PRODUCT"
-        test "$(git -C "$d/src" hash-object runsc/container/container_save_restore_test.go)" = "$TEST_BLOB"
         test -z "$(git -C "$d/src" remote)"
         test -z "$(git -C "$d/src" config --local --get-regexp 'extraheader|credential' || :)"
-        # Only public source filenames and Bazel's own enum names may appear
-        # in a diagnostic; keep both allowlists outside the compiler mounts.
-        git -C "$d/src" ls-files -z > "$d/source-files"
-        curl -fsS --max-time 30 https://raw.githubusercontent.com/bazelbuild/bazel/8.8.1/src/main/protobuf/failure_details.proto > "$d/failure-details.proto"
-        test "$(git hash-object "$d/failure-details.proto")" = d77aded3e134c22308621f7c647f4ee5cc5f2717
+        cp "$PKG/stdlib.py" "$d/output/"
         docker pull "$IMAGE" > "$d/pull.log" 2>&1
         docker run --rm --cap-drop=ALL --security-opt no-new-privileges \
           -v "$d/src:/src" -v "$d/output:/transfer" -w /src \
           -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/src \
           --entrypoint /bin/bash "$IMAGE" -c '
-          set -euo pipefail
-          flags=(--config=x86_64 --jobs=4 --spawn_strategy=local --remote_cache= --remote_executor= --bes_backend= --test_sharding_strategy=disabled)
-          target=//runsc/container:container_test
-          bazel cquery "${flags[@]}" --output=label --build_event_json_file=/transfer/analysis.bep "$target" || { rc=$?; echo "$rc" > /transfer/analysis.exit; exit "$rc"; }
-          echo 0 > /transfer/analysis.exit
-          bazel build "${flags[@]}" --build_event_json_file=/transfer/build.bep "$target" || { rc=$?; echo "$rc" > /transfer/build.exit; exit "$rc"; }
-          echo 0 > /transfer/build.exit
-          p=$(bazel cquery "${flags[@]}" --output=files //runsc/container:container_test)
-          test -x "$p" && test "$(basename "$p")" = container_test && test -d "$p.runfiles/_main"
-          test -z "$(git status --porcelain --untracked-files=no)"
-          sha256sum "$p" | cut -d" " -f1 > /transfer/elf.sha256
-          cd "$(dirname "$p")"
-          ulimit -f 1048576
-          tar --hard-dereference -chf /transfer/capsule.tar container_test container_test.runfiles
-          test "$(stat -c %s /transfer/capsule.tar)" -lt 1073741824' > "$d/build.log" 2>&1 || rc=$?
+          set -eu
+          if test -r /sys/fs/cgroup/memory.events; then cp /sys/fs/cgroup/memory.events /transfer/before; fi
+          bazel build --config=x86_64 --jobs=4 --spawn_strategy=local --remote_cache= --remote_executor= --bes_backend= \
+            --test_sharding_strategy=disabled --build_event_json_file_path_conversion=false \
+            --build_event_publish_all_actions --build_event_json_file=/transfer/build.bep \
+            //tools/nogo:stdlib || rc=$?
+          date --utc --iso-8601=ns > /transfer/finished
+          echo "${rc:-0}" > /transfer/build.exit
+          if test -r /sys/fs/cgroup/memory.events; then cp /sys/fs/cgroup/memory.events /transfer/after; fi
+          python3 -B /transfer/stdlib.py collect || echo "Original action log unavailable"
+          exit "${rc:-0}"' > "$d/build.log" 2>&1 || rc=$?
         echo "${rc:-0}" > "$d/compiler.exit"
-        # The stopped compiler controlled /transfer. Never follow any path it
-        # left behind or introduce one of its links into the trusted workspace.
-        handoff_rc=0
-        python3 "$PKG/handoff.py" "$d" "$PKG/capsule.tar" || handoff_rc=$?
-        echo "$handoff_rc" > "$d/handoff.exit"
-        python3 "$PKG/handoff.py" diagnostics "$d" || echo incomplete > "$d/diagnostics.missing"
-        if test "${rc:-0}" = 0; then rc=$handoff_rc; fi
         exit "${rc:-0}"
-    - name: Run the public binary, unchanged and offline, in that VM
-      timeout-minutes: 21
-      env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: python3 -B "$PKG/check.py" restore
-    - name: Retain the build disposition and bounded status
-      if: always()
-      run: |
-        python3 - <<'PY'
-        from datetime import datetime, timezone
-        import json, os, re
-        from pathlib import Path
-        tmp = Path(os.environ["RUNNER_TEMP"])
-        out = tmp / "restore-vm-verdict.json"
-        d = tmp / "restore-build"
-        data = json.loads(out.read_text())
-        for key, path in (("analysis_exit", d/"analysis.exit"), ("compile_exit", d/"build.exit"), ("compiler_container_exit", d/"compiler.exit"), ("handoff_exit", d/"handoff.exit")):
-            data[key] = int(path.read_text()) if path.is_file() and path.read_text().strip().isdecimal() else None
-        diagnostics = d/"diagnostics.json"
-        if diagnostics.is_file(): data["diagnostics"] = json.loads(diagnostics.read_text())
-        data["diagnostics_incomplete"] = (d/"diagnostics.missing").exists()
-        binary = d/"elf.sha256"
-        if binary.is_file() and re.fullmatch(r"[0-9a-f]{64}", v := binary.read_text().strip()): data["owner_elf_sha256"] = v
-        if data["status"] != "PASS" and d.is_dir():
-            def ends(path):
-                with path.open("rb") as stream:
-                    first = stream.read(65536)
-                    stream.seek(max(0, os.fstat(stream.fileno()).st_size - 65536))
-                    return (first + b"\n" + stream.read(65536)).decode(errors="replace")
-            log = "\n".join(ends(p) for p in (d/"build.log", d/"pull.log") if p.exists())
-            data["build_failure_categories"] = [kind for kind, pattern in {
-              "disk":"no space left", "fetch":"downloading|could not resolve host|failed to fetch",
-              "permissions":"permission denied|operation not permitted", "compiler":"fatal error:|undefined reference",
-            }.items() if re.search(pattern, log, re.I)]
-        data["verified_utc"] = datetime.now(timezone.utc).isoformat()
-        out.write_text(json.dumps(data, indent=2) + "\n")
-        PY
+    - name: Reconcile native exit, action diagnostic and OOM counters
+      if: ${{ !cancelled() }}
+      run: python3 -B "$PKG/stdlib.py" verdict
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: isolated-cgroup-restore-result
-        path: ${{ runner.temp }}/restore-vm-verdict.json
+        name: upstream-stdlib-diagnostic
+        path: ${{ runner.temp }}/stdlib-result.json
         if-no-files-found: error
