@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T20:10:46.936496+00:00",
+    "updatedAt": "2026-11-03T20:21:57.270287+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -30129,10 +30129,30 @@
       "title": "Build the runsc sidecars with the C toolchain",
       "url": "https://github.com/google/gvisor/pull/16522",
       "group": "release",
-      "status": "Open; reviewer feedback applied",
-      "updatedAt": "2026-11-03T02:30:53.096288+00:00",
-      "summary": "Published the freestanding sidecar changes and answered all three linker and allocator review threads. The PR description now distinguishes the build-tree paths from the sidecars shipped beside runsc.",
+      "status": "Open; amendment ready for contributor review",
+      "updatedAt": "2026-11-03T20:21:57.270287+00:00",
+      "summary": "Lucas flagged two internal build differences: the transition must live under tools/, and Bazel’s default malloc label names TCMalloc internally. The fork amendment moves the executable rule to the C++ build adapter and lets each sidecar keep its own allocator.",
       "evidence": [
+        {
+          "label": "Proposed C++ build adapter change",
+          "url": "https://github.com/tamird/gvisor/commit/74aa42d5f"
+        },
+        {
+          "label": "12 static ELF outputs; 13 AMD64 runtime cases per compiler",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41707427239/artifacts/13266904325"
+        },
+        {
+          "label": "Unmodified LLVM 0.8.24 could not link pthread or dl",
+          "url": "https://app.buildbuddy.io/invocation/29a82241-f69b-4ba6-bf22-b15bf5af73e7"
+        },
+        {
+          "label": "Lucas: allowlisted noasan transition",
+          "url": "https://github.com/google/gvisor/pull/16522#discussion_r4459430770"
+        },
+        {
+          "label": "Lucas: public malloc label selects TCMalloc internally",
+          "url": "https://github.com/google/gvisor/pull/16522#discussion_r4459430773"
+        },
         {
           "label": "Six original test XMLs and stdout logs match the remote worker records",
           "url": "https://github.com/tamird/gvisor/actions/runs/40801674309"
@@ -30169,10 +30189,11 @@
       "number": 16522,
       "refinement": {
         "before": {
-          "head": "50188341ca87809d0d81fafac8cd10d7df64d11a"
+          "head": "e482579e11a4e098f069bdeb4c66677b36bc93ff",
+          "base": "0424a4b4fa3105cbe3271c301e8bf6cb8adf0277"
         },
         "after": {
-          "head": "e482579e11a4e098f069bdeb4c66677b36bc93ff",
+          "head": "74aa42d5fb36b5efa0c92f269a4360e7a7caf4b2",
           "base": "0424a4b4fa3105cbe3271c301e8bf6cb8adf0277"
         }
       },
@@ -30187,13 +30208,28 @@
       "followup": {
         "owner": "Source PR owner",
         "sourceHead": "e482579e11a4e098f069bdeb4c66677b36bc93ff",
-        "observedAt": "2026-11-03T02:30:53.096288+00:00",
-        "disposition": "Open; reviewer feedback applied",
-        "nextAction": "Follow the original PR. No contributor decision is pending.",
+        "observedAt": "2026-11-03T20:21:57.270287+00:00",
+        "disposition": "Contributor review requested",
+        "nextAction": "Review the fork amendment and the two replies before updating the original PR.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16522/commits/e482579e11a4e098f069bdeb4c66677b36bc93ff",
-          "https://github.com/google/gvisor/pull/16522#issuecomment-6593579029"
-        ]
+          "https://github.com/tamird/gvisor/commit/74aa42d5f",
+          "https://github.com/tamird/gvisor/actions/runs/41707427239/artifacts/13266904325",
+          "https://github.com/google/gvisor/pull/16522#discussion_r4459430770",
+          "https://github.com/google/gvisor/pull/16522#discussion_r4459430773",
+          "https://app.buildbuddy.io/invocation/29a82241-f69b-4ba6-bf22-b15bf5af73e7"
+        ],
+        "providerHead": "e482579e11a4e098f069bdeb4c66677b36bc93ff"
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "74aa42d5fb36b5efa0c92f269a4360e7a7caf4b2",
+        "baseHead": "e482579e11a4e098f069bdeb4c66677b36bc93ff",
+        "url": "https://github.com/tamird/gvisor/commit/74aa42d5f",
+        "title": "Put the freestanding executable transition in the C++ build adapter",
+        "requestedAt": "2026-11-03T20:21:57.270287+00:00",
+        "summary": "Publish this amendment on #16522 and reply to Lucas’s two comments?",
+        "body": "The ordinary C++ target kept the injected sanitizer, allocator and linker options. The three sidecars removed the sanitizer runtime and allocator override but kept the unrelated hardening flag. GNU and LLVM compiled and linked all three binaries for AMD64 and ARM64. With their default options, both compilers passed all 13 AMD64 runtime cases. The LLVM passes used supplier fix 83245b957; the unmodified 0.8.24 release still could not link pthread or dl. Google’s internal build was not exercised.\n\nTransition reply:\nI moved the transition behind `//tools:defs.bzl`. The public adapter removes sanitizer features and direct sanitizer runtime flags while preserving unrelated options. The internal adapter still needs to map `freestanding_executable` to its existing C++ noasan policy; I can’t verify that mapping in the public tree.\n\nPosted by Codex on behalf of @tamird.\n\nAllocator reply:\nThe transition now unsets `--custom_malloc`, so the sidecars keep their own `tcmalloc = False` setting. With a custom allocator selected on the command line, the ordinary control kept it and none of the three sidecars linked it.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -45905,6 +45941,15 @@
         "after": {
           "head": "bbdb2f8a254b4f51e5bf1fa96eaf4872be190d63"
         }
+      },
+      "reapproval": {
+        "kind": "content-amendment",
+        "method": "reviewed-source-diff",
+        "head": "bbdb2f8a254b4f51e5bf1fa96eaf4872be190d63",
+        "approvedHead": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689",
+        "diffSha256": "348233ce13cdf1abaa4a22b8bf35b61b3314b0621861436777a5d6af2fc5f197",
+        "summary": "The listener now reports a failed SYN-cookie send while still counting the cookie that was generated.",
+        "evidence": "https://github.com/tamird/gvisor/compare/bc9ffcc0d...bbdb2f8a2"
       }
     },
     {
