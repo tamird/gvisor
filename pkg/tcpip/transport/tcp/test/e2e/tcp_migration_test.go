@@ -25,6 +25,7 @@ import (
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checker"
+	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/link/channel"
 	"gvisor.dev/gvisor/pkg/tcpip/network/arp"
@@ -47,7 +48,11 @@ func TestTCPMigration(t *testing.T) {
 		wantOriginalState    tcp.EndpointState
 		wantRestoredState    tcp.EndpointState
 		expectRestored       bool
+		cork                 bool
+		pending              bool
 	}{
+		{name: "CorkIdle", allowMigration: true, removeConf: true, hasRouteAfterRestore: true, wantOriginalState: tcp.StateEstablished, wantRestoredState: tcp.StateEstablished, expectRestored: true, cork: true},
+		{name: "CorkPending", allowMigration: true, removeConf: true, hasRouteAfterRestore: true, wantOriginalState: tcp.StateEstablished, wantRestoredState: tcp.StateEstablished, expectRestored: true, cork: true, pending: true},
 		{
 			name:                 "MigrationAllowed_RemoveConf_RouteExists",
 			allowMigration:       true,
@@ -80,7 +85,7 @@ func TestTCPMigration(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Create stack.
-			c := testcontext.New(t, e2e.DefaultMTU)
+			c := testcontext.NewWithOpts(t, testcontext.Options{EnableV4: true, EnableV6: true, MTU: e2e.DefaultMTU, Clock: faketime.NewManualClock()})
 			defer c.Cleanup()
 
 			c.Stack().SetAllowLiveTCPMigration(tc.allowMigration)
@@ -91,6 +96,23 @@ func TestTCPMigration(t *testing.T) {
 
 			if got, want := tcp.EndpointState(c.EP.State()), tcp.StateEstablished; got != want {
 				t.Fatalf("Unexpected endpoint state: want %v, got %v", want, got)
+			}
+
+			writeByte := func(ep tcpip.Endpoint) {
+				t.Helper()
+				if n, err := ep.Write(bytes.NewReader([]byte("z")), tcpip.WriteOptions{}); n != 1 || err != nil {
+					t.Fatalf("Write: n=%d, err=%v", n, err)
+				}
+			}
+			if tc.cork {
+				c.EP.SocketOptions().SetCorkOption(true)
+				if tc.pending {
+					writeByte(c.EP)
+					if packet := c.GetPacketNonBlocking(); packet != nil {
+						packet.Release()
+						t.Fatal("pending write sent before save")
+					}
+				}
 			}
 
 			// Save the stack.
@@ -119,9 +141,10 @@ func TestTCPMigration(t *testing.T) {
 			}
 			t.Logf("Load stats:\n%s", loadStats.String())
 
+			var ep *channel.Endpoint
 			if tc.hasRouteAfterRestore {
 				// Recreate the NIC 1 with same IP.
-				ep := channel.New(1000, e2e.DefaultMTU, "")
+				ep = channel.New(1000, e2e.DefaultMTU, "")
 				if err := restoredStack.CreateNIC(1, ep); err != nil {
 					t.Fatalf("CreateNIC failed: %v", err)
 				}
@@ -173,6 +196,41 @@ func TestTCPMigration(t *testing.T) {
 				t.Logf("Subtest %s: got state: %v, want state: %v", tc.name, got, want)
 				if got != want {
 					t.Fatalf("Unexpected restored endpoint state: want %v, got %v", want, got)
+				}
+			}
+			if tc.cork {
+				if !restoredEP.SocketOptions().GetCorkOption() {
+					t.Fatal("TCP_CORK lost at restore")
+				}
+				// The decoded clock is the one the reconstructed sender uses.
+				clock := restoredStack.Clock().(*faketime.ManualClock)
+				readData := func() []byte {
+					var data []byte
+					for pkt := ep.Read(); pkt != nil; pkt = ep.Read() {
+						v := pkt.ToView()
+						ip := header.IPv4(v.AsSlice())
+						if ip.TransportProtocol() == header.TCPProtocolNumber {
+							h := header.TCP(ip.Payload())
+							if h.DestinationPort() == testcontext.TestPort {
+								data = append(data, h.Payload()...)
+							}
+						}
+						v.Release()
+						pkt.DecRef()
+					}
+					return data
+				}
+				if !tc.pending {
+					clock.Advance(tcp.MinRTO / 2)
+					writeByte(restoredEP)
+				}
+				clock.Advance(tcp.MinRTO - time.Nanosecond)
+				if got := readData(); len(got) != 0 {
+					t.Fatalf("restored cork released %q before the write deadline", got)
+				}
+				clock.Advance(time.Nanosecond)
+				if got := readData(); string(got) != "z" {
+					t.Fatalf("restored cork released %q at deadline, want z", got)
 				}
 			}
 		})
