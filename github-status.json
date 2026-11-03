@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-11-03T02:24:15.335617+00:00",
-  "registryDate": "2026-11-02T22:54:43.336654+00:00",
+  "registryDate": "2026-11-03T02:30:53.096288+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -302207,6 +302207,13 @@
         "basis": "observed",
         "qualifier": "Validation checks passed",
         "observedAt": "2026-11-03T02:23:54.808083+00:00"
+      },
+      "contributor-review": {
+        "scope": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
+        "since": "2026-11-03T02:30:53.096288+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-03T02:30:53.096288+00:00"
       }
     },
     "pr:16589": {
@@ -302381,6 +302388,13 @@
         "basis": "observed",
         "qualifier": "Validation checks passed",
         "observedAt": "2026-11-03T02:23:54.808083+00:00"
+      },
+      "contributor-review": {
+        "scope": "da05e74d9febb9c6430bfc94d6406684eaab66df",
+        "since": "2026-11-03T02:30:53.096288+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-03T02:30:53.096288+00:00"
       }
     },
     "pr:16620": {
@@ -302921,6 +302935,13 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-03T02:23:54.808083+00:00"
+      },
+      "contributor-review": {
+        "scope": "c58f36d4e068c2b0aa31a207fabbb37e25b60472",
+        "since": "2026-11-03T02:30:53.096288+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-03T02:30:53.096288+00:00"
       }
     },
     "pr:16804": {
@@ -304374,6 +304395,15 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-02T22:54:43.336654+00:00"
+      }
+    },
+    "branch:tcp-keepalive-user-timeout": {
+      "contributor-review": {
+        "scope": "1b56b8506d2eb230d46bf8f95ab1242c9a81298a",
+        "since": "2026-11-03T02:30:53.096288+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-03T02:30:53.096288+00:00"
       }
     }
   },
