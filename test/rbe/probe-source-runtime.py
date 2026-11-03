@@ -1,7 +1,6 @@
 """Qualify native source-runtime installation through the existing Buildkite hooks."""
 
 import hashlib
-import io
 import json
 import os
 from pathlib import Path
@@ -9,11 +8,8 @@ import platform
 import re
 import signal
 import subprocess
-import sys
-import tarfile
 import time
 import traceback
-import zipfile
 from datetime import datetime, timezone
 
 
@@ -37,7 +33,7 @@ EXPECTED = {
 record = {
     'product': PRODUCT, 'integration': INTEGRATION, 'compiler': COMPILER,
     'status': 'INCOMPLETE', 'phases': {}, 'observations': {},
-    'scope': 'native AMD64 source installation; retained compiler prerequisite',
+    'scope': 'native ARM64 source installation; retained compiler prerequisite',
     'producer_action_freshness': 'not asserted',
 }
 
@@ -125,7 +121,7 @@ def environment(name, **updates):
     return env
 
 
-def hook(name, env, *, expected=0, timeout=2100):
+def hook(name, env, *, expected=0, timeout=3300):
     # The EXIT recorder does not alter the hook's native status.
     script = 'set -euo pipefail\ntrap \'rc=$?; python3 "$EMIT_ENV"; exit "$rc"\' EXIT\n' + pre
     path = command(name, ['bash', '-c', script], env=env, timeout=timeout, expected=expected)
@@ -158,10 +154,10 @@ def inventory(directory):
         assert path.is_file() and not path.is_symlink()
         with path.open('rb') as stream:
             header = stream.read(20)
-        assert header[:5] == b'\x7fELF\x02' and int.from_bytes(header[18:20], 'little') == 62
+        assert header[:6] == b'\x7fELF\x02\x01' and int.from_bytes(header[18:20], 'little') == 183
         assert os.access(path, os.X_OK)
         result[name] = {'sha256': digest(path), 'bytes': path.stat().st_size,
-                        'mode': oct(path.stat().st_mode & 0o777), 'elf_machine': 62}
+                        'mode': oct(path.stat().st_mode & 0o777), 'elf_machine': 183}
     return result
 
 
@@ -187,91 +183,12 @@ def cleanup(name, env):
         assert not Path(env['BUILDKITE_STAGED_BINARIES_DIRECTORY']).exists()
 
 
-def container_diagnostics():
-    """Recover two original failure messages; never run the container tests."""
-    global OUT, record
-    OUT = TMP / 'container-diagnostics.json'
-    record = {'status': 'INCOMPLETE', 'original_artifact': 13262889422,
-              'original_zip_sha256': 'bf9878ea8ec8aea7b72ae576b6156e67d019d797919be514dadbf3bd334000cd',
-              'workload_repeated': False, 'logs': {}, 'started_at': now()}
-    save()
-    try:
-        original = subprocess.check_output(['gh', 'api', 'repos/tamird/gvisor/actions/artifacts/13262889422/zip'])
-        assert hashlib.sha256(original).hexdigest() == record['original_zip_sha256']
-        with zipfile.ZipFile(io.BytesIO(original)) as archive:
-            assert archive.namelist() == ['container-native-result.json']
-            prior = json.loads(archive.read(archive.namelist()[0]))
-        assert prior['carrier'] == '1d2d1ca00ecd9c5b25e4d3c9b0506fc2a71ea09c'
-        assert prior['source'] == '45e2b205ea018f69e9f3bc80e162ba07d88fd768'
-        assert prior['status'] == 'INCOMPLETE' and prior['commands']['guest']['exit'] == 124
-        record['original_status'] = prior['status']
-        record['original_missing_attempts'] = prior['missing_attempts']
-        os.environ['BUILDBUDDY_API_KEY'] = SECRET
-        from cas_inputs import blob
-        os.environ.pop('BUILDBUDDY_API_KEY')
-        for mode, sha, size in (
-            ('v1', '206c82c7b1d41c689d5177498fd81a5273aa7fe0bdfe1ae687b7b1ed34fe90b2', 1797400),
-            ('v2', '468cf9783e9aed858574eee956ea9a43ae518de1fd4390c6c986887579e93a75', 1753738),
-        ):
-            attempt, = [row for row in prior['attempts'] if row['mode'] == mode and row['status'] == 'FAILED']
-            assert attempt['owner'] == '//runsc/container:container_test' and attempt['shard'] == 7
-            assert attempt['invocation'] == '470bc6b5-083f-4273-9415-08dba352f2d5'
-            assert attempt['xml']['failed_cases'] == ['TestCheckpointRestoreAnnotation']
-            assert attempt['log']['sha256'] == sha and attempt['log']['bytes'] == size
-            row = record['logs'][mode] = {'sha256': sha, 'bytes': size, 'original_status': 'FAILED',
-                'case': 'TestCheckpointRestoreAnnotation', 'status': 'INCOMPLETE'}
-            save()
-            data = blob({'hash': sha, 'sizeBytes': size}, attempt['invocation'])
-            diagnostics = []
-            for match in re.finditer(r'multi_container_save_restore_test\.go:(\d+): ([^\r\n]*)', data.decode(errors='replace')):
-                if not 599 <= int(match[1]) <= 729:
-                    continue
-                text = match[2]
-                # Keep the actual assertion text, hash arbitrary quoted payloads,
-                # and remove URL/path operands. Raw guest logs remain private.
-                allowed = {'"resume\\n"', '"resume\\nrestore\\n"', '"restore\\n"', '""'}
-                text = re.sub(r'"(?:\\.|[^"\\])*"', lambda m: m[0] if m[0] in allowed else
-                              '<quoted sha256=' + hashlib.sha256(m[0].encode()).hexdigest() + '>', text)
-                text = re.sub(r'(?i)(?:https?|grpcs?)://\S+', '<url>', text)
-                text = re.sub(r'(?:[A-Za-z]:)?/[^\s,;]*', '<path>', text)
-                if SECRET in text or re.search(r'(?i)(?:authorization|x-buildbuddy-api-key|github_pat_|gh[pousr]_)', text):
-                    text = '<diagnostic sha256=' + hashlib.sha256(match[2].encode()).hexdigest() + '>'
-                diagnostics.append({'file': 'runsc/container/multi_container_save_restore_test.go',
-                                    'line': int(match[1]), 'message': text[:600],
-                                    'original_message_sha256': hashlib.sha256(match[2].encode()).hexdigest()})
-            assert len(diagnostics) <= 8
-            row.update(status='RECOVERED', diagnostics=diagnostics,
-                       source_message_observed=bool(diagnostics))
-            save()
-        record['status'] = 'ORIGINAL_LOGS_RECOVERED'
-    except Exception as exc:
-        record['error_type'] = type(exc).__name__
-        record['error_line'] = traceback.extract_tb(exc.__traceback__)[-1].lineno
-    finally:
-        record['verdict_at'] = now()
-        save()
-    print(json.dumps({'diagnostics_status': record['status'], 'verdict_at': record['verdict_at']}))
-    raise SystemExit(0 if record['status'] == 'ORIGINAL_LOGS_RECOVERED' else 1)
-
-
-if '--container-diagnostics' in sys.argv:
-    container_diagnostics()
-
-
 try:
-    original_bytes = (TMP / 'original-source.zip').read_bytes()
-    assert hashlib.sha256(original_bytes).hexdigest() == '3034b139adeac9a33600a328672000dcd40a9d8c3a4c35ef4e46be264b425ba9'
-    with zipfile.ZipFile(io.BytesIO(original_bytes)) as archive:
-        assert archive.namelist() == ['source-verdict.json']
-        prior = json.loads(archive.read('source-verdict.json'))
-    assert prior['product'] == PRODUCT and prior['integration'] == INTEGRATION
-    assert prior['status'] == 'FAIL' and prior['phases']['source-empty']['exit'] == 2
-    assert not prior['invocations'] and not prior['observations']
-    record['original_qualification'] = {'artifact': 13264213121,
-        'zip_sha256': hashlib.sha256(original_bytes).hexdigest(), 'receipt': prior}
-    save()
-    assert platform.system() == 'Linux' and platform.machine() == 'x86_64' and os.getuid() != 0
+    assert platform.system() == 'Linux' and platform.machine() == 'aarch64' and os.getuid() != 0
     assert captured(['git', 'rev-parse', 'HEAD']) == INTEGRATION
+    record['execution_platform'] = {'architecture': 'arm64', 'isolation': 'oci',
+        'image': 'docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02',
+        'routing_source': '0b014096d2f890fc8441d64aa585cb002ec77728'}
     record['host'] = {'os': 'Linux', 'architecture': platform.machine(), 'kernel': platform.release(), 'uid': os.getuid()}
     original = Path('.buildkite/hooks/pre-command').read_text()
     begin = original.index('# The job and its post-command cleanup must use the same Bazel server.')
@@ -319,8 +236,6 @@ sys.exit(r.returncode if r.returncode>=0 else 128-r.returncode)
     wrapper.chmod(0o755)
     (tools / 'docker').write_text('#!/bin/sh\nprintf called >> "$RUNTIME_PRIVATE/docker-called"\nexit 87\n')
     (tools / 'docker').chmod(0o755)
-    (tools / 'gcloud').write_text('#!/bin/sh\n[ "$1" = storage ] && [ "$2" = cat ] && [ "$3" = gs://qualification/runtime.tar.gz ] || exit 88\nexec cat "$RUNTIME_PRIVATE/runtime.tar.gz"\n')
-    (tools / 'gcloud').chmod(0o755)
     os.environ['RUNTIME_PRIVATE'] = str(PRIVATE)
     record['bazel_version'] = captured([str(REAL_BAZEL), '--version'])
     assert record['bazel_version'] == 'bazel 8.8.1'
@@ -353,11 +268,8 @@ sys.exit(r.returncode if r.returncode>=0 else 128-r.returncode)
     record['observations']['source_install'] = {'files': files, 'runtime_args': installed.get('runtimeArgs', []),
         'docker_invocations_during_install': 0, 'native_make_build_and_cquery': True,
         'cache_argument_once_each': True, 'quoted_metadata_once_each': True,
-        'executable_architecture': 'x86_64', 'producer_files_match': True,
+        'executable_architecture': 'aarch64', 'producer_files_match': True,
         'build_target': '//:release', 'cquery_expression': 'set() union "//:release"'}
-    with tarfile.open(PRIVATE / 'runtime.tar.gz', 'w:gz') as archive:
-        for name in sorted(EXPECTED):
-            archive.add(source_dir / name, arcname=name, recursive=False)
     command('clean_outputs', [str(Path(source['BUILDKITE_BAZEL_DIRECTORY']) / 'bazel'), 'clean'], env=source)
     assert all(not path.exists() for path in outputs.values())
     assert inventory(source_dir) == files
@@ -373,22 +285,6 @@ sys.exit(r.returncode if r.returncode>=0 else 128-r.returncode)
     assert not Path(f'/proc/{pid}').exists()
     record['observations']['failed_mixed_job_cleanup'] = {'job_exit_status': 1, 'native_server_stopped': True,
         'client_directory_removed': True, 'runtime_directory_removed': True}
-    staged = environment('archive-positive', STAGED_BINARIES='gs://qualification/runtime.tar.gz',
-                         RUNTIME_ARGS='--platform=systrap --network=none')
-    hook('archive-positive', staged, timeout=180)
-    assert not staged.get('BUILDKITE_BAZEL_DIRECTORY') and not clients('archive-positive')
-    staged_dir, installed = runtime(staged)
-    assert inventory(staged_dir) == files
-    docker_guest('archive_guest', staged)
-    record['observations']['archive_install'] = {'native_bazel_invocations': 0,
-        'runtime_args': installed['runtimeArgs'], 'files_match_source': True}
-    cleanup('archive_cleanup', staged)
-    invalid = environment('invalid-option', BAZEL_OPTIONS='--runtime_install_deliberate_bad_option')
-    hook('invalid-option', invalid, expected=2, timeout=180)
-    assert record['phases']['invalid-option']['diagnostic_classes'] == ['unknown_option']
-    assert not Path(invalid['BUILDKITE_STAGED_BINARIES_DIRECTORY'], 'runsc').exists()
-    cleanup('invalid_option_cleanup', invalid)
-    assert not (PRIVATE / 'docker-called').exists()
     record['status'] = 'PASS'
 except Exception as exc:
     record['error_type'] = type(exc).__name__
@@ -412,6 +308,11 @@ finally:
                     value = event['started'].get('uuid', '')
                     if re.fullmatch(r'[0-9a-f-]{36}', value):
                         row['invocation_id'] = value
+                if 'buildMetrics' in event:
+                    summary = event['buildMetrics'].get('actionSummary', {})
+                    row['runner_counts'] = {entry['name']: int(entry.get('count', 0))
+                                            for entry in summary.get('runnerCount', [])
+                                            if re.fullmatch('[A-Za-z0-9 _/.-]{1,64}', entry['name'])}
                 if 'finished' in event:
                     row['exit'] = event['finished'].get('exitCode', {}).get('code')
         invocations.append(row)

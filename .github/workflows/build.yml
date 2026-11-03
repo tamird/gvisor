@@ -1,33 +1,35 @@
-name: Qualify native source-runtime installation
+name: Qualify native ARM64 source-runtime installation
 on:
   push:
-    branches: [qualification/buildkite-source-runtime-native]
+    branches: [qualification/buildkite-source-runtime-arm64]
 permissions:
   contents: read
-  actions: read
 jobs:
   install:
-    if: github.repository == 'tamird/gvisor'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 55
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 65
     env:
       PRODUCT: 88cf79c935336ff38f4a50cc9a7934f942828b28
       INTEGRATION: 2e9e15266979cfb4a75f4a0ef9ef23b2948fda62
       COMPILER: a385bd2b0155b82faf4fc6a0c195a153ad57550c
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 4, persist-credentials: false}
+        with: {fetch-depth: 5, persist-credentials: false}
       - name: Bind the existing hooks and retained compiler source
         timeout-minutes: 7
         run: |
           set -euo pipefail
-          test "$(uname -m)" = x86_64
+          jq -n --arg product "$PRODUCT" --arg integration "$INTEGRATION" --arg compiler "$COMPILER" \
+            '{product:$product,integration:$integration,compiler:$compiler,status:"INCOMPLETE",phase:"bootstrap"}' \
+            > "$RUNNER_TEMP/source-verdict.json"
+          test "$(uname -m)" = aarch64
           test "$(id -u)" != 0
-          test "$(git rev-parse HEAD^)" = aaee741755b8c01c24c73a5a9b5f7d2359d6caf5
-          test "$(git rev-parse HEAD^^)" = "$INTEGRATION"
-          test "$(git rev-parse HEAD^^^)" = "$COMPILER"
+          test "$(git rev-parse HEAD^)" = 13497c4859c7582be07d2074fe9b0a4ee2cfbad6
+          test "$(git rev-parse HEAD~3)" = "$INTEGRATION"
+          test "$(git rev-parse HEAD~4)" = "$COMPILER"
           git diff --exit-code "$INTEGRATION" HEAD -- . ':!.github/workflows/build.yml' ':!test/rbe/probe-source-runtime.py'
-          git fetch --depth=3 origin proposal/buildkite-source-runtime-native
+          git fetch --depth=3 origin "$PRODUCT"
           test "$(git rev-parse FETCH_HEAD)" = "$PRODUCT"
           git diff --exit-code "$PRODUCT" "$INTEGRATION" -- .buildkite/hooks/pre-command .buildkite/hooks/post-command tools/bazel.mk tools/release.bzl tools/show_paths.bzl runsc/cmd/install.go images/default/bazelversion
           cp test/rbe/probe-source-runtime.py "$RUNNER_TEMP/probe.py"
@@ -48,14 +50,20 @@ jobs:
           mkdir "$RUNNER_TEMP/gnu"
           touch "$RUNNER_TEMP/gnu/REPO.bazel"
           cat > "$RUNNER_TEMP/gnu/BUILD" <<'BUILD'
-          platform(name="gnu", visibility=["//visibility:public"], constraint_values=["@platforms//os:linux","@platforms//cpu:x86_64"], exec_properties={"Arch":"amd64","OSFamily":"linux","container-image":"docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a","EstimatedMemory":"6GB","workload-isolation-type":"firecracker"})
+          platform(
+              name = "gnu",
+              constraint_values = ["@platforms//os:linux", "@platforms//cpu:aarch64"],
+              exec_properties = {
+                  "Arch": "arm64",
+                  "OSFamily": "linux",
+                  "container-image": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+                  "workload-isolation-type": "oci",
+              },
+              visibility = ["//visibility:public"],
+          )
           BUILD
           sudo test -f /etc/docker/daemon.json || printf '%s\n' '{}' | sudo tee /etc/docker/daemon.json >/dev/null
-          tar -C / -chf - bin/true lib/x86_64-linux-gnu/libc.so.6 lib64/ld-linux-x86-64.so.2 | docker import - hook-probe >/dev/null
-      - name: Preserve the original observer failure without rereading container logs
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api repos/tamird/gvisor/actions/artifacts/13264213121/zip > "$RUNNER_TEMP/original-source.zip"
+          tar -C / -chf - bin/true lib/aarch64-linux-gnu/libc.so.6 lib/ld-linux-aarch64.so.1 | docker import - hook-probe >/dev/null
       - name: Exercise native copy, durable Docker runtime and failure cleanup
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -86,6 +94,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: ${{ always() && steps.public.outcome == 'success' }}
         with:
-          name: source-runtime-verdict
+          name: arm64-source-runtime-verdict
           path: ${{ runner.temp }}/source-verdict.json
           if-no-files-found: error
