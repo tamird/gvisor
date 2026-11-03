@@ -579,7 +579,7 @@ def recover_original() -> None:
     from cas_inputs import blob, fetch, rpc
 
     original = "aaed41e45c71fb16ddb3ec4b6f630e15a60df757"
-    assert git("rev-parse", "HEAD^^").decode().strip() == original
+    assert git("rev-parse", "HEAD^^^").decode().strip() == original
     assert set(git("diff", "--name-only", original, SOURCE).decode().splitlines()) == {
         PACKAGE + "/check.py", ".github/workflows/native-unit-amd64-cgroup-v1.yml"}
     raw = (TMP / "original.zip").read_bytes()
@@ -597,6 +597,13 @@ def recover_original() -> None:
     catalog = git("show", PRODUCT + ":tools/licensecheck/dependencies.yaml").decode()
     dependencies = set(re.findall(r"(?m)^\s*- dependency: ([A-Za-z0-9_./+-]+)$", catalog))
     assert dependencies
+    prior_bytes = (TMP / 'prior-diagnostics.zip').read_bytes()
+    assert sha(prior_bytes) == '6792ea14c48f96e73cae85d2f385fd521b7623735b5f77ec334d643e0a538892'
+    with ZipFile(BytesIO(prior_bytes)) as archive:
+        assert archive.namelist() == ['verdict.json']
+        prior = json.loads(archive.read('verdict.json'))
+    assert prior['carrier'] == '4c758e737b3679ac0aaa236e6ff6d217f40af89f' and prior['original'] == old
+    record['prior_diagnostics'] = {k: v for k, v in prior.items() if k != 'original'}
 
     def project(data):
         # Output fixed diagnostic classes and source-known dependency names,
@@ -760,9 +767,14 @@ def recover_original() -> None:
                    metadata_sha256=sha(json.dumps(result, sort_keys=True).encode()), actions=[])
         for event in target.get('actionEvents', []):
             identity = event['id']['actionCompleted']
-            assert identity['label'] == label and identity['configuration']['id'] == failure['configuration']
+            assert re.fullmatch(r'(?:(?:@@?)[A-Za-z0-9_+~.-]+)?//[A-Za-z0-9_./:+-]+', identity['label'])
+            assert re.fullmatch(r'[a-f0-9]{64}', identity['configuration']['id'])
             action = event['action']
-            item = dict(exit_code=action.get('exitCode'), files=[])
+            item = dict(exit_code=action.get('exitCode'), owner=identity['label'],
+                        configuration=identity['configuration']['id'],
+                        association='GetTarget actionEvents follows the selected failed target\'s ActionCompleted children',
+                        same_owner=identity['label'] == label,
+                        same_configuration=identity['configuration']['id'] == failure['configuration'], files=[])
             row['actions'].append(item)
             for name in ('stderr', 'stdout'):
                 if name not in action:
@@ -774,19 +786,38 @@ def recover_original() -> None:
                 item['files'].append(dict(name=name, **project(data)))
         row['coverage_complete'] = bool(row['actions']) and all(a['files'] for a in row['actions'])
 
+    def coretag_messages(row):
+        source, = [f for f in prior['phases']['coretag_files']['files'] if f['name'] == 'test.log']
+        assert source['sha256'] == '7277242acda914426e221b9d4fe846df0e76d5e61e258fe2f3b61efd500e08e1' and source['bytes'] == 34324
+        data = blob({'hash': source['sha256'], 'sizeBytes': source['bytes']}, guest['invocation'])
+        lines = data.decode(errors='replace').splitlines()
+        fixed = ('Guest core scheduling unavailable', 'Guest CPUs are not SMT siblings',
+                 'Guest did not report a completed test', 'Passing guest omitted test XML')
+        row.update(sha256=sha(data), bytes=len(data), fixed_messages=[value for value in fixed if value in lines],
+                   config_sched_core='CONFIG_SCHED_CORE=y' in lines, siblings=[], host_phases=[],
+                   test_enable_started='=== RUN   TestEnable' in lines, coverage_complete=True)
+        for line in lines:
+            match = re.fullmatch(r'Guest CPU ([01]) thread siblings: ([0-9,-]{1,64})', line)
+            if match:
+                row['siblings'].append(dict(cpu=int(match[1]), mask=match[2]))
+            match = re.fullmatch(r'host_uptime_seconds=([0-9.]+) phase=([a-z_]{1,40}) status=(-|[0-9]{1,3}) outer_test_timeout_seconds=(unset|[0-9]{1,5})', line)
+            if match:
+                row['host_phases'].append(dict(host_uptime_seconds=match[1], phase=match[2], status=match[3]))
+
     phase('projection_controls', controls)
-    for name, source in (('bulk', bulk), ('coretag', guest)):
-        phase(name + '_timing', lambda row, s=source: invocation(row, s))
-        phase(name + '_console', lambda row, s=source: console(row, s))
-    for name, source, label in (
-            ('license_files', bulk, '//tools/licensecheck:licensecheck_test'),
-            ('coretag_files', guest, '//' + WORKER + ':guest_test')):
-        phase(name, lambda row, s=source, l=label: files(row, s, l))
+    for name in ('bulk_timing', 'coretag_timing', 'coretag_console', 'license_files', 'coretag_files'):
+        row = dict(prior['phases'][name])
+        assert row['status'] == 'PASS' and row['coverage_complete']
+        row['reused_from'] = '41653851298/13238084338'
+        record['phases'][name] = row
+    phase('coretag_fixed_messages', coretag_messages)
     phase('nogo_target', nogo_target)
     record['status'] = 'ORIGINAL_FAIL_DIAGNOSTICS_RECORDED'
     record['lookups_succeeded'] = all(p['status'] == 'PASS' for p in record['phases'].values())
-    record['diagnostics_complete'] = record['lookups_succeeded'] and all(
+    record['requested_recovery_complete'] = record['lookups_succeeded'] and all(
         p.get('coverage_complete', False) for p in record['phases'].values())
+    record['diagnostics_complete'] = record['requested_recovery_complete'] and prior['phases']['bulk_console']['coverage_complete']
+    record['bulk_console_scope'] = 'Prior bounded prefix and tail only; no complete bulk-console claim'
     record['cause_established'] = False
     record['diagnostic_scope'] = 'Recognized log classes and exact source-known names; matching a class alone does not establish the cause'
     save()
@@ -797,7 +828,7 @@ if __name__ == "__main__":
     try:
         if sys.argv[1:] == ['--recover-original']:
             recover_original()
-            sys.exit(0 if record['diagnostics_complete'] else 1)
+            sys.exit(0 if record['requested_recovery_complete'] else 1)
         with tempfile.TemporaryDirectory(dir=TMP) as directory:
             prepare(Path(directory))
             del os.environ["BUILDBUDDY_API_KEY"]

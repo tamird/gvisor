@@ -17,13 +17,14 @@ jobs:
           echo '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/unit-v1-public/verdict.json"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 3
+          fetch-depth: 4
           persist-credentials: false
       - name: Recover the original failed aggregate
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh api repos/tamird/gvisor/actions/artifacts/13234271430/zip > "$RUNNER_TEMP/original.zip"
+          gh api repos/tamird/gvisor/actions/artifacts/13238084338/zip > "$RUNNER_TEMP/prior-diagnostics.zip"
       - name: Stage the existing read-only evidence helpers
         run: |
           set -euo pipefail
