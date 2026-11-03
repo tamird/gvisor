@@ -130,10 +130,63 @@ def diagnostics(directory):
                         row["fetch"] = ["musl-1.2.6.tar.gz"]
     (directory / "diagnostics.json").write_text(json.dumps(report))
 
+def compiler_console(path, destination):
+    # This is stdout/stderr of the actual stopped compiler, outside all its
+    # writable mounts. Keep native phases and public phrases, never raw text.
+    phrases = {
+        "missing target": r"no such target|target .+ not declared in package",
+        "server terminated abruptly": r"server terminated abruptly|unexpected EOF from server",
+        "connection closed": r"socket closed|connection (?:closed|reset)|connection terminated",
+        "disk full": r"no space left on device|disk quota exceeded",
+        "out of memory": r"OutOfMemoryError|out of memory|cannot allocate memory",
+        "process killed": r"signal: killed|killed by signal|out of memory|(?:^|: )killed\b",
+        "permission denied": r"permission denied|operation not permitted",
+        "internal error": r"internal error|internal bazel crash|internal bug",
+        "source download failed": r"error downloading|failed to fetch|repository.*fetch.*fail",
+        "no such file": r"no such file or directory|command not found",
+        "compilation failed": r"compilepkg:|compilation terminated|undefined reference",
+        "invalid option": r"unrecognized option|unrecognized command|unknown startup option",
+        "sandbox failed": r"sandbox.*(?:failed|error)",
+    }
+    diagnostics, phases, resources, offset = [], [], [], 0
+    with path.open("rb") as stream:
+        # Capture the origin and the tail of large logs; never retain raw bytes.
+        length = path.stat().st_size
+        available = [(0, min(length, 262144))]
+        if length > 262144:
+            start = max(262144, length - 262144)
+            available.append((start, length - start))
+        for offset, size in available:
+            stream.seek(offset)
+            for line in stream.read(size).decode(errors="replace").splitlines():
+                line = line[:8192]
+                if m := re.fullmatch(r"QUAL-PHASE (probe|stock|fixed|tool) (source|analysis|build|locate|archive) (start|[0-9]{1,3})", line):
+                    phases.append([m[1], m[2], m[3]])
+                if m := re.fullmatch(r"QUAL-RESOURCE (free_mib|oom|oom_kill) ([0-9]{1,12})", line):
+                    resources.append([m[1], int(m[2])])
+                found = [key for key, pattern in phrases.items() if re.search(pattern, line, re.I)]
+                if found and found not in diagnostics and len(diagnostics) < 16:
+                    diagnostics.append(found)
+    destination.write_text(json.dumps({"phases": phases[-64:], "diagnostics": diagnostics,
+        "resources":resources[-48:], "console_bytes": length, "inspected_bytes":sum(sz for _, sz in available)}))
+
+
+def observe(directory):
+    # Status is independent of whether a capsule exists, opens or validates.
+    for phase in ("analysis", "build", "locate", "archive"):
+        try:
+            original_exit(directory, phase)
+        except FileNotFoundError:
+            continue
+
 
 if __name__ == "__main__":
     try:
-        if sys.argv[1] == "diagnostics":
+        if sys.argv[1] == "observe":
+            observe(Path(sys.argv[2]))
+        elif sys.argv[1] == "console":
+            compiler_console(Path(sys.argv[2]), Path(sys.argv[3]))
+        elif sys.argv[1] == "diagnostics":
             diagnostics(Path(sys.argv[2]))
         else:
             copy(Path(sys.argv[1]), Path(sys.argv[2]))

@@ -1,148 +1,226 @@
-name: Check both restores in an isolated cgroup-v2 VM
+name: Paired live checkpoint of a 50,000-file tmpfs
 on:
   push:
-    branches: [qualification/gc-restore-limits-kvm-sandboxed]
+    branches: [qualification/state-segment-live-checkpoint]
 permissions:
   contents: read
-  actions: read
 jobs:
-  restore:
+  checkpoint:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
     runs-on: ubuntu-22.04
-    timeout-minutes: 105
+    timeout-minutes: 95
     env:
       IMAGE: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      PRODUCT: a48b7a12cb3bd615c48f9b36d353c02a6463a929
-      TEST_BLOB: 040c7dafa4a9e6286563c80bfda9dc07e6d68767
+      STOCK: d280d49cf180e6443fdba49d57260c3bfd471ff5
+      FIXED: d1ec4193fa7f0dfec50865c55601c3897f6f0e12
+      PRODUCT: d7f75a4d80d375c20efa602d0ea0c0869b2ecdf7
+      BASE: aa767e4c43d011121271551fe24da501a56f729d
+      TOOL: 2b51abee8530385431b7225198fdd5cd65e78696
       PKG: .github/qualification/restore-limit-vm
     steps:
-    - name: Initialize an incomplete result
+    - name: Initialize an incomplete outcome
       run: |
-        printf '{"status":"INCOMPLETE","stages":{},"product":"%s","carrier":"%s","test_blob":"%s"}\n' \
-          "$PRODUCT" "$GITHUB_SHA" "$TEST_BLOB" > "$RUNNER_TEMP/restore-vm-verdict.json"
+        printf '{"status":"INCOMPLETE","stages":{},"stock":"%s","fixed":"%s","product":"%s","carrier":"%s"}\n' "$STOCK" "$FIXED" "$PRODUCT" "$GITHUB_SHA" > "$RUNNER_TEMP/restore-vm-verdict.json"
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with: {fetch-depth: 2, persist-credentials: false}
-    - name: Verify the original six-GiB KVM delegation and unchanged fixture
-      env:
-        GH_TOKEN: ${{ github.token }}
+    - name: Build the original two owner closures without credentials
+      timeout-minutes: 62
       run: |
         set -euo pipefail
         test -c /dev/kvm
-        gh api repos/tamird/gvisor/actions/artifacts/13226626592/zip > "$RUNNER_TEMP/preflight.zip"
-        python3 -B "$PKG/check.py" preflight
-        # The upstream analyzer consumed two GoStdlib trees. The optional
-        # GoStdlibList output was not requested by that owner.
-        gh api repos/tamird/gvisor/actions/artifacts/13238224825/zip > "$RUNNER_TEMP/producer.zip"
-        python3 - <<'CHECK'
-        import hashlib, io, json, os
-        from pathlib import Path
-        from zipfile import ZipFile
-        tmp = Path(os.environ["RUNNER_TEMP"])
-        data = (tmp/"producer.zip").read_bytes()
-        assert hashlib.sha256(data).hexdigest() == "95fc155051926a38611252c4dd52f05e2dcb9b4e81385868b8dd1a124fb70bfe"
-        with ZipFile(io.BytesIO(data)) as z:
-            assert z.namelist() == ["stdlib-result.json"]
-            old = json.loads(z.read("stdlib-result.json"))
-        assert old["product"] == "0bbcbf9de7626fcecba97f37723dce80b435d73d" and old["carrier"] == "03469d14d37e94da41b3e8ffa447b87d38ddff6d"
-        assert old["status"] == "INCOMPLETE" and old["restore_attempts"] == 0 and old["native_exit"] == old["bep_exit"] == old["container_exit"] == 0 and old["target_success"]
-        assert len(old["actions"]) == 1 and old["actions"][0]["mnemonic"] == "GoStandardLibraryAnalysis" and old["actions"][0]["success"]
-        assert len(old["producers"]) == 2
-        for row in old["producers"]:
-            assert row["mnemonic"] == "GoStdlib" and row["runner"] == "processwrapper-sandbox" and not row["cache_hit"] and row["status"] == "" and row["exit"] == 0
-            assert row["archive_outputs"] == [{"count":368,"fmt":True,"example2":False}]
-        result = tmp/"restore-vm-verdict.json"
-        doc = json.loads(result.read_text())
-        doc["stdlib_prerequisite"] = {"artifact":13238224825,"original_status":old["status"],"native_exit":0,"actual_go_stdlib_spawns":2,"go_stdlib_list_spawns":0,"archives_per_tree":368,"excluded_example2":True}
-        result.write_text(json.dumps(doc,indent=2)+"\n")
-        CHECK
-    - name: Build just the original test and runfiles without credentials
-      timeout-minutes: 60
-      run: |
-        set -euo pipefail
-        d=$RUNNER_TEMP/restore-build
-        mkdir -p "$d/src" "$d/output"
-        chmod a+w "$d/src" "$d/output"
+        d="$RUNNER_TEMP/live-build"
+        mkdir -p "$d/src" "$d/transfer"
+        chmod a+w "$d/src" "$d/transfer"
         git -C "$d/src" init -q
-        git -C "$d/src" fetch -q --depth=1 https://github.com/tamird/gvisor.git "$PRODUCT"
-        git -C "$d/src" checkout -q --detach FETCH_HEAD
-        test "$(git -C "$d/src" rev-parse HEAD)" = "$PRODUCT"
-        test "$(git -C "$d/src" hash-object runsc/container/container_save_restore_test.go)" = "$TEST_BLOB"
+        git -C "$d/src" fetch -q --depth=1 https://github.com/tamird/gvisor.git "$STOCK" "$FIXED" "$PRODUCT" "$BASE" "$TOOL"
+        expected=$(printf '%s\n' pkg/state/graph_encode_{stream_unsafe,unsafe,values_unsafe}.go)
+        test "$(git -C "$d/src" diff --name-only "$STOCK" "$FIXED")" = "$expected"
+        test "$(git -C "$d/src" diff --binary "$STOCK" "$FIXED" | sha256sum)" = "$(git -C "$d/src" diff --binary "$BASE" "$PRODUCT" | sha256sum)"
+        test "$(git -C "$d/src" rev-parse "$STOCK:runsc/container/container_save_restore_test.go")" = 6818655c7dd2c3a8b9b0557ba12112f1a18b5c73
         test -z "$(git -C "$d/src" remote)"
         test -z "$(git -C "$d/src" config --local --get-regexp 'extraheader|credential' || :)"
-        # Only public source filenames and Bazel's own enum names may appear
-        # in a diagnostic; keep both allowlists outside the compiler mounts.
-        git -C "$d/src" ls-files -z > "$d/source-files"
-        curl -fsS --max-time 30 https://raw.githubusercontent.com/bazelbuild/bazel/8.8.1/src/main/protobuf/failure_details.proto > "$d/failure-details.proto"
-        test "$(git hash-object "$d/failure-details.proto")" = d77aded3e134c22308621f7c647f4ee5cc5f2717
         docker pull "$IMAGE" > "$d/pull.log" 2>&1
+        for arm in stock fixed; do
+          mkdir -p "$d/$arm/output"
+          chmod a+w "$d/$arm/output"
+          name=${arm^^}
+          git -C "$d/src" ls-tree -r -z --name-only "${!name}" > "$d/$arm/source-files"
+        done
+        curl -fsS --max-time 30 https://raw.githubusercontent.com/bazelbuild/bazel/8.8.1/src/main/protobuf/failure_details.proto > "$d/failure-details.proto" || :
+        if test "$(git hash-object "$d/failure-details.proto")" = d77aded3e134c22308621f7c647f4ee5cc5f2717; then
+          for arm in stock fixed; do cp "$d/failure-details.proto" "$d/$arm/"; done
+        fi
+        # A real missing Bazel target verifies the entire failure path using
+        # the same image, default UID, capabilities and host-owned output mount.
+        mkdir -p "$d/probe/output"
+        chmod a+w "$d/probe/output"
+        git -C "$d/src" show "$STOCK:.bazelversion" > "$d/probe/version"
+        probe=0
         docker run --rm --cap-drop=ALL --security-opt no-new-privileges \
-          -v "$d/src:/src" -v "$d/output:/transfer" -w /src \
-          -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/src \
+          -v "$d/probe/output:/out" -v "$d/probe/version:/version:ro" -w /tmp \
+          --entrypoint /bin/bash "$IMAGE" -c '
+          set -eu
+          mkdir reproduce && cd reproduce
+          cp /version .bazelversion
+          touch BUILD.bazel MODULE.bazel
+          echo "QUAL-PHASE probe analysis start"
+          rc=0
+          bazel --batch --nosystem_rc --nohome_rc --noworkspace_rc build --nobuild --build_event_json_file=/out/analysis.bep //:deliberately_missing || rc=$?
+          echo "QUAL-PHASE probe analysis $rc"
+          echo "$rc" > /out/analysis.exit
+          exit "$rc"' > "$d/probe.log" 2>&1 || probe=$?
+        echo "$probe" > "$d/probe/container.exit"
+        python3 -B "$PKG/handoff.py" observe "$d/probe"
+        python3 -B "$PKG/handoff.py" console "$d/probe.log" "$d/probe/console.json"
+        test ! -e "$d/probe/output/capsule.tar"
+        python3 - "$d/probe" <<'CHECK'
+        import json, sys
+        from pathlib import Path
+        directory = Path(sys.argv[1])
+        rc = int((directory/"container.exit").read_text())
+        assert rc and int((directory/"analysis.exit").read_text()) == rc
+        doc = json.loads((directory/"console.json").read_text())
+        assert ["probe", "analysis", str(rc)] in doc["phases"]
+        assert any("missing target" in row for row in doc["diagnostics"])
+        CHECK
+        rc=0
+        docker run --rm --cap-drop=ALL --security-opt no-new-privileges \
+          -v "$d/src/.git:/original:ro" -v "$d/stock/output:/transfer/stock" \
+          -v "$d/fixed/output:/transfer/fixed" -v "$d/transfer:/tools" -w /tmp \
+          -e STOCK -e FIXED -e TOOL \
           --entrypoint /bin/bash "$IMAGE" -c '
           set -euo pipefail
+          mkdir /tmp/checkpoint-src
+          cp -R /original /tmp/checkpoint-src/.git
           flags=(--config=x86_64 --jobs=4 --spawn_strategy=local --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox --remote_cache= --remote_executor= --bes_backend= --test_sharding_strategy=disabled)
+          phase() {
+            local arm=$1 stage=$2 rc=0
+            shift 2
+            echo "QUAL-PHASE $arm $stage start" >&2
+            "$@" || rc=$?
+            echo "QUAL-PHASE $arm $stage $rc" >&2
+            echo "$rc" > "/transfer/$arm/$stage.exit"
+            return "$rc"
+          }
+          resources() {
+            df -Pm /tmp | awk "NR==2{print \"QUAL-RESOURCE free_mib\", \$4}"
+            if test -r /sys/fs/cgroup/memory.events; then
+              sed -n -E "s/^(oom|oom_kill) ([0-9]+)$/QUAL-RESOURCE \1 \2/p" /sys/fs/cgroup/memory.events
+            fi
+          }
+          trap resources EXIT
+          resources
           target=//runsc/container:container_test
-          bazel cquery "${flags[@]}" --output=label --build_event_json_file=/transfer/analysis.bep "$target" || { rc=$?; echo "$rc" > /transfer/analysis.exit; exit "$rc"; }
-          echo 0 > /transfer/analysis.exit
-          bazel build "${flags[@]}" --build_event_json_file=/transfer/build.bep "$target" || { rc=$?; echo "$rc" > /transfer/build.exit; exit "$rc"; }
-          echo 0 > /transfer/build.exit
-          p=$(bazel cquery "${flags[@]}" --output=files //runsc/container:container_test)
-          test -x "$p" && test "$(basename "$p")" = container_test && test -d "$p.runfiles/_main"
-          test -z "$(git status --porcelain --untracked-files=no)"
-          sha256sum "$p" | cut -d" " -f1 > /transfer/elf.sha256
-          cd "$(dirname "$p")"
-          ulimit -f 1048576
-          tar --hard-dereference -chf /transfer/capsule.tar container_test container_test.runfiles
-          test "$(stat -c %s /transfer/capsule.tar)" -lt 1073741824' > "$d/build.log" 2>&1 || rc=$?
-        echo "${rc:-0}" > "$d/compiler.exit"
-        # The stopped compiler controlled /transfer. Never follow any path it
-        # left behind or introduce one of its links into the trusted workspace.
+          for arm in stock fixed; do
+            name=${arm^^}
+            cd /tmp/checkpoint-src
+            phase "$arm" source git checkout -q --detach "${!name}"
+            out=/transfer/$arm
+            phase "$arm" analysis bazel cquery "${flags[@]}" --build_event_json_file="$out/analysis.bep" --output=label "$target"
+            phase "$arm" build bazel build "${flags[@]}" --build_event_json_file="$out/build.bep" "$target"
+            p=$(phase "$arm" locate bazel cquery "${flags[@]}" --output=files "$target")
+            test -x "$p" && test "$(basename "$p")" = container_test && test -d "$p.runfiles/_main"
+            test -z "$(git status --porcelain --untracked-files=no)"
+            sha256sum "$p" | cut -d" " -f1 > "$out/elf.sha256"
+            (cd "$(dirname "$p")"; ulimit -f 1048576; phase "$arm" archive tar --hard-dereference -chf "$out/capsule.tar" container_test container_test.runfiles)
+            resources
+          done
+          git checkout -q --detach "$TOOL"
+          tool=@org_golang_x_perf//cmd/benchstat
+          echo "QUAL-PHASE tool build start" >&2
+          trc=0; bazel build "${flags[@]}" "$tool" || trc=$?
+          echo "QUAL-PHASE tool build $trc" >&2
+          test "$trc" = 0 || exit "$trc"
+          bin=$(bazel cquery "${flags[@]}" --output=files "$tool")
+          cp "$bin" /tools/benchstat' > "$d/build.log" 2>&1 || rc=$?
+        echo "$rc" > "$d/compiler.exit"
+        # Inspect all compiler-controlled output as untrusted data. No compiler
+        # environment, filesystem or Docker socket is shared with the VM.
+        python3 -B "$PKG/handoff.py" console "$d/build.log" "$d/console.json"
         handoff_rc=0
-        python3 "$PKG/handoff.py" "$d" "$PKG/capsule.tar" || handoff_rc=$?
-        echo "$handoff_rc" > "$d/handoff.exit"
-        python3 "$PKG/handoff.py" diagnostics "$d" || echo incomplete > "$d/diagnostics.missing"
-        if test "${rc:-0}" = 0; then rc=$handoff_rc; fi
-        exit "${rc:-0}"
-    - name: Run the public binary, unchanged and offline, in that VM
-      timeout-minutes: 21
+        for arm in stock fixed; do
+          python3 -B "$PKG/handoff.py" observe "$d/$arm" || :
+          if test "$rc" != 0 && test -f "$d/$arm/failure-details.proto"; then
+            python3 -B "$PKG/handoff.py" diagnostics "$d/$arm" || :
+          fi
+          python3 -B "$PKG/handoff.py" "$d/$arm" "$PKG/$arm.tar" || handoff_rc=$?
+        done
+        # A standalone benchstat build failure must not prevent real observations
+        # when both original owner archives are validated.
+        if test "$handoff_rc" != 0; then
+          if test "$rc" != 0; then exit "$rc"; fi
+          exit "$handoff_rc"
+        fi
+    - name: Measure sixteen alternating pairs in one isolated VM
+      timeout-minutes: 25
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: python3 -B "$PKG/check.py" restore
-    - name: Retain the build disposition and bounded status
+    - name: Compare original per-checkpoint samples with benchstat
+      id: stats
+      run: |
+        set -euo pipefail
+        d="$RUNNER_TEMP/live-build"
+        # Never execute the compiler-supplied program on the coordinator.
+        tool="$d/transfer/benchstat"
+        test -f "$tool" && ! test -L "$tool" && test "$(stat -c '%h' "$tool")" = 1 && test "$(stat -c '%s' "$tool")" -le 33554432
+        mkdir "$d/samples"
+        cp "$RUNNER_TEMP/stock.bench" "$RUNNER_TEMP/fixed.bench" "$d/samples"
+        status=0
+        docker run --rm --network=none --read-only --cap-drop=ALL --security-opt no-new-privileges \
+          -v "$tool:/tool:ro" -v "$d/samples:/data:ro" -w /data --entrypoint /tool "$IMAGE" stock.bench fixed.bench > "$d/benchstat.pending" || status=$?
+        echo "$status" > "$d/benchstat.exit"
+        test "$status" = 0
+        grep -Fq NativeCheckpoint "$d/benchstat.pending"
+        test "$(wc -c < "$d/benchstat.pending")" -lt 12000
+        mv "$d/benchstat.pending" "$RUNNER_TEMP/benchstat.txt"
+        touch "$d/benchstat.ok"
+    - name: Preserve setup, native exits and the final disposition
       if: always()
+      env:
+        STATS_OUTCOME: ${{ steps.stats.outcome }}
       run: |
         python3 - <<'PY'
         from datetime import datetime, timezone
         import json, os, re
         from pathlib import Path
-        tmp = Path(os.environ["RUNNER_TEMP"])
-        out = tmp / "restore-vm-verdict.json"
-        d = tmp / "restore-build"
+        d = Path(os.environ["RUNNER_TEMP"]) / "live-build"
+        out = d.parent / "restore-vm-verdict.json"
         data = json.loads(out.read_text())
-        for key, path in (("analysis_exit", d/"analysis.exit"), ("compile_exit", d/"build.exit"), ("compiler_container_exit", d/"compiler.exit"), ("handoff_exit", d/"handoff.exit")):
-            data[key] = int(path.read_text()) if path.is_file() and path.read_text().strip().isdecimal() else None
-        diagnostics = d/"diagnostics.json"
-        if diagnostics.is_file(): data["diagnostics"] = json.loads(diagnostics.read_text())
-        data["diagnostics_incomplete"] = (d/"diagnostics.missing").exists()
-        binary = d/"elf.sha256"
-        if binary.is_file() and re.fullmatch(r"[0-9a-f]{64}", v := binary.read_text().strip()): data["owner_elf_sha256"] = v
-        if data["status"] != "PASS" and d.is_dir():
-            def ends(path):
-                with path.open("rb") as stream:
-                    first = stream.read(65536)
-                    stream.seek(max(0, os.fstat(stream.fileno()).st_size - 65536))
-                    return (first + b"\n" + stream.read(65536)).decode(errors="replace")
-            log = "\n".join(ends(p) for p in (d/"build.log", d/"pull.log") if p.exists())
-            data["build_failure_categories"] = [kind for kind, pattern in {
-              "disk":"no space left", "fetch":"downloading|could not resolve host|failed to fetch",
-              "permissions":"permission denied|operation not permitted", "compiler":"fatal error:|undefined reference",
-            }.items() if re.search(pattern, log, re.I)]
-        data["verified_utc"] = datetime.now(timezone.utc).isoformat()
+        def status(path):
+            return int(path.read_text()) if path.is_file() and path.read_text().strip().isdecimal() else None
+        data["original"] = {"run":41667723661, "artifact":13246568221,
+                            "zip_sha256":"a0eaf0c589078cd201e133d2a8c4880a89ef4ab68d3d746e9f17fb0de7cc9d79",
+                            "compiler_exit":128, "checkpoint_attempts":0}
+        data["previous_compiler"] = {"run":41668765879, "artifact":13248865920,
+            "zip_sha256":"b027dc95e3a962f46d2d79e0dc8b3fe7967fd7cb078fc3a02dce79eca77c1ebc",
+            "compiler_exit":37, "checkpoint_attempts":0, "handoff":"move permission denied",
+            "original_checkout_probe":{"exit":128,"compiler_uid":0,"gitdir_uid":1001,"categories":["index_lock","permission"]}}
+        for key, path in (("failure_control",d/"probe/console.json"),("compiler_console",d/"console.json")):
+            if path.is_file():
+                data[key] = json.loads(path.read_text())
+        data["failure_control_container_exit"] = status(d/"probe/container.exit")
+        data["failure_control_bazel_exit"] = status(d/"probe/analysis.exit")
+        data["compiler_exit"] = status(d / "compiler.exit")
+        data["builds"] = {arm: {name:status(d / arm / (name+".exit")) for name in ("analysis","build","locate","archive")} for arm in ("stock","fixed")}
+        for arm in ("stock", "fixed"):
+            diag = d / arm / "diagnostics.json"
+            if diag.is_file():
+                data["builds"][arm]["diagnostics"] = json.loads(diag.read_text())
+        stats = {"success":"PASS","failure":"FAIL","cancelled":"INCOMPLETE","skipped":"NOT_RUN"}[os.environ["STATS_OUTCOME"]]
+        data["benchstat"] = {"status":stats, "native_exit":status(d/"benchstat.exit")}
+        if data["status"] == "PASS" and (stats != "PASS" or not (d/"benchstat.ok").is_file()):
+            data["status"] = "FAIL" if stats == "FAIL" else "INCOMPLETE"
+        data["completed_utc"] = datetime.now(timezone.utc).isoformat()
         out.write_text(json.dumps(data, indent=2) + "\n")
         PY
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: isolated-cgroup-restore-result
-        path: ${{ runner.temp }}/restore-vm-verdict.json
+        name: native-checkpoint-pairs
+        path: |
+          ${{ runner.temp }}/restore-vm-verdict.json
+          ${{ runner.temp }}/stock.bench
+          ${{ runner.temp }}/fixed.bench
+          ${{ runner.temp }}/benchstat.txt
         if-no-files-found: error

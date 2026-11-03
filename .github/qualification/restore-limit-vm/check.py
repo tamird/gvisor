@@ -1,6 +1,7 @@
-"""Use the maintained guest and reporter; publish only the two restore cases."""
+"""Measure the native checkpoint call on matched encoder builds in a single guest."""
 
 from datetime import datetime, timezone
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -18,10 +19,10 @@ import qualification_report as report
 TMP = Path(os.environ["RUNNER_TEMP"])
 OUT = TMP / "restore-vm-verdict.json"
 PACKAGE = ".github/qualification/restore-limit-vm"
-PRODUCT = "a48b7a12cb3bd615c48f9b36d353c02a6463a929"
-GUEST = "38745c527784376e0b5d915fe5ebd85e1d1385fd"
+GUEST = "b343642cb16de74e01312ac2e0895f13a8aebcbb"
 SOURCE = os.environ["GITHUB_SHA"]
-CASES = ["container/TestRestoreCgroupMemoryLimit/" + name for name in ("createAtLimit", "lowerBeforeRestore")]
+ARMS = ("stock", "fixed")
+CASES = ["container/TestCheckpointTmpfsTreeForProfile"]
 
 
 def now():
@@ -36,45 +37,74 @@ def save(result):
     OUT.write_text(json.dumps(result, indent=2) + "\n")
 
 
-def original_preflight(result):
-    bundle = TMP / "preflight.zip"
-    assert report.file_record(bundle)["sha256"] == "8b037a99ca78cf345b974cd5b1600a109971848affab02320add7ca2b52624d4"
-    with ZipFile(bundle) as archive:
-        assert archive.namelist() == ["restore-vm-verdict.json"]
-        old = json.loads(archive.read(archive.namelist()[0]))
-    assert old["product"] == PRODUCT and old["carrier"] == "40af79dce23a11c910a77214b0ae5ec2da01f9cc"
-    assert old["status"] == "INCOMPLETE" and old["compile_exit"] is None
-    for filename, blob in (("BUILD", "8fdaf8d3db2888f59a2222d2881eb4a7100a7316"),
-                           ("payload.sh", "c7edf4a7179600722a36e9994d7c846e0196c216")):
-        assert git("hash-object", f"{PACKAGE}/{filename}").decode().strip() == blob
-    assert git("rev-parse", "HEAD^").decode().strip() == GUEST
-    row = old["stages"]["preflight"]
-    assert row["native_exit"] == 0 and row["fresh_local"] and row["delegation_and_guest_exit"]
-    # The fixture emits literal XML. The captured byte count and digest bind
-    # this reconstruction to what that guest actually returned.
-    shell = Path(PACKAGE, "payload.sh").read_text()
-    literal = re.findall(r"printf '(<testsuites>[^']*</testsuites>)\\n' > ", shell)
-    assert len(literal) == 1
-    xml = TMP / "original-preflight.xml"
-    xml.write_text(literal[0] + "\n")
-    assert report.file_record(xml) == row["xml"]
-    counts = report.xml_cases(xml, frozenset({"cgroup2/delegated"}))
-    assert counts["required_passed"] == ["cgroup2/delegated"] and (counts["passed"], counts["failed"], counts["skipped"]) == (1, 0, 0)
-    result["stages"]["preflight"] = {**row, "status":"PASS", "original_status":old["status"],
-                                      "artifact":13226626592, "xml_recovered":True}
+def originals(bundle, row):
+    """Check each real Go test result, including runs excluded from timing."""
+    def small(name, ceiling=8192):
+        key = "guest/outputs/" + name
+        info = bundle.getinfo(key)
+        assert info.file_size <= ceiling
+        return bundle.read(key)
+
+    files = ("checkpoint.img", "pages.img", "pages_meta.img")
+    row["arms"] = {}
+    row["guest_cpus"] = small("cpus", 80).decode().strip()
+    row["guest_affinity"] = small("affinity", 80).decode().strip()
+    assert row["guest_affinity"] == row["guest_cpus"] == "0-1"
+    for arm in ARMS:
+        owner, runtime, sentry, capsule = small(arm + ".sha", 300).decode().splitlines()
+        assert all(re.fullmatch(r"[0-9a-f]{64}", x) for x in (owner, runtime, sentry, capsule))
+        assert owner == (TMP / "live-build" / arm / "elf.sha256").read_text().strip()
+        assert capsule == report.file_record(Path(PACKAGE, arm + ".tar"))["sha256"]
+        row["arms"][arm] = {"owner": owner, "runsc": runtime, "sentry": sentry, "capsule": capsule}
+    # The release launcher may be unchanged: the Go code lives in its Sentry sidecar.
+    assert row["arms"]["stock"]["sentry"] != row["arms"]["fixed"]["sentry"]
+    samples = row["measurements"] = []
+    original = TMP / "pair.xml"
+    for i in range(17):
+        arms = ARMS if i == 0 or i % 2 else tuple(reversed(ARMS))
+        for arm in arms:
+            prefix = f"r{i}-{arm}"
+            code = int(small(prefix + ".exit", 8))
+            sample = {"round": i, "arm": arm, "exit": code}
+            samples.append(sample)
+            xml = small(prefix + ".xml", 2097152)
+            original.write_bytes(xml)
+            sample["xml_sha256"] = hashlib.sha256(xml).hexdigest()
+            counts = report.xml_cases(original, frozenset(CASES))
+            assert code == 0 and counts["required_passed"] == CASES
+            assert (counts["passed"], counts["failed"], counts["skipped"]) == (1, 0, 0)
+            lines = small(prefix + ".markers").decode().splitlines()
+            expected = {"TMPFS-CAP save 2147483648", "TMPFS-CAP restore 2147483648",
+                        "TMPFS-GRAPH kernel=true", "TMPFS-VERIFIED 50000"}
+            times = {}
+            for line in lines:
+                if m := re.fullmatch(r"TMPFS-NS (checkpoint|new|restore|new-to-guest) ([1-9][0-9]*)", line):
+                    assert m[1] not in times
+                    times[m[1]] = int(m[2])
+                else:
+                    expected.remove(line)
+            assert not expected and set(times) == {"checkpoint", "new", "restore", "new-to-guest"}
+            assert times["new-to-guest"] > times["restore"]
+            sizes = dict(zip(files, map(int, small(prefix + ".bytes", 100).splitlines()), strict=True))
+            assert all(x > 0 for x in sizes.values())
+            sample.update(checkpoint_ns=times["checkpoint"], archive_bytes=sizes, restored_files=50000)
+    for arm in ARMS:
+        lines = []
+        for x in samples:
+            if x["round"] and x["arm"] == arm:
+                lines.append(f"BenchmarkNativeCheckpoint 1 {x['checkpoint_ns']} ns/op {sum(x['archive_bytes'].values())} archive-B {x['archive_bytes'][files[0]]} kernel-file-B")
+        assert len(lines) == 16
+        (TMP / (arm + ".bench")).write_text("\n".join(lines) + "\n")
 
 
 def run(stage, result):
-    if stage == "preflight":
-        original_preflight(result)
-        return
     assert git("rev-parse", "HEAD^").decode().strip() == GUEST and git("rev-parse", "HEAD").decode().strip() == SOURCE
     directory = TMP / ("restore-limit-" + stage)
     directory.mkdir()
     row = result["stages"][stage] = {"status": "INCOMPLETE"}
     save(result)
     target = f"//{PACKAGE}:{stage}"
-    required = CASES if stage == "restore" else ["cgroup2/delegated"]
+    required = CASES
     (directory / "owners").write_text(target + "\n")
     report.write_json(directory / "required.json", {target: required})
     raw = directory / "raw.jsonl"
@@ -132,16 +162,10 @@ def run(stage, result):
         "oom_kill":r"^oom_kill [1-9]\d*$", "permission":r"permission denied|operation not permitted",
         "restore":r"restoring container under", "fixture":r"FindFile\(test_app\)|creating container:",
     }.items() if re.search(expression, log, re.M | re.I)]
-    if stage == "restore":
-        with ZipFile(logs / "test.outputs/outputs.zip") as bundle:
-            observed = bundle.read("guest/outputs/capsule-sha256").decode().strip()
-            elf = bundle.read("guest/outputs/owner-elf-sha256").decode().strip()
-        expected = report.file_record(Path(PACKAGE, "capsule.tar"))["sha256"]
-        row["capsule_verified"] = (expected == observed and re.fullmatch(r"[0-9a-f]{64}", elf) is not None
-                                   and elf == (TMP/"restore-build/elf.sha256").read_text().strip())
-        row["capsule_sha256"] = expected
+    with ZipFile(logs / "test.outputs/outputs.zip") as bundle:
+        originals(bundle, row)
     if (v["status"] == "PASS" and row["fresh_local"] and not v["skips"]
-            and row["delegation_and_guest_exit"] and row.get("capsule_verified", True)):
+            and row["delegation_and_guest_exit"]):
         row["status"] = "PASS"
     elif original.returncode:
         row["status"] = "FAIL"
