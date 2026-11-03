@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T16:50:02.468339+00:00",
+    "updatedAt": "2026-11-03T16:58:02.729813+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36637,9 +36637,9 @@
       "head": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
       "title": "Format stateify output in the generator",
       "url": "https://github.com/google/gvisor/pull/16710",
-      "status": "Agent work",
-      "summary": "Replace the generated shell script that runs goimports with a gVisor-local launcher. The formatter needs the declared Go tool on an absolute PATH.",
-      "updatedAt": "2026-11-03T16:50:02.468339+00:00",
+      "status": "open",
+      "summary": "The gVisor-local launcher ran upstream goimports on a shell-free AMD64 worker. All 12 generated files matched current master byte for byte. The same nine targets built on both versions, and three synthetic import fixtures failed to compile on both.",
+      "updatedAt": "2026-11-03T16:58:02.729813+00:00",
       "evidence": [
         {
           "label": "Seven identical production outputs and scratch qualification",
@@ -36688,6 +36688,14 @@
         {
           "label": "Supplier action retains list-call identity",
           "url": "https://github.com/tamird/rules_go/actions/runs/41657052068/artifacts/13241010279"
+        },
+        {
+          "label": "gVisor-local launcher",
+          "url": "https://github.com/tamird/gvisor/commit/ea9eef3eb"
+        },
+        {
+          "label": "Twelve shell-free output comparisons against current master",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41678553267/artifacts/13251728088"
         }
       ],
       "settledReviews": [
@@ -36709,12 +36717,13 @@
       "followup": {
         "owner": "root",
         "sourceHead": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
-        "observedAt": "2026-11-03T16:50:02.468339+00:00",
-        "disposition": "Contributor requested the gVisor-local fix",
-        "nextAction": "Qualify the local launcher against the existing action and prepare the revision for review.",
+        "observedAt": "2026-11-03T16:58:02.729813+00:00",
+        "disposition": "Local launcher qualified",
+        "nextAction": "Publish the gVisor-only amendment after contributor review.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16710#pullrequestreview-5744331855",
-          "https://github.com/tamird/gvisor/commit/50890dbbe"
+          "https://github.com/tamird/gvisor/commit/50890dbbe",
+          "https://github.com/tamird/gvisor/actions/runs/41678553267/artifacts/13251728088"
         ],
         "actionableComment": {
           "head": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
@@ -36722,6 +36731,27 @@
           "commentId": "PRR_kwDOB9IlXs8AAAABVmOMTw",
           "url": "https://github.com/google/gvisor/pull/16710#pullrequestreview-5744331855"
         }
+      },
+      "refinement": {
+        "before": {
+          "base": "c3d3fd4a3844b46529b6d15216b3410b872df735",
+          "head": "7cbb007c3febee15d1904c7faaf3bb21f34a3ae5"
+        },
+        "after": {
+          "base": "471d6dff5229b99208bf6fec985601067f1f9d69",
+          "head": "ea9eef3eb688b6b22b6567d68a0314f43005ed1a"
+        }
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "ea9eef3eb688b6b22b6567d68a0314f43005ed1a",
+        "baseHead": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
+        "url": "https://github.com/tamird/gvisor/commit/ea9eef3eb",
+        "title": "Run goimports with the declared Go executable on PATH",
+        "summary": "May I publish this gVisor-only amendment to #16710? The gVisor-local launcher ran upstream goimports on a shell-free AMD64 worker. All 12 generated files matched current master byte for byte. The same nine targets built on both versions, and three synthetic import fixtures failed to compile on both.",
+        "body": "goimports invokes go to resolve imports in generated state methods.\nThe toolchain paths are relative to the Bazel execution root, but Go\nrejects commands found through a relative PATH entry. Converting the\npath with a generated shell script makes formatting depend on /bin/sh.\n\nResolve the directory of the declared go symlink in a Go launcher and\nrun the upstream goimports executable. Preserve its stdout in the\ngenerated file and let diagnostics reach the Bazel action. The rule\nsets PATH to that one directory, so tools installed on the worker do\nnot participate in import resolution.",
+        "requestedAt": "2026-11-03T16:58:02.729813+00:00"
       }
     },
     {
