@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import shlex
 import shutil
 import subprocess
@@ -17,7 +18,6 @@ from threading import Thread
 import time
 from zipfile import ZipFile
 
-import yaml
 
 SOURCE = '9ae6638ae6d1916725b10f45a5cad76f022d9d7e'
 BASE = '75c04f42d5b7346e4a54a5991dfaf31b043b6769'
@@ -113,6 +113,8 @@ def partitions(rows):
 
 
 def pipeline(rev, file, label):
+    import yaml
+
     doc = yaml.safe_load(git('show', f'{rev}:{file}'))
     step, = [s for s in doc['steps'] if isinstance(s, dict) and s.get('label') == label]
     assert step['env']['DOCKER_BUILD'] == 'false', step
@@ -167,7 +169,92 @@ def compile_pair(key, old, new, env, row):
     assert sorted(a.values()) == sorted(b.values()), key
     row['configuration_correspondence'] = {old_id: [new_id for new_id, members in b.items() if members == owners] for old_id, owners in a.items()}
     assert all(len(matches) == 1 for matches in row['configuration_correspondence'].values()), row
-    assert left['selected_producer_actions'] == right['selected_producer_actions'], key
+    row['action_query'] = action_observations(left, right)
+
+
+def action_observations(left, right):
+    # The projection omitted action configurations. Do not treat every loaded
+    # instance of the selected label as the top-level configured target.
+    old = {tuple(action) for action in left['selected_producer_actions']}
+    new = {tuple(action) for action in right['selected_producer_actions']}
+    assert old and new and old <= new, (old, new)
+    assert all(re.fullmatch('[0-9a-f]{64}', key) for _, _, key in old | new)
+    return {
+        'old_keys': len(old),
+        'new_keys': len(new),
+        'all_old_keys_retained': True,
+        'keys_equal': old == new,
+        'complete_action_configuration_identity': 'UNVERIFIED',
+    }
+
+
+def reconcile(path, result):
+    raw = path.read_bytes()
+    digest = sha256(raw).hexdigest()
+    assert digest == '63d97cf219788f9db6efb3e51861f82c4f5a441c6dc1f2f6f0ed02061f2968bb'
+    with ZipFile(io.BytesIO(raw)) as archive_file:
+        assert archive_file.namelist() == ['result.json']
+        original = json.loads(archive_file.read('result.json'))
+    result['original'] = original
+    result['original_artifact_sha256'] = digest
+    result['original_run'] = 41579868653
+    result['original_artifact'] = 13205600447
+    result['workload_repeated'] = False
+    assert original['status'] == 'FAIL'
+    assert (original['source'], original['package'], original['staged']) == (SOURCE, PKG, STAGED)
+    assert git('diff', '--name-only', SOURCE, 'HEAD').splitlines() == [
+        '.github/qualification/buildkite-client-options.py',
+        '.github/workflows/buildkite-client-options.yml',
+    ]
+    phases = original['phases']
+    pairs = ('amd64-pkg', 'amd64-runsc', 'arm64-pkg', 'arm64-runsc')
+    assert set(phases) == {*pairs, 'retained_archives', 'staged_checker', 'invalid_build_option'}
+    assert all(phases[key]['status'] == 'PASS' for key in ('retained_archives', 'staged_checker', 'invalid_build_option'))
+    cache = phases['staged_checker']['complete']['bazel']['args'][2]
+    assert re.fullmatch('--remote_cache=http://127[.]0[.]0[.]1:[0-9]+', cache), cache
+
+    def forwarded(record, present):
+        assert record['agent_cache_received'] == record['quoted_option_received'] == present
+        assert (cache in record['args']) == (META in record['args']) == present
+
+    result['configured_commands'] = {}
+    for key in pairs:
+        phase_record = phases[key]
+        expected_status = 'PASS' if key == 'arm64-runsc' else 'FAIL'
+        assert phase_record['status'] == expected_status
+        if expected_status == 'FAIL':
+            assert phase_record['error'] == f'AssertionError: {key}'
+        old, new = (phase_record[key + suffix] for suffix in ('-old', '-make'))
+        assert old['exit'] == old['build']['exit'] == new['exit'] == new['build']['exit'] == new['cquery']['exit'] == 0
+        forwarded(old['build'], False)
+        forwarded(new['build'], True)
+        forwarded(new['cquery'], True)
+        assert old['configured'] == new['configured']
+        assert len(old['configured']) == (1951 if key.endswith('pkg') else 391)
+        groups = partitions(old['configured'])
+        assert phase_record['configuration_correspondence'] == {identity: [identity] for identity in groups}
+        assert new['cquery']['enumerated_outputs'] > 0 and new['cquery']['materialized_outputs_claimed'] is False
+        result['configured_commands'][key] = {
+            'status': 'PASS',
+            'configured_owners': len(old['configured']),
+            'configuration_ids': sorted(groups),
+            'output_descriptors': new['cquery']['enumerated_outputs'],
+            'action_query': action_observations(old, new),
+        }
+    checker = phases['staged_checker']
+    expected_exits = {'old': (0, 0), 'complete': (0, 0), 'missing': (2, 1), 'corrupt': (2, 1), 'truncated': (2, 1), 'download': (2, 0)}
+    for name, exits in expected_exits.items():
+        record = checker[name]
+        assert (record['exit'], record['bazel']['exit']) == exits, (name, record)
+        forwarded(record['bazel'], name != 'old')
+    assert checker['old']['fixture_sha256'] == checker['complete']['fixture_sha256'] == checker['download']['fixture_sha256']
+    assert checker['missing']['diagnostic'] == 'containerd-shim-runsc-v1'
+    assert checker['corrupt']['diagnostic'] == 'checksum'
+    assert checker['truncated']['diagnostic'] == 'unexpected EOF'
+    assert checker['empty']['exit'] == 0
+    assert phases['invalid_build_option']['exit'] == phases['invalid_build_option']['build']['exit'] == 2
+    result['scope'] = 'Actual command option forwarding, configured target sets, cquery descriptors and checker stdin/failure behavior; no package build or complete producer action-set claim.'
+    result['status'] = 'PASS'
 
 
 def archive(path, names):
@@ -312,7 +399,12 @@ if __name__ == '__main__':
     TMP.mkdir(exist_ok=True)
     result = {'source': SOURCE, 'package': PKG, 'staged': STAGED, 'status': 'FAIL', 'phases': {}}
     try:
-        main(result)
+        if sys.argv[1:]:
+            mode, archive_path = sys.argv[1:]
+            assert mode == '--reconcile-original', mode
+            reconcile(Path(archive_path), result)
+        else:
+            main(result)
     except Exception as exc:
         result['error'] = f'{type(exc).__name__}: {exc}'[:2000]
     finally:
