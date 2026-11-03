@@ -512,10 +512,101 @@ def recover():
     raise SystemExit(0 if report["verified"] else 1)
 
 
+def report_fixtures():
+    """Exercise reporting contracts with metadata, never build or run targets."""
+    import copy
+    import zipfile
+
+    raw = subprocess.check_output(["gh", "api", "repos/tamird/gvisor/actions/artifacts/13211446882/zip"])
+    archive_sha = hashlib.sha256(raw).hexdigest()
+    require(archive_sha == "a0b7d33f2e359f9e92eaa1dbb8b1a10735ff86d787b85caefdeb91a23beea426", "fixture archive differs")
+    with zipfile.ZipFile(BytesIO(raw)) as archive:
+        original = json.loads(archive.read("recovery.json"))
+    require(original["workload_verified"] and not original["verified"] and not original["workload_repeated"],
+            "fixture source verdict differs")
+    require(original["source"] == os.environ["PRODUCT"], "fixture source differs")
+    compiler = original["phases"]["compiler"]
+    require(compiler["cpp_summary"]["unresolved_tools"] == 2, "fixture unknown-tool scope differs")
+    direct = compiler["indirect_links"][0]["wrapper_compile_producers"]
+    require(len(direct) == 3, "fixture direct compiler inventory differs")
+    base = {"invocation": original["invocation"], "counts": [],
+            "actions": copy.deepcopy(compiler["compilers"] + compiler["local_go_actions"] + direct)}
+    # These tiny synthetic headers exercise architecture and digest checks.
+    # They are test data, never evidence of an executed compiler or real ELF.
+    output_bytes = {}
+    for action in base["actions"]:
+        if action["owner"] in COWNERS:
+            for output in action["outputs"]:
+                data = b"\x7fELF\x02\x01" + bytes(12) + output["machine"].to_bytes(2, "little")
+                output_bytes[output["path"]] = data
+                output["digest"] = [hashlib.sha256(data).hexdigest(), len(data)]
+    report = {"verified": False, "kind": "metadata_fixture_checks", "workload_executed": False,
+              "fixture_archive": {"id": 13211446882, "sha256": archive_sha},
+              "checker_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), "cases": {}}
+    expected_errors = {
+        "direct": None,
+        "unresolved_wrapper": "C++ action placement or input evidence incomplete",
+        "empty_cpp": "no C++ action evidence",
+        "missing_digest": "C++ action placement or input evidence incomplete",
+        "wrong_placement": "C++ action placement or input evidence incomplete",
+        "wrong_invocation": "execution log invocation differs",
+        "failed_action": "C++ action placement or input evidence incomplete",
+        "missing_embedded_owner": "missing cross-architecture compiler actions",
+        "wrong_output_digest": "file bytes differ",
+    }
+    write("report-fixtures", report)
+    for case in ("direct", "unresolved_wrapper", "empty_cpp", "missing_digest", "wrong_placement",
+                 "wrong_invocation", "failed_action", "missing_embedded_owner", "wrong_output_digest"):
+        value = copy.deepcopy(base)
+        action = next(a for a in value["actions"] if a["mnemonic"] == "CppCompile")
+        if case == "unresolved_wrapper":
+            value["actions"].append(copy.deepcopy(compiler["indirect_links"][0]))
+        elif case == "empty_cpp":
+            value["actions"] = [a for a in value["actions"] if a["mnemonic"] not in {"CppCompile", "CppLink"}]
+        elif case == "missing_digest":
+            action["tools"][0]["digest"] = ["", 0]
+        elif case == "wrong_placement":
+            action["runner"] = "local"
+        elif case == "wrong_invocation":
+            value["invocation"] = "00000000-0000-0000-0000-000000000000"
+        elif case == "failed_action":
+            action["status"] = "EXECUTION_FAILED"
+        elif case == "missing_embedded_owner":
+            value["actions"].pop(0)
+        elif case == "wrong_output_digest":
+            value["actions"][0]["outputs"][0]["digest"][0] = "0" * 64
+        (ROOT / "nogo.compact").write_text(json.dumps(value, sort_keys=True))
+        accepted, error = False, None
+        try:
+            check("compiler", value, lambda item: output_bytes[item["path"]], base["invocation"])
+            accepted = True
+        except ValueError as exc:
+            error = str(exc)
+        data = (OUT / "compiler.json").read_bytes()
+        result = json.loads(data)
+        require(accepted == result["verified"] == (case == "direct") and error == expected_errors[case],
+                "wrong fixture disposition: " + case)
+        require(len(data) < 4 * 1024 * 1024, "fixture summary exceeded bound")
+        report["cases"][case] = {"accepted": accepted, "error": error, "summary_bytes": len(data),
+                                 "summary_sha256": hashlib.sha256(data).hexdigest()}
+        write("report-fixtures", report)
+    try:
+        write("oversize-fixture", {"payload": "x" * (4 * 1024 * 1024)})
+    except ValueError:
+        require(not (OUT / "oversize-fixture.json").exists(), "oversized report was persisted")
+    else:
+        raise ValueError("oversized report was accepted")
+    report.update(verified=True, oversize_rejected_before_write=True,
+                  verdict_available=datetime.now(timezone.utc).isoformat())
+    write("report-fixtures", report)
+
+
 if __name__ == "__main__":
     try:
         if sys.argv[1:] == ["recover"]:
             recover()
+        elif sys.argv[1:] == ["report-fixtures"]:
+            report_fixtures()
         else:
             check(sys.argv[1])
     except Exception as exc:
