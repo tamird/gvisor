@@ -8,7 +8,9 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 import tarfile
+from urllib.parse import urlsplit, urlunsplit
 import xml.etree.ElementTree as ET
 import zipfile
 
@@ -182,14 +184,94 @@ def phase(name: str, fn: Callable[[dict], None]) -> None:
         save()
 
 
+def terminal_diagnosis(row: dict) -> None:
+    """Recover the original timeout's causal context without executing a workload."""
+    from cas_inputs import fetch, rpc
+
+    data = (TMP / "diagnosis-original.zip").read_bytes()
+    assert sha(data) == "07a0e2de2a429bb6f77b4f3436690eb6c7710dc46a5b1321d99f93047894b3f3"
+    with zipfile.ZipFile(TMP / "diagnosis-original.zip") as z:
+        prior = json.loads(z.read("result.json"))["phases"]["hackbench_diagnosis"]
+    matches = [entry for entry in prior["invocations"]
+               if entry["invocationId"] == "17603d7e-5f53-4911-8148-b5cf0976495c"]
+    old, = matches
+    assert old["commitSha"] == "41b305bcc71d303421044555b4f1ddeccbcaed5a"
+    assert old["command"] == "test" and old["pattern"] == ["//test/benchmarks/base:hackbench_test"]
+    assert old["invocationStatus"] == "DISCONNECTED_INVOCATION_STATUS"
+    row.update(original_archive_sha256=sha(data), original_run=41522986904,
+               original=old, new_workloads=0)
+    save()
+    token = ""
+    chunks = []
+    for _ in range(4):
+        response = json.loads(fetch("api/v1/GetLog", {"selector": {"invocation_id": old["invocationId"]}, "page_token": token}))
+        chunks.append(response.get("log", {}).get("contents", ""))
+        token = response.get("next_page_token", response.get("nextPageToken", ""))
+        if not token:
+            break
+    text = "".join(chunks)
+    row["log_sha256"] = sha(text.encode())
+    row["partial"] = bool(token)
+    assert not token and row["log_sha256"] == old["log_projection"]["sha256"], "Original console bytes changed"
+    normalized = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", text)
+    lines = normalized.splitlines()
+    row["console"] = {"bytes": len(text.encode()), "lines": len(lines), "ansi_removed": normalized != text}
+    # Keep diagnostic context, not environment, complete command lines or logs.
+    safe_lines = [re.sub(r'https?://[^\s\"<>]+', lambda m: urlunsplit((urlsplit(m[0]).scheme, urlsplit(m[0]).hostname or "", urlsplit(m[0]).path, "", "")), line) for line in lines]
+    row["diagnostics"] = [line[:900] for line in safe_lines
+        if line.startswith(("ERROR:", "WARNING:", "FAIL:", "INFO: Analyzed", "INFO: Invocation", "INFO: Elapsed",
+                            "INFO: Build", "INFO: Found", "INFO: Waiting", "INFO: Streaming", "DEBUG:", "Executed "))
+        and not re.search(r"(?i)authorization|bearer|remote_header|bes_header|x-buildbuddy|github_pat_|gh[pousr]_[A-Za-z0-9]{20}", line)][:80]
+    row["progress"] = [line[:900] for line in safe_lines
+        if (line.startswith(("Loading:", "Analyzing:", "Computing main repo mapping:", "Fetching "))
+            or re.match(r"^\[[0-9, /]+\] ", line))
+        and not re.search(r"(?i)authorization|bearer|remote_header|bes_header|x-buildbuddy|github_pat_|gh[pousr]_[A-Za-z0-9]{20}", line)][-40:]
+    save()
+    row["structured_status"] = "INCOMPLETE"
+    try:
+        response = rpc("GetInvocation", {"lookup": {"invocationId": old["invocationId"]}})
+        inv, = response["invocation"]
+        assert inv["invocationId"] == old["invocationId"] and inv["commitSha"] == old["commitSha"]
+        row["latest_invocation"] = {key: inv.get(key) for key in ("invocationId", "commitSha", "command", "pattern",
+                                  "invocationStatus", "success", "bazelExitCode", "durationUsec", "actionCount", "targetConfiguredCount")}
+        # Only event kinds and the selected target's public fields leave this job.
+        events = [entry.get("buildEvent", {}) for entry in inv.get("event", [])]
+        kinds = {}
+        for event in events:
+            for key in event.get("id", {}):
+                kinds[key] = kinds.get(key, 0) + 1
+        row["event_kinds"] = kinds
+        # GetInvocation excludes target/progress events. Query the named owner
+        # explicitly; an absent retained event does not prove it never ran.
+        target = rpc("GetTarget", {"invocationId": old["invocationId"],
+                                  "targetLabel": "//test/benchmarks/base:hackbench_test"})
+        groups = target.get("targetGroups", [])
+        assert not any(group.get("nextPageToken") for group in groups), "Named owner metadata is partial"
+        row["targets"] = []
+        for group in groups:
+            for item in group.get("targets", []):
+                assert item["metadata"]["label"] == "//test/benchmarks/base:hackbench_test"
+                row["targets"].append({"label": item["metadata"]["label"], "status": item.get("status"),
+                    "rootCause": item.get("rootCause"), "test_result_events": len(item.get("testResultEvents", [])),
+                    "action_events": len(item.get("actionEvents", []))})
+        row["structured_events_available"] = bool(events)
+        row["structured_status"] = "RECOVERED"
+    except Exception as error:
+        row["structured_error"] = type(error).__name__
+
+
 assert subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() == PRODUCT
 assert not subprocess.check_output(["git", "diff", "HEAD", "--"], text=True)
 RESULT["started"] = now()
-phase("original", original)
-phase("amd64", lambda row: image("x86_64", "amd64", 62, row))
-phase("arm64", lambda row: image("aarch64", "arm64", 183, row))
-RESULT["status"] = "PASS" if all(row["status"] == "PASS" for row in RESULT["phases"].values()) else "FAIL"
+if len(sys.argv) == 2 and sys.argv[1] == "diagnose":
+    phase("terminal_diagnosis", terminal_diagnosis)
+    RESULT["status"] = "ORIGINAL_CONSOLE_RECOVERED" if RESULT["phases"]["terminal_diagnosis"]["status"] == "PASS" else "INCOMPLETE"
+else:
+    phase("original", original)
+    phase("amd64", lambda row: image("x86_64", "amd64", 62, row))
+    phase("arm64", lambda row: image("aarch64", "arm64", 183, row))
+    RESULT["status"] = "PASS" if all(row["status"] == "PASS" for row in RESULT["phases"].values()) else "FAIL"
 RESULT["finished"] = now()
 save()
 print(json.dumps({"status": RESULT["status"], "phases": {k: v["status"] for k, v in RESULT["phases"].items()}}))
-raise SystemExit(RESULT["status"] != "PASS")
+raise SystemExit(RESULT["status"] not in ("PASS", "ORIGINAL_CONSOLE_RECOVERED"))
