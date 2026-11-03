@@ -175,6 +175,23 @@ def phase(name, action):
     save()
 
 
+def stdlib_evidence(path):
+    from stdlib_provenance import summarize
+
+    require(path.stat().st_size < 128 * 1024**2, 'execution log size bound')
+    evidence = summarize(path, False)
+    require(evidence['invocation'] == DOC['native_build_evidence']['invocation'], 'execution log invocation mismatch')
+    require(0 < len(evidence['actions']) <= 64, 'stdlib action count bound')
+    DOC['stdlib_producers'] = evidence
+    save()
+    producers = [r for r in evidence['actions'] if r['mnemonic'] == 'GoStdlib']
+    analyses = [r for r in evidence['actions'] if r['mnemonic'] == 'GoStandardLibraryAnalysis']
+    require(producers and analyses, 'missing stdlib producer or consumer')
+    require(all(r['runner'] == 'processwrapper-sandbox' and not r['cacheHit'] and r['exit'] == 0 and not r['status'] for r in producers), 'stdlib producer placement or result mismatch')
+    require(all(r['outputs'] and all(o['archiveCount'] > 0 and not o['excludedArchives'] for o in r['outputs']) for r in producers), 'undeclared or missing stdlib archives')
+    require(all(r['exit'] == 0 and not r['status'] for r in analyses), 'stdlib analysis failed')
+
+
 def native(rc):
     require(git('rev-parse', 'HEAD') == SOURCE, 'wrong product integration')
     require(not git('diff', '--name-only', 'HEAD'), 'dirty product integration')
@@ -198,14 +215,25 @@ def native(rc):
     original = build.read_text()
     build.write_text('load("@rules_pkg//pkg:pkg.bzl", _qualification_tar = "pkg_tar")\n' + original + '\n' +
         '\n'.join('_qualification_tar(name = "%s_capsule", testonly = True, srcs = [":%s"], include_runfiles = True, strip_prefix = "/", allow_duplicates_with_different_content = False)' % (n, n) for n in NAMES))
-    flags = ['--config=x86_64', '--strip=never', '--jobs=6', CACHE, '--remote_executor=', '--keep_going']
+    # Constrain only the SDK producers to their declared files. An unrestricted
+    # producer can compile packages intentionally omitted from sdk.srcs. Do not
+    # reuse a remote result with that larger package set, or weaken Nogo's check.
+    producer_flags = ['--strategy=GoStdlib=processwrapper-sandbox',
+                      '--strategy=GoStdlibList=processwrapper-sandbox',
+                      '--modify_execution_info=GoStdlib(List)?=+no-remote-cache']
+    DOC['qualification_producer_options'] = producer_flags
+    flags = ['--config=x86_64', '--strip=never', '--jobs=6', CACHE, '--remote_executor=', '--keep_going', *producer_flags]
     targets = ['//runsc/container:' + n + '_capsule' for n in NAMES]
     try:
         bep = TMP / 'native-build.bep'
-        code = execute('native-build', bazel + ['build', *flags, '--nobuild_event_json_file_path_conversion', '--build_event_json_file=' + str(bep), *targets])
+        compact = TMP / 'native-build.compact.zst'
+        code = execute('native-build', bazel + ['build', *flags, '--nobuild_event_json_file_path_conversion', '--build_event_json_file=' + str(bep), '--execution_log_compact_file=' + str(compact), *targets])
         if bep.exists():
             build_evidence(bep)
+        # Keep execution and diagnostic collection independent on failure.
+        phase('stdlib_producer_evidence', lambda: stdlib_evidence(compact))
         require(code == 0, 'native capsule build failed')
+        require(DOC['phases']['stdlib_producer_evidence']['status'] == 'PASS', 'stdlib producer evidence incomplete')
         for name in NAMES:
             path = Path('bazel-bin/runsc/container/' + name + '_capsule.tar')
             require(path.stat().st_size < 1024 ** 3, 'capsule size bound')
@@ -239,7 +267,7 @@ def native(rc):
 
 def guest(rc):
     git('switch', '--quiet', '--detach', CARRIER)
-    require(git('rev-parse', 'HEAD~3') == GUEST, 'guest source mismatch')
+    require(git('rev-parse', 'HEAD~5') == GUEST, 'guest source mismatch')
     package = Path(PKG)
     for name, row in DOC['payloads'].items():
         shutil.copyfile(TMP / (name + '.tar'), package / (name + '.tar'))
@@ -389,6 +417,14 @@ def main():
             and prior['commands']['native-build']['exit'] == 1 and not prior['attempts'], 'unexpected original execution')
     DOC['original'] = dict(artifact=13248882573, zip_sha256=sha(original), receipt=prior,
                           test_workload_repeated=False, build_failure_diagnostic='not retained')
+    recovery = (TMP / 'diagnostic.zip').read_bytes()
+    require(sha(recovery) == '87c80db9c15b59d55bed91b91db1e4231e1062a7c3c17fc8136f2d8a1db5c414', 'diagnostic ZIP mismatch')
+    with zipfile.ZipFile(io.BytesIO(recovery)) as archive:
+        require(archive.namelist() == ['container-native-result.json'], 'diagnostic members mismatch')
+        diagnostic = json.loads(archive.read('container-native-result.json'))
+    require(diagnostic['status'] == 'ORIGINAL_FAIL_DIAGNOSTIC_RECOVERED' and diagnostic['source'] == SOURCE and diagnostic['product'] == PRODUCT and diagnostic['carrier'] == '27ce26ffee21c40458a9f106d2ac10e3cb70ef82', 'diagnostic source mismatch')
+    require(diagnostic['recovered_stderr']['sha256'] == '9ae35684375799d6f9248bc76bc7095ef5123b3aad2d3170ff1c1c0e6bf6fce2', 'diagnostic stderr mismatch')
+    DOC['original_diagnostic'] = dict(artifact=13251075654, zip_sha256=sha(recovery), receipt=diagnostic)
     sample = diagnostic_lines(b'ERROR: public/BUILD:1:2: missing input\nAuthorization: Bearer private\ncompilepkg: missing dependency https://private@example.test/x?token=private\nERROR: grpcs://private@example.test/x?token=private')
     require(sample == ['ERROR: public/BUILD:1:2: missing input', 'compilepkg: missing dependency [URL omitted]', 'ERROR: [URL omitted]'], 'diagnostic projection control')
     DOC['diagnostic_projection_control'] = 'PASS'
@@ -420,7 +456,7 @@ def main():
             phase('guest_v1_v2', lambda: guest(rc))
     if any(r['exit'] not in (0, None, 124) and r.get('disposition') != 'VALIDATED_ANALYSIS_ONLY' for r in DOC['commands'].values()):
         DOC['status'] = 'FAIL'
-    elif set(DOC['phases']) == {'native_make_and_capsules', 'guest_v1_v2'} and all(r['status'] == 'PASS' for r in DOC['phases'].values()):
+    elif set(DOC['phases']) == {'native_make_and_capsules', 'stdlib_producer_evidence', 'guest_v1_v2'} and all(r['status'] == 'PASS' for r in DOC['phases'].values()):
         DOC['status'] = 'PASS'
     save()
 
