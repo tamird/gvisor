@@ -1,7 +1,6 @@
-"""Qualify the four native Buildkite Make entries against today's original jobs."""
+"""Reconcile the two native boot benchmarks using the unchanged Make entry."""
 from datetime import datetime, timezone
 from hashlib import sha256
-import html
 import json
 import os
 from pathlib import Path
@@ -11,7 +10,6 @@ import shutil
 import subprocess
 import sys
 import zipfile
-from urllib.request import urlopen
 
 from qualification_report import benchmark_rows
 
@@ -82,31 +80,41 @@ def inspect_inputs(suite, console, prefix, narrow):
 def originals():
     archive = TMP/'original.zip'
     digest = sha256(archive.read_bytes()).hexdigest()
-    require(digest == '6108b2c206d8315d82008b2a839f7c472187eac5a87b18c5ff300d21c136f337', 'wrong original')
+    require(digest == '0eeb34c90bf9d72f2fb7c5f7aec8edfec643f5acf2396466d1f73c16656af5bd', 'wrong original')
     with zipfile.ZipFile(archive) as z:
+        require(z.namelist() == ['result.json'], 'wrong original archive')
         prior = json.loads(z.read('result.json'))
-    require(prior['product'] == os.environ['PRODUCT'] and prior['original_source'] == os.environ['MASTER']
-            and prior['status'] == 'FAIL' and prior['cleanup'] == 'success' and prior['reason'] == 'native producer missing',
-            'wrong original result')
-    require(not prior['probes']['aarch64-linux-gnu-gcc'] and prior['original']['artifact'] == 13250084690,
-            'wrong failed producer environment')
-    for native in prior['native'].values():
-        require(native['make_exit'] == 2 and not native['docker_called'] and native['input_count'] == 0
-                and any('/usr/bin/aarch64-linux-gnu-gcc: No such file or directory' in msg for msg in native['errors']),
-                'wrong original producer failure')
+    require(prior['status'] == 'FAIL' and prior['reason'] == 'native samples incomplete'
+            and prior['product'] == os.environ['PRODUCT']
+            and prior['integration'] == os.environ['INTEGRATION']
+            and prior['compiler'] == os.environ['COMPILER']
+            and prior['original_source'] == os.environ['MASTER'], 'wrong prior identities')
+    boot = prior['native']['boot_lifecycle']
+    require(boot['counts'] == ['0', '0'] and boot['make_exit'] == 2 and boot['input_count'] == 2
+            and boot['stopped_at_missing_adc'] == 0
+            and boot['console_sha256'] == '3c5e0aa10bee8281f6f93b790c5ac458fcd2fbbba34a4839c21f55ef0fd98f5f', 'wrong original boot failure')
+    controls = {}
     for suite, (job, digest0, _, _) in JOBS.items():
-        owner = prior['originals'][suite]
-        require(owner['job'] == job and owner['output_sha256'] == digest0, 'wrong original job')
+        original = prior['originals'][suite]
+        require(original['job'] == job and original['output_sha256'] == digest0, 'wrong production source')
         for platform in platforms(suite):
+            label = suite + '/' + platform
             names = expected(suite, platform)
-            measurement = owner['results'][platform]
-            replay = prior['replay'][suite+'/'+platform]
-            require(set(measurement['rows']) == names and measurement['parser_count'] == len(names)
-                    and measurement['iterations'] == 30 and replay['native_exit'] == 1 and replay['missing_adc']
-                    and replay['counts'] == [str(len(names))], 'wrong retained parser result')
+            measurement = original['results'][platform]
+            replay = prior['replay'][label]
+            require(set(measurement['rows']) == names and measurement['iterations'] == 30
+                    and measurement['parser_count'] == len(names) and replay['missing_adc']
+                    and replay['counts'] == [str(len(names))], 'wrong production rows')
+            if suite != 'boot_lifecycle':
+                passed = prior['native'][suite]['results'][platform]
+                require(passed['parser_count'] == len(passed['rows']) > 0 and passed['iterations'] == 30,
+                        'missing retained native sample')
+                controls[label] = passed
+    require(len(controls) == 5, 'wrong retained sample count')
     DOC.update(product=prior['product'], original_source=prior['original_source'], originals=prior['originals'],
-               replay=prior['replay'], integration=os.environ['INTEGRATION'], compiler=os.environ['COMPILER'], original=dict(artifact=13252397097, sha256=digest, status=prior['status'],
-               failed_native=prior['native'], parser_sha256=prior['original']['parser_sha256'], first_artifact=prior['original']['artifact']))
+               replay=prior['replay'], integration=prior['integration'], compiler=prior['compiler'],
+               original=dict(artifact=13252074858, sha256=digest, status=prior['status'], boot=boot, accepted=controls))
+    DOC['stage'] = 'native'
     save()
 
 
@@ -127,11 +135,66 @@ def error_lines(log):
     return lines
 
 
+def boot_child(args):
+    # The selected Make entry calls sudo -E once per platform; preserve all
+    # other sudo calls exactly. Keep the child's status before GNU xargs maps it.
+    if len(args) < 2 or args[0] != '-E' or Path(args[1]).name != 'boot_benchmark_test':
+        os.execv('/usr/bin/sudo', ['sudo', *args])
+    exe = Path(args[1])
+    platform, = [a.removeprefix('--test_platforms=') for a in args if a.startswith('--test_platforms=')]
+    require(platform in platforms('boot_lifecycle') and exe.is_absolute()
+            and args[2:] == ['--test_platforms=' + platform, '-test.v',
+                             '-test.bench=' + JOBS['boot_lifecycle'][2], '-test.benchtime=30x'], 'unexpected boot arguments')
+    stdout, stderr, status = (TMP / (platform + suffix) for suffix in ('.stdout', '.stderr', '.exit'))
+    row = dict(executable_sha256=sha256(exe.read_bytes()).hexdigest(), platform=platform, args=args[2:])
+    def retain():
+        (TMP / ('child-' + platform + '.json')).write_text(json.dumps(row))
+    retain()
+    with stdout.open('xb') as out, stderr.open('xb') as err:
+        # Only run the already selected benchmark under sudo. The shell stores
+        # its direct exit before sudo, two xargs instances and Make return.
+        rc = subprocess.run(['/usr/bin/sudo', '-E', '/bin/sh', '-c',
+                              '"$@"; rc=$?; printf "%s\n" "$rc" > "$0"; exit "$rc"',
+                              str(status), *args[1:]], stdin=sys.stdin, stdout=out, stderr=err).returncode
+    row.update(sudo_exit=rc, binary_exit=int(status.read_text()) if status.exists() else None)
+    retain()
+    for stream, path, dest in (('stdout', stdout, sys.stdout.buffer), ('stderr', stderr, sys.stderr.buffer)):
+        data = path.read_bytes()
+        lines = data.decode(errors='replace').splitlines()
+        report = row[stream] = dict(bytes=len(data), sha256=sha256(data).hexdigest(),
+            milestones=[l for l in lines if l in ('goos: linux','goarch: amd64','FAIL','PASS') or
+                        re.fullmatch(r'BenchmarkSandboxBoot(?:/(?:systrap|kvm)(?:_overlay)?(?:/(?:Boot|Run|New))?)?', l)],
+            failures=[])
+        for line in lines:
+            # Keep only a source-located Go test diagnostic or a named failure,
+            # never the full command, environment, or setup trace.
+            if not re.match(r'^\s*(?:[\w./-]+\.go:\d+:|--- FAIL: BenchmarkSandboxBoot\b|Error running as root:|panic:|sudo:)', line):
+                continue
+            if re.search(r'(?i)token|credential|password|authorization|api.key|secret|https?://|(?:^|\s)[A-Z_]{3,}=', line):
+                continue
+            text = re.sub(r'/(?:home/runner|tmp|var/tmp)/[^\s"\x27,:;)]+', '[runner path]', line.strip())
+            text = re.sub(r'\b[0-9a-f]{32,}\b', '[id]', text)
+            excerpt = text if len(text) <= 560 else text[:250] + ' … ' + text[-300:]
+            if excerpt not in report['failures'] and len(report['failures']) < 18:
+                report['failures'].append(excerpt)
+        if stream == 'stdout' and row['binary_exit'] == 0:
+            try:
+                report['measurements'] = [r for r in benchmark_rows(path, pgo=True) if r['name'] in expected('boot_lifecycle',platform)]
+            except (ValueError, OSError) as exc:
+                report['parse_error'] = type(exc).__name__
+        retain()
+        dest.write(data)
+        dest.flush()
+    return rc
+
+
 def native():
     import yaml
     pipe = yaml.safe_load(Path('.buildkite/pipeline.yaml').read_text())
     selected = [s for s in pipe['steps'] if isinstance(s, dict) and s.get('command','').startswith(('make benchmark-nodocker ', 'make benchmark-platforms-nodocker '))]
     require(len(selected) == 4, 'wrong Buildkite selection')
+    selected = [s for s in selected if 'BENCHMARKS_SUITE=boot_lifecycle' in shlex.split(s['command'])]
+    require(len(selected) == 1, 'wrong boot selection')
     directory = os.environ['BUILDKITE_BAZEL_DIRECTORY']
     actual = Path(directory)/'bazel'
     require(Path(shutil.which('bazel')) == actual, 'native hook Bazel not first')
@@ -155,6 +218,7 @@ with (Path(os.environ['RUNNER_TEMP'])/'lifecycle'/'bazel-calls').open('a') as f:
 raise SystemExit(result.returncode)
 """)
     wrapper('docker', '#!/bin/sh\ntouch "$RUNNER_TEMP/lifecycle/docker.called"\nexit 125\n')
+    wrapper('sudo', '#!/bin/sh\nexec /usr/bin/python3 -B "$RUNNER_TEMP/lifecycle/buildkite-lifecycle.py" child "$@"\n')
     env = dict(os.environ, PATH=str(guards)+':'+os.environ['PATH'],
                GOOGLE_APPLICATION_CREDENTIALS=str(TMP/'deliberately-absent-adc.json'),
                GCE_METADATA_HOST='127.0.0.1:1', BAZEL_REMOTE_CACHE=CACHE, BAZEL_OPTIONS="'"+QUOTED+"'")
@@ -182,6 +246,11 @@ raise SystemExit(result.returncode)
           diagnostics=[c for c,s in {'no_target':'no such target','compile':'compilepkg:', 'kvm':'failed to create KVM','permission':'permission denied','fetch':'Error downloading','stdlib':'GoStdlib','sandbox':'cannot create gofer','missing_file':'no such file'}.items() if s.lower() in log.lower()])
         calls=[json.loads(line) for line in callfile.read_text().splitlines()[previous:]] if callfile.exists() else []
         row['bazel_calls'] = calls
+        row['children'] = {}
+        for platform in platforms(suite):
+            childfile = TMP / ('child-' + platform + '.json')
+            if childfile.exists():
+                row['children'][platform] = json.loads(childfile.read_text())
         row['errors'] = error_lines(log)
         row['console_sha256'] = sha256(log.encode()).hexdigest()
         row['docker_called'] = (TMP/'docker.called').exists()
@@ -189,6 +258,8 @@ raise SystemExit(result.returncode)
         try:
             require(rc == 2 and row['stopped_at_missing_adc'] == len(platforms(suite))
                     and env['GOOGLE_APPLICATION_CREDENTIALS'] in log, 'wrong reporting boundary')
+            require(set(row['children']) == set(platforms(suite)) and
+                    all(c['binary_exit'] == c['sudo_exit'] == 0 for c in row['children'].values()), 'native child failed')
             row['results']=inspect_inputs(suite,log,'fresh',True)
         except ValueError as e:
             row['error']=str(e)
@@ -198,11 +269,11 @@ raise SystemExit(result.returncode)
     normalized=lambda s:s.lstrip('/')
     DOC['observed_build_targets']=targets
     save()
-    require({normalized(target) for target in targets} >= {x[3] for x in JOBS.values()} | {'tools/parsers:parser', ':release'}, 'native producer missing')
+    require({normalized(target) for target in targets} == {JOBS['boot_lifecycle'][3], 'tools/parsers:parser', ':release'}, 'native producer missing')
     require(all(a[0] in ('cquery','build') and a[2:4]==[1,1] and a[4]==os.getuid() and a[5]==0 for a in calls), 'wrong Make Bazel options/user')
     DOC['native_bazel']=dict(builds=targets, queries=sum(c[0]=='cquery' for c in calls),all_cache_and_quoted_options=True,caller_uid=os.getuid(),hook_command=str(actual.name))
     DOC['docker_calls']=int((TMP/'docker.called').exists())
-    require(not DOC['docker_calls'] and set(DOC['native']) == set(JOBS), 'unexpected builder or suite')
+    require(not DOC['docker_calls'] and set(DOC['native']) == {'boot_lifecycle'}, 'unexpected builder or suite')
     require(all('results' in v for v in DOC['native'].values()), 'native samples incomplete')
     require(all(v['native_exit']==1 and v['missing_adc'] and v['counts']==[str(len(expected(*k.split('/'))))] for k,v in DOC['replay'].items()), 'original replay incomplete')
     DOC['status']='PASS'
@@ -210,6 +281,8 @@ raise SystemExit(result.returncode)
 
 
 if __name__=='__main__':
+    if sys.argv[1] == 'child':
+        raise SystemExit(boot_child(sys.argv[2:]))
     try:
         if sys.argv[1]=='originals':
             originals()

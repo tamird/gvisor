@@ -1,7 +1,7 @@
-name: Native Buildkite lifecycle benchmark entry points
+name: Native Buildkite boot benchmark diagnosis
 on:
   push:
-    branches: [qualification/buildkite-lifecycle-native-llvm]
+    branches: [qualification/buildkite-lifecycle-boot-diagnosis]
 permissions:
   contents: read
   actions: read
@@ -19,16 +19,17 @@ jobs:
       DOCKER_BUILD: "false"
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 3, persist-credentials: false}
+      with: {fetch-depth: 4, persist-credentials: false}
     - name: Select the published Buildkite source and prior native reporter
       run: |
         set -euo pipefail
         d="$RUNNER_TEMP/lifecycle"
-        mkdir "$d"
+        mkdir -m 700 "$d"
         printf '{"status":"INCOMPLETE","stage":"source"}\n' > "$d/result.json"
-        test "$(git rev-parse HEAD^)" = "$INTEGRATION"
-        test "$(git rev-parse HEAD^^1)" = "$PRODUCT"
-        test "$(git rev-parse HEAD^^2)" = "$COMPILER"
+        test "$(git rev-parse HEAD^)" = c5eb76e8a9d756ddbf39d86948656620f0d9574a
+        test "$(git rev-parse HEAD~2)" = "$INTEGRATION"
+        test "$(git rev-parse "$INTEGRATION^1")" = "$PRODUCT"
+        test "$(git rev-parse "$INTEGRATION^2")" = "$COMPILER"
         test "$(git rev-parse "$INTEGRATION^{tree}")" = a2a154ca76bd55ac9528ffc9646a81cfb52b6680
         cp .github/qualification/buildkite-lifecycle.py "$d/"
         git fetch -q --no-tags --depth=1 origin "$REPORTER" "$MASTER"
@@ -40,11 +41,11 @@ jobs:
         git diff --quiet "$PRODUCT" HEAD -- .buildkite Makefile tools/bazel.mk tools/parsers tools/bigquery runsc/container shim/tests sandboxexec/sandbox
         git diff --quiet "$COMPILER" HEAD -- pkg/sentry/platform/systrap/sysmsg/BUILD vdso/BUILD tools/bazeldefs/cc.bzl
         test -z "$(git status --porcelain --untracked-files=no)"
-    - name: Reuse the verified 94 original rows and seven offline parser replays
+    - name: Bind the original 94 rows, five successful native samples and both failures
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
-        gh api repos/tamird/gvisor/actions/artifacts/13252397097/zip > "$RUNNER_TEMP/lifecycle/original.zip"
+        gh api repos/tamird/gvisor/actions/artifacts/13252074858/zip > "$RUNNER_TEMP/lifecycle/original.zip"
         python3 -B "$RUNNER_TEMP/lifecycle/buildkite-lifecycle.py" originals
     - name: Provision Bazelisk using the native Buildkite hook
       run: |
@@ -59,7 +60,7 @@ jobs:
         sudo -n test -r /dev/kvm
         sudo -n test -w /dev/kvm
         test -r /proc/self/mountinfo
-    - name: Run the four native Make samples with the declared compiler
+    - name: Run only the original KVM and systrap boot cases with child status capture
       id: native
       run: timeout --signal=INT --kill-after=30s 70m python3 -B "$RUNNER_TEMP/lifecycle/buildkite-lifecycle.py" native
     - name: Exercise the Buildkite successful-shutdown path
@@ -99,6 +100,6 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always() && steps.scan.outcome == 'success'
       with:
-        name: native-lifecycle-benchmarks
+        name: native-boot-benchmark-diagnosis
         path: ${{ runner.temp }}/lifecycle/result.json
         if-no-files-found: error
