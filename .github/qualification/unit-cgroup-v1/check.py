@@ -26,6 +26,8 @@ TMP = Path(os.environ['RUNNER_TEMP'])
 SOURCE = os.environ['SOURCE']
 PRODUCT = os.environ['PRODUCT']
 CARRIER = os.environ['GITHUB_SHA']
+PRIOR_SOURCE = '7e29426b047a41303652cfa9f0ae91e933302f5e'
+LOOKUP = 'b2bd6284f19ec076f76aa0ce3d00494e69f75b0b'
 GUEST = '38745c527784376e0b5d915fe5ebd85e1d1385fd'
 PKG = '.github/qualification/unit-cgroup-v1'
 NAMES = ('container_test', 'boot_test', 'gofer_env_test', 'gofer_maxprocs_test', 'modify_test', 'serialization_test')
@@ -198,11 +200,16 @@ def stdlib_evidence(path):
 def native(rc):
     require(git('rev-parse', 'HEAD') == SOURCE, 'wrong product integration')
     require(not git('diff', '--name-only', 'HEAD'), 'dirty product integration')
-    require(git('rev-parse', SOURCE + '^') == PRODUCT, 'wrong compiler integration parent')
+    require(git('rev-parse', SOURCE + '^') == PRIOR_SOURCE
+            and git('rev-parse', PRIOR_SOURCE + '^') == PRODUCT, 'wrong lookup/compiler integration parents')
+    changed = git('diff-tree', '--no-commit-id', '--name-only', '-r', SOURCE).splitlines()
+    require(len(changed) == 8 and all(p.startswith(('pkg/test/testutil/', 'runsc/container/')) for p in changed), 'unexpected lookup scope')
+    require(not git('diff', '--name-only', LOOKUP, SOURCE, '--', *changed), 'qualified lookup source differs')
+    DOC['lookup_fix'] = dict(source=LOOKUP, integrated_files=changed)
     DOC['bazel_version'] = subprocess.check_output(['bazel', '--version'], text=True).strip()
     require(DOC['bazel_version'] == 'bazel ' + Path('.bazelversion').read_text().strip(), 'wrong Bazel')
     bazel = ['bazel', '--bazelrc=' + str(rc)]
-    prior = DOC['original']['receipt']
+    prior = DOC['original']['receipt']['original']['receipt']
     require(prior['bazel_version'] == DOC['bazel_version'], 'changed analysis client')
     for mode in ('false', 'true'):
         row = prior['modes'][mode]
@@ -262,6 +269,9 @@ def native(rc):
                     runsc_hash = None
             DOC['payloads'][name] = dict(sha256=sha(dest.read_bytes()), bytes=dest.stat().st_size,
                 binary=entry.name, runfiles=runfiles, elf_sha256=sha(binary), elf_bytes=len(binary), runsc_sha256=runsc_hash)
+            old = DOC['original']['receipt']['payloads'][name]
+            DOC['payloads'][name]['matches_original'] = {key: DOC['payloads'][name][key] == old[key]
+                for key in ('sha256', 'elf_sha256', 'runsc_sha256')}
             save()
     finally:
         build.write_text(original)
@@ -270,8 +280,8 @@ def native(rc):
 
 def guest(rc):
     git('switch', '--quiet', '--detach', CARRIER)
-    require(git('rev-parse', 'HEAD^') == 'a7d6b51bd83d8a9aedfcd58720aeedddad7308ed'
-            and git('rev-parse', 'HEAD~7') == GUEST, 'guest source mismatch')
+    require(git('rev-parse', 'HEAD^') == '098e3e093bf859d8aebf856c5840dbba18aefb86'
+            and git('rev-parse', 'HEAD~8') == GUEST, 'guest source mismatch')
     package = Path(PKG)
     for name, row in DOC['payloads'].items():
         shutil.copyfile(TMP / (name + '.tar'), package / (name + '.tar'))
@@ -504,12 +514,12 @@ def main():
         require(archive.namelist() == ['container-native-result.json'], 'original members mismatch')
         prior = json.loads(archive.read('container-native-result.json'))
     require(prior['carrier'] == 'c90e30503332735ddb87d992588101661a7e2d1c' and prior['status'] == 'FAIL'
-            and prior['source'] == SOURCE and prior['product'] == PRODUCT
+            and prior['source'] == PRIOR_SOURCE and prior['product'] == PRODUCT
             and prior['commands']['native-build']['exit'] == 0 and prior['commands']['guest']['exit'] == 3
             and prior['phases']['native_make_and_capsules']['status'] == 'PASS', 'unexpected original execution')
     DOC.update(original=dict(artifact=13253001262, zip_sha256=sha(original), receipt=prior),
-               scope='Corrected guest adapter using six exact original native capsules; no product build',
-               product_build_repeated=False, modes=prior['modes'])
+               scope='Six native container capsules with the qualified executable lookup fix, then KVM v1/v2 guests',
+               product_build_repeated=True, modes=prior['modes'])
     DOC['host'] = dict(machine=os.uname().machine, kernel=os.uname().release, uid=os.getuid(),
                       caller_kvm_access=os.access('/dev/kvm', os.R_OK | os.W_OK))
     # The maintained local-root test route invokes QEMU through sudo. Check
@@ -520,9 +530,6 @@ def main():
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10).returncode == 0
     save()
     require(DOC['host']['machine'] == 'x86_64' and DOC['host']['root_kvm_read'] and DOC['host']['root_kvm_write'], 'native root KVM unavailable')
-    phase('recover_capsules', lambda: recover_capsules(prior))
-    if DOC['phases']['recover_capsules']['status'] != 'PASS':
-        return
     with tempfile.TemporaryDirectory(dir=TMP) as temporary:
         credential = Path(temporary)
         prepare(credential)
@@ -535,10 +542,13 @@ def main():
             'build:buildbuddy_remote_executor --remote_cache=grpcs://remote.buildbuddy.io\n'
             'build:buildbuddy_remote_executor --bes_backend=grpcs://remote.buildbuddy.io\n'
             'build:buildbuddy_remote_executor --bes_results_url=https://app.buildbuddy.io/invocation/\n')
-        phase('guest_v1_v2', lambda: guest(rc))
+        git('switch', '--quiet', '--detach', SOURCE)
+        phase('native_make_and_capsules', lambda: native(rc))
+        if DOC['phases']['native_make_and_capsules']['status'] == 'PASS':
+            phase('guest_v1_v2', lambda: guest(rc))
     if any(r['exit'] not in (0, None, 124) and r.get('disposition') != 'VALIDATED_ANALYSIS_ONLY' for r in DOC['commands'].values()):
         DOC['status'] = 'FAIL'
-    elif set(DOC['phases']) == {'recover_capsules', 'guest_v1_v2'} and all(r['status'] == 'PASS' for r in DOC['phases'].values()):
+    elif set(DOC['phases']) == {'native_make_and_capsules', 'stdlib_producer_evidence', 'guest_v1_v2'} and all(r['status'] == 'PASS' for r in DOC['phases'].values()):
         DOC['status'] = 'PASS'
     save()
 
