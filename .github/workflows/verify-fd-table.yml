@@ -1,13 +1,14 @@
-name: Qualify the robust-futex list pointer contract
+name: Complete the robust-list positive analyzer control
 on:
   push:
-    branches: [qualification/robust-list-lock-contract]
+    branches: [qualification/robust-list-positive-recovery]
 permissions:
   contents: read
+  actions: read
 jobs:
   catalog:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
-    name: Robust-list owner and missing-lock controls
+    name: Missing positive owner only
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -21,7 +22,38 @@ jobs:
           path: source
           fetch-depth: 2
           persist-credentials: false
-      - name: Exercise changed packages and original regression cases
+      - name: Preserve the original timeout and completed negative control
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/tamird/gvisor/actions/artifacts/13273541045/zip > "$RUNNER_TEMP/robust-original.zip"
+          python3 - <<'PYTHON'
+          import hashlib, json, os
+          from pathlib import Path
+          from zipfile import ZipFile
+          root = Path(os.environ["RUNNER_TEMP"])
+          archive = root / "robust-original.zip"
+          assert hashlib.sha256(archive.read_bytes()).hexdigest() == "a8e6fa41c9c762cdeddc2b4654508de42ae8bd21a73d45e38990984a7df93cfb"
+          with ZipFile(archive) as z:
+              assert len(z.namelist()) == 2 and set(z.namelist()) == {"final-positive/result.json", "final-negative/result.json"}
+              data = {mode: z.read("final-" + mode + "/result.json") for mode in ("positive", "negative")}
+          positive, negative = [json.loads(data[mode]) for mode in ("positive", "negative")]
+          assert positive["source"] == "7160231be01096832973a93f08cf52690284f070" and positive["native_exit"] == 124
+          assert positive["executions"] == [] and positive["reports"] == [] and positive["status"] == "FAIL"
+          assert negative["source"] == "589f967e4cebd1c6a1e2db1c4d27ce90ddc7d187" and negative["native_exit"] == 3
+          assert negative["status"] == "EXPECTED_FAILURE" and len(negative["executions"]) == 1
+          attempt, = negative["executions"]
+          assert attempt["remote"] and not attempt["cached"] and attempt["status"] == "FAILED"
+          assert attempt["owner"] == "//pkg/sentry/kernel:kernel_test_nogo"
+          assert set(negative["negative_control"]) == {"amd64", "arm64"}
+          assert all(set(checks) == {"GetRobustList", "SetRobustList", "exitRobustList_read", "exitRobustList_clear"}
+                     and all(checks.values()) for checks in negative["negative_control"].values())
+          for mode, raw in data.items():
+              out = root / ("final-original-" + mode)
+              out.mkdir()
+              (out / "result.json").write_bytes(raw)
+          PYTHON
+      - name: Execute only the missing positive analyzer owner
         working-directory: source
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -75,16 +107,7 @@ jobs:
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$rc"
           unset BUILDBUDDY_API_KEY
-          git fetch --no-tags origin 589f967e4cebd1c6a1e2db1c4d27ce90ddc7d187
-          test "$(git rev-parse FETCH_HEAD^)" = "$SHA"
-          result=0
-          for phase in positive negative; do
-            sha=589f967e4cebd1c6a1e2db1c4d27ce90ddc7d187
-            if [[ "$phase" = positive ]]; then sha=$SHA; fi
-            git checkout --quiet --detach "$sha"
-            python3 -B ../carrier/test/rbe/qualify_fd_table.py "robust-list-$phase" "$ARCH" "$sha" "$rc" "$RUNNER_TEMP/final-$phase" || result=1
-          done
-          exit "$result"
+          python3 -B ../carrier/test/rbe/qualify_fd_table.py "robust-list-positive" "$ARCH" "$SHA" "$rc" "$RUNNER_TEMP/final-positive"
       - name: Check bounded public reports
         id: privacy
         if: always()
@@ -108,8 +131,9 @@ jobs:
       - if: always() && steps.privacy.outcome == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: robust-list-lock-contract
+          name: robust-list-positive-recovery
           path: |
-            ${{ runner.temp }}/final-negative/result.json
+            ${{ runner.temp }}/final-original-negative/result.json
+            ${{ runner.temp }}/final-original-positive/result.json
             ${{ runner.temp }}/final-positive/result.json
           if-no-files-found: error
