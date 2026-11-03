@@ -47,10 +47,6 @@ func (e *Endpoint) beforeSave() {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	if e.snd != nil {
-		e.snd.startCork = e.snd.corkTimer.enabled()
-	}
-
 	epState := e.EndpointState()
 	switch {
 	case epState == StateInitial || epState == StateBound:
@@ -278,8 +274,9 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 			e.timeWaitTimer = e.stack.Clock().AfterFunc(e.getTimeWaitDuration(), e.timeWaitTimerExpired)
 		}
 
-		if e.ops.GetCorkOption() && e.snd.startCork {
-			// Resume a pending cork timeout without starting one on an idle socket.
+		if e.ops.GetCorkOption() {
+			// Rearm the timer if TCP_CORK is enabled which will
+			// drain all the segments in the queue after restore.
 			e.snd.corkTimer.enable(MinRTO)
 		}
 		e.mu.Unlock()
