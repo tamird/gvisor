@@ -1,6 +1,6 @@
 """Check the native Nogo worker and retain actual cross-compiler placement."""
 
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import datetime, timezone
 import hashlib
 from io import BytesIO
@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shlex
 import subprocess
 import sys
 
@@ -24,7 +25,9 @@ TOOLS = re.compile(r"(?:external/|bazel-out/)[^\s\"';]+/(?:clang(?:\+\+)?|ld\.ll
 
 
 def write(name, value):
-    (OUT / (name + ".json")).write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
+    data = (json.dumps(value, indent=2, sort_keys=True) + "\n").encode()
+    require(len(data) < 4 * 1024 * 1024, "bounded placement report exceeded 4MiB")
+    (OUT / (name + ".json")).write_bytes(data)
 
 
 def require(condition, message):
@@ -42,6 +45,14 @@ def integers(values):
             while (item := number(stream)) is not None:
                 result.append(item)
     return result
+
+
+def command_files(args, declared):
+    return [{"index": index, "path": arg.removeprefix("@"),
+             "response_file": arg.startswith("@"),
+             "digest": declared.get(arg.removeprefix("@"))}
+            for index, arg in enumerate(args)
+            if re.fullmatch(r"@?(?:external|bazel-out)/[a-zA-Z0-9_+./-]+", arg)]
 
 
 def inspect(path, commands=False):
@@ -97,16 +108,30 @@ def inspect(path, commands=False):
             if commands and mnemonic in {"CppCompile", "CppLink"} and not tools:
                 # Only file identities from the two unmatched original commands;
                 # never their environment or arbitrary command-line strings.
-                row["command_files"] = [
-                    {"index": index, "path": arg.removeprefix("@"),
-                     "response_file": arg.startswith("@"),
-                     "digest": declared.get(arg.removeprefix("@"))}
-                    for index, arg in enumerate(args)
-                    if re.fullmatch(r"@?(?:external|bazel-out)/[a-zA-Z0-9_+./-]+", arg)]
+                row["command_files"] = command_files(args, declared)
                 row["argument_count"] = len(args)
+                env = {first(fields(item), 1).decode(): first(fields(item), 2).decode()
+                       for item in spawn.get(2, [])
+                       if first(fields(item), 1) in {b"LLVM_CLANGXX", b"LLVM_DSYM_PATH", b"LLVM_GENERATE_INTERFACE_LIBRARY"}}
+                clangxx = env.get("LLVM_CLANGXX", "")
+                row["linker_environment"] = {
+                    "clangxx": {"path": clangxx, "digest": declared.get(clangxx)} if TOOLS.fullmatch(clangxx) else None,
+                    "dsym_requested": bool(env.get("LLVM_DSYM_PATH")),
+                    "interface_requested": env.get("LLVM_GENERATE_INTERFACE_LIBRARY") == "yes",
+                }
                 row["declared_compiler_tools"] = [
                     {"path": path, "digest": key} for path, key in sorted(declared.items())
                     if TOOLS.fullmatch(path)]
+            if (commands and mnemonic in {"CppCompile", "CppLink"}
+                    and any("link-wrapper-clang++" in output["path"] for output in outputs)):
+                related = [{"path": path, "digest": key} for path, key in declared.items()
+                           if "link_wrapper" in path.rsplit("/", 1)[-1]]
+                related.sort(key=lambda item: item["path"])
+                if related:
+                    row["wrapper_inputs"] = related
+                    row["wrapper_command_files"] = command_files(args, declared)
+                    row["wrapper_compile_sources"] = [item for item in row["wrapper_command_files"]
+                                                      if item["index"] and args[item["index"] - 1] == "-c"]
             selected.append(row)
         require(process.wait() == 0, "incomplete compact log")
     return {"invocation": invocation, "actions": selected,
@@ -114,46 +139,182 @@ def inspect(path, commands=False):
                        for k, v in sorted(counts.items())]}
 
 
-def check(mode):
-    report = inspect(ROOT / ("probe.compact" if mode == "probe" else "nogo.compact"))
-    report.update(verified=False, source=os.environ["PRODUCT"])
+
+def valid_digest(value):
+    return (isinstance(value, list) and len(value) == 2
+            and isinstance(value[0], str) and re.fullmatch(r"[a-f0-9]{64}", value[0])
+            and isinstance(value[1], int) and value[1] > 0)
+
+
+def summarize_compilers(value):
+    cpp = [a for a in value["actions"] if a["mnemonic"] in {"CppCompile", "CppLink"}]
+    groups = defaultdict(list)
+    for action in cpp:
+        groups[action["owner"], action["mnemonic"]].append(action)
+    issues = [a for a in cpp if a["runner"] != "remote" or a["platform"] != PROPS
+              or a["exit"] != 0 or a["status"] or a["cached"]
+              or not a["tools"] or not all(valid_digest(t["digest"]) for t in a["tools"])]
+    return {"invocation": value["invocation"], "counts": value["counts"],
+            "compilers": [a for a in value["actions"] if a["owner"] in COWNERS],
+            "local_go_actions": [a for a in value["actions"] if a["owner"] == "//runsc/cgroup:cgroup_test"
+                                 and a["mnemonic"] in {"GoCompilePkg", "GoStaticAnalysis"}],
+            "cpp_summary": {"actions": len(cpp), "mnemonics": dict(Counter(a["mnemonic"] for a in cpp)),
+                            "rows_sha256": hashlib.sha256(json.dumps(cpp, sort_keys=True).encode()).hexdigest()},
+            "cpp_owners": [{"owner": owner, "mnemonic": mnemonic, "actions": len(actions),
+                            "rows_sha256": hashlib.sha256(json.dumps(actions, sort_keys=True).encode()).hexdigest()}
+                           for (owner, mnemonic), actions in sorted(groups.items())],
+            "issue_groups": [{"owner": owner, "mnemonic": mnemonic, "actions": count}
+                             for (owner, mnemonic), count in sorted(Counter((a["owner"], a["mnemonic"]) for a in issues).items())],
+            "initial_issue_count": len(issues), "issue_examples": issues[:8]}
+
+
+def resolve_links(actions, report, read_file, save):
+    cpp = [a for a in actions if a["mnemonic"] in {"CppCompile", "CppLink"}]
+    report["indirect_links"] = [a for a in cpp if not a["tools"]]
+    for action in report["indirect_links"]:
+        action["indirection_verified"] = False
+        save()
+        command = action.get("command_files", [])
+        if (action["mnemonic"] != "CppLink" or len(action["outputs"]) != 1
+                or not valid_digest(action["outputs"][0]["digest"])
+                or action.get("argument_count") != 2
+                or [item["index"] for item in command] != [0, 1]):
+            continue
+        driver, params = command
+        env = action.get("linker_environment", {})
+        clangxx = env.get("clangxx")
+        if (driver["response_file"] or not params["response_file"]
+                or not driver["path"].endswith("/link-wrapper-clang++")
+                or not valid_digest(driver["digest"]) or not valid_digest(params["digest"])
+                or not clangxx or not clangxx["path"].endswith("/clang++") or not valid_digest(clangxx["digest"])
+                or env["dsym_requested"] or env["interface_requested"]):
+            continue
+        # v0.8.24 link_wrapper.c calls execv(LLVM_CLANGXX, argv). Bind the
+        # executed wrapper through its actual object producer to that source.
+        objects = [a for a in cpp if a["mnemonic"] == "CppCompile" and any(
+            item["path"].endswith("/tools/internal/link_wrapper.c") and item["digest"] ==
+            ["8b29485c9804c8b8a986659949ae7436f255d78f49d1abc852c93502660e4a63", 9273]
+            for item in a.get("wrapper_compile_sources", []))]
+        producers = [a for a in cpp if a["mnemonic"] == "CppLink"
+                     and {"path": driver["path"], "digest": driver["digest"]} in a["outputs"]
+                     and any(item in obj["outputs"] for item in a.get("wrapper_inputs", []) for obj in objects)]
+        action["wrapper_compile_producers"] = objects
+        action["wrapper_link_producers"] = producers
+        if len(producers) != 1 or not objects:
+            continue
+        producer, = producers
+        link_files = producer.get("wrapper_command_files", [])
+        link_args = [item["path"] for item in link_files if not item["response_file"]]
+        for item in link_files:
+            if item["response_file"]:
+                link_args.extend(shlex.split(read_file(item).decode()))
+        producer["bound_wrapper_objects"] = [item for item in producer["wrapper_inputs"]
+                                              if item["path"] in link_args
+                                              and any(item in obj["outputs"] for obj in objects)]
+        if not producer["bound_wrapper_objects"]:
+            continue
+        raw = read_file(params)
+        args = shlex.split(raw.decode())
+        params["compiler_paths"] = sorted(set(TOOLS.findall(raw.decode())))
+        output_paths = [args[i + 1] for i in range(len(args) - 1) if args[i] == "-o"]
+        if output_paths != [item["path"] for item in action["outputs"]]:
+            continue
+        selected = {tool["path"]: tool for tool in action["declared_compiler_tools"]}
+        if not all(path in selected and valid_digest(selected[path]["digest"]) for path in params["compiler_paths"]):
+            continue
+        action.update(tools=[clangxx] + [selected[path] for path in params["compiler_paths"] if path != clangxx["path"]],
+                      indirection_verified=True, classification="shared_library_link")
+        save()
+
+
+def validate_cpp(cpp, report):
+    tools = Counter((tool["path"], *tool["digest"]) for action in cpp for tool in action["tools"]
+                    if valid_digest(tool["digest"]))
+    report["tool_inputs"] = [{"path": path, "digest": [sha, size], "actions": count}
+                             for (path, sha, size), count in sorted(tools.items())]
+    report["cpp_summary"].update(
+        wrong_placement=sum(a["runner"] != "remote" or a["platform"] != PROPS for a in cpp),
+        unresolved_tools=sum(not a["tools"] or not all(valid_digest(t["digest"]) for t in a["tools"]) for a in cpp),
+        non_success_results=sum(a["exit"] != 0 or a["status"] != "" for a in cpp),
+        cache_hits=sum(a["cached"] for a in cpp),
+        verified_indirect_links=sum(a.get("indirection_verified", False) for a in cpp))
+    report["remaining_issue_count"] = sum(
+        a["runner"] != "remote" or a["platform"] != PROPS or a["exit"] != 0 or a["status"] != "" or a["cached"]
+        or not a["tools"] or not all(valid_digest(t["digest"]) for t in a["tools"]) for a in cpp)
+    require(cpp and report["remaining_issue_count"] == 0,
+            "C++ action placement or input evidence incomplete")
+
+def check(mode, value=None, read_file=None, expected_invocation=None):
+    path = ROOT / ("probe.compact" if mode == "probe" else "nogo.compact")
+    if value is None:
+        value = inspect(path, commands=mode != "probe")
+    report = value if mode == "probe" else summarize_compilers(value)
+    raw = path.read_bytes()
+    report.update(verified=False, source=os.environ["PRODUCT"],
+                  compact_log={"hash": hashlib.sha256(raw).hexdigest(), "sizeBytes": len(raw)})
     write(mode, report)
-    rows = report["actions"]
-    if mode == "probe":
-        require(len(rows) == 1, "missing unique worker probe")
-        row, = rows
-        require(row["owner"].endswith("//:no_compiler") and row["exit"] == 0 and not row["cached"]
-                and row["runner"] == "remote" and row["platform"] == PROPS, "worker probe did not execute on the pinned image")
-        output, = row["outputs"]
-        data = Path(output["path"]).read_bytes()
-        require(data == b"no host compiler; bash and awk available\n" and hashlib.sha256(data).hexdigest() == output["digest"][0], "wrong probe output")
-    else:
-        verdict = json.loads((OUT / "verdict.json").read_text())
-        require(report["invocation"] == verdict["invocation"], "execution log invocation differs")
-        compiled = [row for row in rows if row["owner"] in COWNERS]
-        require(Counter(row["owner"] for row in compiled) == {owner: 2 for owner in COWNERS}, "missing cross-architecture compiler actions")
-        for row in compiled:
-            require(row["runner"] == "remote" and not row["cached"] and row["exit"] == 0
-                    and row["platform"] == PROPS, "compiler action placement or result differs")
-            require(row["tools"] and all(tool["digest"] for tool in row["tools"]), "compiler or linker is not a declared input")
-            require(any("/clang" in tool["path"] for tool in row["tools"]) and row["target_triples"], "missing declared compiler or target triple")
-            for output in row["outputs"]:
-                data = Path(output["path"]).read_bytes()
-                require(data[:6] == b"\x7fELF\x02\x01" and hashlib.sha256(data).hexdigest() == output["digest"][0], "wrong materialized compiler output")
-                output["machine"] = int.from_bytes(data[18:20], "little")
-                require(output["machine"] in {62, 183}, "wrong embedded ELF architecture")
-        for owner in COWNERS:
-            require({output["machine"] for row in compiled if row["owner"] == owner for output in row["outputs"]} == {62, 183}, "missing one C target architecture")
-        for row in rows:
-            if row["mnemonic"] in {"CppCompile", "CppLink"}:
-                require(row["runner"] == "remote" and row["platform"] == PROPS
-                        and row["tools"] and all(tool["digest"] for tool in row["tools"]), "host compiler dependency")
-        local = [row for row in rows if row["owner"] == "//runsc/cgroup:cgroup_test"
-                 and row["mnemonic"] in {"GoCompilePkg", "GoStaticAnalysis"}]
-        require(all(row["runner"] == "local" and row["exit"] == 0 for row in local)
-                and {row["mnemonic"] for row in local} == {"GoCompilePkg", "GoStaticAnalysis"}, "missing explicit cgroup Go-only placement")
-    report.update(verified=True, verdict_available=datetime.now(timezone.utc).isoformat())
-    write(mode, report)
+
+    def load(item):
+        require(valid_digest(item["digest"]), "missing file digest")
+        if read_file is not None:
+            data = read_file(item)
+        elif Path(item["path"]).is_file():
+            data = Path(item["path"]).read_bytes()
+        else:
+            from cas_inputs import blob
+            data = blob({"hash": item["digest"][0], "sizeBytes": item["digest"][1]}, value["invocation"])
+        require([hashlib.sha256(data).hexdigest(), len(data)] == item["digest"], "file bytes differ")
+        return data
+
+    try:
+        rows = value["actions"]
+        if mode == "probe":
+            require(len(rows) == 1, "missing unique worker probe")
+            action, = rows
+            require(action["owner"].endswith("//:no_compiler") and action["exit"] == 0 and not action["status"]
+                    and not action["cached"] and action["runner"] == "remote" and action["platform"] == PROPS,
+                    "worker probe did not execute on the pinned image")
+            output, = action["outputs"]
+            require(load(output) == b"no host compiler; bash and awk available\n", "wrong probe output")
+        else:
+            if expected_invocation is None:
+                expected_invocation = json.loads((OUT / "verdict.json").read_text())["invocation"]
+            require(value["invocation"] == expected_invocation, "execution log invocation differs")
+            compiled = report["compilers"]
+            cpp = [a for a in rows if a["mnemonic"] in {"CppCompile", "CppLink"}]
+            require(cpp, "no C++ action evidence")
+            require(Counter(a["owner"] for a in compiled) == {owner: 2 for owner in COWNERS},
+                    "missing cross-architecture compiler actions")
+            require(all(valid_digest(a["digest"]) for a in compiled)
+                    and len({tuple(a["digest"]) for a in compiled}) == len(compiled),
+                    "missing or duplicate embedded action digest")
+            for action in compiled:
+                require(action["runner"] == "remote" and not action["cached"] and action["exit"] == 0
+                        and not action["status"] and action["platform"] == PROPS, "embedded compiler execution differs")
+                require(action["tools"] and all(valid_digest(tool["digest"]) for tool in action["tools"]),
+                        "embedded compiler input digest missing")
+                require(any("/clang" in tool["path"] for tool in action["tools"]) and action["target_triples"],
+                        "missing declared embedded compiler or target triple")
+                require(action["outputs"], "missing embedded compiler output")
+                for output in action["outputs"]:
+                    data = load(output)
+                    require(data[:6] == b"\x7fELF\x02\x01", "wrong embedded ELF")
+                    output["machine"] = int.from_bytes(data[18:20], "little")
+                    require(output["machine"] in {62, 183}, "wrong embedded ELF architecture")
+                write(mode, report)
+            for owner in COWNERS:
+                require({o["machine"] for a in compiled if a["owner"] == owner for o in a["outputs"]} == {62, 183},
+                        "missing embedded target architecture")
+            resolve_links(rows, report, load, lambda: write(mode, report))
+            validate_cpp(cpp, report)
+            local = report["local_go_actions"]
+            require(local and all(a["runner"] == "local" and a["exit"] == 0 and not a["status"] for a in local)
+                    and {a["mnemonic"] for a in local} == {"GoCompilePkg", "GoStaticAnalysis"},
+                    "explicit local Go placement differs")
+        report.update(verified=True, verdict_available=datetime.now(timezone.utc).isoformat())
+    finally:
+        write(mode, report)
+    return report
 
 
 # Recovery reads only the completed invocation. The original worker experiment
@@ -221,11 +382,6 @@ def recover():
                    original_verdict={key: value[key] for key in keys},
                    original_projection_step="failure", original_upload_gate="filename/type/8MiB bound")
 
-    def valid_digest(value):
-        return (isinstance(value, list) and len(value) == 2
-                and isinstance(value[0], str) and re.fullmatch(r"[a-f0-9]{64}", value[0])
-                and isinstance(value[1], int) and value[1] > 0)
-
     records = {}
 
     def events(row):
@@ -292,90 +448,63 @@ def recover():
                    counts=value["counts"])
         value = inspect(ROOT / "nogo.compact", commands=True)
         require(value["invocation"] == invocation, "command inspection invocation differs")
-        compiled = [action for action in value["actions"] if action["owner"] in COWNERS]
-        local = [action for action in value["actions"] if action["owner"] == "//runsc/cgroup:cgroup_test"
-                 and action["mnemonic"] in {"GoCompilePkg", "GoStaticAnalysis"}]
-        row.update(compilers=compiled, local_go_actions=local,
-                   original_two_actions_per_owner=Counter(a["owner"] for a in compiled) == {owner: 2 for owner in COWNERS})
-        cpp = [action for action in value["actions"] if action["mnemonic"] in {"CppCompile", "CppLink"}]
-        row["cpp_summary"] = {"actions": len(cpp), "mnemonics": dict(Counter(a["mnemonic"] for a in cpp)),
-                              "wrong_placement": sum(a["runner"] != "remote" or a["platform"] != PROPS for a in cpp),
-                              "missing_compact_tool_digest": sum(not a["tools"] or not all(valid_digest(t["digest"]) for t in a["tools"]) for a in cpp),
-                              "rows_sha256": hashlib.sha256(json.dumps(cpp, sort_keys=True).encode()).hexdigest()}
-        row["cpp_issue_examples"] = [a for a in cpp if a["runner"] != "remote" or a["platform"] != PROPS
-                                     or not a["tools"] or not all(valid_digest(t["digest"]) for t in a["tools"])][:8]
-        save()
-        require(set(a["owner"] for a in compiled) == COWNERS and 10 <= len(compiled) <= 40,
-                "incomplete or unbounded embedded compiler selection")
-        require(len({tuple(a["digest"]) for a in compiled}) == len(compiled), "duplicate compiler action")
-        for action in compiled:
-            require(action["runner"] == "remote" and not action["cached"] and action["exit"] == 0
-                    and action["platform"] == PROPS, "embedded compiler execution differs")
-            require(action["tools"] and all(valid_digest(tool["digest"]) for tool in action["tools"]),
-                    "embedded compiler input digest missing from original compact log")
-            require(any("/clang" in tool["path"] for tool in action["tools"]) and action["target_triples"],
-                    "missing declared embedded compiler or target triple")
-            require(action["outputs"], "missing embedded compiler output")
-            for output in action["outputs"]:
-                data = blob({"hash": output["digest"][0], "sizeBytes": output["digest"][1]}, invocation)
-                require(data[:6] == b"\x7fELF\x02\x01", "wrong original embedded ELF")
-                output["machine"] = int.from_bytes(data[18:20], "little")
-                require(output["machine"] in {62, 183}, "wrong original embedded ELF architecture")
+        import copy
+        original_rows = copy.deepcopy(value)
+        cache = {}
+
+        def read(item):
+            key = tuple(item["digest"])
+            if key not in cache:
+                cache[key] = blob({"hash": key[0], "sizeBytes": key[1]}, invocation)
+            return cache[key]
+
+        try:
+            checked = check("compiler", value, read, invocation)
+        finally:
+            row.update(json.loads((OUT / "compiler.json").read_text()))
             save()
-        for owner in COWNERS:
-            require({o["machine"] for a in compiled if a["owner"] == owner for o in a["outputs"]} == {62, 183},
-                    "missing embedded target architecture")
-        # rules_cc 0.2.25's declared shared-library wrapper reads its linker
-        # from line five of an input parameter file. Verify those original bytes
-        # before treating an indirect command as a declared linker invocation.
-        row["indirect_links"] = [a for a in cpp if not a["tools"]]
-        for action in row["indirect_links"]:
-            action["indirection_verified"] = False
-            save()
-            command = action.get("command_files", [])
-            if (action["mnemonic"] != "CppLink" or len(action["outputs"]) != 1
-                    or not valid_digest(action["outputs"][0]["digest"])
-                    or action.get("argument_count") != 2
-                    or [item["index"] for item in command] != [0, 1]):
-                continue
-            driver, params = command
-            if (driver["response_file"] or not params["response_file"]
-                    or not driver["path"].endswith("/link_dynamic_library.sh")
-                    or driver["digest"] != ["410914e519a1d309961ba77f4549a8c92da307ce1f596c10f8284da904b17a77", 4125]
-                    or not valid_digest(params["digest"])):
-                continue
-            blob({"hash": driver["digest"][0], "sizeBytes": driver["digest"][1]}, invocation)
-            data = blob({"hash": params["digest"][0], "sizeBytes": params["digest"][1]}, invocation)
-            lines = data.decode().splitlines()
-            params["compiler_paths"] = sorted(set(TOOLS.findall(data.decode())))
-            if len(lines) < 5 or lines[0] != "no" or not TOOLS.fullmatch(lines[4]):
-                continue
-            linker = [tool for tool in action["declared_compiler_tools"] if tool["path"] == lines[4]]
-            outputs = [lines[i + 1] for i in range(5, len(lines) - 1) if lines[i] == "-o"]
-            if (len(linker) != 1 or not valid_digest(linker[0]["digest"])
-                    or outputs != [output["path"] for output in action["outputs"]]):
-                continue
-            action.update(tools=linker, indirection_verified=True,
-                          classification="shared_library_link", interface_library=False)
-            save()
-        row["cpp_summary"].update(
-            unresolved_tools=sum(not a["tools"] or not all(valid_digest(t["digest"]) for t in a["tools"]) for a in cpp),
-            non_success_results=sum(a["exit"] != 0 or a["status"] != "" for a in cpp),
-            cache_hits=sum(a["cached"] for a in cpp),
-            verified_indirect_links=sum(a["indirection_verified"] for a in row["indirect_links"]))
-        save()
-        require(cpp and not row["cpp_summary"]["wrong_placement"]
-                and not row["cpp_summary"]["unresolved_tools"]
-                and not row["cpp_summary"]["non_success_results"]
-                and not row["cpp_summary"]["cache_hits"],
-                "C++ action placement or input evidence incomplete")
-        require(local and all(a["runner"] == "local" and a["exit"] == 0 for a in local)
-                and {a["mnemonic"] for a in local} == {"GoCompilePkg", "GoStaticAnalysis"},
-                "explicit local Go placement differs")
+        records["compiler_rows"] = original_rows
+        records["read_file"] = read
+        records["compiler_report"] = checked
+
+    def fixtures(row):
+        import copy
+        require("compiler_rows" in records, "positive compiler fixture unavailable")
+        row["negative_cases"] = {}
+        for case in ("empty_cpp", "missing_tool_digest", "unknown_wrapper_source", "wrong_placement"):
+            value = copy.deepcopy(records["compiler_rows"])
+            if case == "empty_cpp":
+                value["actions"] = [a for a in value["actions"] if a["mnemonic"] not in {"CppCompile", "CppLink"}]
+            elif case == "unknown_wrapper_source":
+                for action in value["actions"]:
+                    for item in action.get("wrapper_compile_sources", []):
+                        if item["path"].endswith("/link_wrapper.c"):
+                            item["digest"] = ["0" * 64, 9273]
+            else:
+                action = next(a for a in value["actions"] if a["mnemonic"] == "CppCompile")
+                if case == "missing_tool_digest":
+                    action["tools"][0]["digest"] = ["", 0]
+                else:
+                    action["runner"] = "local"
+            try:
+                check("compiler", value, records["read_file"], invocation)
+            except ValueError as exc:
+                result = json.loads((OUT / "compiler.json").read_text())
+                require(not result["verified"], "negative fixture lost its failure")
+                row["negative_cases"][case] = {"rejected": True, "error": str(exc)}
+            else:
+                raise ValueError("negative fixture was accepted: " + case)
+        positive = records["compiler_report"]
+        write("compiler", positive)
+        raw = (OUT / "compiler.json").read_bytes()
+        row.update(positive_summary_bytes=len(raw), positive_summary_sha256=hashlib.sha256(raw).hexdigest(),
+                   cpp_owners=len(positive["cpp_owners"]), original_cpp_actions=positive["cpp_summary"]["actions"])
+        require(len(raw) < 4 * 1024 * 1024 and positive["verified"], "unbounded or unsuccessful future summary")
 
     phase("original", receipt)
     phase("original_events", events)
     phase("compiler", compiler)
+    phase("future_report_fixtures", fixtures)
     report["verdict_available"] = datetime.now(timezone.utc).isoformat()
     report["verified"] = all(p["verified"] for p in report["phases"].values())
     report["workload_verified"] = report["phases"]["original"]["verified"]
