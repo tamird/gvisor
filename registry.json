@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T20:35:54.663277+00:00",
+    "updatedAt": "2026-11-03T20:40:16.868104+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -30153,16 +30153,24 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "qualification/native-sidecar-cc",
-      "head": "e482579e11a4e098f069bdeb4c66677b36bc93ff",
+      "head": "74aa42d5fb36b5efa0c92f269a4360e7a7caf4b2",
       "title": "Build the runsc sidecars with the C toolchain",
       "url": "https://github.com/google/gvisor/pull/16522",
       "group": "release",
       "status": "Open; amendment ready for contributor review",
-      "updatedAt": "2026-11-03T20:21:57.270287+00:00",
-      "summary": "Lucas flagged two internal build differences: the transition must live under tools/, and Bazel’s default malloc label names TCMalloc internally. The fork amendment moves the executable rule to the C++ build adapter and lets each sidecar keep its own allocator.",
+      "updatedAt": "2026-11-03T20:40:16.868104+00:00",
+      "summary": "The published amendment moves the sidecars’ freestanding C++ rule behind //tools:defs.bzl. The public adapter removes sanitizer runtime options and the command-line allocator override while preserving unrelated linker flags. Lucas received replies on both points. The internal adapter still needs to map freestanding_executable to its noasan policy; the public tests do not verify that mapping.",
       "evidence": [
         {
-          "label": "Proposed C++ build adapter change",
+          "label": "Reply to Lucas on the C++ transition and internal mapping",
+          "url": "https://github.com/google/gvisor/pull/16522#discussion_r4460168357"
+        },
+        {
+          "label": "Reply to Lucas on allocator precedence",
+          "url": "https://github.com/google/gvisor/pull/16522#discussion_r4460168783"
+        },
+        {
+          "label": "Published C++ build adapter amendment",
           "url": "https://github.com/tamird/gvisor/commit/74aa42d5f"
         },
         {
@@ -30231,33 +30239,32 @@
           "head": "e482579e11a4e098f069bdeb4c66677b36bc93ff",
           "outcome": "approved",
           "at": "2026-10-29T18:56:07.113045+00:00"
+        },
+        {
+          "kind": "amendment",
+          "head": "74aa42d5fb36b5efa0c92f269a4360e7a7caf4b2",
+          "outcome": "approved",
+          "at": "2026-11-03T20:40:16.868104+00:00",
+          "url": "https://github.com/tamird/gvisor/commit/74aa42d5f",
+          "body": "The ordinary C++ target kept the injected sanitizer, allocator and linker options. The three sidecars removed the sanitizer runtime and allocator override but kept the unrelated hardening flag. GNU and LLVM compiled and linked all three binaries for AMD64 and ARM64. With their default options, both compilers passed all 13 AMD64 runtime cases. The LLVM passes used supplier fix 83245b957; the unmodified 0.8.24 release still could not link pthread or dl. Google’s internal build was not exercised.\n\nTransition reply:\nI moved the transition behind `//tools:defs.bzl`. The public adapter removes sanitizer features and direct sanitizer runtime flags while preserving unrelated options. The internal adapter still needs to map `freestanding_executable` to its existing C++ noasan policy; I can’t verify that mapping in the public tree.\n\nPosted by Codex on behalf of @tamird.\n\nAllocator reply:\nThe transition now unsets `--custom_malloc`, so the sidecars keep their own `tcmalloc = False` setting. With a custom allocator selected on the command line, the ordinary control kept it and none of the three sidecars linked it.\n\nPosted by Codex on behalf of @tamird."
         }
       ],
       "followup": {
         "owner": "Source PR owner",
-        "sourceHead": "e482579e11a4e098f069bdeb4c66677b36bc93ff",
-        "observedAt": "2026-11-03T20:21:57.270287+00:00",
-        "disposition": "Contributor review requested",
-        "nextAction": "Review the fork amendment and the two replies before updating the original PR.",
+        "sourceHead": "74aa42d5fb36b5efa0c92f269a4360e7a7caf4b2",
+        "observedAt": "2026-11-03T20:40:16.868104+00:00",
+        "disposition": "Published and replied to both review threads",
+        "nextAction": "Await maintainer review of the amended build adapter. The transition and allocator replies are posted.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16522#discussion_r4460168357",
+          "https://github.com/google/gvisor/pull/16522#discussion_r4460168783",
           "https://github.com/tamird/gvisor/commit/74aa42d5f",
           "https://github.com/tamird/gvisor/actions/runs/41707427239/artifacts/13266904325",
           "https://github.com/google/gvisor/pull/16522#discussion_r4459430770",
           "https://github.com/google/gvisor/pull/16522#discussion_r4459430773",
           "https://app.buildbuddy.io/invocation/29a82241-f69b-4ba6-bf22-b15bf5af73e7"
         ],
-        "providerHead": "e482579e11a4e098f069bdeb4c66677b36bc93ff"
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "74aa42d5fb36b5efa0c92f269a4360e7a7caf4b2",
-        "baseHead": "e482579e11a4e098f069bdeb4c66677b36bc93ff",
-        "url": "https://github.com/tamird/gvisor/commit/74aa42d5f",
-        "title": "Put the freestanding executable transition in the C++ build adapter",
-        "requestedAt": "2026-11-03T20:21:57.270287+00:00",
-        "summary": "Publish this amendment on #16522 and reply to Lucas’s two comments?",
-        "body": "The ordinary C++ target kept the injected sanitizer, allocator and linker options. The three sidecars removed the sanitizer runtime and allocator override but kept the unrelated hardening flag. GNU and LLVM compiled and linked all three binaries for AMD64 and ARM64. With their default options, both compilers passed all 13 AMD64 runtime cases. The LLVM passes used supplier fix 83245b957; the unmodified 0.8.24 release still could not link pthread or dl. Google’s internal build was not exercised.\n\nTransition reply:\nI moved the transition behind `//tools:defs.bzl`. The public adapter removes sanitizer features and direct sanitizer runtime flags while preserving unrelated options. The internal adapter still needs to map `freestanding_executable` to its existing C++ noasan policy; I can’t verify that mapping in the public tree.\n\nPosted by Codex on behalf of @tamird.\n\nAllocator reply:\nThe transition now unsets `--custom_malloc`, so the sidecars keep their own `tcmalloc = False` setting. With a custom allocator selected on the command line, the ordinary control kept it and none of the three sidecars linked it.\n\nPosted by Codex on behalf of @tamird."
+        "providerHead": "74aa42d5fb36b5efa0c92f269a4360e7a7caf4b2"
       }
     },
     {
