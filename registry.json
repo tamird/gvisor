@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T14:10:33.767303+00:00",
+    "updatedAt": "2026-11-03T14:33:29.484586+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -20099,22 +20099,25 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "nogo-export-data",
-      "head": "ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970",
+      "head": "cd5e5628a42fa74409864903aae50717b596f214",
       "title": "Generate Nogo export data from source",
       "url": "https://github.com/google/gvisor/pull/16098",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-03T03:34:04.930459+00:00",
+      "updatedAt": "2026-11-03T14:33:29.484586+00:00",
       "summary": "On AMD64 and ARM64, the checker, eventchannel (generated protobuf), sync (generated constants), and a fixture using the historical Go adapter with two real compiler archives passed. Public source-only and archive-only rules took their respective paths. The private Google build was not exercised.",
       "followup": {
         "owner": "root",
-        "disposition": "Qualified amendment awaiting contributor review",
-        "sourceHead": "ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970",
-        "observedAt": "2026-11-03T03:34:04.930459+00:00",
-        "nextAction": "Publish the amendment on #16098 and answer the three review threads? It analyzes generated Go sources when available and imports compiler-produced archives for build rules that expose no source. The existing Go adapter needs no new functions.",
+        "sourceHead": "cd5e5628a42fa74409864903aae50717b596f214",
+        "observedAt": "2026-11-03T14:33:29.484586+00:00",
+        "disposition": "Amendment published and all three review threads answered",
+        "nextAction": "Follow the public checks and maintainer review on the published revision.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41572556824/artifacts/13202316608",
-          "https://github.com/tamird/gvisor/commit/ae9cacf5c"
+          "https://github.com/google/gvisor/pull/16098",
+          "https://github.com/tamird/gvisor/commit/cd5e5628a",
+          "https://github.com/google/gvisor/pull/16098#discussion_r4456035662",
+          "https://github.com/google/gvisor/pull/16098#discussion_r4456036079",
+          "https://github.com/google/gvisor/pull/16098#discussion_r4456036506"
         ]
       },
       "evidence": [
@@ -20225,6 +20228,22 @@
         {
           "label": "Existing checker suite including package type identity",
           "url": "https://github.com/tamird/gvisor/actions/runs/41568680244/artifacts/13201415590"
+        },
+        {
+          "label": "Published amendment",
+          "url": "https://github.com/tamird/gvisor/commit/cd5e5628a"
+        },
+        {
+          "label": "Reply on the guarded importer cache",
+          "url": "https://github.com/google/gvisor/pull/16098#discussion_r4456035662"
+        },
+        {
+          "label": "Reply on archive-only protobuf packages",
+          "url": "https://github.com/google/gvisor/pull/16098#discussion_r4456036079"
+        },
+        {
+          "label": "Reply on package sources and embeds",
+          "url": "https://github.com/google/gvisor/pull/16098#discussion_r4456036506"
         }
       ],
       "refinement": {
@@ -20244,19 +20263,15 @@
           "head": "ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970",
           "outcome": "approved",
           "at": "2026-10-29T18:56:07.113045+00:00"
+        },
+        {
+          "kind": "amendment",
+          "head": "cd5e5628a42fa74409864903aae50717b596f214",
+          "outcome": "approved",
+          "at": "2026-11-03T14:33:29.484586+00:00",
+          "url": "https://github.com/tamird/gvisor/commit/cd5e5628a"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "cd5e5628a42fa74409864903aae50717b596f214",
-        "baseHead": "ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970",
-        "title": "Generate Nogo export data from source",
-        "url": "https://github.com/tamird/gvisor/commit/cd5e5628a",
-        "requestedAt": "2026-11-03T03:34:04.930459+00:00",
-        "summary": "Publish the amendment on #16098 and answer the three review threads? It analyzes generated Go sources when available and imports compiler-produced archives for build rules that expose no source. The existing Go adapter needs no new functions.",
-        "body": "Generate export data during Nogo's existing source analysis and read it\nwith the supported x/tools API. Replace deprecated compiler-archive\ndecoding, reusing the type-checked package when serializing exports.\nDeclare standard-library exports per SDK and build mode.\n\nPreserve primary dependency imports ahead of import aliases, matching\nrules_go. The s2a token manager imports both protocol versions, while\nthe v2 package also aliases the v1 path; treating that alias as primary\notherwise collapses the distinct Identity types during source analysis.\n\nForward dependencies from source-only Go embeds to the consuming package\nwithout creating separate analysis actions for those sources.\n\nAnalyze protobuf packages when the build rules supply their generated\nGo sources. For rules that expose only compiled packages, import the\ntarget archive and its additional protobuf dependencies with the Go\nSDK. Convert these inputs to Nogo export data so all imports share one\npackage identity. Do not require other Go rule implementations to expose\nrules_go providers or protobuf compiler attributes.\n\nExempt only the unsafe-import filename diagnostic for generated .pb.go\nfiles, since protoc-gen-go emits unsafe descriptor access.\n\nOn one amd64 worker, serial warm-cache Nogo analysis of sync and\neventchannel and their dependencies took 83.5-85.4 s before and\n84.8-85.0 s after (two measured passes per revision). This includes\nstandard-library work, export writes and newly analyzed protobuf\ndependencies; compilation and downloads are excluded."
-      }
+      ]
     },
     {
       "id": "pr:16096",
@@ -31177,7 +31192,7 @@
       "number": 16588,
       "group": "runtime",
       "ref": "review/fifo-reader-hangup",
-      "head": "a8bbad97dfc28b8df159693cca8393b7466bd496",
+      "head": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
       "title": "Report FIFO hangups per open reader",
       "url": "https://github.com/google/gvisor/pull/16588",
       "evidence": [
@@ -31186,7 +31201,7 @@
           "url": "https://github.com/google/gvisor/pull/16588"
         },
         {
-          "label": "Published head",
+          "label": "Earlier published head",
           "url": "https://github.com/tamird/gvisor/commit/a8bbad97dfc28b8df159693cca8393b7466bd496"
         },
         {
@@ -31220,9 +31235,13 @@
         {
           "label": "Maintainer’s original review",
           "url": "https://github.com/google/gvisor/pull/16588#discussion_r4447247880"
+        },
+        {
+          "label": "Published amendment",
+          "url": "https://github.com/tamird/gvisor/commit/1dbbcd676"
         }
       ],
-      "updatedAt": "2026-11-03T02:30:53.096288+00:00",
+      "updatedAt": "2026-11-03T14:33:29.484586+00:00",
       "status": "open",
       "summary": "Stock gVisor reported a hangup to both FIFO readers when Linux reported it only to the reader that had seen the writer. Linux and the corrected gVisor each passed all seven FIFO cases on tmpfs. The four anonymous-pipe unit cases and both-architecture pipe analyzers also passed.",
       "refinement": {
@@ -31237,26 +31256,33 @@
       },
       "followup": {
         "owner": "root",
-        "sourceHead": "a8bbad97dfc28b8df159693cca8393b7466bd496",
-        "observedAt": "2026-10-28T14:12:46.344996+00:00",
-        "disposition": "Contributor-approved change published",
-        "nextAction": "Follow checks, maintainer review and import on #16588.",
+        "sourceHead": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
+        "observedAt": "2026-11-03T14:33:29.484586+00:00",
+        "disposition": "Approved amendment published",
+        "nextAction": "Post the substantive replies in their original threads once authorized.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16588",
-          "https://github.com/tamird/gvisor/commit/a8bbad97dfc28b8df159693cca8393b7466bd496",
-          "https://github.com/tamird/gvisor/commit/5b0087ad1eaec140a6f903b9702adaea722cdb06"
+          "https://github.com/tamird/gvisor/commit/1dbbcd676"
         ]
       },
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
+          "outcome": "approved",
+          "at": "2026-11-03T14:33:29.484586+00:00",
+          "url": "https://github.com/tamird/gvisor/commit/1dbbcd676"
+        }
+      ],
       "contributorReview": {
+        "kind": "reply",
         "status": "pending",
-        "kind": "amendment",
-        "head": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
-        "baseHead": "a8bbad97dfc28b8df159693cca8393b7466bd496",
-        "title": "Report FIFO hangups per open reader",
-        "url": "https://github.com/tamird/gvisor/commit/1dbbcd676",
-        "requestedAt": "2026-11-03T02:30:53.096288+00:00",
-        "summary": "Apply the reviewed FIFO test changes to the open original PR?",
-        "body": "A writer opens and closes a FIFO while one reader holds it open. A\nsecond nonblocking reader then opens the same FIFO. Linux reports\nPOLLHUP to the first reader only; gVisor remembers that the pipe once\nhad a writer and reports POLLHUP to both.\n\nRecord the writer generation when a nonblocking reader opens a FIFO\nwithout a writer. If the last writer has closed, report POLLHUP only\nwhen that generation has changed, as Linux does [1][2]. Once another\nwriter opens and closes, both readers see the hangup.\n\nA nonblocking writer that finds no readers returns ENXIO without\nadvancing the generation [3]. Otherwise a writer that never opened\ncould cause a concurrent reader to report a hangup.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/fs/pipe.c#L1156-L1164\n[2]: https://github.com/torvalds/linux/blob/adc218676/fs/pipe.c#L686-L691\n[3]: https://github.com/torvalds/linux/blob/adc218676/fs/pipe.c#L1172-L1181"
+        "requestedAt": "2026-11-03T14:33:29.484586+00:00",
+        "title": "Reply to Lucas on FIFO readiness",
+        "summary": "Post the 3 inline replies on the published amendment?",
+        "body": "[Writer generation](https://github.com/google/gvisor/pull/16588#discussion_r4447247863)\n\nThe comment now names Linux’s pipe_inode_info.w_counter and explains why wOpen, rOpen, and rReadinessLocked need the same mutex for the two writer counters.\n\nPosted by Codex on behalf of @tamird.\n\n[Per-reader snapshot](https://github.com/google/gvisor/pull/16588#discussion_r4447247872)\n\nThe comment now starts with initialWriters and describes when POLLHUP is suppressed. Linux stores this snapshot in filp->f_pipe; [fifo_open](https://github.com/torvalds/linux/blob/7d0a66e4b/fs/pipe.c#L1170-L1193) sets it and [pipe_poll](https://github.com/torvalds/linux/blob/7d0a66e4b/fs/pipe.c#L687-L692) compares it.\n\nPosted by Codex on behalf of @tamird.\n\n[Initial FIFO readiness](https://github.com/google/gvisor/pull/16588#discussion_r4447247880)\n\nThe test now checks that a nonblocking writer gets ENXIO before any reader opens and that the first reader sees no poll events before a writer opens.\n\nPosted by Codex on behalf of @tamird.",
+        "url": "https://github.com/google/gvisor/pull/16588#discussion_r4447247863",
+        "head": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d"
       }
     },
     {
@@ -33104,13 +33130,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/mixed-owner-getlk",
-      "head": "60b75d53510bf35b648bfec78626133007e926c3",
+      "head": "da05e74d9febb9c6430bfc94d6406684eaab66df",
       "title": "Report the conflicting record lock's owner",
       "url": "https://github.com/google/gvisor/pull/16618",
       "group": "runtime",
       "status": "open",
       "summary": "A process and an open file description can both hold a read lock on the same bytes. Both stock gVisor modes reported that the range was unlocked; Linux reported the other owner. All seven syscall cases, including PID namespace translation, pass on Linux and both corrected gVisor modes.",
-      "updatedAt": "2026-11-03T02:30:53.096288+00:00",
+      "updatedAt": "2026-11-03T14:33:29.484586+00:00",
       "evidence": [
         {
           "label": "Published upstream as #16618",
@@ -33143,20 +33169,21 @@
         {
           "label": "Maintainer’s original review",
           "url": "https://github.com/google/gvisor/pull/16618#discussion_r4447247051"
+        },
+        {
+          "label": "Published amendment",
+          "url": "https://github.com/tamird/gvisor/commit/da05e74d9"
         }
       ],
       "followup": {
-        "owner": "native_runtime",
-        "sourceHead": "60b75d53510bf35b648bfec78626133007e926c3",
-        "observedAt": "2026-10-28T19:54:39Z",
-        "disposition": "Published as #16618",
-        "nextAction": "Follow checks and maintainer review on #16618.",
+        "owner": "root",
+        "sourceHead": "da05e74d9febb9c6430bfc94d6406684eaab66df",
+        "observedAt": "2026-11-03T14:33:29.484586+00:00",
+        "disposition": "Approved amendment published",
+        "nextAction": "Post the substantive replies in their original threads once authorized.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16618",
-          "https://app.buildbuddy.io/invocation/b5e4efe5-5b46-4a87-bd9a-feb53b07b4ad",
-          "https://app.buildbuddy.io/invocation/140b1024-3c79-42c9-98ec-671d08e7ac12",
-          "https://app.buildbuddy.io/invocation/7ca7f89b-d19b-4cf4-9fd1-f6ae70f3ae13",
-          "https://app.buildbuddy.io/invocation/d7c4215d-5666-40f1-b951-cc14acc7fafb"
+          "https://github.com/tamird/gvisor/commit/da05e74d9"
         ]
       },
       "number": 16618,
@@ -33170,16 +33197,24 @@
           "head": "da05e74d9febb9c6430bfc94d6406684eaab66df"
         }
       },
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "da05e74d9febb9c6430bfc94d6406684eaab66df",
+          "outcome": "approved",
+          "at": "2026-11-03T14:33:29.484586+00:00",
+          "url": "https://github.com/tamird/gvisor/commit/da05e74d9"
+        }
+      ],
       "contributorReview": {
+        "kind": "reply",
         "status": "pending",
-        "kind": "amendment",
-        "head": "da05e74d9febb9c6430bfc94d6406684eaab66df",
-        "baseHead": "60b75d53510bf35b648bfec78626133007e926c3",
-        "title": "Report the conflicting record lock's owner",
-        "url": "https://github.com/tamird/gvisor/commit/da05e74d9",
-        "requestedAt": "2026-11-03T02:30:53.096288+00:00",
-        "summary": "Drop unused OFD state and check the required zero input PID on the open original PR?",
-        "body": "F_GETLK and F_OFD_GETLK ignored overlapping read locks when the other\nlock used a different ownership model. A process lock and an open file\ndescription lock can conflict even when the same process acquired both.\n\nExclude only the querying owner. Report -1 for a conflicting open file\ndescription and translate a conflicting process ID into the caller's PID\nnamespace, regardless of which command made the query. The recorded PID\nalready distinguishes these cases, so locks need no separate OFD flag.\nReject a nonzero input PID for F_OFD_GETLK as for F_OFD_SETLK."
+        "requestedAt": "2026-11-03T14:33:29.484586+00:00",
+        "title": "Reply to Lucas on record-lock ownership",
+        "summary": "Post the 2 inline replies on the published amendment?",
+        "body": "[OFD ownership](https://github.com/google/gvisor/pull/16618#discussion_r4447247043)\n\nRemoved OwnerInfo.OFD and the redundant flag through the lock code. The owner ID already distinguishes an open file description from a process lock.\n\nPosted by Codex on behalf of @tamird.\n\n[F_GETLK output](https://github.com/google/gvisor/pull/16618#discussion_r4447247051)\n\nReset fl.l_pid to zero before F_GETLK, so the assertion now checks that the second call wrote -1.\n\nPosted by Codex on behalf of @tamird.",
+        "url": "https://github.com/google/gvisor/pull/16618#discussion_r4447247043",
+        "head": "da05e74d9febb9c6430bfc94d6406684eaab66df"
       }
     },
     {
@@ -36582,8 +36617,8 @@
       "title": "Format stateify output in the generator",
       "url": "https://github.com/google/gvisor/pull/16710",
       "status": "open",
-      "summary": "The current PR has three internal-build objections. The proposed replacement keeps x/tools and SDK lookup out of the shared generator and Starlark rules. It preserves resolution of math/rand/v2 as rand and the missing time import. Of the five caller layouts tested, nine requested targets passed and three alias/sibling controls failed identically on both sides. Twelve generated files matched byte for byte. On the pinned one-file worker, stock failed to start /bin/sh; all twelve candidate formatter actions ran. The exact measured commit was 188353594; the reviewed 50890dbbe only renames a local Starlark variable, changes how equivalent progress text is expressed, and tidies comments. The internal Blaze build was not exercised.",
-      "updatedAt": "2026-11-03T03:00:43.613804+00:00",
+      "summary": "The change on the public PR cannot be imported into the internal build. Tamir requested that the Bazel-specific formatter launcher be made reusable through rules_go. The earlier, stateify-specific launcher is no longer awaiting review. Its twelve matching outputs establish a baseline for the replacement.",
+      "updatedAt": "2026-11-03T14:33:29.484586+00:00",
       "evidence": [
         {
           "label": "Seven identical production outputs and scratch qualification",
@@ -36628,16 +36663,31 @@
           "head": "50890dbbe59fbf3754de2b49168972e37f0e8478"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "50890dbbe59fbf3754de2b49168972e37f0e8478",
-        "baseHead": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
-        "title": "Run goimports without a host shell",
-        "url": "https://github.com/tamird/gvisor/commit/50890dbbe",
-        "requestedAt": "2026-11-03T03:00:43.613804+00:00",
-        "summary": "Replace the generator change on #16710 with a Bazel-only goimports launcher? The shared generator and rule keep their internal interface; the formatter still resolves package names independently of path basenames and discovers missing imports.",
-        "body": "The Bazel stateify pipeline launches goimports through /bin/sh to put the\nGo SDK on PATH. A worker without a shell fails before import resolution.\nCompute the absolute PATH in a small Go launcher instead and call the\nsame imports.Process implementation with the declared SDK.\n\nKeep the two-action generator and formatter pipeline, including inference\nof undeclared and non-basename package imports. The formatter dependency\nand SDK lookup stay under tools/bazeldefs; the shared stateify generator\nand rule definitions retain their existing internal-build interface."
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "50890dbbe59fbf3754de2b49168972e37f0e8478",
+          "outcome": "changes-requested",
+          "at": "2026-11-03T14:33:29.484586+00:00",
+          "url": "https://github.com/tamird/gvisor/commit/50890dbbe"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
+        "observedAt": "2026-11-03T14:33:29.484586+00:00",
+        "disposition": "Changes requested on the stateify-specific launcher",
+        "nextAction": "Prepare a reusable rules_go launcher. Reuse the earlier generated-output comparison and verify that the replacement addresses the internal adapter review.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16710#pullrequestreview-5744331855",
+          "https://github.com/tamird/gvisor/commit/50890dbbe"
+        ],
+        "actionableComment": {
+          "head": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
+          "kind": "review",
+          "commentId": "PRR_kwDOB9IlXs8AAAABVmOMTw",
+          "url": "https://github.com/google/gvisor/pull/16710#pullrequestreview-5744331855"
+        }
       }
     },
     {
@@ -41793,12 +41843,12 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposals/tcp-cookie-handshake-boundary",
-      "head": "e62e48e9a8ba9523323071f011c1390b7873852f",
+      "head": "f8ca88ad9ab4d8fb4b11db0e7376e2f49b213f58",
       "title": "Identify SYN cookies before testing how the listener handles an ACK",
       "url": "https://github.com/google/gvisor/pull/16841",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T02:48:42.204681+00:00",
+      "updatedAt": "2026-11-03T14:33:29.484586+00:00",
       "summary": "The old packet test accepted six unexpected Linux SYN-ACK retransmissions. The revised test identified the third SYN on Linux and the second on gVisor as the first cookie. Its 12 retransmission checks ran on each, and both suites passed all 31 cases.",
       "evidence": [
         {
@@ -41828,6 +41878,10 @@
         {
           "label": "Earlier run stopped before tests: both workers lacked IPv6 interface controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/41566386132/artifacts/13199117130"
+        },
+        {
+          "label": "Published amendment",
+          "url": "https://github.com/tamird/gvisor/commit/f8ca88ad9"
         }
       ],
       "settledReviews": [
@@ -41836,6 +41890,13 @@
           "head": "e62e48e9a8ba9523323071f011c1390b7873852f",
           "outcome": "approved",
           "at": "2026-11-02T20:32:31Z"
+        },
+        {
+          "kind": "amendment",
+          "head": "f8ca88ad9ab4d8fb4b11db0e7376e2f49b213f58",
+          "outcome": "approved",
+          "at": "2026-11-03T14:33:29.484586+00:00",
+          "url": "https://github.com/tamird/gvisor/commit/f8ca88ad9"
         }
       ],
       "number": 16841,
@@ -41849,16 +41910,16 @@
           "head": "f8ca88ad9ab4d8fb4b11db0e7376e2f49b213f58"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "f8ca88ad9ab4d8fb4b11db0e7376e2f49b213f58",
-        "baseHead": "e62e48e9a8ba9523323071f011c1390b7873852f",
-        "title": "Check SACK on sockets accepted with SYN cookies",
-        "url": "https://github.com/tamird/gvisor/commit/f8ca88ad9",
-        "requestedAt": "2026-11-03T02:48:42.204681+00:00",
-        "summary": "Add the permanently observed, accepted-socket SACK check requested on merged #16336 to the open cookie test PR? A cookie SYN-ACK can advertise SACK even if the accepted child has lost the option. Both Linux and gVisor ACKed the hole and SACKed just the out-of-order byte. Each passed all 32 named cases, including the existing 31 controls.",
-        "body": "The cookie SYN-ACK can advertise SACK even if the accepted socket loses\nthe option. After negotiating timestamps and SACK, send one byte beyond\na hole and check the cumulative ACK and exact SACK block.\n\nUse the same full-listener check as the handshake flag tests: without\ntimestamps, the first SYN-ACK permits SACK and a cookie SYN-ACK does\nnot. This works even when Linux and gVisor save different numbers of\nhalf-open connections."
+      "followup": {
+        "owner": "root",
+        "sourceHead": "f8ca88ad9ab4d8fb4b11db0e7376e2f49b213f58",
+        "observedAt": "2026-11-03T14:33:29.484586+00:00",
+        "disposition": "Approved amendment published",
+        "nextAction": "Follow the public checks and maintainer review on the published revision.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16841",
+          "https://github.com/tamird/gvisor/commit/f8ca88ad9"
+        ]
       }
     },
     {
@@ -44950,11 +45011,11 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/bazel-9-3-1",
-      "head": "8c224f822451f7e0c4ac7047b3f005e69097f4e5",
+      "head": "514a1ce4f7dfeca8077048be5d1f321f72a7e2bd",
       "title": "Build gVisor with Bazel 9.3.1",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-03T05:15:56.968656+00:00",
+      "updatedAt": "2026-11-03T14:33:29.484586+00:00",
       "url": "https://github.com/google/gvisor/pull/16801",
       "summary": "Bazel 9.3.1 includes the directory-watch fix for the lint migration; two patches keep the existing Coral compiler and LLVM parser. The approved head is 8c224f822. Its imports failed when Bazel removed the native cc_library rule and changed dependency include directories to -I. The proposed amendment corrects both in #16801; no separate plugin PR is needed.",
       "evidence": [
@@ -45025,19 +45086,12 @@
         {
           "label": "Proposed amendment",
           "url": "https://github.com/tamird/gvisor/commit/514a1ce4f"
+        },
+        {
+          "label": "Fresh approval requested from relkochta",
+          "url": "https://github.com/google/gvisor/pull/16801#issuecomment-6606468878"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "514a1ce4f7dfeca8077048be5d1f321f72a7e2bd",
-        "baseHead": "8c224f822451f7e0c4ac7047b3f005e69097f4e5",
-        "title": "Build gVisor with Bazel 9.3.1",
-        "url": "https://github.com/tamird/gvisor/commit/514a1ce4f",
-        "requestedAt": "2026-11-03T05:15:56.968656+00:00",
-        "summary": "Publish the amendment to #16801 and request reapproval? It loads the network plugin’s C++ rule and restores -isystem for dependency include directories. The AMD64 plugin binaries link on the exact amendment. Both syscall test binaries build with each target compiler; an injected warning in gVisor source still fails.\n\ngit -C ~/code/gvisor range-diff 8c224f822^! 514a1ce4f^!",
-        "body": "Bazel 9.3.1 includes the fix for invalidating a repository rule when a\nwatched directory is removed and recreated. Select that release for\nBazelisk and the gVisor builder. [1][2]\n\nIf a Make builder is already running for this checkout, run\n`make bazel-shutdown` once so the next Make invocation starts the\nversion-pinned builder image.\n\nBazel 9 removed implicit C++ and shell rules and providers used by two\npinned dependencies. Load them explicitly in the Coral toolchain\ntemplates. Coral's crosstool is archived, so carry the patch locally\nuntil hermetic-llvm replaces it. Load cc_library explicitly in the\nnetwork plugin BUILD file as well.\n\nBackport the corresponding LLVM loads for protobuf, shell rules, CcInfo\nand zlib so the NVIDIA driver parser keeps its existing Clang API.\n[3][4][5][6]\n\nBazel 9 also passes directories from cc_library.includes with -I.\nUse -isystem for those directories so warnings in GoogleTest headers\ndo not fail syscall builds under -Werror. [7]\n\n[1]: https://github.com/bazelbuild/bazel/releases/tag/9.3.1\n[2]: https://github.com/bazelbuild/bazel/commit/923188d6f\n[3]: https://github.com/llvm/llvm-project/commit/930066f6e\n[4]: https://github.com/llvm/llvm-project/commit/f645d209d\n[5]: https://github.com/llvm/llvm-project/commit/fb4450c45\n[6]: https://github.com/llvm/llvm-project/commit/9626c90c3\n[7]: https://github.com/bazelbuild/rules_cc/commit/c809f4418"
-      },
       "refinement": {
         "before": {
           "base": "aa767e4c43d011121271551fe24da501a56f729d",
@@ -45049,17 +45103,26 @@
         }
       },
       "followup": {
-        "owner": "Workstream owner",
-        "sourceHead": "8c224f822451f7e0c4ac7047b3f005e69097f4e5",
-        "observedAt": "2026-11-03T05:15:56.968656+00:00",
-        "disposition": "Qualified amendment awaiting contributor review",
-        "nextAction": "Publish the amendment to #16801 and request reapproval? It loads the network plugin’s C++ rule and restores -isystem for dependency include directories. The AMD64 plugin binaries link on the exact amendment. Both syscall test binaries build with each target compiler; an injected warning in gVisor source still fails.",
+        "owner": "root",
+        "sourceHead": "514a1ce4f7dfeca8077048be5d1f321f72a7e2bd",
+        "observedAt": "2026-11-03T14:33:29.484586+00:00",
+        "disposition": "Amendment published; fresh approval requested in the PR",
+        "nextAction": "Follow the public checks and maintainer review on the published revision.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/41581711656/artifacts/13205624762",
-          "https://github.com/tamird/gvisor/actions/runs/41580834566/artifacts/13206151106",
-          "https://github.com/tamird/gvisor/actions/runs/41580322219/artifacts/13205762110"
+          "https://github.com/google/gvisor/pull/16801",
+          "https://github.com/tamird/gvisor/commit/514a1ce4f",
+          "https://github.com/google/gvisor/pull/16801#issuecomment-6606468878"
         ]
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "514a1ce4f7dfeca8077048be5d1f321f72a7e2bd",
+          "outcome": "approved",
+          "at": "2026-11-03T14:33:29.484586+00:00",
+          "url": "https://github.com/tamird/gvisor/commit/514a1ce4f"
+        }
+      ]
     },
     {
       "id": "pr:16802",
@@ -45181,12 +45244,12 @@
       "repo": "google/gvisor",
       "number": 16803,
       "ref": "proposals/make-race-target-mode",
-      "head": "3e0709a90beefbc5dcbccfb6aa7115fab90b607b",
+      "head": "c58f36d4e068c2b0aa31a207fabbb37e25b60472",
       "title": "Exercise the race-instrumented Sentry in the smoke test",
       "url": "https://github.com/google/gvisor/pull/16803",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-03T02:30:53.096288+00:00",
+      "updatedAt": "2026-11-03T14:33:29.484586+00:00",
       "summary": "The Make race smoke test staged the ordinary Sentry and overlaid the race launcher. Stage a matched race release so the guest kernel also runs with the race detector. Select race mode on the Go binaries, keeping it out of host build tools.",
       "evidence": [
         {
@@ -45228,6 +45291,10 @@
         {
           "label": "Maintainer’s original review",
           "url": "https://github.com/google/gvisor/pull/16803#discussion_r4448554797"
+        },
+        {
+          "label": "Published amendment",
+          "url": "https://github.com/tamird/gvisor/commit/c58f36d4e"
         }
       ],
       "settledReviews": [
@@ -45236,6 +45303,13 @@
           "head": "3e0709a90beefbc5dcbccfb6aa7115fab90b607b",
           "outcome": "approved",
           "at": "2026-11-02T16:20:02.085486+00:00"
+        },
+        {
+          "kind": "amendment",
+          "head": "c58f36d4e068c2b0aa31a207fabbb37e25b60472",
+          "outcome": "approved",
+          "at": "2026-11-03T14:33:29.484586+00:00",
+          "url": "https://github.com/tamird/gvisor/commit/c58f36d4e"
         }
       ],
       "refinement": {
@@ -45248,16 +45322,16 @@
           "head": "c58f36d4e068c2b0aa31a207fabbb37e25b60472"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "c58f36d4e068c2b0aa31a207fabbb37e25b60472",
-        "baseHead": "3e0709a90beefbc5dcbccfb6aa7115fab90b607b",
-        "title": "Exercise the race-instrumented Sentry in the smoke test",
-        "url": "https://github.com/tamird/gvisor/commit/c58f36d4e",
-        "requestedAt": "2026-11-03T02:30:53.096288+00:00",
-        "summary": "Make smoke-race-tests fail when the Sentry reports a Go race? The real exit_group race printed a warning under both recipes: stock returned success, and the candidate propagated child status 66 to Make status 2. A clean race-enabled guest still booted.",
-        "body": "The race smoke test copies the ordinary release and then overwrites its\nlauncher with runsc-race. The guest kernel runs in a separate executable,\ngvisor-bin/gvisor_sentry, so the smoke test can pass with the race\ndetector disabled in the kernel. The release supports a matching race\nSentry [1], but the smoke recipe never selects it.\n\nStage the race launcher and Sentry together using the release flavor\ntable. Both Go binaries set race mode on their own dependencies. The\nbuild tools that generate their sources can run without the race\nruntime or the host C library it requires.\n\n[1]: https://github.com/google/gvisor/commit/6e97c9a36"
+      "followup": {
+        "owner": "root",
+        "sourceHead": "c58f36d4e068c2b0aa31a207fabbb37e25b60472",
+        "observedAt": "2026-11-03T14:33:29.484586+00:00",
+        "disposition": "Approved amendment published",
+        "nextAction": "Follow the public checks and maintainer review on the published revision.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16803",
+          "https://github.com/tamird/gvisor/commit/c58f36d4e"
+        ]
       }
     },
     {
@@ -47207,6 +47281,49 @@
           "url": "https://buildkite.com/gvisor/pipeline/builds/53249"
         }
       ]
+    },
+    {
+      "id": "issue:16878",
+      "type": "issue",
+      "repo": "google/gvisor",
+      "number": 16878,
+      "title": "TCP dispatcher spins while another goroutine holds the endpoint lock",
+      "url": "https://github.com/google/gvisor/issues/16878",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-03T14:33:29.484586+00:00",
+      "summary": "Martijn reported a TCP dispatcher spin on TamaGo. On Linux with one Go P, yielding on the first lock miss let the holder run but delayed an already runnable peer. A bounded variant lets existing peers take a turn before yielding, including when the listener moves to another processor. TamaGo was not tested.",
+      "evidence": [
+        {
+          "label": "Original single-P experiment",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41626190812/artifacts/13225822564"
+        },
+        {
+          "label": "Bounded dispatcher variant",
+          "url": "https://github.com/tamird/gvisor/commit/71733cfc7"
+        },
+        {
+          "label": "Replenishing peer and second-processor controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41628817215/artifacts/13226843881"
+        },
+        {
+          "label": "Uninstrumented TCP suite and both architecture analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41652011676/artifacts/13238562037"
+        },
+        {
+          "label": "TCP review guide",
+          "url": "https://github.com/google/gvisor/issues/16670"
+        }
+      ],
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "requestedAt": "2026-11-03T14:33:29.484586+00:00",
+        "title": "Reply to Martijn on the single-P dispatcher",
+        "summary": "Share the Linux scheduling controls and bounded variant with Martijn?",
+        "body": "I tried [your Gosched suggestion with one Go P on Linux](https://github.com/tamird/gvisor/actions/runs/41626190812/artifacts/13225822564). The lock holder ran after the first miss, but a ready peer had to wait. If useful for your PR, [this variant](https://github.com/tamird/gvisor/commit/71733cfc7) records the last endpoint already queued and gives those peers one visit before yielding. [A replenishing peer processed one 100-item batch before the holder ran](https://github.com/tamird/gvisor/actions/runs/41628817215/artifacts/13226843881); the handoff also worked when another processor claimed the contended listener. I haven’t tested TamaGo.\n\nPosted by Codex on behalf of @tamird.",
+        "url": "https://github.com/google/gvisor/issues/16878"
+      }
     }
   ],
   "edges": [
