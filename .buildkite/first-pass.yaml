@@ -36,14 +36,13 @@ steps:
     env:
       DOCKER_BUILD: "false"
     label: ":fire: Smoke tests (AMD64)"
-    command: bazel run //:smoke
+    command: make test TARGETS=//:smoke
   - <<: *common
     <<: *source_test
     env:
       DOCKER_BUILD: "false"
-      GLIBC_TUNABLES: glibc.pthread.rseq=0
     label: ":fire: Smoke race tests"
-    command: bazel run //:smoke-race
+    command: make test TARGETS=//:smoke-race
 
   # Run the remaining tests only if the smoke tests pass, so that a change
   # that does not build or start does not use the other agents (presubmits

@@ -1,5 +1,5 @@
 load("@bazel_lib//lib:write_source_files.bzl", "write_source_files")
-load("@bazel_skylib//rules:native_binary.bzl", "native_binary", "native_test")
+load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_license//rules:license.bzl", "license")
 load("//tools:defs.bzl", "build_test", "gazelle", "go_path")
@@ -74,18 +74,27 @@ SMOKE_ARGS = [
     "true",
 ]
 
-native_binary(
+# Start a guest on this worker on every presubmit, even when the release
+# binaries are cached.
+SMOKE_TAGS = [
+    "external",
+    "local",
+    "manual",
+]
+
+native_test(
     name = "smoke",
     src = ":release",
     args = SMOKE_ARGS,
-    tags = ["manual"],
+    tags = SMOKE_TAGS,
 )
 
-native_binary(
+native_test(
     name = "smoke-race",
     src = ":release-race",
     args = SMOKE_ARGS,
-    tags = ["manual"],
+    env = {"GLIBC_TUNABLES": "glibc.pthread.rseq=0"},
+    tags = SMOKE_TAGS,
 )
 
 nogo_config(

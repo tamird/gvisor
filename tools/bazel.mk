@@ -43,7 +43,7 @@
 ##   To opt out of these wrappers, set DOCKER_BUILD=false.
 ifneq ($(MAKECMDGOALS),)
 ifeq ($(filter-out help,$(MAKECMDGOALS)),)
-DOCKER_BUILD ?= false
+DOCKER_BUILD := false
 endif
 endif
 DOCKER_BUILD ?= true
@@ -56,6 +56,7 @@ BRANCH_NAME := $(shell (git branch --show-current 2>/dev/null || \
   git rev-parse --abbrev-ref HEAD 2>/dev/null) | \
   xargs -n 1 basename 2>/dev/null)
 BUILD_ROOTS := bazel-bin/ bazel-out/
+RACE_FLAGS := --config=race
 PLUGIN_STACK_FLAGS := --config=plugin-tldk
 
 # Bazel container configuration (see below).
@@ -125,6 +126,7 @@ TEST_OPTIONS       += $(BASE_OPTIONS) \
   --test_output=$(BAZEL_TEST_OUTPUT) \
   --keep_going \
   --verbose_failures=true \
+  --nobuild_event_json_file_path_conversion \
   --build_event_json_file=.build_events.json
 
 # Basic options.
@@ -399,7 +401,7 @@ clean: ## Cleans the bazel cache.
 .PHONY: clean
 
 runsc-race:
-	@$(call build,//runsc:runsc-race)
+	@$(call build,--config=race runsc:runsc-race)
 
 testlogs: ## Returns the most recent set of test logs.
 	@if test -f .build_events.json; then \

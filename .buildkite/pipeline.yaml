@@ -87,7 +87,7 @@ steps:
     env:
       DOCKER_BUILD: "false"
     label: ":fire: Smoke tests (AMD64)"
-    command: bazel run //:smoke
+    command: make test TARGETS=//:smoke
     agents:
       arch: "amd64"
       queue: "default"
@@ -95,9 +95,8 @@ steps:
     <<: *source_test
     env:
       DOCKER_BUILD: "false"
-      GLIBC_TUNABLES: glibc.pthread.rseq=0
     label: ":fire: Smoke race tests"
-    command: bazel run //:smoke-race
+    command: make test TARGETS=//:smoke-race
     agents:
       queue: "default"
 
@@ -115,7 +114,7 @@ steps:
     env:
       DOCKER_BUILD: "false"
     label: ":fire: Smoke tests (ARM64)"
-    command: bazel run //:smoke
+    command: make test TARGETS=//:smoke
     agents:
       arch: "arm64"
       queue: "arm64"
