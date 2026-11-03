@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T03:00:43.613804+00:00",
+    "updatedAt": "2026-11-03T03:34:04.930459+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -20068,15 +20068,16 @@
       "url": "https://github.com/google/gvisor/pull/16098",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
-      "summary": "Published the focused test amendment. The cases now distinguish a missing export file, malformed export bytes, and a compiler archive.",
+      "updatedAt": "2026-11-03T03:34:04.930459+00:00",
+      "summary": "On AMD64 and ARM64, the checker, eventchannel (generated protobuf), sync (generated constants), and a fixture using the historical Go adapter with two real compiler archives passed. Public source-only and archive-only rules took their respective paths. The private Google build was not exercised.",
       "followup": {
         "owner": "root",
-        "disposition": "Contributor-approved amendment published",
+        "disposition": "Qualified amendment awaiting contributor review",
         "sourceHead": "ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970",
-        "observedAt": "2026-10-29T18:56:07.113045+00:00",
-        "nextAction": "Published the focused test amendment. The cases now distinguish a missing export file, malformed export bytes, and a compiler archive.",
+        "observedAt": "2026-11-03T03:34:04.930459+00:00",
+        "nextAction": "Publish the amendment on #16098 and answer the three review threads? It analyzes generated Go sources when available and imports compiler-produced archives for build rules that expose no source. The existing Go adapter needs no new functions.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41572556824/artifacts/13202316608",
           "https://github.com/tamird/gvisor/commit/ae9cacf5c"
         ]
       },
@@ -20168,14 +20169,36 @@
         {
           "label": "Published amendment",
           "url": "https://github.com/tamird/gvisor/commit/ae9cacf5c"
+        },
+        {
+          "label": "Guard the importer cache in the test",
+          "url": "https://github.com/google/gvisor/pull/16098#discussion_r4450253789"
+        },
+        {
+          "label": "Preserve compiler archives and additional protobuf dependencies",
+          "url": "https://github.com/google/gvisor/pull/16098#discussion_r4450253805"
+        },
+        {
+          "label": "Keep the historical Go adapter independent of rules_go providers",
+          "url": "https://github.com/google/gvisor/pull/16098#discussion_r4450253810"
+        },
+        {
+          "label": "Current adapter on AMD64 and ARM64: named tests and compiler archive inputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41572556824/artifacts/13202316608"
+        },
+        {
+          "label": "Existing checker suite including package type identity",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41568680244/artifacts/13201415590"
         }
       ],
       "refinement": {
         "before": {
-          "head": "63e9f5dadc33c98738456ec5ff3385639256ede3"
+          "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
+          "head": "ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970"
         },
         "after": {
-          "head": "ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970"
+          "base": "7bffefa9185aa55ba377e8a5534210a7f0cbf266",
+          "head": "cd5e5628a42fa74409864903aae50717b596f214"
         }
       },
       "number": 16098,
@@ -20186,7 +20209,18 @@
           "outcome": "approved",
           "at": "2026-10-29T18:56:07.113045+00:00"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "cd5e5628a42fa74409864903aae50717b596f214",
+        "baseHead": "ae9cacf5c3ed0fa3acb0eb9c1eb20522db333970",
+        "title": "Generate Nogo export data from source",
+        "url": "https://github.com/tamird/gvisor/commit/cd5e5628a",
+        "requestedAt": "2026-11-03T03:34:04.930459+00:00",
+        "summary": "Publish the amendment on #16098 and answer the three review threads? It analyzes generated Go sources when available and imports compiler-produced archives for build rules that expose no source. The existing Go adapter needs no new functions.",
+        "body": "Generate export data during Nogo's existing source analysis and read it\nwith the supported x/tools API. Replace deprecated compiler-archive\ndecoding, reusing the type-checked package when serializing exports.\nDeclare standard-library exports per SDK and build mode.\n\nPreserve primary dependency imports ahead of import aliases, matching\nrules_go. The s2a token manager imports both protocol versions, while\nthe v2 package also aliases the v1 path; treating that alias as primary\notherwise collapses the distinct Identity types during source analysis.\n\nForward dependencies from source-only Go embeds to the consuming package\nwithout creating separate analysis actions for those sources.\n\nAnalyze protobuf packages when the build rules supply their generated\nGo sources. For rules that expose only compiled packages, import the\ntarget archive and its additional protobuf dependencies with the Go\nSDK. Convert these inputs to Nogo export data so all imports share one\npackage identity. Do not require other Go rule implementations to expose\nrules_go providers or protobuf compiler attributes.\n\nExempt only the unsafe-import filename diagnostic for generated .pb.go\nfiles, since protoc-gen-go emits unsafe descriptor access.\n\nOn one amd64 worker, serial warm-cache Nogo analysis of sync and\neventchannel and their dependencies took 83.5-85.4 s before and\n84.8-85.0 s after (two measured passes per revision). This includes\nstandard-library work, export writes and newly analyzed protobuf\ndependencies; compilation and downloads are excluded."
+      }
     },
     {
       "id": "pr:16096",
@@ -38830,20 +38864,21 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/declared-jekyll-site",
-      "head": "2d59e8489625bcc700c22ed572d4160ffff0a1fd",
+      "head": "757a452f9265d02a963203d1ccf7704e7d1ebc57",
       "title": "Render the gVisor website without its Jekyll builder",
       "group": "bazel",
       "status": "Agent work",
       "url": "https://github.com/tamird/gvisor/tree/research/declared-jekyll-site",
-      "updatedAt": "2026-11-02T21:30:10.580114+00:00",
-      "summary": "Bazel builds the website without a Docker daemon. Dropping the inline-SVG plugin and its optimizer preserved all 278 published files byte for byte; neither gem was installed in the selected SDK. Disabling Autoprefixer changed css/main.css, so it stays. The serving-image check also covered the hard-linked logo.",
+      "updatedAt": "2026-11-03T03:34:04.930459+00:00",
+      "summary": "The released rules_img 0.3.24 builds and serves the site without the Jekyll builder. All 278 public paths matched the stock inventory. Of those, 276 matched byte for byte; only the order of 84 sitemap records and CSS tar header ownership and timestamps differed. The image retained the logo hard link, and all five HTTP responses matched stock. The canonical license audit verified 226 entries.",
       "followup": {
         "owner": "root",
-        "sourceHead": "2d59e8489625bcc700c22ed572d4160ffff0a1fd",
-        "observedAt": "2026-11-02T21:30:10.580114+00:00",
-        "disposition": "Source notices verified; waiting for build prerequisites",
-        "nextAction": "The BCR now publishes rules_img 0.3.24, including the archive import and layer fix from #811. Update this proposal from 0.3.23 and check the site and the hard-linked logo against the released module. The native Buildkite entry still needs its Bazelisk bootstrap. The five Ruby gems and tar.bzl are verified; the Go documentation and server still need GNU tools.",
+        "sourceHead": "757a452f9265d02a963203d1ccf7704e7d1ebc57",
+        "observedAt": "2026-11-03T03:34:04.930459+00:00",
+        "disposition": "Released OCI layer support verified on hosted Linux",
+        "nextAction": "The Buildkite release job still needs the Bazelisk bootstrap. This build used native AMD64 and ARM64 cross GNU compilers for the existing Go documentation and server; it did not qualify a worker without GNU tools or deploy the site.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41571402230/artifacts/13201877206",
           "https://github.com/tamird/gvisor/actions/runs/41148839163/artifacts/13021069904",
           "https://github.com/tamird/gvisor/actions/runs/41144112084/artifacts/13019603780",
           "https://github.com/tamird/gvisor/actions/runs/41127231437/artifacts/13011169580",
@@ -38858,13 +38893,21 @@
       },
       "refinement": {
         "before": {
-          "head": "6719095ebbd170eefb875c446f6a93a5fe6cf7b9"
+          "head": "2d59e8489625bcc700c22ed572d4160ffff0a1fd"
         },
         "after": {
-          "head": "2d59e8489625bcc700c22ed572d4160ffff0a1fd"
+          "head": "757a452f9265d02a963203d1ccf7704e7d1ebc57"
         }
       },
       "evidence": [
+        {
+          "label": "Released BCR modules: full site, hard link, preview, five HTTP routes and license audit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41571402230/artifacts/13201877206"
+        },
+        {
+          "label": "Module and canonical catalog update",
+          "url": "https://github.com/tamird/gvisor/compare/2d59e8489...757a452f9"
+        },
         {
           "label": "226-entry Fetch/Verify, both failure controls and SDK inventory",
           "url": "https://github.com/tamird/gvisor/actions/runs/41148839163/artifacts/13021069904"
@@ -38916,7 +38959,7 @@
       ],
       "links": [
         {
-          "label": "Unreleased rules_img layer flattening",
+          "label": "Layer flattening released in rules_img 0.3.24",
           "url": "https://github.com/bazel-contrib/rules_img/pull/811"
         },
         {
