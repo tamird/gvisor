@@ -13,6 +13,9 @@ import sys
 import tarfile
 import tempfile
 from urllib.parse import unquote, urlsplit
+import urllib.error
+import urllib.parse
+import urllib.request
 import xml.etree.ElementTree as ET
 import zipfile
 
@@ -267,7 +270,8 @@ def native(rc):
 
 def guest(rc):
     git('switch', '--quiet', '--detach', CARRIER)
-    require(git('rev-parse', 'HEAD~5') == GUEST, 'guest source mismatch')
+    require(git('rev-parse', 'HEAD^') == 'c90e30503332735ddb87d992588101661a7e2d1c'
+            and git('rev-parse', 'HEAD~6') == GUEST, 'guest source mismatch')
     package = Path(PKG)
     for name, row in DOC['payloads'].items():
         shutil.copyfile(TMP / (name + '.tar'), package / (name + '.tar'))
@@ -290,6 +294,7 @@ def guest(rc):
     rows = events(bep)
     DOC['guest_invocation'] = next(e['started']['uuid'] for e in rows if 'started' in e)
     seen = set()
+    configurations = {}
     leaves_by_owner = {}
     passed = {mode: set() for mode in ('v1', 'v2')}
     for event in rows:
@@ -299,11 +304,16 @@ def guest(rc):
         label = ident['label']
         require(label in labels, 'unexpected guest owner')
         mode, name = label.split(':')[1].split('_', 1)
-        shard = int(ident.get('shard', 0))
+        bep_shard = int(ident.get('shard', 0))
+        shard = bep_shard - 1
+        configuration = ident['configuration']['id']
+        require(re.fullmatch('[a-f0-9]{64}', configuration)
+                and int(ident.get('run', 0)) == int(ident.get('attempt', 0)) == 1, 'invalid attempt identity')
+        require(configurations.setdefault(label, configuration) == configuration, 'mixed guest configurations')
         key = (mode, name, shard)
         require(key not in seen and shard in range(SHARDS[name]), 'duplicate or wrong shard')
         seen.add(key)
-        row = dict(owner='//runsc/container:' + name, mode=mode, shard=shard,
+        row = dict(owner='//runsc/container:' + name, mode=mode, shard=shard, bep_shard=bep_shard, configuration=configuration,
             status=result['status'], local_cache=bool(result.get('cachedLocally')),
             remote_cache=bool(result.get('executionInfo', {}).get('cachedRemotely')),
             strategy=result.get('executionInfo', {}).get('strategy'),
@@ -316,6 +326,14 @@ def guest(rc):
                 uri = urlsplit(outputs[name])
                 require(uri.scheme == 'file' and uri.netloc in ('', 'localhost'), 'nonlocal guest report')
                 return Path(unquote(uri.path))
+            log = local_file('test.log')
+            require(log.stat().st_size < 16 * 1024**2, 'guest log size bound')
+            content = log.read_bytes()
+            row['log'] = dict(sha256=sha(content), bytes=len(content), setup_failures=[
+                dict(stage=m[1].decode(), exit=int(m[2])) for m in re.finditer(
+                    rb'^NATIVE_CONTAINER_SETUP stage=(capsule_identity|worker_contract|hierarchy|extract|executable_identity|erofs_files|erofs_cli|proof|exec) exit=([0-9]{1,3})\r?$', content, re.M)],
+                erofs_cli_control=bool(re.search(rb'^NATIVE_CONTAINER_EROFS rejected_version_exit=1 help_exit=0\r?$', content, re.M)))
+            save()
             xml = local_file('test.xml')
             require(xml.stat().st_size < 16 * 1024 * 1024, 'XML size bound')
             count = xml_cases(xml)
@@ -366,6 +384,7 @@ def guest(rc):
     require(seen == expected, 'incomplete guest attempts')
     require(all(not r['local_cache'] and not r['remote_cache'] and r['strategy'] == 'local' for r in DOC['attempts']), 'guest placement mismatch')
     require(all('xml' in r and 'guest_proof' in r for r in DOC['attempts']), 'incomplete guest reports')
+    require(all(r['log']['erofs_cli_control'] and not r['log']['setup_failures'] for r in DOC['attempts']), 'EROFS preflight did not pass')
     require(code == 0 and all(r['status'] == 'PASSED' and r['xml']['failed'] == 0 and r['xml']['passed'] > 0 for r in DOC['attempts']), 'guest functional failure')
     require(all({'TestMinimalBoot/systrap', 'TestMinimalBoot/kvm', 'TestMountEROFS', 'TestMountEROFSConfig/image1'} <= names for names in passed.values()), 'required platform or EROFS case did not pass')
 
@@ -406,28 +425,65 @@ def recover_build():
     save()
 
 
+def recover_capsules(prior):
+    """Materialize the six original outputs; never substitute a new build."""
+    from cas_inputs import KEY, OPENER
+
+    invocation = prior['native_build_evidence']['invocation']
+    require(invocation == '134254d6-7c51-4854-9a1e-fdfb2ce9ddc6', 'original native invocation mismatch')
+    require(set(prior['payloads']) == set(NAMES), 'original capsule set mismatch')
+    DOC['capsule_recovery'] = {}
+    for name, original in prior['payloads'].items():
+        expected, size = original['sha256'], original['bytes']
+        require(re.fullmatch('[0-9a-f]{64}', expected) and 0 < size < 300 * 1024**2, 'capsule bound')
+        row = DOC['capsule_recovery'][name] = dict(sha256=expected, bytes=size, status='INCOMPLETE')
+        save()
+        uri = 'bytestream://remote.buildbuddy.io/blobs/' + expected + '/' + str(size)
+        url = 'https://app.buildbuddy.io/file/download?' + urllib.parse.urlencode(dict(bytestream_url=uri, invocation_id=invocation))
+        request = urllib.request.Request(url, headers={'x-buildbuddy-api-key': KEY})
+        destination = TMP / (name + '.tar')
+        digest, total = hashlib.sha256(), 0
+        # The established reader's no-redirect opener preserves the credential
+        # boundary. Stream these exact larger outputs with their own byte cap.
+        try:
+            with OPENER.open(request, timeout=120) as response, destination.open('xb') as output:
+                while data := response.read(1024**2):
+                    total += len(data)
+                    require(total <= size, 'capsule exceeds original length')
+                    digest.update(data)
+                    output.write(data)
+        except Exception as exc:
+            row.update(error_class=type(exc).__name__, received_bytes=total)
+            if isinstance(exc, urllib.error.HTTPError):
+                row['http_status'] = exc.code
+            save()
+            raise
+        require(total == size and digest.hexdigest() == expected, 'original capsule bytes differ')
+        with tarfile.open(destination) as archive:
+            binary = archive.extractfile(original['binary']).read()
+            require(sha(binary) == original['elf_sha256'] and len(binary) == original['elf_bytes']
+                    and binary[:6] == b'\x7fELF\x02\x01' and int.from_bytes(binary[18:20], 'little') == 62, 'original capsule ELF differs')
+            if original['runsc_sha256']:
+                runsc = archive.extractfile(original['runfiles'] + '/_main/release/runsc').read()
+                require(sha(runsc) == original['runsc_sha256'], 'original runsc differs')
+        DOC['payloads'][name] = original
+        row['status'] = 'RECOVERED'
+        save()
+
+
 def main():
     original = (TMP / 'original.zip').read_bytes()
-    require(sha(original) == 'd138fc483e8a18f06b40438422edf3aedaa622f547390108e835c72aa2a38679', 'original ZIP mismatch')
+    require(sha(original) == '065c02f43387d0cdaa4c5417d2f89feec88202ebb9ca44c99d6225a1d4ce46e5', 'original ZIP mismatch')
     with zipfile.ZipFile(io.BytesIO(original)) as archive:
         require(archive.namelist() == ['container-native-result.json'], 'original members mismatch')
         prior = json.loads(archive.read('container-native-result.json'))
-    require(prior['carrier'] == 'c063181c68d6228cb4d34e7d897c4fa8f485d2c0' and prior['status'] == 'FAIL'
+    require(prior['carrier'] == 'c90e30503332735ddb87d992588101661a7e2d1c' and prior['status'] == 'FAIL'
             and prior['source'] == SOURCE and prior['product'] == PRODUCT
-            and prior['commands']['native-build']['exit'] == 1 and not prior['attempts'], 'unexpected original execution')
-    DOC['original'] = dict(artifact=13248882573, zip_sha256=sha(original), receipt=prior,
-                          test_workload_repeated=False, build_failure_diagnostic='not retained')
-    recovery = (TMP / 'diagnostic.zip').read_bytes()
-    require(sha(recovery) == '87c80db9c15b59d55bed91b91db1e4231e1062a7c3c17fc8136f2d8a1db5c414', 'diagnostic ZIP mismatch')
-    with zipfile.ZipFile(io.BytesIO(recovery)) as archive:
-        require(archive.namelist() == ['container-native-result.json'], 'diagnostic members mismatch')
-        diagnostic = json.loads(archive.read('container-native-result.json'))
-    require(diagnostic['status'] == 'ORIGINAL_FAIL_DIAGNOSTIC_RECOVERED' and diagnostic['source'] == SOURCE and diagnostic['product'] == PRODUCT and diagnostic['carrier'] == '27ce26ffee21c40458a9f106d2ac10e3cb70ef82', 'diagnostic source mismatch')
-    require(diagnostic['recovered_stderr']['sha256'] == '9ae35684375799d6f9248bc76bc7095ef5123b3aad2d3170ff1c1c0e6bf6fce2', 'diagnostic stderr mismatch')
-    DOC['original_diagnostic'] = dict(artifact=13251075654, zip_sha256=sha(recovery), receipt=diagnostic)
-    sample = diagnostic_lines(b'ERROR: public/BUILD:1:2: missing input\nAuthorization: Bearer private\ncompilepkg: missing dependency https://private@example.test/x?token=private\nERROR: grpcs://private@example.test/x?token=private')
-    require(sample == ['ERROR: public/BUILD:1:2: missing input', 'compilepkg: missing dependency [URL omitted]', 'ERROR: [URL omitted]'], 'diagnostic projection control')
-    DOC['diagnostic_projection_control'] = 'PASS'
+            and prior['commands']['native-build']['exit'] == 0 and prior['commands']['guest']['exit'] == 3
+            and prior['phases']['native_make_and_capsules']['status'] == 'PASS', 'unexpected original execution')
+    DOC.update(original=dict(artifact=13253001262, zip_sha256=sha(original), receipt=prior),
+               scope='Corrected guest adapter using six exact original native capsules; no product build',
+               product_build_repeated=False, modes=prior['modes'])
     DOC['host'] = dict(machine=os.uname().machine, kernel=os.uname().release, uid=os.getuid(),
                       caller_kvm_access=os.access('/dev/kvm', os.R_OK | os.W_OK))
     # The maintained local-root test route invokes QEMU through sudo. Check
@@ -438,6 +494,9 @@ def main():
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10).returncode == 0
     save()
     require(DOC['host']['machine'] == 'x86_64' and DOC['host']['root_kvm_read'] and DOC['host']['root_kvm_write'], 'native root KVM unavailable')
+    phase('recover_capsules', lambda: recover_capsules(prior))
+    if DOC['phases']['recover_capsules']['status'] != 'PASS':
+        return
     with tempfile.TemporaryDirectory(dir=TMP) as temporary:
         credential = Path(temporary)
         prepare(credential)
@@ -450,13 +509,10 @@ def main():
             'build:buildbuddy_remote_executor --remote_cache=grpcs://remote.buildbuddy.io\n'
             'build:buildbuddy_remote_executor --bes_backend=grpcs://remote.buildbuddy.io\n'
             'build:buildbuddy_remote_executor --bes_results_url=https://app.buildbuddy.io/invocation/\n')
-        git('switch', '--quiet', '--detach', SOURCE)
-        phase('native_make_and_capsules', lambda: native(rc))
-        if DOC['phases']['native_make_and_capsules']['status'] == 'PASS':
-            phase('guest_v1_v2', lambda: guest(rc))
+        phase('guest_v1_v2', lambda: guest(rc))
     if any(r['exit'] not in (0, None, 124) and r.get('disposition') != 'VALIDATED_ANALYSIS_ONLY' for r in DOC['commands'].values()):
         DOC['status'] = 'FAIL'
-    elif set(DOC['phases']) == {'native_make_and_capsules', 'stdlib_producer_evidence', 'guest_v1_v2'} and all(r['status'] == 'PASS' for r in DOC['phases'].values()):
+    elif set(DOC['phases']) == {'recover_capsules', 'guest_v1_v2'} and all(r['status'] == 'PASS' for r in DOC['phases'].values()):
         DOC['status'] = 'PASS'
     save()
 

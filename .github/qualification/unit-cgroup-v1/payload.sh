@@ -3,11 +3,14 @@
 set -euo pipefail
 mode=$1
 name=$2
+stage=capsule_identity
+trap 'code=$?; printf "NATIVE_CONTAINER_SETUP stage=%s exit=%s\n" "$stage" "$code" >&2' ERR
 pkg=$TEST_SRCDIR/$TEST_WORKSPACE/.github/qualification/unit-cgroup-v1
 mapfile -t expected < "$pkg/$name.inputs"
 archive=$pkg/$name.tar
 actual=$(sha256sum "$archive" | cut -d' ' -f1)
 [[ $actual == "${expected[0]}" ]]
+stage=worker_contract
 test "$(id -u)" = 0
 test "$(uname -m)" = x86_64
 test -r /dev/kvm && test -w /dev/kvm
@@ -15,6 +18,7 @@ if command -v docker || command -v dockerd; then
   exit 1
 fi
 test ! -S /var/run/docker.sock
+stage=hierarchy
 if [[ $mode == v1 ]]; then
   test "$(stat -f -c %T /sys/fs/cgroup)" = tmpfs
   awk '$0 ~ / - cgroup / { n++ } END { exit n != 13 }' /proc/self/mountinfo
@@ -24,15 +28,18 @@ else
   test "$(stat -f -c %T /sys/fs/cgroup)" = cgroup2fs
   export CGROUPV2=true
 fi
+stage=extract
 mkdir -p /work/original /work/erofs /work/bin
 /bin/busybox tar -xf "$archive" -C /work/original
 /bin/busybox tar -xf "$pkg/erofs.tar" -C /work/erofs
 binary=/work/original/${expected[1]}
 runfiles=/work/original/${expected[2]}
+stage=executable_identity
 test "$(sha256sum "$binary" | cut -d' ' -f1)" = "${expected[3]}"
 if [[ ${expected[4]} != - ]]; then
   test "$(sha256sum "$runfiles/_main/release/runsc" | cut -d' ' -f1)" = "${expected[4]}"
 fi
+stage=erofs_files
 # Keep the newer tool's libc isolated from the Jammy guest. This is the
 # existing container-test tool archive's own interpreter and library closure.
 loader=/work/erofs/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
@@ -46,7 +53,16 @@ EOF
 chmod 755 /work/bin/mkfs.erofs
 ln -s /bin/busybox /work/bin/tar
 export PATH=/work/bin:$PATH
-mkfs.erofs -V > /work/erofs-version 2>&1
+stage=erofs_cli
+# The pinned 1.7.1 writer predates -V. Preserve the original adapter's
+# rejection separately, then use its supported, non-writing help option.
+old_status=0
+LC_ALL=C mkfs.erofs -V > "$TEST_UNDECLARED_OUTPUTS_DIR/erofs-rejected-version" 2>&1 || old_status=$?
+test "$old_status" = 1
+grep -F -- "invalid option -- 'V'" "$TEST_UNDECLARED_OUTPUTS_DIR/erofs-rejected-version" >/dev/null
+LC_ALL=C mkfs.erofs --help > "$TEST_UNDECLARED_OUTPUTS_DIR/erofs-help" 2>&1
+printf 'NATIVE_CONTAINER_EROFS rejected_version_exit=1 help_exit=0\n'
+stage=proof
 printf '%s\n' "$mode" "$actual" "${expected[3]}" docker_absent kvm_present \
   "CGROUPV2=$CGROUPV2" "$(uname -r)" "$(sha256sum /work/erofs/usr/bin/mkfs.erofs | cut -d' ' -f1)" \
   "$(sha256sum "$loader" | cut -d' ' -f1)" "${TEST_SHARD_INDEX:-0}" "${TEST_TOTAL_SHARDS:-1}" \
@@ -55,6 +71,7 @@ export TEST_SRCDIR=$runfiles RUNFILES_DIR=$runfiles TEST_WORKSPACE=_main
 export TEST_TARGET=//runsc/container:$name TEST_BINARY=${expected[1]}
 export GO_TEST_RUN_FROM_BAZEL=1 GO_TEST_WRAP_TESTV=true RUNTIME=buildkite_runtime
 cd "$runfiles/_main"
+stage=exec
 if [[ $name == container_test || $name == boot_test ]]; then
   exec "$binary" --test_platforms=ptrace,kvm,systrap
 fi

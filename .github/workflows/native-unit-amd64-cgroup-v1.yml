@@ -1,7 +1,7 @@
-name: Native container Make and KVM cgroup modes
+name: Native container capsules in KVM cgroup modes
 on:
   push:
-    branches: [qualification/buildkite-container-native-kvm]
+    branches: [qualification/buildkite-container-native-reuse]
 permissions:
   contents: read
   actions: read
@@ -15,26 +15,24 @@ jobs:
       SOURCE: 7e29426b047a41303652cfa9f0ae91e933302f5e
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 6, persist-credentials: false}
+      with: {fetch-depth: 7, persist-credentials: false}
     - name: Retain controller outside product checkout
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
-        test "$(git rev-parse HEAD~5)" = 38745c527784376e0b5d915fe5ebd85e1d1385fd
+        test "$(git rev-parse HEAD^)" = c90e30503332735ddb87d992588101661a7e2d1c
+        test "$(git rev-parse HEAD~6)" = 38745c527784376e0b5d915fe5ebd85e1d1385fd
         printf '{"status":"INCOMPLETE","carrier":"%s"}\n' "$GITHUB_SHA" > "$RUNNER_TEMP/container-native-result.json"
         test -c /dev/kvm
         mkdir "$RUNNER_TEMP/controller"
         cp .github/qualification/unit-cgroup-v1/check.py test/rbe/{credential_artifacts,qualification_report,unit_matrix}.py "$RUNNER_TEMP/controller/"
-        git fetch --no-tags origin "$SOURCE" --depth=3
-        decoder=0a9bdf9bc331d6a66f35aefcbbb5cf466eb6f7f5
-        git fetch --no-tags origin "$decoder" --depth=1
-        git show "$decoder:test/rbe/stdlib-provenance.py" > "$RUNNER_TEMP/controller/stdlib_provenance.py"
-        command -v zstd
-        gh api repos/tamird/gvisor/actions/artifacts/13251075654/zip > "$RUNNER_TEMP/diagnostic.zip"
-        gh api repos/tamird/gvisor/actions/artifacts/13248882573/zip > "$RUNNER_TEMP/original.zip"
+        helper=680739b629229eb1c8fa91aa1147d1bca71eb04f
+        git fetch --no-tags origin "$helper" --depth=1
+        git show "$helper:test/rbe/cas_inputs.py" > "$RUNNER_TEMP/controller/cas_inputs.py"
+        gh api repos/tamird/gvisor/actions/artifacts/13253001262/zip > "$RUNNER_TEMP/original.zip"
         printf '{"status":"INCOMPLETE","carrier":"%s"}\n' "$GITHUB_SHA" > "$RUNNER_TEMP/container-native-result.json"
-    - name: Native build and fresh isolated guests
+    - name: Recover original capsules and run fresh isolated guests
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: python3 -B "$RUNNER_TEMP/controller/check.py"
