@@ -47,12 +47,12 @@ native_goals := help
 ifeq ($(shell uname -sm),Linux x86_64)
 native_goals += website-build website-server website-push website-deploy
 endif
-DOCKER_BUILD := true
 ifneq ($(MAKECMDGOALS),)
 ifeq ($(filter-out $(native_goals),$(MAKECMDGOALS)),)
 DOCKER_BUILD := false
 endif
 endif
+DOCKER_BUILD ?= true
 ifeq ($(DOCKER_BUILD),true)
 -include bazel-server-inc
 endif

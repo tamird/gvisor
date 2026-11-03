@@ -706,7 +706,7 @@ steps:
     label: ":earth_americas: Website tests"
     env:
       DOCKER_BUILD: "false"
-    command: bazel build //website:site_image
+    command: make build TARGETS=//website:site_image
     agents:
       arch: "amd64"
       kernel: "modern"
