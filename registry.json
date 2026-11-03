@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T15:12:55.022550+00:00",
+    "updatedAt": "2026-11-03T15:24:10.796603+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -47524,6 +47524,44 @@
           "url": "https://app.buildbuddy.io/invocation/1decea9a-144d-4a37-9dcb-2816f1336c49"
         }
       ]
+    },
+    {
+      "id": "pr:16886",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16886,
+      "ref": "botir/preserve-packet-buffer-ranges",
+      "title": "Preserve packet headers when consuming payloads",
+      "url": "https://github.com/google/gvisor/pull/16886",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-03T15:24:10.796603+00:00",
+      "head": "39d91ca98b8216e927b3bc04299de852bb60c6e6",
+      "summary": "The change preserves headers on payload reads. Eight paired AMD64 runs isolate the cost of the first partial read on a hot shared payload. The review asks whether the remaining buffer views can be reused.",
+      "evidence": [
+        {
+          "label": "Partial-read benchstat, original logs and header checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41660785031/artifacts/13241593725"
+        },
+        {
+          "label": "PacketData change measured against its upstream parent",
+          "url": "https://github.com/tamird/gvisor/commit/935fd50ef"
+        },
+        {
+          "label": "Benchmark and correctness controls",
+          "url": "https://github.com/tamird/gvisor/commit/e5c3091ae"
+        }
+      ],
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "39d91ca98b8216e927b3bc04299de852bb60c6e6",
+        "url": "https://github.com/google/gvisor/pull/16886/files#diff-4407c88217d47e4db4ab1795637bad66f4f8a6d6c11c95e5d22169b5022edbc5R666",
+        "title": "Avoid cloning untouched views after a partial packet read",
+        "summary": "Post the inline review on PacketData.ReadTo to the author?",
+        "body": "Keeping the header when consuming payload fixes the corruption. On the first 64-byte read of a hot 1,460-byte payload with 54 bytes of retained headers, [eight paired measurements](https://github.com/tamird/gvisor/actions/runs/41660785031/artifacts/13241593725) show this cost (stock → this change, sec/op):\n\n```text\nPacketReadQualification/size=1460/views=4/headers=54/read=64        123.0n ± 0%    263.9n ± 3%  +114.68% (p=0.000 n=8)\nPacketReadQualification/size=1460/views=16/headers=54/read=64       437.1n ± 1%   1089.0n ± 1%  +149.17% (p=0.000 n=8)\n```\n\nThe stock numbers include the header bug. A headerless packet also pays for the clone: when `dataOffset() == 0`, the buffer can trim its prefix directly. When there is a header, could we remove the consumed bytes without cloning the untouched payload views?\n\nPosted by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-03T15:24:10.796603+00:00"
+      }
     }
   ],
   "edges": [
