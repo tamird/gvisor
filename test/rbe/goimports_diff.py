@@ -9,8 +9,11 @@ import shutil
 import subprocess
 import time
 
-BASE = "0f433775b36d0f73ebb153029747fd4fa5318de3"
-SOURCE = "d140e4d63b51cb5053d57cde308379069b5a6436"
+BASE = "aba6dfd3c19d76dddd8dcf6e3b4c1953af8c52a6"
+PARENT = "c7fa4e24e698ad352f0e7ebc15f6d4ec6dcef16f"
+SOURCE = "264f9bec0b5deeb426c2450977ff41dfca131945"
+DIFF = "golang.org/x/tools/internal/diff"
+GOIMPORTS = "golang.org/x/tools/cmd/goimports"
 WORK = Path(os.environ["RUNNER_TEMP"]) / "goimports-diff-work"
 REPORT = Path(os.environ["RUNNER_TEMP"]) / "goimports-diff-result"
 ENV = {k: v for k, v in os.environ.items() if k in (
@@ -27,7 +30,7 @@ FORMATTED = {
     "dir/input file.go": "package p\n\nfunc f() {\n\tprintln(1)\n}\n",
     "other.go": "package q\n\nvar value = 2\n",
 }
-OUT = {"source": SOURCE, "control": BASE, "verdict": "INCOMPLETE", "phases": {}}
+OUT = {"source": SOURCE, "parent": PARENT, "control": BASE, "verdict": "INCOMPLETE", "phases": {}}
 
 
 def now():
@@ -62,6 +65,58 @@ def checkout(source):
     require(subprocess.check_output(["git", "rev-parse", "HEAD"]).decode().strip() == source,
             "wrong supplier checkout")
     require(not subprocess.check_output(["git", "status", "--porcelain"]), "supplier tree changed")
+
+
+def owner(name, args):
+    row, p = run(name, ["go", "test", "-count=1", "-json", *args])
+    events = [json.loads(s) for s in p.stdout.splitlines() if s.startswith(b"{")]
+    row["cases"] = [{k: e[k] for k in ("Package", "Test", "Action", "Elapsed") if k in e}
+                    for e in events if e.get("Test") and e["Action"] in ("pass", "fail", "skip")]
+    row["packages"] = {e["Package"]: e["Action"] for e in events if not e.get("Test")
+                       and e["Action"] in ("pass", "fail", "skip")}
+    if p.returncode:
+        row["failureOutput"] = "".join(e.get("Output", "") for e in events)[-4000:]
+    save()
+    return row, events
+
+
+def negative():
+    path = "internal/diff/diff_test.go"
+    fixture = subprocess.check_output(["git", "show", PARENT + ":" + path])
+    # Only the parent test file is overlaid on stock; restore it before testing the CLI.
+    stock = Path(path).read_bytes()
+    try:
+        Path(path).write_bytes(fixture)
+        require(subprocess.check_output(["git", "diff", "--name-only"]).decode().splitlines() == [path],
+                "baseline regression overlay changed other source")
+        row, events = owner("baseline_regression", ["-run", "^TestUnifiedJoinedEdits$", "./internal/diff"])
+        output = "".join(e.get("Output", "") for e in events if e.get("Test") == "TestUnifiedJoinedEdits")
+        row["fixtureSha256"] = sha256(fixture).hexdigest()
+        row["verified"] = (row["exit"] == 1 and row["packages"] == {DIFF: "fail"}
+                           and [(e["Package"], e["Test"], e["Action"]) for e in row["cases"]]
+                           == [(DIFF, "TestUnifiedJoinedEdits", "fail")]
+                           and "@@ -8,4 +7,4 @@" in output and "@@ -8,4 +8,4 @@" in output)
+        save()
+    finally:
+        Path(path).write_bytes(stock)
+    checkout(BASE)
+
+
+def suite(arm):
+    packages = {DIFF, DIFF + "/lcs", DIFF + "/difftest"}
+    required = {(DIFF, "TestToUnified"), (DIFF, "TestUnifiedJoinedEdits"), (DIFF + "/lcs", "TestLcsFix"),
+                (DIFF + "/difftest", "TestVerifyUnified")}
+    if arm == "candidate":
+        packages.add(GOIMPORTS)
+        required.update({(GOIMPORTS, "TestCmd"), (GOIMPORTS, "TestDiff")})
+    row, _ = owner(arm + "_owners", ["./internal/diff/..."] + (["./cmd/goimports"] if arm == "candidate" else []))
+    passed = {(e["Package"], e["Test"]) for e in row["cases"] if e["Action"] == "pass"}
+    skipped = {(e["Package"], e["Test"]) for e in row["cases"] if e["Action"] == "skip"}
+    expected_skips = {(DIFF + "/difftest", "TestVerifyUnified/" + c) for c in ("delete_front", "multiple_replace")}
+    row["verified"] = (row["exit"] == 0 and row["packages"] == dict.fromkeys(packages, "pass")
+                       and required <= passed and skipped == expected_skips
+                       and not any(e["Action"] == "fail" for e in row["cases"]))
+    save()
 
 
 def cli(arm, binary):
@@ -125,6 +180,37 @@ def cli(arm, binary):
             b"diff -u stdin.go.orig stdin.go\n--- stdin.go.orig\t\n+++ stdin.go\t\n") and b"\\ No newline" in p.stdout
         save()
         require(row["verified"], "stdin still needs a temporary directory")
+        # Exercise ordinary import resolution as well as the format-only controls.
+        module = directory / "module"
+        module.mkdir()
+        (module / "go.mod").write_text("module example.com/local\n\ngo 1.26\n")
+        source = b"package p\n\nfunc f() { fmt.Println(1) }\n"
+        formatted = b'package p\n\nimport "fmt"\n\nfunc f() { fmt.Println(1) }\n'
+        (module / "main.go").write_bytes(source)
+        # Reproduce the parent's joined-edits shape through goimports itself.
+        lines = [f"\tprintln({i})\n" for i in range(1, 12)]
+        def program(body):
+            return ("package p\n\nfunc joined() {\n" + "".join(body) + "}\n").encode()
+        joined = program([f"\tprintln( {i} )\n" if i in (1, 3, 11) else line
+                          for i, line in enumerate(lines, start=1)])
+        (module / "joined.go").write_bytes(joined)
+        applied = WORK / "ordinary-apply"
+        shutil.copytree(module, applied)
+        sdk_path = str(Path(shutil.which("go", path=ENV["PATH"])).resolve().parent)
+        require(shutil.which("diff", path=sdk_path) is None, "SDK path unexpectedly supplies diff")
+        row, p = run("candidate_ordinary_import", [str(binary), "-d", "main.go", "joined.go"],
+                     cwd=module, env=ENV | {"PATH": sdk_path, "GOPROXY": "off"})
+        patch = subprocess.run([OUT["patchExecutable"], "--batch", "-p0"], input=p.stdout, env=ENV,
+                               cwd=applied, capture_output=True, timeout=30)
+        row["patchExit"] = patch.returncode
+        row["hunkHeaders"] = [s.decode() for s in p.stdout.splitlines() if s.startswith(b"@@")]
+        row["verified"] = (p.returncode == 0 and not p.stderr and b'+import "fmt"' in p.stdout
+                           and "@@ -11,5 +11,5 @@" in row["hunkHeaders"]
+                           and patch.returncode == 0 and (module / "main.go").read_bytes() == source
+                           and (module / "joined.go").read_bytes() == joined
+                           and (applied / "main.go").read_bytes() == formatted
+                           and (applied / "joined.go").read_bytes() == program(lines))
+        save()
 
 
 def main():
@@ -135,26 +221,18 @@ def main():
     OUT["patchExecutable"] = shutil.which("patch")
     OUT["patchVersion"] = subprocess.check_output([OUT["patchExecutable"], "--version"]).decode().splitlines()[0]
     require(OUT["patchVersion"].startswith("GNU patch "), "not the GNU patch oracle")
-    require(subprocess.check_output(["git", "rev-parse", SOURCE + "^"]).decode().strip() == BASE,
-            "control is not the candidate parent")
-    for arm, source in [("control", BASE), ("candidate", SOURCE)]:
+    for tip, parent in [(SOURCE, PARENT), (PARENT, BASE)]:
+        require(subprocess.check_output(["git", "rev-parse", tip + "^"]).decode().strip() == parent,
+                "wrong Gerrit stack")
+    for arm, source in [("control", BASE), ("parent", PARENT), ("candidate", SOURCE)]:
         try:
             checkout(source)
-            if arm == "candidate":
-                row, p = run("owner_tests", ["go", "test", "-count=1", "-json", "./cmd/goimports", "./internal/diff"])
-                events = [json.loads(s) for s in p.stdout.splitlines() if s.startswith(b"{")]
-                row["cases"] = [{k: e[k] for k in ("Package", "Test", "Action", "Elapsed") if k in e}
-                                for e in events if e.get("Test") and e["Action"] in ("pass", "fail", "skip")]
-                row["packages"] = [{"name": e["Package"], "status": e["Action"]} for e in events
-                                   if not e.get("Test") and e["Action"] in ("pass", "fail", "skip")]
-                if p.returncode:
-                    row["failureOutput"] = "".join(e.get("Output", "") for e in events)[-4000:]
-                row["verified"] = p.returncode == 0 and len(row["packages"]) == 2 and {
-                    e["name"]: e["status"] for e in row["packages"]} == {
-                        "golang.org/x/tools/cmd/goimports": "pass", "golang.org/x/tools/internal/diff": "pass",
-                    } and {e["Test"] for e in row["cases"] if e["Package"].endswith("/cmd/goimports") and e["Action"] == "pass"} == {"TestCmd", "TestDiff"}
-                row["verified"] &= all(e["Action"] == "pass" for e in row["cases"])
-                save()
+            if arm == "control":
+                negative()
+            else:
+                suite(arm)
+            if arm == "parent":
+                continue
             binary = WORK / ("goimports-" + arm)
             row, p = run(arm + "_build", ["go", "build", "-o", str(binary), "./cmd/goimports"])
             row["verified"] = p.returncode == 0
@@ -168,9 +246,10 @@ def main():
         except Exception as e:
             OUT[arm + "Error"] = {"type": type(e).__name__, "message": str(e)}
             save()
-    expected = {"owner_tests", "candidate_stdin_no_tmp"} | {
+    expected = {"baseline_regression", "parent_owners", "candidate_owners", "candidate_stdin_no_tmp",
+                "candidate_ordinary_import"} | {
         arm + "_" + phase for arm in ("control", "candidate") for phase in ("build", "patch", "clean", "changed", "invalid")}
-    require(not any(k in OUT for k in ("controlError", "candidateError"))
+    require(not any(k in OUT for k in ("controlError", "parentError", "candidateError"))
             and set(OUT["phases"]) == expected and all(r["verified"] for r in OUT["phases"].values()),
             "missing or failed qualification phase")
     OUT["verdict"] = "PASS"
