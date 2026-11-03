@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T06:24:21.015903+00:00",
+    "updatedAt": "2026-11-03T07:06:47.467598+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2264,26 +2264,58 @@
       "id": "branch:bazel-clang-tidy-llvm",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "bazel-clang-tidy-current",
+      "ref": "review/clang-tidy-compile-actions",
       "title": "Run clang-tidy through Bazel compile actions",
-      "url": "https://github.com/tamird/gvisor/commit/e312033b85f31626dacbece4fb65db81adaca947",
+      "url": "https://github.com/tamird/gvisor/commit/49c4a3a92",
       "group": "release",
-      "status": "Contributor approved; waiting for prerequisites",
-      "summary": "Contributor acceptance is complete after removing four unused manual fixture files (83 lines) that obscured how validation worked. The production implementation is unchanged from the validated source. Actual LLVM positive and negative controls and the full two-architecture lint result remain valid: 371 AMD64 and 370 ARM64 actions. The failed standalone GNU probe is preserved; no GNU compatibility is claimed.\n\nEarlier source-specific record:\n\nRefreshed source ab759926b0 retains the compiler prerequisite. The standalone GNU probe failed on a GCC-only flag and missing <vector>; configured graph preparation and buildifier passed, but ARM execution was not attempted. Root will qualify the unchanged lint implementation on the refreshed compiler composition. No contributor review or current LLVM result is claimed.\n\nEarlier source-specific evidence:\n\nCurrent disposition: code dependency. Root to reconcile the actual source prerequisite or replacement. Preserve source; a review request alone cannot clear the dependency.\n\nEarlier source and validation record (historical request wording does not establish a current unanswered question):\n\nUses clang-tidy from the existing hermetic LLVM compiler supplier. On the qualification branch, focused AMD64 and ARM64 checks pass, and full AMD64 lint produces 368 reports. Canonical Fetch/Verify passes for 706 catalog entries. Current source 40dc10a02 and the generated catalog are integrated in d6a21b8b7. Contributor review remains pending; the old wheel-based branch is historical.",
-      "updatedAt": "2026-11-03T06:16:06.081403+00:00",
+      "status": "Contributor review requested",
+      "summary": "Bazel runs clang-tidy for each configured C++ compilation. The revised action calls clang-tidy directly and declares its frontend diagnostics file. On an AMD64 image containing only /hello, two clean actions produced identical files. An invalid include printed its source line and check name in the Bazel log and failed the build. The previous revision covered 371 AMD64 and 370 ARM64 actions.",
+      "updatedAt": "2026-11-03T07:06:47.467598+00:00",
       "followup": {
-        "owner": "root",
-        "sourceHead": "e312033b85f31626dacbece4fb65db81adaca947",
-        "observedAt": "2026-11-03T06:16:06.081403+00:00",
-        "disposition": "Contributor approved; waiting for prerequisites",
-        "nextAction": "Replace the shell that captures clang-tidy output, and qualify readable failures and clean checks on remote workers. The existing version passed contributor review. The compiler migration and #16236 remain delivery prerequisites.",
+        "owner": "Contributor",
+        "sourceHead": "49c4a3a920d738e4bb92d72b41ddfe3a5a8b8ecb",
+        "observedAt": "2026-11-03T07:06:47.467598+00:00",
+        "disposition": "Contributor review requested",
+        "nextAction": "Review the direct invocation. #16236 and #16313 have merged. Run the full integrated AMD64 and ARM64 selection before opening this PR after the compiler prerequisite.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/e312033b85f31626dacbece4fb65db81adaca947",
-          "https://github.com/google/gvisor/pull/16313",
-          "https://github.com/google/gvisor/pull/16236"
+          "https://github.com/tamird/gvisor/actions/runs/41593214329/artifacts/13211346681",
+          "https://app.buildbuddy.io/invocation/65a0825c-34d6-4e58-8bd8-a3eaee9d289e"
         ]
       },
-      "head": "e312033b85f31626dacbece4fb65db81adaca947"
+      "head": "49c4a3a920d738e4bb92d72b41ddfe3a5a8b8ecb",
+      "refinement": {
+        "before": {
+          "head": "e312033b85f31626dacbece4fb65db81adaca947"
+        },
+        "after": {
+          "head": "49c4a3a920d738e4bb92d72b41ddfe3a5a8b8ecb"
+        }
+      },
+      "evidence": [
+        {
+          "label": "Previously approved compile-action implementation",
+          "url": "https://github.com/tamird/gvisor/commit/e312033b8"
+        },
+        {
+          "label": "Clean and failing actions on the one-file AMD64 worker image",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41593214329/artifacts/13211346681"
+        },
+        {
+          "label": "Include-cleaner location, check name and exit status",
+          "url": "https://app.buildbuddy.io/invocation/65a0825c-34d6-4e58-8bd8-a3eaee9d289e"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "49c4a3a920d738e4bb92d72b41ddfe3a5a8b8ecb",
+        "baseHead": "b4bb99dcbddc1d9de84365d7f62f44e301101eb0",
+        "url": "https://github.com/tamird/gvisor/commit/49c4a3a92",
+        "title": "Run clang-tidy through Bazel compile actions",
+        "summary": "Bazel runs clang-tidy for each configured C++ compilation. The revised action calls clang-tidy directly and declares its frontend diagnostics file. On an AMD64 image containing only /hello, two clean actions produced identical files. An invalid include printed its source line and check name in the Bazel log and failed the build. The previous revision covered 371 AMD64 and 370 ARM64 actions.",
+        "body": "A source file can compile with different flags and headers in different\ntargets. Running clang-tidy once per source in a local execution root\nmisses those differences and keeps Bazel from scheduling lint remotely.\n\nRun the LLVM toolchain's clang-tidy for each configured compilation of\nrepository sources. Pass the compile action's arguments, declared\ninputs and clang-tidy's matching builtin headers. Share header\ndiscovery with the editor's compilation database and include transitive\ngenerated sources in that database. Keep generated and third-party\nsources outside the lint selection.\n\nDeclare a serialized Clang frontend diagnostics file for each action.\nClang writes it even on a clean run, so Bazel can invoke clang-tidy\ndirectly without a shell. Read clang-tidy findings in the Bazel action\nlog. With warnings treated as errors, clang-tidy's exit status replaces\nthe Python diagnostic parser and thread pool.",
+        "requestedAt": "2026-11-03T07:06:47.467598+00:00"
+      }
     },
     {
       "id": "pr:15307",
@@ -43812,9 +43844,9 @@
       "title": "Run Buildkite Nogo tests without starting the builder",
       "url": "https://github.com/tamird/gvisor/commit/a19da812a",
       "group": "analysis",
-      "status": "Agent work",
-      "updatedAt": "2026-11-03T04:32:11.975385+00:00",
-      "summary": "Both native Buildkite Nogo jobs keep make nogo-tests and the original target selection. Three analyzer owners ran for AMD64 and ARM64; the ordinary Go test was excluded. An intentional self-assignment failed only the selected owner (Bazel exit 3, Make exit 2). The hook located its original diagnostic. This did not rerun the full wildcard. The historical 871-owner qualification used different sources.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-03T07:06:47.467598+00:00",
+      "summary": "Both Buildkite jobs run make nogo-tests on the agent. On the proposed pipeline change, the failure hook found an injected analyzer error. On a separate Linux integration source with the proposed compiler, native Make exited successfully and all 871 selected analyzer tests ran. Their reports cover AMD64 and ARM64. The four pipeline lines still depend on the compiler and the shared Bazelisk setup.",
       "evidence": [
         {
           "label": "597 original Nogo tests with both architecture reports",
@@ -43855,20 +43887,26 @@
         {
           "label": "Native Make, both architecture reports, and the failed-log handoff",
           "url": "https://github.com/tamird/gvisor/actions/runs/41576928150/artifacts/13205005426"
+        },
+        {
+          "label": "All 871 fresh analyzer owners on the compiler integration source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41590585980/artifacts/13209552914"
+        },
+        {
+          "label": "Native executions, AMD64/ARM64 ELF inputs and selected linker tools",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41593578228/artifacts/13211446882"
         }
       ],
       "followup": {
-        "owner": "Workstream owner",
+        "owner": "Contributor",
         "sourceHead": "a19da812a7d6abefcb48cdddf5dba24f0e178e02",
-        "observedAt": "2026-11-03T04:32:11.975385+00:00",
-        "disposition": "Cache and diagnostics verified; cross-compiler owners still need qualification",
-        "nextAction": "Qualify the selected vdsodata_nogo and sysmsg_nogo owners with the proposed compiler on the actual worker configuration; both fail without the ARM cross compiler. The shared native Bazelisk setup is a separate delivery prerequisite.",
+        "observedAt": "2026-11-03T07:06:47.467598+00:00",
+        "disposition": "Contributor review requested",
+        "nextAction": "Review the four pipeline lines. Open after the compiler and the native Buildkite bootstrap land. The integration run used a hosted Linux worker. Verification of one compiler-wrapper symlink in its execution records is separate.",
         "evidence": [
-          "https://buildkite.com/gvisor/pipeline/builds/53249",
-          "https://github.com/tamird/gvisor/commit/75c04f42d",
           "https://github.com/tamird/gvisor/actions/runs/41576928150/artifacts/13205005426",
-          "https://github.com/tamird/gvisor/actions/runs/41353178606/artifacts/13101943112",
-          "https://github.com/tamird/gvisor/actions/runs/41353882134/artifacts/13101954456"
+          "https://github.com/tamird/gvisor/actions/runs/41590585980/artifacts/13209552914",
+          "https://github.com/tamird/gvisor/actions/runs/41593578228/artifacts/13211446882"
         ]
       },
       "refinement": {
@@ -43878,6 +43916,17 @@
         "after": {
           "head": "a19da812a7d6abefcb48cdddf5dba24f0e178e02"
         }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "a19da812a7d6abefcb48cdddf5dba24f0e178e02",
+        "baseHead": "75c04f42d5b7346e4a54a5991dfaf31b043b6769",
+        "url": "https://github.com/tamird/gvisor/commit/a19da812a",
+        "title": "Run Buildkite Nogo tests without starting the builder",
+        "summary": "Both Buildkite jobs run make nogo-tests on the agent. On the proposed pipeline change, the failure hook found an injected analyzer error. On a separate Linux integration source with the proposed compiler, native Make exited successfully and all 871 selected analyzer tests ran. Their reports cover AMD64 and ARM64. The four pipeline lines still depend on the compiler and the shared Bazelisk setup.",
+        "body": "Run make nogo-tests directly on the Buildkite worker. Make passes the\nagent’s remote cache options to Bazel and records local paths for failed\ntest logs. Both jobs keep the same Nogo target selection.",
+        "requestedAt": "2026-11-03T07:06:47.467598+00:00"
       }
     },
     {
@@ -44555,8 +44604,8 @@
       "url": "https://github.com/google/gvisor/pull/16867",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T05:54:19.256070+00:00",
-      "summary": "On the same verified 50,000-file checkpoint, eight alternating pairs used 135.6 MiB instead of 137.5 MiB allocated; post-GC heap fell from 67.04 to 66.62 MiB. Kernel decode time was indistinguishable (213.4 vs 212.2 ms, p=.505). With #16860 already applied, queue reuse reduced allocation from 121.8 to 119.9 MiB per decode and post-GC heap from 63.88 to 63.46 MiB. Kernel decode time in that comparison fell from 182.3 to 176.0 ms (eight pairs, p=.038).",
+      "updatedAt": "2026-11-03T07:06:47.467598+00:00",
+      "summary": "On the same verified 50,000-file checkpoint, eight alternating pairs used 135.6 MiB instead of 137.5 MiB allocated; post-GC heap fell from 67.04 to 66.62 MiB. Kernel decode time was indistinguishable (213.4 vs 212.2 ms, p=.505). With #16860 already applied, queue reuse reduced allocation from 121.8 to 119.9 MiB per decode and post-GC heap from 63.88 to 63.46 MiB. Kernel decode time in that comparison fell from 182.3 to 176.0 ms (eight pairs, p=.038). With #16860 applied, the first successful guest command after restoring a 50,000-file tmpfs tree took 227.8 ms without queue reuse and 241.6 ms with it (benchstat p=.195, eight alternating pairs). All 18 restores, including both warmups, verified the file count. The guest timing does not establish a speedup.",
       "evidence": [
         {
           "label": "Benchstat and all 16 decodes with #16860 applied",
@@ -44573,6 +44622,10 @@
         {
           "label": "Allocation profiles on one frozen checkpoint and correctness controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/41422456146/artifacts/13131506474"
+        },
+        {
+          "label": "First guest command with #16860 applied, benchstat and all 18 native results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41592478209/artifacts/13211487269"
         }
       ],
       "settledReviews": [
