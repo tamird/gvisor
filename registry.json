@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T20:02:04.782774+00:00",
+    "updatedAt": "2026-11-03T20:10:46.936496+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1827,12 +1827,12 @@
       "summary": "The GNU-only change builds both static binaries. On a host with /dev/vhost-net, the published plugin initialized but its Sentry exited before the guest opened either socket. Native Linux exchanged both TCP and UDP payloads on the same Docker bridge. Earlier diagnostics traced the startup failure to a glibc allocator call blocked by seccomp and reproduced it on the unchanged parent. The separate musl binaries passed the bridge test.",
       "number": 15153,
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-11-03T20:02:04.782774+00:00",
+      "updatedAt": "2026-11-03T20:10:46.936496+00:00",
       "followup": {
-        "disposition": "Contributor review requested",
+        "disposition": "Amendment published and reviewer answered",
         "owner": "root",
-        "nextAction": "Publish after contributor review.",
-        "sourceHead": "675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa",
+        "nextAction": "Check the private importer result when it is reported upstream.",
+        "sourceHead": "c7c5dce62b1e19f4bfe3f6231e368fa9219b2986",
         "reviewedAt": "2026-11-03T19:17:53Z",
         "reviewDecision": null,
         "mergeable": "MERGEABLE",
@@ -1846,18 +1846,19 @@
           "https://github.com/tamird/gvisor/commit/c7c5dce62",
           "https://github.com/tamird/gvisor/actions/runs/41705510705",
           "https://github.com/tamird/gvisor/actions/runs/41705510705/artifacts/13266815840",
-          "https://github.com/tamird/gvisor/actions/runs/41708363052/artifacts/13267960556"
+          "https://github.com/tamird/gvisor/actions/runs/41708363052/artifacts/13267960556",
+          "https://github.com/google/gvisor/pull/15153#discussion_r4459868583"
         ],
-        "observedAt": "2026-11-03T20:02:04.782774+00:00",
-        "providerHead": "675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa"
+        "observedAt": "2026-11-03T20:10:46.936496+00:00",
+        "providerHead": "c7c5dce62b1e19f4bfe3f6231e368fa9219b2986"
       },
-      "head": "675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa",
+      "head": "c7c5dce62b1e19f4bfe3f6231e368fa9219b2986",
       "refinement": {
         "before": {
-          "head": "a3818d1793b919df1feeeb1c028cc40158754a7e"
+          "head": "675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa"
         },
         "after": {
-          "head": "85c742f25194e6198c292e099754f09549f09cdf"
+          "head": "c7c5dce62b1e19f4bfe3f6231e368fa9219b2986"
         }
       },
       "evidence": [
@@ -1952,19 +1953,22 @@
         {
           "label": "Prior proposal and rebase history",
           "url": "https://github.com/tamird/gvisor/blob/a05683ce8/registry.json#L1815"
+        },
+        {
+          "label": "Reply on the DPDK package import thread",
+          "url": "https://github.com/google/gvisor/pull/15153#discussion_r4459868583"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "c7c5dce62b1e19f4bfe3f6231e368fa9219b2986",
-        "baseHead": "675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa",
-        "url": "https://github.com/tamird/gvisor/commit/c7c5dce62",
-        "title": "Keep the DPDK compiler toolchain in the external package",
-        "requestedAt": "2026-11-03T20:02:04.782774+00:00",
-        "summary": "Publish this amendment and reply on the original thread?",
-        "body": "Only the external DPDK package instantiates the toolchain. The main package declares the helper’s rules_cc dependency. All three GNU AMD64 targets built, and the executable from that build started.\nPublish after contributor review.\n\nProposed reply: Moved the toolchain into @libpluginstack. The main package now exports the build files and declares the helper’s rules_cc dependency. The package queries pass and the linked runsc starts."
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "c7c5dce62b1e19f4bfe3f6231e368fa9219b2986",
+          "url": "https://github.com/tamird/gvisor/commit/c7c5dce62",
+          "at": "2026-11-03T20:10:46.936496+00:00",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/15153#discussion_r4459868583"
+        }
+      ]
     },
     {
       "id": "pr:16236",
@@ -27190,14 +27194,14 @@
       "url": "https://github.com/google/gvisor/pull/16419",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T20:02:04.782774+00:00",
+      "updatedAt": "2026-11-03T20:10:46.936496+00:00",
       "summary": "The reviewed repeated-timeout amendment is now published as #16419 at c25ba441f. It starts a new loss episode on any advancing cumulative ACK, including a partial-segment ACK, while a SACK alone does not reset the episode. A zero-window probe with no data in flight retains the congestion window and threshold. The focused remote qualification passes 425 records. No contributor decision remains; the delivery owner is completing the associated review responses. If #15604 lands first, synchronize its two new HandleRTOExpired test calls with this signature; neither PR independently requires the other.\n\nEarlier source-specific record:\n\nThe approved e396b8c8a proposal is delivered as #16419 at d13561b12 with an identical diff. No contributor decision remains pending. Current public checks and maintainer review are tracked on the PR.\n\nA ten-segment flight set the slow-start threshold to five segments with Reno and seven with CUBIC on the first timeout. When the same retransmission timed out again, the sender reduced the threshold to two. The published change preserves five or seven until a timeout reaches new data, as RFC 5681 requires. In separate tests with no ACK and a half-segment ACK, the old code failed four cases per run; both corrected runs passed all 13 cases. These tests cover repeated timeouts on the same bytes; #16393 reported advancing oldest data.\n\nBroader validation passed 536 records across TCP, race, packet and analyzer checks, with one existing RACK skip. All seven packet cases passed. Each analyzer passed for AMD64 and ARM64; the runtime checks were on AMD64.\n\nThe current integration at 185276b5b, which includes this fix, also passed its selected public socket slice: 11 targets and 38 sharded attempts, with 1,686 positive records, 32 known skips and no failures or missing results. Coverage includes ordinary AMD64, emulated ARM64 variants including 64 KiB pages, and separate AMD64 UNIX-stream save/restore cases. The TCP suite itself excludes save/restore. This is integration evidence, separate from the standalone repeated-timeout regression.",
       "followup": {
         "sourceHead": "8c03c2e9ce3d2e3a1db11d7a02ff519abd22c640",
-        "owner": "root",
-        "observedAt": "2026-11-03T20:02:04.782774+00:00",
-        "disposition": "Contributor review requested",
-        "nextAction": "Publish and reply once both cases pass on Linux and gVisor at this commit.",
+        "owner": "TCP workstream",
+        "observedAt": "2026-11-03T20:10:46.936496+00:00",
+        "disposition": "Contributor approved; packet checks running",
+        "nextAction": "Verify both cases on Linux and gVisor, then publish the approved amendment and reply to Lucas.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/b84d8479-53da-4b50-9823-b7de420223d4",
           "https://github.com/google/gvisor/pull/16419",
@@ -27208,7 +27212,8 @@
           "https://app.buildbuddy.io/invocation/a797de55-0d7c-465a-b6f6-07fa0952a90b",
           "https://app.buildbuddy.io/invocation/41a38860-e1bf-4a91-8278-ea68ef60b656",
           "https://github.com/tamird/gvisor/actions/runs/41708548483",
-          "https://github.com/google/gvisor/pull/16419#discussion_r4459604147"
+          "https://github.com/google/gvisor/pull/16419#discussion_r4459604147",
+          "https://github.com/tamird/gvisor/commit/67260334d"
         ]
       },
       "evidence": [
@@ -27266,17 +27271,16 @@
         }
       ],
       "number": 16419,
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "67260334de03b62815627b85207fed41f9d15062",
-        "baseHead": "8c03c2e9ce3d2e3a1db11d7a02ff519abd22c640",
-        "url": "https://github.com/tamird/gvisor/commit/67260334d",
-        "title": "Check the threshold after two timeouts on Linux and gVisor",
-        "requestedAt": "2026-11-03T20:02:04.782774+00:00",
-        "summary": "Publish this amendment and reply on the original thread?",
-        "body": "The packet test reads TCP_INFO before and after a second timeout. With no ACK, Linux kept its threshold at 5 and gVisor at 4. After an ACK covering half a segment both cut it to 2. Those measurements used the earlier test.\nPublish and reply once both cases pass on Linux and gVisor at this commit.\n\nProposed reply: Added the packetimpact test. It reads TCP_INFO after two timeouts on Linux and gVisor, with and without an ACK covering half a segment."
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "67260334de03b62815627b85207fed41f9d15062",
+          "url": "https://github.com/tamird/gvisor/commit/67260334d",
+          "at": "2026-11-03T20:10:46.936496+00:00",
+          "outcome": "approved",
+          "body": "The packet test reads TCP_INFO before and after a second timeout. With no ACK, Linux kept its threshold at 5 and gVisor at 4. After an ACK covering half a segment both cut it to 2. Those measurements used the earlier test.\nPublish and reply once both cases pass on Linux and gVisor at this commit.\n\nProposed reply: Added the packetimpact test. It reads TCP_INFO after two timeouts on Linux and gVisor, with and without an ACK covering half a segment."
+        }
+      ]
     },
     {
       "id": "branch:hermetic-llvm-project",
@@ -45827,13 +45831,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/tcp-info-total-retrans",
-      "head": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689",
+      "head": "bbdb2f8a254b4f51e5bf1fa96eaf4872be190d63",
       "number": 16809,
       "title": "Report retransmitted segments in TCP_INFO",
       "url": "https://github.com/google/gvisor/pull/16809",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T19:22:46.745532+00:00",
+      "updatedAt": "2026-11-03T20:10:46.936496+00:00",
       "summary": "Expose the socket’s lifetime retransmission count to applications diagnosing packet loss.",
       "evidence": [
         {
@@ -45851,6 +45855,18 @@
         {
           "label": "Copybara export of the approved bc9ffcc0d head",
           "url": "https://github.com/google/gvisor/pull/16915"
+        },
+        {
+          "label": "Corrected SYN-cookie error return",
+          "url": "https://github.com/tamird/gvisor/compare/bc9ffcc0d...bbdb2f8a2"
+        },
+        {
+          "label": "Re-approval request to Parth",
+          "url": "https://github.com/google/gvisor/pull/16809#issuecomment-6614296745"
+        },
+        {
+          "label": "Refused SYN-ACK and listener warning on the corrected source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41702202296/artifacts/13264951278"
         }
       ],
       "settledReviews": [
@@ -45859,19 +45875,36 @@
           "head": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689",
           "outcome": "approved",
           "at": "2026-11-02T16:25:23.256481+00:00"
+        },
+        {
+          "kind": "amendment",
+          "head": "bbdb2f8a254b4f51e5bf1fa96eaf4872be190d63",
+          "url": "https://github.com/tamird/gvisor/compare/bc9ffcc0d...bbdb2f8a2",
+          "at": "2026-11-03T20:10:46.936496+00:00",
+          "outcome": "approved"
         }
       ],
       "followup": {
         "owner": "TCP workstream",
-        "sourceHead": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689",
-        "observedAt": "2026-11-03T19:22:46.745532+00:00",
-        "disposition": "Approved head matches open Copybara export #16915",
-        "nextAction": "Follow the export; the change to return a failed cookie send is under separate review.",
+        "sourceHead": "bbdb2f8a254b4f51e5bf1fa96eaf4872be190d63",
+        "observedAt": "2026-11-03T20:10:46.936496+00:00",
+        "disposition": "Corrected source published; earlier export awaits re-approval",
+        "nextAction": "Follow Parth’s re-approval and check that the Copybara version returns the failed send to the listener. If the earlier export lands first, submit the tested correction on top.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16809",
           "https://github.com/google/gvisor/pull/16915",
-          "https://github.com/tamird/gvisor/commit/bbdb2f8a2"
+          "https://github.com/tamird/gvisor/commit/bbdb2f8a2",
+          "https://github.com/google/gvisor/pull/16809#issuecomment-6614296745",
+          "https://github.com/tamird/gvisor/compare/bc9ffcc0d...bbdb2f8a2"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689"
+        },
+        "after": {
+          "head": "bbdb2f8a254b4f51e5bf1fa96eaf4872be190d63"
+        }
       }
     },
     {
@@ -47792,9 +47825,9 @@
       "title": "Return SYN-cookie send errors to the TCP listener",
       "url": "https://github.com/tamird/gvisor/commit/bbdb2f8a2",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-03T19:22:46.745532+00:00",
-      "summary": "When the link rejects a SYN-cookie reply, #16809 counts the generated cookie but returns success to the listener. This follow-up keeps that count and returns the send error so the listener can log it.",
+      "status": "Delivered",
+      "updatedAt": "2026-11-03T20:10:46.936496+00:00",
+      "summary": "Published directly on #16809. The PR tracks maintainer re-approval and the Copybara import.",
       "evidence": [
         {
           "label": "One insertion and two deletions on the published bc9ffcc0d head",
@@ -47811,19 +47844,22 @@
         {
           "label": "Exact parent awaiting import",
           "url": "https://github.com/google/gvisor/pull/16915"
+        },
+        {
+          "label": "Published correction on #16809",
+          "url": "https://github.com/google/gvisor/pull/16809"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "bbdb2f8a254b4f51e5bf1fa96eaf4872be190d63",
-        "baseHead": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689",
-        "url": "https://github.com/tamird/gvisor/compare/bc9ffcc0d...bbdb2f8a2",
-        "title": "Return SYN-cookie send errors to the TCP listener",
-        "requestedAt": "2026-11-03T19:22:46.745532+00:00",
-        "summary": "Open this follow-up after #16915 lands and the author’s open-PR limit allows?",
-        "body": "The listener logs a rate-limited warning when it cannot send a packet.\nReturning success after a failed SYN-cookie reply hides that diagnostic.\nCount the generated cookie before sending the SYN-ACK so a failed write\nboth contributes to the cookie count and reaches the listener."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "bbdb2f8a254b4f51e5bf1fa96eaf4872be190d63",
+          "url": "https://github.com/tamird/gvisor/compare/bc9ffcc0d...bbdb2f8a2",
+          "at": "2026-11-03T20:10:46.936496+00:00",
+          "outcome": "approved"
+        }
+      ],
+      "inactive": true
     }
   ],
   "edges": [
@@ -51448,16 +51484,6 @@
       "to": "pr:16905",
       "reason": "The approved fork source is the head of the published keepalive PR.",
       "evidence": "https://github.com/google/gvisor/pull/16905"
-    },
-    {
-      "type": "depends_on",
-      "from": "pr:16809",
-      "to": "branch:tcp-info-cookie-send-error",
-      "reason": "The follow-up returns the SYN-cookie send error on top of the approved accounting change, currently exported in #16915.",
-      "evidence": [
-        "https://github.com/google/gvisor/pull/16915",
-        "https://github.com/tamird/gvisor/commit/bbdb2f8a2"
-      ]
     }
   ],
   "investigations": [
