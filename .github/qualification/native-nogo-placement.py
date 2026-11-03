@@ -56,7 +56,7 @@ def command_files(args, declared):
 
 
 def inspect(path, commands=False):
-    files, inputs, selected = {}, {}, []
+    files, inputs, selected, symlinks = {}, {}, [], []
     counts = Counter()
     invocation = None
     with subprocess.Popen(["zstd", "-qdc", str(path)], stdout=subprocess.PIPE) as process:
@@ -71,6 +71,12 @@ def inspect(path, commands=False):
             if 6 in entry:
                 item = fields(first(entry, 6))
                 inputs[key] = (integers(item.get(5, [])), integers(item.get(4, [])))
+            if commands and 8 in entry:
+                item = fields(first(entry, 8))
+                link = {name: first(item, field).decode() for name, field in
+                        (("input", 1), ("output", 2), ("owner", 3), ("mnemonic", 4))}
+                if "link-wrapper-clang++" in link["output"]:
+                    symlinks.append(link)
             if 7 not in entry:
                 continue
             spawn = fields(first(entry, 7))
@@ -134,7 +140,7 @@ def inspect(path, commands=False):
                                                       if item["index"] and args[item["index"] - 1] == "-c"]
             selected.append(row)
         require(process.wait() == 0, "incomplete compact log")
-    return {"invocation": invocation, "actions": selected,
+    return {"invocation": invocation, "actions": selected, "symlinks": symlinks,
             "counts": [{"mnemonic": k[0], "runner": k[1], "cached": k[2], "count": v}
                        for k, v in sorted(counts.items())]}
 
@@ -168,7 +174,25 @@ def summarize_compilers(value):
             "initial_issue_count": len(issues), "issue_examples": issues[:8]}
 
 
-def resolve_links(actions, report, read_file, save):
+def resolve_output(path: str, symlinks: list[dict[str, str]]) -> tuple[str, list[dict[str, str]]]:
+    """Follow Bazel's executed SymlinkAction records, not filesystem guesses."""
+    links = defaultdict(list)
+    for link in symlinks:
+        links[link["output"]].append(link)
+    chain = []
+    visited = set()
+    while path in links:
+        require(path not in visited, "cyclic wrapper symlink")
+        require(len(links[path]) == 1, "ambiguous wrapper symlink")
+        require(len(chain) < 16, "wrapper symlink chain exceeds bound")
+        visited.add(path)
+        link, = links[path]
+        chain.append(link)
+        path = link["input"]
+    return path, chain
+
+
+def resolve_links(actions, symlinks, report, read_file, save):
     cpp = [a for a in actions if a["mnemonic"] in {"CppCompile", "CppLink"}]
     report["indirect_links"] = [a for a in cpp if not a["tools"]]
     for action in report["indirect_links"]:
@@ -189,6 +213,8 @@ def resolve_links(actions, report, read_file, save):
                 or not clangxx or not clangxx["path"].endswith("/clang++") or not valid_digest(clangxx["digest"])
                 or env["dsym_requested"] or env["interface_requested"]):
             continue
+        produced_path, chain = resolve_output(driver["path"], symlinks)
+        action["wrapper_symlink_chain"] = chain
         # v0.8.24 link_wrapper.c calls execv(LLVM_CLANGXX, argv). Bind the
         # executed wrapper through its actual object producer to that source.
         objects = [a for a in cpp if a["mnemonic"] == "CppCompile" and any(
@@ -196,7 +222,7 @@ def resolve_links(actions, report, read_file, save):
             ["8b29485c9804c8b8a986659949ae7436f255d78f49d1abc852c93502660e4a63", 9273]
             for item in a.get("wrapper_compile_sources", []))]
         producers = [a for a in cpp if a["mnemonic"] == "CppLink"
-                     and {"path": driver["path"], "digest": driver["digest"]} in a["outputs"]
+                     and {"path": produced_path, "digest": driver["digest"]} in a["outputs"]
                      and any(item in obj["outputs"] for item in a.get("wrapper_inputs", []) for obj in objects)]
         action["wrapper_compile_producers"] = objects
         action["wrapper_link_producers"] = producers
@@ -305,7 +331,7 @@ def check(mode, value=None, read_file=None, expected_invocation=None):
             for owner in COWNERS:
                 require({o["machine"] for a in compiled if a["owner"] == owner for o in a["outputs"]} == {62, 183},
                         "missing embedded target architecture")
-            resolve_links(rows, report, load, lambda: write(mode, report))
+            resolve_links(rows, value.get("symlinks", []), report, load, lambda: write(mode, report))
             validate_cpp(cpp, report)
             local = report["local_go_actions"]
             require(local and all(a["runner"] == "local" and a["exit"] == 0 and not a["status"] for a in local)
@@ -342,6 +368,7 @@ def recover():
             function(row)
             row["verified"] = True
         except Exception as exc:
+            row["verified"] = False
             row["error_type"] = type(exc).__name__
             if isinstance(exc, ValueError):
                 row["error"] = str(exc)[:400]
@@ -460,6 +487,10 @@ def recover():
 
         try:
             checked = check("compiler", value, read, invocation)
+            links = checked["indirect_links"]
+            require(len(links) == 2 and all(
+                a["owner"] == "//tools/ioctl_sniffer:ioctl_hook" and a["indirection_verified"]
+                and a["wrapper_symlink_chain"] for a in links), "original wrapper pair differs")
         finally:
             row.update(json.loads((OUT / "compiler.json").read_text()))
             save()
@@ -471,17 +502,43 @@ def recover():
         import copy
         require("compiler_rows" in records, "positive compiler fixture unavailable")
         row["negative_cases"] = {}
-        for case in ("empty_cpp", "missing_tool_digest", "unknown_wrapper_source", "wrong_placement"):
+        expected_errors = {
+            "empty_cpp": "no C++ action evidence",
+            "ambiguous_wrapper_symlink": "ambiguous wrapper symlink",
+            "cyclic_wrapper_symlink": "cyclic wrapper symlink",
+        }
+        for case in ("empty_cpp", "missing_tool_digest", "unknown_wrapper_source", "wrong_placement",
+                     "missing_wrapper_symlink", "ambiguous_wrapper_symlink", "cyclic_wrapper_symlink",
+                     "wrong_wrapper_digest", "wrong_wrapper_object"):
             value = copy.deepcopy(records["compiler_rows"])
             if case == "empty_cpp":
                 value["actions"] = [a for a in value["actions"] if a["mnemonic"] not in {"CppCompile", "CppLink"}]
+            elif case == "missing_wrapper_symlink":
+                value["symlinks"] = []
+            elif case in {"ambiguous_wrapper_symlink", "cyclic_wrapper_symlink"}:
+                first_link = records["compiler_report"]["indirect_links"][0]["wrapper_symlink_chain"][0]
+                link, = [link for link in value["symlinks"] if link["output"] == first_link["output"]]
+                if case == "ambiguous_wrapper_symlink":
+                    value["symlinks"].append(copy.deepcopy(link))
+                else:
+                    link["input"] = link["output"]
+            elif case == "wrong_wrapper_digest":
+                for action in value["actions"]:
+                    if action["mnemonic"] == "CppLink" and not action["tools"]:
+                        action["command_files"][0]["digest"] = ["0" * 64, 1]
+            elif case == "wrong_wrapper_object":
+                for action in value["actions"]:
+                    if action["mnemonic"] == "CppLink":
+                        for item in action.get("wrapper_inputs", []):
+                            item["digest"] = ["0" * 64, 1]
             elif case == "unknown_wrapper_source":
                 for action in value["actions"]:
                     for item in action.get("wrapper_compile_sources", []):
                         if item["path"].endswith("/link_wrapper.c"):
                             item["digest"] = ["0" * 64, 9273]
             else:
-                action = next(a for a in value["actions"] if a["mnemonic"] == "CppCompile")
+                action = next(a for a in value["actions"]
+                              if a["mnemonic"] == "CppCompile" and a["owner"] not in COWNERS)
                 if case == "missing_tool_digest":
                     action["tools"][0]["digest"] = ["", 0]
                 else:
@@ -491,6 +548,8 @@ def recover():
             except ValueError as exc:
                 result = json.loads((OUT / "compiler.json").read_text())
                 require(not result["verified"], "negative fixture lost its failure")
+                expected = expected_errors.get(case, "C++ action placement or input evidence incomplete")
+                require(str(exc) == expected, "wrong negative fixture diagnostic: " + case)
                 row["negative_cases"][case] = {"rejected": True, "error": str(exc)}
             else:
                 raise ValueError("negative fixture was accepted: " + case)
