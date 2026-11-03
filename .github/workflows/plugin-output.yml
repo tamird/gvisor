@@ -1,0 +1,45 @@
+name: Start the original linked DPDK executable
+on:
+  push:
+    branches: [qualification/plugin-existing-output]
+permissions: {}
+jobs:
+  startup:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      INVOCATION: 732cb66f-8842-4a07-b5ab-25d5743fdf2d
+      LABEL: //runsc:runsc-plugin-stack
+    steps:
+    - name: Read the original executable from its successful Bazel target
+      env:
+        BB_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail
+        cd "$RUNNER_TEMP"
+        umask 077
+        jq -n --arg id "$INVOCATION" --arg label "$LABEL" '{invocation_id:$id, target_label:$label, status:0}' |
+          curl --fail --silent --show-error --max-time 45 -H 'Content-Type: application/json' -H "x-buildbuddy-api-key: $BB_KEY" --data-binary @- https://app.buildbuddy.io/rpc/BuildBuddyService/GetTarget > target.json
+        uri=$(jq -er --arg label "$LABEL" '[.targetGroup[]?, .targetGroups[]?, .target_groups[]? | (.targets // .target // [])[] | select(.metadata.label == $label) | .files[] | select(.name | endswith("runsc-plugin-stack")) | .uri] | unique | select(length == 1) | .[0]' target.json)
+        [[ $uri =~ ^bytestream://remote\.buildbuddy\.io/([^[:space:]]*/)?blobs/([a-f0-9]{64})/([0-9]+)$ ]]
+        hash=${BASH_REMATCH[2]}
+        size=${BASH_REMATCH[3]}
+        jq -n --arg uri "$uri" '{uri:$uri}' |
+          curl --fail --silent --show-error --max-time 90 -H 'Content-Type: application/json' -H "x-buildbuddy-api-key: $BB_KEY" --data-binary @- https://app.buildbuddy.io/api/v1/GetFile > runsc
+        test "$(stat -c %s runsc)" = "$size"
+        echo "$hash  runsc" | sha256sum -c
+        chmod 0555 runsc
+        jq -n --arg sha "$hash" --arg inv "$INVOCATION" --arg label "$LABEL" '{sha256:$sha,invocation:$inv,target:$label,startup:"unverified"}' > receipt.json
+    - name: Start the linked binary without credentials or network
+      run: |
+        set -euo pipefail
+        cd "$RUNNER_TEMP"
+        docker run --rm --read-only --network none --user 65534:65534 --cap-drop ALL -v "$PWD/runsc:/runsc:ro" --entrypoint /runsc gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a --version | tee version.txt
+        grep -Eq '^runsc version .+' version.txt
+        jq --arg at "$(date --utc --iso-8601=ns)" '.startup = "PASS" | .verifiedAt=$at' receipt.json > result.json
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: plugin-startup
+        path: ${{ runner.temp }}/result.json
+        if-no-files-found: error
