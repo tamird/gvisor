@@ -1,0 +1,57 @@
+name: Verify the three native owner results on the live map
+on:
+  push:
+    branches: [qualification/work-map-native-owner-results]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the live UI and the curated pair
+        id: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 70d3236a043dd1599a3dbac6ed7956b86a207757
+          test "$(git rev-parse HEAD^^)" = cb8f744e827e8c5a227ca35fe8f7aefc51d201c3
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          test "$(git diff --name-only HEAD^^ HEAD^)" = "$(printf '%s\n' github-status.json registry.json)"
+          sha256sum -c <<'INPUTS'
+          e5d01ececbb039823104599713efd9082379b42e00b724e4580a0ffedf37230a  app.js
+          a94b8e825501e757f5b424130806ed08575e21c8526b46ac16fec2c047782018  registry.json
+          4b838428405a8b7c587fd5e6dbdd560cc3fcc6e240ca7ab5c9b80942acbc2ab6  github-status.json
+          INPUTS
+          mkdir results
+      - name: Check the canonical metadata pair
+        id: metadata
+        if: always() && steps.source.outcome == 'success'
+        run: node metadata-preflight.mjs . > results/preflight.json
+      - name: Verify previous observations and outstanding owner work
+        run: |
+          python3 - <<'PYTHON'
+          import json, subprocess
+          from pathlib import Path
+          from work_states import derive_states
+          def before(f):return json.loads(subprocess.check_output(['git','show','HEAD^^:'+f]))
+          r=json.loads(Path('registry.json').read_bytes());s=json.loads(Path('github-status.json').read_bytes())
+          prior=before('github-status.json'); prior['registryDate']=r['meta']['updatedAt']; assert prior==s
+          ids={'branch:buildkite-native-nogo','branch:buildkite-native-unit-tests','branch:declared-jekyll-site'}
+          nodes={n['id']:n for n in r['nodes']};old={n['id']:n for n in before('registry.json')['nodes']}
+          assert {k for k,n in nodes.items() if old[k]!=n}==ids
+          a,b=derive_states(s['prs'],r),derive_states(s['prs'],before('registry.json'))
+          assert a==b
+          for k in ids: assert nodes[k]['status']=='Agent work' and k not in s['workStates'] and not nodes[k].get('contributorReview')
+          PYTHON
+      - name: Publish the bounded verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-map-native-owner-evidence
+          path: results/preflight.json
+          if-no-files-found: error
