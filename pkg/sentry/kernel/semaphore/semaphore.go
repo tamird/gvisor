@@ -452,7 +452,7 @@ func (s *Set) SetVal(ctx context.Context, num int32, val int16, creds *auth.Cred
 	sem.value = val
 	sem.pid = pid
 	s.changeTime = ktime.NowFromContext(ctx)
-	sem.wakeWaiters()
+	s.wakeWaiters(int(num))
 	return nil
 }
 
@@ -487,7 +487,7 @@ func (s *Set) SetValAll(ctx context.Context, vals []uint16, creds *auth.Credenti
 		// TODO(gvisor.dev/issue/137): Clear undo entries in all processes.
 		sem.value = int16(val)
 		sem.pid = pid
-		sem.wakeWaiters()
+		s.wakeWaiters(i)
 	}
 	s.changeTime = ktime.NowFromContext(ctx)
 	return nil
@@ -687,10 +687,15 @@ func (s *Set) executeOps(ctx context.Context, ops []linux.Sembuf, pid int32) (ch
 
 	// All operations succeeded, apply them.
 	// TODO(gvisor.dev/issue/137): handle undo operations.
-	for i, v := range tmpVals {
-		s.sems[i].value = v
-		s.sems[i].wakeWaiters()
-		s.sems[i].pid = pid
+	for _, op := range ops {
+		sem := &s.sems[op.SemNum]
+		sem.value = tmpVals[op.SemNum]
+		sem.pid = pid
+	}
+	// A multi-operation waiter may now hit an error before reaching the
+	// semaphore on which it blocked.
+	for i := range s.sems {
+		s.wakeWaiters(i)
 	}
 	s.opTime = ktime.NowFromContext(ctx)
 	return nil, 0, nil
@@ -736,13 +741,14 @@ func abs(val int16) int16 {
 	return val
 }
 
-// wakeWaiters goes over all waiters and checks which of them can be notified.
+// wakeWaiters notifies waiters that can retry on semaphore num.
 //
-// Preconditions: The owning Set.mu must be held.
-func (s *sem) wakeWaiters() {
+// +checklocks:s.mu
+func (s *Set) wakeWaiters(num int) {
+	sem := &s.sems[num]
 	// Note that this will release all waiters waiting for 0 too.
-	for w := s.waiters.Front(); w != nil; {
-		if s.value < abs(w.value) {
+	for w := sem.waiters.Front(); w != nil; {
+		if sem.value < abs(w.value) {
 			// Still blocked, skip it.
 			w = w.Next()
 			continue
@@ -750,7 +756,7 @@ func (s *sem) wakeWaiters() {
 		w.ch <- struct{}{}
 		old := w
 		w = w.Next()
-		s.waiters.Remove(old)
+		sem.waiters.Remove(old)
 	}
 }
 
