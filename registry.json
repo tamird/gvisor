@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T09:08:16.452060+00:00",
+    "updatedAt": "2026-11-03T09:26:23.862437+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -44180,10 +44180,10 @@
       "ref": "revision/buildkite-smoke-as-tests",
       "head": "3ab02c201d1842c00081552221fa8fe37fe3c884",
       "url": "https://github.com/tamird/gvisor/commit/3ab02c201",
-      "title": "Run the Buildkite smoke guests directly with Bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-11-03T09:04:47.148432+00:00",
-      "summary": "The Buildkite smoke jobs start fresh guests with the shipping binaries and forward the agent cache through Make. The revised native ARM64 and AMD64 normal tests each started two guests. All eight release files and the launcher and Sentry GoLink actions matched the default build on each architecture. The AMD64 race build stopped during a dependency fetch, before its first guest.",
+      "title": "Run Buildkite smoke guests as native Bazel tests",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-03T09:26:23.862437+00:00",
+      "summary": "Buildkite runs its smoke tests with the release files that Make ships. AMD64, ARM64 and race-enabled AMD64 each started two fresh guests. On all three configurations, the eight files matched the default release byte for byte, and the launcher and Sentry used the same GoLink actions. The runs used the integration source on Linux workers.",
       "evidence": [
         {
           "label": "AMD64 normal and race guest receipts",
@@ -44244,6 +44244,10 @@
         {
           "label": "AMD64 normal guests passed; race dependency fetch failed before execution",
           "url": "https://github.com/tamird/gvisor/actions/runs/41605913581/artifacts/13217656502"
+        },
+        {
+          "label": "Two fresh AMD64 race guests with the shipping binaries and matching GoLink actions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41608432080/artifacts/13218522690"
         }
       ],
       "refinement": {
@@ -44257,13 +44261,25 @@
       "followup": {
         "owner": "Workstream owner",
         "sourceHead": "3ab02c201d1842c00081552221fa8fe37fe3c884",
-        "observedAt": "2026-11-03T09:04:47.148432+00:00",
-        "disposition": "AMD64 and ARM64 normal guests passed; AMD64 race still needs execution",
-        "nextAction": "Recover the AMD64 race fetch and require two fresh race guest runs with matching shipping files and GoLink actions.",
+        "observedAt": "2026-11-03T09:26:23.862437+00:00",
+        "disposition": "Contributor review requested",
+        "nextAction": "After contributor review and the native compiler, agent bootstrap, #16506 and #16803 land, open the smoke-test PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41605913581/artifacts/13217226911",
-          "https://github.com/tamird/gvisor/actions/runs/41605913581/artifacts/13217656502"
+          "https://github.com/tamird/gvisor/actions/runs/41605913581/artifacts/13217656502",
+          "https://github.com/tamird/gvisor/actions/runs/41608432080/artifacts/13218522690"
         ]
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "3ab02c201d1842c00081552221fa8fe37fe3c884",
+        "baseHead": "04447777756804d7e72148dc00c40f72017795bc",
+        "title": "Run Buildkite smoke guests as native Bazel tests",
+        "summary": "Buildkite runs its smoke tests with the release files that Make ships. AMD64, ARM64 and race-enabled AMD64 each started two fresh guests. On all three configurations, the eight files matched the default release byte for byte, and the launcher and Sentry used the same GoLink actions. The runs used the integration source on Linux workers.",
+        "body": "Start runsc from its release layout and run true with networking\ndisabled. The race test selects the instrumented launcher and Sentry\ntogether.\n\nRun each test on the Buildkite agent even when its release binaries are\ncached. Use the release build's strip setting so the smoke test runs\nthe same binaries that Make copies. Other Make tests keep their debug\nsymbols. Make also supplies the agent's remote cache settings to Bazel.",
+        "url": "https://github.com/tamird/gvisor/commit/3ab02c201",
+        "requestedAt": "2026-11-03T09:26:23.862437+00:00"
       }
     },
     {
@@ -45886,8 +45902,8 @@
       "url": "https://github.com/tamird/gvisor/commit/22b87677f",
       "group": "analysis",
       "status": "Agent work",
-      "updatedAt": "2026-11-03T08:56:35.964539+00:00",
-      "summary": "All 355 selected unit targets on 96fadde72 ran under native ARM64 across three disjoint attempts. Nine targets failed. The XML reports contain 101,777 passed cases, 26 failed and 138 skipped. Of the 355 targets, 36 reported zero cases and two skipped every case. Seven targets reported EACCES executing /proc/self/exe, including three gofer launches. One target failed to mount, and TestLicensePolicy reported mismatched license entries for 20 QEMU dependencies and one LTP dependency. All 35 license cases passed separately on native-Make proposal 5555ba1f2, which uses the stock catalog and policy. The fork catalog comparison in 72470ec60 retained these mismatches after integrating the classifier from #15146. The same entries and policy remain on integration f1e943169. In separate 4 KiB ARM64 guests, the original procumounter and safemount binaries passed all six cases. All 156 cgroup unit cases ran on an ARM64 cgroup-v2 host; the v1 unit cases use fixture hierarchies.",
+      "updatedAt": "2026-11-03T09:26:23.862437+00:00",
+      "summary": "All 355 selected unit targets on 96fadde72 ran under native ARM64 across three disjoint attempts. Nine targets failed. The XML reports contain 101,777 passed cases, 26 failed and 138 skipped. Of the 355 targets, 36 reported zero cases and two skipped every case. Seven targets reported EACCES executing /proc/self/exe, including three gofer launches. One target failed to mount, and TestLicensePolicy reported mismatched license entries for 20 QEMU dependencies and one LTP dependency. All 35 license cases passed separately on native-Make proposal 5555ba1f2, which uses the stock catalog and policy. The fork catalog comparison in 72470ec60 retained these mismatches after integrating the classifier from #15146. The same entries and policy remain on integration f1e943169. In separate 4 KiB ARM64 guests, the original procumounter and safemount binaries passed all six cases. All 156 cgroup unit cases ran on an ARM64 cgroup-v2 host; the v1 unit cases use fixture hierarchies. On native Ubuntu 22.04, five of the six remaining permission-sensitive targets passed. The sixth reached checkpoint inspection and failed when runsc statefile exited 128. The six XML reports recorded 225 passed, two failed (the subtest and its parent), and seven skipped. The Python suite reported all 39 tests passed.",
       "evidence": [
         {
           "label": "Three matching AMD64 selections and 471 named buffer/cgroup cases",
@@ -45944,14 +45960,18 @@
         {
           "label": "Two private ARM64 guests, original binary hashes and six executed cases",
           "url": "https://github.com/tamird/gvisor/actions/runs/41605938071/artifacts/13216413222"
+        },
+        {
+          "label": "Six fresh ARM64 unit targets on Ubuntu 22.04; five passed and one checkpoint subtest failed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41608714830/artifacts/13218491847"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "22b87677f7ae1fa27ebee5b4eb95ab9cfe966761",
-        "observedAt": "2026-11-03T08:56:35.964539+00:00",
-        "disposition": "Two ARM64 targets passed in separate guests; nine failed in the original host run",
-        "nextAction": "Exercise the remaining six permission-sensitive targets with their required facilities. The AMD64 Buildkite lane also needs a native cgroup-v1 worker. The earlier cache comparison changed the configured mode on a v2 host. Track the QEMU and LTP catalog mismatches independently.",
+        "observedAt": "2026-11-03T09:26:23.862437+00:00",
+        "disposition": "Seven of the nine original failures passed in follow-ups; one checkpoint subtest and the catalog mismatch remain",
+        "nextAction": "Diagnose the failing checkpoint inspection in runsc/cmd. Track the QEMU and LTP license differences separately. The AMD64 Buildkite lane still needs a native cgroup-v1 worker.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41497682946/artifacts/13172754926",
           "https://github.com/tamird/gvisor/actions/runs/41513096230/artifacts/13175395076",
@@ -45960,7 +45980,8 @@
           "https://github.com/tamird/gvisor/actions/runs/41589548481/artifacts/13212422877",
           "https://github.com/tamird/gvisor/actions/runs/41597716559/artifacts/13212788996",
           "https://buildkite.com/gvisor/pipeline/builds/53249#01a19c21-d0a1-4e8b-8dca-646db0259dc6",
-          "https://github.com/tamird/gvisor/actions/runs/41605938071/artifacts/13216413222"
+          "https://github.com/tamird/gvisor/actions/runs/41605938071/artifacts/13216413222",
+          "https://github.com/tamird/gvisor/actions/runs/41608714830/artifacts/13218491847"
         ]
       }
     },
