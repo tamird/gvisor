@@ -280,8 +280,8 @@ def native(rc):
 
 def guest(rc):
     git('switch', '--quiet', '--detach', CARRIER)
-    require(git('rev-parse', 'HEAD^') == '1d2d1ca00ecd9c5b25e4d3c9b0506fc2a71ea09c'
-            and git('rev-parse', 'HEAD~9') == GUEST, 'guest source mismatch')
+    require(git('rev-parse', 'HEAD^') == '312a88ac731277a0e435ec4044432605342a1f51'
+            and git('rev-parse', 'HEAD~10') == GUEST, 'guest source mismatch')
     package = Path(PKG)
     for name, row in DOC['payloads'].items():
         shutil.copyfile(TMP / (name + '.tar'), package / (name + '.tar'))
@@ -504,6 +504,48 @@ def recover_capsules(prior):
         save()
 
 
+def recover_guest_downloads():
+    """Reuse only the four failed, immutable Debian archives from Ubuntu."""
+    from cas_inputs import OPENER
+
+    raw = (TMP / 'fetch-failure.zip').read_bytes()
+    require(sha(raw) == '9d52736b31bf09fae2a823afd18d7db547ea9f8d5390f7e897b00dd93ac48bed', 'fetch failure ZIP mismatch')
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+        require(archive.namelist() == ['container-native-result.json'], 'fetch failure members mismatch')
+        prior = json.loads(archive.read('container-native-result.json'))
+    require(prior['carrier'] == '312a88ac731277a0e435ec4044432605342a1f51'
+            and prior['source'] == SOURCE and prior['product'] == PRODUCT and prior['guest'] == GUEST
+            and prior['status'] == 'FAIL' and prior['attempts'] == []
+            and prior['commands']['guest-remaining']['exit'] == 1
+            and prior['guest_invocations'][0]['invocation'] == '21d4a58c-b13b-4570-b966-6d0ac4397f05', 'unexpected fetch failure')
+    DOC['fetch_failure'] = dict(artifact=13267680388, zip_sha256=sha(raw),
+        receipt={key: prior[key] for key in ('carrier', 'status', 'commands', 'attempts', 'missing_attempts',
+                                            'guest_invocations', 'execution_finished_utc', 'verdict_utc')})
+    save()
+    require(git('hash-object', 'MODULE.bazel.lock') == git('rev-parse', GUEST + ':MODULE.bazel.lock'), 'guest lock changed')
+    lock = json.loads(Path('MODULE.bazel.lock').read_bytes())
+    repositories = lock['moduleExtensions']['@@rules_distroless+//apt:extensions.bzl%apt']['general']['generatedRepoSpecs']
+    names = ('jammy_libnuma1-amd64_2.0.14-3ubuntu2', 'jammy_libfdt1-amd64_1.6.1-1',
+             'jammy_libdaxctl1-amd64_72.1-1', 'jammy-security_libkmod2-amd64_29-1ubuntu1.1')
+    directory = TMP / 'guest-deb-distdir'
+    directory.mkdir()
+    DOC['guest_archive_mirrors'] = []
+    for name in names:
+        attributes = repositories[name]['attributes']
+        require(len(attributes['urls']) == 1 and re.fullmatch('[0-9a-f]{64}', attributes['sha256']), 'invalid pinned archive')
+        original = attributes['urls'][0]
+        prefix = 'https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/'
+        require(original.startswith(prefix), 'unexpected archive origin')
+        url = 'https://archive.ubuntu.com/ubuntu/pool/' + original.removeprefix(prefix)
+        with OPENER.open(url, timeout=45) as response:
+            data = response.read(256 * 1024 + 1)
+        require(0 < len(data) <= 256 * 1024 and sha(data) == attributes['sha256'], 'mirror archive differs')
+        (directory / url.rsplit('/', 1)[1]).write_bytes(data)
+        DOC['guest_archive_mirrors'].append(dict(repository=name, url=url, bytes=len(data), sha256=sha(data)))
+        save()
+    return directory
+
+
 def main():
     # Read and bind both immutable originals before using any retained binary.
     import cas_inputs  # Captures the key before prepare removes it from children.
@@ -565,8 +607,10 @@ def main():
         credential = Path(temporary)
         prepare(credential)
         os.environ.pop('BUILDBUDDY_API_KEY', None)
+        directory = recover_guest_downloads()
         rc = credential / 'client.bazelrc'
         rc.write_text('common --credential_helper=remote.buildbuddy.io=' + str(credential / 'helper') + '\n'
+            'common --distdir=' + str(directory) + '\n'
             'build --bes_backend=grpcs://remote.buildbuddy.io\n'
             'build --bes_results_url=https://app.buildbuddy.io/invocation/\n'
             'build:buildbuddy_remote_executor --remote_executor=grpcs://remote.buildbuddy.io\n'
