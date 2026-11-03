@@ -117,13 +117,33 @@ func TestRACKFreshHead(t *testing.T) {
 				if len(replies) != 0 || st.RACKState.ReoWnd <= 0 {
 					t.Fatalf("timer arm needs a delayed decision: immediate=%v reo=%s", replies, st.RACKState.ReoWnd)
 				}
-				clk.Advance(st.RACKState.ReoWnd + time.Millisecond)
-				replies = drain()
+				// Stop when the second RTO fires. A repair in the same tick
+				// cannot establish that RACK repaired the lost data first.
+				if st.RTO <= 0 || st.RTO > 10*time.Second {
+					t.Fatalf("unexpected retransmission timeout %s", st.RTO)
+				}
+				var beforeTimeout []int
+				for elapsed := time.Duration(0); elapsed <= 2*st.RTO; elapsed += time.Millisecond {
+					clk.Advance(time.Millisecond)
+					batch := drain()
+					if stats.Timeouts.Value() != 1 {
+						t.Logf("NEXT_RTO elapsed=%s packets=%v", elapsed+time.Millisecond, batch)
+						break
+					}
+					if len(batch) != 0 {
+						t.Logf("BEFORE_NEXT_RTO elapsed=%s packets=%v", elapsed+time.Millisecond, batch)
+						beforeTimeout = append(beforeTimeout, batch...)
+					}
+				}
+				if stats.Timeouts.Value() != 2 {
+					t.Fatalf("second RTO not observed: count=%d, RTO=%s", stats.Timeouts.Value(), st.RTO)
+				}
+				replies = beforeTimeout
 			}
 			if (schedule == "head-lost" || schedule == "classic-dupack") && (len(replies) == 0 || replies[0] != 0) {
 				t.Fatalf("head still outstanding but no head repair: %v", replies)
 			}
-			t.Logf("WIRE schedule=%s timeouts=%d ack_offset=0 sack=[%d,%d) us_after_RTO=%d replies=%v cwnd=%d out=%d recovery=%v sacked=%d fast_retransmit_delta=%d",
+			t.Logf("WIRE schedule=%s timeouts=%d ack_offset=0 sack=[%d,%d) us_after_RTO=%d replies=%v ack_cwnd=%d ack_out=%d ack_recovery=%v ack_sacked=%d fast_retransmit_delta=%d",
 				schedule, stats.Timeouts.Value(), int(b.Start-first), int(b.End-first), clk.NowMonotonic().Sub(headAt).Microseconds(), replies, st.SndCwnd, st.Outstanding, st.FastRecovery.Active, st.SackedOut, stats.FastRetransmit.Value()-fastBefore)
 		})
 	}
