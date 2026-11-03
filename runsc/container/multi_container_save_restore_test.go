@@ -300,7 +300,7 @@ func TestFSCheckpointCommand(t *testing.T) {
 
 			// Each container must use a distinct writable temporary directory as its
 			// filesystem root, to hold the filestore file used by disk-backed overlay.
-			appSrc, err := testutil.FindFile("test/cmd/test_app/test_app")
+			appSrc, err := testutil.FindTestApp()
 			if err != nil {
 				t.Fatal("Error finding test_app:", err)
 			}
@@ -746,7 +746,7 @@ func TestFSCheckpointAnnotation(t *testing.T) {
 
 			// Each container must use a distinct writable temporary directory as its
 			// filesystem root, to hold the filestore file used by disk-backed overlay.
-			appSrc, err := testutil.FindFile("test/cmd/test_app/test_app")
+			appSrc, err := testutil.FindTestApp()
 			if err != nil {
 				t.Fatal("Error finding test_app:", err)
 			}
@@ -1003,7 +1003,7 @@ func TestFSCheckpointSharedVolume(t *testing.T) {
 		subName  = "sub-container"
 	)
 
-	appSrc, err := testutil.FindFile("test/cmd/test_app/test_app")
+	appSrc, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("Error finding test_app:", err)
 	}
@@ -1200,7 +1200,7 @@ func TestMultiContainerSharedVolumeCheckpointRestore(t *testing.T) {
 		t.Fatalf("error chmoding file: %q, %v", singleSharedDir, err)
 	}
 
-	appSrc, err := testutil.FindFile("test/cmd/test_app/test_app")
+	appSrc, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("Error finding test_app:", err)
 	}
@@ -2324,7 +2324,7 @@ func TestFSCheckpointNoRootContainer(t *testing.T) {
 // an overlay filestore.
 func testAppNoRootContainerSubSpec(t *testing.T, sbID string) *specs.Spec {
 	t.Helper()
-	appSrc, err := testutil.FindFile("test/cmd/test_app/test_app")
+	appSrc, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("Error finding test_app:", err)
 	}
