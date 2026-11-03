@@ -1,35 +1,50 @@
-name: CI
-
-"on":
+name: Link the network plugin on the combined Bazel 9 amendment
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/bazel9-plugin-combined]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  plugin:
+    if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      FIXED: 514a1ce4f7dfeca8077048be5d1f321f72a7e2bd
+      REPORTER: fb60e127516defd6aab633f80be09a03022f0737
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Open the bounded receipt before setup
+        run: |
+          mkdir -p "$RUNNER_TEMP/plugin"
+          printf '{"status":"INCOMPLETE","phase":"setup","source":"%s"}\n' "$FIXED" > "$RUNNER_TEMP/plugin/result.json"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Prepare the pinned Bazel client and existing AMD64 GNU builder
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/plugin"
+          test "$(git rev-parse HEAD^)" = "$FIXED"
+          git fetch --no-tags --depth=1 origin "$REPORTER"
+          path=external/tools/plugin-stack/plugin-stack.BUILD
+          test "$(git rev-parse "$FIXED:$path")" = 423846dd330fb3cb6e5c3e74fe7189db7429a3db
+          test "$(git rev-parse "$FIXED:.bazelrc")" = 50676c61af84913a732eff08c34269c9eb6a3399
+          cp .github/qualification/plugin_rule.py "$d/"
+          for f in qualification_report unit_matrix; do git show "$REPORTER:test/rbe/$f.py" > "$d/$f.py"; done
+          curl -fsSL --retry 3 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$d/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $d/bazel" | sha256sum -c -
+          chmod +x "$d/bazel"
+          docker pull --platform linux/amd64 "$GNU"
+          docker run -d --name plugin --entrypoint /bin/bash --user root \
+            -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e "GIT_CONFIG_VALUE_0=$GITHUB_WORKSPACE" \
+            -v "$d:$d" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+          test "$(docker exec plugin "$d/bazel" --version)" = "bazel 9.3.1"
+      - name: Build both plugin consumers and inspect the active C++ actions
+        timeout-minutes: 47
+        run: python3 "$RUNNER_TEMP/plugin/plugin_rule.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: combined-plugin-result
+          if-no-files-found: error
+          path: ${{ runner.temp }}/plugin/result.json
