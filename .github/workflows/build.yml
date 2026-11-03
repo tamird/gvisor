@@ -1,7 +1,7 @@
 name: Verify terminal poll and single-refusal behavior
 on:
   push:
-    branches: [qualification/tcp-terminal-refusal-composition]
+    branches: [qualification/tcp-terminal-resource-recovery]
 permissions:
   contents: read
 jobs:
@@ -24,8 +24,9 @@ jobs:
         mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
         echo '{"verified":false,"reason":"qualification incomplete"}' > "$RUNNER_TEMP/records/verdict.json"
         cp .github/qualification/tcp-terminal-composition.py "$RUNNER_TEMP/verify-tcp.py"
-        test "$(git rev-parse HEAD^)" = "$CANDIDATE"
-        test "$(git rev-parse HEAD^^)" = "$STOCK"
+        test "$(git rev-parse HEAD^)" = "2b9ba9b1fa6796bb567ea64ba492b57f79c72e57"
+        test "$(git rev-parse HEAD^^)" = "$CANDIDATE"
+        test "$(git rev-parse HEAD^^^)" = "$STOCK"
         printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
         printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
         umask 077
@@ -66,8 +67,18 @@ jobs:
             for owner in "${owners[@]}"; do labels+=("//test/syscalls:${owner}_${platform}"); done
             options+=(--test_env=GTEST_FILTER="$filter")
           fi
+          # The original native invocation reported 12 RESOURCE_EXHAUSTED executions
+          # of the two ABI GoStaticAnalysis actions. Keep the action cache and
+          # source identities; use BuildBuddy's execution-only resource header.
+          # Later arms reuse the original key with its now completed output.
+          memory=default
+          if [[ "$arm" == native || "$arm" == *nogo ]]; then
+            options+=(--remote_exec_header=x-buildbuddy-platform.estimatedmemory=12GB)
+            memory=12GB
+          fi
+          printf '%s\n' "$memory" > "$d/requested-memory"
           rc=0
-          timeout 1200 docker exec tcp-compiler bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config="$cpu" --jobs=64 --keep_going --strategy=TestRunner="$runner" --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --flaky_test_attempts=1 --test_output=errors --test_timeout=450 --test_sharding_strategy=disabled --build_tag_filters= --test_tag_filters= --build_event_json_file="$d/bep" "${options[@]}" "${labels[@]}" > "$d/bazel.log" 2>&1 || rc=$?
+          docker exec tcp-compiler timeout --kill-after=30s 1100 bazel --bazelrc="$RUNNER_TEMP/tcp.bazelrc" test --config="$cpu" --jobs=64 --keep_going --strategy=TestRunner="$runner" --nocache_test_results --modify_execution_info='^TestRunner$=+no-remote-cache' --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --flaky_test_attempts=1 --test_output=errors --test_timeout=450 --test_sharding_strategy=disabled --build_tag_filters= --test_tag_filters= --build_event_json_file="$d/bep" "${options[@]}" "${labels[@]}" > "$d/bazel.log" 2>&1 || rc=$?
           echo "$rc" > "$d/exit"; date -u +%FT%TZ > "$d/end"
           if [[ "$arm" != *-nogo ]]; then
             for owner in "${owners[@]}"; do
@@ -76,6 +87,12 @@ jobs:
             git restore --source="$src" -- "$path"
           fi
           python3 "$RUNNER_TEMP/verify-tcp.py" "$RUNNER_TEMP/records" progress
+          # Stop an infra failure from trapping all the remaining arms in the same
+          # prerequisite. Preserve actual test failures and independent results.
+          if [[ "$rc" != 0 && "$rc" != 3 ]] && ! grep -q '"testResult":' "$d/bep"; then
+            echo "Build failed before any test result; original exit $rc preserved."
+            break
+          fi
         done
     - name: Require the original four poll cases and both refusal paths
       if: ${{ !cancelled() }}

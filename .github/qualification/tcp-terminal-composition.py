@@ -82,7 +82,8 @@ def inspect(arm):
                 build_errors.append(line.strip()[:500])
                 if len(build_errors) == 6:
                     break
-    return {"build_errors": build_errors, "source": source, "exit": rc, "finished": finish, "invocation": inv, "attempts": attempts,
+    return {"requested_memory": (d / "requested-memory").read_text().strip(),
+            "build_errors": build_errors, "source": source, "exit": rc, "finished": finish, "invocation": inv, "attempts": attempts,
             "summaries": summaries, "cases": cases, "diagnostics": diagnostics, "verified": bool(ok),
             "start": (d / "start").read_text().strip(), "end": (d / "end").read_text().strip()}
 
@@ -94,7 +95,9 @@ for arm in ("native", "stock", "fixed", "amd64-nogo", "arm64-nogo"):
     except Exception as exc:
         rows[arm] = {"verified": False, "reason": str(exc)[:250]}
 ok = all(r["verified"] for r in rows.values())
-out = {"rows": rows, "verified": ok, "verdict_at": datetime.now(timezone.utc).isoformat()}
+out = {"original_receipt": "13186374929", "original_service_log_receipt": "13198617926",
+       "original_resource_failure": "GoStaticAnalysis //pkg/abi/linux:linux: 12 remote resource-exhausted executions, no syscall tests",
+       "rows": rows, "verified": ok, "verdict_at": datetime.now(timezone.utc).isoformat()}
 (ROOT / "verdict.json").write_text(json.dumps(out, indent=2) + "\n")
 print({name: r["verified"] for name, r in rows.items()})
 if len(sys.argv) == 2:
