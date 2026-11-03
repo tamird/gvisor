@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T16:58:02.729813+00:00",
+    "updatedAt": "2026-11-03T17:14:59.055459+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -36638,8 +36638,8 @@
       "title": "Format stateify output in the generator",
       "url": "https://github.com/google/gvisor/pull/16710",
       "status": "open",
-      "summary": "The gVisor-local launcher ran upstream goimports on a shell-free AMD64 worker. All 12 generated files matched current master byte for byte. The same nine targets built on both versions, and three synthetic import fixtures failed to compile on both.",
-      "updatedAt": "2026-11-03T16:58:02.729813+00:00",
+      "summary": "Review feedback calls for stateify to generate its own imports. The build owner is checking the replacement against real packages and previously working conversions.",
+      "updatedAt": "2026-11-03T17:14:59.055459+00:00",
       "evidence": [
         {
           "label": "Seven identical production outputs and scratch qualification",
@@ -36712,14 +36712,20 @@
           "outcome": "changes-requested",
           "at": "2026-11-03T16:50:02.468339+00:00",
           "url": "https://github.com/tamird/gvisor/commit/7cbb007c3"
+        },
+        {
+          "kind": "amendment",
+          "head": "ea9eef3eb688b6b22b6567d68a0314f43005ed1a",
+          "outcome": "changes-requested",
+          "at": "2026-11-03T17:14:59.055459+00:00"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
-        "observedAt": "2026-11-03T16:58:02.729813+00:00",
-        "disposition": "Local launcher qualified",
-        "nextAction": "Publish the gVisor-only amendment after contributor review.",
+        "observedAt": "2026-11-03T17:14:59.055459+00:00",
+        "disposition": "Generator revision in progress",
+        "nextAction": "Remove the separate goimports action and check generated files and compilation against the current generator.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16710#pullrequestreview-5744331855",
           "https://github.com/tamird/gvisor/commit/50890dbbe",
@@ -36731,27 +36737,6 @@
           "commentId": "PRR_kwDOB9IlXs8AAAABVmOMTw",
           "url": "https://github.com/google/gvisor/pull/16710#pullrequestreview-5744331855"
         }
-      },
-      "refinement": {
-        "before": {
-          "base": "c3d3fd4a3844b46529b6d15216b3410b872df735",
-          "head": "7cbb007c3febee15d1904c7faaf3bb21f34a3ae5"
-        },
-        "after": {
-          "base": "471d6dff5229b99208bf6fec985601067f1f9d69",
-          "head": "ea9eef3eb688b6b22b6567d68a0314f43005ed1a"
-        }
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "ea9eef3eb688b6b22b6567d68a0314f43005ed1a",
-        "baseHead": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
-        "url": "https://github.com/tamird/gvisor/commit/ea9eef3eb",
-        "title": "Run goimports with the declared Go executable on PATH",
-        "summary": "May I publish this gVisor-only amendment to #16710? The gVisor-local launcher ran upstream goimports on a shell-free AMD64 worker. All 12 generated files matched current master byte for byte. The same nine targets built on both versions, and three synthetic import fixtures failed to compile on both.",
-        "body": "goimports invokes go to resolve imports in generated state methods.\nThe toolchain paths are relative to the Bazel execution root, but Go\nrejects commands found through a relative PATH entry. Converting the\npath with a generated shell script makes formatting depend on /bin/sh.\n\nResolve the directory of the declared go symlink in a Go launcher and\nrun the upstream goimports executable. Preserve its stdout in the\ngenerated file and let diagnostics reach the Bazel action. The rule\nsets PATH to that one directory, so tools installed on the worker do\nnot participate in import resolution.",
-        "requestedAt": "2026-11-03T16:58:02.729813+00:00"
       }
     },
     {
@@ -45333,7 +45318,7 @@
       "url": "https://github.com/google/gvisor/pull/16803",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-03T14:47:30.598669+00:00",
+      "updatedAt": "2026-11-03T17:09:22.900538+00:00",
       "summary": "The Make race smoke test staged the ordinary Sentry and overlaid the race launcher. Stage a matched race release so the guest kernel also runs with the race detector. Select race mode on the Go binaries, keeping it out of host build tools.",
       "evidence": [
         {
@@ -45383,6 +45368,10 @@
         {
           "label": "Lucas’s smoke-race exit-status review",
           "url": "https://github.com/google/gvisor/pull/16803#discussion_r4448554797"
+        },
+        {
+          "label": "Measured Sentry and Make exit statuses posted to Lucas",
+          "url": "https://github.com/google/gvisor/pull/16803#discussion_r4457969052"
         }
       ],
       "settledReviews": [
@@ -45398,6 +45387,15 @@
           "outcome": "approved",
           "at": "2026-11-03T14:33:29.484586+00:00",
           "url": "https://github.com/tamird/gvisor/commit/c58f36d4e"
+        },
+        {
+          "kind": "reply",
+          "head": "c58f36d4e068c2b0aa31a207fabbb37e25b60472",
+          "body": "The race smoke target runs the matched launcher and Sentry with GORACE=halt_on_error=1. With an injected race, the child exited 66 and make exited 2.\n\nPosted by Codex on behalf of @tamird.",
+          "url": "https://github.com/google/gvisor/pull/16803#discussion_r4448554797",
+          "outcome": "approved",
+          "at": "2026-11-03T17:09:22.900538+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16803#discussion_r4457969052"
         }
       ],
       "refinement": {
@@ -45413,23 +45411,14 @@
       "followup": {
         "owner": "root",
         "sourceHead": "c58f36d4e068c2b0aa31a207fabbb37e25b60472",
-        "observedAt": "2026-11-03T14:33:29.484586+00:00",
-        "disposition": "Approved amendment published",
-        "nextAction": "Post the measured exit statuses on the original thread once authorized.",
+        "observedAt": "2026-11-03T17:09:22.900538+00:00",
+        "disposition": "Amendment published and reviewer answered",
+        "nextAction": "Follow maintainer review on the published head.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16803",
-          "https://github.com/tamird/gvisor/commit/c58f36d4e"
+          "https://github.com/tamird/gvisor/commit/c58f36d4e",
+          "https://github.com/google/gvisor/pull/16803#discussion_r4457969052"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "reply",
-        "head": "c58f36d4e068c2b0aa31a207fabbb37e25b60472",
-        "url": "https://github.com/google/gvisor/pull/16803#discussion_r4448554797",
-        "title": "Reply to Lucas on the Sentry race exit",
-        "requestedAt": "2026-11-03T14:47:30.598669+00:00",
-        "summary": "Post the actual child and Make exit statuses to the open review thread?",
-        "body": "The race smoke target runs the matched launcher and Sentry with GORACE=halt_on_error=1. With an injected race, the child exited 66 and make exited 2.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -67410,7 +67399,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-03T14:10:33.767303+00:00",
+      "updatedAt": "2026-11-03T17:14:59.055459+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the packet-socket reply on #16793 and the duplicate reconnect reply on #15019.",
       "findings": [
@@ -68115,9 +68104,26 @@
               "url": "https://github.com/google/gvisor/issues/16670"
             }
           ]
+        },
+        {
+          "text": "On the isolated bridge used to investigate #16908, all 2,000 client-first exchanges in each of four cases succeeded. With forwarding on, 1,844 public July connections showed a matching server-direction RST, versus zero on current gVisor. The first observed July RST followed both FINs. Neither version showed a matching RST with forwarding off. The failing GKE syscall and its first matching RST remain unknown.",
+          "evidence": [
+            {
+              "label": "Four-cell comparison and packet evidence",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41681641439/artifacts/13253085882"
+            },
+            {
+              "label": "TCP reviewer guide",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            }
+          ]
         }
       ],
       "evidence": [
+        {
+          "label": "#16887 transmit metadata review and test-budget suggestion",
+          "url": "https://github.com/google/gvisor/pull/16887#pullrequestreview-5756434671"
+        },
         {
           "label": "405 packet cases and the primary analyzer for both architectures",
           "url": "https://github.com/tamird/gvisor/actions/runs/41303197318/artifacts/13083144218"
@@ -68188,7 +68194,8 @@
           16081,
           16659,
           16660,
-          16793
+          16793,
+          16887
         ],
         "owner": "Netstack",
         "reviewers": [
