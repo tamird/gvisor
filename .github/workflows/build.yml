@@ -1,35 +1,103 @@
-name: CI
-
-"on":
+name: Qualify native source-runtime installation
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/buildkite-source-runtime-native]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  install:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      PRODUCT: 88cf79c935336ff38f4a50cc9a7934f942828b28
+      INTEGRATION: 2e9e15266979cfb4a75f4a0ef9ef23b2948fda62
+      COMPILER: a385bd2b0155b82faf4fc6a0c195a153ad57550c
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Bind the existing hooks and retained compiler source
+        timeout-minutes: 7
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = x86_64
+          test "$(id -u)" != 0
+          test "$(git rev-parse HEAD^)" = "$INTEGRATION"
+          test "$(git rev-parse HEAD^^)" = "$COMPILER"
+          git diff --exit-code "$INTEGRATION" HEAD -- . ':!.github/workflows/build.yml' ':!test/rbe/probe-source-runtime.py'
+          git fetch --depth=3 origin proposal/buildkite-source-runtime-native
+          test "$(git rev-parse FETCH_HEAD)" = "$PRODUCT"
+          git diff --exit-code "$PRODUCT" "$INTEGRATION" -- .buildkite/hooks/pre-command .buildkite/hooks/post-command tools/bazel.mk tools/release.bzl tools/show_paths.bzl runsc/cmd/install.go images/default/bazelversion
+          cp test/rbe/probe-source-runtime.py "$RUNNER_TEMP/probe.py"
+          helper=680739b629229eb1c8fa91aa1147d1bca71eb04f
+          git fetch --depth=1 origin "$helper"
+          git show "$helper:test/rbe/cas_inputs.py" > "$RUNNER_TEMP/cas_inputs.py"
+          git checkout --detach "$INTEGRATION"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          text = Path('.buildkite/hooks/pre-command').read_text()
+          start = text.index('# The job and its post-command cleanup must use the same Bazel server.')
+          end = text.index('if [[ "${BUILDKITE_PIPELINE_INSTALL_RUNTIME:-}" == "true" ]]; then', start)
+          Path(os.environ['RUNNER_TEMP'], 'bootstrap.sh').write_text(text[start:end])
+          PY
+          export DOCKER_BUILD=false
+          source "$RUNNER_TEMP/bootstrap.sh"
+          test -x "$BUILDKITE_BAZEL_DIRECTORY/bazel"
+          echo "REAL_BAZEL=$BUILDKITE_BAZEL_DIRECTORY/bazel" >> "$GITHUB_ENV"
+          echo USE_BAZEL_FALLBACK_VERSION=error: >> "$GITHUB_ENV"
+          mkdir "$RUNNER_TEMP/gnu"
+          touch "$RUNNER_TEMP/gnu/REPO.bazel"
+          cat > "$RUNNER_TEMP/gnu/BUILD" <<'BUILD'
+          platform(name="gnu", visibility=["//visibility:public"], constraint_values=["@platforms//os:linux","@platforms//cpu:x86_64"], exec_properties={"Arch":"amd64","OSFamily":"linux","container-image":"docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a","EstimatedMemory":"6GB","workload-isolation-type":"firecracker"})
+          BUILD
+          sudo test -f /etc/docker/daemon.json || printf '%s\n' '{}' | sudo tee /etc/docker/daemon.json >/dev/null
+          tar -C / -chf - bin/true lib/x86_64-linux-gnu/libc.so.6 lib64/ld-linux-x86-64.so.2 | docker import - hook-probe >/dev/null
+      - name: Recover only the two known original container failure logs
+        id: diagnostics
+        continue-on-error: true
+        timeout-minutes: 4
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -B "$RUNNER_TEMP/probe.py" --container-diagnostics
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: ${{ always() && steps.diagnostics.outcome != 'skipped' }}
+        with:
+          name: original-container-diagnostics
+          path: ${{ runner.temp }}/container-diagnostics.json
+          if-no-files-found: warn
+      - name: Exercise native copy, durable Docker runtime and failure cleanup
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          test -n "$BUILDBUDDY_API_KEY"
+          unset USE_BAZEL_VERSION
+          python3 "$RUNNER_TEMP/probe.py"
+      - name: Check the public receipt boundary
+        id: public
+        if: always()
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          path = Path(os.environ['RUNNER_TEMP'], 'source-verdict.json')
+          assert path.is_file() and path.stat().st_size < 128 * 1024
+          text = path.read_text()
+          secret = os.environ['BUILDBUDDY_API_KEY']
+          assert secret and secret not in text and json.dumps(secret)[1:-1] not in text
+          assert not re.search(r'(?i)(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_|(?:authorization|x-buildbuddy-api-key)\s*[:=])', text)
+          value = json.loads(text)
+          assert value['product'] == os.environ['PRODUCT'] and value['integration'] == os.environ['INTEGRATION']
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: ${{ always() && steps.public.outcome == 'success' }}
+        with:
+          name: source-runtime-verdict
+          path: ${{ runner.temp }}/source-verdict.json
+          if-no-files-found: error
