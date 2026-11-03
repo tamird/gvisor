@@ -1,12 +1,15 @@
 """Compare the existing bridge syscall regression on Linux and two Sentries."""
 
 from datetime import datetime, timezone
+import hashlib
+import io
 import json
 import os
 from pathlib import Path
 import re
 import subprocess
 import xml.etree.ElementTree as ET
+import zipfile
 
 import qualification_report as report
 
@@ -53,7 +56,7 @@ def execute(name, source, target):
             "--remote_download_outputs=toplevel", "--test_output=errors",
             f"--build_event_json_file={raw}", "--build_event_json_file_path_conversion=false", target]
     (out / "executed_arguments").write_text("\n".join(args) + "\n")
-    command = ["docker", "exec", "bridge-gnu", "timeout", "--signal=INT", "--kill-after=30s", "1080",
+    command = ["docker", "exec", "bridge-gnu", "timeout", "--signal=INT", "--kill-after=30s", "1800",
                "bazel", f"--bazelrc={ROOT / 'bridge.bazelrc'}", *args]
     with (out / "console").open("wb") as stream:
         code = subprocess.run(command, stdout=stream, stderr=subprocess.STDOUT).returncode
@@ -117,10 +120,37 @@ def execute(name, source, target):
 
 
 result = dict(source=os.environ["GITHUB_SHA"], product=PRODUCT, stock=STOCK, base=BASE,
-              started_at=utc(), status="INCOMPLETE", arms={})
+              started_at=utc(), status="INCOMPLETE", arms={}, command_timeout_seconds=1800)
 save()
 try:
-    assert git("rev-parse", "HEAD^") == STOCK
+    assert git("rev-parse", "HEAD^") == "4b64fa6de52a1b145ed86bb39585ca918d9a1153"
+    assert git("rev-parse", "HEAD~2") == STOCK
+    originals = []
+    for name, digest in (
+        ("original.zip", "c22c2c2abc04889d426e9e8190ac528e4f2f0a78eb14bc0ad82f4137f0814323"),
+        ("original-console.zip", "564f8d8a227b556efd46702000968785b776d7c427868c7b6f27c566027714b1"),
+    ):
+        data = (ROOT / name).read_bytes()
+        assert hashlib.sha256(data).hexdigest() == digest
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            assert archive.namelist() == ["verdict.json"]
+            originals.append(json.loads(archive.read("verdict.json")))
+    original, recovered = originals
+    assert original["source"] == "4b64fa6de52a1b145ed86bb39585ca918d9a1153"
+    assert original["product"] == PRODUCT and original["stock"] == STOCK
+    assert original["status"] == "INCOMPLETE" and set(original["arms"]) == {"native"}
+    native = original["arms"]["native"]
+    assert native["native_exit"] == 124 and native["case_counts"] == {} and native["reports"] == []
+    assert native["source"] == STOCK and native["target"] == "//test/syscalls:socket_netlink_route_test_native"
+    assert native["invocation"] == "bbcaf9bd-0664-43b0-9ef9-87344330eeab"
+    assert recovered["source"] == "0d5bcebaf295fa5d949b631876fadac1ddfd6d57"
+    assert recovered["original"] == original and recovered["workload_repeated"] is False
+    assert recovered["console_forward_complete"] and recovered["status"] == "ORIGINAL_LOGS_READ"
+    console = recovered["console"]["forward"]
+    assert console["sha256"] == "38f59ad42ac5fc5f43631beba4e6a7cc04d5f366aec6ec868781cd0dc99ba0ba"
+    assert console["bytes"] == 129464
+    result.update(original=original, original_console=console)
+    save()
     assert git("rev-parse", STOCK + "^") == PRODUCT
     assert git("rev-parse", PRODUCT + "^") == BASE
     assert git("diff", "--name-only", STOCK, PRODUCT) == "pkg/tcpip/stack/bridge.go"
