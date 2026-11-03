@@ -22,7 +22,7 @@ jobs:
       run: |
         set -euo pipefail
         test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-        test "$(git rev-parse HEAD^1)" = "ba0d2cf39f48e8a357dfd6a9199b1c5881049edf"
+        test "$(git rev-parse HEAD^1)" = "99001198a94202b0073e1d35a9e77a5c193b1fb2"
         mkdir -p "$RUNNER_TEMP/checker"
         for file in qualify.sh unit_matrix.py qualification_report.py tcp_long_replay.py; do
           cp "test/rbe/$file" "$RUNNER_TEMP/checker/$file"
@@ -81,7 +81,7 @@ jobs:
             'build --bes_backend=grpcs://remote.buildbuddy.io' \
             'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
             'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
-            'build --remote_accept_cached' \
+            'build --remote_accept_cached' 'build --jobs=400' \
             "build --inject_repository=fifo_platform=$platform" \
             'build --host_platform=@fifo_platform//:ubuntu' \
             'build --extra_execution_platforms=@fifo_platform//:ubuntu' \
