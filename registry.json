@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T07:06:47.467598+00:00",
+    "updatedAt": "2026-11-03T07:42:58.172731+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -43895,6 +43895,14 @@
         {
           "label": "Native executions, AMD64/ARM64 ELF inputs and selected linker tools",
           "url": "https://github.com/tamird/gvisor/actions/runs/41593578228/artifacts/13211446882"
+        },
+        {
+          "label": "Bounded compiler evidence collector",
+          "url": "https://github.com/tamird/gvisor/commit/aec8da9e2"
+        },
+        {
+          "label": "Reporter validates failures, missing evidence and its publication limit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41594637243/artifacts/13210924490"
         }
       ],
       "followup": {
@@ -45821,8 +45829,8 @@
       "url": "https://github.com/tamird/gvisor/commit/22b87677f",
       "group": "analysis",
       "status": "Agent work",
-      "updatedAt": "2026-11-03T04:32:11.975385+00:00",
-      "summary": "AMD64 and ARM64 selected the same 355 test owners at 96fadde72: 1,069 configured rules less 711 Nogo and three KVM rules. On ARM64 the full run timed out after attempting 69 owners; 286 did not run. Original XML recorded 14,397 passed cases, two failures and 110 skips. TestLicensePolicy found LTP/QEMU catalog mismatches; the QEMU fetch test passed. The Python sandbox test failed to create its guest. Both stock and new invocations on the same ARM64 host hit the same gofer EACCES and AppArmor user-namespace exec denial. The AMD64 focused checks passed 471 cases. On 5555ba1f2, the unchanged license policy test passed in a fresh native ARM64 run: all 35 license cases passed, with no skips. This resolves the license case only.",
+      "updatedAt": "2026-11-03T07:42:58.172731+00:00",
+      "summary": "All 355 selected unit targets on 96fadde72 ran under native ARM64 across three disjoint attempts. Nine targets failed. The XML reports contain 101,777 passed cases, 26 failed and 138 skipped. Of the 355 targets, 36 reported zero cases and two skipped every case. Seven targets reported EACCES executing /proc/self/exe, including three gofer launches. One target failed to mount, and TestLicensePolicy reported mismatched license entries for 20 QEMU dependencies and one LTP dependency. All 35 license cases passed separately on native-Make proposal 5555ba1f2, which uses the stock catalog and policy. The fork catalog comparison in 72470ec60 retained these mismatches after integrating the classifier from #15146. The same entries and policy remain on integration f1e943169.",
       "evidence": [
         {
           "label": "Three matching AMD64 selections and 471 named buffer/cgroup cases",
@@ -45859,19 +45867,38 @@
         {
           "label": "Fresh ARM64 license owner: 35 passed, including TestLicensePolicy",
           "url": "https://github.com/tamird/gvisor/actions/runs/41577341947/artifacts/13204601108"
+        },
+        {
+          "label": "285 fresh ARM64 targets and original test reports",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41589548481/artifacts/13212422877"
+        },
+        {
+          "label": "Final ARM64 cgroup test and disjoint 355-target verdict",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41597716559/artifacts/13212788996"
+        },
+        {
+          "label": "Production ARM64 queue and cached sandbox test",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53249#01a19c21-d0a1-4e8b-8dca-646db0259dc6"
+        },
+        {
+          "label": "Catalog comparison with the complete-text classifier",
+          "url": "https://github.com/tamird/gvisor/commit/72470ec60"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "22b87677f7ae1fa27ebee5b4eb95ab9cfe966761",
-        "observedAt": "2026-11-03T04:32:11.975385+00:00",
-        "disposition": "Incomplete: 286 ARM64 owners did not execute; license owner now passes",
-        "nextAction": "Use an ARM64 worker that permits gofer user-namespace exec for sandbox_py_test, and obtain native cgroup-v1 coverage. The 286 unexecuted owners in the timed-out aggregate remain unqualified.",
+        "observedAt": "2026-11-03T07:42:58.172731+00:00",
+        "disposition": "All 355 ARM64 unit targets attempted; combined verdict failed",
+        "nextAction": "Run the permission-sensitive targets on a supported isolated ARM64 worker and obtain cgroup-v1 coverage. The hosted runner denied gofer exec under AppArmor in the controlled sandbox_py_test. The other permission failures have their own logs. Buildkite uses a different host configuration and its cited sandbox test was cached.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41497682946/artifacts/13172754926",
           "https://github.com/tamird/gvisor/actions/runs/41513096230/artifacts/13175395076",
           "https://github.com/tamird/gvisor/actions/runs/41516374236/artifacts/13175549051",
-          "https://github.com/tamird/gvisor/actions/runs/41577341947/artifacts/13204601108"
+          "https://github.com/tamird/gvisor/actions/runs/41577341947/artifacts/13204601108",
+          "https://github.com/tamird/gvisor/actions/runs/41589548481/artifacts/13212422877",
+          "https://github.com/tamird/gvisor/actions/runs/41597716559/artifacts/13212788996",
+          "https://buildkite.com/gvisor/pipeline/builds/53249#01a19c21-d0a1-4e8b-8dca-646db0259dc6"
         ]
       }
     },
