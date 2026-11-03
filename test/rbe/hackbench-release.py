@@ -7,9 +7,11 @@ import json
 import os
 from pathlib import Path
 import re
+import signal
 import subprocess
 import sys
 import tarfile
+import time
 from urllib.parse import urlsplit, urlunsplit
 import xml.etree.ElementTree as ET
 import zipfile
@@ -23,6 +25,12 @@ PRIVATE.mkdir(exist_ok=True)
 PUBLIC.mkdir(exist_ok=True)
 RESULT = {"product": PRODUCT, "carrier": os.environ["GITHUB_SHA"], "phases": {}}
 BZ = ["bazel", "--bazelrc=" + str(TMP / "images.bazelrc")]
+STARTED = time.monotonic()
+TARGET = "//test/benchmarks/base:hackbench_test"
+TEST_FLAGS = ["--jobs=4", r"--strategy_regexp=Compiling src/google/protobuf/.*\.cc=linux-sandbox",
+              "--strategy=TestRunner=local", "--nocache_test_results", "--test_output=errors",
+              "--test_arg=-test.v", "--test_arg=-test.run=^$", "--test_arg=-test.bench=^BenchmarkHackbench$",
+              "--test_arg=-test.benchtime=1x", "--test_arg=-runtime=runc", "--test_timeout=600"]
 
 
 def sha(data: bytes) -> str:
@@ -38,26 +46,107 @@ def save() -> None:
     for key, value in os.environ.items():
         if ("TOKEN" in key or "SECRET" in key or "API_KEY" in key) and len(value) >= 12:
             assert value.encode() not in data, f"Secret in report: {key}"
+    rc = TMP / "images.bazelrc"
+    if rc.exists():
+        for value in re.findall(r"x-buildbuddy-api-key=([^\s]+)", rc.read_text()):
+            assert value.encode() not in data, "Remote credential in report"
     assert b"x-buildbuddy-api-key" not in data and b"Bearer " not in data
     (PUBLIC / "result.json").write_bytes(data)
 
 
-def run(name: str, args: list[str], row: dict) -> subprocess.CompletedProcess:
-    started = now()
-    p = subprocess.run(args, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+def summarize_bep(path: Path) -> dict:
+    """Project the current complete records; a concurrently written tail may be partial."""
+    events = []
+    data = path.read_bytes() if path.exists() else b""
+    if data:
+        for line in data.splitlines():
+            try:
+                events.append(json.loads(line))
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                break
+    return {"bytes": len(data),
+            "sha256": sha(data) if data else None,
+            "uuid": next((e["started"].get("uuid") for e in events if "started" in e), None),
+            "completions": [{"id": e["id"]["targetCompleted"], "success": e.get("completed", {}).get("success")}
+                            for e in events if "targetCompleted" in e.get("id", {}) and e["id"]["targetCompleted"]["label"] == TARGET],
+            "attempts": [{"id": e["id"]["testResult"], "status": e.get("testResult", {}).get("status")}
+                         for e in events if "testResult" in e.get("id", {}) and e["id"]["testResult"]["label"] == TARGET]}
+
+
+def run(name: str, args: list[str], row: dict, timeout: int = 600) -> subprocess.CompletedProcess:
+    timeout = min(timeout, int(75 * 60 - (time.monotonic() - STARTED)))
+    assert timeout > 0, "Recovery command budget exhausted"
     log = PRIVATE / (name + ".log")
-    log.write_text(p.stdout)
-    item = {"command": args, "started": started, "finished": now(), "exit": p.returncode,
-            "log_sha256": sha(log.read_bytes())}
+    item = {"command": args, "started": now(), "exit": None, "timeout_seconds": timeout}
     row.setdefault("commands", []).append(item)
-    if p.returncode:
-        # Only ordinary build diagnostics, never full logs or environment dumps.
-        item["diagnostics"] = [line[:700] for line in p.stdout.splitlines()
-                               if line.startswith(("ERROR:", "FAIL:", "licensecheck:"))
-                               and not any(word in line.lower() for word in
-                                           ("authorization", "token", "api-key", "https://"))][:10]
     save()
-    return p
+    started = time.monotonic()
+    bep = next((Path(arg.split("=", 1)[1]) for arg in args if arg.startswith("--build_event_json_file=")), None)
+
+    def snapshot() -> None:
+        item["elapsed_seconds"] = round(time.monotonic() - started, 3)
+        lines = log.read_text(errors="replace").splitlines()
+        # Public diagnostics exclude command/environment dumps and all URLs.
+        item["diagnostics"] = [line[:900] for line in lines if re.match(
+            r"^(ERROR:|WARNING:|FAIL:|INFO: (Analyzed|Found|Elapsed|Build)|\[[0-9, /]+\] )", line)
+            and not re.search(r"(?i)authorization|token|api-key|https?://|remote_header|bes_header", line)][-30:]
+        if bep is not None:
+            try:
+                item["bep"] = summarize_bep(bep)
+            except Exception as error:
+                item["bep_error"] = type(error).__name__
+        save()
+
+    with log.open("wb") as output_file:
+        process = subprocess.Popen(args, stdout=output_file, stderr=subprocess.STDOUT, start_new_session=True)
+        while process.poll() is None:
+            try:
+                process.wait(timeout=20)
+            except subprocess.TimeoutExpired:
+                pass
+            snapshot()
+            if process.poll() is None and time.monotonic() - started >= timeout:
+                item["timed_out"] = True
+                os.killpg(process.pid, signal.SIGINT)
+                try:
+                    process.wait(timeout=30)
+                except subprocess.TimeoutExpired:
+                    os.killpg(process.pid, signal.SIGKILL)
+                    process.wait()
+    snapshot()
+    data = log.read_bytes()
+    item.update(finished=now(), exit=124 if item.get("timed_out") else process.returncode,
+                log_sha256=sha(data), log_bytes=len(data))
+    save()
+    return subprocess.CompletedProcess(args, item["exit"], data.decode(errors="replace"))
+
+
+def build_consumer(row: dict) -> None:
+    bep = PRIVATE / "consumer-build.bep.json"
+    result = run("consumer-build", BZ + ["build", *TEST_FLAGS, "--show_progress", "--color=no", "--curses=no",
+                 "--build_event_json_file=" + str(bep), TARGET], row, timeout=2700)
+    assert result.returncode == 0, "Consumer build did not complete"
+
+
+def build_proof(row: dict) -> None:
+    row.update(summarize_bep(PRIVATE / "consumer-build.bep.json"))
+    assert re.fullmatch(r"[a-f0-9-]{36}", row["uuid"]), "Missing original build UUID"
+    assert any(e["success"] and not e["id"].get("aspect") for e in row["completions"]), "No successful owner completion"
+
+
+def consumer_binary(row: dict) -> None:
+    binary = output("consumer-path", TARGET, [], row)
+    data = binary.read_bytes()
+    assert data[:6] == b"\x7fELF\x02\x01" and int.from_bytes(data[18:20], "little") == 62
+    row["binary"] = {"path": str(binary), "size": len(data), "sha256": sha(data)}
+    # Preserve the executable itself; its native Bazel runfiles remain in this job.
+    for value in re.findall(r"x-buildbuddy-api-key=([^\s]+)", (TMP / "images.bazelrc").read_text()):
+        assert value.encode() not in data
+    for key, value in os.environ.items():
+        if ("TOKEN" in key or "SECRET" in key or "API_KEY" in key) and len(value) >= 12:
+            assert value.encode() not in data, f"Secret in executable: {key}"
+    (PUBLIC / "hackbench_test").write_bytes(data)
+    save()
 
 
 def checked(name: str, args: list[str], row: dict) -> str:
@@ -95,34 +184,11 @@ def image(arch: str, cpu: str, machine: int, row: dict) -> None:
     row["image"] = {"id": info["Id"], "architecture": cpu, "os": info["Os"],
                     "layers": info["RootFS"]["Layers"]}
     assert row["image"] == RESULT["original"]["phases"][cpu]["image"]
-    cid = checked(arch + "-create", ["docker", "create", "--platform=linux/" + cpu,
-                  tag, "/usr/bin/hackbench", "--help"], row).strip()
-    assert re.fullmatch(r"[a-f0-9]{64}", cid), "Malformed container identity"
-    try:
-        binary = PRIVATE / (arch + "-hackbench")
-        notice = PRIVATE / (arch + "-COPYING")
-        checked(arch + "-elf-copy", ["docker", "cp", cid + ":/usr/bin/hackbench", str(binary)], row)
-        checked(arch + "-license-copy", ["docker", "cp", cid + ":/usr/share/doc/hackbench/COPYING", str(notice)], row)
-        data = binary.read_bytes()
-        assert data[:6] == b"\x7fELF\x02\x01" and int.from_bytes(data[18:20], "little") == machine
-        elf = checked(arch + "-elf", ["readelf", "-l", "-d", str(binary)], row)
-        assert "INTERP" not in elf and "(NEEDED)" not in elf, "ELF is not static"
-        assert sha(notice.read_bytes()) == COPYING
-        row["elf"] = {"size": len(data), "sha256": sha(data), "machine": machine, "static": True}
-        row["copying_sha256"] = COPYING
-        help_text = checked(arch + "-help", ["docker", "start", "-a", cid], row)
-        assert help_text.splitlines()[0] == "hackbench V 2.11", help_text[:100]
-        row["version"] = help_text.splitlines()[0]
-    finally:
-        subprocess.run(["docker", "rm", "-f", cid], stdout=subprocess.DEVNULL, check=True)
     target = "//test/benchmarks/base:hackbench_test"
     bep = PRIVATE / (arch + "-benchmark.bep.json")
-    args = BZ + ["test", "--jobs=2", r"--strategy_regexp=Compiling src/google/protobuf/.*\.cc=linux-sandbox",
-                 "--strategy=TestRunner=local", "--nocache_test_results",
-                 "--test_output=errors", "--test_arg=-test.v", "--test_arg=-test.run=^$",
-                 "--test_arg=-test.bench=^BenchmarkHackbench$", "--test_arg=-test.benchtime=1x",
-                 "--test_arg=-runtime=runc", "--test_timeout=600", "--build_event_json_file=" + str(bep), target]
-    p = run(arch + "-benchmark", args, row)
+    args = BZ + ["test", *TEST_FLAGS, "--experimental_remote_require_cached",
+                 "--build_event_json_file=" + str(bep), target]
+    p = run(arch + "-benchmark", args, row, timeout=900)
     base = Path("bazel-testlogs/test/benchmarks/base/hackbench_test")
     log = (base / "test.log").read_text() if (base / "test.log").exists() else ""
     row["benchmark_exit"] = p.returncode
@@ -168,6 +234,13 @@ def original(row: dict) -> None:
     row["artifact"] = "https://github.com/tamird/gvisor/actions/runs/41520993482/artifacts/13178695451"
     row["archive_sha256"] = expected
     row["catalog_reused"] = True
+    timeout_zip = TMP / "timeout-original.zip"
+    assert sha(timeout_zip.read_bytes()) == "97490a76a86b3ee57dab8dac43c998fbe8a51207b92c77dc5b4d20203ba08a71"
+    with zipfile.ZipFile(timeout_zip) as archive:
+        receipt = json.loads(archive.read("result.json"))
+    assert receipt["product"] == PRODUCT and receipt["carrier"] == "e999b2a936ca18bcd69af550c3697759b34f5d8c"
+    RESULT["prior_timeout"] = {"run": 41522986904, "status": "cancelled: exceeded maximum execution time",
+        "receipt_sha256": sha(timeout_zip.read_bytes()), "record": receipt["phases"]["terminal_diagnosis"]}
 
 
 def phase(name: str, fn: Callable[[dict], None]) -> None:
@@ -268,9 +341,16 @@ if len(sys.argv) == 2 and sys.argv[1] == "diagnose":
     RESULT["status"] = "ORIGINAL_CONSOLE_RECOVERED" if RESULT["phases"]["terminal_diagnosis"]["status"] == "PASS" else "INCOMPLETE"
 else:
     phase("original", original)
-    phase("amd64", lambda row: image("x86_64", "amd64", 62, row))
-    phase("arm64", lambda row: image("aarch64", "arm64", 183, row))
-    RESULT["status"] = "PASS" if all(row["status"] == "PASS" for row in RESULT["phases"].values()) else "FAIL"
+    phase("consumer_build", build_consumer)
+    if RESULT["phases"]["consumer_build"]["status"] == "PASS":
+        phase("consumer_build_proof", build_proof)
+        phase("consumer_binary", consumer_binary)
+        if RESULT["phases"]["original"]["status"] == "PASS":
+            phase("amd64", lambda row: image("x86_64", "amd64", 62, row))
+            phase("arm64", lambda row: image("aarch64", "arm64", 183, row))
+    for name in ("consumer_build_proof", "consumer_binary", "amd64", "arm64"):
+        RESULT["phases"].setdefault(name, {"status": "NOT_EXECUTED", "reason": "Required consumer build or original identity unavailable"})
+    RESULT["status"] = "PASS" if all(row["status"] == "PASS" for row in RESULT["phases"].values()) else "INCOMPLETE"
 RESULT["finished"] = now()
 save()
 print(json.dumps({"status": RESULT["status"], "phases": {k: v["status"] for k, v in RESULT["phases"].items()}}))
