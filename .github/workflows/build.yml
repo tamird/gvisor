@@ -1,59 +1,37 @@
-name: Reconcile original TCP receiver windows
+name: Compare the Newt TCP client transfers
 on:
   push:
-    branches: [qualification/tcp-mss-forwarder-reconcile]
+    branches: [qualification/tcp-newt-pr16081-transfer]
 permissions:
   contents: read
-  actions: read
 jobs:
-  reconcile:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-mss-forwarder-reconcile'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
+  transfer:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/tcp-newt-pr16081-transfer'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 40
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 2, persist-credentials: false}
-    - name: Retrieve only the exact original artifacts
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: |
-        python3 - <<'PYTHON'
-        import hashlib, os, subprocess
-        from pathlib import Path
-        root = Path(os.environ['RUNNER_TEMP']) / 'mss-forwarder'
-        root.mkdir()
-        for artifact, name in [(13137577796, 'duration.zip'), (13137025228, 'helpers.zip')]:
-            result = subprocess.run(['gh', 'api', f'repos/tamird/gvisor/actions/artifacts/{artifact}/zip?receipt=' + os.environ['GITHUB_RUN_ID']], capture_output=True)
-            if result.returncode:
-                print('artifact retrieval failed', artifact, result.returncode, hashlib.sha256(result.stderr).hexdigest())
-                raise SystemExit(result.returncode)
-            (root / name).write_bytes(result.stdout)
-        PYTHON
-    - name: Verify original bytes and the prespecified interior windows
-      run: python3 test/rbe/tcp_mss_forwarder.py reconcile
-    - name: Validate the typed publication
-      id: privacy
-      if: always()
-      env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        GH_TOKEN: ${{ github.token }}
-      run: python3 test/rbe/tcp_mss_forwarder.py scan
-    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      if: ${{ always() && steps.privacy.outcome == 'success' }}
+      with: {persist-credentials: false}
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-        name: tcp-mss-forwarder-reconciled
-        path: ${{ runner.temp }}/mss-forwarder/public/result.json
+        repository: adios-404/netstack-rack-repro
+        ref: ae0978c979502245730603fbe269edcc51166906
+        persist-credentials: false
+        path: reporter
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        repository: fosrl/newt
+        ref: 76ff3b13801b8a03e18f808aabde4bd4bef15058
+        persist-credentials: false
+        path: newt
+    - name: Build the pinned Newt data path and compare ten local fetches
+      env:
+        GOTOOLCHAIN: go1.27.3
+        GOPROXY: https://proxy.golang.org
+      run: python3 test/rbe/tcp_newt_transfer.py
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
+      with:
+        name: newt-transfer
+        path: ${{ runner.temp }}/newt-transfer.json
         if-no-files-found: error
-    - name: Publish the compact disposition and individual pairs
-      if: ${{ always() && steps.privacy.outcome == 'success' }}
-      run: |
-        python3 - <<'PYTHON'
-        import json, os
-        from pathlib import Path
-        row = json.loads((Path(os.environ['RUNNER_TEMP']) / 'mss-forwarder/public/result.json').read_text())
-        summary = {key: row.get(key) for key in ('verdict', 'original_run', 'original_workflow_conclusion', 'original_source', 'original_zip_sha256', 'error', 'execution_finish_unix', 'original_verifier_unix', 'reconciled_at_unix', 'medians_mbps', 'native_drift', 'pairs')}
-        text = json.dumps(summary, indent=2)
-        print(text)
-        with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as stream:
-            stream.write('```json\n' + text + '\n```\n')
-        PYTHON
