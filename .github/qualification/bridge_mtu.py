@@ -7,6 +7,9 @@ import json
 import os
 from pathlib import Path
 import re
+import shlex
+import socket
+import stat
 import subprocess
 import xml.etree.ElementTree as ET
 import zipfile
@@ -40,10 +43,36 @@ def save():
     (PUBLIC / "verdict.json").write_text(data)
 
 
+def binaries(target, name):
+    script = Path("bazel-bin/test/syscalls") / target.split(":")[1]
+    line, = [line for line in script.read_text().splitlines() if line.startswith("exec ")]
+    args = shlex.split(line)
+    assert "--network=none" in args
+    assert "--platform=" + ("native" if name == "native" else "systrap") in args
+    assert "--file-access=" + ("exclusive" if name == "native" else "shared") in args
+    paths = {"test_runner": args[1], "fixture": args[-1], "runsc": "release/runsc",
+             "sentry": "release/gvisor-bin/gvisor_sentry"}
+    records = {"wrapper": {"sha256": hashlib.sha256(script.read_bytes()).hexdigest(), "bytes": script.stat().st_size}}
+    for role, relative in paths.items():
+        path = Path(relative)
+        assert not path.is_absolute() and ".." not in path.parts
+        path = Path("bazel-bin") / path
+        assert stat.S_ISREG(path.stat().st_mode) and path.stat().st_mode & 0o111
+        digest = hashlib.sha256()
+        with path.open("rb") as stream:
+            header = stream.read(20)
+            assert header[:6] == b"\x7fELF\x02\x01" and int.from_bytes(header[18:20], "little") == 62
+            digest.update(header)
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                digest.update(chunk)
+        records[role] = {"path": relative, "bytes": path.stat().st_size, "sha256": digest.hexdigest(), "elf_machine": 62}
+    return records
+
+
 def execute(name, source, target):
     git("checkout", "--quiet", "--detach", source)
     out = ROOT / "bridge-private" / name
-    out.mkdir(parents=True)
+    out.mkdir(parents=True, mode=0o700)
     for field, args in {
         "commit_file": ("cat-file", "commit", "HEAD"),
         "source_before": ("status", "--porcelain", "--untracked-files=no"),
@@ -51,12 +80,12 @@ def execute(name, source, target):
         (out / field).write_bytes(subprocess.check_output(["git", *args]))
     raw = out / "raw.jsonl"
     args = ["test", "--config=x86_64", "--keep_going", "--strip=never",
-            "--lockfile_mode=off", "--test_filter=NetlinkRouteTest.BridgeAddUnnamed", "--test_sharding_strategy=disabled",
+            "--lockfile_mode=off", "--strategy=TestRunner=local", "--test_filter=NetlinkRouteTest.BridgeAddUnnamed", "--test_sharding_strategy=disabled",
             "--nocache_test_results", "--flaky_test_attempts=1", "--test_timeout=180",
             "--remote_download_outputs=toplevel", "--test_output=errors",
             f"--build_event_json_file={raw}", "--build_event_json_file_path_conversion=false", target]
     (out / "executed_arguments").write_text("\n".join(args) + "\n")
-    command = ["docker", "exec", "bridge-gnu", "timeout", "--signal=INT", "--kill-after=30s", "1800",
+    command = ["timeout", "--signal=INT", "--kill-after=30s", "1800",
                "bazel", f"--bazelrc={ROOT / 'bridge.bazelrc'}", *args]
     with (out / "console").open("wb") as stream:
         code = subprocess.run(command, stdout=stream, stderr=subprocess.STDOUT).returncode
@@ -99,8 +128,9 @@ def execute(name, source, target):
     row["test_timing"] = {key: observation[key] for key in (
         "testAttemptStart", "testAttemptStartMillis", "testAttemptDuration", "testAttemptDurationMillis") if key in observation}
     save()
-    assert row["evidence_complete"] and info.get("strategy") == "remote"
+    assert row["evidence_complete"] and info.get("strategy") == "local"
     assert not observation.get("cachedLocally") and not info.get("cachedRemotely")
+    row["materialized_binaries"] = binaries(target, name)
     xml, = [out / item["path"] for item in captured["reports"] if item["name"] == "test.xml"]
     case, = ET.parse(xml).getroot().iter("testcase")
     assert "/".join((case.get("classname", ""), case.get("name", ""))) == CASE
@@ -123,8 +153,23 @@ result = dict(source=os.environ["GITHUB_SHA"], product=PRODUCT, stock=STOCK, bas
               started_at=utc(), status="INCOMPLETE", arms={}, command_timeout_seconds=1800)
 save()
 try:
-    assert git("rev-parse", "HEAD^") == "4b64fa6de52a1b145ed86bb39585ca918d9a1153"
-    assert git("rev-parse", "HEAD~2") == STOCK
+    assert git("rev-parse", "HEAD^") == "2f2aa1332380ac3e9016e6adb57a791ba1423054"
+    assert git("rev-parse", "HEAD~2") == "4b64fa6de52a1b145ed86bb39585ca918d9a1153"
+    assert git("rev-parse", "HEAD~3") == STOCK
+    coordinator = json.loads((ROOT / "coordinator.json").read_text())
+    assert coordinator["privileged"] is True and coordinator["user"] == "0:0"
+    assert coordinator["image"] == "gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a"
+    assert os.getuid() == 0 and os.uname().sysname == "Linux" and os.uname().machine == "x86_64"
+    capabilities, = re.findall(r"^CapEff:\s*([0-9a-f]+)$", Path("/proc/self/status").read_text(), re.M)
+    assert all(int(capabilities, 16) & (1 << bit) for bit in (12, 21))
+    assert "RUNTIME" not in os.environ
+    coordinator.update(uid=os.getuid(), architecture=os.uname().machine, kernel=os.uname().release,
+                       net_admin=True, sys_admin=True,
+                       hostname_sha256=hashlib.sha256(socket.gethostname().encode()).hexdigest())
+    result["coordinator"] = coordinator
+    result["placement"] = {"compile_strategy": "remote", "test_strategy": "local", "remote_local_fallback": False}
+    result["related_setup_failure"] = "https://github.com/tamird/gvisor/actions/runs/41737617085/artifacts/13279139095"
+    save()
     originals = []
     for name, digest in (
         ("original.zip", "c22c2c2abc04889d426e9e8190ac528e4f2f0a78eb14bc0ad82f4137f0814323"),
