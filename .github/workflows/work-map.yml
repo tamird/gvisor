@@ -1,0 +1,67 @@
+name: Check the packet read decision against the retained draft snapshot
+on:
+  push:
+    branches: [qualification/work-map-packet-draft-review]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the live UI and the curated pair
+        id: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 155031db292b776fa993fc3cc0f56913eeef833c
+          test "$(git rev-parse HEAD^^)" = 81d4acccd59d4f430501a8f9f873665a10110793
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          test "$(git diff --name-only HEAD^^ HEAD^)" = "$(printf '%s\n' github-status.json registry.json)"
+          sha256sum -c <<'INPUTS'
+          e5d01ececbb039823104599713efd9082379b42e00b724e4580a0ffedf37230a  app.js
+          9944e277509785d0e2d4bf5e37c1b796649a32eb1d7aa45b414a730763c6f0a9  registry.json
+          7e7b89e37b81f6609dbd149bc182705dae0f626983f07b1791f5ea3d07aab3be  github-status.json
+          INPUTS
+          mkdir results
+      - name: Check the canonical metadata pair
+        id: metadata
+        if: always() && steps.source.outcome == 'success'
+        run: node metadata-preflight.mjs . > results/preflight.json
+      - name: Check the decision using the live application functions
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          import vm from 'node:vm';
+          const root='https://tamird.github.io/gvisor/';
+          const read=name=>JSON.parse(fs.readFileSync(name,'utf8'));
+          const n=read('registry.json').nodes.find(x=>x.id==='pr:16886');
+          const p=read('github-status.json').prs.find(x=>x.url===n.url);
+          assert.equal(p.status,'draft');
+          assert.equal(p.authorLogin,'botirkhaltaev');
+          assert.equal(n.head,p.head); assert.equal(n.head,n.contributorReview.head);
+          assert.equal(n.head,'39d91ca98b8216e927b3bc04299de852bb60c6e6');
+          assert.ok(p.commentsComplete && p.reviewsComplete && p.feedback.complete && !p.feedback.items.length && p.threads.complete && p.threads.total===0);
+          assert.ok(n.contributorReview.summary.includes('draft PR'));
+          assert.ok(n.contributorReview.url.endsWith('/files#diff-4407c88217d47e4db4ab1795637bad66f4f8a6d6c11c95e5d22169b5022edbc5R666'));
+          for(const s of ['+114.68% (p=0.000 n=8)','+149.17% (p=0.000 n=8)','13241593725','dataOffset() == 0','stock numbers include the header bug']) assert.ok(n.contributorReview.body.includes(s));
+          assert.ok(n.contributorReview.body.endsWith('Posted by Codex on behalf of @tamird.'));
+          const app=fs.readFileSync('app.js','utf8');
+          const ctx=vm.createContext({URL,location:{href:root},node:{...n,github:p}});
+          vm.runInContext(app.slice(0,-'start();\n'.length),ctx);
+          assert.equal(vm.runInContext('pendingDecisions(node).length',ctx),1);
+          assert.equal(vm.runInContext('!!contributorDecisionNeedsRefresh(node,node.contributorReview)',ctx),false);
+          assert.equal(vm.runInContext('contributorDecisionURL(node,decisionReason(node.contributorReview)).toString()',ctx),root+'?view=table&reason=post-review#pr%3A16886');
+          JS
+      - name: Publish the bounded verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: verified-packet-review
+          path: results/preflight.json
+          if-no-files-found: error
