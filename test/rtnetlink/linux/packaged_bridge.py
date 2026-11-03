@@ -14,9 +14,27 @@ RELEASES = {
     "current": ("20261102.0-22-g471d6dff5229", "9a30c8c48fcbf90b7f67fcf92abb77dd61d738c34f5e94a1937d40e001c39dec"),
     "july": ("20260727.0", "386bdc2196fc600b68ff8dafdd8ecdc6a8e033ecf9cfa9dfab61ec1b389da307"),
 }
+BIN_PATH = "/usr/sbin:/usr/bin:/sbin:/bin"
+TOOLS = ("bash", "sh", "dirname", "readlink", "grep", "which", "mount", "cp", "mkdir",
+         "ip", "python3", "seq", "sleep", "cat")
+if sys.argv[1:] == ["--tools"]:
+    # This process runs INSIDE the actual Sentry, before any of the traffic cases.
+    import collections, errno, ipaddress, select, socket, struct, threading, time
+    resolved = {}
+    for name in TOOLS:
+        p = shutil.which(name)
+        if not p or not os.access(os.path.realpath(p), os.X_OK):
+            raise ValueError("missing guest utility: " + name)
+        resolved[name] = [p, os.path.realpath(p)]
+    assert subprocess.check_output(["which", "mount"], text=True).strip() == resolved["mount"][0]
+    for argv in (["ip", "-V"], ["mount", "--version"], ["bash", "--version"]):
+        subprocess.run(argv, stdout=subprocess.DEVNULL, check=True)
+    print("GUEST16908 " + json.dumps(resolved), flush=True)
+    raise SystemExit(0)
+
 FILES = Path(os.environ["TEST_SRCDIR"]) / os.environ["TEST_WORKSPACE"] / "test/rtnetlink/linux"
 WORK = Path(os.environ["TEST_TMPDIR"]).resolve()
-ENV = {"PATH": "/usr/bin:/bin", "LC_ALL": "C"}
+ENV = {"PATH": BIN_PATH, "LC_ALL": "C"}
 
 
 def digest(path):
@@ -56,10 +74,26 @@ def run_cell(runtime, variant):
     (root / "var/run").symlink_to("../run")
     (root / "etc/hosts").write_text("127.0.0.1 localhost\n192.168.0.2 srv\n")
     (root / "etc/nsswitch.conf").write_text("hosts: files\n")
+    (root / "etc/alternatives").mkdir()
+    for name in TOOLS:
+        found = shutil.which(name, path=BIN_PATH)
+        require(found is not None, "missing host fixture utility: " + name)
+        p = Path(found)
+        final = p.resolve(strict=True)
+        require(final.is_relative_to("/usr") and final.is_file(), "invalid host utility: " + name)
+        visited = set()
+        while p.is_symlink():
+            require(p not in visited, "cyclic host utility")
+            visited.add(p)
+            if p.parent == Path("/etc/alternatives"):
+                dest = root / "etc/alternatives" / p.name
+                if not dest.is_symlink():
+                    dest.symlink_to(final)
+            p = Path(os.path.normpath(p.parent / p.readlink()))
     fixture = root / "fixture"
     for name in ("bridge_test.sh", "short_connections.py", "rtnetlink_test.sh"):
         source = name
-        if variant == "baseline":
+        if variant in ("baseline", "tools"):
             source = {"bridge_test.sh": "baseline-bridge.sh", "short_connections.py": "baseline-short.py"}.get(name, name)
         shutil.copyfile(FILES / source, fixture / name)
     # No customer, host home, workspace, or network is mounted in the sandbox.
@@ -67,11 +101,15 @@ def run_cell(runtime, variant):
     for destination, kind in (("/proc", "proc"), ("/sys", "sysfs"), ("/tmp", "tmpfs"), ("/run", "tmpfs")):
         mounts.append(dict(destination=destination, type=kind, source=kind))
     caps = ["CAP_SYS_ADMIN", "CAP_NET_ADMIN", "CAP_NET_RAW", "CAP_DAC_OVERRIDE"]
-    env = ["PATH=/usr/bin:/bin", "LC_ALL=C", "TEST_ON_GVISOR=1"]
-    if variant != "baseline":
+    env = ["PATH=" + BIN_PATH, "LC_ALL=C", "TEST_ON_GVISOR=1"]
+    if variant.startswith("forward"):
         env.append("TCP16908_FORWARD=" + variant[-1])
+    args = ["/bin/bash", "/fixture/bridge_test.sh"]
+    if variant == "tools":
+        shutil.copyfile(Path(__file__).resolve(), fixture / "check.py")
+        args = ["/usr/bin/python3", "/fixture/check.py", "--tools"]
     spec = dict(ociVersion="1.0.2", root=dict(path="rootfs", readonly=True),
-                process=dict(args=["/bin/bash", "/fixture/bridge_test.sh"], cwd="/", user=dict(uid=0, gid=0),
+                process=dict(args=args, cwd="/", user=dict(uid=0, gid=0),
                              env=env, capabilities={k: caps for k in ("effective", "permitted", "bounding")}),
                 mounts=mounts, linux=dict(namespaces=[dict(type=k) for k in ("pid", "network", "ipc", "uts", "mount")]))
     (work / "config.json").write_text(json.dumps(spec))
@@ -96,6 +134,8 @@ def run_cell(runtime, variant):
     for line in output.splitlines():
         if line.startswith("TCP16908 {"):
             row["cells"].append(json.loads(line.split(" ", 1)[1]))
+        if line.startswith("GUEST16908 {"):
+            row["tools"] = json.loads(line.split(" ", 1)[1])
     return row
 
 
@@ -120,7 +160,8 @@ def main():
         require(embedded in ("runsc version " + version, "runsc version release-" + version), "wrong embedded version")
         focus = os.environ.get("SHORT_BRIDGE_FOCUS") == "1"
         require(not focus or name == "july", "unexpected focused release")
-        for variant in (("forward0", "forward1") if focus else ("baseline",)):
+        modes = ("tools",) if os.environ.get("SHORT_BRIDGE_TOOLS") == "1" else ("forward0", "forward1") if focus else ("baseline",)
+        for variant in modes:
             record["variants"].append(run_cell(runtime, variant))
     except Exception as exc:
         record["error"] = str(exc) if type(exc) is ValueError else type(exc).__name__

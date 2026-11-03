@@ -10,7 +10,7 @@ jobs:
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 4, persist-credentials: false}
+        with: {fetch-depth: 5, persist-credentials: false}
       - name: Bind the exact original control and both official release packages
         env:
           GH_TOKEN: ${{ github.token }}
@@ -18,12 +18,14 @@ jobs:
           set -euo pipefail
           carrier=d1e3f464d979d34d82fb90d07c0d740acc3344d1
           master=471d6dff5229b99208bf6fec985601067f1f9d69
-          test "$(git rev-parse HEAD^)" = "$carrier"
-          test "$(git rev-parse HEAD^^^)" = "$master"
+          test "$(git rev-parse HEAD^)" = fd76963445760a3b8f05cddb8e9da61f98b5b62e
+          test "$(git rev-parse HEAD^^)" = "$carrier"
+          test "$(git rev-parse HEAD~4)" = "$master"
           git fetch --depth=1 https://github.com/google/gvisor.git refs/tags/release-20260727.0
           test "$(git rev-parse 'FETCH_HEAD^{commit}')" = 9f3e9a3fba9416ea1f5832d82923d95830479096
           mkdir -p "$RUNNER_TEMP/bridge-receipts"
           gh api repos/tamird/gvisor/actions/artifacts/13250247550/zip > "$RUNNER_TEMP/native.zip"
+          gh api repos/tamird/gvisor/actions/artifacts/13252136757/zip > "$RUNNER_TEMP/packaged-original.zip"
           unset GH_TOKEN
           python3 .github/qualification/short_bridge_receipt.py packaged native-reuse current 0
           p=test/rtnetlink/linux
@@ -53,8 +55,12 @@ jobs:
             date --utc --iso-8601=ns > "$RUNNER_TEMP/bridge-receipts/$name.finished"
             python3 .github/qualification/short_bridge_receipt.py packaged "$name" "$rel" "$rc" || true
           }
-          run current-baseline current
-          run july-baseline july
+          run current-tools current --test_env=SHORT_BRIDGE_TOOLS=1
+          run july-tools july --test_env=SHORT_BRIDGE_TOOLS=1
+          if python3 .github/qualification/short_bridge_receipt.py tools-ready; then
+            run current-baseline current
+            run july-baseline july
+          fi
           if python3 .github/qualification/short_bridge_receipt.py baseline-clean; then
             run july-forward july --test_env=SHORT_BRIDGE_FOCUS=1
           fi

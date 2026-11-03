@@ -192,6 +192,14 @@ def packaged():
     save()
     try:
         if name == "native-reuse":
+            failed = (TEMP / "packaged-original.zip").read_bytes()
+            assert hashlib.sha256(failed).hexdigest() == "a051966000a6a5a08d48302d403b9975f95f1668a8050407619dfa222d9307a7"
+            with zipfile.ZipFile(io.BytesIO(failed)) as archive:
+                original = [json.loads(archive.read(n + "-baseline.json")) for n in ("current", "july")]
+            assert all(x["bazel_exit"] == 3 and x["observed"]["variants"][0]["runtime_exit"] == 127
+                       and x["observed"]["variants"][0]["cells"] == [] and any("which: command not found" in line
+                       for line in x["observed"]["variants"][0]["diagnostics"]) for x in original)
+            report["prior_setup_failure"] = {"artifact":13252136757,"rows":original}
             content = (TEMP / "native.zip").read_bytes()
             assert hashlib.sha256(content).hexdigest() == "b1e30cbb85eb3e91718955b591bfdbb1c9868d5e8ca3ae4501d9244601b67ec0"
             with zipfile.ZipFile(io.BytesIO(content)) as archive:
@@ -225,6 +233,13 @@ def packaged():
         save()
         assert obs["release"] == release and not obs.get("error") and obs["binaries"]
         assert report["bazel_exit"] == 0 and report["test_results"] == [{"status":"PASSED","strategy":"local","cached":False}]
+        if name.endswith("-tools"):
+            v, = obs["variants"]
+            assert v["variant"] == "tools" and v["runtime_exit"] == 0 and v["cells"] == []
+            names = {"bash","sh","dirname","readlink","grep","which","mount","cp","mkdir","ip","python3","seq","sleep","cat"}
+            assert set(v["tools"]) == names and all(len(paths) == 2 and paths[1].startswith("/usr/") for paths in v["tools"].values())
+            report.update(complete=True,verdict="GUEST_TOOLS_READY")
+            return 0
         variants = ["baseline"] if name.endswith("baseline") else ["forward0","forward1"]
         assert [v["variant"] for v in obs["variants"]] == variants
         clean = True
@@ -266,6 +281,13 @@ def packaged():
 
 
 def packaged_finish():
+    readiness = []
+    for name in ("current-tools", "july-tools"):
+        path = OUT / (name + ".json")
+        readiness.append(json.loads(path.read_text()) if path.exists() else {})
+    ready = all(r.get("verdict") == "GUEST_TOOLS_READY" for r in readiness)
+    if sys.argv[1] == "tools-ready":
+        return not ready
     baseline = []
     for name in ("native-reuse", "current-baseline", "july-baseline"):
         path = OUT / (name + ".json")
@@ -276,16 +298,17 @@ def packaged_finish():
     focus = OUT / "july-forward.json"
     typed = [b.get("verdict", "PRIOR_NATIVE_CLEAN" if b.get("native") else "INCOMPLETE") for b in baseline]
     focused = json.loads(focus.read_text()) if focus.exists() else {}
-    complete = all(b.get("complete") for b in baseline) and (not clean or focused.get("complete",False))
+    complete = ready and all(b.get("complete") for b in baseline) and (not clean or focused.get("complete",False))
     runtime_failures = [
         [b["phase"], v["variant"], v.get("runtime_exit"),bool(v.get("timeout"))]
-        for b in [*baseline, focused] for v in b.get("observed", {}).get("variants", [])
+        for b in [*readiness,*baseline, focused] for v in b.get("observed", {}).get("variants", [])
         if v.get("runtime_exit") != 0
     ]
     (OUT/"verdict.json").write_text(json.dumps({"verdict":"COMPLETE" if complete else "INCOMPLETE",
         "baseline":typed, "july_forwarding":focused.get("verdict", "INCOMPLETE" if clean else "NOT_RUN"),
         "runtime_failures":runtime_failures,
-        "bazel_failures":[[b["phase"],b["bazel_exit"]] for b in [*baseline,focused] if b.get("bazel_exit")],
+        "tools_ready":ready,
+        "bazel_failures":[[b["phase"],b["bazel_exit"]] for b in [*readiness,*baseline,focused] if b.get("bazel_exit")],
         "verified":now()},indent=2))
     return not complete
 
@@ -294,7 +317,7 @@ if __name__ == "__main__":
     OUT.mkdir(exist_ok=True)
     if sys.argv[1:] and sys.argv[1] == "packaged":
         raise SystemExit(packaged())
-    if sys.argv[1:] and sys.argv[1] in ("baseline-clean","packaged-finish"):
+    if sys.argv[1:] and sys.argv[1] in ("tools-ready","baseline-clean","packaged-finish"):
         raise SystemExit(packaged_finish())
     if sys.argv[1:] and sys.argv[1] == "build":
         raise SystemExit(build(*sys.argv[2:]))
