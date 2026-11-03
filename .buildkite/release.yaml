@@ -68,6 +68,8 @@ steps:
   - <<: *common
     label: ":ship: Website Deploy"
     if: build.branch == "master" && build.tag == null
+    env:
+      DOCKER_BUILD: "false"
     commands:
       # The built website image must be x86_64.
       - make BAZEL_OPTIONS=--config=x86_64 website-deploy
