@@ -1,161 +1,58 @@
-"""Compare both veth endpoints using the existing setlink and veth unit tests."""
+"""Identify the original failure in two bounded test logs without retrying."""
 
-from datetime import datetime, timezone
+import hashlib
+import io
 import json
 import os
 from pathlib import Path
 import re
-import subprocess
+import zipfile
 
-import qualification_report as report
+from cas_inputs import blob
 
-ROOT = Path(os.environ["RUNNER_TEMP"])
-PUBLIC = ROOT / "veth-public"
-PRODUCT = "11004be74a5724b2cc3769eb41c9be31e699c432"
-STOCK = "e8489c86088a020aba72296a60c2be1c75648fbd"
-BASE = "400bd2c81dcc0349033a8218bdf38e239d256678"
-UNIT = "//pkg/tcpip/link/veth:veth_test"
-NATIVE = "//test/rtnetlink:setlink_test_native"
-SYSTRAP = "//test/rtnetlink:setlink_test_runsc_systrap_overlay_directfs"
-EXPECTED = {
-    "native": [1500, 3000, 1500, 3000, 1460],
-    "stock": [1486, 2986, 2986, 1446, 1446],
-    "fixed": [1486, 2986, 1486, 2986, 1446],
-}
-FIELDS = ["initial_peer_mtu", "first_mtu", "peer_after_first", "first_after_peer", "peer_mtu"]
-SECRETS = [value for key in ("GH_TOKEN", "GITHUB_TOKEN", "BUILDBUDDY_API_KEY")
-           if (value := os.environ.get(key))]
-
-
-def utc():
-    return datetime.now(timezone.utc).isoformat()
-
-
-def git(*args):
-    return subprocess.check_output(["git", *args]).decode().strip()
-
-
-def save():
-    result["verdict_available_at"] = utc()
-    data = json.dumps(result, indent=2, sort_keys=True) + "\n"
-    assert len(data.encode()) < 128 * 1024
-    assert not any(value in data or json.dumps(value)[1:-1] in data for value in SECRETS)
-    assert not re.search(r"(?i)(?:authorization|x-buildbuddy-api-key)\s*[:=]|github_pat_|gh[pousr]_", data)
-    (PUBLIC / "verdict.json").write_text(data)
-
-
-def execute(name, source, target):
-    git("checkout", "--quiet", "--detach", source)
-    out = ROOT / "veth-private" / name
-    out.mkdir(parents=True)
-    for field, args in {
-        "commit_file": ("cat-file", "commit", "HEAD"),
-        "source_before": ("status", "--porcelain", "--untracked-files=no"),
-    }.items():
-        (out / field).write_bytes(subprocess.check_output(["git", *args]))
-    raw = out / "raw.jsonl"
-    args = ["test", "--config=x86_64", "--keep_going", "--strip=never",
-            "--lockfile_mode=off", "--test_sharding_strategy=disabled",
-            "--nocache_test_results", "--flaky_test_attempts=1", "--test_timeout=180",
-            "--remote_download_outputs=toplevel", "--test_output=errors",
-            f"--test_env=VETH_MTU_QUALIFICATION={os.environ['GITHUB_RUN_ID']}-{name}",
-            *(["--test_arg=-test.v"] if name == "unit" else []),
-            f"--build_event_json_file={raw}", "--build_event_json_file_path_conversion=false", target]
-    (out / "executed_arguments").write_text("\n".join(args) + "\n")
-    command = ["docker", "exec", "bridge-gnu", "timeout", "--signal=INT", "--kill-after=30s", "1080",
-               "bazel", f"--bazelrc={ROOT / 'bridge.bazelrc'}", *args]
-    with (out / "console").open("wb") as stream:
-        code = subprocess.run(command, stdout=stream, stderr=subprocess.STDOUT).returncode
-    finished = utc()
-    row = dict(source=source, target=target, native_exit=code, command_finished_at=finished,
-               status="FAIL" if code == 3 else "INCOMPLETE")
-    result["arms"][name] = row
-    save()
-    (out / "native_exit").write_text(str(code))
-    (out / "source_after").write_text(git("status", "--porcelain", "--untracked-files=no"))
-    (out / "final_head").write_text(git("rev-parse", "HEAD"))
-    (out / "targets").write_text(target + "\n")
-    events = out / "events.jsonl"
-    captured = report.capture(raw, events, Path("bazel-out"), out / "reports")
-    (out / "capture_exit").write_text("1" if captured["errors"] else "0")
-    context = {key: key for key in ("commit_file", "source_before", "source_after", "final_head",
-                                   "executed_arguments", "native_exit", "capture_exit")}
-    context.update(expected_source=source, command_kind="test", execution_finished_at=finished)
-    report.write_json(out / "context.json", context)
-    verdict = report.verdict(events, report.manifest_path(events), out / "context.json", out / "targets", ())
-    row.update(original_status=verdict["status"], case_counts=verdict["case_counts"],
-               source_clean=not verdict["errors"], evidence_complete=not (verdict["errors"] or verdict["missing"]),
-               reporting_elapsed_seconds=verdict["reporting_elapsed_seconds"],
-               execution_to_verdict_seconds=verdict["execution_to_verdict_seconds"])
-    records = [json.loads(line) for line in events.read_text().splitlines()]
-    starts = [item["started"]["uuid"] for item in records if "started" in item]
-    assert len(starts) == 1 and re.fullmatch(r"[a-f0-9-]{36}", starts[0])
-    row["invocation"] = starts[0]
-    row["reports"] = [{key: item[key] for key in ("name", "sha256", "bytes")} for item in captured["reports"]]
-    attempts = [item for item in records if "testResult" in item]
-    assert len(attempts) == 1 and len(verdict["executed"]) == 1
-    attempt = attempts[0]
-    identity, observation = attempt["id"]["testResult"], attempt["testResult"]
-    assert identity["label"] == target and re.fullmatch(r"[a-f0-9]{64}", identity["configuration"]["id"])
-    assert all(identity.get(key, 1) == 1 for key in ("run", "shard", "attempt"))
-    info = observation["executionInfo"]
-    row["attempt"] = dict(configuration=identity["configuration"]["id"],
-                          strategy=info.get("strategy"), cached_locally=observation.get("cachedLocally", False),
-                          cached_remotely=info.get("cachedRemotely", False), status=observation["status"])
-    row["test_timing"] = {key: observation[key] for key in (
-        "testAttemptStart", "testAttemptStartMillis", "testAttemptDuration", "testAttemptDurationMillis") if key in observation}
-    save()
-    assert git("rev-parse", "HEAD") == source
-    assert not (out / "source_before").read_text().strip() and not (out / "source_after").read_text().strip()
-    assert info.get("strategy") == "remote" and not observation.get("cachedLocally") and not info.get("cachedRemotely")
-    log_path, = [out / item["path"] for item in captured["reports"] if item["name"] == "test.log"]
-    log = log_path.read_text(errors="replace")
-    if name == "unit":
-        row["mtu_test_passed"] = "--- PASS: TestMTU " in log
-        assert row["mtu_test_passed"] and code == 0 and observation["status"] == "PASSED"
-        row["status"] = "PASS"
-    else:
-        readings = {}
-        for field in FIELDS:
-            values = re.findall(rf"\+ {field}=([0-9]+)\b", log)
-            if values:
-                assert len(set(values)) == 1
-                readings[field] = int(values[0])
-        row["mtu_readings"] = readings
-        save()
-        assert [readings.get(field) for field in FIELDS] == EXPECTED[name]
-        if name == "stock":
-            assert "[[ 2986 == 1486 ]]" in log.replace("\\", "")
-            assert code == 3 and observation["status"] == "FAILED"
-            row["status"] = "EXPECTED_FAILURE"
-        else:
-            assert code == 0 and observation["status"] == "PASSED"
-            row["status"] = "PASS"
-    save()
-
-
-result = dict(source=os.environ["GITHUB_SHA"], product=PRODUCT, stock=STOCK, base=BASE,
-              started_at=utc(), status="INCOMPLETE", arms={})
-save()
-try:
-    assert git("rev-parse", "HEAD^") == STOCK
-    assert git("rev-parse", STOCK + "^") == PRODUCT
-    assert git("rev-parse", PRODUCT + "^") == BASE
-    endpoint = "pkg/tcpip/link/veth/veth.go"
-    assert git("diff", "--name-only", STOCK, PRODUCT) == endpoint
-    assert git("rev-parse", STOCK + ":" + endpoint) == git("rev-parse", BASE + ":" + endpoint)
-    assert git("diff", "--name-only", BASE, PRODUCT).splitlines() == [
-        "pkg/tcpip/link/veth/BUILD", endpoint, "pkg/tcpip/link/veth/veth_test.go", "test/rtnetlink/linux/setlink_test.sh"]
-    for name, source, target in (("native", STOCK, NATIVE), ("stock", STOCK, SYSTRAP),
-                                 ("fixed", PRODUCT, SYSTRAP), ("unit", PRODUCT, UNIT)):
-        try:
-            execute(name, source, target)
-        except Exception as error:
-            result["arms"].setdefault(name, {"status": "INCOMPLETE"})["verifier_error"] = type(error).__name__
-            save()
-    statuses = {name: row["status"] for name, row in result["arms"].items()}
-    result["status"] = "PASS" if statuses == {"native": "PASS", "stock": "EXPECTED_FAILURE", "fixed": "PASS", "unit": "PASS"} else (
-        "FAIL" if "FAIL" in statuses.values() else "INCOMPLETE")
-finally:
-    save()
-assert result["status"] == "PASS"
+root = Path(os.environ["RUNNER_TEMP"])
+archive = (root / "original.zip").read_bytes()
+assert hashlib.sha256(archive).hexdigest() == "0d45db8f8b717b2435c89ff3e3b4e20517014d5386dd5e7dff7f000f43c07e83"
+with zipfile.ZipFile(io.BytesIO(archive)) as source:
+    assert source.namelist() == ["verdict.json"]
+    original = json.loads(source.read("verdict.json"))
+assert original["source"] == "7418e0ff3e05db3e7622fc199a8fd033da67630c"
+identifiers = {"stock": "e3549627-93f1-406d-a7de-b960fea5d45a", "fixed": "f6f5204a-1cf2-4fd5-af7f-b7e7f676b268"}
+vocabulary = set("""
+a an the of or by is in from with to on failed failure cannot could can not found no such file directory
+or permission permissions operation permitted refused denied invalid argument arguments missing error
+fatal panic refused exists already executable exec executing execution run running startup start starting
+boot initializing setting setting-up settingup creating create make setup configure mount mounted
+mountpoint mounter mode mounts tmpfs filesystem overlay overlayfs proc sys dev rootfs root runsc
+sentry sandbox gofer systrap ptrace seccomp namespace unshare user network net veth linux sandboxed
+link addr address mtu netlink dev device tools binary test tests command host shared socket input output
+failed-to-parse parse load loader loading open opening read write path stat chdir mkdir read-only
+timeout deadline exceeded disconnected closed network unreachable unsupported supported service
+timed out context canceled killed signal exit code status system call function implemented command-not-found
+bash sh ip sed grep dirname mount chmod which iproute2 rtnetlink_test.sh setlink_test.sh setlink_test
+test_veth01 test_veth02 netns cap_sys_admin cap_net_admin runfiles setup_container setupcontainer
+symlink resolve resolution too many levels symbolic links mountinfo namespaces cgroup cgroups
+apparmor memory cpus platform backends resources buildbuddy firecracker log losing skipped interpreting
+working process terminal standard stdin stdout stderr sync cap capability capabilities procfs devpts
+portmapping runsc-sandbox runsc-gofer file-access directfs group gid uid map bin usr var tmp home
+public transport new network-child linux-amd64 file-system did unable specified unsupported target
+systemd not-a-directory executable-file permission-denied cannot-find rtnetlink answers mountpoint
+ELF interpreter mount_setattr cannot-execute source sourced bundle missing-dependencies runfiles.bash
+test-binary readlink waited initialization failure creating subprocess container
+""".lower().split())
+marker = re.compile(r"(?i)\b(?:cannot|unable|failed|failure|fatal|error|panic|denied|permitted|not found|no such|unsupported|not supported|killed|exception|exit status|read-only|skip)\b")
+result = {"workload_repeated": False, "original_carrier": original["source"], "originals": {}}
+for arm, invocation in identifiers.items():
+    row = original["arms"][arm]
+    assert row["invocation"] == invocation and row["attempt"]["status"] == "FAILED" and row["mtu_readings"] == {}
+    record, = [v for v in row["reports"] if v["name"] == "test.log"]
+    assert 0 < record["bytes"] < 12 * 1024
+    data = blob({"hash": record["sha256"], "sizeBytes": record["bytes"]}, invocation)
+    tokens = []
+    for line in data.decode(errors="replace").splitlines():
+        if marker.search(line):
+            words = [w for w in re.findall(r"[a-z_][a-z0-9_.-]*", line.lower()) if w in vocabulary]
+            if words:
+                tokens.append(words[:48])
+    result["originals"][arm] = {**record, "invocation": invocation, "diagnostic_words": tokens[-24:]}
+(root / "veth-public/verdict.json").write_text(json.dumps(result, indent=2) + "\n")
