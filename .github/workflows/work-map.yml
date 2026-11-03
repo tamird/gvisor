@@ -1,0 +1,119 @@
+name: Verify the SYN-cookie follow-up and pending RACK review
+on:
+  push:
+    branches: [qualification/work-map-cookie-error-review]
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind collector to the curated records and published base
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 29498fcab7ce409cf9e0882e3ddc8381d70c465a
+          test "$(git rev-parse HEAD^^)" = a6184dcfa44329b5d0a3e97ce68c0cdce8986b83
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          test "$(git diff --name-only HEAD^^ HEAD^)" = registry.json
+          mkdir results
+          cp registry.json results/
+      - name: Refresh the two TCP PRs and their matching exports
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PYTHON'
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import copy
+          import json
+          import runpy
+          u = runpy.run_path("update-status.py")
+          g = u["collect_repository"].__globals__
+          r = u["REGISTRY"]
+          saved = copy.deepcopy(r)
+          repo = "google/gvisor"
+          numbers = {16809, 16857}
+          p = Path("github-status.json")
+          old = json.loads(p.read_text())
+          prior = [x for x in old["prs"] if x.get("repo",repo) == repo and x["number"] in numbers]
+          assert {p["number"] for p in prior} == numbers
+          try:
+              # The canonical collector supports registered-only repositories. For this
+              # publication, scope that existing path to exactly the changed nodes.
+              r["nodes"] = [n for n in r["nodes"] if n["id"] in
+                            {"pr:" + str(i) for i in numbers}]
+              r["meta"]["registeredOnlyRepositories"].append(repo)
+              g["PR_BATCH_SIZE"] = 3
+              rows, fresh, _, inventory = u["collect_repository"](repo, "copybara", {**old, "prs":prior})
+              issues = {}
+              assert len(rows) == len(numbers) and set(fresh).issuperset(numbers)
+              u["recheck_snapshot_mergeability"](list(fresh.values()), [p for s in rows for p in (s,*s["imports"])], repo)
+          finally:
+              r.clear()
+              r.update(saved)
+          maintainers = u["fetch_maintainers"]()
+          nodes = {n["id"]:n for n in r["nodes"]}
+          current = {}
+          for pr in rows:
+              key = "pr:"+str(pr["number"])
+              node = nodes[key]
+              if pr["status"] == "open":
+                  pr = u["with_maintainer_reviewers"](pr, maintainers)
+                  pr["publicImportDisposition"] = u["public_import_disposition"](pr,node.get("approvedPatch"),node.get("landedPatch"))
+              current[pr["url"]] = pr
+          prs = [current.get(p["url"],p) for p in old["prs"]]
+          assert len({p["url"] for p in prs}) == len(prs)
+
+          now = datetime.now(timezone.utc).isoformat()
+          report = u["check_report"](prs,old)
+          snap = {**old,"checkedAt":now,"registryDate":r["meta"]["updatedAt"],"prs":prs,"issues":{**old["issues"],**issues},
+                  "reviewerHandoff":u["reviewer_handoff"](prs,old),
+                  "mergeabilityHandoff":u["mergeability_handoff"](report,old),"checkFailures":report["checkFailures"],
+                  "workStates":u["record_states"](prs,r,old,now)}
+          snap["limits"] = {**old["limits"],"curationRefresh":{"prs":sorted(numbers),"issues":sorted(issues),"requests":g["requests"],
+              "graphqlCost":g["query_cost"],"previousFullSnapshot":old["checkedAt"],"repositoryObservation":inventory}}
+          if sweep := u["feedback_sweep"](r,[*prs,*old["reviewPRs"]],old,now):
+              snap["projectFeedbackReview"] = sweep
+          p.write_text(json.dumps(snap,indent=2,ensure_ascii=False)+"\n")
+          PYTHON
+          cp github-status.json results/
+      - name: Check the data used to render the cards
+        run: |
+          node metadata-preflight.mjs . > results/preflight.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          nodes = {n["id"]: n for n in json.loads(Path("registry.json").read_text())["nodes"]}
+          snap = json.loads(Path("github-status.json").read_text())
+          observed = {p["url"]:p for p in snap["prs"]}
+          from hashlib import sha256
+          q=nodes["pr:16809"]
+          pr=observed[q["url"]]
+          exports=[n for n in pr["imports"] if n["number"]==16915]
+          assert len(exports)==1 and exports[0]["sourceHead"]==q["head"]==pr["approvedHead"]=="bc9ffcc0dab81dacb713ea60879fa5bde6e31689"
+          assert exports[0]["matchesSourceHead"] and "contributorReview" not in q
+          assert any(v["outcome"]=="approved" and v["head"]==pr["head"] for v in q["settledReviews"])
+          n=nodes["branch:tcp-info-cookie-send-error"]
+          c=n["contributorReview"]
+          assert c["kind"]=="proposal" and c["status"]=="pending" and c["baseHead"]==q["head"]
+          assert c["head"]==n["head"]=="bbdb2f8a254b4f51e5bf1fa96eaf4872be190d63"
+          assert snap["workStates"][n["id"]]["contributor-review"]["scope"]==n["head"]
+          assert any(e["url"].endswith("/13264951278") for e in n["evidence"])
+          rack=nodes["pr:16857"]
+          inline="https://github.com/google/gvisor/pull/16857#discussion_r4459290531"
+          assert any(item["kind"]=="inline" and item["url"]==inline and item["author"]["login"]=="rexren-gif" and item["createdAt"]=="2026-11-03T19:11:54Z" for item in observed[rack["url"]]["feedback"]["items"])
+          assert inline in rack["followup"]["evidence"] and "contributorReview" not in rack
+          assert snap["limits"]["curationRefresh"]["prs"]==[16809,16857]
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: published-work-map-pair
+          path: results/
+          if-no-files-found: error
