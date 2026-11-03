@@ -18,6 +18,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/rand"
+	"runtime"
 	"time"
 
 	"golang.org/x/time/rate"
@@ -150,12 +151,13 @@ func deliverAccepted(ep *Endpoint) bool {
 
 // handleConnecting is responsible for TCP processing for an endpoint in one of
 // the connecting states.
+// It reports whether it acquired the endpoint lock.
 //
 // +checklocksexclude:ep.segmentQueue.mu
 // +checklocksexclude:ep.pendingProcessingMu
-func handleConnecting(ep *Endpoint) {
+func handleConnecting(ep *Endpoint) bool {
 	if !ep.TryLock() {
-		return
+		return false
 	}
 	cleanup := func() {
 		ep.mu.Unlock()
@@ -167,7 +169,7 @@ func handleConnecting(ep *Endpoint) {
 		// stage then just return (only possible if it was closed or
 		// timed out by the time we got around to processing the wakeup.
 		ep.mu.Unlock()
-		return
+		return true
 	}
 	if err := ep.h.processSegments(); err != nil {
 		// handshake failed. clean up the tcp endpoint and handshake
@@ -179,7 +181,7 @@ func handleConnecting(ep *Endpoint) {
 		}
 		ep.handshakeFailed(err)
 		cleanup()
-		return
+		return true
 	}
 
 	if ep.EndpointState() == StateEstablished && ep.h.listenEP != nil {
@@ -188,19 +190,21 @@ func handleConnecting(ep *Endpoint) {
 		if !deliverAccepted(ep) {
 			ep.resetConnectionLocked(&tcpip.ErrConnectionAborted{})
 			cleanup()
-			return
+			return true
 		}
 	}
 	ep.mu.Unlock()
+	return true
 }
 
 // handleConnected is responsible for TCP processing for an endpoint in one of
 // the connected states(StateEstablished, StateFinWait1 etc.)
+// It reports whether it acquired the endpoint lock.
 //
 // +checklocksexclude:ep.segmentQueue.mu
-func handleConnected(ep *Endpoint) {
+func handleConnected(ep *Endpoint) bool {
 	if !ep.TryLock() {
-		return
+		return false
 	}
 
 	if !ep.EndpointState().connected() {
@@ -208,7 +212,7 @@ func handleConnected(ep *Endpoint) {
 		// state then just return (only possible if it was closed or
 		// timed out by the time we got around to processing the wakeup.
 		ep.mu.Unlock()
-		return
+		return true
 	}
 
 	// NOTE: We read this outside of e.mu lock which means that by the time
@@ -224,11 +228,12 @@ func handleConnected(ep *Endpoint) {
 		ep.mu.Unlock()
 		ep.drainClosingSegmentQueue()
 		ep.waiterQueue.Notify(waiter.EventHUp | waiter.EventErr | waiter.ReadableEvents | waiter.WritableEvents)
-		return
+		return true
 	case ep.EndpointState() == StateTimeWait:
 		startTimeWait(ep)
 	}
 	ep.mu.Unlock()
+	return true
 }
 
 // startTimeWait starts a new goroutine to handle TIME-WAIT.
@@ -247,11 +252,12 @@ func startTimeWait(ep *Endpoint) {
 
 // handleTimeWait is responsible for TCP processing for an endpoint in TIME-WAIT
 // state.
+// It reports whether it acquired the endpoint lock.
 //
 // +checklocksexclude:ep.segmentQueue.mu
-func handleTimeWait(ep *Endpoint) {
+func handleTimeWait(ep *Endpoint) bool {
 	if !ep.TryLock() {
-		return
+		return false
 	}
 
 	if ep.EndpointState() != StateTimeWait {
@@ -259,7 +265,7 @@ func handleTimeWait(ep *Endpoint) {
 		// state then just return (only possible if it was closed or
 		// timed out by the time we got around to processing the wakeup.
 		ep.mu.Unlock()
-		return
+		return true
 	}
 
 	extendTimeWait, reuseTW := ep.handleTimeWaitSegments()
@@ -269,23 +275,25 @@ func handleTimeWait(ep *Endpoint) {
 		ep.drainClosingSegmentQueue()
 		ep.waiterQueue.Notify(waiter.EventHUp | waiter.EventErr | waiter.ReadableEvents | waiter.WritableEvents)
 		reuseTW()
-		return
+		return true
 	}
 	if extendTimeWait {
 		ep.timeWaitTimer.Reset(ep.getTimeWaitDuration())
 	}
 	ep.mu.Unlock()
+	return true
 }
 
 var warnRateLimiter = rate.NewLimiter(rate.Every(time.Second), 1)
 
 // handleListen is responsible for TCP processing for an endpoint in LISTEN
 // state.
+// It reports whether it acquired the endpoint lock.
 //
 // +checklocksexclude:ep.segmentQueue.mu
-func handleListen(ep *Endpoint) {
+func handleListen(ep *Endpoint) bool {
 	if !ep.TryLock() {
-		return
+		return false
 	}
 	defer ep.mu.Unlock()
 
@@ -293,7 +301,7 @@ func handleListen(ep *Endpoint) {
 		// If the endpoint has already transitioned out of a LISTEN
 		// state then just return (only possible if it was closed or
 		// shutdown).
-		return
+		return true
 	}
 
 	for i := 0; i < maxSegmentsPerWake; i++ {
@@ -309,6 +317,7 @@ func handleListen(ep *Endpoint) {
 		}
 		s.DecRef()
 	}
+	return true
 }
 
 // start runs the main loop for a processor which is responsible for all TCP
@@ -331,23 +340,26 @@ func (p *processor) start(wg *sync.WaitGroup) {
 				<-p.resumeChan
 			}
 		case w == &p.newEndpointWaker:
+			var firstContended *Endpoint
 			for {
 				ep := p.epQ.dequeue()
 				if ep == nil {
 					break
 				}
 				if ep.segmentQueue.empty() {
+					firstContended = nil
 					continue
 				}
+				acquired := true
 				switch state := ep.EndpointState(); {
 				case state.connecting():
-					handleConnecting(ep)
+					acquired = handleConnecting(ep)
 				case state.connected() && state != StateTimeWait:
-					handleConnected(ep)
+					acquired = handleConnected(ep)
 				case state == StateTimeWait:
-					handleTimeWait(ep)
+					acquired = handleTimeWait(ep)
 				case state == StateListen:
-					handleListen(ep)
+					acquired = handleListen(ep)
 				case state == StateError || state == StateClose:
 					// Try to redeliver any still queued
 					// packets to another endpoint or send a
@@ -365,7 +377,19 @@ func (p *processor) start(wg *sync.WaitGroup) {
 				// requeue this endpoint for processing.
 				if !ep.segmentQueue.empty() && !ep.isOwnedByUser() {
 					p.epQ.enqueue(ep)
+					if !acquired {
+						// Seeing this endpoint again without acquiring any
+						// lock means the entire FIFO ahead of it was busy.
+						// Give the lock holders a turn before another pass.
+						if firstContended == ep {
+							runtime.Gosched()
+						} else if firstContended == nil {
+							firstContended = ep
+						}
+						continue
+					}
 				}
+				firstContended = nil
 			}
 		}
 	}
