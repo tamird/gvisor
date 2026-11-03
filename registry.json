@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T18:50:22.524457+00:00",
+    "updatedAt": "2026-11-03T19:07:32.229433+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -44664,10 +44664,18 @@
         {
           "label": "Native ownership case with mapped credentials, alongside the original retained results",
           "url": "https://github.com/tamird/gvisor/actions/runs/41395245317/artifacts/13119595225"
+        },
+        {
+          "label": "Fork rebase 1e2c3bce4: native Nogo wrapper passed with AMD64 and ARM64 finding inputs; systrap passed six cases, native failed credential setup before IPC_RMID",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41677508668/artifacts/13256418500"
+        },
+        {
+          "label": "Separate redundant target-configured ARM64 wrapper exited 126 on the AMD64 runner (Exec format error); not a SHM finding",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41697675886/artifacts/13261118075"
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
+      "updatedAt": "2026-11-03T19:07:32.229433+00:00",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -44796,7 +44804,7 @@
       "url": "https://go-review.googlesource.com/c/tools/+/858482",
       "group": "analysis",
       "status": "Published for upstream review",
-      "updatedAt": "2026-11-03T18:50:22.524457+00:00",
+      "updatedAt": "2026-11-03T19:07:32.229433+00:00",
       "summary": "Go Gerrit CL 858481 corrects the new-file line number for adjacent edits in x/tools/internal/diff, the source vendored by Go. Its child CL 858482 uses that implementation in goimports -d so it can print a patch without invoking an external diff program.",
       "evidence": [
         {
@@ -44830,6 +44838,10 @@
         {
           "label": "Child CL: generate goimports diffs in process",
           "url": "https://go-review.googlesource.com/c/tools/+/858482"
+        },
+        {
+          "label": "Linux: stock emitted +7 instead of +8; parent and child suites passed and goimports emitted an applicable patch without external diff",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41697466128/artifacts/13261282119"
         }
       ],
       "settledReviews": [
@@ -45143,9 +45155,9 @@
       "title": "Build gVisor with Bazel 9.3.1",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-03T18:50:22.524457+00:00",
+      "updatedAt": "2026-11-03T19:07:32.229433+00:00",
       "url": "https://github.com/google/gvisor/pull/16801",
-      "summary": "Bazel 9.3.1 includes the directory-watching fix. The plugin BUILD file loads cc_library explicitly, and the Coral toolchain treats dependency includes as system headers. Maintainer approval and both Copybara statuses refer to the current revision.",
+      "summary": "Bazel 9.3.1 includes the directory-watching fix. The plugin BUILD file loads cc_library explicitly, and the Coral toolchain treats dependency includes as system headers. Copybara export #16913 names approved 514a1ce4f and includes the same eight file paths.",
       "evidence": [
         {
           "label": "Published Bazel 9.3.1 upgrade",
@@ -45226,18 +45238,38 @@
         {
           "label": "First-pass build 513 failed; the responsible job has not been established",
           "url": "https://buildkite.com/gvisor/first-pass/builds/513"
+        },
+        {
+          "label": "Export of the current approved 514a1ce4f source and CL 1013117920; all eight paths match",
+          "url": "https://github.com/google/gvisor/pull/16913"
+        },
+        {
+          "label": "Public pipeline and retries for the matching export",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53379"
+        },
+        {
+          "label": "Public fallback Bazel download failed before testing",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53379#01a1a2b1-3085-4e26-9745-044ceb9bee76"
+        },
+        {
+          "label": "Second public fallback download failure",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53379#01a1a2b1-309d-4188-99a3-8067024cc8b4"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "514a1ce4f7dfeca8077048be5d1f321f72a7e2bd",
-        "observedAt": "2026-11-03T18:50:22.524457+00:00",
-        "disposition": "Current head approved; Copybara import and feedback succeeded",
-        "nextAction": "Identify the failed job in Buildkite first-pass 513 before attributing a failure to the change.",
+        "observedAt": "2026-11-03T19:07:32.229433+00:00",
+        "disposition": "Current approved head matches the open Copybara export",
+        "nextAction": "Follow public export #16913. Two public fallback builder downloads failed in curl before cgroupv1/PHP tests ran, and race smoke was canceled during package installation. Buildkite retried all three. First-pass 513 requires login; its cause is unknown.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16801#pullrequestreview-5757342721",
           "https://buildkite.com/gvisor/first-pass/builds/513",
-          "https://github.com/google/gvisor/pull/16801"
+          "https://github.com/google/gvisor/pull/16801",
+          "https://github.com/google/gvisor/pull/16913",
+          "https://buildkite.com/gvisor/pipeline/builds/53379",
+          "https://buildkite.com/gvisor/pipeline/builds/53379#01a1a2b1-3085-4e26-9745-044ceb9bee76",
+          "https://buildkite.com/gvisor/pipeline/builds/53379#01a1a2b1-309d-4188-99a3-8067024cc8b4"
         ]
       },
       "settledReviews": [
@@ -47621,6 +47653,37 @@
           "url": "https://app.buildbuddy.io/invocation/1decea9a-144d-4a37-9dcb-2816f1336c49"
         }
       ]
+    },
+    {
+      "id": "issue:16908",
+      "type": "issue",
+      "repo": "google/gvisor",
+      "number": 16908,
+      "title": "Identify the failed client call for GKE bridge TCP resets",
+      "url": "https://github.com/google/gvisor/issues/16908",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-03T19:07:32.229433+00:00",
+      "summary": "The GKE client counts connection, send and receive errors together. An isolated bridge completed all exchanges even when post-close resets were captured; the failing GKE syscall and its packet tuple are still needed.",
+      "evidence": [
+        {
+          "label": "Public July release: client-first and server-first close orders",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41696247019/artifacts/13262175985"
+        },
+        {
+          "label": "Forwarding controls on July and current public gVisor",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41681641439/artifacts/13253085882"
+        }
+      ],
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "requestedAt": "2026-11-03T19:07:32.229433+00:00",
+        "title": "Ask for the failing client call and its packet trace",
+        "summary": "Post the completed close-order comparison and ask which GKE syscall first saw the reset?",
+        "body": "Could you share which call first raises `ConnectionResetError` on GKE (`create_connection`, `sendall`, or `recv`), along with the errno? The client currently counts all three under the same exception. If you have a trace for that connection, its client port and the SYN/RST sequence would let us match it to the failing call.\n\nOn public runsc 20260727.0 I connected two network namespaces across a bridge inside the sandbox. All 2,000 exchanges finished in each close order. The first reset I captured in each run followed both FINs, after the exchange succeeded. [Run and packet observations](https://github.com/tamird/gvisor/actions/runs/41696247019/artifacts/13262175985).\n\nPosted by Codex on behalf of @tamird.",
+        "url": "https://github.com/google/gvisor/issues/16908"
+      }
     }
   ],
   "edges": [
@@ -67492,7 +67555,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-03T17:14:59.055459+00:00",
+      "updatedAt": "2026-11-03T19:07:32.229433+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the packet-socket reply on #16793 and the duplicate reconnect reply on #15019.",
       "findings": [
@@ -68199,7 +68262,7 @@
           ]
         },
         {
-          "text": "On the isolated bridge used to investigate #16908, all 2,000 client-first exchanges in each of four cases succeeded. With forwarding on, 1,844 public July connections showed a matching server-direction RST, versus zero on current gVisor. The first observed July RST followed both FINs. Neither version showed a matching RST with forwarding off. The failing GKE syscall and its first matching RST remain unknown.",
+          "text": "For #16908, 2,000 exchanges completed in each close order on public runsc 20260727.0 with two network namespaces connected by a veth bridge inside the sandbox. The passive closer sent a sequence-matched reset on 1,844 client-first and 1,988 server-first connections. In each run the first such reset followed both FINs. The client-first control on 471d6dff5 had no matching resets with forwarding on; neither revision had one with forwarding off. This fixture used neither GKE nor a Docker daemon. The failing GKE client call, errno and trace for that tuple remain unknown.",
           "evidence": [
             {
               "label": "Four-cell comparison and packet evidence",
@@ -68208,6 +68271,10 @@
             {
               "label": "TCP reviewer guide",
               "url": "https://github.com/google/gvisor/issues/16670"
+            },
+            {
+              "label": "Public release, both close orders: completed exchanges and sequence-matched resets",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41696247019/artifacts/13262175985"
             }
           ]
         }
