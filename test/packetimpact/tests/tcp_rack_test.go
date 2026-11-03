@@ -16,6 +16,7 @@ package tcp_rack_test
 
 import (
 	"flag"
+	"fmt"
 	"testing"
 	"time"
 
@@ -211,7 +212,7 @@ func TestRACKFreshTimeoutRetransmission(t *testing.T) {
 			repairs = append(repairs, delta/uint32(mss)+uint32(i)+1)
 		}
 	}
-	t.Logf("RACK_AFTER_TIMEOUT repairs=%v mss=%d", repairs, mss)
+	fmt.Printf("RACK_AFTER_TIMEOUT native=%t repairs=%v mss=%d\n", testbench.Native, repairs, mss)
 	if repeatedHead {
 		t.Fatal("SACK of later segments retransmitted the freshly repaired head")
 	}
