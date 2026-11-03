@@ -44,3 +44,14 @@ go_test(
     ],
     deps = ["//pkg/zip"],
 )
+
+go_test(
+    name = "notice_ranges_test",
+    size = "small",
+    srcs = ["notice_ranges_test.go"],
+    embed = [":licensecheck"],
+    embedsrcs = [
+        "testdata/qualification-ltp.txt",
+        "testdata/qualification-qemu.txt",
+    ],
+)
