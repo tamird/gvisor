@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T07:42:58.172731+00:00",
+    "updatedAt": "2026-11-03T08:05:15.209566+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -43845,8 +43845,8 @@
       "url": "https://github.com/tamird/gvisor/commit/a19da812a",
       "group": "analysis",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-03T07:06:47.467598+00:00",
-      "summary": "Both Buildkite jobs run make nogo-tests on the agent. On the proposed pipeline change, the failure hook found an injected analyzer error. On a separate Linux integration source with the proposed compiler, native Make exited successfully and all 871 selected analyzer tests ran. Their reports cover AMD64 and ARM64. The four pipeline lines still depend on the compiler and the shared Bazelisk setup.",
+      "updatedAt": "2026-11-03T08:05:15.209566+00:00",
+      "summary": "Both Buildkite jobs run make nogo-tests on the agent. On the proposed pipeline change, the failure hook found an injected analyzer error. On a separate Linux integration source with the proposed compiler, native Make exited successfully and all 871 selected analyzer tests ran. Their reports cover AMD64 and ARM64. The four pipeline lines still depend on the compiler and the shared Bazelisk setup. The execution records identify the compiler for all 9,894 C++ actions, including both ioctl_sniffer wrapper symlinks.",
       "evidence": [
         {
           "label": "597 original Nogo tests with both architecture reports",
@@ -43903,18 +43903,27 @@
         {
           "label": "Reporter validates failures, missing evidence and its publication limit",
           "url": "https://github.com/tamird/gvisor/actions/runs/41594637243/artifacts/13210924490"
+        },
+        {
+          "label": "Both wrapper symlinks traced to their producer; nine altered-record controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41599622761/artifacts/13214047276"
+        },
+        {
+          "label": "Verifier used by the integration harness",
+          "url": "https://github.com/tamird/gvisor/commit/5bdabc3ba"
         }
       ],
       "followup": {
         "owner": "Contributor",
         "sourceHead": "a19da812a7d6abefcb48cdddf5dba24f0e178e02",
-        "observedAt": "2026-11-03T07:06:47.467598+00:00",
+        "observedAt": "2026-11-03T08:05:15.209566+00:00",
         "disposition": "Contributor review requested",
-        "nextAction": "Review the four pipeline lines. Open after the compiler and the native Buildkite bootstrap land. The integration run used a hosted Linux worker. Verification of one compiler-wrapper symlink in its execution records is separate.",
+        "nextAction": "Review the four pipeline lines. Open after the compiler and the native Buildkite bootstrap land. The integration run used a hosted Linux worker.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41576928150/artifacts/13205005426",
           "https://github.com/tamird/gvisor/actions/runs/41590585980/artifacts/13209552914",
-          "https://github.com/tamird/gvisor/actions/runs/41593578228/artifacts/13211446882"
+          "https://github.com/tamird/gvisor/actions/runs/41593578228/artifacts/13211446882",
+          "https://github.com/tamird/gvisor/actions/runs/41599622761/artifacts/13214047276"
         ]
       },
       "refinement": {
