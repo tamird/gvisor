@@ -20,15 +20,18 @@ import (
 	"time"
 
 	"gvisor.dev/gvisor/pkg/atomicbitops"
+	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checker"
+	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp/test/e2e"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp/testing/context"
+	"gvisor.dev/gvisor/pkg/waiter"
 )
 
 func TestForwarderSendMSSLessThanMTU(t *testing.T) {
@@ -223,13 +226,19 @@ func TestForwarderReopenAfterTimeWait(t *testing.T) {
 // stack and closes the resulting endpoint, exchanging FINs until the forwarded
 // endpoint sits in TIME_WAIT. It returns the forwarder's result channel and
 // the peer's initial sequence number; the stack's is left in c.IRS.
-func forwardedTimeWait(t *testing.T, c *context.Context) (ch chan tcpip.Error, iss seqnum.Value) {
+func forwardedTimeWait(t *testing.T, c *context.Context) (chan tcpip.Error, seqnum.Value) {
 	t.Helper()
 
+	iss := seqnum.Value(context.TestInitialSequenceNumber)
+	return forwardedTimeWaitAt(t, c, iss), iss
+}
+
+func forwardedTimeWaitAt(t *testing.T, c *context.Context, iss seqnum.Value) chan tcpip.Error {
+	t.Helper()
 	s := c.Stack()
 	// Buffered so the handler for either connection can send its result
 	// without waiting on the test to catch up.
-	ch = make(chan tcpip.Error, 2)
+	ch := make(chan tcpip.Error, 2)
 	f := tcp.NewForwarder(s, 65536, 10, func(r *tcp.ForwarderRequest) {
 		var err tcpip.Error
 		c.EP, err = r.CreateEndpoint(&c.WQ)
@@ -238,7 +247,6 @@ func forwardedTimeWait(t *testing.T, c *context.Context) (ch chan tcpip.Error, i
 	})
 	s.SetTransportProtocolHandler(tcp.ProtocolNumber, f.HandlePacket)
 
-	iss = seqnum.Value(context.TestInitialSequenceNumber)
 	c.SendPacket(nil, &context.Headers{
 		SrcPort: context.TestPort,
 		DstPort: context.StackPort,
@@ -299,7 +307,7 @@ func forwardedTimeWait(t *testing.T, c *context.Context) (ch chan tcpip.Error, i
 		checker.TCPAckNum(uint32(iss)+2),
 		checker.TCPFlags(header.TCPFlagAck)))
 
-	return ch, iss
+	return ch
 }
 
 // TestForwarderTimeWaitSynAckKeepsEndpoint checks that a SYN-ACK arriving
@@ -450,6 +458,114 @@ func TestForwarderDroppedStats(t *testing.T) {
 	}
 	close(checkedStats)
 	<-done
+}
+
+// TestQueuedForwarderReconnect uses a second TCP stack as the connecting peer.
+func TestQueuedForwarderReconnect(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		copies int
+	}{{"single", 1}, {"duplicated", 2}} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := context.New(t, e2e.DefaultMTU)
+			defer server.Cleanup()
+			client := context.NewWithOpts(t, context.Options{EnableV4: true, MTU: e2e.DefaultMTU, Clock: faketime.NewManualClock()})
+			defer client.Cleanup()
+
+			// Both test stacks own StackAddr and send to TestAddr. Swap those
+			// two IPv4 addresses between them. This preserves both checksums
+			// and delivers the entire TCP segment unchanged.
+			read := func(c *context.Context) []byte {
+				t.Helper()
+				v := c.GetPacket()
+				defer v.Release()
+				b := append([]byte(nil), v.AsSlice()...)
+				ip := header.IPv4(b)
+				src, dst := ip.SourceAddress(), ip.DestinationAddress()
+				ip.SetSourceAddress(dst)
+				ip.SetDestinationAddress(src)
+				return b
+			}
+			deliver := func(c *context.Context, b []byte) {
+				c.SendSegment(buffer.MakeWithData(b))
+			}
+			tcpOf := func(b []byte) header.TCP { return header.TCP(header.IPv4(b).Payload()) }
+
+			client.Create(-1)
+			if err := client.EP.Bind(tcpip.FullAddress{Addr: context.StackAddr, Port: context.TestPort}); err != nil {
+				t.Fatalf("bind: %v", err)
+			}
+			we, ready := waiter.NewChannelEntry(waiter.WritableEvents)
+			client.WQ.EventRegister(&we)
+			defer client.WQ.EventUnregister(&we)
+			if _, ok := client.EP.Connect(tcpip.FullAddress{Addr: context.TestAddr, Port: context.StackPort}).(*tcpip.ErrConnectStarted); !ok {
+				t.Fatal("connect did not start")
+			}
+			syn := read(client)
+			h := tcpOf(syn)
+			if h.Flags() != header.TCPFlagSyn || h.SourcePort() != context.TestPort || h.DestinationPort() != context.StackPort {
+				t.Fatalf("unexpected opening segment: flags=%v ports=%d→%d", h.Flags(), h.SourcePort(), h.DestinationPort())
+			}
+			// The original connection used sequence space just before the
+			// real client's ISN, as in TestForwarderReopenAfterTimeWait.
+			ch := forwardedTimeWaitAt(t, server, seqnum.Value(h.SequenceNumber()-3))
+			server.Stack().Pause()
+			for i := 0; i < tc.copies; i++ {
+				deliver(server, syn)
+			}
+			server.Stack().Resume()
+			reply := read(server)
+			r := tcpOf(reply)
+			if r.DestinationPort() != h.SourcePort() || r.SourcePort() != h.DestinationPort() || r.AckNumber() != h.SequenceNumber()+1 {
+				t.Fatalf("reply did not acknowledge client's SYN: %v", r.Flags())
+			}
+			deliver(client, reply)
+			select {
+			case <-ready:
+			case <-time.After(5 * time.Second):
+				t.Fatal("client connect did not complete")
+			}
+			err := client.EP.LastError()
+			var outcome string
+			switch r.Flags() {
+			case header.TCPFlagSyn | header.TCPFlagAck:
+				if err != nil || tcp.EndpointState(client.EP.State()) != tcp.StateEstablished {
+					t.Fatalf("SYN-ACK: client state=%v err=%v", client.EP.State(), err)
+				}
+				outcome = "connected"
+			case header.TCPFlagRst | header.TCPFlagAck:
+				if _, ok := err.(*tcpip.ErrConnectionRefused); !ok || tc.copies == 1 {
+					t.Fatalf("RST before handshake: client err=%v copies=%d", err, tc.copies)
+				}
+				outcome = "refused"
+				// Let the closed client answer the forwarder's subsequent
+				// SYN-ACK, so CreateEndpoint gets the real peer response.
+				late := read(server)
+				l := tcpOf(late)
+				if l.Flags() != header.TCPFlagSyn|header.TCPFlagAck || l.AckNumber() != h.SequenceNumber()+1 {
+					t.Fatalf("unexpected late response: %v", l.Flags())
+				}
+				deliver(client, late)
+			default:
+				t.Fatalf("unexpected first response: %v", r.Flags())
+			}
+			feedback := read(client)
+			final := tcpOf(feedback).Flags()
+			if outcome == "connected" && final != header.TCPFlagAck || outcome == "refused" && final != header.TCPFlagRst {
+				t.Fatalf("client %s, unexpected reply: %v", outcome, final)
+			}
+			deliver(server, feedback)
+			select {
+			case serverErr := <-ch:
+				if outcome == "connected" && serverErr != nil || outcome == "refused" && serverErr == nil {
+					t.Fatalf("client %s, forwarder error = %v", outcome, serverErr)
+				}
+				t.Logf("RECONNECT copies=%d first=%d client=%s peer_reply=%d forwarder_error=%T", tc.copies, r.Flags(), outcome, final, serverErr)
+			case <-time.After(5 * time.Second):
+				t.Fatal("forwarder did not complete")
+			}
+		})
+	}
 }
 
 func TestMain(m *testing.M) {

@@ -83,14 +83,17 @@ go_test(
     deps = [
         ":e2e",
         "//pkg/atomicbitops",
+        "//pkg/buffer",
         "//pkg/refs",
         "//pkg/tcpip",
         "//pkg/tcpip/checker",
+        "//pkg/tcpip/faketime",
         "//pkg/tcpip/header",
         "//pkg/tcpip/seqnum",
         "//pkg/tcpip/stack",
         "//pkg/tcpip/transport/tcp",
         "//pkg/tcpip/transport/tcp/testing/context",
+        "//pkg/waiter",
     ],
 )
 
