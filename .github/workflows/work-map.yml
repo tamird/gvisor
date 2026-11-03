@@ -1,0 +1,87 @@
+name: Check CI cache routing and contributor decisions
+on:
+  push:
+    branches: [qualification/work-map-buildkite-cache-audit]
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the exact curation
+        id: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 7ac661963b3e5671bcfdeab09f59bdda2849fdb3
+          test "$(git rev-parse HEAD^^)" = d024e898814e0e754ac8918cbce8635665a33656
+          test -z "$(git diff --name-only HEAD^ HEAD -- ':!.github')"
+          test "$(git diff --name-only HEAD^^ HEAD^)" = registry.json
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
+          mkdir results
+          jq -n --arg source "$GITHUB_SHA" '{source:$source,collector_exit:null}' > results/source.json
+      - name: Validate curated branch metadata before contacting providers
+        run: |
+          node --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';
+          import vm from 'node:vm';
+          const source=readFileSync('app.js','utf8');
+          if (!source.endsWith('start();\n')) throw Error('Unexpected client entry');
+          const registry=JSON.parse(readFileSync('registry.json'));
+          const ctx=vm.createContext({URL, candidateRegistry: registry});
+          vm.runInContext(source.slice(0,-'start();\n'.length),ctx);
+          vm.runInContext('validateRegistry(candidateRegistry)',ctx);
+          JS
+      - name: Collect the canonical snapshot independently
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          status=0
+          python3 update-status.py || status=$?
+          jq -n --arg source "$GITHUB_SHA" --arg product "$(git rev-parse HEAD^)" \
+            --arg curation "$(git rev-parse HEAD^^)" --argjson exit "$status" \
+            '{source:$source,curation:$product,base:$curation,collector_exit:$exit}' > results/source.json
+          test "$status" = 0
+          node metadata-preflight.mjs . > results/preflight.json
+          cp registry.json github-status.json results/
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          registry = json.loads(Path('registry.json').read_text())
+          snapshot = json.loads(Path('github-status.json').read_text())
+          nodes = {node['id']: node for node in registry['nodes']}
+          six = {"branch:buildkite-native-packages","branch:buildkite-native-nogo","branch:buildkite-direct-smoke","branch:buildkite-native-plugin","branch:declared-staged-release-check","branch:declared-jekyll-site"}
+          g="branch:buildkite-native-governance"; h="branch:rules-img-hackbench-image"; oldlint="branch:buildkite-source-lint-native"
+          before=json.loads(__import__("subprocess").check_output(["git","show","HEAD^^:registry.json"]))
+          oldnodes={x["id"]:x for x in before["nodes"]}
+          for k in six:
+              assert "contributorReview" not in nodes[k] and nodes[k]["status"]=="Agent work"
+              assert nodes[k].get("settledReviews")==oldnodes[k].get("settledReviews")
+              assert "contributor-review" not in snapshot["workStates"].get(k,{})
+          assert nodes[h]["settledReviews"]==oldnodes[h]["settledReviews"]
+          for k,head in ((h,"e3ea0022cb30bf8f5646ef29955998501a425d8e"),(g,"75c04f42d5b7346e4a54a5991dfaf31b043b6769")):
+              assert nodes[k]["head"]==nodes[k]["contributorReview"]["head"]==snapshot["workStates"][k]["contributor-review"]["scope"]==head
+          for k in (oldlint, "branch:release-archives-versioned", "pr:16793"):
+              assert nodes[k]==oldnodes[k]
+          assert {e["to"] for e in before["edges"] if e["from"]==oldlint}|{oldlint} == {e["to"] for e in registry["edges"] if e["from"]==g}
+          assert not any(e["from"]==oldlint for e in registry["edges"])
+          assert snapshot["registryDate"]==registry["meta"]["updatedAt"]
+          PY
+      - name: Publish the read-only snapshot pair and verifier
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-map-buildkite-cache-audit
+          path: |
+            results/source.json
+            results/preflight.json
+            results/registry.json
+            results/github-status.json
+          if-no-files-found: error
