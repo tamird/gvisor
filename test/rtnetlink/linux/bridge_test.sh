@@ -21,8 +21,15 @@ if [[ ! -f "$fixture/rtnetlink_test.sh" ]]; then
 fi
 source "$fixture/rtnetlink_test.sh"
 ip netns attach rootns "$$"
-for link in bridge loopback; do
-for closer in client server; do
+links=(bridge loopback)
+closers=(client server)
+if [[ -v TCP16908_FORWARD ]]; then
+  [[ "$TCP16908_FORWARD" == 0 || "$TCP16908_FORWARD" == 1 ]]
+  links=(bridge)
+  closers=(client)
+fi
+for link in "${links[@]}"; do
+for closer in "${closers[@]}"; do
 ip link add br0 type bridge
 ip netns add test0
 ip netns add test1
@@ -54,6 +61,10 @@ ip link set hveth1 mtu 1460
 ip -n test0 link set veth0 mtu 1460
 ip -n test1 link set veth1 mtu 1460
 ip -n test1 link set lo up
+if [[ -v TCP16908_FORWARD ]]; then
+  printf '%s\n' "$TCP16908_FORWARD" > /proc/sys/net/ipv4/ip_forward
+  [[ "$(cat /proc/sys/net/ipv4/ip_forward)" == "$TCP16908_FORWARD" ]]
+fi
 python3 "$fixture/short_connections.py" run "$link" "$closer"
 
 # Destroy namespaces and the bridge.

@@ -1,87 +1,69 @@
-name: Run the native bridge control before building either Sentry
+name: Run the two source-matched gVisor packages on the private bridge
 on:
   push:
-    branches: [qualification/tcp-short-bridge-native-canary]
-permissions: {contents: read}
+    branches: [qualification/tcp-short-bridge-packaged]
+permissions: {contents: read, actions: read}
 jobs:
   compare:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
     runs-on: ubuntu-24.04
-    timeout-minutes: 70
-    env:
-      CURRENT: 471d6dff5229b99208bf6fec985601067f1f9d69
-      JULY: 9f3e9a3fba9416ea1f5832d82923d95830479096
-      ORIGINAL: 8469059159cbf238be7e21a6bff33c61927cb207
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 3
-          persist-credentials: false
-      - name: Select the same product trees and isolate failure collection
+        with: {fetch-depth: 4, persist-credentials: false}
+      - name: Bind the exact original control and both official release packages
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "$ORIGINAL"
-          test "$(git rev-parse HEAD^^)" = "$CURRENT"
+          carrier=d1e3f464d979d34d82fb90d07c0d740acc3344d1
+          master=471d6dff5229b99208bf6fec985601067f1f9d69
+          test "$(git rev-parse HEAD^)" = "$carrier"
+          test "$(git rev-parse HEAD^^^)" = "$master"
           git fetch --depth=1 https://github.com/google/gvisor.git refs/tags/release-20260727.0
-          test "$(git rev-parse 'FETCH_HEAD^{commit}')" = "$JULY"
-          git diff --quiet "$JULY" "$CURRENT" -- test/rtnetlink/BUILD test/rtnetlink/linux/{bridge_test,rtnetlink_test}.sh
+          test "$(git rev-parse 'FETCH_HEAD^{commit}')" = 9f3e9a3fba9416ea1f5832d82923d95830479096
           mkdir -p "$RUNNER_TEMP/bridge-receipts"
-          git diff --binary "$CURRENT" "$ORIGINAL" -- test/rtnetlink/linux/BUILD > "$RUNNER_TEMP/fixture.patch"
-          git diff --binary "$CURRENT" HEAD -- test/rtnetlink/linux/{bridge_test.sh,short_connections.py} >> "$RUNNER_TEMP/fixture.patch"
-          git diff "$ORIGINAL" HEAD -- test/rtnetlink/linux/BUILD > "$RUNNER_TEMP/native.patch"
-          cp .github/qualification/short_bridge_receipt.py "$RUNNER_TEMP/receipt.py"
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends g++-aarch64-linux-gnu iproute2
-      - name: Require a recorded failed action and four real native cells before either Sentry build
+          gh api repos/tamird/gvisor/actions/artifacts/13250247550/zip > "$RUNNER_TEMP/native.zip"
+          unset GH_TOKEN
+          python3 .github/qualification/short_bridge_receipt.py packaged native-reuse current 0
+          p=test/rtnetlink/linux
+          git show "$carrier:$p/short_connections.py" > "$p/baseline-short.py"
+          git show "$carrier:$p/bridge_test.sh" > "$p/baseline-bridge.sh"
+          git diff --exit-code "$carrier" HEAD -- "$p/rtnetlink_test.sh"
+          base=https://storage.googleapis.com/gvisor/releases/pool
+          curl -fsSL --retry 2 "$base/20261102.0-22-g471d6dff5229/binary-amd64/runsc.deb" -o "$p/current.deb"
+          curl -fsSL --retry 2 "$base/20260727.0/binary-amd64/runsc.deb" -o "$p/july.deb"
+          sha256sum -c <<EOF
+          9a30c8c48fcbf90b7f67fcf92abb77dd61d738c34f5e94a1937d40e001c39dec  $p/current.deb
+          386bdc2196fc600b68ff8dafdd8ecdc6a8e033ecf9cfa9dfab61ec1b389da307  $p/july.deb
+          EOF
+          command -v ip
+      - name: Run both baselines independently and then the applicable two-cell July contrast
         run: |
-          set -euo pipefail
-          readonly out="$RUNNER_TEMP/bridge-receipts"
-          readonly report="$RUNNER_TEMP/receipt.py"
-          readonly bazel_bin="$(command -v bazel)"
-          # Only the child test needs private network and mount namespaces.
-          readonly native_wrapper='/usr/bin/sudo -n /usr/bin/unshare --mount --net --pid --fork --mount-proc --propagation private'
-          readonly runner_wrapper='/usr/bin/sudo -n --preserve-env=TEST_SRCDIR,TEST_WORKSPACE,TEST_TMPDIR,XML_OUTPUT_FILE,TEST_UNDECLARED_OUTPUTS_DIR,RUNFILES_DIR,RUNFILES_MANIFEST_FILE'
-          function attempt() {
-            local key="$1" command="$2" label="$3"
-            shift 3
-            rc=0
-            env -i HOME="$HOME" PATH="$PATH" USER="$USER" "$bazel_bin" "$command" --config=x86_64 -c opt \
-              --jobs=4 --build_event_json_file="$RUNNER_TEMP/$key.events" "$@" "$label" \
-              > "$RUNNER_TEMP/$key.buildlog" 2>&1 || rc=$?
-            printf '%s\n' "$rc" > "$out/$key.exit"
-            date --utc --iso-8601=ns > "$out/$key.finished"
+          set -eu
+          readonly cli="$(command -v bazel)"
+          run() {
+            local name="$1" rel="$2"; shift 2
+            local rc=0
+            env -i HOME="$HOME" PATH="$PATH" USER="$USER" "$cli" test --config=x86_64 \
+              --strategy=TestRunner=local --nocache_test_results --flaky_test_attempts=1 --test_timeout=640 \
+              --build_tag_filters= --test_tag_filters= --build_event_json_file="$RUNNER_TEMP/$name.events" \
+              "$@" "//test/rtnetlink/linux:short_bridge_$rel" > "$RUNNER_TEMP/$name.buildlog" 2>&1 || rc=$?
+            printf '%s\n' "$rc" > "$RUNNER_TEMP/bridge-receipts/$name.exit"
+            date --utc --iso-8601=ns > "$RUNNER_TEMP/bridge-receipts/$name.finished"
+            python3 .github/qualification/short_bridge_receipt.py packaged "$name" "$rel" "$rc" || true
           }
-          args=(--strategy=TestRunner=local --nocache_test_results --flaky_test_attempts=1 --test_timeout=300 --build_tag_filters= --test_tag_filters=)
-          src="$CURRENT"
-          for name in current july; do
-            if [[ "$name" = july ]]; then src="$JULY"; fi
-            git switch --detach "$src"
-            git apply --index "$RUNNER_TEMP/fixture.patch"
-            test "$(git hash-object test/rtnetlink/linux/bridge_test.sh)" = "$(git rev-parse "$GITHUB_SHA:test/rtnetlink/linux/bridge_test.sh")"
-            test "$(git hash-object test/rtnetlink/linux/short_connections.py)" = "$(git rev-parse "$GITHUB_SHA:test/rtnetlink/linux/short_connections.py")"
-            if [[ "$name" = current ]]; then
-              git apply --index "$RUNNER_TEMP/native.patch"
-              label=//test/rtnetlink/linux:short_bridge_error_canary
-              attempt error-canary build "$label"
-              python3 "$report" build "$src" error-canary "$label" "$rc"
-              label=//test/rtnetlink/linux:short_bridge_native_canary
-              attempt native-test test "$label" "${args[@]}" "--run_under=$native_wrapper"
-              python3 "$report" test "$src" native "$rc"
-              git apply -R --index "$RUNNER_TEMP/native.patch"
-            fi
-            label=//test/rtnetlink:bridge_test_runsc_systrap_overlay_directfs
-            attempt "$name-build" build "$label"
-            python3 "$report" build "$src" "$name-build" "$label" "$rc"
-            attempt "$name-test" test "$label" "${args[@]}" "--run_under=$runner_wrapper"
-            python3 "$report" test "$src" "$name" "$rc"
-            git restore --source=HEAD --staged --worktree -- test/rtnetlink/linux/{BUILD,bridge_test.sh,short_connections.py}
-          done
-      - name: Verify only observed outcomes
+          run current-baseline current
+          run july-baseline july
+          if python3 .github/qualification/short_bridge_receipt.py baseline-clean; then
+            run july-forward july --test_env=SHORT_BRIDGE_FOCUS=1
+          fi
+      - name: Verify observed outcomes only
         if: ${{ !cancelled() }}
-        run: python3 "$RUNNER_TEMP/receipt.py"
+        run: python3 .github/qualification/short_bridge_receipt.py packaged-finish
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: short-bridge-native-first
+          name: short-bridge-packaged
           path: ${{ runner.temp }}/bridge-receipts/
           if-no-files-found: error

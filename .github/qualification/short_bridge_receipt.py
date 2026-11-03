@@ -177,8 +177,125 @@ def finish():
     return not ok
 
 
+
+def packaged():
+    import io
+    import zipfile
+
+    name, release, rc = sys.argv[2:]
+    path = OUT / (name + ".json")
+    label = "//test/rtnetlink/linux:short_bridge_" + release
+    report = {"phase": name, "source": PRODUCT[release], "owner": label, "bazel_exit": int(rc),
+              "test_results": [], "aborted": [], "observed": {}, "complete": False}
+    def save():
+        path.write_text(json.dumps(report, indent=2))
+    save()
+    try:
+        if name == "native-reuse":
+            content = (TEMP / "native.zip").read_bytes()
+            assert hashlib.sha256(content).hexdigest() == "b1e30cbb85eb3e91718955b591bfdbb1c9868d5e8ca3ae4501d9244601b67ec0"
+            with zipfile.ZipFile(io.BytesIO(content)) as archive:
+                prior = json.loads(archive.read("native.json"))
+            assert prior["native_exit"] == 0 and all(prior["gates"].values())
+            assert prior["fixture"] == "3929bfa774b11795f3f5f99af17e9e545891818114ab6e625123a09c907b3ce5"
+            assert len(prior["cells"]) == 4 and {(x["link"], x["active_closer"]) for x in prior["cells"]} == CASES
+            assert all(x["client"]["outcomes"] == {"ok": 512} and x["server"]["echoed"] == 512
+                       and not x["client"]["first_rst_attempt"] and x["root_bridge_ip_forward"] == "1" for x in prior["cells"])
+            report.update(complete=True, artifact=13250247550, native=prior, owner=prior["target"])
+            return 0
+        rows, log = attempt_files(name)
+        for e in rows:
+            if e.get("id", {}).get("testResult", {}).get("label") != label:
+                continue
+            if "testResult" not in e:
+                report["aborted"].append(e.get("aborted", {}).get("reason", "missing payload"))
+                continue
+            r = e["testResult"]
+            x = r.get("executionInfo", {})
+            report["test_results"].append({"status": r.get("status"), "strategy":x.get("strategy"),
+                                            "cached":r.get("cachedLocally", False) or x.get("cachedRemotely", False)})
+        testlog = Path("bazel-testlogs/test/rtnetlink/linux/short_bridge_" + release + "/test.log")
+        test = testlog.read_text(errors="replace") if testlog.is_file() else ""
+        report["diagnostics"] = failures(log + "\n" + test)
+        save()
+        markers = [json.loads(l.split(" ", 1)[1]) for l in test.splitlines() if l.startswith("PACKAGED16908 {")]
+        assert len(markers) == 1
+        obs = markers[0]
+        report["observed"] = obs
+        save()
+        assert obs["release"] == release and not obs.get("error") and obs["binaries"]
+        assert report["bazel_exit"] == 0 and report["test_results"] == [{"status":"PASSED","strategy":"local","cached":False}]
+        variants = ["baseline"] if name.endswith("baseline") else ["forward0","forward1"]
+        assert [v["variant"] for v in obs["variants"]] == variants
+        clean = True
+        resets, other = [], []
+        for v in obs["variants"]:
+            assert v["runtime_exit"] == 0
+            base = v["variant"] == "baseline"
+            n = 512 if base else 2000
+            keys = CASES if base else {("bridge","client")}
+            assert len(v["cells"]) == len(keys) and {(c["link"],c["active_closer"]) for c in v["cells"]} == keys
+            if base:
+                assert v["fixture"]["short_connections.py"] == "3929bfa774b11795f3f5f99af17e9e545891818114ab6e625123a09c907b3ce5"
+            for c in v["cells"]:
+                cl, sv = c["client"], c["server"]
+                good = cl["outcomes"].get("ok", 0)
+                assert cl["attempts"] == n == sum(cl["outcomes"].values()) and good > 0
+                assert good <= sv["echoed"] <= sv["accepted"] and cl["counts"]["received"] >= good
+                active = c["active_closer"]
+                eof = (sv if active == "client" else cl["counts"]).get(active + " EOF", 0)
+                assert eof > 0
+                if base:
+                    assert cl["elapsed"] >= 512*.045
+                else:
+                    assert c["root_bridge_ip_forward"] == v["variant"][-1]
+                for who, entries in (("client", {k:m for k,m in cl["outcomes"].items() if k!="ok"}),
+                                     ("server", {k:m for k,m in sv.items() if k not in {"accepted","received","echoed","client EOF","closed"}})):
+                    for k, m in entries.items():
+                        (resets if "ECONNRESET" in k else other).append([v["variant"],c["link"],active,who,k,m])
+                clean &= (good == eof == n and all(sv.get(k) == n for k in ("received","echoed","closed","accepted")))
+        report.update(complete=True, verdict="RESET_OBSERVED" if resets else "CLEAN_EXCHANGES_NO_ECONNRESET" if clean and not other else "NO_ECONNRESET_OTHER_ERRORS",
+                      resets=resets, other_errors=other)
+        return 0
+    except Exception as exc:
+        report["collector_error"] = type(exc).__name__
+        return 1
+    finally:
+        report["verified"] = now()
+        save()
+
+
+def packaged_finish():
+    baseline = []
+    for name in ("native-reuse", "current-baseline", "july-baseline"):
+        path = OUT / (name + ".json")
+        baseline.append(json.loads(path.read_text()) if path.exists() else {})
+    clean = all(b.get("complete") for b in baseline) and all(b.get("verdict") == "CLEAN_EXCHANGES_NO_ECONNRESET" for b in baseline[1:])
+    if sys.argv[1] == "baseline-clean":
+        return not clean
+    focus = OUT / "july-forward.json"
+    typed = [b.get("verdict", "PRIOR_NATIVE_CLEAN" if b.get("native") else "INCOMPLETE") for b in baseline]
+    focused = json.loads(focus.read_text()) if focus.exists() else {}
+    complete = all(b.get("complete") for b in baseline) and (not clean or focused.get("complete",False))
+    runtime_failures = [
+        [b["phase"], v["variant"], v.get("runtime_exit"),bool(v.get("timeout"))]
+        for b in [*baseline, focused] for v in b.get("observed", {}).get("variants", [])
+        if v.get("runtime_exit") != 0
+    ]
+    (OUT/"verdict.json").write_text(json.dumps({"verdict":"COMPLETE" if complete else "INCOMPLETE",
+        "baseline":typed, "july_forwarding":focused.get("verdict", "INCOMPLETE" if clean else "NOT_RUN"),
+        "runtime_failures":runtime_failures,
+        "bazel_failures":[[b["phase"],b["bazel_exit"]] for b in [*baseline,focused] if b.get("bazel_exit")],
+        "verified":now()},indent=2))
+    return not complete
+
+
 if __name__ == "__main__":
     OUT.mkdir(exist_ok=True)
+    if sys.argv[1:] and sys.argv[1] == "packaged":
+        raise SystemExit(packaged())
+    if sys.argv[1:] and sys.argv[1] in ("baseline-clean","packaged-finish"):
+        raise SystemExit(packaged_finish())
     if sys.argv[1:] and sys.argv[1] == "build":
         raise SystemExit(build(*sys.argv[2:]))
     if sys.argv[1:] and sys.argv[1] == "test":

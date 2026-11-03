@@ -4,6 +4,7 @@ import collections
 import errno
 import ipaddress
 import json
+import os
 import select
 import socket
 import struct
@@ -13,7 +14,8 @@ import threading
 import time
 from pathlib import Path
 
-COUNT = 512
+REPORTER = "TCP16908_FORWARD" in os.environ
+COUNT = 2000 if REPORTER else 512
 PORT = 9000
 SCRIPT = str(Path(__file__).resolve())
 IP = {"bridge": ("192.168.0.1", "192.168.0.2"), "loopback": ("127.0.0.1", "127.0.0.1")}
@@ -59,7 +61,7 @@ def server(link, closer):
     threads = []
     with socket.socket() as listener:
         listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        listener.bind((dst, PORT))
+        listener.bind(("0.0.0.0" if REPORTER else dst, PORT))
         listener.listen(512)
         listener.settimeout(.1)
 
@@ -168,19 +170,23 @@ def client(link, closer):
     started = time.monotonic()
     done = 0
     for i in range(COUNT):
-        if time.monotonic() - started > 50:
+        if time.monotonic() - started > (100 if REPORTER else 50):
             break
         begin = time.monotonic()
         # No outstanding application connection at this point. Late packets from
         # an earlier attempt must not be assigned to this one.
         controls(sensor, link)
-        s = socket.socket()
+        s = None
         stage = "connect"
         port = 0
         outcome = "ok"
         try:
-            s.settimeout(3)
-            s.connect((dst, PORT))
+            if REPORTER:
+                s = socket.create_connection(("srv", PORT), timeout=3)
+            else:
+                s = socket.socket()
+                s.settimeout(3)
+                s.connect((dst, PORT))
             counts["connected"] += 1
             address, port = s.getsockname()
             if address != src:
@@ -205,14 +211,17 @@ def client(link, closer):
         except OSError as exc:
             outcome = "/".join((stage, *issue(exc)))
             try:
-                port = s.getsockname()[1]
+                if s is not None:
+                    port = s.getsockname()[1]
             except OSError:
                 pass
         finally:
-            s.close()
+            if s is not None:
+                s.close()
         outcomes[outcome] += 1
         done += 1
-        time.sleep(max(0, begin + .05 - time.monotonic()))
+        if not REPORTER:
+            time.sleep(max(0, begin + .05 - time.monotonic()))
         obs = observation(controls(sensor, link), port)
         wire_counts[obs["binding"]] += 1
         if obs.get("first_fin"):
@@ -253,7 +262,7 @@ def run(link, closer):
         try:
             if not select.select([srv.stdout], [], [], 5)[0] or srv.stdout.readline().strip() != "READY":
                 raise RuntimeError("listener did not start")
-            raw = subprocess.check_output([*prefix, cl, *cmd, "client", link, closer], timeout=60)
+            raw = subprocess.check_output([*prefix, cl, *cmd, "client", link, closer], timeout=110 if REPORTER else 60)
             srv.stdin.write("done\n")
             srv.stdin.flush()
             server_result = srv.communicate(timeout=8)[0]

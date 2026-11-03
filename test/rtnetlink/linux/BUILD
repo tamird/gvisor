@@ -72,3 +72,23 @@ sh_test(
     deps = [":rtnetlink_test"],
     timeout = "long",
 )
+
+# These local-only tests consume digest-verified official release packages.
+[
+    sh_test(
+        name = "short_bridge_" + version,
+        srcs = ["packaged_bridge.py"],
+        args = [version],
+        data = [
+            version + ".deb",
+            "baseline-bridge.sh",
+            "baseline-short.py",
+            "bridge_test.sh",
+            "rtnetlink_test.sh",
+            "short_connections.py",
+        ],
+        timeout = "long",
+        tags = ["local", "manual"],
+    )
+    for version in ["july", "current"]
+]
