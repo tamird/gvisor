@@ -4,6 +4,7 @@ on:
     branches: [qualification/work-map-tcp-close-reply]
 permissions:
   contents: read
+  actions: read
 jobs:
   collect:
     if: github.repository == 'tamird/gvisor'
@@ -14,76 +15,24 @@ jobs:
         with:
           fetch-depth: 3
           persist-credentials: false
-      - name: Bind collector to the curated records and published base
-        run: |
-          set -euo pipefail
-          test "$(git rev-parse HEAD^)" = ee048ca67dac568680c56d63323ae23b5a01a7a3
-          test "$(git rev-parse HEAD^^)" = 2122578dd73647a841b1d86e0a9d6db5c38108a8
-          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/work-map.yml
-          test "$(git diff --name-only HEAD^^ HEAD^)" = registry.json
-          mkdir results
-          cp registry.json results/
-      - name: Refresh the Bazel PR, its exports and the reported issue
+      - name: Restore the exact canonical pair from the original observation
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PYTHON'
-          from datetime import datetime, timezone
+          import hashlib, io, json, subprocess, zipfile
           from pathlib import Path
-          import copy
-          import json
-          import runpy
-          u = runpy.run_path("update-status.py")
-          g = u["collect_repository"].__globals__
-          r = u["REGISTRY"]
-          saved = copy.deepcopy(r)
-          repo = "google/gvisor"
-          numbers = {16801}
-          p = Path("github-status.json")
-          old = json.loads(p.read_text())
-          prior = [x for x in old["prs"] if x.get("repo",repo) == repo and x["number"] in numbers]
-          assert {p["number"] for p in prior} == numbers
-          try:
-              # The canonical collector supports registered-only repositories. For this
-              # publication, scope that existing path to exactly the changed nodes.
-              r["nodes"] = [n for n in r["nodes"] if n["id"] in
-                            ({"pr:" + str(i) for i in numbers} | {"issue:16908"})]
-              r["meta"]["registeredOnlyRepositories"].append(repo)
-              g["PR_BATCH_SIZE"] = 3
-              rows, fresh, _, inventory = u["collect_repository"](repo, "copybara", {**old, "prs":prior})
-              issues = u["collect_issues"](old)
-              assert set(issues) == {"issue:16908"}
-              assert len(rows) == len(numbers) and set(fresh).issuperset(numbers)
-              u["recheck_snapshot_mergeability"](list(fresh.values()), [p for s in rows for p in (s,*s["imports"])], repo)
-          finally:
-              r.clear()
-              r.update(saved)
-          maintainers = u["fetch_maintainers"]()
-          nodes = {n["id"]:n for n in r["nodes"]}
-          current = {}
-          for pr in rows:
-              key = "pr:"+str(pr["number"])
-              node = nodes[key]
-              if pr["status"] == "open":
-                  pr = u["with_maintainer_reviewers"](pr, maintainers)
-                  pr["publicImportDisposition"] = u["public_import_disposition"](pr,node.get("approvedPatch"),node.get("landedPatch"))
-              current[pr["url"]] = pr
-          prs = [current.get(p["url"],p) for p in old["prs"]]
-          assert len({p["url"] for p in prs}) == len(prs)
-
-          now = datetime.now(timezone.utc).isoformat()
-          report = u["check_report"](prs,old)
-          snap = {**old,"checkedAt":now,"registryDate":r["meta"]["updatedAt"],"prs":prs,"issues":{**old["issues"],**issues},
-                  "reviewerHandoff":u["reviewer_handoff"](prs,old),
-                  "mergeabilityHandoff":u["mergeability_handoff"](report,old),"checkFailures":report["checkFailures"],
-                  "workStates":u["record_states"](prs,r,old,now)}
-          snap["limits"] = {**old["limits"],"curationRefresh":{"prs":sorted(numbers),"issues":sorted(issues),"requests":g["requests"],
-              "graphqlCost":g["query_cost"],"previousFullSnapshot":old["checkedAt"],"repositoryObservation":inventory}}
-          if sweep := u["feedback_sweep"](r,[*prs,*old["reviewPRs"]],old,now):
-              snap["projectFeedbackReview"] = sweep
-          p.write_text(json.dumps(snap,indent=2,ensure_ascii=False)+"\n")
+          zdata=subprocess.check_output(["gh","api","repos/tamird/gvisor/actions/artifacts/13261329547/zip"])
+          assert hashlib.sha256(zdata).hexdigest()=="e5a24c849836225a604c528b9d6e8d57f6780a13ea03817e09f3baeb0e712fb1"
+          with zipfile.ZipFile(io.BytesIO(zdata)) as z:
+              assert set(z.namelist())=={"registry.json","github-status.json","preflight.json"}
+              r=z.read("registry.json"); s=z.read("github-status.json"); pre=json.loads(z.read("preflight.json"))
+          assert pre["status"]=="PASS" and Path("registry.json").read_bytes()==r
+          for name,data in (("registry.json",r),("github-status.json",s),("app.js",Path("app.js").read_bytes())):
+              assert hashlib.sha256(data).hexdigest()==pre["inputs"][name]["sha256"]
+          out=Path("results"); out.mkdir(); (out/"registry.json").write_bytes(r);(out/"github-status.json").write_bytes(s)
+          Path("github-status.json").write_bytes(s)
           PYTHON
-          cp github-status.json results/
       - name: Check the data used to render the cards
         run: |
           node metadata-preflight.mjs . > results/preflight.json
@@ -104,7 +53,7 @@ jobs:
           c=n["contributorReview"]
           assert c["kind"]=="reply" and c["status"]=="pending" and c["url"]==n["url"]
           assert sha256(c["body"].encode()).hexdigest()=="dd17552a4cd630f82a4b7aa31356bdb9fdc4b12a4477c6ca06bf7b55e12b45d3"
-          assert snap["issues"][n["id"]]["githubState"]=="OPEN"
+          assert snap["issues"][n["id"]]["githubState"]=="open"
           assert snap["workStates"][n["id"]]["contributor-review"]["scope"]==n["url"]
           assert "pr:16886" not in nodes and len(snap["limits"]["curationRefresh"]["prs"])==1
           assert any(e["url"].endswith("/13261282119") for e in nodes["branch:goimports-in-process-diff"]["evidence"])
