@@ -1447,7 +1447,7 @@ func TestMultiPIDNSPath(t *testing.T) {
 // TestMultiPIDNSKill kills processes using PID when containers are using
 // different PID namespaces to ensure PID is taken from the root namespace.
 func TestMultiPIDNSKill(t *testing.T) {
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("error finding test_app:", err)
 	}
@@ -1882,7 +1882,7 @@ func TestMultiContainerSignal(t *testing.T) {
 // TestMultiContainerDestroy checks that container are properly cleaned-up when
 // they are destroyed.
 func TestMultiContainerDestroy(t *testing.T) {
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("error finding test_app:", err)
 	}
@@ -2030,7 +2030,7 @@ func TestMultiContainerKillAll(t *testing.T) {
 		{killContainer: true},
 		{killContainer: false},
 	} {
-		app, err := testutil.FindFile("test/cmd/test_app/test_app")
+		app, err := testutil.FindTestApp()
 		if err != nil {
 			t.Fatal("error finding test_app:", err)
 		}
@@ -2284,7 +2284,7 @@ func TestMultiContainerDifferentFilesystems(t *testing.T) {
 // TestMultiContainerContainerDestroyStress tests that IO operations continue
 // to work after containers have been stopped and gofers killed.
 func TestMultiContainerContainerDestroyStress(t *testing.T) {
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("error finding test_app:", err)
 	}
@@ -2885,7 +2885,7 @@ func TestMultiContainerSharedBindMount(t *testing.T) {
 // Test that one container can send an FD to another container, even though
 // they have distinct MountNamespaces.
 func TestMultiContainerMultiRootCanHandleFDs(t *testing.T) {
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("error finding test_app:", err)
 	}
@@ -3712,7 +3712,7 @@ func TestMultiContainerShm(t *testing.T) {
 // in the host-file backing the overlay.
 func TestMultiContainerOverlayLeaks(t *testing.T) {
 	conf := testutil.TestConfig(t)
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("error finding test_app:", err)
 	}
@@ -3811,7 +3811,7 @@ func copyFile(src, dst string) error {
 // does not lead to memory leaks.
 func TestMultiContainerMemoryLeakStress(t *testing.T) {
 	conf := testutil.TestConfig(t)
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("error finding test_app:", err)
 	}
@@ -3934,7 +3934,7 @@ func TestMultiContainerMemoryLeakStress(t *testing.T) {
 // Tests cgroups are mounted in only containers which have a cgroup mount in
 // the spec.
 func TestMultiContainerCgroups(t *testing.T) {
-	_, err := testutil.FindFile("test/cmd/test_app/test_app")
+	_, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("error finding test_app:", err)
 	}

@@ -67,7 +67,7 @@ func bootConfigs(tb testing.TB, newConf func() *config.Config) []testutil.Platfo
 // mounts.
 func setupMinimalRootfs(tb testing.TB) string {
 	tb.Helper()
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		tb.Fatalf("FindFile: %v", err)
 	}

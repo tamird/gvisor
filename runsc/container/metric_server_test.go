@@ -804,7 +804,7 @@ func TestMetricServerToleratesNoRootDirectory(t *testing.T) {
 func TestMetricServerDoesNotExportZeroValueCounters(t *testing.T) {
 	te, cleanup := setupMetrics(t, false /* forceTempUDS */)
 	defer cleanup()
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatalf("error finding test_app: %v", err)
 	}

@@ -403,7 +403,7 @@ func TestCheckpointRestoreClocks(t *testing.T) {
 		sleepDuration        = 4 * time.Second
 		checkpointedDuration = 8 * time.Second
 	)
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatalf("error finding test_app: %v", err)
 	}
@@ -706,7 +706,7 @@ func TestCheckpointRestoreHostname(t *testing.T) {
 // TestCheckpointRestoreHostinet does the checkpoint/restore test with host
 // networking.
 func TestCheckpointRestoreHostinet(t *testing.T) {
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("error finding test_app:", err)
 	}
@@ -724,7 +724,7 @@ func TestCheckpointRestoreHostinet(t *testing.T) {
 // TestCheckpointResumeHostinet does the checkpoint --leave-running test with
 // host networking.
 func TestCheckpointResumeHostinet(t *testing.T) {
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatal("error finding test_app:", err)
 	}
@@ -2426,7 +2426,7 @@ func runAdjustedTSCTest(t *testing.T, conf *config.Config, count int, offsetCycl
 	}
 	defer outputFile.Close()
 
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatalf("error finding test_app: %v", err)
 	}
@@ -2640,7 +2640,7 @@ func runActiveWorkloadChain(t *testing.T, conf *config.Config, overlay string, i
 		}
 	}
 
-	app, err := testutil.FindFile("test/cmd/test_app/test_app")
+	app, err := testutil.FindTestApp()
 	if err != nil {
 		t.Fatalf("error finding test_app: %v", err)
 	}

@@ -16,10 +16,48 @@ package testutil
 
 import (
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 )
+
+func TestRunfileExecutable(t *testing.T) {
+	for _, tc := range []struct {
+		name, selected, executable string
+		mode                       os.FileMode
+		wantErr                    bool
+	}{
+		{"direct", "test_app", "test_app", 0755, false},
+		{"rules_go", "test_app_/test_app", "test_app_/test_app", 0755, false},
+		{"wrapped", "test_app", "test_app/test_app", 0755, false},
+		{"not_executable", "test_app", "test_app/test_app", 0644, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			want := filepath.Join(root, tc.executable)
+			if err := os.MkdirAll(filepath.Dir(want), 0755); err != nil {
+				t.Fatal(err)
+			}
+			target := filepath.Join(root, "target")
+			if err := os.WriteFile(target, nil, tc.mode); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Symlink(target, want); err != nil {
+				t.Fatal(err)
+			}
+			got, err := runfileExecutable(filepath.Join(root, tc.selected))
+			if tc.wantErr {
+				if err == nil {
+					t.Errorf("runfileExecutable(%q) = %q, want error", tc.selected, got)
+				}
+			} else if err != nil || got != want {
+				t.Errorf("runfileExecutable(%q) = %q, %v; want %q", tc.selected, got, err, want)
+			}
+		})
+	}
+}
 
 func TestWaitUntilRead(t *testing.T) {
 	for _, tc := range []struct {
