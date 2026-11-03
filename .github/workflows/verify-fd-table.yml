@@ -1,13 +1,13 @@
-name: Qualify the final FDTable writer contract
+name: Qualify the robust-futex list pointer contract
 on:
   push:
-    branches: [qualification/fd-table-stacked-nov1]
+    branches: [qualification/robust-list-lock-contract]
 permissions:
   contents: read
 jobs:
   catalog:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
-    name: FDTable writer and negative controls
+    name: Robust-list owner and missing-lock controls
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -17,7 +17,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          ref: b5c5589bad4519a4bd03ae2939379ebf0d09d2b1
+          ref: 7160231be01096832973a93f08cf52690284f070
           path: source
           fetch-depth: 2
           persist-credentials: false
@@ -29,11 +29,12 @@ jobs:
           CPU: x86_64
           WORKER_IMAGE: docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
           ISOLATION: firecracker
-          SHA: b5c5589bad4519a4bd03ae2939379ebf0d09d2b1
+          SHA: 7160231be01096832973a93f08cf52690284f070
         shell: bash
         run: |
           set -eu -o pipefail
           test "$(git rev-parse HEAD)" = "$SHA"
+          test "$(git rev-parse HEAD^)" = b21a9d4eea7b0066232c33c63df9cf20ed987f6f
           test "$(git -C ../carrier rev-parse HEAD)" = "$GITHUB_SHA"
           test "$(git -C ../carrier rev-parse HEAD:test/rbe/qualification_report.py)" = d2e3eedabc2ad911d958aa448fd916aa6835aa86
           test "$(git -C ../carrier rev-parse HEAD:test/rbe/unit_matrix.py)" = d01d9e319084e18ea2928671e417e1b4e86c4954
@@ -65,7 +66,7 @@ jobs:
               'build --bes_backend=grpcs://remote.buildbuddy.io' \
               'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
               'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
-              'build --remote_accept_cached' 'build --remote_cache_compression' 'build --jobs=400' \
+              'build --remote_accept_cached' 'build --remote_cache_compression' 'build --jobs=100' \
               "build --inject_repository=catalog_platform=$platform" \
               'build --host_platform=@catalog_platform//:gnu' \
               'build --extra_execution_platforms=@catalog_platform//:gnu' \
@@ -74,19 +75,40 @@ jobs:
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$rc"
           unset BUILDBUDDY_API_KEY
-          git fetch --no-tags origin e884530b8ac8fac71bb0f061325766b839af8ebd
+          git fetch --no-tags origin 589f967e4cebd1c6a1e2db1c4d27ce90ddc7d187
+          test "$(git rev-parse FETCH_HEAD^)" = "$SHA"
           result=0
-          for phase in negative positive; do
-            sha=e884530b8ac8fac71bb0f061325766b839af8ebd
+          for phase in positive negative; do
+            sha=589f967e4cebd1c6a1e2db1c4d27ce90ddc7d187
             if [[ "$phase" = positive ]]; then sha=$SHA; fi
             git checkout --quiet --detach "$sha"
-            python3 -B ../carrier/test/rbe/qualify_fd_table.py "fd-table-$phase" "$ARCH" "$sha" "$rc" "$RUNNER_TEMP/final-$phase" || result=1
+            python3 -B ../carrier/test/rbe/qualify_fd_table.py "robust-list-$phase" "$ARCH" "$sha" "$rc" "$RUNNER_TEMP/final-$phase" || result=1
           done
           exit "$result"
-      - if: always()
+      - name: Check bounded public reports
+        id: privacy
+        if: always()
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          key = os.environ["BUILDBUDDY_API_KEY"]
+          assert key
+          files = list(Path(os.environ["RUNNER_TEMP"]).glob("final-*/result.json"))
+          assert files
+          for p in files:
+              assert p.is_file() and not p.is_symlink() and p.stat().st_size < 100000
+              b = p.read_bytes()
+              json.loads(b)
+              assert key.encode() not in b and json.dumps(key)[1:-1].encode() not in b
+              assert not re.search(rb"x-buildbuddy-api-key|authorization\s*[:=]|github_pat_|gh[pousr]_", b, re.I)
+          PY
+      - if: always() && steps.privacy.outcome == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: fd-table-stacked
+          name: robust-list-lock-contract
           path: |
             ${{ runner.temp }}/final-negative/result.json
             ${{ runner.temp }}/final-positive/result.json
