@@ -22,7 +22,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
+	"syscall"
 	"testing"
 
 	"golang.org/x/sys/unix"
@@ -54,6 +56,53 @@ func dumpCheckpointText(t *testing.T, imgPath string) string {
 	t.Helper()
 	out, err := runRunsc("statefile", imgPath)
 	if err != nil {
+		// Qualification only: preserve the original invocation and combined pipe.
+		_, callerFile, callerLine, callerOK := runtime.Caller(1)
+		t.Logf("STATEFILE_SITE case=%s file=%s line=%d ok=%t", t.Name(), filepath.Base(callerFile), callerLine, callerOK)
+		recordChild := func(stage string, output []byte, childErr error) {
+			exit, signal := 0, -1
+			if childErr != nil {
+				exit = -1
+				if e, ok := childErr.(*exec.ExitError); ok {
+					status := e.ProcessState.Sys().(syscall.WaitStatus)
+					exit, signal = status.ExitStatus(), int(status.Signal())
+				}
+			}
+			t.Logf("STATEFILE_CHILD case=%s stage=%s exit=%d signal=%d output_bytes=%d output_sha256=%x", t.Name(), stage, exit, signal, len(output), sha256.Sum256(output))
+		}
+		recordError := func(stage string, output []byte) {
+			count := 0
+			for _, line := range strings.Split(string(output), "\n") {
+				if i := strings.Index(line, "FATAL ERROR: "); i >= 0 {
+					line = line[i:]
+				} else if !strings.HasPrefix(line, "panic:") && !strings.HasPrefix(line, "fatal error:") && !strings.HasPrefix(line, "runtime:") {
+					continue
+				}
+				t.Logf("STATEFILE_ERROR case=%s stage=%s %s", t.Name(), stage, line[:min(len(line), 1024)])
+				count++
+				if count == 8 {
+					break
+				}
+			}
+		}
+		recordChild("original", out, err)
+		recordError("original", out)
+		before, readErr := os.ReadFile(imgPath)
+		if readErr != nil {
+			t.Fatalf("read failed checkpoint before diagnostic: %v", readErr)
+		}
+		debugPath := filepath.Join(t.TempDir(), "statefile.debug.log")
+		replayed, replayErr := runRunsc("--debug", "--debug-log="+debugPath, "statefile", imgPath)
+		recordChild("debug", replayed, replayErr)
+		recordError("debug", replayed)
+		after, readErr := os.ReadFile(imgPath)
+		if readErr != nil {
+			t.Fatalf("read failed checkpoint after diagnostic: %v", readErr)
+		}
+		t.Logf("STATEFILE_INPUT case=%s before_bytes=%d before_sha256=%x after_bytes=%d after_sha256=%x", t.Name(), len(before), sha256.Sum256(before), len(after), sha256.Sum256(after))
+		debug, debugErr := os.ReadFile(debugPath)
+		t.Logf("STATEFILE_DEBUG case=%s readable=%t bytes=%d sha256=%x", t.Name(), debugErr == nil, len(debug), sha256.Sum256(debug))
+		recordError("debug_log", debug)
 		t.Fatalf("runsc statefile %s failed: %v\n%s", imgPath, err, out)
 	}
 	return string(out)
