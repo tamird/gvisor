@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T05:54:19.256070+00:00",
+    "updatedAt": "2026-11-03T06:16:06.081403+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2270,13 +2270,13 @@
       "group": "release",
       "status": "Contributor approved; waiting for prerequisites",
       "summary": "Contributor acceptance is complete after removing four unused manual fixture files (83 lines) that obscured how validation worked. The production implementation is unchanged from the validated source. Actual LLVM positive and negative controls and the full two-architecture lint result remain valid: 371 AMD64 and 370 ARM64 actions. The failed standalone GNU probe is preserved; no GNU compatibility is claimed.\n\nEarlier source-specific record:\n\nRefreshed source ab759926b0 retains the compiler prerequisite. The standalone GNU probe failed on a GCC-only flag and missing <vector>; configured graph preparation and buildifier passed, but ARM execution was not attempted. Root will qualify the unchanged lint implementation on the refreshed compiler composition. No contributor review or current LLVM result is claimed.\n\nEarlier source-specific evidence:\n\nCurrent disposition: code dependency. Root to reconcile the actual source prerequisite or replacement. Preserve source; a review request alone cannot clear the dependency.\n\nEarlier source and validation record (historical request wording does not establish a current unanswered question):\n\nUses clang-tidy from the existing hermetic LLVM compiler supplier. On the qualification branch, focused AMD64 and ARM64 checks pass, and full AMD64 lint produces 368 reports. Canonical Fetch/Verify passes for 706 catalog entries. Current source 40dc10a02 and the generated catalog are integrated in d6a21b8b7. Contributor review remains pending; the old wheel-based branch is historical.",
-      "updatedAt": "2026-10-28T03:01:55.211624+00:00",
+      "updatedAt": "2026-11-03T06:16:06.081403+00:00",
       "followup": {
         "owner": "root",
         "sourceHead": "e312033b85f31626dacbece4fb65db81adaca947",
-        "observedAt": "2026-10-28T03:01:55.211624+00:00",
+        "observedAt": "2026-11-03T06:16:06.081403+00:00",
         "disposition": "Contributor approved; waiting for prerequisites",
-        "nextAction": "Open after the compiler migration and independent Linux UAPI header selection #16236 land. Benchmark umbrella headers #16313, direct headers #16204 and the Benchmark version change #15376 have merged. Contributor approval is already recorded.",
+        "nextAction": "Replace the shell that captures clang-tidy output, and qualify readable failures and clean checks on remote workers. The existing version passed contributor review. The compiler migration and #16236 remain delivery prerequisites.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/e312033b85f31626dacbece4fb65db81adaca947",
           "https://github.com/google/gvisor/pull/16313",
@@ -39464,7 +39464,7 @@
       "url": "https://github.com/google/gvisor/pull/15019",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T22:17:21.705842+00:00",
+      "updatedAt": "2026-11-03T06:16:06.081403+00:00",
       "summary": "The author applied the tested guard: an unexpected SYN-ACK and a repeated FIN are ACKed with the old sequence numbers in TIME_WAIT. Only a bare SYN may reopen through the forwarder. The revised tests also cover a forwarder that declines the connection.",
       "evidence": [
         {
@@ -39482,6 +39482,14 @@
         {
           "label": "Author applied the guard and expanded the regression tests",
           "url": "https://github.com/google/gvisor/pull/15019#issuecomment-6583440607"
+        },
+        {
+          "label": "Forward queued segments to the accepting handler",
+          "url": "https://github.com/tamird/gvisor/commit/936ad90db"
+        },
+        {
+          "label": "Order-only and handler comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41588109156/artifacts/13208872158"
         }
       ],
       "settledReviews": [
@@ -39493,7 +39501,17 @@
           "at": "2026-11-02T15:46:59.054342+00:00",
           "url": "https://github.com/google/gvisor/pull/15019#pullrequestreview-5739193389"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "ed8a800c0c2d10916616ad2e0a791976fbd60274",
+        "url": "https://github.com/google/gvisor/pull/15019#discussion_r4449581574",
+        "title": "Reply to Carsten about duplicate TIME_WAIT reconnects",
+        "summary": "Reordering delivery still refused the connection. Forwarding the queued copy to the handler that accepted the first SYN let the client and forwarder complete the handshake.",
+        "body": "I tried delivering the first SYN before draining the queue. The client still got `ECONNREFUSED`: the forwarder records the request before its goroutine registers an endpoint.\n\n[This change](https://github.com/tamird/gvisor/commit/936ad90db) tries the registered endpoint first and, if there is none, offers the queued packet to the handler that accepted the opening SYN. Both the client and the forwarder completed the handshake. The single-SYN and declined-SYN cases still passed. I’d limit the fallback to this unlocked path because [outgoing port reuse](https://github.com/google/gvisor/blob/ed8a800c0/pkg/tcpip/transport/tcp/endpoint.go#L2419-L2434) drains the same queue while holding two endpoint locks. [Packet traces](https://github.com/tamird/gvisor/actions/runs/41588109156/artifacts/13208872158).\n\nPosted by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-03T06:16:06.081403+00:00"
+      }
     },
     {
       "id": "pr:16865",
@@ -65881,9 +65899,26 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-02T02:26:35+00:00",
+      "updatedAt": "2026-11-03T06:16:06.081403+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
+        {
+          "text": "Guarding SysV IPC metadata on ipc.Object.Mu passed the four owning analyzers and 97 package/syscall cases. Removing a lock produced the expected diagnostic on both architectures. The save/restore run exercised 18 restores across message queues, semaphores, and shared memory. The follow-up initializes the object inside Registry.Register so no forced Key read is needed and is being tested together with the pending semaphore and shared-memory fixes.",
+          "evidence": [
+            {
+              "label": "Source, positive and negative controls",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41585853906/artifacts/13208551549"
+            },
+            {
+              "label": "Restore results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41586395579/artifacts/13208038707"
+            },
+            {
+              "label": "Integrated source",
+              "url": "https://github.com/tamird/gvisor/compare/60ee09629...47ed5b668"
+            }
+          ]
+        },
         {
           "text": "With two waiters asleep on a futex, Linux returned 2 for a request to requeue up to seven of them on the same word. Stock gVisor returned 0. Counting instead of removing and reinserting the same waiters fixes both the return value and the queue used by the next requeue. A change that only increments the count returned 7 for the same two threads. Both FUTEX_PRIVATE_FLAG settings reproduced the difference.",
           "evidence": [
@@ -67394,10 +67429,19 @@
       "title": "Reconcile earlier proposals with current review guidance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-11-02T22:54:43.336654+00:00",
+      "updatedAt": "2026-11-03T06:16:06.081403+00:00",
       "lastReviewedAt": "2026-11-02T08:31:43+00:00",
       "summary": "Check new review guidance against open proposals and recently landed changes. Address Lucas Manning’s optional cleanups on the original PR whenever it is still open, including after approval or an import has started.",
       "findings": [
+        {
+          "text": "Screened additions across 128 available gVisor diffs for empty-string presence checks, unreadable syscall errno assertions, and new shell actions. The three shell matches all inherit one clang-tidy action that still invokes Bash and cat. The approved aspect itself contains the same action. The lint owner will qualify a shell-free replacement before delivery.",
+          "evidence": [
+            {
+              "label": "Approved clang-tidy source",
+              "url": "https://github.com/tamird/gvisor/blob/e312033b8/tools/clang_tidy/clang_tidy.bzl#L63-L98"
+            }
+          ]
+        },
         {
           "text": "In syscall regressions, use a syscall matcher for a failing call and print strerror(err) when checking an error value such as SO_ERROR. A sweep of additions in 108 active or recently updated gVisor proposals found one more bare expected-errno assertion beyond the Unix datagram correction. Both now produce readable diagnostics.",
           "evidence": [
