@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T14:33:29.484586+00:00",
+    "updatedAt": "2026-11-03T14:48:57.209577+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31239,9 +31239,21 @@
         {
           "label": "Published amendment",
           "url": "https://github.com/tamird/gvisor/commit/1dbbcd676"
+        },
+        {
+          "label": "Posted inline reply 1",
+          "url": "https://github.com/google/gvisor/pull/16588#discussion_r4456246811"
+        },
+        {
+          "label": "Posted inline reply 2",
+          "url": "https://github.com/google/gvisor/pull/16588#discussion_r4456247398"
+        },
+        {
+          "label": "Posted inline reply 3",
+          "url": "https://github.com/google/gvisor/pull/16588#discussion_r4456247839"
         }
       ],
-      "updatedAt": "2026-11-03T14:33:29.484586+00:00",
+      "updatedAt": "2026-11-03T14:48:57.209577+00:00",
       "status": "open",
       "summary": "Stock gVisor reported a hangup to both FIFO readers when Linux reported it only to the reader that had seen the writer. Linux and the corrected gVisor each passed all seven FIFO cases on tmpfs. The four anonymous-pipe unit cases and both-architecture pipe analyzers also passed.",
       "refinement": {
@@ -31257,12 +31269,15 @@
       "followup": {
         "owner": "root",
         "sourceHead": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
-        "observedAt": "2026-11-03T14:33:29.484586+00:00",
-        "disposition": "Approved amendment published",
-        "nextAction": "Post the substantive replies in their original threads once authorized.",
+        "observedAt": "2026-11-03T14:48:57.209577+00:00",
+        "disposition": "Published amendment; all approved inline replies posted",
+        "nextAction": "Follow the public review and import checks.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16588",
-          "https://github.com/tamird/gvisor/commit/1dbbcd676"
+          "https://github.com/tamird/gvisor/commit/1dbbcd676",
+          "https://github.com/google/gvisor/pull/16588#discussion_r4456246811",
+          "https://github.com/google/gvisor/pull/16588#discussion_r4456247398",
+          "https://github.com/google/gvisor/pull/16588#discussion_r4456247839"
         ]
       },
       "settledReviews": [
@@ -31272,18 +31287,16 @@
           "outcome": "approved",
           "at": "2026-11-03T14:33:29.484586+00:00",
           "url": "https://github.com/tamird/gvisor/commit/1dbbcd676"
+        },
+        {
+          "kind": "reply",
+          "body": "[Writer generation](https://github.com/google/gvisor/pull/16588#discussion_r4447247863)\n\nThe comment now names Linux’s pipe_inode_info.w_counter and explains why wOpen, rOpen, and rReadinessLocked need the same mutex for the two writer counters.\n\nPosted by Codex on behalf of @tamird.\n\n[Per-reader snapshot](https://github.com/google/gvisor/pull/16588#discussion_r4447247872)\n\nThe comment now starts with initialWriters and describes when POLLHUP is suppressed. Linux stores this snapshot in filp->f_pipe; [fifo_open](https://github.com/torvalds/linux/blob/7d0a66e4b/fs/pipe.c#L1170-L1193) sets it and [pipe_poll](https://github.com/torvalds/linux/blob/7d0a66e4b/fs/pipe.c#L687-L692) compares it.\n\nPosted by Codex on behalf of @tamird.\n\n[Initial FIFO readiness](https://github.com/google/gvisor/pull/16588#discussion_r4447247880)\n\nThe test now checks that a nonblocking writer gets ENXIO before any reader opens and that the first reader sees no poll events before a writer opens.\n\nPosted by Codex on behalf of @tamird.",
+          "head": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
+          "at": "2026-11-03T14:48:57.209577+00:00",
+          "outcome": "approved",
+          "url": "https://github.com/google/gvisor/pull/16588#discussion_r4456246811"
         }
-      ],
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "requestedAt": "2026-11-03T14:33:29.484586+00:00",
-        "title": "Reply to Lucas on FIFO readiness",
-        "summary": "Post the 3 inline replies on the published amendment?",
-        "body": "[Writer generation](https://github.com/google/gvisor/pull/16588#discussion_r4447247863)\n\nThe comment now names Linux’s pipe_inode_info.w_counter and explains why wOpen, rOpen, and rReadinessLocked need the same mutex for the two writer counters.\n\nPosted by Codex on behalf of @tamird.\n\n[Per-reader snapshot](https://github.com/google/gvisor/pull/16588#discussion_r4447247872)\n\nThe comment now starts with initialWriters and describes when POLLHUP is suppressed. Linux stores this snapshot in filp->f_pipe; [fifo_open](https://github.com/torvalds/linux/blob/7d0a66e4b/fs/pipe.c#L1170-L1193) sets it and [pipe_poll](https://github.com/torvalds/linux/blob/7d0a66e4b/fs/pipe.c#L687-L692) compares it.\n\nPosted by Codex on behalf of @tamird.\n\n[Initial FIFO readiness](https://github.com/google/gvisor/pull/16588#discussion_r4447247880)\n\nThe test now checks that a nonblocking writer gets ENXIO before any reader opens and that the first reader sees no poll events before a writer opens.\n\nPosted by Codex on behalf of @tamird.",
-        "url": "https://github.com/google/gvisor/pull/16588#discussion_r4447247863",
-        "head": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d"
-      }
+      ]
     },
     {
       "id": "pr:16593",
@@ -33136,7 +33149,7 @@
       "group": "runtime",
       "status": "open",
       "summary": "A process and an open file description can both hold a read lock on the same bytes. Both stock gVisor modes reported that the range was unlocked; Linux reported the other owner. All seven syscall cases, including PID namespace translation, pass on Linux and both corrected gVisor modes.",
-      "updatedAt": "2026-11-03T14:33:29.484586+00:00",
+      "updatedAt": "2026-11-03T14:48:57.209577+00:00",
       "evidence": [
         {
           "label": "Published upstream as #16618",
@@ -33173,17 +33186,27 @@
         {
           "label": "Published amendment",
           "url": "https://github.com/tamird/gvisor/commit/da05e74d9"
+        },
+        {
+          "label": "Posted inline reply 1",
+          "url": "https://github.com/google/gvisor/pull/16618#discussion_r4456248355"
+        },
+        {
+          "label": "Posted inline reply 2",
+          "url": "https://github.com/google/gvisor/pull/16618#discussion_r4456248953"
         }
       ],
       "followup": {
         "owner": "root",
         "sourceHead": "da05e74d9febb9c6430bfc94d6406684eaab66df",
-        "observedAt": "2026-11-03T14:33:29.484586+00:00",
-        "disposition": "Approved amendment published",
-        "nextAction": "Post the substantive replies in their original threads once authorized.",
+        "observedAt": "2026-11-03T14:48:57.209577+00:00",
+        "disposition": "Published amendment; all approved inline replies posted",
+        "nextAction": "Follow the public review and import checks.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16618",
-          "https://github.com/tamird/gvisor/commit/da05e74d9"
+          "https://github.com/tamird/gvisor/commit/da05e74d9",
+          "https://github.com/google/gvisor/pull/16618#discussion_r4456248355",
+          "https://github.com/google/gvisor/pull/16618#discussion_r4456248953"
         ]
       },
       "number": 16618,
@@ -33204,18 +33227,16 @@
           "outcome": "approved",
           "at": "2026-11-03T14:33:29.484586+00:00",
           "url": "https://github.com/tamird/gvisor/commit/da05e74d9"
+        },
+        {
+          "kind": "reply",
+          "body": "[OFD ownership](https://github.com/google/gvisor/pull/16618#discussion_r4447247043)\n\nRemoved OwnerInfo.OFD and the redundant flag through the lock code. The owner ID already distinguishes an open file description from a process lock.\n\nPosted by Codex on behalf of @tamird.\n\n[F_GETLK output](https://github.com/google/gvisor/pull/16618#discussion_r4447247051)\n\nReset fl.l_pid to zero before F_GETLK, so the assertion now checks that the second call wrote -1.\n\nPosted by Codex on behalf of @tamird.",
+          "head": "da05e74d9febb9c6430bfc94d6406684eaab66df",
+          "at": "2026-11-03T14:48:57.209577+00:00",
+          "outcome": "approved",
+          "url": "https://github.com/google/gvisor/pull/16618#discussion_r4456248355"
         }
-      ],
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "requestedAt": "2026-11-03T14:33:29.484586+00:00",
-        "title": "Reply to Lucas on record-lock ownership",
-        "summary": "Post the 2 inline replies on the published amendment?",
-        "body": "[OFD ownership](https://github.com/google/gvisor/pull/16618#discussion_r4447247043)\n\nRemoved OwnerInfo.OFD and the redundant flag through the lock code. The owner ID already distinguishes an open file description from a process lock.\n\nPosted by Codex on behalf of @tamird.\n\n[F_GETLK output](https://github.com/google/gvisor/pull/16618#discussion_r4447247051)\n\nReset fl.l_pid to zero before F_GETLK, so the assertion now checks that the second call wrote -1.\n\nPosted by Codex on behalf of @tamird.",
-        "url": "https://github.com/google/gvisor/pull/16618#discussion_r4447247043",
-        "head": "da05e74d9febb9c6430bfc94d6406684eaab66df"
-      }
+      ]
     },
     {
       "id": "pr:16621",
@@ -36617,8 +36638,8 @@
       "title": "Format stateify output in the generator",
       "url": "https://github.com/google/gvisor/pull/16710",
       "status": "open",
-      "summary": "The change on the public PR cannot be imported into the internal build. Tamir requested that the Bazel-specific formatter launcher be made reusable through rules_go. The earlier, stateify-specific launcher is no longer awaiting review. Its twelve matching outputs establish a baseline for the replacement.",
-      "updatedAt": "2026-11-03T14:33:29.484586+00:00",
+      "summary": "The replacement uses upstream goimports with a reusable rules_go action. Twelve uncached formatting actions reproduced all twelve generated files on the shell-free AMD64 worker. Nine target builds passed; the same three synthetic alias fixtures failed on both versions. The tool-independent stateify and Blaze adapter sources are unchanged. Publishing the amendment requires a rules_go release containing the launcher.",
+      "updatedAt": "2026-11-03T14:47:30.598669+00:00",
       "evidence": [
         {
           "label": "Seven identical production outputs and scratch qualification",
@@ -36651,16 +36672,32 @@
         {
           "label": "Exact qualification source to final review source",
           "url": "https://github.com/tamird/gvisor/compare/188353594..50890dbbe"
+        },
+        {
+          "label": "Replacement using the rules_go action",
+          "url": "https://github.com/tamird/gvisor/commit/7cbb007c3"
+        },
+        {
+          "label": "Supplier action",
+          "url": "https://github.com/tamird/rules_go/commit/1e46f02a9"
+        },
+        {
+          "label": "Twelve generated-file comparisons and target dispositions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41655395579/artifacts/13239008072"
+        },
+        {
+          "label": "Supplier action retains list-call identity",
+          "url": "https://github.com/tamird/rules_go/actions/runs/41657052068/artifacts/13241010279"
         }
       ],
       "refinement": {
         "before": {
-          "base": "247a7b4fab5d1964f4915c3b492f207e2f8b4643",
-          "head": "cd92efa5f06a504a5f6bb187519f482d4941b21f"
+          "base": "c3d3fd4a3844b46529b6d15216b3410b872df735",
+          "head": "50890dbbe59fbf3754de2b49168972e37f0e8478"
         },
         "after": {
           "base": "c3d3fd4a3844b46529b6d15216b3410b872df735",
-          "head": "50890dbbe59fbf3754de2b49168972e37f0e8478"
+          "head": "7cbb007c3febee15d1904c7faaf3bb21f34a3ae5"
         }
       },
       "settledReviews": [
@@ -36675,9 +36712,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
-        "observedAt": "2026-11-03T14:33:29.484586+00:00",
-        "disposition": "Changes requested on the stateify-specific launcher",
-        "nextAction": "Prepare a reusable rules_go launcher. Reuse the earlier generated-output comparison and verify that the replacement addresses the internal adapter review.",
+        "observedAt": "2026-11-03T14:48:57.209577+00:00",
+        "disposition": "Replacement qualified; supplier release needed before publication",
+        "nextAction": "Publish only when an available rules_go release contains the reviewed launcher.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16710#pullrequestreview-5744331855",
           "https://github.com/tamird/gvisor/commit/50890dbbe"
@@ -36688,6 +36725,17 @@
           "commentId": "PRR_kwDOB9IlXs8AAAABVmOMTw",
           "url": "https://github.com/google/gvisor/pull/16710#pullrequestreview-5744331855"
         }
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "7cbb007c3febee15d1904c7faaf3bb21f34a3ae5",
+        "baseHead": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
+        "url": "https://github.com/tamird/gvisor/commit/7cbb007c3",
+        "title": "Run goimports with the Go toolchain on PATH",
+        "summary": "Approve this amendment for publication after a rules_go release contains the launcher? All twelve generated files matched on the shell-free worker.",
+        "body": "goimports invokes the go command to resolve imports. Building PATH in a generated shell script makes formatting stateify output depend on /bin/sh on the execution platform.\n\nRun the upstream goimports executable with rules_go’s SDK launcher and write its stdout to the declared output. Keep the SDK files and build environment selected for the generator.",
+        "requestedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     {
@@ -45249,7 +45297,7 @@
       "url": "https://github.com/google/gvisor/pull/16803",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-03T14:33:29.484586+00:00",
+      "updatedAt": "2026-11-03T14:47:30.598669+00:00",
       "summary": "The Make race smoke test staged the ordinary Sentry and overlaid the race launcher. Stage a matched race release so the guest kernel also runs with the race detector. Select race mode on the Go binaries, keeping it out of host build tools.",
       "evidence": [
         {
@@ -45295,6 +45343,10 @@
         {
           "label": "Published amendment",
           "url": "https://github.com/tamird/gvisor/commit/c58f36d4e"
+        },
+        {
+          "label": "Lucas’s smoke-race exit-status review",
+          "url": "https://github.com/google/gvisor/pull/16803#discussion_r4448554797"
         }
       ],
       "settledReviews": [
@@ -45327,11 +45379,21 @@
         "sourceHead": "c58f36d4e068c2b0aa31a207fabbb37e25b60472",
         "observedAt": "2026-11-03T14:33:29.484586+00:00",
         "disposition": "Approved amendment published",
-        "nextAction": "Follow the public checks and maintainer review on the published revision.",
+        "nextAction": "Post the measured exit statuses on the original thread once authorized.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16803",
           "https://github.com/tamird/gvisor/commit/c58f36d4e"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "head": "c58f36d4e068c2b0aa31a207fabbb37e25b60472",
+        "url": "https://github.com/google/gvisor/pull/16803#discussion_r4448554797",
+        "title": "Reply to Lucas on the Sentry race exit",
+        "requestedAt": "2026-11-03T14:47:30.598669+00:00",
+        "summary": "Post the actual child and Make exit statuses to the open review thread?",
+        "body": "The race smoke target runs the matched launcher and Sentry with GORACE=halt_on_error=1. With an injected race, the child exited 66 and make exited 2.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -47291,7 +47353,7 @@
       "url": "https://github.com/google/gvisor/issues/16878",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T14:33:29.484586+00:00",
+      "updatedAt": "2026-11-03T14:48:57.209577+00:00",
       "summary": "Martijn reported a TCP dispatcher spin on TamaGo. On Linux with one Go P, yielding on the first lock miss let the holder run but delayed an already runnable peer. A bounded variant lets existing peers take a turn before yielding, including when the listener moves to another processor. TamaGo was not tested.",
       "evidence": [
         {
@@ -47313,16 +47375,79 @@
         {
           "label": "TCP review guide",
           "url": "https://github.com/google/gvisor/issues/16670"
+        },
+        {
+          "label": "Posted Linux scheduling comparison",
+          "url": "https://github.com/google/gvisor/issues/16878#issuecomment-6606883108"
         }
       ],
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "body": "I tried [your Gosched suggestion with one Go P on Linux](https://github.com/tamird/gvisor/actions/runs/41626190812/artifacts/13225822564). The lock holder ran after the first miss, but a ready peer had to wait. If useful for your PR, [this variant](https://github.com/tamird/gvisor/commit/71733cfc7) records the last endpoint already queued and gives those peers one visit before yielding. [A replenishing peer processed one 100-item batch before the holder ran](https://github.com/tamird/gvisor/actions/runs/41628817215/artifacts/13226843881); the handoff also worked when another processor claimed the contended listener. I haven’t tested TamaGo.\n\nPosted by Codex on behalf of @tamird.",
+          "at": "2026-11-03T14:48:57.209577+00:00",
+          "outcome": "approved",
+          "url": "https://github.com/google/gvisor/issues/16878#issuecomment-6606883108"
+        }
+      ]
+    },
+    {
+      "id": "branch:rules-go-run-with-sdk",
+      "type": "branch",
+      "repo": "tamird/rules_go",
+      "targetRepo": "bazel-contrib/rules_go",
+      "ref": "proposal/action-go-path",
+      "head": "1e46f02a9c4862f8d303bd18bcb6dd2da9230a4f",
+      "title": "Run build tools with the selected Go SDK on PATH",
+      "url": "https://github.com/tamird/rules_go/tree/proposal/action-go-path",
+      "group": "rbe",
+      "status": "Ready for contributor review",
+      "summary": "Run a declared build tool with only the execution SDK’s go command on PATH and optionally write its stdout to a declared file. All five final supplier cases passed. The first workflow then failed to analyze goimports without the consumer’s telemetry dependency. A separate supported list caller had identical arguments, output, environment, execution platform and action key before and after the tuple refinement. gVisor independently exercised goimports twelve times on the earlier list implementation. No Windows execution was measured.",
+      "updatedAt": "2026-11-03T14:47:30.598669+00:00",
+      "evidence": [
+        {
+          "label": "Supplier proposal",
+          "url": "https://github.com/tamird/rules_go/commit/1e46f02a9"
+        },
+        {
+          "label": "Original five-case supplier result and incomplete action comparison",
+          "url": "https://github.com/tamird/rules_go/actions/runs/41656196227/artifacts/13239628082"
+        },
+        {
+          "label": "gVisor’s generated-output integration on supplier 6b4da6302",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41655395579/artifacts/13239008072"
+        },
+        {
+          "label": "gVisor’s original PR",
+          "url": "https://github.com/google/gvisor/pull/16710"
+        },
+        {
+          "label": "Matching seven arguments, output, environment, platform and action key",
+          "url": "https://github.com/tamird/rules_go/actions/runs/41657052068/artifacts/13241010279"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "1e46f02a9c4862f8d303bd18bcb6dd2da9230a4f",
+        "observedAt": "2026-11-03T14:48:57.209577+00:00",
+        "disposition": "Five final cases pass; list-call action identity verified",
+        "nextAction": "Open the upstream PR after contributor review.",
+        "evidence": [
+          "https://github.com/tamird/rules_go/actions/runs/41656196227/artifacts/13239628082",
+          "https://github.com/tamird/rules_go/actions/runs/41657052068/artifacts/13241010279",
+          "https://github.com/tamird/gvisor/actions/runs/41655395579/artifacts/13239008072"
+        ]
+      },
       "contributorReview": {
-        "kind": "reply",
+        "kind": "proposal",
         "status": "pending",
-        "requestedAt": "2026-11-03T14:33:29.484586+00:00",
-        "title": "Reply to Martijn on the single-P dispatcher",
-        "summary": "Share the Linux scheduling controls and bounded variant with Martijn?",
-        "body": "I tried [your Gosched suggestion with one Go P on Linux](https://github.com/tamird/gvisor/actions/runs/41626190812/artifacts/13225822564). The lock holder ran after the first miss, but a ready peer had to wait. If useful for your PR, [this variant](https://github.com/tamird/gvisor/commit/71733cfc7) records the last endpoint already queued and gives those peers one visit before yielding. [A replenishing peer processed one 100-item batch before the holder ran](https://github.com/tamird/gvisor/actions/runs/41628817215/artifacts/13226843881); the handoff also worked when another processor claimed the contended listener. I haven’t tested TamaGo.\n\nPosted by Codex on behalf of @tamird.",
-        "url": "https://github.com/google/gvisor/issues/16878"
+        "head": "1e46f02a9c4862f8d303bd18bcb6dd2da9230a4f",
+        "baseHead": "f9689452ce5999237c187346ea2ad62207015d99",
+        "url": "https://github.com/tamird/rules_go/commit/1e46f02a9",
+        "title": "Run build tools with the selected Go SDK on PATH",
+        "summary": "Open the new PR in bazel-contrib/rules_go? Five final-source cases pass, including tuple arguments and forwarding child exit 37.",
+        "body": "Tools such as goimports invoke go by name. Bazel supplies the path to the SDK relative to the execution root, but Go rejects a PATH lookup that resolves to a relative executable. Putting the SDK bin directory on PATH also exposes unrelated programs such as gofmt.\n\nAdd go_run_with_sdk to run the declared tool with a private directory containing only the execution SDK go command. Resolve that directory when the existing builder runs and forward the tool arguments intact. The caller can capture stdout in a declared output without a shell.",
+        "requestedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     }
   ],
@@ -50941,6 +51066,13 @@
         "https://github.com/bazel-contrib/rules_distroless/pull/294",
         "https://github.com/tamird/gvisor/actions/runs/41540964289/artifacts/13186473194"
       ]
+    },
+    {
+      "from": "branch:rules-go-run-with-sdk",
+      "to": "pr:16710",
+      "type": "blocked_by",
+      "reason": "The formatting action is supplied by rules_go; the gVisor change needs a released version containing it.",
+      "evidence": "https://github.com/tamird/rules_go/commit/1e46f02a9"
     }
   ],
   "investigations": [

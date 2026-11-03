@@ -2,8 +2,8 @@
   "schema": 1,
   "repo": "google/gvisor",
   "owner": "tamird",
-  "checkedAt": "2026-11-03T14:41:45.885082+00:00",
-  "registryDate": "2026-11-03T14:33:29.484586+00:00",
+  "checkedAt": "2026-11-03T14:50:44.396036+00:00",
+  "registryDate": "2026-11-03T14:48:57.209577+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -219203,14 +219203,14 @@
       "branchHead": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
-      "mergeabilityCheckedAt": "2026-11-03T14:41:39.528267+00:00",
+      "mergeabilityCheckedAt": "2026-11-03T14:50:42.137106+00:00",
       "headCommittedAt": "2026-11-03T02:29:06Z",
       "headHistoryComplete": true,
       "headIntroducedAt": "2026-11-03T14:23:30Z",
       "headOwner": "tamird",
       "headRepo": "tamird/gvisor",
       "authorLogin": "tamird",
-      "updatedAt": "2026-11-03T14:23:30Z",
+      "updatedAt": "2026-11-03T14:47:14Z",
       "createdAt": "2026-10-28T14:10:11Z",
       "mergedAt": null,
       "closedAt": null,
@@ -219261,6 +219261,57 @@
             }
           },
           {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABVvrOIQ",
+            "url": "https://github.com/google/gvisor/pull/16588#pullrequestreview-5754244641",
+            "body": "",
+            "state": "COMMENTED",
+            "submittedAt": "2026-11-03T14:47:14Z",
+            "updatedAt": "2026-11-03T14:47:14Z",
+            "authorAssociation": "CONTRIBUTOR",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABVvrRYA",
+            "url": "https://github.com/google/gvisor/pull/16588#pullrequestreview-5754245472",
+            "body": "",
+            "state": "COMMENTED",
+            "submittedAt": "2026-11-03T14:47:16Z",
+            "updatedAt": "2026-11-03T14:47:16Z",
+            "authorAssociation": "CONTRIBUTOR",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABVvrUQw",
+            "url": "https://github.com/google/gvisor/pull/16588#pullrequestreview-5754246211",
+            "body": "",
+            "state": "COMMENTED",
+            "submittedAt": "2026-11-03T14:47:19Z",
+            "updatedAt": "2026-11-03T14:47:19Z",
+            "authorAssociation": "CONTRIBUTOR",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d"
+            }
+          },
+          {
             "kind": "inline",
             "threadId": "PRRT_kwDOB9IlXs6y2GhL",
             "isResolved": false,
@@ -219274,6 +219325,23 @@
             "updatedAt": "2026-11-02T20:16:02Z",
             "author": {
               "login": "manninglucas",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6y2GhL",
+            "isResolved": false,
+            "isOutdated": true,
+            "path": "pkg/sentry/kernel/pipe/pipe.go",
+            "line": null,
+            "id": "PRRC_kwDOB9IlXs8AAAABCZzuGw",
+            "url": "https://github.com/google/gvisor/pull/16588#discussion_r4456246811",
+            "body": "The comment now names Linux’s pipe_inode_info.w_counter and explains why wOpen, rOpen, and rReadinessLocked need the same mutex for the two writer counters.\n\nPosted by Codex on behalf of @tamird.",
+            "createdAt": "2026-11-03T14:47:13Z",
+            "updatedAt": "2026-11-03T14:47:14Z",
+            "author": {
+              "login": "tamird",
               "__typename": "User"
             }
           },
@@ -219296,6 +219364,23 @@
           },
           {
             "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6y2GhR",
+            "isResolved": false,
+            "isOutdated": true,
+            "path": "pkg/sentry/kernel/pipe/vfs.go",
+            "line": null,
+            "id": "PRRC_kwDOB9IlXs8AAAABCZzwZg",
+            "url": "https://github.com/google/gvisor/pull/16588#discussion_r4456247398",
+            "body": "The comment now starts with initialWriters and describes when POLLHUP is suppressed. Linux stores this snapshot in filp->f_pipe; [fifo_open](https://github.com/torvalds/linux/blob/7d0a66e4b/fs/pipe.c#L1170-L1193) sets it and [pipe_poll](https://github.com/torvalds/linux/blob/7d0a66e4b/fs/pipe.c#L687-L692) compares it.\n\nPosted by Codex on behalf of @tamird.",
+            "createdAt": "2026-11-03T14:47:16Z",
+            "updatedAt": "2026-11-03T14:47:16Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "inline",
             "threadId": "PRRT_kwDOB9IlXs6y2GhV",
             "isResolved": false,
             "isOutdated": false,
@@ -219308,6 +219393,23 @@
             "updatedAt": "2026-11-02T20:16:02Z",
             "author": {
               "login": "manninglucas",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6y2GhV",
+            "isResolved": false,
+            "isOutdated": false,
+            "path": "test/syscalls/linux/fifo.cc",
+            "line": 110,
+            "id": "PRRC_kwDOB9IlXs8AAAABCZzyHw",
+            "url": "https://github.com/google/gvisor/pull/16588#discussion_r4456247839",
+            "body": "The test now checks that a nonblocking writer gets ENXIO before any reader opens and that the first reader sees no poll events before a writer opens.\n\nPosted by Codex on behalf of @tamird.",
+            "createdAt": "2026-11-03T14:47:18Z",
+            "updatedAt": "2026-11-03T14:47:19Z",
+            "author": {
+              "login": "tamird",
               "__typename": "User"
             }
           }
@@ -219486,11 +219588,11 @@
             "purpose": "validation"
           },
           {
-            "id": "SC_kwDOB9IlXs8AAAANfdycew",
+            "id": "SC_kwDOB9IlXs8AAAANff5_qg",
             "name": "buildkite/first-pass",
             "state": "PENDING",
             "url": "https://buildkite.com/gvisor/first-pass/builds/509",
-            "description": "Build #509 scheduled",
+            "description": "Build #509 started",
             "app": null,
             "kind": "status",
             "purpose": "validation"
@@ -219519,12 +219621,12 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-11-03T14:41:45.331139+00:00",
+      "checkedAt": "2026-11-03T14:50:43.494867+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
         "base": "471d6dff5229b99208bf6fec985601067f1f9d69",
-        "checkedAt": "2026-11-03T14:41:39.528267+00:00"
+        "checkedAt": "2026-11-03T14:50:42.137106+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -227227,14 +227329,14 @@
       "branchHead": "da05e74d9febb9c6430bfc94d6406684eaab66df",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
-      "mergeabilityCheckedAt": "2026-11-03T14:41:39.528270+00:00",
+      "mergeabilityCheckedAt": "2026-11-03T14:50:42.137125+00:00",
       "headCommittedAt": "2026-11-02T22:54:36Z",
       "headHistoryComplete": true,
       "headIntroducedAt": "2026-11-03T14:28:00Z",
       "headOwner": "tamird",
       "headRepo": "tamird/gvisor",
       "authorLogin": "tamird",
-      "updatedAt": "2026-11-03T14:29:31Z",
+      "updatedAt": "2026-11-03T14:47:21Z",
       "createdAt": "2026-10-28T19:54:39Z",
       "mergedAt": null,
       "closedAt": null,
@@ -227285,6 +227387,40 @@
             }
           },
           {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABVvrXNA",
+            "url": "https://github.com/google/gvisor/pull/16618#pullrequestreview-5754246964",
+            "body": "",
+            "state": "COMMENTED",
+            "submittedAt": "2026-11-03T14:47:21Z",
+            "updatedAt": "2026-11-03T14:47:21Z",
+            "authorAssociation": "CONTRIBUTOR",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "da05e74d9febb9c6430bfc94d6406684eaab66df"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABVvrawg",
+            "url": "https://github.com/google/gvisor/pull/16618#pullrequestreview-5754247874",
+            "body": "",
+            "state": "COMMENTED",
+            "submittedAt": "2026-11-03T14:47:24Z",
+            "updatedAt": "2026-11-03T14:47:24Z",
+            "authorAssociation": "CONTRIBUTOR",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "da05e74d9febb9c6430bfc94d6406684eaab66df"
+            }
+          },
+          {
             "kind": "inline",
             "threadId": "PRRT_kwDOB9IlXs6y2GZe",
             "isResolved": false,
@@ -227298,6 +227434,23 @@
             "updatedAt": "2026-11-02T20:15:57Z",
             "author": {
               "login": "manninglucas",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6y2GZe",
+            "isResolved": false,
+            "isOutdated": false,
+            "path": "pkg/sentry/fsimpl/lock/lock.go",
+            "line": 528,
+            "id": "PRRC_kwDOB9IlXs8AAAABCZz0Iw",
+            "url": "https://github.com/google/gvisor/pull/16618#discussion_r4456248355",
+            "body": "Removed OwnerInfo.OFD and the redundant flag through the lock code. The owner ID already distinguishes an open file description from a process lock.\n\nPosted by Codex on behalf of @tamird.",
+            "createdAt": "2026-11-03T14:47:21Z",
+            "updatedAt": "2026-11-03T14:47:21Z",
+            "author": {
+              "login": "tamird",
               "__typename": "User"
             }
           },
@@ -227317,6 +227470,23 @@
               "login": "manninglucas",
               "__typename": "User"
             }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6y2GZl",
+            "isResolved": false,
+            "isOutdated": false,
+            "path": "test/syscalls/linux/fcntl.cc",
+            "line": 2174,
+            "id": "PRRC_kwDOB9IlXs8AAAABCZz2eQ",
+            "url": "https://github.com/google/gvisor/pull/16618#discussion_r4456248953",
+            "body": "Reset fl.l_pid to zero before F_GETLK, so the assertion now checks that the second call wrote -1.\n\nPosted by Codex on behalf of @tamird.",
+            "createdAt": "2026-11-03T14:47:24Z",
+            "updatedAt": "2026-11-03T14:47:24Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
           }
         ]
       },
@@ -227327,21 +227497,6 @@
         "supersededContexts": [],
         "complete": true,
         "contexts": [
-          {
-            "id": "CR_kwDOB9IlXs8AAAAdVPJoNg",
-            "name": "generate",
-            "state": "IN_PROGRESS",
-            "url": "https://github.com/google/gvisor/actions/runs/41653966000/job/125979224118",
-            "kind": "check-run",
-            "app": "GitHub Actions",
-            "appSlug": "github-actions",
-            "appId": "MDM6QXBwMTUzNjg=",
-            "workflow": "Go",
-            "workflowId": "MDg6V29ya2Zsb3cxMjc5NTY5",
-            "runNumber": 64748,
-            "runAttempt": 1,
-            "purpose": "validation"
-          },
           {
             "id": "CR_kwDOB9IlXs8AAAAdVPJqYA",
             "name": "gazelle",
@@ -227369,6 +227524,21 @@
             "workflow": "GitHub Actions Scan",
             "workflowId": "W_kwDOB9IlXs4QtptT",
             "runNumber": 12948,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdVPJoNg",
+            "name": "generate",
+            "state": "SUCCESS",
+            "url": "https://github.com/google/gvisor/actions/runs/41653966000/job/125979224118",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "Go",
+            "workflowId": "MDg6V29ya2Zsb3cxMjc5NTY5",
+            "runNumber": 64748,
             "runAttempt": 1,
             "purpose": "validation"
           },
@@ -227493,11 +227663,11 @@
             "purpose": "validation"
           },
           {
-            "id": "SC_kwDOB9IlXs8AAAANfeMd5w",
+            "id": "SC_kwDOB9IlXs8AAAANff5mRQ",
             "name": "buildkite/first-pass",
             "state": "PENDING",
             "url": "https://buildkite.com/gvisor/first-pass/builds/515",
-            "description": "Build #515 scheduled",
+            "description": "Build #515 started",
             "app": null,
             "kind": "status",
             "purpose": "validation"
@@ -227526,12 +227696,12 @@
       "reviewDecision": "REVIEW_REQUIRED",
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-11-03T14:41:45.331139+00:00",
+      "checkedAt": "2026-11-03T14:50:43.494867+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "da05e74d9febb9c6430bfc94d6406684eaab66df",
         "base": "471d6dff5229b99208bf6fec985601067f1f9d69",
-        "checkedAt": "2026-11-03T14:41:39.528270+00:00"
+        "checkedAt": "2026-11-03T14:50:42.137125+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -237606,7 +237776,7 @@
       "branchHead": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
-      "mergeabilityCheckedAt": "2026-11-03T14:41:41.751716+00:00",
+      "mergeabilityCheckedAt": "2026-11-03T14:50:42.137127+00:00",
       "headCommittedAt": "2026-10-29T22:14:57Z",
       "headHistoryComplete": true,
       "headIntroducedAt": null,
@@ -237942,12 +238112,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-11-03T14:41:45.331139+00:00",
+      "checkedAt": "2026-11-03T14:50:43.494867+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "cd92efa5f06a504a5f6bb187519f482d4941b21f",
         "base": "471d6dff5229b99208bf6fec985601067f1f9d69",
-        "checkedAt": "2026-11-03T14:41:41.751716+00:00"
+        "checkedAt": "2026-11-03T14:50:42.137127+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -251828,7 +251998,7 @@
       "branchHead": "c58f36d4e068c2b0aa31a207fabbb37e25b60472",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
-      "mergeabilityCheckedAt": "2026-11-03T14:41:41.751733+00:00",
+      "mergeabilityCheckedAt": "2026-11-03T14:50:43.494815+00:00",
       "headCommittedAt": "2026-11-03T02:01:57Z",
       "headHistoryComplete": true,
       "headIntroducedAt": "2026-11-03T14:28:00Z",
@@ -252077,11 +252247,11 @@
             "purpose": "validation"
           },
           {
-            "id": "SC_kwDOB9IlXs8AAAANfeMdRQ",
+            "id": "SC_kwDOB9IlXs8AAAANff402g",
             "name": "buildkite/first-pass",
             "state": "PENDING",
             "url": "https://buildkite.com/gvisor/first-pass/builds/514",
-            "description": "Build #514 scheduled",
+            "description": "Build #514 started",
             "app": null,
             "kind": "status",
             "purpose": "validation"
@@ -252110,12 +252280,12 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-11-03T14:41:45.331139+00:00",
+      "checkedAt": "2026-11-03T14:50:43.494867+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "c58f36d4e068c2b0aa31a207fabbb37e25b60472",
         "base": "471d6dff5229b99208bf6fec985601067f1f9d69",
-        "checkedAt": "2026-11-03T14:41:41.751733+00:00"
+        "checkedAt": "2026-11-03T14:50:43.494815+00:00"
       },
       "importsComplete": true,
       "importPolicy": "copybara",
@@ -291078,9 +291248,17 @@
       "githubStateReason": null,
       "githubURL": "https://github.com/google/gvisor/issues/16878",
       "closedAt": null,
-      "updatedAt": "2026-11-02T22:16:29Z",
-      "checkedAt": "2026-11-03T14:41:45.589461+00:00",
-      "comments": [],
+      "updatedAt": "2026-11-03T14:47:12Z",
+      "checkedAt": "2026-11-03T14:50:44.015266+00:00",
+      "comments": [
+        {
+          "url": "https://github.com/google/gvisor/issues/16878#issuecomment-6606883108",
+          "updatedAt": "2026-11-03T14:47:12Z",
+          "author": {
+            "login": "tamird"
+          }
+        }
+      ],
       "olderComments": false
     }
   },
@@ -291509,91 +291687,6 @@
     }
   ],
   "reviewerHandoff": [
-    {
-      "repo": "google/gvisor",
-      "number": 16618,
-      "head": "da05e74d9febb9c6430bfc94d6406684eaab66df",
-      "sourceNumber": 16618,
-      "owner": "root",
-      "kind": "inline",
-      "id": "PRRC_kwDOB9IlXs8AAAABCROaww",
-      "url": "https://github.com/google/gvisor/pull/16618#discussion_r4447247043",
-      "author": "manninglucas",
-      "updatedAt": "2026-11-02T20:15:57Z",
-      "newOrChanged": false,
-      "awaitingAuthor": true,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 16618,
-      "head": "da05e74d9febb9c6430bfc94d6406684eaab66df",
-      "sourceNumber": 16618,
-      "owner": "root",
-      "kind": "inline",
-      "id": "PRRC_kwDOB9IlXs8AAAABCROayw",
-      "url": "https://github.com/google/gvisor/pull/16618#discussion_r4447247051",
-      "author": "manninglucas",
-      "updatedAt": "2026-11-02T20:15:57Z",
-      "newOrChanged": false,
-      "awaitingAuthor": true,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 16588,
-      "head": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
-      "sourceNumber": 16588,
-      "owner": "root",
-      "kind": "inline",
-      "id": "PRRC_kwDOB9IlXs8AAAABCROd9w",
-      "url": "https://github.com/google/gvisor/pull/16588#discussion_r4447247863",
-      "author": "manninglucas",
-      "updatedAt": "2026-11-02T20:16:02Z",
-      "newOrChanged": false,
-      "awaitingAuthor": true,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 16588,
-      "head": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
-      "sourceNumber": 16588,
-      "owner": "root",
-      "kind": "inline",
-      "id": "PRRC_kwDOB9IlXs8AAAABCROeAA",
-      "url": "https://github.com/google/gvisor/pull/16588#discussion_r4447247872",
-      "author": "manninglucas",
-      "updatedAt": "2026-11-02T20:16:02Z",
-      "newOrChanged": false,
-      "awaitingAuthor": true,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
-    {
-      "repo": "google/gvisor",
-      "number": 16588,
-      "head": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
-      "sourceNumber": 16588,
-      "owner": "root",
-      "kind": "inline",
-      "id": "PRRC_kwDOB9IlXs8AAAABCROeCA",
-      "url": "https://github.com/google/gvisor/pull/16588#discussion_r4447247880",
-      "author": "manninglucas",
-      "updatedAt": "2026-11-02T20:16:02Z",
-      "newOrChanged": false,
-      "awaitingAuthor": true,
-      "assigned": false,
-      "feedbackComplete": true,
-      "action": "Read the complete thread and route substantive feedback to its owner before qualification or routine CI work; do not post an automatic acknowledgement."
-    },
     {
       "repo": "google/gvisor",
       "number": 16803,
@@ -299283,21 +299376,14 @@
         "since": "2026-11-03T14:41:45.331139+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:41:45.331139+00:00"
+        "observedAt": "2026-11-03T14:50:43.494867+00:00"
       },
       "maintainer-review": {
         "scope": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
         "since": "2026-11-03T14:41:45.331139+00:00",
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
-        "observedAt": "2026-11-03T14:41:45.331139+00:00"
-      },
-      "contributor-review": {
-        "scope": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
-        "since": "2026-11-03T02:30:53.096288+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:50:43.494867+00:00"
       }
     },
     "pr:16589": {
@@ -299471,21 +299557,14 @@
         "since": "2026-11-03T14:41:45.331139+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:41:45.331139+00:00"
+        "observedAt": "2026-11-03T14:50:43.494867+00:00"
       },
       "maintainer-review": {
         "scope": "da05e74d9febb9c6430bfc94d6406684eaab66df",
         "since": "2026-11-03T14:41:45.331139+00:00",
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
-        "observedAt": "2026-11-03T14:41:45.331139+00:00"
-      },
-      "contributor-review": {
-        "scope": "da05e74d9febb9c6430bfc94d6406684eaab66df",
-        "since": "2026-11-03T02:30:53.096288+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:50:43.494867+00:00"
       }
     },
     "pr:16620": {
@@ -299569,7 +299648,7 @@
         "since": "2026-11-01T19:40:22.453604+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "pr:16664": {
@@ -299700,7 +299779,14 @@
         "since": "2026-10-29T22:24:21.523461+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:41:45.331139+00:00"
+        "observedAt": "2026-11-03T14:50:43.494867+00:00"
+      },
+      "contributor-review": {
+        "scope": "7cbb007c3febee15d1904c7faaf3bb21f34a3ae5",
+        "since": "2026-11-03T14:48:57.209577+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "pr:16711": {
@@ -300053,14 +300139,21 @@
         "since": "2026-11-03T14:41:45.331139+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:41:45.331139+00:00"
+        "observedAt": "2026-11-03T14:50:43.494867+00:00"
       },
       "maintainer-review": {
         "scope": "c58f36d4e068c2b0aa31a207fabbb37e25b60472",
         "since": "2026-11-03T14:41:45.331139+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:41:45.331139+00:00"
+        "observedAt": "2026-11-03T14:50:43.494867+00:00"
+      },
+      "contributor-review": {
+        "scope": "c58f36d4e068c2b0aa31a207fabbb37e25b60472",
+        "since": "2026-11-03T14:48:57.209577+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "pr:16804": {
@@ -301273,7 +301366,7 @@
         "since": "2026-10-31T16:57:06.135+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:bazel-python-release": {
@@ -301282,7 +301375,7 @@
         "since": "2026-10-30T16:55:14.197497+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -301291,7 +301384,7 @@
         "since": "2026-11-03T07:06:47.467598+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:rules-img-hackbench-image": {
@@ -301300,7 +301393,7 @@
         "since": "2026-11-03T04:16:24.163353+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:rules-img-wrk2-image": {
@@ -301309,7 +301402,7 @@
         "since": "2026-10-31T07:18:55.041730+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:licensecheck-go-digest-notices": {
@@ -301318,7 +301411,7 @@
         "since": "2026-11-02T16:53:35.881136+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:package-clang-format": {
@@ -301327,7 +301420,7 @@
         "since": "2026-11-02T08:21:11+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:declared-codespell": {
@@ -301336,7 +301429,7 @@
         "since": "2026-11-02T08:21:11+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:release-archives-versioned": {
@@ -301345,7 +301438,7 @@
         "since": "2026-10-31T10:28:33.920382+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:tcp-restore-send-deadlines": {
@@ -301354,7 +301447,7 @@
         "since": "2026-10-29T21:52:21.505470+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:mutable-overlay-poll-waiter": {
@@ -301363,7 +301456,7 @@
         "since": "2026-10-30T05:07:07.633004+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:proc-forwarding-mounts": {
@@ -301372,7 +301465,7 @@
         "since": "2026-10-30T17:32:27.326543+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:staged-release-tag": {
@@ -301381,7 +301474,7 @@
         "since": "2026-10-31T09:29:02.218795+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:tcp-sack-reneging": {
@@ -301390,7 +301483,7 @@
         "since": "2026-10-31T15:23:16.789097+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:native-gazelle-check": {
@@ -301399,7 +301492,7 @@
         "since": "2026-11-02T16:20:02.085486+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:checkpoint-memory-file-registration": {
@@ -301408,7 +301501,7 @@
         "since": "2026-10-31T18:05:07.150+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:buildkite-native-packages": {
@@ -301417,7 +301510,7 @@
         "since": "2026-11-03T09:40:14.321194+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:tcp-cookie-window-packets": {
@@ -301426,7 +301519,7 @@
         "since": "2026-10-31T19:36:28.936+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:tcp-retain-fixed-source-port": {
@@ -301435,7 +301528,7 @@
         "since": "2026-11-01T01:51:20.575751+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:hostinet-exit-linger": {
@@ -301444,7 +301537,7 @@
         "since": "2026-11-01T05:08:12.703055+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:rack-checkpoint-recovery": {
@@ -301453,7 +301546,7 @@
         "since": "2026-11-01T07:12:21.056431+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:tcp-cookie-accepted-sack": {
@@ -301462,7 +301555,7 @@
         "since": "2026-11-01T08:08:39.992196+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:tcp-consumed-socket-error": {
@@ -301471,7 +301564,7 @@
         "since": "2026-11-03T02:48:42.204681+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:tcp-established-icmp-errors": {
@@ -301480,7 +301573,7 @@
         "since": "2026-11-01T09:30:13.357522+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -301489,7 +301582,7 @@
         "since": "2026-11-01T11:45:39.922159+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:state-graph-object-frame-bounds": {
@@ -301498,7 +301591,7 @@
         "since": "2026-11-01T13:49:13.599008+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:tcp-report-read-hangups": {
@@ -301507,7 +301600,7 @@
         "since": "2026-11-01T13:56:22.287550+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:buildkite-native-nogo": {
@@ -301516,7 +301609,7 @@
         "since": "2026-11-03T07:06:47.467598+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:tcp-passive-syn-retry": {
@@ -301525,7 +301618,7 @@
         "since": "2026-11-02T00:04:15+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:futex-requeue-count": {
@@ -301534,7 +301627,7 @@
         "since": "2026-11-02T02:29:36+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:buildkite-direct-smoke": {
@@ -301543,7 +301636,7 @@
         "since": "2026-11-03T09:26:23.862437+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:buildkite-native-plugin": {
@@ -301552,7 +301645,7 @@
         "since": "2026-11-03T08:23:27.485264+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:state-graph-print-errors": {
@@ -301561,7 +301654,7 @@
         "since": "2026-11-02T22:54:43.336654+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:tcp-keepalive-user-timeout": {
@@ -301570,7 +301663,7 @@
         "since": "2026-11-03T02:30:53.096288+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
     "branch:ipc-object-guard": {
@@ -301579,16 +301672,16 @@
         "since": "2026-11-03T06:24:21.015903+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     },
-    "issue:16878": {
+    "branch:rules-go-run-with-sdk": {
       "contributor-review": {
-        "scope": "https://github.com/google/gvisor/issues/16878",
-        "since": "2026-11-03T14:33:29.484586+00:00",
+        "scope": "1e46f02a9c4862f8d303bd18bcb6dd2da9230a4f",
+        "since": "2026-11-03T14:48:57.209577+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-03T14:33:29.484586+00:00"
+        "observedAt": "2026-11-03T14:48:57.209577+00:00"
       }
     }
   },
@@ -301752,21 +301845,18 @@
     "retainedImports": 342,
     "curationRefresh": {
       "prs": [
-        16098,
         16588,
         16618,
         16710,
-        16801,
-        16803,
-        16841
+        16803
       ],
       "issue": 16878,
-      "requests": 6,
-      "graphqlCost": 11,
-      "previousFullSnapshot": "2026-11-03T14:13:16.511214+00:00",
+      "requests": 4,
+      "graphqlCost": 6,
+      "previousFullSnapshot": "2026-11-03T14:41:45.885082+00:00",
       "repositoryObservation": {
         "scope": "registered-only",
-        "registeredCount": 7,
+        "registeredCount": 4,
         "openInventoryTotal": null,
         "retainedSources": 0,
         "retainedImports": 0
@@ -302600,6 +302690,10 @@
       "https://github.com/google/gvisor/pull/16618": {
         "head": "da05e74d9febb9c6430bfc94d6406684eaab66df",
         "status": "open"
+      },
+      "https://github.com/tamird/rules_go/tree/proposal/action-go-path": {
+        "head": "1e46f02a9c4862f8d303bd18bcb6dd2da9230a4f",
+        "status": "Ready for contributor review"
       }
     }
   }
