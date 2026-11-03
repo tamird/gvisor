@@ -8,8 +8,8 @@ permissions:
 jobs:
   guest:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.run_attempt == 1
-    runs-on: ubuntu-24.04-arm
-    timeout-minutes: 75
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     env:
       PRODUCT: 96fadde722e14d482a62276b80237398f8b62fbf
       GUEST: 588d3e6d35225ff5425d0148d3ec468d0a4e7833
@@ -17,44 +17,26 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 5
+          fetch-depth: 2
           persist-credentials: false
-      - name: Bind the two existing source trees and install their pinned Bazel
-        run: |
-          test "$(git rev-parse HEAD^)" = 0e2ed6f4116a4d3e00fe1b3bb09b6006d863796e
-          test "$(git rev-parse HEAD^^)" = 993c59719c5aabac80afd4a4b25aadf33ccc104e
-          test "$(git rev-parse HEAD~4)" = "$PRODUCT"
-          test "$(uname -m)" = aarch64
-          git diff --name-only "$PRODUCT" HEAD > "$RUNNER_TEMP/carrier-files"
-          diff -u <(printf '%s\n' .github/qualification/arm64-unit-private-guest.py .github/workflows/build.yml) "$RUNNER_TEMP/carrier-files"
-          cp .github/qualification/arm64-unit-private-guest.py "$RUNNER_TEMP/"
-          git fetch --quiet --depth=1 origin "$GUEST"
-          git fetch --quiet --depth=1 origin 93de62e8d3573407bfc1ded722a0a73d80cabedc
-          git show 93de62e8d3573407bfc1ded722a0a73d80cabedc:test/rbe/plugin_programs/cas_inputs.py > "$RUNNER_TEMP/cas_inputs.py"
-          git checkout --quiet --detach "$PRODUCT"
-          sed -n '/^install_.*bazel() {$/,$p' .buildkite/hooks/pre-command > "$RUNNER_TEMP/unit-setup.bash"
-          source "$RUNNER_TEMP/unit-setup.bash"
-          test "$(bazel --version)" = "bazel 8.8.1"
-          echo "$BUILDKITE_BAZEL_DIRECTORY" >> "$GITHUB_PATH"
-      - name: Read the original paired capsule manifest
+      - name: Bind the original failed invocation and existing official reader
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api repos/tamird/gvisor/actions/artifacts/13214038729/zip > "$RUNNER_TEMP/original.zip"
-      - name: Recover only the original capsule bytes and the existing executor configuration
+        run: |
+          test "$(git rev-parse HEAD^)" = faf46cb9484718769a2ead5eafad2697d833f100
+          gh api repos/tamird/gvisor/actions/artifacts/13216750553/zip > "$RUNNER_TEMP/original.zip"
+          git fetch --quiet --depth=1 origin 93de62e8d3573407bfc1ded722a0a73d80cabedc
+          git show 93de62e8d3573407bfc1ded722a0a73d80cabedc:test/rbe/plugin_programs/cas_inputs.py > "$RUNNER_TEMP/cas_inputs.py"
+          cp .github/qualification/arm64-unit-private-guest.py "$RUNNER_TEMP/"
+          curl --fail --silent --show-error --location --max-time 120 \
+            https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64 \
+            --output "$RUNNER_TEMP/bb"
+          printf '%s  %s\n' f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb "$RUNNER_TEMP/bb" | sha256sum --check --strict
+          chmod +x "$RUNNER_TEMP/bb"
+      - name: Identify the failed declared executable without running Bazel
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: |
-          set -eu
-          test -n "$BUILDBUDDY_API_KEY"
-          umask 077
-          rc="$RUNNER_TEMP/guest.bazelrc"
-          base=build:buildbuddy_remote_executor
-          for option in remote_cache remote_executor bes_backend; do echo "$base --$option=grpcs://remote.buildbuddy.io"; done > "$rc"
-          echo "$base --bes_results_url=https://app.buildbuddy.io/invocation/" >> "$rc"
-          for option in remote_header bes_header; do echo "$base --$option=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY"; done >> "$rc"
-          python3 "$RUNNER_TEMP/arm64-unit-private-guest.py" recover
-      - name: Run only the two previously unexecuted private guests
-        run: python3 "$RUNNER_TEMP/arm64-unit-private-guest.py" guest
+        run: python3 "$RUNNER_TEMP/arm64-unit-private-guest.py" inspect-failure
       - name: Check the small publication allowlist
         id: safe
         if: always()
