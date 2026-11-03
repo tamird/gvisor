@@ -1,0 +1,71 @@
+name: Direct Bazel Nogo selection
+on:
+  push:
+    branches: [qualification/nogo-test-config]
+permissions:
+  contents: read
+jobs:
+  native:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      PRODUCT: e288d9db458e5b13c0e65a86503efd83c6a4adb1
+      BASE: b21a9d4eea7b0066232c33c63df9cf20ed987f6f
+      REPORTER: 6b3fe9ab6c03facafe6340c85f8d60ca3591566b
+      DOCKER_BUILD: 'false'
+      BAZEL_REMOTE_CACHE: '--remote_cache=grpcs://remote.buildbuddy.io --define="nogo_agent=quoted value"'
+      DOCKER_HOST: unix:///nonexistent-gvisor-builder.sock
+      BUILDKITE_LABEL: ':golang: Nogo tests'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Verify Make equivalence and run the direct Bazel selections
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/nogo-receipts"
+          echo '{"verified":false,"reason":"qualification incomplete"}' > "$RUNNER_TEMP/nogo-receipts/verdict.json"
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          cp .github/qualification/native-nogo.py "$RUNNER_TEMP"
+          git checkout --quiet --detach "$PRODUCT"
+          test "$(uname -m)" = x86_64
+          test "$(git rev-parse HEAD^)" = "$BASE"
+          test "$(git diff --name-only "$BASE" "$PRODUCT")" = "$(printf '.bazelrc\nMakefile')"
+          git fetch --quiet --no-tags --depth=1 origin "$REPORTER"
+          for helper in unit_matrix qualification_report; do
+            git show "$REPORTER:test/rbe/$helper.py" > "$RUNNER_TEMP/$helper.py"
+          done
+          test "$(bazel --version)" = "bazel $(cat .bazelversion)"
+          mkdir "$RUNNER_TEMP/gnu-platform"
+          echo 'module(name="nogo_gnu")' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+          echo 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a"},visibility=["//visibility:public"])' > "$RUNNER_TEMP/gnu-platform/BUILD"
+          umask 077
+          {
+            echo 'build --jobs=32'
+            echo 'build --remote_executor=grpcs://remote.buildbuddy.io'
+            echo 'build --bes_backend=grpcs://remote.buildbuddy.io'
+            echo 'build --bes_results_url=https://app.buildbuddy.io/invocation/'
+            echo 'build --spawn_strategy=remote'
+            echo 'build --noremote_local_fallback'
+            echo 'test --strategy=TestRunner=sandboxed'
+            echo 'build --remote_download_outputs=toplevel'
+            echo "build --inject_repository=nogo_gnu=$RUNNER_TEMP/gnu-platform"
+            echo 'build --extra_execution_platforms=@nogo_gnu//:gnu'
+            echo 'build --host_platform=@nogo_gnu//:gnu'
+            echo 'test --nocache_test_results'
+            test -n "$BUILDBUDDY_API_KEY"
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$RUNNER_TEMP/nogo-resources.bazelrc"
+          unset BUILDBUDDY_API_KEY
+          python3 "$RUNNER_TEMP/native-nogo.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: nogo-test-config
+          path: ${{ runner.temp }}/nogo-receipts/verdict.json
+          if-no-files-found: error
