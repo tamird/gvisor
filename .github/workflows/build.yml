@@ -1,4 +1,4 @@
-name: Run the two source-matched gVisor packages on the private bridge
+name: Compare current forwarding on the original private bridge
 on:
   push:
     branches: [qualification/tcp-short-bridge-packaged]
@@ -7,40 +7,36 @@ jobs:
   compare:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 5, persist-credentials: false}
-      - name: Bind the exact original control and both official release packages
+        with: {fetch-depth: 6, persist-credentials: false}
+      - name: Bind the original observations and current release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           carrier=d1e3f464d979d34d82fb90d07c0d740acc3344d1
           master=471d6dff5229b99208bf6fec985601067f1f9d69
-          test "$(git rev-parse HEAD^)" = fd76963445760a3b8f05cddb8e9da61f98b5b62e
-          test "$(git rev-parse HEAD^^)" = "$carrier"
-          test "$(git rev-parse HEAD~4)" = "$master"
-          git fetch --depth=1 https://github.com/google/gvisor.git refs/tags/release-20260727.0
-          test "$(git rev-parse 'FETCH_HEAD^{commit}')" = 9f3e9a3fba9416ea1f5832d82923d95830479096
+          test "$(git rev-parse HEAD^)" = b3862e4bbab478a7cf201f46c4311d489f983d53
+          test "$(git rev-parse HEAD~3)" = "$carrier"
+          test "$(git rev-parse HEAD~5)" = "$master"
           mkdir -p "$RUNNER_TEMP/bridge-receipts"
-          gh api repos/tamird/gvisor/actions/artifacts/13250247550/zip > "$RUNNER_TEMP/native.zip"
-          gh api repos/tamird/gvisor/actions/artifacts/13252136757/zip > "$RUNNER_TEMP/packaged-original.zip"
+          gh api repos/tamird/gvisor/actions/artifacts/13250969904/zip > "$RUNNER_TEMP/original.zip"
           unset GH_TOKEN
-          python3 .github/qualification/short_bridge_receipt.py packaged native-reuse current 0
+          python3 .github/qualification/short_bridge_receipt.py bind-comparison
           p=test/rtnetlink/linux
           git show "$carrier:$p/short_connections.py" > "$p/baseline-short.py"
           git show "$carrier:$p/bridge_test.sh" > "$p/baseline-bridge.sh"
           git diff --exit-code "$carrier" HEAD -- "$p/rtnetlink_test.sh"
+          git diff --exit-code HEAD^ HEAD -- "$p/short_connections.py" "$p/bridge_test.sh" "$p/BUILD"
           base=https://storage.googleapis.com/gvisor/releases/pool
           curl -fsSL --retry 2 "$base/20261102.0-22-g471d6dff5229/binary-amd64/runsc.deb" -o "$p/current.deb"
-          curl -fsSL --retry 2 "$base/20260727.0/binary-amd64/runsc.deb" -o "$p/july.deb"
           sha256sum -c <<EOF
           9a30c8c48fcbf90b7f67fcf92abb77dd61d738c34f5e94a1937d40e001c39dec  $p/current.deb
-          386bdc2196fc600b68ff8dafdd8ecdc6a8e033ecf9cfa9dfab61ec1b389da307  $p/july.deb
           EOF
           command -v ip
-      - name: Run both baselines independently and then the applicable two-cell July contrast
+      - name: Run only the missing two current forwarding cells
         run: |
           set -eu
           readonly cli="$(command -v bazel)"
@@ -55,18 +51,10 @@ jobs:
             date --utc --iso-8601=ns > "$RUNNER_TEMP/bridge-receipts/$name.finished"
             python3 .github/qualification/short_bridge_receipt.py packaged "$name" "$rel" "$rc" || true
           }
-          run current-tools current --test_env=SHORT_BRIDGE_TOOLS=1
-          run july-tools july --test_env=SHORT_BRIDGE_TOOLS=1
-          if python3 .github/qualification/short_bridge_receipt.py tools-ready; then
-            run current-baseline current
-            run july-baseline july
-          fi
-          if python3 .github/qualification/short_bridge_receipt.py baseline-clean; then
-            run july-forward july --test_env=SHORT_BRIDGE_FOCUS=1
-          fi
+          run current-forward current --test_env=SHORT_BRIDGE_FOCUS=1
       - name: Verify observed outcomes only
         if: ${{ !cancelled() }}
-        run: python3 .github/qualification/short_bridge_receipt.py packaged-finish
+        run: python3 .github/qualification/short_bridge_receipt.py compare-releases
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:

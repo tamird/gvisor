@@ -313,10 +313,66 @@ def packaged_finish():
     return not complete
 
 
+def compare_releases():
+    import io
+    import zipfile
+
+    report = {"verdict":"INCOMPLETE","prior_artifact":13250969904,"cells":[]}
+    try:
+        original = (TEMP / "original.zip").read_bytes()
+        assert hashlib.sha256(original).hexdigest() == "40b796a71ccb958ad5526607d23b2a7162d0f449ead42b4eb69644c8721fddc9"
+        with zipfile.ZipFile(io.BytesIO(original)) as a:
+            july = json.loads(a.read("july-forward.json"))
+            old_current = json.loads(a.read("current-baseline.json"))["observed"]
+            assert json.loads(a.read("verdict.json"))["verdict"] == "COMPLETE"
+        if sys.argv[1] == "bind-comparison":
+            return 0
+        current = json.loads((OUT / "current-forward.json").read_text())
+        assert current["observed"]["binaries"] == old_current["binaries"]
+        fixtures = {}
+        for release, result in [("july", july), ("current", current)]:
+            obs = result["observed"]
+            assert obs["release"] == release and result["complete"] and result["bazel_exit"] == 0
+            assert result["test_results"] == [{"status":"PASSED","strategy":"local","cached":False}]
+            assert [v["variant"] for v in obs["variants"]] == ["forward0","forward1"]
+            for v in obs["variants"]:
+                assert v["runtime_exit"] == 0
+                c, = v["cells"]
+                x = c["client"]
+                assert c["link"] == "bridge" and c["active_closer"] == "client" and x["attempts"] == 2000
+                assert v["variant"] == "forward" + c["root_bridge_ip_forward"]
+                assert fixtures.setdefault(v["variant"], v["fixture"]) == v["fixture"]
+                wire = x["wire"]
+                rsts = {k:n for k,n in wire.items() if k.startswith("matched RST/")}
+                good = x["outcomes"].get("ok",0)
+                first = x["first_rst_attempt"]
+                done = min(good,c["server"]["echoed"],c["server"].get("client EOF",0),c["server"]["closed"])
+                stats = x["packet_stats"]
+                covered = (not x["sensor_error"] and wire.get("socket+SYN",0) == 2000
+                           and isinstance(stats,list) and len(stats)==2 and stats[1]==0)
+                report["cells"].append({"release":release,"variant":v["variant"],"attempts":x["attempts"],
+                    "outcomes":x["outcomes"],"application_resets":[r for r in result["resets"] if r[0]==v["variant"]],
+                    "other_errors":[r for r in result["other_errors"] if r[0]==v["variant"]],
+                    "wire":wire,"matched_wire_resets_on_clean_exchanges":sum(rsts.values()) if done == 2000 and covered else None,
+                    "first_matched_reset":first,"elapsed":x["elapsed"],"packet_stats":x["packet_stats"],
+                    "sensor_error":x["sensor_error"],"completed_echo_and_eof":done})
+        report["verdict"] = "COMPARISON_OBSERVED"
+    except Exception as exc:
+        report["error_class"] = type(exc).__name__
+        return 1
+    finally:
+        if sys.argv[1] != "bind-comparison":
+            report["verified"] = now()
+            (OUT/"verdict.json").write_text(json.dumps(report,indent=2))
+    return 0
+
+
 if __name__ == "__main__":
     OUT.mkdir(exist_ok=True)
     if sys.argv[1:] and sys.argv[1] == "packaged":
         raise SystemExit(packaged())
+    if sys.argv[1:] and sys.argv[1] in ("bind-comparison","compare-releases"):
+        raise SystemExit(compare_releases())
     if sys.argv[1:] and sys.argv[1] in ("tools-ready","baseline-clean","packaged-finish"):
         raise SystemExit(packaged_finish())
     if sys.argv[1:] and sys.argv[1] == "build":
