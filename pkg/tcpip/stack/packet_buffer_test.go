@@ -16,6 +16,7 @@ package stack
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/buffer"
@@ -836,5 +837,40 @@ func TestCalculateTransportChecksumUDPZero(t *testing.T) {
 
 	if got, want := udpHdr.Checksum(), uint16(0xFFFF); got != want {
 		t.Errorf("got udpHdr.Checksum() = 0x%x, want = 0x%x", got, want)
+	}
+}
+
+func TestPacketDataReadToPreservesHeaders(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		size    int
+		peek    bool
+		wantErr error
+	}{
+		{name: "partial read", size: 3, wantErr: io.ErrShortWrite},
+		{name: "full read", size: 6},
+		{name: "peek", size: 3, peek: true, wantErr: io.ErrShortWrite},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			pkt := NewPacketBuffer(PacketBufferOptions{Payload: buffer.MakeWithData([]byte("headabcdef"))})
+			defer pkt.DecRef()
+			if _, ok := pkt.TransportHeader().Consume(4); !ok {
+				t.Fatal("header Consume failed")
+			}
+			dst := make([]byte, tc.size)
+			writer := tcpip.SliceWriter(dst)
+			n, err := pkt.Data().ReadTo(&writer, tc.peek)
+			if n != tc.size || err != tc.wantErr || string(dst) != "abcdef"[:tc.size] {
+				t.Fatalf("ReadTo = (%d, %v, %q), want (%d, %v, %q)", n, err, dst, tc.size, tc.wantErr, "abcdef"[:tc.size])
+			}
+			checkPacketHeader(t, "transport", pkt.TransportHeader(), []byte("head"))
+			removed := n
+			if tc.peek {
+				removed = 0
+			}
+			if got, want := string(pkt.Data().AsRange().ToSlice()), "abcdef"[removed:]; got != want {
+				t.Errorf("payload = %q, want %q", got, want)
+			}
+		})
 	}
 }
