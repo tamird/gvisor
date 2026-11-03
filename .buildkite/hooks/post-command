@@ -136,11 +136,9 @@ if [[ -n "${BUILDKITE_STAGED_BINARIES_DIRECTORY:-}" ]]; then
 fi
 
 if [[ -n "${BUILDKITE_BAZEL_DIRECTORY:-}" ]]; then
-  # Docker cleanup also stops the builder after successful jobs.
+  # Source runtime installation can use native Bazel even when the job uses Docker.
   shutdown_status=0
-  if [[ "$BUILDKITE_COMMAND_EXIT_STATUS" == 0 ]]; then
-    bazel shutdown || shutdown_status=$?
-  fi
+  bazel shutdown || shutdown_status=$?
   rm -f -- "$BUILDKITE_BAZEL_DIRECTORY/bazel"
   rmdir -- "$BUILDKITE_BAZEL_DIRECTORY"
   if [[ "$shutdown_status" != 0 ]]; then

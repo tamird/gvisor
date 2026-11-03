@@ -87,6 +87,31 @@ else
   export DOCKER_RELOAD_COMMAND='sudo systemctl reload docker'
 fi
 
+# The job and its post-command cleanup must use the same Bazel server.
+install_bazelisk() {
+  local dir="$1" bazelisk
+  if bazelisk="$(command -v bazelisk)"; then
+    ln -s -- "$bazelisk" "$dir/bazel"
+  else
+    GOBIN="$dir" go install github.com/bazelbuild/bazelisk@v1.30.0 &&
+      mv -- "$dir/bazelisk" "$dir/bazel"
+  fi
+}
+
+if [[ "${DOCKER_BUILD:-}" == false ||
+      ( "${BUILDKITE_PIPELINE_INSTALL_RUNTIME:-}" == true && -z "${STAGED_BINARIES:-}" ) ]]; then
+  BUILDKITE_BAZEL_DIRECTORY="$(mktemp -d)"
+  if ! install_bazelisk "$BUILDKITE_BAZEL_DIRECTORY"; then
+    rm -f -- "$BUILDKITE_BAZEL_DIRECTORY"/{bazel,bazelisk}
+    rmdir -- "$BUILDKITE_BAZEL_DIRECTORY"
+    exit 1
+  fi
+  export BUILDKITE_BAZEL_DIRECTORY
+  export PATH="$BUILDKITE_BAZEL_DIRECTORY:$PATH"
+  unset USE_BAZEL_VERSION
+  export USE_BAZEL_FALLBACK_VERSION=error:
+fi
+
 if [[ "${BUILDKITE_PIPELINE_INSTALL_RUNTIME:-}" == "true" ]]; then
   # Ensure Docker has experimental enabled, install runtimes.
   echo 'Current Docker daemon configuration:' >&2
@@ -98,7 +123,8 @@ if [[ "${BUILDKITE_PIPELINE_INSTALL_RUNTIME:-}" == "true" ]]; then
       | tar -C "$BUILDKITE_STAGED_BINARIES_DIRECTORY" -zxvf -
     chmod -R +x "$BUILDKITE_STAGED_BINARIES_DIRECTORY"
   else
-    make copy TARGETS=//:release DESTINATION="$BUILDKITE_STAGED_BINARIES_DIRECTORY"
+    make copy DOCKER_BUILD=false TARGETS=//:release \
+      DESTINATION="$BUILDKITE_STAGED_BINARIES_DIRECTORY"
   fi
   read -r -a runtime_args <<< "${RUNTIME_ARGS:-}"
   sudo "$BUILDKITE_STAGED_BINARIES_DIRECTORY/runsc" install \
@@ -184,28 +210,4 @@ if [[ "${BUILDKITE_COMMAND:-}" =~ "pipeline upload" ]]; then
     echo "Skipping GPU tests"
     pipeline_add_env SKIP_GPU_TESTS 1
   fi
-fi
-
-# The job and its post-command cleanup must use the same Bazel server.
-install_bazelisk() {
-  local dir="$1" bazelisk
-  if bazelisk="$(command -v bazelisk)"; then
-    ln -s -- "$bazelisk" "$dir/bazel"
-  else
-    GOBIN="$dir" go install github.com/bazelbuild/bazelisk@v1.30.0 &&
-      mv -- "$dir/bazelisk" "$dir/bazel"
-  fi
-}
-
-if [[ "${DOCKER_BUILD:-}" == false ]]; then
-  BUILDKITE_BAZEL_DIRECTORY="$(mktemp -d)"
-  if ! install_bazelisk "$BUILDKITE_BAZEL_DIRECTORY"; then
-    rm -f -- "$BUILDKITE_BAZEL_DIRECTORY"/{bazel,bazelisk}
-    rmdir -- "$BUILDKITE_BAZEL_DIRECTORY"
-    exit 1
-  fi
-  export BUILDKITE_BAZEL_DIRECTORY
-  export PATH="$BUILDKITE_BAZEL_DIRECTORY:$PATH"
-  unset USE_BAZEL_VERSION
-  export USE_BAZEL_FALLBACK_VERSION=error:
 fi
