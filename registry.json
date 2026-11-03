@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T08:05:15.209566+00:00",
+    "updatedAt": "2026-11-03T08:23:27.485264+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -44168,13 +44168,13 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "group": "bazel",
-      "ref": "proposal/buildkite-native-smoke-targets",
-      "head": "fbe18a2bd8ff26d2d843776a74b2ceba6a13a925",
-      "url": "https://github.com/tamird/gvisor/commit/fbe18a2bd",
+      "ref": "proposal/buildkite-smoke-as-tests",
+      "head": "afef36b39b1a3e5200ffcc3eaf0df5f175eccc8e",
+      "url": "https://github.com/tamird/gvisor/commit/afef36b39",
       "title": "Run the Buildkite smoke guests directly with Bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-03T04:16:24.163353+00:00",
-      "summary": "Five direct smoke commands bypass the agent’s cache arguments. Five Buildkite steps now call two Bazel targets. On native AMD64, normal and race guests ran as UID 1001; on native ARM64, the normal guest did too. Each launcher used its matching Sentry and retained the eight-file release layout. Only the AMD64 race pair contained race instrumentation. These checks ran the production commands on GitHub-hosted Linux workers.",
+      "updatedAt": "2026-11-03T08:23:27.485264+00:00",
+      "summary": "The five native Buildkite steps use make test to pass agent cache options to Bazel. The normal and race smoke tests must boot a guest on the worker on each invocation. The Linux qualification checks that each guest uses the matching Sentry; the earlier direct-command results apply only to that version.",
       "evidence": [
         {
           "label": "AMD64 normal and race guest receipts",
@@ -44223,25 +44223,29 @@
         {
           "label": "Buildkite agent injects remote-cache options before repository hooks",
           "url": "https://buildkite.com/gvisor/pipeline/builds/53249"
+        },
+        {
+          "label": "Native Bazel test selection and guest runs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41602641778"
         }
       ],
       "refinement": {
         "before": {
-          "head": "f21dd0d1f664ffe62fa4f2da92d6d4414e121396"
+          "head": "fbe18a2bd8ff26d2d843776a74b2ceba6a13a925"
         },
         "after": {
-          "head": "fbe18a2bd8ff26d2d843776a74b2ceba6a13a925"
+          "head": "afef36b39b1a3e5200ffcc3eaf0df5f175eccc8e"
         }
       },
       "followup": {
         "owner": "Workstream owner",
-        "sourceHead": "fbe18a2bd8ff26d2d843776a74b2ceba6a13a925",
-        "observedAt": "2026-11-03T04:16:24.163353+00:00",
-        "disposition": "Needs cache-routing correction",
-        "nextAction": "Preserve smoke test selection and make the agent cache options available to all five commands.",
+        "sourceHead": "afef36b39b1a3e5200ffcc3eaf0df5f175eccc8e",
+        "observedAt": "2026-11-03T08:23:27.485264+00:00",
+        "disposition": "Qualifying native smoke tests",
+        "nextAction": "Verify fresh guest startup, the release layout, race instrumentation and the agent cache route on Linux.",
         "evidence": [
-          "https://buildkite.com/gvisor/pipeline/builds/53249",
-          "https://github.com/tamird/gvisor/commit/75c04f42d"
+          "https://github.com/tamird/gvisor/commit/afef36b39",
+          "https://github.com/tamird/gvisor/actions/runs/41602641778"
         ]
       }
     },
@@ -44400,14 +44404,14 @@
       "id": "branch:buildkite-native-plugin",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/buildkite-native-plugin",
-      "head": "89fed95c14d3569acb4c895ae602983b7ce25d32",
-      "title": "Build the plugin runtime directly on Buildkite",
+      "ref": "review/buildkite-native-plugin-make",
+      "head": "3d576b2ffb5b3dce0e3ebc7651338d1de66f0e3a",
+      "title": "Build the plugin runtime on the Buildkite agent",
       "group": "bazel",
-      "url": "https://github.com/tamird/gvisor/commit/89fed95c1",
-      "status": "Agent work",
-      "updatedAt": "2026-11-03T04:16:24.163353+00:00",
-      "summary": "The native plugin command bypasses the agent’s cache arguments. The AMD64 plugin runtime also builds an ARM64 cgo standard library. Give that input the declared LLVM cross-compiler and let the job run Bazelisk directly. DPDK and the optimized AMD64 runtime still use the worker’s GNU toolchain.",
+      "url": "https://github.com/tamird/gvisor/commit/3d576b2ff",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-03T08:23:27.485264+00:00",
+      "summary": "The AMD64 plugin also builds an ARM64 cgo standard library. The plugin configuration selects its cross-compiler. Buildkite runs the existing Make target on the agent, so its remote-cache options reach both Bazel calls. On the Linux integration source, the resulting static AMD64 executable contained the plugin and ran successfully.",
       "evidence": [
         {
           "label": "Native static AMD64 link, embedded plugin symbol, --version and architecture-specific compiler selection",
@@ -44424,18 +44428,45 @@
         {
           "label": "Buildkite agent injects remote-cache options before repository hooks",
           "url": "https://buildkite.com/gvisor/pipeline/builds/53249"
+        },
+        {
+          "label": "Native Make cache options, static plugin, startup and invalid-option control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41601509314/artifacts/13214452029"
+        },
+        {
+          "label": "GNU plugin and native Make integration source",
+          "url": "https://github.com/tamird/gvisor/commit/0ec4753b7"
         }
       ],
       "followup": {
-        "owner": "Workstream owner",
-        "sourceHead": "89fed95c14d3569acb4c895ae602983b7ce25d32",
-        "observedAt": "2026-11-03T04:16:24.163353+00:00",
-        "disposition": "Needs cache-routing correction",
-        "nextAction": "Route the existing plugin checks through the agent’s cache settings and verify the original output.",
+        "owner": "Contributor",
+        "sourceHead": "3d576b2ffb5b3dce0e3ebc7651338d1de66f0e3a",
+        "observedAt": "2026-11-03T08:23:27.485264+00:00",
+        "disposition": "Contributor review requested",
+        "nextAction": "Review the four-line change. Submit after the GNU plugin and native Buildkite bootstrap land.",
         "evidence": [
-          "https://buildkite.com/gvisor/pipeline/builds/53249",
-          "https://github.com/tamird/gvisor/commit/75c04f42d"
+          "https://github.com/tamird/gvisor/commit/3d576b2ff",
+          "https://github.com/tamird/gvisor/actions/runs/41601509314/artifacts/13214452029"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "89fed95c14d3569acb4c895ae602983b7ce25d32"
+        },
+        "after": {
+          "head": "3d576b2ffb5b3dce0e3ebc7651338d1de66f0e3a"
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "3d576b2ffb5b3dce0e3ebc7651338d1de66f0e3a",
+        "baseHead": "eafcb8392effca7769ef6e220d24feaadb3bdf17",
+        "url": "https://github.com/tamird/gvisor/commit/3d576b2ff",
+        "title": "Build the plugin runtime on the Buildkite agent",
+        "summary": "The AMD64 plugin also builds an ARM64 cgo standard library. The plugin configuration selects its cross-compiler. Buildkite runs the existing Make target on the agent, so its remote-cache options reach both Bazel calls. On the Linux integration source, the resulting static AMD64 executable contained the plugin and ran successfully.",
+        "body": "Run the existing plugin Make target with DOCKER_BUILD=false so the\nagent cache and quoted caller options reach both Bazel invocations.\n\nThe AMD64 plugin runtime also builds an ARM64 cgo standard library.\nSelect the declared LLVM cross compiler in plugin-tldk, where cgo is\nenabled, instead of requiring the native worker to install cross GCC.\nThe AMD64 DPDK build and runtime link retain the GNU toolchain.",
+        "requestedAt": "2026-11-03T08:23:27.485264+00:00"
       }
     },
     {
