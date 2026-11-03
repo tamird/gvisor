@@ -159,7 +159,7 @@ def main():
         record["version"] = embedded
         require(embedded in ("runsc version " + version, "runsc version release-" + version), "wrong embedded version")
         focus = os.environ.get("SHORT_BRIDGE_FOCUS") == "1"
-        modes = ("tools",) if os.environ.get("SHORT_BRIDGE_TOOLS") == "1" else ("forward0", "forward1") if focus else ("baseline",)
+        modes = ("tools",) if os.environ.get("SHORT_BRIDGE_TOOLS") == "1" else ("forward1",) if focus else ("baseline",)
         for variant in modes:
             record["variants"].append(run_cell(runtime, variant))
     except Exception as exc:

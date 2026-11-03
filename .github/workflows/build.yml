@@ -1,7 +1,7 @@
-name: Compare current forwarding on the original private bridge
+name: Compare the active closer on the July private bridge
 on:
   push:
-    branches: [qualification/tcp-short-bridge-packaged]
+    branches: [qualification/tcp-short-bridge-server-close]
 permissions: {contents: read, actions: read}
 jobs:
   compare:
@@ -10,17 +10,17 @@ jobs:
     timeout-minutes: 18
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 6, persist-credentials: false}
-      - name: Bind the original observations and current release
+        with: {fetch-depth: 7, persist-credentials: false}
+      - name: Bind the original observations and July package
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           carrier=d1e3f464d979d34d82fb90d07c0d740acc3344d1
           master=471d6dff5229b99208bf6fec985601067f1f9d69
-          test "$(git rev-parse HEAD^)" = b3862e4bbab478a7cf201f46c4311d489f983d53
-          test "$(git rev-parse HEAD~3)" = "$carrier"
-          test "$(git rev-parse HEAD~5)" = "$master"
+          test "$(git rev-parse HEAD^)" = fc8490e2c2dda9b10fcb90bede88007d25226238
+          test "$(git rev-parse HEAD~4)" = "$carrier"
+          test "$(git rev-parse HEAD~6)" = "$master"
           mkdir -p "$RUNNER_TEMP/bridge-receipts"
           gh api repos/tamird/gvisor/actions/artifacts/13250969904/zip > "$RUNNER_TEMP/original.zip"
           unset GH_TOKEN
@@ -29,32 +29,34 @@ jobs:
           git show "$carrier:$p/short_connections.py" > "$p/baseline-short.py"
           git show "$carrier:$p/bridge_test.sh" > "$p/baseline-bridge.sh"
           git diff --exit-code "$carrier" HEAD -- "$p/rtnetlink_test.sh"
-          git diff --exit-code HEAD^ HEAD -- "$p/short_connections.py" "$p/bridge_test.sh" "$p/BUILD"
+          git diff --exit-code HEAD^ HEAD -- "$p/BUILD"
           base=https://storage.googleapis.com/gvisor/releases/pool
-          curl -fsSL --retry 2 "$base/20261102.0-22-g471d6dff5229/binary-amd64/runsc.deb" -o "$p/current.deb"
+          curl -fsSL --retry 2 "$base/20260727.0/binary-amd64/runsc.deb" -o "$p/july.deb"
           sha256sum -c <<EOF
-          9a30c8c48fcbf90b7f67fcf92abb77dd61d738c34f5e94a1937d40e001c39dec  $p/current.deb
+          386bdc2196fc600b68ff8dafdd8ecdc6a8e033ecf9cfa9dfab61ec1b389da307  $p/july.deb
           EOF
           command -v ip
-      - name: Run only the missing two current forwarding cells
+      - name: Run only the July server-first bridge cell
         run: |
           set -eu
           readonly cli="$(command -v bazel)"
           run() {
             local name="$1" rel="$2"; shift 2
-            local rc=0
+            local rc=0 collect=0
             env -i HOME="$HOME" PATH="$PATH" USER="$USER" "$cli" test --config=x86_64 \
               --strategy=TestRunner=local --nocache_test_results --flaky_test_attempts=1 --test_timeout=640 \
               --build_tag_filters= --test_tag_filters= --build_event_json_file="$RUNNER_TEMP/$name.events" \
               "$@" "//test/rtnetlink/linux:short_bridge_$rel" > "$RUNNER_TEMP/$name.buildlog" 2>&1 || rc=$?
             printf '%s\n' "$rc" > "$RUNNER_TEMP/bridge-receipts/$name.exit"
             date --utc --iso-8601=ns > "$RUNNER_TEMP/bridge-receipts/$name.finished"
-            python3 .github/qualification/short_bridge_receipt.py packaged "$name" "$rel" "$rc" || true
+            python3 .github/qualification/short_bridge_receipt.py packaged "$name" "$rel" "$rc" || collect=$?
+            if [[ "$rc" != 0 ]]; then return "$rc"; fi
+            return "$collect"
           }
-          run current-forward current --test_env=SHORT_BRIDGE_FOCUS=1
+          run july-server july --test_env=SHORT_BRIDGE_FOCUS=1
       - name: Verify observed outcomes only
         if: ${{ !cancelled() }}
-        run: python3 .github/qualification/short_bridge_receipt.py compare-releases
+        run: python3 .github/qualification/short_bridge_receipt.py compare-closers
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:

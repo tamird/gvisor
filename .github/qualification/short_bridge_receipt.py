@@ -240,7 +240,7 @@ def packaged():
             assert set(v["tools"]) == names and all(len(paths) == 2 and paths[1].startswith("/usr/") for paths in v["tools"].values())
             report.update(complete=True,verdict="GUEST_TOOLS_READY")
             return 0
-        variants = ["baseline"] if name.endswith("baseline") else ["forward0","forward1"]
+        variants = ["baseline"] if name.endswith("baseline") else ["forward1"]
         assert [v["variant"] for v in obs["variants"]] == variants
         clean = True
         resets, other = [], []
@@ -248,7 +248,7 @@ def packaged():
             assert v["runtime_exit"] == 0
             base = v["variant"] == "baseline"
             n = 512 if base else 2000
-            keys = CASES if base else {("bridge","client")}
+            keys = CASES if base else {("bridge","server")}
             assert len(v["cells"]) == len(keys) and {(c["link"],c["active_closer"]) for c in v["cells"]} == keys
             if base:
                 assert v["fixture"]["short_connections.py"] == "3929bfa774b11795f3f5f99af17e9e545891818114ab6e625123a09c907b3ce5"
@@ -313,7 +313,7 @@ def packaged_finish():
     return not complete
 
 
-def compare_releases():
+def compare_closers():
     import io
     import zipfile
 
@@ -323,40 +323,49 @@ def compare_releases():
         assert hashlib.sha256(original).hexdigest() == "40b796a71ccb958ad5526607d23b2a7162d0f449ead42b4eb69644c8721fddc9"
         with zipfile.ZipFile(io.BytesIO(original)) as a:
             july = json.loads(a.read("july-forward.json"))
-            old_current = json.loads(a.read("current-baseline.json"))["observed"]
             assert json.loads(a.read("verdict.json"))["verdict"] == "COMPLETE"
+        assert july["source"] == JULY and july["complete"] and july["bazel_exit"] == 0
+        reference, = [v for v in july["observed"]["variants"] if v["variant"] == "forward1"]
+        ref_cell, = reference["cells"]
+        assert (ref_cell["client"]["outcomes"], ref_cell["client"]["wire"].get("matched RST/server")) == ({"ok":2000},1844)
         if sys.argv[1] == "bind-comparison":
             return 0
-        current = json.loads((OUT / "current-forward.json").read_text())
-        assert current["observed"]["binaries"] == old_current["binaries"]
-        fixtures = {}
-        for release, result in [("july", july), ("current", current)]:
-            obs = result["observed"]
-            assert obs["release"] == release and result["complete"] and result["bazel_exit"] == 0
+        new = json.loads((OUT / "july-server.json").read_text())
+        assert new["source"] == JULY and new["observed"]["release"] == "july"
+        for field in ("binaries", "package_sha256", "version"):
+            assert new["observed"][field] == july["observed"][field]
+        new_variant, = new["observed"]["variants"]
+        records = [(july, reference, "client"), (new, new_variant, "server")]
+        for result, variant, closer in records:
+            assert result["complete"] and result["bazel_exit"] == variant["runtime_exit"] == 0
             assert result["test_results"] == [{"status":"PASSED","strategy":"local","cached":False}]
-            assert [v["variant"] for v in obs["variants"]] == ["forward0","forward1"]
-            for v in obs["variants"]:
-                assert v["runtime_exit"] == 0
-                c, = v["cells"]
-                x = c["client"]
-                assert c["link"] == "bridge" and c["active_closer"] == "client" and x["attempts"] == 2000
-                assert v["variant"] == "forward" + c["root_bridge_ip_forward"]
-                assert fixtures.setdefault(v["variant"], v["fixture"]) == v["fixture"]
-                wire = x["wire"]
-                rsts = {k:n for k,n in wire.items() if k.startswith("matched RST/")}
-                good = x["outcomes"].get("ok",0)
-                first = x["first_rst_attempt"]
-                done = min(good,c["server"]["echoed"],c["server"].get("client EOF",0),c["server"]["closed"])
-                stats = x["packet_stats"]
-                covered = (not x["sensor_error"] and wire.get("socket+SYN",0) == 2000
-                           and isinstance(stats,list) and len(stats)==2 and stats[1]==0)
-                report["cells"].append({"release":release,"variant":v["variant"],"attempts":x["attempts"],
-                    "outcomes":x["outcomes"],"application_resets":[r for r in result["resets"] if r[0]==v["variant"]],
-                    "other_errors":[r for r in result["other_errors"] if r[0]==v["variant"]],
-                    "wire":wire,"matched_wire_resets_on_clean_exchanges":sum(rsts.values()) if done == 2000 and covered else None,
-                    "first_matched_reset":first,"elapsed":x["elapsed"],"packet_stats":x["packet_stats"],
-                    "sensor_error":x["sensor_error"],"completed_echo_and_eof":done})
-        report["verdict"] = "COMPARISON_OBSERVED"
+            cell, = variant["cells"]
+            assert variant["variant"] == "forward1" and cell["root_bridge_ip_forward"] == "1"
+            assert cell["link"] == "bridge" and cell["active_closer"] == closer
+            cl, sv = cell["client"], cell["server"]
+            assert cl["attempts"] == 2000 == sum(cl["outcomes"].values())
+            assert cl["sysctls"] == ref_cell["client"]["sysctls"]
+            app_errors = [e for e in result["resets"] + result["other_errors"] if e[0] == "forward1"]
+            eof = (sv if closer == "client" else cl["counts"]).get(closer+" EOF",0)
+            completed = min(cl["outcomes"].get("ok",0), eof, sv["echoed"], sv["closed"])
+            first_errors = [e for e in (cl.get("first_error"),cell.get("first_server_error")) if e]
+            wire = cl["wire"]
+            stats = cl["packet_stats"]
+            covered = (not cl["sensor_error"] and wire.get("socket+SYN",0)==2000 and
+                       isinstance(stats,list) and len(stats)==2 and stats[1]==0)
+            record = {"closer": closer, "attempts":cl["attempts"], "elapsed":cl["elapsed"],
+                      "outcomes":cl["outcomes"], "socket_errors_or_incomplete_exchanges":app_errors,
+                      "first_observed_socket_error":min(first_errors,key=lambda e:e["observed_ns"],default=None),
+                      "completed_echo_and_eof":completed,"wire":wire,"capture_complete":covered,
+                      "first_matched_reset":cl["first_rst_attempt"],"examples":cl["examples"]}
+            report["cells"].append(record)
+            # Missing wire coverage cannot establish zero resets or the sending peer.
+            assert wire.get("first FIN/"+closer,0) > 0
+            if closer == "server":
+                observed_os_errors = any("Error/" in e[-2] or "TimeoutError" in e[-2] for e in app_errors)
+                assert bool(first_errors) == observed_os_errors
+        report["verdict"] = ("COMPARISON_OBSERVED" if all(r["capture_complete"] for r in report["cells"])
+                             else "APPLICATION_OBSERVED_PARTIAL_WIRE")
     except Exception as exc:
         report["error_class"] = type(exc).__name__
         return 1
@@ -371,8 +380,8 @@ if __name__ == "__main__":
     OUT.mkdir(exist_ok=True)
     if sys.argv[1:] and sys.argv[1] == "packaged":
         raise SystemExit(packaged())
-    if sys.argv[1:] and sys.argv[1] in ("bind-comparison","compare-releases"):
-        raise SystemExit(compare_releases())
+    if sys.argv[1:] and sys.argv[1] in ("bind-comparison","compare-closers"):
+        raise SystemExit(compare_closers())
     if sys.argv[1:] and sys.argv[1] in ("tools-ready","baseline-clean","packaged-finish"):
         raise SystemExit(packaged_finish())
     if sys.argv[1:] and sys.argv[1] == "build":

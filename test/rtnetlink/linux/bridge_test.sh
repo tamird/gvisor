@@ -26,7 +26,7 @@ closers=(client server)
 if [[ -v TCP16908_FORWARD ]]; then
   [[ "$TCP16908_FORWARD" == 0 || "$TCP16908_FORWARD" == 1 ]]
   links=(bridge)
-  closers=(client)
+  closers=(server)
 fi
 for link in "${links[@]}"; do
 for closer in "${closers[@]}"; do

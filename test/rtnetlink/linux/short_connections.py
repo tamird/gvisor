@@ -28,6 +28,7 @@ def issue(exc):
 def server(link, closer):
     _, dst = IP[link]
     counts = collections.Counter()
+    first_error = None
     stop = threading.Event()
     lock = threading.Lock()
 
@@ -35,7 +36,8 @@ def server(link, closer):
         with lock:
             counts[key] += 1
 
-    def exchange(peer):
+    def exchange(peer, remote):
+        nonlocal first_error
         stage = "receive"
         try:
             with peer:
@@ -56,7 +58,13 @@ def server(link, closer):
                 stage = "close"
             count("closed")
         except OSError as exc:
-            count("/".join((stage, *issue(exc))))
+            when = time.monotonic_ns()
+            outcome = "/".join((stage, *issue(exc)))
+            with lock:
+                counts[outcome] += 1
+                if first_error is None or when < first_error["observed_ns"]:
+                    first_error = dict(side="server", stage=stage, errno=issue(exc)[1],
+                                       port=remote[1], observed_ns=when)
 
     threads = []
     with socket.socket() as listener:
@@ -68,11 +76,11 @@ def server(link, closer):
         def accept():
             while not stop.is_set():
                 try:
-                    peer, _ = listener.accept()
+                    peer, remote = listener.accept()
                 except TimeoutError:
                     continue
                 count("accepted")
-                thread = threading.Thread(target=exchange, args=(peer,))
+                thread = threading.Thread(target=exchange, args=(peer, remote))
                 thread.start()
                 threads.append(thread)
 
@@ -84,7 +92,7 @@ def server(link, closer):
         acceptor.join()
     for thread in threads:
         thread.join()
-    print(json.dumps(counts), flush=True)
+    print(json.dumps([counts, first_error]), flush=True)
 
 
 def tap(iface):
@@ -167,6 +175,7 @@ def client(link, closer):
     wire_counts = collections.Counter()
     examples = {}
     first_rst_attempt = None
+    first_error = None
     started = time.monotonic()
     done = 0
     for i in range(COUNT):
@@ -210,6 +219,9 @@ def client(link, closer):
             s.close()
         except OSError as exc:
             outcome = "/".join((stage, *issue(exc)))
+            if first_error is None:
+                first_error = dict(side="client", stage=stage, errno=issue(exc)[1],
+                                   attempt=i+1, observed_ns=time.monotonic_ns())
             try:
                 if s is not None:
                     port = s.getsockname()[1]
@@ -250,7 +262,7 @@ def client(link, closer):
             config[name] = None
     print(json.dumps({"attempts": done, "elapsed": time.monotonic() - started, "counts": counts,
                       "outcomes": outcomes, "wire": wire_counts, "examples": examples, "first_rst_attempt": first_rst_attempt, "packet_stats": packet_stats,
-                      "iface": iface, "sensor_error": sensor_error, "sysctls": config}), flush=True)
+                      "iface": iface, "sensor_error": sensor_error, "sysctls": config, "first_error": first_error}), flush=True)
 
 
 def run(link, closer):
@@ -272,7 +284,8 @@ def run(link, closer):
                 router_forward = Path("/proc/sys/net/ipv4/ip_forward").read_text().strip()
             except OSError:
                 router_forward = None
-            row = {"root_bridge_ip_forward": router_forward, "link": link, "active_closer": closer, "client": json.loads(raw), "server": json.loads(server_result)}
+            server_counts, server_error = json.loads(server_result)
+            row = {"root_bridge_ip_forward": router_forward, "link": link, "active_closer": closer, "client": json.loads(raw), "server": server_counts, "first_server_error": server_error}
             print("TCP16908 " + json.dumps(row, separators=(",", ":")), flush=True)
         finally:
             if srv.poll() is None:
