@@ -451,8 +451,8 @@ def recover_build():
     save()
 
 
-def recover_capsules(prior):
-    """Materialize the six original outputs; never substitute a new build."""
+def recover_capsules(prior, names=NAMES):
+    """Materialize selected original outputs; never substitute a new build."""
     from cas_inputs import KEY, OPENER
 
     invocation = prior['native_build_evidence']['invocation']
@@ -460,6 +460,8 @@ def recover_capsules(prior):
     require(set(prior['payloads']) == set(NAMES), 'original capsule set mismatch')
     DOC['capsule_recovery'] = {}
     for name, original in prior['payloads'].items():
+        if name not in names:
+            continue
         expected, size = original['sha256'], original['bytes']
         require(re.fullmatch('[0-9a-f]{64}', expected) and 0 < size < 300 * 1024**2, 'capsule bound')
         row = DOC['capsule_recovery'][name] = dict(sha256=expected, bytes=size, status='INCOMPLETE')
@@ -497,7 +499,7 @@ def recover_capsules(prior):
         save()
 
 
-def main():
+def original_native():
     original = (TMP / 'original.zip').read_bytes()
     require(sha(original) == '065c02f43387d0cdaa4c5417d2f89feec88202ebb9ca44c99d6225a1d4ce46e5', 'original ZIP mismatch')
     with zipfile.ZipFile(io.BytesIO(original)) as archive:
@@ -507,6 +509,73 @@ def main():
             and prior['source'] == SOURCE and prior['product'] == PRODUCT
             and prior['commands']['native-build']['exit'] == 0 and prior['commands']['guest']['exit'] == 3
             and prior['phases']['native_make_and_capsules']['status'] == 'PASS', 'unexpected original execution')
+    return original, prior
+
+
+def capsule_layout():
+    """Inspect one original tar without extracting or executing its files."""
+    original, prior = original_native()
+    failure_zip = (TMP / 'failure.zip').read_bytes()
+    require(sha(failure_zip) == '6b549b23f34dacfb8af3801db4e0ce20ccaf1f0c404fdf1de482629e324c00a2', 'boot failure ZIP mismatch')
+    with zipfile.ZipFile(io.BytesIO(failure_zip)) as archive:
+        require(archive.namelist() == ['container-native-result.json'], 'boot failure members mismatch')
+        failure = json.loads(archive.read('container-native-result.json'))
+    require(failure['carrier'] == '098e3e093bf859d8aebf856c5840dbba18aefb86'
+            and failure['source'] == SOURCE and failure['product'] == PRODUCT
+            and failure['status'] == 'FAIL' and failure['commands']['guest-boot']['exit'] == 3
+            and len(failure['attempts']) == 2
+            and {row['mode'] for row in failure['attempts']} == {'v1', 'v2'}
+            and all(row['owner'] == '//runsc/container:boot_test' and row['status'] == 'FAILED'
+                    and row['xml']['failed_cases'] == ['TestMinimalBoot'] for row in failure['attempts']), 'original boot failure differs')
+    DOC.update(original=dict(artifact=13253001262, zip_sha256=sha(original), receipt=prior),
+               boot_failure=dict(artifact=13257181708, zip_sha256=sha(failure_zip), receipt=failure),
+               scope='Exact original boot capsule member inventory only', workload_repeated=False,
+               product_build_repeated=False)
+    save()
+    recover_capsules(prior, ('boot_test',))
+    prefix = prior['payloads']['boot_test']['runfiles'] + '/_main/'
+    requested = 'test/cmd/test_app/test_app'
+    inventory = dict(requested=requested, entries=[])
+    DOC['capsule_layout'] = inventory
+    with tarfile.open(TMP / 'boot_test.tar') as archive:
+        members = archive.getmembers()
+        inventory['archive_member_count'] = len(members)
+        require(len(members) < 10000, 'archive member bound')
+        seen = set()
+        for member in members:
+            name = member.name.removeprefix('./')
+            if not name.startswith(prefix + 'test/cmd/test_app/'):
+                continue
+            relative = name.removeprefix(prefix).rstrip('/')
+            require(re.fullmatch(r'[A-Za-z0-9_./+@=-]{1,512}', relative)
+                    and '..' not in Path(relative).parts and relative not in seen, 'invalid or duplicate selected member')
+            seen.add(relative)
+            row = dict(path=relative, bytes=member.size, mode=oct(member.mode))
+            if member.isfile():
+                require(member.size < 128 * 1024**2, 'selected file bound')
+                data = archive.extractfile(member).read()
+                require(len(data) == member.size, 'selected member length mismatch')
+                row.update(kind='file', sha256=sha(data))
+                if data[:6] == b'\x7fELF\x02\x01' and len(data) >= 20:
+                    row['elf_machine'] = int.from_bytes(data[18:20], 'little')
+            elif member.isdir():
+                row['kind'] = 'directory'
+            elif member.issym() or member.islnk():
+                row.update(kind='symlink' if member.issym() else 'hardlink', target_sha256=sha(member.linkname.encode()))
+            else:
+                row['kind'] = 'other'
+            inventory['entries'].append(row)
+            require(len(inventory['entries']) <= 32, 'selected inventory bound')
+        require(inventory['entries'] and any(row['kind'] == 'file' for row in inventory['entries']), 'no original app files')
+    matches = [row for row in inventory['entries'] if row['path'] == requested]
+    inventory['requested_kind'] = (matches[0]['kind'] if matches else
+        'implicit_directory' if any(row['path'].startswith(requested + '/') for row in inventory['entries']) else 'absent')
+    DOC['status'] = 'ORIGINAL_CAPSULE_LAYOUT_RECORDED'
+    save()
+
+
+def main():
+    original, prior = original_native()
     DOC.update(original=dict(artifact=13253001262, zip_sha256=sha(original), receipt=prior),
                scope='Corrected guest adapter using six exact original native capsules; no product build',
                product_build_repeated=False, modes=prior['modes'])
@@ -547,9 +616,11 @@ if __name__ == '__main__':
     try:
         if sys.argv[1:] == ['--recover-build']:
             recover_build()
+        elif sys.argv[1:] == ['--capsule-layout']:
+            capsule_layout()
         else:
             main()
     except Exception as exc:
         DOC['error_class'] = type(exc).__name__
         save()
-    sys.exit(0 if DOC['status'] in ('PASS', 'ORIGINAL_FAIL_DIAGNOSTIC_RECOVERED') else 1)
+    sys.exit(0 if DOC['status'] in ('PASS', 'ORIGINAL_FAIL_DIAGNOSTIC_RECOVERED', 'ORIGINAL_CAPSULE_LAYOUT_RECORDED') else 1)
