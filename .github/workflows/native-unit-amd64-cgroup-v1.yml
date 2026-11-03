@@ -4,6 +4,7 @@ on:
     branches: [qualification/buildkite-container-native-kvm]
 permissions:
   contents: read
+  actions: read
 jobs:
   container:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
@@ -14,16 +15,19 @@ jobs:
       SOURCE: 7e29426b047a41303652cfa9f0ae91e933302f5e
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 2, persist-credentials: false}
+      with: {fetch-depth: 3, persist-credentials: false}
     - name: Retain controller outside product checkout
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
-        test "$(git rev-parse HEAD^)" = 38745c527784376e0b5d915fe5ebd85e1d1385fd
+        test "$(git rev-parse HEAD~2)" = 38745c527784376e0b5d915fe5ebd85e1d1385fd
         printf '{"status":"INCOMPLETE","carrier":"%s"}\n' "$GITHUB_SHA" > "$RUNNER_TEMP/container-native-result.json"
         test -c /dev/kvm
         mkdir "$RUNNER_TEMP/controller"
         cp .github/qualification/unit-cgroup-v1/check.py test/rbe/{credential_artifacts,qualification_report,unit_matrix}.py "$RUNNER_TEMP/controller/"
         git fetch --no-tags origin "$SOURCE" --depth=3
+        gh api repos/tamird/gvisor/actions/artifacts/13248405646/zip > "$RUNNER_TEMP/original.zip"
         printf '{"status":"INCOMPLETE","carrier":"%s"}\n' "$GITHUB_SHA" > "$RUNNER_TEMP/container-native-result.json"
     - name: Native build and fresh isolated guests
       env:

@@ -2,6 +2,7 @@
 """Exercise the native container Make selection in the maintained KVM guest."""
 import datetime
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -181,7 +182,7 @@ def native(rc):
 
 def guest(rc):
     git('switch', '--quiet', '--detach', CARRIER)
-    require(git('rev-parse', 'HEAD^') == GUEST, 'guest source mismatch')
+    require(git('rev-parse', 'HEAD~2') == GUEST, 'guest source mismatch')
     package = Path(PKG)
     for name, row in DOC['payloads'].items():
         shutil.copyfile(TMP / (name + '.tar'), package / (name + '.tar'))
@@ -285,8 +286,24 @@ def guest(rc):
 
 
 def main():
-    require(os.uname().machine == 'x86_64' and os.access('/dev/kvm', os.R_OK | os.W_OK), 'native host KVM unavailable')
-    DOC['host'] = dict(machine=os.uname().machine, kernel=os.uname().release, uid=os.getuid(), kvm=True)
+    original = (TMP / 'original.zip').read_bytes()
+    require(sha(original) == 'c61979d846b430d8744189a46ab54274e954f31f24f3499fc94eff285977b917', 'original ZIP mismatch')
+    with zipfile.ZipFile(io.BytesIO(original)) as archive:
+        require(archive.namelist() == ['container-native-result.json'], 'original members mismatch')
+        prior = json.loads(archive.read('container-native-result.json'))
+    require(prior['carrier'] == '77779c356c947e90fe486e1a6a8fcb36ad6368d9' and prior['status'] == 'INCOMPLETE'
+            and not prior['commands'] and not prior['attempts'], 'unexpected original execution')
+    DOC['original'] = dict(artifact=13248405646, zip_sha256=sha(original), receipt=prior, workload_repeated=False)
+    DOC['host'] = dict(machine=os.uname().machine, kernel=os.uname().release, uid=os.getuid(),
+                      caller_kvm_access=os.access('/dev/kvm', os.R_OK | os.W_OK))
+    # The maintained local-root test route invokes QEMU through sudo. Check
+    # that existing privilege boundary; never chmod the device or change policy.
+    for permission in ('read', 'write'):
+        DOC['host']['root_kvm_' + permission] = subprocess.run(
+            ['sudo', '-n', 'test', '-r' if permission == 'read' else '-w', '/dev/kvm'],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10).returncode == 0
+    save()
+    require(DOC['host']['machine'] == 'x86_64' and DOC['host']['root_kvm_read'] and DOC['host']['root_kvm_write'], 'native root KVM unavailable')
     with tempfile.TemporaryDirectory(dir=TMP) as temporary:
         credential = Path(temporary)
         prepare(credential)
