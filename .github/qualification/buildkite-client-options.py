@@ -18,7 +18,6 @@ import time
 from zipfile import ZipFile
 from urllib.parse import unquote, urlsplit
 
-import yaml
 
 SOURCE = '9ae6638ae6d1916725b10f45a5cad76f022d9d7e'
 BASE = '75c04f42d5b7346e4a54a5991dfaf31b043b6769'
@@ -114,6 +113,7 @@ def partitions(rows):
 
 
 def pipeline(rev, file, label):
+    import yaml
     doc = yaml.safe_load(git('show', f'{rev}:{file}'))
     step, = [s for s in doc['steps'] if isinstance(s, dict) and s.get('label') == label]
     assert step['env']['DOCKER_BUILD'] == 'false', step
@@ -353,7 +353,7 @@ def inventory(arch):
         extra = SLIM if (arch, scope) == ('arm64', 'pkg') else []
         assert len(old) == count and old <= selected and selected-old == set(OWNERS[scope] + extra)
         result[scope] = {'old_source': ORIGINALS[scope][2], 'old_count': count, 'configured_count': len(selected),
-                         'added': sorted(selected-old), 'removed': [], 'source_artifact': ORIGINALS[scope][:2]}
+                         'added': sorted(selected-old), 'removed': [], 'source_artifact': list(ORIGINALS[scope][:2])}
     return result
 
 
@@ -369,6 +369,24 @@ def file_info(p):
     elif header.startswith(b'!<arch>'):
         data['archive'] = True
     return data
+
+
+def named_set(e, sets):
+    if 'namedSet' in e['id']:
+        sets[e['id']['namedSet']['id']] = e['namedSetOfFiles']
+
+
+def default_files(event, sets):
+    groups = [g for g in event.get('outputGroup', []) if g['name'] == 'default']
+    pending = [v['id'] for g in groups for v in g.get('fileSets', [])]
+    files, seen = [], set()
+    while pending:
+        node = pending.pop()
+        if node in seen: continue
+        seen.add(node)
+        files.extend(sets[node].get('files', []))
+        pending.extend(x['id'] for x in sets[node].get('fileSets', []))
+    return files
 
 
 def build_added(arch, scope, env, row):
@@ -401,8 +419,7 @@ def build_added(arch, scope, env, row):
                 row['invocation'] = e['started']['uuid']
             if 'finished' in e:
                 row['build_finished'] = e['finished'].get('finishTime')
-            if 'namedSetOfFiles' in key and 'namedSetOfFiles' in e:
-                sets[key['namedSetOfFiles']['id']] = e['namedSetOfFiles']
+            named_set(e, sets)
             target = key.get('targetCompleted', {})
             if target.get('label') in labels and not target.get('aspect'):
                 if 'aborted' in e:
@@ -424,6 +441,8 @@ def build_added(arch, scope, env, row):
                     history[key] = [name, file_info(Path(path))]
     write(witness, history)
     row['actions'], row['skipped'] = actions, skipped
+    row['expected_primary_files'] = {key: info for key, (phase_name, info) in history.items() if phase_name == name}
+
     row['completed'] = {label: [cfg, configs.get(cfg), bool(event.get('success'))] for label, (cfg, event) in comp.items()}
     if build['exit'] or row['exit']:
         errors = (TMP / f'{name}-build.err').read_text(errors='replace')
@@ -437,15 +456,7 @@ def build_added(arch, scope, env, row):
     assert cquery['exit'] == 0
     row['outputs'] = {}
     for label, (cfg, event) in comp.items():
-        groups = [g for g in event.get('outputGroup', []) if g['name'] == 'default']
-        pending = [v['id'] for g in groups for v in g.get('fileSets', [])]
-        files, seen = [], set()
-        while pending:
-            node = pending.pop()
-            if node in seen: continue
-            seen.add(node)
-            files.extend(sets[node].get('files', []))
-            pending.extend(x['id'] for x in sets[node].get('fileSets', []))
+        files = default_files(event, sets)
         paths = [Path(unquote(urlsplit(v['uri']).path)) for v in files if v.get('uri','').startswith('file:')]
         outputs = [file_info(p) for p in paths if p.is_file()]
         row['outputs'][label] = outputs
@@ -503,13 +514,87 @@ def added(result):
     result['status'] = 'FAIL' if any(row['status']=='FAIL' for row in rows) else ('PASS' if all(row['status']=='PASS' for row in rows) else 'INCOMPLETE')
 
 
+def original_outputs(arch,scope):
+    label, path = ('//pkg/abi/linux:linux', 'pkg/abi/linux/linux.x') if scope == 'pkg' else ('//runsc:runsc', 'runsc/runsc_/runsc')
+    name = arch + '-' + scope
+    target, sets = None, {}
+    with tarfile.open(fileobj=io.BytesIO(original_file(scope).read('native-packages.tgz'))) as tar:
+        for line in tar.extractfile(name + '/events'):
+            event = json.loads(line)
+            named_set(event, sets)
+            if event['id'].get('targetCompleted', {}).get('label') == label:
+                target = event.get('completed')
+    assert '0' in sets and target and target['success']
+    files = [v for v in default_files(target, sets) if v['name'] == path]
+    f, = files
+    assert f['length'].isdigit() and int(f['length']) > 0
+    assert len(bytes.fromhex(f['digest'])) == 32 and f['uri'].endswith('/' + f['digest'] + '/' + f['length'])
+    cpu = 'k8' if arch == 'amd64' else 'aarch64'
+    assert f['pathPrefix'][:3] == ['bazel-out',cpu+'-fastbuild','bin']
+    return {'artifact': ORIGINALS[scope][0], 'label': label, 'named_sets': len(sets), 'file': path, 'size': int(f['length']), 'sha256': f['digest']}
+
+
+def replay_added(result):
+    assert git('rev-parse','HEAD') == SOURCE
+    digest = '28056a5c2538258fcf5009859bf53c4360c45f402eba95c3bd9bf151797dc0bb'
+    data = (TMP/'13218099399.zip').read_bytes()
+    assert sha256(data).hexdigest() == digest
+    original = json.loads(ZipFile(io.BytesIO(data)).read('result.json'))
+    assert original['status'] == 'INCOMPLETE'
+    result.update(original_artifact='13218099399', original_sha256=digest, original_status=original['status'],
+                  product_workloads_executed_by_replay=0, independent_output_byte_check='UNAVAILABLE', phases={})
+    # For this operator the BEP primary outputs are retained, but their bytes are not.
+    # Each expected tuple must resolve to a successful action in the completed owner's configuration.
+    names = {CAP: [('GoCompilePkg','capabilitytest.a')],
+             CAP+'_state_autogen': [('GoImports','capabilitytest_state_autogen.go')],
+             CAP+'_state_autogen_with_imports': [('GoStateify','capabilitytest_state_autogen_with_imports.go')],
+             GOFER: [('GoLink','gofer_maxprocs_test_/gofer_maxprocs_test')],
+             GOFER+'_nogo': [('FileWrite','gofer_maxprocs_test_nogo')]+[('GoStaticAnalysis','gofer_maxprocs_test_nogo.'+a+'.findings') for a in ('amd64','arm64')]}
+    last = []
+    for arch in ('amd64','arm64'):
+        arm = original['architectures'][arch]
+        assert arm['source'] == SOURCE and arm['target_arch'] == arch and arm['host_arch']=='x86_64'
+        assert arm['status'] == 'INCOMPLETE' and arm['inventory'] == inventory(arch)
+        part = result['phases'][arch] = {'tools':arm['tools'], 'inventory':arm['inventory'], 'original_verdict_at':arm['verified_at'], 'builds':{}}
+        assert set(arm['phases']) == ({'incompatible'} if arch == 'arm64' else set()) | set(OWNERS)
+        cpu = 'k8' if arch == 'amd64' else 'aarch64'
+        if arch == 'arm64':
+            x = arm['phases']['incompatible']
+            assert x['status']=='PASS' and x['exit']==x['build']['exit']==0 and x['skipped']==dict.fromkeys(SLIM,'SKIPPED') and not x['completed']
+            part['incompatible'] = x
+        for scope, owners in OWNERS.items():
+            phase = arm['phases'][scope]
+            assert phase['status']=='INCOMPLETE' and phase['error']=="KeyError: '0'"
+            assert phase['exit']==phase['build']['exit']==0 and not phase['skipped']
+            assert phase['completed'].keys()==set(owners) and phase['build']['args'][-len(owners):]==owners
+            rec = part['builds'][scope] = {'invocation':phase['invocation'], 'make_exit':phase['exit'], 'bazel_exit':phase['build']['exit'],
+                                          'bazel_finished':phase['build_finished'], 'make_finished':phase['finished_at'], 'owners':{}}
+            last.append(phase['build_finished'])
+            rec['named_set_parser_control'] = original_outputs(arch,scope)
+            for owner in owners:
+                config, target_cpu, ok = phase['completed'][owner]
+                assert target_cpu == cpu and ok and len(bytes.fromhex(config))==32
+                actions = phase['actions'][owner]
+                assert actions and all(a[3] for a in actions)
+                matched = []
+                for mnemonic, file in names[owner]:
+                    path = 'bazel-out/'+cpu+'-fastbuild/bin/'+owner[2:].split(':')[0]+'/'+file
+                    target, = [a for a in actions if a == [config, mnemonic, path, True]]
+                    matched.append(target)
+                rec['owners'][owner] = matched
+    result['last_original_bazel_finished'] = max(last)
+    result['status'] = 'PASS_BUILD_OWNERS'
+
+
 if __name__ == '__main__':
     if Path(sys.argv[0]).name in ('bazel', 'docker', 'gcloud'):
         raise SystemExit(wrapped())
     TMP.mkdir(exist_ok=True)
     result = {'source': SOURCE, 'package': PKG, 'staged': STAGED, 'status': 'FAIL', 'phases': {}}
     try:
-        if sys.argv[1:2] == ['--added']:
+        if sys.argv[1:] == ['--replay-added']:
+            replay_added(result)
+        elif sys.argv[1:2] == ['--added']:
             added(result)
         else:
             main(result)
@@ -518,4 +603,4 @@ if __name__ == '__main__':
     finally:
         result['verified_at'] = now()
         write(TMP / 'result.json', result)
-    raise SystemExit(0 if result['status'] == 'PASS' else 1)
+    raise SystemExit(0 if result['status'] in ('PASS','PASS_BUILD_OWNERS') else 1)

@@ -1,5 +1,6 @@
 name: Build the newly configured Buildkite package owners
 on:
+  workflow_dispatch:
   push:
     branches: [qualification/buildkite-package-action-owners]
 permissions:
@@ -7,7 +8,7 @@ permissions:
   contents: read
 jobs:
   build:
-    if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/qualification/buildkite-package-action-owners' && github.run_attempt == 1
     runs-on: ubuntu-24.04
     timeout-minutes: 220
     env:
@@ -15,26 +16,32 @@ jobs:
       DOCKER_BUILD: "false"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 5, persist-credentials: false}
+        with: {fetch-depth: 6, persist-credentials: false}
       - name: Restore the exact source and authenticated selection receipts
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           mkdir "$RUNNER_TEMP/client-options"
+          printf '{"status":"INCOMPLETE","source":"%s","stage":"bootstrap"}\n' "$SOURCE" > "$RUNNER_TEMP/client-options/result.json"
           for arch in amd64 arm64; do
             printf '{"status":"INCOMPLETE","source":"%s","target_arch":"%s","stage":"bootstrap"}\n' "$SOURCE" "$arch" > "$RUNNER_TEMP/client-options/$arch.json"
           done
-          test "$(git rev-parse HEAD^)" = 1c7b642b1fe2958ade7db1dfb0d370841344ba47
-          test "$(git rev-parse HEAD^^^)" = "$SOURCE"
+          test "$(git rev-parse HEAD^)" = 7fc9ef2549c10e020afac5d9752d0d8dd9454f1a
+          test "$(git rev-parse HEAD^^)" = 1c7b642b1fe2958ade7db1dfb0d370841344ba47
+          test "$(git rev-parse HEAD^^^^)" = "$SOURCE"
           test "$(git diff --name-only "$SOURCE" HEAD)" = "$(printf '%s\n' .github/qualification/buildkite-client-options.py .github/workflows/buildkite-client-options.yml)"
           cp .github/qualification/buildkite-client-options.py "$RUNNER_TEMP/check-client-options.py"
-          for artifact in 13055965081 13063861013 13217262560; do
+          for artifact in 13055965081 13063861013 13217262560 13218099399; do
             gh api "repos/tamird/gvisor/actions/artifacts/$artifact/zip" > "$RUNNER_TEMP/client-options/$artifact.zip"
           done
           git checkout --detach "$SOURCE"
           test -z "$(git status --porcelain --untracked-files=no)"
+      - name: Recover the original build evidence without a workload
+        if: github.event_name == 'push'
+        run: "$RUNNER_TEMP/check-client-options.py --replay-added"
       - name: Use the native GNU and cross GNU client setup
+        if: github.event_name == 'workflow_dispatch'
         run: |
           set -euo pipefail
           if ! command -v aarch64-linux-gnu-gcc; then
@@ -45,6 +52,7 @@ jobs:
           source <(sed -n '/^install_bazelisk() {$/,$p' .buildkite/hooks/pre-command)
           printf '%s\n' "$BUILDKITE_BAZEL_DIRECTORY" >> "$GITHUB_PATH"
       - name: Build the selected additional owners
+        if: github.event_name == 'workflow_dispatch'
         run: |
           set -u
           status=0
@@ -62,6 +70,11 @@ jobs:
           import json, os, re
           from pathlib import Path
           root=Path(os.environ['RUNNER_TEMP'])/'client-options'
+          if os.environ['GITHUB_EVENT_NAME']=='push':
+              raw=(root/'result.json').read_bytes()
+              assert len(raw)<500_000 and json.loads(raw)['source']==os.environ['SOURCE']
+              assert not re.search(rb'(?i)gh[pousr]_|github_pat_|x-buildbuddy-api-key|authorization[:=]|BEGIN [A-Z]+ PRIVATE KEY',raw)
+              raise SystemExit(0)
           rows=[]
           for arch in ['amd64','arm64']:
               raw=(root/(arch+'.json')).read_bytes()
