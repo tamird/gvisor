@@ -66,15 +66,16 @@ def client(mode, n):
                              errno_name=errno.errorcode.get(key[2]))
                 print("FIRST " + json.dumps(first), flush=True)
     elapsed = time.monotonic() - start
+    result = dict(mode=mode, attempted=n, completed=done, echoes=echoes, eofs=eof,
+                  elapsed_seconds=elapsed, first=first,
+                  errors=[dict(stage=k[0], error=k[1], errno=k[2], count=v) for k,v in failures.items()])
+    print("TALLY " + json.dumps(result), flush=True)
     # Inspect name service after the loop, so the first attempted connection is also
     # the client's first resolution of "srv".
     root = Path("/proc/sys/net/ipv4")
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe:
         ifreq = fcntl.ioctl(probe, 0x8921, struct.pack("16s24x", b"eth0"))  # SIOCGIFMTU
-    result = dict(mode=mode, attempted=n, completed=done, echoes=echoes, eofs=eof,
-                  elapsed_seconds=elapsed, first=first,
-                  errors=[dict(stage=k[0], error=k[1], errno=k[2], count=v) for k,v in failures.items()],
-                  srv_ips=sorted({v[4][0] for v in socket.getaddrinfo("srv",9000,type=socket.SOCK_STREAM)}),
+    result.update(srv_ips=sorted({v[4][0] for v in socket.getaddrinfo("srv",9000,type=socket.SOCK_STREAM)}),
                   dns=[l.split()[1] for l in Path("/etc/resolv.conf").read_text().splitlines() if l.startswith("nameserver ")],
                   static_srv=any("srv" in l.split()[1:] for l in Path("/etc/hosts").read_text().splitlines()),
                   mtu=struct.unpack_from("i", ifreq, 16)[0], python=sys.version.split()[0],

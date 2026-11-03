@@ -14,6 +14,9 @@ report = dict(verdict="INCOMPLETE", source=os.environ["GITHUB_SHA"], owner=label
               prior_setup=dict(artifact=13264256213, zip="34f81ffd552e740449b3f8ec0b2388f115b24affeb741e641671ca36574ab4ac",
                                bazel_exit=3,runtime_exit=2,stage="isolated-route",socket_attempts=0,
                                cause="BusyBox SIOCSIFMTU (0x8922) returned ENOTTY"),
+              prior_iproute2=dict(artifact=13263642483, zip="329990dd62cb6868cb4b8110e5f096f6d39207f053c5d45a1e0210fe119a19ad",
+                                  bazel_exit=3,runtime_exit=1,stage="isolated-route",socket_attempts=0,
+                                  cause="individual failed check was not recorded"),
               docker_manifest="sha256:f649ef046008ca7f926a2571c32b0ac22e5c59eb61b959617f9acc2a4c638cf5",
               python_manifest="sha256:69ebe56e2a764c399514a0a6117131cb730cc4d0e71e85c08deb9af74cbb9f41",
               native_control=False, cluster=False)

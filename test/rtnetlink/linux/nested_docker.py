@@ -24,7 +24,7 @@ exec "$4" --root="$1/state" --platform=systrap --network=none --net-raw=true --i
 
 def main():
     record = {"source": "9f3e9a3fba9416ea1f5832d82923d95830479096", "release": "20260727.0",
-              "guest_caps": CAPS, "steps": [], "cells": [], "first_errors": [], "server_ips": {}, "snat": {}}
+              "guest_caps": CAPS, "steps": [], "mtu_changes": [], "tallies": [], "cells": [], "first_errors": [], "server_ips": {}, "snat": {}}
     try:
         package = FILES / "july.deb"
         assert digest(package) == RELEASES["july"][1] and text("dpkg-deb", "-f", package, "Version") == record["release"]
@@ -78,6 +78,16 @@ def main():
         for line in p.stdout.splitlines():
             if line.startswith("DIND_STEP "):
                 record["steps"].append(line.split()[1])
+            elif line.startswith("DIND_MTU "):
+                record["mtu_changes"].append(line.split()[1:])
+            elif line.startswith("DIND_ROUTE "):
+                record["default_route"] = line[11:][:180]
+            elif line.startswith("DIND_FORWARD "):
+                record["forward"] = line[13:]
+            elif line.startswith("DIND_END "):
+                record["guest_end"] = line.split()[1:]
+            elif line.startswith("TALLY "):
+                record["tallies"].append(json.loads(line[6:]))
             elif line.startswith("DIND_SNAT "):
                 _, proto, status, fw = line.split()
                 record["snat"][proto] = [status, fw]
@@ -93,9 +103,13 @@ def main():
             elif line.startswith("FIRST "):
                 record["first_errors"].append(json.loads(line[6:]))
         assert p.returncode == 0 and record["steps"][-1] == "finished" and record["daemon"] == "27.5.1"
+        assert record["guest_end"] == ["finished","0"] and record["mtu_changes"][-1][1] == "1460"
+        assert record["forward"] == "1" and "dev eth0" in record["default_route"]
         assert len(record["network_id"]) == 64 and set(record["snat"]) == {"tcp","udp"}
         assert [c["mode"] for c in record["cells"]] == ["client-first","server-first"]
-        for c in record["cells"]:
+        assert len(record["tallies"]) == len(record["cells"])
+        for tally, c in zip(record["tallies"], record["cells"]):
+            assert all(c[k] == v for k,v in tally.items())
             failed = sum(e["count"] for e in c["errors"])
             assert c["attempted"] == c["completed"] + failed == 2000 and (c["first"] is None) == (failed == 0)
             assert c["completed"] <= c["echoes"] <= 2000
