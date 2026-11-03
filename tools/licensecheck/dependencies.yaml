@@ -1344,10 +1344,10 @@
   sha256: c3e253237109ab2e2a8d3cb075688b98a6e6fce43d849849648e8e3a84f20d6f
   license: Apache-2.0
 - dependency: rules_img
-  version: https://github.com/bazel-contrib/rules_img/releases/download/v0.3.23/rules_img-v0.3.23.tar.gz
-  retrieved: "2026-10-21"
-  commit: 5a6bfd045c78fec2ad600e22ec697e65a7c49c27
-  sha256: 22092bd8f72d915995ab75c803a12f8506b8cf56bc59bc540f7df7812cc49a1d
+  version: https://github.com/bazel-contrib/rules_img/releases/download/v0.3.24/rules_img-v0.3.24.tar.gz
+  retrieved: "2026-11-03"
+  commit: 13f2631d7aa2b1679a981d252c40c84baff0c366
+  sha256: 75bce2c9897960b4dc2198785a2cd61daec38a380dee5f247cdc2655775a9b71
   license: Apache-2.0
 - dependency: rules_license
   version: https://github.com/bazelbuild/rules_license/releases/download/1.0.0/rules_license-1.0.0.tar.gz
