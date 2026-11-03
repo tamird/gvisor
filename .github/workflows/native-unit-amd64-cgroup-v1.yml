@@ -15,14 +15,14 @@ jobs:
       SOURCE: 7e29426b047a41303652cfa9f0ae91e933302f5e
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 7, persist-credentials: false}
+      with: {fetch-depth: 8, persist-credentials: false}
     - name: Retain controller outside product checkout
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
-        test "$(git rev-parse HEAD^)" = c90e30503332735ddb87d992588101661a7e2d1c
-        test "$(git rev-parse HEAD~6)" = 38745c527784376e0b5d915fe5ebd85e1d1385fd
+        test "$(git rev-parse HEAD^)" = a7d6b51bd83d8a9aedfcd58720aeedddad7308ed
+        test "$(git rev-parse HEAD~7)" = 38745c527784376e0b5d915fe5ebd85e1d1385fd
         printf '{"status":"INCOMPLETE","carrier":"%s"}\n' "$GITHUB_SHA" > "$RUNNER_TEMP/container-native-result.json"
         test -c /dev/kvm
         mkdir "$RUNNER_TEMP/controller"

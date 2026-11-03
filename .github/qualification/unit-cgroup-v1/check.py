@@ -140,7 +140,7 @@ def build_evidence(path):
 
 
 def execute(name, args, *, env=None, timeout=2400):
-    row = dict(started_utc=now(), exit=None, kind='test' if name == 'guest' else 'build')
+    row = dict(started_utc=now(), exit=None, kind='test' if name.startswith('guest') else 'build')
     DOC['commands'][name] = row
     save()
     log = TMP / (name + '.log')
@@ -270,8 +270,8 @@ def native(rc):
 
 def guest(rc):
     git('switch', '--quiet', '--detach', CARRIER)
-    require(git('rev-parse', 'HEAD^') == 'c90e30503332735ddb87d992588101661a7e2d1c'
-            and git('rev-parse', 'HEAD~6') == GUEST, 'guest source mismatch')
+    require(git('rev-parse', 'HEAD^') == 'a7d6b51bd83d8a9aedfcd58720aeedddad7308ed'
+            and git('rev-parse', 'HEAD~7') == GUEST, 'guest source mismatch')
     package = Path(PKG)
     for name, row in DOC['payloads'].items():
         shutil.copyfile(TMP / (name + '.tar'), package / (name + '.tar'))
@@ -282,24 +282,50 @@ def guest(rc):
         require(all(re.fullmatch(r'[A-Za-z0-9_./+-]+', row[key]) for key in ('binary', 'runfiles')), 'invalid archive path')
         (package / (name + '.inputs')).write_text('\n'.join(row[key] or '-' for key in ('sha256', 'binary', 'runfiles', 'elf_sha256', 'runsc_sha256')) + '\n')
     labels = ['//' + PKG + ':' + mode + '_' + n for mode in ('v1', 'v2') for n in NAMES]
-    bep = TMP / 'guest.bep'
     args = ['bazel', '--bazelrc=' + str(rc), 'test', '--config=rbe', '--config=rbe-local-tests',
             '--//tools/bazeldefs:local_test_architecture=amd64', '--jobs=80', '--local_test_jobs=2',
             '--nocache_test_results', '--flaky_test_attempts=1', '--runs_per_test=1', '--keep_going',
-            '--zip_undeclared_test_outputs', '--nobuild_event_json_file_path_conversion', '--test_timeout=900', '--test_output=errors',
-            '--build_event_json_file=' + str(bep), *labels]
-    code = execute('guest', args, timeout=3600)
+            '--zip_undeclared_test_outputs', '--nobuild_event_json_file_path_conversion', '--test_timeout=900', '--test_output=errors']
+    rows = []
+    DOC['guest_invocations'] = []
+    boot = [label for label in labels if label.endswith(':v1_boot_test') or label.endswith(':v2_boot_test')]
+    for command, selection in (('guest-boot', boot), ('guest', [label for label in labels if label not in boot])):
+        bep = TMP / (command + '.bep')
+        code = execute(command, args + ['--build_event_json_file=' + str(bep), *selection], timeout=1800)
+        current = events(bep)
+        invocation = next(e['started']['uuid'] for e in current if 'started' in e)
+        DOC['guest_invocations'].append(dict(command=command, invocation=invocation, bep_sha256=sha(bep.read_bytes())))
+        results = [e for e in current if 'testResult' in e]
+        rows.extend((invocation, event) for event in results)
+        save()
+        if command == 'guest-boot':
+            ready = code == 0 and len(results) == 2 and {e['id']['testResult']['label'] for e in results} == set(boot)
+            for event in results:
+                result = event['testResult']
+                ready = ready and result['status'] == 'PASSED'
+                try:
+                    uri, = (urlsplit(f['uri']) for f in result['testActionOutput'] if f.get('name') == 'test.xml')
+                    require(uri.scheme == 'file' and uri.netloc in ('', 'localhost'), 'nonlocal boot XML')
+                    path = Path(unquote(uri.path))
+                    require(path.stat().st_size < 16 * 1024**2, 'boot XML bound')
+                    counts = xml_cases(path)
+                    passed_names = {c.get('name') for c in ET.parse(path).iter('testcase')
+                        if not any(c.find(k) is not None for k in ('failure', 'error', 'skipped'))
+                        and c.get('status') != 'notrun' and c.get('result') != 'suppressed'}
+                    ready = ready and counts['failed'] == 0 and {'TestMinimalBoot/systrap', 'TestMinimalBoot/kvm'} <= passed_names
+                except Exception:
+                    ready = False
+            DOC['boot_gate_passed'] = ready
+            save()
+            if not ready:
+                break
     DOC['execution_finished_utc'] = now()
     save()
-    rows = events(bep)
-    DOC['guest_invocation'] = next(e['started']['uuid'] for e in rows if 'started' in e)
     seen = set()
     configurations = {}
     leaves_by_owner = {}
     passed = {mode: set() for mode in ('v1', 'v2')}
-    for event in rows:
-        if 'testResult' not in event:
-            continue
+    for invocation, event in rows:
         ident, result = event['id']['testResult'], event['testResult']
         label = ident['label']
         require(label in labels, 'unexpected guest owner')
@@ -313,7 +339,7 @@ def guest(rc):
         key = (mode, name, shard)
         require(key not in seen and shard in range(SHARDS[name]), 'duplicate or wrong shard')
         seen.add(key)
-        row = dict(owner='//runsc/container:' + name, mode=mode, shard=shard, bep_shard=bep_shard, configuration=configuration,
+        row = dict(owner='//runsc/container:' + name, invocation=invocation, mode=mode, shard=shard, bep_shard=bep_shard, configuration=configuration,
             status=result['status'], local_cache=bool(result.get('cachedLocally')),
             remote_cache=bool(result.get('executionInfo', {}).get('cachedRemotely')),
             strategy=result.get('executionInfo', {}).get('strategy'),
@@ -331,7 +357,7 @@ def guest(rc):
             content = log.read_bytes()
             row['log'] = dict(sha256=sha(content), bytes=len(content), setup_failures=[
                 dict(stage=m[1].decode(), exit=int(m[2])) for m in re.finditer(
-                    rb'^NATIVE_CONTAINER_SETUP stage=(capsule_identity|worker_contract|hierarchy|extract|executable_identity|erofs_files|erofs_cli|proof|exec) exit=([0-9]{1,3})\r?$', content, re.M)],
+                    rb'^NATIVE_CONTAINER_SETUP stage=(capsule_identity|worker_contract|hierarchy|extract_capsule|extract_erofs|executable_identity|erofs_files|erofs_cli|proof|exec) exit=([0-9]{1,3})\r?$', content, re.M)],
                 erofs_cli_control=bool(re.search(rb'^NATIVE_CONTAINER_EROFS rejected_version_exit=1 help_exit=0\r?$', content, re.M)))
             save()
             xml = local_file('test.xml')

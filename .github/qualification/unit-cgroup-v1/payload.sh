@@ -28,9 +28,10 @@ else
   test "$(stat -f -c %T /sys/fs/cgroup)" = cgroup2fs
   export CGROUPV2=true
 fi
-stage=extract
+stage=extract_capsule
 mkdir -p /work/original /work/erofs /work/bin
 /bin/busybox tar -xf "$archive" -C /work/original
+stage=extract_erofs
 /bin/busybox tar -xf "$pkg/erofs.tar" -C /work/erofs
 binary=/work/original/${expected[1]}
 runfiles=/work/original/${expected[2]}

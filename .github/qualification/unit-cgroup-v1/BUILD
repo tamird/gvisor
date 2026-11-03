@@ -1,10 +1,17 @@
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+load("@rules_distroless//distroless:defs.bzl", "flatten")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("//test/rbe/tcg:defs.bzl", "amd64_kvm_test")
 
+flatten(
+    name = "erofs_tool_closure",
+    deduplicate = True,
+    tars = ["@container_test_tools//erofs-utils/amd64"],
+)
+
 copy_file(
     name = "erofs_archive",
-    src = "@container_test_tools//:flat",
+    src = ":erofs_tool_closure",
     out = "erofs.tar",
     allow_symlink = True,
 )
