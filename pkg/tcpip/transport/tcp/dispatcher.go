@@ -266,9 +266,7 @@ func handleTimeWait(ep *Endpoint) {
 	if reuseTW != nil {
 		ep.transitionToStateCloseLocked()
 		ep.mu.Unlock()
-		ep.waiterQueue.Notify(waiter.EventHUp | waiter.EventErr | waiter.ReadableEvents | waiter.WritableEvents)
 		reuseTW()
-		ep.drainClosingSegmentQueue()
 		return
 	}
 	if extendTimeWait {
