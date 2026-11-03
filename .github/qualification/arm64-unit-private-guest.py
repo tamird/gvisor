@@ -84,106 +84,21 @@ def add_rule(directory, load, rule):
     path.write_text(load + "\n" + path.read_text() + "\n" + rule + "\n")
 
 
-def inspect_failure():
-    from cas_inputs import blob, cas, input_file, rpc
-
-    iid = "56be66b7-f319-41fb-8134-b116395b00b5"
-    original = TMP / "original.zip"
-    require(sha(original.read_bytes()) == "a3bb6135712e8f150c81f10d240c3fb4ce9a20f473659e3cd91d818bceedb626", "wrong original ZIP")
-    with zipfile.ZipFile(original) as z:
-        prior = json.loads(z.read("receipt.json"))
-    require(prior["carrier"] == "faf46cb9484718769a2ead5eafad2697d833f100" and
-            prior["product_source"] == PRODUCT and prior["guest_source"] == GUEST and
-            prior["guest"]["invocations"] == [iid] and prior["guest"]["exit"] == 1 and
-            prior["guest"]["diagnostics"] == ["exec_format"] and
-            prior["selection"]["exit"] == 0 and all(not r["results"] for r in prior["payloads"].values()),
-            "wrong original failure")
-    report.update(original_run=41603799702, original_artifact=13216750553, invocation=iid,
-                  original_bazel_exit=1, original_guest_attempts=0, selection=prior["selection"]["actions"])
-    log = base64.b64decode(rpc("GetEventLogChunk", {"invocationId": iid, "minLines": 5000})["buffer"])
-    report["original_log_sha256"] = sha(log)
-    text = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", log.decode(errors="replace"))
-    error_lines = [line for line in text.splitlines() if "exec format" in line.lower()]
-    # Report fixed symbols only. The worker paths and complete commands remain private.
-    tools = {"tar", "bsdtar", "bsd_tar", "sh", "bash", "env", "build_image", "build_image.sh", "run.sh",
-             "zstd", "zstd_cli", "bsdtar_tool", "qemu-system-aarch64", "ld-linux-x86-64.so.2",
-             "ld-linux-aarch64.so.1", "process-wrapper", "test-setup.sh", "cp", "python3"}
-    def mentions(lines):
-        return sorted(tool for tool in tools if any(re.search(r"(?<![a-zA-Z0-9_.-])" +
-                      re.escape(tool) + r"(?![a-zA-Z0-9_.-])", line) for line in lines))
-    report["console_format_mentions"] = mentions(error_lines)
-    report["console_format_count"] = len(error_lines)
-    report["image_builder_lines"] = sorted({int(n) for line in error_lines for n in
-        re.findall(r"build_image(?:[.]sh)?: (?:line )?(\d+)", line)})
-    lookup = {"invocationId": iid}
-    all_exec = rpc("GetExecution", {"executionLookup": lookup}).get("execution", [])
-    failed = [x for x in all_exec if x.get("status", {}).get("code", 0) or int(x.get("exitCode", 0)) != 0]
-    report.update(executions=len(all_exec), failed_executions=len(failed), failures=[])
-    save()
-    require(0 < len(failed) <= 20, "no bounded set of original failed actions")
-    for x in failed:
-        digest = x["actionDigest"]
-        require(re.fullmatch(r"[0-9a-f]{64}", digest["hash"]) and int(digest["sizeBytes"]) > 0, "invalid original action digest")
-        label = x.get("targetLabel", "")
-        owner = next((l for l, _, _ in report["selection"] if l == label), None)
-        mnemonic = x.get("actionMnemonic", "")
-        row = {"action":digest, "owner":owner, "mnemonic":mnemonic if mnemonic in
-            {"TcgGuestImage", "TestRunner", "Genrule", "CppLink", "CppCompile", "PackageTar", "Flatten",
-             "DebExtract", "DebianExtract", "Symlink", "ExpandTreeArtifact", "Tar"} else "other",
-            "exit":int(x.get("exitCode", 0)), "rpc_status":x.get("status", {}).get("code", 0)}
-        report["failures"].append(row)
-        save()
-        act = cas(digest, "Action")
-        cmd = cas(act["commandDigest"], "Command")
-        argv = cmd["arguments"]
-        props = {p["name"]:p["value"] for p in (act.get("platform") or cmd.get("platform") or {}).get("properties", [])}
-        row["platform"] = {k:v for k,v in props.items() if (k,v) in
-            {("OSFamily","Linux"), ("Arch","amd64"), ("Arch","arm64"), ("workload-isolation-type","oci"),
-             ("container-network","off"), ("container-network","none")}}
-        if "container-image" in props:
-            row["container_image_property_sha256"] = sha(props["container-image"].encode())
-        script = argv[0]
-        row["argv0_known"] = Path(script).name if Path(script).name in tools else None
-        obtain = rpc("GetExecution", {"executionLookup":dict(lookup, executionId=x["executionId"]),
-                                      "inlineExecuteResponse":True}).get("execution", [])
-        require(len(obtain) == 1 and obtain[0]["actionDigest"] == digest, "action result identity mismatch")
-        result = obtain[0].get("executeResponse", {}).get("result", {})
-        err = b""
-        if "stderrRaw" in result:
-            err = base64.b64decode(result["stderrRaw"])
-        elif int(result.get("stderrDigest", {}).get("sizeBytes", 0)) in range(1, 4*1024*1024):
-            err = blob(result["stderrDigest"], iid)
-        action_error = [l for l in err.decode(errors="replace").splitlines() if "exec format" in l.lower()]
-        status_msg = x.get("status", {}).get("message", "")
-        if "exec format" in status_msg.lower():
-            action_error.append(status_msg)
-        row.update(stderr_sha256=sha(err), action_error_mentions=mentions(action_error),
-                   format_error_in_action=bool(action_error))
-        save()
-        if owner != "//test/rbe/tcg:rc_guest" or mnemonic != "TcgGuestImage":
-            continue
-        require(len(argv) >= 12 and argv[10] == "arm64" and argv[8] == "4096", "image builder argument layout changed")
-        row["tools"] = {}
-        for role, n in (("image_builder", 0), ("tar", 1), ("zstd", 9)):
-            arg = argv[n]
-            node = input_file(act["inputRootDigest"], arg)
-            data = blob(node["digest"], iid)
-            role_name = Path(arg).name
-            row["tools"][role] = dict(argv_index=n, sha256=sha(data), size=len(data),
-                elf_machine=int.from_bytes(data[18:20], "little") if data[:6] == b"\x7fELF\x02\x01" else None,
-                script=data.startswith(b"#!"), exec_path_sha256=sha(arg.encode()),
-                basename=role_name if role_name in tools else None,
-                argument_named_on_format_error=any(arg in l or (role_name in tools and role_name in mentions([l]))
-                    for l in action_error))
-            save()
-        tar = row["tools"]["tar"]
-        row["wrong_tar_arch"] = bool(row["platform"].get("Arch") == "amd64" and tar["elf_machine"] == 183
-            and row["format_error_in_action"] and tar["argument_named_on_format_error"])
-    report["status"] = "BOUND_IMAGE_TAR_MISMATCH" if any(r.get("wrong_tar_arch") for r in report["failures"]) else "ORIGINAL_DIAGNOSTIC"
-
-
 def recover():
     from cas_inputs import blob, fetch, rpc
+
+    projection = TMP / "tool-proof.zip"
+    require(sha(projection.read_bytes()) == "041fa1c04f38277dcbfc14512da48d97803143301154d3b404b62fd9eb7e26b2",
+            "wrong original action projection")
+    with zipfile.ZipFile(projection) as z:
+        proof = json.loads(z.read("receipt.json"))
+    require(proof["status"] == "BOUND_IMAGE_TAR_MISMATCH" and proof["original_guest_attempts"] == 0 and
+            proof["original_artifact"] == 13216750553 and proof["product_source"] == PRODUCT and
+            proof["guest_source"] == GUEST, "different original image failure")
+    failed, = [r for r in proof["failures"] if r.get("wrong_tar_arch")]
+    report["previous_image"] = dict(action=failed["action"], platform=failed["platform"], exit=failed["exit"],
+                                    tar=failed["tools"]["tar"])
+    save()
 
     iid = "f6b847ae-7000-4bbe-adf0-e04fc051ce01"
     response = rpc("GetEventLogChunk", {"invocationId": iid, "minLines": 4000})
@@ -266,7 +181,10 @@ def guest():
     before = '        "host_tools": attr.label(allow_single_file = True, mandatory = True),'
     old_rule = image_rule.read_text()
     require(old_rule.count(before) == 1, "image tool declaration changed")
-    image_rule.write_text(old_rule.replace(before, before[:-2] + ', cfg = "exec"),'))
+    target_tar = "@tar.bzl//tar/toolchain:target_type"
+    require(old_rule.count(target_tar) == 2, "image tar references changed")
+    image_rule.write_text(old_rule.replace(before, before[:-2] + ', cfg = "exec"),')
+                                 .replace(target_tar, "@tar.bzl//tar/toolchain:type"))
     # Match the Go test XML settings in the native unit run. The donor exports
     # selected test-harness variables into the private guest at this point.
     launch = Path("test/rbe/tcg/run.sh")
@@ -304,7 +222,7 @@ arm64_tcg_test(
     # Read Bazel's actual configuration of the image and both test actions.
     query = 'mnemonic("TcgGuestImage|TestRunner", deps(set(' + " ".join(targets) + ')))'
     cmd = ["bazel", "--bazelrc=" + str(TMP / "guest.bazelrc"), "aquery", "--config=rbe-arm64",
-           "--config=aarch64", "--include_commandline=false", "--include_artifacts=false", "--output=jsonproto", query]
+           "--config=aarch64", "--include_commandline=true", "--include_artifacts=false", "--output=jsonproto", query]
     with (TMP / "selection.aquery").open("wb") as out, (TMP / "selection.log").open("wb") as err:
         rc = subprocess.run(cmd, stdout=out, stderr=err).returncode
     report["selection"] = {"exit": rc, "diagnostics": diagnostic(TMP / "selection.log")}
@@ -319,6 +237,23 @@ arm64_tcg_test(
     report["selection"]["actions"] = sorted(actual)
     save()
     require(actual == {(l, m, p) for (l, m), p in expected.items()}, "unexpected configured image or test executor")
+    image_action, = [a for a in graph["actions"] if a["mnemonic"] == "TcgGuestImage" and
+                     labels[str(a["targetId"])] == "//test/rbe/tcg:rc_guest"]
+    selected_tar = Path(image_action["arguments"][1])
+    require(selected_tar.name == "tar" and selected_tar.parent.name.endswith("bsd_tar_toolchains_linux_amd64"),
+            "image did not select the execution tar")
+    # tar.bzl downloads the unmodified binary directly into this repository.
+    # Compare the action argument to its actual bytes before starting the tests.
+    output_base = subprocess.check_output(["bazel", "--bazelrc=" + str(TMP / "guest.bazelrc"),
+                                           "info", "output_base"],
+                                          stderr=subprocess.DEVNULL, text=True).strip()
+    data = (Path(output_base) / "external" / selected_tar.parent.name / "tar").read_bytes()
+    tar = dict(sha256=sha(data), elf_machine=int.from_bytes(data[18:20], "little"), size=len(data))
+    report["selection"]["image_tar"] = tar
+    save()
+    require(data[:6] == b"\x7fELF\x02\x01" and tar["elf_machine"] == 62 and
+            tar["sha256"] == "ae24dbc3ecf6ad628c2fdd205a52347fd4446589e750469766669e25cb80e22b",
+            "configured tar differs from the upstream AMD64 binary")
     status, events = bazel("guest", "test", ["--config=rbe-arm64", "--config=aarch64", "--keep_going",
                            "--nocache_test_results", "--flaky_test_attempts=1", "--runs_per_test=1",
                            "--strategy=TestRunner=remote", "--noremote_local_fallback",
@@ -364,9 +299,7 @@ OUT.mkdir(exist_ok=True)
 report = dict(status="INCOMPLETE", carrier=os.environ["GITHUB_SHA"], product_source=PRODUCT,
               guest_source=GUEST, prior_host_run="41589548481", started=now())
 try:
-    if sys.argv[1:] == ["inspect-failure"]:
-        inspect_failure()
-    elif sys.argv[1:] == ["recover"]:
+    if sys.argv[1:] == ["recover"]:
         save()
         recover()
     else:
