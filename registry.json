@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T21:38:59.870561+00:00",
+    "updatedAt": "2026-11-03T21:46:00.284424+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -46647,15 +46647,27 @@
       "id": "branch:buildkite-native-unit-tests",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "proposal/buildkite-native-unit-tests",
-      "head": "22b87677f7ae1fa27ebee5b4eb95ab9cfe966761",
-      "title": "Run Buildkite unit tests directly with Bazel",
-      "url": "https://github.com/tamird/gvisor/commit/22b87677f",
+      "ref": "research/buildkite-unit-jobs-local",
+      "head": "5555ba1f24f319f77ad240a0e0f5aa8ef08a1d57",
+      "title": "Run Buildkite unit tests without the Docker builder",
+      "url": "https://github.com/tamird/gvisor/commit/5555ba1f24f319f77ad240a0e0f5aa8ef08a1d57",
       "group": "analysis",
       "status": "Agent work",
-      "updatedAt": "2026-11-03T21:28:21.302894+00:00",
-      "summary": "The broad compiler integration 96fadde72 still needs its pinned QEMU and LTP license-grant evidence reconciled in #15146 before rerunning its TestLicensePolicy. The standalone unit proposal 22b87677f and builder-removal candidate 5555ba1f2 do not contain that classifier; the private license hold is not a new source prerequisite for them. The source-specific check reproduces the catalog mismatch against GPL-2.0-only policy for 20 QEMU archives and LTP. QEMU’s GPL-2.0-or-later match occurs only in the appendix’s model grant; removing that appendix leaves GPL-2.0. LTP matches GPL-2.0 with or without its appendix. This does not clear the original policy failure or the maintainer hold.\n\nThe AMD64 cgroup-v1 auxiliary build failure is resolved by the landed #16835 patch on the original 96fadde72 integration. Both original fastbuild archive configurations and all four analysis/filter outputs executed freshly on the same remote worker. The filtered target built without TestRunner attempts; Bazel then returned its expected exit 4 because no tests were selected. This was a build-only qualification.\n\nThe original native ARM64 selection attempted all 355 targets; nine failed, and eight later had passing follow-ups. The complete cmd rerun passed 164 cases with seven skips, but its earlier checkpoint printer exit 128 remains unexplained. The original AMD64-v1 aggregate also remains failed. Runtime skips, missing coverage and the separate license-policy result are not cleared by the auxiliary build result. Earlier cgroup-v1 runtime and cache-mode receipts remain below.",
+      "updatedAt": "2026-11-03T21:46:00.284424+00:00",
+      "summary": "Keep make unit-tests as the native CI entry point so agent cache flags and the cgroup-v1/v2 cache partition are retained. The eight-line change sets DOCKER_BUILD=false in the existing four jobs; the earlier direct-Bazel proposal 22b87677f did not forward BAZEL_REMOTE_CACHE and is superseded for Buildkite. Nogo remains an independent sibling.\n\nThe broader 96fadde72 integration retains a #15146 policy mismatch for QEMU/LTP; this classifier is absent from the standalone unit change. Its original failed aggregates, runtime skips and unexplained ARM64 checkpoint exit 128 remain, despite the passing follow-ups linked below. The original cgroup auxiliary build failure is resolved by landed #16835 in both matched fastbuild configurations, without repeating tests.\n\nCompare the superseded direct-Bazel change with the native-Make candidate:\n\ngit -C ~/code/gvisor range-diff 22b87677f^! 5555ba1f2^!",
       "evidence": [
+        {
+          "label": "Native Make proposal: the existing four jobs and their cache/cgroup options",
+          "url": "https://github.com/tamird/gvisor/commit/5555ba1f24f319f77ad240a0e0f5aa8ef08a1d57"
+        },
+        {
+          "label": "Superseded for Buildkite: direct Bazel proposal without agent remote-cache forwarding",
+          "url": "https://github.com/tamird/gvisor/commit/22b87677f7ae1fa27ebee5b4eb95ab9cfe966761"
+        },
+        {
+          "label": "Source comparison; use the range-diff above to separate the two proposal patches",
+          "url": "https://github.com/tamird/gvisor/compare/22b87677f...5555ba1f2"
+        },
         {
           "label": "Exact original fastbuild configurations: two fresh remote cgroup archives and four analysis outputs; no tests repeated",
           "url": "https://github.com/tamird/gvisor/actions/runs/41720481581/artifacts/13271776895"
@@ -46755,10 +46767,10 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "22b87677f7ae1fa27ebee5b4eb95ab9cfe966761",
-        "observedAt": "2026-11-03T21:28:21.302894+00:00",
-        "disposition": "Matched cgroup build blocker resolved; broad-integration license result remains separate",
-        "nextAction": "Reconcile the actual pinned upstream grant evidence through the existing #15146 review before rerunning the broad integration’s policy owner. Keep that limitation separate from the standalone unit proposal, which does not contain the classifier. Retain the original failed aggregates and runtime coverage exclusions; revisit the unexplained ARM64 checkpoint failure if it recurs.",
+        "sourceHead": "5555ba1f24f319f77ad240a0e0f5aa8ef08a1d57",
+        "observedAt": "2026-11-03T21:46:00.284424+00:00",
+        "disposition": "Native Make candidate; agent-owned integration verification",
+        "nextAction": "Verify the existing job selections atop #16904 with the declared native/cross compiler. Keep Nogo independently deliverable. Reconcile the broader 96fadde72 integration's pinned QEMU/LTP evidence through #15146 before repeating that integration's policy owner; preserve its original failed aggregates and runtime exclusions, and revisit the unexplained ARM64 checkpoint failure if it recurs.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41720481581/artifacts/13271776895",
           "https://github.com/tamird/gvisor/actions/runs/41720701453/artifacts/13271891801",
@@ -48264,6 +48276,54 @@
           "https://github.com/google/gvisor/pull/16925",
           "https://github.com/google/gvisor/pull/15918",
           "https://github.com/tamird/gvisor/compare/29edee9cb...3569e5c2f"
+        ]
+      }
+    },
+    {
+      "id": "branch:robust-list-lock-contract",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/robust-list-lock-contract",
+      "head": "34758a350d95884412302f4791e71cf43677942e",
+      "title": "Check the robust-futex list pointer's lock",
+      "url": "https://github.com/tamird/gvisor/commit/34758a350d95884412302f4791e71cf43677942e",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-03T21:46:00.284424+00:00",
+      "summary": "get_robust_list can read another task's robust-futex list pointer while that task sets or clears it. The three accessors already hold Task.mu; annotate the pointer so checklocks enforces the existing contract.",
+      "evidence": [
+        {
+          "label": "Fresh positive analyzer, retained timeout and eight required unlocked-access observations",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41723394622/artifacts/13272764172"
+        },
+        {
+          "label": "Original timed-out positive and completed negative control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41718417663/artifacts/13273541045"
+        },
+        {
+          "label": "Comment-only difference from the qualified source",
+          "url": "https://github.com/tamird/gvisor/compare/7160231be..34758a350d"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "34758a350d95884412302f4791e71cf43677942e",
+        "baseHead": "b21a9d4eea7b0066232c33c63df9cf20ed987f6f",
+        "url": "https://github.com/tamird/gvisor/commit/34758a350d95884412302f4791e71cf43677942e",
+        "title": "Check the robust-futex list pointer's lock",
+        "requestedAt": "2026-11-03T21:46:00.284424+00:00",
+        "summary": "get_robust_list can read another task's robust-futex list pointer while that task sets or clears it. The three accessors already hold Task.mu; annotate the pointer so checklocks enforces the existing contract.",
+        "body": "Add +checklocks:mu to Task.robustList and fix the adjacent comment typo. This makes the existing lock contract enforceable at the read, write and exit-time read/clear without changing runtime behavior. The standalone change has no unpublished FD-table or futex prerequisite.\n\nThe normal kernel_test_nogo owner passed freshly on a remote AMD64 worker, checking both AMD64 and ARM64 findings. Removing the three existing lock pairs made that same analyzer reject all four accesses on both architectures. This is static-analysis evidence, not an ARM64 runtime test.\n\nThe first positive command timed out before any TestRunner attempt; the recovery artifact retains that failure and the completed negative control byte for byte, then records the fresh positive pass. The qualified head is 7160231be; the proposed signed head changes only tasks's to task's in the adjacent comment. No workload was repeated for that prose edit.\n\ngit -C ~/code/gvisor show 34758a350d\n\ngit -C ~/code/gvisor range-diff 7160231be^! 34758a350d^!"
+      },
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "34758a350d95884412302f4791e71cf43677942e",
+        "observedAt": "2026-11-03T21:46:00.284424+00:00",
+        "disposition": "Both architecture analyzers and the deliberate unlocked control verified",
+        "nextAction": "Review the standalone lock annotation. No upstream submission has been made.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41723394622/artifacts/13272764172"
         ]
       }
     }
@@ -51811,15 +51871,6 @@
       ]
     },
     {
-      "type": "depends_on",
-      "from": "branch:buildkite-native-nogo",
-      "to": "branch:buildkite-native-unit-tests",
-      "reason": "The unit jobs reuse the native Buildkite Bazel configuration and log handling.",
-      "evidence": [
-        "https://github.com/tamird/gvisor/commit/6aa894aa1"
-      ]
-    },
-    {
       "from": "pr:16904",
       "to": "branch:buildkite-source-lint-native",
       "type": "depends_on",
@@ -51905,6 +51956,20 @@
       "type": "depends_on",
       "reason": "The before-bind regression exercises the multicast interface correction now merged through #15918.",
       "evidence": "https://github.com/google/gvisor/pull/15918"
+    },
+    {
+      "from": "pr:16904",
+      "to": "branch:buildkite-native-unit-tests",
+      "type": "depends_on",
+      "reason": "Native Make needs the agent Bazelisk bootstrap and BEP cleanup.",
+      "evidence": "https://github.com/tamird/gvisor/commit/5555ba1f24f319f77ad240a0e0f5aa8ef08a1d57"
+    },
+    {
+      "from": "branch:hermetic-compiler-review",
+      "to": "branch:buildkite-native-unit-tests",
+      "type": "depends_on",
+      "reason": "Native unit builds need the declared native and cross compiler; Nogo is an independent sibling.",
+      "evidence": "https://github.com/tamird/gvisor/commit/5555ba1f24f319f77ad240a0e0f5aa8ef08a1d57"
     }
   ],
   "investigations": [
