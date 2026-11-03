@@ -2,9 +2,9 @@
 
 load("//tools:defs.bzl", "short_path")
 
-# DocInfo is a provider which simple adds sufficient metadata to the source
-# files (and additional data files) so that a jeyll header can be constructed
-# dynamically. This is done the via BUILD system so that the plain
+# DocInfo is a provider which adds sufficient metadata to the source
+# files (and additional data files) so that a Jekyll header can be constructed
+# dynamically. This is done via the BUILD system so that the plain
 # documentation files can be viewable without non-compliant markdown headers.
 DocInfo = provider(
     "Encapsulates information for a documentation page.",
@@ -90,107 +90,38 @@ doc = rule(
     },
 )
 
-def _docs_impl(ctx):
-    # Tarball is the actual output.
-    tarball = ctx.actions.declare_file(ctx.label.name + ".tgz")
+SiteDocs = provider(fields = ["entries"])
 
-    # But we need an intermediate builder to translate the files.
-    builder = ctx.actions.declare_file("%s-builder" % ctx.label.name)
-    builder_content = [
-        "#!/bin/bash",
-        "set -euo pipefail",
-        "declare -r T=$(mktemp -d)",
-        "function cleanup {",
-        "    rm -rf $T",
-        "}",
-        "trap cleanup EXIT",
-    ]
+def _docs_impl(ctx):
+    entries = []
+    sources = []
     for dep in ctx.attr.deps:
         doc = dep[DocInfo]
-
-        # Sanity check the permalink.
         if not doc.permalink.endswith("/"):
-            fail("permalink %s for target %s should end with /" % (
-                doc.permalink,
-                ctx.label.name,
+            fail("permalink %s for target %s should end with /" % (doc.permalink, ctx.label.name))
+        sources.append(dep.files)
+        for file in dep.files.to_list():
+            entries.append(dict(
+                file = file.path,
+                short = file.short_path,
+                layout = doc.layout,
+                description = doc.description,
+                permalink = doc.permalink,
+                category = doc.category,
+                subcategory = doc.subcategory,
+                weight = doc.weight,
+                editpath = doc.editpath,
+                authors = doc.authors,
+                include_in_menu = doc.include_in_menu,
+                body_classes = doc.body_classes,
             ))
-
-        # Construct the header.
-        header = """\
-description: {description}
-permalink: {permalink}
-category: {category}
-subcategory: {subcategory}
-weight: {weight}
-editpath: {editpath}
-authors: {authors}
-layout: {layout}
-include_in_menu: {include_in_menu}
-body_classes: {body_classes}"""
-
-        for f in dep.files.to_list():
-            # Is this a markdown file? If not, then we ensure that it ends up
-            # in the same path as the permalink for relative addressing.
-            if not f.basename.endswith(".md"):
-                builder_content.append("mkdir -p $T/%s" % doc.permalink)
-                builder_content.append("cp %s $T/%s" % (f.path, doc.permalink))
-                continue
-
-            # Is this a post? If yes, then we must put this in the _posts
-            # directory. This directory is treated specially with respect to
-            # pagination and page generation.
-            dest = f.short_path
-            if doc.layout == "post":
-                dest = "_posts/" + f.basename
-            builder_content.append("echo Processing %s... >&2" % f.short_path)
-            builder_content.append("mkdir -p $T/$(dirname %s)" % dest)
-
-            # Construct the header dynamically. We include the title field from
-            # the markdown itself, as this is the g3doc format required. The
-            # title will be injected by the web layout however, so we don't
-            # want this to appear in the document.
-            args = dict([(k, getattr(doc, k)) for k in dir(doc)])
-            builder_content.append("title=\"$(grep -E '^# ' %s | head -n 1 | cut -d'#' -f2- || true)\"" % f.path)
-            builder_content.append("cat >$T/%s <<EOF" % dest)
-            builder_content.append("---")
-            builder_content.append("title: \"$title\"")
-            builder_content.append("excerpt_separator: '<!--/excerpt-->'")
-            builder_content.append(header.format(**args))
-            builder_content.append("---")
-            builder_content.append("EOF")
-
-            # To generate the final page, we need to strip out the title (which
-            # was pulled above to generate the annotation in the frontmatter,
-            # and substitute the [TOC] tag with the {% toc %} plugin tag. Note
-            # that the pipeline here is almost important, as the grep will
-            # return non-zero if the file is empty, but we ignore that within
-            # the pipeline.
-            builder_content.append("awk '!found && /^# / {found=1; next} 1' %s | sed -e 's|^\\[TOC\\]$|- TOC\\n{:toc}|' >>$T/%s" %
-                                   (f.path, dest))
-
-    builder_content.append("declare -r filename=$(readlink -m %s)" % tarball.path)
-    builder_content.append("(cd $T && tar -zcf \"${filename}\" .)\n")
-    ctx.actions.write(builder, "\n".join(builder_content), is_executable = True)
-
-    # Generate the tarball.
-    ctx.actions.run(
-        inputs = depset(ctx.files.deps),
-        outputs = [tarball],
-        mnemonic = "GvisorWebsiteDocs",
-        progress_message = "Generating %s" % ctx.label,
-        executable = builder,
-        toolchain = None,
-    )
-    return [DefaultInfo(
-        files = depset([tarball]),
-    )]
+    return [
+        DefaultInfo(files = depset(transitive = sources)),
+        SiteDocs(entries = entries),
+    ]
 
 docs = rule(
     implementation = _docs_impl,
-    doc = "Construct a site tarball from doc dependencies.",
-    attrs = {
-        "deps": attr.label_list(
-            doc = "All document dependencies.",
-        ),
-    },
+    doc = "Collect source files and their Jekyll front matter.",
+    attrs = {"deps": attr.label_list(providers = [DocInfo])},
 )
