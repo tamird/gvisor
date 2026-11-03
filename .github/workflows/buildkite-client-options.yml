@@ -1,0 +1,66 @@
+name: Compare native Buildkite client options
+on:
+  push:
+    branches: [qualification/buildkite-client-options]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      SOURCE: 9ae6638ae6d1916725b10f45a5cad76f022d9d7e
+      DOCKER_BUILD: "false"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 4, persist-credentials: false}
+      - name: Preserve exact source and the existing comparison
+        run: |
+          set -euo pipefail
+          mkdir "$RUNNER_TEMP/client-options"
+          printf '{"status":"INCOMPLETE","source":"%s","stage":"bootstrap"}\n' "$SOURCE" > "$RUNNER_TEMP/client-options/result.json"
+          test "$(git rev-parse HEAD^)" = "$SOURCE"
+          test "$(git diff --name-only HEAD^ HEAD)" = "$(printf '%s\n' .github/qualification/buildkite-client-options.py .github/workflows/buildkite-client-options.yml)"
+          cp .github/qualification/buildkite-client-options.py "$RUNNER_TEMP/check-client-options.py"
+          git fetch --no-tags --depth=2 origin d30816db365b44801393af8fe721795897ab5a65 a5627c7311e6acaed4179f3ebd6a0694661336d9 bcec52ddaaddedf04de03988486d72647187e309
+          git checkout --detach "$SOURCE"
+          test -z "$(git status --porcelain --untracked-files=no)"
+      - name: Retrieve the original checker and archive receipts
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/tamird/gvisor/actions/artifacts/12940116829/zip > "$RUNNER_TEMP/checker.zip"
+          gh api repos/tamird/gvisor/actions/artifacts/12943941273/zip > "$RUNNER_TEMP/archives.zip"
+      - name: Use the current native GNU client setup
+        run: |
+          set -euo pipefail
+          if ! command -v aarch64-linux-gnu-gcc; then
+            sudo apt-get -qq update
+            sudo apt-get -qq install --no-install-recommends build-essential crossbuild-essential-arm64
+          fi
+          python3 -c 'import yaml' || sudo apt-get -qq install --no-install-recommends python3-yaml
+          source <(sed -n '/^install_bazelisk() {$/,$p' .buildkite/hooks/pre-command)
+          printf '%s\n' "$BUILDKITE_BAZEL_DIRECTORY" >> "$GITHUB_PATH"
+      - name: Analyze package commands and execute only the staged checker
+        run: timeout --signal=INT --kill-after=30s 50m "$RUNNER_TEMP/check-client-options.py"
+      - name: Check the bounded typed publication
+        id: scan
+        if: always()
+        shell: python
+        run: |
+          import json, os, re
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'client-options/result.json'
+          raw=p.read_bytes()
+          assert len(raw)<8_000_000
+          json.loads(raw)
+          assert not re.search(rb'(?i)gh[pousr]_|github_pat_|x-buildbuddy-api-key|authorization[:=]|BEGIN [A-Z]+ PRIVATE KEY',raw)
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.scan.outcome == 'success'
+        with:
+          name: native-buildkite-client-options
+          path: ${{ runner.temp }}/client-options/result.json
+          if-no-files-found: error
