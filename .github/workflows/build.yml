@@ -1,7 +1,7 @@
-name: Check short echo exchanges with real Docker in the public July Sentry
+name: Compare short Docker bridge connections on native Linux
 on:
   push:
-    branches: [qualification/tcp-july-dind-closers]
+    branches: [qualification/tcp-native-dind-closers]
 permissions: {contents: read}
 jobs:
   compare:
@@ -11,17 +11,14 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {fetch-depth: 2, persist-credentials: false}
-      - name: Stage immutable public Linux packages outside the sandbox
+      - name: Stage the same two digest-verified public Docker images
         run: |
           set -euo pipefail
           phase=source
           trap 'printf "%s %s\n" "$phase" "$?" > "$RUNNER_TEMP/dind-setup"' EXIT
-          test "$(git rev-parse HEAD^)" = a723461aec54e041222511c98f6a1f61442ccb3d
+          test "$(git rev-parse HEAD^)" = b40e0eb54f6c36853b4a3ced7d3b663c92ba89ab
           p=test/rtnetlink/linux
-          phase=july-package
-          base=https://storage.googleapis.com/gvisor/releases/pool/20260727.0/binary-amd64
-          curl -fsSL --retry 2 "$base/runsc.deb" -o "$p/july.deb"
-          echo "386bdc2196fc600b68ff8dafdd8ecdc6a8e033ecf9cfa9dfab61ec1b389da307  $p/july.deb" | sha256sum -c
+          git diff --exit-code HEAD^ HEAD -- test/rtnetlink/linux/dind_socket.py
           stage_image() {
             local name="$1" manifest="$2" id="$3"; shift 3
             for registry in mirror.gcr.io docker.io; do
@@ -51,7 +48,7 @@ jobs:
           env -i HOME="$HOME" USER="$USER" PATH="$PATH" "$(command -v bazel)" test --config=x86_64 \
             --strategy=TestRunner=local --nocache_test_results --flaky_test_attempts=1 --test_timeout=780 \
             --build_tag_filters= --test_tag_filters= --build_event_json_file="$RUNNER_TEMP/dind.events" \
-            //test/rtnetlink/linux:nested_docker_july > "$RUNNER_TEMP/dind.buildlog" 2>&1 || rc=$?
+            //test/rtnetlink/linux:nested_docker_native > "$RUNNER_TEMP/dind.buildlog" 2>&1 || rc=$?
           printf '%s\n' "$rc" > "$RUNNER_TEMP/dind.exit"
           exit "$rc"
       - name: Preserve original setup and test evidence, including incomplete runs
@@ -61,6 +58,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: nested-docker-july
+          name: nested-docker-native
           path: ${{ runner.temp }}/nested-docker.json
           if-no-files-found: error

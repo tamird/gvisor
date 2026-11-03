@@ -95,14 +95,13 @@ sh_test(
 
 # Local refers to the disposable Actions Linux host, not an RBE worker's Docker daemon.
 sh_test(
-    name = "nested_docker_july",
+    name = "nested_docker_native",
     srcs = ["nested_docker.py"],
     data = [
         "dind-rootfs.tar",
         "dind_guest.sh",
         "dind_socket.py",
         "packaged_bridge.py",
-        "july.deb",
         "python-image.tar",
     ],
     tags = ["local", "manual"],

@@ -7,16 +7,12 @@ import os
 from short_bridge_receipt import attempt_files, failures, now, TEMP
 
 
-label = "//test/rtnetlink/linux:nested_docker_july"
+label = "//test/rtnetlink/linux:nested_docker_native"
 out = TEMP / "nested-docker.json"
 report = dict(verdict="INCOMPLETE", source=os.environ["GITHUB_SHA"], owner=label, attempts=[],
-              baseline="release-20260727.0", prior_namespace_artifact=13262175985,
-              prior_setup=dict(artifact=13264256213, zip="34f81ffd552e740449b3f8ec0b2388f115b24affeb741e641671ca36574ab4ac",
-                               bazel_exit=3,runtime_exit=2,stage="isolated-route",socket_attempts=0,
-                               cause="BusyBox SIOCSIFMTU (0x8922) returned ENOTTY"),
-              prior_iproute2=dict(artifact=13263642483, zip="329990dd62cb6868cb4b8110e5f096f6d39207f053c5d45a1e0210fe119a19ad",
-                                  bazel_exit=3,runtime_exit=1,stage="isolated-route",socket_attempts=0,
-                                  cause="individual failed check was not recorded"),
+              baseline="native-linux-runc", july_artifact=13265691217,
+              july_fixture="b40e0eb54f6c36853b4a3ced7d3b663c92ba89ab",
+              july_archive_sha256="19a503618295631de4e076dc30c86f21375d96f20a9629f84274de3995e83799",
               docker_manifest="sha256:f649ef046008ca7f926a2571c32b0ac22e5c59eb61b959617f9acc2a4c638cf5",
               python_manifest="sha256:69ebe56e2a764c399514a0a6117131cb730cc4d0e71e85c08deb9af74cbb9f41",
               native_control=False, cluster=False)
@@ -24,7 +20,9 @@ report = dict(verdict="INCOMPLETE", source=os.environ["GITHUB_SHA"], owner=label
 
 def save():
     report["at"] = now()
-    out.write_text(json.dumps(report,indent=2))
+    public = json.dumps(report,indent=2)
+    assert len(public.encode()) < 32768
+    out.write_text(public)
 
 
 save()
@@ -43,7 +41,7 @@ try:
         report["attempts"].append(dict(status=t["status"], strategy=ex.get("strategy"),
              cached=t.get("cachedLocally",False) or ex.get("cachedRemotely",False),
              start=t.get("testAttemptStart"),duration=t.get("testAttemptDuration")))
-    log = Path("bazel-testlogs/test/rtnetlink/linux/nested_docker_july/test.log")
+    log = Path("bazel-testlogs/test/rtnetlink/linux/nested_docker_native/test.log")
     raw = log.read_text(errors="replace") if log.is_file() else ""
     observed = [json.loads(l.removeprefix("NESTED16908 ")) for l in raw.splitlines() if l.startswith("NESTED16908 ")]
     report["observed"] = observed
@@ -54,6 +52,7 @@ try:
     assert report["setup"] == ["ready","0"] and report["bazel_exit"] == row["runtime_exit"] == 0
     assert attempt["status"] == "PASSED" and attempt["strategy"] == "local" and not attempt["cached"]
     assert row["complete"] and len(row["cells"]) == 2
+    report["native_control"] = True
     report["verdict"] = "OBSERVED_SOCKET_ERRORS" if any(c["first"] for c in row["cells"]) else "NO_SOCKET_ERRORS"
     save()
 finally:
