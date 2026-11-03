@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-03T21:02:38.092566+00:00",
+    "updatedAt": "2026-11-03T21:24:20.813219+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -45999,15 +45999,23 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/tcp-info-total-retrans",
-      "head": "bbdb2f8a254b4f51e5bf1fa96eaf4872be190d63",
+      "head": "f1dbaa4d1e2cfb522fa03197ed36f21df9a74a3b",
       "number": 16809,
       "title": "Report retransmitted segments in TCP_INFO",
       "url": "https://github.com/google/gvisor/pull/16809",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T20:10:46.936496+00:00",
+      "updatedAt": "2026-11-03T21:24:20.813219+00:00",
       "summary": "Expose the socket’s lifetime retransmission count to applications diagnosing packet loss.",
       "evidence": [
+        {
+          "label": "Parth requested a single squashed commit",
+          "url": "https://github.com/google/gvisor/pull/16809#issuecomment-6615654449"
+        },
+        {
+          "label": "Reviewed source published as one commit",
+          "url": "https://github.com/tamird/gvisor/commit/f1dbaa4d1e2cfb522fa03197ed36f21df9a74a3b"
+        },
         {
           "label": "Linux, stock gVisor and corrected gVisor on the same three socket traces",
           "url": "https://github.com/tamird/gvisor/actions/runs/41360715303/artifacts/13105296962"
@@ -46050,20 +46058,29 @@
           "url": "https://github.com/tamird/gvisor/compare/bc9ffcc0d...bbdb2f8a2",
           "at": "2026-11-03T20:10:46.936496+00:00",
           "outcome": "approved"
+        },
+        {
+          "kind": "amendment",
+          "head": "f1dbaa4d1e2cfb522fa03197ed36f21df9a74a3b",
+          "outcome": "approved",
+          "at": "2026-11-03T21:24:20.813219+00:00",
+          "summary": "Squash of the identical reviewed source tree; no new source change."
         }
       ],
       "followup": {
         "owner": "TCP workstream",
-        "sourceHead": "bbdb2f8a254b4f51e5bf1fa96eaf4872be190d63",
-        "observedAt": "2026-11-03T20:10:46.936496+00:00",
-        "disposition": "Corrected source published; earlier export awaits re-approval",
-        "nextAction": "Follow Parth’s re-approval and check that the Copybara version returns the failed send to the listener. If the earlier export lands first, submit the tested correction on top.",
+        "sourceHead": "f1dbaa4d1e2cfb522fa03197ed36f21df9a74a3b",
+        "observedAt": "2026-11-03T21:24:20.813219+00:00",
+        "disposition": "Requested squash published; reply awaits authorization",
+        "nextAction": "Post the exact pending reply only after authorization, then follow re-approval and the corrected Copybara export. No further source amendment or duplicate request is needed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16809",
           "https://github.com/google/gvisor/pull/16915",
           "https://github.com/tamird/gvisor/commit/bbdb2f8a2",
           "https://github.com/google/gvisor/pull/16809#issuecomment-6614296745",
-          "https://github.com/tamird/gvisor/compare/bc9ffcc0d...bbdb2f8a2"
+          "https://github.com/tamird/gvisor/compare/bc9ffcc0d...bbdb2f8a2",
+          "https://github.com/google/gvisor/pull/16809#issuecomment-6615654449",
+          "https://github.com/tamird/gvisor/commit/f1dbaa4d1e2cfb522fa03197ed36f21df9a74a3b"
         ]
       },
       "refinement": {
@@ -46082,6 +46099,16 @@
         "diffSha256": "348233ce13cdf1abaa4a22b8bf35b61b3314b0621861436777a5d6af2fc5f197",
         "summary": "The listener now reports a failed SYN-cookie send while still counting the cookie that was generated.",
         "evidence": "https://github.com/tamird/gvisor/compare/bc9ffcc0d...bbdb2f8a2"
+      },
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "f1dbaa4d1e2cfb522fa03197ed36f21df9a74a3b",
+        "url": "https://github.com/google/gvisor/pull/16809#issuecomment-6615654449",
+        "title": "Confirm the squash and request re-approval",
+        "requestedAt": "2026-11-03T21:24:20.813219+00:00",
+        "summary": "The reviewed correction is published as one commit. The earlier Copybara export still omits the SYN-cookie send-error return.",
+        "body": "@parth-opensrc, squashed into f1dbaa4d1. Could you re-approve it? #16915 still drops the SYN-cookie send error."
       }
     },
     {
@@ -46572,9 +46599,17 @@
       "url": "https://github.com/tamird/gvisor/commit/22b87677f",
       "group": "analysis",
       "status": "Agent work",
-      "updatedAt": "2026-11-03T15:12:55.022550+00:00",
-      "summary": "The native ARM64 selection ran all 355 targets. Nine failed. XML reported 101,777 passes, 26 failures and 138 skips. Eight failed targets passed in follow-ups. The full cmd rerun exercised the original 171 cases (164 passed, seven skipped); the checkpoint printer’s exit 128 did not recur. The fork catalog still disagrees on 20 QEMU entries and one LTP entry. On AMD64, the original cgroup binary passed all 156 cases in a KVM guest with 12 v1 controllers. The subsequent host selector exited before its configured-target count was recorded. Separate same-source runs of two targets verified that switching the cgroup mode prevents cache reuse. In the separate AMD64 cgroup-v1 run, the auxiliary cgroup_test_nogo target failed while compiling the test package: both GoCompilePkg actions (AMD64 and ARM64) reported NO_USABLE_STRATEGY_FOUND. Its cgroup_test rule was tagged local and remote was the only enabled strategy. Upstream dropped that tag in #16835. The original failed run remains on record.",
+      "updatedAt": "2026-11-03T21:24:20.813219+00:00",
+      "summary": "The remaining action is to reconcile the pinned QEMU and LTP license-grant evidence in #15146 before rerunning TestLicensePolicy. The source-specific check reproduces the catalog mismatch against GPL-2.0-only policy for 20 QEMU archives and LTP. QEMU’s GPL-2.0-or-later match occurs only in the appendix’s model grant; removing that appendix leaves GPL-2.0. LTP matches GPL-2.0 with or without its appendix. This does not clear the original policy failure or the maintainer hold.\n\nThe AMD64 cgroup-v1 auxiliary build failure is resolved by the landed #16835 patch on the original 96fadde72 integration. Both original fastbuild archive configurations and all four analysis/filter outputs executed freshly on the same remote worker. The filtered target built without TestRunner attempts; Bazel then returned its expected exit 4 because no tests were selected. This was a build-only qualification.\n\nThe original native ARM64 selection attempted all 355 targets; nine failed, and eight later had passing follow-ups. The complete cmd rerun passed 164 cases with seven skips, but its earlier checkpoint printer exit 128 remains unexplained. The original AMD64-v1 aggregate also remains failed. Runtime skips, missing coverage and the separate license-policy result are not cleared by the auxiliary build result. Earlier cgroup-v1 runtime and cache-mode receipts remain below.",
       "evidence": [
+        {
+          "label": "Exact original fastbuild configurations: two fresh remote cgroup archives and four analysis outputs; no tests repeated",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41720481581/artifacts/13271776895"
+        },
+        {
+          "label": "Pinned upstream QEMU and LTP text reproduced the license-policy mismatch; three executed Go records",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41720701453/artifacts/13271891801"
+        },
         {
           "label": "Three matching AMD64 selections and 471 named buffer/cgroup cases",
           "url": "https://github.com/tamird/gvisor/actions/runs/41495497730/artifacts/13166333421"
@@ -46667,10 +46702,12 @@
       "followup": {
         "owner": "root",
         "sourceHead": "22b87677f7ae1fa27ebee5b4eb95ab9cfe966761",
-        "observedAt": "2026-11-03T15:12:55.022550+00:00",
-        "disposition": "Eight of nine original owners have passing follow-ups. The intermittent ARM64 exit 128 remains unexplained and the catalog mismatch remains open.",
-        "nextAction": "Resolve the fork catalog mismatch with the license owner. Full native AMD64 cgroup-v1 CI remains unqualified. Keep the original ARM64 failure alongside the passing full cmd rerun; revisit the checkpoint only if the failure recurs.",
+        "observedAt": "2026-11-03T21:24:20.813219+00:00",
+        "disposition": "Matched cgroup build blocker resolved; license-policy reconciliation remains",
+        "nextAction": "Reconcile the actual pinned upstream grant evidence through the existing #15146 review before rerunning the policy owner. Retain the original failed aggregates and runtime coverage exclusions. Revisit the unexplained ARM64 checkpoint failure if it recurs; do not repeat the settled cgroup builds.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/41720481581/artifacts/13271776895",
+          "https://github.com/tamird/gvisor/actions/runs/41720701453/artifacts/13271891801",
           "https://github.com/tamird/gvisor/actions/runs/41497682946/artifacts/13172754926",
           "https://github.com/tamird/gvisor/actions/runs/41513096230/artifacts/13175395076",
           "https://github.com/tamird/gvisor/actions/runs/41516374236/artifacts/13175549051",
