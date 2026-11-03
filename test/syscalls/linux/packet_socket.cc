@@ -31,7 +31,9 @@
 #include <unistd.h>
 
 #include <cerrno>
+#include <chrono>
 #include <cstddef>
+#include <cstdio>
 #include <cstdint>
 #include <cstring>
 #include <limits>
@@ -94,6 +96,34 @@ class PacketSocketCreationTest
         !ASSERT_NO_ERRNO_AND_VALUE(HavePacketSocketCapability(type, protocol)));
   }
 };
+
+// With protocol zero, no packet can make the receive ready.
+TEST(PacketSocketShutdown, RejectedShutdownLeavesReceiveOpen) {
+  const DisableSave disable_save;
+  for (int type : {SOCK_DGRAM, SOCK_RAW}) {
+    FileDescriptor fd = ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_PACKET, type, 0));
+    timeval timeout = {.tv_sec = 0, .tv_usec = 150000};
+    ASSERT_THAT(setsockopt(fd.get(), SOL_SOCKET, SO_RCVTIMEO, &timeout,
+                           sizeof(timeout)), SyscallSucceeds());
+    for (int shut : {0, 1}) {
+      if (shut) {
+        ASSERT_THAT(shutdown(fd.get(), SHUT_RD),
+                    SyscallFailsWithErrno(EOPNOTSUPP));
+      }
+      char c;
+      const auto start = std::chrono::steady_clock::now();
+      const ssize_t n = RetryEINTR(recv)(fd.get(), &c, sizeof(c), 0);
+      const int recv_errno = n < 0 ? errno : 0;
+      const auto usec = std::chrono::duration_cast<std::chrono::microseconds>(
+          std::chrono::steady_clock::now() - start).count();
+      std::printf("PACKETRECV type=%d shut=%d result=%zd errno=%d us=%lld\n",
+                  type, shut, n, recv_errno, static_cast<long long>(usec));
+      EXPECT_EQ(n, -1);
+      EXPECT_EQ(recv_errno, EAGAIN);
+      EXPECT_GE(usec, 100000);
+    }
+  }
+}
 
 TEST_P(PacketSocketCreationTest, Create) {
   const auto [type, protocol] = GetParam();
