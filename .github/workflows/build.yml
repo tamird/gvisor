@@ -1,35 +1,41 @@
-name: CI
-
-"on":
+name: Qualify the two native Buildkite Gazelle checks
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/buildkite-gazelle-agent-jobs]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  verify:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Run the shipped Make command and reject a missing dependency
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir "$RUNNER_TEMP/public"
+          cp .github/workflows/qualify-gazelle.sh "$RUNNER_TEMP/qualify-gazelle.sh"
+          git switch -q --detach HEAD~2
+          bash "$RUNNER_TEMP/qualify-gazelle.sh"
+      - name: Check the bounded public receipt
+        if: always()
+        id: scan
+        env:
+          KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          path = Path(os.environ['RUNNER_TEMP']) / 'public/gazelle.json'
+          data = path.read_bytes()
+          assert len(data) < 32768 and os.environ['KEY'] and os.environ['KEY'].encode() not in data
+          assert not re.search(rb'(?i)authorization:|x-buildbuddy-api-key|github_pat_|gh[pousr]_', data)
+          assert json.loads(data)['source'] == '683c2687297d36a04c02cae21a8be4e135a7ff16'
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.scan.outcome == 'success'
+        with: {name: native-buildkite-gazelle, path: '${{ runner.temp }}/public/gazelle.json', if-no-files-found: error}
