@@ -4831,8 +4831,8 @@
       "url": "https://github.com/tamird/gvisor/commit/a385bd2b0",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Bazel 9.3.1 and the declared clang++ built the NVIDIA ABI parser for x86_64-linux-gnu and aarch64-linux-gnu. With supplier source 17f6a3008, the generated LLVM configuration contained exactly AArch64 and X86. TestParser passed uncached on each native architecture. The earlier compiler integration passed all 871 selected Nogo targets (one cached result); those tests were not rerun on Bazel 9. Ordinary C binaries used GNU libc on both architectures. Static syscallbench ran all three modes on AMD64; its constraint excludes ARM64.",
-      "updatedAt": "2026-11-03T21:38:59.870561+00:00",
+      "summary": "Bazel 9.3.1 and the declared clang++ built the NVIDIA ABI parser for x86_64-linux-gnu and aarch64-linux-gnu. With supplier source 17f6a3008, the generated LLVM configuration contained exactly AArch64 and X86. TestParser passed uncached on each native architecture. The earlier compiler integration passed all 871 selected Nogo targets (one cached result); those tests were not rerun on Bazel 9. Ordinary C binaries used GNU libc on both architectures. Static syscallbench ran all three modes on AMD64; its constraint excludes ARM64.\n\nThe fork-only packaging follow-up 50c1f8f6a lets a bare downstream Bazel module select exactly @kernel_dep//tools/bazeldefs:static.bzl for fsstress. All ten gVisor policy tags remain, with no consumer-supplied overrides. Stock 588e6f343 exits 7 at Gazelle; the corrected query exits 0, and the wrong-root load control exits 7. This qualifies loading and label selection only, not downstream compilation. The earlier root-workspace archives and AMD64 file-creation result remain separate.",
+      "updatedAt": "2026-11-04T20:16:20.916368+00:00",
       "head": "a385bd2b0155b82faf4fc6a0c195a153ad57550c",
       "evidence": [
         {
@@ -4930,6 +4930,22 @@
         {
           "label": "Two generated LLVM backends; matching compiler triples and ELF machines; both native TestParser runs passed uncached",
           "url": "https://github.com/tamird/gvisor/actions/runs/41717072807/artifacts/13273383359"
+        },
+        {
+          "label": "Fork-only narrow packaging adapters and downstream load fix",
+          "url": "https://github.com/tamird/gvisor/commit/50c1f8f6a"
+        },
+        {
+          "label": "Bare downstream query: stock failure, corrected selection and wrong-root control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41903967649/artifacts/13358133337"
+        },
+        {
+          "label": "Earlier root-workspace images and AMD64 consumer; original downstream failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41870529908/artifacts/13343778034"
+        },
+        {
+          "label": "Earlier query with explicit consumer policy",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41872028128/artifacts/13343998937"
         }
       ],
       "refinement": {
@@ -48817,8 +48833,8 @@
       "url": "https://github.com/google/gvisor/issues/16908",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T22:22:19.360070+00:00",
-      "summary": "Docker 27.5.1 inside public runsc 20260727.0 returned ECONNRESET in 3 of 2,000 client-first exchanges and 2 of 2,000 server-first exchanges. The reporter has been asked which socket call and errno they observed on GKE.",
+      "updatedAt": "2026-11-04T20:16:20.916368+00:00",
+      "summary": "The packet-instrumented July public runsc 20260727.0 / Docker 27.5.1 fixture recorded 13 client-first and one server-first ECONNRESET among 2,000 exchanges per order. The first failure in each order was recv_echo after connect and send succeeded. Both endpoint captures showed two SYN-ACKs acknowledging the same SYN with different server initial sequence numbers. The client acknowledged the first server sequence plus one, then received an RST at that acknowledged sequence. At the server interface, the first SYN-ACK was outgoing and the second was received as OTHERHOST.\n\nNeither failing tuple had a recorded server accept, echo or FIN. Successful controls completed the handshake, echo and FINs before late resets. Conntrack data was unavailable; the traces establish neither a cause nor a confirmed GKE match. The earlier uninstrumented July results (three and two resets) and Linux controls (zero in both orders) remain independent. The reporter has already been asked which socket call and errno they observed on GKE.",
       "evidence": [
         {
           "label": "Public July release: client-first and server-first close orders",
@@ -48839,6 +48855,10 @@
         {
           "label": "Same Docker 27.5.1 fixture on Linux runc 1.5.2: 2,000 exchanges per close order, zero errors; Linux retained zero SNAT hits",
           "url": "https://github.com/tamird/gvisor/actions/runs/41729636045/artifacts/13274284389"
+        },
+        {
+          "label": "July Docker fixture: paired endpoint headers and application observations",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41902453154/artifacts/13360000336"
         }
       ],
       "settledReviews": [
@@ -71698,5 +71718,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-04T19:58:38.622329+00:00"
+  "updatedAt": "2026-11-04T20:16:20.916368+00:00"
 }
