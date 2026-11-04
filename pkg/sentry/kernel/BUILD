@@ -454,6 +454,7 @@ go_test(
         "//pkg/bpf",
         "//pkg/context",
         "//pkg/errors/linuxerr",
+        "//pkg/goid",
         "//pkg/hostarch",
         "//pkg/safemem",
         "//pkg/sentry/arch",
