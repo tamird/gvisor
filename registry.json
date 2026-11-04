@@ -29204,13 +29204,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/kvm-vdso-declared-tools",
-      "head": "5f020ddd609be492ca79508f4f3e3745a8bf1e93",
+      "head": "212b0add216acfcad2c20b2aaee101d8461d085f",
       "title": "Declare vDSO disassembly tools",
       "url": "https://github.com/google/gvisor/pull/16491",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
-      "summary": "Bazel ran all 23 AMD64 and 20 ARM64 cases with PATH=/nonexistent. Both native test actions used the declared LLVM tools. This covers the vDSO unit tests, which do not require /dev/kvm.",
+      "updatedAt": "2026-11-04T20:45:45.283369+00:00",
+      "summary": "Published the patch-preserving rebase 212b0add21 on 92d3cc68c. Konstantin’s October 29 approval remains on prior head 77b422e41. That old head was imported successfully, then reported an internal-check failure; neither status is a result for the rebased head. Earlier Bazel runs passed 23 AMD64 and 20 ARM64 vDSO cases with PATH=/nonexistent using the declared LLVM tools, without /dev/kvm.",
       "evidence": [
         {
           "label": "Contributor-reviewed commit",
@@ -29223,20 +29223,33 @@
         {
           "label": "ARM64 suite on a worker without system objdump",
           "url": "https://app.buildbuddy.io/invocation/6293a554-c54d-4ed6-98c0-70db49e30e03"
+        },
+        {
+          "label": "Published patch-preserving rebase on 92d3cc68c; earlier qualification remains source-bound",
+          "url": "https://github.com/tamird/gvisor/commit/212b0add21"
+        },
+        {
+          "label": "October 29 approval on the prior head",
+          "url": "https://github.com/google/gvisor/pull/16491#pullrequestreview-5706389298"
+        },
+        {
+          "label": "Old 77b422e41 status: import success followed by internal feedback failure",
+          "url": "https://github.com/google/gvisor/commit/77b422e41/checks"
         }
       ],
       "number": 16491,
       "followup": {
         "owner": "root",
-        "sourceHead": "5f020ddd609be492ca79508f4f3e3745a8bf1e93",
-        "observedAt": "2026-10-31T00:17:49.384556+00:00",
-        "disposition": "Published as #16491",
-        "nextAction": "Follow maintainer review and public checks on #16491.",
+        "sourceHead": "212b0add216acfcad2c20b2aaee101d8461d085f",
+        "observedAt": "2026-11-04T20:45:45.283369+00:00",
+        "disposition": "Patch-preserving rebase published",
+        "nextAction": "Follow current-head maintainer review and CI; retain prior approvals and source-bound results as history.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16491",
           "https://github.com/tamird/gvisor/commit/c4f90e2cd8f301baaea11ae00b5c8b947680f50e",
           "https://app.buildbuddy.io/invocation/1ed0c7c1-eae5-4cc0-8c89-dff268322054",
-          "https://app.buildbuddy.io/invocation/6293a554-c54d-4ed6-98c0-70db49e30e03"
+          "https://app.buildbuddy.io/invocation/6293a554-c54d-4ed6-98c0-70db49e30e03",
+          "https://github.com/tamird/gvisor/commit/212b0add21"
         ]
       }
     },
@@ -29322,13 +29335,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "qualification/release-mixed-presubmit",
-      "head": "21d21cad8e54a5d2cf69319065167a1cc1b90b89",
+      "head": "30df99de8b2e89c1f02c0e3e3ec80095902e41ad",
       "title": "Build both release architectures in one Bazel invocation",
       "url": "https://github.com/google/gvisor/pull/16490",
       "group": "rbe",
       "status": "open",
-      "updatedAt": "2026-10-27T09:36:13+00:00",
-      "summary": "Buildkite currently asks Make to build six packages separately. This change builds all six in one Bazel invocation and keeps their existing filenames and staging directories.",
+      "updatedAt": "2026-11-04T20:45:45.283369+00:00",
+      "summary": "Published the patch-preserving rebase 30df99de8b on 92d3cc68c. It retains the reviewed single-invocation build of six release packages and the upstream declared release-copy implementation. The earlier package and runtime results remain bound to their original sources; checks on the rebased head are tracked separately.",
       "evidence": [
         {
           "label": "Contributor-reviewed commit",
@@ -29353,22 +29366,27 @@
         {
           "label": "Fork integration 2882b32e3, with the Python launcher, static interpreter and compiler: three fresh packages on each native distroless architecture. Each contained all nine binaries, including netgofer, with verified modes, ELF architecture and Debian metadata. The combined target, signing and publication were outside this run.",
           "url": "https://github.com/tamird/gvisor/actions/runs/41779130466/artifacts/13299000441"
+        },
+        {
+          "label": "Published patch-preserving rebase on 92d3cc68c; earlier qualification remains source-bound",
+          "url": "https://github.com/tamird/gvisor/commit/30df99de8b"
         }
       ],
       "number": 16490,
       "followup": {
         "owner": "root",
-        "sourceHead": "21d21cad8e54a5d2cf69319065167a1cc1b90b89",
-        "observedAt": "2026-10-27T09:36:13+00:00",
-        "disposition": "Published as #16490",
-        "nextAction": "Follow maintainer review and public checks on #16490.",
+        "sourceHead": "30df99de8b2e89c1f02c0e3e3ec80095902e41ad",
+        "observedAt": "2026-11-04T20:45:45.283369+00:00",
+        "disposition": "Patch-preserving rebase published",
+        "nextAction": "Follow current-head maintainer review and CI; retain prior approvals and source-bound results as history.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16490",
           "https://github.com/tamird/gvisor/commit/eb2460d8185ff3b3bfd2a25a48a027e61458d3b9",
           "https://github.com/tamird/gvisor/commit/21d21cad8e54a5d2cf69319065167a1cc1b90b89",
           "https://app.buildbuddy.io/invocation/dfd11ffe-84f8-477f-8d24-20263fe973d8",
           "https://app.buildbuddy.io/invocation/9b77eff7-eaf0-4206-bcf2-43250fc1ae95",
-          "https://app.buildbuddy.io/invocation/2c0e4e9a-6c44-4b6f-87cc-30d4ab353413"
+          "https://app.buildbuddy.io/invocation/2c0e4e9a-6c44-4b6f-87cc-30d4ab353413",
+          "https://github.com/tamird/gvisor/commit/30df99de8b"
         ]
       }
     },
@@ -30350,13 +30368,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "qualification/native-sidecar-cc",
-      "head": "c329a6e31a5968a410831950c8a457ee243384c8",
+      "head": "1c90c430cd50f010f01f4dd79b63760c1a95137c",
       "title": "Build the runsc sidecars with the C toolchain",
       "url": "https://github.com/google/gvisor/pull/16522",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-04T18:38:21.659977+00:00",
-      "summary": "The inner C++ binary is manual, so wildcard builds reach it through the public freestanding wrapper. The corrected wildcard built all three static AMD64 sidecars; the original direct link failed with a forced hosted allocator. A separate cquery confirmed that each inner target clears --custom_malloc. The private build adapter still needs upstream verification.",
+      "updatedAt": "2026-11-04T20:45:45.283369+00:00",
+      "summary": "Published all four commits as the patch-preserving rebase 1c90c430cd on 92d3cc68c. The inner C++ binary remains manual, so wildcard builds reach it through the public freestanding wrapper. On the prior source, the corrected wildcard built all three static AMD64 sidecars while the original direct link failed with a forced hosted allocator; a separate cquery confirmed that each inner target clears --custom_malloc. Those results do not attest the rebased head’s new CI. The private build adapter still needs upstream verification.",
       "evidence": [
         {
           "label": "Rebased three-commit change",
@@ -30449,6 +30467,10 @@
         {
           "label": "Published amendment and reply to Lucas",
           "url": "https://github.com/google/gvisor/pull/16522#discussion_r4471682150"
+        },
+        {
+          "label": "Published patch-preserving rebase on 92d3cc68c; earlier qualification remains source-bound",
+          "url": "https://github.com/tamird/gvisor/commit/1c90c430cd"
         }
       ],
       "number": 16522,
@@ -31935,7 +31957,7 @@
       "number": 16591,
       "group": "bazel",
       "ref": "review/hostlayout-generator-inputs",
-      "head": "876b93eba2466c097e383346041a3ad7c2c3a5ec",
+      "head": "28a27e004b8e42d9f5b0aed4fbfadff0facaa8cd",
       "title": "Generate Go host-layout tests from source files",
       "url": "https://github.com/google/gvisor/pull/16591",
       "evidence": [
@@ -32006,11 +32028,15 @@
         {
           "label": "Template constructor — posted reply",
           "url": "https://github.com/google/gvisor/pull/16591#discussion_r4470795662"
+        },
+        {
+          "label": "Published patch-preserving rebase on 92d3cc68c; earlier qualification remains source-bound",
+          "url": "https://github.com/tamird/gvisor/commit/28a27e004b"
         }
       ],
-      "updatedAt": "2026-11-04T17:23:36.488704+00:00",
+      "updatedAt": "2026-11-04T20:45:45.283369+00:00",
       "status": "open",
-      "summary": "Published the approved adapter and constructor amendment and mechanically rebased it to 876b93eba on 6dcadf4a8. The public PR is mergeable; approval remains bound to 6264dbadc, whose additions and removals are unchanged. The reviewer identified two requirements for Google’s import. Copybara rewrites the Go provider load in tools/defs.bzl. The internal host-layout template supplies a constructor that strips a repository prefix before generating the import.",
+      "summary": "Published the patch-preserving rebase 28a27e004b on 92d3cc68c. Contributor approval remains bound to 6264dbadc; the same four-file change and posted replies are preserved. The earlier 383-case qualification covers the public generator and modeled import prefix, not Google’s private integration. Copybara rewrites the Go provider load in tools/defs.bzl, and the internal template supplies the constructor that strips its repository prefix. Current-head CI is separate from those prior results.",
       "refinement": {
         "before": {
           "head": "d678f172b527c75aac54b2d437566746e3a35696"
@@ -32022,11 +32048,11 @@
       },
       "followup": {
         "owner": "Agent",
-        "sourceHead": "876b93eba2466c097e383346041a3ad7c2c3a5ec",
-        "providerHead": "876b93eba2466c097e383346041a3ad7c2c3a5ec",
-        "observedAt": "2026-11-04T17:23:36.488704+00:00",
-        "disposition": "Approved amendment and replies published",
-        "nextAction": "Follow the upstream review.",
+        "sourceHead": "28a27e004b8e42d9f5b0aed4fbfadff0facaa8cd",
+        "providerHead": "28a27e004b8e42d9f5b0aed4fbfadff0facaa8cd",
+        "observedAt": "2026-11-04T20:45:45.283369+00:00",
+        "disposition": "Patch-preserving rebase published",
+        "nextAction": "Follow current-head maintainer review and CI; retain prior approvals and source-bound results as history.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16591",
           "https://github.com/tamird/gvisor/commit/6264dbadc8d73f914c64acee7e8067018adbffd6",
@@ -32037,7 +32063,8 @@
           "https://github.com/tamird/gvisor/actions/runs/41762208277/artifacts/13291492843",
           "https://github.com/tamird/gvisor/commit/876b93eba2466c097e383346041a3ad7c2c3a5ec",
           "https://github.com/google/gvisor/pull/16591#discussion_r4470795080",
-          "https://github.com/google/gvisor/pull/16591#discussion_r4470795662"
+          "https://github.com/google/gvisor/pull/16591#discussion_r4470795662",
+          "https://github.com/tamird/gvisor/commit/28a27e004b"
         ]
       },
       "settledReviews": [
@@ -34169,13 +34196,13 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/tcp-dsack-above-gap",
-      "head": "19b9ac70fff949d3bcf8104efd1ea5e08c3ecfa2",
+      "head": "ed556a288cb5512afa5b9d06c2c3c95dd0e31746",
       "title": "Report duplicate queued TCP data above a receive gap",
-      "url": "https://github.com/tamird/gvisor/commit/19b9ac70fff949d3bcf8104efd1ea5e08c3ecfa2",
+      "url": "https://github.com/tamird/gvisor/commit/ed556a288",
       "group": "runtime",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-29T00:37:26.613452+00:00",
-      "summary": "When a peer repeats [10,14) inside queued [8,16), send the duplicate range before its containing range. Linux and the corrected receiver produced the same five ACKs and delivered the same 16 bytes through EOF. The packet TestResult passed before Bazel ran out of memory; the 32 SACK cases and both architecture analyzers passed separately.",
+      "status": "Delivered as #16999",
+      "updatedAt": "2026-11-04T20:45:45.283369+00:00",
+      "summary": "Delivered as #16999 after #16403 landed through #16986. The approved 19b9ac70f patch is unchanged in ed556a288 on ebb46ee1d. When a peer repeats [10,14) inside queued [8,16), send the duplicate range before its containing range. Linux and the corrected receiver produced the same five ACKs and delivered the same 16 bytes through EOF. The packet TestResult passed before Bazel ran out of memory; the 32 SACK cases and both architecture analyzers passed separately.",
       "evidence": [
         {
           "label": "Fork proposal",
@@ -34200,15 +34227,32 @@
         {
           "label": "Two architecture analyzers",
           "url": "https://app.buildbuddy.io/invocation/6defa75d-a500-458a-9698-d1a8039afa7d"
+        },
+        {
+          "label": "Published approved follow-up",
+          "url": "https://github.com/google/gvisor/pull/16999"
+        },
+        {
+          "label": "Patch-preserving published source",
+          "url": "https://github.com/tamird/gvisor/commit/ed556a288"
+        },
+        {
+          "label": "Prerequisite exported and merged",
+          "url": "https://github.com/google/gvisor/pull/16986"
         }
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "19b9ac70fff949d3bcf8104efd1ea5e08c3ecfa2",
-        "observedAt": "2026-10-29T00:37:26.613452+00:00",
-        "disposition": "Contributor approved; waiting for prerequisites",
-        "nextAction": "Open the reviewed commit after #16403 lands."
-      }
+        "sourceHead": "ed556a288cb5512afa5b9d06c2c3c95dd0e31746",
+        "observedAt": "2026-11-04T20:45:45.283369+00:00",
+        "disposition": "Approved follow-up delivered as #16999",
+        "nextAction": "Follow upstream review and CI on #16999; no contributor decision remains.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16999",
+          "https://github.com/google/gvisor/pull/16986"
+        ]
+      },
+      "inactive": true
     },
     {
       "id": "branch:mount-promise-rack-nits",
@@ -37257,12 +37301,12 @@
       "number": 16710,
       "group": "bazel",
       "ref": "review/stateify-output-path",
-      "head": "4bbf4d71809d8a03442d1ce149600c3b823b10e1",
+      "head": "66fbf023e8a61b269c104bea321ffe75f49b8115",
       "title": "Generate checkpoint methods without a host shell",
       "url": "https://github.com/google/gvisor/pull/16710",
       "status": "open",
-      "summary": "Stateify selects the imports used by its generated methods and formats the result with go/format. It no longer needs goimports or a host shell. The public revision matches all 485 official generated files, including the five seccomp-dependent outputs. The sibling-file alias fixture passes.",
-      "updatedAt": "2026-11-03T18:50:22.524457+00:00",
+      "summary": "Published the patch-preserving rebase 66fbf023e8 on 92d3cc68c. Lucas’s November 3 approval remains on prior head 4bbf4d718; the rebased head has no ready-to-pull label. Current-head review and import checks remain separate. Stateify selects the imports used by its generated methods and formats the result with go/format, without goimports or a host shell. Earlier qualification matched all 485 official generated files, including the five seccomp-dependent outputs, and passed the sibling-file alias fixture.",
+      "updatedAt": "2026-11-04T20:45:45.283369+00:00",
       "evidence": [
         {
           "label": "Seven identical production outputs and scratch qualification",
@@ -37355,6 +37399,14 @@
         {
           "label": "Answered Lucas on tracking imports in the generator",
           "url": "https://github.com/google/gvisor/pull/16710#discussion_r4459027083"
+        },
+        {
+          "label": "Published patch-preserving rebase on 92d3cc68c; earlier qualification remains source-bound",
+          "url": "https://github.com/tamird/gvisor/commit/66fbf023e8"
+        },
+        {
+          "label": "November 3 approval on the prior head",
+          "url": "https://github.com/google/gvisor/pull/16710#pullrequestreview-5758453946"
         }
       ],
       "settledReviews": [
@@ -37395,17 +37447,18 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "4bbf4d71809d8a03442d1ce149600c3b823b10e1",
-        "observedAt": "2026-11-03T18:50:22.524457+00:00",
-        "disposition": "Approved revision published; all three review threads answered",
-        "nextAction": "Follow maintainer review and public import checks on the published revision.",
+        "sourceHead": "66fbf023e8a61b269c104bea321ffe75f49b8115",
+        "observedAt": "2026-11-04T20:45:45.283369+00:00",
+        "disposition": "Patch-preserving rebase published",
+        "nextAction": "Follow current-head maintainer review and the ready-to-pull label; the prior-head approval is not a new review.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16710",
           "https://github.com/tamird/gvisor/commit/4bbf4d718",
           "https://github.com/tamird/gvisor/actions/runs/41694952054/artifacts/13260638404",
           "https://github.com/google/gvisor/pull/16710#discussion_r4459026110",
           "https://github.com/google/gvisor/pull/16710#discussion_r4459026564",
-          "https://github.com/google/gvisor/pull/16710#discussion_r4459027083"
+          "https://github.com/google/gvisor/pull/16710#discussion_r4459027083",
+          "https://github.com/tamird/gvisor/commit/66fbf023e8"
         ]
       }
     },
@@ -50139,6 +50192,69 @@
         }
       ],
       "inactive": true
+    },
+    {
+      "id": "pr:16999",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "review/tcp-dsack-above-gap",
+      "head": "ed556a288cb5512afa5b9d06c2c3c95dd0e31746",
+      "title": "TCP: report duplicate queued data above a receive gap",
+      "url": "https://github.com/google/gvisor/pull/16999",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-04T20:45:45.283369+00:00",
+      "summary": "Delivered as #16999 after #16403 landed through #16986. The approved 19b9ac70f patch is unchanged in ed556a288 on ebb46ee1d. When a peer repeats [10,14) inside queued [8,16), send the duplicate range before its containing range. Linux and the corrected receiver produced the same five ACKs and delivered the same 16 bytes through EOF. The packet TestResult passed before Bazel ran out of memory; the 32 SACK cases and both architecture analyzers passed separately.",
+      "evidence": [
+        {
+          "label": "Fork proposal",
+          "url": "https://github.com/tamird/gvisor/commit/19b9ac70fff949d3bcf8104efd1ea5e08c3ecfa2"
+        },
+        {
+          "label": "Linux and original receiver packet traces",
+          "url": "https://app.buildbuddy.io/invocation/953a668c-cd3a-43b1-b030-0670bbef843f"
+        },
+        {
+          "label": "Corrected packet TestResult; Bazel later ran out of memory",
+          "url": "https://app.buildbuddy.io/invocation/393c3838-8252-4bbc-9e96-0ce69db5ee3a"
+        },
+        {
+          "label": "Original Bazel exit diagnostic",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40791466944"
+        },
+        {
+          "label": "SACK suite, 32 cases",
+          "url": "https://app.buildbuddy.io/invocation/ba20ea95-859a-4b84-b779-b2d288c72c22"
+        },
+        {
+          "label": "Two architecture analyzers",
+          "url": "https://app.buildbuddy.io/invocation/6defa75d-a500-458a-9698-d1a8039afa7d"
+        },
+        {
+          "label": "Published approved follow-up",
+          "url": "https://github.com/google/gvisor/pull/16999"
+        },
+        {
+          "label": "Patch-preserving published source",
+          "url": "https://github.com/tamird/gvisor/commit/ed556a288"
+        },
+        {
+          "label": "Prerequisite exported and merged",
+          "url": "https://github.com/google/gvisor/pull/16986"
+        }
+      ],
+      "followup": {
+        "owner": "root",
+        "sourceHead": "ed556a288cb5512afa5b9d06c2c3c95dd0e31746",
+        "observedAt": "2026-11-04T20:45:45.283369+00:00",
+        "disposition": "Approved follow-up delivered as #16999",
+        "nextAction": "Follow upstream review and CI on #16999; no contributor decision remains.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16999",
+          "https://github.com/google/gvisor/pull/16986"
+        ]
+      },
+      "number": 16999
     }
   ],
   "edges": [
@@ -53036,12 +53152,13 @@
     },
     {
       "from": "pr:16403",
-      "to": "branch:tcp-dsack-above-gap",
+      "to": "pr:16999",
       "type": "depends_on",
-      "reason": "The above-gap change uses the D-SACK sender introduced by #16403.",
+      "reason": "Uses the D-SACK sender from #16403, landed through #16986 before the follow-up was published.",
       "evidence": [
         "https://github.com/google/gvisor/pull/16403",
-        "https://github.com/tamird/gvisor/commit/19b9ac70fff949d3bcf8104efd1ea5e08c3ecfa2"
+        "https://github.com/tamird/gvisor/commit/19b9ac70fff949d3bcf8104efd1ea5e08c3ecfa2",
+        "https://github.com/google/gvisor/pull/16986"
       ]
     },
     {
@@ -67156,7 +67273,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-04T19:58:38.622329+00:00",
+      "updatedAt": "2026-11-04T20:45:45.283369+00:00",
       "summary": "Supported builds need declared Bazel tools and inputs, including interpreters, system libraries and helpers. Literal zero-layer execution remains blocked before the action: the production probe failed at the worker mount and its executor revision is unknown. The latest native full-graph build is incomplete; the separately repaired license package reaches its held policy check and fails.",
       "findings": [
         {
@@ -69010,7 +69127,7 @@
           ]
         },
         {
-          "text": "The production Build everything selection is //... with --build_tag_filters=-network_plugins. On fork integration f876b5047, the credential-free native AMD64 build exited 124 at 75 minutes: 2,098 targets completed successfully, one licensecheck_test compile failed, and 5,667 of the 7,766 selected targets had no completion record. The full build is INCOMPLETE; no tests ran and this was not RBE.\n\nFork-only 87e5ce851 repairs that compile. Its separate native licensecheck_test run passed 44 cases and failed TestLicensePolicy. All 21 catalog rows match the original Fetch result; neither catalog regeneration nor changes to approved exceptions are warranted. The classifier remains on the maintainer hold in #15146. This package result does not complete the full build.",
+          "text": "The production Build everything selection is //... with --build_tag_filters=-network_plugins. On fork integration f876b5047, the credential-free native AMD64 build exited 124 at 75 minutes: 2,098 targets completed successfully, one licensecheck_test compile failed, and 5,667 of the 7,766 selected targets had no completion record. The full build is INCOMPLETE; no tests ran and this was not RBE.\n\nFork-only 87e5ce851 repairs that compile. Its separate native licensecheck_test run passed 44 cases and failed TestLicensePolicy. All 21 catalog rows match the original Fetch result; neither catalog regeneration nor changes to approved exceptions are warranted. The classifier remains on the maintainer hold in #15146. This package result does not complete the full build.\n\nThe current fork graph is research/graph-declared-release-staging at 9e6e8fa9c. It adds the landed declared release-copy rule to 87e5ce851; the rule is identical to upstream, and the nine-file layout retains netgofer. Earlier qualification executed nine copies per architecture on its own source. The 75-minute full-graph result above predates this addition; the updated graph has no full-build completion result.",
           "evidence": [
             {
               "label": "Production Build everything job",
@@ -69059,6 +69176,14 @@
             {
               "label": "Classifier maintainer hold",
               "url": "https://github.com/google/gvisor/pull/15146"
+            },
+            {
+              "label": "Current fork graph with the landed release-copy rule",
+              "url": "https://github.com/tamird/gvisor/commit/9e6e8fa9c"
+            },
+            {
+              "label": "Earlier nine declared release copies per architecture; separate source",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41765228449/artifacts/13292873920"
             }
           ]
         }
@@ -71718,5 +71843,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-04T20:16:20.916368+00:00"
+  "updatedAt": "2026-11-04T20:45:45.283369+00:00"
 }
