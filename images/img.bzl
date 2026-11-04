@@ -2,7 +2,7 @@
 
 load("@rules_img//img:load.bzl", "image_load")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_files")
-load("//tools:defs.bzl", "pkg_tar")
+load("//tools:pkg.bzl", "pkg_tar")
 
 def image_outputs(name, image, image_name):
     """Exposes a Docker-save archive and Make's content-addressed context.

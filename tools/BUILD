@@ -45,6 +45,7 @@ bzl_library(
     visibility = [
         "//:sandbox",
     ],
+    deps = [":pkg_bzl"],
 )
 
 bzl_library(
@@ -61,6 +62,15 @@ bzl_library(
     visibility = [
         "//:sandbox",
     ],
+)
+
+bzl_library(
+    name = "pkg_bzl",
+    srcs = ["pkg.bzl"],
+    visibility = [
+        "//:sandbox",
+    ],
+    deps = ["//tools/bazeldefs:pkg_bzl"],
 )
 
 bzl_library(

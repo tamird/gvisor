@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "bzl_library", "string_flag")
+load(":defs.bzl", "bzl_library", "string_flag")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -37,6 +37,13 @@ bzl_library(
         ":static_bzl",
         "@with_cfg.bzl//:with_cfg",
     ],
+)
+
+bzl_library(
+    name = "pkg_bzl",
+    srcs = ["pkg.bzl"],
+    visibility = ["//tools:__pkg__"],
+    deps = ["@rules_pkg//pkg:bzl_srcs"],
 )
 
 bzl_library(
