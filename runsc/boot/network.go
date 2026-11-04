@@ -134,7 +134,7 @@ func (n *Network) CreateLinksAndRoutes(args *sentryapi.CreateLinksAndRoutesArgs,
 		nicids[link.Name] = nicID
 
 		var linkEP stack.LinkEndpoint
-		linkEP = ethernet.NewWithNetworkMTU(loopback.New())
+		linkEP = ethernet.New(loopback.New())
 		if args.LogPackets {
 			linkEP = sniffer.New(linkEP)
 		}
