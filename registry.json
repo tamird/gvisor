@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T00:07:12.093334+00:00",
+    "updatedAt": "2026-11-04T00:12:44.634843+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35745,16 +35745,16 @@
       "title": "Flush corked TCP data when a FIN is queued",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-04T00:07:12.093334+00:00",
+      "updatedAt": "2026-11-04T00:12:44.634843+00:00",
       "reviewDecision": null,
       "url": "https://github.com/google/gvisor/pull/16671",
       "summary": "Close and SHUT_WR flush a corked short write before FIN instead of waiting 200 ms.",
       "followup": {
         "owner": "TCP owner",
-        "disposition": "Checkpoint delta ready; Linux and published-sender controls pending",
+        "disposition": "Approved; Linux and published-sender checks pending",
         "sourceHead": "c336db121f61914f6f2a761dc005bf4293f67e09",
-        "observedAt": "2026-11-04T00:07:12.093334+00:00",
-        "nextAction": "Complete only the outstanding Linux and published-sender comparisons. Publish 5d154c171 after the checkpoint delta is approved and those comparisons qualify; retain the existing approval and reply authorization for 8c163432b.",
+        "observedAt": "2026-11-04T00:12:44.634843+00:00",
+        "nextAction": "Complete only the outstanding Linux and published-sender comparisons. Once those checks qualify, publish approved 5d154c171 and the already authorized reply to Parth. No contributor decision remains.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16671#discussion_r4461143676",
           "https://github.com/tamird/gvisor/actions/runs/41733158454",
@@ -35846,19 +35846,17 @@
           "at": "2026-11-03T23:08:02.164545+00:00",
           "url": "https://github.com/tamird/gvisor/commit/8c163432b",
           "body": "Conditionally approved for publication and reply after the Linux, published-sender, amended-sender and manual-clock checks pass. This approval covers 8c163432b only. Restore-specific qualification remains agent work before preparing a replacement amendment."
+        },
+        {
+          "kind": "amendment",
+          "head": "5d154c17183b1f362f4e85ddb2d5af0570b166a3",
+          "baseHead": "c336db121f61914f6f2a761dc005bf4293f67e09",
+          "outcome": "approved",
+          "at": "2026-11-04T00:12:44.634843+00:00",
+          "url": "https://github.com/tamird/gvisor/commit/5d154c171",
+          "body": "Approved the checkpoint-only delta 8c163432b..5d154c171: sample the armed timer under the endpoint mutex before saving, and rearm it after restore only if a write was already waiting. The real Save/Load comparison passed both idle and waiting cases; the earlier approved version failed idle and passed waiting. Public card publication is authorized now; publish the PR amendment and reply only after the outstanding Linux and published-sender comparisons qualify. The earlier ordinary amendment and reply approval remain in effect."
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "5d154c17183b1f362f4e85ddb2d5af0570b166a3",
-        "baseHead": "c336db121f61914f6f2a761dc005bf4293f67e09",
-        "url": "https://github.com/tamird/gvisor/commit/5d154c171",
-        "title": "Preserve the pending TCP_CORK timer across checkpoint and restore",
-        "requestedAt": "2026-11-04T00:07:12.093334+00:00",
-        "summary": "Approve only the checkpoint delta, for publication after the outstanding Linux and published-sender checks pass?",
-        "body": "The earlier 8c163432b amendment is already conditionally approved. This additional change samples whether the cork timer is armed under the endpoint mutex at save time, then rearms it on restore only for a socket that was already waiting. The normal send path is unchanged from that approved revision.\n\nThe real Save/Load comparison showed the approved version sending a new byte too early after restoring an idle corked socket; its already-waiting case passed. The replacement passed both cases with fresh remote execution and no skips. The ordinary amended-sender comparison passed 48 socket cases and the eight manual-clock leaves. Linux and the published-sender controls timed out during their commands without test results and are being completed separately; publication still depends on those results.\n\nReview only the additional source change (https://github.com/tamird/gvisor/commit/2d658aad0):\ngit -C ~/code/gvisor diff 8c163432b..5d154c171\n\nThe incremental commit is 2d658aad0; the complete replacement is 5d154c171 on review/tcp-cork-restore-deadline. This request does not reopen the prior ordinary amendment or reply approval."
-      }
+      ]
     },
     {
       "id": "branch:release-archives-versioned",
