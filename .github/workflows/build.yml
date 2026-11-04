@@ -1,7 +1,7 @@
-name: Check the declared repository lint inputs after the Bazel 9 merge
+name: Check the declared linters using the governance dependency version
 on:
   push:
-    branches: [qualification/repository-lint-current-master]
+    branches: [qualification/repository-lint-bazel-lib-3-4]
 permissions:
   contents: read
 jobs:
@@ -13,7 +13,7 @@ jobs:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 3, persist-credentials: false}
+        with: {fetch-depth: 4, persist-credentials: false}
       - name: Prepare the verified released client and GNU execution platform
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -24,6 +24,7 @@ jobs:
           cp .github/qualification/lint-pilot/check.py "$d/check.py"
           echo '{"verdict":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/native-lint-pilot.json"
           git checkout --detach 07fd29494ed9b1a29fd81de936db93224bcddfe8
+          git fetch --no-tags --depth=1 origin 6e1caeba747c9dcaa533bd9fe1a4232895ac04c2
           curl --retry 3 -fsSL https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$d/bazel"
           printf '%s  %s\n' 7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c "$d/bazel" | sha256sum -c -
           chmod +x "$d/bazel"

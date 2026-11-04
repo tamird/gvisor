@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 
@@ -83,7 +84,7 @@ def report(phase, tool, spawn, wanted, configs, wanted_exit, log):
     row["program_path"] = native
     phase["actions"][tool] = row
     check(row["runner"] == "remote" and not row["cache"] and row["worker_image"] == IMAGE and row["worker_arch"] == "amd64", "wrong physical execution")
-    check(row["spawn"]["hash"] == "fff56331defc1c191a62063c812cbc600fb42ca5824eda4fd41e601a804d36b4",
+    check(row["spawn"]["hash"] == "c66dec06777daf38a73278eb578c726b118ac3a93d5ae68f15cd132cc2b0723d",
           "wrong native run_binary launcher")
     check(row["inputs_match"] and len(rows) == len(wanted_hash), "incomplete declared source bytes")
     check(row["action_exit"] == wanted_exit, "unexpected native checker exit")
@@ -156,9 +157,33 @@ def main():
     OUT["prior_source"] = "045a3f7a506c109eab8beb396e5b3af37776a2df"
     OUT["rebase_parent"] = git("rev-parse", "HEAD^").decode().strip()
     check(OUT["rebase_parent"] == "183a39d1b2aff9e8e2219171940001749a2b5db0", "wrong upstream base")
+    gov = "6e1caeba747c9dcaa533bd9fe1a4232895ac04c2"
+    OUT["dependency_source"] = gov
+    OUT["overlay_sha256"] = {}
+    # Replace only the two approved governance values on the clean product.
+    for path, pattern, want in [
+        ("MODULE.bazel", rb'^bazel_dep\(name = "bazel_lib".+$', "151f3b2327f019bf9575fab8e475646ae50038aad69c00bce554691b8dc728ab"),
+        ("tools/licensecheck/dependencies.yaml", rb'^- dependency: bazel_lib\n(?:  [^\n]+\n)+', "b1c04baeb2bec7fd3158eaa49e62722db2054bcee04e99e17365178a66542ae5"),
+    ]:
+        rx = re.compile(pattern, re.M)
+        base = Path(path).read_bytes()
+        old, = rx.findall(base)
+        selected, = rx.findall(git("show", gov + ":" + path))
+        replaced = base.replace(old, selected)
+        check(digest(replaced) == want, "wrong governance overlay")
+        Path(path).write_bytes(replaced)
+        OUT["overlay_sha256"][path] = want
+    check(git("diff", "--name-only").decode().splitlines() == list(OUT["overlay_sha256"]), "unexpected source change")
     build("clean", tracked, {})
-    phase = OUT["phases"]["clean"]
-    ok = phase["verified"] and phase["completed_targets"] == sorted(OUT["targets"])
+    check(not CASE.exists(), "negative fixture already exists")
+    CASE.mkdir()
+    try:
+        Path(BAD_BZL).write_text("X= 1\n")
+        Path(BAD_CPP).write_text("// Controlled disordered includes.\n#include <vector>\n#include <stdio.h>\n")
+        build("malformed", tracked | {BAD_BZL, BAD_CPP}, {"BuildifierCheck": 4, "Cpplint": 1})
+    finally:
+        shutil.rmtree(CASE)
+    ok = all(phase["verified"] for phase in OUT["phases"].values()) and OUT["phases"]["clean"]["completed_targets"] == sorted(OUT["targets"])
     OUT["checks_finished_at"] = utc()
     OUT["verdict"] = "PASS" if ok else "INCOMPLETE"
     save()
