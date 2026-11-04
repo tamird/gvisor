@@ -1,35 +1,148 @@
-name: CI
-
-"on":
+name: Check the graph's corrected license-test fixture
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/graph-license-classifier-package]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  package:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    env:
+      PRODUCT: 87e5ce85174221e49c27215fc8246310656b2880
+      PARENT: f876b5047538c0bbe2de38ef3f306a2cab985aa7
+      OWNER: //tools/licensecheck:licensecheck_test
+      PYTHONDONTWRITEBYTECODE: '1'
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Bind the graph source and native Bazel bootstrap
+        run: |
+          set -euo pipefail
+          umask 077
+          root="$RUNNER_TEMP/graph-license"
+          mkdir -p "$root"
+          printf '{"status":"INCOMPLETE","phase":"bootstrap"}\n' > "$root/verdict.json"
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD^^)" = "$PARENT"
+          git switch --quiet --detach "$PRODUCT"
+          test "$(git rev-parse HEAD^{tree})" = 563220fa261ea3b83bcc41f8dc5c9a0f1eba95fa
+          test "$(git diff --name-only HEAD^ HEAD)" = tools/licensecheck/licensecheck_test.go
+          test "$(git rev-parse HEAD:tools/licensecheck/licensecheck_test.go)" = 3c6dfe2ea9807f074f97749ac0b7df69c0f0f300
+          test "$(cat .bazelversion)" = 9.3.1
+          test "$(uname -m)" = x86_64
+          curl --retry 3 -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$root/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $root/bazel" | sha256sum -c -
+          chmod 755 "$root/bazel"
+          test "$("$root/bazel" --version)" = 'bazel 9.3.1'
+      - name: Run the complete license package on the corrected graph
+        timeout-minutes: 29
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/graph-license"
+          rc=0
+          env -i HOME="$HOME" PATH="$PATH" LANG=C.UTF-8 USER="$USER" \
+            timeout -k 15 1500 "$root/bazel" --nosystem_rc --nohome_rc --host_jvm_args=-Xmx4g test \
+              --jobs=4 --remote_cache= --remote_executor= --nocache_test_results \
+              --test_env=GO_TEST_WRAP_TESTV=1 --test_output=errors \
+              --build_event_json_file="$root/package.bep" "$OWNER" >"$root/package.console" 2>&1 || rc=$?
+          RC="$rc" python3 -B - <<'PY'
+          import hashlib
+          import json
+          import os
+          import re
+          from collections import Counter
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from xml.etree import ElementTree
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+          root = Path(os.environ["RUNNER_TEMP"], "graph-license")
+          owner = os.environ["OWNER"]
+          rc = int(os.environ["RC"])
+          now = lambda: datetime.now(timezone.utc).isoformat()
+          record = {"status": "FAIL" if rc else "INCOMPLETE", "native_exit": rc,
+                    "source": os.environ["PRODUCT"], "parent": os.environ["PARENT"],
+                    "owner": owner, "execution_finished_at": now(),
+                    "original_graph_run": 41886246923, "original_graph_artifact": 13355668355}
 
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
+          def save():
+              (root / "verdict.json").write_text(json.dumps(record, indent=2) + "\n")
 
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+          save()
+          try:
+              console = (root / "package.console").read_bytes()
+              record["console_sha256"] = hashlib.sha256(console).hexdigest()
+              record["undefined_names"] = re.findall(
+                  r"(?m)^tools/licensecheck/[\w.]+:\d+:\d+: undefined: [A-Za-z0-9_]+$",
+                  console.decode(errors="replace"))[:6]
+              results, summaries = [], []
+              for line in (root / "package.bep").read_text().splitlines():
+                  event = json.loads(line)
+                  identity = event["id"]
+                  if "testResult" in event:
+                      attempt = identity["testResult"]
+                      result = event["testResult"]
+                      info = result.get("executionInfo", {})
+                      results.append({"owner": attempt["label"], "configuration": attempt["configuration"]["id"],
+                                      "status": result["status"], "strategy": info.get("strategy"),
+                                      "cached": result.get("cachedLocally", False) or info.get("cachedRemotely", False)})
+                  if "testSummary" in event and identity["testSummary"]["label"] == owner:
+                      summaries.append(event["testSummary"]["overallStatus"])
+                  if "finished" in event:
+                      record["bazel_finished_at"] = event["finished"].get("finishTime")
+                  if "started" in event:
+                      record["invocation"] = event["started"].get("uuid")
+              record.update(attempts=results, summaries=summaries)
+              save()
+              xml = Path("bazel-testlogs/tools/licensecheck/licensecheck_test/test.xml").read_bytes()
+              record["xml_sha256"] = hashlib.sha256(xml).hexdigest()
+              required = {"TestClassify/title", "TestVerifyLicenseSource",
+                          "TestEnumerateAndFetchQemuLicenseSource", "TestLLVMSourceDependency"}
+              passed, counts = set(), Counter()
+              record["unsuccessful_cases"] = []
+              for case in ElementTree.fromstring(xml).iter("testcase"):
+                  name = "/".join(filter(None, [case.get("classname"), case.get("name")]))
+                  kind = next((k for k in ("failure", "error", "skipped") if case.find(k) is not None), "passed")
+                  if case.get("status") == "notrun" or case.get("result") == "suppressed":
+                      kind = "skipped"
+                  counts[kind] += 1
+                  if kind == "passed":
+                      passed.update(k for k in required if name == k or name.endswith("/" + k))
+                  elif len(record["unsuccessful_cases"]) < 12:
+                      safe_name = re.search(r"(?:^|/)(Test[\w/-]{1,160})$", name)
+                      locations = re.findall(r"\b[\w]+\.go:\d+\b", " ".join(case.itertext()))[:6]
+                      record["unsuccessful_cases"].append({
+                          "name": safe_name[1] if safe_name else "unidentified", "status": kind, "locations": locations})
+              record.update(xml_counts=dict(counts), passed_required=sorted(passed), missing_required=sorted(required - passed))
+              assert rc == 0 and record["bazel_finished_at"] and len(results) == 1 and summaries == ["PASSED"]
+              attempt, = results
+              assert attempt["owner"] == owner and attempt["status"] == "PASSED" and not attempt["cached"]
+              assert attempt["strategy"] in ("linux-sandbox", "processwrapper-sandbox", "local")
+              assert counts["passed"] >= len(required) and set(counts) == {"passed"} and passed == required
+              record["status"] = "PASS"
+          except Exception as exc:
+              record["verification_error"] = type(exc).__name__
+          record["verified_at"] = now()
+          save()
+          raise SystemExit(rc or int(record["status"] != "PASS"))
+          PY
+      - name: Validate the public result
+        if: always()
+        id: privacy
+        run: |
+          python3 -B - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          p = Path(os.environ["RUNNER_TEMP"], "graph-license/verdict.json")
+          assert p.is_file() and not p.is_symlink() and 0 < p.stat().st_size < 65536
+          data = p.read_bytes()
+          assert json.loads(data)["status"] in ("PASS", "FAIL", "INCOMPLETE")
+          assert not re.search(rb"(?i)https?://|authorization\s*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}", data)
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.privacy.outcome == 'success'
+        with:
+          name: graph-license-package
+          path: ${{ runner.temp }}/graph-license/verdict.json
+          if-no-files-found: error
