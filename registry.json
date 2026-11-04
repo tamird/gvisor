@@ -48688,6 +48688,36 @@
         "summary": "Open the checkpoint client lock-annotation PR?",
         "body": "The watchdog holds filesMu while shutting down the registered endpoints. Close takes the same mutex to remove an endpoint, so the watchdog cannot reach it when Close calls Destroy. This also lets other operations acquire the mutex during Destroy.\n\nAll five cases ran on AMD64 with and without the race detector. Removing the lock from Close produced the expected diagnostic on AMD64 and ARM64. The original workflow misread Go’s framed pass lines. The linked verdict reconciles all ten case results from the original logs and XML."
       }
+    },
+    {
+      "id": "branch:bridge-mtu-roundtrip",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/bridge-mtu-roundtrip",
+      "title": "Report the configured MTU on a bridge",
+      "group": "runtime",
+      "url": "https://github.com/tamird/gvisor/commit/735639f57",
+      "status": "Contributor review requested",
+      "head": "735639f573bb921490150d0c722414c124119728",
+      "updatedAt": "2026-11-04T01:53:26.841430+00:00",
+      "summary": "Bridge creation and netlink updates already supply the network MTU. Subtracting the Ethernet header again makes the MTU reported to the application 14 bytes too small.",
+      "evidence": [
+        {
+          "label": "BridgeAddUnnamed on native Linux, stock gVisor and corrected gVisor",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41756184607/artifacts/13288622198"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "735639f573bb921490150d0c722414c124119728",
+        "baseHead": "b21a9d4eea7b0066232c33c63df9cf20ed987f6f",
+        "url": "https://github.com/tamird/gvisor/commit/735639f57",
+        "requestedAt": "2026-11-04T01:53:26.841430+00:00",
+        "title": "Report the configured MTU on a bridge",
+        "summary": "Open the bridge MTU correction and its syscall regression?",
+        "body": "The existing BridgeAddUnnamed test now reads the MTU of a new bridge, requests 1460 via RTM_SETLINK, then reads it again. Linux and corrected gVisor returned 1500 then 1460. Stock gVisor returned 1486 then 1446. The same syscall fixture ran on all three with no skips. This replaces the Go test that expected the subtraction."
+      }
     }
   ],
   "edges": [
