@@ -787,3 +787,102 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+// TestPrivateSeqpacketRecords observes a bounded number of dispatcher calls.
+// The peer and both ends of each socketpair belong to this test.
+func TestPrivateSeqpacketRecords(t *testing.T) {
+	packet := make([]byte, header.IPv4MinimumSize+4)
+	packet[0], packet[2], packet[3], packet[9] = 0x45, 0, byte(len(packet)), byte(header.UDPProtocolNumber)
+	for _, tc := range []struct {
+		name                     string
+		kind                     int
+		mark, after, close, half bool
+		empty                    int
+	}{
+		{name: "Open", kind: unix.SOCK_SEQPACKET, empty: 1},
+		{name: "Datagram", kind: unix.SOCK_DGRAM, empty: 1},
+		{name: "Closed", kind: unix.SOCK_SEQPACKET, close: true, empty: 1},
+		{name: "HalfClosed", kind: unix.SOCK_SEQPACKET, half: true, empty: 1},
+		{name: "BeforeMarker", kind: unix.SOCK_SEQPACKET, mark: true, after: true, close: true, empty: 1},
+		{name: "Marked", kind: unix.SOCK_SEQPACKET, mark: true, close: true, empty: 1},
+		{name: "MarkedHalf", kind: unix.SOCK_SEQPACKET, mark: true, half: true, empty: 1},
+		{name: "FullEmptyBatch", kind: unix.SOCK_SEQPACKET, mark: true, close: true, empty: MaxMsgsPerRecv},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			pair, err := unix.Socketpair(unix.AF_UNIX, tc.kind|unix.SOCK_CLOEXEC, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer unix.Close(pair[0])
+			defer func() {
+				if pair[1] >= 0 {
+					unix.Close(pair[1])
+				}
+			}()
+			mark := func() {
+				if err := unix.SetsockoptInt(pair[0], unix.SOL_SOCKET, unix.SO_PASSCRED, 1); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if tc.mark && !tc.after {
+				mark()
+			}
+			for i := 0; i < tc.empty; i++ {
+				if err := unix.Sendmsg(pair[1], nil, nil, nil, 0); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := unix.Sendmsg(pair[1], packet, nil, nil, 0); err != nil {
+				t.Fatal(err)
+			}
+			if tc.mark && tc.after {
+				mark()
+			}
+			if tc.close {
+				if err := unix.Close(pair[1]); err != nil {
+					t.Fatal(err)
+				}
+				pair[1] = -1
+			}
+			if tc.half {
+				if err := unix.Shutdown(pair[1], unix.SHUT_WR); err != nil {
+					t.Fatal(err)
+				}
+			}
+			sink := &fakeNetworkDispatcher{}
+			link, err := newRecvMMsgDispatcher(pair[0], &endpoint{dispatcher: sink}, &Options{ProcessorsPerChannel: 1})
+			if err != nil {
+				t.Fatal(err)
+			}
+			d := link.(*recvMMsgDispatcher)
+			defer d.close()
+			defer d.release()
+			defer func() {
+				for _, p := range sink.pkts {
+					p.DecRef()
+				}
+			}()
+			batches := 1
+			if tc.close || tc.half {
+				batches = 2
+			}
+			for b := 0; b < batches; b++ {
+				cont, err := d.dispatch()
+				if err != nil || !cont {
+					t.Fatalf("stock dispatch = %v, %v", cont, err)
+				}
+				var lens, flags []int
+				for _, m := range d.msgHdrs {
+					if m.Msg.Iovlen == 0 {
+						lens = append(lens, int(m.Len))
+						flags = append(flags, int(m.Msg.Flags))
+					}
+				}
+				t.Logf("record batch=%d lengths=%v flags=%v delivered=%d continue=%t", b, lens, flags, len(sink.pkts), cont)
+			}
+			if got := len(sink.pkts); got != 1 {
+				t.Fatalf("delivered %d, want 1", got)
+			}
+		})
+	}
+}
