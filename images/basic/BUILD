@@ -37,11 +37,18 @@ image_outputs(
     image_name = "basic/busybox",
 )
 
+# The layer would otherwise select the transition's executable symlink.
+# With runfiles excluded, only the linked ELF is a declared binary input.
+filegroup(
+    name = "fsstress_binary",
+    srcs = ["@ltp//:fsstress"],
+)
+
 image_layer(
     name = "fsstress_layer",
     srcs = {
         "/run.sh": "fsstress/run.sh",
-        "/usr/bin/fsstress": "@ltp//:fsstress",
+        "/usr/bin/fsstress": ":fsstress_binary",
         "/usr/share/doc/fsstress/COPYING": "@ltp//:COPYING",
     },
     create_parent_directories = "enabled",
