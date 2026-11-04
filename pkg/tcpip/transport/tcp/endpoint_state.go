@@ -280,6 +280,9 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 			// drain all the segments in the queue after restore.
 			e.snd.corkTimer.enable(MinRTO)
 		}
+		if e.delayedACK && e.snd.MaxSentAck != e.rcv.RcvNxt {
+			e.snd.sendAck()
+		}
 		e.mu.Unlock()
 		e.requeueOnRestore()
 		connectedLoading.Done()
