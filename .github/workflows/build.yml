@@ -1,35 +1,99 @@
-name: CI
-
-"on":
+name: Check downstream Eifel replay cancellation
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-eifel-cancel]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  packet:
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      CANDIDATE: 45868c5470d96319f7a56696247a09b2986aedec
+      NEGATIVE: b9b05337b03754c2e75b72355610c23478d61ae3
+      REPORTER: 611a6ff017c528dddbd0d2e643aaf23c6ddac488
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 5, persist-credentials: false}
+    - name: Prepare existing GNU coordinator and remote workers
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@v5
-
-    - name: build
+        set -euo pipefail
+        umask 077
+        mkdir -p "$RUNNER_TEMP/records" "$RUNNER_TEMP/gnu-platform"
+        echo '{"status":"INCOMPLETE","reason":"qualification has not finished"}' > "$RUNNER_TEMP/records/verdict.json"
+        cp test/rbe/eifel-wrap-receipt.py "$RUNNER_TEMP/"
+        test "$(git rev-parse HEAD^)" = "$NEGATIVE"
+        test "$(git rev-parse "$NEGATIVE^")" = "$CANDIDATE"
+        test "$(git rev-parse "$CANDIDATE^^")" = 32d64686c13190f83cb8411a23b036e0e102d4f3
+        test "$(git diff --name-only "$CANDIDATE" "$NEGATIVE")" = pkg/tcpip/transport/tcp/undo.go
+        git fetch --no-tags origin "$REPORTER"
+        test "$(git rev-parse "$REPORTER:test/rbe/qualification_report.py")" = d2e3eedabc2ad911d958aa448fd916aa6835aa86
+        test "$(git rev-parse "$REPORTER:test/rbe/unit_matrix.py")" = d01d9e319084e18ea2928671e417e1b4e86c4954
+        git show "$REPORTER:test/rbe/qualification_report.py" > "$RUNNER_TEMP/qualification_report.py"
+        git show "$REPORTER:test/rbe/unit_matrix.py" > "$RUNNER_TEMP/unit_matrix.py"
+        printf 'module(name="tcp_gnu")\n' > "$RUNNER_TEMP/gnu-platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu-platform/BUILD"
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$RUNNER_TEMP/gnu-platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/tcp.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        test "$(cat .bazelversion)" = 8.3.1
+        curl --fail --silent --show-error --location --proto '=https' --retry 3 --output "$RUNNER_TEMP/bazel-8.3.1" https://releases.bazel.build/8.3.1/release/bazel-8.3.1-linux-x86_64
+        echo "17247e8a84245f59d3bc633d0cfe0a840992a7760a11af1a30012d03da31604c  $RUNNER_TEMP/bazel-8.3.1" | sha256sum --check --status
+        chmod 0555 "$RUNNER_TEMP/bazel-8.3.1"
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name tcp-compiler --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        test "$(docker exec tcp-compiler uname -m)" = x86_64
+        test "$(docker exec tcp-compiler "$RUNNER_TEMP/bazel-8.3.1" --version)" = 'bazel 8.3.1'
+    - name: Run only the three matched packet cases on both sources
       run: |
-          mkdir -p bin
-          make copy TARGETS=runsc DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@v4
+        set -euo pipefail
+        for arm in candidate without_cancellation; do
+          case "$arm" in candidate) source="$CANDIDATE";; without_cancellation) source="$NEGATIVE";; esac
+          git checkout --quiet --detach "$source"
+          code=0
+          docker exec -e "GITHUB_WORKSPACE=$GITHUB_WORKSPACE" -e "RUNNER_TEMP=$RUNNER_TEMP" -e "BAZEL=$RUNNER_TEMP/bazel-8.3.1" -e "BAZEL_RC=$RUNNER_TEMP/tcp.bazelrc" tcp-compiler python3 "$RUNNER_TEMP/eifel-wrap-receipt.py" "$arm" || code=$?
+          printf '%s\n' "$code" > "$RUNNER_TEMP/records/$arm-reporter-exit"
+        done
+    - name: Reconcile both original outcomes
+      if: always()
+      run: |
+        python3 - <<'PY'
+        from datetime import datetime, timezone
+        import json
+        import os
+        from pathlib import Path
+        root = Path(os.environ['RUNNER_TEMP'])/'records'
+        result = {'status':'INCOMPLETE', 'arms':[], 'prior_attempt': {'url':'https://github.com/tamird/gvisor/actions/runs/41781704288/artifacts/13299506581', 'zip_sha256':'725875050e62080e6d9decd7c19d1d70b9ec4ada77798013ce1c72b1bd4964f3', 'status':'INCOMPLETE', 'bazel_invoked':False, 'cause':'coordinator Git ownership check'}, 'downstream':'https://github.com/juxuanu/gvisor/commit/0d0ca8b24e47b5f7e5b5afb556a7a1ecd57134a7'}
+        for arm in ('candidate','without_cancellation'):
+            path = root/arm/'result.json'
+            if path.is_file():
+                assert path.stat().st_size < 256*1024
+                result['arms'].append(json.loads(path.read_text()))
+        if [r['status'] for r in result['arms']] == ['PASS','EXPECTED_FAILURE']:
+            result['status'] = 'PASS'
+        elif any(r['status'] == 'FAIL' for r in result['arms']):
+            result['status'] = 'FAIL'
+        result['verified_at'] = datetime.now(timezone.utc).isoformat()
+        text = json.dumps(result,indent=2)+'\n'
+        assert len(text.encode()) < 512*1024
+        (root/'verdict.json').write_text(text)
+        raise SystemExit(result['status'] != 'PASS')
+        PY
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/runsc
+        name: eifel-replay-cancellation
+        path: ${{ runner.temp }}/records/verdict.json
+        if-no-files-found: error
+    - name: Remove coordinator and private settings
+      if: always()
+      run: |
+        docker rm -f tcp-compiler || true
+        rm -f "$RUNNER_TEMP/tcp.bazelrc"
