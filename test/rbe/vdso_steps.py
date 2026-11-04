@@ -1,33 +1,29 @@
-"""Run isolated vDSO source checks before the existing fixed-fixture race test."""
+"""Check the two configured vDSO links selected by the Sentry's embed rule."""
 
 from datetime import datetime, timezone
 import hashlib
 import json
-import os
 from pathlib import Path
 import re
-import shutil
 import subprocess
 import sys
+from urllib.parse import unquote, urlsplit
 
 
 root = Path(sys.argv[1])
-abi = root / "abi"
-standalone = "cf2264788a7cfe5302a96311d314bf715d50de9a"
-parent = "6dcadf4a84a07f69e8eb5f1ea9d7b2903bd03bd7"
-integration = "caa2f641cb64ef4d22c5b9269d2d54acd0317f81"
-carrier = (root / "carrier").read_text().strip()
-expected = ["fixed_native", "layout", "parent_old_header", "fixed_old_header", "native_symbols_and_clocks"]
-receipt = {"status": "INCOMPLETE", "expected": expected, "executed": {}, "failed": [], "missing": expected,
-           "standalone": standalone, "export": "1899f71d79be9b78ed439313ee050ff6b8d62a5d",
-           "export_source": "471d6dff5229b99208bf6fec985601067f1f9d69",
-           "legacy_header_sha256": hashlib.sha256((root / "legacy/sys/time.h").read_bytes()).hexdigest(),
-           "native_header_sha256": hashlib.sha256(Path("/usr/include/x86_64-linux-gnu/sys/time.h").read_bytes()).hexdigest()}
+result = root / "out/result.json"
+source = "caa2f641cb64ef4d22c5b9269d2d54acd0317f81"
+owner = "//pkg/sentry/loader/vdsodata:vdso_arch"
+original_sha = "a54912f01589481ba440b57df27e4733ba3a2fc521585cebeeea499c582d1251"
 bazel = ["bazel", "--nosystem_rc", "--nohome_rc", "--bazelrc=/dev/null", "--host_jvm_args=-Xmx3g"]
 options = ["--config=race", "--extra_toolchains=@llvm//toolchain:linux_x86_64_to_linux_aarch64", "--compilation_mode=opt",
            "--jobs=4", "--local_resources=memory=8192", "--remote_cache=", "--remote_executor=", "--bes_backend=",
            "--spawn_strategy=local", "--strategy=TestRunner=local"]
-marker = "GVISOR_QUALIFICATION_OLD_HEADER"
+out_pattern = r"bazel-out/[A-Za-z0-9_.+~-]{1,180}/bin/vdso/vdso\.so"
+platforms = {"k8": "linux_amd64", "aarch64": "linux_arm64"}
+r = {"status": "INCOMPLETE", "phase": "source", "source": source, "owner": owner, "expected": sorted(platforms.values()),
+     "original_failure": {"artifact": 13330128632, "stderr_bytes": 124, "stderr_sha256": original_sha},
+     "options": options, "diagnostic_status": "INCOMPLETE", "configurations": {}, "actions": {}, "matched": [], "missing": sorted(platforms.values())}
 
 
 def now():
@@ -35,89 +31,114 @@ def now():
 
 
 def save():
-    receipt["missing"] = [p for p in expected if p not in receipt["executed"]]
-    receipt["failed"] = [p for p, v in receipt["executed"].items() if v.get("verified") is False]
-    receipt["verified_at"] = now()
-    (abi / "builds.json").write_text(json.dumps(receipt, sort_keys=True))
+    r["verified_at"] = now()
+    result.write_text(json.dumps(r, sort_keys=True))
 
 
-def select(source):
-    subprocess.run(["git", "switch", "--detach", "--quiet", source], check=True)
-    assert subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() == source
+def linker_lines(data):
+    lines = []
+    for raw in data.decode(errors="replace").splitlines():
+        line = raw.strip()
+        match = re.fullmatch(r"(?:[/A-Za-z0-9_.+~-]+/)?((?:[A-Za-z0-9_.+-]+-)?ld(?:\.(?:lld|bfd|gold))?|lld|clang(?:\+\+)?)(?:-[0-9]+)?: (.{1,450})", line)
+        if not match:
+            continue
+        detail = match.group(2)
+        if (not re.fullmatch(r"[a-zA-Z0-9 .,;:'/+()=\[\]*_~<>‘’`-]+", detail)
+                or re.search(r"(?i)token|password|authorization|credential|github_pat|gh[pousr]_|https?://|AKIA", detail)):
+            continue
+        # Keep the linker reason and basenames, never the worker's path.
+        detail = re.sub(r"[/][^\s':,]+/", "<path>/", detail)
+        lines.append(match.group(1) + ": " + detail[:300])
+    return lines[:5]
 
 
-def run(phase, source, target, *, legacy=False, test=False):
-    select(source)
-    row = {"source": source, "owner": target, "started_at": now(), "verified": False}
-    receipt["executed"][phase] = row
-    save()
-    event_path = abi / (phase + ".bep")
-    args = [*bazel, "test" if test else "build", *options, "--build_event_json_file=" + str(event_path)]
-    if legacy:
-        args.append("--action_env=CPATH=" + str(root / "witness"))
-    if test:
-        args.extend(("--nocache_test_results", "--flaky_test_attempts=1", "--runs_per_test=1"))
-    if phase == "native_symbols_and_clocks":
-        args.append("--test_env=VDSO_RECEIPTS=" + str(abi))
-    log = abi / (phase + ".log")
-    with log.open("wb") as out:
-        row["native_exit"] = subprocess.run(["timeout", "-k", "10", "1000", *args, target], stdout=out, stderr=subprocess.STDOUT).returncode
-    row["execution_finished_at"] = now()
-    save()
-    body = log.read_text(errors="replace")
-    row["log_sha256"] = hashlib.sha256(log.read_bytes()).hexdigest()
-    row["old_header_witness"] = marker in body
-    if row["native_exit"]:
-        row["diagnostics"] = []
-        for line in body.splitlines():
-            if not re.search(r"(fatal error:|error:|^ERROR:)", line, re.I):
-                continue
-            line = re.sub(r'https?://\S+|/home/runner/\S+|/tmp/\S+', '<path>', line)
-            if not re.search(r"(?i)token|credential|password|authorization|gh[pousr]_|https?://|(?:^|\s)(?:env|exec|cd)\s", line):
-                row["diagnostics"].append(line[:340])
-            if len(row["diagnostics"]) == 4:
-                break
-        save()
-        return False
-    if legacy and not row["old_header_witness"]:
-        row["failure"] = "old header witness missing"
-        save()
-        return False
-    if test:
-        attempts = []
-        for line in event_path.read_text().splitlines():
-            event = json.loads(line)
-            if "testResult" in event:
-                info = event["testResult"]
-                meta = info.get("executionInfo", {})
-                attempts.append({"owner": event["id"]["testResult"]["label"], "status": info.get("status"),
-                                 "cached": bool(info.get("cachedLocally") or meta.get("cachedRemotely")),
-                                 "strategy": meta.get("strategy")})
-        row["attempts"] = attempts
-        row["verified"] = attempts == [{"owner": target, "status": "PASSED", "cached": False, "strategy": "local"}]
-    else:
-        image = Path("bazel-bin/vdso/vdso.so")
-        assert image.is_file()
-        shutil.copyfile(image, abi / (phase + ".so"))
-        row["sha256"] = hashlib.sha256(image.read_bytes()).hexdigest()
-        row["verified"] = True
-    save()
-    return row["verified"]
+def local_stderr(action, outbase):
+    ref = urlsplit(action.get("stderr", {}).get("uri", ""))
+    if ref.scheme != "file" or ref.netloc not in ("", "localhost"):
+        return {}
+    path = Path(unquote(ref.path)).resolve()
+    if not path.is_relative_to(outbase) or not path.is_file() or path.stat().st_size > 65536:
+        return {}
+    data = path.read_bytes()
+    digest = hashlib.sha256(data).hexdigest()
+    return {"bytes": len(data), "sha256": digest, "matches_original": len(data) == 124 and digest == original_sha,
+            "linker_lines": linker_lines(data)}
 
 
 try:
     save()
-    witness = root / "witness/sys"
-    witness.mkdir(parents=True)
-    (witness / "time.h").write_text('#pragma message("' + marker + '")\n#include "' + str(root / "legacy/sys/time.h") + '"\n')
-    native = run("fixed_native", standalone, "//vdso:vdso")
-    layout = native and run("layout", standalone, "//vdso:vdso_test", test=True)
-    run("parent_old_header", parent, "//vdso:vdso", legacy=True)
-    run("fixed_old_header", standalone, "//vdso:vdso", legacy=True)
-    if native:
-        run("native_symbols_and_clocks", carrier, "//test/rbe:vdso_alias_test", test=True)
-    receipt["status"] = "PASS" if not receipt["failed"] and not receipt["missing"] else "FAIL"
-finally:
-    select(integration)
+    assert subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() == source
+    assert not subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"])
+    r["phase"] = "split_build"
     save()
-sys.exit(int(receipt["status"] != "PASS"))
+    bep = root / "events.raw"
+    with (root / "build.log").open("wb") as out:
+        r["native_exit"] = subprocess.run(["timeout", "-k", "10", "900", *bazel, "build", *options, "--keep_going",
+                                           "--build_event_publish_all_actions", "--build_event_json_file=" + str(bep),
+                                           "--build_event_json_file_path_conversion=false", owner], stdout=out, stderr=subprocess.STDOUT).returncode
+    r["execution_finished_at"] = now()
+    r["status"] = "FAIL" if r["native_exit"] else "INCOMPLETE"
+    save()
+    r["phase"] = "configured_outputs"
+    save()
+    # This is configured-graph inspection only; it cannot execute another link.
+    expression = '"%s|%s|%s" % (build_options(target).get("//command_line_option:cpu", ""), build_options(target).get("//command_line_option:platforms", []), target.files.to_list()[0].path)'
+    query = subprocess.run(["timeout", "150", *bazel, "cquery", *options, "--output=starlark", "--starlark:expr=" + expression,
+                            'filter("vdso:vdso$", deps(' + owner + ', 1))'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    r["cquery_exit"] = query.returncode
+    for raw in query.stdout.decode(errors="replace").splitlines():
+        cells = raw.split("|")
+        if len(cells) != 3 or cells[0] not in platforms or not re.fullmatch(out_pattern, cells[2]):
+            continue
+        cpu, labels, output = cells
+        platform = platforms[cpu]
+        if re.search(r"//tools/bazeldefs:" + platform + r"\b", labels):
+            r["configurations"][output] = {"cpu": cpu, "platform": "//tools/bazeldefs:" + platform}
+    save()
+    outbase = Path(subprocess.check_output([*bazel, "info", "output_base"], stderr=subprocess.DEVNULL, text=True).strip()).resolve()
+    r["phase"] = "original_action_comparison"
+    save()
+    for line in bep.open():
+        event = json.loads(line)
+        key = event.get("id", {}).get("actionCompleted", {})
+        match = re.search(r"(" + out_pattern + r")$", key.get("primaryOutput", ""))
+        action = event.get("action", {})
+        if not match or action.get("type") != "Genrule":
+            continue
+        output = match[1]
+        configuration_id = key.get("configuration", {}).get("id", "")
+        row = {"success": bool(action.get("success")), "exit": action.get("exitCode", 0), "type": "Genrule",
+               "configuration_id": configuration_id if re.fullmatch("[a-f0-9]{7,128}", configuration_id) else None}
+        r["actions"][output] = row
+        if not row["success"]:
+            row["stderr"] = local_stderr(action, outbase)
+            if row["stderr"].get("matches_original"):
+                r["matched"].append(output)
+        else:
+            path = Path(output).resolve()
+            if path.is_relative_to(outbase) and path.is_file() and path.stat().st_size < 256 * 1024:
+                data = path.read_bytes()
+                if data.startswith(b"\x7fELF\x02\x01"):
+                    row["elf"] = {"bytes": len(data), "sha256": hashlib.sha256(data).hexdigest(), "machine": int.from_bytes(data[18:20], "little")}
+        save()
+    seen = {cfg["platform"].split(":")[-1] for out, cfg in r["configurations"].items() if out in r["actions"]}
+    r["missing"] = sorted(set(platforms.values()) - seen)
+    r["relation"] = "MATCHED" if len(r["matched"]) == 1 and r["matched"][0] in r["configurations"] else "NOT_ESTABLISHED"
+    if not r["native_exit"] and not r["missing"] and all(row["success"] for row in r["actions"].values()):
+        r["status"] = "PASS"
+    if (r["native_exit"] == 1 and r["relation"] == "MATCHED" and not r["missing"]
+            and len(r["actions"]) == 2 and r["configurations"].keys() == r["actions"].keys()):
+        failed_key, = r["matched"]
+        passed_key, = r["actions"].keys() - {failed_key}
+        failure, success = r["actions"][failed_key], r["actions"][passed_key]
+        expected_machine = {"k8": 62, "aarch64": 183}[r["configurations"][passed_key]["cpu"]]
+        reasons = [line for line in failure["stderr"]["linker_lines"] if "linker command failed with exit code" not in line]
+        if (not failure["success"] and failure["exit"] == 1 and reasons and success["success"]
+                and success["exit"] == 0 and success.get("elf", {}).get("machine") == expected_machine):
+            r["diagnostic_status"] = "PASS"
+    r["phase"] = "complete"
+except (AssertionError, OSError, ValueError, subprocess.SubprocessError) as exc:
+    r["reader_error"] = type(exc).__name__
+finally:
+    save()
+sys.exit(int(r["diagnostic_status"] != "PASS"))
