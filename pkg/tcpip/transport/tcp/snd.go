@@ -1579,7 +1579,7 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 				var newlyCovered []*segment
 				if !s.FastRecovery.Active {
 					for seg := s.writeList.Front(); seg != nil && seg.sequenceNumber.LessThan(sb.End); seg = seg.Next() {
-						if seg.xmitCount != 0 && !s.ep.scoreboard.IsSACKED(seg.sackBlock()) {
+						if seg.xmitCount != 0 && sb.Start.LessThan(seg.sackBlock().End) && !s.ep.scoreboard.IsSACKED(seg.sackBlock()) {
 							newlyCovered = append(newlyCovered, seg)
 						}
 					}
