@@ -32,6 +32,23 @@ mount -t devpts devpts /dev/pts
 mount -t tmpfs -o mode=1777,nosuid,nodev tmpfs /dev/shm
 ln -s /proc/self/fd /dev/fd
 mount -t cgroup2 none /sys/fs/cgroup
+# The echo fixture uses a read-only input disk and a private serial port.
+# No guest directory is exported to the host in this mode.
+case " $(cat /proc/cmdline) " in
+  *" gvisor_echo=stock "*) echo_arm=stock ;;
+  *" gvisor_echo=fixed "*) echo_arm=fixed ;;
+  *) echo_arm= ;;
+esac
+if [[ -n "$echo_arm" ]]; then
+  trap 'rc=$?; printf "ECHO_VM_END %s %d\n" "$echo_arm" "$rc"; sync; /bin/busybox poweroff -f' EXIT
+  [[ "$(uname -r)" == 6.8.0-138-generic && "$(uname -m)" == x86_64 ]]
+  [[ "$(cat /sys/class/block/vda/ro)" == 1 && "$(ls /sys/class/net)" == lo ]]
+  mount -t ext4 -o ro,nodev,nosuid /dev/vda /input
+  ip link set lo up
+  printf 'ECHO_VM_READY %s %s\n' "$echo_arm" "$(uname -r)"
+  /bin/bash /input/fixture.sh "$echo_arm"
+  exit
+fi
 modprobe 9pnet_virtio
 modprobe 9p
 mount -t 9p -o trans=virtio,version=9p2000.L,ro input /input

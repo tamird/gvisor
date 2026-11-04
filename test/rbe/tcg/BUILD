@@ -14,6 +14,7 @@
 
 load("@rules_distroless//distroless:defs.bzl", "flatten")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//tools:defs.bzl", "bzl_library", "pkg_tar")
 load(":defs.bzl", "guest_host_tools", "tcg_image")
 
@@ -265,6 +266,24 @@ tcg_image(
     page_size = 4096,
     tags = ["manual"],
 )
+
+# Both tests use one immutable input image and independent disposable roots.
+# The input is staged by the fork workflow from the original source binaries.
+[
+    sh_test(
+        name = "july_bridge_" + arm,
+        srcs = ["july_bridge_vm.sh"],
+        args = [arm],
+        data = [
+            ":amd64_cgroup_v1_guest",
+            ":kvm_host_tools",
+            "july_bridge_inputs.ext4",
+        ],
+        tags = ["manual", "local"],
+        timeout = "long",
+    )
+    for arm in ["stock", "fixed"]
+]
 
 bzl_library(
     name = "defs_bzl",

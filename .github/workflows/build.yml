@@ -1,184 +1,127 @@
-name: CI
-
-"on":
-  workflow_dispatch:
-    inputs:
-      profile:
-        description: One selection or the complete supported public CPU matrix
-        type: choice
-        options: [single, public-cpu]
-        default: single
-      lanes:
-        description: Space-separated qualification lanes
-        type: string
-        default: smoke
-        required: true
-      architecture:
-        description: Target architecture selection
-        type: choice
-        options: [amd64, arm64, all]
-        default: amd64
-      execution:
-        description: Run tests on BuildBuddy or this Actions runner
-        type: choice
-        options: [remote, local]
-        default: remote
-      clock_source:
-        description: Explicit runtime clock source for qualification
-        type: choice
-        options: [calibrated, reference]
-        default: calibrated
-      local_test_requirements:
-        description: Comma-separated requirements missing from remote workers for hybrid lanes
-        type: string
-        default: namespace
-      syscall_bucket:
-        description: Optional increasing comma-separated hash15 buckets (0..14) for local or guest syscall lanes
-        type: string
-      targets:
-        description: Optional build/test/syscall owner labels, or continuous benchmark labels
-        type: string
-      test_filter:
-        description: Optional Bazel test filter for the test, container-v1 or docker lane
-        type: string
-      header_base:
-        description: Full comparison commit SHA for license-headers
-        type: string
-      cos_catalog_gzip_base64:
-        description: Gzip/base64-encoded complete gcloud COS image catalog
-        type: string
-      cos_catalog_sha256:
-        description: SHA256 of the uncompressed COS catalog
-        type: string
-
-concurrency:
-  # Explicit target lists can exceed GitHub's concurrency-key length limit.
-  # Keep those runs independent; different selections must not cancel each other.
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.profile }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ (contains(fromJSON('["build","test","benchmarks","pgo"]'), inputs.lanes) || inputs.targets != '') && github.run_id || '' }}-${{ inputs.clock_source }}
-  cancel-in-progress: true
-
+name: Compare July bridge source binaries in offline guests
+on:
+  push:
+    branches: [qualification/july-bridge-vm-ab]
+permissions: {contents: read, actions: read}
 jobs:
-  qualification-plan:
-    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((startsWith(github.ref, 'refs/heads/qualification/') || github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-nftables' || github.ref == 'refs/heads/rbe-actions-kvm-startup' || github.ref == 'refs/heads/rbe-unit-mixed-hybrid' || github.ref == 'refs/heads/diagnostics/unit-mixed-continuation')))
-    # All remote rows use this coordinator; run a sole matching row here.
-    name: ${{ inputs.profile == 'single' && inputs.execution == 'remote' && format('Qualification {0} remote {1}', inputs.architecture, inputs.lanes) || 'Plan qualification' }}
+  observe:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    outputs:
-      plan: ${{ steps.plan.outputs.plan }}
-      in_place: ${{ steps.plan.outputs.in_place }}
-    env:
-      QUALIFICATION_PROFILE: ${{ inputs.profile || 'single' }}
-      QUALIFICATION_COMMIT: ${{ github.sha }}
-      QUALIFICATION_LANES: ${{ inputs.lanes || 'smoke' }}
-      QUALIFICATION_ARCH: ${{ inputs.architecture || 'amd64' }}
-      QUALIFICATION_EXECUTION: ${{ inputs.execution || 'remote' }}
-      QUALIFICATION_CLOCK_SOURCE: ${{ inputs.clock_source || 'calibrated' }}
-      QUALIFICATION_LOCAL_TEST_REQUIREMENTS: ${{ inputs.local_test_requirements }}
-      QUALIFICATION_TARGETS: ${{ inputs.targets }}
-      QUALIFICATION_TEST_FILTER: ${{ inputs.test_filter }}
-      QUALIFICATION_SYSCALL_BUCKET: ${{ inputs.syscall_bucket }}
-      QUALIFICATION_HEADER_BASE: ${{ inputs.header_base }}
-      QUALIFICATION_COS_GZIP_BASE64: ${{ inputs.cos_catalog_gzip_base64 }}
-      QUALIFICATION_COS_SHA256: ${{ inputs.cos_catalog_sha256 }}
+    timeout-minutes: 75
     steps:
-    - name: Checkout the triggering commit
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      with:
-        ref: ${{ github.sha }}
-        persist-credentials: false
-    - name: Resolve the source-owned qualification plan
-      id: plan
-      shell: bash
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 2, persist-credentials: false}
+    - name: Bind the previous two original binary archives and their fork source
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
-        plan=$(bash test/rbe/qualify.sh --dispatch-plan)
-        printf 'plan=%s\n' "$plan" >> "$GITHUB_OUTPUT"
-        in_place=$(jq -r '.profile == "single" and (.rows | length <= 2) and all(.rows[]; .runner == "ubuntu-24.04")' <<<"$plan")
-        printf 'in_place=%s\n' "$in_place" >> "$GITHUB_OUTPUT"
-
-    - name: Run the selected checks
-      id: row
-      if: steps.plan.outputs.in_place == 'true'
-      timeout-minutes: ${{ fromJSON(steps.plan.outputs.plan).rows[0].job_minutes }}
-      uses: ./.github/actions/qualification-row
+        set -euo pipefail
+        d="$RUNNER_TEMP/july-bridge-vm"
+        mkdir -m 700 "$d"
+        printf '%s\n' '{"status":"INCOMPLETE","binaries":{},"arms":{},"vm_source":"64fea59014b0104240a5e100095b60e51aa90bae","fixture":"55389ccd4ddad77ee81531a7acf0d552d57471dd","original_packet_artifact":13360000336,"build_artifact":13360069037}' >"$d/result.json"
+        test "$(git rev-parse HEAD^)" = 64fea59014b0104240a5e100095b60e51aa90bae
+        gh api repos/tamird/gvisor/actions/artifacts/13359584720/zip > "$d/stock.zip"
+        gh api repos/tamird/gvisor/actions/artifacts/13360118839/zip > "$d/fixed.zip"
+        printf '%s  %s\n' 04a7314cb8d1efacf59a696a68755eeb1ffca8afca948f7af809cbee2a10dc0c "$d/stock.zip" 1b32c287347364392ce7c8990536f0cdc30516138dddf962de42d6c33e730bb4 "$d/fixed.zip" | sha256sum -c -
+    - name: Stage the original public fixture images without starting either
+      run: |
+        set -euo pipefail
+        d="$RUNNER_TEMP/july-bridge-vm"
+        phase=source
+        trap 'printf "%s %s\n" "$phase" "$?" > "$d/setup"' EXIT
+        obs=55389ccd4ddad77ee81531a7acf0d552d57471dd
+        rep=75eceea46eaab71ebf693a302e459d3a8dafcd51
+        git fetch --no-tags --depth=1 origin "$obs" "$rep"
+        test "$(git rev-parse "$obs:test/rtnetlink/linux/dind_socket.py")" = b6f745c9cfc1cd05c83572a52cbe8638eed4bb5e
+        test "$(git rev-parse "$obs:test/rtnetlink/linux/dind_guest.sh")" = 1d1f2de2f2174640aec66adc86717ad72a3c7abe
+        test "$(git rev-parse "$obs:test/rtnetlink/linux/nested_docker.py")" = 16dcbd65f151794411acf8710b77c2755ea88f52
+        test "$(git rev-parse "$obs:.github/qualification/nested_docker_receipt.py")" = 44b65c4b549c6726d4d50a613d0557acec22eba6
+        git show "$rep:.github/qualification/july_runsc_build.py" >"$d/build-report.py"
+        phase=tools
+        test "$(cat .bazelversion)" = 8.8.1
+        curl -fsSL --retry 2 https://releases.bazel.build/8.8.1/release/bazel-8.8.1-linux-x86_64 -o "$d/bazel"
+        echo "5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160  $d/bazel" | sha256sum -c -
+        chmod 755 "$d/bazel"
+        phase=sidecars
+        curl -fsSL --retry 2 https://storage.googleapis.com/gvisor/releases/pool/20260727.0/binary-amd64/runsc.deb -o "$d/july.deb"
+        echo "386bdc2196fc600b68ff8dafdd8ecdc6a8e033ecf9cfa9dfab61ec1b389da307  $d/july.deb" | sha256sum -c -
+        dpkg-deb -x "$d/july.deb" "$d/july"
+        # The trusted image importer only pulls, saves and exports; it never
+        # starts a workload with the host daemon or supplies that socket to it.
+        stage_image() {
+          for registry in mirror.gcr.io docker.io; do
+            if docker pull --platform linux/amd64 "$registry/library/$1@$2"; then
+              test "$(docker image inspect -f '{{.Id}}' "$registry/library/$1@$2")" = "$3"
+              return
+            fi
+          done
+          return 1
+        }
+        phase=docker-image
+        dind=sha256:d2dc198f7d839eae26b5a9cb0e7cdc4e2c97d9cb4ea66dbeb0a4c0c7f0b165f8
+        stage_image docker sha256:f649ef046008ca7f926a2571c32b0ac22e5c59eb61b959617f9acc2a4c638cf5 "$dind"
+        container=$(docker create --network none "$dind")
+        docker export -o "$d/dind-rootfs.tar" "$container"
+        docker rm -v "$container"
+        phase=python-image
+        py=sha256:38fd5a425aa93b06d367e2e47e2da6a9bc0cabdaf5788fb1707d143fd1416e97
+        stage_image python sha256:69ebe56e2a764c399514a0a6117131cb730cc4d0e71e85c08deb9af74cbb9f41 "$py"
+        docker tag "$py" python:3.12-alpine
+        docker save -o "$d/python-image.tar" python:3.12-alpine
+        phase=ready
+    - name: Assemble the public VM once and run both Bazel owners as the ordinary unprivileged user
+      run: |
+        set -euo pipefail
+        d="$RUNNER_TEMP/july-bridge-vm"
+        sudo -n unshare --mount --pid --fork --mount-proc --propagation private \
+          setpriv --reuid="$(id -u)" --regid="$(id -g)" --clear-groups --no-new-privs \
+            --bounding-set=-all --inh-caps=-all --ambient-caps=-all \
+            env -i HOME="$HOME" USER="$(id -un)" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 GIT_TERMINAL_PROMPT=0 \
+            /bin/bash -ec '
+              set -o pipefail
+              dir=$1
+              test ! -w /var/run/docker.sock
+              python3 -B .github/qualification/july_bridge_vm.py "$dir" stage
+              test "$("$dir/bazel" --version)" = "bazel 8.8.1"
+              rc=0
+              timeout -k 20 3400 "$dir/bazel" --nosystem_rc --nohome_rc test --config=x86_64 --jobs=3 --local_test_jobs=1 --keep_going \
+                --remote_executor= --remote_cache= --bes_backend= --strategy=TestRunner=local \
+                --nocache_test_results --flaky_test_attempts=1 --test_timeout=840 --build_tests_only=false \
+                --build_tag_filters= --test_tag_filters= --color=no --curses=no --noshow_progress \
+                --build_event_publish_all_actions --build_event_json_file="$dir/events" \
+                //test/rbe/tcg:amd64_cgroup_v1_guest //test/rbe/tcg:kvm_host_tools \
+                //test/rbe/tcg:july_bridge_stock //test/rbe/tcg:july_bridge_fixed >"$dir/build.log" 2>&1 || rc=$?
+              printf "%s\n" "$rc" >"$dir/exit"
+              exit "$rc"
+            ' julius "$d"
+    - name: Retain native build, both original test results, and first socket exchange independently
+      if: always()
+      run: |
+        set -euo pipefail
+        dir="$RUNNER_TEMP/july-bridge-vm"
+        env -i HOME="$HOME" PATH=/usr/bin:/bin LANG=C.UTF-8 /usr/bin/python3 -B .github/qualification/july_bridge_vm.py "$dir" collect
+    - name: Validate the bounded public projection
+      if: always()
+      id: safe
+      run: |
+        set -eu
+        python3 - "$RUNNER_TEMP/july-bridge-vm/result.json" <<'PY'
+        import json,re,sys
+        from pathlib import Path
+        p=Path(sys.argv[1])
+        assert p.is_file() and not p.is_symlink() and 0<p.stat().st_size<160000
+        data=p.read_bytes()
+        assert not re.search(rb'(?i)https?://|github_pat_|gh[pousr]_|bearer\s|authorization\s*[:=]|BEGIN [A-Z]*PRIVATE KEY',data)
+        r=json.loads(data)
+        assert r["status"] in ("MEASURED","INCOMPLETE") and set(r["arms"])<={"stock","fixed"}
+        PY
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.safe.outcome == 'success'
       with:
-        plan: ${{ steps.plan.outputs.plan }}
-        row: ${{ toJSON(fromJSON(steps.plan.outputs.plan).rows[0]) }}
-        cos: ${{ inputs.cos_catalog_gzip_base64 }}
-        key: ${{ secrets.BUILDBUDDY_API_KEY }}
-
-    - name: Run the remaining Nogo checks
-      id: nogo
-      if: always() && steps.plan.outputs.in_place == 'true' && fromJSON(steps.plan.outputs.plan).rows[1].id != ''
-      timeout-minutes: ${{ fromJSON(steps.plan.outputs.plan).rows[1].job_minutes }}
-      uses: ./.github/actions/qualification-row
-      with:
-        plan: ${{ steps.plan.outputs.plan }}
-        row: ${{ toJSON(fromJSON(steps.plan.outputs.plan).rows[1]) }}
-        cos: ${{ inputs.cos_catalog_gzip_base64 }}
-        key: ${{ secrets.BUILDBUDDY_API_KEY }}
-
-    - name: Verify the original row bytes
-      if: always() && steps.plan.outputs.in_place == 'true'
-      uses: ./.github/actions/qualification-result
-      with:
-        plan: ${{ steps.plan.outputs.plan }}
-        outcome: ${{ steps.nogo.outcome == 'failure' && 'failure' || steps.row.outcome }}
-        label: ${{ inputs.architecture }}
-
-  remote-qualification:
-    needs: qualification-plan
-    if: needs.qualification-plan.outputs.in_place != 'true'
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJSON(needs.qualification-plan.outputs.plan).rows }}
-    name: Qualification ${{ matrix.id }}
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: ${{ matrix.job_minutes }}
-    permissions:
-      contents: read
-    steps:
-    - name: Checkout the triggering commit
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      with:
-        ref: ${{ github.sha }}
-        persist-credentials: false
-    - name: Run this planned row on its selected coordinator
-      id: row
-      timeout-minutes: ${{ matrix.job_minutes }}
-      uses: ./.github/actions/qualification-row
-      with:
-        plan: ${{ needs.qualification-plan.outputs.plan }}
-        row: ${{ toJSON(matrix) }}
-        cos: ${{ inputs.cos_catalog_gzip_base64 }}
-        key: ${{ secrets.BUILDBUDDY_API_KEY }}
-
-    - name: Verify a lone row on its native runner
-      if: always() && inputs.profile == 'single'
-      uses: ./.github/actions/qualification-result
-      with:
-        plan: ${{ needs.qualification-plan.outputs.plan }}
-        outcome: ${{ steps.row.outcome }}
-        label: ${{ inputs.architecture }}
-
-  qualification-result:
-    needs: [qualification-plan, remote-qualification]
-    if: always() && inputs.profile == 'public-cpu' && needs.qualification-plan.result == 'success'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    permissions:
-      contents: read
-    steps:
-    - name: Checkout the triggering commit
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      with:
-        ref: ${{ github.sha }}
-        persist-credentials: false
-    - name: Verify every planned public CPU row
-      uses: ./.github/actions/qualification-result
-      with:
-        plan: ${{ needs.qualification-plan.outputs.plan }}
-        outcome: ${{ needs.remote-qualification.result }}
-        label: all
+        name: july-bridge-vm-comparison
+        path: ${{ runner.temp }}/july-bridge-vm/result.json
+        if-no-files-found: error
+    - name: Require both measured arms
+      if: always()
+      run: |
+        jq -e '.status == "MEASURED"' "$RUNNER_TEMP/july-bridge-vm/result.json"
