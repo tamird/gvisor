@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T00:12:44.634843+00:00",
+    "updatedAt": "2026-11-04T00:31:34.866976+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -35741,26 +35741,14 @@
       "number": 16671,
       "repo": "google/gvisor",
       "ref": "fix/tcp-cork-flush-before-fin",
-      "head": "c336db121f61914f6f2a761dc005bf4293f67e09",
+      "head": "5d154c17183b1f362f4e85ddb2d5af0570b166a3",
       "title": "Flush corked TCP data when a FIN is queued",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-04T00:12:44.634843+00:00",
+      "updatedAt": "2026-11-04T00:31:34.866976+00:00",
       "reviewDecision": null,
       "url": "https://github.com/google/gvisor/pull/16671",
       "summary": "Close and SHUT_WR flush a corked short write before FIN instead of waiting 200 ms.",
-      "followup": {
-        "owner": "TCP owner",
-        "disposition": "Approved; Linux and published-sender checks pending",
-        "sourceHead": "c336db121f61914f6f2a761dc005bf4293f67e09",
-        "observedAt": "2026-11-04T00:12:44.634843+00:00",
-        "nextAction": "Complete only the outstanding Linux and published-sender comparisons. Once those checks qualify, publish approved 5d154c171 and the already authorized reply to Parth. No contributor decision remains.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/16671#discussion_r4461143676",
-          "https://github.com/tamird/gvisor/actions/runs/41733158454",
-          "https://github.com/tamird/gvisor/actions/runs/41738515962/artifacts/13280596522"
-        ]
-      },
       "evidence": [
         {
           "label": "Reported cork timeout on close or SHUT_WR",
@@ -35829,6 +35817,18 @@
         {
           "label": "Ordinary comparison: amended sender and clock passed; Linux and published sender had no attempts before timeout",
           "url": "https://github.com/tamird/gvisor/actions/runs/41733158454/artifacts/13279632050"
+        },
+        {
+          "label": "Published approved amendment 5d154c171",
+          "url": "https://github.com/google/gvisor/pull/16671/commits/5d154c17183b1f362f4e85ddb2d5af0570b166a3"
+        },
+        {
+          "label": "Final comparison: all 48 Linux cases, 48 amended gVisor cases and eight clock leaves passed; old sender failed the expected second poll",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41746548551/artifacts/13283698252"
+        },
+        {
+          "label": "Reply to Parth after publication and completed checks",
+          "url": "https://github.com/google/gvisor/pull/16671#discussion_r4462129709"
         }
       ],
       "settledReviews": [
@@ -35855,6 +35855,15 @@
           "at": "2026-11-04T00:12:44.634843+00:00",
           "url": "https://github.com/tamird/gvisor/commit/5d154c171",
           "body": "Approved the checkpoint-only delta 8c163432b..5d154c171: sample the armed timer under the endpoint mutex before saving, and rearm it after restore only if a write was already waiting. The real Save/Load comparison passed both idle and waiting cases; the earlier approved version failed idle and passed waiting. Public card publication is authorized now; publish the PR amendment and reply only after the outstanding Linux and published-sender comparisons qualify. The earlier ordinary amendment and reply approval remain in effect."
+        },
+        {
+          "kind": "reply",
+          "head": "5d154c17183b1f362f4e85ddb2d5af0570b166a3",
+          "outcome": "approved",
+          "at": "2026-11-04T00:28:52Z",
+          "url": "https://github.com/google/gvisor/pull/16671#discussion_r4461143676",
+          "postedURL": "https://github.com/google/gvisor/pull/16671#discussion_r4462129709",
+          "body": "Published the approved amendment after the Linux, published-sender, amended-sender, clock and checkpoint comparisons qualified, then posted the authorized reply to Parth."
         }
       ]
     },
