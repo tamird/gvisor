@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T01:24:27.854931+00:00",
+    "updatedAt": "2026-11-04T01:32:28.520065+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -44167,13 +44167,13 @@
       "repo": "google/gvisor",
       "number": 16793,
       "ref": "hostinet-shutdown-rd-recv",
-      "head": "d47997f8e4c48b4e608436e92c6566d6e03bf76e",
+      "head": "8f7a1936f76cfcdf91ca815a4349471a80f3ded5",
       "title": "Review hostinet read shutdown across TCP reconnect",
       "url": "https://github.com/google/gvisor/pull/16793",
       "group": "runtime",
       "status": "open",
-      "summary": "The author fixed the TCP reconnect and synchronized publication of the accepted fd. In a separate AF_PACKET comparison, Linux timed out with EAGAIN after shutdown returned EOPNOTSUPP. Hostinet returned EOF in under 0.1 ms on both SOCK_DGRAM and SOCK_RAW; both waited normally before shutdown.",
-      "updatedAt": "2026-11-03T14:10:33.767303+00:00",
+      "summary": "The author addressed both review findings. A reconnected TCP stream uses the host’s receive state. On AF_PACKET, a rejected shutdown leaves reads enabled. The new syscall test checks that recv times out with EAGAIN after SHUT_RD and SHUT_RDWR on both raw and datagram packet sockets. The author reports 10 passing hostinet runs and passes on native Linux and netstack.",
+      "updatedAt": "2026-11-04T01:32:28.520065+00:00",
       "evidence": [
         {
           "label": "Reply about packet socket reads after shutdown fails",
@@ -44206,6 +44206,10 @@
         {
           "label": "Original timed Linux and hostinet syscall results",
           "url": "https://github.com/tamird/gvisor/actions/runs/41575061199/artifacts/13202768324"
+        },
+        {
+          "label": "Author’s fix and results for the packet-socket review",
+          "url": "https://github.com/google/gvisor/pull/16793#discussion_r4462404944"
         }
       ],
       "settledReviews": [
