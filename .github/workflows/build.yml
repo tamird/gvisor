@@ -1,29 +1,36 @@
 name: Check recurring TCP cork timeouts
 on:
   push:
-    branches: [qualification/tcp-cork-timer-compare]
+    branches: [qualification/tcp-cork-socket-recovery]
 permissions:
   contents: read
+  actions: read
 jobs:
   compare:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
     runs-on: ubuntu-24.04
-    timeout-minutes: 70
+    timeout-minutes: 100
     env:
       REPORTER: 6b3fe9ab6c03facafe6340c85f8d60ca3591566b
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 4
+          fetch-depth: 5
           persist-credentials: false
-      - name: Run the socket case on Linux and both gVisor senders
+      - name: Retain the original socket and clock verdict
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api repos/tamird/gvisor/actions/artifacts/13279632050/zip > "$RUNNER_TEMP/cork-original.zip"
+      - name: Run only the missing Linux and published-sender comparisons
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/cork-public" "$RUNNER_TEMP/cork-private"
           printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/cork-public/verdict.json"
-          test "$(git rev-parse HEAD^)" = f69769dd4a4556762a6391e89f3133cfd6bffc05
+          test "$(git rev-parse HEAD^)" = d1928120d01a8169846ac59f340fab5ff178424a
           cp .github/qualification/cork_timer.py "$RUNNER_TEMP/"
           git fetch --quiet --depth=1 origin "$REPORTER"
           for helper in unit_matrix qualification_report; do
