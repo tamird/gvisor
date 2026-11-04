@@ -27,6 +27,7 @@ BASE = "7bffefa9185aa55ba377e8a5534210a7f0cbf266"
 PUBLIC = "5af539b23594b3711fd49c514e236442baad9df3"
 REGRESSION = "296615c83a03899059e1e37f9bfc34fd68efdf71"
 PRODUCT = os.environ["PRODUCT"]
+CONSUMER = os.environ["CONSUMER"]
 LABEL = "//pkg/buffer:buffer_test"
 BUILD = "pkg/buffer/BUILD"
 TEST = "pkg/buffer/buffer_test.go"
@@ -37,6 +38,8 @@ BENCH_NAMES = {"BenchmarkReadAt", "BenchmarkReadAtMultiView", "BenchmarkViewList
 BENCH_ROW = re.compile(r"^(BenchmarkReadAt(?:MultiView)?|BenchmarkViewListAsSlice)(?:-1)?\s+(\d+)\s+([0-9.]+) ns/op\s+(\d+) B/op\s+(\d+) allocs/op\s*$")
 PACKAGE_FILES = ["pkg/buffer/" + name for name in ("BUILD", "buffer.go", "buffer_state.go", "buffer_test.go", "chunk.go", "view.go", "view_test.go", "view_unsafe.go")]
 FORBIDDEN = re.compile(rb"gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|BEGIN (RSA |OPENSSH )?PRIVATE KEY|(?i:authorization|x-buildbuddy-api-key)\s*[:=]")
+RACE_TOOLCHAIN = "@llvm//toolchain:linux_x86_64_to_linux_aarch64"
+RACE_OPTIONS = ["--config=race", "--extra_toolchains=" + RACE_TOOLCHAIN]
 DEADLINE = time.monotonic() + 100 * 60
 
 
@@ -162,7 +165,7 @@ def invoke(key: str, source: str, args: list[str], info: dict, *, package_source
         save(info)
     else:
         raise ValueError("No original BEP available")
-    if build_only or os.environ.get("RACE_DIAGNOSTIC") == "1":
+    if build_only or key == "race":
         row["actions"] = []
         for event in records:
             if "action" not in event:
@@ -231,34 +234,82 @@ def invoke(key: str, source: str, args: list[str], info: dict, *, package_source
     return row, log
 
 
+def compiler_selection(info: dict) -> None:
+    checkout(PRODUCT)
+    info["race_compilers"] = {
+        "execution_architecture": platform.machine(),
+        "test_target_architecture": "x86_64",
+        "cross_stdlib_target_architecture": "aarch64",
+        "explicit_cross_toolchain": RACE_TOOLCHAIN,
+        "host_tools": {name: bool(shutil.which(name)) for name in ("cc", "gcc", "aarch64-linux-gnu-gcc")},
+        "selections": [],
+    }
+    save(info)
+    for name, options in (("original", ["--config=race"]), ("declared_cross", RACE_OPTIONS)):
+        path = TMP / ("compiler-" + name + ".json")
+        with path.open("w") as output, (TMP / ("compiler-" + name + ".stderr")).open("w") as errors:
+            result = subprocess.run(["bazelisk", "aquery", "-c", "opt", *options, "--output=jsonproto",
+                "--noinclude_artifacts", 'mnemonic("GoStdlib", deps(//pkg/buffer:buffer_test))'],
+                stdout=output, stderr=errors, timeout=300,
+                env={key: os.environ[key] for key in ("PATH", "HOME", "USER") if key in os.environ})
+        row = {"selection": name, "native_exit": result.returncode, "actions": []}
+        info["race_compilers"]["selections"].append(row)
+        save(info)
+        if result.returncode or path.stat().st_size > 8 * 1024**2:
+            row["disposition"] = "SELECTION_UNAVAILABLE"
+            save(info)
+            continue
+        data = json.loads(path.read_bytes())
+        for action in data.get("actions", []):
+            assert action["mnemonic"] == "GoStdlib"
+            env = {item["key"]: item["value"] for item in action.get("environmentVariables", [])}
+            selected = {key: env[key] for key in ("CC", "GOARCH", "GOOS", "CGO_ENABLED") if key in env}
+            assert all(re.fullmatch(r"[A-Za-z0-9_+@./:=,-]{1,1024}", value) for value in selected.values())
+            row["actions"].append({"configuration_id": action["configurationId"], "environment": selected})
+        row["disposition"] = "OBSERVED" if row["actions"] else "NO_ACTIONS"
+        save(info)
+
+
+def race_binary(row: dict) -> None:
+    result = subprocess.run(["bazelisk", "cquery", "-c", "opt", *RACE_OPTIONS, "--output=files", LABEL],
+                            capture_output=True, text=True, timeout=300,
+                            env={key: os.environ[key] for key in ("PATH", "HOME", "USER") if key in os.environ})
+    assert result.returncode == 0, "Race binary query failed"
+    output, = result.stdout.splitlines()
+    assert output.startswith("bazel-out/") and ".." not in Path(output).parts
+    binary = Path(output)
+    assert binary.is_file() and binary.stat().st_size < 512 * 1024**2
+    data = binary.read_bytes()
+    assert data[:6] == b"\x7fELF\x02\x01" and int.from_bytes(data[18:20], "little") == 62
+    row["test_binary"] = {"sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data), "elf_machine": 62}
+    row["architecture_scope"] = "Native AMD64 TestRunner and test ELF; ARM64 GoStdlib is a cross-built input, not an ARM64 test execution"
+
+
 def functional(info: dict) -> None:
+    try:
+        compiler_selection(info)
+    except (AssertionError, OSError, ValueError, TypeError, KeyError, subprocess.TimeoutExpired) as error:
+        info["race_compilers"]["verification_error"] = str(error)[:500]
+        save(info)
     for key, source, args in (
         ("ordinary", PRODUCT, ["--test_arg=-test.v", LABEL]),
-        ("race", PRODUCT, ["--config=race", "--test_arg=-test.v", LABEL]),
+        ("race", PRODUCT, [*RACE_OPTIONS, "--test_arg=-test.v", LABEL]),
         ("nogo", PRODUCT, [LABEL + "_nogo"]),
-        ("restore-negative", REGRESSION, ["--test_arg=-test.run=^TestExternalStorageRestoreOrder$", "--test_arg=-test.v", LABEL]),
     ):
         try:
-            row, log = invoke(key, source, args, info, expected_failure=key == "restore-negative")
-            if key == "restore-negative":
-                if row["native_exit"] == 0:
-                    row["status"] = "DISAGREEMENT"
-                assert row["native_exit"] == 3 and row["test_status"] == "FAILED", "Baseline restore failure not observed"
-                assert all(row["cases"].get(name) == "FAILED" for name in RESTORE_CASES), "Both original restore leaves must fail"
-                assert set(row["cases"]) <= RESTORE_CASES | {"TestExternalStorageRestoreOrder"}, "Unexpected negative cases"
-                assert log.count(FAILURE) >= 2, "Missing original release-before-load diagnostics"
-                row["status"] = "EXPECTED_FAILURE"
+            row, log = invoke(key, source, args, info)
+            assert row["native_exit"] == 0 and row["test_status"] == "PASSED", "Candidate test command failed"
+            assert row["xml"]["failed"] == row["xml"]["skipped"] == 0, "Failed or skipped candidate cases"
+            if key == "nogo":
+                assert all(f"{arch}...PASS" in log for arch in ("amd64", "arm64")), "Missing Nogo architecture section"
             else:
-                assert row["native_exit"] == 0 and row["test_status"] == "PASSED", "Candidate test command failed"
-                assert row["xml"]["failed"] == row["xml"]["skipped"] == 0, "Failed or skipped candidate cases"
-                if key == "nogo":
-                    assert all(f"{arch}...PASS" in log for arch in ("amd64", "arm64")), "Missing Nogo architecture section"
-                else:
-                    required = RESTORE_CASES | {"TestSaveRestoreExternalBuffers", "TestSaveRestoreEmptyExternalView"}
-                    assert all(row["cases"].get(name) == "PASSED" for name in required), "Missing required restore pass"
-                row["status"] = "PASS"
-            row["verified_at"] = utc()
-        except (AssertionError, OSError, ValueError, TypeError, KeyError) as error:
+                required = RESTORE_CASES | {"TestSaveRestoreExternalBuffers", "TestSaveRestoreEmptyExternalView",
+                    "TestSaveRestoreTrimmedHeapBuffer", "TestGrowExternalBuffer"}
+                assert all(row["cases"].get(name) == "PASSED" for name in required), "Missing required restore pass"
+                if key == "race":
+                    race_binary(row)
+            row.update(status="PASS", verified_at=utc())
+        except (AssertionError, OSError, ValueError, TypeError, KeyError, subprocess.TimeoutExpired) as error:
             info["attempts"][-1]["verification_error"] = str(error)[:500]
         save(info)
     ordinary, race = info["attempts"][:2]
@@ -292,7 +343,9 @@ def main() -> None:
     assert git("rev-parse", PUBLIC + "^") == BASE
     assert git("rev-parse", REGRESSION + "^") == PUBLIC
     assert git("diff", "--name-only", PUBLIC, REGRESSION) == TEST
-    assert source_bytes(REGRESSION, TEST) == source_bytes(PRODUCT, TEST), "Restore regression differs between arms"
+    assert git("rev-parse", CONSUMER + "^") == "4f77681799d81bb31a4b1e09f661eff5fe474b93"
+    for path in ("buffer.go", "buffer_state.go", "chunk.go", "view.go", "view_unsafe.go"):
+        assert source_bytes(PRODUCT, "pkg/buffer/" + path) == source_bytes(CONSUMER, "pkg/buffer/" + path), "Consumer production buffer differs"
     assert len({source_bytes(source, BUILD) for source in (BASE, PUBLIC, PRODUCT)}) == 1, "Benchmark library settings changed"
     for source in (BASE, PUBLIC, PRODUCT):
         assert git("ls-tree", "--name-only", f"{source}:pkg/buffer").splitlines() == [Path(path).name for path in PACKAGE_FILES], "Package file inventory changed"
@@ -300,44 +353,46 @@ def main() -> None:
     original = re.compile(rb"func BenchmarkReadAt\(b \*testing.B\) \{.*?\n\}", re.S)
     assert len({original.search(source_bytes(source, TEST))[0] for source in (BASE, PUBLIC, PRODUCT)}) == 1, "Existing benchmark changed"
     info = {"status": "INCOMPLETE", "base": BASE, "public": PUBLIC, "product": PRODUCT, "regression": REGRESSION,
-            "host": host, "benchmark_fixture": report.file_record(TMP / "buffer_read_benchmark.go"), "attempts": [],
+            "consumer_integration": CONSUMER, "host": host, "benchmark_fixture": report.file_record(TMP / "buffer_read_benchmark.go"), "attempts": [],
             "benchmark_common_root": PRODUCT,
             "go_sdk_inputs": {path: git("rev-parse", f"{PRODUCT}:{path}") for path in ("go.mod", "MODULE.bazel", "tools/go_types_memoize.patch")},
             "timing_scope": "Native hot heap-backed Buffer.ReadAt and View.AsSlice on one common dependency root; no packet or end-to-end restore throughput claim"}
     save(info)
-    if os.environ.get("RACE_DIAGNOSTIC") == "1":
-        original = json.loads((OUT / "original-verdict.json").read_bytes())
-        assert original["product"] == PRODUCT and original["status"] == "FAIL"
-        race, = (row for row in original["attempts"] if row["phase"] == "race")
-        assert race["source"] == PRODUCT and race["native_exit"] == 1 and race["attempt_count"] == 0
-        assert race["invocations"] == ["b0da347d-662c-46ac-8029-495e1b341afd"]
-        info["original"] = {"run": 41767076495, "artifact": 13293284072,
-                            "sha256": "46db1cb9779c30b660cb51fe771e37d71f4f14b13b8eb3fafa42b06e60e3d8ab",
-                            "status": original["status"], "race": race}
-        try:
-            row, _ = invoke("race", PRODUCT, ["--config=race", "--test_arg=-test.v", LABEL], info)
-            assert row["native_exit"] == 0 and row["test_status"] == "PASSED", "Actual race test owner failed"
-            ordinary, = (item for item in original["attempts"] if item["phase"] == "ordinary")
-            assert ordinary["status"] == "PASS" and ordinary["source"] == PRODUCT
-            assert row["cases"] == ordinary["cases"], "Race must run the same actual candidate cases"
-            assert row["identity"]["configuration"] != ordinary["identity"]["configuration"], "Race configuration was not distinct"
-            assert row["xml"]["failed"] == row["xml"]["skipped"] == 0
-            row.update(status="PASS", verified_at=utc())
-            info["status"] = "RACE_PASS_ORIGINAL_BUILD_FAILURE_UNEXPLAINED"
-        except (AssertionError, OSError, ValueError, TypeError, KeyError) as error:
-            row = info["attempts"][-1]
-            row["verification_error"] = str(error)[:500]
-            info["status"] = "FAIL" if row.get("native_exit") not in (None, 0) and not row.get("timed_out") else "INCOMPLETE"
-        finally:
-            info["verified_at"] = utc()
-            save(info)
-        assert info["status"] == "RACE_PASS_ORIGINAL_BUILD_FAILURE_UNEXPLAINED", "Race qualification remains unsuccessful"
-        return
+    original = json.loads((OUT / "original-verdict.json").read_bytes())
+    assert original["product"] == "1624a495b6c1e58e9fd5209e3ff00dba8811cb1c" and original["status"] == "FAIL"
+    negative, = (row for row in original["attempts"] if row["phase"] == "restore-negative")
+    assert negative["source"] == REGRESSION and negative["status"] == "EXPECTED_FAILURE"
+    assert negative["native_exit"] == 3 and negative["test_status"] == "FAILED"
+    assert all(negative["cases"].get(name) == "FAILED" for name in RESTORE_CASES)
+    info["retained_original"] = {"run": 41767076495, "artifact": 13293284072,
+        "sha256": "46db1cb9779c30b660cb51fe771e37d71f4f14b13b8eb3fafa42b06e60e3d8ab",
+        "status": original["status"], "negative": negative,
+        "scope": "Prior old-source restore failure and full first-candidate timings retained; no old control repeated"}
+    diagnostic = json.loads((OUT / "diagnostic-verdict.json").read_bytes())
+    assert diagnostic["product"] == original["product"] and diagnostic["status"] == "FAIL"
+    failed, = diagnostic["attempts"]
+    assert failed["phase"] == "race" and failed["native_exit"] == 1 and failed["attempt_count"] == 0
+    info["retained_race_diagnosis"] = {"run": 41771239765, "artifact": 13294344177,
+        "sha256": "28e905bbfb379cf2f3b8860ab261b2c3cc783bf1f8ea3ad4e01212cf6337e5d2", "native_exit": 1,
+        "attempt_count": 0, "scope": "Original candidate ARM64 GoStdlib failed before TestRunner"}
+    save(info)
     try:
         functional(info)
         for block, order in enumerate(list(itertools.permutations(("parent", "public", "candidate"))) * 3, 1):
             for arm in order:
                 measure(block, arm, info)
+        try:
+            row, _ = invoke("consumer", CONSUMER, ["--test_arg=-test.run=^TestMappedStorageSaveRestore$",
+                "--test_arg=-test.v", "//pkg/sentry/pgalloc:pgalloc_test"], info)
+            row["scope"] = "Real pgalloc mapping consumer on its separate integration source, not standalone buffer source"
+            names = {"TestMappedStorageSaveRestore"} | {"TestMappedStorageSaveRestore/" + mode
+                for mode in ("sync", "async", "async_error", "cold_cleanup", "release_before_mapping")}
+            assert row["native_exit"] == 0 and row["test_status"] == "PASSED"
+            assert row["cases"] == dict.fromkeys(names, "PASSED"), "Missing, extra, failed or skipped actual consumer cases"
+            row.update(status="PASS", verified_at=utc())
+        except (AssertionError, OSError, ValueError, TypeError, KeyError) as error:
+            info["attempts"][-1]["verification_error"] = str(error)[:500]
+        save(info)
         assert len(info["attempts"]) == 58, "Incomplete comparison"
         assert all(row["status"] == ("EXPECTED_FAILURE" if row["expected_failure"] else "PASS") for row in info["attempts"]), "Some qualification phases did not pass"
         info["status"] = "PASS"
