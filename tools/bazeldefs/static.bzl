@@ -15,11 +15,13 @@ _MUSL_PLATFORMS = select_arch(
 
 musl_cc_binary, _cc_binary_transition = with_cfg(_cc_binary, executable = True).set("platforms", _MUSL_PLATFORMS).build()
 
-go_binary, _go_binary_transition = with_cfg(
+go_binary_builder = with_cfg(
     _go_binary,
     executable = True,
     extra_providers = [GoLibrary, GoArchive],
-).set("platforms", _MUSL_PLATFORMS).build()
+).set("platforms", _MUSL_PLATFORMS)
+
+go_binary, _go_binary_transition = go_binary_builder.build()
 
 # Extend the upstream test rule rather than wrapping its executable. Exporting
 # it as go_test preserves the rule kind used by the Nogo aspect, together with

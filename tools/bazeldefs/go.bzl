@@ -7,7 +7,7 @@ load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "GoInfo", "GoLibrary", _go_b
 load("@io_bazel_rules_go//proto:def.bzl", _go_grpc_library = "go_grpc_library", _go_proto_library = "go_proto_library")
 load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
 load("//tools/bazeldefs:defs.bzl", "select_arch", "select_system")
-load("//tools/bazeldefs:static.bzl", _static_go_binary = "go_binary", _static_go_test = "go_test")
+load("//tools/bazeldefs:static.bzl", _static_go_binary = "go_binary", _static_go_binary_builder = "go_binary_builder", _static_go_test = "go_test")
 
 gazelle = _gazelle
 
@@ -70,6 +70,16 @@ def go_binary(name, static = False, pure = False, x_defs = None, **kwargs):
         x_defs: additional definitions.
         **kwargs: rest of the arguments are passed to _go_binary.
     """
+    _go_binary_with_rule(
+        name = name,
+        binary_rule = _static_go_binary if static else _go_binary,
+        static = static,
+        pure = pure,
+        x_defs = x_defs,
+        **kwargs
+    )
+
+def _go_binary_with_rule(name, binary_rule, static = False, pure = False, x_defs = None, **kwargs):
     if "noasan" in kwargs:
         # no-op option, will need to do transitions when sanitizer configs are defined.
         kwargs.pop("noasan")
@@ -90,7 +100,6 @@ def go_binary(name, static = False, pure = False, x_defs = None, **kwargs):
         "//tools:lockdep": ["lockdep"],
         "//conditions:default": [],
     })
-    binary_rule = _static_go_binary if static else _go_binary
     binary_rule(
         name = name,
         x_defs = x_defs,
@@ -98,26 +107,42 @@ def go_binary(name, static = False, pure = False, x_defs = None, **kwargs):
         **kwargs
     )
 
-go_cov, _go_cov_transition = with_cfg(
-    go_binary,
+def _with_coverage(builder):
+    return builder.set("collect_code_coverage", True).set(
+        "instrumentation_filter",
+        # Exclude the coverage runtime itself and low-level platform code. In
+        # sleep, sync, and syncevent, //go:norace doesn't stop coverage from
+        # inserting atomic counter updates. Under -race those atomics call
+        # into the race detector where it cannot safely run. Reconsider these
+        # exclusions when Go can suppress those calls:
+        # https://github.com/golang/go/issues/43007
+        #
+        # Race builds need different seccomp filters. They build them at
+        # startup so ordinary runsc binaries needn't embed race-only filters.
+        # bpf.Optimize restarts its passes after each change. Instrumenting
+        # that loop sends each block's atomic counter update through the race
+        # detector and can add tens of seconds to sandbox startup.
+        "^//,-//pkg/(sentry/platform|ring0|coverage|sleep|sync|syncevent|bpf)",
+    )
+
+_go_cov, _go_cov_transition = _with_coverage(with_cfg(
+    _go_binary,
     executable = True,
     extra_providers = [GoLibrary, GoArchive],
-).set("collect_code_coverage", True).set(
-    "instrumentation_filter",
-    # Exclude the coverage runtime itself and low-level platform code. In
-    # sleep, sync, and syncevent, //go:norace doesn't stop coverage from
-    # inserting atomic counter updates. Under -race those atomics call
-    # into the race detector where it cannot safely run. Reconsider these
-    # exclusions when Go can suppress those calls:
-    # https://github.com/golang/go/issues/43007
-    #
-    # Race builds need different seccomp filters. They build them at
-    # startup so ordinary runsc binaries needn't embed race-only filters.
-    # bpf.Optimize restarts its passes after each change. Instrumenting
-    # that loop sends each block's atomic counter update through the race
-    # detector and can add tens of seconds to sandbox startup.
-    "^//,-//pkg/(sentry/platform|ring0|coverage|sleep|sync|syncevent|bpf)",
-).build()
+)).build()
+
+# Compose the settings before creating the macro. Nesting with_cfg macros
+# recursively invokes the supplier's wrapper during package loading.
+_static_go_cov, _static_go_cov_transition = _with_coverage(_static_go_binary_builder.clone()).build()
+
+def go_cov(name, static = False, **kwargs):
+    """Build a Go binary with coverage instrumentation."""
+    _go_binary_with_rule(
+        name = name,
+        binary_rule = _static_go_cov if static else _go_cov,
+        static = static,
+        **kwargs
+    )
 
 def go_importpath(target):
     """Returns the importpath for the target."""
