@@ -48654,6 +48654,40 @@
         "summary": "Open the one-line change that reports the native test’s startup error?",
         "body": "Report the test name and the error returned by cmd.Run. With the same runner file as the proposal, the diagnostic identified setup_container and “permission denied” before the GTest case started."
       }
+    },
+    {
+      "id": "branch:stateipc-client-file-lock",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "stateipc-client-file-lock",
+      "title": "Guard the checkpoint client’s open files with checklocks",
+      "group": "analysis",
+      "url": "https://github.com/tamird/gvisor/commit/26a9823e3",
+      "status": "Contributor review requested",
+      "head": "26a9823e3e565b7e709316489bd5756696d81797",
+      "updatedAt": "2026-11-04T01:38:10.239891+00:00",
+      "summary": "The disconnect watchdog and Close both use the file-map mutex. Let Nogo check that contract and destroy each endpoint after removing it from the map.",
+      "evidence": [
+        {
+          "label": "Normal and race tests, both architecture analyzers, and the missing-lock controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41750686125/artifacts/13286109234"
+        },
+        {
+          "label": "Verified verdict from the original test logs and XML",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41755177749/artifacts/13287901503"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "26a9823e3e565b7e709316489bd5756696d81797",
+        "baseHead": "155fee684b492cc63692d3a8f8c10ad6b0d5a1db",
+        "url": "https://github.com/tamird/gvisor/commit/26a9823e3",
+        "requestedAt": "2026-11-04T01:38:10.239891+00:00",
+        "title": "Guard the checkpoint client’s open files with checklocks",
+        "summary": "Open the checkpoint client lock-annotation PR?",
+        "body": "The watchdog holds filesMu while shutting down the registered endpoints. Close takes the same mutex to remove an endpoint, so the watchdog cannot reach it when Close calls Destroy. This also lets other operations acquire the mutex during Destroy.\n\nAll five cases ran on AMD64 with and without the race detector. Removing the lock from Close produced the expected diagnostic on AMD64 and ARM64. The original workflow misread Go’s framed pass lines. The linked verdict reconciles all ten case results from the original logs and XML."
+      }
     }
   ],
   "edges": [
