@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T05:35:40.537494+00:00",
+    "updatedAt": "2026-11-04T06:17:26.824975+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40391,12 +40391,12 @@
       "repo": "tamird/gvisor",
       "ref": "review/nogo-sandbox-actions",
       "head": "a2a76817d2d66f2956059b464d2eadbb036078f9",
-      "title": "Allow Bazel to sandbox Nogo actions",
+      "title": "Sandbox Nogo package and standard-library analysis",
       "url": "https://github.com/tamird/gvisor/commit/a2a76817d",
       "group": "rbe",
       "status": "Agent work",
-      "updatedAt": "2026-10-31T13:27:19.063035+00:00",
-      "summary": "On AMD64, go tool objdump consumed 4.86–4.89 seconds of the 4.95-second sandboxed package check. The identical prebuilt SDK tool ran in 2 milliseconds and brought the action down to 0.060–0.066 seconds with all SDK inputs still present. Both target architectures produced unchanged facts and findings. In the follow-up checkout, Bazel supplied the AMD64 SDK disassembler to the analyzer for both AMD64 and ARM64 target archives.",
+      "updatedAt": "2026-11-04T06:17:26.824975+00:00",
+      "summary": "Package and standard-library analysis run checkescape, which invokes go tool objdump. Their sandboxing still depends on a reusable disassembler for the execution platform. The original four-action experiment also included filtering and rendering, now split out at 55f8f34f4.\n\nOn AMD64, go tool objdump consumed 4.86–4.89 seconds of the 4.95-second sandboxed package check. The identical prebuilt SDK tool ran in 2 milliseconds and brought the action down to 0.060–0.066 seconds with all SDK inputs still present. Both target architectures produced unchanged facts and findings. In the follow-up checkout, Bazel supplied the AMD64 SDK disassembler to the analyzer for both AMD64 and ARM64 target archives.",
       "evidence": [
         {
           "label": "Shared SDK disassembler: execution platform and both target architectures",
@@ -40411,7 +40411,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41164057153/artifacts/13028461355"
         },
         {
-          "label": "Four operations on two architectures, with the sanity finding",
+          "label": "Four operations on two architectures. The aggregate failed on empty goid test XML.",
           "url": "https://github.com/tamird/gvisor/actions/runs/41162639883/artifacts/13027658952"
         },
         {
@@ -40425,19 +40425,62 @@
         {
           "label": "Bazel removed sandboxfs",
           "url": "https://github.com/bazelbuild/bazel/commit/217fafe2b"
+        },
+        {
+          "label": "Independent filter and renderer extraction",
+          "url": "https://github.com/tamird/gvisor/compare/183a39d1b...55f8f34f4"
         }
       ],
       "followup": {
         "owner": "Build analysis",
         "sourceHead": "a2a76817d2d66f2956059b464d2eadbb036078f9",
-        "observedAt": "2026-10-31T13:27:19.063035+00:00",
-        "disposition": "Execution-platform tool selection verified; rules_go proposal awaits contributor review",
-        "nextAction": "Once rules_go publishes its SDK tool target, use it for Nogo and drop the private Go cache. The supplier proposal has the pending review.",
+        "observedAt": "2026-11-04T06:17:26.824975+00:00",
+        "disposition": "rules_go #4772 is open for upstream review. The contributor approved the supplier proposal and its follow-up reply.",
+        "nextAction": "Once rules_go publishes the SDK tool, use it in the two checkescape-producing actions so an isolated analyzer can reuse objdump.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41166982711/artifacts/13029633072",
           "https://github.com/tamird/gvisor/actions/runs/41165748432/artifacts/13028867522",
-          "https://github.com/bazel-contrib/rules_go/issues/4535"
+          "https://github.com/bazel-contrib/rules_go/issues/4535",
+          "https://github.com/bazel-contrib/rules_go/pull/4772#issuecomment-6602869919"
         ]
+      }
+    },
+    {
+      "id": "branch:nogo-sandbox-reports",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/nogo-sandbox-reports",
+      "title": "Allow Bazel to sandbox Nogo filtering and facts rendering",
+      "group": "rbe",
+      "url": "https://github.com/tamird/gvisor/compare/183a39d1b...55f8f34f4",
+      "status": "Contributor review requested",
+      "head": "55f8f34f476bcb42be15afbbeba7b36d7aeaeb3b",
+      "updatedAt": "2026-11-04T06:17:26.824975+00:00",
+      "summary": "The Nogo findings filter and facts renderer still opt out of sandboxing because of an old sandboxfs cost. Neither invokes objdump. The four-line change lets Bazel choose the execution strategy for these two actions.",
+      "evidence": [
+        {
+          "label": "Original local and linux-sandbox actions, output digests and expected sanity finding. The aggregate failed on empty goid test XML.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41162639883/artifacts/13027658952"
+        },
+        {
+          "label": "Passing follow-up on the four-action source, including fresh sandbox runs of filter and render for AMD64 and ARM64 targets",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41164057153/artifacts/13028461355"
+        },
+        {
+          "label": "Bazel removed sandboxfs before version 7",
+          "url": "https://github.com/bazelbuild/bazel/commit/217fafe2b"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "55f8f34f476bcb42be15afbbeba7b36d7aeaeb3b",
+        "baseHead": "183a39d1b2aff9e8e2219171940001749a2b5db0",
+        "url": "https://github.com/tamird/gvisor/compare/183a39d1b...55f8f34f4",
+        "requestedAt": "2026-11-04T06:17:26.824975+00:00",
+        "title": "Allow Bazel to sandbox Nogo filtering and facts rendering",
+        "summary": "Open the four-line change that lets Bazel sandbox findings filtering and facts rendering?",
+        "body": "The filter reads findings and configuration files. The renderer runs checkconst and staticcheck for its template. Neither runs checkescape. Package and standard-library analysis continue to use their existing strategy until rules_go supplies a reusable objdump.\n\nThe two report rules match the earlier tested source byte for byte. For AMD64 and ARM64 targets, uncached local and linux-sandbox actions returned identical filtered findings and generated assembly. The first aggregate failed because the goid test XML contained zero test cases. The follow-up passed. The extracted commit has no separate execution result."
       }
     },
     {
