@@ -32,12 +32,43 @@ def maintainer_logins(text: str) -> frozenset[str]:
     return frozenset(logins)
 
 
-def import_author_block(pr: dict, node: dict) -> str | None:
+def approved_after_thread_replies(pr: dict, approval: dict | None) -> bool:
+    """An approving reviewer may leave a previously answered thread unresolved."""
+    if not approval or not pr.get("feedback", {}).get("complete"):
+        return False
+    reviewer = approval["author"]["login"]
+    threads = {}
+    for item in pr["feedback"]["items"]:
+        if item["kind"] == "inline" and item.get("isResolved") is False:
+            threads.setdefault(item["threadId"], []).append(item)
+    if not threads or len(threads) != pr["threads"]["unresolved"]:
+        return False
+    for items in threads.values():
+        if not all(item.get("body", "").strip()
+                   and (item.get("author") or {}).get("login") in {reviewer, pr["authorLogin"]}
+                   for item in items):
+            return False
+        replies = [item["createdAt"] for item in items if item["author"]["login"] == pr["authorLogin"]]
+        requests = [item["updatedAt"] for item in items if item["author"]["login"] == reviewer]
+        # GitHub timestamps here are UTC in the same second-resolution format.
+        # A tied or later reviewer edit does not establish who answered last.
+        if not replies or not requests or not max(requests) < max(replies) < approval["submittedAt"]:
+            return False
+        if any(item["updatedAt"] >= approval["submittedAt"] for item in items):
+            return False
+    return True
+
+
+def import_author_block(pr: dict, node: dict, approval: dict | None = None) -> str | None:
     """Leave concrete current-source work with the author before import recovery."""
-    if pr.get("threads", {}).get("complete") is not True or pr["threads"].get("unresolved"):
+    if (pr.get("threads", {}).get("complete") is not True
+            or pr["threads"].get("unresolved") and not approved_after_thread_replies(pr, approval)):
         return "unresolved-or-incomplete-author-threads"
     comment = node.get("followup", {}).get("actionableComment", {})
-    if any(matches_feedback_assignment(pr, item, comment) for item in pr.get("feedback", {}).get("items", [])):
+    if (any(matches_feedback_assignment(pr, item, comment) for item in pr.get("feedback", {}).get("items", []))
+            and not (approval and comment["commentId"] == approval["id"]
+                     and comment.get("nonblockingReviewUpdatedAt") == approval.get("updatedAt")
+                     and approval.get("updatedAt"))):
         return "registered-current-author-action"
     if node.get("releaseWait", {}).get("head") == pr["head"]:
         return "registered-current-release-wait"
@@ -139,9 +170,9 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
                                  approvedHead=old, approvers=approvers, body=body,
                                  importReapproval=True)
     if disposition["action"] in {"maintainer-import-label", "maintainer-reimport"} and disposition["trigger"]["state"] == "missing":
-        if reason := import_author_block(pr, node):
-            return {**skip(reason), "status": "deferred"}
         current_approval = effective_approval(pr, require_aggregate=False, trusted_reviewers=maintainers)
+        if reason := import_author_block(pr, node, current_approval):
+            return {**skip(reason), "status": "deferred"}
         patch = node.get("approvedPatch", {})
         approval = current_approval
         if not approval and approved_patch(pr, patch):

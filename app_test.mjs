@@ -1703,6 +1703,26 @@ test('unanswered feedback stays author work after a mechanical new head or outda
   assert.equal(node.github.reviewDecision, 'CHANGES_REQUESTED'); // Preserve GitHub's fact, not its old action assignment.
 });
 
+test('delivered code leaves unanswered threads with the agent until each has a reply', () => {
+  const context = client(), inspect = () => JSON.parse(vm.runInContext('JSON.stringify(stateRecords(snapshotInput, nodeInput))', context));
+  for (const [number, outdated] of [[16591, true], [16766, false]]) {
+    const node = attentionNode(number), pr = node.github;
+    context.nodeInput = node;
+    pr.reviewDecision = 'REVIEW_REQUIRED';
+    node.settledReviews = [{ kind: 'amendment', outcome: 'approved', head: pr.head }];
+    const request = { kind: 'inline', threadId: 'one', isOutdated: outdated, isResolved: false,
+      author: { login: 'reviewer' }, createdAt: '2026-11-03T19:00:00Z', url: node.url + '#discussion_r1' };
+    pr.feedback.items = [request];
+    pr.threads.unresolved = pr.threads.total = 1;
+    assert.equal(inspect()['author-feedback'].url, request.url);
+    assert.ok(inspect()['maintainer-review']); assert.ok(!inspect()['contributor-review']);
+    assert.ok(reasonsFor(node).find(reason => reason.id === 'author-feedback').detail.includes(request.url));
+    pr.feedback.items.push({ ...request, author: { login: 'tamird' }, createdAt: '2026-11-04T17:00:00Z' });
+    assert.ok(!inspect()['author-feedback']); assert.ok(inspect()['maintainer-review']);
+    assert.ok(!pr.feedback.items[0].isResolved);
+  }
+});
+
 test('known bot feedback needs author triage even with incomplete review inventory', () => {
   const node = attentionNode();
   const comment = { kind: 'inline', threadId: 'bot-thread', isResolved: false, isOutdated: false, createdAt: '2026-10-13T09:10:00Z', author: { login: 'review-bot', __typename: 'Bot' } };

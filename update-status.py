@@ -11,7 +11,7 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
-from reapproval import maintainer_logins, reminder_plan
+from reapproval import import_author_block, maintainer_logins, reminder_plan
 from work_states import FAILURES, check_purpose, check_states, effective_approval, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, with_maintainer_reviewers
 
 
@@ -1043,6 +1043,9 @@ def main() -> None:
             continue
         node = nodes.get((pr.get("repo"), pr["number"]), {})
         pr["publicImportDisposition"] = public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"))
+        if pr["publicImportDisposition"]["action"] == "maintainer-import-label":
+            approval = effective_approval(pr, require_aggregate=False, trusted_reviewers=maintainers)
+            pr["publicImportDisposition"]["authorBlock"] = import_author_block(pr, node, approval)
     report = check_report(prs, previous)
     snapshot = {"schema": 1, "repo": REPO, "owner": OWNER, "checkedAt": checked_at,
                 "registryDate": REGISTRY["meta"]["updatedAt"], "repositories": policies, "prs": prs, "issues": issues,

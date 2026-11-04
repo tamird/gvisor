@@ -7,10 +7,10 @@ const UI_KEY = "gvisor-work-map-view-v1";
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 const VIEWS = ["dag", "table", "investigations"];
 const SORT_KEYS = ["number", "title", "impact", "direct", "age", "review", "checks", "group"];
-const STATE_LABELS = { "contributor-review": "Contributor review", "maintainer-review": "Maintainer review", "proposed-update": "Prepared proposals", "changes-requested": "Changes requested",
+const STATE_LABELS = { "author-feedback": "Agent: review follow-up", "contributor-review": "Contributor review", "maintainer-review": "Maintainer review", "proposed-update": "Prepared proposals", "changes-requested": "Changes requested",
   "awaiting-import": "Awaiting public export", importing: "Import PR open", "waiting-merge": "Waiting for merge", failing: "Failing checks",
   "checks-pending": "Checks pending", "waiting-release": "Waiting for an upstream release", conflicts: "Conflicts", draft: "Draft", imported: "Imported", merged: "Merged", closed: "Closed" };
-const FILTER_STATES = ["contributor-review", "maintainer-review", "proposed-update", "awaiting-import", "importing", "waiting-merge", "waiting-release", "failing", "changes-requested", "checks-pending", "conflicts", "draft"];
+const FILTER_STATES = ["author-feedback", "contributor-review", "maintainer-review", "proposed-update", "awaiting-import", "importing", "waiting-merge", "waiting-release", "failing", "changes-requested", "checks-pending", "conflicts", "draft"];
 const FAILURE_STATES = new Set(["FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STALE"]);
 let stateFilters = new Set(), reasonFilters = new Set();
 let tableGrouping = false, visibleTableGroups = [];
@@ -280,26 +280,27 @@ function reviewAttention(pr, owner) {
     if (!threads.has(item.threadId)) threads.set(item.threadId, []);
     threads.get(item.threadId).push(item);
   }
-  let author = false, response = false, unknown = !complete;
+  const unanswered = [];
+  let response = false, unknown = !complete;
   for (const comments of threads.values()) {
     comments.sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
     const latest = comments.at(-1);
     if (latest.isResolved) continue;
     // A newer head or an outdated location does not answer a finding.
     if (latest.author?.login === owner) response = true;
-    else if (latest.author?.login) author = true;
+    else if (latest.author?.login) unanswered.push(latest);
     else unknown = true;
   }
   const decision = effectiveReviewDecision(pr);
-  if (decision === "CHANGES_REQUESTED" && !author && !response) {
+  if (decision === "CHANGES_REQUESTED" && !unanswered.length && !response) {
     const requests = items.filter(item => item.kind === "review" && item.state === "CHANGES_REQUESTED" && item.author?.login !== owner);
     response = Boolean(threads.size && pr.threads.unresolved === 0
       || requests.length && requests.every(item => item.commit?.oid && item.commit.oid !== pr.head));
     // A review-level hold does not identify an author code change. Its text is
     // available in details; do not infer intent from free-form wording.
-    return { author, response, unknown: unknown || !response, incomplete: !complete };
+    return { unanswered, response, unknown: unknown || !response, incomplete: !complete };
   }
-  return { author, response, unknown, incomplete: !complete };
+  return { unanswered, response, unknown, incomplete: !complete };
 }
 function blockedImportRetry(node, imported) {
   const recovery = node.ciRecovery, pr = node.github;
@@ -500,7 +501,7 @@ function attentionReasons(node, owner) {
   const comment = actionableComment(node), feedback = [];
   const newWaitComment = node.releaseWait?.head === pr.head && pr.feedback?.items?.findLast(item => (item.kind === "comment" || item.kind === "review" && item.state !== "APPROVED" && item.body?.trim())
     && item.author?.login !== owner && Date.parse(item.updatedAt || item.createdAt) > Date.parse(node.releaseWait.confirmedAt));
-  if (review.author) feedback.push("A current unresolved review thread awaits author triage or a response; automated feedback is included without endorsing its finding.");
+  if (review.unanswered.length) feedback.push("Review the unanswered threads: " + review.unanswered.map(item => safeURL(item.url) || "thread in PR details").join(", ") + ".");
   if (comment) feedback.push(`${node.followup.owner} is assigned to address this top-level ${comment.kind}: ${comment.url}. GitHub's review decision is unchanged.`);
   if (newWaitComment) feedback.push(`Triage the comment posted after the release hold was agreed: ${newWaitComment.url}. Reconfirm the hold if it still applies.`);
   if (feedback.length) add("author-feedback", feedback.join(" "));
@@ -576,7 +577,8 @@ function attentionReasons(node, owner) {
     else add("agent-release-check", `${version ? `Upstream now lists ${version}.` : "The latest upstream release could not be verified."} ${wait.nextAction}`);
     return ATTENTION_REASONS.flatMap(definition => reasons.filter(reason => reason.id === definition.id));
   }
-  if (restoreLabel && pr.threads?.complete && !pr.threads.unresolved && !comment)
+  if (restoreLabel && (Object.hasOwn(importDisposition, "authorBlock") ? importDisposition.authorBlock === null
+    : pr.threads?.complete && !pr.threads.unresolved && !comment))
     add("maintainer-import-label", importDisposition.description, "Restore ready to pull");
   // Closing the only export is independent of its retained CI failure. Keep
   // both actions visible; skipping another approval request is not all-clear.
@@ -999,7 +1001,7 @@ function appendStates(parent, node, detail = false) {
     const text = `${stateLabel(node, state)} ${age(record)}${qualifier ? " · " + qualifier : ""}`;
     const failures = state === "failing" ? failureSources(node) : [];
     const decision = state === "contributor-review" ? visibleDecisions(node).find(item => !contributorDecisionNeedsRefresh(node, item)) : state === "changes-requested" ? contributorChanges(node) : null;
-    const url = failures[0]?.url || (state === "contributor-review" && decision && decisionReason(decision) !== "review-changes"
+    const url = failures[0]?.url || (state === "author-feedback" && record.url) || (state === "contributor-review" && decision && decisionReason(decision) !== "review-changes"
       ? contributorDecisionURL(node, decisionReason(decision)) : decision?.url);
     const item = url ? link(text, url, `work-state ${state}`) : element("span", `work-state ${state}`, text);
     item.title = stateTitle(state, record) + (record.qualifier ? " " + record.qualifier : "");
@@ -1694,6 +1696,17 @@ function stateRecords(snapshot, node) {
     for (const key of Object.keys(records)) delete records[key];
     records.imported = { scope: node.github.head, since: landed.verifiedAt, basis: "observed", qualifier: "Landed; source PR still open" };
   }
+  // Project observed conversations locally: older clients reject unknown
+  // snapshot state keys. An upstream approval and a reply are separate actions.
+  const pr = node.github;
+  if (pr?.status === "open" && pr.headOwner === registry.meta.owner && !pr.revisionChanged
+      && (!pr.branchHead || pr.branchHead === pr.head) && !attentionDisposition(node, "author-feedback")) {
+    const threads = reviewAttention(pr, registry.meta.owner).unanswered;
+    const assigned = actionableComment(node);
+    if (threads.length || assigned) records["author-feedback"] = { scope: pr.head, since: null, basis: "unknown",
+      qualifier: [threads.length && `${threads.length} unanswered review thread${threads.length === 1 ? "" : "s"}`,
+        assigned && "Assigned review follow-up"].filter(Boolean).join("; "), url: safeURL(threads[0]?.url || assigned?.url) };
+  }
   if (decision && !contributorDecisionNeedsRefresh(node)) {
     const scope = decision.head || decision.url, history = snapshot.workStates?.[node.id];
     const previous = history?.["contributor-review"] || (node.type === "branch" ? history?.review : null);
@@ -1799,6 +1812,7 @@ function validateRegistry(candidate) {
         || typeof node.followup.owner !== "string" || !node.followup.owner.trim()
         || !/^[a-f0-9]{40}$/.test(comment.head)
         || (comment.kind !== undefined && !["comment", "review"].includes(comment.kind))
+        || (comment.nonblockingReviewUpdatedAt !== undefined && (comment.kind !== "review" || !Number.isFinite(Date.parse(comment.nonblockingReviewUpdatedAt))))
         || typeof comment.commentId !== "string" || !comment.commentId.trim()
         || typeof comment.url !== "string" || !comment.url.startsWith(commentPrefix)
         || !/^[1-9]\d*$/.test(comment.url.slice(commentPrefix.length))))

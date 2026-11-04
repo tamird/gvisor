@@ -353,10 +353,25 @@ On each refresh or continuation, handle this handoff before qualifications,
 source-CI failures and routine metadata. Read the complete linked discussion,
 alert its owner immediately when the existing refresh completes, and update
 the existing follow-up with the concrete action.
+A code amendment and its replies are separate deliveries. If both were
+approved together, retain each original thread as agent work until its
+reply has a public URL; record that URL with the existing approved
+`settledReviews` reply. Never infer posting permission from a code-only
+approval. The browser shows an agent follow-up alongside the independent
+maintainer approval state. In the snapshot, use `reviewerHandoff` alongside
+`workStates`; the latter records the upstream review clock.
 Do not treat observation as acknowledgement or send automatic replies.
 An author reply only changes who owes the next response. Keep the implementation
 obligation active until a reviewer-ready fix, necessary substantive question,
 justified disagreement or exact disposition resolves it.
+
+An unresolved inline thread does not by itself block an import-label
+reminder when the author answered it and the same reviewer subsequently
+approved the exact head. A reviewer edit or reply after approval, missing
+history, or unanswered thread still blocks. A nonblocking follow-up in an
+approving review may be explicitly assigned with
+`actionableComment.nonblockingReviewUpdatedAt` bound to that revision of
+the review. An edited review must be checked again.
 
 After human feedback, drain the same snapshot's `mergeabilityHandoff` before
 starting routine qualification work. It retains current-source conflicts,

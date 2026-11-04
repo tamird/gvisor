@@ -1351,6 +1351,30 @@ class ReapprovalReminderTest(unittest.TestCase):
         self.assertTrue(reminder["body"].endswith(f"head={pr['head']} action=restore-import-label -->"))
         # A listed maintainer may only be a CONTRIBUTOR on GitHub (#16551).
         fresh = pr["feedback"]["items"][-1]
+        # An author response followed by the same reviewer's current-head
+        # approval can leave GitHub's outdated thread unresolved (#16594).
+        finding = {"kind": "inline", "threadId": "old", "isResolved": False, "isOutdated": True,
+                   "author": fresh["author"], "body": "Use the early return.",
+                   "createdAt": "2026-10-27T19:00:00Z", "updatedAt": "2026-10-27T19:00:00Z"}
+        answer = {**finding, "author": {"login": "tamird"}, "body": "Applied in the current head.",
+                  "createdAt": "2026-10-27T20:00:00Z", "updatedAt": "2026-10-27T20:00:00Z"}
+        with mock.patch.dict(pr["threads"], {"complete": True, "unresolved": 1}), \
+                mock.patch.dict(pr["feedback"], {"complete": True, "items": [*pr["feedback"]["items"], finding, answer]}):
+            self.assertEqual(plan({})["action"], "restore-import-label")
+            with mock.patch.dict(finding, {"isOutdated": False}), mock.patch.dict(answer, {"isOutdated": False}):
+                self.assertEqual(plan({})["action"], "restore-import-label")
+            followup = {"followup": {"actionableComment": {"kind": "review", "head": pr["head"],
+                       "commentId": fresh["id"], "url": fresh["url"], "nonblockingReviewUpdatedAt": fresh["updatedAt"]}}}
+            with mock.patch.dict(fresh, {"body": "Please add a separate follow-up; it does not block import."}):
+                self.assertEqual(plan(followup)["action"], "restore-import-label")
+                del followup["followup"]["actionableComment"]["nonblockingReviewUpdatedAt"]
+                self.assertEqual(plan(followup)["reason"], "registered-current-author-action")
+            for item, changes in [(finding, {"author": {"login": "other"}}),
+                                  (finding, {"updatedAt": "2026-10-27T21:55:00Z"}),
+                                  (answer, {"body": ""}), (pr["feedback"], {"complete": False}),
+                                  (pr["threads"], {"unresolved": 2})]:
+                with self.subTest(changes=changes), mock.patch.dict(item, changes):
+                    self.assertEqual(plan({})["reason"], "unresolved-or-incomplete-author-threads")
         with mock.patch.dict(fresh, {"authorAssociation": "CONTRIBUTOR"}):
             self.assertEqual(plan({})["action"], "restore-import-label")
             nonmember = updater.reminder_plan(pr, {}, now, "tamird", frozenset())
