@@ -91,6 +91,8 @@ def main():
             elif line.startswith("DIND_SNAT "):
                 _, proto, status, fw = line.split()
                 record["snat"][proto] = [status, fw]
+            elif line in ("DIND_CT readable", "DIND_CT unavailable"):
+                record["docker_namespace_proc_nf_conntrack"] = line.split()[1]
             elif line.startswith("DIND_DAEMON "):
                 record["daemon"],record["driver"] = line.split()[1:]
             elif line.startswith("DIND_NETWORK "):

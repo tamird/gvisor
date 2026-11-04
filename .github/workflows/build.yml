@@ -1,11 +1,11 @@
-name: Check short echo exchanges with real Docker in the public July Sentry
+name: Observe the first reset in the public July Docker echo fixture
 on:
   push:
-    branches: [qualification/tcp-july-dind-closers]
+    branches: [qualification/tcp-july-dind-flow]
 permissions: {contents: read}
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -16,7 +16,7 @@ jobs:
           set -euo pipefail
           phase=source
           trap 'printf "%s %s\n" "$phase" "$?" > "$RUNNER_TEMP/dind-setup"' EXIT
-          test "$(git rev-parse HEAD^)" = a723461aec54e041222511c98f6a1f61442ccb3d
+          test "$(git rev-parse HEAD^)" = b40e0eb54f6c36853b4a3ced7d3b663c92ba89ab
           p=test/rtnetlink/linux
           phase=july-package
           base=https://storage.googleapis.com/gvisor/releases/pool/20260727.0/binary-amd64

@@ -70,13 +70,17 @@ step network
 docker network create t1
 test "$(docker network inspect --format '{{.Driver}}' t1)" = bridge
 echo "DIND_NETWORK $(docker network inspect --format '{{.Id}} {{range .IPAM.Config}}{{.Subnet}}{{end}}' t1)"
+if [ -r /proc/net/nf_conntrack ]; then echo DIND_CT readable; else echo DIND_CT unavailable; fi
 for mode in client-first server-first; do
   step "$mode"
   docker rm -f srv >/dev/null 2>&1 || :
-  docker run --pull=never -d --name srv --network t1 -e MODE="$mode" -v /qa/dind_socket.py:/s.py:ro python:3.12-alpine python /s.py
+  flow="/tmp/dind-flow-$mode"
+  mkdir -m 0700 "$flow"
+  docker run --pull=never -d --name srv --network t1 -e MODE="$mode" -v "$flow:/flow" -v /qa/dind_socket.py:/s.py:ro python:3.12-alpine python /s.py
   sleep 2
   test "$(docker inspect -f '{{.State.Running}}' srv)" = true
-  echo "DIND_SERVER $mode $(docker inspect -f '{{(index .NetworkSettings.Networks "t1").IPAddress}}' srv)"
-  timeout 280 docker run --pull=never --rm --network t1 -v /qa/dind_socket.py:/c.py:ro python:3.12-alpine python /c.py "$mode" 2000
+  server_ip="$(docker inspect -f '{{(index .NetworkSettings.Networks "t1").IPAddress}}' srv)"
+  echo "DIND_SERVER $mode $server_ip"
+  timeout 280 docker run --pull=never --rm --network t1 -e ECHO_IP="$server_ip" -v "$flow:/flow" -v /qa/dind_socket.py:/c.py:ro python:3.12-alpine python /c.py "$mode" 2000
 done
 step finished
