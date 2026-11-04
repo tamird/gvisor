@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T18:22:37.381246+00:00",
+    "updatedAt": "2026-11-04T18:38:21.659977+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -30326,13 +30326,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "qualification/native-sidecar-cc",
-      "head": "59bc02b23955bc1d4c6a4c1423da514f38d05287",
+      "head": "c329a6e31a5968a410831950c8a457ee243384c8",
       "title": "Build the runsc sidecars with the C toolchain",
       "url": "https://github.com/google/gvisor/pull/16522",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-04T18:22:37.381246+00:00",
-      "summary": "The rebase resolves the conflict in tools/defs.bzl. GNU and supplier-patched Clang built all three sidecars on AMD64 and ARM64, including the 4 KiB prewarmer. All 13 AMD64 cases passed with each compiler. The overall run records the expected link failure with unpatched registry LLVM. The private build adapter still needs upstream verification.",
+      "updatedAt": "2026-11-04T18:38:21.659977+00:00",
+      "summary": "The inner C++ binary is manual, so wildcard builds reach it through the public freestanding wrapper. The corrected wildcard built all three static AMD64 sidecars; the original direct link failed with a forced hosted allocator. A separate cquery confirmed that each inner target clears --custom_malloc. The private build adapter still needs upstream verification.",
       "evidence": [
         {
           "label": "Rebased three-commit change",
@@ -30417,6 +30417,14 @@
         {
           "label": "Wildcard build: old direct link failed, corrected three static AMD64 executables built; supplemental options not recorded",
           "url": "https://github.com/tamird/gvisor/actions/runs/41885181016/artifacts/13352550223"
+        },
+        {
+          "label": "All three inner binaries clear the allocator override (cquery only)",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41886830537/artifacts/13352371272"
+        },
+        {
+          "label": "Published amendment and reply to Lucas",
+          "url": "https://github.com/google/gvisor/pull/16522#discussion_r4471682150"
         }
       ],
       "number": 16522,
@@ -30444,32 +30452,17 @@
           "at": "2026-11-03T20:40:16.868104+00:00",
           "url": "https://github.com/tamird/gvisor/commit/74aa42d5f",
           "body": "The ordinary C++ target kept the injected sanitizer, allocator and linker options. The three sidecars removed the sanitizer runtime and allocator override but kept the unrelated hardening flag. GNU and LLVM compiled and linked all three binaries for AMD64 and ARM64. With their default options, both compilers passed all 13 AMD64 runtime cases. The LLVM passes used supplier fix 83245b957; the unmodified 0.8.24 release still could not link pthread or dl. Google’s internal build was not exercised.\n\nTransition reply:\nI moved the transition behind `//tools:defs.bzl`. The public adapter removes sanitizer features and direct sanitizer runtime flags while preserving unrelated options. The internal adapter still needs to map `freestanding_executable` to its existing C++ noasan policy; I can’t verify that mapping in the public tree.\n\nPosted by Codex on behalf of @tamird.\n\nAllocator reply:\nThe transition now unsets `--custom_malloc`, so the sidecars keep their own `tcmalloc = False` setting. With a custom allocator selected on the command line, the ordinary control kept it and none of the three sidecars linked it.\n\nPosted by Codex on behalf of @tamird."
+        },
+        {
+          "kind": "amendment",
+          "head": "c329a6e31a5968a410831950c8a457ee243384c8",
+          "title": "Build the runsc sidecars with the C toolchain",
+          "body": "Proposed PR description:\n\nThe FD parker, proc unmounter, and sentry prewarmer each compile and link a C file through a shell genrule. Give Bazel the source and link options directly so it can run the compiler and linker as separate actions without an intervening shell.\n\nUse one rule for the three executables. Each provides its own entry point and needs no runtime libraries. Keep the public target names and filenames: the release installs the sidecars beside runsc in gvisor-bin/, and the sidecar tests use those paths to find them in the build tree.\n\nDo not inherit an allocator, sanitizer runtime, or hosted linker features when building these syscall-only executables. Expose freestanding_executable through the build adapter in //tools:defs.bzl. Its transition clears --custom_malloc and removes sanitizer features and sanitizer link options.\n\nMark the inner cc_binary manual so wildcard builds select the public wrapper and reach the binary through that transition.\n\nProposed reply to [Lucas’s inline review](https://github.com/google/gvisor/pull/16522#discussion_r4471219579) after publishing the commit:\n\nTagged the inner cc_binary manual in [c329a6e31](https://github.com/google/gvisor/commit/c329a6e31). The public wrapper stays in wildcard builds and still selects its binary through the freestanding transition. I also corrected the description to say that the transition clears --custom_malloc and is exposed through the build adapter.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-04T18:36:54Z",
+          "url": "https://github.com/tamird/gvisor/commit/c329a6e31"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "c329a6e31a5968a410831950c8a457ee243384c8",
-        "baseHead": "59bc02b23955bc1d4c6a4c1423da514f38d05287",
-        "url": "https://github.com/tamird/gvisor/commit/c329a6e31",
-        "title": "Build the runsc sidecars with the C toolchain",
-        "requestedAt": "2026-11-04T18:17:28.707772+00:00",
-        "summary": "If the wildcard build check passes, publish the manual tag, replace the PR description and reply to Lucas on his original thread?",
-        "body": "Proposed PR description:\n\nThe FD parker, proc unmounter, and sentry prewarmer each compile and link a C file through a shell genrule. Give Bazel the source and link options directly so it can run the compiler and linker as separate actions without an intervening shell.\n\nUse one rule for the three executables. Each provides its own entry point and needs no runtime libraries. Keep the public target names and filenames: the release installs the sidecars beside runsc in gvisor-bin/, and the sidecar tests use those paths to find them in the build tree.\n\nDo not inherit an allocator, sanitizer runtime, or hosted linker features when building these syscall-only executables. Expose freestanding_executable through the build adapter in //tools:defs.bzl. Its transition clears --custom_malloc and removes sanitizer features and sanitizer link options.\n\nMark the inner cc_binary manual so wildcard builds select the public wrapper and reach the binary through that transition.\n\nProposed reply to [Lucas’s inline review](https://github.com/google/gvisor/pull/16522#discussion_r4471219579) after publishing the commit:\n\nTagged the inner cc_binary manual in [c329a6e31](https://github.com/google/gvisor/commit/c329a6e31). The public wrapper stays in wildcard builds and still selects its binary through the freestanding transition. I also corrected the description to say that the transition clears --custom_malloc and is exposed through the build adapter.\n\nPosted by Codex on behalf of @tamird."
-      },
-      "followup": {
-        "owner": "Agent",
-        "sourceHead": "59bc02b23955bc1d4c6a4c1423da514f38d05287",
-        "observedAt": "2026-11-04T18:17:28.707772+00:00",
-        "disposition": "The old direct wildcard link failed on the forced allocator. The corrected wildcard dropped only the inner target and built the public targets and all three static AMD64 executables. The aggregate is red because the supplemental cquery recorder failed before saving the options; no test was run.",
-        "nextAction": "Review the one-line source change, complete description and proposed inline reply. Keep the missing optional cquery observation separate from the actual wildcard-build verdict.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/16522#discussion_r4471219579",
-          "https://github.com/tamird/gvisor/compare/59bc02b23..c329a6e31",
-          "https://github.com/tamird/gvisor/actions/runs/41885181016",
-          "https://github.com/tamird/gvisor/actions/runs/41885181016/artifacts/13352550223"
-        ]
-      }
+      ]
     },
     {
       "id": "branch:licensecheck-native-bazel-mod",
@@ -50010,8 +50003,8 @@
       "url": "https://github.com/tamird/gvisor/commit/626ca2e77",
       "title": "Use the timer helper for negative intervals",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-04T18:22:37.381246+00:00",
+      "status": "Delivered as #16990",
+      "updatedAt": "2026-11-04T18:38:21.659977+00:00",
       "summary": "NegativeInterval now uses the kernel timer helper and stops if timer creation fails. On the separate compiler integration, the identical patch linked with declared LLVM and the case passed on native AMD64 Linux and gVisor systrap directfs. The native case ran with bazel run; the systrap case used one fresh TestRunner. No whole-repository or ARM run is claimed.",
       "evidence": [
         {
@@ -50029,19 +50022,24 @@
         {
           "label": "Compiler link and both IntervalTimerTest.NegativeInterval results",
           "url": "https://github.com/tamird/gvisor/actions/runs/41883374454/artifacts/13350348791"
+        },
+        {
+          "label": "Approved source published as #16990",
+          "url": "https://github.com/google/gvisor/pull/16990"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "626ca2e773c6e35a4948594927ca9a0e3ab3f1dd",
-        "baseHead": "6dcadf4a84a07f69e8eb5f1ea9d7b2903bd03bd7",
-        "url": "https://github.com/tamird/gvisor/commit/626ca2e77",
-        "title": "Use the timer helper for negative intervals",
-        "requestedAt": "2026-11-04T18:22:37.381246+00:00",
-        "summary": "Open an upstream PR with this standalone timer test fix?",
-        "body": "timers_test fails to link when glibc provides the POSIX timer functions\nin librt. NegativeInterval also continues after a failed timer_create\nwith an uninitialized timer ID.\n\nUse the kernel interval timer helper as the other interval tests do.\nRequire creation to succeed before checking timer_settime for EINVAL\nand let the helper delete the timer when the test returns.\n\nFixes: 5f31525f7 (\"Catch negative values in `timer_settime(2)`.\")"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "626ca2e773c6e35a4948594927ca9a0e3ab3f1dd",
+          "title": "Use the timer helper for negative intervals",
+          "body": "timers_test fails to link when glibc provides the POSIX timer functions\nin librt. NegativeInterval also continues after a failed timer_create\nwith an uninitialized timer ID.\n\nUse the kernel interval timer helper as the other interval tests do.\nRequire creation to succeed before checking timer_settime for EINVAL\nand let the helper delete the timer when the test returns.\n\nFixes: 5f31525f7 (\"Catch negative values in `timer_settime(2)`.\")",
+          "outcome": "approved",
+          "at": "2026-11-04T18:37:39Z",
+          "url": "https://github.com/tamird/gvisor/commit/626ca2e77"
+        }
+      ],
+      "inactive": true
     }
   ],
   "edges": [
