@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T18:17:28.707772+00:00",
+    "updatedAt": "2026-11-04T18:22:37.381246+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -30331,7 +30331,7 @@
       "url": "https://github.com/google/gvisor/pull/16522",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-04T18:17:28.707772+00:00",
+      "updatedAt": "2026-11-04T18:22:37.381246+00:00",
       "summary": "The rebase resolves the conflict in tools/defs.bzl. GNU and supplier-patched Clang built all three sidecars on AMD64 and ARM64, including the 4 KiB prewarmer. All 13 AMD64 cases passed with each compiler. The overall run records the expected link failure with unpatched registry LLVM. The private build adapter still needs upstream verification.",
       "evidence": [
         {
@@ -30413,6 +30413,10 @@
         {
           "label": "Linux wildcard-build comparison",
           "url": "https://github.com/tamird/gvisor/actions/runs/41885181016"
+        },
+        {
+          "label": "Wildcard build: old direct link failed, corrected three static AMD64 executables built; supplemental options not recorded",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41885181016/artifacts/13352550223"
         }
       ],
       "number": 16522,
@@ -30457,12 +30461,13 @@
         "owner": "Agent",
         "sourceHead": "59bc02b23955bc1d4c6a4c1423da514f38d05287",
         "observedAt": "2026-11-04T18:17:28.707772+00:00",
-        "disposition": "Lucas requested a manual tag for the inner binary.",
-        "nextAction": "Verify the wildcard build on the candidate. Publish the amendment and description and post the reviewed reply only after the check passes and the contributor approves.",
+        "disposition": "The old direct wildcard link failed on the forced allocator. The corrected wildcard dropped only the inner target and built the public targets and all three static AMD64 executables. The aggregate is red because the supplemental cquery recorder failed before saving the options; no test was run.",
+        "nextAction": "Review the one-line source change, complete description and proposed inline reply. Keep the missing optional cquery observation separate from the actual wildcard-build verdict.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16522#discussion_r4471219579",
           "https://github.com/tamird/gvisor/compare/59bc02b23..c329a6e31",
-          "https://github.com/tamird/gvisor/actions/runs/41885181016"
+          "https://github.com/tamird/gvisor/actions/runs/41885181016",
+          "https://github.com/tamird/gvisor/actions/runs/41885181016/artifacts/13352550223"
         ]
       }
     },
@@ -49995,6 +50000,48 @@
           "url": "https://github.com/tamird/gvisor/commit/679d20c1b"
         }
       ]
+    },
+    {
+      "id": "branch:timer-negative-interval-helper",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/timer-negative-interval-helper",
+      "head": "626ca2e773c6e35a4948594927ca9a0e3ab3f1dd",
+      "url": "https://github.com/tamird/gvisor/commit/626ca2e77",
+      "title": "Use the timer helper for negative intervals",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-04T18:22:37.381246+00:00",
+      "summary": "NegativeInterval now uses the kernel timer helper and stops if timer creation fails. On the separate compiler integration, the identical patch linked with declared LLVM and the case passed on native AMD64 Linux and gVisor systrap directfs. The native case ran with bazel run; the systrap case used one fresh TestRunner. No whole-repository or ARM run is claimed.",
+      "evidence": [
+        {
+          "label": "Standalone patch on master 6dcadf4a8",
+          "url": "https://github.com/tamird/gvisor/commit/626ca2e77"
+        },
+        {
+          "label": "Identical patch on the compiler integration",
+          "url": "https://github.com/tamird/gvisor/commit/f876b5047"
+        },
+        {
+          "label": "Original unresolved POSIX timer libc symbols",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41872651951/artifacts/13347734045"
+        },
+        {
+          "label": "Compiler link and both IntervalTimerTest.NegativeInterval results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41883374454/artifacts/13350348791"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "626ca2e773c6e35a4948594927ca9a0e3ab3f1dd",
+        "baseHead": "6dcadf4a84a07f69e8eb5f1ea9d7b2903bd03bd7",
+        "url": "https://github.com/tamird/gvisor/commit/626ca2e77",
+        "title": "Use the timer helper for negative intervals",
+        "requestedAt": "2026-11-04T18:22:37.381246+00:00",
+        "summary": "Open an upstream PR with this standalone timer test fix?",
+        "body": "timers_test fails to link when glibc provides the POSIX timer functions\nin librt. NegativeInterval also continues after a failed timer_create\nwith an uninitialized timer ID.\n\nUse the kernel interval timer helper as the other interval tests do.\nRequire creation to succeed before checking timer_settime for EINVAL\nand let the helper delete the timer when the test returns.\n\nFixes: 5f31525f7 (\"Catch negative values in `timer_settime(2)`.\")"
+      }
     }
   ],
   "edges": [
