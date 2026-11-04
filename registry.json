@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T15:33:33.339313+00:00",
+    "updatedAt": "2026-11-04T15:50:00.217422+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -49639,8 +49639,8 @@
       "title": "Report the TCP send MSS on connected sockets",
       "url": "https://github.com/tamird/gvisor/commit/36ee2797f",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-04T15:33:33.339313+00:00",
+      "status": "Delivered as #16964",
+      "updatedAt": "2026-11-04T15:50:00.217422+00:00",
       "summary": "Return the current send payload limit for TCP_MAXSEG on connected sockets. Across IPv4 and IPv6, active and accepted sockets reported TCP_MAXSEG/TCP_INFO values of 1012/1012 on Linux, 536/984 on stock gVisor, and 984/984 with the change. Native and corrected gVisor each passed all six selected syscall cases; the two connected stock cases failed. The three actual executions and twelve readbacks were independently verified. The outer collector remains red after a stock-observation assertion; its failure detail is unknown. The diagnostic fixture adds four logging lines to the proposed test, with production code unchanged. This is a socket-option reporting fix, independent of #16393 throughput work.",
       "evidence": [
         {
@@ -49662,19 +49662,24 @@
         {
           "label": "Linux connected TCP_MAXSEG implementation",
           "url": "https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp.c#L4314-L4320"
+        },
+        {
+          "label": "Approved source published as #16964",
+          "url": "https://github.com/google/gvisor/pull/16964"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "36ee2797f8a32db133769117da3dd2d6af15cd82",
-        "baseHead": "6dcadf4a84a07f69e8eb5f1ea9d7b2903bd03bd7",
-        "url": "https://github.com/tamird/gvisor/commit/36ee2797f",
-        "title": "Report the TCP send MSS on connected sockets",
-        "requestedAt": "2026-11-04T15:33:33.339313+00:00",
-        "summary": "Approve publishing this independent two-file TCP_MAXSEG reporting fix. The exact source and syscall observations are linked below; the original collector failure remains explicit.",
-        "body": "TCP_MAXSEG returns 536 on established sockets even when TCP_INFO\nreports a different send MSS. Linux reads the same cached MSS for both\nqueries on a connected socket.\n\nReturn the sender’s current payload limit, which accounts for the peer\nMSS, route MTU and TCP options. Check both ends of a loopback\nconnection after setting a new MSS preference."
-      }
+      "inactive": true,
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "36ee2797f8a32db133769117da3dd2d6af15cd82",
+          "title": "Report the TCP send MSS on connected sockets",
+          "body": "TCP_MAXSEG returns 536 on established sockets even when TCP_INFO\nreports a different send MSS. Linux reads the same cached MSS for both\nqueries on a connected socket.\n\nReturn the sender’s current payload limit, which accounts for the peer\nMSS, route MTU and TCP options. Check both ends of a loopback\nconnection after setting a new MSS preference.",
+          "outcome": "approved",
+          "at": "2026-11-04T15:47:08Z",
+          "url": "https://github.com/google/gvisor/pull/16964"
+        }
+      ]
     }
   ],
   "edges": [
