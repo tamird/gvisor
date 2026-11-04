@@ -1,0 +1,21 @@
+{
+  "source": "59bc02b23955bc1d4c6a4c1423da514f38d05287",
+  "parent": "24787157d8063aae59e87f59e4ecf2a893f9dfa8",
+  "tree": "6d5a2fe44d9279e85e938a8fd2928e3715984330",
+  "host": "cb548161f537465fda2576793e6d6cea59a32260",
+  "targets": [
+    "//runsc/fdparking:fdparking_binary",
+    "//runsc/prewarmer:prewarmer_binary",
+    "//runsc/procumounter:procumounter_binary",
+    "//runsc/fdparking:fdparking_test",
+    "//runsc/prewarmer:prewarmer_single_page_test",
+    "//runsc/procumounter:procumounter_test"
+  ],
+  "request_sha256": "0b2e40af46400fe21168f68afde966ec9a3be20fba7f62ad325363ae472cc351",
+  "file_sha256": {
+    "image_bootstrap.py": "3ef2013954225ffbf5b50ff98d9c50c436d630a0fb9bae8246fe3181c6b219ef",
+    "image_execution.py": "73986cb2a55b23baecadec7691dd6ba50db2e9fed7cbbf59834e0dd2316e071e",
+    "image_qualification.py": "f0c0290e1013e2abe7bda587da35309fc2ef640d28218c441a848f0c38ec0499",
+    "image_workload.py": "75f2686a9c981afdf216b40f6b434cb9ad3ca966bdbe42a7e5969424e707869b"
+  }
+}
