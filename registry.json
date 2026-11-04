@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T11:30:33.132947+00:00",
+    "updatedAt": "2026-11-04T14:17:56.116888+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -49412,6 +49412,90 @@
         "requestedAt": "2026-11-04T11:15:44.882861+00:00",
         "summary": "Approve opening one PR for this four-file locking change, with the protected race fixture explicitly unqualified?",
         "body": "A task can replace its file descriptor table during unshare or exec. A\nlookup from another task must hold the target's mutex until it has\nacquired a file reference. The descriptor table's own lock does not\nprotect the task's table pointer.\n\nUse the existing UnshareFdTable operation during exec and share procfs's\nlocked lookup with pidfd_getfd. For exec tracing, take the sibling's\nstdin and stdout references from one table under its mutex. Collect\nprocess metadata and release those references after unlocking.\n\nFour fresh analyzer wrappers for kernel and proc production and test\ncode passed with both AMD64 and ARM64 analysis sections. The five\nselected PIDFD cases passed on native AMD64 and under systrap: ten\npasses, no failures or skips. This does not establish concurrent exec\nor procfs runtime coverage [1].\n\nThe separate protected TestPIDFDGetFDConcurrentUnshare race fixture\nremains unqualified. With the same native fixture and flags, the build\nexited 1 at //vdso:vdso: gettimeofday in vdso/vdso.cc conflicts with the\nhost sys/time.h declaration. No TestRunner, Go race case, XML or test\nELF was produced [2]. The earlier build failures remain recorded\nseparately [3, 4, 5].\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41812000340/artifacts/13314021795\n[2]: https://github.com/tamird/gvisor/actions/runs/41819732999/artifacts/13316183219\n[3]: https://github.com/tamird/gvisor/actions/runs/41816354405/artifacts/13314817066\n[4]: https://github.com/tamird/gvisor/actions/runs/41815832757/artifacts/13314253662\n[5]: https://github.com/tamird/gvisor/actions/runs/41818566527/artifacts/13316300652"
+      }
+    },
+    {
+      "id": "pr:16952",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16952,
+      "ref": "stdclock-windows-qpc",
+      "head": "d164666c63241ac965864c976a0e9cf447f96c02",
+      "title": "Review the Windows clock resolution and restore tests",
+      "url": "https://github.com/google/gvisor/pull/16952",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-04T14:17:56.116888+00:00",
+      "summary": "Source inspection found that the resolution test passes for a stalled clock and can fail when the test goroutine is descheduled. The restore test calls hooks on one object instead of exercising generated Save/Load. The author's Windows Server 2022/2025 lossy-transfer measurements are author-reported and were not reproduced here.",
+      "evidence": [
+        {
+          "label": "Exact submitted clock tests: resolution condition at 43; beforeSave at 67",
+          "url": "https://github.com/google/gvisor/blob/d164666c63241ac965864c976a0e9cf447f96c02/pkg/tcpip/stdclock_test.go"
+        },
+        {
+          "label": "Author-reported Windows transfer and clock measurements",
+          "url": "https://github.com/google/gvisor/pull/16952"
+        },
+        {
+          "label": "Existing clock round-trip proposal",
+          "url": "https://github.com/google/gvisor/pull/16711"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "review",
+        "head": "d164666c63241ac965864c976a0e9cf447f96c02",
+        "url": "https://github.com/google/gvisor/pull/16952",
+        "title": "Ask for a resolution witness and a real clock round trip",
+        "requestedAt": "2026-11-04T14:17:56.116888+00:00",
+        "summary": "Approve one COMMENT review with these two inline comments on the exact submitted tests?",
+        "body": "Review summary (COMMENT):\n\nTwo questions about the new clock tests.\n\nPosted by Codex on behalf of @tamird.\n\nInline comment at pkg/tcpip/stdclock_test.go:43 RIGHT:\n\nIf the clock stays at one value, `span` and `want` are both zero, so this resolution check passes. The reverse can happen on a busy runner: the elapsed span includes time when this goroutine couldn't sample the counter. Could the test require observing a positive step below 50 µs before an independent deadline? That distinguishes the coarse clock without requiring a minimum number of reads per second.\n\nInline comment at pkg/tcpip/stdclock_test.go:67 RIGHT:\n\nCould this exercise `state.Save` and `state.Load` into a fresh clock? Calling the two hooks on the same object also passes if the generated restore path never calls `afterLoad`. #16711 already has a round trip that checks both the restored and the still-running clock; we can share it when the changes meet."
+      }
+    },
+    {
+      "id": "branch:vdso-gettimeofday-weak-alias",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/vdso-gettimeofday-weak-alias",
+      "head": "cf2264788a7cfe5302a96311d314bf715d50de9a",
+      "title": "Keep the x86 vDSO gettimeofday alias independent of libc headers",
+      "url": "https://github.com/tamird/gvisor/commit/cf2264788a7cfe5302a96311d314bf715d50de9a",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-04T14:17:56.116888+00:00",
+      "summary": "Give the weak gettimeofday alias a separate C++ identifier while preserving its ELF name and kernel signature. The AMD64 vDSO checks passed with old and current glibc headers and byte-identical outputs. This is independent of #16586, which changes the BUILD file and leaves the declaration unchanged. The receipt’s separate protected-FD link failed before any test; that result does not qualify FD behavior.",
+      "evidence": [
+        {
+          "label": "One-file source proposal on upstream 6dcadf4a8",
+          "url": "https://github.com/tamird/gvisor/commit/cf2264788a7cfe5302a96311d314bf715d50de9a"
+        },
+        {
+          "label": "Fresh local Bazel vDSO/export and clock-fallback checks; separate FD link remains red",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41844752607/artifacts/13330128632"
+        },
+        {
+          "label": "Original native gettimeofday declaration error",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41819732999/artifacts/13316183219"
+        },
+        {
+          "label": "Production AMD64 ELF from identical parent vDSO sources",
+          "url": "https://github.com/google/gvisor/blob/1899f71d7/pkg/sentry/loader/vdsodata/vdso_amd64.so"
+        },
+        {
+          "label": "Independent BUILD-only vDSO proposal",
+          "url": "https://github.com/google/gvisor/pull/16586"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "cf2264788a7cfe5302a96311d314bf715d50de9a",
+        "baseHead": "6dcadf4a84a07f69e8eb5f1ea9d7b2903bd03bd7",
+        "url": "https://github.com/tamird/gvisor/commit/cf2264788a7cfe5302a96311d314bf715d50de9a",
+        "title": "Keep the x86 vDSO gettimeofday alias independent of libc headers",
+        "requestedAt": "2026-11-04T14:17:56.116888+00:00",
+        "summary": "Approve publishing this one-file AMD64 gettimeofday build fix upstream?",
+        "body": "The x86 vDSO exports a weak gettimeofday at __vdso_gettimeofday. Newer glibc headers declare the timezone parameter as void*, while the kernel entry point takes struct timezone*. Redeclaring gettimeofday with the kernel signature prevents the vDSO from compiling with those headers.\n\nGive the alias its own C++ identifier and the existing ELF name. Its type comes from the kernel entry point, leaving the weak binding and calling convention intact.\n\nThe parent built with the glibc 2.27 header, the change with that header, and the change with Ubuntu 24.04’s native header produced byte-identical AMD64 ELFs. All nine versioned functions kept their offsets and bindings relative to the production export. Both gettimeofday entry points returned time between the two host clock samples and zeroed the supplied timezone with the parameter page uninitialized."
       }
     }
   ],
