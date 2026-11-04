@@ -1,0 +1,127 @@
+name: Qualify checkpoint file locking and watchdog behavior
+on:
+  push:
+    branches: [qualification/stateipc-client-file-lock]
+permissions:
+  contents: read
+jobs:
+  catalog:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
+    name: Checkpoint file suite, race and lock controls
+    runs-on: ubuntu-24.04
+    timeout-minutes: 116
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          path: carrier
+          fetch-depth: 3
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 26a9823e3e565b7e709316489bd5756696d81797
+          path: source
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Exercise changed packages and original regression cases
+        working-directory: source
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+          ARCH: amd64
+          CPU: x86_64
+          WORKER_IMAGE: docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          ISOLATION: firecracker
+          SHA: 26a9823e3e565b7e709316489bd5756696d81797
+        shell: bash
+        run: |
+          set -eu -o pipefail
+          test "$(git rev-parse HEAD)" = "$SHA"
+          test "$(git rev-parse HEAD^)" = 155fee684b492cc63692d3a8f8c10ad6b0d5a1db
+          test "$(git -C ../carrier rev-parse HEAD)" = "$GITHUB_SHA"
+          control=0b078813b37387fb3d30e079f43eccb812e4d035
+          donor=611a6ff017c528dddbd0d2e643aaf23c6ddac488
+          test "$(git -C ../carrier rev-parse HEAD^)" = "$control"
+          test "$(git -C ../carrier rev-parse HEAD^^)" = "$SHA"
+          test "$(git -C ../carrier diff --name-only "$SHA" "$control")" = pkg/sentry/state/stateipc/client.go
+          git fetch --quiet --no-tags --depth=1 origin "$donor"
+          test "$(git rev-parse "$donor:test/rbe/qualification_report.py")" = d2e3eedabc2ad911d958aa448fd916aa6835aa86
+          test "$(git rev-parse "$donor:test/rbe/unit_matrix.py")" = d01d9e319084e18ea2928671e417e1b4e86c4954
+          for helper in qualification_report unit_matrix; do
+            git show "$donor:test/rbe/$helper.py" > "$RUNNER_TEMP/$helper.py"
+          done
+          export PYTHONPATH="$RUNNER_TEMP"
+          mkdir -p "$RUNNER_TEMP/catalog_platform"
+          platform=$RUNNER_TEMP/catalog_platform
+          printf '%s\n' 'module(name="catalog_platform")' > "$platform/MODULE.bazel"
+          cat > "$platform/BUILD" <<BUILD
+          platform(
+              name = "gnu",
+              constraint_values = ["@platforms//cpu:$CPU", "@platforms//os:linux"],
+              exec_properties = {
+                  "Arch": "$ARCH",
+                  "OSFamily": "linux",
+                  "workload-isolation-type": "$ISOLATION",
+                  "container-image": "$WORKER_IMAGE",
+                  "EstimatedMemory": "8GB",
+              },
+              visibility = ["//visibility:public"],
+          )
+          BUILD
+          export USE_BAZEL_VERSION
+          USE_BAZEL_VERSION=$(cat images/default/bazelversion)
+          rc=$RUNNER_TEMP/catalog.bazelrc
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
+              'build --remote_cache=grpcs://remote.buildbuddy.io' \
+              'build --bes_backend=grpcs://remote.buildbuddy.io' \
+              'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+              'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
+              'build --remote_accept_cached' 'build --remote_cache_compression' 'build --jobs=100' \
+              "build --inject_repository=catalog_platform=$platform" \
+              'build --host_platform=@catalog_platform//:gnu' \
+              'build --extra_execution_platforms=@catalog_platform//:gnu' \
+              "build --platforms=//tools/bazeldefs:linux_$ARCH"
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          git fetch --quiet --no-tags ../carrier "$control"
+          result=0
+          for phase in ordinary race nogo negative; do
+            sha=$SHA
+            if [[ "$phase" == negative ]]; then sha=$control; fi
+            git checkout --quiet --detach "$sha"
+            python3 -B ../carrier/test/rbe/qualify_fd_table.py "$phase" "$ARCH" "$sha" "$rc" "$RUNNER_TEMP/final-$phase" || result=1
+          done
+          exit "$result"
+      - name: Check bounded public reports
+        id: privacy
+        if: always()
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          key = os.environ["BUILDBUDDY_API_KEY"]
+          assert key
+          files = list(Path(os.environ["RUNNER_TEMP"]).glob("final-*/result.json"))
+          assert files
+          for p in files:
+              assert p.is_file() and not p.is_symlink() and p.stat().st_size < 100000
+              b = p.read_bytes()
+              json.loads(b)
+              assert key.encode() not in b and json.dumps(key)[1:-1].encode() not in b
+              assert not re.search(rb"x-buildbuddy-api-key|authorization\s*[:=]|github_pat_|gh[pousr]_", b, re.I)
+          PY
+      - if: always() && steps.privacy.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: stateipc-client-file-lock
+          path: |
+            ${{ runner.temp }}/final-negative/result.json
+            ${{ runner.temp }}/final-nogo/result.json
+            ${{ runner.temp }}/final-ordinary/result.json
+            ${{ runner.temp }}/final-race/result.json
+          if-no-files-found: error
