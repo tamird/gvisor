@@ -12,6 +12,7 @@ import shlex
 import socket
 import stat
 import subprocess
+import sys
 import xml.etree.ElementTree as ET
 import zipfile
 
@@ -23,7 +24,6 @@ PRODUCT = "735639f573bb921490150d0c722414c124119728"
 STOCK = "03e75796c4fe287faa7a5e0f6a85ae81c044f896"
 BASE = "b21a9d4eea7b0066232c33c63df9cf20ed987f6f"
 CASE = "NetlinkRouteTest/BridgeAddUnnamed"
-DIAGNOSTIC_SOURCE = "4b290b5879af5ba7e7a3f577d0dbcbffe9e3c7ce"
 SECRETS = [value for key in ("GH_TOKEN", "GITHUB_TOKEN", "BUILDBUDDY_API_KEY")
            if (value := os.environ.get(key))]
 
@@ -133,42 +133,9 @@ def execute(name, source, target):
     assert row["evidence_complete"] and info.get("strategy") == "local"
     assert not observation.get("cachedLocally") and not info.get("cachedRemotely")
     row["materialized_binaries"] = binaries(target, name)
-    log, = [out / item["path"] for item in captured["reports"] if item["name"] == "test.log"]
-    text = log.read_text(errors="replace")
-    row["gtest_started"] = bool(re.search(r"\[\s*RUN\s*\]\s+NetlinkRouteTest\.BridgeAddUnnamed\b", text))
-    relative = "test/runner/setup_container/setup_container"
-    helper = Path("bazel-bin/test/syscalls") / (target.split(":")[1] + ".runfiles") / "_main" / relative
-    helper_info = {"runfiles_path": relative}
-    try:
-        metadata = helper.stat()
-        helper_info.update(kind="file" if stat.S_ISREG(metadata.st_mode) else "other", mode=oct(stat.S_IMODE(metadata.st_mode)))
-        if stat.S_ISREG(metadata.st_mode):
-            payload = helper.read_bytes()
-            helper_info.update(bytes=len(payload), sha256=hashlib.sha256(payload).hexdigest(),
-                               elf_machine=int.from_bytes(payload[18:20], "little") if payload[:6] == b"\x7fELF\x02\x01" else None)
-    except OSError as error:
-        helper_info.update(kind="unavailable", errno=errno.errorcode.get(error.errno, "UNKNOWN"))
-    row["setup_helper"] = helper_info
-    errors = []
-    for error in re.findall(r'\btest "main\.test" failed: ([^\r\n]+)', text):
-        observation = {"sha256": hashlib.sha256(error.encode()).hexdigest(), "message": "UNRECOGNIZED"}
-        match = re.fullmatch(r"fork/exec (.+): (.+)", error)
-        if match and match[1].endswith("/" + relative):
-            for number, name in errno.errorcode.items():
-                if match[2] == os.strerror(number):
-                    observation.update(message="fork/exec <setup_container>: " + match[2], errno=name)
-                    break
-        elif re.fullmatch(r"exit status [0-9]{1,3}", error):
-            observation["message"] = error
-        elif error in ("signal: killed", "signal: segmentation fault", "signal: aborted"):
-            observation["message"] = error
-        errors.append(observation)
-    assert len(errors) <= 1
-    row["native_errors"] = errors
-    save()
     xml, = [out / item["path"] for item in captured["reports"] if item["name"] == "test.xml"]
     case, = ET.parse(xml).getroot().iter("testcase")
-    assert "/".join(filter(None, (case.get("classname"), case.get("name")))) == CASE
+    assert "/".join((case.get("classname", ""), case.get("name", ""))) == CASE
     assert case.find("skipped") is None and case.get("status") != "notrun" and case.get("result") != "suppressed"
     if name == "stock":
         assert observation["status"] == "FAILED"
@@ -184,31 +151,83 @@ def execute(name, source, target):
     save()
 
 
+def original_native():
+    from cas_inputs import blob
+
+    data = (ROOT / "bridge-original.zip").read_bytes()
+    assert len(data) == 3341
+    digest = hashlib.sha256(data).hexdigest()
+    assert digest == "8e4965fa1f4e2d9196341db59cf8a22efa13e61fe30a164f2edcc93a314a970a"
+    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+        assert archive.namelist() == ["verdict.json"]
+        old = json.loads(archive.read("verdict.json"))
+    assert old["source"] == "139ec4f5adf5276fc7e0d6cb3a43f739e877e65c"
+    assert old["product"] == PRODUCT and old["stock"] == STOCK and old["status"] == "FAIL"
+    assert set(old["arms"]) == {"native"}
+    prior = old["arms"]["native"]
+    uuid = "ec09d954-ed04-4d5f-a4b1-d4ffdcc86880"
+    assert prior["invocation"] == uuid and prior["source"] == "4b290b5879af5ba7e7a3f577d0dbcbffe9e3c7ce" and prior["native_exit"] == 3
+    assert prior["target"] == "//test/syscalls:socket_netlink_route_test_native"
+    assert prior["attempt"]["strategy"] == "local" and prior["attempt"]["status"] == "FAILED"
+    assert not prior["attempt"]["cached_locally"] and not prior["attempt"]["cached_remotely"]
+    result.update(original=old, original_zip_sha256=digest, workload_repeated=False, reports={})
+    save()
+    reports = {}
+    for name, sha, size in (
+        ("test.log", "a7fb96afef1c582ec49d10555be042700588c83bcb6d4bc43859930c67679dac", 1995),
+        ("test.xml", "145b19593c4792b610be761b9d5d46db0f030430a240f2afe05d76346b790dca", 2472),
+    ):
+        record, = [r for r in prior["reports"] if r["name"] == name]
+        assert record == {"name": name, "sha256": sha, "bytes": size}
+        reports[name] = blob({"hash": sha, "sizeBytes": size}, uuid)
+        result["reports"][name] = record
+        save()
+    case, = ET.fromstring(reports["test.xml"]).iter("testcase")
+    identity = "/".join(filter(None, (case.get("classname"), case.get("name"))))
+    result["expected_xml_identity"] = identity == CASE
+    result["xml_identity_sha256"] = hashlib.sha256(identity.encode()).hexdigest()
+    assert case.find("skipped") is None and case.get("status") != "notrun" and case.get("result") != "suppressed"
+    failures = case.findall("failure") + case.findall("error")
+    assert 0 < len(failures) <= 8
+    allowed_files = {Path(p).name for p in git("ls-files", "test/syscalls/linux", "test/util", "test/runner").splitlines()}
+    operations = ("NewLink", "NetlinkRequestAckOrError", "GetLinkByName", "SetLinkMTU", "DumpLinks", "socket", "sendmsg", "recvmsg", "bridge.mtu", "updated.mtu", "bridge0", "fork/exec", "clone", "setup-container", "unshare")
+
+    def project(text):
+        locations = re.findall(r"(?<![a-zA-Z0-9_.-])([a-zA-Z0-9_-]+\.(?:cc|h|go)):(\d{1,6})\b", text)
+        return {"sha256": hashlib.sha256(text.encode()).hexdigest(),
+                "locations": list(dict.fromkeys(f"{f}:{n}" for f, n in locations if f in allowed_files))[:12],
+                "errno": sorted({name for i, name in errno.errorcode.items() if re.search(r"\b" + name + r"\b", text) or
+                                 os.strerror(i).lower() in text.lower() or re.search(rf"\berrno\s*[:=]\s*{i}\b", text, re.I)}),
+                "source_operations": [word for word in operations if word in text],
+                "assertion_numbers": [int(value) for value in re.findall(r"(?:Which is|Actual|Expected):\s*(\d{1,5})\b", text)][:16]}
+
+    result["failures"] = [project((f.get("message", "") + "\n" + "".join(f.itertext()))) for f in failures]
+    result["log_diagnostic"] = project(reports["test.log"].decode(errors="replace"))
+    result["gtest_started"] = bool(re.search(r"\[\s*RUN\s*\]\s+NetlinkRouteTest\.BridgeAddUnnamed\b", reports["test.log"].decode(errors="replace")))
+    error, = re.findall(r'\btest "main\.test" failed: ([^\r\n]+)', reports["test.log"].decode())
+    assert hashlib.sha256(error.encode()).hexdigest() == "f224a72116188a9ac8543f1e5528f77a544f6bb37502c34f0524c4db12524bc1"
+    observation = {"sha256": hashlib.sha256(error.encode()).hexdigest(), "message": "UNRECOGNIZED"}
+    match = re.fullmatch(r"fork/exec (.+): (.+)", error)
+    if match and match[1].endswith("/test/runner/setup_container/setup_container"):
+        for number, name in errno.errorcode.items():
+            if match[2].casefold() == os.strerror(number).casefold():
+                observation.update(message="fork/exec <setup_container>: " + match[2], errno=name)
+                break
+    result["startup_error"] = observation
+    result["status"] = "ORIGINAL_STARTUP_ERROR_READ"
+    save()
+
+
 result = dict(source=os.environ["GITHUB_SHA"], product=PRODUCT, stock=STOCK, base=BASE,
               started_at=utc(), status="INCOMPLETE", arms={}, command_timeout_seconds=1800)
 save()
+if sys.argv[1:] == ["--original-native"]:
+    original_native()
+    sys.exit(0)
 try:
-    assert git("rev-parse", "HEAD^") == DIAGNOSTIC_SOURCE
-    assert git("rev-parse", DIAGNOSTIC_SOURCE + "^") == STOCK
-    assert git("diff", "--name-only", STOCK, DIAGNOSTIC_SOURCE) == "test/runner/main.go"
-    expected = git("show", STOCK + ":test/runner/main.go").replace(
-        '\t\tws := err.(*exec.ExitError).Sys().(syscall.WaitStatus)\n\t\tt.Errorf("test %q exited with status %d, want 0", tc.FullName(), ws.ExitStatus())',
-        '\t\tt.Errorf("test %q failed: %v", tc.FullName(), err)')
-    assert git("show", DIAGNOSTIC_SOURCE + ":test/runner/main.go") == expected
-    data = (ROOT / "bridge-original.zip").read_bytes()
-    assert len(data) == 2224 and hashlib.sha256(data).hexdigest() == "a08395b1d541ab1d7723aeb466524c4050755c69d256cc2e6b2ff7948fe096bd"
-    with zipfile.ZipFile(io.BytesIO(data)) as archive:
-        assert archive.namelist() == ["verdict.json"]
-        prior = json.loads(archive.read("verdict.json"))
-    assert prior["source"] == "d4c958bc8681caf621a07098b5a5ca5b81309167" and prior["status"] == "FAIL"
-    assert set(prior["arms"]) == {"native"}
-    old = prior["arms"]["native"]
-    assert old["source"] == STOCK and old["native_exit"] == 3
-    assert old["invocation"] == "14dc23d7-1ce1-4645-a9da-40304791fa86"
-    assert old["attempt"]["status"] == "FAILED" and old["attempt"]["strategy"] == "local"
-    result.update(original_native=prior, diagnostic_source=DIAGNOSTIC_SOURCE,
-                  original_diagnostic="https://github.com/tamird/gvisor/actions/runs/41746804630/artifacts/13284830030")
-    save()
+    assert git("rev-parse", "HEAD^") == "2f2aa1332380ac3e9016e6adb57a791ba1423054"
+    assert git("rev-parse", "HEAD~2") == "4b64fa6de52a1b145ed86bb39585ca918d9a1153"
+    assert git("rev-parse", "HEAD~3") == STOCK
     coordinator = json.loads((ROOT / "coordinator.json").read_text())
     assert coordinator["privileged"] is True and coordinator["user"] == "0:0"
     assert coordinator["image"] == "gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a"
@@ -257,7 +276,8 @@ try:
         "pkg/tcpip/stack/bridge.go", "pkg/tcpip/stack/bridge_test.go", "test/syscalls/linux/socket_netlink_route.cc",
         "test/syscalls/linux/socket_netlink_route_util.cc", "test/syscalls/linux/socket_netlink_route_util.h",
         "test/syscalls/linux/tuntap.cc"]
-    for name, source, suffix in (("native", DIAGNOSTIC_SOURCE, "native"),):
+    for name, source, suffix in (("native", STOCK, "native"), ("stock", STOCK, "runsc_systrap_shared"),
+                                  ("fixed", PRODUCT, "runsc_systrap_shared")):
         try:
             execute(name, source, "//test/syscalls:socket_netlink_route_test_" + suffix)
         except Exception as error:
@@ -266,8 +286,8 @@ try:
             if name == "native":
                 break
     statuses = {name: row["status"] for name, row in result["arms"].items()}
-    result["status"] = "NATIVE_DIAGNOSTIC_PASS" if statuses == {"native": "PASS"} else (
+    result["status"] = "PASS" if statuses == {"native": "PASS", "stock": "EXPECTED_FAILURE", "fixed": "PASS"} else (
         "FAIL" if "FAIL" in statuses.values() else "INCOMPLETE")
 finally:
     save()
-assert result["status"] == "NATIVE_DIAGNOSTIC_PASS"
+assert result["status"] == "PASS"
