@@ -17,7 +17,7 @@ OUT = ROOT / "out"
 SOURCES = {
     "baseline": "0bbcbf9de7626fcecba97f37723dce80b435d73d",
     "reference": "79637cb45ac762b3a5de6b08d0c2e6067b16ca50",
-    "proposed": "5068ecb10e0ca383cc00791cc4a655b7a90a626f",
+    "proposed": "a48b7a12cb3bd615c48f9b36d353c02a6463a929",
 }
 TARGET = "//runsc/container:container_test"
 CASE = "TestGCReferenceSave"
@@ -32,7 +32,7 @@ RECEIPT["plan"] = {
     "reference_original": "e4184f4509ad634618c61aa7bb854b5cc3ccf6db",
     "image": os.environ["GNU"],
     "order": PERMUTATIONS * 2,
-    "workload": {"files": 100000, "depth": 100, "file_bytes": 0, "engine": "wire", "platform": "systrap", "memory_bytes": 2 << 30, "sandbox_cpu_quota": "max", "idle_seconds": 2},
+    "workload": {"files": 100000, "depth": 100, "file_bytes": 0, "engine": "graph", "platform": "systrap", "memory_bytes": 2 << 30, "sandbox_cpu_quota": "max", "idle_seconds": 2},
     "stop": "12 complete triplets after one warmup per arm, or first setup/functional failure; no timing outlier exclusions",
     "memory_scope": "waitid high-water includes reaped descendants; proc VmRSS/VmHWM are approximate; sampled save-through-exit Sentry RSS may miss short peaks",
     "scope": "save only; every archive restored and 100000 files verified; not the published C4/COS environment or HTTP readiness",
@@ -48,6 +48,12 @@ def run(name, args):
         proc = subprocess.run(args, stdout=stream, stderr=subprocess.STDOUT)
     end = time.time_ns()
     RECEIPT["commands"].append({"phase": name, "exit": proc.returncode, "start_ns": start, "end_ns": end})
+    if proc.returncode:
+        output = (ROOT / (name + ".log")).read_text(errors="replace").lower()
+        RECEIPT["commands"][-1]["signatures"] = [s for s in ("strict dependencies", "undefined:",
+            "no such file or directory", "no matching toolchains", "unavailable", "permission denied",
+            "execution failed", "failed to fetch", "timed out") if s in output]
+        RECEIPT["commands"][-1]["fixture_lines"] = sorted(set(re.findall(r"gc_reference_test\.go:\d+", output)))[:10]
     save()
     return proc.returncode
 
@@ -60,11 +66,14 @@ def select(arm):
     original = path.read_text()
     line = '        "container_save_restore_test.go",\n'
     assert original.count(line) == 1
-    path.write_text(original.replace(line, line + '        "gc_reference_test.go",\n'))
+    original = original.replace(line, line + '        "gc_reference_test.go",\n')
+    dep = '        "//pkg/state/statefile",\n'
+    assert original.count(dep) == 1
+    path.write_text(original.replace(dep, dep + '        "//pkg/state/wire",\n'))
     Path("runsc/container/gc_reference_test.go").write_bytes((ROOT / "fixture.go").read_bytes())
     subprocess.run(["git", "diff", "--exit-code", "--quiet", "--", ".", ":!runsc/container/BUILD"], check=True)
     assert hashlib.sha256(Path("runsc/container/gc_reference_test.go").read_bytes()).hexdigest() == RECEIPT["fixture_sha256"]
-    subprocess.run(["git", "diff", "--exit-code", SOURCES["baseline"], SOURCES[arm], "--", "test/cmd/test_app"], check=True)
+    subprocess.run(["git", "diff", "--exit-code", SOURCES["baseline"], SOURCES[arm], "--", "test/cmd/test_app", "pkg/state", "pkg/gohacks", "pkg/compressio", "tools/go_stateify", "runsc/config/flags.go", "MODULE.bazel", ".bazelversion"], check=True)
 
 def finish_time(event):
     if event.get("finishTimeMillis"):
@@ -116,7 +125,11 @@ def observe(arm, number):
             record["measured"] = [json.loads(row) for row in measured]
             record["observations"] = [json.loads(row) for row in rows]
             # Fixture diagnostics only; remote coordinator logs remain private.
-            record["diagnostics"] = [line[:700] for line in log.splitlines() if re.search(r"gc_reference_test.go:\d+:", line) and "GC-SAVE-" not in line][-8:]
+            record["diagnostics"] = sorted(set(re.findall(r"gc_reference_test\.go:\d+", log)))[:16]
+            record["signatures"] = [s for s in ("reading cpuid frame", "reading kernel frame",
+                "frame is not a nonempty graph", "reading cpuid payload", "reading kernel payload",
+                "permission denied", "no space left on device", "out of memory", "signal: killed")
+                if s in log.lower()]
     save()
     assert code == 0 and detail["status"] == "PASSED" and record["summaries"][0]["status"] == "PASSED", record["test_status"]
     assert not record["cached_locally"] and not record["execution"]["cachedRemotely"]
@@ -142,6 +155,8 @@ def observe(arm, number):
     assert row["cpu_quotas"][0].startswith("max ") and row["boot"]["--total-memory"] == str(2 << 30)
     assert set(row["archive"]) == {"checkpoint.img", "pages_meta.img", "pages.img"}
     assert all(v["bytes"] > 0 and re.fullmatch("[0-9a-f]{64}", v["sha256"]) for v in row["archive"].values())
+    assert set(row["graph_frames"]) == {"cpuid", "kernel"}
+    assert all(isinstance(size, int) and size > 0 for size in row["graph_frames"].values())
     record["status"] = "PASS"
     record["verified_ns"] = time.time_ns()
     record["execution_to_verdict_ns"] = record["verified_ns"] - record["execution_finished_ns"]

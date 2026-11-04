@@ -1,12 +1,12 @@
-name: Compare GC policies on a warmed 100k-file checkpoint
+name: Compare GC policies on a warmed 100k-file graph checkpoint
 on:
   push:
-    branches: [qualification/gc-save-comparison]
+    branches: [qualification/gc-graph-save-comparison]
 permissions:
   contents: read
 jobs:
   compare:
-    if: github.repository == 'tamird/gvisor'
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
     runs-on: ubuntu-24.04
     timeout-minutes: 48
     env:
@@ -25,9 +25,10 @@ jobs:
         cp runsc/container/gc_reference_test.go "$root/fixture.go"
         cp -R test/rbe/gnu_platform "$root/gnu-platform"
         git fetch -q origin 0bbcbf9de7626fcecba97f37723dce80b435d73d 79637cb45ac762b3a5de6b08d0c2e6067b16ca50
-        git fetch -q https://github.com/google/gvisor.git 5068ecb10e0ca383cc00791cc4a655b7a90a626f
+        git fetch -q https://github.com/google/gvisor.git a48b7a12cb3bd615c48f9b36d353c02a6463a929
         test "$(git rev-parse "79637cb45^{tree}")" = 69f35f233b2dac7d6ded75f414009ad386fcd87a
-        test "$(git rev-parse 5068ecb10^)" = 0bbcbf9de7626fcecba97f37723dce80b435d73d
+        test "$(git rev-parse 79637cb45^1)" = 0bbcbf9de7626fcecba97f37723dce80b435d73d
+        test "$(git rev-parse a48b7a12c^)" = 0bbcbf9de7626fcecba97f37723dce80b435d73d
         umask 077
         {
           printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=gnu_qualification=$root/gnu-platform" 'build --extra_execution_platforms=@gnu_qualification//:gnu' 'build --host_platform=@gnu_qualification//:gnu'
@@ -77,7 +78,7 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: ${{ always() && steps.safe.outcome == 'success' }}
       with:
-        name: gc-save-reference-comparison
+        name: gc-graph-save-reference-comparison
         path: |
           ${{ runner.temp }}/gc-save/out/receipt.json
           ${{ runner.temp }}/gc-save/out/baseline.bench

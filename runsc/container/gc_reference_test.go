@@ -30,11 +30,47 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/sentry/control/controlapi"
+	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/state/statefile"
+	"gvisor.dev/gvisor/pkg/state/wire"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/runsc/config"
 	"gvisor.dev/gvisor/runsc/sandbox"
 )
+
+// gcGraphFrames verifies the CPUID and kernel frames after the timed save.
+func gcGraphFrames(t *testing.T, image string) map[string]uint64 {
+	t.Helper()
+	f, err := os.Open(image)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r, _, err := statefile.NewReader(f, nil)
+	if err != nil {
+		f.Close()
+		t.Fatal(err)
+	}
+	defer r.Close()
+	wr := wire.Reader{Reader: r}
+	lengths := make(map[string]uint64)
+	for _, name := range []string{"cpuid", "kernel"} {
+		h, err := state.ReadHeaderMode(&wr)
+		if err != nil {
+			t.Fatalf("reading %s frame: %v", name, err)
+		}
+		if !h.Object || !h.Graph || h.Length == 0 {
+			t.Fatalf("%s frame is not a nonempty graph: %+v", name, h)
+		}
+		if _, err := io.CopyN(io.Discard, r, int64(h.Length)); err != nil {
+			t.Fatalf("reading %s payload: %v", name, err)
+		}
+		lengths[name] = h.Length
+	}
+	if err := r.Verify(); err != nil {
+		t.Fatal(err)
+	}
+	return lengths
+}
 
 func gcSaveMemory(pid int) (rss, hwm uint64, err error) {
 	data, err := os.ReadFile(fmt.Sprintf("/proc/%d/status", pid))
@@ -243,7 +279,7 @@ func TestGCReferenceSave(t *testing.T) {
 			<-done
 		}
 	}()
-	engine := config.StateEngineWire
+	engine := config.StateEngineGraph
 	if err := cont.Checkpoint(conf, imageDir, sandbox.CheckpointOpts{Compression: statefile.CompressionLevelNone, StateEngine: &engine}); err != nil {
 		t.Fatal(err)
 	}
@@ -302,6 +338,7 @@ func TestGCReferenceSave(t *testing.T) {
 		}
 		files[name] = map[string]any{"sha256": fmt.Sprintf("%x", h.Sum(nil)), "bytes": size}
 	}
+	row["graph_frames"] = gcGraphFrames(t, filepath.Join(imageDir, "checkpoint.img"))
 	restored, err := New(conf, args)
 	if err != nil {
 		t.Fatal(err)

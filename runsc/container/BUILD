@@ -94,6 +94,7 @@ go_test(
         "//pkg/sentry/state/checkpointfiles",
         "//pkg/state",
         "//pkg/state/statefile",
+        "//pkg/state/wire",
         "//pkg/sync",
         "//pkg/test/testutil",
         "//pkg/unet",
