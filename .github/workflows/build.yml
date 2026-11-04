@@ -1,35 +1,110 @@
-name: CI
-
-"on":
+name: Verify native AMD64 vDSO exports and protected descriptor lookup
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/amd64-vdso-alias-native]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  native:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 140
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 4
+        persist-credentials: false
+    - name: Bind the public source fixture, local report helpers and Bazelisk
+      shell: bash
+      run: |
+        set -euo pipefail
+        umask 077
+        root="$RUNNER_TEMP/fd-race-native"
+        mkdir -p "$root"/{bin,out,tmp,abi,fd,legacy/sys}
+        printf '{"status":"INCOMPLETE","phase":"public-source-bootstrap"}\n' > "$root/out/result.json"
+        fixture=97bfc4ae73a4e74751f4db335918970889807bb6
+        product=8cdb6eb0da66ecf93b0a5e32a2ee970016833a5a
+        integration=caa2f641cb64ef4d22c5b9269d2d54acd0317f81
+        standalone=cf2264788a7cfe5302a96311d314bf715d50de9a
+        base=6dcadf4a84a07f69e8eb5f1ea9d7b2903bd03bd7
+        export_commit=1899f71d79be9b78ed439313ee050ff6b8d62a5d
+        test "$(git rev-parse HEAD^)" = "$integration"
+        test "$(git rev-parse HEAD^^)" = "$fixture"
+        test "$(git rev-parse HEAD^^^)" = "$product"
+        git rev-parse HEAD > "$root/carrier"
+        git fetch --quiet --depth=2 https://github.com/tamird/gvisor.git "$standalone"
+        git fetch --quiet --depth=1 https://github.com/google/gvisor.git "$export_commit"
+        test "$(git rev-parse "$standalone^")" = "$base"
+        test "$(git rev-parse "$base:vdso")" = 7384048381256188210b27d456f3573e6a46f3e7
+        test "$(git rev-parse "$fixture:vdso")" = "$(git rev-parse "$base:vdso")"
+        test "$(git rev-parse "$standalone:vdso")" = "$(git rev-parse "$integration:vdso")"
+        test "$(git diff --name-only "$fixture" "$integration")" = vdso/vdso.cc
+        test "$(git diff --name-only "$base" "$standalone")" = vdso/vdso.cc
+        test "$(git rev-parse "$export_commit:pkg/sentry/loader/vdsodata/vdso_amd64.so")" = bbc51a1e3decf089073ea91fae46a3524f2aa892
+        git show "$export_commit:pkg/sentry/loader/vdsodata/vdso_amd64.so" > "$root/abi/export.so"
+        curl -fsSL https://raw.githubusercontent.com/bminor/glibc/23158b08a0908f381459f273a984c6fd328363cb/time/sys/time.h -o "$root/legacy/sys/time.h"
+        echo "6b74846a3b0c0aab6b7f5261813efa3c83c5fa5cc96a9e59f4f3c323f51c70da  $root/legacy/sys/time.h" | sha256sum -c -
+        test "$(grep -c 'struct timezone \*__restrict __timezone_ptr_t' "$root/legacy/sys/time.h")" -eq 1
+        grep -F 'void *__restrict __tz' /usr/include/x86_64-linux-gnu/sys/time.h > /dev/null
+        cp test/rbe/qualify_fd_table.py test/rbe/vdso_steps.py "$root/"
+        donor=611a6ff017c528dddbd0d2e643aaf23c6ddac488
+        git fetch --quiet --depth=1 https://github.com/tamird/gvisor.git "$donor"
+        test "$(git rev-parse "$donor:test/rbe/qualification_report.py")" = d2e3eedabc2ad911d958aa448fd916aa6835aa86
+        test "$(git rev-parse "$donor:test/rbe/unit_matrix.py")" = d01d9e319084e18ea2928671e417e1b4e86c4954
+        for helper in unit_matrix qualification_report; do git show "$donor:test/rbe/$helper.py" > "$root/$helper.py"; done
+        git switch --detach --quiet "$fixture"
+        test "$(git diff --name-only HEAD^ HEAD)" = "$(printf '%s\n' pkg/sentry/kernel/BUILD pkg/sentry/kernel/fd_table_test.go)"
+        test "$(git rev-parse HEAD:pkg/sentry/kernel/BUILD)" = edee10c38f47263b9d611805e09bb3c8fc56700f
+        test "$(git rev-parse HEAD:pkg/sentry/kernel/fd_table_test.go)" = eaa1bc48fb34f0b86217249b9ee04c7bb7dc7c9d
+        test "$(cat .bazelversion)" = 9.3.1
+        curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$root/bin/bazel"
+        echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $root/bin/bazel" | sha256sum -c -
+        chmod 755 "$root/bin/bazel"
+        test "$(env -i HOME="$HOME" PATH="$PATH" "$root/bin/bazel" --version)" = 'bazel 9.3.1'
+    - name: Verify the standalone vDSO on both headers and the production export
+      timeout-minutes: 40
+      run: |
+        root="$RUNNER_TEMP/fd-race-native"
+        env -i HOME="$HOME" PATH="$root/bin:/usr/local/bin:/usr/bin:/bin" USER=runner LANG=C.UTF-8 TMPDIR="$root/tmp" GIT_TERMINAL_PROMPT=0 \
+          python3 -B "$root/vdso_steps.py" "$root"
+    - name: Run one native Linux AMD64 test with the Go race detector
+      if: ${{ !cancelled() }}
+      timeout-minutes: 94
+      run: |
+        root="$RUNNER_TEMP/fd-race-native"
+        python3 -c 'import json,sys; r=json.load(open(sys.argv[1])); assert r["executed"]["fixed_native"]["verified"] and r["executed"]["layout"]["verified"]' "$root/abi/builds.json"
+        python3 -c 'import json,sys; r=json.load(open(sys.argv[1])); assert all(r["images"][k]["calls"] == ["gettimeofday","__vdso_gettimeofday"] for k in ("export","fixed_native"))' "$root/abi/symbols.json"
+        env -i HOME="$HOME" PATH="$root/bin:/usr/local/bin:/usr/bin:/bin" USER=runner LANG=C.UTF-8 TMPDIR="$root/tmp" GIT_TERMINAL_PROMPT=0 \
+          python3 -B "$root/qualify_fd_table.py" race amd64 caa2f641cb64ef4d22c5b9269d2d54acd0317f81 "$root/fd"
+    - name: Check the compact native result
+      id: safe
+      if: always()
+      run: |
+        python3 - <<'PY'
+        import json, os, pathlib, re
+        root = pathlib.Path(os.environ["RUNNER_TEMP"], "fd-race-native")
+        path = root / "out/result.json"
+        combined = json.loads(path.read_bytes())
+        for phase, relative in (("production", "abi/builds.json"), ("abi", "abi/symbols.json"), ("fd", "fd/result.json")):
+            selected = root / relative
+            if selected.is_file():
+                assert not selected.is_symlink() and selected.stat().st_size < 100000
+                combined[phase] = json.loads(selected.read_bytes())
+        states = [combined.get(k, {}).get("status", "INCOMPLETE") for k in ("production", "abi", "fd")]
+        combined["status"] = "PASS" if states == ["PASS"] * 3 else "FAIL" if "FAIL" in states else "INCOMPLETE"
+        combined["verified_at"] = __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat()
+        combined["original_failure_artifact"] = 13316183219
+        combined["source"] = "cf2264788a7cfe5302a96311d314bf715d50de9a"
+        combined["integration"] = "caa2f641cb64ef4d22c5b9269d2d54acd0317f81"
+        path.write_text(json.dumps(combined, sort_keys=True))
+        assert path.is_file() and not path.is_symlink() and 0 < path.stat().st_size < 100000
+        body = path.read_bytes()
+        assert json.loads(body)["status"] in {"INCOMPLETE", "FAIL", "PASS"}
+        assert not re.search(rb'(?i)authorization\s*[:=]|github_pat_|gh[pousr]_', body)
+        PY
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.safe.outcome == 'success'
+      with:
+        name: vdso-weak-alias-native
+        path: ${{ runner.temp }}/fd-race-native/out/result.json
+        if-no-files-found: error
