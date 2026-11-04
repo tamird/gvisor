@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T09:53:57.618428+00:00",
+    "updatedAt": "2026-11-04T11:05:10.787984+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -49034,8 +49034,8 @@
       "head": "b79cad51119968aff3e0027237e3d646d00b6a4c",
       "title": "Start the Bazel builder only for images that need it",
       "url": "https://github.com/tamird/gvisor/commit/b79cad511",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-04T09:53:57.618428+00:00",
+      "status": "Delivered as #16951",
+      "updatedAt": "2026-11-04T11:05:10.787984+00:00",
       "summary": "Buildkite’s four CPU and GPU image jobs use 12 shards. On the two x86_64 GPU shards containing only Dockerfiles, Make now checks three and two manifests without starting a Bazel builder. Images with Bazel contexts still use make copy.",
       "evidence": [
         {
@@ -49061,19 +49061,12 @@
         {
           "label": "Original 35 Linux inventory and partition controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/41761993523/artifacts/13291250731"
+        },
+        {
+          "label": "Approved exact source published as #16951",
+          "url": "https://github.com/google/gvisor/pull/16951"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "b79cad51119968aff3e0027237e3d646d00b6a4c",
-        "baseHead": "6dcadf4a84a07f69e8eb5f1ea9d7b2903bd03bd7",
-        "url": "https://github.com/tamird/gvisor/commit/b79cad511",
-        "title": "Start the Bazel builder only for images that need it",
-        "requestedAt": "2026-11-04T09:53:57.618428+00:00",
-        "summary": "Open one PR for the image inventory and Buildkite dispatch change?",
-        "body": "Buildkite checks CPU and GPU images in shards. A shard containing only Dockerfiles can check manifests and rebuild missing images with Docker alone. Loading the Bazel wrappers first starts a builder that the shard never uses.\n\nLoad the public Bazel wrappers only when an inventory or image check also requests a goal that needs them. Images with Bazel-built contexts already invoke a separate make copy, which keeps the caller’s choice of native Bazel or the Docker builder.\n\nAll 12 shard selections kept their image names, order and context targets. The routing checks ran on AMD64; ARM64 selection was checked without building ARM64 images. In a real AMD64 run, native Bazel staged the Alpine image and Docker built the symlink-resolv Dockerfile. Once both manifests were in the loopback registry, Make found them without another Docker build or load."
-      },
       "settledReviews": [
         {
           "kind": "proposal",
@@ -49083,8 +49076,18 @@
           "body": "Listing image names can pull or build the Docker builder even though Make already has the list. Treat the four image-listing targets as host-only when every requested goal can run on the host. A command that also requests a build still uses the builder.\n\nOn an x86_64 Linux host, the output matched byte for byte for both architecture selections and the CPU and GPU partitions. The default list-all-images invocation went from six Docker calls to zero.",
           "outcome": "superseded",
           "at": "2026-11-04T09:53:57.618428+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "b79cad51119968aff3e0027237e3d646d00b6a4c",
+          "url": "https://github.com/tamird/gvisor/commit/b79cad511",
+          "title": "Start the Bazel builder only for images that need it",
+          "body": "Buildkite checks CPU and GPU images in shards. A shard containing only Dockerfiles can check manifests and rebuild missing images with Docker alone. Loading the Bazel wrappers first starts a builder that the shard never uses.\n\nLoad the public Bazel wrappers only when an inventory or image check also requests a goal that needs them. Images with Bazel-built contexts already invoke a separate make copy, which keeps the caller’s choice of native Bazel or the Docker builder.\n\nAll 12 shard selections kept their image names, order and context targets. The routing checks ran on AMD64; ARM64 selection was checked without building ARM64 images. In a real AMD64 run, native Bazel staged the Alpine image and Docker built the symlink-resolv Dockerfile. Once both manifests were in the loopback registry, Make found them without another Docker build or load.",
+          "outcome": "approved",
+          "at": "2026-11-04T11:05:10.787984+00:00"
         }
-      ]
+      ],
+      "inactive": true
     },
     {
       "id": "branch:kind-release-archive",
@@ -49214,6 +49217,81 @@
         "requestedAt": "2026-11-04T08:51:09.081212+00:00",
         "summary": "Publish the four-line Gazelle change after #16904 lands?",
         "body": "Both Buildkite pipelines start the Docker builder to run Gazelle against the agent checkout. Use the Bazelisk installed by #16904 for the existing make gazelle-check command. This preserves the agent’s cache options and Gazelle’s stale BUILD-file diagnostics.\n\nBoth pipeline commands passed on a clean checkout. Removing the //pkg/sync dependency from pkg/linewriter/BUILD made Gazelle identify the omission and Make exit 2."
+      }
+    },
+    {
+      "id": "pr:16951",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "proposal/image-check-dispatch",
+      "group": "bazel",
+      "head": "b79cad51119968aff3e0027237e3d646d00b6a4c",
+      "title": "Start the Bazel builder only for images that need it",
+      "url": "https://github.com/google/gvisor/pull/16951",
+      "status": "open",
+      "updatedAt": "2026-11-04T11:05:10.787984+00:00",
+      "summary": "Buildkite’s four CPU and GPU image jobs use 12 shards. On the two x86_64 GPU shards containing only Dockerfiles, Make now checks three and two manifests without starting a Bazel builder. Images with Bazel contexts still use make copy.",
+      "evidence": [
+        {
+          "label": "Proposed Make change (b79cad511)",
+          "url": "https://github.com/tamird/gvisor/commit/b79cad511"
+        },
+        {
+          "label": "Full diff against upstream 6dcadf4a8",
+          "url": "https://github.com/tamird/gvisor/compare/6dcadf4a8...b79cad511"
+        },
+        {
+          "label": "35 inventory controls and 19 dispatch checks, including a real AMD64 mixed shard",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41810067752/artifacts/13311982105"
+        },
+        {
+          "label": "Twelve-shard and loopback-registry qualifier (604a4855a)",
+          "url": "https://github.com/tamird/gvisor/commit/604a4855a"
+        },
+        {
+          "label": "Superseded inventory-only proposal (f5b1fa005)",
+          "url": "https://github.com/tamird/gvisor/commit/f5b1fa005"
+        },
+        {
+          "label": "Original 35 Linux inventory and partition controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41761993523/artifacts/13291250731"
+        },
+        {
+          "label": "Approved exact source published as #16951",
+          "url": "https://github.com/google/gvisor/pull/16951"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "f5b1fa005b08e1b7f9c61f1cafd13417b9707d1e",
+          "url": "https://github.com/tamird/gvisor/commit/f5b1fa005",
+          "title": "List images without starting the Docker builder",
+          "body": "Listing image names can pull or build the Docker builder even though Make already has the list. Treat the four image-listing targets as host-only when every requested goal can run on the host. A command that also requests a build still uses the builder.\n\nOn an x86_64 Linux host, the output matched byte for byte for both architecture selections and the CPU and GPU partitions. The default list-all-images invocation went from six Docker calls to zero.",
+          "outcome": "superseded",
+          "at": "2026-11-04T09:53:57.618428+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "b79cad51119968aff3e0027237e3d646d00b6a4c",
+          "url": "https://github.com/tamird/gvisor/commit/b79cad511",
+          "title": "Start the Bazel builder only for images that need it",
+          "body": "Buildkite checks CPU and GPU images in shards. A shard containing only Dockerfiles can check manifests and rebuild missing images with Docker alone. Loading the Bazel wrappers first starts a builder that the shard never uses.\n\nLoad the public Bazel wrappers only when an inventory or image check also requests a goal that needs them. Images with Bazel-built contexts already invoke a separate make copy, which keeps the caller’s choice of native Bazel or the Docker builder.\n\nAll 12 shard selections kept their image names, order and context targets. The routing checks ran on AMD64; ARM64 selection was checked without building ARM64 images. In a real AMD64 run, native Bazel staged the Alpine image and Docker built the symlink-resolv Dockerfile. Once both manifests were in the loopback registry, Make found them without another Docker build or load.",
+          "outcome": "approved",
+          "at": "2026-11-04T11:05:10.787984+00:00"
+        }
+      ],
+      "number": 16951,
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "b79cad51119968aff3e0027237e3d646d00b6a4c",
+        "providerHead": "b79cad51119968aff3e0027237e3d646d00b6a4c",
+        "observedAt": "2026-11-04T11:05:10.787984+00:00",
+        "disposition": "Approved source published; public checks and review remain",
+        "nextAction": "Follow #16951 checks and maintainer feedback without requesting another decision for this unchanged source.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16951"
+        ]
       }
     }
   ],
