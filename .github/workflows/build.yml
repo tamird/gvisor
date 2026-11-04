@@ -30,7 +30,7 @@ jobs:
           set -euo pipefail
           mkdir "$RUNNER_TEMP/bridge-public"
           cp .github/qualification/bridge_mtu.py "$RUNNER_TEMP/"
-          test "$(git rev-parse HEAD^)" = d4c958bc8681caf621a07098b5a5ca5b81309167
+          test "$(git rev-parse HEAD^)" = d266401935f3defc18a53feebe49201071f6b377
           resolver=680739b629229eb1c8fa91aa1147d1bca71eb04f
           git fetch --quiet --depth=1 origin "$REPORTER" "$resolver"
           for helper in unit_matrix qualification_report; do

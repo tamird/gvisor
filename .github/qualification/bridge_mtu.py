@@ -183,15 +183,17 @@ def original_native():
         result["reports"][name] = record
         save()
     case, = ET.fromstring(reports["test.xml"]).iter("testcase")
-    assert "/".join((case.get("classname", ""), case.get("name", ""))) == CASE
+    identity = "/".join(filter(None, (case.get("classname"), case.get("name"))))
+    result["expected_xml_identity"] = identity == CASE
+    result["xml_identity_sha256"] = hashlib.sha256(identity.encode()).hexdigest()
     assert case.find("skipped") is None and case.get("status") != "notrun" and case.get("result") != "suppressed"
     failures = case.findall("failure") + case.findall("error")
     assert 0 < len(failures) <= 8
-    allowed_files = {Path(p).name for p in git("ls-files", "test/syscalls/linux", "test/util").splitlines()}
-    operations = ("NewLink", "NetlinkRequestAckOrError", "GetLinkByName", "SetLinkMTU", "DumpLinks", "socket", "sendmsg", "recvmsg", "bridge.mtu", "updated.mtu", "bridge0")
+    allowed_files = {Path(p).name for p in git("ls-files", "test/syscalls/linux", "test/util", "test/runner").splitlines()}
+    operations = ("NewLink", "NetlinkRequestAckOrError", "GetLinkByName", "SetLinkMTU", "DumpLinks", "socket", "sendmsg", "recvmsg", "bridge.mtu", "updated.mtu", "bridge0", "fork/exec", "clone", "setup-container", "unshare")
 
     def project(text):
-        locations = re.findall(r"(?<![a-zA-Z0-9_.-])([a-zA-Z0-9_-]+\.(?:cc|h)):(\d{1,6})\b", text)
+        locations = re.findall(r"(?<![a-zA-Z0-9_.-])([a-zA-Z0-9_-]+\.(?:cc|h|go)):(\d{1,6})\b", text)
         return {"sha256": hashlib.sha256(text.encode()).hexdigest(),
                 "locations": list(dict.fromkeys(f"{f}:{n}" for f, n in locations if f in allowed_files))[:12],
                 "errno": sorted({name for i, name in errno.errorcode.items() if re.search(r"\b" + name + r"\b", text) or
@@ -201,6 +203,10 @@ def original_native():
 
     result["failures"] = [project((f.get("message", "") + "\n" + "".join(f.itertext()))) for f in failures]
     result["log_diagnostic"] = project(reports["test.log"].decode(errors="replace"))
+    result["gtest_started"] = bool(re.search(r"\[\s*RUN\s*\]\s+NetlinkRouteTest\.BridgeAddUnnamed\b", reports["test.log"].decode(errors="replace")))
+    result["prior_reader"] = {"url": "https://github.com/tamird/gvisor/actions/runs/41746332733/artifacts/13282734873",
+                              "zip_sha256": "bbda2bd8abc534a85d75edf4db0dad4310347f9c980fa34400e6a4fef85bdafa",
+                              "status": "INCOMPLETE", "stopped_at": "XML identity assertion"}
     result["status"] = "ORIGINAL_REPORTS_READ"
     save()
 
