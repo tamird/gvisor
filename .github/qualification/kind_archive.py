@@ -11,8 +11,6 @@ import sys
 import traceback
 import uuid
 
-import full
-
 TMP = Path(os.environ["RUNNER_TEMP"])
 TOOL = TMP / "tools"
 TRACE = TMP / "witness"
@@ -59,7 +57,12 @@ def standin(name, args):
         else:
             assert "--starlark:file=tools/show_paths.bzl" in args
         status = 39
-        if phase == "positive":
+        if os.getenv("KIND_RETAINED"):
+            assert phase == "positive"
+            if command == "cquery":
+                print(TMP / "retained.tar.bz2", "gvisor.tar.bz2")
+            status = 0
+        elif phase == "positive":
             status = subprocess.run([TOOL / "real-bazel", "--bazelrc=" + str(TMP / "kind.bazelrc"),
                                      command, "--build_event_json_file=" + str(TMP / (command + ".bep")),
                                      *args[1:]]).returncode
@@ -80,7 +83,8 @@ def standin(name, args):
             return 0
         if name == "docker" and len(args) == 3 and args[0] == "cp" and args[2] == NODE + ":/usr/bin/":
             files = Path(args[1])
-            assert args[1].endswith("/unpacked/.") and files.parent.parent.parent == TMP / "bin-dirs"
+            save("reached", {"node_copy": True, "at": now()})
+            assert args[1].endswith("/unpacked/.") and files.parent.parent == TMP / "bin-dirs"
             actual = sorted(str(p.relative_to(files)) for p in files.rglob("*") if p.is_file())
             p = original()
             assert actual == sorted(p["members"]) and all(not (files / n).is_symlink() and os.access(files / n, os.X_OK) for n in actual)
@@ -89,7 +93,7 @@ def standin(name, args):
             actual_sha = sha(archive)
             save("copy", {"source": "unpacked/.", "destination": args[2], "archive_sha256": actual_sha,
                           "archive_bytes": archive.stat().st_size, "prior_archive_identical": actual_sha == p["sha256"],
-                          "selected_bazel_output_identical": actual_sha == sha(Path("bazel-bin/debian/gvisor.tar.bz2")),
+                          "selected_output_identical": actual_sha == sha(TMP / "retained.tar.bz2" if os.getenv("KIND_RETAINED") else Path("bazel-bin/debian/gvisor.tar.bz2")),
                           "executable_paths": actual, "at": now()})
             return 73  # Intentional stop at submission to the simulated node.
     save("unexpected", {"tool": name, "phase": phase})
@@ -124,7 +128,16 @@ def main():
     try:
         (TMP / "bin-dirs").mkdir()
         env = os.environ | {"TMPDIR": str(TMP / "bin-dirs"), "MAKEFLAGS": " -- DOCKER_BUILD=false"}
-        for phase in ("negative", "positive"):
+        retained = bool(os.getenv("KIND_RETAINED"))
+        if retained:
+            first = json.loads((TMP / "first.json").read_text())
+            assert first["product"] == result["product"] and first["producer"] == result["producer"] and first["status"] == "FAIL"
+            assert first["arms"]["negative"]["verified"] and first["arms"]["negative"]["build"]["exit"] == 39
+            assert first["arms"]["positive"]["script_exit"] == 1 and "copy" not in first["arms"]["positive"]
+            assert all(first["arms"]["positive"][s]["exit"] == 0 and first["arms"]["positive"][s]["owner"] == OWNER for s in ("build", "cquery"))
+            result.update(original_run=41785604947, original=first, recovery_bazel_executed=False,
+                          scope="actual Kind script, make copy, extraction and node-copy recorder using original package bytes")
+        for phase in (("positive",) if retained else ("negative", "positive")):
             arm = result["arms"][phase] = {}
             log = TMP / (phase + ".log")
             with log.open("w") as f:
@@ -137,28 +150,42 @@ def main():
                     arm[cmd] = load(phase + cmd)
             if (TRACE / "unexpected").is_file():
                 arm["unexpected"] = load("unexpected")
+            if (TRACE / "tool_error").is_file():
+                arm["tool_error"] = load("tool_error")
             if (TRACE / "copy").is_file():
                 arm["copy"] = load("copy")
+            if (TRACE / "reached").is_file():
+                arm["reached"] = load("reached")
             output.write_text(json.dumps(result))
             assert not arm.get("unexpected")
             if phase == "negative":
                 assert arm["script_exit"] == 2 and arm["build"]["exit"] == 39 and "cquery" not in arm and "copy" not in arm
             else:
                 assert arm["script_exit"] == 73 and arm["build"]["exit"] == arm["cquery"]["exit"] == 0
-                assert arm["copy"]["prior_archive_identical"] and arm["copy"]["selected_bazel_output_identical"]
-                arm["events"] = {cmd: event(cmd) for cmd in ("build", "cquery")}
+                assert arm["copy"]["prior_archive_identical"] and arm["copy"]["selected_output_identical"]
+                if not retained:
+                    arm["events"] = {cmd: event(cmd) for cmd in ("build", "cquery")}
+                else:
+                    arm["bazel_standins_only"] = True
             arm["verified"] = True
-        result["status"] = "PASS"
+        result["status"] = "RETAINED_HANDOFF_PASS" if retained else "PASS"
     except Exception as e:
         result.update(status="FAIL", error=type(e).__name__, line=traceback.extract_tb(e.__traceback__)[-1].lineno)
-        if "log" in locals() and log.is_file():
+        if not os.getenv("KIND_RETAINED") and "log" in locals() and log.is_file():
+            import full
             result["diagnostics"] = full.diagnostics(log)
     finally:
         result["verified_at"] = now()
         output.write_text(json.dumps(result, indent=2))
-    return int(result["status"] != "PASS")
+    return int(result["status"] not in ("PASS", "RETAINED_HANDOFF_PASS"))
 
 
 if __name__ == "__main__":
     name = Path(sys.argv[0]).name
-    sys.exit(main() if name == "witness" else standin(name, sys.argv[1:]))
+    if name == "witness":
+        sys.exit(main())
+    try:
+        sys.exit(standin(name, sys.argv[1:]))
+    except Exception as e:
+        save("tool_error", {"tool": name, "error": type(e).__name__, "line": traceback.extract_tb(e.__traceback__)[-1].lineno})
+        sys.exit(78)
