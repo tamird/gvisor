@@ -5,9 +5,12 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import selectors
 import shutil
 import subprocess
+import sys
 import tempfile
+import time
 
 FILES = Path(os.environ["TEST_SRCDIR"]) / os.environ["TEST_WORKSPACE"] / "test/rtnetlink/linux"
 WORK = Path(os.environ["TEST_TMPDIR"]).resolve()
@@ -77,8 +80,33 @@ def main() -> int:
                    "--root=" + state, "--platform=systrap", "--network=none", "--net-raw=true",
                    "--ignore-cgroups=true", "run", "--bundle=" + str(work), "bridge-mtu"]
         try:
-            result = subprocess.run(command, env=ENV, timeout=180)
-            return result.returncode
+            # runsc changes inherited stdio ownership. Give it a pipe so the
+            # unprivileged Bazel client keeps ownership of its test.log.
+            with subprocess.Popen(command, env=ENV, stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as child:
+                deadline = time.monotonic() + 180
+                try:
+                    with selectors.DefaultSelector() as ready:
+                        ready.register(child.stdout, selectors.EVENT_READ)
+                        while ready.get_map():
+                            remaining = deadline - time.monotonic()
+                            if remaining <= 0:
+                                raise subprocess.TimeoutExpired(command, 180)
+                            for key, _ in ready.select(remaining):
+                                data = os.read(key.fd, 65536)
+                                if data:
+                                    sys.stdout.buffer.write(data)
+                                    sys.stdout.buffer.flush()
+                                else:
+                                    ready.unregister(key.fileobj)
+                    return child.wait(timeout=max(0, deadline - time.monotonic()))
+                except subprocess.TimeoutExpired:
+                    print("BRIDGE_CHILD_TIMEOUT", flush=True)
+                    raise
+                finally:
+                    if child.poll() is None:
+                        child.kill()
+                        child.wait()
+                    print("BRIDGE_CHILD_RETURN", child.returncode, flush=True)
         finally:
             if xml.is_file() and xml.stat().st_size:
                 shutil.copyfile(xml, os.environ["XML_OUTPUT_FILE"])

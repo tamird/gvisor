@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 5
+          fetch-depth: 6
           persist-credentials: false
       - name: Retain the original native pass and stock launch failure
         env:
@@ -31,7 +31,7 @@ jobs:
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/bridge-public" "$RUNNER_TEMP/bridge-private"
           printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/bridge-public/verdict.json"
-          test "$(git rev-parse HEAD^)" = f589199cf6173ee69948c3790e2b0d09d4f999a2
+          test "$(git rev-parse HEAD^)" = 5e497343c1eec5fb7ebcac610979e6f7d4fdb341
           cp .github/qualification/bridge_mtu.py "$RUNNER_TEMP/"
           git fetch --quiet --depth=1 origin "$REPORTER"
           for helper in unit_matrix qualification_report; do

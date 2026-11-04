@@ -24,6 +24,7 @@ FIXTURE = "//test/syscalls/linux:socket_netlink_route_test"
 CASE = "NetlinkRouteTest/BridgeAddUnnamed"
 CARRIER = os.environ["GITHUB_SHA"]
 ORIGINAL_CARRIER = "f589199cf6173ee69948c3790e2b0d09d4f999a2"
+RECOVERY_CARRIER = "5e497343c1eec5fb7ebcac610979e6f7d4fdb341"
 STAGED = Path("test/rtnetlink/linux/bridge-release")
 STAGED_FIXTURE = Path("test/rtnetlink/linux/bridge-fixture")
 RELEASE_FILES = {"runsc", "containerd-shim-runsc-v1", *("gvisor-bin/" + name for name in (
@@ -218,6 +219,10 @@ def execute(name: str, source: str) -> None:
     logs = [out / item["path"] for item in captured["reports"] if item["name"] == "test.log"]
     log = logs[0].read_text(errors="replace") if len(logs) == 1 else ""
     row["test_boundary"] = boundary(log)
+    returns = [int(value) for value in re.findall(r"(?m)^BRIDGE_CHILD_RETURN (-?[0-9]{1,3})$", log)]
+    row["child_returncodes"] = returns
+    row["child_signals"] = [-value for value in returns if value < 0]
+    row["child_timeout"] = "BRIDGE_CHILD_TIMEOUT" in log.splitlines()
     row["xml_boundary"] = [boundary((out / item["path"]).read_text(errors="replace"))
                            for item in captured["reports"] if item["name"] == "test.xml"]
     row["report_permissions"] = {}
@@ -270,6 +275,8 @@ def execute(name: str, source: str) -> None:
     if name != "native":
         expected.update(runsc=built["binaries"]["runsc"], gvisor_sentry=built["binaries"]["gvisor-bin/gvisor_sentry"])
     assert row["launched_binaries"] == expected, row["launched_binaries"]
+    assert row["report_permissions"]["test.log"].get("uid") == os.getuid()
+    assert returns == [1 if name == "stock" else 0] and not row["child_timeout"]
     assert row["reporter_complete"]
     xml, = [out / item["path"] for item in captured["reports"] if item["name"] == "test.xml"]
     case, = ET.parse(xml).getroot().iter("testcase")
@@ -297,10 +304,14 @@ result = dict(source=CARRIER, product=PRODUCT, stock=STOCK, base=BASE,
                   {"run": 41748857558, "artifact": 13285116244, "status": "FAIL", "gtest_started": False,
                    "zip_sha256": "8e4965fa1f4e2d9196341db59cf8a22efa13e61fe30a164f2edcc93a314a970a"},
                   {"run": 41750123884, "artifact": 13284988753, "startup_errno": "EACCES", "workload_repeated": False,
-                   "zip_sha256": "1bb72d872742cc8c070cf56a1ac46a2c6817057008e25ba25b60279b4993dd70"}])
+                   "zip_sha256": "1bb72d872742cc8c070cf56a1ac46a2c6817057008e25ba25b60279b4993dd70"},
+                  {"run": 41753719629, "artifact": 13286388599, "native_exit": 36,
+                   "test_log_uid": 0, "test_log_mode": "0600", "client_uid": 1001,
+                   "zip_sha256": "a7648e8d56470cb81c502066c7f701637bdcc0bfda37bdc1ae88b66fafba3129"}])
 save()
 try:
-    assert git("rev-parse", "HEAD^") == ORIGINAL_CARRIER and git("rev-parse", ORIGINAL_CARRIER + "^") == STOCK
+    assert git("rev-parse", "HEAD^") == RECOVERY_CARRIER and git("rev-parse", RECOVERY_CARRIER + "^") == ORIGINAL_CARRIER
+    assert git("rev-parse", ORIGINAL_CARRIER + "^") == STOCK
     assert git("rev-parse", STOCK + "^") == PRODUCT and git("rev-parse", PRODUCT + "^") == BASE
     assert git("diff", "--name-only", STOCK, PRODUCT) == "pkg/tcpip/stack/bridge.go"
     assert git("rev-parse", STOCK + ":pkg/tcpip/stack/bridge.go") == git("rev-parse", BASE + ":pkg/tcpip/stack/bridge.go")
