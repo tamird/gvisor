@@ -43,7 +43,8 @@
 ##   To opt out of these wrappers, set DOCKER_BUILD=false.
 DOCKER_BUILD := true
 ifneq ($(MAKECMDGOALS),)
-ifeq ($(filter-out help testlogs,$(MAKECMDGOALS)),)
+ifeq ($(filter-out help testlogs list-all-images list-all-test-images \
+        list-cpu-images list-gpu-images,$(MAKECMDGOALS)),)
 DOCKER_BUILD := false
 endif
 endif
