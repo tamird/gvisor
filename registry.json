@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T02:54:51.822362+00:00",
+    "updatedAt": "2026-11-04T03:06:00+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10965,16 +10965,16 @@
       "head": "c94060421c769ad55606bd2b57c7e74eff0de661",
       "title": "Route tests by missing worker requirements",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/c94060421c769ad55606bd2b57c7e74eff0de661",
-      "status": "Routed syscall cohort independently verified",
-      "updatedAt": "2026-10-10T23:22:03.302418+00:00",
-      "summary": "The generic missing-requirements policy preserves the complete 1,176-owner/2,138-shard universe. Independent saved review verifies unchanged default contracts on both architectures and an AMD64 split of 25 local owners/63 shards and 1,151 remote owners/2,075 shards, including unchanged remote argument suffixes. Native and host-network declarations cover demonstrated failures and 74 additional skipped bodies; gVisor netstack, PTY and VDSO remain remote. The first graph attempt retained 11 successful analyses but failed on a Python compatibility operation. That is corrected at c94060421. The oversized accepted continuation 0dadd9cc has no observed terminal result; its outcome remains unknown after its requested parent bound, with cancellation unconfirmed. Compact continuation 6745ef42 completed the remaining graph assertions successfully. No syscall body ran in these graph checks. The focused Actions method now executes exactly the 25 routed owners with original shards and deadlines, remote compilation and expected 58 Docker plus five initial-cgroup host test actions. Its first attempt 38091978973 started no jobs because the raw policy made the concurrency key exceed GitHub's 400-character limit. The one-line workflow correction retains the policy input and evidence; corrected run 38092405785 at 697237b865 is owner-verified: all 25 owners and 63 fresh test actions passed, placed as 58 Docker and five host actions. All 4,181 non-test spawns were remote or remote-cache, with no local compiler. The 126 authenticated log/XML files contain 2,312 executed C++ passes and 54 explicit skips, with no wrapper-only or empty XML. All 74 cases that previously skipped on hosted workers executed successfully. Native cgroup-transfer retains its two known skipped identities, with no body credit. The original captured method/payload commits, provider source and clean restoration agree. Independent saved review is complete and reproduces every placement and case count. This run gives no new execution credit to the 1,151 remote owners. Root is composing the validated routing with other qualified policies; its hybrid-unit report receives a separate Python 3.8 compatibility correction and final graph check.",
+      "url": "https://github.com/tamird/gvisor/commit/c94060421",
+      "status": "Routing integrated and graph verified",
+      "updatedAt": "2026-11-04T03:06:00+00:00",
+      "summary": "The generic missing-requirements policy preserves the complete 1,176-owner/2,138-shard universe. Independent saved review verifies unchanged default contracts on both architectures and an AMD64 split of 25 local owners/63 shards and 1,151 remote owners/2,075 shards, including unchanged remote argument suffixes. Native and host-network declarations cover demonstrated failures and 74 additional skipped bodies; gVisor netstack, PTY and VDSO remain remote. The first graph attempt retained 11 successful analyses but failed on a Python compatibility operation. That is corrected at c94060421. The oversized accepted continuation 0dadd9cc has no observed terminal result; its outcome remains unknown after its requested parent bound, with cancellation unconfirmed. Compact continuation 6745ef42 completed the remaining graph assertions successfully. No syscall body ran in these graph checks. The focused Actions method now executes exactly the 25 routed owners with original shards and deadlines, remote compilation and expected 58 Docker plus five initial-cgroup host test actions. Its first attempt 38091978973 started no jobs because the raw policy made the concurrency key exceed GitHub's 400-character limit. The one-line workflow correction retains the policy input and evidence; corrected run 38092405785 at 697237b865 is owner-verified: all 25 owners and 63 fresh test actions passed, placed as 58 Docker and five host actions. All 4,181 non-test spawns were remote or remote-cache, with no local compiler. The 126 authenticated log/XML files contain 2,312 executed C++ passes and 54 explicit skips, with no wrapper-only or empty XML. All 74 cases that previously skipped on hosted workers executed successfully. Native cgroup-transfer retains its two known skipped identities, with no body credit. The original captured method/payload commits, provider source and clean restoration agree. Independent saved review is complete and reproduces every placement and case count. This run gives no new execution credit to the 1,151 remote owners. The combined policy incorporates this selector. Its ARM64 unit graph selects 673 distinct labels, 674 configured targets and 694 actions under each of the two routing policies. The enclosing job failed because its verifier assumed a single configuration per label. The captured graphs preserve the extra configuration.",
       "followup": {
-        "disposition": "Graph and routed runtime independently closed",
-        "owner": "external_sweeps",
+        "disposition": "Routing integrated and graph verified",
+        "owner": "root",
         "sourceHead": "c94060421c769ad55606bd2b57c7e74eff0de661",
-        "reviewedAt": "2026-10-10T23:22:03.302418+00:00",
-        "nextAction": "Root owns final combined-profile integration and graph validation. Preserve the bounded concurrency key and the separate PTY/clock diagnoses; no contributor question is pending for this qualification infrastructure.",
+        "reviewedAt": "2026-11-04T03:06:00+00:00",
+        "nextAction": "Use Current public-CI qualification for runtime coverage. The graph comparison covers selection only.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/38092405785",
           "https://app.buildbuddy.io/invocation/6745ef42-80cf-40f1-80f5-2cfc6793b37b",
@@ -10982,9 +10982,12 @@
           "https://app.buildbuddy.io/invocation/0dadd9cc-5498-4ef9-8438-a2c3f1ffb212",
           "https://github.com/tamird/gvisor/commit/c94060421c769ad55606bd2b57c7e74eff0de661",
           "https://github.com/tamird/gvisor/commit/eac9708762711f8c8025820170ab113d1b212f9b",
-          "https://app.buildbuddy.io/invocation/ed1dd938-2ee2-4e57-b1e5-a385e39674f9"
+          "https://app.buildbuddy.io/invocation/ed1dd938-2ee2-4e57-b1e5-a385e39674f9",
+          "https://github.com/tamird/gvisor/commit/9aea996b6",
+          "https://github.com/tamird/gvisor/actions/runs/38097348180/artifacts/11687036889"
         ]
-      }
+      },
+      "inactive": true
     },
     {
       "id": "pr:15644",
