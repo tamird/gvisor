@@ -34,7 +34,6 @@
 #include <linux/if.h>
 #include <linux/if_addr.h>
 #include <linux/if_arp.h>
-#include <linux/if_ether.h>
 #include <linux/if_link.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
@@ -488,7 +487,7 @@ TEST_P(NetlinkSetLinkTest, ChangeMTU) {
   EXPECT_NO_ERRNO(NetlinkRequestAckOrError(fd, kSeq, &req, sizeof(req)));
 
   // Update the local loopback_link's MTU to the requested value.
-  loopback_link.mtu = req.mtu - ETH_HLEN;
+  loopback_link.mtu = req.mtu;
   // Verify the new MTU.
   struct searchrequest {
     struct nlmsghdr hdr;
