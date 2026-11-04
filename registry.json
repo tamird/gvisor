@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T05:00:25.863097+00:00",
+    "updatedAt": "2026-11-04T05:35:40.537494+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1641,27 +1641,37 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-25T12:59:04.302653+00:00",
-      "summary": "The October 25 source reconciliation is delivered at e1e9c4ea0f06 and the 12:53 provider snapshot reports it mergeable. The source reconciliation preserves the device-file credential callback with the landed Filesystem identity accessors. No runtime replay or fresh exact-head approval is claimed.\n\nHistorical source-specific record:\n\nThe requested post-#16046 rebase is published at 40f478e8cb1f on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at dc2687aa226e on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe contributor-approved Init explanation is published at ebebea2d3997 after the source-preserving rebase. It explains why field guards keep exclusive initialization writes checked. The existing discussion received a reply and was resolved. Maintainer follow-up is pending; the native review re-request returned HTTP 404, so no successful new request is claimed.",
+      "updatedAt": "2026-11-04T05:35:40.537494+00:00",
+      "summary": "The November 4 rebase onto master 183a39d1b is published at e438da4be. GitHub reports the head is mergeable. All four Nogo targets passed on AMD64 and ARM64. On native AMD64, 171 TMPFS and 40 VFS cases passed, including both new SIGBUS cases. No cases were skipped. The earlier changes-requested review remains on the PR.\n\nOn October 25 the 12:53 provider snapshot reported e1e9c4ea0 mergeable. That source preserved the device-file credential callback with the landed Filesystem identity accessors. Its reconciliation did not include a runtime replay or fresh approval.\n\nHistorical source-specific record:\n\nThe requested post-#16046 rebase is published at 40f478e8cb1f on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe published mechanical rebase is at dc2687aa226e on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. No prior approving reviewer was recorded; none was invented for outreach.\n\nEarlier source-specific record:\n\nThe contributor-approved Init explanation is published at ebebea2d3997 after the source-preserving rebase. It explains why field guards keep exclusive initialization writes checked. The existing discussion received a reply and was resolved. Maintainer follow-up is pending; the native review re-request returned HTTP 404, so no successful new request is claimed.",
       "followup": {
         "owner": "work_map_current",
-        "disposition": "Source reconciliation delivered; current head is mergeable",
-        "sourceHead": "e1e9c4ea0f069dc2b1e10646dbd0a37ce29a45e5",
+        "disposition": "Rebase published and mergeable. Four Nogo targets and both native AMD64 suites passed.",
+        "sourceHead": "e438da4be1095b62b03343a3ad78bf3c46f87e4f",
         "reviewedAt": "2026-10-10T18:38:04.777493+00:00",
-        "nextAction": "Follow exact-head checks, matching imports and maintainer review through the existing watcher. Earlier runtime results and approvals retain their source identities; no duplicate rebase or courtesy comment.",
+        "nextAction": "Follow the public checks and maintainer review on the rebased head. All earlier threads are resolved.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14343#discussion_r4260325076",
           "https://github.com/tamird/gvisor/commit/ebebea2d39970e0da947503e4dc75af172a55e8c",
           "https://github.com/tamird/gvisor/commit/dc2687aa226ef6501206c06b6395969bfe9f68ea",
           "https://github.com/tamird/gvisor/commit/40f478e8cb1f7fa2216f34ca047b163d848d69a5",
-          "https://github.com/tamird/gvisor/commit/e1e9c4ea0f069dc2b1e10646dbd0a37ce29a45e5"
+          "https://github.com/tamird/gvisor/commit/e1e9c4ea0f069dc2b1e10646dbd0a37ce29a45e5",
+          "https://github.com/tamird/gvisor/commit/e438da4be",
+          "https://github.com/tamird/gvisor/actions/runs/41779051630/artifacts/13298471909"
         ],
-        "observedAt": "2026-10-25T12:59:04.302653+00:00",
+        "observedAt": "2026-11-04T05:35:40.537494+00:00",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
-      "head": "e1e9c4ea0f069dc2b1e10646dbd0a37ce29a45e5",
+      "head": "e438da4be1095b62b03343a3ad78bf3c46f87e4f",
       "evidence": [
+        {
+          "label": "Four Nogo targets on AMD64 and ARM64, plus 211 native AMD64 TMPFS and VFS cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41779051630/artifacts/13298471909"
+        },
+        {
+          "label": "Rebase of the locking contracts onto master 183a39d1b",
+          "url": "https://github.com/tamird/gvisor/commit/e438da4be"
+        },
         {
           "label": "Published mechanical rebase",
           "url": "https://github.com/tamird/gvisor/commit/dc2687aa226ef6501206c06b6395969bfe9f68ea"
@@ -29269,6 +29279,10 @@
         {
           "label": "Earlier smoke fixture rejected before running any tests",
           "url": "https://app.buildbuddy.io/invocation/2c0e4e9a-6c44-4b6f-87cc-30d4ab353413"
+        },
+        {
+          "label": "Fork integration 2882b32e3, with the Python launcher, static interpreter and compiler: three fresh packages on each native distroless architecture. Each contained all nine binaries, including netgofer, with verified modes, ELF architecture and Debian metadata. The combined target, signing and publication were outside this run.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41779130466/artifacts/13299000441"
         }
       ],
       "number": 16490,
