@@ -1,5 +1,6 @@
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@rules_shell//shell:sh_library.bzl", "sh_library")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//tools:defs.bzl", "go_binary")
 
 package(
@@ -51,4 +52,25 @@ go_binary(
     deps = [
         "@org_golang_x_sys//unix:go_default_library",
     ],
+)
+
+# The fork qualification stages these exact Bazel //:release outputs here.
+sh_test(
+    name = "source_veth_setlink",
+    srcs = ["packaged_bridge.py"],
+    args = ["source-veth"],
+    data = [
+        "rtnetlink_test.sh",
+        "setlink_test.sh",
+        "veth-release/containerd-shim-runsc-v1",
+        "veth-release/gvisor-bin/checkpointgofer",
+        "veth-release/gvisor-bin/gvisor-proc-umounter",
+        "veth-release/gvisor-bin/gvisor-sentry-prewarmer",
+        "veth-release/gvisor-bin/gvisor_sentry",
+        "veth-release/gvisor-bin/runsc-fd-parking",
+        "veth-release/gvisor-bin/runsc-metric-server",
+        "veth-release/runsc",
+    ],
+    tags = ["local", "manual"],
+    timeout = "long",
 )
