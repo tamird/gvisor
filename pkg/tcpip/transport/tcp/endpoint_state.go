@@ -188,6 +188,7 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 		snd.reorderTimer.init(s.Clock(), timerHandler(e, e.snd.rc.reorderTimerExpired))
 		snd.probeTimer.init(s.Clock(), timerHandler(e, e.snd.probeTimerExpired))
 		snd.corkTimer.init(s.Clock(), timerHandler(e, e.snd.corkTimerExpired))
+		snd.delayedACKTimer.init(s.Clock(), timerHandler(e, e.snd.delayedACKTimerExpired))
 	}
 	e.ops.InitHandler(e, e.stack, GetTCPSendBufferLimits, GetTCPReceiveBufferLimits)
 	e.segmentQueue.thaw()

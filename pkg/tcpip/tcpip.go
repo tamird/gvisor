@@ -1172,6 +1172,18 @@ func (*TCPAvailableCongestionControlOption) isGettableTransportProtocolOption() 
 
 func (*TCPAvailableCongestionControlOption) isSettableTransportProtocolOption() {}
 
+// TCPDelayedACKOption enables delayed acknowledgments for TCP (RFC 9293,
+// section 3.8.6.3): on interactive connections, where data is sent shortly
+// after data is received, received data is acknowledged within 40ms rather
+// than immediately, unless more than one full-sized segment is unacknowledged
+// or segments arrive out of order, so that acknowledgments can be sent along
+// with data (e.g. a response).
+type TCPDelayedACKOption bool
+
+func (*TCPDelayedACKOption) isGettableTransportProtocolOption() {}
+
+func (*TCPDelayedACKOption) isSettableTransportProtocolOption() {}
+
 // TCPModerateReceiveBufferOption enables/disables receive buffer moderation
 // for TCP.
 type TCPModerateReceiveBufferOption bool

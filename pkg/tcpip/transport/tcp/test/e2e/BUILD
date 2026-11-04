@@ -6,6 +6,26 @@ package(
 )
 
 go_test(
+    name = "delayed_ack_qualification_test",
+    size = "small",
+    srcs = [
+        "tcp_delayed_ack_gap_test.go",
+        "tcp_delayed_ack_test.go",
+    ],
+    deps = [
+        ":e2e",
+        "//pkg/refs",
+        "//pkg/tcpip",
+        "//pkg/tcpip/checker",
+        "//pkg/tcpip/faketime",
+        "//pkg/tcpip/header",
+        "//pkg/tcpip/seqnum",
+        "//pkg/tcpip/transport/tcp",
+        "//pkg/tcpip/transport/tcp/testing/context",
+    ],
+)
+
+go_test(
     name = "tcp_test",
     size = "large",
     srcs = [
