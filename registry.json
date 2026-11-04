@@ -45644,11 +45644,11 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/shm-removal-publication",
-      "head": "166e166261dd9140cfaac183445b2377b3be4f20",
+      "head": "90a37644f7c3e99f4c21954dc9e4181a494094ec",
       "title": "Make shared memory removal visible atomically",
       "url": "https://github.com/google/gvisor/pull/16864",
       "group": "runtime",
-      "summary": "A concurrent IPC_STAT could report SHM_DEST while still returning the segment’s old key. Remove the key and set SHM_DEST under the same registry and segment locks.",
+      "summary": "A concurrent IPC_STAT could report SHM_DEST while still returning the segment’s old key. Remove the key and set SHM_DEST under the same registry and segment locks.\n\nPublished rebase 90a37644f preserves the previously qualified 1e2c3bce4 patch by range-diff. The reconciled original results contain six native AMD64 Linux and the same six systrap-directfs syscall passes, including RmidOwnershipPermissionDenied with native mapped UID/GID 65534. One native Nogo wrapper passed with both AMD64 and ARM64 finding inputs; there were no failed, skipped or missing cases. The original incomplete result projection and earlier role-specific evidence remain linked. The original contributor approval is preserved; no new maintainer approval is claimed.",
       "evidence": [
         {
           "label": "Controlled interleaving before and after, systrap syscall cases and both architecture analyzers",
@@ -45665,6 +45665,18 @@
         {
           "label": "Separate redundant target-configured ARM64 wrapper exited 126 on the AMD64 runner (Exec format error); not a SHM finding",
           "url": "https://github.com/tamird/gvisor/actions/runs/41697675886/artifacts/13261118075"
+        },
+        {
+          "label": "Published patch-preserving rebase 90a37644f",
+          "url": "https://github.com/tamird/gvisor/commit/90a37644f"
+        },
+        {
+          "label": "Reconciled original results: six native and six systrap cases, mapped ownership, both architecture Nogo inputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41896681317/artifacts/13356243128"
+        },
+        {
+          "label": "Preserved original incomplete result projection",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41894355458/artifacts/13355442664"
         }
       ],
       "status": "open",
@@ -71622,5 +71634,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-04T19:30:20.494810+00:00"
+  "updatedAt": "2026-11-04T19:37:36.046402+00:00"
 }
