@@ -1,35 +1,64 @@
-name: CI
-
-"on":
+name: Verify the delayed-ACK gap on native Linux
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-delayed-ack-gap]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  native:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 64
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 3
+        persist-credentials: false
+    - name: Bind the public source fixture, local report helpers and Bazelisk
+      shell: bash
+      run: |
+        set -euo pipefail
+        umask 077
+        root="$RUNNER_TEMP/tcp-gap"
+        mkdir -p "$root"/{bin,out,tmp}
+        printf '{"status":"INCOMPLETE","phase":"public-source-bootstrap"}\n' > "$root/out/result.json"
+        fixture=b41d5a16e248cf2cc1f5055f5d3711a1a926e6de
+        product=6dcadf4a84a07f69e8eb5f1ea9d7b2903bd03bd7
+        test "$(git rev-parse HEAD^)" = "$fixture"
+        test "$(git rev-parse HEAD^^)" = "$product"
+        cp test/rbe/delayed_ack_receipt.py "$root/"
+        donor=611a6ff017c528dddbd0d2e643aaf23c6ddac488
+        git fetch --quiet --depth=1 https://github.com/tamird/gvisor.git "$donor"
+        test "$(git rev-parse "$donor:test/rbe/qualification_report.py")" = d2e3eedabc2ad911d958aa448fd916aa6835aa86
+        test "$(git rev-parse "$donor:test/rbe/unit_matrix.py")" = d01d9e319084e18ea2928671e417e1b4e86c4954
+        for helper in unit_matrix qualification_report; do git show "$donor:test/rbe/$helper.py" > "$root/$helper.py"; done
+        git switch --detach --quiet "$fixture"
+        test "$(cat .bazelversion)" = 9.3.1
+        curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$root/bin/bazel"
+        echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $root/bin/bazel" | sha256sum -c -
+        chmod 755 "$root/bin/bazel"
+        test "$(env -i HOME="$HOME" PATH="$PATH" "$root/bin/bazel" --version)" = 'bazel 9.3.1'
+    - name: Run the gap and existing timer controls on native Linux AMD64
+      timeout-minutes: 59
+      run: |
+        root="$RUNNER_TEMP/tcp-gap"
+        env -i HOME="$HOME" PATH="$root/bin:/usr/local/bin:/usr/bin:/bin" USER=runner LANG=C.UTF-8 TMPDIR="$root/tmp" GIT_TERMINAL_PROMPT=0 \
+          python3 -B "$root/delayed_ack_receipt.py" b41d5a16e248cf2cc1f5055f5d3711a1a926e6de "$root/out"
+    - name: Check the compact native result
+      id: safe
+      if: always()
+      run: |
+        python3 - <<'PY'
+        import json, os, pathlib, re
+        path = pathlib.Path(os.environ["RUNNER_TEMP"], "tcp-gap", "out", "result.json")
+        assert path.is_file() and not path.is_symlink() and 0 < path.stat().st_size < 100000
+        body = path.read_bytes()
+        assert json.loads(body)["status"] in {"INCOMPLETE", "FAIL", "PASS"}
+        assert not re.search(rb'(?i)authorization\s*[:=]|github_pat_|gh[pousr]_', body)
+        PY
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.safe.outcome == 'success'
+      with:
+        name: delayed-ack-gap
+        path: ${{ runner.temp }}/tcp-gap/out/result.json
+        if-no-files-found: error
