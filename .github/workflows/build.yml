@@ -1,35 +1,90 @@
-name: CI
-
-"on":
+name: Qualify the protected FD race case with native vDSO link actions
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/fd-vdso-selected-cxx-link]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  native:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 140
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 4
+        persist-credentials: false
+    - name: Bind the original integration and the public Bazel client
+      shell: bash
+      run: |
+        set -euo pipefail
+        umask 077
+        root="$RUNNER_TEMP/fd-race-native"
+        mkdir -p "$root"/{bin,out,tmp,split,fd}
+        printf '{"status":"INCOMPLETE","phase":"public-source-bootstrap"}\n' > "$root/out/result.json"
+        source=bd8c827e2eaad36ffba2c4abcca0faf40ae122f3
+        test "$(git rev-parse HEAD^)" = "$source"
+        test "$(git rev-parse HEAD^^)" = caa2f641cb64ef4d22c5b9269d2d54acd0317f81
+        test "$(git rev-parse HEAD^^^)" = 97bfc4ae73a4e74751f4db335918970889807bb6
+        cp test/rbe/vdso_steps.py test/rbe/qualify_fd_table.py "$root/"
+        donor=611a6ff017c528dddbd0d2e643aaf23c6ddac488
+        git fetch --quiet --depth=1 https://github.com/tamird/gvisor.git "$donor"
+        test "$(git rev-parse "$donor:test/rbe/qualification_report.py")" = d2e3eedabc2ad911d958aa448fd916aa6835aa86
+        test "$(git rev-parse "$donor:test/rbe/unit_matrix.py")" = d01d9e319084e18ea2928671e417e1b4e86c4954
+        for helper in unit_matrix qualification_report; do git show "$donor:test/rbe/$helper.py" > "$root/$helper.py"; done
+        git switch --detach --quiet "$source"
+        test "$(git rev-parse HEAD:vdso/BUILD)" = aaf99d2ab8d104f934ec12b37c16158dbfd66710
+        test "$(git diff --name-only HEAD^ HEAD)" = vdso/BUILD
+        test "$(git rev-parse HEAD:pkg/sentry/kernel/BUILD)" = edee10c38f47263b9d611805e09bb3c8fc56700f
+        test "$(git rev-parse HEAD:pkg/sentry/kernel/fd_table_test.go)" = eaa1bc48fb34f0b86217249b9ee04c7bb7dc7c9d
+        test "$(cat .bazelversion)" = 9.3.1
+        curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$root/bin/bazel"
+        echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $root/bin/bazel" | sha256sum -c -
+        chmod 755 "$root/bin/bazel"
+        test "$(env -i HOME="$HOME" PATH="$PATH" "$root/bin/bazel" --version)" = 'bazel 9.3.1'
+    - name: Verify the two selected native link actions and their embedded images
+      timeout-minutes: 38
+      run: |
+        root="$RUNNER_TEMP/fd-race-native"
+        env -i HOME="$HOME" PATH="$root/bin:/usr/local/bin:/usr/bin:/bin" USER=runner LANG=C.UTF-8 TMPDIR="$root/tmp" GIT_TERMINAL_PROMPT=0 \
+          python3 -B "$root/vdso_steps.py" "$root"
+    - name: Run the original protected descriptor case under the AMD64 race runtime
+      if: ${{ !cancelled() }}
+      timeout-minutes: 94
+      run: |
+        root="$RUNNER_TEMP/fd-race-native"
+        python3 -c 'import json,sys; assert json.load(open(sys.argv[1]))["split_verified"]' "$root/split/result.json"
+        env -i HOME="$HOME" PATH="$root/bin:/usr/local/bin:/usr/bin:/bin" USER=runner LANG=C.UTF-8 TMPDIR="$root/tmp" GIT_TERMINAL_PROMPT=0 \
+          python3 -B "$root/qualify_fd_table.py" race amd64 bd8c827e2eaad36ffba2c4abcca0faf40ae122f3 "$root/fd"
+    - name: Check the compact native result
+      id: safe
+      if: always()
+      run: |
+        python3 - <<'PY'
+        import json, os, pathlib, re
+        root = pathlib.Path(os.environ["RUNNER_TEMP"], "fd-race-native")
+        path = root / "out/result.json"
+        root = path.parent.parent
+        from datetime import datetime, timezone
+        d = json.loads(path.read_bytes())
+        for key in ("split", "fd"):
+            file = root / key / "result.json"
+            if file.is_file():
+                assert not file.is_symlink() and file.stat().st_size < 85000
+                d[key] = json.loads(file.read_bytes())
+        states = [d.get(k, {}).get("status", "INCOMPLETE") for k in ("split", "fd")]
+        d["status"] = "PASS" if states == ["PASS", "PASS"] else "FAIL" if "FAIL" in states else "INCOMPLETE"
+        d["verified_at"] = datetime.now(timezone.utc).isoformat()
+        d["original_split_artifact"] = 13331402265
+        path.write_text(json.dumps(d, sort_keys=True))
+        assert path.is_file() and not path.is_symlink() and 0 < path.stat().st_size < 100000
+        body = path.read_bytes()
+        assert json.loads(body)["status"] in {"INCOMPLETE", "FAIL", "PASS"}
+        assert not re.search(rb'(?i)authorization\s*[:=]|github_pat_|gh[pousr]_', body)
+        PY
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.safe.outcome == 'success'
+      with:
+        name: fd-race-native-vdso
+        path: ${{ runner.temp }}/fd-race-native/out/result.json
+        if-no-files-found: error
