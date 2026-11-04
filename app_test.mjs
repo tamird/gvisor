@@ -241,6 +241,61 @@ print(json.dumps(public_import_disposition(row['pr'], row['node'].get('approvedP
   }
 });
 
+test('reviewed content amendments retain their older export without certifying equivalence', () => {
+  const context = client();
+  const fixture = JSON.parse(readFileSync(new URL('./import-trigger-fixtures.json', import.meta.url)));
+  const original = fixture.amendedExportRows[0];
+  const classify = row => {
+    const script = `import json, sys
+from work_states import public_import_disposition
+row = json.load(sys.stdin)
+print(json.dumps(public_import_disposition(row['pr'], amendment=row['node'].get('reapproval'))))`;
+    row.pr.publicImportDisposition = JSON.parse(execFileSync('python3', ['-c', script], {
+      cwd: new URL('.', import.meta.url), input: JSON.stringify(row), encoding: 'utf8',
+    }));
+    context.nodeInput = { ...row.node, github: row.pr };
+    assert.ok(vm.runInContext('publicImportDisposition(nodeInput)', context));
+    return JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, "tamird"))', context));
+  };
+  const row = structuredClone(original), reasons = classify(row);
+  const reason = reasons.find(item => item.id === 'maintainer-reapproval');
+  assert.equal(reason.title, 'Reapprove current source PR');
+  assert.match(reason.detail, /#16647.*is open and names 6fe570155/);
+  assert.match(reason.detail, /approval does not cover this amendment/);
+  assert.doesNotMatch(reason.detail, /Equivalent source|equivalent approved patch/);
+  assert.equal(row.pr.publicImportDisposition.scope, 'amended');
+  assert.equal(row.pr.publicImportDisposition.binding.currentApproval, false);
+  assert.ok(!reasons.some(item => ['maintainer-review', 'maintainer-import-previous', 'maintainer-merge'].includes(item.id)));
+  assert.equal(vm.runInContext('approvedPatch(nodeInput)', context), null);
+  const approval = row.pr.feedback.items.find(item => item.kind === 'review' && item.commit?.oid === row.node.reapproval.approvedHead);
+  row.pr.feedback.items.push({ ...approval, id: 'fresh', commit: { oid: row.pr.head },
+    submittedAt: row.observedAt, updatedAt: row.observedAt, body: '' });
+  const fresh = classify(row);
+  assert.ok(!fresh.some(item => item.id === 'maintainer-reapproval'));
+  assert.ok(fresh.some(item => item.title === 'Reapproved; waiting for Copybara'));
+  for (const change of [current => { current.pr.importsComplete = false; },
+    current => { current.node.reapproval.diffSha256 = 'invalid'; },
+    current => { current.pr.reviewsComplete = false; },
+    current => { current.pr.imports.push({ ...current.pr.imports[0], number: 99999, sourceHead: current.pr.head, matchesSourceHead: true }); }]) {
+    const current = structuredClone(original); change(current);
+    assert.ok(!classify(current).some(item => item.id === 'maintainer-reapproval'));
+  }
+  const unrelated = structuredClone(original);
+  unrelated.pr.imports[0].sourceHead = 'f'.repeat(40);
+  assert.doesNotMatch(classify(unrelated).find(item => item.id === 'maintainer-reapproval').detail, /#16647/);
+  const unrelatedApproval = structuredClone(original);
+  const other = unrelatedApproval.pr.feedback.items.find(item => item.kind === 'review');
+  other.commit.oid = 'f'.repeat(40);
+  Object.assign(unrelatedApproval.pr, { githubReviewDecision: 'APPROVED', reviewDecision: 'APPROVED',
+    approvedHead: other.commit.oid, approvedAt: other.submittedAt });
+  assert.ok(!classify(unrelatedApproval).some(item => item.id === 'maintainer-reapproval'));
+  assert.equal(unrelatedApproval.pr.publicImportDisposition.binding.eligible, false);
+  const changedProof = structuredClone(original);
+  classify(changedProof);
+  changedProof.node.reapproval.diffSha256 = 'f'.repeat(64);
+  assert.equal(vm.runInContext('publicImportDisposition(nodeInput)', context), null);
+});
+
 test('cross-references remain visible evidence without creating graph relationships', () => {
   const context = client(), pr = attentionNode().github;
   context.snapshotInput.checkedAt = pr.checkedAt = '2026-10-21T02:54:53Z';

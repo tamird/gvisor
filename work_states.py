@@ -311,10 +311,63 @@ def landed_patch(pr: dict, proof: dict | None) -> bool:
         return False
 
 
-def import_lineage(pr: dict, patch: dict | None = None) -> list[dict]:
+def reviewed_amendment(pr: dict, proof: dict | None) -> bool:
+    """Bind a reviewed content delta without treating it as an approved patch."""
+    return bool(proof and pr.get("repo", "google/gvisor") == "google/gvisor"
+                and not pr.get("revisionChanged") and proof.get("kind") == "content-amendment"
+                and proof.get("method") == "reviewed-source-diff" and proof.get("head") == pr.get("head")
+                and proof.get("head") != proof.get("approvedHead")
+                and all(isinstance(proof.get(key), str) and re.fullmatch(r"[a-f0-9]{40}", proof[key])
+                        for key in ("head", "approvedHead"))
+                and isinstance(proof.get("diffSha256"), str) and re.fullmatch(r"[a-f0-9]{64}", proof["diffSha256"])
+                and isinstance(proof.get("summary"), str) and proof["summary"].strip()
+                and isinstance(proof.get("evidence"), str) and proof["evidence"].startswith("https://github.com/"))
+
+
+def maintainer_review_history(pr: dict) -> tuple[dict[str, dict], list[dict]] | None:
+    """Select latest trusted decisions and approvals, retaining dismissal facts.
+
+    Callers check history completeness. None preserves the planner's distinct
+    missing-review-time disposition instead of silently discarding a review.
+    """
+    latest = {}
+    for item in pr.get("feedback", {}).get("items", []):
+        author = (item.get("author") or {}).get("login")
+        if (item.get("kind") != "review" or not author or (item.get("author") or {}).get("__typename") != "User"
+                or author == pr.get("authorLogin", pr.get("headOwner"))
+                or item.get("authorAssociation") not in {"MEMBER", "OWNER", "COLLABORATOR"}
+                and author.casefold() not in pr.get("maintainerReviewers", [])
+                or item.get("state") not in {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}):
+            continue
+        if not item.get("submittedAt"):
+            return None
+        if author not in latest or item["submittedAt"] > latest[author]["submittedAt"]:
+            latest[author] = item
+    dismissed = {(event.get("review") or {}).get("id"): event["previousReviewState"]
+                 for event in pr["reviewDismissals"].get("items", [])}
+    approvals = [item for item in latest.values()
+                 if item["state"] == "APPROVED" or item["state"] == "DISMISSED"
+                 and dismissed.get(item["id"]) == "APPROVED"]
+    return latest, approvals
+
+
+def amendment_approvers(pr: dict, proof: dict | None) -> list[str]:
+    """Use the same prior formal approvals as the content-amendment planner."""
+    if not reviewed_amendment(pr, proof) or not pr.get("reviewsComplete") or not pr.get("reviewDismissals", {}).get("complete"):
+        return []
+    history = maintainer_review_history(pr)
+    return sorted(item["author"]["login"] for item in history[1]
+                  if (item.get("commit") or {}).get("oid") == proof["approvedHead"]) if history else []
+
+
+def import_lineage(pr: dict, patch: dict | None = None, amendment: dict | None = None) -> list[dict]:
     """An exact-head successor supersedes attempts at a certified earlier patch."""
     current = [item for item in pr.get("imports", [])
                if item.get("matchesSourceHead") and item.get("sourceHead") == pr["head"]]
+    # Content lineage is informational only. Callers deciding whether the
+    # source is imported or merge-ready do not pass an amendment here.
+    if reviewed_amendment(pr, amendment) and not approved_patch(pr, patch):
+        return current or [item for item in pr.get("imports", []) if item.get("sourceHead") == amendment["approvedHead"]]
     if any(item["status"] != "closed" for item in current) or not approved_patch(pr, patch):
         return current
     earlier = [item for item in pr.get("imports", []) if item.get("sourceHead") == patch["approvedHead"]]
@@ -351,12 +404,15 @@ def with_maintainer_reviewers(pr: dict, maintainers: frozenset[str]) -> dict:
     return {**pr, "maintainerReviewers": sorted(maintainers & authors)}
 
 
-def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict | None = None) -> dict:
+def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict | None = None,
+                              amendment: dict | None = None) -> dict:
     """Share public export progress separately from permission to post reminders."""
-    imports = import_lineage(pr, patch)
+    amendment = amendment if reviewed_amendment(pr, amendment) and not approved_patch(pr, patch) else None
+    imports = import_lineage(pr, patch, amendment)
     accepted = approved_patch(pr, patch)
     active = [item for item in imports if item["status"] in {"open", "draft"}]
-    scope = "exact" if imports and imports[0]["sourceHead"] == pr["head"] else "equivalent" if imports else "none"
+    scope = ("exact" if imports and imports[0]["sourceHead"] == pr["head"]
+             else "amended" if imports and amendment else "equivalent" if imports else "none")
     reviewers = frozenset(pr.get("maintainerReviewers", []))
     if accepted:
         reviewers |= {patch["reviewer"].casefold()}
@@ -369,6 +425,8 @@ def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict
                "imports": [{**{key: item.get(key) for key in ("number", "head", "sourceHead", "status", "mergeable")},
                             "conflicting": item.get("mergeable") == "CONFLICTING" or bool(conflict_qualifier(item))}
                            for item in imports]}
+    if amendment:
+        binding["amendment"] = amendment
     if active:
         state = "conflicting" if any(item.get("mergeable") == "CONFLICTING" or conflict_qualifier(item)
                                      for item in active) else "open" if any(item["status"] == "open" for item in active) else "draft"
@@ -381,7 +439,7 @@ def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict
     eligible = (pr.get("importPolicy", "copybara") == "copybara" and pr.get("status") == "open"
                 and not pr.get("revisionChanged") and pr.get("branchHead", pr["head"]) in {None, pr["head"]}
                 and pr.get("mergeable") == "MERGEABLE" and not landed_patch(pr, landing)
-                and (review_decision(pr) == "APPROVED" or accepted or approval
+                and (review_decision(pr) == "APPROVED" or accepted or (approval or scope != "exact" and amendment_approvers(pr, amendment))
                      and pr.get("githubReviewDecision", pr.get("reviewDecision")) != "CHANGES_REQUESTED"))
     binding["eligible"] = bool(eligible)
     trigger = import_trigger(pr)
@@ -395,6 +453,9 @@ def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict
                 and scope != "exact" and state != "closed"
                 and not any(item["status"] == "merged" for item in imports)):
             action = "maintainer-import-label"
+        elif amendment and scope != "exact":
+            if binding["complete"] and not binding["currentApproval"]:
+                action = "maintainer-reapproval"
         elif scope == "equivalent" and active:
             if binding["complete"] and not binding["currentApproval"]:
                 action = "maintainer-reapproval"
@@ -414,13 +475,18 @@ def public_import_disposition(pr: dict, patch: dict | None = None, landing: dict
         "unknown": "Public export inventory is incomplete; refresh before deciding.",
     }[state]
     if action == "maintainer-reapproval":
-        description = ("The approval predates the current source head and Copybara still exports the earlier revision. "
+        description = ("The approval covers the earlier source revision. "
+                       + ("Copybara's recorded export does not contain this amendment. " if amendment and imports else
+                          "Copybara still exports the earlier revision. " if imports else "") +
                        "Ask the approving maintainer to reapprove the current source PR so Copybara regenerates it.")
     elif action == "maintainer-import-label":
         description = ("The current source has been approved, but its ready to pull label was removed "
                        "and there is no export of this head. Restore the label to start its import.")
-    elif scope == "equivalent" and active and binding["currentApproval"]:
+    elif scope in {"equivalent", "amended"} and active and binding["currentApproval"]:
         description = "The current source has a fresh approval; wait for Copybara to replace the earlier export."
+    elif scope == "amended":
+        description = ("The recorded export covers only the earlier source revision. "
+                       "It does not establish approval or delivery of this amendment.")
     elif state == "closed" and trigger["state"] == "missing":
         description = ("The earlier export closed and the previously applied ready to pull label is missing. "
                        "Restore the import trigger; patch approval and the label are separate.")

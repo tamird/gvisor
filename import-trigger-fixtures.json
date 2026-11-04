@@ -6368,5 +6368,180 @@
         "different_change_paths": []
       }
     ]
-  }
+  },
+  "amendedExportRows": [
+    {
+      "observedAt": "2026-11-04T18:25:29.490263+00:00",
+      "evidence": "https://github.com/tamird/gvisor/actions/runs/41886611403",
+      "pr": {
+        "number": 16594,
+        "repo": "google/gvisor",
+        "url": "https://github.com/google/gvisor/pull/16594",
+        "status": "open",
+        "ref": "review/mount-promise-waiter-notification",
+        "head": "b2cbea854fc9094a9b295a6226a90bccc4dad2ca",
+        "branchHead": "b2cbea854fc9094a9b295a6226a90bccc4dad2ca",
+        "headCommittedAt": "2026-11-04T17:49:44Z",
+        "headIntroducedAt": "2026-11-04T17:50:13Z",
+        "headHistoryComplete": true,
+        "headOwner": "tamird",
+        "authorLogin": "tamird",
+        "githubReviewDecision": "APPROVED",
+        "reviewDecision": "REVIEW_REQUIRED",
+        "approvedHead": null,
+        "approvedAt": null,
+        "reviewsComplete": true,
+        "commentsComplete": true,
+        "reviewRequestsComplete": true,
+        "reviewRequests": [
+          {
+            "__typename": "User",
+            "login": "konstantin-s-bogom"
+          }
+        ],
+        "maintainerReviewers": [
+          "manninglucas"
+        ],
+        "labelsComplete": true,
+        "labels": [
+          "ready to pull"
+        ],
+        "labelHistory": {
+          "complete": true,
+          "items": [
+            {
+              "__typename": "LabeledEvent",
+              "id": "LE_lADOB9IlXs8AAAABam-aHM8AAAAIClA8tw",
+              "createdAt": "2026-10-28T23:59:07Z",
+              "actor": {
+                "login": "manninglucas",
+                "__typename": "User"
+              },
+              "label": {
+                "name": "ready to pull"
+              }
+            },
+            {
+              "__typename": "UnlabeledEvent",
+              "id": "UNLE_lADOB9IlXs8AAAABam-aHM8AAAAIJRSUBA",
+              "createdAt": "2026-11-03T03:53:13Z",
+              "actor": {
+                "login": "EtiennePerot",
+                "__typename": "User"
+              },
+              "label": {
+                "name": "ready to pull"
+              }
+            },
+            {
+              "__typename": "LabeledEvent",
+              "id": "LE_lADOB9IlXs8AAAABam-aHM8AAAAIL4Mi1g",
+              "createdAt": "2026-11-04T17:40:42Z",
+              "actor": {
+                "login": "manninglucas",
+                "__typename": "User"
+              },
+              "label": {
+                "name": "ready to pull"
+              }
+            }
+          ]
+        },
+        "importsComplete": true,
+        "importPolicy": "copybara",
+        "mergeable": "MERGEABLE",
+        "threads": {
+          "unresolved": 1,
+          "total": 1,
+          "complete": true
+        },
+        "feedback": {
+          "complete": true,
+          "items": [
+            {
+              "kind": "review",
+              "id": "PRR_kwDOB9IlXs8AAAABVzt7Ww",
+              "url": "https://github.com/google/gvisor/pull/16594#pullrequestreview-5758483291",
+              "state": "APPROVED",
+              "submittedAt": "2026-11-03T19:43:47Z",
+              "updatedAt": "2026-11-03T19:43:47Z",
+              "author": {
+                "login": "manninglucas",
+                "__typename": "User"
+              },
+              "authorAssociation": "CONTRIBUTOR",
+              "commit": {
+                "oid": "6fe5701556558d631f24919814f014172204208d"
+              }
+            },
+            {
+              "kind": "comment",
+              "id": "IC_kwDOB9IlXs8AAAABi6HmCw",
+              "url": "https://github.com/google/gvisor/pull/16594#issuecomment-6637610507",
+              "createdAt": "2026-11-04T17:38:44Z",
+              "updatedAt": "2026-11-04T17:38:44Z",
+              "author": {
+                "login": "tamird",
+                "__typename": "User"
+              },
+              "body": "<!-- codex-reapproval-reminder:v1 head=6fe5701556558d631f24919814f014172204208d action=restore-import-label -->"
+            },
+            {
+              "kind": "inline",
+              "id": "PRRC_kwDOB9IlXs8AAAABCUACCA",
+              "url": "https://github.com/google/gvisor/pull/16594#discussion_r4450157064",
+              "createdAt": "2026-11-03T02:10:00Z",
+              "updatedAt": "2026-11-03T02:10:00Z",
+              "author": {
+                "login": "tamird",
+                "__typename": "User"
+              },
+              "threadId": "PRRT_kwDOB9IlXs6xXdGA",
+              "isResolved": false,
+              "isOutdated": true
+            }
+          ]
+        },
+        "reviewDismissals": {
+          "complete": true,
+          "items": []
+        },
+        "imports": [
+          {
+            "number": 16647,
+            "repo": "google/gvisor",
+            "url": "https://github.com/google/gvisor/pull/16647",
+            "status": "open",
+            "head": "73c9ccf5aa11658c8c40b9047a4599c6daa070a6",
+            "sourceHead": "6fe5701556558d631f24919814f014172204208d",
+            "matchesSourceHead": false,
+            "mergeable": "MERGEABLE",
+            "checks": {
+              "complete": false,
+              "total": 15,
+              "contexts": []
+            }
+          }
+        ]
+      },
+      "node": {
+        "id": "pr:16594",
+        "type": "pr",
+        "repo": "google/gvisor",
+        "number": 16594,
+        "reapproval": {
+          "kind": "content-amendment",
+          "method": "reviewed-source-diff",
+          "head": "b2cbea854fc9094a9b295a6226a90bccc4dad2ca",
+          "approvedHead": "6fe5701556558d631f24919814f014172204208d",
+          "diffSha256": "5f8b5fce03789b573fb47cddb7f7218cec37f6e7547282105f695cbcac643a63",
+          "summary": "The amendment adds a permanent test for a mount resolving after waiter registration and accepts the channel as receive-only in the wait path. The mounted root and open notification channel passed in the 40-record native VFS suite. The published tree matches the qualified fork amendment.",
+          "evidence": "https://github.com/tamird/gvisor/compare/6fe570155...f11e71355"
+        }
+      },
+      "expectedAction": "reapprove-amendment",
+      "expectedNextEligibleAt": "2026-11-04T20:38:44+00:00",
+      "projection": "Relevant published source/export identities, latest formal approval, last thread reply, label events and last alarm marker. Unrelated checks, cross-references, superseded feedback and message bodies are omitted; completeness flags describe the original provider histories."
+    }
+  ]
 }

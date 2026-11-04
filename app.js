@@ -414,9 +414,39 @@ function attentionDisposition(node, reason) {
   const current = attentionDispositionEvidence(node, reason, record.replacement);
   return current && evidenceJSON(current) === evidenceJSON(record.binding) ? record : null;
 }
-function importLineage(node) {
+function reviewedAmendment(node) {
+  const pr = node.github, proof = node.reapproval;
+  return proof && (pr.repo || node.repo) === "google/gvisor" && !pr.revisionChanged
+    && proof.kind === "content-amendment" && proof.method === "reviewed-source-diff"
+    && proof.head === pr.head && proof.head !== proof.approvedHead
+    && [proof.head, proof.approvedHead].every(value => typeof value === "string" && /^[a-f0-9]{40}$/.test(value))
+    && typeof proof.diffSha256 === "string" && /^[a-f0-9]{64}$/.test(proof.diffSha256)
+    && typeof proof.summary === "string" && proof.summary.trim()
+    && typeof proof.evidence === "string" && proof.evidence.startsWith("https://github.com/") ? proof : null;
+}
+function amendmentApprovers(pr, proof) {
+  if (!proof || !pr.reviewsComplete || !pr.reviewDismissals?.complete) return [];
+  const latest = new Map();
+  for (const item of pr.feedback?.items || []) {
+    const author = item.author?.login;
+    if (item.kind !== "review" || !author || item.author.__typename !== "User"
+        || author === (pr.authorLogin || pr.headOwner)
+        || !["MEMBER", "OWNER", "COLLABORATOR"].includes(item.authorAssociation)
+          && !pr.maintainerReviewers?.includes(author.toLowerCase())
+        || !["APPROVED", "CHANGES_REQUESTED", "DISMISSED"].includes(item.state)) continue;
+    if (!item.submittedAt) return [];
+    if (!latest.has(author) || item.submittedAt > latest.get(author).submittedAt) latest.set(author, item);
+  }
+  const dismissed = new Map((pr.reviewDismissals.items || []).map(item => [item.review?.id, item.previousReviewState]));
+  return [...latest.values()].filter(item => item.commit?.oid === proof.approvedHead
+    && (item.state === "APPROVED" || item.state === "DISMISSED" && dismissed.get(item.id) === "APPROVED"))
+    .map(item => item.author.login).sort();
+}
+function importLineage(node, includeAmendment = false) {
   const pr = node.github, current = pr.imports.filter(item => item.matchesSourceHead && item.sourceHead === pr.head);
   const patch = approvedPatch(node);
+  const amendment = includeAmendment && reviewedAmendment(node);
+  if (amendment && !patch) return current.length ? current : pr.imports.filter(item => item.sourceHead === amendment.approvedHead);
   if (current.some(item => item.status !== "closed") || !patch) return current;
   const earlier = pr.imports.filter(item => item.sourceHead === patch.approvedHead);
   if (!current.length) return earlier;
@@ -426,16 +456,22 @@ function importLineage(node) {
 function publicImportDisposition(node) {
   const pr = node.github, record = pr.publicImportDisposition, patch = approvedPatch(node);
   if (!record) return null; // Older paired snapshots use the same direct lineage below.
+  // Older snapshots did not classify content amendments. Keep those readable
+  // without inventing a newly collected disposition in the browser.
+  const amendment = Object.hasOwn(record.binding, "amendment") && !patch ? reviewedAmendment(node) : null;
   const currentApproval = currentHeadApproval(pr, patch);
   const binding = { sourceHead: pr.head, approvedHead: patch?.approvedHead ?? null, currentApproval,
     complete: pr.importsComplete === true, labels: [...(pr.labels || [])].sort(), labelsComplete: pr.labelsComplete === true,
-    labelHistory: pr.labelHistory ?? null, imports: importLineage(node).map(item => ({
+    labelHistory: pr.labelHistory ?? null, imports: importLineage(node, !!amendment).map(item => ({
       number: item.number, head: item.head, sourceHead: item.sourceHead, status: item.status,
       mergeable: item.mergeable ?? null, conflicting: !!conflictRecord(item),
     })), eligible: usesImports(pr) && pr.status === "open" && !pr.revisionChanged
       && (!pr.branchHead || pr.branchHead === pr.head) && pr.mergeable === "MERGEABLE"
       && !landedPatch(node) && (effectiveReviewDecision(pr) === "APPROVED" || !!patch
-        || currentApproval && (pr.githubReviewDecision ?? pr.reviewDecision) !== "CHANGES_REQUESTED") };
+        || (currentApproval || !pr.imports.some(item => item.matchesSourceHead && item.sourceHead === pr.head)
+          && amendmentApprovers(pr, amendment).length > 0)
+          && (pr.githubReviewDecision ?? pr.reviewDecision) !== "CHANGES_REQUESTED") };
+  if (amendment) binding.amendment = amendment;
   return evidenceJSON(record.binding) === evidenceJSON(binding) ? record : null;
 }
 function unresolvedImportChecks(imports) {
@@ -514,8 +550,8 @@ function attentionReasons(node, owner) {
   if (contexts.some(check => check.purpose === "reviewer-assignment" && FAILURE_STATES.has(check.state)))
     add("maintainer-assignment", "Reviewer assignment failed; this is separate from source validation.");
   const current = pr.imports.filter(item => item.matchesSourceHead && item.sourceHead === pr.head);
-  const lineage = importLineage(node);
   const importDisposition = publicImportDisposition(node);
+  const lineage = importLineage(node, !!importDisposition?.binding.amendment);
   const active = lineage.filter(item => ["open", "draft"].includes(item.status));
   // Only old snapshots need the direct fallback. New snapshots share this
   // recovery decision with the periodic planner, including source readiness.
@@ -525,14 +561,16 @@ function attentionReasons(node, owner) {
     : !active.length && pr.importsComplete && lineage.length
       ? lineage.some(item => item.status === "merged") ? "maintainer-import-landed" : "maintainer-reimport" : null;
   if (importAction === "maintainer-reapproval") {
-    const exports = active.map(item => `Copybara PR #${item.number} (${item.url}) still exports ${item.sourceHead.slice(0, 9)}: ${checkInfo(item).text.toLowerCase()} public checks (${item.checks.total} reported)${conflictRecord(item) ? "; merge conflicts" : ""}`);
-    add("maintainer-reapproval", `Ask the approving maintainer to reapprove current source ${pr.head.slice(0, 9)} (${pr.url}), published ${pr.headIntroducedAt}. The prior approval was submitted ${acceptedPatch.submittedAt}. ${exports.join(". ")}. Reapproval of this source PR lets Copybara regenerate the import. Equivalent source patches and an open older export do not replace current-head approval; the periodic alarm uses the existing per-PR cooldown and business hours.`);
+    const exports = (acceptedPatch ? active : lineage).map(item => `Copybara PR #${item.number} (${item.url}) ${acceptedPatch ? "still exports" : `is ${item.status} and names`} ${item.sourceHead.slice(0, 9)}: ${checkInfo(item).text.toLowerCase()} public checks (${item.checks.total} reported)${conflictRecord(item) ? "; merge conflicts" : ""}`);
+    const approval = acceptedPatch ? `The prior approval was submitted ${acceptedPatch.submittedAt}. Equivalent source patches and an open older export do not replace current-head approval.`
+      : `The reviewed amendment changes the source approved at ${node.reapproval.approvedHead.slice(0, 9)}. That approval does not cover this amendment${lineage.length ? ", and the older export does not contain it" : ""}.`;
+    add("maintainer-reapproval", `Ask the approving maintainer to reapprove current source ${pr.head.slice(0, 9)} (${pr.url}), published ${pr.headIntroducedAt}. ${approval} ${exports.join(". ")}${exports.length ? ". " : ""}Reapproval of this source PR lets Copybara regenerate the import; the periodic alarm uses the existing per-PR cooldown and business hours.`);
   }
   const restoreLabel = importAction === "maintainer-import-label";
-  const awaitingReapprovedExport = !restoreLabel && importDisposition?.binding.eligible && importDisposition.scope === "equivalent"
-    && importDisposition.binding.currentApproval && active.length;
+  const awaitingReapprovedExport = !restoreLabel && importDisposition?.binding.eligible && ["equivalent", "amended"].includes(importDisposition.scope)
+    && importDisposition.binding.currentApproval && (active.length || importDisposition.scope === "amended" && lineage.length);
   if (awaitingReapprovedExport)
-    add("maintainer-unknown", `Current source ${pr.head.slice(0, 9)} has a fresh approval. Copybara still shows the earlier export ${active.map(item => "#" + item.number).join(", ")}; wait for its replacement. The earlier export is not a request for manual conflict repair.`, "Reapproved; waiting for Copybara");
+    add("maintainer-unknown", `Current source ${pr.head.slice(0, 9)} has a fresh approval. Copybara still shows the earlier export ${lineage.map(item => "#" + item.number).join(", ")}; wait for its replacement. The earlier export is not a request for manual conflict repair.`, "Reapproved; waiting for Copybara");
   for (const item of active) if (conflictRecord(item) && (current.length || importAction === "maintainer-import-refresh"))
     add(current.length ? "author-conflicts" : "maintainer-import-refresh", `Import #${item.number}: ${mergeDescription(item)}${current.length ? "" : " This export predates the equivalent source rebase. Refresh the export; its conflict does not establish a conflict on the current source."}`);
   const failed = unresolvedImportChecks(lineage).filter(item => checkInfo(item).tone === "bad");
@@ -563,7 +601,7 @@ function attentionReasons(node, owner) {
     add("maintainer-internal-feedback", `${internalImportFailures.join(". ")}. Internal checks failed; public validation results remain separate. ${[pr, ...active].some(item => (item.checks?.contexts || []).some(check => isImportStatus(check) && FAILURE_STATES.has(check.state) && check.url)) ? "Inspect the reported service link." : "No public log URL was reported; internal diagnostics are needed."}`);
   if (pr.mergeable === "UNKNOWN" || active.some(item => item.mergeable === "UNKNOWN"))
     add("agent-refresh", "GitHub has not computed current mergeability for the source or a matching import. Refresh its public evidence; any previously observed same-head conflict remains actionable.");
-  if (review.incomplete || [pr, ...active].some(item => !completeChecks(item)
+  if (review.incomplete || importDisposition?.binding.amendment && !pr.importsComplete || [pr, ...active].some(item => !completeChecks(item)
       || checkInfo(item).tone === "unknown" && validationChecks(item).length > 0)
       || approved && (usesImports(pr) && !pr.importsComplete || pr.labelsComplete !== true))
     add("agent-refresh", "Current public review, checks, labels or import-link evidence is incomplete. The agent needs to refresh or investigate it; known actions remain listed.");
@@ -586,7 +624,7 @@ function attentionReasons(node, owner) {
     add("maintainer-reimport", `Import ${lineage.map(item => "#" + item.number).join(", ")} closed without merging. No matching public export is open. ${importDisposition?.trigger?.state === "missing"
       ? `The ready to pull label was removed at ${importDisposition.trigger.removedAt}${importDisposition.trigger.actor ? ` by ${importDisposition.trigger.actor}` : ""}. A qualified approving maintainer needs to restore that label to restart import; the periodic alarm checks this independently of patch approval.`
       : "A maintainer needs to recover the import; the closure's cause is not established."} Retained CI evidence remains separate.`);
-  if (importDisposition?.binding.eligible && importDisposition.state === "closed" && importDisposition.trigger?.state === "present")
+  if (importDisposition?.binding.eligible && importDisposition.scope !== "amended" && importDisposition.state === "closed" && importDisposition.trigger?.state === "present")
     add("maintainer-unknown", "The ready to pull label is present again. Waiting for Copybara to create a replacement export; no label-restoration reminder is due.", "Relabeled; waiting for replacement export");
   if (importAction === "maintainer-import-landed")
     add("maintainer-import-landed", `Import ${lineage.filter(item => item.status === "merged").map(item => "#" + item.number).join(", ")} merged${acceptedPatch && !current.length ? " with the verified equivalent pre-rebase patch" : ""}; the source PR remains open. Verify the landed change and reconcile the source PR; another import or fresh approval is not indicated.`);
@@ -604,7 +642,7 @@ function attentionReasons(node, owner) {
           && pr.checks.contexts.every(check => ["SUCCESS", "SKIPPED", "NEUTRAL"].includes(check.state)))
         add("maintainer-merge", "Current-head approval and complete green checks are recorded. Maintainers control merging; the site never merges automatically.");
     }
-    else if (open.length) {
+    else if (open.length && importDisposition?.scope !== "amended") {
       const facts = open.map(item => `Import #${item.number}: ${checkInfo(item).text.toLowerCase()} checks${item.mergeable === "UNKNOWN" ? "; mergeability unknown" : item.mergeable === "CONFLICTING" ? "; conflicts" : ""}`);
       add(current.length ? "maintainer-merge" : "maintainer-import-previous", `${facts.join(". ")}.${current.length ? "" : " The export contains the equivalent approved patch before the rebase; these checks belong to that earlier head. No fresh approval is needed."} Remaining internal gates are not established.`);
     } else if (active.length) add("maintainer-unknown", "The matching public import is a draft.", "Matching import is a draft");
@@ -2006,7 +2044,7 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
     numbers.add(identity);
     if (pr.publicImportDisposition !== undefined) {
       const disposition = publicImportDisposition({ ...nextRegistry.nodes.find(node => node.id === identity), github: pr });
-      if (!disposition || !["exact", "equivalent", "none"].includes(disposition.scope)
+      if (!disposition || !["exact", "equivalent", "amended", "none"].includes(disposition.scope)
           || !["conflicting", "open", "draft", "merged", "closed", "absent", "unknown"].includes(disposition.state)
           || ![null, "author-conflicts", "maintainer-import-refresh", "maintainer-reapproval", "maintainer-import-label", "maintainer-reimport", "maintainer-import-landed"].includes(disposition.action)
           || typeof disposition.description !== "string") throw new Error("Invalid public import disposition");
