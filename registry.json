@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T19:08:48.148753+00:00",
+    "updatedAt": "2026-11-04T19:12:01.183060+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -33381,7 +33381,7 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/rack-multiplier-saturation",
-      "head": "ba0eec12f1e5ec7ee35775e23b30c7689e526674",
+      "head": "3edf0c0d6fce34d9cf77c2391b4045f79c02ef24",
       "title": "Saturate the RACK reordering window multiplier",
       "url": "https://github.com/google/gvisor/pull/16605",
       "group": "runtime",
@@ -33436,15 +33436,23 @@
         {
           "label": "Prior maintainer approval",
           "url": "https://github.com/google/gvisor/pull/16605#pullrequestreview-5691234151"
+        },
+        {
+          "label": "Current mechanically rebased source; matching stable patch ID",
+          "url": "https://github.com/google/gvisor/commit/3edf0c0d6"
+        },
+        {
+          "label": "Rebased native TCP package: 46 passed, no failures or skips",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41893190903/artifacts/13353444358"
         }
       ],
       "number": 16605,
       "followup": {
         "owner": "Source PR owner",
-        "sourceHead": "ba0eec12f1e5ec7ee35775e23b30c7689e526674",
-        "observedAt": "2026-11-03T02:30:53.096288+00:00",
-        "disposition": "Open; reviewer feedback applied",
-        "nextAction": "Follow the original PR. Apply the established reapproval check to the changed head.",
+        "sourceHead": "3edf0c0d6fce34d9cf77c2391b4045f79c02ef24",
+        "observedAt": "2026-11-04T19:12:01.183060+00:00",
+        "disposition": "Open; approved patch mechanically rebased",
+        "nextAction": "Follow the source and its existing export through the ordinary revision-bound import checks. The retained maintainer approval predates this head; patch equivalence is not a fresh review.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16605",
           "https://github.com/tamird/gvisor/commit/d73d52b39ef5e82b2264eda4a9aa6caa552f9b6c",
@@ -33457,7 +33465,8 @@
           "https://github.com/google/gvisor/pull/16605/commits/ba0eec12f1e5ec7ee35775e23b30c7689e526674",
           "https://github.com/google/gvisor/pull/16605#discussion_r4450138015",
           "https://github.com/tamird/gvisor/actions/runs/40792990873/artifacts/12862527261",
-          "https://github.com/google/gvisor/pull/16605#pullrequestreview-5691234151"
+          "https://github.com/google/gvisor/pull/16605#pullrequestreview-5691234151",
+          "https://github.com/tamird/gvisor/actions/runs/41893190903/artifacts/13353444358"
         ]
       },
       "reapproval": {
@@ -33468,6 +33477,17 @@
         "diffSha256": "41a7ed905ba11811b9a8748fe8fa3bb65d17a73161bb3c5778d30926d19ec340",
         "summary": "A fresh duplicate SACK at saturation now has permanent test assertions for the round boundary and persistence. The TCP test is identical to the one in the prior 43-case passing suite.",
         "evidence": "https://github.com/google/gvisor/compare/d73d52b39ef5e82b2264eda4a9aa6caa552f9b6c..ba0eec12f1e5ec7ee35775e23b30c7689e526674"
+      },
+      "approvedPatch": {
+        "head": "3edf0c0d6fce34d9cf77c2391b4045f79c02ef24",
+        "approvedHead": "ba0eec12f1e5ec7ee35775e23b30c7689e526674",
+        "reviewId": "PRR_kwDOB9IlXs8AAAABVzttqQ",
+        "reviewer": "manninglucas",
+        "submittedAt": "2026-11-03T19:43:31Z",
+        "method": "stable-patch-id",
+        "oldPatchId": "a92f6c899a9636ddbeb558a864015b14745e1ab8",
+        "newPatchId": "a92f6c899a9636ddbeb558a864015b14745e1ab8",
+        "verifiedAt": "2026-11-04T19:12:01.183060+00:00"
       }
     },
     {
