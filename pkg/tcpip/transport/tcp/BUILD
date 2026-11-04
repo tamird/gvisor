@@ -185,6 +185,7 @@ go_library(
         "tcp_segment_list.go",
         "tcp_segment_refs.go",
         "timer.go",
+        "undo.go",
     ],
     visibility = ["//visibility:public"],
     deps = [
