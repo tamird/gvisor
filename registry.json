@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T03:32:25.175514+00:00",
+    "updatedAt": "2026-11-04T04:13:07.872004+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3286,32 +3286,67 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "buffer-external-storage-refresh",
-      "title": "Support external buffer storage",
+      "title": "Support externally owned buffer chunks",
       "url": "https://github.com/google/gvisor/pull/15443",
       "group": "runtime",
       "status": "open",
-      "summary": "The requested post-#16046 rebase is published at 7771b786fbba on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nPublic buffer-external-storage-refresh@1c636c974ff648d8e67fffb6280e01599e117bf5 is an independent refresh on verified upstream e1bc74024. Complete source/record peer 1ab800726bc5 and immutable binding 16ec469922b0 verify the reviewed seven-path patch and final message; original d065 remains preserved. External chunks use existing references, release exactly once, detach shared writes to heap storage and preserve owner sharing through checkpoint restoration without accessing unready storage. Concrete owners must restore accessible bytes before use. This adds no MemoryFile owner or TUN write-policy change. The clone-growth prerequisite and populated benchmark correction are already upstream.\n\nThe owning implementation and benchmarks match historically tested composition 4f81, apart from two test contexts and a comment explaining the existing size bound. Recovered primary parent 46357 is OK in 95.090 seconds, with the complete buffer owner, benchmark owner and both owning Nogo targets passing; parent console confirms both CPU analyses and five candidate samples per benchmark. The earlier 326-entry XML and authentic COW failure remain attributed to the closed prior record, not newly recovered leaf artifacts. Recorded medians rise from 3.924 to 4.535 ns for ReadAt (+15.6%) and 64.30 to 66.31 ns for WriteRead (+3.1%), with zero allocations. Worker identity is unknown; these are possible costs, not a statistical or causal performance claim. No fresh current-master, ARM runtime, real asynchronous packet restore or oversized TUN parity result is claimed.\n\nThe contributor answered the 066a review request by asking for the missing TUN context. The message-only revision is now published at a971becd35c244f8a93c16b91ee544be16e02bd5, explaining Linux writes beyond the MTU, current Go-heap allocation, and why a later MemoryFile-backed TUN change needs this buffer lifetime support. Independent editorial and factual review passed; the source tree and validation evidence are unchanged. The contributor then approved publication subject to comment corrections. Exact amendment 1c636 clarifies disjoint heap/external storage and moves Bytes/Release requirements onto their methods; noncomment bytes and the reviewed message are unchanged (independent peer 804528225dfe). Ready PR #15443 is now open against master, with verified body, head, tracking and thread metadata. CI and review are being followed by the standing sweep.",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "summary": "PR #15443 is open at 5af539b23. Restore-order controls reproduced premature release of external storage through both Buffer and View. The first fix passed 329 ordinary cases and both analyzers. Iterating eight heap-backed views still took 12.01 ns, compared with 4.97 ns before the PR and 12.58 ns on its public head (medians). The first race build ran zero cases. A separate compiler check built the race standard library, but the actual race target still stopped before testing because its aarch64-opt runtime/cgo action could not find cc. The source owner is revising the read path and qualifying the race-enabled tests. There is no contributor decision yet.",
+      "updatedAt": "2026-11-04T04:13:07.872004+00:00",
       "followup": {
-        "disposition": "open",
-        "owner": "external_sweeps",
-        "nextAction": "Follow the delivered exact head, CI, import and human review in the standing periodic sweep.",
+        "disposition": "Source revision and race qualification in progress",
+        "owner": "Source PR owner",
+        "nextAction": "Replace the per-read storage dispatch, remeasure the eight heap-backed views against the pre-PR source, and make cc available to the actual race target so its tests can run.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15443",
-          "https://github.com/tamird/gvisor/commit/7771b786fbba82026dea68352e7bbc954e6326f2"
+          "https://github.com/tamird/gvisor/commit/5af539b23",
+          "https://github.com/google/gvisor/pull/15443#discussion_r4462958129",
+          "https://github.com/google/gvisor/pull/15443#discussion_r4462958137",
+          "https://github.com/tamird/gvisor/actions/runs/41767076495/artifacts/13293284072",
+          "https://github.com/tamird/gvisor/actions/runs/41770025069/artifacts/13293749207",
+          "https://github.com/tamird/gvisor/actions/runs/41771239765/artifacts/13294344177",
+          "https://github.com/tamird/gvisor/commit/7771b786fbba82026dea68352e7bbc954e6326f2",
+          "https://github.com/tamird/gvisor/blob/455fad86f/registry.json#L3285-L3316"
         ],
-        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
-        "sourceHead": "7771b786fbba82026dea68352e7bbc954e6326f2",
+        "reviewedAt": "2026-11-04T02:41:27Z",
+        "sourceHead": "5af539b23594b3711fd49c514e236442baad9df3",
         "reviewDecision": null,
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-10-22T00:33:19.689675+00:00"
+        "observedAt": "2026-11-04T04:13:07.872004+00:00"
       },
-      "head": "7771b786fbba82026dea68352e7bbc954e6326f2",
+      "head": "5af539b23594b3711fd49c514e236442baad9df3",
       "number": 15443,
       "evidence": [
         {
-          "label": "Published post-16046 rebase",
+          "label": "Current PR source (5af539b23)",
+          "url": "https://github.com/tamird/gvisor/commit/5af539b23"
+        },
+        {
+          "label": "Review thread on external storage restore order",
+          "url": "https://github.com/google/gvisor/pull/15443#discussion_r4462958129"
+        },
+        {
+          "label": "Review thread on heap-backed reads",
+          "url": "https://github.com/google/gvisor/pull/15443#discussion_r4462958137"
+        },
+        {
+          "label": "Restore controls, ordinary tests, analyzers, and paired benchmarks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41767076495/artifacts/13293284072"
+        },
+        {
+          "label": "Compiler-only race standard library check",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41770025069/artifacts/13293749207"
+        },
+        {
+          "label": "Actual race target stopped in runtime/cgo before tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41771239765/artifacts/13294344177"
+        },
+        {
+          "label": "October post-#16046 rebase (7771b786f)",
           "url": "https://github.com/tamird/gvisor/commit/7771b786fbba82026dea68352e7bbc954e6326f2"
+        },
+        {
+          "label": "October rebase, validation, and benchmark history",
+          "url": "https://github.com/tamird/gvisor/blob/455fad86f/registry.json#L3285-L3316"
         }
       ]
     },
