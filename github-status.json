@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-11-04T00:32:53.758726+00:00",
-  "registryDate": "2026-11-04T00:31:34.866976+00:00",
+  "registryDate": "2026-11-04T01:00:29.582231+00:00",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -306887,6 +306887,24 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-04T00:31:34.866976+00:00"
+      }
+    },
+    "branch:veth-port-mtu": {
+      "contributor-review": {
+        "scope": "dfbc2ca7059c9f7606eab8777a7804c79e3f1427",
+        "since": "2026-11-04T01:00:29.582231+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-04T01:00:29.582231+00:00"
+      }
+    },
+    "branch:native-syscall-runner-start-error": {
+      "contributor-review": {
+        "scope": "f3527b352413b8166aa536837460ed3b8faf8316",
+        "since": "2026-11-04T01:00:29.582231+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-04T01:00:29.582231+00:00"
       }
     }
   },

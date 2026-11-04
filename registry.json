@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T00:31:34.866976+00:00",
+    "updatedAt": "2026-11-04T01:00:29.582231+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -48555,6 +48555,78 @@
           "https://github.com/google/gvisor/pull/16933"
         ]
       }
+    },
+    {
+      "id": "branch:veth-port-mtu",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/veth-port-mtu",
+      "title": "Keep the MTU on each veth endpoint",
+      "group": "runtime",
+      "url": "https://github.com/tamird/gvisor/compare/400bd2c81...dfbc2ca70",
+      "status": "Contributor review requested",
+      "head": "dfbc2ca7059c9f7606eab8777a7804c79e3f1427",
+      "updatedAt": "2026-11-04T01:00:29.582231+00:00",
+      "summary": "Setting one end of a Linux veth pair leaves its peer’s MTU alone. Stock gVisor stores one MTU for the pair. Move the value to each endpoint and protect it with the endpoint’s existing lock.",
+      "evidence": [
+        {
+          "label": "Linux control on both endpoints",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41730911731/artifacts/13277765046"
+        },
+        {
+          "label": "Stock and corrected systrap guest results and owning Nogo check",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41748246801/artifacts/13284278897"
+        },
+        {
+          "label": "Five veth unit cases, including the MTU state round trip",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41732386526/artifacts/13277699861"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "dfbc2ca7059c9f7606eab8777a7804c79e3f1427",
+        "baseHead": "400bd2c81dcc0349033a8218bdf38e239d256678",
+        "url": "https://github.com/tamird/gvisor/compare/400bd2c81...dfbc2ca70",
+        "requestedAt": "2026-11-04T01:00:29.582231+00:00",
+        "title": "Keep the MTU on each veth endpoint",
+        "summary": "Open the change that makes each veth endpoint’s MTU independent?",
+        "body": "The regression sets A to 3000, reads both ends, then sets B to 1460 and reads both again. Each pair below is (A, B).\n\nNative Linux    (3000, 1500) → (3000, 1460)\nStock Sentry    (2986, 2986) → (1446, 1446)\nCorrected Sentry    (2986, 1486) → (2986, 1446)\n\nThe existing setlink script failed on the untouched peer in the stock systrap guest and passed in the corrected guest. The owning Nogo check and five veth unit cases passed. TestMTU verified that two distinct values survive state.Save/Load."
+      }
+    },
+    {
+      "id": "branch:native-syscall-runner-start-error",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/native-syscall-runner-start-error",
+      "title": "Report startup errors from the native syscall test runner",
+      "group": "tests",
+      "url": "https://github.com/tamird/gvisor/compare/155fee684...f3527b352",
+      "status": "Contributor review requested",
+      "head": "f3527b352413b8166aa536837460ed3b8faf8316",
+      "updatedAt": "2026-11-04T01:00:29.582231+00:00",
+      "summary": "The native runner assumed every cmd.Run failure carried a child exit status. When setup_container could not start, the runner panicked before GTest and hid the launch error.",
+      "evidence": [
+        {
+          "label": "Original native failure before GTest",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41743992378/artifacts/13283495690"
+        },
+        {
+          "label": "Retained diagnostic with the same runner source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41750123884/artifacts/13284988753"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "f3527b352413b8166aa536837460ed3b8faf8316",
+        "baseHead": "155fee684b492cc63692d3a8f8c10ad6b0d5a1db",
+        "url": "https://github.com/tamird/gvisor/compare/155fee684...f3527b352",
+        "requestedAt": "2026-11-04T01:00:29.582231+00:00",
+        "title": "Report startup errors from the native syscall test runner",
+        "summary": "Open the one-line change that reports the native test’s startup error?",
+        "body": "Report the test name and the error returned by cmd.Run. With the same runner file as the proposal, the diagnostic identified setup_container and “permission denied” before the GTest case started."
+      }
     }
   ],
   "edges": [
@@ -65565,7 +65637,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-03T20:48:30.202545+00:00",
+      "updatedAt": "2026-11-04T01:00:29.582231+00:00",
       "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional. BuildBuddy’s empty-root correction is merged, but the latest literal zero-layer production probe still fails at the worker mount. No DPDK action ran; the deployed executor build is unknown.",
       "findings": [
         {
@@ -67407,6 +67479,35 @@
             {
               "label": "Prior one-file worker archive proof, distinct from zero-layer execution",
               "url": "https://github.com/tamird/gvisor/actions/runs/41428504065/artifacts/13133351604"
+            }
+          ]
+        },
+        {
+          "text": "Continuous Build everything selects //... with the production filters. Buildkite 53456 downloaded and rebuilt Go for race coverage, which #16507 moves to rules_go. Separate AMD64 wildcard build comparisons required the ARM cross-compiler. Keep the production selection when qualifying native execution. #16904 shows the Bazelisk/Make invocation on the agent for governance and license checks. The pkg and runsc proposal bcec52dda covers a narrower target set.",
+          "evidence": [
+            {
+              "label": "Production Build everything job",
+              "url": "https://buildkite.com/gvisor/pipeline/builds/53456#01a1a3e9-782e-46a5-b59c-781311605955"
+            },
+            {
+              "label": "Build coverage binaries with rules_go",
+              "url": "https://github.com/google/gvisor/pull/16507"
+            },
+            {
+              "label": "AMD64 wildcard build evidence",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41353178606/artifacts/13101943112"
+            },
+            {
+              "label": "Paired AMD64 wildcard build evidence",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41353882134/artifacts/13101954456"
+            },
+            {
+              "label": "Native agent invocation for governance and license checks",
+              "url": "https://github.com/google/gvisor/pull/16904"
+            },
+            {
+              "label": "Narrower pkg and runsc proposal",
+              "url": "https://github.com/tamird/gvisor/commit/bcec52dda"
             }
           ]
         }
