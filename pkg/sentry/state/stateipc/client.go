@@ -211,9 +211,7 @@ func (rw *asyncReadWriter) Close() error {
 	err := rw.closeWithoutEndpoint()
 	rw.ioep.Shutdown()
 	rw.connectorWG.Wait()
-	rw.client.filesMu.Lock()
 	delete(rw.client.files, rw)
-	rw.client.filesMu.Unlock()
 	rw.ioep.Destroy()
 	rw.client.DecRef()
 	return err
