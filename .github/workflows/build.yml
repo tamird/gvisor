@@ -1,7 +1,7 @@
 name: Check SHM removal against the current registry mutex
 on:
   push:
-    branches: [qualification/shm-registry-rebase]
+    branches: [qualification/shm-rebase-original-reports]
 permissions:
   contents: read
 jobs:
@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 3
+          fetch-depth: 4
           persist-credentials: false
       - name: Bind the public tool and report helpers
         shell: bash
@@ -29,8 +29,9 @@ jobs:
           for helper in qualification_report unit_matrix; do
             git show "$donor:test/rbe/$helper.py" > "$root/$helper.py"
           done
-          test "$(git rev-parse HEAD^)" = 90a37644f7c3e99f4c21954dc9e4181a494094ec
-          git switch --quiet --detach HEAD^
+          test "$(git rev-parse HEAD^)" = bca79228de07e46ee3435a6881d347213348bf18
+          test "$(git rev-parse HEAD^^)" = 90a37644f7c3e99f4c21954dc9e4181a494094ec
+          git switch --quiet --detach 90a37644f7c3e99f4c21954dc9e4181a494094ec
           test "$(cat .bazelversion)" = 9.3.1
           curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$root/bin/bazel"
           echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $root/bin/bazel" | sha256sum -c -

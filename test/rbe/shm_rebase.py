@@ -98,48 +98,74 @@ def execute(arm, target, row):
     clean = out / "events.jsonl"
     manifest = report.capture(raw, clean, Path("bazel-out"), out / "reports")
     (out / "capture_exit").write_text(str(int(bool(manifest["errors"]))))
-    keys = ("commit_file", "source_before", "source_after", "final_head", "executed_arguments", "native_exit", "capture_exit")
-    context = {key: key for key in keys}
-    context.update(expected_source=PRODUCT, command_kind="test", execution_finished_at=finished)
-    report.write_json(out / "context", context)
-    verdict = report.verdict(clean, report.manifest_path(clean), out / "context", out / "targets", ())
-    row.update(original_status=verdict["status"], case_counts=verdict["case_counts"], invocation=verdict["invocation"],
-               expected_test_attempts=1, test_attempts=len(verdict["executed"]),
-               reports=[{k: item[k] for k in ("name", "sha256", "bytes")} for item in manifest["reports"]])
+    row["reports"] = [{k: item[k] for k in ("name", "sha256", "bytes", "identity")} for item in manifest["reports"]]
     save()
-    attempt, = verdict["executed"]
-    row["attempt"] = {key: attempt[key] for key in ("status", "owner", "run", "shard", "attempt", "cached_locally")}
-    row["strategy"] = attempt["execution_info"].get("strategy")
-    row["cached_remotely"] = attempt["execution_info"].get("cachedRemotely", False)
+    started, attempts = [], []
+    with clean.open() as stream:
+        for line in stream:
+            event = json.loads(line)
+            if "started" in event:
+                started.append(event["started"].get("uuid", ""))
+            if "testResult" in event:
+                attempt = event["testResult"]
+                info = attempt.get("executionInfo", {})
+                attempts.append({"identity": event["id"]["testResult"], "status": attempt["status"],
+                                 "strategy": info.get("strategy"), "cached_locally": attempt.get("cachedLocally", False),
+                                 "cached_remotely": info.get("cachedRemotely", False)})
+    row.update(test_attempts=len(attempts), attempts=attempts)
     save()
-    assert attempt["owner"]["label"] == target and not (verdict["errors"] or verdict["missing"] or manifest["errors"])
-    assert all(attempt[k] == 1 for k in ("run", "shard", "attempt"))
-    assert row["strategy"] == placement and not attempt["cached_locally"] and not row["cached_remotely"]
     files = {item["name"]: out / item["path"] for item in manifest["reports"]}
     assert set(files) == {"test.log", "test.xml"}
     text = files["test.log"].read_text(errors="replace")
     row["test_diagnostic_locations"] = references(text)
     nodes = list(ET.parse(files["test.xml"]).iter("testcase"))
+    observations = []
+    for node in nodes:
+        name = node.get("name")
+        known = (node.get("classname") == "ShmTest" and name in CASES) or (arm == "nogo" and name == target[2:].replace(":", "/"))
+        state = next((child.tag for child in node if child.tag in ("failure", "error", "skipped")), "pass")
+        if node.get("status") == "notrun" or node.get("result") == "suppressed":
+            state = "skipped"
+        observations.append({"name": name if known else "<unexpected>", "status": state})
+    row["xml_cases"] = observations
+    row["xml_case_counts"] = {state: sum(case["status"] == state for case in observations)
+                              for state in ("pass", "failure", "error", "skipped")}
     if arm == "nogo":
         row["architectures"] = re.findall(r"^(amd64|arm64)\.\.\.PASS\s*$", text, re.M)
-        assert sorted(row["architectures"]) == ["amd64", "arm64"]
         expected = 1
     else:
-        actual = {(n.get("classname"), n.get("name")) for n in nodes}
-        row["executed_cases"] = [case for case in CASES if ("ShmTest", case) in actual]
-        row["failed_cases"] = [n.get("name") for n in nodes if n.get("name") in CASES and
-                               (n.find("failure") is not None or n.find("error") is not None)]
-        save()
-        assert actual == {("ShmTest", case) for case in CASES}
         expected = len(CASES)
+    save()
+    if len(started) == 1 and re.fullmatch(r"[a-f0-9-]{36}", started[0]):
+        row["invocation"] = started[0]
+    keys = ("commit_file", "source_before", "source_after", "final_head", "executed_arguments", "native_exit", "capture_exit")
+    context = {key: key for key in keys}
+    context.update(expected_source=PRODUCT, command_kind="test", execution_finished_at=finished)
+    report.write_json(out / "context", context)
+    verdict = report.verdict(clean, report.manifest_path(clean), out / "context", out / "targets", ())
+    row.update(original_status=verdict["status"], case_counts=verdict["case_counts"])
+    save()
+    attempt, = attempts
+    identity = attempt["identity"]
+    assert len(verdict["executed"]) == 1 and not (verdict["errors"] or verdict["missing"] or manifest["errors"])
+    assert identity["label"] == target and re.fullmatch(r"[0-9a-f]{64}", identity["configuration"]["id"])
+    assert all(identity.get(k, 1) == 1 for k in ("run", "shard", "attempt"))
+    assert all(item["identity"] == identity for item in manifest["reports"])
+    assert attempt["strategy"] == placement and not attempt["cached_locally"] and not attempt["cached_remotely"]
+    if arm == "nogo":
+        assert sorted(row["architectures"]) == ["amd64", "arm64"]
+    else:
+        assert {case["name"] for case in observations} == set(CASES)
     assert len(nodes) == expected and verdict["case_counts"] == {"passed": expected, "failed": 0, "skipped": 0}
-    assert all(n.get("status") != "notrun" and n.get("result") != "suppressed" for n in nodes)
+    assert all(case["name"] != "<unexpected>" and case["status"] == "pass" for case in observations)
     assert code == 0 and verdict["status"] == "PASS" and attempt["status"] == "PASSED"
     row["status"] = "PASS"
 
 
 result = dict(product=PRODUCT, base=BASE, original_reconciliation="1e2c3bce4cbcd408e303e322cbe97fc11caa585d",
               previous_artifacts=[13119345175, 13119595225, 13256418500], expected=list(TARGETS),
+              original_projection={"artifact": 13355442664, "status": "INCOMPLETE", "native_exits": [0, 0, 0],
+                                   "zip_sha256": "5ad6ec151d7681f7783d96bbefd77f05a0877c152309ec1234cb73abb4db4cf4"},
               arms={}, status="INCOMPLETE", started_at=utc(), kernel=platform.release(), machine=platform.machine())
 save()
 assert platform.machine() == "x86_64" and os.getuid() == 0
