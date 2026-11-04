@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T02:35:57.933009+00:00",
+    "updatedAt": "2026-11-04T02:40:55.900969+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31787,6 +31787,10 @@
         {
           "label": "Amendment against the published PR",
           "url": "https://github.com/tamird/gvisor/compare/71a996f39...6264dbadc"
+        },
+        {
+          "label": "Linux qualification of the four-file amendment",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41762208277"
         }
       ],
       "updatedAt": "2026-11-04T02:35:57.933009+00:00",
@@ -48766,6 +48770,40 @@
         "title": "Suggest skipping SACK candidates that cannot change",
         "summary": "Post the measured suggestion on the candidate loop in the author’s PR?",
         "body": "Could we skip segments that end at or before `sb.Start` here? Inserting this SACK block cannot change whether those segments are covered. The sender still walks past them to find the block, but it can skip both the append and the second scoreboard lookup. A partially overlapping segment still needs both checks because adjacent SACK blocks can merge.\n\nI timed one new SACK near the end of a 128-segment send queue in `handleRcvdSegment`, with RACK disabled. `stock` is this PR and `fixed` adds the overlap check.\n\n```text\n                                                │    stock     │               fixed                │\n                                                │    sec/op    │   sec/op     vs base               │\nSACKAccountingQualification/queue=128/sack=far    3604.5n ± 1%   937.2n ± 5%  -74.00% (p=0.000 n=8)\n```\n\nAllocations fell from seven to two per ACK. Both versions gave the same Outstanding count for duplicate and partially overlapping blocks, including across sequence-number wrap. [One-line change](https://github.com/tamird/gvisor/commit/ffd2dc90a) · [Benchmark and controls](https://github.com/tamird/gvisor/actions/runs/41757174160/artifacts/13289470471).\n\nPosted by Codex on behalf of @tamird."
+      }
+    },
+    {
+      "id": "branch:host-image-inventory",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/host-image-inventory",
+      "group": "bazel",
+      "head": "f5b1fa005b08e1b7f9c61f1cafd13417b9707d1e",
+      "title": "List images without starting the Docker builder",
+      "url": "https://github.com/tamird/gvisor/commit/f5b1fa005",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-04T02:39:42.926755+00:00",
+      "summary": "With Docker unavailable, make list-all-images still listed 96 images but made six Docker calls, including pull and build. Four host-only goals now print the same names without contacting Docker. A mixed build still selects the builder.",
+      "evidence": [
+        {
+          "label": "Two-line Make change",
+          "url": "https://github.com/tamird/gvisor/commit/f5b1fa005"
+        },
+        {
+          "label": "35 Linux controls, both architecture selections and CPU/GPU partitions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41761993523/artifacts/13291250731"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "f5b1fa005b08e1b7f9c61f1cafd13417b9707d1e",
+        "baseHead": "183a39d1b2aff9e8e2219171940001749a2b5db0",
+        "url": "https://github.com/tamird/gvisor/commit/f5b1fa005",
+        "title": "List images without starting the Docker builder",
+        "requestedAt": "2026-11-04T02:39:42.926755+00:00",
+        "summary": "Open the standalone PR for the four Make inventory commands?",
+        "body": "Listing image names can pull or build the Docker builder even though Make already has the list. Treat the four image-listing targets as host-only when every requested goal can run on the host. A command that also requests a build still uses the builder.\n\nOn an x86_64 Linux host, the output matched byte for byte for both architecture selections and the CPU and GPU partitions. The default list-all-images invocation went from six Docker calls to zero."
       }
     }
   ],
