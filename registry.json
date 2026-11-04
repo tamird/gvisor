@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T01:32:28.520065+00:00",
+    "updatedAt": "2026-11-04T02:10:52.704255+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -30188,14 +30188,22 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "qualification/native-sidecar-cc",
-      "head": "74aa42d5fb36b5efa0c92f269a4360e7a7caf4b2",
+      "head": "59bc02b23955bc1d4c6a4c1423da514f38d05287",
       "title": "Build the runsc sidecars with the C toolchain",
       "url": "https://github.com/google/gvisor/pull/16522",
       "group": "release",
-      "status": "Rebase under validation",
-      "updatedAt": "2026-11-04T01:24:27.854931+00:00",
-      "summary": "The published amendment moves the sidecars’ freestanding C++ rule behind //tools:defs.bzl. The public adapter removes sanitizer runtime options and the command-line allocator override while preserving unrelated linker flags. Lucas received replies on both points. The internal adapter still needs to map freestanding_executable to its noasan policy; the public tests do not verify that mapping.",
+      "status": "open",
+      "updatedAt": "2026-11-04T02:10:52.704255+00:00",
+      "summary": "The rebase resolves the conflict in tools/defs.bzl. GNU and supplier-patched Clang built all three sidecars on AMD64 and ARM64, including the 4 KiB prewarmer. All 13 AMD64 cases passed with each compiler. The overall run records the expected link failure with unpatched registry LLVM. The private build adapter still needs upstream verification.",
       "evidence": [
+        {
+          "label": "Rebased three-commit change",
+          "url": "https://github.com/tamird/gvisor/compare/e9961d5d8...59bc02b23"
+        },
+        {
+          "label": "Six verified phases and unpatched registry LLVM control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41755890855/artifacts/13288104153"
+        },
         {
           "label": "Reply to Lucas on the C++ transition and internal mapping",
           "url": "https://github.com/google/gvisor/pull/16522#discussion_r4460168357"
@@ -30260,12 +30268,12 @@
       "number": 16522,
       "refinement": {
         "before": {
-          "head": "e482579e11a4e098f069bdeb4c66677b36bc93ff",
+          "head": "74aa42d5fb36b5efa0c92f269a4360e7a7caf4b2",
           "base": "0424a4b4fa3105cbe3271c301e8bf6cb8adf0277"
         },
         "after": {
-          "head": "74aa42d5fb36b5efa0c92f269a4360e7a7caf4b2",
-          "base": "0424a4b4fa3105cbe3271c301e8bf6cb8adf0277"
+          "head": "59bc02b23955bc1d4c6a4c1423da514f38d05287",
+          "base": "e9961d5d844e709e8aab6b7215b482b198325a86"
         }
       },
       "settledReviews": [
@@ -30283,24 +30291,7 @@
           "url": "https://github.com/tamird/gvisor/commit/74aa42d5f",
           "body": "The ordinary C++ target kept the injected sanitizer, allocator and linker options. The three sidecars removed the sanitizer runtime and allocator override but kept the unrelated hardening flag. GNU and LLVM compiled and linked all three binaries for AMD64 and ARM64. With their default options, both compilers passed all 13 AMD64 runtime cases. The LLVM passes used supplier fix 83245b957; the unmodified 0.8.24 release still could not link pthread or dl. Google’s internal build was not exercised.\n\nTransition reply:\nI moved the transition behind `//tools:defs.bzl`. The public adapter removes sanitizer features and direct sanitizer runtime flags while preserving unrelated options. The internal adapter still needs to map `freestanding_executable` to its existing C++ noasan policy; I can’t verify that mapping in the public tree.\n\nPosted by Codex on behalf of @tamird.\n\nAllocator reply:\nThe transition now unsets `--custom_malloc`, so the sidecars keep their own `tcmalloc = False` setting. With a custom allocator selected on the command line, the ordinary control kept it and none of the three sidecars linked it.\n\nPosted by Codex on behalf of @tamird."
         }
-      ],
-      "followup": {
-        "owner": "Source PR owner",
-        "sourceHead": "74aa42d5fb36b5efa0c92f269a4360e7a7caf4b2",
-        "observedAt": "2026-11-04T01:24:27.854931+00:00",
-        "disposition": "The published head conflicts with master in tools/defs.bzl",
-        "nextAction": "Qualify the context-only rebase on Bazel 9.3.1. Master added core tagging to the prewarmer; verify its 4 KiB limit and the sidecar link options on both architectures.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/16522#discussion_r4460168357",
-          "https://github.com/google/gvisor/pull/16522#discussion_r4460168783",
-          "https://github.com/tamird/gvisor/commit/74aa42d5f",
-          "https://github.com/tamird/gvisor/actions/runs/41707427239/artifacts/13266904325",
-          "https://github.com/google/gvisor/pull/16522#discussion_r4459430770",
-          "https://github.com/google/gvisor/pull/16522#discussion_r4459430773",
-          "https://app.buildbuddy.io/invocation/29a82241-f69b-4ba6-bf22-b15bf5af73e7"
-        ],
-        "providerHead": "74aa42d5fb36b5efa0c92f269a4360e7a7caf4b2"
-      }
+      ]
     },
     {
       "id": "branch:licensecheck-native-bazel-mod",
