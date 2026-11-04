@@ -72,6 +72,67 @@ func TestParseGitHubCodeloadURL(t *testing.T) {
 	}
 }
 
+// The public LLVM source extension imports libraries separately from compiler
+// toolchains. Their archive identity comes from the generated repository rule.
+func TestLLVMSourceDependency(t *testing.T) {
+	const sourceURL = "https://github.com/hermeticbuild/llvm-redist/releases/download/llvmorg-23.1.2-r1/llvm-project-23.1.2.src.tar.zst"
+	const sourceSHA = "271da53a2feb0cb221a9276a14268a3b76ad802c7fc8fb1098291a43b06e4c56"
+	graph, err := parseModGraph(`{
+  "extensionUsages": [
+    {"key": "@@llvm+//extensions:llvm.bzl%llvm", "used_repos": ["llvm-project"]},
+    {"key": "@@llvm+//extensions:llvm_toolchain.bzl%llvm_toolchain", "used_repos": ["llvm_toolchain"]},
+    {"key": "@@another+//extensions:llvm.bzl%llvm", "used_repos": ["unrelated"]}
+  ]
+}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	refs, err := graph.repoRefs()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []repoRef{{"@llvm-project", "llvm-project"}}; !slices.Equal(refs, want) {
+		t.Fatalf("source repository selection = %v, want %v", refs, want)
+	}
+	for _, test := range []struct {
+		name, url, sha256, wantErr string
+	}{
+		{name: "pinned source", url: sourceURL, sha256: sourceSHA},
+		{name: "missing URL", sha256: sourceSHA, wantErr: "llvm_project_archive llvm-project has no URL"},
+		{name: "missing checksum", url: sourceURL, wantErr: "llvm_project_archive llvm-project has no SHA-256"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			// Missing attributes are omitted, as in show_repo output.
+			row := "## @llvm-project:\nllvm_project_archive(\n"
+			if test.url != "" {
+				row += "  url = \"" + test.url + "\",\n"
+			}
+			if test.sha256 != "" {
+				row += "  sha256 = \"" + test.sha256 + "\",\n"
+			}
+			repos, err := parseShowRepos(row + ")\n")
+			if err != nil {
+				t.Fatal(err)
+			}
+			repo, ok := repos[refs[0].ref]
+			if !ok {
+				t.Fatalf("show_repo did not report selected repository %s", refs[0].ref)
+			}
+			got, err := repo.archiveDependency(refs[0].name)
+			if test.wantErr != "" {
+				if err == nil || err.Error() != test.wantErr {
+					t.Fatalf("archiveDependency = %+v, %v, want error %q", got, err, test.wantErr)
+				}
+				return
+			}
+			want := dep{name: "llvm-project", kind: kindArchive, url: sourceURL, sha256: sourceSHA}
+			if err != nil || got != want {
+				t.Fatalf("archiveDependency = %+v, %v, want %+v", got, err, want)
+			}
+		})
+	}
+}
+
 func TestModuleLicenses(t *testing.T) {
 	const prefix = "example.com/module@v1.0.0/"
 	for _, test := range []struct {
@@ -171,106 +232,43 @@ func TestModuleLicenses(t *testing.T) {
 	}
 }
 
+// Complete notices copied from the inputs that exposed classifier mistakes:
+// bsd.txt and openssl.txt: https://github.com/apache/arrow/blob/e03105efc/go/LICENSE.txt
+// llvm.txt: https://github.com/llvm/llvm-project/blob/85ac56026/LICENSE.TXT
+var (
+	//go:embed testdata/bsd.txt
+	bsdText string
+	//go:embed testdata/openssl.txt
+	opensslText string
+	//go:embed testdata/llvm.txt
+	llvmText string
+)
+
 func TestClassify(t *testing.T) {
+	apache, _, ok := strings.Cut(llvmText, "---- LLVM Exceptions to the Apache 2.0 License ----")
+	if !ok {
+		t.Fatal("LLVM fixture has no exception boundary")
+	}
 	for _, test := range []struct {
 		name, text string
 		want       Licenses
-		wantErr    bool
 	}{
-		{
-			name: "apache",
-			text: "Apache License\nVersion 2.0, January 2004\nhttp://www.apache.org/licenses/",
-			want: Licenses{apache2},
-		},
-		{
-			name: "apache-llvm",
-			text: "Apache License v2.0 with LLVM Exceptions\n\nApache License\nVersion 2.0, January 2004",
-			want: Licenses{apache2LLVM},
-		},
-		{
-			name: "mit",
-			text: "Permission is hereby granted, free of charge, to any person obtaining a copy of this software",
-			want: Licenses{mit},
-		},
-		{
-			name: "bsd3",
-			text: "Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:\n3. Neither the name of the copyright holder...",
-			want: Licenses{bsd3},
-		},
-		{
-			// libbacktrace's license uses a different nonendorsement clause:
-			// https://github.com/ianlancetaylor/libbacktrace/blob/793921876/LICENSE
-			name: "bsd3 author name",
-			text: `# Copyright (C) 2012-2016 Free Software Foundation, Inc.
-
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are
-# met:
-
-#     (1) Redistributions of source code must retain the above copyright
-#     notice, this list of conditions and the following disclaimer.
-
-#     (2) Redistributions in binary form must reproduce the above copyright
-#     notice, this list of conditions and the following disclaimer in
-#     the documentation and/or other materials provided with the
-#     distribution.
-
-#     (3) The name of the author may not be used to
-#     endorse or promote products derived from this software without
-#     specific prior written permission.`,
-			want: Licenses{bsd3},
-		},
-		{
-			name: "bsd2",
-			text: "Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: 1... 2...",
-			want: Licenses{bsd2},
-		},
-		{
-			name: "cc0",
-			text: "Creative Commons Legal Code\nCC0 1.0 Universal",
-			want: Licenses{cc0},
-		},
-		{
-			name: "isc",
-			text: "Permission to use, copy, modify, and distribute this software for any purpose with or without fee is hereby granted",
-			want: Licenses{isc},
-		},
-		{
-			name: "lgpl21",
-			text: "GNU LESSER GENERAL PUBLIC LICENSE\nVersion 2.1, February 1999",
-			want: Licenses{lgpl21},
-		},
-		{
-			name: "dual sorted",
-			text: "Permission is hereby granted, free of charge, ...\n...\nApache License\nVersion 2.0",
-			want: Licenses{apache2, mit},
-		},
-		{
-			// MPL-2.0 mentions the GNU licenses in its "Secondary License"
-			// clause; that must not count as LGPL/GPL.
-			name: "mpl mentioning gnu",
-			text: "Mozilla Public License Version 2.0\n1.12. \"Secondary License\" means either the GNU General Public License, Version 2.0, the GNU Lesser General Public License, Version 2.1, the GNU Affero General Public License, Version 3.0, or any later versions of those licenses.",
-			want: Licenses{mpl2},
-		},
-		{
-			name:    "unknown",
-			text:    "All rights reserved. Do not redistribute.",
-			wantErr: true,
-		},
+		{"separate grants", opensslText + bsdText + opensslText, Licenses{"BSD-3-Clause", "OpenSSL"}},
+		{"llvm", llvmText, Licenses{"Apache-2.0 WITH LLVM-exception", "NCSA"}},
+		{"apache without exception", apache, Licenses{"Apache-2.0"}},
+		{"unknown", "All rights reserved. Do not redistribute.", nil},
+		{"reference", "See https://opensource.org/licenses/MIT for background.", nil},
+		{"title", "GNU General Public License Version 2, June 1991", nil},
 	} {
-		got, err := classify(test.text)
-		if (err != nil) != test.wantErr {
-			t.Errorf("%s: err = %v, wantErr = %t", test.name, err, test.wantErr)
-			continue
-		}
-		if !slices.Equal(got, test.want) {
-			t.Errorf("%s: classify = %v, want %v", test.name, got, test.want)
-		}
-		for _, license := range got {
-			if !knownLicenses[license] {
-				t.Errorf("%s: classify returned unknown license %q", test.name, license)
+		t.Run(test.name, func(t *testing.T) {
+			got, err := classify(test.text)
+			if (err != nil) != (test.want == nil) {
+				t.Fatalf("classify error = %v, want licenses %v", err, test.want)
 			}
-		}
+			if !slices.Equal(got, test.want) {
+				t.Errorf("classify = %v, want %v", got, test.want)
+			}
+		})
 	}
 }
 
@@ -280,12 +278,20 @@ func TestVerifyProblems(t *testing.T) {
 		{name: "some-archive", kind: kindArchive, url: "https://github.com/a/b/archive/refs/tags/v3.tar.gz", sha256: "cafe"},
 	}
 	entries := []Entry{
-		{Dependency: "example.com/mod", Version: "v1.2.0", Retrieved: "2026-08-26", Commit: "abc", SHA256: "beef", License: Licenses{mit}},
-		{Dependency: "some-archive", Version: "https://github.com/a/b/archive/refs/tags/v3.tar.gz", Retrieved: "2026-08-26", Commit: "def", SHA256: "cafe", License: Licenses{apache2}},
+		{Dependency: "example.com/mod", Version: "v1.2.0", Retrieved: "2026-08-26", Commit: "abc", SHA256: "beef", License: Licenses{"MIT"}},
+		{Dependency: "some-archive", Version: "https://github.com/a/b/archive/refs/tags/v3.tar.gz", Retrieved: "2026-08-26", Commit: "def", SHA256: "cafe", License: Licenses{"Apache-2.0"}},
 	}
 	if problems := verifyProblems(deps, entries); len(problems) != 0 {
 		t.Errorf("verifyProblems on up-to-date entries = %v, want none", problems)
 	}
+	for _, id := range []License{"NOASSERTION", "Apache-2.0 WITH LLVM-exception", "GPL-2.0", "GPL-2.0-only", "GPL-2.0-or-later"} {
+		entries[0].License = Licenses{id}
+		if problems := verifyProblems(deps, entries); len(problems) != 0 {
+			t.Errorf("verifyProblems with explicit %s = %v", id, problems)
+		}
+	}
+	entries[0].License = Licenses{"MIT"}
+
 	// A version bump without re-fetching must be flagged, for both kinds.
 	deps[0].version = "v1.3.0"
 	deps[1].url = "https://github.com/a/b/archive/refs/tags/v4.tar.gz"
@@ -378,16 +384,16 @@ func TestLicensePolicy(t *testing.T) {
 
 func TestCheckPolicy(t *testing.T) {
 	entries := []Entry{
-		{Dependency: "a", License: Licenses{mit}},
-		{Dependency: "b", License: Licenses{mpl2}},
-		{Dependency: "c", License: Licenses{apache2, mpl2}},
-		{Dependency: "d", License: Licenses{gpl2}},
+		{Dependency: "a", License: Licenses{"MIT"}},
+		{Dependency: "b", License: Licenses{"MPL-2.0"}},
+		{Dependency: "c", License: Licenses{"Apache-2.0", "MPL-2.0"}},
+		{Dependency: "d", License: Licenses{"GPL-2.0-only"}},
 	}
 	policy := &Policy{
-		AllowedLicenses: []License{apache2, mit},
+		AllowedLicenses: []License{"Apache-2.0", "MIT"},
 		Exceptions: []Exception{
-			{Dependency: "b", License: Licenses{mpl2}, ExceptionRationale: "vendored"},
-			{Dependency: "c", License: Licenses{apache2, mpl2}, ExceptionRationale: "notices"},
+			{Dependency: "b", License: Licenses{"MPL-2.0"}, ExceptionRationale: "vendored"},
+			{Dependency: "c", License: Licenses{"Apache-2.0", "MPL-2.0"}, ExceptionRationale: "notices"},
 		},
 	}
 	if problems := CheckPolicy(entries, policy); len(problems) != 1 || !strings.Contains(problems[0], "d uses disallowed licenses") {
@@ -396,9 +402,9 @@ func TestCheckPolicy(t *testing.T) {
 	// A license mismatch, a stale exception, an unnecessary exception, and
 	// the now-uncovered c and d are all flagged.
 	policy.Exceptions = []Exception{
-		{Dependency: "a", License: Licenses{mit}, ExceptionRationale: "redundant"},
-		{Dependency: "b", License: Licenses{unlicense}, ExceptionRationale: "wrong license"},
-		{Dependency: "z", License: Licenses{mpl2}, ExceptionRationale: "no longer a dependency"},
+		{Dependency: "a", License: Licenses{"MIT"}, ExceptionRationale: "redundant"},
+		{Dependency: "b", License: Licenses{"Unlicense"}, ExceptionRationale: "wrong license"},
+		{Dependency: "z", License: Licenses{"MPL-2.0"}, ExceptionRationale: "no longer a dependency"},
 	}
 	problems := CheckPolicy(entries, policy)
 	for _, want := range []string{
