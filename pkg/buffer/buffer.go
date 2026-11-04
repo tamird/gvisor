@@ -28,7 +28,7 @@ import (
 //
 // +stateify savable
 type Buffer struct {
-	data ViewList `state:".([]byte)"`
+	data ViewList `state:".([]savedView)"`
 	size int64
 }
 
@@ -98,7 +98,7 @@ func (b *Buffer) ReadAt(p []byte, offset int64) (int, error) {
 		}
 
 		// Actually read data.
-		n := copy(p[done:], v.AsSlice()[needToSkip:])
+		n := copy(p[done:], v.asSlice()[needToSkip:])
 		skipped += int64(needToSkip)
 		done += int64(n)
 	}

@@ -34,7 +34,7 @@ var viewPool = sync.Pool{
 // View is a window into a shared chunk. Views are held by Buffers in
 // viewLists to represent contiguous memory.
 //
-// A View must be created with NewView, NewViewWithData, or Clone. Owners are
+// A View must be created with a NewView function or Clone. Owners are
 // responsible for maintaining ownership over their views. When Views need to be
 // shared or copied, the owner should create a new View with Clone. Clone must
 // only ever be called on a owned View, not a borrowed one.
@@ -51,7 +51,7 @@ type View struct {
 	ViewEntry `state:"nosave"`
 	read      int
 	write     int
-	chunk     *chunk
+	chunk     *chunk `state:"wait"`
 }
 
 // NewView creates a new view with capacity at least as big as cap. It is
@@ -80,6 +80,23 @@ func NewViewWithData(data []byte) *View {
 	v := viewPool.Get().(*View)
 	*v = View{chunk: c}
 	v.Write(data)
+	return v
+}
+
+// NewViewWithExternalStorage creates a fully populated View without copying
+// storage's bytes. On success it takes ownership of storage, which must satisfy
+// the ExternalStorage contract. An invalid length panics without transferring
+// ownership. Each storage owner may be passed successfully to this function only
+// once; use Clone to share its chunk with another View.
+func NewViewWithExternalStorage(storage ExternalStorage) *View {
+	data := storage.Bytes()
+	if len(data) == 0 || len(data) > MaxChunkSize {
+		panic(fmt.Sprintf("external storage length %d is outside [1, %d]", len(data), MaxChunkSize))
+	}
+	c := &chunk{external: storage}
+	c.InitRefs()
+	v := viewPool.Get().(*View)
+	*v = View{write: len(data), chunk: c}
 	return v
 }
 
@@ -126,7 +143,7 @@ func (v *View) sharesChunk() bool {
 //
 // This indicates there is no capacity left to write.
 func (v *View) Full() bool {
-	return v == nil || v.write == len(v.chunk.data)
+	return v == nil || v.write == len(v.chunk.bytes())
 }
 
 // Capacity returns the total size of this view's chunk.
@@ -134,7 +151,7 @@ func (v *View) Capacity() int {
 	if v == nil {
 		return 0
 	}
-	return len(v.chunk.data)
+	return len(v.chunk.bytes())
 }
 
 // Size returns the size of data written to the view.
@@ -155,10 +172,23 @@ func (v *View) TrimFront(n int) {
 
 // AsSlice returns a slice of the data written to this view.
 func (v *View) AsSlice() []byte {
+	if v != nil && v.read != v.write && v.chunk.data != nil {
+		return v.chunk.data[v.read:v.write]
+	}
+	return v.slowAsSlice()
+}
+
+// slowAsSlice handles nil, empty, and externally backed Views.
+func (v *View) slowAsSlice() []byte {
 	if v.Size() == 0 {
 		return nil
 	}
-	return v.chunk.data[v.read:v.write]
+	return v.asSlice()
+}
+
+// asSlice returns the readable bytes of a nonempty View.
+func (v *View) asSlice() []byte {
+	return v.chunk.bytes()[v.read:v.write]
 }
 
 // ToSlice returns an owned copy of the data in this view.
@@ -176,7 +206,7 @@ func (v *View) AvailableSize() int {
 	if v == nil {
 		return 0
 	}
-	return len(v.chunk.data) - v.write
+	return len(v.chunk.bytes()) - v.write
 }
 
 // Read reads v's data into p.
@@ -250,7 +280,7 @@ func (v *View) Write(p []byte) (int, error) {
 		defer v.chunk.DecRef()
 		v.chunk = v.chunk.Clone()
 	}
-	n := copy(v.chunk.data[v.write:], p)
+	n := copy(v.chunk.bytes()[v.write:], p)
 	v.write += n
 	if n < len(p) {
 		return n, io.ErrShortWrite
@@ -362,5 +392,5 @@ func (v *View) availableSlice() []byte {
 		c := v.chunk.Clone()
 		v.chunk = c
 	}
-	return v.chunk.data[v.write:]
+	return v.chunk.bytes()[v.write:]
 }
