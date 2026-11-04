@@ -1,7 +1,7 @@
 name: Verify the delayed-ACK gap on native Linux
 on:
   push:
-    branches: [qualification/tcp-delayed-ack-gap]
+    branches: [qualification/tcp-delayed-ack-gap-stdlib]
 permissions:
   contents: read
 jobs:
@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-        fetch-depth: 3
+        fetch-depth: 4
         persist-credentials: false
     - name: Bind the public source fixture, local report helpers and Bazelisk
       shell: bash
@@ -24,8 +24,9 @@ jobs:
         printf '{"status":"INCOMPLETE","phase":"public-source-bootstrap"}\n' > "$root/out/result.json"
         fixture=b41d5a16e248cf2cc1f5055f5d3711a1a926e6de
         product=6dcadf4a84a07f69e8eb5f1ea9d7b2903bd03bd7
-        test "$(git rev-parse HEAD^)" = "$fixture"
-        test "$(git rev-parse HEAD^^)" = "$product"
+        test "$(git rev-parse HEAD^)" = 07cd8f51f97c8749ec294393dfe9fb13a0a6bbc4
+        test "$(git rev-parse HEAD^^)" = "$fixture"
+        test "$(git rev-parse HEAD^^^)" = "$product"
         cp test/rbe/delayed_ack_receipt.py "$root/"
         donor=611a6ff017c528dddbd0d2e643aaf23c6ddac488
         git fetch --quiet --depth=1 https://github.com/tamird/gvisor.git "$donor"

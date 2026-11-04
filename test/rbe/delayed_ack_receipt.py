@@ -77,7 +77,15 @@ try:
     assert not (d/"before").read_bytes()
     (d/"commit").write_bytes(git("cat-file", "commit", source))
     bazel = ["bazel", "--nosystem_rc", "--nohome_rc", "--bazelrc=/dev/null", "--host_jvm_args=-Xmx3g"]
-    options = []
+    r["original"] = {"source":source, "artifact":13331901922, "zip_sha256":"eb64f8804dbf5b56c58ea747648fcc1ba6166f1bf86496ca615f338cdfc2eed8", "native_exit":1, "test_attempts":0, "stdlib_stderr":[]}
+    for package, size, digest in (
+        ("log/slog/internal/benchmarks", 108, "9d50daba8cc30244025571ce2fe8b5f3243f8398078722d5372e8f529344b383"),
+        ("reflect/internal/example1", 105, "cab9490943c849485c5af1ed5b67680a8f8e385c14cfb99780ee04264731cc4a"),
+    ):
+        message = f'error filtering packages: package "{package}" present in stdlib GOROOT but not in source\n'
+        assert len(message.encode()) == size and hashlib.sha256(message.encode()).hexdigest() == digest
+        r["original"]["stdlib_stderr"].append({"message":message.rstrip(), "bytes":size, "sha256":digest})
+    options = ["--strategy=GoStdlib=processwrapper-sandbox", "--strategy=GoStdlibList=processwrapper-sandbox", "--build_event_publish_all_actions"]
     args = ["test", *options, "--compilation_mode=opt", "--jobs=4", "--local_resources=memory=8192",
             "--remote_cache=", "--remote_executor=", "--bes_backend=", "--spawn_strategy=local", "--strategy=TestRunner=local",
             "--test_filter=^(" + wanted + "|" + control + ")$", "--test_timeout=120", "--test_arg=-test.v", "--nocache_test_results", "--test_sharding_strategy=disabled", "--runs_per_test=1", "--flaky_test_attempts=1",
@@ -108,6 +116,19 @@ try:
         r["diagnostics"] = diagnostic_lines(log)
         r["diagnostic_classes"] = [term for term in ("missing strict dependencies", "undefined:", "no such file or directory", "no such package", "Error downloading", "race detected", "could not import", "incompatible", "out of memory", "no usable", "no matching toolchains", "absolute path inclusion", "runtime/cgo", "cc: no such file or directory", "failed to download", "could not resolve", "out of disk space") if term.lower() in log.lower()]
         save("result.json", r)
+    actions = []
+    if (d/"events.raw").is_file():
+        for line in (d/"events.raw").open():
+            event = json.loads(line)
+            action = event.get("action", {})
+            name = action.get("type")
+            if name not in {"GoStdlib","GoStdlibList","GoStandardLibraryAnalysis"}:
+                continue
+            identity = event.get("id", {}).get("actionCompleted", {})
+            actions.append({"type":name, "success":bool(action.get("success")), "exit":action.get("exitCode",0),
+                            "stdlib_nogo":identity.get("label") == "//tools/nogo:stdlib"})
+    r["stdlib_actions"] = actions
+    save("result.json",r)
     clean=d/"events.jsonl"
     outroot=Path(subprocess.check_output(bazel+["info","output_base"],stderr=subprocess.DEVNULL,text=True).strip())
     if code and (d/"events.raw").is_file():
