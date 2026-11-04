@@ -1,7 +1,7 @@
-name: Read original sidecar and module-map results
+name: Read the original sidecar rebase bootstrap
 "on":
   push:
-    branches: [qualification/sidecar-originals-91556820]
+    branches: [qualification/sidecar-rebase-log-89f31a14]
 permissions:
   contents: read
 jobs:
@@ -23,9 +23,9 @@ jobs:
           cp .github/qualification/sidecar-review/originals.py "$root/"
           cd "$root"
           sha256sum --check <<'SUMS'
-          338e495410b8fe0f81cc5dbcf0ce93b9265444fc429ed1671c8999b1bb479469  originals.py
+          ca738c2358df463515df28a3e2754f825556afb9556aeda29ed17a36a72d3265  originals.py
           SUMS
-      - name: Read only the authenticated original archive
+      - name: Read the original invocation status and bootstrap diagnostic
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
