@@ -111,7 +111,12 @@ try:
                      "fixture": "b41d5a16e248cf2cc1f5055f5d3711a1a926e6de",
                      "artifact": 13332099611, "zip_sha256": "11080aab5e915d55aabd52460f36a500898e3ed637e9ec1cc60777700ff0e725",
                      "observed_ms": {"default": 0, "enabled": 40}}
-    options = ["--strategy=GoStdlib=processwrapper-sandbox", "--strategy=GoStdlibList=processwrapper-sandbox", "--build_event_publish_all_actions"]
+    r["previous_build"] = {"artifact": 13351817301, "zip_sha256": "0ddf3ce76ceadf04fe342d9ff75543e38ea248a8ffdd6674ef74e459b9fdb800",
+                           "native_exit": 1, "failed_owner": "//tools/nogo:stdlib", "test_results": 0, "stderr": "UNAVAILABLE"}
+    # pkg/sync needs Nogo-generated sources. Keep both producers and run
+    # them in the same network-isolated sandbox as the other build actions.
+    options = ["--strategy=GoStdlib=processwrapper-sandbox", "--strategy=GoStdlibList=processwrapper-sandbox",
+               "--modify_execution_info=^(GoStandardLibraryAnalysis|GoStaticAnalysis)$=-no-sandbox", "--build_event_publish_all_actions"]
     if phase != "gap":
         options.append("--test_filter=^(TestDelayedACKTimeout|TestPendingDelayedACKAcrossRestore)$")
     args = ["test", *options, "--compilation_mode=opt", "--jobs=4", "--local_resources=memory=8192",
@@ -142,6 +147,10 @@ try:
     r["hints"] = [h for h in ("no space left on device", "SSLHandshakeException", "No space left", "failed to fetch", "no such target", "Permission denied", "not found", "signal: killed") if h.lower() in log.lower()]
     if code:
         r["diagnostics"] = diagnostic_lines(log)
+        r["no_usable_strategy_mnemonics"] = [
+            name for name in ("GoStandardLibraryAnalysis", "GoStaticAnalysis", "GoStdlib", "GoStdlibList", "TestRunner")
+            if re.search(r"\b" + name + r" spawn[^\n]* cannot be executed with any of the available strategies", log)
+        ]
         r["diagnostic_classes"] = [term for term in ("missing strict dependencies", "undefined:", "no such file or directory", "no such package", "Error downloading", "race detected", "could not import", "incompatible", "out of memory", "no usable", "no matching toolchains", "absolute path inclusion", "runtime/cgo", "cc: no such file or directory", "failed to download", "could not resolve", "out of disk space") if term.lower() in log.lower()]
         save("result.json", r)
     actions = []
@@ -153,8 +162,17 @@ try:
             if name not in {"GoStdlib","GoStdlibList","GoStandardLibraryAnalysis"}:
                 continue
             identity = event.get("id", {}).get("actionCompleted", {})
-            actions.append({"type":name, "success":bool(action.get("success")), "exit":action.get("exitCode",0),
-                            "stdlib_nogo":identity.get("label") == "//tools/nogo:stdlib"})
+            row = {"type":name, "success":bool(action.get("success")), "exit":action.get("exitCode",0),
+                   "stdlib_nogo":identity.get("label") == "//tools/nogo:stdlib"}
+            if row["stdlib_nogo"]:
+                details = action.get("strategyDetails", [])
+                row["runners"] = sorted({item["runner"] for item in details if item.get("runner") in ("linux-sandbox", "local", "processwrapper-sandbox")})
+                for key in ("startTime", "endTime"):
+                    timestamp = action.get(key, "")
+                    if re.fullmatch(r"[0-9T:.Z-]{15,35}", timestamp):
+                        row[key] = timestamp
+                row["no_usable_strategy"] = action.get("failureDetail", {}).get("spawn", {}).get("code") == "NO_USABLE_STRATEGY_FOUND"
+            actions.append(row)
     r["stdlib_actions"] = actions
     save("result.json",r)
     clean=d/"events.jsonl"
@@ -208,6 +226,9 @@ try:
     save("result.json", r)
     logpath, = (d/f["path"] for f in m["reports"] if f["name"] == "test.log" and f["identity"]["label"] == owner)
     logtext = logpath.read_text(errors="replace")
+    r["fixture_locations"] = sorted(set(re.findall(
+        r"\b(?:tcp_delayed_ack_gap_test|tcp_delayed_ack_restore_test|tcp_delayed_ack_test)\.go:[0-9]{1,4}\b", logtext)))[:32]
+    save("result.json", r)
     assert not m["errors"] and len(r["reports"]) == 2 * len(owners)
     assert len(r["executions"]) == len(owners) and {run["owner"] for run in r["executions"]} == set(owners)
     for run in r["executions"]:

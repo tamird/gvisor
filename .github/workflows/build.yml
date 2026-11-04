@@ -1,7 +1,7 @@
 name: Check delayed TCP ACKs at a gap and across restore
 on:
   push:
-    branches: [qualification/tcp-delayed-ack-controls]
+    branches: [qualification/tcp-delayed-ack-sandboxed-facts]
 permissions:
   contents: read
 jobs:
@@ -26,11 +26,12 @@ jobs:
           printf '{"status":"INCOMPLETE","phase":"bootstrap"}\n' > "$root/out/$phase/result.json"
         done
         fixture=8ceb0ea415f881eada665c0fb4229e351d668f46
-        test "$(git rev-parse HEAD^)" = 0bb42c582ef70adb7f3022d9cd55cdb489e09844
-        test "$(git rev-parse HEAD^^)" = cbb089c143d33281025229a2a7cf1495b2dc675f
-        test "$(git rev-parse HEAD^^^)" = 5e903e17232e9191f5c20fa48a9a3ab171826cb1
+        test "$(git rev-parse HEAD^)" = c8f7fdb2dc0ef1c95d5057cc54eab02d37528b36
+        test "$(git rev-parse HEAD~2)" = 0bb42c582ef70adb7f3022d9cd55cdb489e09844
+        test "$(git rev-parse HEAD~3)" = cbb089c143d33281025229a2a7cf1495b2dc675f
+        test "$(git rev-parse HEAD~4)" = 5e903e17232e9191f5c20fa48a9a3ab171826cb1
         git fetch --quiet --no-tags --depth=3 https://github.com/tamird/gvisor.git "$fixture"
-        test "$(git rev-parse "$fixture^")" = "$(git rev-parse HEAD^^^)"
+        test "$(git rev-parse "$fixture^")" = "$(git rev-parse HEAD~4)"
         cp test/rbe/delayed_ack_receipt.py "$root/"
         donor=611a6ff017c528dddbd0d2e643aaf23c6ddac488
         git fetch --quiet --depth=1 https://github.com/tamird/gvisor.git "$donor"
@@ -67,8 +68,11 @@ jobs:
         p = pathlib.Path(os.environ["RUNNER_TEMP"], "tcp-ack-restore/out/gap/result.json")
         assert not p.is_symlink() and 0 < p.stat().st_size < 100000
         b = p.read_bytes()
-        assert json.loads(b)["status"] in {"INCOMPLETE", "FAIL", "PASS"}
+        receipt = json.loads(b)
+        assert receipt["status"] in {"INCOMPLETE", "FAIL", "PASS"}
         assert not re.search(rb'(?i)authorization\s*[:=]|github_pat_|gh[pousr]_', b)
+        with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+            print("started=" + str(bool(receipt.get("executions"))).lower(), file=output)
         PYTHON
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always() && steps.gap.outcome == 'success'
@@ -77,6 +81,7 @@ jobs:
         path: ${{ runner.temp }}/tcp-ack-restore/out/gap/result.json
         if-no-files-found: error
     - name: Compare the same live checkpoint on the author and corrected sources
+      if: "!cancelled() && steps.gap.outputs.started == 'true'"
       timeout-minutes: 33
       run: |
         set -eu
