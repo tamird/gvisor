@@ -422,6 +422,17 @@ Older-source imports, approval-gated checks and internal-only failures retain
 their distinct scopes. Do not repeat notifications for an owner already acting
 on the same evidence, or publish an empty update merely to acknowledge a sweep.
 
+For `google/gvisor` only, the exact status context `buildkite/first-pass` is
+advisory: [maintainers say its setup is unfinished and its results can be
+ignored](https://github.com/google/gvisor/issues/16791#issuecomment-6585124255).
+Retain the original context, result and URL as provenance, but exclude it from
+source/import failure filters and actionable CI intake. It does not block
+review or warrant a log request or retry. This does not qualify skipped or
+unexecuted work; other validation evidence is still required. The
+[full Buildkite suite still runs during merging](https://github.com/google/gvisor/issues/16791#issuecomment-6568317189).
+Other repositories, `buildkite/pipeline`, and independently observed failures
+keep their existing treatment.
+
 Record an assigned top-level comment in the existing PR `followup` as
 `actionableComment: {head, commentId, url}`, with its assigned `owner`. For a
 submitted review body, add `kind: "review"` and use the review’s ID and URL.

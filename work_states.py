@@ -67,6 +67,12 @@ def is_import_status(check: dict) -> bool:
     return check.get("kind") == "status" and check.get("name") in {"import/copybara", "feedback/copybara"}
 
 
+def is_advisory_check(pr: dict, check: dict) -> bool:
+    """Apply gVisor's maintainer guidance for its unfinished First Pass service."""
+    return (pr.get("repo") == "google/gvisor" and check.get("kind") == "status"
+            and check.get("name") == "buildkite/first-pass")
+
+
 def is_approval_gate(pr: dict, check: dict) -> bool:
     """Recognize BuildBuddy's exact provider response before CI can run."""
     return (pr.get("repo") == "buildbuddy-io/buildbuddy" and check.get("kind") == "status"
@@ -92,7 +98,7 @@ def complete_checks(pr: dict) -> bool:
 def validation_checks(pr: dict) -> list[dict]:
     return [item for item in (pr.get("checks") or {}).get("contexts", [])
             if item.get("purpose") != "reviewer-assignment" and not is_import_status(item)
-            and not is_approval_gate(pr, item)]
+            and not is_approval_gate(pr, item) and not is_advisory_check(pr, item)]
 
 
 def check_states(pr: dict) -> set[str]:
@@ -101,13 +107,14 @@ def check_states(pr: dict) -> set[str]:
     aggregate = checks.get("state")
     administrative = {item["state"] for item in checks.get("contexts", [])
                       if item.get("purpose") == "reviewer-assignment" or is_import_status(item)
-                      or is_approval_gate(pr, item) or is_canceled_buildkite_run(item)}
+                      or is_approval_gate(pr, item) or is_canceled_buildkite_run(item)
+                      or is_advisory_check(pr, item)}
     explained_states = administrative | {item["state"] for item in checks.get("supersededContexts", [])}
     explained = complete_checks(pr) and (
         aggregate in FAILURES and bool(explained_states & FAILURES)
         or aggregate in PENDING and bool(explained_states & PENDING))
     # Preserve aggregate problems unless the complete inventory explains them
-    # with an administrative, canceled, or superseded result of the same class.
+    # with an administrative, advisory, canceled, or superseded result of the same class.
     if isinstance(aggregate, str) and not explained:
         states.add(aggregate)
     return states
@@ -117,17 +124,26 @@ def checks_passed(pr: dict) -> bool:
     # Keep merge-readiness conservative: separating an administrative failure
     # from source validation does not establish that all service gates passed.
     checks = pr.get("checks") or {}
+    advisory = [item for item in checks.get("contexts", []) if is_advisory_check(pr, item)]
+    explained = any(checks.get("state") in FAILURES and item["state"] in FAILURES
+                    or checks.get("state") in PENDING and item["state"] in PENDING for item in advisory)
     return bool(complete_checks(pr) and validation_checks(pr)
-                and checks.get("state") == "SUCCESS"
-                and all(item["state"] in PASSED for item in checks["contexts"]))
+                and (not advisory or any(item["state"] == "SUCCESS" for item in validation_checks(pr)))
+                and (checks.get("state") == "SUCCESS" or explained)
+                and all(item["state"] in PASSED for item in checks["contexts"]
+                        if not is_advisory_check(pr, item)))
 
 
 def check_qualifier(pr: dict) -> str:
     states = check_states(pr)
+    advisory = any(is_advisory_check(pr, item) for item in (pr.get("checks") or {}).get("contexts", []))
     canceled = any(is_canceled_buildkite_run(item) for item in validation_checks(pr))
     validation = ("Checks failing" if states & FAILURES else "Checks canceled" if canceled else "Checks pending" if states & PENDING
                   else "Validation checks passed" if complete_checks(pr) and validation_checks(pr) and states <= PASSED
+                  and (not advisory or any(item["state"] == "SUCCESS" for item in validation_checks(pr)))
                   else "Checks unknown")
+    if advisory:
+        validation += "; First Pass advisory"
     services = {item["name"]: item for item in (pr.get("checks") or {}).get("contexts", [])
                 if is_import_status(item)}
     if not services:

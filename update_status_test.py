@@ -1131,6 +1131,27 @@ class CheckReportTest(unittest.TestCase):
         self.assertEqual(report["checkFailures"], [])
         self.assertEqual(report["changedChecks"][0]["status"], "closed")
 
+    def test_first_pass_raw_status_is_retained_without_ci_failure_intake(self) -> None:
+        source = retained(raw_pr(16522))
+        first_pass = {"id": "first-pass-588", "kind": "status", "name": "buildkite/first-pass",
+                      "state": "FAILURE", "description": "Build #588 failed",
+                      "url": "https://buildkite.com/gvisor/first-pass/builds/588"}
+        lint = {"kind": "check-run", "name": "lint", "state": "SUCCESS"}
+        source["checks"] = {"state": "FAILURE", "total": 2, "complete": True, "contexts": [first_pass, lint]}
+        export = linked(imported(16900, 16522), 16522)
+        export["checks"] = copy.deepcopy(source["checks"])
+        source["imports"] = [export]
+        report = updater.check_report([source], {})
+        self.assertEqual(report["checkFailures"], [])
+        self.assertEqual(report["changedChecks"], [])
+        self.assertEqual(report["activeImports"][0]["failedChecks"], [])
+        self.assertEqual(source["checks"]["contexts"][0], first_pass)
+        self.assertEqual(export["checks"]["contexts"][0], first_pass)
+        lint["state"] = "FAILURE"
+        self.assertEqual(updater.check_report([source], {})["checkFailures"][0]["failedChecks"], [lint])
+        source["repo"] = "other/gvisor"
+        self.assertIn(first_pass, updater.check_report([source], {})["checkFailures"][0]["failedChecks"])
+
     def test_terminal_source_keeps_failed_import_history_out_of_current_attention(self) -> None:
         source = retained(raw_pr(3))
         old_import = linked(imported(103, 3), 3)
@@ -1362,6 +1383,9 @@ class ReapprovalReminderTest(unittest.TestCase):
         self.assert_commit_links(due, pr["head"], node["reapproval"]["approvedHead"])
         self.assertNotIn("patch-preserving", due["body"])
         self.assertNotIn("restore", due["body"].split("\n\n")[0])
+        advisory = {"kind": "status", "name": "buildkite/first-pass", "state": "FAILURE"}
+        with mock.patch.dict(pr, {"checks": {"complete": True, "total": 1, "state": "FAILURE", "contexts": [advisory]}}):
+            self.assertEqual(updater.reminder_plan(pr, node, eligible, "tamird", maintainers)["action"], "reapprove-amendment")
 
         for change in ({"importsComplete": False}, {"reviewsComplete": False},
                        {"reviewDismissals": {"complete": False, "items": []}},

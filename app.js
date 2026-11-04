@@ -181,6 +181,7 @@ function completeChecks(pr) {
   return Boolean(checks?.complete && checks.total > 0 && checks.contexts.length === checks.total);
 }
 function isImportStatus(check) { return check.kind === "status" && ["import/copybara", "feedback/copybara"].includes(check.name); }
+function isAdvisoryCheck(pr, check) { return pr?.repo === "google/gvisor" && check.kind === "status" && check.name === "buildkite/first-pass"; }
 function isApprovalGate(pr, check) {
   return pr?.repo === "buildbuddy-io/buildbuddy" && check.kind === "status" && check.state === "ERROR"
     && check.description === "Check requires approving review"
@@ -192,11 +193,11 @@ function canceledBuildkiteRun(check) {
     && check.name.startsWith("buildkite/")
     && check.url === `https://buildkite.com/gvisor/${check.name.slice("buildkite/".length)}/builds/${build[1]}`;
 }
-function validationChecks(pr) { return (pr?.checks?.contexts || []).filter(check => check.purpose !== "reviewer-assignment" && !isImportStatus(check) && !isApprovalGate(pr, check)); }
+function validationChecks(pr) { return (pr?.checks?.contexts || []).filter(check => check.purpose !== "reviewer-assignment" && !isImportStatus(check) && !isApprovalGate(pr, check) && !isAdvisoryCheck(pr, check)); }
 function codeCheckStates(pr) {
   const result = new Set(validationChecks(pr).filter(check => !canceledBuildkiteRun(check)).map(check => check.state));
   const aggregate = pr?.checks?.state;
-  const administrative = (pr?.checks?.contexts || []).filter(check => check.purpose === "reviewer-assignment" || isImportStatus(check) || isApprovalGate(pr, check));
+  const administrative = (pr?.checks?.contexts || []).filter(check => check.purpose === "reviewer-assignment" || isImportStatus(check) || isApprovalGate(pr, check) || isAdvisoryCheck(pr, check));
   const explainedChecks = [...administrative, ...validationChecks(pr).filter(canceledBuildkiteRun), ...(pr?.checks?.supersededContexts || [])];
   const pending = new Set(["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"]);
   const explained = completeChecks(pr) && (FAILURE_STATES.has(aggregate) && explainedChecks.some(check => FAILURE_STATES.has(check.state))
@@ -209,18 +210,34 @@ function checkInfo(pr) {
   if (!checks || !checks.total) return { text: "Unavailable", tone: "unknown", glyph: "?", detail: "No visible check rollup for this head; no test result is implied." };
   const states = codeCheckStates(pr), substantive = validationChecks(pr);
   const canceled = substantive.filter(canceledBuildkiteRun);
+  const advisory = checks.contexts.filter(check => isAdvisoryCheck(pr, check));
   const approvalGates = checks.contexts.filter(check => isApprovalGate(pr, check));
   const failed = [...states].some(state => FAILURE_STATES.has(state));
   const pending = [...states].some(state => ["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"].includes(state));
-  const passed = !canceled.length && !approvalGates.length && completeChecks(pr) && substantive.length > 0 && [...states].every(state => ["SUCCESS", "SKIPPED", "NEUTRAL"].includes(state));
+  const passed = !canceled.length && !approvalGates.length && completeChecks(pr) && substantive.length > 0
+    && (!advisory.length || substantive.some(check => check.state === "SUCCESS"))
+    && [...states].every(state => ["SUCCESS", "SKIPPED", "NEUTRAL"].includes(state));
   const assignmentFailures = checks.contexts.filter(check => check.purpose === "reviewer-assignment" && FAILURE_STATES.has(check.state));
   const importProblems = checks.contexts.filter(check => isImportStatus(check) && (FAILURE_STATES.has(check.state) || ["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"].includes(check.state)));
   const serviceIssues = [assignmentFailures.length && "assignment", importProblems.length && "import"].filter(Boolean);
   const result = failed ? { text: "Failure", tone: "bad", glyph: "!" } : canceled.length ? { text: "Canceled", tone: "pending", glyph: "○" } : pending ? { text: "Pending", tone: "pending", glyph: "○" }
     : approvalGates.length ? { text: "Approval required", tone: "pending", glyph: "○" }
       : passed ? { text: serviceIssues.length ? `Passed · ${serviceIssues.join(" / ")} issue` : "Success", tone: serviceIssues.length ? "pending" : "good", glyph: serviceIssues.length ? "!" : "✓" }
-      : { text: "Unknown", tone: "unknown", glyph: "?" };
-  return { ...result, passed, detail: `${substantive.length} current validation check/status contexts${checks.complete ? "" : "; context list incomplete"}. ${canceled.length ? "Buildkite reports a canceled run; its raw FAILURE status does not establish a failing test or CI configuration problem. " : ""}${checks.supersededContexts?.length ? `${checks.supersededContexts.length} superseded workflow attempts remain below as history. ` : ""}${assignmentFailures.length ? "Reviewer assignment failed; its raw result remains below and is not a contributor-source failure. " : ""}${importProblems.length ? "Copybara import status needs attention; its raw result remains below and does not establish a public source-test failure. " : ""}${approvalGates.length ? "BuildBuddy requires approving review before these checks run; their raw ERROR statuses remain below. " : ""}GitHub's aggregate is ${checks.state}. Checks/statuses are not test-case counts.` };
+      : { text: advisory.length && !substantive.length ? "Advisory" : "Unknown", tone: "unknown", glyph: "?" };
+  return { ...result, passed, detail: `${substantive.length} current validation check/status contexts${checks.complete ? "" : "; context list incomplete"}. ${canceled.length ? "Buildkite reports a canceled run; its raw FAILURE status does not establish a failing test or CI configuration problem. " : ""}${checks.supersededContexts?.length ? `${checks.supersededContexts.length} superseded workflow attempts remain below as history. ` : ""}${assignmentFailures.length ? "Reviewer assignment failed; its raw result remains below and is not a contributor-source failure. " : ""}${importProblems.length ? "Copybara import status needs attention; its raw result remains below and does not establish a public source-test failure. " : ""}${approvalGates.length ? "BuildBuddy requires approving review before these checks run; their raw ERROR statuses remain below. " : ""}${advisory.length ? "First Pass is advisory; its result is not qualification evidence. " : ""}GitHub's aggregate is ${checks.state}. Checks/statuses are not test-case counts.` };
+}
+
+function checksPassed(pr) {
+  const checks = pr?.checks, contexts = checks?.contexts || [];
+  const passed = check => ["SUCCESS", "SKIPPED", "NEUTRAL"].includes(check.state);
+  const advisory = contexts.filter(check => isAdvisoryCheck(pr, check));
+  const pending = new Set(["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"]);
+  const explained = advisory.some(check => FAILURE_STATES.has(checks.state) && FAILURE_STATES.has(check.state)
+    || pending.has(checks.state) && pending.has(check.state));
+  return Boolean(completeChecks(pr) && validationChecks(pr).length
+    && (!advisory.length || validationChecks(pr).some(check => check.state === "SUCCESS"))
+    && (checks.state === "SUCCESS" || explained)
+    && contexts.filter(check => !isAdvisoryCheck(pr, check)).every(passed));
 }
 
 const DECISION_REASONS = [
@@ -638,8 +655,7 @@ function attentionReasons(node, owner) {
   if (approved && !followupBlocked && !retryDetails.length && !cancellationDetails.length && !awaitingReapprovedExport && !restoreLabel) {
     const open = active.filter(item => item.status === "open");
     if (!usesImports(pr)) {
-      if (pr.mergeable === "MERGEABLE" && checkInfo(pr).passed && pr.checks.state === "SUCCESS"
-          && pr.checks.contexts.every(check => ["SUCCESS", "SKIPPED", "NEUTRAL"].includes(check.state)))
+      if (pr.mergeable === "MERGEABLE" && checksPassed(pr))
         add("maintainer-merge", "Current-head approval and complete green checks are recorded. Maintainers control merging; the site never merges automatically.");
     }
     else if (open.length && importDisposition?.scope !== "amended") {
@@ -729,10 +745,15 @@ function appendChecks(container, pr, heading) {
   section.dataset.pr = prIdentity(pr);
   summary.append(document.createTextNode(`${heading} · `), badge(info)); section.append(summary);
   section.append(element("p", "detail-meta", info.detail));
+  if (pr.checks?.contexts.some(check => isAdvisoryCheck(pr, check))) {
+    const note = element("p", "detail-meta", "First Pass is advisory while maintainers set it up. ");
+    note.append(link("Maintainer guidance", "https://github.com/google/gvisor/issues/16791#issuecomment-6585124255"));
+    section.append(note);
+  }
   for (const check of [...(pr.checks?.contexts || []), ...(pr.checks?.supersededContexts || [])]) {
     const row = element("div", "check-row");
     const historical = pr.checks.supersededContexts?.includes(check);
-    row.append(check.url ? link(check.name, check.url) : element("span", "", check.name), element("span", "check-state", `${check.state.toLowerCase().replaceAll("_", " ")}${historical ? " · superseded attempt" : check.purpose === "reviewer-assignment" ? " · reviewer assignment" : isImportStatus(check) ? " · import status" : isApprovalGate(pr, check) ? " · approval required; not run" : ""}`));
+    row.append(check.url ? link(check.name, check.url) : element("span", "", check.name), element("span", "check-state", `${check.state.toLowerCase().replaceAll("_", " ")}${historical ? " · superseded attempt" : isAdvisoryCheck(pr, check) ? " · advisory" : check.purpose === "reviewer-assignment" ? " · reviewer assignment" : isImportStatus(check) ? " · import status" : isApprovalGate(pr, check) ? " · approval required; not run" : ""}`));
     if (check.description) row.title = check.description;
     if (!check.url) row.title = "No public log URL reported. The status is reported by GitHub; logs were not inspected.";
     section.append(row);

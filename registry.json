@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T18:46:10.077644+00:00",
+    "updatedAt": "2026-11-04T19:08:48.148753+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40289,7 +40289,7 @@
         "sourceHead": "32045814e05bcfcf3a6ea55a65e7329ab423b3fd",
         "observedAt": "2026-11-04T17:48:56.110142+00:00",
         "disposition": "Published the qualified timer fix and regression in a reply to Lucas.",
-        "nextAction": "Flozano owns the PR description and first-pass CI. Watch for a new reviewer question or an author update.",
+        "nextAction": "Flozano owns the PR description. Watch for a new reviewer question or an author update. The First Pass result is advisory under the maintainer guidance in #16791; no log request or retry is needed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15972#pullrequestreview-5758454721",
           "https://github.com/google/gvisor/pull/15972#discussion_r4471155616"
@@ -46236,7 +46236,7 @@
         "sourceHead": "514a1ce4f7dfeca8077048be5d1f321f72a7e2bd",
         "observedAt": "2026-11-03T19:07:32.229433+00:00",
         "disposition": "Current approved head matches the open Copybara export",
-        "nextAction": "Follow public export #16913. Two public fallback builder downloads failed in curl before cgroupv1/PHP tests ran, and race smoke was canceled during package installation. Buildkite retried all three. First-pass 513 requires login; its cause is unknown.",
+        "nextAction": "Follow public export #16913. Two public fallback builder downloads failed in curl before cgroupv1/PHP tests ran, and race smoke was canceled during package installation. Buildkite retried all three. First Pass 513 is advisory while maintainers finish setting up that pipeline.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16801#pullrequestreview-5757342721",
           "https://buildkite.com/gvisor/first-pass/builds/513",

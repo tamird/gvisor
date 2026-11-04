@@ -214,9 +214,9 @@ class WorkStatesTest(unittest.TestCase):
                 self.assertEqual(check_purpose({**check, **change}), "validation")
 
     def test_canceled_buildkite_is_neither_failed_validation_nor_success(self):
-        canceled = {"kind": "status", "name": "buildkite/first-pass", "state": "FAILURE",
+        canceled = {"kind": "status", "name": "buildkite/pipeline", "state": "FAILURE",
                     "description": "Build #37 canceled by Ryan El Kochta",
-                    "url": "https://buildkite.com/gvisor/first-pass/builds/37"}
+                    "url": "https://buildkite.com/gvisor/pipeline/builds/37"}
         pr = original(checks={"state": "FAILURE", "total": 1, "complete": True, "contexts": [canceled]})
         self.assertNotIn("failing", pr_states(pr))
         self.assertEqual(check_qualifier(pr), "Checks canceled")
@@ -230,6 +230,47 @@ class WorkStatesTest(unittest.TestCase):
                 pr["checks"]["contexts"] = [{**canceled, **change}]
                 self.assertIn("failing", pr_states(pr))
         pr["checks"]["contexts"] = [canceled]
+        pr["checks"]["complete"] = False
+        self.assertIn("failing", pr_states(pr))
+
+    def test_only_gvisor_first_pass_status_is_advisory(self):
+        first_pass = {"kind": "status", "name": "buildkite/first-pass", "state": "FAILURE",
+                      "url": "https://buildkite.com/gvisor/first-pass/builds/588",
+                      "description": "Build #588 failed"}
+        lint = {"kind": "check-run", "name": "lint", "state": "SUCCESS"}
+        pr = original(repo="google/gvisor", number=16522, checks={"state": "FAILURE", "total": 2,
+                      "complete": True, "contexts": [first_pass, lint]})
+        for state in ("FAILURE", "ERROR", "PENDING", "SUCCESS"):
+            with self.subTest(state=state):
+                first_pass["state"] = pr["checks"]["state"] = state
+                self.assertNotIn("failing", pr_states(pr))
+                self.assertTrue(checks_passed(pr))
+                self.assertIn("First Pass advisory", check_qualifier(pr))
+                self.assertEqual(pr["checks"]["contexts"][0], first_pass)
+        first_pass["state"] = pr["checks"]["state"] = "FAILURE"
+        imported = {**copy.deepcopy(pr), "number": 16900, "matchesSourceHead": True}
+        self.assertNotIn("failing", pr_states(original(imports=[imported])))
+        for field, value in (("repo", "other/gvisor"), ("repo", None)):
+            with self.subTest(value=value):
+                other = {**pr, field: value}
+                self.assertIn("failing", pr_states(other))
+                self.assertFalse(checks_passed(other))
+        for change in ({"name": "buildkite/pipeline"}, {"kind": "check-run"},
+                       {"name": "buildkite/first-pass-extra"}):
+            with self.subTest(change=change):
+                other = {**pr, "checks": {**pr["checks"], "contexts": [{**first_pass, **change}, lint]}}
+                self.assertIn("failing", pr_states(other))
+        lint["state"] = "FAILURE"
+        self.assertIn("failing", pr_states(pr))
+        self.assertFalse(checks_passed(pr))
+        lint["state"] = "PENDING"
+        self.assertEqual(check_qualifier(pr), "Checks pending; First Pass advisory")
+        self.assertFalse(checks_passed(pr))
+        lint["state"] = "SKIPPED"
+        self.assertFalse(checks_passed(pr))
+        self.assertIn("Checks unknown", check_qualifier(pr))
+        pr["checks"].update(total=1, contexts=[first_pass])
+        self.assertFalse(checks_passed(pr))
         pr["checks"]["complete"] = False
         self.assertIn("failing", pr_states(pr))
 

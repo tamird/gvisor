@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from reapproval import import_author_block, maintainer_logins, reminder_plan
-from work_states import FAILURES, check_purpose, check_states, effective_approval, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, with_maintainer_reviewers
+from work_states import FAILURES, check_purpose, check_states, effective_approval, is_advisory_check, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, with_maintainer_reviewers
 
 
 ROOT = Path(__file__).resolve().parent
@@ -768,9 +768,11 @@ def check_report(prs: list[dict], previous: dict) -> dict:
             old = prior.get((repo, pr["number"]), {})
             is_source = pr is source
             checks = pr.get("checks") or {}
-            failed = [check for check in checks.get("contexts", []) if check["state"] in FAILURES]
+            failed = [check for check in checks.get("contexts", [])
+                      if check["state"] in FAILURES and not is_advisory_check(pr, check)]
             old_checks = old.get("checks") or {}
-            old_failed = [check for check in old_checks.get("contexts", []) if check["state"] in FAILURES]
+            old_failed = [check for check in old_checks.get("contexts", [])
+                          if check["state"] in FAILURES and not is_advisory_check(old, check)]
             active = source["status"] in {"open", "draft"} and pr["status"] in {"open", "draft"}
             observation = {
                 "repo": repo, "source": source["number"], "sourceHead": source["head"],
@@ -801,7 +803,7 @@ def check_report(prs: list[dict], previous: dict) -> dict:
                 mergeability_changes.append({**observation, "followup": assignment})
             # Include resolution and closure, and re-report failures after a head
             # change even if the service reuses its status-context identifier.
-            if (failed or old_failed or checks.get("state") in FAILURES or old_checks.get("state") in FAILURES) and (
+            if (failed or old_failed or check_states(pr) & FAILURES or check_states(old) & FAILURES) and (
                 source_status_changed or (pr["head"], pr["status"], pr.get("sourceHead"), checks) !=
                 (old.get("head"), old.get("status"), old.get("sourceHead"), old_checks)
             ):

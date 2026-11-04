@@ -1327,11 +1327,64 @@ test('attention assigns simultaneous public and internal failures to their actua
   assert.match(reasonsFor(node).find(reason => reason.id === 'maintainer-import-checks').detail, /refresh and investigate/);
 });
 
+test('only gVisor First Pass statuses are advisory in source and import filters', () => {
+  const node = attentionNode(16522);
+  node.repo = node.github.repo = 'google/gvisor';
+  const firstPass = { ...serviceStatus('buildkite/first-pass', 'FAILURE'),
+    description: 'Build #588 failed', url: 'https://buildkite.com/gvisor/first-pass/builds/588' };
+  const lint = { name: 'lint', kind: 'check-run', state: 'SUCCESS' };
+  node.github.checks = { complete: true, total: 2, state: 'FAILURE', contexts: [firstPass, lint] };
+  const context = client(); context.nodeInput = node;
+  const inspect = expression => vm.runInContext(expression, context);
+  for (const state of ['FAILURE', 'ERROR', 'PENDING', 'SUCCESS']) {
+    firstPass.state = node.github.checks.state = state;
+    assert.ok(!idsFor(node).includes('author-public-checks'));
+    assert.ok(!idsFor(node).includes('maintainer-ci-canceled'));
+    assert.equal(inspect('checkInfo(nodeInput.github).passed'), true);
+    assert.equal(inspect('checksPassed(nodeInput.github)'), true);
+    assert.equal(inspect('failureSources(nodeInput).length'), 0);
+  }
+  firstPass.state = node.github.checks.state = 'FAILURE';
+  const imported = attentionImport(node); imported.repo = 'google/gvisor';
+  imported.checks = structuredClone(node.github.checks); node.github.imports = [imported];
+  assert.ok(!idsFor(node).includes('maintainer-import-checks'));
+  const variants = [structuredClone(node.github)];
+  for (const change of [{ repo: 'other/gvisor' }, { repo: undefined }]) {
+    variants.push({ ...structuredClone(node.github), ...change });
+  }
+  for (const change of [{ name: 'buildkite/pipeline' }, { kind: 'check-run' }, { name: 'buildkite/first-pass-extra' }]) {
+    const pr = structuredClone(node.github); Object.assign(pr.checks.contexts[0], change); variants.push(pr);
+  }
+  for (const pr of variants) {
+    context.prInput = pr;
+    const python = JSON.parse(execFileSync('python3', ['-B', '-c',
+      'import json,sys; from work_states import check_states, checks_passed; p=json.load(sys.stdin); print(json.dumps([sorted(check_states(p)),checks_passed(p)]))'],
+      { input: JSON.stringify(pr), encoding: 'utf8' }));
+    assert.deepEqual(JSON.parse(inspect('JSON.stringify([[...codeCheckStates(prInput)].sort(),checksPassed(prInput)])')), python);
+    assert.equal(python[1], pr === variants[0]);
+  }
+  lint.state = 'FAILURE';
+  assert.ok(idsFor(node).includes('author-public-checks'));
+  assert.match(reasonsFor(node).find(reason => reason.id === 'author-public-checks').detail, /lint: FAILURE/);
+  assert.doesNotMatch(reasonsFor(node).find(reason => reason.id === 'author-public-checks').detail, /first-pass/);
+  imported.checks.contexts[1].state = 'FAILURE';
+  assert.ok(idsFor(node).includes('maintainer-import-checks'));
+  lint.state = 'PENDING';
+  assert.equal(inspect('checkInfo(nodeInput.github).text'), 'Pending');
+  lint.state = 'SKIPPED';
+  assert.equal(inspect('checkInfo(nodeInput.github).passed'), false);
+  assert.equal(inspect('checksPassed(nodeInput.github)'), false);
+  node.github.checks = { complete: true, total: 1, state: 'SUCCESS', contexts: [{ ...firstPass, state: 'SUCCESS' }] };
+  assert.equal(inspect('checkInfo(nodeInput.github).text'), 'Advisory');
+  assert.equal(inspect('checkInfo(nodeInput.github).passed'), false);
+  assert.equal(inspect('checksPassed(nodeInput.github)'), false);
+});
+
 test('canceled Buildkite runs remain distinct from CI configuration and failed tests; other failures still need diagnosis', () => {
   const node = attentionNode(16374), imported = attentionImport(node, 16470);
   node.github.imports = [imported];
-  const canceled = { ...serviceStatus('buildkite/first-pass', 'FAILURE'),
-    description: 'Build #50 canceled by Ryan El Kochta', url: 'https://buildkite.com/gvisor/first-pass/builds/50' };
+  const canceled = { ...serviceStatus('buildkite/pipeline', 'FAILURE'),
+    description: 'Build #50 canceled by Ryan El Kochta', url: 'https://buildkite.com/gvisor/pipeline/builds/50' };
   imported.checks = { complete: true, state: 'FAILURE', total: 1, contexts: [canceled] };
   assert.match(reasonsFor(node).find(reason => reason.id === 'maintainer-ci-canceled').detail, /Import #16470: Build #50 canceled/);
   assert.ok(!idsFor(node).includes('maintainer-import-checks'));
@@ -1345,7 +1398,7 @@ test('canceled Buildkite runs remain distinct from CI configuration and failed t
   imported.checks.total++;
   const failed = reasonsFor(node).find(reason => reason.id === 'maintainer-import-checks').detail;
   assert.match(failed, /generate: FAILURE/);
-  assert.doesNotMatch(failed, /buildkite\/first-pass/);
+  assert.doesNotMatch(failed, /buildkite\/pipeline/);
 
   const context = client(); context.nodeInput = node;
   assert.equal(vm.runInContext('checkInfo(nodeInput.github.imports[0]).text', context), 'Failure');
@@ -1362,9 +1415,9 @@ test('canceled Buildkite runs remain distinct from CI configuration and failed t
   node.github.checks = { complete: true, state: 'FAILURE', total: 1, contexts: [canceled] };
   assert.match(reasonsFor(node).find(reason => reason.id === 'maintainer-ci-canceled').detail, /Source #16374/);
   assert.ok(!idsFor(node).includes('author-public-checks'));
-  canceled.url = 'https://buildkite.com/gvisor/first-pass/builds/51';
+  canceled.url = 'https://buildkite.com/gvisor/pipeline/builds/51';
   assert.ok(idsFor(node).includes('author-public-checks'));
-  canceled.url = 'https://buildkite.com/gvisor/first-pass/builds/50';
+  canceled.url = 'https://buildkite.com/gvisor/pipeline/builds/50';
   canceled.description = 'Build #50 failed (33 minutes, 41 seconds)';
   assert.ok(idsFor(node).includes('author-public-checks'));
   assert.ok(!idsFor(node).includes('maintainer-ci-canceled'));
@@ -1392,8 +1445,8 @@ test('closed exports retain unresolved public failures without reviving canceled
   node.github.checks.contexts.push(serviceStatus('feedback/copybara', 'FAILURE'));
   node.github.checks.total++; node.github.checks.state = 'FAILURE';
   imported.checks = { complete: true, state: 'FAILURE', total: 1, contexts: [{
-    ...serviceStatus('buildkite/first-pass', 'FAILURE'), description: 'Build #56 canceled by Ryan El Kochta',
-    url: 'https://buildkite.com/gvisor/first-pass/builds/56',
+    ...serviceStatus('buildkite/pipeline', 'FAILURE'), description: 'Build #56 canceled by Ryan El Kochta',
+    url: 'https://buildkite.com/gvisor/pipeline/builds/56',
   }] };
   assert.deepEqual(idsFor(node), ['maintainer-reimport', 'maintainer-internal-feedback']);
   assert.match(reasonsFor(node)[0].detail, /#16385 closed without merging/);
