@@ -15,6 +15,7 @@ import shutil
 import signal
 import subprocess
 import time
+import urllib.parse
 import xml.etree.ElementTree as ET
 
 import qualification_report as report
@@ -71,6 +72,8 @@ def checkout(source: str, package_source: str | None = None) -> dict[str, str]:
         assert build.count('        "buffer_test.go",') == 1, "Ambiguous benchmark owner"
         assert build.count('    name = "buffer",') == 1, "Ambiguous library for inline remarks"
         build = build.replace('    name = "buffer",', '    name = "buffer",\n    gc_goopts = ["-m=2"],')
+        assert build.count('    name = "buffer_test",') == 1
+        build = build.replace('    name = "buffer_test",', '    name = "buffer_test",\n    gc_goopts = ["-m=2"],')
         Path(BUILD).write_text(build.replace('        "buffer_test.go",', '        "buffer_test.go",\n        "read_qualification_test.go",'))
         shutil.copyfile(TMP / "buffer_read_benchmark.go", BENCH)
         changed = set(git("diff", "--name-only", "HEAD").splitlines())
@@ -109,7 +112,7 @@ def cases(path: Path) -> dict[str, str]:
     return rows
 
 
-def invoke(key: str, source: str, args: list[str], info: dict, *, package_source: str | None = None, expected_failure: bool = False) -> tuple[dict, str]:
+def invoke(key: str, source: str, args: list[str], info: dict, *, package_source: str | None = None, expected_failure: bool = False, build_only: bool = False) -> tuple[dict, str]:
     row = {"phase": key, "source": source, "status": "INCOMPLETE", "expected_failure": expected_failure}
     info["attempts"].append(row)
     save(info)
@@ -117,11 +120,11 @@ def invoke(key: str, source: str, args: list[str], info: dict, *, package_source
     phase = TMP / key
     phase.mkdir()
     events = phase / "raw.jsonl"
-    cmd = ["bazelisk", "test", "-c", "opt", "--jobs=4", "--remote_cache=", "--remote_executor=",
+    cmd = ["bazelisk", "build" if build_only else "test", "-c", "opt", "--jobs=4", "--remote_cache=", "--remote_executor=",
            "--strategy=TestRunner=local", "--build_tag_filters=", "--test_tag_filters=",
            "--nocache_test_results", "--test_timeout=300", "--flaky_test_attempts=1", "--runs_per_test=1",
            "--test_sharding_strategy=disabled", "--nobuild_event_json_file_path_conversion",
-           f"--build_event_json_file={events}", *args]
+           f"--build_event_json_file={events}", "--build_event_publish_all_actions", *args]
     row.update(started_at=utc(), arguments=cmd)
     save(info)
     remaining = DEADLINE - time.monotonic() - 120
@@ -146,8 +149,10 @@ def invoke(key: str, source: str, args: list[str], info: dict, *, package_source
         row["diagnostics"] = [re.sub(r"(?:https?|grpcs?)://\S+", "<url>", line)[:500]
                               for line in (phase / "console").read_text(errors="replace").splitlines()
                               if diagnostic.search(line)][:6]
-    inline = re.compile(r"^(?:pkg/buffer/)?(?:view|chunk)\.go:[0-9]+:[0-9]+: (?:can|cannot) inline (?:\(\*View\)\.(?:AsSlice|Capacity|Full|AvailableSize)|\(\*chunk\)\.bytes)(?: with cost [0-9]+ as .*|: .*)$")
+    inline = re.compile(r"^(?:pkg/buffer/)?(?:view|chunk)\.go:[0-9]+:[0-9]+: (?:can|cannot) inline (?:\(\*View\)\.(?:AsSlice|Capacity|Full|AvailableSize)|\(\*chunk\)\.bytes)(?: with cost [0-9]+ as: .*|: .*)$")
     row["inline_remarks"] = [line[:1000] for line in (phase / "console").read_text(errors="replace").splitlines() if inline.fullmatch(line)][:16]
+    call = re.compile(r"^(?:pkg/buffer/)?read_qualification_test\.go:([0-9]+):[0-9]+: inlining call to \(\*View\)\.AsSlice$")
+    row["inline_calls"] = [line for line in (phase / "console").read_text(errors="replace").splitlines() if call.fullmatch(line)][:16]
     save(info)
     if events.is_file():
         records = [json.loads(line) for line in events.read_text().splitlines()]
@@ -157,6 +162,39 @@ def invoke(key: str, source: str, args: list[str], info: dict, *, package_source
         save(info)
     else:
         raise ValueError("No original BEP available")
+    if build_only:
+        assert not observations, "Standard-library diagnosis must not execute tests"
+        row["actions"] = []
+        for event in records:
+            if "action" not in event:
+                continue
+            action = event["action"]
+            if action.get("success") and action.get("type") != "GoStdlib":
+                continue
+            item = {key: action.get(key) for key in ("type", "success", "exitCode", "label")}
+            item["primary_output"] = event.get("id", {}).get("actionCompleted", {}).get("primaryOutput")
+            row["actions"].append(item)
+            save(info)
+            for stream in ("stderr", "stdout"):
+                source_log = action.get(stream, {})
+                uri = urllib.parse.urlsplit(source_log.get("uri", ""))
+                if uri.scheme != "file" or uri.netloc not in ("", "localhost"):
+                    item[stream] = {"disposition": "UNAVAILABLE_LOCAL_FILE"}
+                    continue
+                path = Path(urllib.parse.unquote(uri.path)).resolve()
+                allowed = (Path.home() / ".cache/bazel").resolve()
+                if not path.is_relative_to(allowed) or not path.is_file() or path.stat().st_size > 65536:
+                    item[stream] = {"disposition": "OUTSIDE_ROOT_OR_MISSING_OR_OVERSIZED"}
+                    continue
+                data = path.read_bytes()
+                assert not FORBIDDEN.search(data), "Unsafe compiler diagnostic"
+                lines = [re.sub(r"(?:https?|grpcs?)://\S+", "<url>", line).replace(str(Path.home()), "<home>")[:1000]
+                         for line in data.decode(errors="replace").splitlines()[:40]]
+                item[stream] = {"sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data), "lines": lines}
+            save(info)
+        row.update(status="BUILD_PASSED" if row["native_exit"] == 0 else "BUILD_FAILED", verified_at=utc())
+        save(info)
+        return row, ""
     assert len(observations) == 1, "Expected one original TestResult"
     event, = observations
     identity, payload = event["id"]["testResult"], event["testResult"]
@@ -266,6 +304,45 @@ def main() -> None:
             "go_sdk_inputs": {path: git("rev-parse", f"{PRODUCT}:{path}") for path in ("go.mod", "MODULE.bazel", "tools/go_types_memoize.patch")},
             "timing_scope": "Native hot heap-backed Buffer.ReadAt and View.AsSlice on one common dependency root; no packet or end-to-end restore throughput claim"}
     save(info)
+    if os.environ.get("RACE_DIAGNOSTIC") == "1":
+        original = json.loads((OUT / "original-verdict.json").read_bytes())
+        assert original["product"] == PRODUCT and original["status"] == "FAIL"
+        race, = (row for row in original["attempts"] if row["phase"] == "race")
+        assert race["source"] == PRODUCT and race["native_exit"] == 1 and race["attempt_count"] == 0
+        assert race["invocations"] == ["b0da347d-662c-46ac-8029-495e1b341afd"]
+        info["original"] = {"run": 41767076495, "artifact": 13293284072,
+                            "sha256": "46db1cb9779c30b660cb51fe771e37d71f4f14b13b8eb3fafa42b06e60e3d8ab",
+                            "status": original["status"], "race": race}
+        try:
+            row, _ = invoke("race-stdlib-diagnostic", PRODUCT, ["--config=race", "@io_bazel_rules_go//:stdlib"], info, build_only=True)
+            if row.get("timed_out"):
+                info["status"] = "DIAGNOSIS_TIMED_OUT"
+            elif row["native_exit"] == 0:
+                info["status"] = "DIAGNOSIS_NOT_REPRODUCED"
+            elif any(not item.get("success") and item.get(stream, {}).get("lines")
+                     for item in row["actions"] for stream in ("stderr", "stdout")):
+                info["status"] = "BUILD_FAILURE_DIAGNOSTIC_RECORDED"
+            else:
+                info["status"] = "BUILD_FAILED_DIAGNOSTIC_UNAVAILABLE"
+        finally:
+            info["verified_at"] = utc()
+            save(info)
+        candidate = os.environ["INLINE_CANDIDATE"]
+        assert candidate == "ed0f932bfabb77047eeb8293e4864dc7fb4d8b0e"
+        assert git("diff", "--name-only", PRODUCT, candidate) == "pkg/buffer/view.go"
+        row, _ = invoke("inline-preflight", PRODUCT, [LABEL], info, package_source=candidate, build_only=True)
+        fixture = Path(BENCH).read_text()
+        function = re.search(r"func BenchmarkViewListAsSlice\(b \*testing.B\) \{.*?\n\}", fixture, re.S)
+        assert function, "Missing original accessor benchmark"
+        first = fixture[:function.start()].count("\n") + 1
+        last = fixture[:function.end()].count("\n") + 1
+        declaration = any("can inline (*View).AsSlice with cost " in line for line in row["inline_remarks"])
+        callsite = any(first <= int(line.split(":")[1]) <= last for line in row["inline_calls"])
+        row["accessor_inline_verified"] = row["native_exit"] == 0 and declaration and callsite
+        info["verified_at"] = utc()
+        save(info)
+        assert row["accessor_inline_verified"], "Actual accessor declaration/callsite did not inline"
+        return
     try:
         functional(info)
         for block, order in enumerate(list(itertools.permutations(("parent", "public", "candidate"))) * 3, 1):

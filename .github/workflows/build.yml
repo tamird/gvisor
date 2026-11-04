@@ -1,15 +1,18 @@
-name: Qualify external buffer restore and accessor costs
+name: Diagnose the original buffer race standard library
 on:
   push:
     branches: [qualification/buffer-external-restore-read]
 permissions:
   contents: read
+  actions: read
 jobs:
   buffer:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 115
+    timeout-minutes: 35
     env:
+      RACE_DIAGNOSTIC: "1"
+      INLINE_CANDIDATE: ed0f932bfabb77047eeb8293e4864dc7fb4d8b0e
       PRODUCT: 1624a495b6c1e58e9fd5209e3ff00dba8811cb1c
       BASE: 7bffefa9185aa55ba377e8a5534210a7f0cbf266
       PUBLIC: 5af539b23594b3711fd49c514e236442baad9df3
@@ -18,17 +21,17 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 3
+          fetch-depth: 2
           persist-credentials: false
       - name: Prepare the original reporter and source revisions
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/results"
           printf '{"status":"INCOMPLETE","phase":"bootstrap"}\n' > "$RUNNER_TEMP/results/verdict.json"
-          test "$(git rev-parse HEAD^)" = ad60d51f176edb9ea175ff3060ebc4c1be3e2ff3
-          test "$(git rev-parse HEAD^^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD^)" = f3ba92cc31a364099d865871af4cff603919f769
+          git fetch --quiet --depth=3 origin "$PRODUCT"
           cp .github/qualification/window_benchmark.py .github/qualification/buffer_read_benchmark.go "$RUNNER_TEMP"
-          for ref in "$BASE" "$PUBLIC" "$REGRESSION" "$VERIFIER"; do
+          for ref in "$BASE" "$PUBLIC" "$REGRESSION" "$VERIFIER" "$INLINE_CANDIDATE"; do
             git fetch --quiet --depth=3 origin "$ref"
           done
           for helper in unit_matrix qualification_report; do
@@ -40,19 +43,23 @@ jobs:
           chmod 755 "$RUNNER_TEMP/bazelisk-bin/bazelisk"
           echo "$RUNNER_TEMP/bazelisk-bin" >> "$GITHUB_PATH"
           test "$("$RUNNER_TEMP/bazelisk-bin/bazelisk" --version)" = "bazel $(cat .bazelversion)"
-      - name: Run restoration controls and balanced native benchmark blocks
-        run: python3 "$RUNNER_TEMP/window_benchmark.py"
-      - name: Compare the complete original benchmark samples
-        if: always() && !cancelled()
+      - name: Preserve the exact original failed race receipt
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
-          cd "$RUNNER_TEMP/results"
-          for arm in parent public candidate; do test "$(wc -l < "$arm")" -eq 54; done
-          go run golang.org/x/perf/cmd/benchstat@v0.0.0-20261009192801-be2c69fb417e parent public candidate > benchstat-all.txt
-          go run golang.org/x/perf/cmd/benchstat@v0.0.0-20261009192801-be2c69fb417e public candidate > benchstat-amendment.txt
-          for output in benchstat-all.txt benchstat-amendment.txt; do
-            for metric in sec/op B/op allocs/op; do grep -Fq "$metric" "$output"; done
-          done
+          python3 - <<'PYTHON'
+          import hashlib, io, json, os, pathlib, subprocess, zipfile
+          data = subprocess.check_output(["gh", "api", "repos/tamird/gvisor/actions/artifacts/13293284072/zip"])
+          assert len(data) == 72073
+          assert hashlib.sha256(data).hexdigest() == "46db1cb9779c30b660cb51fe771e37d71f4f14b13b8eb3fafa42b06e60e3d8ab"
+          with zipfile.ZipFile(io.BytesIO(data)) as archive:
+              assert archive.namelist().count("verdict.json") == 1
+              assert archive.getinfo("verdict.json").file_size < 1024**2
+              original = archive.read("verdict.json")
+          pathlib.Path(os.environ["RUNNER_TEMP"], "results", "original-verdict.json").write_bytes(original)
+          PYTHON
+      - name: Diagnose race compilation and preflight accessor inlining
+        run: python3 "$RUNNER_TEMP/window_benchmark.py"
       - name: Check the bounded original evidence
         id: scan
         if: always()
@@ -63,7 +70,7 @@ jobs:
           total = 0
           for path in root.iterdir():
               assert path.is_file() and not path.is_symlink()
-              assert re.fullmatch(r"verdict\.json|benchstat-(?:all|amendment)\.txt|parent|public|candidate|(?:ordinary|race|nogo|restore-negative|block-(?:0[1-9]|1[0-8])-(?:parent|public|candidate))\.(?:log|xml)", path.name), path
+              assert re.fullmatch(r"original-verdict\.json|verdict\.json|benchstat-(?:all|amendment)\.txt|parent|public|candidate|(?:ordinary|race|nogo|restore-negative|block-(?:0[1-9]|1[0-8])-(?:parent|public|candidate))\.(?:log|xml)", path.name), path
               data = path.read_bytes()
               total += len(data)
               assert len(data) < 1024**2
@@ -73,6 +80,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.scan.outcome == 'success'
         with:
-          name: buffer-restore-accessor-evidence
+          name: buffer-race-build-diagnostic
           path: ${{ runner.temp }}/results/
           if-no-files-found: error
