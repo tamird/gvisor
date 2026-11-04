@@ -1,35 +1,94 @@
-name: CI
-
-"on":
+name: Check the Kind release archive handoff
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/kind-release-archive]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  archive:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      PRODUCT: dab2124cde6f1c76d44ff2af7c297566d86c10f5
+      PRODUCER: 2882b32e315991b4063c0baf2aedd40539ce6fd4
+      ORIGINAL: 20d09052012f528465e38ff85b81c2771c4143f1
+      SCRIPT: test/kubernetes/scripts/run_kind_e2e.sh
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Bind the current caller and the previously verified producer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          mkdir "$RUNNER_TEMP/original" "$RUNNER_TEMP/witness" "$RUNNER_TEMP/tools"
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD^^)" = 183a39d1b2aff9e8e2219171940001749a2b5db0
+          test "$(git diff --name-only HEAD^^ HEAD^)" = "$SCRIPT"
+          git show "$PRODUCT:$SCRIPT" > "$RUNNER_TEMP/run_kind_e2e.sh"
+          cp .github/qualification/kind_archive.py "$RUNNER_TEMP/tools/witness"
+          gh api repos/tamird/gvisor/actions/artifacts/13299000441/zip > "$RUNNER_TEMP/original.zip"
+          echo "61daebedc7b18692f0d4f1df7f220820fbccdb6a6364a4b710d5d1715e3a03dd  $RUNNER_TEMP/original.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/original.zip" amd64.json -d "$RUNNER_TEMP/original"
+          git fetch --no-tags --depth=3 https://github.com/tamird/gvisor.git "$ORIGINAL"
+          test "$(git rev-parse FETCH_HEAD^)" = "$PRODUCER"
+          git diff --exit-code "$PRODUCT" "$PRODUCER" -- Makefile tools/show_paths.bzl tools/compat/realpath.py
+          for source in "$PRODUCT" "$PRODUCER"; do
+            git show "$source:tools/bazel.mk" | sed -n '/^build_paths =/,/^sudo  =/p' > "$RUNNER_TEMP/$source.make"
+          done
+          cmp "$RUNNER_TEMP/$PRODUCT.make" "$RUNNER_TEMP/$PRODUCER.make"
+          git checkout --detach "$PRODUCER"
+          mkdir -p test/rbe/release_prewarmer
+          git show "$ORIGINAL:test/rbe/release_prewarmer/BUILD" > test/rbe/release_prewarmer/BUILD
+          for helper in full qualify image_inventory; do
+            git show "$ORIGINAL:test/rbe/release_prewarmer/$helper.py" > "$RUNNER_TEMP/tools/$helper.py"
+          done
+          test "$(git hash-object test/rbe/release_prewarmer/BUILD)" = 0942c3a1b2856d6b31866ec8bb60e280ba38a011
+          git diff --exit-code
+          grep -Fqx '9.3.1' images/default/bazelversion
+          curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$RUNNER_TEMP/tools/real-bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $RUNNER_TEMP/tools/real-bazel" | sha256sum -c -
+          chmod 755 "$RUNNER_TEMP/tools"/{real-bazel,witness}
+          for name in kind kubectl docker bazel; do ln -s witness "$RUNNER_TEMP/tools/$name"; done
+      - name: Reuse the pinned AMD64 package worker
+        env:
+          ACCESS: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          test -n "$ACCESS"
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --config=x86_64' 'build --extra_execution_platforms=//test/rbe/release_prewarmer:amd64' 'build --host_platform=//test/rbe/release_prewarmer:amd64' 'build --extra_toolchains=//test/rbe/go_bootstrap:linux_amd64_ash,//test/rbe/protoc_check:static_python' 'build --@rules_python//python/config_settings:bootstrap_impl=native' 'build --@io_bazel_rules_go//go/config:experimental_use_sh_toolchain' 'build --remote_accept_cached' 'build --lockfile_mode=off' 'build --jobs=32'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "$ACCESS" "$ACCESS"
+          } > "$RUNNER_TEMP/kind.bazelrc"
+      - name: Run the real Kind script up to its local node-copy boundary
+        env:
+          USE_BAZEL_VERSION: 9.3.1
+          DOCKER_HOST: unix:///nonexistent/kind.sock
+        run: |
+          set -eu
+          export PATH="$RUNNER_TEMP/tools:$PATH"
+          "$RUNNER_TEMP/tools/witness"
+      - name: Verify the public projection
+        if: always()
+        id: privacy
+        env:
+          ACCESS: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          out = Path(os.environ["RUNNER_TEMP"]) / "result.json"
+          assert out.is_file() and not out.is_symlink() and out.stat().st_size < 16000
+          raw = out.read_bytes()
+          assert os.environ["ACCESS"] and all(x not in raw for x in (os.environ["ACCESS"].encode(), b"remote_header", b"bes_header", b"Bearer ", b"Authorization:", b"X-Amz-"))
+          json.loads(raw)
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.privacy.outcome == 'success'
+        with:
+          name: kind-release-archive
+          path: ${{ runner.temp }}/result.json
+          if-no-files-found: error
