@@ -1,7 +1,7 @@
-name: Qualify the native webhook image and loopback deployment
+name: Compare host Docker push with the declared webhook manifest
 on:
   push:
-    branches: [qualification/webhook-oci-loopback]
+    branches: [qualification/webhook-oci-host-push-depth]
 permissions:
   contents: read
 jobs:
@@ -11,22 +11,32 @@ jobs:
     timeout-minutes: 95
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 3}
+        with: {persist-credentials: false, fetch-depth: 4}
       - name: Pin the product, Bazelisk and worker-local registry
         run: |
           set -euo pipefail
           work="$RUNNER_TEMP/webhook-oci"
           mkdir -p "$work/bin"
           printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$work/result.json"
-          test "$(git rev-parse HEAD^)" = 0d54cc79f0155cc02ffd4a1a0c679579f52af9dd
-          test "$(git rev-parse HEAD^^)" = 183a39d1b2aff9e8e2219171940001749a2b5db0
+          phase=source
+          trap 'rc=$?; printf "{\"status\":\"INCOMPLETE\",\"phase\":\"%s\",\"exit\":%d}\n" "$phase" "$rc" > "$work/result.json"' ERR
+          product=0d54cc79f0155cc02ffd4a1a0c679579f52af9dd
+          base=183a39d1b2aff9e8e2219171940001749a2b5db0
+          test "$(git rev-parse HEAD^)" = 1c4ed53402fe868e9864d32ff334e0ec1e5adc49
+          test "$(git rev-parse 1c4ed53402fe868e9864d32ff334e0ec1e5adc49^)" = "$product"
+          test "$(git rev-parse "$product^{tree}")" = 536a0a31cdb60553fabda2ad48cee1ea92affba9
+          test "$(git rev-parse "$product^")" = "$base"
+          git cat-file -e "$base^{commit}"
+          test "$(git hash-object .github/qualification/webhook_oci.py)" = ba0fc85d5df129eacef3b910ab329115e8addb8a
           cp .github/qualification/webhook_oci.py "$work/check.py"
-          git checkout --quiet --detach HEAD^
+          git checkout --quiet --detach "$product"
+          phase=bazelisk
           curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$work/bin/bazel"
           echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $work/bin/bazel" | sha256sum -c -
           chmod 755 "$work/bin/bazel"
           echo "$work/bin" >> "$GITHUB_PATH"
           cd "$work"
+          phase=registry-package
           sudo apt-get update -qq
           apt-get download docker-registry
           dpkg-deb -x docker-registry_*.deb package
@@ -37,6 +47,7 @@ jobs:
         run: |
           set -euo pipefail
           work="$RUNNER_TEMP/webhook-oci"
+          trap 'rc=$?; printf "{\"status\":\"INCOMPLETE\",\"phase\":\"remote-setup\",\"exit\":%d}\n" "$rc" > "$work/result.json"' ERR
           umask 077
           mkdir "$work/platform"
           echo 'module(name="webhook_gnu")' > "$work/platform/MODULE.bazel"
@@ -69,7 +80,7 @@ jobs:
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$work/remote.bazelrc"
-      - name: Build, render, load, run and push to the loopback registry
+      - name: Load the source image and test the original host Docker publication path
         run: python3 "$RUNNER_TEMP/webhook-oci/check.py"
       - name: Verify the single bounded receipt
         id: privacy
@@ -90,6 +101,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
-          name: webhook-oci
+          name: webhook-oci-host-push
           path: ${{ runner.temp }}/webhook-oci/result.json
           if-no-files-found: error
