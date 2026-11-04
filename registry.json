@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T06:47:42.020186+00:00",
+    "updatedAt": "2026-11-04T07:51:03.518087+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -49081,6 +49081,56 @@
         "requestedAt": "2026-11-04T06:36:04.743007+00:00",
         "summary": "Open the one-line Kind archive selection as a standalone gVisor PR?",
         "body": "The Kind smoke test installs gvisor.tar.bz2 on its node. Its setup currently builds and copies gvisor.tar.zstd as well, then discards it. Select only the optimized bzip2 target through make copy. This keeps the documented Docker-based build and the native Bazel option.\n\nOn Linux, the updated script selected only //debian:gvisor-release-tar-bz2 for its native Bazel build and cquery. Both succeeded on the previously qualified package source. An injected build failure stopped the script before cquery or copying. The original run then stopped in its node-copy recorder. With that recorder fixed, the same script extracted the retained 84,291,492-byte archive and prepared all nine executables for the node’s /usr/bin directory, including runsc-netgofer. No cluster was started."
+      }
+    },
+    {
+      "id": "branch:webhook-published-manifest",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/webhook-published-manifest",
+      "group": "release",
+      "head": "0bdc5723e11795c6063c95d36fba0c70817eacbc",
+      "title": "Pin the webhook deployment to the published image for this build",
+      "url": "https://github.com/tamird/gvisor/compare/183a39d1b...0bdc5723e",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-04T07:51:03.518087+00:00",
+      "summary": "The current webhook update writes a local Docker config ID as a tag. The push publishes a different tag. The proposal builds a scratch image with Bazel and pins the matching published manifest in the Kubernetes YAML. The existing Make load and host Docker push still accept registry ports and tags.\n\nThe image contained the expected executable on AMD64 and ARM64. The TLS loopback registry exercised the native Make path on AMD64. The first list fixture failed during setup. The first startup smoke omitted the files that Kubernetes mounts at /certs. The final check reproduced the missing caKey.pem panic and ran the identical entrypoint successfully with the four read-only public test files. ARM64 validation covered the archive and ELF. Live admission, TLS serving and external registry authentication remain untested.",
+      "evidence": [
+        {
+          "label": "Native AMD64 entrypoint and extracted ELF. Empty /certs returned 2 at caKey.pem. Four mounted files printed help and returned 0.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41794898958/artifacts/13305585466"
+        },
+        {
+          "label": "Both architecture archives, tagged and shorthand references, OCI rendering and list/write rejection. Aggregate failed at the empty /certs smoke.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41793170769/artifacts/13304303999"
+        },
+        {
+          "label": "Real Make push and matching Docker schema 2 descriptor, missing tag, stale config and cert init substitution. Aggregate stopped in the first list fixture.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41791814353/artifacts/13304085544"
+        },
+        {
+          "label": "Docker 28 preserved the config but published different manifest bytes from the Bazel OCI image.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41789716607/artifacts/13303136266"
+        },
+        {
+          "label": "Original comparison stopped at shallow-checkout setup before loading or pushing an image.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41789194677/artifacts/13302910729"
+        },
+        {
+          "label": "First draft built its AMD64 image and checked name routing, then failed in the Make renderer.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41787721038/artifacts/13301694177"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "0bdc5723e11795c6063c95d36fba0c70817eacbc",
+        "baseHead": "183a39d1b2aff9e8e2219171940001749a2b5db0",
+        "url": "https://github.com/tamird/gvisor/compare/183a39d1b...0bdc5723e",
+        "title": "Pin the webhook deployment to the published image for this build",
+        "requestedAt": "2026-11-04T07:51:03.518087+00:00",
+        "summary": "Open the two-file webhook image and deployment change as a standalone gVisor PR?",
+        "body": "webhook-update uses the config ID from docker import as an image tag. webhook-push publishes WEBHOOK_IMAGE, so the generated deployment can name a tag that was never pushed.\n\nBuild the single-file scratch image with rules_img. Keep webhook-build as the local Docker load and webhook-push as a host Docker push. Docker can change the manifest representation on push while preserving the config. Compare the selected Bazel config with the published single-platform manifest, then write the registry digest into the deployment. A missing tag, different build, manifest list or rendering error leaves the previous YAML in place.\n\nBazel produced Linux/amd64 and Linux/arm64 archives containing the corresponding /webhook executable. On AMD64, native Make rendered matching Docker schema 2 and OCI descriptors from a loopback TLS registry. The packaged entrypoint printed help with the four certificate files mounted in the deployment’s working directory."
       }
     }
   ],
