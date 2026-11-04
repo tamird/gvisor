@@ -48718,6 +48718,40 @@
         "summary": "Open the bridge MTU correction and its syscall regression?",
         "body": "The existing BridgeAddUnnamed test now reads the MTU of a new bridge, requests 1460 via RTM_SETLINK, then reads it again. Linux and corrected gVisor returned 1500 then 1460. Stock gVisor returned 1486 then 1446. The same syscall fixture ran on all three with no skips. This replaces the Go test that expected the subtraction."
       }
+    },
+    {
+      "id": "pr:14101",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 14101,
+      "ref": "fix-outstanding-sack-leak-outside-recovery",
+      "head": "df000e6d7a2ca32aea30416c12cf257c79806c50",
+      "title": "Review SACK accounting outside recovery",
+      "url": "https://github.com/google/gvisor/pull/14101",
+      "group": "runtime",
+      "status": "open",
+      "summary": "The candidate loop can skip allocations and scoreboard lookups for segments ending before the new SACK block. A single late SACK on a 128-segment queue took 3.60 µs at the PR head and 0.94 µs with the overlap check.",
+      "updatedAt": "2026-11-04T02:03:48.508617+00:00",
+      "evidence": [
+        {
+          "label": "One-line overlap check",
+          "url": "https://github.com/tamird/gvisor/commit/ffd2dc90a"
+        },
+        {
+          "label": "Original ACK-handler measurements and accounting controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41757174160/artifacts/13289470471"
+        }
+      ],
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "df000e6d7a2ca32aea30416c12cf257c79806c50",
+        "url": "https://github.com/google/gvisor/pull/14101/files#diff-0912a3274bb72f64af67df685e65186477ca212ce5ad3d655a37ba9872a64fd1R1582",
+        "requestedAt": "2026-11-04T02:03:48.508617+00:00",
+        "title": "Suggest skipping SACK candidates that cannot change",
+        "summary": "Post the measured suggestion on the candidate loop in the author’s PR?",
+        "body": "Could we skip segments that end at or before `sb.Start` here? Inserting this SACK block cannot change whether those segments are covered. The sender still walks past them to find the block, but it can skip both the append and the second scoreboard lookup. A partially overlapping segment still needs both checks because adjacent SACK blocks can merge.\n\nI timed one new SACK near the end of a 128-segment send queue in `handleRcvdSegment`, with RACK disabled. `stock` is this PR and `fixed` adds the overlap check.\n\n```text\n                                                │    stock     │               fixed                │\n                                                │    sec/op    │   sec/op     vs base               │\nSACKAccountingQualification/queue=128/sack=far    3604.5n ± 1%   937.2n ± 5%  -74.00% (p=0.000 n=8)\n```\n\nAllocations fell from seven to two per ACK. Both versions gave the same Outstanding count for duplicate and partially overlapping blocks, including across sequence-number wrap. [One-line change](https://github.com/tamird/gvisor/commit/ffd2dc90a) · [Benchmark and controls](https://github.com/tamird/gvisor/actions/runs/41757174160/artifacts/13289470471).\n\nPosted by Codex on behalf of @tamird."
+      }
     }
   ],
   "edges": [
@@ -68671,9 +68705,9 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-03T19:43:08.796751+00:00",
+      "updatedAt": "2026-11-04T02:03:48.508617+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
-      "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the packet-socket reply on #16793 and the duplicate reconnect reply on #15019.",
+      "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the duplicate reconnect reply on #15019.",
       "findings": [
         {
           "text": "On Linux with one Go scheduler P, stock gVisor drained 201 ready packets but made a contended endpoint’s lock owner wait 20 ms. Yielding on the first miss left all 201 queued. For a replenishing peer, the revised dispatcher snapshots the actual queue tail and yields after one 100-packet batch. When a second processor claimed a listener, it yielded after two misses. All 20 cases drained across normal and disabled asynchronous preemption. End-to-end throughput and TamaGo remain unmeasured.",
@@ -69404,6 +69438,10 @@
         }
       ],
       "evidence": [
+        {
+          "label": "#14101 ACK-handler benchmark for a late SACK with RACK disabled",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41757174160/artifacts/13289470471"
+        },
         {
           "label": "#16887 transmit metadata review and test-budget suggestion",
           "url": "https://github.com/google/gvisor/pull/16887#pullrequestreview-5756434671"
