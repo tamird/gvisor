@@ -1,4 +1,4 @@
-name: Diagnose the original buffer race standard library
+name: Qualify the original buffer race test owner
 on:
   push:
     branches: [qualification/buffer-external-restore-read]
@@ -12,7 +12,6 @@ jobs:
     timeout-minutes: 35
     env:
       RACE_DIAGNOSTIC: "1"
-      INLINE_CANDIDATE: ed0f932bfabb77047eeb8293e4864dc7fb4d8b0e
       PRODUCT: 1624a495b6c1e58e9fd5209e3ff00dba8811cb1c
       BASE: 7bffefa9185aa55ba377e8a5534210a7f0cbf266
       PUBLIC: 5af539b23594b3711fd49c514e236442baad9df3
@@ -28,10 +27,10 @@ jobs:
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/results"
           printf '{"status":"INCOMPLETE","phase":"bootstrap"}\n' > "$RUNNER_TEMP/results/verdict.json"
-          test "$(git rev-parse HEAD^)" = f3ba92cc31a364099d865871af4cff603919f769
+          test "$(git rev-parse HEAD^)" = 449ccaed96cbf03efde30d99cd484b6a5cc3b770
           git fetch --quiet --depth=3 origin "$PRODUCT"
           cp .github/qualification/window_benchmark.py .github/qualification/buffer_read_benchmark.go "$RUNNER_TEMP"
-          for ref in "$BASE" "$PUBLIC" "$REGRESSION" "$VERIFIER" "$INLINE_CANDIDATE"; do
+          for ref in "$BASE" "$PUBLIC" "$REGRESSION" "$VERIFIER"; do
             git fetch --quiet --depth=3 origin "$ref"
           done
           for helper in unit_matrix qualification_report; do
@@ -58,7 +57,7 @@ jobs:
               original = archive.read("verdict.json")
           pathlib.Path(os.environ["RUNNER_TEMP"], "results", "original-verdict.json").write_bytes(original)
           PYTHON
-      - name: Diagnose race compilation and preflight accessor inlining
+      - name: Run only the original missing race owner
         run: python3 "$RUNNER_TEMP/window_benchmark.py"
       - name: Check the bounded original evidence
         id: scan
@@ -80,6 +79,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.scan.outcome == 'success'
         with:
-          name: buffer-race-build-diagnostic
+          name: buffer-race-owner-evidence
           path: ${{ runner.temp }}/results/
           if-no-files-found: error

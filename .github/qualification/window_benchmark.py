@@ -162,8 +162,7 @@ def invoke(key: str, source: str, args: list[str], info: dict, *, package_source
         save(info)
     else:
         raise ValueError("No original BEP available")
-    if build_only:
-        assert not observations, "Standard-library diagnosis must not execute tests"
+    if build_only or os.environ.get("RACE_DIAGNOSTIC") == "1":
         row["actions"] = []
         for event in records:
             if "action" not in event:
@@ -192,9 +191,11 @@ def invoke(key: str, source: str, args: list[str], info: dict, *, package_source
                          for line in data.decode(errors="replace").splitlines()[:40]]
                 item[stream] = {"sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data), "lines": lines}
             save(info)
-        row.update(status="BUILD_PASSED" if row["native_exit"] == 0 else "BUILD_FAILED", verified_at=utc())
-        save(info)
-        return row, ""
+        if build_only:
+            assert not observations, "Compiler preflight must not execute tests"
+            row.update(status="BUILD_PASSED" if row["native_exit"] == 0 else "BUILD_FAILED", verified_at=utc())
+            save(info)
+            return row, ""
     assert len(observations) == 1, "Expected one original TestResult"
     event, = observations
     identity, payload = event["id"]["testResult"], event["testResult"]
@@ -314,34 +315,23 @@ def main() -> None:
                             "sha256": "46db1cb9779c30b660cb51fe771e37d71f4f14b13b8eb3fafa42b06e60e3d8ab",
                             "status": original["status"], "race": race}
         try:
-            row, _ = invoke("race-stdlib-diagnostic", PRODUCT, ["--config=race", "@io_bazel_rules_go//:stdlib"], info, build_only=True)
-            if row.get("timed_out"):
-                info["status"] = "DIAGNOSIS_TIMED_OUT"
-            elif row["native_exit"] == 0:
-                info["status"] = "DIAGNOSIS_NOT_REPRODUCED"
-            elif any(not item.get("success") and item.get(stream, {}).get("lines")
-                     for item in row["actions"] for stream in ("stderr", "stdout")):
-                info["status"] = "BUILD_FAILURE_DIAGNOSTIC_RECORDED"
-            else:
-                info["status"] = "BUILD_FAILED_DIAGNOSTIC_UNAVAILABLE"
+            row, _ = invoke("race", PRODUCT, ["--config=race", "--test_arg=-test.v", LABEL], info)
+            assert row["native_exit"] == 0 and row["test_status"] == "PASSED", "Actual race test owner failed"
+            ordinary, = (item for item in original["attempts"] if item["phase"] == "ordinary")
+            assert ordinary["status"] == "PASS" and ordinary["source"] == PRODUCT
+            assert row["cases"] == ordinary["cases"], "Race must run the same actual candidate cases"
+            assert row["identity"]["configuration"] != ordinary["identity"]["configuration"], "Race configuration was not distinct"
+            assert row["xml"]["failed"] == row["xml"]["skipped"] == 0
+            row.update(status="PASS", verified_at=utc())
+            info["status"] = "RACE_PASS_ORIGINAL_BUILD_FAILURE_UNEXPLAINED"
+        except (AssertionError, OSError, ValueError, TypeError, KeyError) as error:
+            row = info["attempts"][-1]
+            row["verification_error"] = str(error)[:500]
+            info["status"] = "FAIL" if row.get("native_exit") not in (None, 0) and not row.get("timed_out") else "INCOMPLETE"
         finally:
             info["verified_at"] = utc()
             save(info)
-        candidate = os.environ["INLINE_CANDIDATE"]
-        assert candidate == "ed0f932bfabb77047eeb8293e4864dc7fb4d8b0e"
-        assert git("diff", "--name-only", PRODUCT, candidate) == "pkg/buffer/view.go"
-        row, _ = invoke("inline-preflight", PRODUCT, [LABEL], info, package_source=candidate, build_only=True)
-        fixture = Path(BENCH).read_text()
-        function = re.search(r"func BenchmarkViewListAsSlice\(b \*testing.B\) \{.*?\n\}", fixture, re.S)
-        assert function, "Missing original accessor benchmark"
-        first = fixture[:function.start()].count("\n") + 1
-        last = fixture[:function.end()].count("\n") + 1
-        declaration = any("can inline (*View).AsSlice with cost " in line for line in row["inline_remarks"])
-        callsite = any(first <= int(line.split(":")[1]) <= last for line in row["inline_calls"])
-        row["accessor_inline_verified"] = row["native_exit"] == 0 and declaration and callsite
-        info["verified_at"] = utc()
-        save(info)
-        assert row["accessor_inline_verified"], "Actual accessor declaration/callsite did not inline"
+        assert info["status"] == "RACE_PASS_ORIGINAL_BUILD_FAILURE_UNEXPLAINED", "Race qualification remains unsuccessful"
         return
     try:
         functional(info)
