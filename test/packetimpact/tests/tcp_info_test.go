@@ -16,6 +16,7 @@ package tcp_info_test
 
 import (
 	"flag"
+	"fmt"
 	"testing"
 	"time"
 
@@ -73,7 +74,9 @@ func TestTCPInfoOptions(t *testing.T) {
 			dut.PollOne(t, listenFD, unix.POLLIN, time.Second)
 			fd, _ := dut.Accept(t, listenFD)
 			defer dut.Close(t, fd)
-			if got := dut.GetSockOptTCPInfo(t, fd).Options & mask; got != tt.want {
+			got := dut.GetSockOptTCPInfo(t, fd).Options & mask
+			fmt.Printf("TCP_INFO_WIRE offer=%d ts=%t sack=%t reported=%d\n", tt.want, negotiated.TS, negotiated.SACKPermitted, got)
+			if got != tt.want {
 				t.Errorf("TCP_INFO timestamps/SACK bits = %#x, want %#x from SYN-ACK", got, tt.want)
 			}
 		})
