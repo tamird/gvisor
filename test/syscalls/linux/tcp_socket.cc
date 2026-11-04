@@ -34,6 +34,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <ctime>
 #include <iterator>
@@ -2035,6 +2036,9 @@ TEST_P(SimpleTcpSocketTest, SetMaxSeg) {
     optlen = sizeof(optval);
     ASSERT_THAT(getsockopt(fd, IPPROTO_TCP, TCP_MAXSEG, &optval, &optlen),
                 SyscallSucceeds());
+    std::fprintf(stderr, "MSS_OBSERVATION family=%d role=%s get=%d snd=%u options=%u\n",
+                 GetParam(), fd == s.get() ? "active" : "accepted", optval,
+                 info.tcpi_snd_mss, static_cast<unsigned>(info.tcpi_options));
     EXPECT_EQ(optval, info.tcpi_snd_mss);
   }
 }
