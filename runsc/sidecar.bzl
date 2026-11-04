@@ -48,6 +48,7 @@ def freestanding_sidecar(name, src, out):
         linkstatic = True,
         stamp = 0,
         tcmalloc = False,
+        tags = ["manual"],
         visibility = ["//visibility:private"],
     )
     freestanding_executable(
