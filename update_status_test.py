@@ -526,6 +526,37 @@ class CollectorHistoryTest(unittest.TestCase):
             self.assertEqual(updater.review_watch_report([changed], current)[0]["status"], "merged")
             self.assertEqual(updater.review_watch_report([changed], {"prs": [changed]}), [])
 
+    def test_posted_review_starts_handoff_without_another_subscription(self) -> None:
+        pr = retained(raw_pr(500, author="contributor"))
+        own = {"id": "review", "url": pr["url"] + "#pullrequestreview-11", "kind": "review",
+               "author": {"login": "tamird", "__typename": "User"}, "submittedAt": OLD}
+        incoming = {"id": "response", "url": pr["url"] + "#issuecomment-12", "kind": "comment",
+                    "author": {"login": "maintainer", "__typename": "User"},
+                    "body": "@tamird, can you check this revision?", "updatedAt": LATER, "createdAt": LATER}
+        pr["feedback"] = {"complete": True, "items": [own, incoming]}
+        node = {"id": "pr:500", "type": "pr", "repo": pr["repo"], "number": 500,
+                "settledReviews": [{"kind": "review", "outcome": "approved", "url": own["url"]}]}
+        self.registry["nodes"].append(node)
+        with mock.patch.object(updater, "REGISTRY", self.registry):
+            self.assertNotIn((pr["repo"], 500), updater.review_watches())  # No extra fetch.
+            self.assertEqual(updater.review_watch_handoff([pr], {}), [])
+            self.assertIsNone(updater.posted_review(pr, {}, {}))  # Unregistered review.
+            self.assertIsNone(updater.posted_review({**pr, "authorLogin": "tamird"}, node, {}))
+            self.assertIsNone(updater.posted_review({**pr, "status": "merged"}, node, {}))
+            self.assertIsNone(updater.posted_review({**pr, "feedback": {"items": [
+                {**own, "author": incoming["author"]}]}}, node, {}))  # Not our posted review.
+            receipt = updater.posted_review(pr, node, {})
+            self.assertEqual(receipt, {"id": "review", "url": own["url"], "at": OLD})
+            pr["postedReview"] = receipt
+            record, = updater.review_watch_handoff([pr], {})
+            self.assertEqual((record["id"], record["assigned"]), ("response", False))
+            partial = {**pr, "feedback": {"complete": False, "items": []}}
+            self.assertEqual(updater.posted_review(partial, node, pr), receipt)
+            again, = updater.review_watch_handoff([partial], {"reviewWatchHandoff": [record]})
+            self.assertEqual(again["id"], "response")
+            self.assertFalse(again["feedbackComplete"])
+            self.assertIsNone(updater.posted_review(partial, {}, pr))  # Registration removed.
+
     def test_investigation_tracks_external_review_without_a_delivery_row(self) -> None:
         self.registry["investigations"] = [{"id": "investigation:external-reviews", "reviewWatch": {
             "repo": "google/gvisor", "numbers": [500], "owner": "Netstack", "reviewers": ["tamird"],

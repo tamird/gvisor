@@ -112,6 +112,11 @@ review's own commit when GitHub provides one. Assign a top-level item with the
 existing `followup.actionableComment`. The reviewer owns that follow-up;
 the PR author still owns their changes.
 
+For a registered external PR, a settled review also starts this handoff when
+GitHub confirms the linked inline comment or review was posted by our reviewer.
+The snapshot keeps that receipt even if it later falls outside the feedback
+page. Approval to post is not a delivery receipt. This adds no GitHub requests.
+
 A later reply by the reviewer on the same thread clears the pending message.
 For a review handled elsewhere, record its `id`, `url`, `head`, `updatedAt`
 and an `evidence` link in the subscription's `inspected` list. An edited

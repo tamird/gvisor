@@ -257,9 +257,28 @@ def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
     return sorted(records, key=lambda item: (not item["awaitingAuthor"], item.get("updatedAt") or "", item["url"]))
 
 
+def posted_review(pr: dict, node: dict, previous: dict) -> dict | None:
+    """Register a delivered review, not permission to post one or another author's comment."""
+    if pr["status"] not in {"open", "draft"} or not pr.get("authorLogin") or pr["authorLogin"] == OWNER:
+        return None
+    urls = {review.get("postedURL") or review.get("url") for review in node.get("settledReviews", [])
+            if review["kind"] == "review" and review["outcome"] == "approved"}
+    if not urls:
+        return None
+    receipts = [{"url": item["url"], "id": item["id"], "at": item.get("submittedAt") or item["createdAt"]}
+                for item in pr["feedback"]["items"]
+                if item["url"] in urls and item["kind"] in {"review", "inline"}
+                and (item.get("author") or {}).get("login") == OWNER
+                and item["author"].get("__typename") == "User"]
+    # A previously verified receipt can fall outside the bounded feedback page.
+    if (receipt := previous.get("postedReview")) and receipt["url"] in urls:
+        receipts.append(receipt)
+    return min(receipts, key=lambda item: (item["at"], item["url"]), default=None)
+
+
 def review_watches() -> dict:
     watches = {(node["repo"], node["number"]): node["reviewWatch"]
-               for node in REGISTRY["nodes"] if node.get("reviewWatch")}
+               for node in REGISTRY["nodes"] if node.get("reviewWatch", {}).get("owner")}
     for investigation in REGISTRY.get("investigations", []):
         if watch := investigation.get("reviewWatch"):
             watches.update(((watch["repo"], number), watch) for number in watch["numbers"])
@@ -313,13 +332,17 @@ def review_watch_handoff(prs: list[dict], previous: dict) -> list[dict]:
     records = []
     for pr in prs:
         key = pr.get("repo", REPO), pr["number"]
+        node = nodes.get(key, {})
+        followup = node.get("followup", {})
         watch = watches.get(key, {})
+        if not watch and (receipt := pr.get("postedReview")):
+            watch = {"since": receipt["at"], "owner": followup.get("owner", "Agent"),
+                     "inspected": node.get("reviewWatch", {}).get("inspected", [])}
         if (not watch.get("since") or pr["status"] not in {"open", "draft"}
                 or not pr.get("authorLogin") or pr["authorLogin"] == OWNER):
             continue
         prior = {entry["id"]: entry for entry in previous.get("reviewWatchHandoff", [])
                  if (entry["repo"], entry["number"]) == key}
-        followup = nodes.get(key, {}).get("followup", {})
         items = pr["feedback"]["items"]
         threads = {}
         for item in items:
@@ -1100,10 +1123,15 @@ def main() -> None:
     checked_at = datetime.now(timezone.utc).isoformat()
     nodes = {(node.get("repo"), node.get("number")): node for node in REGISTRY["nodes"] if node["type"] == "pr"}
     for pr in prs:
+        key = pr.get("repo", REPO), pr["number"]
+        node = nodes.get(key, {})
+        if receipt := posted_review(pr, node, prior_prs.get(key, {})):
+            pr["postedReview"] = receipt
+        else:
+            pr.pop("postedReview", None)
         if pr["status"] != "open":
             pr.pop("publicImportDisposition", None)
             continue
-        node = nodes.get((pr.get("repo"), pr["number"]), {})
         pr["publicImportDisposition"] = public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"))
         if pr["publicImportDisposition"]["action"] == "maintainer-import-label":
             approval = effective_approval(pr, require_aggregate=False, trusted_reviewers=maintainers)
