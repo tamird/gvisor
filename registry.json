@@ -40562,12 +40562,12 @@
       "repo": "google/gvisor",
       "group": "runtime",
       "ref": "review/fdnotifier-epoll-registration",
-      "head": "7ab597c1c75ab15ae9634ee493e3fd1457bc162a",
+      "head": "e6bb7ceffc585bbf1d336468d094a880935842c8",
       "title": "Identify fdnotifier events by registration",
       "url": "https://github.com/google/gvisor/pull/16865",
       "status": "open",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
-      "summary": "If an epoll event has already been returned when the registration is removed, dispatch by file descriptor can wake its replacement. A registration ID lets the notifier discard the old event without losing a current one.",
+      "updatedAt": "2026-11-04T21:13:01.638583+00:00",
+      "summary": "The contributor-approved lazy-startup amendment e6bb7ceff is published on #16865. If an epoll event has already been returned when the registration is removed, dispatch by file descriptor can wake its replacement. A registration ID lets the notifier discard the old event without losing a current one.\n\nThe amendment adapts the registration fix to the landed lazy fdnotifier startup. It initializes the registration map on the first AddFD, and the test owns its epoll descriptor to control dispatch of an already-returned event. Both descriptor-reuse cases and the unchanged Pause/Register controls passed: six native AMD64 XML records, with no failures or skips. This amendment adds no race or Nogo qualification; the original approval and source-specific evidence remain separate.",
       "evidence": [
         {
           "label": "Both stock failures and both corrected controls; analyzer check and verdict timestamps",
@@ -40580,6 +40580,10 @@
         {
           "label": "Lazy-startup amendment: six native AMD64 XML records passed; no new race or Nogo claim",
           "url": "https://github.com/tamird/gvisor/actions/runs/41893554936/artifacts/13353749595"
+        },
+        {
+          "label": "Contributor-approved lazy-startup amendment published on #16865",
+          "url": "https://github.com/tamird/gvisor/commit/e6bb7ceff"
         }
       ],
       "settledReviews": [
@@ -40588,19 +40592,23 @@
           "head": "7ab597c1c75ab15ae9634ee493e3fd1457bc162a",
           "outcome": "approved",
           "at": "2026-11-02T20:41:59Z"
+        },
+        {
+          "kind": "amendment",
+          "head": "e6bb7ceffc585bbf1d336468d094a880935842c8",
+          "baseHead": "7ab597c1c75ab15ae9634ee493e3fd1457bc162a",
+          "url": "https://github.com/tamird/gvisor/commit/e6bb7ceff",
+          "outcome": "approved",
+          "at": "2026-11-04T21:12:16.238381+00:00"
         }
       ],
       "number": 16865,
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "e6bb7ceffc585bbf1d336468d094a880935842c8",
-        "baseHead": "7ab597c1c75ab15ae9634ee493e3fd1457bc162a",
-        "url": "https://github.com/tamird/gvisor/commit/e6bb7ceff",
-        "title": "Identify fdnotifier events by registration",
-        "requestedAt": "2026-11-04T19:13:56.672254+00:00",
-        "summary": "Publish the amendment adapting the approved registration fix to lazy fdnotifier startup?",
-        "body": "The approved public change conflicts with the newly landed lazy fdnotifier startup. This amendment initializes the registration map on the first AddFD. The permanent test owns its epoll descriptor so it can control when an already-returned event is dispatched. The registration-ID behavior remains the purpose of the existing PR.\n\nBoth original descriptor-reuse cases and the unchanged Pause/Register controls passed: six XML records on native AMD64, with no failures or skips. This run adds no race or Nogo qualification. The original approval and earlier evidence remain separate.\n\ngit -C ~/code/gvisor range-diff 7ab597c1c^! e6bb7ceff^!\n\n[Native qualification](https://github.com/tamird/gvisor/actions/runs/41893554936/artifacts/13353749595)"
+      "followup": {
+        "owner": "maintainer",
+        "disposition": "Approved amendment published; upstream review and checks remain",
+        "sourceHead": "e6bb7ceffc585bbf1d336468d094a880935842c8",
+        "observedAt": "2026-11-04T21:13:01.638583+00:00",
+        "nextAction": "Track current-head checks and maintainer review; no contributor decision remains."
       }
     },
     {
@@ -71843,5 +71851,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-04T20:45:45.283369+00:00"
+  "updatedAt": "2026-11-04T21:13:01.638583+00:00"
 }
