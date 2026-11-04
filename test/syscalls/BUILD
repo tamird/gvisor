@@ -428,6 +428,8 @@ syscall_test(
 )
 
 syscall_test(
+    # Save/restore needs headroom beyond the populated 512 MiB mapping.
+    exec_properties = {"test.EstimatedMemory": "2GB"},
     test = "//test/syscalls/linux:memory_accounting_test",
 )
 
@@ -1372,6 +1374,8 @@ syscall_test(
     # Per-syscall tracing dominates the million deliberately invalid close calls.
     # Keep debug logs without formatting a trace for every call.
     args = ["--strace=false"],
+    # Allow for the thousand workload threads and their ptrace tracers.
+    exec_properties = {"test.EstimatedMemory": "1GB"},
     test = "//test/syscalls/linux:processes_test",
 )
 
