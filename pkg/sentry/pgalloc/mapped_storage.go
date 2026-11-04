@@ -35,6 +35,9 @@ type MappedStorage struct {
 	length uint64
 	mf     *MemoryFile `state:"nosave"`
 	data   []byte      `state:"nosave"`
+	// dst is the restored chunk's slice slot, held only until the mapping
+	// barrier completes, is abandoned, or the storage is released.
+	dst *[]byte `state:"nosave"`
 }
 
 // AllocateMapped allocates length bytes, split into independently owned mappings
@@ -101,6 +104,14 @@ func (s *MappedStorage) Bytes() []byte {
 	return s.data
 }
 
+// RestoreBytes implements buffer.ExternalStorage.RestoreBytes. A filesystem
+// extraction never resumes packet I/O, so it doesn't retain the destination.
+func (s *MappedStorage) RestoreBytes(ctx context.Context, dst *[]byte) {
+	if ctx.Value(CtxMappedStorageRestore) != nil {
+		s.dst = dst
+	}
+}
+
 // Release releases the owned page references. It must be called exactly once,
 // before the MemoryFile is destroyed. Restored MemoryFile range metadata and
 // references must already be loaded. It does not require Bytes to be ready, so
@@ -111,6 +122,7 @@ func (s *MappedStorage) Release() {
 	s.mf.DecRef(s.fr)
 	s.mf = nil
 	s.data = nil
+	s.dst = nil
 }
 
 // afterLoad is invoked by stateify.
@@ -132,9 +144,13 @@ type MappedStorageRestore struct {
 	storage []*MappedStorage
 }
 
-// Clear drops borrowed pointers without accessing or releasing storage. Call it
-// on every return path from a restore, including failed state or MemoryFile loads.
+// Clear drops pending destinations and borrowed owners without mapping or
+// releasing storage. Call it on every restore exit, including state or
+// MemoryFile load failure.
 func (r *MappedStorageRestore) Clear() {
+	for _, s := range r.storage {
+		s.dst = nil
+	}
 	r.storage = nil
 }
 
@@ -145,6 +161,10 @@ func (r *MappedStorageRestore) Clear() {
 func (r *MappedStorageRestore) Restore() error {
 	defer r.Clear()
 	for _, s := range r.storage {
+		if s.mf == nil {
+			// Released after metadata load, before the mapping barrier.
+			continue
+		}
 		blocks, err := s.mf.MapInternal(s.fr, hostarch.ReadWrite)
 		if err != nil {
 			return fmt.Errorf("restore mapped storage %v: %w", s.fr, err)
@@ -155,6 +175,12 @@ func (r *MappedStorageRestore) Restore() error {
 			return fmt.Errorf("restored storage %v is not contiguous", s.fr)
 		}
 		s.data = blocks.Head().ToSlice()[:s.length:s.length]
+	}
+	// Publish to chunks only when every required mapping has succeeded.
+	for _, s := range r.storage {
+		if s.dst != nil {
+			*s.dst = s.data
+		}
 	}
 	return nil
 }

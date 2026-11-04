@@ -103,7 +103,7 @@ func (r *blockedPageReader) ReadAt(dst []byte, off int64) (int, error) {
 }
 
 func TestMappedStorageSaveRestore(t *testing.T) {
-	for _, mode := range []string{"sync", "async", "async error", "cold cleanup"} {
+	for _, mode := range []string{"sync", "async", "async error", "cold cleanup", "release before mapping"} {
 		t.Run(mode, func(t *testing.T) {
 			f := newSaveRestoreMemoryFile(t)
 			storage, err := f.AllocateMapped(2*page+37, page, usage.System, 0)
@@ -195,10 +195,12 @@ func TestMappedStorageSaveRestore(t *testing.T) {
 					t.Fatalf("registered %d owners, want 3 shared across both buffers", len(restore.storage))
 				}
 				owners := append([]*MappedStorage(nil), restore.storage...)
+				var slots []*[]byte
 				for _, s := range owners {
-					if s.data != nil {
-						t.Fatal("state.Load exposed bytes before MemoryFile loading")
+					if s.data != nil || s.dst == nil || *s.dst != nil {
+						t.Fatal("state.Load did not leave an unpopulated chunk destination")
 					}
+					slots = append(slots, s.dst)
 				}
 				var loadDone chan error
 				var reader *blockedPageReader
@@ -226,10 +228,21 @@ func TestMappedStorageSaveRestore(t *testing.T) {
 				} else if err := restoredMF.LoadFrom(ctx, &metadata, &loadOpts); err != nil {
 					t.Fatal(err)
 				}
-				if mode == "cold cleanup" {
-					// Filesystem-only extraction does not need packet mappings.
+				if mode == "cold cleanup" || mode == "release before mapping" {
+					// Neither filesystem extraction nor an owner released after the
+					// metadata load needs to expose a packet mapping.
 					for _, b := range restored {
 						b.Release()
+					}
+					if mode == "release before mapping" {
+						if err := restore.Restore(); err != nil {
+							t.Fatalf("released storage: %v", err)
+						}
+					}
+					for i, slot := range slots {
+						if *slot != nil || owners[i].dst != nil {
+							t.Fatal("mapping barrier published or retained released storage")
+						}
 					}
 					for _, fr := range ranges {
 						checkMappedReferences(t, restoredMF, fr, 0)
@@ -247,9 +260,9 @@ func TestMappedStorageSaveRestore(t *testing.T) {
 						if restoreErr == nil || loadErr == nil {
 							t.Fatalf("truncated page file: restore=%v, loader=%v; want both errors", restoreErr, loadErr)
 						}
-						for _, s := range owners {
-							if s.data != nil {
-								t.Error("failed loading exposed bytes")
+						for i, s := range owners {
+							if s.data != nil || s.dst != nil || *slots[i] != nil {
+								t.Error("failed mapping exposed data or retained a chunk destination")
 							}
 						}
 						for _, b := range restored {
@@ -274,6 +287,12 @@ func TestMappedStorageSaveRestore(t *testing.T) {
 				}
 				if len(restore.storage) != 0 {
 					t.Error("successful barrier retained borrowed owners")
+				}
+				for i, slot := range slots {
+					s := owners[i]
+					if s.dst != nil || len(*slot) != len(s.Bytes()) || &(*slot)[0] != &s.Bytes()[0] {
+						t.Fatal("completed barrier did not publish the exact mapping and drop its destination")
+					}
 				}
 				// Measure before Bytes access can fault in missing zero pages.
 				var st unix.Stat_t

@@ -822,9 +822,11 @@ func TestGrowBufferCloned(t *testing.T) {
 // externalTestStorage models an owner whose bytes are not available until its
 // restore lifecycle finishes, after state.Load has reconstructed the buffers.
 type externalTestStorage struct {
-	data     []byte
-	ready    bool
-	releases int
+	data                []byte
+	ready               bool
+	releases            int
+	loadedBeforeRelease bool
+	dst                 *[]byte
 }
 
 func (s *externalTestStorage) Bytes() []byte {
@@ -834,7 +836,12 @@ func (s *externalTestStorage) Bytes() []byte {
 	return s.data
 }
 
+func (s *externalTestStorage) RestoreBytes(_ context.Context, dst *[]byte) {
+	s.dst = dst
+}
+
 func (s *externalTestStorage) Release() {
+	s.dst = nil
 	s.releases++
 	s.ready = false
 }
@@ -852,11 +859,68 @@ func (s *externalTestStorage) StateSave(sink state.Sink) {
 }
 
 func (s *externalTestStorage) StateLoad(_ context.Context, source state.Source) {
-	source.Load(0, &s.data)
+	source.LoadWait(0, &s.data)
+	source.AfterLoad(func() { s.loadedBeforeRelease = s.releases == 0 })
+}
+
+// releaseOnLoad drops its buffer or view as soon as that object is restored.
+// storage observes the release; it is not an additional wait dependency.
+type releaseOnLoad struct {
+	buffer  Buffer
+	view    *View
+	storage *externalTestStorage
+}
+
+func (*releaseOnLoad) StateTypeName() string { return "gvisor.dev/gvisor/pkg/buffer.releaseOnLoad" }
+func (*releaseOnLoad) StateFields() []string { return []string{"buffer", "view", "storage"} }
+func (o *releaseOnLoad) StateSave(sink state.Sink) {
+	sink.Save(0, &o.buffer)
+	sink.Save(1, &o.view)
+	sink.Save(2, &o.storage)
+}
+func (o *releaseOnLoad) StateLoad(_ context.Context, source state.Source) {
+	source.Load(0, &o.buffer)
+	source.LoadWait(1, &o.view)
+	source.Load(2, &o.storage)
+	source.AfterLoad(o.release)
+}
+func (o *releaseOnLoad) release() {
+	if o.view != nil {
+		o.view.Release()
+	} else {
+		o.buffer.Release()
+	}
 }
 
 func init() {
 	state.Register((*externalTestStorage)(nil))
+	state.Register((*releaseOnLoad)(nil))
+}
+
+func TestExternalStorageRestoreOrder(t *testing.T) {
+	for _, kind := range []string{"Buffer", "View"} {
+		t.Run(kind, func(t *testing.T) {
+			owner := releaseOnLoad{storage: &externalTestStorage{data: []byte("x"), ready: true}}
+			v := NewViewWithExternalStorage(owner.storage)
+			if kind == "Buffer" {
+				owner.buffer.appendOwned(v)
+			} else {
+				owner.view = v
+			}
+			defer owner.release()
+			var encoded bytes.Buffer
+			if _, err := state.Save(t.Context(), &encoded, &owner); err != nil {
+				t.Fatal(err)
+			}
+			var restored releaseOnLoad
+			if _, err := state.Load(t.Context(), &encoded, &restored); err != nil {
+				t.Fatal(err)
+			}
+			if got := restored.storage; got.releases != 1 || !got.loadedBeforeRelease || got.dst != nil {
+				t.Errorf("storage releases = %d, loaded before release = %t, pending bytes = %t; want one release after load with no pending bytes", got.releases, got.loadedBeforeRelease, got.dst != nil)
+			}
+		})
+	}
 }
 
 func TestSaveRestoreExternalBuffers(t *testing.T) {
@@ -879,7 +943,7 @@ func TestSaveRestoreExternalBuffers(t *testing.T) {
 
 	toSave := []*Buffer{&original, &shared, &written}
 	var encoded bytes.Buffer
-	ctx := context.Background()
+	ctx := t.Context()
 	if _, err := state.Save(ctx, &encoded, &toSave); err != nil {
 		t.Fatal(err)
 	}
@@ -902,7 +966,12 @@ func TestSaveRestoreExternalBuffers(t *testing.T) {
 	if owner.ready || owner.releases != 0 {
 		t.Fatalf("storage touched during load: ready=%t, releases=%d", owner.ready, owner.releases)
 	}
+	if first.chunk.data != nil || owner.dst != &first.chunk.data {
+		t.Fatal("restore copied external bytes or failed to attach their destination")
+	}
 	owner.ready = true
+	*owner.dst = owner.Bytes()
+	owner.dst = nil
 	for i, want := range []string{"head34567890tail", "head34567890tail", "headX4567890tail"} {
 		if got := string(restored[i].Flatten()); got != want {
 			t.Errorf("buffer %d = %q, want %q", i, got, want)
@@ -949,7 +1018,7 @@ func TestSaveRestoreTrimmedHeapBuffer(t *testing.T) {
 	defer b.Release()
 	b.TrimFront(MaxChunkSize - 1)
 	var encoded bytes.Buffer
-	ctx := context.Background()
+	ctx := t.Context()
 	if _, err := state.Save(ctx, &encoded, &b); err != nil {
 		t.Fatal(err)
 	}

@@ -51,7 +51,7 @@ type View struct {
 	ViewEntry `state:"nosave"`
 	read      int
 	write     int
-	chunk     *chunk
+	chunk     *chunk `state:"wait"`
 }
 
 // NewView creates a new view with capacity at least as big as cap. It is
@@ -93,7 +93,7 @@ func NewViewWithExternalStorage(storage ExternalStorage) *View {
 	if len(data) == 0 || len(data) > MaxChunkSize {
 		panic(fmt.Sprintf("external storage length %d is outside [1, %d]", len(data), MaxChunkSize))
 	}
-	c := &chunk{external: storage}
+	c := &chunk{data: data, external: storage}
 	c.InitRefs()
 	v := viewPool.Get().(*View)
 	*v = View{write: len(data), chunk: c}
@@ -143,7 +143,7 @@ func (v *View) sharesChunk() bool {
 //
 // This indicates there is no capacity left to write.
 func (v *View) Full() bool {
-	return v == nil || v.write == len(v.chunk.bytes())
+	return v == nil || v.write == len(v.chunk.data)
 }
 
 // Capacity returns the total size of this view's chunk.
@@ -151,7 +151,7 @@ func (v *View) Capacity() int {
 	if v == nil {
 		return 0
 	}
-	return len(v.chunk.bytes())
+	return len(v.chunk.data)
 }
 
 // Size returns the size of data written to the view.
@@ -175,7 +175,7 @@ func (v *View) AsSlice() []byte {
 	if v.Size() == 0 {
 		return nil
 	}
-	return v.chunk.bytes()[v.read:v.write]
+	return v.chunk.data[v.read:v.write]
 }
 
 // ToSlice returns an owned copy of the data in this view.
@@ -193,7 +193,7 @@ func (v *View) AvailableSize() int {
 	if v == nil {
 		return 0
 	}
-	return len(v.chunk.bytes()) - v.write
+	return len(v.chunk.data) - v.write
 }
 
 // Read reads v's data into p.
@@ -267,7 +267,7 @@ func (v *View) Write(p []byte) (int, error) {
 		defer v.chunk.DecRef()
 		v.chunk = v.chunk.Clone()
 	}
-	n := copy(v.chunk.bytes()[v.write:], p)
+	n := copy(v.chunk.data[v.write:], p)
 	v.write += n
 	if n < len(p) {
 		return n, io.ErrShortWrite
@@ -379,5 +379,5 @@ func (v *View) availableSlice() []byte {
 		c := v.chunk.Clone()
 		v.chunk = c
 	}
-	return v.chunk.bytes()[v.write:]
+	return v.chunk.data[v.write:]
 }

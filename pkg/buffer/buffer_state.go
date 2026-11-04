@@ -18,13 +18,34 @@ import (
 	"context"
 )
 
+// saveData omits external memory; its owner checkpoints the backing.
+func (c *chunk) saveData() []byte {
+	if c.external != nil {
+		return nil
+	}
+	return c.data
+}
+
+// loadData is invoked by stateify.
+func (c *chunk) loadData(_ context.Context, data []byte) {
+	c.data = data
+}
+
+// afterLoad is invoked after the external owner's own state has loaded.
+func (c *chunk) afterLoad(ctx context.Context) {
+	if c.external != nil {
+		c.external.RestoreBytes(ctx, &c.data)
+	}
+}
+
 // savedView keeps heap data compact while preserving external chunk ownership
-// and sharing. If external is nil, data contains the live heap bytes.
+// and sharing. It stores either live heap bytes in data or an externally backed
+// View in external, never both.
 //
 // +stateify savable
 type savedView struct {
 	data     []byte
-	external *View
+	external *View `state:"wait"`
 }
 
 // saveData is invoked by stateify.
@@ -37,7 +58,7 @@ func (b *Buffer) saveData() []savedView {
 			views = append(views, savedView{external: v})
 		} else {
 			// A subslice would retain unused capacity and heap chunk aliases.
-			// Keep only the live bytes, as the flattened representation did.
+			// Save only the bytes visible through this View.
 			views = append(views, savedView{data: v.ToSlice()})
 		}
 	}
@@ -53,7 +74,7 @@ func (b *Buffer) loadData(_ context.Context, views []savedView) {
 			v = NewViewWithData(saved.data)
 		}
 		// Restore list ownership without acquiring another chunk reference or
-		// accessing external bytes that may not have been restored yet. Append
+		// accessing external bytes that may not have been mapped yet. Append
 		// could copy data or release an empty View, so only rebuild the links.
 		b.appendOwned(v)
 	}

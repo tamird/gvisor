@@ -178,21 +178,23 @@ func (fd *tunFD) Write(ctx context.Context, src usermem.IOSequence, opts vfs.Wri
 		// MemoryFile backing store's errors to the writer.
 		return 0, linuxerr.ENOBUFS
 	}
-	var data buffer.Buffer
-	defer data.Release()
 	blocks := make([]safemem.Block, 0, len(storage))
 	for _, s := range storage {
-		// Every view is full, so Append only links it into data. The buffer
-		// now owns the page references, including on a later copy failure.
-		data.Append(buffer.NewViewWithExternalStorage(s))
 		blocks = append(blocks, safemem.BlockFromSafeSlice(s.Bytes()))
 	}
 	writer := safemem.BlockSeqWriter{Blocks: safemem.BlockSeqFromSlice(blocks)}
 	if _, err := src.CopyInTo(ctx, &writer); err != nil {
+		for _, s := range storage {
+			s.Release()
+		}
 		return 0, err
 	}
-	// Copy the entire user range before injecting any packet. Device.Write
-	// retains shared chunk references when delivery outlives this call.
+	// Transfer the initialized packet, including its page references.
+	var data buffer.Buffer
+	defer data.Release()
+	for _, s := range storage {
+		data.Append(buffer.NewViewWithExternalStorage(s))
+	}
 	return fd.device.Write(&data)
 }
 
