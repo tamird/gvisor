@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T15:50:00.217422+00:00",
+    "updatedAt": "2026-11-04T16:27:53.571651+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37967,13 +37967,13 @@
       "repo": "google/gvisor",
       "number": 16737,
       "title": "Preserve signaling NaNs in legacy checkpoints",
-      "summary": "Saving or restoring float32 and complex64 could quiet a signaling NaN. Preserve its bits through defined float types and map values, including complex values whose other component is infinite.",
+      "summary": "The encoding fix is already approved. On current master, Save defaults to the graph engine, so the legacy regression must explicitly select the legacy engine and restore the prior mode. Review the three-line test amendment before rebasing the PR.",
       "group": "runtime",
       "ref": "review/state-signaling-nan",
       "head": "1e9e13978115bcd98a58f6b568c34217ee7dcc35",
       "url": "https://github.com/google/gvisor/pull/16737",
       "status": "open",
-      "updatedAt": "2026-10-30T10:22:03.833397+00:00",
+      "updatedAt": "2026-11-04T16:27:53.571651+00:00",
       "evidence": [
         {
           "label": "Native ARM64 state suites, AMD64 regression, owning analyzers on both architectures and finite-array comparison",
@@ -37982,8 +37982,31 @@
         {
           "label": "Four original AMD64 failures and checkpoint bit probes",
           "url": "https://github.com/tamird/gvisor/actions/runs/40998475925/artifacts/12952099358"
+        },
+        {
+          "label": "Existing approval of the unchanged encoding fix",
+          "url": "https://github.com/google/gvisor/pull/16737#pullrequestreview-5759254780"
+        },
+        {
+          "label": "Only the test-engine selection differs from the mechanical rebase",
+          "url": "https://github.com/tamird/gvisor/compare/6fb6378c8..d5d31a74d"
+        },
+        {
+          "label": "Current-master negative control and fresh AMD64 ordinary/race passes; no skips",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41864687927/artifacts/13341143402"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "d5d31a74d63cfbe91e57220300601d67122dd313",
+        "baseHead": "1e9e13978115bcd98a58f6b568c34217ee7dcc35",
+        "url": "https://github.com/tamird/gvisor/commit/d5d31a74d",
+        "title": "Preserve signaling NaNs in legacy checkpoints",
+        "requestedAt": "2026-11-04T16:27:53.571651+00:00",
+        "summary": "Apply the three-line legacy-engine test amendment and rebase the already-approved #16737 onto current master?",
+        "body": "Current master makes Save use the graph engine by default. TestSignalingNaN exercises the legacy checkpoint encoding, so it now saves the current engine setting, selects the legacy engine, and restores the setting afterward. This is the only change from the mechanical rebase. The encoding implementation and existing PR description stay unchanged.\n\nOn the same current base, the unchanged production code failed the selected test with five exact quiet-bit mismatches. The amended source passed the selected test in fresh native AMD64 ordinary and Go race runs, with the race symbols verified and no skipped cases. The earlier ARM64 and analyzer evidence remains separate.\n\nReview only the additional test change:\n\ngit -C ~/code/gvisor diff 6fb6378c8..d5d31a74d\n\nOriginal qualification: https://github.com/tamird/gvisor/actions/runs/41864687927/artifacts/13341143402"
+      }
     },
     {
       "id": "pr:16728",
@@ -49680,6 +49703,40 @@
           "url": "https://github.com/google/gvisor/pull/16964"
         }
       ]
+    },
+    {
+      "id": "branch:tcp-info-negotiated-options",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/tcp-info-negotiated-options",
+      "head": "70e7896ace3c40297c91f02abfb245527e59523f",
+      "title": "Report negotiated timestamps and SACK in TCP_INFO",
+      "url": "https://github.com/tamird/gvisor/commit/70e7896ac",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "summary": "TCP_INFO clears the timestamp and SACK bits even when the same connection negotiated them. A permanent packet test checks all four SYN-ACK combinations before reading the socket: Linux and the fix report [0, 1, 2, 3], while stock reports [0, 0, 0, 0]. This changes two reported bits, not traffic or throughput.",
+      "updatedAt": "2026-11-04T16:27:53.571651+00:00",
+      "evidence": [
+        {
+          "label": "Production change and permanent same-socket regression",
+          "url": "https://github.com/tamird/gvisor/commit/70e7896ac"
+        },
+        {
+          "label": "Fresh Linux, stock and corrected packet tests: four option combinations, no missing or skipped cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41860774840/artifacts/13341908697"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "70e7896ace3c40297c91f02abfb245527e59523f",
+        "baseHead": "6dcadf4a84a07f69e8eb5f1ea9d7b2903bd03bd7",
+        "url": "https://github.com/tamird/gvisor/commit/70e7896ac",
+        "title": "Report negotiated timestamps and SACK in TCP_INFO",
+        "requestedAt": "2026-11-04T16:27:53.571651+00:00",
+        "summary": "Open this independent TCP_INFO reporting fix and its permanent packet regression upstream?",
+        "body": "Programs inspecting a TCP socket see both option bits clear even when\nthe peer negotiated timestamps and selective acknowledgments. Return\nthe flags the TCP endpoint uses to send timestamps and SACK blocks.\n\nExercise each combination on an accepted socket. Check the options in\nthe SYN-ACK before comparing them with getsockopt(TCP_INFO) on that\nconnection."
+      }
     }
   ],
   "edges": [

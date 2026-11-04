@@ -244,6 +244,21 @@ new public approval. This supports the operational distinction above; it does
 not document Copybara's internal policy or establish that a rebase caused every
 observed progression.
 
+On November 4, failed imports were followed by successful internal imports
+after rebases that preserved the approved patches for
+[#15562](https://github.com/google/gvisor/pull/15562),
+[#16391](https://github.com/google/gvisor/pull/16391),
+[#16491](https://github.com/google/gvisor/pull/16491),
+[#16506](https://github.com/google/gvisor/pull/16506),
+[#16600](https://github.com/google/gvisor/pull/16600),
+[#16668](https://github.com/google/gvisor/pull/16668),
+[#16682](https://github.com/google/gvisor/pull/16682) and
+[#16859](https://github.com/google/gvisor/pull/16859). The existing approval
+timestamps and ready-to-pull labels were retained, with no new reviewer
+comment or approval. Unlike the October examples, these observations record
+internal import success, not merges; they do not establish a general waiver
+of review requirements.
+
 ### Reapproval after amendments
 
 The existing refresh workflow can remind prior human maintainer approvers with
