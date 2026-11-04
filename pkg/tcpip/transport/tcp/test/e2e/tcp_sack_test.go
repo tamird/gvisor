@@ -27,6 +27,7 @@ import (
 	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checker"
+	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp"
@@ -955,4 +956,146 @@ func TestMain(m *testing.M) {
 	time.Sleep(1 * time.Second)
 	refs.DoLeakCheck()
 	os.Exit(code)
+}
+
+// TestEifelReplayCancellation separates a delayed ACK for an original packet
+// from an ACK for its repair, then checks a later genuine loss independently.
+func TestEifelReplayCancellation(t *testing.T) {
+	for _, scenario := range []string{"original_ack", "original_ack_then_real_loss", "repair_ack"} {
+		t.Run(scenario, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			observed := make(chan tcp.TCPSenderState, 32)
+			c := context.NewWithOpts(t, context.Options{
+				MTU: mtu, EnableV4: true, Clock: clock,
+				Probe: func(s *tcp.TCPEndpointState) { observed <- s.Sender },
+			})
+			defer c.Cleanup()
+			e2e.SetStackSACKPermitted(t, c, true)
+			e2e.SetStackTCPRecovery(t, c, 0)
+			peer := e2e.CreateConnectedWithSACKAndTS(c)
+			info := func() tcpip.TCPInfoOption {
+				t.Helper()
+				var result tcpip.TCPInfoOption
+				if err := c.EP.GetSockOpt(&result); err != nil {
+					t.Fatalf("TCP_INFO: %v", err)
+				}
+				return result
+			}
+			if rto := info().RTO; rto < 10*time.Millisecond || rto > time.Minute {
+				t.Fatalf("unexpected initial RTO: %s", rto)
+			}
+			// Reuse the original Eifel fixture's wire-clock alignment. No
+			// data is outstanding while the randomized TS offset is removed.
+			clock.Advance(time.Duration(uint32(1000)-peer.RecentTS) * time.Millisecond)
+			data := make([]byte, 6*maxPayload)
+			for i := range data {
+				data[i] = byte(i)
+			}
+			write := func(payload []byte) {
+				t.Helper()
+				if n, err := c.EP.Write(bytes.NewReader(payload), tcpip.WriteOptions{}); err != nil || int(n) != len(payload) {
+					t.Fatalf("write got (%d,%v), want (%d,nil)", n, err, len(payload))
+				}
+			}
+			packet := func(offset int) uint32 {
+				t.Helper()
+				v := c.GetPacket()
+				defer v.Release()
+				h := header.TCP(header.IPv4(v.AsSlice()).Payload())
+				checkReceivedPacket(t, c, h, uint32(offset), v, data)
+				if len(h.Payload()) != maxPayload || !h.ParsedOptions().TS {
+					t.Fatalf("offset %d: payload %d, timestamp present %t", offset, len(h.Payload()), h.ParsedOptions().TS)
+				}
+				return h.ParsedOptions().TSVal
+			}
+			ack := func(n int, echo uint32) tcp.TCPSenderState {
+				t.Helper()
+				opt := [12]byte{header.TCPOptionNOP, header.TCPOptionNOP}
+				header.EncodeTSOption(10+uint32(n), echo, opt[2:])
+				want := c.IRS.Add(1 + seqnum.Size(n))
+				c.SendPacket(nil, &context.Headers{SrcPort: context.TestPort, DstPort: c.Port, Flags: header.TCPFlagAck, SeqNum: peer.NextSeqNum, AckNum: want, RcvWnd: 30000, TCPOpts: opt[:]})
+				deadline := time.NewTimer(time.Second)
+				defer deadline.Stop()
+				for {
+					select {
+					case s := <-observed:
+						if s.SndUna == want {
+							return s
+						}
+					case <-deadline.C:
+						t.Fatalf("ACK at offset %d was not processed", n)
+					}
+				}
+			}
+			const flight = 5 * maxPayload
+			write(data[:flight])
+			original := packet(0)
+			if original != 1000 {
+				t.Fatalf("original TSval = %d, want 1000", original)
+			}
+			for offset := maxPayload; offset < flight; offset += maxPayload {
+				if ts := packet(offset); ts != original {
+					t.Fatalf("initial packet at %d has TSval %d, want %d", offset, ts, original)
+				}
+			}
+			// Observe all five transmissions. In the loss case B is discarded
+			// while C-E are buffered at the peer; the other cases deliver B-E.
+			// Delay A's ACK until its first RTO, without SACK or DSACK evidence.
+			clock.Advance(info().RTO + time.Millisecond)
+			firstRepair := packet(0)
+			if firstRepair <= original || info().CcState != tcpip.RTORecovery || c.Stack().Stats().TCP.Timeouts.Value() != 1 {
+				t.Fatalf("first repair is not the required RTO: TSval=%d state=%v timeouts=%d", firstRepair, info().CcState, c.Stack().Stats().TCP.Timeouts.Value())
+			}
+			echo := original
+			var wantUndo uint64 = 1
+			if scenario == "repair_ack" {
+				echo, wantUndo = firstRepair, 0
+			}
+			partial := ack(maxPayload, echo)
+			if got := c.Stack().Stats().TCP.SpuriousRecoveryUndo.Value(); got != wantUndo {
+				t.Fatalf("undo count = %d, want %d", got, wantUndo)
+			}
+			if scenario == "repair_ack" {
+				// A really was lost: its repair ACK must keep ordinary replay.
+				echo = packet(maxPayload)
+			} else {
+				// The probe runs after handleSegmentLocked. With the manual
+				// clock stopped, this checks immediate replay, not a later RTO.
+				if v := c.GetPacketWithTimeout(20 * time.Millisecond); v != nil {
+					h := header.TCP(header.IPv4(v.AsSlice()).Payload())
+					offset := h.SequenceNumber() - uint32(c.IRS.Add(1))
+					v.Release()
+					t.Fatalf("unexpected immediate replay at offset %d after original ACK", offset)
+				}
+				if partial.Outstanding != 4 || info().CcState != tcpip.Open {
+					t.Fatalf("after undo: outstanding=%d state=%v, want 4 and Open", partial.Outstanding, info().CcState)
+				}
+				if scenario == "original_ack_then_real_loss" {
+					// B is still missing. Do not acknowledge C-E until the next
+					// real timeout repairs B and closes the cumulative-ACK hole.
+					clock.Advance(info().RTO + time.Millisecond)
+					echo = packet(maxPayload)
+					if echo <= firstRepair || info().CcState != tcpip.RTORecovery || c.Stack().Stats().TCP.Timeouts.Value() != 2 {
+						t.Fatalf("missing later genuine RTO: TSval=%d state=%v timeouts=%d", echo, info().CcState, c.Stack().Stats().TCP.Timeouts.Value())
+					}
+				}
+			}
+			complete := ack(flight, echo)
+			if complete.Outstanding != 0 || complete.SndUna != complete.SndNxt || c.Stack().Stats().TCP.SpuriousRecoveryUndo.Value() != wantUndo {
+				t.Fatalf("flight incomplete: outstanding=%d UNA=%d NXT=%d undo=%d", complete.Outstanding, complete.SndUna, complete.SndNxt, c.Stack().Stats().TCP.SpuriousRecoveryUndo.Value())
+			}
+			end := complete
+			if scenario != "repair_ack" {
+				// Cancellation must preserve the cursor for never-sent data.
+				// The repair control may already have emitted C as well as B.
+				write(data[flight:])
+				next := packet(flight)
+				end = ack(len(data), next)
+				if end.Outstanding != 0 || end.SndUna != end.SndNxt {
+					t.Fatalf("new data incomplete: outstanding=%d UNA=%d NXT=%d", end.Outstanding, end.SndUna, end.SndNxt)
+				}
+			}
+			t.Logf("EIFEL_CANCEL case=%s original=%d repair=%d echo=%d timeouts=%d undo=%d partial_outstanding=%d final_outstanding=%d cwnd=%d", scenario, original, firstRepair, echo, c.Stack().Stats().TCP.Timeouts.Value(), c.Stack().Stats().TCP.SpuriousRecoveryUndo.Value(), partial.Outstanding, end.Outstanding, end.SndCwnd)
+		})
+	}
 }
