@@ -514,7 +514,7 @@ func newIdleRACKConn(t *testing.T) *idleRACKConn {
 	e2e.SetStackSACKPermitted(t, c, true)
 	c.CreateConnectedWithOptions(header.TCPSynOptions{SACKPermitted: c.SACKEnabled(), TS: true}, 0 /* delay */)
 
-	ic := &idleRACKConn{c: c, clock: clock, data: make([]byte, 3*maxPayload), samples: samples}
+	ic := &idleRACKConn{c: c, clock: clock, data: make([]byte, 6*maxPayload), samples: samples}
 	for i := range ic.data {
 		ic.data[i] = byte(i)
 	}
@@ -632,6 +632,47 @@ func TestRACKTLPFlightAfterAck(t *testing.T) {
 	ic.c.CheckNoPacketTimeout("probe sent before one RTO from the ACK", 200*time.Millisecond)
 	ic.clock.Advance(time.Nanosecond)
 	ic.c.ReceiveAndCheckPacketWithOptions(ic.data, 2*maxPayload, maxPayload, e2e.TSOptionSize)
+}
+
+// TestRACKTLPAfterRecovery tests that the advancing ACK which ends SACK
+// recovery bounds the probe by a full RTO, rather than the recovery timer's
+// remaining time.
+func TestRACKTLPAfterRecovery(t *testing.T) {
+	ic := newIdleRACKConn(t)
+	seq := func(i int) seqnum.Value { return ic.c.IRS.Add(1 + seqnum.Size(i*maxPayload)) }
+
+	// Lose the first segment of a four-segment flight. The three SACKs
+	// report the later segments, causing the missing segment to be repaired.
+	for i := 1; i < 5; i++ {
+		ic.send(t, i)
+	}
+	ic.clock.Advance(ic.srtt / 2)
+	for i := 2; i < 5; i++ {
+		ic.c.SendAckWithSACK(seqnum.Value(context.TestInitialSequenceNumber).Add(1), maxPayload, []header.SACKBlock{{Start: seq(2), End: seq(i + 1)}})
+		ic.c.Stack().Pause()
+		ic.c.Stack().Resume()
+	}
+	ic.clock.Advance(ic.srtt)
+	ic.c.ReceiveAndCheckPacketWithOptions(ic.data, maxPayload, maxPayload, e2e.TSOptionSize)
+
+	// Send a tail beyond the recovery point, then let some of the recovery
+	// RTO elapse before acknowledging the repaired flight. Only the newer
+	// tail remains outstanding after this ACK ends recovery.
+	ic.send(t, 5)
+	ic.clock.Advance(2 * ic.srtt)
+	rto, _ := ic.ack(t, 5*maxPayload)
+	if got := ic.c.Stack().Stats().TCP.SACKRecovery.Value(); got != 1 {
+		t.Fatalf("SACK recoveries = %d, want 1", got)
+	}
+
+	ic.clock.Advance(rto - time.Nanosecond)
+	ic.c.CheckNoPacketTimeout("probe sent before one RTO from the recovery ACK", 200*time.Millisecond)
+	ic.clock.Advance(time.Nanosecond)
+	ic.c.ReceiveAndCheckPacketWithOptions(ic.data, 5*maxPayload, maxPayload, e2e.TSOptionSize)
+	if got := ic.c.Stack().Stats().TCP.Timeouts.Value(); got != 0 {
+		t.Fatalf("RTOs = %d, want 0", got)
+	}
+	ic.ack(t, 6*maxPayload)
 }
 
 // TestRACKDetectDSACK tests that RACK detects DSACK with duplicate segments.
