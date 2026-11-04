@@ -466,7 +466,7 @@ func TestLicenseSourceIdentity(t *testing.T) {
 func TestVerifyLicenseSource(t *testing.T) {
 	const commit = "0123456789abcdef0123456789abcdef01234567"
 	d := dep{name: "tool", kind: kindArchive, url: "https://example.com/tool.tar.gz", sha256: strings.Repeat("a", 64)}
-	e := Entry{Dependency: d.name, Version: d.url, SHA256: d.sha256, Retrieved: "2026-10-17", Commit: commit, License: Licenses{gpl2}, LicenseSource: "https://raw.githubusercontent.com/example/upstream/" + commit + "/COPYING"}
+	e := Entry{Dependency: d.name, Version: d.url, SHA256: d.sha256, Retrieved: "2026-10-17", Commit: commit, License: Licenses{"GPL-2.0-only"}, LicenseSource: "https://raw.githubusercontent.com/example/upstream/" + commit + "/COPYING"}
 	if problems := verifyProblems([]dep{d}, []Entry{e}); len(problems) != 0 {
 		t.Fatalf("verifyProblems = %v, want a valid explicit notice", problems)
 	}
@@ -526,7 +526,9 @@ func TestEnumerateAndFetchQemuLicenseSource(t *testing.T) {
 		sha      = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 		commit   = "0123456789abcdef0123456789abcdef01234567"
 		source   = "https://raw.githubusercontent.com/qemu/qemu/" + commit + "/COPYING"
-		gpl2Text = "GNU GENERAL PUBLIC LICENSE Version 2, June 1991"
+		gpl2Text = `This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the Free
+Software Foundation, version 2.`
 	)
 
 	dir := t.TempDir()
@@ -613,7 +615,7 @@ func TestEnumerateAndFetchQemuLicenseSource(t *testing.T) {
 		Retrieved:     "2026-10-17",
 		Commit:        commit,
 		SHA256:        sha,
-		License:       Licenses{gpl2},
+		License:       Licenses{"GPL-2.0-only"},
 		LicenseSource: source,
 	}}
 	if err := writeEntries(yamlPath, seed); err != nil {
@@ -639,7 +641,7 @@ func TestEnumerateAndFetchQemuLicenseSource(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(got) != 1 || got[0].LicenseSource != source || !slices.Equal(got[0].License, Licenses{gpl2}) {
+	if len(got) != 1 || got[0].LicenseSource != source || !slices.Equal(got[0].License, Licenses{"GPL-2.0-only"}) {
 		t.Fatalf("readEntries after Fetch = %+v, want preserved LicenseSource and GPL-2.0-only", got)
 	}
 
