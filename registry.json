@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T01:00:29.582231+00:00",
+    "updatedAt": "2026-11-04T01:24:27.854931+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2249,8 +2249,8 @@
       "head": "8dad7a574b6914fc2aea3609f92235af9ca7b0d3",
       "title": "Stage only the current Python release archives",
       "url": "https://github.com/google/gvisor/pull/16766",
-      "status": "open",
-      "updatedAt": "2026-10-30T21:25:47.985190+00:00",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-04T01:24:27.854931+00:00",
       "summary": "Keep the release function brace-bodied. The build runs in a private project copy; its cd and cleanup are scoped so the all path still uploads from the caller’s relative staging directory. Four builds, failure cleanup, and the upload arguments passed.",
       "evidence": [
         {
@@ -2272,6 +2272,18 @@
         {
           "label": "One-file change against upstream master",
           "url": "https://github.com/tamird/gvisor/compare/8f15deb0c...6be2b030b"
+        },
+        {
+          "label": "Review of the shared staging directory",
+          "url": "https://github.com/google/gvisor/pull/16766#discussion_r4462295886"
+        },
+        {
+          "label": "Ten-line amendment against the public PR",
+          "url": "https://github.com/tamird/gvisor/compare/8dad7a574...04df6c244"
+        },
+        {
+          "label": "Two versions in one staging directory, on both frontends",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41753277814/artifacts/13286028457"
         }
       ],
       "refinement": {
@@ -2290,7 +2302,18 @@
           "at": "2026-10-30T21:19:57.406552+00:00"
         }
       ],
-      "number": 16766
+      "number": 16766,
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "04df6c244952232769db6b4123555354f9873e9b",
+        "baseHead": "8dad7a574b6914fc2aea3609f92235af9ca7b0d3",
+        "url": "https://github.com/tamird/gvisor/compare/8dad7a574...04df6c244",
+        "title": "Replace older gVisor archives in the Python staging directory",
+        "requestedAt": "2026-11-04T01:24:27.854931+00:00",
+        "summary": "Publish the amendment and reply to carzh on #16766?",
+        "body": "Building versions .1 and .2 into artifacts/python left both wheels and both source archives there. The release manifest rejected them. With the fix, both PyPA build and uv staged only .2. Five unrelated files survived, a failed build preserved the previous files, and two simultaneous writers left one complete version. Twine received the staged paths through an argument recorder; manifest publication was a dry run.\n\nProposed reply\n\nFixed in 04df6c244. Two consecutive make artifacts-python builds reproduced the manifest rejection. The build now removes older gVisor archives after staging the new ones and preserves other packages in that directory. With both python -m build and uv, make release staged only the second version and the manifest dry-run selected it.\n\nLinux comparison: https://github.com/tamird/gvisor/actions/runs/41753277814/artifacts/13286028457\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "branch:bazel-clang-tidy-llvm",
@@ -30169,8 +30192,8 @@
       "title": "Build the runsc sidecars with the C toolchain",
       "url": "https://github.com/google/gvisor/pull/16522",
       "group": "release",
-      "status": "Open; amendment ready for contributor review",
-      "updatedAt": "2026-11-03T20:40:16.868104+00:00",
+      "status": "Rebase under validation",
+      "updatedAt": "2026-11-04T01:24:27.854931+00:00",
       "summary": "The published amendment moves the sidecars’ freestanding C++ rule behind //tools:defs.bzl. The public adapter removes sanitizer runtime options and the command-line allocator override while preserving unrelated linker flags. Lucas received replies on both points. The internal adapter still needs to map freestanding_executable to its noasan policy; the public tests do not verify that mapping.",
       "evidence": [
         {
@@ -30264,9 +30287,9 @@
       "followup": {
         "owner": "Source PR owner",
         "sourceHead": "74aa42d5fb36b5efa0c92f269a4360e7a7caf4b2",
-        "observedAt": "2026-11-03T20:40:16.868104+00:00",
-        "disposition": "Published and replied to both review threads",
-        "nextAction": "Await maintainer review of the amended build adapter. The transition and allocator replies are posted.",
+        "observedAt": "2026-11-04T01:24:27.854931+00:00",
+        "disposition": "The published head conflicts with master in tools/defs.bzl",
+        "nextAction": "Qualify the context-only rebase on Bazel 9.3.1. Master added core tagging to the prewarmer; verify its 4 KiB limit and the sidecar link options on both architectures.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16522#discussion_r4460168357",
           "https://github.com/google/gvisor/pull/16522#discussion_r4460168783",
