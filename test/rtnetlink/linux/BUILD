@@ -1,5 +1,6 @@
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@rules_shell//shell:sh_library.bzl", "sh_library")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//tools:defs.bzl", "go_binary")
 
 package(
@@ -51,4 +52,12 @@ go_binary(
     deps = [
         "@org_golang_x_sys//unix:go_default_library",
     ],
+)
+
+# Fork-only comparison, with a source-built release staged by the qualifier.
+sh_test(
+    name = "source_veth_mss",
+    srcs = ["packaged_bridge.py"],
+    data = ["veth_wire.py"] + glob(["veth-release/**"], allow_empty = True),
+    tags = ["manual"],
 )

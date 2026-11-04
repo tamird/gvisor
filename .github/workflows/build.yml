@@ -1,35 +1,65 @@
-name: CI
-
-"on":
+name: Compare configured MTUs and TCP SYN MSS on private virtual links
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/veth-network-mtu-wire]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:509c3211494b2ab580b120454e6d9fe7f2a7e80fabd87c97100fdb99e3066e72
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Bind both original sources and prepare the native GNU release builder
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/veth-network-mtu"
+          mkdir -p "$root"/{bin,public}
+          echo '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$root/public/result.json"
+          test "$(git rev-parse HEAD^)" = 224d478ba5a85e1146267a60e2e7300e92c0b990
+          test "$(git rev-parse HEAD^^)" = 6dcadf4a84a07f69e8eb5f1ea9d7b2903bd03bd7
+          test "$(cat .bazelversion)" = 9.3.1
+          cp .github/qualification/veth_mtu.py "$root/veth_mtu.py"
+          curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$root/bin/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $root/bin/bazel" | sha256sum -c -
+          chmod 755 "$root/bin/bazel"
+          test "$("$root/bin/bazel" --version)" = 'bazel 9.3.1'
+          docker pull --platform=linux/amd64 "$GNU"
+          docker run -d --name veth-builder --user "$(id -u):$(id -g)"             -e HOME=/home/runner -e USER=runner -e LANG=C.UTF-8             -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$root:$root"             -w "$GITHUB_WORKSPACE" --entrypoint /bin/sleep "$GNU" infinity
+          # Use the tool's normal cache inside the disposable builder container.
+          docker exec --user 0 veth-builder bash -ec 'mkdir -p /home/runner; chown "$1:$2" /home/runner' bash "$(id -u)" "$(id -g)"
+          test "$(docker exec veth-builder /usr/local/bin/bazel --version)" = 'bazel 9.3.1'
+          docker exec veth-builder aarch64-linux-gnu-gcc --version | head -1
+      - name: Run the exact private Linux and Sentry owners
+        timeout-minutes: 106
+        run: |
+          root="$RUNNER_TEMP/veth-network-mtu"
+          env -i HOME="$HOME" USER="$USER" PATH="/usr/local/bin:/usr/bin:/bin" LANG=C.UTF-8             python3 -B "$root/veth_mtu.py" "$root" "$GITHUB_SHA"
+      - name: Verify the bounded public projection
+        if: always()
+        id: public
+        run: |
+          python3 -B - <<'PY'
+          import json,os,re
+          from pathlib import Path
+          out = Path(os.environ["RUNNER_TEMP"],"veth-network-mtu","public")
+          assert {p.name for p in out.iterdir()} == {"result.json"}
+          p=out/"result.json"
+          assert p.is_file() and not p.is_symlink() and 0 < p.stat().st_size < 128*1024
+          s=p.read_text()
+          assert not re.search(r'https?://|(?i:authorization|bearer |password|api[_-]key|github_pat_|gh[pousr]_)',s)
+          assert json.loads(s)["status"] in ("PASS","FAIL","INCOMPLETE")
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.public.outcome == 'success'
+        with:
+          name: virtual-link-mtu-and-syn
+          path: ${{ runner.temp }}/veth-network-mtu/public/result.json
+          if-no-files-found: error
+      - name: Remove the ephemeral build container
+        if: always()
+        run: docker rm -f veth-builder >/dev/null 2>&1 || true
