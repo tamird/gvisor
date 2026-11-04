@@ -1,5 +1,5 @@
+load("@gvisor//tools/bazeldefs:static.bzl", "musl_cc_binary")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
-load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -14,7 +14,7 @@ write_file(
     ],
 )
 
-cc_binary(
+musl_cc_binary(
     name = "fsstress",
     srcs = [
         "include/lapi/fcntl.h",
