@@ -12,7 +12,6 @@ go_library(
     marshal = False,
     stateify = False,
     visibility = ["//visibility:public"],
-    deps = ["//pkg/sync"],
 )
 
 go_test(
