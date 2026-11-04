@@ -1,4 +1,4 @@
-"""Verify the permanent loopback and veth tests against native Linux and two Sentries."""
+"""Recover the first operation or MTU readback from the existing fixed shell test."""
 
 from datetime import datetime, timezone
 import hashlib
@@ -6,7 +6,6 @@ import json
 import os
 from pathlib import Path
 from urllib.parse import unquote, urlparse
-import xml.etree.ElementTree as ET
 import re
 import subprocess
 
@@ -17,16 +16,14 @@ FIXED = "679d20c1ba36918979ce60e0f7619c3c72738d03"
 STOCK = "cc65110cb1a021ebc7dd5526fb8334dca9fc6b2f"
 BASE = "6dcadf4a84a07f69e8eb5f1ea9d7b2903bd03bd7"
 PREVIOUS = "224d478ba5a85e1146267a60e2e7300e92c0b990"
-ROUTE = "//test/syscalls:socket_netlink_route_test_"
+ORIGINAL = "f1ccfd3be89aa530ae9d5cfae6f6673a891f0102"
 SHELL = "//test/rtnetlink:setlink_test_"
-UNIT = "//pkg/tcpip/link/ethernet:ethernet_test"
-CASES = {f"_/NetlinkSetLinkTest.ChangeMTU/{i}" for i in (0, 1)}
 SOURCES = ("test/rtnetlink/linux/setlink_test.sh", "test/syscalls/linux/socket_netlink_route.cc")
 SCOPED = ["--config=x86_64", "--lockfile_mode=off", "--jobs=4", "--local_resources=memory=8192",
           "--remote_cache=", "--remote_executor=", "--bes_backend=",
           "--strategy=GoStdlib=processwrapper-sandbox", "--strategy=GoStdlibList=processwrapper-sandbox"]
 TEST = ["--strategy=TestRunner=local", "--nocache_test_results", "--flaky_test_attempts=1", "--runs_per_test=1",
-        "--test_sharding_strategy=disabled", "--test_timeout=150", "--test_output=errors"]
+        "--test_sharding_strategy=disabled", "--nozip_undeclared_test_outputs", "--test_timeout=150", "--test_output=errors"]
 # Exact projection, never export raw logs, packet bytes, paths, or environment.
 CLUES = ("conflicting declaration", "conflicting types", "cannot represent machine", "cc: no such file",
          "failed to fetch", "failed to download", "no such target", "could not resolve", "no space left",
@@ -64,17 +61,7 @@ def selected(buf):
     lines = buf.decode(errors="replace").splitlines()
     joined = "\n".join(lines).lower()
     locations = re.findall(r"\b(socket_netlink_route\.cc|setlink_test\.sh|main\.go|ethernet(?:_test)?\.go|vdso\.cc)\D{1,12}(\d{1,5})", joined)
-    reasons = []
-    for line in lines:
-        if not re.search(r"ERROR: |(?:fatal )?error: |RuntimeError: |OSError: |subprocess\.CalledProcessError:|RTNETLINK answers:|TimeoutError:", line, re.I):
-            continue
-        if re.search(r"https?://|secret|token|password|cookie|authorization|bearer|gh[pousr]_|github_pat_|[?&]sig=", line, re.I):
-            continue
-        line = re.sub(r"/(?:home|tmp|__w|github)/[^ :]+", "<path>", line)
-        reasons.append(line[:240])
-        if len(reasons) == 4:
-            break
-    return {"signals": [s for s in CLUES if s in joined], "reasons": reasons,
+    return {"signals": [s for s in CLUES if s in joined],
             "locations": sorted(set(":".join(v) for v in locations))[:10],
             "sha256": hashlib.sha256(buf).hexdigest()}
 
@@ -142,86 +129,137 @@ def checkout(ref):
     assert git("rev-parse", "HEAD") == ref and not git("status", "--porcelain", "--untracked-files=no")
 
 
-ARMS = {
-    "native": (STOCK, ROUTE + "native"),
-    "stock": (STOCK, ROUTE + "runsc_systrap_directfs"),
-    "fixed": (FIXED, ROUTE + "runsc_systrap_directfs"),
-    "fixed_shell": (FIXED, SHELL + "runsc_systrap_overlay_directfs"),
-    "ethernet": (FIXED, UNIT),
-}
+ARMS = {"fixed_shell": (FIXED, SHELL + "runsc_systrap_overlay_directfs")}
+
+# First occurrence of each statement in the *original* shell xtrace. No raw
+# command, substituted path, arguments, or environment leave the worker.
+TRACE = (
+    ("source_helper", r"source .*rtnetlink_test\.sh"),
+    ("lookup_mount", r"which mount"),
+    ("copy_mount", r"cp \S+ /tmp/mount"),
+    ("prepare_var_run", r"mkdir -p /var/run"),
+    ("mount_tmpfs", r"(?:\S*/)?mount -t tmpfs test /var/run"),
+    ("create_pair", r"ip link add name test_veth01 type veth peer name test_veth02"),
+    ("read_link", r"ip link show test_veth01"),
+    ("require_1500", r"grep -w ['\"]?mtu 1500"),
+    ("set_3000", r"ip link set test_veth01 mtu 3000"),
+    ("require_3000", r"grep -w ['\"]?mtu 3000"),
+    ("delete_pair", r"ip link del name test_veth01"),
+    ("rename_link", r"ip link set test_veth01 name test_veth03"),
+    ("set_mac", r"ip link set dev test_veth01 address 1a:2a:3a:4a:5a:6a"),
+)
+# "setting up network:" is the caller's error context; the informational
+# "Setting up network" at sandbox/network.go:55 is deliberately separate.
+PHRASES = ("running container:", "starting container:", "creating sandbox:", "creating sandbox process",
+           "setting up network:", "creating default loopback interface", "creating loopback link and routes",
+           "urpc method", "containermanager.setnetworkargs", "connection reset by peer",
+           "the sandbox exited before the container started", "starting root container:",
+           "starting sub-container:", "creating container:", "mounting rootfs", "executing binary",
+           "could not create", "failed to create", "failed to start", "error executing",
+           "failed to mount", "mount source", "failed to connect", "failed to load", "exec format error",
+           "permission denied", "operation not permitted", "operation not supported",
+           "invalid argument", "no such file or directory", "file exists", "device or resource busy",
+           "no such device", "not implemented", "command not found", "not found", "not supported",
+           "not a directory", "read-only file system", "rtnetlink answers:", "segmentation fault",
+           "panic:", "fatal error:", "signal: killed", "signal: bad system call",
+           "sandbox process exited", "test failed with status:", "failed with error exit status")
+FILES = ("sandbox.go", "network.go", "loader.go", "container.go", "boot.go", "gofer.go", "main.go",
+         "setlink_test.sh", "rtnetlink_test.sh", "setup_container.go", "systrap.go", "overlay.go")
+
+
+def projection(text):
+    steps, first_errors, last_errors = [], [], []
+    for n, line in enumerate(text.splitlines(), 1):
+        m = re.search(r"(?:^|\s)\++\s+(.+)", line)
+        if m:
+            for key, pattern in TRACE:
+                if re.match(pattern, m[1]) and len(steps) < 45:
+                    steps.append([n, key])
+                    break
+        low = line.lower()
+        terms = [s for s in PHRASES if s in low]
+        if terms:
+            locations = [[filename, int(pos)] for filename in FILES
+                         for pos in re.findall(re.escape(filename) + r":(\d{1,5})\b", line)[:1]]
+            operations = [k for k in ("netlink", "sentry", "gofer", "systrap", "seccomp", "loopback", "overlay",
+                                      "tmpfs", "openat", "socketpair", "socket", "clone", "unshare", "setns", "bind",
+                                      "connect", "sendmsg", "recvmsg", "ioctl", "pivot_root", "execve", "mount",
+                                      "ptrace", "mmap", "setresuid", "setresgid", "sigsys", "sigkill", "bash", "ip")
+                          if re.search(r"\b" + k + r"\b", low)]
+            item = {"line":n, "terms":terms[:10], "locations":locations[:4], "operations":operations[:8]}
+            if len(first_errors) < 4:
+                first_errors.append(item)
+            else:
+                last_errors = (last_errors + [item])[-3:]
+    return {"trace":steps, "errors":first_errors+last_errors, "network_info_seen":"Setting up network" in text,
+            "link_mtu": [int(v) for v in re.findall(r"^\s*\d+: test_veth01(?:@[^:]+)?: .*?\bmtu (\d{1,5})\b", text, re.M)[:12]]}
+
+
+def sandbox_logs(owner):
+    # The authenticated TestResult is checked by read_attempt(). Follow up only
+    # inside that owner's predeclared, canonical local output directory. Never
+    # follow a symlink in the output tree, open FIFOs, or publish a log line.
+    cache = (Path.home()/".cache/bazel").resolve(strict=True)
+    base = Path("bazel-testlogs").resolve(strict=True)
+    assert base.is_relative_to(cache) and base.name == "testlogs"
+    directory = base / owner[2:].replace(":", "/") / "test.outputs"
+    assert directory.resolve() == directory
+    if not directory.is_dir():
+        return {"directory":False, "members":[]}
+    members = []
+    for here, dirs, files in os.walk(directory, followlinks=False):
+        here = Path(here)
+        depth = len(here.relative_to(directory).parts)
+        pattern = [r"[\w.-]{1,160}",r"runsc[0-9]+",r"logs",r"(?!)"][min(depth,3)]
+        dirs[:] = sorted(d for d in dirs if re.fullmatch(pattern,d) and not (here/d).is_symlink())[:4]
+        if depth != 3:
+            continue
+        for name in sorted(files):
+            match = re.fullmatch(r"runsc\.log\.[\w:.+-]+\.(boot|gofer|run|start|create)\.txt",name)
+            file = here / name
+            if not match or file.is_symlink() or not file.is_file() or len(members) >= 6:
+                continue
+            size = file.stat().st_size
+            with file.open("rb") as stream:
+                head = stream.read(1024 * 1024)
+                if len(head) < size:
+                    stream.seek(max(len(head), size - 262144))
+                    head += b"\n" + stream.read(262144)
+            members.append({"command":match[1], "bytes":size, "complete":size <= 1024 * 1024,
+                            "sample_sha256":hashlib.sha256(head).hexdigest(), **projection(head.decode(errors="replace"))})
+    return {"directory":True, "members":members}
 
 
 def execute(name, source, owner):
     checkout(source)
-    row = R["phases"][name] = {"source": source, "target": owner}
-    args = []
-    if owner.startswith(ROUTE):
-        args = ["--test_filter=_/NetlinkSetLinkTest.ChangeMTU/*"]
-    elif owner == UNIT:
-        args = ["--test_arg=-test.v"]
-    events = bazel(row, name, ["test", *SCOPED, *TEST, *args, owner])
-    log, outputs = read_attempt(row, events, owner, source)
+    row = R["phases"][name] = {"source":source, "target":owner}
+    events = bazel(row, name, ["test", *SCOPED, *TEST, owner])
+    log, _ = read_attempt(row, events, owner, source)
+    row["original_log"] = projection(log)
+    row["mac_readback"] = bool(re.search(r"^\s*link/ether 1a:2a:3a:4a:5a:6a\b", log, re.M))
+    row["skip_seen"] = "SKIP:" in log
+    persist()
+    row["sandbox_logs"] = sandbox_logs(owner)
+    persist()
     test = row["test"]
     assert not test["cached"] and test["strategy"] == "local"
-    if owner.startswith(ROUTE):
-        xml = test_output(outputs["test.xml"], owner, "test.xml")
-        row["xml_sha256"] = hashlib.sha256(xml).hexdigest()
-        nodes = list(ET.fromstring(xml).iter("testcase"))
-        names = [n.get("classname", "") + "." + n.get("name", "") for n in nodes]
-        row["cases"] = names
-        row["failure_details"] = {}
-        for node, case in zip(nodes, names):
-            if case in CASES:
-                details = []
-                for failure in node.findall("failure")[:3]:
-                    message = failure.get("message") or "".join(failure.itertext())
-                    details.append({
-                        "source_lines": re.findall(r"socket_netlink_route\.cc[:(](\d{1,5})", message)[:4],
-                        "numbers": [int(n) for n in re.findall(r"(?:Which is|Actual|Expected):\s*(\d{1,10})\b", message)[:8]],
-                    })
-                row["failure_details"][case] = details
-        persist()
-        assert len(names) == 2 and set(names) == CASES
-        assert all(n.find("skipped") is None and n.find("error") is None and
-                   n.get("status") != "notrun" and n.get("result") != "suppressed" for n in nodes)
-        if name == "stock":
-            row["mismatches"] = {}
-        for node, case in zip(nodes, names):
-            failures = node.findall("failure")
-            state = "FAILED" if name == "stock" else "OK"
-            assert re.search(r"\[\s*" + state + r"\s*\]\s+" + re.escape(case) + r"(?=\s|$)", log)
-            if name == "stock":
-                assert len(failures) == 1
-                message = failures[0].get("message") or "".join(failures[0].itertext())
-                assert re.search(r"\bmtu\b", message)
-                assert row["failure_details"][case][0]["numbers"] == [1220, 1234]
-                row["mismatches"][case] = {"observed": 1220, "expected": 1234}
-            else:
-                assert not failures
-    elif owner == UNIT:
-        passed = set(re.findall(r"^\s*--- PASS: (Test[\w/=]+) \(", log, re.M))
-        expected = {"TestNetworkMTU", "TestMTU", *(f"TestMTU/MaxFrameSize={n}" for n in (0,13,14,15,1500))}
-        row["cases"] = sorted(passed & expected)
-        assert passed >= expected and "FAIL:" not in log and "--- SKIP:" not in log
-    else:
-        # The upstream sh_binary has no gtest XML cases; verify its own shell trace and both readbacks.
-        row["readbacks"] = sorted({int(s) for s in re.findall(r"^\s*\d+: test_veth01(?:@[^:]+)?: .*?\bmtu (1500|3000)\b", log, re.M)})
-        row["finished_mac_case"] = "1a:2a:3a:4a:5a:6a" in log and "ip link del name test_veth01" in log
-        assert row["readbacks"] == [1500,3000] and row["finished_mac_case"] and "SKIP:" not in log
-    if name == "stock":
-        assert row["native_exit"] == 3 and test["status"] == "FAILED"
-    else:
-        assert row["native_exit"] == 0 and test["status"] == "PASSED"
-    row["disposition"] = "EXPECTED_FAILURE" if name == "stock" else "PASS"
+    steps = [s for _, s in row["original_log"]["trace"]]
+    assert row["native_exit"] == 0 and test["status"] == "PASSED"
+    assert {"create_pair","set_3000","set_mac","delete_pair"} <= set(steps)
+    assert set(row["original_log"]["link_mtu"]) == {1500,3000} and row["mac_readback"] and not row["skip_seen"]
+    row["disposition"] = "PASS"
     R["observed"].append(name)
     persist()
 
-
 R = {"status":"INCOMPLETE", "stock_integration":STOCK, "fixed":FIXED, "base":BASE, "carrier":CARRIER,
      "expected":list(ARMS), "observed":[], "phases":{}, "errors":{}, "started_at":now(),
+     "previous_shell":{"run":41860421336,"artifact":13339549679,
+                       "zip_sha256":"2a8e64a4c6cc2d1a632db665a03cfb8b84d22fda03c997609073745975a2c368",
+                       "log_sha256":"6dc84c27d20b467b74cb609052b3ff6bb812980efb5ef0ae001a11f3a48b1068",
+                       "native_exit":3,"status":"FAILED","mtu_readbacks":[]},
      "prior_wire_run":41856957832, "prior_artifact":13339106163}
 persist()
-assert git("rev-parse","HEAD") == CARRIER and git("rev-parse",CARRIER+"^") == STOCK
+assert git("rev-parse","HEAD") == CARRIER and git("rev-parse",CARRIER+"^") == ORIGINAL and git("rev-parse",ORIGINAL+"^") == STOCK
 assert git("rev-parse",STOCK+"^") == FIXED and git("rev-parse",FIXED+"^") == BASE
 assert git("diff","--name-only",BASE,STOCK).splitlines() == list(SOURCES)
 assert git("diff","--name-only",PREVIOUS,FIXED).splitlines() == [SOURCES[1]]

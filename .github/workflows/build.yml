@@ -1,18 +1,18 @@
-name: Run both virtual-link MTU request types on Linux and gVisor
+name: Identify the first operation in the fixed setlink shell test
 on:
   push:
-    branches: [qualification/veth-network-mtu-syscalls]
+    branches: [qualification/setlink-shell-first-error]
 permissions:
   contents: read
 jobs:
   sockets:
     if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 132
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 4
+          fetch-depth: 5
           persist-credentials: false
       - name: Bind the public tool and report helpers
         shell: bash
@@ -28,7 +28,7 @@ jobs:
           curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$root/bin/bazel"
           echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $root/bin/bazel" | sha256sum -c -
           chmod 755 "$root/bin/bazel"
-      - name: Run the existing syscall owners on a dedicated native GNU Linux worker
+      - name: Run only the original fixed setlink shell owner
         shell: bash
         run: |
           set -euo pipefail
@@ -60,6 +60,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.safe.outcome == 'success'
         with:
-          name: veth-network-mtu-syscalls
+          name: setlink-shell-first-error
           path: ${{ runner.temp }}/veth-network-mtu-syscalls/out/verdict.json
           if-no-files-found: error
