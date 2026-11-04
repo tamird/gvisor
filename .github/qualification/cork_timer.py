@@ -1,12 +1,14 @@
 """Check cork timeouts and flushing on Linux and both gVisor senders."""
 
 from datetime import datetime, timezone
+import errno
 import hashlib
 import json
 import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 import xml.etree.ElementTree as ET
 import zipfile
 
@@ -186,9 +188,107 @@ def execute(name, source, target):
     save()
 
 
+def original_reports():
+    from cas_inputs import blob
+
+    path = ROOT / "cork-original.zip"
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    assert digest == "fc37d8ae8d6423e8767258fca8bab02decb16647fa0b05ee45ce918ff542de71"
+    with zipfile.ZipFile(path) as archive:
+        assert archive.namelist() == ["verdict.json"]
+        old = json.loads(archive.read("verdict.json"))
+    assert old["source"] == "4a3e55b3d217d699873b479945c8367183cee1e0" and old["status"] == "FAIL"
+    result.update(original=old, original_zip_sha256=digest)
+    save()
+    # Match names in both GTest XML and the syscall runner's rendered log.
+    case_re = re.compile("(" + "|".join(CASES) + r")/(\d{1,2})(?!\d)")
+    allowed_files = {Path(p).name for p in git("ls-files", "test/syscalls/linux", "test/util").splitlines()}
+
+    def failure(text):
+        files = re.findall(r"(?<![a-zA-Z0-9_.-])([a-zA-Z0-9_-]+\.(?:cc|h)):(\d{1,6})\b", text)
+        return {
+            "locations": list(dict.fromkeys(f"{f}:{n}" for f, n in files if f in allowed_files))[:12],
+            "errno": sorted({name for i, name in errno.errorcode.items() if name in text or
+                             os.strerror(i).lower() in text.lower() or
+                             re.search(rf"\berrno(?:\s*[:=]|\s)\s*{i}\b", text, re.I)}),
+            "socket_calls": [word for word in ("NewSocketPair", "socket", "bind", "connect", "listen",
+                             "setsockopt", "send", "recv", "poll", "shutdown") if re.search(r"\b" + word + r"\b", text)],
+            "poll_zero": bool(re.search(r"RetryEINTR\(poll\)[\s\S]{0,2000}?\bActual:\s*0\b", text)),
+            "iteration_one": bool(re.search(r"socket_ip_tcp_generic\.cc:1580:\s*1\b", text)),
+        }
+
+    def inspect(name, uuid, count):
+        prior = old["arms"][name]
+        assert prior["invocation"] == uuid and prior["source"] == STOCK and prior["native_exit"] == 3
+        assert prior["attempt"]["strategy"] == "remote" and prior["evidence_complete"]
+        assert not prior["attempt"]["cached_locally"] and not prior["attempt"]["cached_remotely"]
+        row = result["arms"][name] = dict(invocation=uuid, target=prior["target"], files={}, status="INCOMPLETE")
+        save()
+        members = {}
+        for kind in ("test.xml", "test.log"):
+            try:
+                record, = [r for r in prior["reports"] if r["name"] == kind]
+                assert 0 < record["bytes"] <= 128 * 1024
+                raw = blob(dict(hash=record["sha256"], sizeBytes=record["bytes"]), uuid)
+                members[kind] = raw
+                row["files"][kind] = record
+            except Exception as error:
+                row["files"][kind] = {"missing": type(error).__name__}
+            save()
+        if "test.xml" not in members:
+            return
+        row["xml_diagnostic"] = failure(members["test.xml"].decode(errors="replace"))
+        if "test.log" in members and name == "stock":
+            row["log_diagnostic"] = failure(members["test.log"].decode(errors="replace"))
+        save()
+        cases = {}
+        for node in ET.fromstring(members["test.xml"]).iter("testcase"):
+            names = node.get("classname", "") + "." + node.get("name", "")
+            matches = set(case_re.findall(names))
+            assert len(matches) == 1
+            test, number = matches.pop()
+            assert 0 <= int(number) < 12
+            case = f"{test}/{number}"
+            assert case not in cases
+            errors = node.findall("failure") + node.findall("error")
+            detail = "\n".join((e.get("message", "") + "\n" + "".join(e.itertext())) for e in errors)
+            skip = node.find("skipped") is not None or node.get("status") == "notrun" or node.get("result") == "suppressed"
+            cases[case] = dict(outcome="skip" if skip else "fail" if errors else "pass")
+            if errors:
+                cases[case]["diagnostic"] = failure(detail)
+        row["cases"] = cases
+        save()
+        assert len(cases) == count and not any(c["outcome"] == "skip" for c in cases.values())
+        assert sum(c["outcome"] == "fail" for c in cases.values()) == prior["case_counts"]["failed"]
+        if "test.log" not in members:
+            return
+        if name == "stock":
+            # Both reports are scoped to this single case; never infer from runtime.
+            assert set(cases) == {RECURRING + "/0"}
+            projections = [cases[RECURRING + "/0"]["diagnostic"], row["log_diagnostic"]]
+            row["verified_second_poll_timed_out"] = any(p["poll_zero"] and p["iteration_one"] for p in projections)
+        row["status"] = "ORIGINAL_REPORTS_READ"
+        save()
+    for name, uuid, count in (("stock", "4a15ad7c-8aac-439e-a3e0-dbb336aca766", 1),
+                              ("native", "9afd1ff2-d2ad-4e9d-8dfa-f00ae001d8f5", 48)):
+        try:
+            inspect(name, uuid, count)
+        except Exception as error:
+            row = result["arms"].setdefault(name, dict(status="INCOMPLETE"))
+            row["error"] = type(error).__name__
+            save()
+    if set(result["arms"]) == {"native", "stock"} and all(
+            row["status"] == "ORIGINAL_REPORTS_READ" for row in result["arms"].values()):
+        result["status"] = "ORIGINAL_REPORTS_READ"
+        save()
+
+
 result = dict(source=os.environ["GITHUB_SHA"], product=PRODUCT, stock=STOCK, base=BASE,
               started_at=utc(), status="INCOMPLETE", arms={})
 save()
+if sys.argv[1:] == ["--original-reports"]:
+    original_reports()
+    sys.exit(result["status"] != "ORIGINAL_REPORTS_READ")
 try:
     assert git("rev-parse", "HEAD^") == ORIGINAL
     assert git("rev-parse", "HEAD~2") == STOCK
