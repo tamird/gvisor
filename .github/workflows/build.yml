@@ -1,35 +1,93 @@
-name: CI
-
-"on":
+name: Compare syscall worker memory on real owners
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/syscall-worker-memory]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  syscall-memory:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 155
+    env:
+      PRODUCT: aa376e1b8025626f4ebca0d908cf8c9aee0a549f
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+      REPORTER: 6b3fe9ab6c03facafe6340c85f8d60ca3591566b
+      CODEC: 0a9bdf9bc331d6a66f35aefcbbb5cf466eb6f7f5
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 3, persist-credentials: false}
+    - name: Bind source and prepare existing GNU remote worker
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -euo pipefail
+        umask 077
+        test "$(git rev-parse HEAD^)" = "$PRODUCT"
+        test "$(git rev-parse "$PRODUCT^")" = 183a39d1b2aff9e8e2219171940001749a2b5db0
+        test "$(git diff --name-only "$PRODUCT^" "$PRODUCT")" = test/syscalls/BUILD
+        mkdir -p "$RUNNER_TEMP/memory-results" "$RUNNER_TEMP/memory-platform"
+        printf '{"status":"INCOMPLETE","phase":"bootstrap"}\n' > "$RUNNER_TEMP/memory-results/verdict.json"
+        cp test/rbe/syscall_memory.py "$RUNNER_TEMP/"
+        git fetch --quiet --no-tags --depth=1 origin "$REPORTER" "$CODEC"
+        test "$(git rev-parse "$REPORTER:test/rbe/qualification_report.py")" = 9d80f07909f32003f3a5051e00777c35075889bf
+        test "$(git rev-parse "$REPORTER:test/rbe/unit_matrix.py")" = d01d9e319084e18ea2928671e417e1b4e86c4954
+        test "$(git rev-parse "$CODEC:test/rbe/stdlib-provenance.py")" = 126ec85fbfd0c3b9595ff3a1b3b3223832e84a38
+        for helper in qualification_report unit_matrix; do git show "$REPORTER:test/rbe/$helper.py" > "$RUNNER_TEMP/$helper.py"; done
+        git show "$CODEC:test/rbe/stdlib-provenance.py" > "$RUNNER_TEMP/stdlib_provenance.py"
+        printf 'module(name="memory_gnu")\n' > "$RUNNER_TEMP/memory-platform/MODULE.bazel"
+        printf 'platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://%s","test.dockerUser":"root"},visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/memory-platform/BUILD"
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=memory_gnu=$RUNNER_TEMP/memory-platform" 'build --extra_execution_platforms=@memory_gnu//:gnu' 'build --host_platform=@memory_gnu//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$RUNNER_TEMP/memory.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        test "$(cat .bazelversion)" = 9.3.1
+        curl --fail --silent --show-error --location --proto '=https' --retry 3 --output "$RUNNER_TEMP/bazel-9.3.1" https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64
+        echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $RUNNER_TEMP/bazel-9.3.1" | sha256sum --check --status
+        chmod 0555 "$RUNNER_TEMP/bazel-9.3.1"
+        docker pull --platform=linux/amd64 "$GNU"
+        docker run -d --name memory-compiler --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+        test "$(docker exec memory-compiler uname -m)" = x86_64
+        test "$(docker exec memory-compiler "$RUNNER_TEMP/bazel-9.3.1" --version)" = 'bazel 9.3.1'
+    - name: Compare both configured architectures before any test
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        docker exec -e "GITHUB_WORKSPACE=$GITHUB_WORKSPACE" -e "RUNNER_TEMP=$RUNNER_TEMP" -e "BAZEL=$RUNNER_TEMP/bazel-9.3.1" -e "BAZEL_RC=$RUNNER_TEMP/memory.bazelrc" memory-compiler python3 "$RUNNER_TEMP/syscall_memory.py" selection
+    - name: Run the four real owners serially and retain every disposition
+      run: |
+        set -euo pipefail
+        for arm in process_default process_1gb memory_save_2gb memory_resume_2gb; do
+          docker exec -e "GITHUB_WORKSPACE=$GITHUB_WORKSPACE" -e "RUNNER_TEMP=$RUNNER_TEMP" -e "BAZEL=$RUNNER_TEMP/bazel-9.3.1" -e "BAZEL_RC=$RUNNER_TEMP/memory.bazelrc" memory-compiler python3 "$RUNNER_TEMP/syscall_memory.py" "$arm"
+        done
+    - name: Reconcile functional outcomes and absent proof separately
+      if: always()
+      run: |
+        docker exec -e "GITHUB_WORKSPACE=$GITHUB_WORKSPACE" -e "RUNNER_TEMP=$RUNNER_TEMP" -e "BAZEL=$RUNNER_TEMP/bazel-9.3.1" -e "BAZEL_RC=$RUNNER_TEMP/memory.bazelrc" memory-compiler python3 "$RUNNER_TEMP/syscall_memory.py" aggregate
+    - name: Check the only public artifact
+      id: scan
+      if: always()
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        python3 - <<'PY'
+        import json, os, pathlib, re
+        path = pathlib.Path(os.environ['RUNNER_TEMP'], 'memory-results', 'verdict.json')
+        data = path.read_bytes()
+        assert len(data) < 512*1024
+        assert not re.search(rb'gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|BEGIN (RSA |OPENSSH )?PRIVATE KEY|(?i:authorization|x-buildbuddy-api-key)\s*[:=]', data)
+        key = os.environ['BUILDBUDDY_API_KEY']
+        assert key and key.encode() not in data and json.dumps(key)[1:-1].encode() not in data
+        assert json.loads(data)['status'] in ('PASS','FAIL','INCOMPLETE')
+        PY
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.scan.outcome == 'success'
       with:
-          name: runsc
-          path: bin/
+        name: syscall-worker-memory
+        path: ${{ runner.temp }}/memory-results/verdict.json
+        if-no-files-found: error
+    - name: Remove coordinator and private settings
+      if: always()
+      run: |
+        docker rm -f memory-compiler || true
+        rm -f "$RUNNER_TEMP/memory.bazelrc"
