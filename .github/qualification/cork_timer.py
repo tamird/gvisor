@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import re
+import socket
 import subprocess
 import xml.etree.ElementTree as ET
 import zipfile
@@ -21,7 +22,8 @@ ORIGINAL = "d1928120d01a8169846ac59f340fab5ff178424a"
 SUITE = "AllTCPSockets/TCPSocketPairTest"
 RECURRING = "WaitTillTimeoutWithCorkOption"
 CASES = (RECURRING, "TCPCork", "TCPCorkFlushOnClose", "TCPCorkFlushOnShutdown")
-GO = "//pkg/tcpip/transport/tcp/test/e2e:tcp_test"
+IPV6 = {0, 2, 3, 5, 6, 8, 9, 11}
+EXPECTED = {f"{SUITE}.{case}/{i}" for case in CASES for i in IPV6}
 SECRETS = [value for key in ("GH_TOKEN", "GITHUB_TOKEN", "BUILDBUDDY_API_KEY")
            if (value := os.environ.get(key))]
 
@@ -46,24 +48,32 @@ def save():
 def reuse_original():
     path = ROOT / "cork-original.zip"
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
-    assert digest == "c9be09559db57ba795a893a5e706b85a13fc000e6939faf0535f4ddcdf365a9f"
+    assert digest == "f95b964af9be2a57306eecc8db3b589d9bbd8df04eea7005d168df8e77f11e6c"
     with zipfile.ZipFile(path) as archive:
         assert archive.namelist() == ["verdict.json"]
-        old = json.loads(archive.read("verdict.json"))
-    assert (old["source"], old["product"], old["stock"], old["base"]) == (ORIGINAL, PRODUCT, STOCK, BASE)
-    assert old["status"] == "INCOMPLETE" and set(old["arms"]) == {"native", "stock", "fixed", "clock"}
-    for name in ("native", "stock"):
+        recovered = json.loads(archive.read("verdict.json"))
+    assert recovered["source"] == "aa43dcfe737f0163db81455fde68af405ca6ef0f"
+    old = recovered["original"]
+    assert (recovered["status"], old["status"], old["product"], old["stock"]) == (
+        "ORIGINAL_REPORTS_READ", "FAIL", PRODUCT, STOCK)
+    assert old["source"] == "4a3e55b3d217d699873b479945c8367183cee1e0"
+    assert old["original"]["source"] == ORIGINAL and old["original"]["status"] == "INCOMPLETE"
+    assert old["original_zip_sha256"] == "c9be09559db57ba795a893a5e706b85a13fc000e6939faf0535f4ddcdf365a9f"
+    stock = recovered["arms"]["stock"]
+    assert stock["verified_second_poll_timed_out"] and list(stock["cases"]) == [RECURRING + "/0"]
+    assert stock["cases"][RECURRING + "/0"]["outcome"] == "fail"
+    assert old["arms"]["stock"]["native_exit"] == 3
+    native = recovered["arms"]["native"]["cases"]
+    assert set(native) == {f"{case}/{i}" for case in CASES for i in range(12)}
+    failed = {f"{SUITE}.{case}" for case, r in native.items() if r["outcome"] == "fail"}
+    assert failed == EXPECTED and all(r["outcome"] in ("pass", "fail") for r in native.values())
+    assert all(r["diagnostic"]["errno"] == ["EAFNOSUPPORT"] for r in native.values() if r["outcome"] == "fail")
+    for name, count in (("fixed", 48), ("clock", 10)):
         row = old["arms"][name]
-        assert row["status"] == "INCOMPLETE" and row["native_exit"] == 124
-        assert not row["reports"] and not row["case_counts"] and "attempt" not in row
-    for name, count, leaves in (("fixed", 48, 48), ("clock", 10, 8)):
-        row = old["arms"][name]
-        assert row["source"] == PRODUCT and row["status"] == "PASS" and row["native_exit"] == 0
-        assert row["case_counts"] == dict(passed=count, failed=0, skipped=0) and len(row["cases"]) == leaves
-        assert row["attempt"]["strategy"] == "remote" and row["attempt"]["status"] == "PASSED"
-        assert not (row["attempt"]["cached_locally"] or row["attempt"]["cached_remotely"])
-        result["arms"][name] = row
-    result.update(original=old, original_zip_sha256=digest, reused_arms=["fixed", "clock"])
+        assert row["status"] == "PASS" and row["source"] == PRODUCT
+        assert row["case_counts"] == dict(passed=count, failed=0, skipped=0)
+    result.update(original=recovered, original_zip_sha256=digest, reused=dict(
+        native_ipv4_passed=16, stock_second_poll_timed_out=True, fixed_passed=48, clock_leaves_passed=8))
     save()
 
 
@@ -77,17 +87,16 @@ def execute(name, source, target):
     }.items():
         (out / field).write_bytes(subprocess.check_output(["git", *args]))
     raw = out / "raw.jsonl"
-    case_filter = (f"--test_env=GTEST_FILTER={SUITE}.{RECURRING}/0" if name == "stock" else
-                   "--test_filter=^Test(CorkFlushBeforeFIN|MinshallPartialSegment)$" if name == "clock" else
-                   "--test_env=GTEST_FILTER=" + ":".join(f"{SUITE}.{case}/*" for case in CASES))
+    assert name == "native" and target == "//test/syscalls:socket_ip_tcp_generic_loopback_test_native"
+    case_filter = "--test_env=GTEST_FILTER=" + ":".join(sorted(EXPECTED))
     args = ["test", "--config=x86_64", "--keep_going", "--strip=never",
-            "--lockfile_mode=off", case_filter, "--test_env=GO_TEST_WRAP_TESTV=1", "--test_sharding_strategy=disabled",
+            "--lockfile_mode=off", "--strategy=TestRunner=local", case_filter, "--test_env=GO_TEST_WRAP_TESTV=1", "--test_sharding_strategy=disabled",
             "--nocache_test_results", "--flaky_test_attempts=1", "--test_timeout=180",
             "--remote_download_outputs=toplevel", "--test_output=errors",
             f"--build_event_json_file={raw}", "--build_event_json_file_path_conversion=false", target]
     (out / "executed_arguments").write_text("\n".join(args) + "\n")
     # The outer budget includes builds; the TestRunner still has only 180 seconds.
-    command = ["docker", "exec", "cork-gnu", "timeout", "--signal=INT", "--kill-after=30s", "2700",
+    command = ["timeout", "--signal=INT", "--kill-after=30s", "2700",
                "bazel", f"--bazelrc={ROOT / 'cork.bazelrc'}", *args]
     with (out / "console").open("wb") as stream:
         code = subprocess.run(command, stdout=stream, stderr=subprocess.STDOUT).returncode
@@ -137,52 +146,24 @@ def execute(name, source, target):
     row["test_timing"] = {key: observation[key] for key in (
         "testAttemptStart", "testAttemptStartMillis", "testAttemptDuration", "testAttemptDurationMillis") if key in observation}
     save()
-    assert clean and row["evidence_complete"] and info.get("strategy") == "remote"
+    assert clean and row["evidence_complete"] and info.get("strategy") == "local"
     assert not observation.get("cachedLocally") and not info.get("cachedRemotely")
     xml, = [out / item["path"] for item in captured["reports"] if item["name"] == "test.xml"]
     log, = [out / item["path"] for item in captured["reports"] if item["name"] == "test.log"]
     log_text = log.read_text(errors="replace")
-    if name == "clock":
-        expected = {"TestCorkFlushBeforeFIN/close", "TestCorkFlushBeforeFIN/shutdown"} | {
-            f"TestMinshallPartialSegment/gso={gso}/{case}"
-            for gso in ("true", "false") for case in ("full-prefix=0", "full-prefix=100", "cork-expired")
-        }
-        observed = set(re.findall(r"--- PASS: (Test(?:CorkFlushBeforeFIN|MinshallPartialSegment)/[^ ]+) ", log_text))
-        # The slash in a nested t.Run name also emits an intermediate gso=... group.
-        assert observed & expected == expected and not re.search(r"--- (?:FAIL|SKIP):", log_text)
-        assert code == 0 and observation["status"] == "PASSED" and verdict["status"] == "PASS"
-        row.update(status="PASS", cases=sorted(expected))
-        save()
-        return
     nodes = list(ET.parse(xml).getroot().iter("testcase"))
-    expected = ({f"{SUITE}.{RECURRING}/0"} if name == "stock" else
-                {f"{SUITE}.{case}/{i}" for case in CASES for i in range(12)})
+    expected = EXPECTED
     actual = {case.get("classname", "") + "." + case.get("name", "") for case in nodes}
     assert len(nodes) == len(expected) and actual == expected
     assert all(case.find("skipped") is None and case.get("status") != "notrun" and
                case.get("result") != "suppressed" for case in nodes)
-    if name == "stock" and code == 0 and verdict["status"] == "PASS" and observation["status"] == "PASSED":
-        assert row["case_counts"] == dict(passed=1, failed=0, skipped=0)
-        assert re.search(r"\[\s*OK\s*\]\s+" + re.escape(next(iter(expected))) + r"(?=\s|$)", log_text)
-        row.update(status="UNEXPECTED_PASS", cases=sorted(expected))
-        save()
-        return
-    marker = "FAILED" if name == "stock" else "OK"
+    marker = "OK"
     for case in expected:
         assert re.search(r"\[\s*" + marker + r"\s*\]\s+" + re.escape(case) + r"(?=\s|$)", log_text)
     row["cases"] = sorted(expected)
-    if name == "stock":
-        assert observation["status"] == "FAILED" and code == 3 and verdict["status"] == "FAIL"
-        failure, = nodes[0].findall("failure")
-        text = "".join(failure.itertext()) + failure.get("message", "")
-        assert re.search(r"RetryEINTR\(poll\).*?Actual:\s*0\b", text, re.S)
-        assert re.search(r"socket_ip_tcp_generic\.cc:\d+: 1\b", text)
-        assert row["case_counts"] == dict(passed=0, failed=1, skipped=0)
-        row.update(status="EXPECTED_FAILURE", observed="second poll timed out")
-    else:
-        assert code == 0 and observation["status"] == "PASSED" and verdict["status"] == "PASS"
-        assert row["case_counts"] == dict(passed=len(expected), failed=0, skipped=0)
-        row["status"] = "PASS"
+    assert code == 0 and observation["status"] == "PASSED" and verdict["status"] == "PASS"
+    assert row["case_counts"] == dict(passed=len(expected), failed=0, skipped=0)
+    row["status"] = "PASS"
     save()
 
 
@@ -190,8 +171,8 @@ result = dict(source=os.environ["GITHUB_SHA"], product=PRODUCT, stock=STOCK, bas
               started_at=utc(), status="INCOMPLETE", arms={})
 save()
 try:
-    assert git("rev-parse", "HEAD^") == ORIGINAL
-    assert git("rev-parse", "HEAD~2") == STOCK
+    assert git("rev-parse", "HEAD^") == "4a3e55b3d217d699873b479945c8367183cee1e0"
+    assert git("rev-parse", "HEAD~2") == ORIGINAL and git("rev-parse", "HEAD~3") == STOCK
     reuse_original()
     assert git("rev-parse", STOCK + "^") == PRODUCT
     assert git("rev-parse", PRODUCT + "^") == BASE
@@ -200,16 +181,18 @@ try:
     assert git("diff", "--name-only", STOCK, PRODUCT) == sender
     assert git("rev-parse", STOCK + ":" + sender) == git("rev-parse", BASE + ":" + sender)
     assert git("diff", "--name-only", BASE, PRODUCT).splitlines() == [sender, fixture]
-    syscall = "//test/syscalls:socket_ip_tcp_generic_loopback_test_"
-    for name, source, target in (("native", STOCK, syscall + "native"), ("stock", STOCK, syscall + "runsc_ptrace")):
-        try:
-            execute(name, source, target)
-        except Exception as error:
-            result["arms"].setdefault(name, {"status": "INCOMPLETE"})["verifier_error"] = type(error).__name__
-            save()
-    statuses = {name: row["status"] for name, row in result["arms"].items()}
-    result["status"] = "PASS" if statuses == {"native": "PASS", "stock": "EXPECTED_FAILURE", "fixed": "PASS", "clock": "PASS"} else (
-        "FAIL" if set(statuses.values()) & {"FAIL", "UNEXPECTED_PASS"} else "INCOMPLETE")
+    assert os.geteuid() == 0 and os.uname().sysname == "Linux"
+    assert Path("/proc/sys/net/ipv6/conf/lo/disable_ipv6").read_text().strip() == "0"
+    with socket.socket(socket.AF_INET6) as sock:
+        sock.bind(("::1", 0))
+        assert sock.getsockname()[0] == "::1"
+    result["native_preflight"] = dict(uid=0, ipv6_loopback_bind=True)
+    save()
+    try:
+        execute("native", STOCK, "//test/syscalls:socket_ip_tcp_generic_loopback_test_native")
+    except Exception as error:
+        result["arms"].setdefault("native", {"status": "INCOMPLETE"})["verifier_error"] = type(error).__name__
+    result["status"] = result["arms"]["native"]["status"]
 finally:
     save()
 assert result["status"] == "PASS"
