@@ -1,0 +1,14 @@
+
+# Qualification-only counterpart; not the private implementation.
+go_binary(
+    name = "qualification_private_generator",
+    srcs = ["hostlayoutgen.go", "qualification_private_template.go"],
+)
+
+genrule(
+    name = "qualification_private_output",
+    srcs = ["qualification_attestation.go"],
+    tools = [":qualification_private_generator"],
+    outs = ["qualification_private_generated.go"],
+    cmd = "$(location :qualification_private_generator) -package attestation -importpath model.internal/example.test/attestation -out $@ $(location qualification_attestation.go)",
+)
