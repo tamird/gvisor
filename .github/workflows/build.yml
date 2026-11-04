@@ -1,18 +1,18 @@
-name: Check sidecar wildcard transition isolation
+name: Recover sidecar configured-option projection
 on:
   push:
-    branches: [qualification/sidecar-wildcard-check]
+    branches: [qualification/sidecar-wildcard-projection]
 permissions:
   contents: read
 jobs:
   sockets:
     if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 65
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 3
+          fetch-depth: 4
           persist-credentials: false
       - name: Bind the public tool and report helpers
         timeout-minutes: 5
@@ -29,8 +29,8 @@ jobs:
           curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$root/bin/bazel"
           echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $root/bin/bazel" | sha256sum -c -
           chmod 755 "$root/bin/bazel"
-      - name: Build the same wildcard on stock and corrected native GNU Linux
-        timeout-minutes: 55
+      - name: Query the corrected configured dependencies without building
+        timeout-minutes: 15
         shell: bash
         run: |
           set -euo pipefail

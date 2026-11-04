@@ -17,6 +17,7 @@ PUBLIC = ROOT / "out/verdict.json"
 BASE = "59bc02b23955bc1d4c6a4c1423da514f38d05287"
 FIXED = "c329a6e31a5968a410831950c8a457ee243384c8"
 CARRIER = os.environ["GITHUB_SHA"]
+ORIGINAL_CARRIER = "7c4ccc26f17f357f2933079490ce8ae96f1a9367"
 ALLOCATOR = "//test/rbe:hosted_allocator"
 OWNERS = {
     "//runsc/fdparking:fdparking_binary": "runsc-fd-parking",
@@ -61,6 +62,7 @@ def normalize(label: str) -> str:
 
 
 def invoke(name: str, args: list[str], limit: int = 1200) -> tuple[dict, list[dict], str]:
+    assert args[0] == "cquery", "this recovery permits only the configured-option query"
     row = R["phases"][name] = {"started_at":now(), "requested_invocation":str(uuid.uuid4())}
     bep, console, stdout = (ROOT / (name + suffix) for suffix in (".bep", ".console", ".stdout"))
     save()
@@ -82,9 +84,11 @@ def invoke(name: str, args: list[str], limit: int = 1200) -> tuple[dict, list[di
     row["completed"] = [{"label":normalize(e["id"]["targetCompleted"]["label"]),
                          "configuration":e["id"]["targetCompleted"].get("configuration", {}).get("id"),
                          "success":e["completed"].get("success", False)}
-                        for e in events if "targetCompleted" in e.get("id", {}) and not e["id"]["targetCompleted"].get("aspect")]
+                        for e in events if "completed" in e and "targetCompleted" in e.get("id", {}) and not e["id"]["targetCompleted"].get("aspect")]
     row["failed_actions"] = [{"owner":normalize(e["action"].get("label", "")), "type":e["action"].get("type"), "exit":e["action"].get("exitCode")}
                              for e in events if "action" in e and not e["action"].get("success", False)]
+    row["aborted"] = [{"owner":normalize(e.get("id", {}).get("targetCompleted", {}).get("label", "")), "reason":e["aborted"].get("reason")} for e in events if "aborted" in e]
+    row["stdout_sha256"] = hashlib.sha256(stdout.read_bytes()).hexdigest()
     save()
     assert row["observed_invocations"] and row["test_attempts"] == 0
     return row, events, stdout.read_text()
@@ -129,49 +133,27 @@ def binaries(row: dict, events: list[dict]) -> None:
 
 
 R = {"status":"INCOMPLETE", "base":BASE, "product":FIXED, "carrier":CARRIER, "phases":{}, "errors":{},
-     "scope":"AMD64 native GNU Bazel build only: one real package wildcard and three public sidecars with custom_malloc; no runtime tests or new ARM64/sanitizer qualification",
+     "scope":"Configured-option projection only on the exact fixed source; no build or TestRunner command",
+     "original":{"artifact":"13352550223", "run":"41885181016", "sha256":"695986d52206cf0c5670eb2b67c6d2b44a9d860797690f7949ccac40cf468e4f", "status":"FAIL", "stock_build":"EXPECTED_FAILURE", "fixed_build":"PASS", "projection_collector":"KeyError"},
      "targets":TARGETS, "environment":{"system":platform.system(), "machine":platform.machine(), "bazel":"9.3.1"},
      "allocator_sha256":hashlib.sha256(ALLOC_SRC.encode()).hexdigest(), "started_at":now()}
 save()
 assert platform.system() == "Linux" and platform.machine() == "x86_64"
-assert git("rev-parse", "HEAD") == CARRIER and git("rev-parse", CARRIER+"^") == FIXED and git("rev-parse",FIXED+"^") == BASE
+assert git("rev-parse", "HEAD") == CARRIER and git("rev-parse", CARRIER+"^") == ORIGINAL_CARRIER and git("rev-parse", ORIGINAL_CARRIER+"^") == FIXED and git("rev-parse",FIXED+"^") == BASE
 assert git("diff", "--name-only", BASE, FIXED) == "runsc/sidecar.bzl"
 assert git("show",FIXED+":runsc/sidecar.bzl").replace('        tags = ["manual"],\n', '') == git("show",BASE+":runsc/sidecar.bzl")
-for name, source in (("stock", BASE), ("fixed", FIXED)):
-    try:
-        git("switch", "--quiet", "--detach", source)
-        assert git("rev-parse", "HEAD") == source and not git("status", "--porcelain", "--untracked-files=no")
-        for filename, data in (("BUILD", BUILD), ("hosted_allocator.c", ALLOC_SRC)):
-            path = Path("test/rbe") / filename
-            if path.exists():
-                assert path.read_text() == data
-            else:
-                path.parent.mkdir(parents=True,exist_ok=True)
-                path.write_text(data)
-        row, events, _ = invoke(name, ["build", *OPTIONS, "--keep_going", *TARGETS])
-        row["source"] = source
-        if name == "stock":
-            assert row["native_exit"] == 1 and INNER in row["selected"]
-            assert "requires_a_hosted_runtime" in row["console"]["signals"]
-            assert {r["label"] for r in row["completed"] if not r["success"]} == {INNER}
-            assert any(a["owner"] == INNER and a["type"] == "CppLink" and a["exit"] for a in row["failed_actions"])
-            row["disposition"] = "EXPECTED_FAILURE"
-        else:
-            assert row["native_exit"] == 0 and INNER not in row["selected"]
-            assert all(r["success"] for r in row["completed"])
-            assert set(R["phases"]["stock"]["selected"]) - set(row["selected"]) == {INNER}
-            assert set(row["selected"]) - set(R["phases"]["stock"]["selected"]) == set()
-            assert set(OWNERS) <= set(row["selected"])
-            binaries(row, events)
-            row["disposition"] = "PASS"
-        save()
-    except Exception as exc:
-        R["errors"][name] = type(exc).__name__
-        save()
+git("switch", "--quiet", "--detach", FIXED)
+assert git("rev-parse", "HEAD") == FIXED and not git("status", "--porcelain", "--untracked-files=no")
+for filename, data in (("BUILD", BUILD), ("hosted_allocator.c", ALLOC_SRC)):
+    path = Path("test/rbe") / filename
+    assert not path.exists()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(data)
+
 try:
     expression = "filter('_linked/', deps(set(" + " ".join(OWNERS) + "), 1))"
     projection = "str(target.label) + ' ' + str(build_options(target).get('//command_line_option:custom_malloc'))"
-    row, _, output = invoke("transition", ["cquery", *OPTIONS, "--output=starlark", "--starlark:expr="+projection, expression], 300)
+    row, _, output = invoke("transition", ["cquery", *OPTIONS, "--output=starlark", "--starlark:expr="+projection, expression], 600)
     observations = sorted([normalize(x[0]), x[1]] for line in output.splitlines() if (x := line.split()))
     expected = sorted([owner.split(":")[0]+":_linked/"+filename, "None"] for owner,filename in OWNERS.items())
     row["observations"] = observations if observations == expected else []
