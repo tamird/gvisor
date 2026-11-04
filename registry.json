@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T18:06:03.363254+00:00",
+    "updatedAt": "2026-11-04T18:17:28.707772+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -30331,7 +30331,7 @@
       "url": "https://github.com/google/gvisor/pull/16522",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-04T02:10:52.704255+00:00",
+      "updatedAt": "2026-11-04T18:17:28.707772+00:00",
       "summary": "The rebase resolves the conflict in tools/defs.bzl. GNU and supplier-patched Clang built all three sidecars on AMD64 and ARM64, including the 4 KiB prewarmer. All 13 AMD64 cases passed with each compiler. The overall run records the expected link failure with unpatched registry LLVM. The private build adapter still needs upstream verification.",
       "evidence": [
         {
@@ -30401,6 +30401,18 @@
         {
           "label": "Reply to the wording review",
           "url": "https://github.com/google/gvisor/pull/16522#issuecomment-6593579029"
+        },
+        {
+          "label": "Lucas’s wildcard-build review",
+          "url": "https://github.com/google/gvisor/pull/16522#discussion_r4471219579"
+        },
+        {
+          "label": "One-line amendment on the published PR",
+          "url": "https://github.com/tamird/gvisor/compare/59bc02b23..c329a6e31"
+        },
+        {
+          "label": "Linux wildcard-build comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41885181016"
         }
       ],
       "number": 16522,
@@ -30429,7 +30441,30 @@
           "url": "https://github.com/tamird/gvisor/commit/74aa42d5f",
           "body": "The ordinary C++ target kept the injected sanitizer, allocator and linker options. The three sidecars removed the sanitizer runtime and allocator override but kept the unrelated hardening flag. GNU and LLVM compiled and linked all three binaries for AMD64 and ARM64. With their default options, both compilers passed all 13 AMD64 runtime cases. The LLVM passes used supplier fix 83245b957; the unmodified 0.8.24 release still could not link pthread or dl. Google’s internal build was not exercised.\n\nTransition reply:\nI moved the transition behind `//tools:defs.bzl`. The public adapter removes sanitizer features and direct sanitizer runtime flags while preserving unrelated options. The internal adapter still needs to map `freestanding_executable` to its existing C++ noasan policy; I can’t verify that mapping in the public tree.\n\nPosted by Codex on behalf of @tamird.\n\nAllocator reply:\nThe transition now unsets `--custom_malloc`, so the sidecars keep their own `tcmalloc = False` setting. With a custom allocator selected on the command line, the ordinary control kept it and none of the three sidecars linked it.\n\nPosted by Codex on behalf of @tamird."
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "c329a6e31a5968a410831950c8a457ee243384c8",
+        "baseHead": "59bc02b23955bc1d4c6a4c1423da514f38d05287",
+        "url": "https://github.com/tamird/gvisor/commit/c329a6e31",
+        "title": "Build the runsc sidecars with the C toolchain",
+        "requestedAt": "2026-11-04T18:17:28.707772+00:00",
+        "summary": "If the wildcard build check passes, publish the manual tag, replace the PR description and reply to Lucas on his original thread?",
+        "body": "Proposed PR description:\n\nThe FD parker, proc unmounter, and sentry prewarmer each compile and link a C file through a shell genrule. Give Bazel the source and link options directly so it can run the compiler and linker as separate actions without an intervening shell.\n\nUse one rule for the three executables. Each provides its own entry point and needs no runtime libraries. Keep the public target names and filenames: the release installs the sidecars beside runsc in gvisor-bin/, and the sidecar tests use those paths to find them in the build tree.\n\nDo not inherit an allocator, sanitizer runtime, or hosted linker features when building these syscall-only executables. Expose freestanding_executable through the build adapter in //tools:defs.bzl. Its transition clears --custom_malloc and removes sanitizer features and sanitizer link options.\n\nMark the inner cc_binary manual so wildcard builds select the public wrapper and reach the binary through that transition.\n\nProposed reply to [Lucas’s inline review](https://github.com/google/gvisor/pull/16522#discussion_r4471219579) after publishing the commit:\n\nTagged the inner cc_binary manual in [c329a6e31](https://github.com/google/gvisor/commit/c329a6e31). The public wrapper stays in wildcard builds and still selects its binary through the freestanding transition. I also corrected the description to say that the transition clears --custom_malloc and is exposed through the build adapter.\n\nPosted by Codex on behalf of @tamird."
+      },
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "59bc02b23955bc1d4c6a4c1423da514f38d05287",
+        "observedAt": "2026-11-04T18:17:28.707772+00:00",
+        "disposition": "Lucas requested a manual tag for the inner binary.",
+        "nextAction": "Verify the wildcard build on the candidate. Publish the amendment and description and post the reviewed reply only after the check passes and the contributor approves.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16522#discussion_r4471219579",
+          "https://github.com/tamird/gvisor/compare/59bc02b23..c329a6e31",
+          "https://github.com/tamird/gvisor/actions/runs/41885181016"
+        ]
+      }
     },
     {
       "id": "branch:licensecheck-native-bazel-mod",
