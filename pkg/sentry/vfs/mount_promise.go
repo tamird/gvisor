@@ -87,7 +87,8 @@ func (vfs *VirtualFilesystem) RegisterMountPromise(vd VirtualDentry, opts MountP
 // Emit a SentryMountPromiseBlockEvent and wait for the mount promise to be
 // resolved or time out.
 func (vfs *VirtualFilesystem) maybeBlockOnMountPromise(ctx context.Context, rp *ResolvingPath) error {
-	mp := vfs.getMountPromise(VirtualDentry{rp.mount, rp.start})
+	vd := VirtualDentry{rp.mount, rp.start}
+	mp := vfs.getMountPromise(vd)
 	if mp == nil {
 		return nil
 	} else if mp.resolved.Load() {
@@ -101,25 +102,30 @@ func (vfs *VirtualFilesystem) maybeBlockOnMountPromise(ctx context.Context, rp *
 	return vfs.waitOnMountPromise(ctx, rp, mp, ch)
 }
 
-// waitOnMountPromise waits with ch already registered on mp.wq.
-func (vfs *VirtualFilesystem) waitOnMountPromise(ctx context.Context, rp *ResolvingPath, mp *mountPromise, ch <-chan struct{}) error {
-	// Resolution may have raced with registering the waiter.
-	if mp.resolved.Load() {
-		vfs.updateResolvingPathForMountPromise(ctx, rp)
-		return nil
-	}
+func (vfs *VirtualFilesystem) waitOnMountPromise(ctx context.Context, rp *ResolvingPath, mp *mountPromise, ch chan struct{}) error {
+	vd := VirtualDentry{rp.mount, rp.start}
 
-	root := RootFromContext(ctx)
-	defer root.DecRef(ctx)
-	path, err := vfs.PathnameReachable(ctx, root, VirtualDentry{rp.mount, rp.start})
-	if err != nil {
-		panic(fmt.Sprintf("could not reach %v from root", rp.Component()))
+	var (
+		path string
+		err  error
+	)
+	// Unblock waiter entries that were created after this mount promise was
+	// resolved by a racing thread.
+	if mp.resolved.Load() {
+		close(ch)
+	} else {
+		root := RootFromContext(ctx)
+		defer root.DecRef(ctx)
+		path, err = vfs.PathnameReachable(ctx, root, vd)
+		if err != nil {
+			panic(fmt.Sprintf("could not reach %v from root", rp.Component()))
+		}
+		if path == "" {
+			log.Warningf("Attempting to block for a mount promise on an empty path.")
+			return nil
+		}
+		eventchannel.Emit(&epb.SentryMountPromiseBlockEvent{Path: path})
 	}
-	if path == "" {
-		log.Warningf("Attempting to block for a mount promise on an empty path.")
-		return nil
-	}
-	eventchannel.Emit(&epb.SentryMountPromiseBlockEvent{Path: path})
 
 	var timeoutCh <-chan time.Time
 	if mp.opts.Timeout > 0 {
