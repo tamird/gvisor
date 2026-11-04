@@ -20,12 +20,16 @@ import continuous
 PRODUCT = "70bd1e9f12215d0c571807acbea136f5441e7f7e"
 PARENT = "a385bd2b0155b82faf4fc6a0c195a153ad57550c"
 TARGETS = ["@ltp//:fsstress", "//images/basic:fsstress_archive"]
-OWNER = "+http_archive+ltp//:fsstress"
+LTP_OWNERS = {"+_repo_rules+ltp//:fsstress", "+http_archive+ltp//:fsstress"}
 IMAGE = "gvisor.dev/images/basic/fsstress:latest"
 ROOT = Path(os.environ["RUNNER_TEMP"]) / "fsstress-static"
 continuous.ROOT = ROOT
 R = {"status": "INCOMPLETE", "source": PRODUCT, "parent": PARENT, "phases": {},
      "expected": ["amd64", "arm64", "supplier"], "test_runner_claimed": False,
+     "original_exact_base": {"artifact": 13345921528,
+                             "sha256": "c276dc663e7719e665e5ca4b3510c6726d27442000c0b8681797af9c3bf9c6eb",
+                             "build_exits": [0, 0], "supplier": "PASS", "archive_inspection": "NOT_RUN",
+                             "amd64_consumer": "NOT_RUN", "status": "FAIL"},
      "integration": {"source": "588e6f3436b08e9b9a49e656458d9ea6178bfedd",
                      "artifact": 13343778034,
                      "sha256": "44f3dd76fc9fbbb0f88432fa55f81d12ce5e3dca023caef8135cdd574766eb41",
@@ -42,7 +46,7 @@ R = {"status": "INCOMPLETE", "source": PRODUCT, "parent": PARENT, "phases": {},
                   "sha256": "928b4aff1a8e04a3ae546d7aa0ed05fd1f13d925676694167e1da550dec0bd68",
                   "source": "2ae92e53463b06a49d68f8d8e83ba1737bf0ade9", "invocation": "98f33d10-6cca-4914-98dd-0b68ef53c140",
                   "status": "FAIL", "native_make_exit": 2, "bazel_exit": 1,
-                  "owner": OWNER, "cause": "static_link_missing_pthread_dl_m_c"}}
+                  "owner": "+http_archive+ltp//:fsstress", "cause": "static_link_missing_pthread_dl_m_c"}}
 
 
 def now():
@@ -197,22 +201,26 @@ def phase(arch, config, machine):
     assert rc == 0 and row["build"]["bazel_exit"]["name"] == "SUCCESS"
     assert row["build"]["observed_invocation"] == requested and row["build"]["test_attempts"] == 0
     events = list(continuous.events(prefix.with_suffix(".bep")))
-    owners = {continuous.normalized(e["id"]["actionCompleted"]["label"]) for e in events
-              if e.get("action", {}).get("type") == "CppCompile" and
-              continuous.normalized(e.get("id", {}).get("actionCompleted", {}).get("label", "")).startswith("+http_archive+ltp//:")}
-    continuous.COMPILER_OWNER, = owners
-    row["placement"] = continuous.compact(prefix.with_suffix(".compact"))
-    save()
-    assert row["placement"]["invocation"] == requested and not row["placement"]["placement_or_execution_errors"]
-    compilers = row["placement"]["project_compiler_actions"]
-    assert compilers and all(c["declared_llvm"] and not c["cached"] and c["exit"] == 0 for c in compilers)
-    binary_path = output(events, OWNER)
+    owner, = (label for label, aspect, _, _, _ in row["build"]["configured"] if not aspect and label in LTP_OWNERS)
+    completed = [(label, cfg) for label, aspect, cfg, success in row["build"]["completed"] if not aspect and success]
+    assert len(completed) == 2 and {label for label, _ in completed} == {owner, TARGETS[1]}
+    assert len({cfg for _, cfg in completed}) == 1
+    binary_path = output(events, owner)
     archive = output(events, TARGETS[1])
+    row["outputs"] = {"binary_owner": owner, "archive_owner": TARGETS[1]}
     binary = binary_path.read_bytes()
     row["elf"] = elf(binary, machine)
     row["archive"] = {"sha256": continuous.digest(archive), "bytes": archive.stat().st_size}
     save()
     consumer(row, archive, binary, arch, machine)
+    save()
+    # with_cfg's compiled target shares the configured frontend's canonical repository.
+    continuous.COMPILER_OWNER = owner + "_/fsstress"
+    row["placement"] = continuous.compact(prefix.with_suffix(".compact"))
+    save()
+    assert row["placement"]["invocation"] == requested and not row["placement"]["placement_or_execution_errors"]
+    compilers = row["placement"]["project_compiler_actions"]
+    assert compilers and all(c["declared_llvm"] and not c["cached"] and c["exit"] == 0 for c in compilers)
     row.update(status="PASS", finished_at=now())
     save()
 

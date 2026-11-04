@@ -1,7 +1,7 @@
 name: Check static fsstress on the declared compiler
 on:
   push:
-    branches: [qualification/fsstress-compiler-exact]
+    branches: [qualification/fsstress-compiler-output-labels]
 permissions:
   contents: read
 jobs:
@@ -24,7 +24,8 @@ jobs:
           d="$RUNNER_TEMP/fsstress-static"
           mkdir -p "$d/out"
           printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$d/out/verdict.json"
-          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD^)" = e79b64b055765f1ef0c45e09a988e7f06c204a7e
+          test "$(git rev-parse HEAD^^)" = "$PRODUCT"
           cp test/rbe/fsstress_static.py "$d/check.py"
           donor=4f8fb9e212fee34a9d14454c9cb3998d51b9956c
           git fetch -q --no-tags --depth=1 origin "$donor"
