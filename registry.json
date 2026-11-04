@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T06:17:26.824975+00:00",
+    "updatedAt": "2026-11-04T06:36:04.743007+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -48991,6 +48991,52 @@
         "requestedAt": "2026-11-04T02:39:42.926755+00:00",
         "summary": "Open the standalone PR for the four Make inventory commands?",
         "body": "Listing image names can pull or build the Docker builder even though Make already has the list. Treat the four image-listing targets as host-only when every requested goal can run on the host. A command that also requests a build still uses the builder.\n\nOn an x86_64 Linux host, the output matched byte for byte for both architecture selections and the CPU and GPU partitions. The default list-all-images invocation went from six Docker calls to zero."
+      }
+    },
+    {
+      "id": "branch:kind-release-archive",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/kind-release-archive",
+      "group": "release",
+      "head": "dab2124cde6f1c76d44ff2af7c297566d86c10f5",
+      "title": "Build only the release archive installed by Kind",
+      "url": "https://github.com/tamird/gvisor/commit/dab2124cd",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-04T06:36:04.743007+00:00",
+      "summary": "Kind’s local Kubernetes smoke test consumes only the bzip2 release. Selecting its existing Bazel target through Make avoids building and copying the unused zstd archive. The current caller was checked against the previously qualified AMD64 package producer, 2882b32e3. Native build and cquery succeeded; the original recorder failed. Its correction verified the retained archive and all nine executable paths at the node-copy boundary, without another Bazel command or a cluster. The original script returned at 06:29:37.438192Z; the usable verdict arrived at 06:34:44.016382Z, 5 min 6.578 s later including the recorder correction and recovery. Individual Bazel finish times were not retained. The final copy observation preceded verification by 42 ms.",
+      "evidence": [
+        {
+          "label": "One-line caller change: dab2124cd",
+          "url": "https://github.com/tamird/gvisor/commit/dab2124cd"
+        },
+        {
+          "label": "Package producer: 2882b32e3",
+          "url": "https://github.com/tamird/gvisor/commit/2882b32e3"
+        },
+        {
+          "label": "Original release packages on AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41779130466/artifacts/13299000441"
+        },
+        {
+          "label": "Native build and cquery, failing-build control, and original recorder failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41785604947/artifacts/13301172607"
+        },
+        {
+          "label": "Recovered original bzip2 archive and nine executable paths at the node-copy boundary",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41786420658/artifacts/13301163460"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "dab2124cde6f1c76d44ff2af7c297566d86c10f5",
+        "baseHead": "183a39d1b2aff9e8e2219171940001749a2b5db0",
+        "url": "https://github.com/tamird/gvisor/commit/dab2124cd",
+        "title": "Build only the release archive installed by Kind",
+        "requestedAt": "2026-11-04T06:36:04.743007+00:00",
+        "summary": "Open the one-line Kind archive selection as a standalone gVisor PR?",
+        "body": "The Kind smoke test installs gvisor.tar.bz2 on its node. Its setup currently builds and copies gvisor.tar.zstd as well, then discards it. Select only the optimized bzip2 target through make copy. This keeps the documented Docker-based build and the native Bazel option.\n\nOn Linux, the updated script selected only //debian:gvisor-release-tar-bz2 for its native Bazel build and cquery. Both succeeded on the previously qualified package source. An injected build failure stopped the script before cquery or copying. The original run then stopped in its node-copy recorder. With that recorder fixed, the same script extracted the retained 84,291,492-byte archive and prepared all nine executables for the node’s /usr/bin directory, including runsc-netgofer. No cluster was started."
       }
     }
   ],
