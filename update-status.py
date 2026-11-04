@@ -938,7 +938,7 @@ def reapproval_reminders(post: bool = False) -> None:
             continue
         node = nodes.get((pr["repo"], pr["number"]), {})
         pr = with_maintainer_reviewers(pr, maintainers)
-        disposition = public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"))
+        disposition = public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"), node.get("reapproval"))
         if disposition["action"]:
             print(json.dumps({"publicImportHandoff": {"number": pr["number"], "url": pr["url"],
                 "snapshotAt": snapshot["checkedAt"], **disposition, "posting": "Diagnostic only; no comment is authorized by this handoff."}}))
@@ -1132,7 +1132,7 @@ def main() -> None:
         if pr["status"] != "open":
             pr.pop("publicImportDisposition", None)
             continue
-        pr["publicImportDisposition"] = public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"))
+        pr["publicImportDisposition"] = public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"), node.get("reapproval"))
         if pr["publicImportDisposition"]["action"] == "maintainer-import-label":
             approval = effective_approval(pr, require_aggregate=False, trusted_reviewers=maintainers)
             pr["publicImportDisposition"]["authorBlock"] = import_author_block(pr, node, approval)

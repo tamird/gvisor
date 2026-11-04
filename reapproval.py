@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import re
 from zoneinfo import ZoneInfo
 
-from work_states import approved_patch, effective_approval, landed_patch, matches_feedback_assignment, public_import_disposition, with_maintainer_reviewers
+from work_states import amendment_approvers, approved_patch, effective_approval, landed_patch, maintainer_review_history, matches_feedback_assignment, public_import_disposition, with_maintainer_reviewers
 
 
 MARKER = "<!-- codex-reapproval-reminder:v1 "
@@ -94,7 +94,7 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
     """Plan either an exact amendment review or a verified missing import trigger."""
     pr = with_maintainer_reviewers(pr, maintainers)
     result = {"repo": pr.get("repo"), "number": pr["number"], "head": pr.get("head"),
-              "publicImportDisposition": public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"))}
+              "publicImportDisposition": public_import_disposition(pr, node.get("approvedPatch"), node.get("landedPatch"), node.get("reapproval"))}
 
     def skip(reason: str) -> dict:
         return {**result, "status": "skipped", "reason": reason}
@@ -121,27 +121,15 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
             return skip("incomplete-reminder-window")
         if oldest.tzinfo is None or now - oldest < REMINDER_INTERVAL:
             return skip("incomplete-reminder-window")
-    dismissed = {(event.get("review") or {}).get("id"): event["previousReviewState"]
-                 for event in pr["reviewDismissals"]["items"]}
-    reviews = [item for item in pr["feedback"]["items"] if item.get("kind") == "review"
-               and (item.get("author") or {}).get("__typename") == "User"
-               and (item.get("author") or {}).get("login") not in {None, owner}
-               and (item.get("authorAssociation") in {"MEMBER", "OWNER", "COLLABORATOR"}
-                    or item["author"]["login"].casefold() in maintainers)]
-    latest = {}
-    for item in reviews:
-        if item.get("state") not in {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}:
-            continue
-        author = item["author"]["login"]
-        if not item.get("submittedAt"):
-            return skip("missing-review-time")
-        if author not in latest or item["submittedAt"] > latest[author]["submittedAt"]:
-            latest[author] = item
+    history = maintainer_review_history(pr)
+    if history is None:
+        return skip("missing-review-time")
+    latest, prior_approvals = history
     disposition = result["publicImportDisposition"]
-    if (disposition["binding"]["eligible"] and disposition["state"] == "closed"
+    if (disposition["scope"] != "amended" and disposition["binding"]["eligible"] and disposition["state"] == "closed"
             and disposition["trigger"]["state"] == "present"):
         return skip("import-trigger-present-awaiting-replacement")
-    if disposition["action"] == "maintainer-reapproval":
+    if disposition["action"] == "maintainer-reapproval" and disposition["scope"] == "equivalent":
         if effective_approval(pr, require_aggregate=False, trusted_reviewers=maintainers):
             return skip("current-head-approved")
         if reason := import_author_block(pr, node):
@@ -219,9 +207,6 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
             return skip("current-head-approved")
     if any(item["state"] == "CHANGES_REQUESTED" for item in current):
         return skip("current-head-needs-source-work")
-    prior_approvals = [item for item in latest.values()
-                       if item["state"] == "APPROVED" or item["state"] == "DISMISSED"
-                       and dismissed.get(item["id"]) == "APPROVED"]
     if not prior_approvals:
         return skip("no-prior-approval")
     patch = node.get("approvedPatch", {})
@@ -248,19 +233,26 @@ def reminder_plan(pr: dict, node: dict, now: datetime, owner: str,
             return {**skip("missing-exact-content-amendment-evidence"), "status": "needs-evidence"}
     if kind == "patch-preserving-rebase":
         return skip("reviewed-patch-preserving-rebase")
-    approvers = sorted(item["author"]["login"] for item in prior_approvals
-                       if (item.get("commit") or {}).get("oid") == old)
+    approvers = amendment_approvers(pr, proof)
     if not approvers:
         return skip("no-matching-prior-maintainer-approval")
+    if disposition["scope"] == "exact" and disposition["state"] not in {"closed", "unknown"}:
+        return skip("current-head-export-present")
+    prior_export = disposition["scope"] == "amended"
+    if prior_export and not pr.get("importsComplete"):
+        return {**skip("incomplete-import-history"), "status": "deferred"}
+    exports = ", ".join(f"[#{item['number']}](https://github.com/google/gvisor/pull/{item['number']})"
+                        for item in disposition["binding"]["imports"])
+    export_detail = (f"The recorded Copybara export {exports} names that earlier source and does not contain this amendment."
+                     if prior_export else "Copybara may still import the earlier approved revision and omit this amendment.")
     body = (f"🚨 {' '.join('@' + login for login in approvers)} please reapprove the amended head "
             f"{commit_link(head)} before it is imported. Your earlier approval covered "
-            f"{commit_link(old)}. Copybara may still import the earlier approved "
-            f"revision and omit this amendment.\n\n{summary}\n\n"
+            f"{commit_link(old)}. {export_detail}\n\n{summary}\n\n"
             f"[Amendment evidence]({evidence})\n\n"
             f"Posted by Codex on behalf of @{owner}.\n\n{MARKER}head={head} -->")
     return schedule_reminder(result, comments, now, owner, approvedHead=old,
                              approvers=approvers, diffSha256=digest, body=body,
-                             action="reapprove-amendment")
+                             action="reapprove-amendment", importReapproval=prior_export)
 
 
 def schedule_reminder(result: dict, comments: list[dict], now: datetime, owner: str, **details: object) -> dict:

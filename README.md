@@ -225,6 +225,12 @@ approving maintainer to reapprove so Copybara regenerates its import. A genuinel
 fresh current-head approval waits for automatic replacement when the import
 label is present. Closed, unmerged
 exports need re-import, while their unresolved public CI evidence stays visible.
+An exact reviewed content amendment has a separate `amended` lineage: the
+earlier export remains visible, but it does not contain or approve the amended
+source. The same prior-approver evidence drives the site's reapproval action
+and the existing reminder. The ordinary per-PR cooldown still spans both label
+and review reminders; a fresh current-head approval or exact export supersedes
+the older-source action. This does not certify patch equivalence or delivery.
 `publicImportHandoff` is diagnostic only. The reminder planner separately
 recognizes a previously applied `ready to pull` label that is now missing:
 one case is a closed export of the approved patch with no successor. Another
