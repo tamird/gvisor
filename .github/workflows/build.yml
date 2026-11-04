@@ -15,23 +15,23 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 6
+          fetch-depth: 7
           persist-credentials: false
-      - name: Retain the original native pass and stock launch failure
+      - name: Retain the original native pass and stock MTU witness
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p "$RUNNER_TEMP/bridge-public"
           printf '%s\n' '{"status":"INCOMPLETE","phase":"original-download"}' > "$RUNNER_TEMP/bridge-public/verdict.json"
-          gh api repos/tamird/gvisor/actions/artifacts/13285349172/zip > "$RUNNER_TEMP/bridge-original.zip"
-      - name: Complete only the two unqualified source release comparisons
+          gh api repos/tamird/gvisor/actions/artifacts/13288355976/zip > "$RUNNER_TEMP/bridge-original.zip"
+      - name: Complete only the corrected source comparison
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/bridge-public" "$RUNNER_TEMP/bridge-private"
           printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/bridge-public/verdict.json"
-          test "$(git rev-parse HEAD^)" = 5e497343c1eec5fb7ebcac610979e6f7d4fdb341
+          test "$(git rev-parse HEAD^)" = cb095ace0c58b504fbab1ac308ac44ff3842d6d4
           cp .github/qualification/bridge_mtu.py "$RUNNER_TEMP/"
           git fetch --quiet --depth=1 origin "$REPORTER"
           for helper in unit_matrix qualification_report; do

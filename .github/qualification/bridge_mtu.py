@@ -25,6 +25,7 @@ CASE = "NetlinkRouteTest/BridgeAddUnnamed"
 CARRIER = os.environ["GITHUB_SHA"]
 ORIGINAL_CARRIER = "f589199cf6173ee69948c3790e2b0d09d4f999a2"
 RECOVERY_CARRIER = "5e497343c1eec5fb7ebcac610979e6f7d4fdb341"
+PIPE_CARRIER = "cb095ace0c58b504fbab1ac308ac44ff3842d6d4"
 STAGED = Path("test/rtnetlink/linux/bridge-release")
 STAGED_FIXTURE = Path("test/rtnetlink/linux/bridge-fixture")
 RELEASE_FILES = {"runsc", "containerd-shim-runsc-v1", *("gvisor-bin/" + name for name in (
@@ -77,16 +78,17 @@ def boundary(log: str) -> dict:
             } for line in log.splitlines() if "permission denied" in line.casefold()][:8]}
 
 
-def reuse_native() -> dict:
+def reuse_controls() -> dict:
     data = (ROOT / "bridge-original.zip").read_bytes()
     digest = hashlib.sha256(data).hexdigest()
-    assert digest == "606c448c594c39e76415bcb21d4a7d5fc97c3870efb738003fd3570f79a476fe"
+    assert digest == "afa5436fbff91858406037fbe79ead6ba9037109d52238044efb38f23d2a5bb2"
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
         assert archive.namelist() == ["verdict.json"]
         original = json.loads(archive.read("verdict.json"))
-    assert original["source"] == ORIGINAL_CARRIER and original["product"] == PRODUCT and original["stock"] == STOCK
-    assert original["status"] == "INCOMPLETE" and set(original["arms"]) == {"native", "stock"}
-    native = original["arms"]["native"]
+    assert original["source"] == PIPE_CARRIER and original["product"] == PRODUCT and original["stock"] == STOCK
+    assert original["status"] == "INCOMPLETE" and set(original["arms"]) == {"stock"}
+    assert original["retained_original"]["zip_sha256"] == "606c448c594c39e76415bcb21d4a7d5fc97c3870efb738003fd3570f79a476fe"
+    native = original["retained_original"]["native"]
     assert native["source"] == ORIGINAL_CARRIER and native["product"] == STOCK and native["target"] == OCI
     assert native["status"] == "PASS" and native["native_exit"] == 0 and native["reporter_complete"]
     assert native["case_counts"] == dict(passed=1, failed=0, skipped=0)
@@ -94,11 +96,21 @@ def reuse_native() -> dict:
     assert not native["attempt"]["cached_locally"] and not native["attempt"]["cached_remotely"]
     assert native["launched_binaries"] == {"fixture": "ef96e43c017ed2166b5054d6021a92a12581d86742047bba110896e60625c25b"}
     stock = original["arms"]["stock"]
-    assert stock["native_exit"] == 36 and stock["attempt"]["status"] == "FAILED" and not stock["reporter_complete"]
-    result["retained_original"] = {"run": 41751798003, "artifact": 13285349172, "zip_sha256": digest,
-                                   "status": original["status"], "native": native, "stock": stock}
+    assert stock["source"] == PIPE_CARRIER and stock["product"] == STOCK and stock["target"] == OCI
+    assert stock["native_exit"] == 3 and stock["attempt"]["status"] == "FAILED" and stock["reporter_complete"]
+    assert stock["status"] == "EXPECTED_FAILURE" and stock["child_returncodes"] == [1] and not stock["child_timeout"]
+    assert stock["observed_mtu"] == [1486, 1446] and stock["requested_mtu"] == [1500, 1460]
+    assert stock["case_counts"] == dict(passed=0, failed=1, skipped=0)
+    assert stock["attempt"]["strategy"] == "local" and not stock["attempt"]["cached_locally"] and not stock["attempt"]["cached_remotely"]
+    fixed = original["source_builds"]["fixed"]
+    assert fixed["source"] == PRODUCT and fixed["exit"] == 0 and set(fixed["binaries"]) == RELEASE_FILES
+    assert fixed["fixture"]["sha256"] == native["launched_binaries"]["fixture"]
+    result["retained_original"] = {"run": 41754882233, "artifact": 13288355976, "zip_sha256": digest,
+                                   "status": original["status"], "native": native, "stock": stock,
+                                   "native_receipt": {key: original["retained_original"][key]
+                                                      for key in ("run", "artifact", "zip_sha256")}}
     save()
-    return original["source_builds"]["stock"]
+    return fixed
 
 
 def checksum(path: Path) -> str:
@@ -159,6 +171,7 @@ def stage_release(name: str, source: str) -> None:
         assert path.stat().st_size > 20 and os.access(path, os.X_OK), path.name
     row["fixture"] = {"sha256": checksum(fixture), "bytes": fixture.stat().st_size, "elf_machine": 62}
     assert row["fixture"]["sha256"] == "ef96e43c017ed2166b5054d6021a92a12581d86742047bba110896e60625c25b"
+    STAGED_FIXTURE.unlink(missing_ok=True)
     shutil.copy2(fixture, STAGED_FIXTURE)
     assert checksum(STAGED_FIXTURE) == row["fixture"]["sha256"]
     with (release / "runsc").open("rb") as runtime:
@@ -310,7 +323,8 @@ result = dict(source=CARRIER, product=PRODUCT, stock=STOCK, base=BASE,
                    "zip_sha256": "a7648e8d56470cb81c502066c7f701637bdcc0bfda37bdc1ae88b66fafba3129"}])
 save()
 try:
-    assert git("rev-parse", "HEAD^") == RECOVERY_CARRIER and git("rev-parse", RECOVERY_CARRIER + "^") == ORIGINAL_CARRIER
+    assert git("rev-parse", "HEAD^") == PIPE_CARRIER and git("rev-parse", PIPE_CARRIER + "^") == RECOVERY_CARRIER
+    assert git("rev-parse", RECOVERY_CARRIER + "^") == ORIGINAL_CARRIER
     assert git("rev-parse", ORIGINAL_CARRIER + "^") == STOCK
     assert git("rev-parse", STOCK + "^") == PRODUCT and git("rev-parse", PRODUCT + "^") == BASE
     assert git("diff", "--name-only", STOCK, PRODUCT) == "pkg/tcpip/stack/bridge.go"
@@ -328,18 +342,18 @@ try:
                                  runtime="systrap", network="none", fixture_donor="396038636")
     assert os.uname().sysname == "Linux" and os.uname().machine == "x86_64"
     save()
-    original_build = reuse_native()
-    stage_release("stock", STOCK)
-    assert result["source_builds"]["stock"]["binaries"] == original_build["binaries"]
-    assert result["source_builds"]["stock"]["fixture"] == original_build["fixture"]
-    execute("stock", STOCK)
-    assert result["arms"]["stock"]["status"] == "EXPECTED_FAILURE"
+    original_build = reuse_controls()
     stage_release("fixed", PRODUCT)
+    assert result["source_builds"]["fixed"]["binaries"] == original_build["binaries"]
+    assert result["source_builds"]["fixed"]["fixture"] == original_build["fixture"]
     execute("fixed", PRODUCT)
     assert result["arms"]["fixed"]["status"] == "PASS"
     result["status"] = "PASS"
 except (AssertionError, KeyError, OSError, ValueError, ET.ParseError, subprocess.CalledProcessError) as error:
     result["verifier_error"] = type(error).__name__
+    if isinstance(error, OSError):
+        result["verifier_errno"] = error.errno
+        result["staged_fixture_error"] = error.filename == str(STAGED_FIXTURE)
     if any(row.get("status") == "FAIL" for row in result["arms"].values()):
         result["status"] = "FAIL"
 finally:
