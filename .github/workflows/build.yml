@@ -1,35 +1,120 @@
-name: CI
-
-"on":
+name: Complete the webhook image and immutable deployment checks
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/webhook-oci-completion]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  webhook:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Pin the product, Bazelisk and worker-local registry
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/webhook-oci"
+          mkdir -p "$work/bin"
+          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$work/result.json"
+          phase=source
+          trap 'rc=$?; printf "{\"status\":\"INCOMPLETE\",\"phase\":\"%s\",\"exit\":%d}\n" "$phase" "$rc" > "$work/result.json"' ERR
+          product=0bdc5723e11795c6063c95d36fba0c70817eacbc
+          base=183a39d1b2aff9e8e2219171940001749a2b5db0
+          test "$(git rev-parse HEAD^)" = "$product"
+          test "$(git rev-parse "$product^{tree}")" = 455a3482b31d675c4bab73be06b63054cc96821f
+          test "$(git rev-parse "$product^")" = "$base"
+          git cat-file -e "$base^{commit}"
+          test "$(git hash-object .github/qualification/webhook_oci.py)" = 05d604f50cfc87c4019bb7997c68fcf02cb3c3dc
+          cp .github/qualification/webhook_oci.py "$work/check.py"
+          git checkout --quiet --detach "$product"
+          phase=bazelisk
+          curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$work/bin/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $work/bin/bazel" | sha256sum -c -
+          chmod 755 "$work/bin/bazel"
+          echo "$work/bin" >> "$GITHUB_PATH"
+          phase=public-test-fixture
+          curl -fsSL https://raw.githubusercontent.com/golang/go/go1.25.4/src/net/http/internal/testcert/testcert.go -o "$work/testcert.go"
+          echo "812c69f79fc71384de1d93fb1058ab20e5b58ab2860dea72167681048d14a12e  $work/testcert.go" | sha256sum -c -
+          cd "$work"
+          phase=registry-package
+          sudo apt-get update -qq
+          apt-get download docker-registry
+          dpkg-deb -x docker-registry_*.deb package
+          test -x package/usr/bin/docker-registry
+      - name: Verify the immutable original partial result
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/webhook-oci"
+          trap 'rc=$?; printf "{\"status\":\"INCOMPLETE\",\"phase\":\"original-receipt\",\"exit\":%d}\n" "$rc" > "$work/result.json"' ERR
+          gh api repos/tamird/gvisor/actions/artifacts/13304085544/zip > "$work/prior.zip"
+          echo "d667ba72b24cb96070a816b39d1910561c15ea96de423abfb968271ec6d09f4c  $work/prior.zip" | sha256sum -c -
+      - name: Configure the established remote GNU build platform
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/webhook-oci"
+          trap 'rc=$?; printf "{\"status\":\"INCOMPLETE\",\"phase\":\"remote-setup\",\"exit\":%d}\n" "$rc" > "$work/result.json"' ERR
+          umask 077
+          mkdir "$work/platform"
+          echo 'module(name="webhook_gnu")' > "$work/platform/MODULE.bazel"
+          echo '{"qualification":"different selected config"}' > "$work/platform/stale-labels.json"
+          cat > "$work/platform/BUILD" <<'BUILD'
+          exports_files(["stale-labels.json"])
+          platform(
+              name = "gnu",
+              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              exec_properties = {
+                  "Arch": "amd64",
+                  "OSFamily": "linux",
+                  "workload-isolation-type": "firecracker",
+                  "dockerUser": "root",
+                  "EstimatedMemory": "8GB",
+                  "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+              },
+              visibility = ["//visibility:public"],
+          )
+          BUILD
+          {
+            printf '%s\n' 'build --jobs=16' 'build --remote_executor=grpcs://remote.buildbuddy.io' \
+              'build --remote_cache=grpcs://remote.buildbuddy.io' \
+              'build --bes_backend=grpcs://remote.buildbuddy.io' \
+              'build --bes_results_url=https://app.buildbuddy.io/invocation/' \
+              'build --spawn_strategy=remote' 'build --noremote_local_fallback' \
+              'build --remote_accept_cached' \
+              "build --inject_repository=webhook_gnu=$work/platform" \
+              'build --extra_execution_platforms=@webhook_gnu//:gnu' \
+              'build --host_platform=@webhook_gnu//:gnu'
+            test -n "$BUILDBUDDY_API_KEY"
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$work/remote.bazelrc"
+      - name: Exercise only the remaining AMD64 controls and build the ARM64 OCI layout
+        run: python3 "$RUNNER_TEMP/webhook-oci/check.py"
+      - name: Verify the single bounded receipt
+        id: privacy
+        if: always()
+        env:
+          ACCESS: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PYTHON'
+          import json, os
+          from pathlib import Path
+          path = Path(os.environ["RUNNER_TEMP"]) / "webhook-oci" / "result.json"
+          assert path.is_file() and not path.is_symlink() and 0 < path.stat().st_size < 16384
+          data = path.read_bytes()
+          assert json.loads(data)["status"] in ("PASS", "FAIL", "INCOMPLETE")
+          key = os.environ["ACCESS"].encode()
+          assert key and all(x not in data for x in (key, b"remote_header", b"bes_header", b"Authorization:", b"Bearer ", b"X-Amz-Signature"))
+          PYTHON
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.privacy.outcome == 'success'
+        with:
+          name: webhook-oci-completion
+          path: ${{ runner.temp }}/webhook-oci/result.json
+          if-no-files-found: error
