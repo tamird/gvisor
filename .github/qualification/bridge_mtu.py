@@ -2,6 +2,7 @@
 
 from datetime import datetime, timezone
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -9,6 +10,7 @@ import re
 import shutil
 import subprocess
 import xml.etree.ElementTree as ET
+import zipfile
 
 import qualification_report as report
 
@@ -21,6 +23,7 @@ OCI = "//test/rtnetlink/linux:source_bridge_mtu"
 FIXTURE = "//test/syscalls/linux:socket_netlink_route_test"
 CASE = "NetlinkRouteTest/BridgeAddUnnamed"
 CARRIER = os.environ["GITHUB_SHA"]
+ORIGINAL_CARRIER = "f589199cf6173ee69948c3790e2b0d09d4f999a2"
 STAGED = Path("test/rtnetlink/linux/bridge-release")
 STAGED_FIXTURE = Path("test/rtnetlink/linux/bridge-fixture")
 RELEASE_FILES = {"runsc", "containerd-shim-runsc-v1", *("gvisor-bin/" + name for name in (
@@ -48,7 +51,7 @@ def save() -> None:
     (PUBLIC / "verdict.json").write_text(data)
 
 
-def boundary(log: str) -> dict[str, list[str]]:
+def boundary(log: str) -> dict:
     signals = ("setting up network", "creating default loopback interface", "creating loopback link and routes",
                "containerManager.SetNetworkArgs", "connection reset by peer", "broken pipe", "EOF",
                "the sandbox exited before the container started", "RTNETLINK answers", "Operation not permitted",
@@ -58,7 +61,43 @@ def boundary(log: str) -> dict[str, list[str]]:
                "no space left on device", "exit status", "failed to fetch", "failed to download",
                "checklocks", "must be held", "unexpectedly held", "not held", "build did not complete")
     return {"signals": [sig for sig in signals if sig.casefold() in log.casefold()],
-            "source_locations": sorted(set(re.findall(r"(?:socket_netlink_route\.cc|packaged_bridge\.py):\d{1,5}\b", log)))[:12]}
+            "source_locations": sorted(set(re.findall(
+                r"(?:socket_netlink_route\.cc|packaged_bridge\.py|test-setup\.sh|test-xml-generator\.sh):(?: line )?\d{1,5}\b", log)))[:12],
+            "permission_errors": [{
+                "line_sha256": hashlib.sha256(line.encode()).hexdigest(),
+                "operations": [word for word in ("open", "opening", "write", "writing", "read", "reading",
+                    "create", "creating", "delete", "deleting", "remove", "removing", "rename", "execute",
+                    "exec", "fork", "cd", "chmod", "chown", "stat", "access", "copy", "copying")
+                    if re.search(r"\b" + word + r"\b", line, re.I)],
+                "known_files": [name for name in ("test.log", "test.xml", "test-setup.sh", "test-xml-generator.sh",
+                    "packaged_bridge.py", "bridge-test", "config.json", "gvisor_sentry", "runsc")
+                    if re.search(r"(?<![\w.-])" + re.escape(name) + r"(?![\w.-])", line)],
+                "errno": "EACCES",
+            } for line in log.splitlines() if "permission denied" in line.casefold()][:8]}
+
+
+def reuse_native() -> dict:
+    data = (ROOT / "bridge-original.zip").read_bytes()
+    digest = hashlib.sha256(data).hexdigest()
+    assert digest == "606c448c594c39e76415bcb21d4a7d5fc97c3870efb738003fd3570f79a476fe"
+    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+        assert archive.namelist() == ["verdict.json"]
+        original = json.loads(archive.read("verdict.json"))
+    assert original["source"] == ORIGINAL_CARRIER and original["product"] == PRODUCT and original["stock"] == STOCK
+    assert original["status"] == "INCOMPLETE" and set(original["arms"]) == {"native", "stock"}
+    native = original["arms"]["native"]
+    assert native["source"] == ORIGINAL_CARRIER and native["product"] == STOCK and native["target"] == OCI
+    assert native["status"] == "PASS" and native["native_exit"] == 0 and native["reporter_complete"]
+    assert native["case_counts"] == dict(passed=1, failed=0, skipped=0)
+    assert native["attempt"]["strategy"] == "local" and native["attempt"]["status"] == "PASSED"
+    assert not native["attempt"]["cached_locally"] and not native["attempt"]["cached_remotely"]
+    assert native["launched_binaries"] == {"fixture": "ef96e43c017ed2166b5054d6021a92a12581d86742047bba110896e60625c25b"}
+    stock = original["arms"]["stock"]
+    assert stock["native_exit"] == 36 and stock["attempt"]["status"] == "FAILED" and not stock["reporter_complete"]
+    result["retained_original"] = {"run": 41751798003, "artifact": 13285349172, "zip_sha256": digest,
+                                   "status": original["status"], "native": native, "stock": stock}
+    save()
+    return original["source_builds"]["stock"]
 
 
 def checksum(path: Path) -> str:
@@ -175,9 +214,21 @@ def execute(name: str, source: str) -> None:
     save()
     captured = report.capture(raw, events, Path("bazel-out"), out / "reports")
     row["reports"] = [{key: item[key] for key in ("name", "sha256", "bytes")} for item in captured["reports"]]
+    row["capture_boundary"] = boundary("\n".join(captured["errors"]))
     logs = [out / item["path"] for item in captured["reports"] if item["name"] == "test.log"]
     log = logs[0].read_text(errors="replace") if len(logs) == 1 else ""
     row["test_boundary"] = boundary(log)
+    row["xml_boundary"] = [boundary((out / item["path"]).read_text(errors="replace"))
+                           for item in captured["reports"] if item["name"] == "test.xml"]
+    row["report_permissions"] = {}
+    for filename in ("test.log", "test.xml", "test.outputs", "test.outputs_manifest"):
+        path = Path("bazel-testlogs/test/rtnetlink/linux/source_bridge_mtu") / filename
+        try:
+            stat = path.stat()
+            row["report_permissions"][filename] = dict(mode=oct(stat.st_mode & 0o7777), uid=stat.st_uid,
+                                                       gid=stat.st_gid, bytes=stat.st_size)
+        except OSError as error:
+            row["report_permissions"][filename] = {"errno": error.errno}
     row["launched_binaries"] = dict(re.findall(r"(?m)^BRIDGE_BINARY (fixture|runsc|gvisor_sentry) ([a-f0-9]{64})$", log))
     save()
     (out / "capture_exit").write_text("1" if captured["errors"] else "0")
@@ -207,6 +258,8 @@ def execute(name: str, source: str) -> None:
                           cached_remotely=info.get("cachedRemotely", False), status=observation["status"])
     row["test_timing"] = {key: observation[key] for key in (
         "testAttemptStart", "testAttemptStartMillis", "testAttemptDuration", "testAttemptDurationMillis") if key in observation}
+    if observation["status"] == "FAILED":
+        row["status"] = "FAIL"
     save()
     assert git("rev-parse", "HEAD") == source
     assert not (out / "source_before").read_text().strip() and not (out / "source_after").read_text().strip()
@@ -247,7 +300,7 @@ result = dict(source=CARRIER, product=PRODUCT, stock=STOCK, base=BASE,
                    "zip_sha256": "1bb72d872742cc8c070cf56a1ac46a2c6817057008e25ba25b60279b4993dd70"}])
 save()
 try:
-    assert git("rev-parse", "HEAD^") == STOCK
+    assert git("rev-parse", "HEAD^") == ORIGINAL_CARRIER and git("rev-parse", ORIGINAL_CARRIER + "^") == STOCK
     assert git("rev-parse", STOCK + "^") == PRODUCT and git("rev-parse", PRODUCT + "^") == BASE
     assert git("diff", "--name-only", STOCK, PRODUCT) == "pkg/tcpip/stack/bridge.go"
     assert git("rev-parse", STOCK + ":pkg/tcpip/stack/bridge.go") == git("rev-parse", BASE + ":pkg/tcpip/stack/bridge.go")
@@ -264,9 +317,10 @@ try:
                                  runtime="systrap", network="none", fixture_donor="396038636")
     assert os.uname().sysname == "Linux" and os.uname().machine == "x86_64"
     save()
+    original_build = reuse_native()
     stage_release("stock", STOCK)
-    execute("native", STOCK)
-    assert result["arms"]["native"]["status"] == "PASS"
+    assert result["source_builds"]["stock"]["binaries"] == original_build["binaries"]
+    assert result["source_builds"]["stock"]["fixture"] == original_build["fixture"]
     execute("stock", STOCK)
     assert result["arms"]["stock"]["status"] == "EXPECTED_FAILURE"
     stage_release("fixed", PRODUCT)
