@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T02:15:38.449862+00:00",
+    "updatedAt": "2026-11-04T02:35:57.933009+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31775,11 +31775,23 @@
         {
           "label": "Previous revision: Bazel rejected the rule name before any generator or test ran",
           "url": "https://app.buildbuddy.io/invocation/e5025898-c1e6-4e89-b123-2f4ab9151777"
+        },
+        {
+          "label": "Where Copybara rewrites the Go provider load",
+          "url": "https://github.com/google/gvisor/pull/16591#discussion_r4460655109"
+        },
+        {
+          "label": "How the internal template obtains its import path",
+          "url": "https://github.com/google/gvisor/pull/16591#discussion_r4460655119"
+        },
+        {
+          "label": "Amendment against the published PR",
+          "url": "https://github.com/tamird/gvisor/compare/71a996f39...6264dbadc"
         }
       ],
-      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
-      "status": "open",
-      "summary": "The generator now takes each Go source and the library’s declared import path directly. Across nine ABI packages it produced the same 94,341 bytes as the previous generator. All 383 generated test cases passed on AMD64, and nine Nogo owners checked both AMD64 and ARM64. The attestation generator reproduced its 438-byte output in an empty filesystem containing only its executable and source. The previous revision failed while loading the rule; no generator or test ran on that revision.",
+      "updatedAt": "2026-11-04T02:35:57.933009+00:00",
+      "status": "Contributor review requested",
+      "summary": "The reviewer identified two requirements for Google’s import. Copybara rewrites the Go provider load in tools/defs.bzl. The internal host-layout template supplies a constructor that strips a repository prefix before generating the import.",
       "refinement": {
         "before": {
           "head": "d678f172b527c75aac54b2d437566746e3a35696"
@@ -31792,14 +31804,26 @@
       "followup": {
         "owner": "root",
         "sourceHead": "71a996f3993d949dae24cc82fa396eb571d26087",
-        "observedAt": "2026-10-28T14:12:46.344996+00:00",
-        "disposition": "Contributor-approved change published",
-        "nextAction": "Follow checks, maintainer review and import on #16591.",
+        "observedAt": "2026-11-04T02:35:57.933009+00:00",
+        "disposition": "Two importer fixes prepared for contributor review",
+        "nextAction": "Verify the public generator and modeled internal template, then publish and answer both review threads after contributor approval.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16591",
-          "https://github.com/tamird/gvisor/commit/71a996f3993d949dae24cc82fa396eb571d26087",
-          "https://github.com/tamird/gvisor/commit/d678f172b527c75aac54b2d437566746e3a35696"
+          "https://github.com/tamird/gvisor/commit/6264dbadc",
+          "https://github.com/google/gvisor/pull/16591#discussion_r4460655109",
+          "https://github.com/google/gvisor/pull/16591#discussion_r4460655119",
+          "https://github.com/tamird/gvisor/compare/71a996f39...6264dbadc"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "6264dbadc8d73f914c64acee7e8067018adbffd6",
+        "baseHead": "71a996f3993d949dae24cc82fa396eb571d26087",
+        "url": "https://github.com/tamird/gvisor/commit/6264dbadc",
+        "title": "Keep host-layout generation compatible with Google’s import",
+        "requestedAt": "2026-11-04T02:35:57.933009+00:00",
+        "summary": "Publish the amendment and reply on both threads after the Linux checks pass?",
+        "body": "The published PR loads the public Go provider from a file Copybara does not rewrite. It also skips the constructor that removes the internal prefix. The amendment moves the generator rule to tools/defs.bzl and calls the template’s constructor with the provider’s import path.\n\nPublication requires the public generated tests and the prefix-model check to pass. Google’s private import can only be checked upstream.\n\ngit -C ~/code/gvisor range-diff 71a996f39^! 6264dbadc^!\n\nProposed replies\n\nMoved the generator rule into tools/defs.bzl. It loads go_importpath alongside the other Go adapters and passes the rule to the shared host-layout macro.\n\nPosted by Codex on behalf of @tamird.\n\nRestored the call to newTemplateData before creating the output. The public template uses the supplied import path verbatim, and the internal template can strip its repository prefix before rendering the import.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
