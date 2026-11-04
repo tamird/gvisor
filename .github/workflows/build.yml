@@ -1,35 +1,85 @@
-name: CI
-
-"on":
+name: Build the July runsc sources on native Linux
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-july-source-build]
+permissions: {contents: read}
 jobs:
   build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 49
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 3, persist-credentials: false}
+    - name: Pin the sources and public Bazelisk; prepare the host compiler
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@v5
-
-    - name: build
+        set -eu
+        umask 077
+        dir="$RUNNER_TEMP/july-runsc-build"
+        mkdir -p "$dir/binaries"
+        printf '%s\n' '{"status":"INCOMPLETE","phase":"public-source-bootstrap"}' > "$dir/result.json"
+        test "$(git rev-parse HEAD^)" = 9ffcd1079387ea27430c721bba4014782257a6f1
+        test "$(git rev-parse HEAD^^)" = 9f3e9a3fba9416ea1f5832d82923d95830479096
+        git fetch --no-tags --depth=1 https://github.com/google/gvisor.git refs/tags/release-20260727.0:refs/tags/release-20260727.0
+        test "$(git rev-parse 'release-20260727.0^{commit}')" = 9f3e9a3fba9416ea1f5832d82923d95830479096
+        cp .github/qualification/july_runsc_build.py "$dir/build.py"
+        curl -fsSL --retry 2 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$dir/bazel"
+        echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $dir/bazel" | sha256sum -c -
+        chmod 755 "$dir/bazel"
+        sudo -n apt-get update -qq
+        sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends g++-aarch64-linux-gnu libc6-dev-i386 libnuma-dev libbpf-dev
+    - name: Build stock, then the isolated bridge change, as the normal user
       run: |
-          mkdir -p bin
-          make copy TARGETS=runsc DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@v4
+        set -eu
+        dir="$RUNNER_TEMP/july-runsc-build"
+        # The outer launcher creates only the PID and mount namespaces. The
+        # compiler runs as the ordinary user with no groups or privilege gain.
+        sudo -n unshare --mount --pid --fork --mount-proc --propagation private \
+          setpriv --reuid="$(id -u)" --regid="$(id -g)" --clear-groups --no-new-privs \
+          --bounding-set=-all --inh-caps=-all --ambient-caps=-all \
+          env -i HOME="$HOME" USER="$(id -un)" PATH=/usr/local/bin:/usr/bin:/bin LANG=C.UTF-8 GIT_TERMINAL_PROMPT=0 \
+          /usr/bin/python3 -B "$dir/build.py" "$dir"
+    - name: Check just the public receipt and validated executables
+      id: safe
+      if: always()
+      run: |
+        python3 - <<'PY'
+        import hashlib, json, os, pathlib, re
+        root = pathlib.Path(os.environ["RUNNER_TEMP"], "july-runsc-build")
+        p = root / "result.json"
+        assert p.is_file() and not p.is_symlink() and p.stat().st_size in range(1, 60000)
+        b = p.read_bytes()
+        assert not re.search(rb'(?i)https?://|github_pat_|gh[pousr]_|bearer\s|authorization\s*[:=]', b)
+        r = json.loads(b)
+        assert r["status"] in {"PASS", "INCOMPLETE", "FAIL"}
+        for arm in ("stock", "fixed"):
+            if r.get("arms", {}).get(arm, {}).get("status") != "PASS":
+                continue
+            f = root / "binaries" / (arm + "-runsc")
+            assert f.is_file() and not f.is_symlink() and f.stat().st_size == r["arms"][arm]["elf"]["bytes"]
+            digest = hashlib.sha256()
+            with f.open("rb") as stream:
+                for block in iter(lambda: stream.read(1048576), b""):
+                    digest.update(block)
+            assert digest.hexdigest() == r["arms"][arm]["elf"]["sha256"]
+            with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+                print(arm + "=true", file=out)
+        PY
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.safe.outcome == 'success'
       with:
-          name: runsc
-          path: bin/runsc
+        name: july-runsc-build-receipt
+        path: ${{ runner.temp }}/july-runsc-build/result.json
+        if-no-files-found: error
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.safe.outcome == 'success' && steps.safe.outputs.stock == 'true'
+      with:
+        name: july-stock-runsc
+        path: ${{ runner.temp }}/july-runsc-build/binaries/stock-runsc
+        if-no-files-found: error
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.safe.outcome == 'success' && steps.safe.outputs.fixed == 'true'
+      with:
+        name: july-bridge-fix-runsc
+        path: ${{ runner.temp }}/july-runsc-build/binaries/fixed-runsc
+        if-no-files-found: error
