@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T18:44:39.997299+00:00",
+    "updatedAt": "2026-11-04T18:46:10.077644+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -49810,7 +49810,7 @@
       "url": "https://github.com/google/gvisor/pull/16953",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-04T18:44:39.997299+00:00",
+      "updatedAt": "2026-11-04T18:46:10.077644+00:00",
       "summary": "The rebased receiver immediately acknowledges a filled gap in both modes. With 500 bytes unread at checkpoint, the submitted receiver did not send the pending ACK by the 40 ms deadline after restore. The same fixture observed it with the fork fix; both receivers acknowledged the next 1,000 bytes.",
       "evidence": [
         {
@@ -49840,6 +49840,10 @@
         {
           "label": "Original and corrected restored-clock packets (two fresh Linux sandbox TestRunners)",
           "url": "https://github.com/tamird/gvisor/actions/runs/41888812145/artifacts/13352788018"
+        },
+        {
+          "label": "Verified restore observation and suggested fix posted on the original thread",
+          "url": "https://github.com/google/gvisor/pull/16953#discussion_r4471778679"
         }
       ],
       "settledReviews": [
@@ -49851,29 +49855,30 @@
           "outcome": "approved",
           "at": "2026-11-04T14:56:55Z",
           "url": "https://github.com/google/gvisor/pull/16953#pullrequestreview-5770448975"
+        },
+        {
+          "kind": "reply",
+          "head": "5e903e17232e9191f5c20fa48a9a3ab171826cb1",
+          "title": "Reply about the pending ACK after restore",
+          "body": "Thanks, @abarisani. I reran the gap test on 5e903e172. The cumulative ACK now arrives immediately with delayed ACKs both off and on.\n\nOne restore case still fails. I sent 500 bytes and checkpointed the connection before the ACK fired. After restore I advanced the clock by 40 ms, but the peer still had no ACK for those bytes. Sending another 1,000 bytes got a cumulative ACK for all 1,500.\n\nCould you send the outstanding ACK on restore or rearm its timer? Sending it during restore passed the same test. [Packet test](https://github.com/tamird/gvisor/commit/cbb089c14) · [Three-line fix](https://github.com/tamird/gvisor/commit/0bb42c582) · [Before and after](https://github.com/tamird/gvisor/actions/runs/41888812145/artifacts/13352788018)\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "url": "https://github.com/google/gvisor/pull/16953#discussion_r4471202707",
+          "at": "2026-11-04T18:45:33Z",
+          "postedURL": "https://github.com/google/gvisor/pull/16953#discussion_r4471778679"
         }
       ],
       "followup": {
         "owner": "TCP review owner",
         "sourceHead": "5e903e17232e9191f5c20fa48a9a3ab171826cb1",
-        "observedAt": "2026-11-04T18:44:39.997299+00:00",
-        "disposition": "The original gap concern is fixed. The current review decision is the separate packet observation after restore.",
-        "nextAction": "Post the reviewed reply on the existing thread if authorized.",
+        "observedAt": "2026-11-04T18:46:10.077644+00:00",
+        "disposition": "Rechecked the revised gap ACK and replied on the original thread with the separate restore case and tested fix.",
+        "nextAction": "The PR author can flush the outstanding ACK on restore or rearm its timer. Watch for their response.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16953#discussion_r4471202707",
           "https://github.com/tamird/gvisor/actions/runs/41888812145/artifacts/13353715113",
-          "https://github.com/tamird/gvisor/actions/runs/41888812145/artifacts/13352788018"
+          "https://github.com/tamird/gvisor/actions/runs/41888812145/artifacts/13352788018",
+          "https://github.com/google/gvisor/pull/16953#discussion_r4471778679"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "reply",
-        "head": "5e903e17232e9191f5c20fa48a9a3ab171826cb1",
-        "url": "https://github.com/google/gvisor/pull/16953#discussion_r4471202707",
-        "title": "Reply about the pending ACK after restore",
-        "requestedAt": "2026-11-04T18:44:39.997299+00:00",
-        "summary": "Post the packet observations and suggested restore fix on the author’s existing thread?",
-        "body": "Thanks, @abarisani. I reran the gap test on 5e903e172. The cumulative ACK now arrives immediately with delayed ACKs both off and on. One restore case still fails: receive 500 bytes, checkpoint before the ACK fires, then advance the restored clock by 40 ms. The peer still has no ACK for those bytes. Sending another 1,000 bytes gets a cumulative ACK for all 1,500. Could you send the outstanding ACK on restore or rearm its timer? I’ve linked the [packet test](https://github.com/tamird/gvisor/commit/cbb089c14), [three-line fix](https://github.com/tamird/gvisor/commit/0bb42c582), and [before/after results](https://github.com/tamird/gvisor/actions/runs/41888812145/artifacts/13352788018).\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
