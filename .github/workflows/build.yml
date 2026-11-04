@@ -1,35 +1,70 @@
-name: CI
-
-"on":
+name: Compare the connected TCP_MAXSEG syscall on Linux and gVisor
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-maxseg-connected]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  sockets:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 132
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 5
+          persist-credentials: false
+      - name: Bind the public tool and report helpers
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/tcp-maxseg"
+          mkdir -p "$root"/{bin,out}
+          printf '{"status":"INCOMPLETE","phase":"bootstrap"}\n' > "$root/out/verdict.json"
+          cp test/rbe/tcp_maxseg.py "$root/"
+          donor=611a6ff017c528dddbd0d2e643aaf23c6ddac488
+          git fetch --quiet --depth=1 https://github.com/tamird/gvisor.git "$donor"
+          test "$(git rev-parse "$donor:test/rbe/qualification_report.py")" = d2e3eedabc2ad911d958aa448fd916aa6835aa86
+          test "$(git rev-parse "$donor:test/rbe/unit_matrix.py")" = d01d9e319084e18ea2928671e417e1b4e86c4954
+          for helper in qualification_report unit_matrix; do
+            git show "$donor:test/rbe/$helper.py" > "$root/$helper.py"
+          done
+          test "$(cat .bazelversion)" = 9.3.1
+          curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$root/bin/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $root/bin/bazel" | sha256sum -c -
+          chmod 755 "$root/bin/bazel"
+      - name: Run the existing syscall owners on a dedicated native GNU Linux worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/tcp-maxseg"
+          image=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          docker pull --platform linux/amd64 "$image"
+          # The syscall runner creates isolated namespaces; no Docker socket,
+          # credentials or host home is mounted into the build/test process.
+          docker run --rm --platform linux/amd64 --privileged --user root \
+            --sysctl net.ipv6.conf.lo.disable_ipv6=0 --entrypoint /usr/bin/env \
+            -v "$root:$root" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE" "$image" \
+            -i HOME=/root USER=root LANG=C.UTF-8 PATH="$root/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+            GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" \
+            GITHUB_SHA="$GITHUB_SHA" RUNNER_TEMP="$root" GIT_TERMINAL_PROMPT=0 \
+            bash -euc 'test "$(bazel --version)" = "bazel 9.3.1"; command -v aarch64-linux-gnu-gcc; command -v setpriv; python3 -B "$RUNNER_TEMP/tcp_maxseg.py"'
+      - name: Validate the public receipt
+        if: always()
+        id: safe
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"], "tcp-maxseg/out/verdict.json")
+          assert p.is_file() and not p.is_symlink() and 0 < p.stat().st_size < 131072
+          data=p.read_bytes()
+          assert json.loads(data)["status"] in ("INCOMPLETE", "FAIL", "PASS")
+          assert not re.search(rb'(?i)authorization\s*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_|https?://', data)
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.safe.outcome == 'success'
+        with:
+          name: tcp-maxseg
+          path: ${{ runner.temp }}/tcp-maxseg/out/verdict.json
+          if-no-files-found: error
