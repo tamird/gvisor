@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T03:06:00+00:00",
+    "updatedAt": "2026-11-04T03:32:25.175514+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -29654,8 +29654,8 @@
       "url": "https://github.com/google/gvisor/pull/16506",
       "group": "release",
       "status": "Open; reviewer feedback applied",
-      "summary": "All 16 release-staging actions ran remotely. Eight files on each architecture match the producer digests and modes. The copy command runs in an empty Linux root with only its declared executable and input; the installed AMD64 runsc starts its sidecars. The original PR now uses the re-export requested in review. Both Make installs staged eight of eight executable files; AMD64 runsc --version also succeeded.",
-      "updatedAt": "2026-11-03T02:30:53.096288+00:00",
+      "summary": "Before runsc-netgofer landed, all 16 staging copies ran remotely. Both Make installs preserved the eight producer digests and executable modes. The declared copy ran in an empty Linux root, and installed AMD64 runsc reported its version and started its sidecars. The PR uses the re-export requested in review. With runsc-netgofer added, integration 96057fa92 ran six Go links and nine declared copies per architecture on native AMD64 and ARM64 workers. Make installed both nine-file layouts with matching bytes and executable modes on the hosted AMD64 runner. The netgofer check covered linking and installation.",
+      "updatedAt": "2026-11-04T03:27:58.890694+00:00",
       "followup": {
         "owner": "Source PR owner",
         "observedAt": "2026-11-03T02:30:53.096288+00:00",
@@ -29668,7 +29668,9 @@
           "https://app.buildbuddy.io/invocation/a6890823-90b9-459e-ab59-81a5d530e87a",
           "https://github.com/google/gvisor/pull/16506/commits/f187880054798de72c74c78d2506c7c60fa6641e",
           "https://github.com/tamird/gvisor/actions/runs/41563938650/artifacts/13199755407",
-          "https://github.com/google/gvisor/pull/16506#discussion_r4450260175"
+          "https://github.com/google/gvisor/pull/16506#discussion_r4450260175",
+          "https://github.com/tamird/gvisor/commit/96057fa92",
+          "https://github.com/tamird/gvisor/actions/runs/41765228449/artifacts/13292873920"
         ]
       },
       "evidence": [
@@ -29691,6 +29693,18 @@
         {
           "label": "Reply on the original PR",
           "url": "https://github.com/google/gvisor/pull/16506#discussion_r4450260175"
+        },
+        {
+          "label": "Upstream addition of runsc-netgofer to the release",
+          "url": "https://github.com/google/gvisor/commit/693353612"
+        },
+        {
+          "label": "Nine-file declared-toolchain integration source",
+          "url": "https://github.com/tamird/gvisor/commit/96057fa92"
+        },
+        {
+          "label": "Native AMD64 and ARM64 links, nine declared copies each and both Make installs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41765228449/artifacts/13292873920"
         }
       ],
       "number": 16506
@@ -34251,8 +34265,8 @@
       "url": "https://github.com/tamird/gvisor/commit/a5afdee61",
       "group": "release",
       "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-10-31T12:01:55.716021+00:00",
-      "summary": "The GitHub push workflow builds the AMD64 release on its hosted runner. With the exact target-architecture selection from #16753, native AMD64 and ARM64 runners built and re-downloaded all eight binaries with Docker stopped. Both archives matched the original paths and ZIP modes and contained the expected static ELFs. Without #16753, each build requested the other architecture’s unavailable compiler. The qualification spelled out top-level output downloads. The existing approval remains scoped to a5afdee61 after #16753.",
+      "updatedAt": "2026-11-04T03:27:58.890694+00:00",
+      "summary": "The GitHub push workflow builds the AMD64 release on its hosted runner. With the exact target-architecture selection from #16753, native AMD64 and ARM64 runners built and re-downloaded the eight binaries then in the release with Docker stopped. Both archives matched the original paths and ZIP modes and contained the expected static ELFs. Without #16753, each build requested the other architecture’s unavailable compiler. The qualification spelled out top-level output downloads. The existing approval remains scoped to a5afdee61 after #16753. The workflow uploads the entire release directory. After runsc-netgofer landed, integration 96057fa92 built the nine-file layout on native workers for both architectures, and Make installed both layouts. The eight-file run remains the archive round-trip check.",
       "evidence": [
         {
           "label": "Direct Ubuntu build and release artifact",
@@ -34281,6 +34295,18 @@
         {
           "label": "Only workflow wording and explicit download mode differed in this proof",
           "url": "https://github.com/tamird/gvisor/compare/a5afdee61..c7a99450c"
+        },
+        {
+          "label": "Upstream addition of runsc-netgofer to the release",
+          "url": "https://github.com/google/gvisor/commit/693353612"
+        },
+        {
+          "label": "Nine-file declared-toolchain integration source",
+          "url": "https://github.com/tamird/gvisor/commit/96057fa92"
+        },
+        {
+          "label": "Native AMD64 and ARM64 links, nine declared copies each and both Make installs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41765228449/artifacts/13292873920"
         }
       ],
       "settledReviews": [
