@@ -1,9 +1,10 @@
 name: Verify the protected PIDFD lookup under the Go race detector
 on:
   push:
-    branches: [qualification/task-foreign-fd-race]
+    branches: [qualification/task-foreign-fd-race-gnu]
 permissions:
   contents: read
+  actions: read
 jobs:
   catalog:
     if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
@@ -22,7 +23,30 @@ jobs:
           path: source
           fetch-depth: 2
           persist-credentials: false
-      - name: Run the existing concurrent lookup test on the protected tree
+      - name: Bind the original failed invocation and its recovered build error
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          umask 077
+          mkdir "$RUNNER_TEMP/final-race"
+          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/final-race/result.json"
+          gh api repos/tamird/gvisor/actions/artifacts/13314253662/zip > "$RUNNER_TEMP/fd-race-original.zip"
+          echo "8d7b6dbb4a2b83ca9ab862415cf4b74f4be296974b55c0aec739fcfa6c3d11a5  $RUNNER_TEMP/fd-race-original.zip" | sha256sum -c -
+          python3 - <<'BIND'
+          from pathlib import Path
+          import os, json, zipfile
+          with zipfile.ZipFile(Path(os.environ["RUNNER_TEMP"]) / "fd-race-original.zip") as z:
+              assert z.namelist() == ["verdict.json"]
+              r = json.loads(z.read("verdict.json"))
+          assert r["status"] == "ORIGINAL_LOGS_READ" and r["console"]["forward"]["complete"]
+          assert r["original_zip_sha256"] == "3c63c39edb79de1535951590a711b295b72984ecbb2741831a8d5eb0f4672b16"
+          old = r["original"]
+          assert old["native_exit"] == 1 and old["cases"] == old["executions"] == []
+          assert old["source"] == "97bfc4ae73a4e74751f4db335918970889807bb6" and old["invocations"] == ["ec927e06-b03e-4103-97b5-fe60c96e9c52"]
+          assert any("path inclusion s found in rule" in " ".join(d["words"]) for d in r["console"]["forward"]["diagnostics"])
+          BIND
+      - name: Run the same protected test with the GNU release client and worker
         working-directory: source
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -37,7 +61,8 @@ jobs:
           test "$(git rev-parse HEAD)" = "$SHA"
           test "$(git rev-parse HEAD^)" = 8cdb6eb0da66ecf93b0a5e32a2ee970016833a5a
           test "$(git -C ../carrier rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(git -C ../carrier rev-parse HEAD^)" = "$SHA"
+          test "$(git -C ../carrier rev-parse HEAD^)" = 4a7a97630c3c55828573878756a79eba1344dd94
+          test "$(git -C ../carrier rev-parse HEAD^^)" = "$SHA"
           test "$(git diff --name-only HEAD^ HEAD)" = "$(printf '%s\n' pkg/sentry/kernel/BUILD pkg/sentry/kernel/fd_table_test.go)"
           test "$(git diff --numstat HEAD^ -- pkg/sentry/kernel/BUILD)" = "$(printf '1\t0\tpkg/sentry/kernel/BUILD')"
           test "$(git rev-parse HEAD:pkg/sentry/kernel/BUILD)" = edee10c38f47263b9d611805e09bb3c8fc56700f
@@ -94,7 +119,16 @@ jobs:
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$rc"
           unset BUILDBUDDY_API_KEY
-          python3 -B ../carrier/test/rbe/qualify_fd_table.py race "$ARCH" "$SHA" "$rc" "$RUNNER_TEMP/final-race"
+          image=${WORKER_IMAGE#docker://}
+          timeout 180 docker pull --platform=linux/amd64 "$image"
+          docker run -d --name fd-race-gnu --entrypoint /bin/bash --user root \
+            -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$PWD" "$image" -c 'sleep infinity'
+          trap 'docker rm -f fd-race-gnu >/dev/null 2>&1 || true; rm -f "$rc"' EXIT
+          test "$(docker exec -e USE_BAZEL_VERSION fd-race-gnu "$RUNNER_TEMP/fd-race-bin/bazel" --version)" = 'bazel 9.3.1'
+          docker exec -e USE_BAZEL_VERSION -e WORKER_IMAGE -e PYTHONPATH -e RUNNER_TEMP \
+            -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e "GIT_CONFIG_VALUE_0=$PWD" \
+            -e "PATH=$RUNNER_TEMP/fd-race-bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+            fd-race-gnu python3 -B ../carrier/test/rbe/qualify_fd_table.py race "$ARCH" "$SHA" "$rc" "$RUNNER_TEMP/final-race"
       - name: Check bounded public reports
         id: privacy
         if: always()
@@ -118,7 +152,7 @@ jobs:
       - if: always() && steps.privacy.outcome == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: task-foreign-fd-race
+          name: task-foreign-fd-race-gnu
           path: |
             ${{ runner.temp }}/final-race/result.json
           if-no-files-found: error

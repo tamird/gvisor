@@ -19,7 +19,7 @@ wanted = "TestPIDFDGetFDConcurrentUnshare"
 owners = [owner]
 required = {(owner, wanted)}
 d = Path(destination)
-d.mkdir()
+d.mkdir(exist_ok=True)
 def now():
     return datetime.now(timezone.utc).isoformat()
 def git(*args):
@@ -32,6 +32,9 @@ try:
     r["worker_image"] = os.environ["WORKER_IMAGE"]
     assert git("rev-parse", "HEAD").decode().strip() == source
     assert source == "97bfc4ae73a4e74751f4db335918970889807bb6", source
+    r["original_failed_build"] = {"native_exit":1, "attempts":0, "artifact":13313558551, "diagnostic_artifact":13314253662,
+                                  "invocation":"ec927e06-b03e-4103-97b5-fe60c96e9c52"}
+    r["client_image"] = r["worker_image"]
     r["product"] = "8cdb6eb0da66ecf93b0a5e32a2ee970016833a5a"
     r["fixture_donor"] = "11e80af23adffb0bc7a17ff57b2f2d4b212dc64d"
     data = Path("pkg/sentry/kernel/fd_table_test.go").read_bytes()
@@ -70,6 +73,14 @@ try:
     r["hints"] = [h for h in ("RESOURCE_EXHAUSTED", "no such target", "Permission denied", "not found", "signal: killed") if h.lower() in log.lower()]
     if code:
         r["diagnostic_classes"] = [term for term in ("missing strict dependencies", "undefined:", "no such file or directory", "no such package", "Error downloading", "race detected", "could not import", "incompatible", "out of memory", "no usable", "no matching toolchains") if term.lower() in log.lower()]
+        # Keep only an existing source file/line and fixed compiler classes.
+        source_lines = Path("pkg/sentry/kernel/fd_table_test.go").read_text().splitlines()
+        r["fixture_compile_diagnostics"] = []
+        for line in log.splitlines():
+            match = re.search(r"(?:^|/)fd_table_test\.go:([0-9]{1,5}):(?:[0-9]+:)?", line[:8192])
+            if match and 0 < int(match[1]) <= len(source_lines) and len(r["fixture_compile_diagnostics"]) < 5:
+                r["fixture_compile_diagnostics"].append({"line":int(match[1]), "kinds":[word for word in
+                        ("undefined", "cannot use", "not enough arguments", "too many arguments", "has no field or method", "cannot call", "mismatched", "cannot assign", "not used") if word in line]})
         save("result.json", r)
     clean=d/"events.jsonl"
     outroot=Path(subprocess.check_output(bazel+["info","output_base"],stderr=subprocess.DEVNULL,text=True).strip())
