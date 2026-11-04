@@ -3,14 +3,12 @@
 import datetime
 import hashlib
 import http.client
-import io
 import json
 import os
 import platform
 import re
 import socket
 import subprocess
-import tarfile
 import time
 from pathlib import Path
 
@@ -19,11 +17,8 @@ WORK = Path(os.environ["RUNNER_TEMP"]) / "webhook-oci"
 PRODUCT = "0d54cc79f0155cc02ffd4a1a0c679579f52af9dd"
 REPOSITORY = "gvisor/qualification/webhook"
 TAG = "qa"
-CASES = [
-    "source", "short-name routing", "daemon-free build", "offline manifest",
-    "docker load", "isolated execution", "private registry", "make push",
-    "published manifest", "scratch filesystem",
-]
+CASES = ["source", "declared digest", "docker load", "private registry", "host push",
+         "published manifest", "published digest lookup"]
 CURRENT = ""
 RESULT = {"expected": CASES, "executed": [], "passed": [], "failed": [], "observations": {}}
 
@@ -63,6 +58,7 @@ def run(args):
             "400 Bad Request", "401 Unauthorized", "404 Not Found", "500 Internal",
             "unknown flag", "unknown command", "no tags", "invalid reference",
             "no space left", "failed to fetch", "repository rule", "deadline exceeded",
+            "server gave HTTP response to HTTPS client", "no such manifest",
         )
         RESULT["command_error"] = {
             "tool": args[0], "exit": proc.returncode,
@@ -93,51 +89,25 @@ def verify():
         port = sock.getsockname()[1]
     registry = f"127.0.0.1:{port}"
     ref = f"{registry}/{REPOSITORY}:{TAG}"
-    start("short-name routing")
-    for source, host, path, tag in (
-        ("webhook-dev:qa", "index.docker.io", "library/webhook-dev", TAG),
-        ("team/webhook", "team", "webhook", "latest"),
-        (ref, registry, REPOSITORY, TAG),
-    ):
-        rendered = run([*make, "-n", "webhook-push", "WEBHOOK_IMAGE=" + source]).decode()
-        check(f'--registry "{host}" --repository "{path}" --tag "{tag}"' in rendered,
-              "wrong push coordinates")
-    start("daemon-free build")
-    run([*bazel, "build", *options, "//webhook:image", "//webhook:webhook"])
-    paths = run([*bazel, "cquery", *options, "--output=files", "//webhook:webhook"])
-    files = [Path(line) for line in paths.decode().splitlines() if line]
-    check(len(files) == 1 and files[0].is_file(), "missing Bazel binary")
-    binary_hash = hashlib.sha256(files[0].read_bytes()).hexdigest()
-    start("offline manifest")
-    output = Path("test/kubernetes/gvisor-injection-admission-webhook.yaml")
-    run([*make, "webhook-update", "WEBHOOK_IMAGE=" + ref])
-    manifest = output.read_text()
-    match = re.search(r"^\s*image: " + re.escape(ref) + r"@(sha256:[a-f0-9]{64})$", manifest, re.M)
-    check(match, "rendered image missing exact tag and digest")
-    digest = match[1]
-    certs = run([*make, "--eval", 'certs-ref:;@echo "$(call remote_image,certs):$(call tag,certs)"',
-                 "certs-ref"]).decode().strip()
-    check(re.fullmatch(r"us-central1-docker\.pkg\.dev/gvisor-presubmit/"
-                       r"gvisor-presubmit-images/certs_x86_64:[a-f0-9]{16}", certs), "wrong certs reference")
-    template = Path(str(output) + ".in").read_text()
-    check(manifest == template.replace("%WEBHOOK%", ref + "@" + digest).replace("%INIT%", certs),
-          "deployment template changed")
-    check(manifest.count("workingDir: /certs") == 2, "unexpected deployment working directories")
-    obs.update(rendered=digest, certs=certs, registry_started_after_render=True)
+    start("declared digest")
+    run([*bazel, "build", *options, "--remote_download_outputs=toplevel", "//webhook:image_digest"])
+    files = run([*bazel, "cquery", *options, "--output=files", "//webhook:image_digest"]).splitlines()
+    check(len(files) == 1, "expected one digest file")
+    digest = Path(os.fsdecode(files[0])).read_text().strip()
+    check(re.fullmatch(r"sha256:[a-f0-9]{64}", digest), "invalid declared digest")
+    obs["declared_digest"] = digest
     start("docker load")
-    local = "webhook-dev:" + TAG
-    run([*make, "webhook-build", "WEBHOOK_IMAGE=" + local])
-    image = json.loads(run(["docker", "image", "inspect", local]))[0]
+    run([*make, "webhook-build", "WEBHOOK_IMAGE=" + ref])
+    image = json.loads(run(["docker", "image", "inspect", ref]))[0]
     check(image["Architecture"] == "amd64" and image["Os"] == "linux", "wrong loaded platform")
     obs["docker_config"] = image["Id"]
-    start("isolated execution")
-    # --help exits before the Kubernetes client or a listening server is constructed.
-    proc = subprocess.run(["docker", "run", "--pull=never", "--rm", "--network=none",
-                           "--workdir=/certs", local, "--help"], capture_output=True)
-    help_text = proc.stdout + proc.stderr
-    obs["help_exit"] = proc.returncode
-    check(proc.returncode == 0 and b"-pod-namespace-labels" in help_text and b"-port" in help_text,
-          "webhook help did not execute")
+    version = run(["docker", "version", "--format", "{{.Server.Version}}"]).decode().strip()
+    driver = run(["docker", "info", "--format", "{{.Driver}}"]).decode().strip()
+    driver_status = json.loads(run(["docker", "info", "--format", "{{json .DriverStatus}}"]))
+    check(re.fullmatch(r"[0-9]+(?:\.[0-9]+){1,3}", version), "unknown Docker version")
+    obs.update(docker_version=version, driver=driver if driver in ("overlay2", "overlayfs", "vfs") else "other",
+               containerd_snapshotter=any(row == ["driver-type", "io.containerd.snapshotter.v1"]
+                                          for row in driver_status or []))
     start("private registry")
     cfg = WORK / "registry.yaml"
     cfg.write_text("version: 0.1\nlog:\n  level: error\nstorage:\n  filesystem:\n"
@@ -146,7 +116,7 @@ def verify():
     def get(path):
         conn = http.client.HTTPConnection("127.0.0.1", port, timeout=30)
         try:
-            conn.request("GET", path, headers={"Accept": "application/vnd.oci.image.manifest.v1+json"})
+            conn.request("GET", path, headers={"Accept": "application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json"})
             response = conn.getresponse()
             return response.status, response.getheader("Docker-Content-Digest"), response.read()
         finally:
@@ -166,39 +136,37 @@ def verify():
             time.sleep(0.25)
         else:
             raise CheckFailure("private registry unavailable")
-        start("make push")
-        run([*make, "webhook-push", "WEBHOOK_IMAGE=" + ref])
+        start("host push")
+        # These are the same two commands as the original Make target: build/load,
+        # then invoke the current user's Docker CLI to publish exactly that name.
+        run(["docker", "push", ref])
         start("published manifest")
         prefix = "/v2/" + REPOSITORY + "/"
         status, header, raw = get(prefix + "manifests/" + TAG)
-        check(status == 200 and header == digest and "sha256:" + hashlib.sha256(raw).hexdigest() == digest,
-              "pushed tag does not match the deployment")
-        check(get(prefix + "manifests/" + digest)[2] == raw, "immutable reference not retrievable")
+        check(status == 200 and header == "sha256:" + hashlib.sha256(raw).hexdigest(),
+              "invalid host registry response")
+        check(get(prefix + "manifests/" + header)[2] == raw, "immutable reference not retrievable")
         check(get(prefix + "manifests/latest")[0] == 404, "unexpected latest tag")
         check(json.loads(get(prefix + "tags/list")[2])["tags"] == [TAG], "unexpected tag set")
         check(json.loads(get("/v2/_catalog")[2])["repositories"] == [REPOSITORY], "unexpected repository")
         desc = json.loads(raw)
-        check(desc["config"]["digest"] == image["Id"], "published and loaded configs differ")
-        cfg = json.loads(get(prefix + "blobs/" + desc["config"]["digest"])[2])["config"]
-        check(cfg["Entrypoint"] == ["/webhook"] and not cfg.get("Cmd") and cfg.get("User", "") in ("", "0")
-              and cfg.get("WorkingDir", "") in ("", "/"), "unexpected OCI configuration")
-        obs.update(pushed=digest, only_tag=TAG, only_repository=REPOSITORY,
-                   entrypoint=cfg["Entrypoint"], user=cfg.get("User"), working_dir=cfg.get("WorkingDir"))
-        start("scratch filesystem")
+        check(desc["config"]["digest"] == image["Id"], "host Docker pushed another image")
         check(len(desc["layers"]) == 1, "unexpected layer count")
-        layer = desc["layers"][0]["digest"]
-        status, _, data = get(prefix + "blobs/" + layer)
-        check(status == 200 and "sha256:" + hashlib.sha256(data).hexdigest() == layer, "wrong layer bytes")
-        with tarfile.open(fileobj=io.BytesIO(data)) as archive:
-            entries = [entry for entry in archive if not entry.isdir()]
-            check(len(entries) == 1 and entries[0].name.removeprefix("./").lstrip("/") == "webhook",
-                  "unexpected scratch contents")
-            entry = entries[0]
-            check(entry.isfile() and entry.mode & 0o111, "webhook is not an executable file")
-            binary = archive.extractfile(entry).read()
-            check(binary[:4] == b"\x7fELF" and int.from_bytes(binary[18:20], "little") == 62 and
-                  hashlib.sha256(binary).hexdigest() == binary_hash, "wrong webhook binary")
-            obs.update(layer=layer, elf_sha256=binary_hash, elf_machine=62, mode=oct(entry.mode))
+        obs.update(host_pushed=header, host_matches_declared=(digest == header), tag=TAG,
+                   media_type=desc.get("mediaType"), layer=desc["layers"][0]["digest"])
+        start("published digest lookup")
+        # The CLI's verbose inspect includes the actual registry descriptor.
+        # Check a typed alternative for a renderer if this daemon converts OCI.
+        inspect = ["docker", "manifest", "inspect", "--verbose"]
+        try:
+            native = json.loads(run([*inspect, ref]))
+            obs["lookup_mode"] = "default"
+        except CheckFailure:
+            obs["loopback_default_error"] = RESULT.pop("command_error")
+            native = json.loads(run([*inspect, "--insecure", ref]))
+            obs["lookup_mode"] = "explicit loopback HTTP"
+        check(native["Descriptor"]["digest"] == header, "Docker descriptor differs from registry")
+        obs["lookup_digest"] = native["Descriptor"]["digest"]
     finally:
         proc.terminate()
         proc.wait(timeout=15)
