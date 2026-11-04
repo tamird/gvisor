@@ -1,7 +1,7 @@
-name: Identify the first operation in the fixed setlink shell test
+name: Check the fixed setlink shell test with Make's sandbox mount
 on:
   push:
-    branches: [qualification/setlink-shell-first-error]
+    branches: [qualification/setlink-shell-mount-comparison]
 permissions:
   contents: read
 jobs:
@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 5
+          fetch-depth: 6
           persist-credentials: false
       - name: Bind the public tool and report helpers
         shell: bash
@@ -28,7 +28,7 @@ jobs:
           curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$root/bin/bazel"
           echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $root/bin/bazel" | sha256sum -c -
           chmod 755 "$root/bin/bazel"
-      - name: Run only the original fixed setlink shell owner
+      - name: Run the fixed setlink owner in the native Linux sandbox
         shell: bash
         run: |
           set -euo pipefail
@@ -60,6 +60,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.safe.outcome == 'success'
         with:
-          name: setlink-shell-first-error
+          name: setlink-shell-sandbox-mount
           path: ${{ runner.temp }}/veth-network-mtu-syscalls/out/verdict.json
           if-no-files-found: error

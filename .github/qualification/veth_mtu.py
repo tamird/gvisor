@@ -1,4 +1,4 @@
-"""Recover the first operation or MTU readback from the existing fixed shell test."""
+"""Run the existing setlink shell test with Make's sandbox mount policy."""
 
 from datetime import datetime, timezone
 import hashlib
@@ -17,12 +17,14 @@ STOCK = "cc65110cb1a021ebc7dd5526fb8334dca9fc6b2f"
 BASE = "6dcadf4a84a07f69e8eb5f1ea9d7b2903bd03bd7"
 PREVIOUS = "224d478ba5a85e1146267a60e2e7300e92c0b990"
 ORIGINAL = "f1ccfd3be89aa530ae9d5cfae6f6673a891f0102"
+LOCAL = "4f7d7c0f48b7923fd0d0ad9c0f2923643167fb60"
 SHELL = "//test/rtnetlink:setlink_test_"
 SOURCES = ("test/rtnetlink/linux/setlink_test.sh", "test/syscalls/linux/socket_netlink_route.cc")
 SCOPED = ["--config=x86_64", "--lockfile_mode=off", "--jobs=4", "--local_resources=memory=8192",
           "--remote_cache=", "--remote_executor=", "--bes_backend=",
           "--strategy=GoStdlib=processwrapper-sandbox", "--strategy=GoStdlibList=processwrapper-sandbox"]
-TEST = ["--strategy=TestRunner=local", "--nocache_test_results", "--flaky_test_attempts=1", "--runs_per_test=1",
+TEST = ["--strategy=TestRunner=linux-sandbox", "--sandbox_add_mount_pair=/tmp",
+        "--nocache_test_results", "--flaky_test_attempts=1", "--runs_per_test=1",
         "--test_sharding_strategy=disabled", "--nozip_undeclared_test_outputs", "--test_timeout=150", "--test_output=errors"]
 # Exact projection, never export raw logs, packet bytes, paths, or environment.
 CLUES = ("conflicting declaration", "conflicting types", "cannot represent machine", "cc: no such file",
@@ -146,6 +148,9 @@ TRACE = (
     ("require_3000", r"grep -w ['\"]?mtu 3000"),
     ("delete_pair", r"ip link del name test_veth01"),
     ("rename_link", r"ip link set test_veth01 name test_veth03"),
+    ("show_renamed", r"ip link show test_veth03"),
+    ("delete_renamed", r"ip link del name test_veth03"),
+    ("wait_for_peer_gone", r"wait_for ['\"]?!['\"]? ip link show test_veth02"),
     ("set_mac", r"ip link set dev test_veth01 address 1a:2a:3a:4a:5a:6a"),
 )
 # "setting up network:" is the caller's error context; the informational
@@ -169,6 +174,7 @@ FILES = ("sandbox.go", "network.go", "loader.go", "container.go", "boot.go", "go
 
 def projection(text):
     steps, first_errors, last_errors = [], [], []
+    mount_errors = []
     for n, line in enumerate(text.splitlines(), 1):
         m = re.search(r"(?:^|\s)\++\s+(.+)", line)
         if m:
@@ -176,7 +182,21 @@ def projection(text):
                 if re.match(pattern, m[1]) and len(steps) < 45:
                     steps.append([n, key])
                     break
-        low = line.lower()
+        low = line.lower().replace('\\"', '"')
+        if "device or resource busy" in low and len(mount_errors) < 4:
+            # Only publish fixed source vocabulary. The original fixed/local
+            # projection did not retain either the path or the mount flags.
+            stages = ("error mounting tmpfs", "error mounting /proc/fs/proc",
+                      "error mounting proc/self/fd", "binding rootfs", "error setting up fs:",
+                      "error setting up /dev", "remounting root as read-only", "pivot_root failed")
+            mount_errors.append({
+                "line": n,
+                "stages": [stage for stage in stages if stage in low],
+                "source_staged_root": 'source: "/proc/fs/root"' in low,
+                "target_staged_root": 'target: "/proc/fs/root"' in low,
+                "safe_mount_call": bool(re.search(
+                    r'mount\("/proc/fs/root", "/proc/fs/proc/self/fd/[0-9]+", "bind", 0x1027, ""\) failed: device or resource busy', low)),
+            })
         terms = [s for s in PHRASES if s in low]
         if terms:
             locations = [[filename, int(pos)] for filename in FILES
@@ -191,7 +211,7 @@ def projection(text):
                 first_errors.append(item)
             else:
                 last_errors = (last_errors + [item])[-3:]
-    return {"trace":steps, "errors":first_errors+last_errors, "network_info_seen":"Setting up network" in text,
+    return {"trace":steps, "errors":first_errors+last_errors, "mount_ebusy":mount_errors, "network_info_seen":"Setting up network" in text,
             "link_mtu": [int(v) for v in re.findall(r"^\s*\d+: test_veth01(?:@[^:]+)?: .*?\bmtu (\d{1,5})\b", text, re.M)[:12]]}
 
 
@@ -242,24 +262,32 @@ def execute(name, source, owner):
     row["sandbox_logs"] = sandbox_logs(owner)
     persist()
     test = row["test"]
-    assert not test["cached"] and test["strategy"] == "local"
+    assert not test["cached"] and test["strategy"] == "linux-sandbox"
     steps = [s for _, s in row["original_log"]["trace"]]
     assert row["native_exit"] == 0 and test["status"] == "PASSED"
-    assert {"create_pair","set_3000","set_mac","delete_pair"} <= set(steps)
-    assert set(row["original_log"]["link_mtu"]) == {1500,3000} and row["mac_readback"] and not row["skip_seen"]
+    assert {"prepare_var_run", "mount_tmpfs", "require_1500", "set_3000", "require_3000",
+            "rename_link", "show_renamed", "delete_renamed", "set_mac"} <= set(steps)
+    assert steps.count("create_pair") == 3 and steps.count("delete_pair") == 2 and steps.count("wait_for_peer_gone") == 3
+    assert row["original_log"]["link_mtu"] == [1500, 3000] and row["mac_readback"] and not row["skip_seen"]
     row["disposition"] = "PASS"
     R["observed"].append(name)
     persist()
 
 R = {"status":"INCOMPLETE", "stock_integration":STOCK, "fixed":FIXED, "base":BASE, "carrier":CARRIER,
      "expected":list(ARMS), "observed":[], "phases":{}, "errors":{}, "started_at":now(),
+     "requested_test_strategy":"linux-sandbox", "sandbox_add_mount_pair":"/tmp",
+     "local_fixed":{"run":41864825898, "artifact":13342621014,
+                    "zip_sha256":"ea5cfd1f8f1ef3d3d478d5d6ea0db7b2e54dab4cc73fbd9a8d3abd665a744281",
+                    "native_exit":3, "mtu_readbacks":[], "gofer_observed":["bind","mount","device or resource busy"],
+                    "literal_mount_path_retained":False},
      "previous_shell":{"run":41860421336,"artifact":13339549679,
                        "zip_sha256":"2a8e64a4c6cc2d1a632db665a03cfb8b84d22fda03c997609073745975a2c368",
                        "log_sha256":"6dc84c27d20b467b74cb609052b3ff6bb812980efb5ef0ae001a11f3a48b1068",
                        "native_exit":3,"status":"FAILED","mtu_readbacks":[]},
      "prior_wire_run":41856957832, "prior_artifact":13339106163}
 persist()
-assert git("rev-parse","HEAD") == CARRIER and git("rev-parse",CARRIER+"^") == ORIGINAL and git("rev-parse",ORIGINAL+"^") == STOCK
+assert git("rev-parse","HEAD") == CARRIER and git("rev-parse",CARRIER+"^") == LOCAL and git("rev-parse",LOCAL+"^") == ORIGINAL
+assert git("rev-parse",ORIGINAL+"^") == STOCK
 assert git("rev-parse",STOCK+"^") == FIXED and git("rev-parse",FIXED+"^") == BASE
 assert git("diff","--name-only",BASE,STOCK).splitlines() == list(SOURCES)
 assert git("diff","--name-only",PREVIOUS,FIXED).splitlines() == [SOURCES[1]]
