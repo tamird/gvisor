@@ -67136,8 +67136,8 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-04T01:00:29.582231+00:00",
-      "summary": "Remove the builder image from the supported build. A clean worker must be able to build from declared Bazel toolchains and inputs, including any shell, interpreter, system libraries or helper programs an action uses. Move Make recipes into Bazel where that removes an undeclared dependency; eliminating all Makefiles is optional. BuildBuddy’s empty-root correction is merged, but the latest literal zero-layer production probe still fails at the worker mount. No DPDK action ran; the deployed executor build is unknown.",
+      "updatedAt": "2026-11-04T19:58:38.622329+00:00",
+      "summary": "Supported builds need declared Bazel tools and inputs, including interpreters, system libraries and helpers. Literal zero-layer execution remains blocked before the action: the production probe failed at the worker mount and its executor revision is unknown. The latest native full-graph build is incomplete; the separately repaired license package reaches its held policy check and fails.",
       "findings": [
         {
           "text": "On a bare Linux AMD64 worker, DPDK’s native Make build for static musl generated its own driver metadata. The separate Bazel helper and configuration targets left the build graph. The helper and header were byte-identical to the separate builds. Both archives contained the same 148 ordered members, 1,153 external symbols and three driver records. The archives differed in bytes. The check covered the build and archive contents.",
@@ -68961,7 +68961,7 @@
           ]
         },
         {
-          "text": "BuildBuddy #14022 merged as 1002071ca at 2026-11-02T19:15:25Z. The November 3 20:44 production AMD64 probe used the pinned tianon/scratch manifest 3d455195f, independently verified to contain no layers or files. ObserveWorkerRoot action 03f60dcce40410708095a3d8ba0a54d1095bde32c1466e4a3dedc2df21e72a9a/365 reached terminal status code 14 with mount overlayfs: invalid argument. The probe command returned at 20:44:13.442498Z; its WORKER_MOUNT_FAILED verdict was written at 20:44:14.289445Z (0.847 seconds later). No DPDK target was executed. The same action and manifest failed at 05:31 after the source merge. The current pool’s executor version is unknown, so this observation neither proves that the fix is deployed nor that the merged implementation failed. Keep the earlier one-file archive PASS separate and await a rollout signal before another probe.",
+          "text": "BuildBuddy v2.322.0 was released on November 4 at source 8e9fa833c. That source still falls through to the OverlayFS mount when there are zero lower directories. The production executor revision is unknown; this release alone provides no basis to repeat the probe.\n\nBuildBuddy #14022 merged as 1002071ca on November 2. The November 3 20:44 production AMD64 probe used the pinned tianon/scratch manifest 3d455195f, verified to contain zero layers and files. ObserveWorkerRoot action 03f60dcce40410708095a3d8ba0a54d1095bde32c1466e4a3dedc2df21e72a9a/365 returned code 14, mount overlayfs: invalid argument, before any DPDK action. The typed verdict followed the command by 0.847 seconds. The same action and manifest failed at 05:31 after the source merge. The earlier one-file archive PASS remains distinct from zero-layer execution.",
           "evidence": [
             {
               "label": "Merged BuildBuddy correction",
@@ -68978,11 +68978,19 @@
             {
               "label": "Prior one-file worker archive proof, distinct from zero-layer execution",
               "url": "https://github.com/tamird/gvisor/actions/runs/41428504065/artifacts/13133351604"
+            },
+            {
+              "label": "BuildBuddy v2.322.0 release",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/releases/tag/v2.322.0"
+            },
+            {
+              "label": "Released zero-lower-directory mount path",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/blob/8e9fa833c/enterprise/server/remote_execution/containers/ociruntime/ociruntime.go#L1201-L1219"
             }
           ]
         },
         {
-          "text": "Continuous Build everything selects //... with the production filters. Buildkite 53456 downloaded and rebuilt Go for race coverage, which #16507 moves to rules_go. Separate AMD64 wildcard build comparisons required the ARM cross-compiler. Keep the production selection when qualifying native execution. #16904 shows the Bazelisk/Make invocation on the agent for governance and license checks. The pkg and runsc proposal bcec52dda covers a narrower target set.",
+          "text": "The production Build everything selection is //... with --build_tag_filters=-network_plugins. On fork integration f876b5047, the credential-free native AMD64 build exited 124 at 75 minutes: 2,098 targets completed successfully, one licensecheck_test compile failed, and 5,667 of the 7,766 selected targets had no completion record. The full build is INCOMPLETE; no tests ran and this was not RBE.\n\nFork-only 87e5ce851 repairs that compile. Its separate native licensecheck_test run passed 44 cases and failed TestLicensePolicy. All 21 catalog rows match the original Fetch result; neither catalog regeneration nor changes to approved exceptions are warranted. The classifier remains on the maintainer hold in #15146. This package result does not complete the full build.",
           "evidence": [
             {
               "label": "Production Build everything job",
@@ -69007,11 +69015,35 @@
             {
               "label": "Narrower pkg and runsc proposal",
               "url": "https://github.com/tamird/gvisor/commit/bcec52dda"
+            },
+            {
+              "label": "Original full native graph: incomplete at 75 minutes",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41886246923/artifacts/13355668355"
+            },
+            {
+              "label": "Fork-only license fixture compile repair",
+              "url": "https://github.com/tamird/gvisor/commit/87e5ce851"
+            },
+            {
+              "label": "Separate native package: 44 passes and policy failure",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41899334782/artifacts/13357137985"
+            },
+            {
+              "label": "Original successful Fetch and catalog rows",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41176176621/artifacts/13033092285"
+            },
+            {
+              "label": "Pinned-source license range scan",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41720701453/artifacts/13271891801"
+            },
+            {
+              "label": "Classifier maintainer hold",
+              "url": "https://github.com/google/gvisor/pull/15146"
             }
           ]
         }
       ],
-      "nextStep": "Wait for an executor rollout or version signal before another literal zero-layer probe. BuildBuddy #14022 is already merged; do not submit it again or treat the older one-file archive PASS as zero-layer qualification. Once a changed deployment is established, pass the empty-root preflight before executing DPDK. The published GNU runtime fails before guest startup; the separate static musl runtime passed TCP and UDP over its external interface.",
+      "nextStep": "Wait for source or rollout evidence addressing the zero-layer mount behavior before another probe; v2.322.0 alone is not that signal. Full-graph completion remains unqualified after the fork-only compile repair. Keep the separate classifier policy issue on #15146’s maintainer hold, with the original catalog and approved exceptions intact.",
       "evidence": [
         {
           "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
@@ -69296,6 +69328,38 @@
         {
           "label": "Earlier post-merge zero-layer production failure",
           "url": "https://github.com/tamird/gvisor/actions/runs/41584320051/artifacts/13207700929"
+        },
+        {
+          "label": "BuildBuddy v2.322.0 release",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/releases/tag/v2.322.0"
+        },
+        {
+          "label": "Released zero-lower-directory mount path",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/blob/8e9fa833c/enterprise/server/remote_execution/containers/ociruntime/ociruntime.go#L1201-L1219"
+        },
+        {
+          "label": "Original full native graph: incomplete at 75 minutes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41886246923/artifacts/13355668355"
+        },
+        {
+          "label": "Fork-only license fixture compile repair",
+          "url": "https://github.com/tamird/gvisor/commit/87e5ce851"
+        },
+        {
+          "label": "Separate native package: 44 passes and policy failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41899334782/artifacts/13357137985"
+        },
+        {
+          "label": "Original successful Fetch and catalog rows",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41176176621/artifacts/13033092285"
+        },
+        {
+          "label": "Pinned-source license range scan",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41720701453/artifacts/13271891801"
+        },
+        {
+          "label": "Classifier maintainer hold",
+          "url": "https://github.com/google/gvisor/pull/15146"
         }
       ],
       "group": "rbe"
@@ -71634,5 +71698,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-04T19:37:36.046402+00:00"
+  "updatedAt": "2026-11-04T19:58:38.622329+00:00"
 }
