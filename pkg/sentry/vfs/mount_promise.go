@@ -87,8 +87,7 @@ func (vfs *VirtualFilesystem) RegisterMountPromise(vd VirtualDentry, opts MountP
 // Emit a SentryMountPromiseBlockEvent and wait for the mount promise to be
 // resolved or time out.
 func (vfs *VirtualFilesystem) maybeBlockOnMountPromise(ctx context.Context, rp *ResolvingPath) error {
-	vd := VirtualDentry{rp.mount, rp.start}
-	mp := vfs.getMountPromise(vd)
+	mp := vfs.getMountPromise(VirtualDentry{rp.mount, rp.start})
 	if mp == nil {
 		return nil
 	} else if mp.resolved.Load() {
@@ -99,7 +98,11 @@ func (vfs *VirtualFilesystem) maybeBlockOnMountPromise(ctx context.Context, rp *
 	e, ch := waiter.NewChannelEntry(waiter.EventOut)
 	mp.wq.EventRegister(&e)
 	defer mp.wq.EventUnregister(&e)
+	return vfs.waitOnMountPromise(ctx, rp, mp, ch)
+}
 
+// waitOnMountPromise waits with ch already registered on mp.wq.
+func (vfs *VirtualFilesystem) waitOnMountPromise(ctx context.Context, rp *ResolvingPath, mp *mountPromise, ch <-chan struct{}) error {
 	// Resolution may have raced with registering the waiter.
 	if mp.resolved.Load() {
 		vfs.updateResolvingPathForMountPromise(ctx, rp)
@@ -108,7 +111,7 @@ func (vfs *VirtualFilesystem) maybeBlockOnMountPromise(ctx context.Context, rp *
 
 	root := RootFromContext(ctx)
 	defer root.DecRef(ctx)
-	path, err := vfs.PathnameReachable(ctx, root, vd)
+	path, err := vfs.PathnameReachable(ctx, root, VirtualDentry{rp.mount, rp.start})
 	if err != nil {
 		panic(fmt.Sprintf("could not reach %v from root", rp.Component()))
 	}
