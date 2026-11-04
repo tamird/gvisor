@@ -876,23 +876,29 @@ website-deploy: website-push ## Deploy a new version of the website.
 ##
 ## Webhook helpers.
 ##
-##   The webhook is built locally.
-##     WEBHOOK_IMAGE - The name of the container image.
+##   WEBHOOK_IMAGE - Docker image reference, with an optional registry and tag.
 ##
 WEBHOOK_IMAGE := gcr.io/gvisor-presubmit/webhook
+# rules_img accepts the destination and tag separately. Keep the registry port
+# outside the tag and let the publisher resolve Docker Hub shorthand.
+webhook_ref = $(if $(findstring /,$(WEBHOOK_IMAGE)),$(WEBHOOK_IMAGE),index.docker.io/library/$(WEBHOOK_IMAGE))
+webhook_registry = $(firstword $(subst /, ,$(webhook_ref)))
+webhook_path = $(patsubst $(webhook_registry)/%,%,$(webhook_ref))
+webhook_repository = $(firstword $(subst :, ,$(webhook_path)))
+webhook_tag = $(if $(findstring :,$(webhook_path)),$(patsubst $(webhook_repository):%,%,$(webhook_path)),latest)
 
-webhook-build: ## Build the webhookimage locally.
-	@$(call run,//webhook:image,$(WEBHOOK_IMAGE))
+webhook-build: ## Build and load the webhook image into the local Docker daemon.
+	@$(call wrapper,$(BAZEL) run $(BASE_OPTIONS) $(BAZEL_OPTIONS) //webhook:load -- --tag "$(WEBHOOK_IMAGE)")
 .PHONY: webhook-build
 
-webhook-push: webhook-build ## Push a new image.
-	@docker push $(WEBHOOK_IMAGE)
-.PHONY: website-push
+webhook-push: ## Push the webhook image to its registry.
+	@$(call wrapper,$(BAZEL) run $(BASE_OPTIONS) $(BAZEL_OPTIONS) //webhook:push -- --registry "$(webhook_registry)" --repository "$(webhook_repository)" --tag "$(webhook_tag)")
+.PHONY: webhook-push
 
 webhook-update: test/kubernetes/gvisor-injection-admission-webhook.yaml.in
-	@WEBHOOK=$(WEBHOOK_IMAGE):$$($(call run,//webhook:image,$(WEBHOOK_IMAGE)) | cut -d':' -f2) && \
-	INIT=$(call remote_image,certs):$(call tag,certs) && \
-	cat $< | sed -e "s|%WEBHOOK%|$${WEBHOOK}|g" | sed -e "s|%INIT%|$${INIT}|g" > test/kubernetes/gvisor-injection-admission-webhook.yaml
+	@digest=$$($(call build_paths,//webhook:image_digest,cat "$$0")) && test -n "$$digest" && \
+	sed -e "s|%WEBHOOK%|$(WEBHOOK_IMAGE)@$$digest|g" \
+	    -e "s|%INIT%|$(call remote_image,certs):$(call tag,certs)|g" "$<" > test/kubernetes/gvisor-injection-admission-webhook.yaml
 .PHONY: webhook-update
 
 ## Syzkaller smoke test.

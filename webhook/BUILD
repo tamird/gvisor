@@ -1,30 +1,42 @@
-load("//images:defs.bzl", "docker_image")
-load("//tools:defs.bzl", "go_binary", "pkg_tar")
+load("@rules_img//img:image.bzl", "image_from_binary")
+load("@rules_img//img:load.bzl", "image_load")
+load("@rules_img//img:push.bzl", "image_push")
+load("//tools:defs.bzl", "go_binary")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
 )
 
-docker_image(
+image_from_binary(
     name = "image",
-    data = ":files",
-    statements = ['ENTRYPOINT ["/webhook"]'],
-    tags = [
-        "local",
-        "manual",
-        "no-sandbox",
-    ],
+    binary = ":webhook",
+    include_runfiles = False,
+    infer_working_dir = False,
+    path = "/webhook",
+    tags = ["manual"],
 )
 
-# files is the full file system of the webhook container. It is simply:
-# /
-# └─ webhook
-pkg_tar(
-    name = "files",
-    srcs = [":webhook"],
-    extension = "tgz",
-    strip_prefix = "/webhook",
+filegroup(
+    name = "image_digest",
+    srcs = [":image"],
+    output_group = "digest",
+    tags = ["manual"],
+)
+
+image_load(
+    name = "load",
+    daemon = "docker",
+    image = ":image",
+    tags = ["manual"],
+)
+
+image_push(
+    name = "push",
+    image = ":image",
+    registry = "gcr.io",
+    repository = "gvisor-presubmit/webhook",
+    tags = ["manual"],
 )
 
 go_binary(
