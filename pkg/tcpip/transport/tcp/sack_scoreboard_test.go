@@ -15,10 +15,17 @@
 package tcp
 
 import (
+	"fmt"
 	"testing"
+	"time"
+
+	"gvisor.dev/gvisor/pkg/buffer"
+	"gvisor.dev/gvisor/pkg/tcpip"
+	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
 // buildScoreboard creates a SACKScoreboard pre-populated with n disjoint SACK
@@ -165,6 +172,155 @@ func BenchmarkSetPipeWorkload(b *testing.B) {
 			}
 			s.IsSACKED(seg)
 			s.IsRangeLost(seg)
+		}
+	}
+}
+
+const accountingMSS = 1460
+
+// accountingSender creates an already-transmitted queue. No route or NIC is
+// necessary: no bytes remain to transmit, and one SACK does not trigger loss
+// recovery. The manual clock keeps RTO expiry out of the measured ACK path.
+func accountingSender(t testing.TB, n int, una seqnum.Value) (*sender, *segment) {
+	clock := faketime.NewManualClock()
+	st := stack.New(stack.Options{Clock: clock})
+	ep := &Endpoint{stack: st}
+	ep.mu.Lock()
+	ep.SACKPermitted = true
+	ep.ops.SetSendBufferSize(16<<20, false)
+	ep.sndQueueInfo.AutoTuneSndBufDisabled.Store(1)
+	ep.sndQueueInfo.SndBufUsed = n * accountingMSS
+	s := &sender{ep: ep}
+	ep.snd = s
+	s.SndUna = una
+	s.SndWnd = seqnum.Size(n * accountingMSS)
+	s.SndNxt = una.Add(s.SndWnd)
+	s.RTTMeasureSeqNum = s.SndNxt
+	s.FastRecovery.Last = una - 1
+	s.MaxPayloadSize = accountingMSS
+	s.Outstanding = n
+	s.cc = s.initCongestionControl(ccReno)
+	s.SndCwnd = n
+	s.RTO = time.Second
+	s.resendTimer.init(clock, func() { panic("unexpected timeout") })
+	s.resendTimer.enable(s.RTO)
+	s.writeList.set = make(map[*segment]struct{})
+	ep.scoreboard = NewSACKScoreboard(accountingMSS, una)
+	for i := 0; i < n; i++ {
+		seg := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.MakeWithData(make([]byte, accountingMSS)), 0)
+		seg.sequenceNumber = una.Add(seqnum.Size(i * accountingMSS))
+		seg.xmitCount = 1
+		seg.flags = header.TCPFlagAck
+		s.writeList.PushBack(seg)
+	}
+	ack := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.Buffer{}, 0)
+	ack.ackNumber, ack.flags, ack.window = una, header.TCPFlagAck, s.SndWnd
+	t.Cleanup(func() {
+		s.resendTimer.cleanup()
+		ack.DecRef()
+		for seg := s.writeList.Front(); seg != nil; seg = s.writeList.Front() {
+			s.writeList.Remove(seg)
+			seg.DecRef()
+		}
+		ep.mu.Unlock()
+		st.Close()
+		st.Wait()
+	})
+	return s, ack
+}
+
+func TestSACKAccountingQualification(t *testing.T) {
+	const n = 16
+	// The segment straddles the sequence-number wrap in the wrap cases.
+	for _, base := range []string{"linear", "wrap"} {
+		for _, halves := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/halves=%t", base, halves), func(t *testing.T) {
+				una := seqnum.Value(1000)
+				if base == "wrap" {
+					una = ^seqnum.Value(0) - (n-2)*accountingMSS - accountingMSS/2
+				}
+				s, ack := accountingSender(t, n, una)
+				start := una.Add((n - 2) * accountingMSS)
+				block := header.SACKBlock{Start: start, End: start.Add(accountingMSS)}
+				report := func(b header.SACKBlock) {
+					ack.parsedOptions.SACKBlocks = []header.SACKBlock{b}
+					ack.hasNewSACKInfo = false
+					s.handleRcvdSegment(ack)
+				}
+				if halves {
+					middle := start.Add(accountingMSS / 2)
+					report(header.SACKBlock{Start: start, End: middle})
+					if s.sackedOutsideRecovery != 0 || s.Outstanding != n || s.ep.scoreboard.IsSACKED(block) {
+						t.Fatal("one half should not cover the segment")
+					}
+					report(header.SACKBlock{Start: middle, End: block.End})
+				} else {
+					report(block)
+				}
+				ranges, _ := s.ep.scoreboard.Copy()
+				if len(ranges) != 1 || ranges[0] != block || s.ep.scoreboard.Sacked() != accountingMSS ||
+					s.sackedOutsideRecovery != 1 || s.Outstanding != n || s.FastRecovery.Active {
+					t.Fatalf("ranges=%v newly covered=%d Outstanding=%d recovery=%t", ranges, s.sackedOutsideRecovery, s.Outstanding, s.FastRecovery.Active)
+				}
+				// A duplicate block must not double count the covered segment.
+				report(block)
+				if ack.hasNewSACKInfo || s.sackedOutsideRecovery != 1 {
+					t.Fatal("duplicate SACK changed accounting")
+				}
+				ack.parsedOptions.SACKBlocks = nil
+				ack.ackNumber = block.End
+				s.handleRcvdSegment(ack)
+				// Leave one data segment in flight: ACKing everything would
+				// unconditionally zero Outstanding and mask an accounting leak.
+				if s.SndUna != block.End || s.Outstanding != 1 || s.sackedOutsideRecovery != 0 || !s.ep.scoreboard.Empty() {
+					t.Fatalf("cumack: una=%d Outstanding=%d previously covered=%d scoreboard bytes=%d", s.SndUna, s.Outstanding, s.sackedOutsideRecovery, s.ep.scoreboard.Sacked())
+				}
+			})
+		}
+	}
+}
+
+func BenchmarkSACKAccountingQualification(b *testing.B) {
+	for _, n := range []int{8, 128} {
+		for _, pos := range []struct {
+			name  string
+			index int
+		}{{"near", 1}, {"far", n - 2}} {
+			b.Run(fmt.Sprintf("queue=%d/sack=%s", n, pos.name), func(b *testing.B) {
+				const una = 1000
+				s, ack := accountingSender(b, n, una)
+				start := seqnum.Value(una).Add(seqnum.Size(pos.index * accountingMSS))
+				block := header.SACKBlock{Start: start, End: start.Add(accountingMSS)}
+				ack.parsedOptions.SACKBlocks = []header.SACKBlock{block}
+				const batch = 256
+				var boards [batch]*SACKScoreboard
+				b.ReportAllocs()
+				b.ResetTimer()
+				b.StopTimer()
+				for done := 0; done < b.N; {
+					count := min(batch, b.N-done)
+					for j := 0; j < count; j++ {
+						boards[j] = NewSACKScoreboard(accountingMSS, una)
+					}
+					b.StartTimer()
+					for j := 0; j < count; j++ {
+						s.ep.scoreboard = boards[j]
+						s.sackedOutsideRecovery, s.DupAckCount, s.state = 0, 0, tcpip.Open
+						ack.hasNewSACKInfo = false
+						s.handleRcvdSegment(ack)
+					}
+					b.StopTimer()
+					if s.sackedOutsideRecovery != 1 || s.Outstanding != n || s.FastRecovery.Active {
+						b.Fatal("unexpected flight counts")
+					}
+					for j := 0; j < count; j++ {
+						if boards[j].Sacked() != accountingMSS || !boards[j].IsSACKED(block) {
+							b.Fatal("unexpected SACK scoreboard")
+						}
+					}
+					done += count
+				}
+			})
 		}
 	}
 }
