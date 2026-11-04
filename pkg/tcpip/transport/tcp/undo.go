@@ -182,27 +182,6 @@ func (s *sender) undoCongestionReduction() {
 		s.cc.(undoableCC).restoreUndoState(u.cc)
 	}
 
-	if wn := s.writeNext; wn != nil && s.isAssignedSequenceNumber(wn) && wn.sequenceNumber.LessThan(s.SndNxt) {
-		// An RTO rewound writeNext to SND.UNA and zeroed Outstanding to
-		// retransmit everything in flight (go-back-N). That data was not
-		// lost, so resume with never-sent data and count the unSACKed rest
-		// as outstanding again. Check the rewind itself rather than the
-		// RTORecovery state: a later ACK may have moved the sender into
-		// SACK recovery since.
-		s.Outstanding = 0
-		var next *segment
-		for seg := s.writeList.Front(); seg != nil; seg = seg.Next() {
-			if !s.isAssignedSequenceNumber(seg) || !seg.sequenceNumber.LessThan(s.SndNxt) {
-				next = seg
-				break
-			}
-			if !s.ep.SACKPermitted || !s.ep.scoreboard.IsSACKED(seg.sackBlock()) {
-				s.Outstanding += s.pCount(seg, s.MaxPayloadSize)
-			}
-		}
-		s.updateWriteNext(next)
-	}
-
 	// Segments RACK marked lost were not, so don't retransmit them or let
 	// them trigger another recovery.
 	for seg := s.writeList.Front(); seg != nil && seg != s.writeNext; seg = seg.Next() {
