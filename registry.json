@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T02:10:52.704255+00:00",
+    "updatedAt": "2026-11-04T02:15:38.449862+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -2308,7 +2308,7 @@
         "kind": "amendment",
         "head": "04df6c244952232769db6b4123555354f9873e9b",
         "baseHead": "8dad7a574b6914fc2aea3609f92235af9ca7b0d3",
-        "url": "https://github.com/tamird/gvisor/compare/8dad7a574...04df6c244",
+        "url": "https://github.com/tamird/gvisor/commit/04df6c244",
         "title": "Replace older gVisor archives in the Python staging directory",
         "requestedAt": "2026-11-04T01:24:27.854931+00:00",
         "summary": "Publish the amendment and reply to carzh on #16766?",
