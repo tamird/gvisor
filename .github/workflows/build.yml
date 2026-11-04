@@ -1,12 +1,102 @@
 name: Compare syscall worker memory on real owners
 on:
   push:
-    branches: [qualification/syscall-worker-memory]
+    branches: [qualification/syscall-worker-memory, research/syscall-worker-memory-reporter]
 permissions:
   contents: read
 jobs:
+  report-fixtures:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.ref_name == 'research/syscall-worker-memory-reporter' && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 1, persist-credentials: false}
+    - name: Preserve original results through missing evidence
+      run: |
+        python3 - <<'PY'
+        import ast
+        import hashlib
+        import json
+        import os
+        from pathlib import Path
+        import sys
+        from types import SimpleNamespace
+        import uuid
+
+        source = Path('test/rbe/syscall_memory.py')
+        tree = ast.parse(source.read_text())
+        functions = {'now', 'save', 'label', 'run', 'classes', 'compact', 'execute'}
+        constants = {'BASE', 'PRODUCT', 'PROCESS', 'MEMORY', 'ARMS', 'OPTIONS', 'SENSITIVE'}
+        nodes = [node for node in tree.body if
+                 isinstance(node, ast.Import) and all(alias.name != 'qualification_report' for alias in node.names) or
+                 isinstance(node, ast.ImportFrom) and node.module != 'stdlib_provenance' or
+                 isinstance(node, ast.FunctionDef) and node.name in functions or
+                 isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id in constants for t in node.targets)]
+        ns = {}
+        exec(compile(ast.Module(body=nodes, type_ignores=[]), str(source), 'exec'), ns)
+        root = Path(os.environ['RUNNER_TEMP'], 'memory-report-fixtures')
+        root.mkdir()
+        launcher = root / 'bazel_stub.py'
+        launcher.write_text('''import json, os, pathlib, sys
+        args = sys.argv[1:]
+        if 'info' in args:
+            print(os.environ['FIXTURE_ROOT'])
+            sys.exit(0)
+        def option(name):
+            return next(x.split('=', 1)[1] for x in args if x.startswith(name + '='))
+        ident = option('--invocation_id')
+        work = pathlib.Path(option('--build_event_json_file')).parent
+        early = json.loads((pathlib.Path(os.environ['FIXTURE_ROOT']) / 'out/process_default.json').read_text())
+        assert early['requested_invocation'] == ident and 'native_exit' not in early
+        if os.environ['FIXTURE_CASE'] == 'absent_bep':
+            sys.exit(34)
+        xml = work / 'test.xml'
+        xml.write_text('<testsuites><testsuite><testcase classname="Processes" name="ThousandsOfThreads"/></testsuite></testsuites>')
+        events = [{'started': {'uuid': ident}}, {'id': {'testResult': {'label': '//test/syscalls:processes_test_runsc_ptrace', 'configuration': {'id': 'fixture'}, 'run': 1, 'shard': 1, 'attempt': 1}}, 'testResult': {'status': 'PASSED', 'testAttemptStart': '2026-11-04T00:00:00Z', 'testAttemptDuration': '1s'}}]
+        pathlib.Path(option('--build_event_json_file')).write_text(''.join(json.dumps(e) + '\\n' for e in events))
+        if os.environ['FIXTURE_CASE'] == 'absent_decoder':
+            pathlib.Path(option('--execution_log_compact_file')).write_bytes(b'synthetic compact input')
+        ''')
+        def capture(raw, clean, outbase, reports):
+            path = raw.parent / 'test.xml'
+            data = path.read_bytes()
+            return {'errors': [], 'reports': [{'identity': {}, 'name': 'test.xml', 'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest(), 'path': 'test.xml'}]}
+        ns.update(BAZEL=[sys.executable, str(launcher)], git=lambda *args: 'TEST(Processes, ThousandsOfThreads) {}' if args[0] == 'show' else '', report=SimpleNamespace(capture=capture, xml_cases=lambda path: None))
+        results = []
+        for case in ('absent_compact', 'absent_decoder', 'absent_bep'):
+            temp = root / case
+            temp.mkdir()
+            out = temp / 'out'
+            out.mkdir()
+            ns.update(TEMP=temp, OUT=out)
+            os.environ.update(FIXTURE_ROOT=str(temp), FIXTURE_CASE=case, PATH='')
+            ns['execute']('process_default')
+            row = json.loads((out / 'process_default.json').read_text())
+            uuid.UUID(row['requested_invocation'])
+            assert row['status'] == 'INCOMPLETE' and not row.get('placement_verified')
+            if case == 'absent_bep':
+                assert row['native_exit'] == 34 and row['missing_file'] == 'build_events'
+                assert 'invocations' not in row and 'test_results' not in row
+            else:
+                assert row['native_exit'] == 0 and row['invocations'] == [row['requested_invocation']]
+                assert row['attempt_count'] == 1 and row['test_results'][0]['status'] == 'PASSED'
+                assert row['case_counts'] == {'passed': 1}
+                if case == 'absent_decoder':
+                    assert row['missing_file'] == 'zstd'
+                else:
+                    assert row['placement']['test_actions'] == []
+            results.append({'fixture': case, 'native_exit': row['native_exit'], 'status': row['status'], 'requested_uuid_retained': True, 'observed_result_retained': bool(row.get('test_results')), 'placement_verified': False})
+        verdict = {'status': 'PASS', 'synthetic': True, 'product_workload_executed': False, 'controller_sha256': hashlib.sha256(source.read_bytes()).hexdigest(), 'fixtures': results}
+        Path(os.environ['RUNNER_TEMP'], 'memory-report-fixtures.json').write_text(json.dumps(verdict, indent=2) + '\n')
+        PY
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: syscall-memory-report-fixtures
+        path: ${{ runner.temp }}/memory-report-fixtures.json
+        if-no-files-found: error
   syscall-memory:
-    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.run_attempt == 1
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.ref_name == 'qualification/syscall-worker-memory' && github.run_attempt == 1
     runs-on: ubuntu-24.04
     timeout-minutes: 155
     env:
@@ -16,14 +106,15 @@ jobs:
       CODEC: 0a9bdf9bc331d6a66f35aefcbbb5cf466eb6f7f5
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 3, persist-credentials: false}
+      with: {fetch-depth: 4, persist-credentials: false}
     - name: Bind source and prepare existing GNU remote worker
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
         set -euo pipefail
         umask 077
-        test "$(git rev-parse HEAD^)" = "$PRODUCT"
+        test "$(git rev-parse HEAD^)" = 1398526d4948e94ab57cb3e325f0564905948c3e
+        test "$(git rev-parse HEAD~2)" = "$PRODUCT"
         test "$(git rev-parse "$PRODUCT^")" = 183a39d1b2aff9e8e2219171940001749a2b5db0
         test "$(git diff --name-only "$PRODUCT^" "$PRODUCT")" = test/syscalls/BUILD
         mkdir -p "$RUNNER_TEMP/memory-results" "$RUNNER_TEMP/memory-platform"

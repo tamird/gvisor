@@ -9,6 +9,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import uuid
 import xml.etree.ElementTree as ET
 
 import qualification_report as report
@@ -171,23 +172,27 @@ def execute(arm):
     work = TEMP / ("memory-" + arm)
     work.mkdir(exist_ok=True)
     row = {"arm": arm, "source": source, "target": target, "target_architecture": "amd64", "execution_architecture": "amd64", "estimated_memory": memory or "unspecified", "status": "INCOMPLETE", "started_at": now()}
+    row["requested_invocation"] = str(uuid.uuid4())
     raw = work / "events.json"
     expected_source = git("show", source + ":test/syscalls/linux/" + ("processes.cc" if target == PROCESS else "memory_accounting.cc"))
     expected = {suite + "." + case for suite, case in re.findall(r"^TEST\((\w+), (\w+)\)", expected_source, re.M)}
     assert expected and ("Processes.ThousandsOfThreads" if target == PROCESS else "MemoryAccounting.AnonAccountingPreservedOnSaveRestore") in expected
+    # A requested UUID is a recovery address, not proof that Bazel started it.
+    save(OUT / (arm + ".json"), row)
     try:
         outbase = subprocess.check_output([*BAZEL, "info", "output_base", *OPTIONS], text=True).strip()
-        args = [*BAZEL, "test", target, *OPTIONS, "--nocache_test_results", "--test_timeout=600", "--test_output=errors", "--test_tag_filters=", "--build_event_json_file=" + str(raw), "--build_event_publish_all_actions", "--execution_log_compact_file=" + str(work / "execution.zst")]
+        args = [*BAZEL, "test", target, *OPTIONS, "--invocation_id=" + row["requested_invocation"], "--nocache_test_results", "--test_timeout=600", "--test_output=errors", "--test_tag_filters=", "--build_event_json_file=" + str(raw), "--build_event_publish_all_actions", "--execution_log_compact_file=" + str(work / "execution.zst")]
         row["native_exit"] = run(args, work / "console.log", 2400 if arm == "process_default" else 1200)
         row["command_finished_at"] = now()
         save(OUT / (arm + ".json"), row)
         console = (work / "console.log").read_bytes()
         row["console"] = {"bytes": len(console), "sha256": hashlib.sha256(console).hexdigest(), "classes": classes(console)}
-        row["placement"] = compact(work / "execution.zst", target)
         events = [json.loads(line) for line in raw.read_text().splitlines()]
         results = [event for event in events if "testResult" in event]
         row["attempt_count"] = len(results)
         row["invocations"] = [event["started"]["uuid"] for event in events if "started" in event]
+        row["test_results"] = [{"identity": event["id"]["testResult"], "status": event["testResult"]["status"], "cached_locally": event["testResult"].get("cachedLocally", False), "cached_remotely": event["testResult"].get("executionInfo", {}).get("cachedRemotely", False), "start": event["testResult"].get("testAttemptStart", {}), "duration": event["testResult"].get("testAttemptDuration", {})} for event in results]
+        save(OUT / (arm + ".json"), row)
         capture = report.capture(raw, work / "clean.json", Path(outbase), work / "reports")
         row["capture_error_count"] = len(capture["errors"])
         row["reports"] = [{key: entry[key] for key in ("identity", "name", "bytes", "sha256")} for entry in capture["reports"]]
@@ -207,7 +212,6 @@ def execute(arm):
         row["cases"] = cases
         row["case_counts"] = dict(Counter(case["status"] for case in cases))
         row["log_classes"] = classes(b"\n".join(logs))
-        row["test_results"] = [{"identity": event["id"]["testResult"], "status": event["testResult"]["status"], "cached_locally": event["testResult"].get("cachedLocally", False), "cached_remotely": event["testResult"].get("executionInfo", {}).get("cachedRemotely", False), "finish": event["testResult"].get("testAttemptStart", {}), "duration": event["testResult"].get("testAttemptDuration", {})} for event in results]
         assert len(results) == 1 and not row["capture_error_count"]
         event = results[0]
         detail = event["testResult"]
@@ -215,6 +219,8 @@ def execute(arm):
             row["execution_finished_at"] = datetime.fromtimestamp((int(detail["testAttemptStartMillis"]) + int(detail["testAttemptDurationMillis"])) / 1000, timezone.utc).isoformat()
         elif isinstance(detail.get("testAttemptStart"), str) and isinstance(detail.get("testAttemptDuration"), str):
             row["execution_finished_at"] = (datetime.fromisoformat(detail["testAttemptStart"].replace("Z", "+00:00")) + timedelta(seconds=float(detail["testAttemptDuration"].removesuffix("s")))).isoformat()
+        row["placement"] = compact(work / "execution.zst", target)
+        assert row["invocations"] == [row["requested_invocation"]]
         assert label(event["id"]["testResult"]["label"]) == target
         assert not event["testResult"].get("cachedLocally", False) and not event["testResult"].get("executionInfo", {}).get("cachedRemotely", False)
         actions = row["placement"]["test_actions"]
@@ -234,6 +240,8 @@ def execute(arm):
             row["status"] = "FAIL"
     except Exception as error:
         row["error_type"] = type(error).__name__
+        if isinstance(error, FileNotFoundError):
+            row["missing_file"] = "zstd" if error.filename == "zstd" else "build_events" if error.filename == str(raw) else "other"
         if row.get("native_exit") == 3 or row.get("case_counts", {}).get("failed", 0):
             row["status"] = "FAIL"
     finally:
