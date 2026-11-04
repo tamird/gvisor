@@ -1,35 +1,69 @@
-name: CI
-
-"on":
+name: Check the downstream fsstress module label
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/fsstress-downstream-bare-query]
+permissions:
+  contents: read
 jobs:
   build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    env:
+      PRODUCT: 588e6f3436b08e9b9a49e656458d9ea6178bfedd
+      PYTHONDONTWRITEBYTECODE: '1'
+      USE_BAZEL_VERSION: 9.3.1
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 5}
+      - name: Stage the existing native build reporters
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          umask 077
+          d="$RUNNER_TEMP/fsstress-static"
+          mkdir -p "$d/out"
+          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$d/out/verdict.json"
+          test "$(git rev-parse HEAD^^^)" = "$PRODUCT"
+          cp test/rbe/fsstress_static.py "$d/check.py"
+          donor=4f8fb9e212fee34a9d14454c9cb3998d51b9956c
+          git fetch -q --no-tags --depth=1 origin "$donor"
+          test "$(git rev-parse "$donor:.github/qualification/buildkite-client-options.py")" = db297224348b63c79271fb692677f493bd70a3e4
+          git show "$donor:.github/qualification/buildkite-client-options.py" > "$d/continuous.py"
+          donor=0a9bdf9bc331d6a66f35aefcbbb5cf466eb6f7f5
+          git fetch -q --no-tags --depth=1 origin "$donor"
+          test "$(git rev-parse "$donor:test/rbe/stdlib-provenance.py")" = 126ec85fbfd0c3b9595ff3a1b3b3223832e84a38
+          git show "$donor:test/rbe/stdlib-provenance.py" > "$d/stdlib_provenance.py"
+          git checkout --quiet --detach "$PRODUCT"
+          test "$(cat .bazelversion)" = 9.3.1
+          test "$(cat images/default/bazelversion)" = 9.3.1
+          git diff --exit-code HEAD --
+          curl --retry 3 -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          python3 -B -c 'import yaml'
+      - name: Query the old and corrected downstream labels
+        timeout-minutes: 12
+        run: |
+          export REAL_BAZEL="$RUNNER_TEMP/fsstress-static/bazel"
+          python3 -B "$RUNNER_TEMP/fsstress-static/check.py"
+      - name: Check the bounded public receipt
+        id: privacy
+        if: always()
+        run: |
+          python3 -B - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])/'fsstress-static/out'
+          assert {p.name for p in root.iterdir()}=={'verdict.json'}
+          p=root/'verdict.json';assert p.is_file() and not p.is_symlink() and 0<p.stat().st_size<4*1024*1024
+          data=p.read_bytes()
+          assert not re.search(rb'(?i)x-buildbuddy-api-key|authorization\s*[:=]|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}',data)
+          assert json.loads(data)['status'] in ('PASS','FAIL','INCOMPLETE')
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.privacy.outcome == 'success'
+        with:
+          name: fsstress-downstream-package-loads
+          path: ${{ runner.temp }}/fsstress-static/out/verdict.json
+          if-no-files-found: error
