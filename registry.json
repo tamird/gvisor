@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T06:36:04.743007+00:00",
+    "updatedAt": "2026-11-04T06:47:42.020186+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1834,19 +1834,22 @@
       "url": "https://github.com/google/gvisor/pull/15153",
       "group": "bazel",
       "status": "open",
-      "summary": "The GNU-only change builds both static binaries. On a host with /dev/vhost-net, the published plugin initialized but its Sentry exited before the guest opened either socket. Native Linux exchanged both TCP and UDP payloads on the same Docker bridge. Earlier diagnostics traced the startup failure to a glibc allocator call blocked by seccomp and reproduced it on the unchanged parent. The separate musl binaries passed the bridge test.",
+      "summary": "Await the private import. The Bazel 9 update preserved the reviewed DPDK source and package files. All three targets built on GNU AMD64 and runsc --version succeeded; this run did not exercise vhost traffic. Earlier, the published glibc plugin exited before the guest opened a socket on the vhost bridge; the unchanged parent also exhibited the seccomp startup failure. The separate musl binaries passed the bridge test.",
       "number": 15153,
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-11-03T20:10:46.936496+00:00",
+      "updatedAt": "2026-11-04T06:47:42.020186+00:00",
       "followup": {
-        "disposition": "Amendment published and reviewer answered",
+        "disposition": "Bazel 9 conflict resolved and published",
         "owner": "root",
-        "nextAction": "Check the private importer result when it is reported upstream.",
-        "sourceHead": "c7c5dce62b1e19f4bfe3f6231e368fa9219b2986",
+        "nextAction": "Check the private import when its result is reported upstream.",
+        "sourceHead": "93993d354e440e71b7e6efaacd72be40e542de57",
         "reviewedAt": "2026-11-03T19:17:53Z",
         "reviewDecision": null,
         "mergeable": "MERGEABLE",
         "evidence": [
+          "https://github.com/google/gvisor/commit/93993d354",
+          "https://github.com/tamird/gvisor/actions/runs/41786334691/artifacts/13301961747",
+          "https://app.buildbuddy.io/invocation/7dbb2163-65ea-4f28-8b27-8473f532646a",
           "https://github.com/google/gvisor/pull/15153",
           "https://github.com/tamird/gvisor/commit/85c742f25194e6198c292e099754f09549f09cdf",
           "https://app.buildbuddy.io/invocation/b3eaa3ec-3f47-4d1d-b778-1ab7c76958bc",
@@ -1859,19 +1862,31 @@
           "https://github.com/tamird/gvisor/actions/runs/41708363052/artifacts/13267960556",
           "https://github.com/google/gvisor/pull/15153#discussion_r4459868583"
         ],
-        "observedAt": "2026-11-03T20:10:46.936496+00:00",
-        "providerHead": "c7c5dce62b1e19f4bfe3f6231e368fa9219b2986"
+        "observedAt": "2026-11-04T06:47:42.020186+00:00",
+        "providerHead": "93993d354e440e71b7e6efaacd72be40e542de57"
       },
-      "head": "c7c5dce62b1e19f4bfe3f6231e368fa9219b2986",
+      "head": "93993d354e440e71b7e6efaacd72be40e542de57",
       "refinement": {
         "before": {
-          "head": "675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa"
+          "head": "c7c5dce62b1e19f4bfe3f6231e368fa9219b2986"
         },
         "after": {
-          "head": "c7c5dce62b1e19f4bfe3f6231e368fa9219b2986"
+          "head": "93993d354e440e71b7e6efaacd72be40e542de57"
         }
       },
       "evidence": [
+        {
+          "label": "Published Bazel 9 update (93993d354)",
+          "url": "https://github.com/google/gvisor/commit/93993d354"
+        },
+        {
+          "label": "Bazel 9.3.1 on GNU AMD64: three targets and runsc --version",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41786334691/artifacts/13301961747"
+        },
+        {
+          "label": "Remote build of the three plugin targets",
+          "url": "https://app.buildbuddy.io/invocation/7dbb2163-65ea-4f28-8b27-8473f532646a"
+        },
         {
           "label": "External-package review",
           "url": "https://github.com/google/gvisor/pull/15153#discussion_r4459362810"
@@ -40836,9 +40851,29 @@
       "url": "https://github.com/google/gvisor/issues/15865",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
-      "summary": "The July source and August release differ in how checkpointing waits for TIME_WAIT timer callbacks. The GKE build revision and whether failures reuse a client port are still unknown.",
+      "updatedAt": "2026-11-04T06:47:42.020186+00:00",
+      "summary": "The reporter confirmed one recurring client port across successive checkpoints of the same sandbox; the other affected sandbox used a different port. The July test covered live connections on the same tuple, but neither checkpoint contained a server-side TIME_WAIT connection. The Unix socket workaround stopped the reported TCP panic. GKE can check the checkpoint writer and restore builds against the timer and RNG fixes.",
       "evidence": [
+        {
+          "label": "Reporter confirms the recurring connection and a separate restored-RNG panic",
+          "url": "https://github.com/google/gvisor/issues/15865#issuecomment-6624386080"
+        },
+        {
+          "label": "July stores the writer’s runsc version in checkpoint metadata",
+          "url": "https://github.com/google/gvisor/blob/9f653e577/runsc/boot/restore.go#L696-L704"
+        },
+        {
+          "label": "The statefile reader can return just one metadata field",
+          "url": "https://github.com/google/gvisor/blob/9f653e577/runsc/cmd/statefile.go#L130-L143"
+        },
+        {
+          "label": "Use a locked random source after restore",
+          "url": "https://github.com/google/gvisor/commit/a6d2142e3"
+        },
+        {
+          "label": "July control: live accepted and queued connections; abortive client close",
+          "url": "https://github.com/tamird/gvisor/blob/0a67bd482/test/rbe/restoretuple/tuple.py#L45-L85"
+        },
         {
           "label": "July 2026 runsc with the default flag: two loopback restores and tuple reuse",
           "url": "https://github.com/tamird/gvisor/actions/runs/41168603665/artifacts/13030331016"
@@ -40868,7 +40903,16 @@
           "at": "2026-11-02T15:46:59.054342+00:00",
           "url": "https://github.com/google/gvisor/issues/15865#issuecomment-6581391275"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "url": "https://github.com/google/gvisor/issues/15865#issuecomment-6624386080",
+        "requestedAt": "2026-11-04T06:47:42.020186+00:00",
+        "title": "Ask GKE to check the writer and restore builds against the two fixes",
+        "summary": "Reply to the new port and RNG observations with a way for GKE to identify the checkpoint writer without restoring it.",
+        "body": "@SecretSun, the same client port across successive checkpoints points to one recurring connection tuple. Our July test kept the accepted connection open at each checkpoint; it didn’t cover a server-side connection in TIME_WAIT. The recurring tuple is a lead, but it doesn’t establish which entry was nil.\n\nFor the GKE team: if an affected checkpoint is still available, [the July writer](https://github.com/google/gvisor/blob/9f653e577/runsc/boot/restore.go#L696-L704) records its version. `runsc statefile -get runsc_version <statefile>` [reads just that field](https://github.com/google/gvisor/blob/9f653e577/runsc/cmd/statefile.go#L130-L143) without restoring the pod. Could you map that label and the build that restored the pod to your internal revisions, then check for [the checkpoint timer fix](https://github.com/google/gvisor/commit/2337c1f9f) and [the restored RNG fix](https://github.com/google/gvisor/commit/a6d2142e3)? The RNG fix matches the separate RNG stack trace; it doesn’t establish the cause of the nil endpoint. No checkpoint contents or new reproduction are needed here.\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "branch:fuse-poll-before-mount",
