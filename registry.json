@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T07:51:03.518087+00:00",
+    "updatedAt": "2026-11-04T08:51:09.081212+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -49132,6 +49132,40 @@
         "summary": "Open the two-file webhook image and deployment change as a standalone gVisor PR?",
         "body": "webhook-update uses the config ID from docker import as an image tag. webhook-push publishes WEBHOOK_IMAGE, so the generated deployment can name a tag that was never pushed.\n\nBuild the single-file scratch image with rules_img. Keep webhook-build as the local Docker load and webhook-push as a host Docker push. Docker can change the manifest representation on push while preserving the config. Compare the selected Bazel config with the published single-platform manifest, then write the registry digest into the deployment. A missing tag, different build, manifest list or rendering error leaves the previous YAML in place.\n\nBazel produced Linux/amd64 and Linux/arm64 archives containing the corresponding /webhook executable. On AMD64, native Make rendered matching Docker schema 2 and OCI descriptors from a loopback TLS registry. The packaged entrypoint printed help with the four certificate files mounted in the deployment’s working directory."
       }
+    },
+    {
+      "id": "branch:buildkite-native-gazelle",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/buildkite-gazelle-native",
+      "group": "bazel",
+      "head": "683c2687297d36a04c02cae21a8be4e135a7ff16",
+      "title": "Run the Buildkite Gazelle checks on the agent",
+      "url": "https://github.com/tamird/gvisor/commit/683c26872",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-04T08:51:09.081212+00:00",
+      "summary": "The first-pass and main Buildkite pipelines both call make gazelle-check. Four added YAML lines select the agent’s Bazelisk from #16904 for those steps. Both clean commands exited 0. Removing //pkg/sync from pkg/linewriter/BUILD made Gazelle report the missing dependency and Make exit 2. All three expected commands ran. The last Make command finished at 08:47:01.421469Z and the verdict was available at 08:47:01.433210Z (12 ms later). Changing the Gazelle check into a cacheable Bazel action is a separate proposal.",
+      "evidence": [
+        {
+          "label": "Four-line pipeline change: 2fada0095 to 683c26872",
+          "url": "https://github.com/tamird/gvisor/compare/2fada0095...683c26872"
+        },
+        {
+          "label": "Clean checks in both pipelines and stale BUILD control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41801775100/artifacts/13307618006"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "683c2687297d36a04c02cae21a8be4e135a7ff16",
+        "baseHead": "2fada0095c0ca959f3f437fdcce56ac408b5d30a",
+        "url": "https://github.com/tamird/gvisor/compare/2fada0095...683c26872",
+        "title": "Run the Buildkite Gazelle checks on the agent",
+        "requestedAt": "2026-11-04T08:51:09.081212+00:00",
+        "summary": "Publish the four-line Gazelle change after #16904 lands?",
+        "body": "Both Buildkite pipelines start the Docker builder to run Gazelle against the agent checkout. Use the Bazelisk installed by #16904 for the existing make gazelle-check command. This preserves the agent’s cache options and Gazelle’s stale BUILD-file diagnostics.\n\nBoth pipeline commands passed on a clean checkout. Removing the //pkg/sync dependency from pkg/linewriter/BUILD made Gazelle identify the omission and Make exit 2."
+      }
     }
   ],
   "edges": [
@@ -52776,6 +52810,13 @@
       "type": "depends_on",
       "reason": "Native unit builds need the declared native and cross compiler; Nogo is an independent sibling.",
       "evidence": "https://github.com/tamird/gvisor/commit/5555ba1f24f319f77ad240a0e0f5aa8ef08a1d57"
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:16904",
+      "to": "branch:buildkite-native-gazelle",
+      "reason": "These jobs use the agent Bazelisk setup and cleanup introduced by #16904.",
+      "evidence": "https://github.com/google/gvisor/pull/16904"
     }
   ],
   "investigations": [
