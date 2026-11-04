@@ -104,6 +104,20 @@ with a repository (`repo`), PR `numbers`, an `owner`, and `reviewers`. A new
 head or substantive reply then appears in the refresh workflow's review
 report without putting the other author's PR in the contributor delivery queue.
 
+On subscriptions with a `since` timestamp, `reviewWatchHandoff` also keeps
+human mentions of the reviewer's GitHub login and replies in threads they
+opened visible on every refresh. It links the incoming message and its thread
+root separately, records the current and first observed heads, and records a
+review's own commit when GitHub provides one. Assign a top-level item with the
+existing `followup.actionableComment`. The reviewer owns that follow-up;
+the PR author still owns their changes.
+
+A later reply by the reviewer on the same thread clears the pending message.
+For a review handled elsewhere, record its `id`, `url`, `head`, `updatedAt`
+and an `evidence` link in the subscription's `inspected` list. An edited
+message requires a fresh inspection. A partial fetch retains pending records
+that are no longer visible. The handoff does not post a comment or reminder.
+
 The project feedback investigation belongs to the agent. On refresh,
 `projectFeedbackReview` lists newly published or landed work since the last
 substantive sweep, including fork proposals and observed force-pushes. The

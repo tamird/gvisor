@@ -274,7 +274,7 @@ def external_review_prs(prs: list[dict]) -> list[dict]:
         numbers = sorted(number for watched_repo, number in pending if watched_repo == repo)
         for raw in fetch_numbers(numbers, timeline=False, repo=repo).values():
             pr = normalize(raw)
-            records.append({key: pr[key] for key in ("repo", "number", "url", "head", "status", "feedback")})
+            records.append({key: pr[key] for key in ("repo", "number", "url", "head", "status", "authorLogin", "feedback")})
     return records
 
 
@@ -303,6 +303,68 @@ def review_watch_report(prs: list[dict], previous: dict) -> list[dict]:
                        "feedback": [{field: item.get(field) for field in ("id", "kind", "url", "updatedAt")}
                                     for item in feedback]})
     return events
+
+
+def review_watch_handoff(prs: list[dict], previous: dict) -> list[dict]:
+    """Keep feedback addressed to our reviewer separate from work owed by the PR author."""
+    watches = review_watches()
+    nodes = {(node.get("repo"), node.get("number")): node for node in REGISTRY["nodes"]}
+    mention = re.compile(r"(?<![\w-])@" + re.escape(OWNER) + r"(?![\w-])", re.I)
+    records = []
+    for pr in prs:
+        key = pr.get("repo", REPO), pr["number"]
+        watch = watches.get(key, {})
+        if (not watch.get("since") or pr["status"] not in {"open", "draft"}
+                or not pr.get("authorLogin") or pr["authorLogin"] == OWNER):
+            continue
+        prior = {entry["id"]: entry for entry in previous.get("reviewWatchHandoff", [])
+                 if (entry["repo"], entry["number"]) == key}
+        followup = nodes.get(key, {}).get("followup", {})
+        items = pr["feedback"]["items"]
+        threads = {}
+        for item in items:
+            if item["kind"] == "inline":
+                threads.setdefault(item["threadId"], []).append(item)
+        complete = pr["feedback"]["complete"]
+        for item in items:
+            author = item.get("author") or {}
+            old = prior.get(item["id"], {})
+            if (author.get("__typename") != "User" or author["login"] == OWNER
+                    or not item.get("body", "").strip() or item.get("state") == "DISMISSED"
+                    or item["updatedAt"] < watch["since"]):
+                continue
+            thread = threads.get(item.get("threadId"), [])
+            root = min(thread, key=lambda msg: msg["createdAt"]) if thread and complete else None
+            if thread and any((msg.get("author") or {}).get("login") == OWNER
+                              and msg["createdAt"] > item["updatedAt"] for msg in thread):
+                continue
+            direct = root and (root.get("author") or {}).get("login") == OWNER
+            before = [msg for msg in thread if msg["createdAt"] < item["createdAt"]
+                      and (msg.get("author") or {}).get("__typename") == "User"]
+            follows_reviewer = before and max(before, key=lambda msg: msg["createdAt"])["author"]["login"] == OWNER
+            if not (direct or follows_reviewer or mention.search(item["body"]) or (not complete and old)):
+                continue
+            review_head = (item.get("commit") or {}).get("oid")
+            first_head = old.get("firstObservedHead", pr["head"])
+            if any(ack["id"] == item["id"] and ack["url"] == item["url"]
+                   and ack["updatedAt"] == item["updatedAt"]
+                   and ack["head"] == (review_head or first_head) and ack.get("evidence")
+                   for ack in watch.get("inspected", [])):
+                continue
+            assigned = matches_feedback_assignment(pr, item, followup.get("actionableComment", {}))
+            records.append({"repo": key[0], "number": key[1], "head": pr["head"],
+                            "firstObservedHead": first_head, "reviewHead": review_head,
+                            "kind": item["kind"], "id": item["id"], "url": item["url"],
+                            "author": author["login"], "updatedAt": item["updatedAt"],
+                            "threadId": item.get("threadId"), "rootURL": root["url"] if root else old.get("rootURL"),
+                            "rootId": root["id"] if root else old.get("rootId"),
+                            "owner": followup["owner"] if assigned else watch["owner"], "assigned": assigned,
+                            "feedbackComplete": complete})
+        if not complete:
+            visible = {item["id"] for item in items}
+            records.extend({**entry, "head": pr["head"], "feedbackComplete": False}
+                           for identity, entry in prior.items() if identity not in visible)
+    return sorted(records, key=lambda entry: (entry["updatedAt"], entry["url"]))
 
 
 def current_check_attempts(contexts: list[dict]) -> tuple[list[dict], list[dict]]:
@@ -1050,6 +1112,7 @@ def main() -> None:
     snapshot = {"schema": 1, "repo": REPO, "owner": OWNER, "checkedAt": checked_at,
                 "registryDate": REGISTRY["meta"]["updatedAt"], "repositories": policies, "prs": prs, "issues": issues,
                 "reviewPRs": review_prs, "reviewerHandoff": reviewer_handoff(prs, previous),
+                "reviewWatchHandoff": review_watch_handoff(prs + review_prs, previous),
                 "mergeabilityHandoff": mergeability_handoff(report, previous),
                 "checkFailures": report["checkFailures"],
                 "workStates": record_states(prs, REGISTRY, previous, checked_at),
@@ -1073,6 +1136,8 @@ def main() -> None:
           f"{len(refreshed)} records in {requests} GitHub requests ({query_cost} GraphQL points).")
     for record in snapshot["reviewerHandoff"]:
         print(json.dumps({"reviewerHandoff": [record]}))
+    for record in snapshot["reviewWatchHandoff"]:
+        print(json.dumps({"reviewWatchHandoff": [record]}))
     for record in snapshot["mergeabilityHandoff"]:
         print(json.dumps({"mergeabilityHandoff": [record]}))
     for pr in prs:

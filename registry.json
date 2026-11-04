@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T17:23:36.488704+00:00",
+    "updatedAt": "2026-11-04T17:52:11.993257+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -21194,7 +21194,8 @@
         "owner": "root",
         "reviewers": [
           "tamird"
-        ]
+        ],
+        "since": "2026-11-02T00:00:00Z"
       }
     },
     {
@@ -32167,10 +32168,22 @@
       "number": 16594,
       "group": "runtime",
       "ref": "review/mount-promise-waiter-notification",
-      "head": "6fe5701556558d631f24919814f014172204208d",
+      "head": "b2cbea854fc9094a9b295a6226a90bccc4dad2ca",
       "title": "Avoid closing a registered mount promise waiter",
       "url": "https://github.com/google/gvisor/pull/16594",
       "evidence": [
+        {
+          "label": "Published amendment; tree matches the qualified test",
+          "url": "https://github.com/google/gvisor/commit/b2cbea854"
+        },
+        {
+          "label": "Published reply to Lucas with the qualified amendment",
+          "url": "https://github.com/google/gvisor/pull/16594#issuecomment-6637870581"
+        },
+        {
+          "label": "Original label reminder to import the previous approved head",
+          "url": "https://github.com/google/gvisor/pull/16594#issuecomment-6637610507"
+        },
         {
           "label": "Upstream pull request",
           "url": "https://github.com/google/gvisor/pull/16594"
@@ -32206,26 +32219,35 @@
         {
           "label": "Current-head approval and nonblocking request for a regression test",
           "url": "https://github.com/google/gvisor/pull/16594#pullrequestreview-5758483291"
+        },
+        {
+          "label": "Permanent regression on the approved source",
+          "url": "https://github.com/tamird/gvisor/compare/6fe570155...f11e71355"
+        },
+        {
+          "label": "40 passing native VFS test records and stock waiter-channel control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41877636880/artifacts/13348071442"
         }
       ],
-      "updatedAt": "2026-11-04T17:23:36.488704+00:00",
+      "updatedAt": "2026-11-04T17:52:11.993257+00:00",
       "status": "Open; reviewer feedback applied",
       "summary": "Stock VFS panicked when a mount resolved between waiter registration and notification. Under the same controlled schedule, the fixed lookup returned the newly mounted root and unregistered. The ordinary VFS suite passed all 39 cases, and Nogo passed for AMD64 and ARM64. This exercises the optional mount-promise API; no in-tree registration caller was found. The resolved-after-registration path now returns before the wait. The reviewed VFS source matches the tested 39-case suite. The previous controlled schedule remains a fork witness; a mount-block event arrives after both loads.",
       "refinement": {
         "before": {
-          "head": "61868f1ce83b855a80252331b7ccf4dc3816ccd9"
+          "head": "f11e71355d869135bab5bdadb03d2a9f9ee65eab",
+          "base": "6fe5701556558d631f24919814f014172204208d"
         },
         "after": {
-          "head": "8d9ce8738115e23dec693545967f2c21124df6df",
+          "head": "b2cbea854fc9094a9b295a6226a90bccc4dad2ca",
           "base": "509ad5337346f8cbdba515cefadd542de28d6156"
         }
       },
       "followup": {
         "owner": "Source PR owner",
-        "sourceHead": "6fe5701556558d631f24919814f014172204208d",
-        "observedAt": "2026-11-04T17:23:36.488704+00:00",
-        "disposition": "Current head approved; regression coverage requested as a nonblocking follow-up",
-        "nextAction": "Exercise the resolve-after-register window in a permanent regression test. The reviewer explicitly kept that follow-up separate from importing this head.",
+        "sourceHead": "b2cbea854fc9094a9b295a6226a90bccc4dad2ca",
+        "observedAt": "2026-11-04T17:52:11.993257+00:00",
+        "disposition": "Published the qualified test and answered Lucas’s nonblocking request.",
+        "nextAction": "Wait for upstream review of the amended head. The earlier approval and label reminder covered the previous revision.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16594",
           "https://github.com/tamird/gvisor/commit/8d9ce8738115e23dec693545967f2c21124df6df",
@@ -32234,25 +32256,40 @@
           "https://github.com/google/gvisor/pull/16594#discussion_r4450157064",
           "https://github.com/tamird/gvisor/actions/runs/40792990873/artifacts/12862527261",
           "https://github.com/google/gvisor/pull/16594#pullrequestreview-5691234490",
-          "https://github.com/google/gvisor/pull/16594#pullrequestreview-5758483291"
-        ],
-        "actionableComment": {
-          "kind": "review",
-          "head": "6fe5701556558d631f24919814f014172204208d",
-          "commentId": "PRR_kwDOB9IlXs8AAAABVzt7Ww",
-          "url": "https://github.com/google/gvisor/pull/16594#pullrequestreview-5758483291",
-          "nonblockingReviewUpdatedAt": "2026-11-03T19:43:47Z"
-        }
+          "https://github.com/google/gvisor/pull/16594#pullrequestreview-5758483291",
+          "https://github.com/google/gvisor/pull/16594#issuecomment-6637870581"
+        ]
       },
       "reapproval": {
         "kind": "content-amendment",
         "method": "reviewed-source-diff",
-        "head": "6fe5701556558d631f24919814f014172204208d",
-        "approvedHead": "8d9ce8738115e23dec693545967f2c21124df6df",
-        "diffSha256": "fbdc10facce725ea75109344875bf47a95fba81bc8f490a47c3b41d4cd029e19",
-        "summary": "The resolved-after-registration path now returns before the wait. The reviewed VFS source matches the tested 39-case suite. The previous controlled schedule remains a fork witness; a mount-block event arrives after both loads.",
-        "evidence": "https://github.com/google/gvisor/compare/8d9ce8738115e23dec693545967f2c21124df6df..6fe5701556558d631f24919814f014172204208d"
-      }
+        "head": "b2cbea854fc9094a9b295a6226a90bccc4dad2ca",
+        "approvedHead": "6fe5701556558d631f24919814f014172204208d",
+        "diffSha256": "5f8b5fce03789b573fb47cddb7f7218cec37f6e7547282105f695cbcac643a63",
+        "summary": "The amendment adds a permanent test for a mount resolving after waiter registration and accepts the channel as receive-only in the wait path. The mounted root and open notification channel passed in the 40-record native VFS suite. The published tree matches the qualified fork amendment.",
+        "evidence": "https://github.com/tamird/gvisor/compare/6fe570155...f11e71355"
+      },
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "f11e71355d869135bab5bdadb03d2a9f9ee65eab",
+          "baseHead": "6fe5701556558d631f24919814f014172204208d",
+          "url": "https://github.com/tamird/gvisor/commit/f11e71355",
+          "title": "Test mount promise resolution after waiter registration",
+          "body": "The native suite recorded 40 passing VFS tests. With the previous wait path restored, lookup returned the same mount but closed the waiter’s channel. If #16594 lands first, publish a follow-up and include its link in the reply.\n\nProposed reply:\n\n@manninglucas, I added a permanent test for a mount resolving after the waiter registers. It verifies that lookup returns the mounted root and leaves the channel open for the queued notification.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-04T17:48:17.273152+00:00"
+        },
+        {
+          "kind": "reply",
+          "head": "b2cbea854fc9094a9b295a6226a90bccc4dad2ca",
+          "url": "https://github.com/google/gvisor/pull/16594#pullrequestreview-5758483291",
+          "body": "@manninglucas, I added a permanent test for a mount resolving after the waiter registers. It verifies that lookup returns the mounted root and leaves the channel open for the queued notification.\n\nCould you review the new head, [b2cbea854](https://github.com/google/gvisor/commit/b2cbea854), following your [earlier review](https://github.com/google/gvisor/pull/16594#pullrequestreview-5758483291)?\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-04T17:51:24Z",
+          "postedURL": "https://github.com/google/gvisor/pull/16594#issuecomment-6637870581"
+        }
+      ]
     },
     {
       "id": "branch:tcp-tail-probe-window-update",
@@ -40112,7 +40149,7 @@
       "url": "https://github.com/google/gvisor/pull/15972",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T22:54:43.336654+00:00",
+      "updatedAt": "2026-11-04T17:48:56.110142+00:00",
       "summary": "The author applied the ACK-accounting fix. On a separate recovery-exit ACK, the PR sent the one remaining segment at the old 20 ms deadline. Using the advancing ACK’s 50 ms RTO matched the Linux timer calculation and preserved the four existing cases.",
       "evidence": [
         {
@@ -40150,6 +40187,22 @@
         {
           "label": "Posted reply with the tested result",
           "url": "https://github.com/google/gvisor/pull/15972#discussion_r4448596038"
+        },
+        {
+          "label": "Lucas’s review and exact-head follow-up",
+          "url": "https://github.com/google/gvisor/pull/15972#pullrequestreview-5758454721"
+        },
+        {
+          "label": "Timer fix followed by the permanent manual-clock regression",
+          "url": "https://github.com/tamird/gvisor/compare/32045814e...91a66e77e"
+        },
+        {
+          "label": "One fresh native AMD64 case per source: early stock probe, corrected deadline without a TCP timeout",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41878373544/artifacts/13348347065"
+        },
+        {
+          "label": "Published reply to Lucas with the two source revisions and measured result",
+          "url": "https://github.com/google/gvisor/pull/15972#discussion_r4471155616"
         }
       ],
       "settledReviews": [
@@ -40168,8 +40221,29 @@
           "outcome": "approved",
           "at": "2026-11-02T22:33:44Z",
           "postedURL": "https://github.com/google/gvisor/pull/15972#discussion_r4448596038"
+        },
+        {
+          "kind": "reply",
+          "head": "32045814e05bcfcf3a6ea55a65e7329ab423b3fd",
+          "url": "https://github.com/google/gvisor/pull/15972#discussion_r4459603569",
+          "title": "Share the tail-probe fix and regression with Flozano",
+          "body": "@flozano, [114f689c8](https://github.com/tamird/gvisor/commit/114f689c8) is the timer fix, and [91a66e77e](https://github.com/tamird/gvisor/commit/91a66e77e) adds Lucas’s manual-clock test on top. Your current head sent the tail probe before one RTO had elapsed from the ACK that ended recovery. With both commits, the tail stayed quiet until that deadline and was then retransmitted without an RTO. [Packet test results](https://github.com/tamird/gvisor/actions/runs/41878373544/artifacts/13348347065)\n\nCould you update the description to cover both paths? Sending more data keeps the oldest outstanding segment’s deadline. An advancing ACK schedules the probe using the flight left after the ACK and caps the delay at one RTO measured from that ACK, including when it ends recovery.\n\n[Buildkite first-pass #409](https://buildkite.com/gvisor/first-pass/builds/409) is red. Its job log returned 403 for me. Can you see which step failed?\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-04T17:48:17.273152+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/15972#discussion_r4471155616"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "TCP review owner",
+        "sourceHead": "32045814e05bcfcf3a6ea55a65e7329ab423b3fd",
+        "observedAt": "2026-11-04T17:48:56.110142+00:00",
+        "disposition": "Published the qualified timer fix and regression in a reply to Lucas.",
+        "nextAction": "Flozano owns the PR description and first-pass CI. Watch for a new reviewer question or an author update.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15972#pullrequestreview-5758454721",
+          "https://github.com/google/gvisor/pull/15972#discussion_r4471155616"
+        ]
+      }
     },
     {
       "id": "branch:ipv6-multicast-socket-options",
@@ -70634,6 +70708,30 @@
         "owner": "Netstack",
         "reviewers": [
           "tamird"
+        ],
+        "since": "2026-11-02T00:00:00Z",
+        "inspected": [
+          {
+            "id": "IC_kwDOB9IlXs8AAAABigD5dg",
+            "url": "https://github.com/google/gvisor/pull/16887#issuecomment-6610286966",
+            "head": "430e65796267c361c86d13b66b4a4604975d0e13",
+            "updatedAt": "2026-11-03T17:00:07Z",
+            "evidence": "https://github.com/google/gvisor/pull/16887#pullrequestreview-5756434671"
+          },
+          {
+            "id": "PRRC_kwDOB9IlXs8AAAABCfrlUA",
+            "url": "https://github.com/google/gvisor/pull/16793#discussion_r4462404944",
+            "head": "8f7a1936f76cfcdf91ca815a4349471a80f3ded5",
+            "updatedAt": "2026-11-04T01:10:37Z",
+            "evidence": "https://github.com/google/gvisor/pull/16793#discussion_r4462404944"
+          },
+          {
+            "id": "PRR_kwDOB9IlXs8AAAABVzsLwQ",
+            "url": "https://github.com/google/gvisor/pull/15972#pullrequestreview-5758454721",
+            "head": "32045814e05bcfcf3a6ea55a65e7329ab423b3fd",
+            "updatedAt": "2026-11-03T19:41:33Z",
+            "evidence": "https://github.com/google/gvisor/pull/15972#discussion_r4471155616"
+          }
         ]
       }
     },

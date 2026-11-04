@@ -540,6 +540,43 @@ class CollectorHistoryTest(unittest.TestCase):
                               updater.review_watch_report([pr], self.previous)], [(500, "Netstack")])
             self.assertEqual(updater.review_watch_report([pr], current), [])
 
+    def test_directed_external_feedback_survives_refresh_until_inspected(self) -> None:
+        watch = {"repo": "google/gvisor", "numbers": [500], "owner": "Netstack",
+                 "reviewers": ["tamird"], "since": OLD}
+        self.registry["investigations"] = [{"id": "investigation:external-reviews", "reviewWatch": watch}]
+        self.raw[500] = raw_pr(500, author="contributor")
+        pr, = self.collect()["reviewPRs"]
+        def message(name, author, body, kind="comment"):
+            return {"id": name, "url": pr["url"] + "#" + name, "kind": kind, "body": body,
+                    "author": {"login": author, "__typename": "User"}, "createdAt": LATER,
+                    "updatedAt": LATER}
+        request = {**message("review", "maintainer", "@tamird, can you confirm?", "review"),
+                   "commit": {"oid": pr["head"]}, "state": "COMMENTED"}
+        author_request = message("squash", "maintainer", "Could you squash your commits?")
+        root = {**message("root", "tamird", "What happens on TCP reconnect?", "inline"),
+                "threadId": "thread", "createdAt": OLD}
+        reply = {**message("reply", "contributor", "I added a socket test.", "inline"), "threadId": "thread"}
+        pr["feedback"] = {"complete": True, "items": [author_request, request, root, reply]}
+        with mock.patch.object(updater, "REGISTRY", self.registry):
+            first = updater.review_watch_handoff([pr], {})
+            by_id = {item["id"]: item for item in first}
+            self.assertEqual(set(by_id), {"reply", "review"})
+            self.assertEqual(by_id["reply"]["rootId"], "root")
+            self.assertEqual(by_id["review"]["reviewHead"], pr["head"])
+            prior = {"reviewWatchHandoff": first}
+            self.assertEqual(updater.review_watch_handoff([pr], prior), first)
+            watch["inspected"] = [{"id": request["id"], "url": request["url"], "head": pr["head"],
+                                   "updatedAt": LATER, "evidence": pr["url"] + "#response"}]
+            self.assertEqual([entry["id"] for entry in updater.review_watch_handoff([pr], prior)], ["reply"])
+            partial = {**pr, "feedback": {"complete": False, "items": [request]}}
+            missing, = updater.review_watch_handoff([partial], prior)
+            self.assertEqual(missing["id"], "reply")
+            self.assertFalse(missing["feedbackComplete"])
+            request["updatedAt"] = "2026-12-01T00:00:00Z"
+            root_response = {**root, "id": "response", "createdAt": "2026-12-01T00:00:00Z"}
+            pr["feedback"]["items"].append(root_response)
+            self.assertEqual([entry["id"] for entry in updater.review_watch_handoff([pr], prior)], ["review"])
+
     def test_retention_reopening_closure_and_active_imports(self) -> None:
         current = self.collect()
         self.assertEqual(next(pr for pr in current["prs"] if pr["number"] == 4)["mergeCommit"], "e" * 40)
