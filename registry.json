@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T04:13:07.872004+00:00",
+    "updatedAt": "2026-11-04T05:00:25.863097+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -3290,13 +3290,16 @@
       "url": "https://github.com/google/gvisor/pull/15443",
       "group": "runtime",
       "status": "open",
-      "summary": "PR #15443 is open at 5af539b23. Restore-order controls reproduced premature release of external storage through both Buffer and View. The first fix passed 329 ordinary cases and both analyzers. Iterating eight heap-backed views still took 12.01 ns, compared with 4.97 ns before the PR and 12.58 ns on its public head (medians). The first race build ran zero cases. A separate compiler check built the race standard library, but the actual race target still stopped before testing because its aarch64-opt runtime/cgo action could not find cc. The source owner is revising the read path and qualifying the race-enabled tests. There is no contributor decision yet.",
-      "updatedAt": "2026-11-04T04:13:07.872004+00:00",
+      "summary": "The proposed amendment orders external storage restoration and restores direct slice reads for heap-backed buffers. Both restore-order controls failed on the public head. The amendment passed 329 ordinary cases and the same 329 cases under native AMD64 race detection with the explicit Bazel LLVM toolchain flag. Nogo passed on AMD64 and ARM64. The separate pgalloc integration passed all five restore and cleanup modes. The paired benchmarks show the eight-view loop back at the pre-PR median, with ReadAt and multi-view ReadAt still 3.92% and 2.08% slower. The original race build and its zero-case diagnosis remain linked below.",
+      "updatedAt": "2026-11-04T04:59:04.694267+00:00",
       "followup": {
-        "disposition": "Source revision and race qualification in progress",
-        "owner": "Source PR owner",
-        "nextAction": "Replace the per-read storage dispatch, remeasure the eight heap-backed views against the pre-PR source, and make cc available to the actual race target so its tests can run.",
+        "disposition": "Contributor review requested",
+        "owner": "Contributor",
+        "nextAction": "Review the standalone buffer amendment, its PR description, and the two replies together.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/a5e521f7d",
+          "https://github.com/tamird/gvisor/commit/7a0df03ab",
+          "https://github.com/tamird/gvisor/actions/runs/41773274379/artifacts/13296013890",
           "https://github.com/google/gvisor/pull/15443",
           "https://github.com/tamird/gvisor/commit/5af539b23",
           "https://github.com/google/gvisor/pull/15443#discussion_r4462958129",
@@ -3311,11 +3314,23 @@
         "sourceHead": "5af539b23594b3711fd49c514e236442baad9df3",
         "reviewDecision": null,
         "mergeable": "MERGEABLE",
-        "observedAt": "2026-11-04T04:13:07.872004+00:00"
+        "observedAt": "2026-11-04T04:59:04.694267+00:00"
       },
       "head": "5af539b23594b3711fd49c514e236442baad9df3",
       "number": 15443,
       "evidence": [
+        {
+          "label": "Proposed standalone buffer amendment on 183a39d1b",
+          "url": "https://github.com/tamird/gvisor/commit/a5e521f7d"
+        },
+        {
+          "label": "Separate pgalloc restored-storage integration",
+          "url": "https://github.com/tamird/gvisor/commit/7a0df03ab"
+        },
+        {
+          "label": "Final paired benchstat, 329 ordinary and native AMD64 race cases each, both Nogo architectures and pgalloc controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41773274379/artifacts/13296013890"
+        },
         {
           "label": "Current PR source (5af539b23)",
           "url": "https://github.com/tamird/gvisor/commit/5af539b23"
@@ -3348,7 +3363,18 @@
           "label": "October rebase, validation, and benchmark history",
           "url": "https://github.com/tamird/gvisor/blob/455fad86f/registry.json#L3285-L3316"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "a5e521f7d2b149674006a4a2c5762db56f75da94",
+        "baseHead": "5af539b23594b3711fd49c514e236442baad9df3",
+        "url": "https://github.com/tamird/gvisor/commit/a5e521f7d",
+        "title": "Support externally owned buffer chunks",
+        "requestedAt": "2026-11-04T04:59:04.694267+00:00",
+        "summary": "Publish the standalone buffer amendment and its description, then post the two replies to the restore-order and read-path reviews?",
+        "body": "Proposed PR description\n\nLinux accepts writes to `/dev/net/tun` larger than the interface MTU [1]. gVisor rejects them and copies accepted writes into Go heap storage. Removing the limit would allow large heap allocations whose failure cannot be returned to the writer as a syscall error.\n\nMemoryFile, the Sentry's file-backed allocator, can report allocation failure. To use it for TUN packets, a buffer must keep the backing alive while packets are queued or cloned, even after the TUN file is closed. This change provides the buffer support. The TUN write path and its MTU limit are separate changes.\n\nA view can now take ownership of external storage. Clones share the chunk, writes to a shared chunk still detach, and the last reference releases the owner. Both heap and external chunks hold their usable slice directly. `AsSlice`, `Full`, `Capacity`, and `AvailableSize` read the same fields as before.\n\nExternal bytes are checkpointed by their owner only. Loading the object graph rebuilds the sharing and orders the owner's Go restore callback before a restored buffer can release it. An owner that maps its backing later installs the slice after its mapping succeeds, before buffer users resume. The wait does not make separately restored MemoryFile metadata available during object loading.\n\nOn heap-backed buffers, single-view and multi-view ReadAt cost 3.92% and 2.08% more with external storage support. The eight-view AsSlice traversal measured 9.604 ns before and 9.591 ns after (p=0.235, n=18). All three benchmarks measured zero allocations [2].\n\n```text\n                 pre-feature      external storage   change in sec/op\nReadAt           8.146n ± 0%      8.466n ± 0%      +3.92% (p=0.000 n=18)\nReadAtMultiView  45.02n ± 2%      45.95n ± 2%      +2.08% (p=0.011 n=18)\n```\n\n[1]: https://github.com/torvalds/linux/blob/830b3c68c/drivers/net/tun.c#L1735\n[2]: https://github.com/tamird/gvisor/actions/runs/41773274379/artifacts/13296013890\n\n<!-- codex-thread: 01a0e5cd-f894-7c00-9aa2-26d0e91eec77 -->\n\nProposed replies\n\nhttps://github.com/google/gvisor/pull/15443#discussion_r4462958129\n\nAdded the waits on the saved view, chunk, and storage. The regression covers releasing either a restored Buffer or a standalone View from its owner's `afterLoad`. Both cases released storage before its own Go callback on 5af539b23. The wait orders those callbacks. A MemoryFile-backed owner still needs its separately restored metadata before it can release its range.\n\nPosted by Codex on behalf of @tamird.\n\nhttps://github.com/google/gvisor/pull/15443#discussion_r4462958137\n\nThe accessors now read `chunk.data` directly again. The external owner supplies the slice once at construction and installs the restored slice before packet I/O resumes. The paired benchmark compares 5af539b23 (public) with the proposed amendment (candidate). All three benchmarks measured zero allocations.\n\n```text\n                │    public    │              candidate              │\n                │    sec/op    │   sec/op     vs base                │\nReadAt            10.340n ± 0%   8.466n ± 0%  -18.13% (p=0.000 n=18)\nReadAtMultiView    57.64n ± 0%   45.95n ± 2%  -20.28% (p=0.000 n=18)\nViewListAsSlice   25.990n ± 0%   9.591n ± 0%  -63.10% (p=0.000 n=18)\n```\n\nSingle- and multi-view ReadAt still measured 3.92% and 2.08% above pre-feature. Eight-view traversal measured 9.604 ns pre-feature and 9.591 ns on the amendment. [Paired benchmarks](https://github.com/tamird/gvisor/actions/runs/41773274379/artifacts/13296013890)\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "branch:pgalloc-retained-commitment",
@@ -35261,8 +35287,36 @@
       "title": "Use the registered Buildifier binary for source lint",
       "url": "https://github.com/google/gvisor/pull/16663",
       "group": "analysis",
-      "summary": "The proposed amendment moves Buildifier and cpplint out of the shell lint driver. A shared Bazel inventory picks up new files in any package. On 9.3.1 both checks also handle removal and recreation of a source directory.",
+      "summary": "The lint amendment runs Buildifier and cpplint on declared inputs. The Bazel 9 prerequisite (#16801) has landed. The amendment uses bazel_lib 3.4.0 supplied by the approved #16736, whose import is open at #16890. Four fresh remote actions checked the qualified 3.4.0 tree. The clean controls covered 624 Buildifier inputs and 485 C/C++ inputs. Deliberately malformed files made both tools fail.",
       "evidence": [
+        {
+          "label": "Proposed lint-only amendment",
+          "url": "https://github.com/tamird/gvisor/commit/e216e3075"
+        },
+        {
+          "label": "Qualified supplier patch reapplied to current master",
+          "url": "https://github.com/tamird/gvisor/commit/0b1ad2d6d"
+        },
+        {
+          "label": "Bazel 9 prerequisite merged",
+          "url": "https://github.com/google/gvisor/pull/16801"
+        },
+        {
+          "label": "bazel_lib 3.4.0 supplier approved",
+          "url": "https://github.com/google/gvisor/pull/16736"
+        },
+        {
+          "label": "Matched import of the bazel_lib supplier",
+          "url": "https://github.com/google/gvisor/pull/16890"
+        },
+        {
+          "label": "Bazel 9 rebase and full 624/485 declared inputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41775383443/artifacts/13296183401"
+        },
+        {
+          "label": "Same final tree with the 3.4.0 supplier, clean and malformed controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41775722478/artifacts/13296792759"
+        },
         {
           "label": "All 614 tracked files, seven damaged-file diffs and repairs, malformed-input behavior, and CLI identity",
           "url": "https://github.com/tamird/gvisor/actions/runs/40833710579"
@@ -35357,14 +35411,21 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-01T17:58:13.420713+00:00",
+      "updatedAt": "2026-11-04T05:00:25.863097+00:00",
       "followup": {
-        "owner": "root",
+        "owner": "Contributor",
         "sourceHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "observedAt": "2026-11-01T17:58:13.420713+00:00",
+        "observedAt": "2026-11-04T05:00:25.863097+00:00",
         "disposition": "Contributor review requested",
-        "nextAction": "Contributor can review the combined amendment now. Publish it after the shared Bazel 9 upgrade lands.",
+        "nextAction": "Review the lint-only amendment now. Publish it to #16663 after the #16736 supplier imports.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/e216e3075",
+          "https://github.com/tamird/gvisor/commit/0b1ad2d6d",
+          "https://github.com/google/gvisor/pull/16801",
+          "https://github.com/google/gvisor/pull/16736",
+          "https://github.com/google/gvisor/pull/16890",
+          "https://github.com/tamird/gvisor/actions/runs/41775383443/artifacts/13296183401",
+          "https://github.com/tamird/gvisor/actions/runs/41775722478/artifacts/13296792759",
           "https://github.com/tamird/gvisor/commit/1d96ea04c",
           "https://github.com/tamird/gvisor/actions/runs/41219788380/artifacts/13050030547",
           "https://github.com/tamird/gvisor/actions/runs/41218940449/artifacts/13049326680",
@@ -35381,20 +35442,20 @@
           "base": "ac7b4e0fdc7dc4674453438e5e15fc069895620c"
         },
         "after": {
-          "head": "045a3f7a506c109eab8beb396e5b3af37776a2df",
-          "base": "375b2c57032fa910447d4b81217fde2171303a9b"
+          "head": "e216e3075aa56eb8a0b5dc1a774e74f452dc6cf1",
+          "base": "0b1ad2d6d0cce88cc9361e73defb9ceb52ec6ed8"
         }
       },
       "contributorReview": {
         "status": "pending",
         "kind": "amendment",
-        "head": "045a3f7a506c109eab8beb396e5b3af37776a2df",
+        "head": "e216e3075aa56eb8a0b5dc1a774e74f452dc6cf1",
         "baseHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
-        "url": "https://github.com/tamird/gvisor/commit/045a3f7a5",
-        "title": "Run Buildifier and cpplint on declared repository inputs",
+        "url": "https://github.com/tamird/gvisor/commit/e216e3075",
+        "title": "Run Buildifier and cpplint on declared inputs",
         "requestedAt": "2026-11-01T17:58:13.420713+00:00",
-        "summary": "Publish this amendment to #16663 after Bazel 9 lands?",
-        "body": "Both tools run through //tools/lint:check with declared inputs and tools. Their dev dependencies stay out of a consuming module. Bazel 9.3.1 checked 620 Buildifier files and 485 C/C++ files. Both checks saw new files after their directory was deleted and recreated without restarting the server. This resolves the last failure on the previous proposal."
+        "summary": "Publish the lint-only amendment after #16736 imports?",
+        "body": "Run both tools through //tools/lint:check with declared tools and inputs. The inventory also handles removal and recreation of a source directory on Bazel 9. The prerequisite supplies bazel_lib 3.4.0. The amendment adds no dependency version change. The qualified tree checked 624 Buildifier files and 485 C/C++ files. Malformed inputs produced Buildifier exit 4 and cpplint exit 1, and Bazel reported failure. The existing public PR is still at 1dac5af96."
       }
     },
     {
