@@ -1,4 +1,4 @@
-load("@gvisor//tools/bazeldefs:static.bzl", "musl_cc_binary")
+load("@//tools/bazeldefs:static.bzl", "musl_cc_binary")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 
 package(default_visibility = ["//visibility:public"])
