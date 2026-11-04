@@ -1,6 +1,7 @@
 """Compare the existing bridge syscall regression on Linux and two Sentries."""
 
 from datetime import datetime, timezone
+import errno
 import hashlib
 import io
 import json
@@ -11,6 +12,7 @@ import shlex
 import socket
 import stat
 import subprocess
+import sys
 import xml.etree.ElementTree as ET
 import zipfile
 
@@ -149,9 +151,66 @@ def execute(name, source, target):
     save()
 
 
+def original_native():
+    from cas_inputs import blob
+
+    data = (ROOT / "bridge-original.zip").read_bytes()
+    assert len(data) == 2224
+    digest = hashlib.sha256(data).hexdigest()
+    assert digest == "a08395b1d541ab1d7723aeb466524c4050755c69d256cc2e6b2ff7948fe096bd"
+    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+        assert archive.namelist() == ["verdict.json"]
+        old = json.loads(archive.read("verdict.json"))
+    assert old["source"] == "d4c958bc8681caf621a07098b5a5ca5b81309167"
+    assert old["product"] == PRODUCT and old["stock"] == STOCK and old["status"] == "FAIL"
+    assert set(old["arms"]) == {"native"}
+    prior = old["arms"]["native"]
+    uuid = "14dc23d7-1ce1-4645-a9da-40304791fa86"
+    assert prior["invocation"] == uuid and prior["source"] == STOCK and prior["native_exit"] == 3
+    assert prior["target"] == "//test/syscalls:socket_netlink_route_test_native"
+    assert prior["attempt"]["strategy"] == "local" and prior["attempt"]["status"] == "FAILED"
+    assert not prior["attempt"]["cached_locally"] and not prior["attempt"]["cached_remotely"]
+    result.update(original=old, original_zip_sha256=digest, workload_repeated=False, reports={})
+    save()
+    reports = {}
+    for name, sha, size in (
+        ("test.log", "0834aa254f79ecc605fa3bd814ac28599f498f633f1045056707045b93bec5bf", 2440),
+        ("test.xml", "675a4befd22367a81be1e4773af8f78a982089a37a82cad2d28842579dad309e", 2917),
+    ):
+        record, = [r for r in prior["reports"] if r["name"] == name]
+        assert record == {"name": name, "sha256": sha, "bytes": size}
+        reports[name] = blob({"hash": sha, "sizeBytes": size}, uuid)
+        result["reports"][name] = record
+        save()
+    case, = ET.fromstring(reports["test.xml"]).iter("testcase")
+    assert "/".join((case.get("classname", ""), case.get("name", ""))) == CASE
+    assert case.find("skipped") is None and case.get("status") != "notrun" and case.get("result") != "suppressed"
+    failures = case.findall("failure") + case.findall("error")
+    assert 0 < len(failures) <= 8
+    allowed_files = {Path(p).name for p in git("ls-files", "test/syscalls/linux", "test/util").splitlines()}
+    operations = ("NewLink", "NetlinkRequestAckOrError", "GetLinkByName", "SetLinkMTU", "DumpLinks", "socket", "sendmsg", "recvmsg", "bridge.mtu", "updated.mtu", "bridge0")
+
+    def project(text):
+        locations = re.findall(r"(?<![a-zA-Z0-9_.-])([a-zA-Z0-9_-]+\.(?:cc|h)):(\d{1,6})\b", text)
+        return {"sha256": hashlib.sha256(text.encode()).hexdigest(),
+                "locations": list(dict.fromkeys(f"{f}:{n}" for f, n in locations if f in allowed_files))[:12],
+                "errno": sorted({name for i, name in errno.errorcode.items() if re.search(r"\b" + name + r"\b", text) or
+                                 os.strerror(i).lower() in text.lower() or re.search(rf"\berrno\s*[:=]\s*{i}\b", text, re.I)}),
+                "source_operations": [word for word in operations if word in text],
+                "assertion_numbers": [int(value) for value in re.findall(r"(?:Which is|Actual|Expected):\s*(\d{1,5})\b", text)][:16]}
+
+    result["failures"] = [project((f.get("message", "") + "\n" + "".join(f.itertext()))) for f in failures]
+    result["log_diagnostic"] = project(reports["test.log"].decode(errors="replace"))
+    result["status"] = "ORIGINAL_REPORTS_READ"
+    save()
+
+
 result = dict(source=os.environ["GITHUB_SHA"], product=PRODUCT, stock=STOCK, base=BASE,
               started_at=utc(), status="INCOMPLETE", arms={}, command_timeout_seconds=1800)
 save()
+if sys.argv[1:] == ["--original-native"]:
+    original_native()
+    sys.exit(0)
 try:
     assert git("rev-parse", "HEAD^") == "2f2aa1332380ac3e9016e6adb57a791ba1423054"
     assert git("rev-parse", "HEAD~2") == "4b64fa6de52a1b145ed86bb39585ca918d9a1153"
