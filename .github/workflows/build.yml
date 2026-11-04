@@ -1,35 +1,102 @@
-name: CI
-
-"on":
+name: Check tmpfs and VFS lock annotations
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/vfs-locks-183a39d1b]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  owners:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 105
+    env:
+      PRODUCT: e438da4be1095b62b03343a3ad78bf3c46f87e4f
+      VERIFIER: 6b3fe9ab6c03facafe6340c85f8d60ca3591566b
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Select the exact product and shared result verifier
+        run: |
+          mkdir -p "$RUNNER_TEMP/proof" "$RUNNER_TEMP/verified"
+          echo '{"status":"INCOMPLETE","phase":"setup"}' > "$RUNNER_TEMP/verified/verdict.json"
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          git fetch --quiet --depth=1 origin "$VERIFIER"
+          for file in unit_matrix qualification_report; do
+            git show "$VERIFIER:test/rbe/$file.py" > "$RUNNER_TEMP/$file.py"
+          done
+          git checkout --quiet --detach "$PRODUCT"
+          test "$(uname -m)" = x86_64
+          curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$RUNNER_TEMP/bazelisk"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $RUNNER_TEMP/bazelisk" | sha256sum -c -
+          chmod 755 "$RUNNER_TEMP/bazelisk"
+          test "$("$RUNNER_TEMP/bazelisk" --version)" = "bazel $(cat .bazelversion)"
+      - name: Run both packages and all four analyzer owners
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/proof"
+          owners=(//pkg/sentry/fsimpl/tmpfs:tmpfs_test //pkg/sentry/vfs:vfs_test)
+          for pkg in pkg/sentry/fsimpl/tmpfs pkg/sentry/vfs; do
+            owners+=("//$pkg:${pkg##*/}_nogo" "//$pkg:${pkg##*/}_test_nogo")
+          done
+          printf '%s\n' "${owners[@]}" > "$p/targets"
+          args=(test -c opt --jobs=4 --remote_cache= --remote_executor= --strategy=TestRunner=local
+                --test_output=errors --test_env=GO_TEST_WRAP_TESTV=1 --test_tag_filters= --build_tag_filters=
+                --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1 --test_sharding_strategy=disabled
+                --nobuild_event_json_file_path_conversion "--build_event_json_file=$p/raw.jsonl" "${owners[@]}")
+          git cat-file commit HEAD > "$p/commit_file"
+          git status --porcelain --untracked-files=no > "$p/source_before"
+          printf '%s\n' "${args[@]}" > "$p/executed_arguments"
+          rc=0
+          timeout --signal=INT --kill-after=30s 90m "$RUNNER_TEMP/bazelisk" "${args[@]}" || rc=$?
+          date -u +'%Y-%m-%dT%H:%M:%S.%3NZ' > "$p/finished"
+          echo "$rc" > "$p/native_exit"
+          git rev-parse HEAD > "$p/final_head"
+          git status --porcelain --untracked-files=no > "$p/source_after"
+          exit "$rc"
+      - name: Reconcile original results and both Nogo architecture reports
+        if: always() && !cancelled()
+        run: |
+          PYTHONPATH="$RUNNER_TEMP" python3 -B - <<'PY'
+          import json, os, sys
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          import qualification_report as report
+          tmp = Path(os.environ["RUNNER_TEMP"])
+          p = tmp / "proof"
+          events = p / "events.jsonl"
+          manifest = report.capture(p / "raw.jsonl", events, Path("bazel-out"), p / "reports")
+          (p / "capture_exit").write_text(str(int(bool(manifest["errors"]))))
+          keys = ("commit_file", "source_before", "source_after", "final_head", "executed_arguments", "native_exit", "capture_exit")
+          ctx = {k: k for k in keys}
+          ctx.update(expected_source=os.environ["PRODUCT"], command_kind="test", execution_finished_at=(p / "finished").read_text().strip())
+          report.write_json(p / "context.json", ctx)
+          v = report.verdict(events, report.manifest_path(events), p / "context.json", p / "targets", ())
+          arch = {}
+          for label in (p / "targets").read_text().splitlines():
+              test_dir = Path("bazel-testlogs", label[2:].replace(":", "/"))
+              if label.endswith("_nogo") and (test_dir / "test.log").exists():
+                  log = (test_dir / "test.log").read_text()
+                  arch[label] = [a for a in ("amd64", "arm64") if a + "...PASS" in log]
+          xml = Path("bazel-testlogs/pkg/sentry/fsimpl/tmpfs/tmpfs_test/test.xml")
+          host_fault = []
+          if xml.exists():
+              for case in ET.parse(xml).iter("testcase"):
+                  name = case.get("name", "")
+                  if "TestDiskBackedWriteHostFault/" in name and not any(case.find(tag) is not None for tag in ("skipped", "failure", "error")):
+                      host_fault.append(name)
+          v.update(nogo_architectures=arch, upstream_host_fault_cases=host_fault)
+          if v["status"] == "PASS" and (len(arch) != 4 or any(len(a) != 2 for a in arch.values()) or len(host_fault) != 2 or v["zero_case_owners"] or v["all_skipped_owners"]):
+              v["status"] = "INCOMPLETE"
+              v["errors"].append("Missing an architecture, an upstream host-fault subtest, or executed cases for a requested owner")
+          report.write_json(tmp / "verified/verdict.json", v)
+          print(json.dumps({k:v[k] for k in ("status","case_counts","errors","missing","nogo_architectures","upstream_host_fault_cases","execution_to_verdict_seconds")}))
+          sys.exit(v["status"] != "PASS")
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: vfs-owners
+          path: ${{ runner.temp }}/verified/verdict.json
+          if-no-files-found: error
