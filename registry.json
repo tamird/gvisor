@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T16:57:53.394700+00:00",
+    "updatedAt": "2026-11-04T17:06:34.798966+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -49756,6 +49756,48 @@
           "url": "https://github.com/google/gvisor/pull/16981"
         }
       ]
+    },
+    {
+      "id": "branch:veth-network-mtu",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/veth-network-mtu",
+      "head": "679d20c1ba36918979ce60e0f7619c3c72738d03",
+      "title": "Use the configured MTU for veth and loopback",
+      "url": "https://github.com/tamird/gvisor/commit/679d20c1b",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-04T17:06:34.798966+00:00",
+      "summary": "At veth MTUs of 1500 and 3000, Linux advertised TCP MSS values of 1460 and 2960 in the SYN. Stock gVisor advertised 1446 and 2946; the fix matched Linux. Setting loopback to 1234 also read back as 1220 on stock and 1234 on Linux and the fix. This corrects a 14-byte header deduction; #16957 separately keeps the peers’ MTUs independent.",
+      "evidence": [
+        {
+          "label": "Standalone change from master, including permanent veth and loopback tests",
+          "url": "https://github.com/tamird/gvisor/compare/6dcadf4a8...679d20c1b"
+        },
+        {
+          "label": "Linux, stock and corrected SYN MSS, netlink MTU and TCP exchanges on the same production change",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41856957832/artifacts/13339106163"
+        },
+        {
+          "label": "Both permanent loopback syscall cases: Linux and corrected gVisor passed; stock returned 1220 instead of 1234",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41860421336/artifacts/13339549679"
+        },
+        {
+          "label": "Standard veth shell test: read 1500 then 3000, renamed the link, set its MAC and removed all three pairs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41872127278/artifacts/13346200993"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "679d20c1ba36918979ce60e0f7619c3c72738d03",
+        "baseHead": "6dcadf4a84a07f69e8eb5f1ea9d7b2903bd03bd7",
+        "url": "https://github.com/tamird/gvisor/commit/679d20c1b",
+        "title": "Use the configured MTU for veth and loopback",
+        "requestedAt": "2026-11-04T17:06:34.798966+00:00",
+        "summary": "Open this independent veth and loopback MTU fix against master?",
+        "body": "The Sentry configures veth and loopback with the maximum IP packet size. Since 66defd3cc, the Ethernet wrapper treats that value as a complete frame budget and subtracts the header. A veth MTU of 1500 consequently becomes 1486 for both netlink and the TCP route. Setting the loopback MTU has the same discrepancy that 35d3c6eb7 originally fixed.\n\nRegister both virtual devices with an Ethernet wrapper that uses the network MTU from the underlying endpoint. Both devices pass complete frames to the receiving stack and have no separate frame-size limit."
+      }
     }
   ],
   "edges": [

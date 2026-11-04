@@ -546,7 +546,7 @@ class CollectorHistoryTest(unittest.TestCase):
         self.assertEqual(self.inventory_pages, 2)
         self.assertEqual(set(self.requested), {2, 3, 4, 5, 6, 101, 103, 105})
         self.assertEqual(len(self.requested), 8)
-        self.assertEqual(updater.REQUEST_LIMIT, 48)
+        self.assertEqual(updater.REQUEST_LIMIT, 64)
         self.assertLess(updater.requests, 10)
         prs = {pr["number"]: pr for pr in current["prs"]}
         self.assertEqual(set(prs), {1, 2, 3, 4, 5, 6, *range(200, 300)})

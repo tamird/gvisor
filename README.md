@@ -173,8 +173,9 @@ receive full detail queries again. PR detail
 queries use batches of eight to limit the combined check, review and timeline
 payload. Registered-only repositories share these batches, keyed by repository
 and PR number. The collector logs each requested inventory page and detail batch
-so growth can be distinguished from transport retries. There is a 48-attempt
-ceiling, including retries, and a 200-open-PR bound.
+so growth can be distinguished from transport retries. A complete refresh has
+used 51 requests. The 64-attempt ceiling leaves room for retries and optional
+mergeability checks; the 200-open-PR bound still applies.
 Failed queries report the GitHub CLI diagnostic and leave the previous snapshot
 unchanged.
 
