@@ -48894,8 +48894,8 @@
       "url": "https://github.com/google/gvisor/issues/16908",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-04T20:16:20.916368+00:00",
-      "summary": "The packet-instrumented July public runsc 20260727.0 / Docker 27.5.1 fixture recorded 13 client-first and one server-first ECONNRESET among 2,000 exchanges per order. The first failure in each order was recv_echo after connect and send succeeded. Both endpoint captures showed two SYN-ACKs acknowledging the same SYN with different server initial sequence numbers. The client acknowledged the first server sequence plus one, then received an RST at that acknowledged sequence. At the server interface, the first SYN-ACK was outgoing and the second was received as OTHERHOST.\n\nNeither failing tuple had a recorded server accept, echo or FIN. Successful controls completed the handshake, echo and FINs before late resets. Conntrack data was unavailable; the traces establish neither a cause nor a confirmed GKE match. The earlier uninstrumented July results (three and two resets) and Linux controls (zero in both orders) remain independent. The reporter has already been asked which socket call and errno they observed on GKE.",
+      "updatedAt": "2026-11-04T21:23:21.762115+00:00",
+      "summary": "A matched comparison of source-built July runsc 9f3e9a3fb and July plus only the landed bridge change d4be3ed28 (9ffcd1079) recorded two ECONNRESETs in 4,000 stock exchanges and none in 4,000 patched exchanges. Each arm ran 2,000 exchanges per close order in a separate offline Linux VM. Both stock errors were server-first: one on sendall and one on recv_echo.\n\nThe first failed stock connection had two different server initial sequence numbers for one SYN and no recorded server accept. Both successful sampled stock controls had duplicate SYN-ACKs with the same initial sequence number and were accepted; both patched sampled controls had one observed server initial sequence number and were accepted. The packet observation timestamps do not establish causal ordering. Conntrack data was unavailable in both arms. This bounded comparison does not prove elimination or establish a GKE cause or a confirmed match to the reporter’s failure.\n\nEarlier source-specific observations:\n\nThe packet-instrumented July public runsc 20260727.0 / Docker 27.5.1 fixture recorded 13 client-first and one server-first ECONNRESET among 2,000 exchanges per order. The first failure in each order was recv_echo after connect and send succeeded. Both endpoint captures showed two SYN-ACKs acknowledging the same SYN with different server initial sequence numbers. The client acknowledged the first server sequence plus one, then received an RST at that acknowledged sequence. At the server interface, the first SYN-ACK was outgoing and the second was received as OTHERHOST.\n\nNeither failing tuple had a recorded server accept, echo or FIN. Successful controls completed the handshake, echo and FINs before late resets. Conntrack data was unavailable; the traces establish neither a cause nor a confirmed GKE match. The earlier uninstrumented July results (three and two resets) and Linux controls (zero in both orders) remain independent. The reporter has already been asked which socket call and errno they observed on GKE.",
       "evidence": [
         {
           "label": "Public July release: client-first and server-first close orders",
@@ -48920,6 +48920,18 @@
         {
           "label": "July Docker fixture: paired endpoint headers and application observations",
           "url": "https://github.com/tamird/gvisor/actions/runs/41902453154/artifacts/13360000336"
+        },
+        {
+          "label": "Matched offline Linux VMs: July stock 2/4,000 resets, bridge-only change 0/4,000",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41910309875/artifacts/13364018365"
+        },
+        {
+          "label": "Fixed source: July plus only the landed bridged-transit delivery change",
+          "url": "https://github.com/tamird/gvisor/commit/9ffcd1079"
+        },
+        {
+          "label": "Landed production bridge change",
+          "url": "https://github.com/google/gvisor/commit/d4be3ed28"
         }
       ],
       "settledReviews": [
@@ -70296,7 +70308,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-04T02:03:48.508617+00:00",
+      "updatedAt": "2026-11-04T21:23:21.762115+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the duplicate reconnect reply on #15019.",
       "findings": [
@@ -71003,7 +71015,7 @@
           ]
         },
         {
-          "text": "For #16908, 2,000 exchanges completed in each close order on public runsc 20260727.0 with two network namespaces connected by a veth bridge inside the sandbox. The passive closer sent a sequence-matched reset on 1,844 client-first and 1,988 server-first connections. In each run the first such reset followed both FINs. The client-first control on 471d6dff5 had no matching resets with forwarding on; neither revision had one with forwarding off. This fixture used neither GKE nor a Docker daemon. The failing GKE client call, errno and trace for that tuple remain unknown. With Docker 27.5.1 running its own bridge on the same public July release, the client saw ECONNRESET in 3/2,000 client-first exchanges and 2/2,000 server-first exchanges. The first error in each run came from recv(1) after sendall. The reporter has been asked to identify the failing call on GKE.",
+          "text": "For #16908, a matched comparison of source-built July runsc 9f3e9a3fb and July plus only the landed bridge change d4be3ed28 (9ffcd1079) recorded two ECONNRESETs in 4,000 stock exchanges and none in 4,000 patched exchanges. Each arm ran 2,000 exchanges per close order in a separate offline Linux VM. Both stock errors were server-first: one on sendall and one on recv_echo.\n\nThe first failed stock connection had two different server initial sequence numbers for one SYN and no recorded server accept. Both successful sampled stock controls had duplicate SYN-ACKs with the same initial sequence number and were accepted; both patched sampled controls had one observed server initial sequence number and were accepted. The packet observation timestamps do not establish causal ordering. Conntrack data was unavailable in both arms. This bounded comparison does not prove elimination or establish a GKE cause or a confirmed match to the reporter’s failure.\n\nEarlier source-specific observations:\n\nFor #16908, 2,000 exchanges completed in each close order on public runsc 20260727.0 with two network namespaces connected by a veth bridge inside the sandbox. The passive closer sent a sequence-matched reset on 1,844 client-first and 1,988 server-first connections. In each run the first such reset followed both FINs. The client-first control on 471d6dff5 had no matching resets with forwarding on; neither revision had one with forwarding off. This fixture used neither GKE nor a Docker daemon. The failing GKE client call, errno and trace for that tuple remain unknown. With Docker 27.5.1 running its own bridge on the same public July release, the client saw ECONNRESET in 3/2,000 client-first exchanges and 2/2,000 server-first exchanges. The first error in each run came from recv(1) after sendall. The reporter has been asked to identify the failing call on GKE.",
           "evidence": [
             {
               "label": "Four-cell comparison and packet evidence",
@@ -71024,6 +71036,18 @@
             {
               "label": "Reply to the GKE reporter",
               "url": "https://github.com/google/gvisor/issues/16908#issuecomment-6613679645"
+            },
+            {
+              "label": "Matched offline Linux VMs: July stock 2/4,000 resets, bridge-only change 0/4,000",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41910309875/artifacts/13364018365"
+            },
+            {
+              "label": "Fixed source: July plus only the landed bridged-transit delivery change",
+              "url": "https://github.com/tamird/gvisor/commit/9ffcd1079"
+            },
+            {
+              "label": "Landed production bridge change",
+              "url": "https://github.com/google/gvisor/commit/d4be3ed28"
             }
           ]
         }
@@ -71851,5 +71875,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-04T21:13:01.638583+00:00"
+  "updatedAt": "2026-11-04T21:23:21.762115+00:00"
 }
