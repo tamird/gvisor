@@ -74,6 +74,8 @@ steps:
     <<: *source_test
     label: ":building_construction: Gazelle BUILD file check"
     command: make gazelle-check
+    env:
+      DOCKER_BUILD: "false"
   - <<: *common
     <<: *source_test
     label: ":scales: Dependency license check"
