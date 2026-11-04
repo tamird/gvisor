@@ -16,7 +16,10 @@ package network
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
+	"os/exec"
+	"strings"
 	"testing"
 	"time"
 
@@ -196,7 +199,7 @@ func BenchmarkIperfManyConnections(b *testing.B) {
 			port := 5001
 
 			// Start the server.
-			if err := server.Spawn(ctx, dockerutil.RunOpts{Image: "benchmarks/iperf"}, "iperf3", "--server", "--port", fmt.Sprint(port), "--forceflush"); err != nil {
+			if err := server.Spawn(ctx, dockerutil.RunOpts{Image: "benchmarks/iperf", NetworkMode: "fdbased-upload"}, "iperf3", "--server", "--port", fmt.Sprint(port), "--forceflush"); err != nil {
 				b.Fatalf("failed to start server with: %v", err)
 			}
 			if out, err := server.WaitForOutput(ctx, fmt.Sprintf("Server listening on %d", port), 10*time.Second); err != nil {
@@ -210,12 +213,16 @@ func BenchmarkIperfManyConnections(b *testing.B) {
 				OmitSeconds:     2,
 			}
 
+			address, err := exec.CommandContext(ctx, "docker", "inspect", "--format", `{{(index .NetworkSettings.Networks "fdbased-upload").IPAddress}}`, server.ID()).Output()
+			if err != nil || net.ParseIP(strings.TrimSpace(string(address))) == nil {
+				b.Fatalf("private receiver IP: %q, %v", address, err)
+			}
 			// Run the client.
 			b.ResetTimer()
 			out, err := client.Run(ctx, dockerutil.RunOpts{
-				Image: "benchmarks/iperf",
-				Links: []string{server.MakeLink("iperfsrv")},
-			}, iperf.MakeCmd("iperfsrv", port)...)
+				Image:       "benchmarks/iperf",
+				NetworkMode: "fdbased-upload",
+			}, iperf.MakeCmd(strings.TrimSpace(string(address)), port)...)
 			if err != nil {
 				b.Fatalf("failed to run client: %v (output: %q)", err, out)
 			}

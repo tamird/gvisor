@@ -146,10 +146,9 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
 
     try:
         records["server_before"] = json.loads(run(["docker", "version", "--format={{json .Server}}"]))
-        make = image_make_arguments()
         retained = configuration.get("retained_release_files")
         if retained is None:
-            run([*make, "RUNTIME_DIR=" + str(runtime_directory), "refresh"])
+            run([*image_make_arguments(), "RUNTIME_DIR=" + str(runtime_directory), "refresh"])
         else:
             # The paired caller joins these files to the successful configured
             # //:release default-BEP outputs before entering this scope.
@@ -199,7 +198,7 @@ def prepared_runtime(destination: Path, runtime_directory: Path, configuration: 
             return
         image_name = "gvisor.dev/images/" + image_component + ":latest"
         image_key = image_component.replace("/", "_")
-        image_make = make
+        image_make = image_make_arguments()
         records["image_platform"] = "--config=x86_64"
         run([*image_make, "rebuild-" + image_key])
         built = json.loads(run(["docker", "image", "inspect", image_name]))[0]

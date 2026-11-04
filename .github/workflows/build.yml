@@ -1,35 +1,76 @@
-name: CI
-
-"on":
+name: Compare one guest TCP upload across the fdbased change
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/fdbased-guest-upload]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 2, persist-credentials: false}
+    - name: Prepare the pinned GNU worker and original source pair
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -euo pipefail
+        root="$RUNNER_TEMP/fdbased-send"
+        mkdir -p "$root"/{public,gnu,fixture}
+        echo '{"status":"INCOMPLETE","phase":"setup"}' > "$root/public/result.json"
+        test "$(uname -m)" = x86_64
+        test "$(git rev-parse HEAD^)" = 856326e97cae3b156727913f9ea03c39b4718acd
+        command -v strace >/dev/null
+        git fetch -q --depth=2 https://github.com/google/gvisor.git refs/pull/16887/head
+        test "$(git rev-parse FETCH_HEAD)" = 430e65796267c361c86d13b66b4a4604975d0e13
+        test "$(git rev-parse FETCH_HEAD^)" = 471d6dff5229b99208bf6fec985601067f1f9d69
+        git fetch -q --depth=1 origin e61da06dc253bd3a62c6583f3350520d305d07c5 2b51abee8530385431b7225198fdd5cd65e78696
+        cp test/rbe/gnu_platform/{BUILD.bazel,MODULE.bazel} "$root/gnu/"
+        cp test/rbe/{fdbased_upload,image_runtime,image_archive}.py "$root/"
+        cp test/benchmarks/network/iperf_test.go test/benchmarks/tools/iperf.go "$root/fixture/"
+        umask 077
+        {
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --noremote_upload_local_results' 'build --jobs=16' 'build --remote_timeout=10m' 'build --remote_download_outputs=toplevel' "build --inject_repository=gnu_qualification=$root/gnu" 'build --extra_execution_platforms=@gnu_qualification//:gnu' 'build --host_platform=@gnu_qualification//:gnu'
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$root/remote.bazelrc"
+        unset BUILDBUDDY_API_KEY
+        docker pull --platform linux/amd64 "$GNU"
+        docker run -d --name fdbased-builder --entrypoint=/bin/bash --user root \
+          -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e "GIT_CONFIG_VALUE_0=$GITHUB_WORKSPACE" \
+          -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$root:$root" -v /var/run/docker.sock:/var/run/docker.sock \
+          -v "$(command -v docker):/usr/local/bin/docker:ro" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+    - name: Build both releases and measure the original upload on the private bridge
+      id: measured
+      timeout-minutes: 59
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        sudo -n env PYTHONDONTWRITEBYTECODE=1 python3 "$RUNNER_TEMP/fdbased-send/fdbased_upload.py" "$RUNNER_TEMP/fdbased-send" > "$RUNNER_TEMP/fdbased-send/private-console" 2>&1
+    - name: Verify the compact public boundary
+      id: safe
+      if: always()
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        sudo -n chmod -R a+rX "$RUNNER_TEMP/fdbased-send/public"
+        python3 - <<'PY'
+        import json, os, pathlib, re
+        p = pathlib.Path(os.environ['RUNNER_TEMP']) / 'fdbased-send/public'
+        for f in p.iterdir():
+            assert f.is_file() and not f.is_symlink() and f.name in {'result.json','before.bench','after.bench','benchstat.txt'}
+            data = f.read_bytes()
+            assert 0 < len(data) < 2**20 and os.environ['BUILDBUDDY_API_KEY'].encode() not in data
+            assert not re.search(rb'(?i)x-buildbuddy-api-key|authorization:|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}', data)
+        assert json.loads((p/'result.json').read_text())['status'] in {'PASS','FAIL','INCOMPLETE'}
+        PY
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.safe.outcome == 'success'
       with:
-          name: runsc
-          path: bin/
+        name: fdbased-guest-upload
+        path: ${{ runner.temp }}/fdbased-send/public
+        if-no-files-found: error
+    - if: always()
+      run: docker rm -f fdbased-builder >/dev/null 2>&1 || true
