@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T19:12:01.183060+00:00",
+    "updatedAt": "2026-11-04T19:13:56.672254+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40499,6 +40499,10 @@
         {
           "label": "Control using the same real epoll tests",
           "url": "https://github.com/tamird/gvisor/commit/3c7d2b027"
+        },
+        {
+          "label": "Lazy-startup amendment: six native AMD64 XML records passed; no new race or Nogo claim",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41893554936/artifacts/13353749595"
         }
       ],
       "settledReviews": [
@@ -40509,7 +40513,18 @@
           "at": "2026-11-02T20:41:59Z"
         }
       ],
-      "number": 16865
+      "number": 16865,
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "e6bb7ceffc585bbf1d336468d094a880935842c8",
+        "baseHead": "7ab597c1c75ab15ae9634ee493e3fd1457bc162a",
+        "url": "https://github.com/tamird/gvisor/commit/e6bb7ceff",
+        "title": "Identify fdnotifier events by registration",
+        "requestedAt": "2026-11-04T19:13:56.672254+00:00",
+        "summary": "Publish the amendment adapting the approved registration fix to lazy fdnotifier startup?",
+        "body": "The approved public change conflicts with the newly landed lazy fdnotifier startup. This amendment initializes the registration map on the first AddFD. The permanent test owns its epoll descriptor so it can control when an already-returned event is dispatched. The registration-ID behavior remains the purpose of the existing PR.\n\nBoth original descriptor-reuse cases and the unchanged Pause/Register controls passed: six XML records on native AMD64, with no failures or skips. This run adds no race or Nogo qualification. The original approval and earlier evidence remain separate.\n\ngit -C ~/code/gvisor range-diff 7ab597c1c^! e6bb7ceff^!\n\n[Native qualification](https://github.com/tamird/gvisor/actions/runs/41893554936/artifacts/13353749595)"
+      }
     },
     {
       "id": "pr:16445",
