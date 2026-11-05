@@ -1,3 +1,4 @@
+load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 load("//tools:defs.bzl", "go_binary")
 
 package(
@@ -5,8 +6,20 @@ package(
     licenses = ["notice"],
 )
 
-go_binary(
+# The container and prctl tests execute this exact path in their runfiles.
+native_binary(
     name = "test_app",
+    testonly = 1,
+    src = ":test_app_bin",
+    out = "test_app",
+    visibility = [
+        "//runsc/container:__pkg__",
+        "//test/syscalls/linux:__pkg__",
+    ],
+)
+
+go_binary(
+    name = "test_app_bin",
     testonly = 1,
     srcs = [
         "chardev.go",
@@ -25,10 +38,6 @@ go_binary(
         "zombies.go",
     ],
     static = True,
-    visibility = [
-        "//runsc/container:__pkg__",
-        "//test/syscalls/linux:__pkg__",
-    ],
     deps = [
         "//pkg/gvisordetect",
         "//pkg/test/testutil",
@@ -38,4 +47,9 @@ go_binary(
         "@com_github_google_subcommands//:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
     ],
+)
+
+test_suite(
+    name = "test_app_nogo",
+    tests = [":test_app_bin_nogo"],
 )
