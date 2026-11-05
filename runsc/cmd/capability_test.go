@@ -20,6 +20,7 @@ import (
 	"os"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/moby/sys/capability"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -144,6 +145,10 @@ func testCapabilities(t *testing.T, directfs bool) {
 }
 
 func TestMain(m *testing.M) {
+	if len(os.Args) == 2 && os.Args[1] == sandboxProcessArg {
+		time.Sleep(1000 * time.Second)
+		os.Exit(0)
+	}
 	flag.Parse()
 	if err := specutils.MaybeRunAsRoot(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error running as root: %v", err)
