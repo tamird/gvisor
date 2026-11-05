@@ -116,7 +116,16 @@ image_apt.install(
         "util-linux (= 2.37.2-4ubuntu3.6)",
     ],
 )
-use_repo(image_apt, "integration_test_packages")
+image_apt.install(
+    dependency_set = "tcpdump_packages",
+    packages = [
+        # Package copyright files refer to the common licenses in base-files.
+        "base-files (= 12ubuntu4.7)",
+        # Exercise the distribution's tcpdump/libpcap builds together.
+        "tcpdump (= 4.99.1-3ubuntu0.2)",
+    ],
+)
+use_repo(image_apt, "integration_test_packages", "tcpdump_packages")
 
 ### LLVM
 # TODO: try using "llvm-raw" from BCR

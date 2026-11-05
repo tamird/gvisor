@@ -1,7 +1,7 @@
 load("@rules_img//img:image.bzl", "image_manifest")
 load("@rules_img//img:layer.bzl", "file_metadata", "image_layer")
 load("//images:img.bzl", "image_outputs")
-load("//tools:defs.bzl", "cc_binary", "pkg_tar")
+load("//tools:defs.bzl", "cc_binary", "go_binary", "pkg_tar")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -36,6 +36,47 @@ image_outputs(
     name = "busybox",
     image = ":busybox",
     image_name = "basic/busybox",
+)
+
+go_binary(
+    name = "tcpdump_sender",
+    srcs = ["tcpdump_sender.go"],
+    pure = True,
+    static = True,
+)
+
+# tcpdump drops privileges to its own account after opening the capture
+# socket. Extracting packages does not run the maintainer's adduser script.
+image_layer(
+    name = "tcpdump_fixture_layer",
+    srcs = {
+        "/etc/group": "tcpdump/group",
+        "/etc/passwd": "tcpdump/passwd",
+        "/usr/bin/tcpdump_sender": ":tcpdump_sender",
+    },
+    create_parent_directories = "enabled",
+    file_metadata = {
+        "/etc/group": file_metadata(mode = "0644"),
+        "/etc/passwd": file_metadata(mode = "0644"),
+    },
+    include_runfiles = False,
+)
+
+image_manifest(
+    name = "tcpdump",
+    env = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin"},
+    layers = [
+        "@tcpdump_packages//:flat",
+        ":tcpdump_fixture_layer",
+    ],
+    tags = ["manual"],
+    user = "0:0",
+)
+
+image_outputs(
+    name = "tcpdump",
+    image = ":tcpdump",
+    image_name = "basic/tcpdump",
 )
 
 image_layer(
