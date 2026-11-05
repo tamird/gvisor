@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T15:03:31.586169Z",
+    "updatedAt": "2026-11-05T15:27:44.402237Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -22176,15 +22176,23 @@
       "id": "branch:state-destination-kind",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "state-destination-kind",
-      "head": "6a5814d55aa2c2cefc256644c11de8598944c095",
+      "ref": "research/state-destination-kind-current",
+      "head": "b3d4c616328d4b266091f465628cb074d4afaa2f",
       "title": "Validate restore kinds against destination types",
-      "url": "https://github.com/tamird/gvisor/commit/6a5814d55aa2c2cefc256644c11de8598944c095",
+      "url": "https://github.com/tamird/gvisor/commit/b3d4c6163",
       "group": "runtime",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-11-01T21:29:32+00:00",
-      "summary": "This corrects destination validation when restoring a wire-format checkpoint, including older checkpoints. Graph restores use a separate decoder.\n\nContributor approved exact6a5814 for opening after the array-storage prerequisite.\n\nPreserved qualification record:\n\nThe destination-kind correction was reviewed and approved, conditional on the homogeneous-array prerequisite. It rejects incompatible empty or zero wire values in the existing decoder and passes normal and race checks. The final direct-assertion version has no detected timing difference in the fixed sixteen-pair, 136-child array-to-kind comparison: graph Load +0.31% (p=.210), UDP Load -0.22% (p=.270), with unchanged allocation counts and wire format. The graph test binary grows 4,096 bytes; UDP is unchanged. The earlier generic-helper regression and compiler evidence remain preserved; no speed or startup claim is made.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-05T15:27:44.402237Z",
+      "summary": "Three tests used the default encoder to create inputs for the legacy decoder. After graph became the default all three failed. Selecting wire makes Load exercise the intended array-to-slice and interface-to-scalar conversions. All three passed on native AMD64.\n\nThe implementation was approved at 6a5814d55. Only the test revision needs review. The implementation rejected incompatible empty wire values in normal and race tests. The 16-pair comparison detected no timing or allocation change.",
       "links": [
+        {
+          "label": "Test-only changes",
+          "url": "https://github.com/tamird/gvisor/compare/b45fba8d8...b3d4c6163"
+        },
+        {
+          "label": "Native AMD64 tests and checkpoint headers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42053810760/artifacts/13429365211"
+        },
         {
           "label": "Complete proposed change",
           "url": "https://github.com/tamird/gvisor/compare/9ecf4b48a09bd1bf0e01627d625b5e35922e7f1d...6a5814d55aa2c2cefc256644c11de8598944c095"
@@ -22199,14 +22207,35 @@
         }
       ],
       "followup": {
-        "owner": "node_tls_sni",
-        "sourceHead": "6a5814d55aa2c2cefc256644c11de8598944c095",
-        "observedAt": "2026-10-22T10:26:32.101647+00:00",
-        "disposition": "Contributor approved; waiting for prerequisites",
-        "nextAction": "Wait for the array-storage prerequisite; preserve the approved patch and do not ask again.",
+        "owner": "Contributor",
+        "sourceHead": "b3d4c616328d4b266091f465628cb074d4afaa2f",
+        "observedAt": "2026-11-05T15:27:44.402237Z",
+        "disposition": "Test revision ready for contributor review",
+        "nextAction": "Include the test revision b3d4c6163 in the approved change after the reference-array change lands?",
         "evidence": [
+          "https://github.com/tamird/gvisor/compare/b45fba8d8...b3d4c6163",
+          "https://github.com/tamird/gvisor/actions/runs/42053810760/artifacts/13429365211",
           "https://github.com/tamird/gvisor/commit/6a5814d55aa2c2cefc256644c11de8598944c095"
         ]
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "6a5814d55aa2c2cefc256644c11de8598944c095",
+          "outcome": "approved",
+          "at": "2026-10-22T10:26:32.101647+00:00"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "b3d4c616328d4b266091f465628cb074d4afaa2f",
+        "baseHead": "b45fba8d8a303c438706d3c00b174f2736193731",
+        "title": "Test legacy destination conversions with wire checkpoints",
+        "url": "https://github.com/tamird/gvisor/compare/b45fba8d8...b3d4c6163",
+        "requestedAt": "2026-11-05T15:27:44.402237Z",
+        "summary": "Include the test revision b3d4c6163 in the approved change after the reference-array change lands?",
+        "body": "The legacy decoder accepts arrays in slices and unwraps interfaces into\nscalar destinations. Save these three inputs with the wire engine so\nLoad exercises those conversions when graph checkpoints are the default."
       }
     },
     {
@@ -22768,25 +22797,35 @@
       "id": "branch:state-decoder-dependencies",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "state-decoder-dependencies",
-      "head": "b9797d128902a3966efa681c432d2f7a7be36962",
+      "ref": "research/state-decoder-dependencies-current",
+      "head": "27451d0c2c88e30eee03cf92ae9252600a7d40c7",
       "title": "Register restore dependencies during decoding",
-      "url": "https://github.com/tamird/gvisor/commit/b9797d128902a3966efa681c432d2f7a7be36962",
+      "url": "https://github.com/tamird/gvisor/commit/27451d0c2",
       "group": "runtime",
-      "status": "Contributor approved; waiting for decoder prerequisites",
-      "updatedAt": "2026-11-01T21:29:32+00:00",
-      "summary": "This simplifies dependency tracking when restoring a wire-format checkpoint. Graph restores schedule their own callbacks.\n\nContributor approved this decoder simplification for opening after its existing prerequisites. It removes four net production lines by registering dependencies while decoding, preserving dependency ordering and validation. Normal and race checks pass. The fixed production comparison detects no timing change in graph Save/Load or UDP Save/Load; allocation counts and wire data are unchanged. The measured graph executable is 4,096 bytes smaller; the UDP executable is unchanged. No speedup is claimed.\n\nThis is a sibling of the approved encoder change. Opening also requires the existing array-storage and destination-kind prerequisites.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-05T15:27:44.402237Z",
+      "summary": "Two tests passed using graph checkpoints without reaching the legacy decoder being changed. The revised test loads both a value root and a pointer root on each engine. The four native AMD64 cases passed, and the recorded headers confirm which encoder wrote each input.\n\nThe implementation was approved at b9797d128. Only the test revision needs review. The implementation registers dependencies during decoding. Normal and race tests passed; the paired comparison found no timing or allocation change.",
       "followup": {
-        "owner": "node_tls_sni",
-        "sourceHead": "b9797d128902a3966efa681c432d2f7a7be36962",
-        "observedAt": "2026-10-22T20:51:29.370222+00:00",
-        "disposition": "Contributor approved; waiting for decoder prerequisites",
-        "nextAction": "Open after the existing array-storage and destination-kind prerequisites land; preserve the approved patch and do not ask again.",
+        "owner": "Contributor",
+        "sourceHead": "27451d0c2c88e30eee03cf92ae9252600a7d40c7",
+        "observedAt": "2026-11-05T15:27:44.402237Z",
+        "disposition": "Test revision ready for contributor review",
+        "nextAction": "Include the test revision 27451d0c2 in the approved change after the destination-type decoder change lands?",
         "evidence": [
+          "https://github.com/tamird/gvisor/compare/268638e5a...27451d0c2",
+          "https://github.com/tamird/gvisor/actions/runs/42053810760/artifacts/13429365211",
           "https://github.com/tamird/gvisor/commit/b9797d128902a3966efa681c432d2f7a7be36962"
         ]
       },
       "links": [
+        {
+          "label": "Test-only changes",
+          "url": "https://github.com/tamird/gvisor/compare/268638e5a...27451d0c2"
+        },
+        {
+          "label": "Native AMD64 tests and checkpoint headers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42053810760/artifacts/13429365211"
+        },
         {
           "label": "Complete proposed change",
           "url": "https://github.com/tamird/gvisor/compare/6a5814d55aa2c2cefc256644c11de8598944c095...b9797d128902a3966efa681c432d2f7a7be36962"
@@ -22795,7 +22834,26 @@
           "label": "Fixed production comparison",
           "url": "https://app.buildbuddy.io/invocation/cc62fddf-578f-4e93-80f9-5604341db0a3"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "b9797d128902a3966efa681c432d2f7a7be36962",
+          "outcome": "approved",
+          "at": "2026-10-22T20:51:29.370222+00:00"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "27451d0c2c88e30eee03cf92ae9252600a7d40c7",
+        "baseHead": "268638e5a85cbfe0f0c22e024be79a4e7087748f",
+        "title": "Test interface wait ordering on both checkpoint engines",
+        "url": "https://github.com/tamird/gvisor/compare/268638e5a...27451d0c2",
+        "requestedAt": "2026-11-05T15:27:44.402237Z",
+        "summary": "Include the test revision 27451d0c2 in the approved change after the destination-type decoder change lands?",
+        "body": "The post-load hook must see the initialized object behind a waiting\ninterface. Exercise that ordering for value and pointer roots with each\nengine, including the legacy decoder that registers the dependency."
+      }
     },
     {
       "id": "pr:16198",
@@ -73232,5 +73290,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T15:03:31.586169Z"
+  "updatedAt": "2026-11-05T15:27:44.402237Z"
 }
