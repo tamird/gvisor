@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T10:45:41.558885Z",
+    "updatedAt": "2026-11-05T11:14:22.277195Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32182,7 +32182,7 @@
       "number": 16589,
       "group": "release",
       "ref": "review/licensecheck-builder-bazel",
-      "head": "fb7bb85aefa9f128224ff9f536f95b856f99f621",
+      "head": "8cf81d364e4e5a78a26e53d34a81d559f1f85a43",
       "title": "Run license queries in the selected Bazel environment",
       "url": "https://github.com/google/gvisor/pull/16589",
       "evidence": [
@@ -32251,7 +32251,7 @@
           "url": "https://github.com/tamird/gvisor/commit/fb7bb85ae"
         }
       ],
-      "updatedAt": "2026-11-05T10:26:25.645415Z",
+      "updatedAt": "2026-11-05T11:14:22.277195Z",
       "status": "open",
       "summary": "Published the change to run all three module queries through the selected Bazel command.",
       "refinement": {
@@ -32264,13 +32264,14 @@
       },
       "followup": {
         "owner": "root",
-        "sourceHead": "fb7bb85aefa9f128224ff9f536f95b856f99f621",
-        "observedAt": "2026-11-05T10:26:25.645415Z",
-        "disposition": "Contributor review requested",
-        "nextAction": "Publish the qualified amendment after contributor review.",
+        "sourceHead": "8cf81d364e4e5a78a26e53d34a81d559f1f85a43",
+        "observedAt": "2026-11-05T11:14:22.277195Z",
+        "disposition": "Published the reviewed conflict repair.",
+        "nextAction": "Await upstream review of this revision.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/8cf81d364",
-          "https://github.com/tamird/gvisor/actions/runs/42009758023/artifacts/13405339592"
+          "https://github.com/tamird/gvisor/actions/runs/42009758023/artifacts/13405339592",
+          "https://github.com/google/gvisor/commit/8cf81d364"
         ]
       },
       "settledReviews": [
@@ -32279,19 +32280,18 @@
           "head": "fb7bb85aefa9f128224ff9f536f95b856f99f621",
           "outcome": "approved",
           "at": "2026-10-29T18:56:07.113045+00:00"
+        },
+        {
+          "kind": "amendment",
+          "head": "8cf81d364e4e5a78a26e53d34a81d559f1f85a43",
+          "baseHead": "fb7bb85aefa9f128224ff9f536f95b856f99f621",
+          "url": "https://github.com/tamird/gvisor/commit/8cf81d364",
+          "title": "Use the selected Bazel for QEMU license lookups",
+          "body": "The rebase keeps master’s LLVM source traversal. The checker passes the selected Bazel command to both QEMU repository lookups. An LLVM-only graph still scans the LLVM archive without running another Bazel command.\n\nOn this source, all 42 package cases passed on native AMD64. The Make and direct Bazel entry points each verified 220 license records.\n\ngit -C ~/code/gvisor range-diff fb7bb85ae^! 8cf81d364^!",
+          "outcome": "approved",
+          "at": "2026-11-05T11:14:22.277195Z"
         }
-      ],
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "8cf81d364e4e5a78a26e53d34a81d559f1f85a43",
-        "baseHead": "fb7bb85aefa9f128224ff9f536f95b856f99f621",
-        "url": "https://github.com/tamird/gvisor/commit/8cf81d364",
-        "title": "Use the selected Bazel for QEMU license lookups",
-        "requestedAt": "2026-11-05T10:26:25.645415Z",
-        "summary": "Publish the conflict repair on #16589?",
-        "body": "The rebase keeps master’s LLVM source traversal. The checker passes the selected Bazel command to both QEMU repository lookups. An LLVM-only graph still scans the LLVM archive without running another Bazel command.\n\nOn this source, all 42 package cases passed on native AMD64. The Make and direct Bazel entry points each verified 220 license records.\n\ngit -C ~/code/gvisor range-diff fb7bb85ae^! 8cf81d364^!"
-      }
+      ]
     },
     {
       "id": "pr:16594",
@@ -41679,7 +41679,7 @@
       "url": "https://github.com/google/gvisor/pull/16472",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-05T10:21:46.859804Z",
+      "updatedAt": "2026-11-05T11:11:29Z",
       "summary": "All 108 restores of the uncompressed graph checkpoint preserved the guest contents. On cold files, WILLNEED reduced the median restore command from 86.72 to 60.04 ms. Async buffering slowed the warm command by 9.33%. The earlier Nginx and pipe results used the legacy decoder.",
       "evidence": [
         {
@@ -41723,18 +41723,18 @@
           "outcome": "approved",
           "at": "2026-11-02T15:46:59.054342+00:00",
           "url": "https://github.com/google/gvisor/pull/16472#issuecomment-6581373723"
+        },
+        {
+          "kind": "reply",
+          "head": "63d3761ddffe329a13d142d91dd61cceeec76fcd",
+          "url": "https://github.com/google/gvisor/pull/16472#issuecomment-6431225649",
+          "title": "Reply with the default graph decoder restore comparison",
+          "body": "@milantracy @EtiennePerot, I repeated the local-file comparison with the default graph decoder. For this checkpoint I would use the existing reader with `POSIX_FADV_WILLNEED` on `checkpoint.img`. It shortened the cold restore command. The async reader made the warm command slower.\n\nThese are the whole-command rows from benchstat (milliseconds, 18 restores per column).\n\n```\n             │    direct    │               advice                │               buffer               │\n             │  cli-ms/op   │  cli-ms/op   vs base                │  cli-ms/op   vs base               │\nRestore/warm   58.63 ±   7%   56.79 ± 14%        ~ (p=0.767 n=18)   64.10 ±  8%  +9.33% (p=0.004 n=18)\nRestore/cold   86.72 ± 160%   60.04 ± 47%  -30.77% (p=0.003 n=18)   69.08 ± 40%       ~ (p=0.126 n=18)\n```\n\nBoth approaches shortened the cold kernel-load phase. The command as a whole varied more, especially with cold files and the direct reader. This was one 8.06 MiB uncompressed state file with separate memory pages on a four-CPU AMD64 worker. Each trial checked residency of all three input files, then verified the guest memory and pipe contents after restore. [Benchstat and all 108 samples](https://github.com/tamird/gvisor/actions/runs/42007688003/artifacts/13405903471)\n\nPosted on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-05T11:11:29Z",
+          "postedURL": "https://github.com/google/gvisor/pull/16472#issuecomment-6656511416"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "reply",
-        "head": "63d3761ddffe329a13d142d91dd61cceeec76fcd",
-        "url": "https://github.com/google/gvisor/pull/16472#issuecomment-6431225649",
-        "title": "Reply with the default graph decoder restore comparison",
-        "requestedAt": "2026-11-05T10:21:46.859804Z",
-        "summary": "Post the measured answer to the author and Etienne on the current graph decoder. The earlier reply covered legacy checkpoints.",
-        "body": "@milantracy @EtiennePerot, I repeated the local-file comparison with the default graph decoder. For this checkpoint I would use the existing reader with `POSIX_FADV_WILLNEED` on `checkpoint.img`. It shortened the cold restore command. The async reader made the warm command slower.\n\nThese are the whole-command rows from benchstat (milliseconds, 18 restores per column).\n\n```\n             │    direct    │               advice                │               buffer               │\n             │  cli-ms/op   │  cli-ms/op   vs base                │  cli-ms/op   vs base               │\nRestore/warm   58.63 ±   7%   56.79 ± 14%        ~ (p=0.767 n=18)   64.10 ±  8%  +9.33% (p=0.004 n=18)\nRestore/cold   86.72 ± 160%   60.04 ± 47%  -30.77% (p=0.003 n=18)   69.08 ± 40%       ~ (p=0.126 n=18)\n```\n\nBoth approaches shortened the cold kernel-load phase. The command as a whole varied more, especially with cold files and the direct reader. This was one 8.06 MiB uncompressed state file with separate memory pages on a four-CPU AMD64 worker. Each trial checked residency of all three input files, then verified the guest memory and pipe contents after restore. [Benchstat and all 108 samples](https://github.com/tamird/gvisor/actions/runs/42007688003/artifacts/13405903471)\n\nPosted on behalf of @tamird."
-      }
+      ]
     },
     {
       "id": "branch:governance-generator",
@@ -42109,10 +42109,10 @@
       "group": "runtime",
       "repo": "google/gvisor",
       "ref": "review/inotify-mask-create",
-      "head": "34d137cdad082fc28278d026400624e8c85ac58f",
+      "head": "aab0e06b4cf72fe170423d2b70b9cbc3eb9d86a6",
       "title": "Honor IN_MASK_CREATE when adding inotify watches",
       "url": "https://github.com/google/gvisor/pull/16842",
-      "updatedAt": "2026-11-05T10:30:13.877780Z",
+      "updatedAt": "2026-11-05T11:14:22.277195Z",
       "status": "open",
       "summary": "A second create-only inotify watch silently replaced IN_OPEN with IN_MODIFY. Linux returns EEXIST and preserves the original watch, even through another hard link. Stock failed three of six shared cases; Linux and fixed gVisor passed all six. The gVisor hard-link comparison used tmpfs.",
       "evidence": [
@@ -42155,6 +42155,16 @@
           "head": "34d137cdad082fc28278d026400624e8c85ac58f",
           "outcome": "approved",
           "at": "2026-11-02T20:32:35Z"
+        },
+        {
+          "kind": "amendment",
+          "head": "aab0e06b4cf72fe170423d2b70b9cbc3eb9d86a6",
+          "baseHead": "34d137cdad082fc28278d026400624e8c85ac58f",
+          "url": "https://github.com/tamird/gvisor/commit/aab0e06b4",
+          "title": "Rebase IN_MASK_CREATE onto the shared watch index",
+          "body": "When a watch already exists, the create-only request returns EEXIST before changing its mask. The rebase preserves the lock order master uses to update both watch indexes. It also adapts the new watched-dentry eviction test to check whether AddWatch succeeded. That caller would fail to compile if only the marked conflict were resolved.\n\nOn this exact source, six syscall cases ran on native AMD64 Linux, the three affected kernfs tests passed, and both owning Nogo checks passed. The earlier gVisor run exercised all six syscall cases, including two hard links to the same tmpfs inode.\n\ngit -C ~/code/gvisor range-diff 34d137cda^! aab0e06b4^!",
+          "outcome": "approved",
+          "at": "2026-11-05T11:14:22.277195Z"
         }
       ],
       "number": 16842,
@@ -42168,25 +42178,15 @@
       },
       "followup": {
         "owner": "root",
-        "sourceHead": "34d137cdad082fc28278d026400624e8c85ac58f",
-        "observedAt": "2026-11-05T10:30:13.877780Z",
-        "disposition": "Contributor review requested",
-        "nextAction": "Publish the qualified amendment after contributor review.",
+        "sourceHead": "aab0e06b4cf72fe170423d2b70b9cbc3eb9d86a6",
+        "observedAt": "2026-11-05T11:14:22.277195Z",
+        "disposition": "Published the reviewed conflict repair.",
+        "nextAction": "Await upstream review of this revision.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/aab0e06b4",
-          "https://github.com/tamird/gvisor/actions/runs/42009462257/artifacts/13407460630"
+          "https://github.com/tamird/gvisor/actions/runs/42009462257/artifacts/13407460630",
+          "https://github.com/google/gvisor/commit/aab0e06b4"
         ]
-      },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "aab0e06b4cf72fe170423d2b70b9cbc3eb9d86a6",
-        "baseHead": "34d137cdad082fc28278d026400624e8c85ac58f",
-        "url": "https://github.com/tamird/gvisor/commit/aab0e06b4",
-        "title": "Rebase IN_MASK_CREATE onto the shared watch index",
-        "requestedAt": "2026-11-05T10:30:13.877780Z",
-        "summary": "Publish this amendment on #16842?",
-        "body": "When a watch already exists, the create-only request returns EEXIST before changing its mask. The rebase preserves the lock order master uses to update both watch indexes. It also adapts the new watched-dentry eviction test to check whether AddWatch succeeded. That caller would fail to compile if only the marked conflict were resolved.\n\nOn this exact source, six syscall cases ran on native AMD64 Linux, the three affected kernfs tests passed, and both owning Nogo checks passed. The earlier gVisor run exercised all six syscall cases, including two hard links to the same tmpfs inode.\n\ngit -C ~/code/gvisor range-diff 34d137cda^! aab0e06b4^!"
       }
     },
     {
@@ -42532,6 +42532,10 @@
       "summary": "When an eventfd import failed at the sentry descriptor limit, the VFS still counted the abandoned file. The fix releases that file and leaves the donated descriptor open for its caller.",
       "evidence": [
         {
+          "label": "Published the production-only rebase and replied on the review thread",
+          "url": "https://github.com/google/gvisor/pull/16854#discussion_r4479713156"
+        },
+        {
           "label": "Rebased source: current eventfd and fdnotifier tests, including qualification-only failure injection",
           "url": "https://github.com/tamird/gvisor/actions/runs/41959115860/artifacts/13384209167"
         },
@@ -42553,28 +42557,36 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-05T03:53:15.523503+00:00",
-      "head": "8b0c840b1aa2afe6bdfbf411bda92cd678dcc857",
+      "updatedAt": "2026-11-05T11:11:54Z",
+      "head": "f0e414b08b89f9486132955578fcb8d55346d33c",
       "settledReviews": [
         {
           "kind": "proposal",
           "head": "8b0c840b1aa2afe6bdfbf411bda92cd678dcc857",
           "outcome": "approved",
           "at": "2026-11-02T20:41:16Z"
+        },
+        {
+          "kind": "amendment",
+          "head": "f0e414b08b89f9486132955578fcb8d55346d33c",
+          "baseHead": "8b0c840b1aa2afe6bdfbf411bda92cd678dcc857",
+          "url": "https://github.com/tamird/gvisor/commit/f0e414b08",
+          "title": "Release the eventfd file after a failed host import",
+          "body": "The amendment drops the subprocess regression Konstantin asked to omit. On master 94c03f66c it changes only eventfd.go, retaining the BUILD file and the tests merged in #16627. The production patch is identical to the one previously qualified. On the earlier base, the stock case reproduced the leak and the corrected package passed; the final EMFILE case also checked that the caller retained the descriptor. On the rebased source, both native Linux AMD64 package tests passed: 10 eventfd and 3 fdnotifier records, with no skips or failures. The previous registration-failure test ran only in the qualification fixture; the amendment does not add that test.\n\nProposed PR description (unchanged):\n\nNewFromHost creates a VFS file before registering the donated host FD.\nIf registration fails, this leaves the file counted in fs/file-nr and\nholds a reference to the anonymous mount.\n\nTransfer the host FD after registration succeeds so that dropping the\nVFS file on error leaves the caller responsible for the host FD.\n\nProposed reply on Konstantin’s existing thread after publishing the amendment:\n\nRemoved the subprocess test and rebased onto master, preserving the tests from #16627. The production fix is unchanged.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-05T11:11:54Z"
+        },
+        {
+          "kind": "reply",
+          "head": "f0e414b08b89f9486132955578fcb8d55346d33c",
+          "outcome": "approved",
+          "at": "2026-11-05T11:11:54Z",
+          "url": "https://github.com/google/gvisor/pull/16854#discussion_r4474272667",
+          "postedURL": "https://github.com/google/gvisor/pull/16854#discussion_r4479713156",
+          "body": "Removed the subprocess test and rebased onto master, preserving the tests from #16627. The production fix is unchanged.\n\nPosted by Codex on behalf of @tamird."
         }
       ],
-      "number": 16854,
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "f0e414b08b89f9486132955578fcb8d55346d33c",
-        "baseHead": "8b0c840b1aa2afe6bdfbf411bda92cd678dcc857",
-        "url": "https://github.com/tamird/gvisor/commit/f0e414b08",
-        "title": "Release the eventfd file after a failed host import",
-        "requestedAt": "2026-11-05T02:54:29.301111+00:00",
-        "summary": "Publish the production-only amendment and reply to Konstantin?",
-        "body": "The amendment drops the subprocess regression Konstantin asked to omit. On master 94c03f66c it changes only eventfd.go, retaining the BUILD file and the tests merged in #16627. The production patch is identical to the one previously qualified. On the earlier base, the stock case reproduced the leak and the corrected package passed; the final EMFILE case also checked that the caller retained the descriptor. On the rebased source, both native Linux AMD64 package tests passed: 10 eventfd and 3 fdnotifier records, with no skips or failures. The previous registration-failure test ran only in the qualification fixture; the amendment does not add that test.\n\nProposed PR description (unchanged):\n\nNewFromHost creates a VFS file before registering the donated host FD.\nIf registration fails, this leaves the file counted in fs/file-nr and\nholds a reference to the anonymous mount.\n\nTransfer the host FD after registration succeeds so that dropping the\nVFS file on error leaves the caller responsible for the host FD.\n\nProposed reply on Konstantin’s existing thread after publishing the amendment:\n\nRemoved the subprocess test and rebased onto master, preserving the tests from #16627. The production fix is unchanged.\n\nPosted by Codex on behalf of @tamird."
-      }
+      "number": 16854
     },
     {
       "id": "branch:checkpoint-page-read-error",
@@ -44251,9 +44263,17 @@
       "url": "https://github.com/google/gvisor/pull/16856",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
+      "updatedAt": "2026-11-05T11:13:40.630361Z",
       "summary": "The shell launcher could not start on a scratch worker. Bazel can run the analyzer directly with the two filtered reports. Tricorder still receives each architecture’s report.",
       "evidence": [
+        {
+          "label": "Public import #16997: sanity test failed on both architectures",
+          "url": "https://buildkite.com/gvisor/pipeline/builds/53625"
+        },
+        {
+          "label": "Focused AMD64 check: analyzer failure and sanity-test success",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42017040778"
+        },
         {
           "label": "Original scratch TestRunner inputs, logs, and checklocks findings",
           "url": "https://github.com/tamird/gvisor/actions/runs/41298618219/artifacts/13080411787"
@@ -44267,7 +44287,18 @@
           "at": "2026-11-02T20:41:24Z"
         }
       ],
-      "number": 16856
+      "number": 16856,
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "cfd4aa8454d0f2d95ac0e8538b6e4a17c0642b6e",
+        "baseHead": "25115956066576e83f5543c275d57b59d6578ed0",
+        "url": "https://github.com/tamird/gvisor/commit/cfd4aa845",
+        "title": "Pass the filter arguments to the Nogo sanity test",
+        "requestedAt": "2026-11-05T11:13:40.630361Z",
+        "summary": "After the focused check passes, publish this amendment and ask carzh to re-approve it? If #16856 lands first, send it as a follow-up.",
+        "body": "Import #16997 failed //tools/nogo/sanity:sanity_test on AMD64 and ARM64. The test ran the analyzer executable without the filter arguments that Bazel normally supplies. It printed its usage instead of the expected printf diagnostic.\n\nThe amendment shares the filter arguments with the Go sanity test. The test invokes the analyzer, checks that it exits with status 1, and requires the diagnostic for the deliberately invalid fmt.Fprintf call.\n\nThe focused native AMD64 check runs both the deliberately failing analyzer and the sanity test that must recognize the finding. Publish only after both outcomes are verified.\n\nProposed request after publishing on #16856 (use the verified published SHA if the commits are folded):\n\n@carzh, [cfd4aa845](https://github.com/tamird/gvisor/commit/cfd4aa845) fixes the sanity test that failed in the import. It now passes the filter arguments to the analyzer and checks for the expected printf finding. Could you re-approve this revision?\n\nPosted by Codex on behalf of @tamird.\n\nIf the original PR lands first, put the correction in a follow-up PR and request review there."
+      }
     },
     {
       "id": "branch:semop-last-pid",
@@ -50041,7 +50072,7 @@
       "url": "https://github.com/google/gvisor/pull/16952",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-05T06:07:04.940311+00:00",
+      "updatedAt": "2026-11-05T11:11:33Z",
       "summary": "The revised tests count 10,000 positive steps under 50 µs before an independent one-second deadline and restore an hour-old clock with state.Save and state.Load into a fresh clock. The author reports that unmodified Go on Windows Server 2022 sometimes took a single fine step and that both stock runners failed the revised test. Go has merged the 100 ns Windows monotonic clock for its forthcoming 1.28 release. The question is whether newer Go builds should use the standard clock.",
       "evidence": [
         {
@@ -50094,32 +50125,33 @@
           "outcome": "approved",
           "at": "2026-11-04T14:39:21Z",
           "url": "https://github.com/google/gvisor/pull/16952#pullrequestreview-5770180433"
+        },
+        {
+          "kind": "reply",
+          "head": "fb98ff4ca16818deea71b420bef46b956c4b258f",
+          "url": "https://github.com/google/gvisor/pull/16952#issuecomment-6650299149",
+          "title": "Reply about the Windows clock tests and Go 1.28",
+          "body": "Thanks, @adios-404. Your Server 2022 result explains why one fine step isn’t enough. Counting positive steps against a separate deadline addresses my resolution concern, and loading the saved state into a fresh clock addresses my restore concern.\n\nI’d use `windows && !go1.28` for the QPC file and keep the resolution test enabled on Go 1.28 and later. [Go’s change](https://github.com/golang/go/commit/16d46baf6) gives `time.Since` a 100 ns monotonic clock on Windows. The test will still catch a regression before Go 1.28 ships.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-05T11:11:33Z",
+          "postedURL": "https://github.com/google/gvisor/pull/16952#issuecomment-6656512634"
         }
       ],
       "followup": {
         "owner": "Agent",
         "sourceHead": "fb98ff4ca16818deea71b420bef46b956c4b258f",
         "providerHead": "fb98ff4ca16818deea71b420bef46b956c4b258f",
-        "observedAt": "2026-11-05T06:07:04.940311+00:00",
-        "disposition": "Read both author responses and the revised tests. Go’s Windows clock change is merged; Go 1.28 is not yet released.",
-        "nextAction": "After contributor approval, answer the author’s question once on the PR conversation.",
+        "observedAt": "2026-11-05T11:11:33Z",
+        "disposition": "Answered the author’s question about Go 1.28 and acknowledged both revised tests.",
+        "nextAction": "The author has the Windows build-tag recommendation. No response is outstanding.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16952#discussion_r4476840572",
           "https://github.com/google/gvisor/pull/16952#discussion_r4476840773",
           "https://github.com/google/gvisor/pull/16952#issuecomment-6650299149",
           "https://github.com/google/gvisor/blob/fb98ff4ca/pkg/tcpip/stdclock_test.go",
-          "https://github.com/golang/go/commit/16d46baf6"
+          "https://github.com/golang/go/commit/16d46baf6",
+          "https://github.com/google/gvisor/pull/16952#issuecomment-6656512634"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "reply",
-        "head": "fb98ff4ca16818deea71b420bef46b956c4b258f",
-        "url": "https://github.com/google/gvisor/pull/16952#issuecomment-6650299149",
-        "title": "Reply about the Windows clock tests and Go 1.28",
-        "requestedAt": "2026-11-05T06:07:04.940311+00:00",
-        "summary": "Post one answer to the author’s question on #16952, acknowledging both revised tests and recommending the Windows QPC fallback only before Go 1.28?",
-        "body": "Thanks, @adios-404. Your Server 2022 result explains why one fine step isn’t enough. Counting positive steps against a separate deadline addresses my resolution concern, and loading the saved state into a fresh clock addresses my restore concern.\n\nI’d use `windows && !go1.28` for the QPC file and keep the resolution test enabled on Go 1.28 and later. [Go’s change](https://github.com/golang/go/commit/16d46baf6) gives `time.Since` a 100 ns monotonic clock on Windows. The test will still catch a regression before Go 1.28 ships.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -50523,7 +50555,7 @@
       "url": "https://github.com/google/gvisor/pull/17023",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-05T06:27:21.503359+00:00",
+      "updatedAt": "2026-11-05T11:11:41Z",
       "summary": "The author’s full-first-ACK control retransmitted segment 3. With only half of segment 1 acknowledged at first, the sender emitted no repair while the manual retransmission clock stayed fixed. Both cases then acknowledged segments 1 and 2 and newly SACKed segments 4 through 6. One uncached native AMD64 Bazel test attempt recorded the control passing and the partial-ACK case failing, with no skips.",
       "evidence": [
         {
@@ -50543,16 +50575,18 @@
           "url": "https://www.rfc-editor.org/rfc/rfc6675.html#section-4"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "review",
-        "head": "4cef606678b6d75bf62c4172ac84d035ba9b88fb",
-        "url": "https://github.com/google/gvisor/pull/17023",
-        "title": "Post the partial-first-ACK finding on #17023",
-        "requestedAt": "2026-11-05T06:27:21.503359+00:00",
-        "summary": "Post this one inline comment on pkg/tcpip/transport/tcp/snd.go:1275 (RIGHT) at the tested commit?",
-        "body": "If the first ACK covers half of the retransmitted segment, this leaves `spuriousTimeoutResumed` false. In [your six-segment test with that one change](https://github.com/tamird/gvisor/commit/7a60344d2), the next ACK still covers segments 1 and 2, and three duplicate ACKs then newly SACK segments 4 through 6. The full-ACK control retransmitted segment 3; the half-ACK case sent nothing with the retransmission clock held fixed. Could we honor that new SACK evidence once the retransmitted bytes have been cumulatively acknowledged? [Packet test results](https://github.com/tamird/gvisor/actions/runs/41979464545/artifacts/13393527468).\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "review",
+          "head": "4cef606678b6d75bf62c4172ac84d035ba9b88fb",
+          "url": "https://github.com/google/gvisor/pull/17023",
+          "title": "Post the partial-first-ACK finding on #17023",
+          "body": "If the first ACK covers half of the retransmitted segment, this leaves `spuriousTimeoutResumed` false. In [your six-segment test with that one change](https://github.com/tamird/gvisor/commit/7a60344d2), the next ACK still covers segments 1 and 2, and three duplicate ACKs then newly SACK segments 4 through 6. The full-ACK control retransmitted segment 3; the half-ACK case sent nothing with the retransmission clock held fixed. Could we honor that new SACK evidence once the retransmitted bytes have been cumulatively acknowledged? [Packet test results](https://github.com/tamird/gvisor/actions/runs/41979464545/artifacts/13393527468).\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-05T11:11:41Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17023#discussion_r4479711190"
+        }
+      ]
     },
     {
       "id": "branch:tcp-timeout-option-locks",
@@ -50611,7 +50645,7 @@
       "url": "https://github.com/google/gvisor/pull/17022",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-05T08:40:24.989712+00:00",
+      "updatedAt": "2026-11-05T11:11:37Z",
       "summary": "Two packets were outstanding before a timeout. The PR restored the slow-start threshold to 10 after detecting that timeout was spurious. Capturing flight size restored it to 2. When the ACK echoed the retransmitted packet’s timestamp, both versions kept the threshold at 2.",
       "evidence": [
         {
@@ -50631,16 +50665,18 @@
           "url": "https://www.rfc-editor.org/rfc/rfc4015.html#section-3.1"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "review",
-        "head": "963e83a9586fe9ea5331bd4e3e30d53d45386d66",
-        "url": "https://github.com/google/gvisor/pull/17022",
-        "title": "Post the two-packet timeout finding on #17022",
-        "requestedAt": "2026-11-05T08:40:24.989712+00:00",
-        "summary": "Post one inline comment on the assignment to pipePrev in snd.go, line 1253?",
-        "body": "Could timeout recovery use the number of packets in flight here? In the [packet test](https://github.com/tamird/gvisor/commit/9696b5abe), an earlier timeout set the slow-start threshold to 2. ACKs then grew the congestion window to 10. Only two packets were in flight when the next timeout fired. Once the sender detected that timeout was spurious, this assignment restored the threshold to 10. [RFC 4015 §3.1, step 0](https://www.rfc-editor.org/rfc/rfc4015.html#section-3.1) gives max(2, 2) = 2.\n\n[Changing the timeout capture to use the outstanding count](https://github.com/tamird/gvisor/commit/a10d0b8eb) kept the threshold at 2. The control that echoed the retransmission’s timestamp also stayed at 2 on both versions. Could you add this application-limited case to the timeout tests? [Packet results](https://github.com/tamird/gvisor/actions/runs/41994453265/artifacts/13399329303)\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "review",
+          "head": "963e83a9586fe9ea5331bd4e3e30d53d45386d66",
+          "url": "https://github.com/google/gvisor/pull/17022",
+          "title": "Post the two-packet timeout finding on #17022",
+          "body": "Could timeout recovery use the number of packets in flight here? In the [packet test](https://github.com/tamird/gvisor/commit/9696b5abe), an earlier timeout set the slow-start threshold to 2. ACKs then grew the congestion window to 10. Only two packets were in flight when the next timeout fired. Once the sender detected that timeout was spurious, this assignment restored the threshold to 10. [RFC 4015 §3.1, step 0](https://www.rfc-editor.org/rfc/rfc4015.html#section-3.1) gives max(2, 2) = 2.\n\n[Changing the timeout capture to use the outstanding count](https://github.com/tamird/gvisor/commit/a10d0b8eb) kept the threshold at 2. The control that echoed the retransmission’s timestamp also stayed at 2 on both versions. Could you add this application-limited case to the timeout tests? [Packet results](https://github.com/tamird/gvisor/actions/runs/41994453265/artifacts/13399329303)\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-05T11:11:37Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17022#discussion_r4479710566"
+        }
+      ]
     },
     {
       "id": "branch:tcp-yield-after-queue-pass",
@@ -72745,5 +72781,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T10:45:41.558885Z"
+  "updatedAt": "2026-11-05T11:14:22.277195Z"
 }
