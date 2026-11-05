@@ -1,35 +1,32 @@
-name: CI
-
-"on":
+name: Check the TCP timeout socket option locks
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-timeout-option-locks]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  analyzer:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.run_attempt == '1'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 4, persist-credentials: false}
+      - name: Use the exact product source and ordinary native compiler
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = eb0fc471b1c949bd173272158de7b906f3cd95d9
+          test "$(git rev-parse HEAD^^)" = 5a5fd2934dc0927eade5cdaf8de86b245785d0ab
+          test "$(git rev-parse HEAD^^^)" = 90d4e2253f004cdc73a35dbc4050eab3e9a8495d
+          cp .github/qualification/tcp-timeout-options.py "$RUNNER_TEMP/"
+          git switch --detach HEAD^^
+          test -z "$(git status --porcelain)"
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends g++-aarch64-linux-gnu
+      - name: Check the three option getters on both analyzed architectures
+        run: python3 "$RUNNER_TEMP/tcp-timeout-options.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: ${{ !cancelled() }}
+        with:
+          name: tcp-timeout-option-locks
+          path: ${{ runner.temp }}/tcp-timeout-options.json
+          if-no-files-found: error
