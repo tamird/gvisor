@@ -32,6 +32,8 @@ go_test(
         "//examples/seccheck:server_cc",
     ],
     embed = [":remote"],
+    # TestExample launches the C++ server on the test worker.
+    static = True,
     deps = [
         "//pkg/fd",
         "//pkg/sentry/seccheck",
