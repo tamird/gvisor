@@ -1,7 +1,7 @@
-name: Compare the current graph save policy in one private native guest
+name: Compare graph save policy in a precreated native systrap cgroup
 on:
   push:
-    branches: [qualification/graph-gc-headroom-native]
+    branches: [qualification/gc-save-native-systrap]
 permissions:
   contents: read
 jobs:
@@ -14,81 +14,153 @@ jobs:
       PRODUCT: c31b2adc27b1d19b1e647b3239cd2b3b536a5adf
       BASE: 706b124a2e5a587123d9844a83db5e55d318d3ea
       REPORTER: 2b51abee8530385431b7225198fdd5cd65e78696
-      TEST_BLOB: 26b33a508454f93047c48d894c2ba43708b2c74b
+      TEST_BLOB: b70a9171605324eef57901601fdd6163572041be
       PKG: .github/qualification/restore-limit-vm
     steps:
-    - name: Check ordinary KVM access before any author build
+    - name: Check the ordinary user's delegated cgroup
       id: host
+      shell: bash
       run: |
-        python3 - <<'PYTHON'
+        set -euo pipefail
+        export LC_ALL=C
+        unit=gvisor-precreated-leaf-probe.service
+        uid=$(id -u)
+        test "$uid" -ne 0
+        if [[ -S /run/user/$uid/bus && $(stat -c %u "/run/user/$uid") == "$uid" ]]; then
+          export XDG_RUNTIME_DIR="/run/user/$uid"
+          export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus"
+        fi
+        cat > "$RUNNER_TEMP/probe.sh" <<'PROBE'
+        set -eu
+        if [[ "${1:-}" != inner ]]; then
+          echo PHASE=service
+          membership=$(awk -F: '$1=="0" {print $3}' /proc/self/cgroup)
+          [[ "${membership##*/}" == gvisor-precreated-leaf-probe.service ]]
+          [[ $(id -u) != 0 ]]
+          # Read effective ancestor limits before changing cgroup namespace.
+          python3 - "$membership" <<'LIMITS'
+        import os, sys
         from pathlib import Path
-        import fcntl, json, os, platform, stat
-        r = {"status":"INELIGIBLE","product_cases":0,"stages":{},"product":os.environ["PRODUCT"],
-             "parent":os.environ["BASE"],"test_blob":os.environ["TEST_BLOB"],"carrier":os.environ["GITHUB_SHA"]}
-        h = r["host"] = {"uid":os.geteuid(),"machine":platform.machine(),"affinity_cpus":len(os.sched_getaffinity(0))}
-        try:
-            h["stage"] = "worker"
-            assert h["uid"] != 0 and h["machine"] == "x86_64" and h["affinity_cpus"] >= 4
-            h["stage"] = "stat"
-            device = os.stat("/dev/kvm")
-            h.update(character_device=stat.S_ISCHR(device.st_mode), mode=oct(stat.S_IMODE(device.st_mode)))
-            assert h["character_device"]
-            h["stage"] = "open_rdwr"
-            fd = os.open("/dev/kvm", os.O_RDWR | os.O_CLOEXEC)
-            try:
-                h["stage"] = "KVM_GET_API_VERSION"
-                h["api_version"] = fcntl.ioctl(fd, 0xAE00, 0)
-                assert h["api_version"] == 12
-            finally:
-                os.close(fd)
-            h["stage"] = "eligible"
-            r["status"] = "INCOMPLETE"
-        except (AssertionError, OSError) as error:
-            h["error"] = type(error).__name__
-            h["errno"] = getattr(error, "errno", None)
-        Path(os.environ["RUNNER_TEMP"], "restore-vm-verdict.json").write_text(json.dumps(r) + "\n")
-        with open(os.environ["GITHUB_OUTPUT"], "a") as out:
-            print("eligible=" + str(h["stage"] == "eligible").lower(), file=out)
-        PYTHON
+        root = Path("/sys/fs/cgroup")
+        mount = [line.split() for line in Path("/proc/self/mountinfo").read_text().splitlines()
+                 if line.split()[4] == str(root)]
+        assert len(mount) == 1 and mount[0][3] == "/" and mount[0][mount[0].index("-") + 1] == "cgroup2"
+        service = (root / sys.argv[1].lstrip("/")).resolve(strict=True)
+        assert root in service.parents
+        print("AFFINITY=", len(os.sched_getaffinity(0)), sep="")
+        for path in (service, *service.parents):
+            for name in ("cpu.max", "memory.max"):
+                limit = path / name
+                if limit.exists():
+                    print(name, "=", limit.read_text().strip(), sep="")
+            if path == root:
+                break
+        LIMITS
+          echo PHASE=user_namespace
+          exec setpriv --no-new-privs unshare --user --map-root-user --mount --cgroup --propagation private \
+            /bin/bash "$0" inner "$2" "$(readlink /proc/self/ns/cgroup)"
+        fi
+        [[ $(id -u) == 0 && $(readlink /proc/self/ns/cgroup) != "$3" && $(cat /proc/self/cgroup) == '0::/' ]]
+        echo PHASE=private_mount
+        mount -t cgroup2 none "$2"
+        cd "$2"
+        [[ $(stat -f -c %T .) == cgroup2fs ]]
+        controllers=$(cat cgroup.controllers)
+        echo PHASE=controllers_read
+        for key in $controllers; do
+          [[ $key =~ ^[a-z_]+$ ]]
+          echo "CONTROLLER=$key"
+        done
+        [[ " $controllers " == *" memory "* ]]
+        echo PHASE=create_children
+        mkdir client probe
+        echo PHASE=move_client
+        echo $$ > client/cgroup.procs
+        [[ $(cat /proc/self/cgroup) == '0::/client' ]]
+        echo PHASE=enable_controllers
+        echo +memory > cgroup.subtree_control
+        echo PHASE=memory_write
+        echo 2147483648 > probe/memory.max
+        [[ $(cat probe/memory.max) == 2147483648 ]]
+        grep -Fxq 'oom_kill 0' probe/memory.events
+        echo PHASE=join_precreated
+        (
+          child=$BASHPID
+          echo "$child" > probe/cgroup.procs
+          [[ $(cat /proc/self/cgroup) == '0::/probe' ]]
+          grep -Fxq "$child" probe/cgroup.procs
+          [[ $(cat probe/memory.max) == 2147483648 ]]
+        )
+        echo PHASE=complete
+        PROBE
+        mkdir "$RUNNER_TEMP/native-cgroup"
+        set +e
+        timeout 45s systemd-run --user --quiet --collect --wait --pipe --unit="$unit" \
+          --property=Delegate=yes --property=RuntimeMaxSec=35s -- \
+          /bin/bash "$RUNNER_TEMP/probe.sh" outer "$RUNNER_TEMP/native-cgroup" > "$RUNNER_TEMP/probe.log" 2>&1
+        code=$?
+        set -e
+        python3 - "$code" <<'PY'
+        import json, os, platform, re, sys
+        from pathlib import Path
+        root = Path(os.environ["RUNNER_TEMP"])
+        lines = (root / "probe.log").read_text(errors="replace").splitlines()
+        steps = ("service", "user_namespace", "private_mount", "controllers_read", "create_children",
+                 "move_client", "enable_controllers", "memory_write", "join_precreated", "complete")
+        phases = [p for p in steps if f"PHASE={p}" in lines]
+        cpu = [line.split("=", 1)[1] for line in lines if re.fullmatch(r"cpu\.max=(max|[0-9]{1,18}) [1-9][0-9]{0,11}", line)]
+        memory = [line.split("=", 1)[1] for line in lines if re.fullmatch(r"memory\.max=(max|[0-9]{1,20})", line)]
+        affinity = [int(line.split("=")[1]) for line in lines if re.fullmatch(r"AFFINITY=[1-9][0-9]{0,3}", line)]
+        assert len(cpu) <= 32 and len(memory) <= 32 and len(affinity) <= 1
+        controllers = [c for c in ("cpu", "cpuset", "io", "memory", "pids") if f"CONTROLLER={c}" in lines]
+        errors = [s for s in ("No medium found", "No such file or directory", "Permission denied",
+                              "Operation not permitted", "Failed to connect to bus", "Access denied",
+                              "Read-only file system", "Device or resource busy", "Failed to start transient service")
+                  if any(s.lower() in line.lower() for line in lines)]
+        exit_code = int(sys.argv[1])
+        leaf = exit_code == 0 and phases == list(steps) and "memory" in controllers
+        comparable = (affinity == [4] and cpu and all(v.startswith("max ") for v in cpu)
+                      and memory and all(v == "max" or int(v) >= 2**31 for v in memory))
+        ready = leaf and bool(comparable)
+        result = {"carrier":os.environ["GITHUB_SHA"], "kernel":platform.release(), "machine":platform.machine(),
+                  "native_exit":exit_code, "phases":phases, "controllers":controllers, "diagnostics":errors,
+                  "ancestor_cpu_max":cpu, "ancestor_memory_max":memory, "affinity":affinity,
+                  "precreated_leaf":leaf, "eligible":ready, "product_cases":0,
+                  "product_revisions":["706b124a2","c31b2adc2"], "fixture":"acd90fc2c",
+                  "verified_memory_max":2**31 if leaf else None}
+        (root / "eligibility.json").write_text(json.dumps(result, indent=2) + "\n")
+        missing = (leaf and not ready) or (exit_code != 0 and
+                  (bool(errors) or ("controllers_read" in phases and "memory" not in controllers)))
+        r = {"status":"INCOMPLETE" if ready else "INELIGIBLE", "product_cases":0, "stages":{}, "host":result,
+             "parent":os.environ["BASE"], "product":os.environ["PRODUCT"], "test_blob":os.environ["TEST_BLOB"],
+             "carrier":os.environ["GITHUB_SHA"]}
+        (root / "restore-vm-verdict.json").write_text(json.dumps(r) + "\n")
+        with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+            print("eligible=" + str(ready).lower(), file=output)
+        if not (ready or missing):
+            sys.exit("incomplete eligibility observation")
+        PY
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       if: steps.host.outputs.eligible == 'true'
-      with: {fetch-depth: 6, persist-credentials: false}
-    - name: Bind the native Bazel launcher and isolated guest
+      with: {fetch-depth: 2, persist-credentials: false}
+    - name: Bind the native Bazel launcher and the matched fixture
       if: steps.host.outputs.eligible == 'true'
       run: |
         set -euo pipefail
         test "$(id -u)" != 0
         awk '$1 == "MemAvailable:" && $2 >= 7*1024*1024 { found=1 } END { exit !found }' /proc/meminfo
         test "$(df -PB1 . | awk 'END {print $4}')" -gt 10000000000
-        test "$(git rev-parse HEAD^)" = 3da1a3fcdf66ad21987cad1be1fa5b81f882df55
-        test "$(git rev-parse HEAD^^^^^)" = 38745c527784376e0b5d915fe5ebd85e1d1385fd
-        test "$(git hash-object "$PKG/BUILD")" = 6254da0920aba4d6eeade2ce7dc6d8070168f8f2
-        test "$(git hash-object "$PKG/payload.sh")" = 7d004a58fea81782ccf6c0e0cbdd3232f7d29fb4
-        test "$(git hash-object "$PKG/gc_reference_test.go")" = "$TEST_BLOB"
+        test "$(git rev-parse HEAD^)" = acd90fc2cbab4a3babb5299668baa23a0b8d4fd7
+        test "$(git hash-object "$PKG/gc_reference_test.go")" = b70a9171605324eef57901601fdd6163572041be
+        test "$(git hash-object "$PKG/paired.py")" = 1d14a5bcf1caa04dd2b86a59582cbefbec5bd7e5
+        test "$(git hash-object "$PKG/native.sh")" = 76d3a70504cb6255cc7f07bafc55d47517d6d97f
+        test "$(git hash-object "$PKG/payload.sh")" = 007c7acdab3c8bc7eb6caf7fdaba5e457c92a72b
+        test "$(git hash-object "$PKG/handoff.py")" = a2c92929659a93d8f80041d4a3b9072a0f181826
         mkdir "$RUNNER_TEMP/restore-tools"
         curl -fsSL --max-time 90 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$RUNNER_TEMP/restore-tools/bazel"
         echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $RUNNER_TEMP/restore-tools/bazel" | sha256sum -c -
         chmod 755 "$RUNNER_TEMP/restore-tools/bazel"
         test "$(cat .bazelversion)" = 8.8.1
-    - name: Verify the pinned Ubuntu archive and boot the real native guest first
-      if: steps.host.outputs.eligible == 'true'
-      timeout-minutes: 38
-      run: |
-        set -euo pipefail
-        # The snapshot returned HTTP 500 on this archive before the VM test ran.
-        f=libblkid1_2.37.2-4ubuntu3.6_amd64.deb
-        dir="$RUNNER_TEMP/ubuntu-distdir"
-        mkdir "$dir"
-        curl -fsSL --retry 2 --max-time 40 "https://archive.ubuntu.com/ubuntu/pool/main/u/util-linux/$f" -o "$dir/$f"
-        echo "bf9ab18457e0a10879951b01c87156bdf503bdeb0f87ae0f0f81ec62cb000279  $dir/$f" | sha256sum -c -
-        cat > "$RUNNER_TEMP/ubuntu-mirrors" <<'EOF'
-        rewrite snapshot\.ubuntu\.com/ubuntu/20260928T000000Z/(pool/[^?]+_(?:amd64|all)\.deb) archive.ubuntu.com/ubuntu/$1
-        rewrite snapshot\.ubuntu\.com/ubuntu/20260928T000000Z/(pool/[^?]+_(?:amd64|all)\.deb) security.ubuntu.com/ubuntu/$1
-        rewrite snapshot\.ubuntu\.com/ubuntu/20260928T000000Z/(pool/[^?]+_(?:amd64|all)\.deb) snapshot.ubuntu.com/ubuntu/20260928T000000Z/$1
-        EOF
-        env -i HOME="$HOME" USER="$USER" PATH=/usr/bin:/bin LANG=C.UTF-8 \
-          RUNNER_TEMP="$RUNNER_TEMP" GITHUB_SHA="$GITHUB_SHA" \
-          python3 -B "$PKG/check.py" preflight
     - name: Build both exact sources with the identical reference fixture
       if: steps.host.outputs.eligible == 'true'
       timeout-minutes: 80
@@ -152,13 +224,25 @@ jobs:
           if test "${rc:-0}" = 0; then rc=$handoff_rc; fi
           test "${rc:-0}" = 0 || exit "$rc"
         done
-    - name: Run both capsules in balanced order in one offline native KVM guest
+    - name: Run both source-bound capsules in isolated native systrap
       if: steps.host.outputs.eligible == 'true'
-      timeout-minutes: 59
+      timeout-minutes: 58
       run: |
-        env -i HOME="$HOME" USER="$USER" PATH=/usr/bin:/bin LANG=C.UTF-8 \
-          RUNNER_TEMP="$RUNNER_TEMP" GITHUB_SHA="$GITHUB_SHA" \
-          python3 -B "$PKG/check.py" restore
+        set -euo pipefail
+        root="$RUNNER_TEMP/native-root"
+        mkdir -p "$root"/{dev,proc,sys,usr,tmp,run,inputs,outputs,work,etc}
+        chmod 1777 "$root/tmp"
+        for dir in bin lib lib64 sbin; do
+          test -L "/$dir"
+          ln -s "$(readlink "/$dir")" "$root/$dir"
+        done
+        printf 'root:x:0:0:root:/work:/bin/bash\n' > "$root/etc/passwd"
+        printf 'root:x:0:\n' > "$root/etc/group"
+        printf '127.0.0.1 localhost\n' > "$root/etc/hosts"
+        cp --reflink=auto "$PKG"/{parent.tar,candidate.tar,payload.sh} "$root/inputs/"
+        rc=0
+        /bin/bash "$PWD/$PKG/native.sh" service "$root" > "$RUNNER_TEMP/native-service.log" 2>&1 || rc=$?
+        RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$PKG/paired.py" receive "$rc"
     - name: Compare the twelve verified saves per arm with the qualified benchstat
       if: steps.host.outputs.eligible == 'true'
       timeout-minutes: 16
@@ -210,8 +294,8 @@ jobs:
         data["product_cases"] = sum("native_exit" in row for row in data["stages"].get("restore", {}).get("samples", []))
         data["original_workload"] = {"run":41802364888, "artifact":13309574814, "source":"1d5db90e0"}
         data["prior_200MiB_correctness"] = {"carrier":"3da1a3fcd","source":"71b5044a6","engine":"graph","compression":"flate-best-speed","measured_performance":False}
-        data["host_preflight"] = {"run":41981584255, "artifact":13394067657}
-        data["guest_machine"] = "native AMD64 KVM, four vCPUs if launched"
+        data["host_preflight"] = {"run":42020023134, "artifact":13411067235, "previous_kvm_no_cases":13405209658}
+        data["guest_machine"] = "native AMD64 host, 4 allowed CPUs, ordinary delegated service, offline namespaces; systrap Sentry"
         data["planned_workload"] = "100000 empty tmpfs files; 2GiB; native systrap; non-resuming save; graph+none; sampled Sentry RSS through exit; full restore verified"
         stats = tmp / "bench-out/benchstat.txt"
         data["benchstat"] = {"source":os.environ["REPORTER"], "available":stats.is_file() and 0 < stats.stat().st_size < 65536}

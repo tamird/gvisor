@@ -1,30 +1,21 @@
 #!/bin/bash
-# The author binaries run only in this offline, hardware-accelerated guest.
-set -euo pipefail
-cg=/sys/fs/cgroup
-[[ $(stat -fc %T "$cg") == cgroup2fs && $(getconf PAGESIZE) == 4096 ]]
-[[ $(getconf _NPROCESSORS_ONLN) == 4 && $(id -u) == 0 ]]
-for controller in cpu cpuset io memory pids; do
-    grep -qw "$controller" "$cg/cgroup.controllers"
-    echo "+$controller" > "$cg/cgroup.subtree_control"
+# Run the same two capsules inside the ordinary-user offline namespace.
+set -Eeuo pipefail
+trap 'printf "PAYLOAD_LOCATION=%d\n" "$LINENO" >&2' ERR
+[[ $(readlink /proc/self/ns/user) != "$OUTER_USER_NS" && $(awk 'NR==1{print $1,$2,$3}' /proc/self/uid_map) == "0 0 1" ]]
+for mountpoint in /usr /inputs; do
+    [[ ,$(findmnt -nr -o VFS-OPTIONS "$mountpoint"), == *,ro,* ]]
 done
-mkdir "$cg/preflight"
-echo 2147483648 > "$cg/preflight/memory.max"
-[[ $(cat "$cg/preflight/memory.max") == 2147483648 && $(cat "$cg/preflight/cpu.max") == "max "* ]]
-grep -Fxq 'oom_kill 0' "$cg/preflight/memory.events"
-rmdir "$cg/preflight"
-echo GC_SAVE_VALIDATED_MEMORY=2147483648
-if [[ $1 == preflight ]]; then
-    printf '<testsuites><testsuite tests="1"><testcase classname="cgroup2" name="delegated"/></testsuite></testsuites>\n' > "$XML_OUTPUT_FILE"
-    exit 0
-fi
-[[ $1 == restore ]]
-out=$TEST_UNDECLARED_OUTPUTS_DIR
-source_dir=$TEST_SRCDIR/$TEST_WORKSPACE/.github/qualification/restore-limit-vm
+cg=/sys/fs/cgroup
+[[ $(cat /proc/self/cgroup) == '0::/client' && $(cat "$cg/benchmark/memory.max") == 2147483648 ]]
+[[ $(getconf PAGESIZE) == 4096 && $(nproc) == 4 ]]
+grep -Fxq 'oom_kill 0' "$cg/benchmark/memory.events"
+out=/outputs
+source_dir=/inputs
 for arm in parent candidate; do
     mkdir "/work/$arm"
     sha256sum "$source_dir/$arm.tar" | cut -d' ' -f1 > "$out/$arm-capsule"
-    /bin/busybox tar -xf "$source_dir/$arm.tar" -C "/work/$arm"
+    tar --no-same-owner --no-same-permissions -xf "$source_dir/$arm.tar" -C "/work/$arm"
     sha256sum "/work/$arm/container_test" | cut -d' ' -f1 > "$out/$arm-elf"
 done
 test_one() {
@@ -48,4 +39,4 @@ for ((i=-1; i<12; i++)); do
     if ((i >= 0 && i % 2 == 1)); then order=(candidate parent); else order=(parent candidate); fi
     for arm in "${order[@]}"; do test_one "$i" "$arm"; done
 done
-printf '<testsuites><testsuite tests="1"><testcase classname="native" name="matchedSave"/></testsuite></testsuites>\n' > "$XML_OUTPUT_FILE"
+printf '<testsuites><testsuite tests="1"><testcase classname="native" name="matchedSave"/></testsuite></testsuites>\n' > /outputs/summary.xml

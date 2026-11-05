@@ -112,7 +112,7 @@ func TestGCReferenceSave(t *testing.T) {
 	conf.Overlay2.Set("none")
 	conf.Debug, conf.Strace, conf.LogPackets = false, false, false
 	conf.Platform = "systrap"
-	cgPath := "/" + testutil.RandomID("gvisor-gc-save")
+	const cgPath = "/benchmark"
 	memLimit := memoryLimit
 	spec.Mounts = []specs.Mount{{Type: "tmpfs", Destination: "/tmpfs"}}
 	spec.Linux = &specs.Linux{CgroupsPath: cgPath, Resources: &specs.LinuxResources{Memory: &specs.LinuxMemory{Limit: &memLimit}}}
@@ -191,13 +191,16 @@ func TestGCReferenceSave(t *testing.T) {
 	if err != nil || strings.TrimSpace(string(limit)) != strconv.FormatInt(memoryLimit, 10) {
 		t.Fatalf("memory limit: %q, %v", limit, err)
 	}
-	var quotas []string
+	quotas := []string{}
 	for dir := cgDir; ; dir = filepath.Dir(dir) {
 		value, err := os.ReadFile(filepath.Join(dir, "cpu.max"))
-		// cpu.max exists only on non-root cgroups. A delegated mount root
-		// can expose it, so omit only an absent file at this mount root.
-		if dir == "/sys/fs/cgroup" && os.IsNotExist(err) {
-			break
+		// A precreated memory-only leaf inherits the outer CPU quota.
+		// The coordinator records every visible ancestor before unshare.
+		if os.IsNotExist(err) {
+			if dir == "/sys/fs/cgroup" {
+				break
+			}
+			continue
 		}
 		if err != nil {
 			t.Fatal(err)
@@ -222,7 +225,7 @@ func TestGCReferenceSave(t *testing.T) {
 			break
 		}
 	}
-	if !strings.HasPrefix(quotas[0], "max ") {
+	if len(quotas) > 0 && !strings.HasPrefix(quotas[0], "max ") {
 		t.Fatalf("unexpected sandbox quota: %v", quotas)
 	}
 	command, err := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", pid))
@@ -348,6 +351,20 @@ func TestGCReferenceSave(t *testing.T) {
 		t.Fatal(err)
 	}
 	work(restored, "fsTreeVerify")
+	restoredMembership, err := os.ReadFile(fmt.Sprintf("/proc/%d/cgroup", restored.SandboxPid()))
+	if err != nil || !strings.Contains("\n"+string(restoredMembership), "\n0::"+cgPath+"\n") {
+		t.Fatalf("restored Sentry cgroup: %q, %v", restoredMembership, err)
+	}
+	limit, err = os.ReadFile(filepath.Join(cgDir, "memory.max"))
+	if err != nil || strings.TrimSpace(string(limit)) != strconv.FormatInt(memoryLimit, 10) {
+		t.Fatalf("restored memory limit: %q, %v", limit, err)
+	}
+	events, err := os.ReadFile(filepath.Join(cgDir, "memory.events"))
+	if err != nil || !strings.Contains("\n"+string(events)+"\n", "\noom_kill 0\n") {
+		t.Fatalf("restored memory events: %q, %v", events, err)
+	}
+	row["restored_limit"] = memoryLimit
+	row["oom_kills"] = 0
 	row["files_verified"] = 100000
 	row["archive"] = files
 	data, err := json.Marshal(row)

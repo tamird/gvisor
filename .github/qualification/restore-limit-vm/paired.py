@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import re
+import stat
 import sys
 from xml.etree import ElementTree
 
@@ -12,11 +13,16 @@ TMP = Path(os.environ["RUNNER_TEMP"])
 PKG = Path(".github/qualification/restore-limit-vm")
 
 
-def bounded(bundle, name, size):
-    full_name = "guest/outputs/" + name
-    entry = bundle.getinfo(full_name)
-    assert 0 < entry.file_size <= size
-    return bundle.read(entry)
+def bounded(directory, name, maximum):
+    # The namespace is stopped. Never follow an untrusted guest link.
+    assert "/" not in name and name not in (".", "..")
+    fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+    with os.fdopen(fd, "rb") as stream:
+        meta = os.fstat(stream.fileno())
+        assert stat.S_ISREG(meta.st_mode) and meta.st_nlink == 1 and 0 < meta.st_size <= maximum
+        data = stream.read(maximum + 1)
+        assert len(data) == meta.st_size
+        return data
 
 
 def collect(bundle, row, result, save):
@@ -52,12 +58,13 @@ def collect(bundle, row, result, save):
             data = json.loads(bounded(bundle, prefix + ".row", 8192))
             assert data["files_verified"] == 100000 and data["memory_limit"] == 2 << 30 and data["direct_child"] is True
             assert data["coordinator_cpus"] == 4 and data["boot"]["--total-memory"] == str(2 << 30)
-            assert 1 <= len(data["cpu_quotas"]) <= 20 and all(re.fullmatch(r"max [1-9][0-9]*", q) for q in data["cpu_quotas"])
+            assert 0 <= len(data["cpu_quotas"]) <= 20 and all(re.fullmatch(r"max [1-9][0-9]*", q) for q in data["cpu_quotas"])
             assert re.fullmatch(r"[0-9,-]{1,40}", data["sentry_allowed_cpus"])
             assert set(data["boot"]).issubset({"--cpu-num", "--lifecycle-cpu-num", "--total-memory"})
             assert all(re.fullmatch(r"[0-9]{1,12}", value) for value in data["boot"].values())
-            item["boot"] = data["boot"]
-            item.update(files_verified=100000, memory_limit=data["memory_limit"], guest_cpus=4, cpu_quotas=data["cpu_quotas"],
+            assert data["restored_limit"] == 2 << 30 and data["oom_kills"] == 0
+            item.update(boot=data["boot"], restored_limit=data["restored_limit"], oom_kills=0)
+            item.update(files_verified=100000, memory_limit=data["memory_limit"], native_cpus=4, cpu_quotas=data["cpu_quotas"],
                         sentry_allowed_cpus=data["sentry_allowed_cpus"])
             assert set(data["graph_frames"]) == {"cpuid", "kernel"} and all(type(v) is int and 0 < v < (1 << 30) for v in data["graph_frames"].values())
             item["graph_frames"] = data["graph_frames"]
@@ -92,5 +99,63 @@ def add_fixture(build):
     build.write_text(updated.replace(dep, dep + '        "//pkg/state/wire",\n'))
 
 
+def receive(code):
+    out = TMP / "restore-vm-verdict.json"
+    result = json.loads(out.read_text())
+    stage = result["stages"]["restore"] = {"service_exit": code, "status": "INCOMPLETE"}
+    def save(value):
+        out.write_text(json.dumps(value, indent=2) + "\n")
+    save(result)
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    root = os.open(TMP / "native-root", flags)
+    try:
+        # Trusted shell setup and sandbox logs remain private to this worker.
+        with (TMP / "native-service.log").open("rb") as service_log:
+            diagnostics = service_log.read(65536).decode(errors="replace")
+        stage["setup_locations"] = re.findall(r"^HOST_SETUP_LOCATION=((?:service|outer|namespace|pivot):[1-9][0-9]{0,3})$", diagnostics, re.M)[:8]
+        stage["payload_locations"] = re.findall(r"^PAYLOAD_LOCATION=([1-9][0-9]{0,3})$", diagnostics, re.M)[:8]
+        stage["outer_cpu_max"] = re.findall(r"^CPU_MAX=(max [1-9][0-9]{0,11})$", diagnostics, re.M)
+        categories = ("No space left on device", "Permission denied", "Operation not permitted",
+                      "No such file or directory", "No medium found", "No such device",
+                      "Invalid argument", "wrong fs type", "Device or resource busy",
+                      "Read-only file system", "Failed to start transient service")
+        categories_lower = {v: v.lower() for v in categories}
+        stage["setup_errors"] = [v for v in categories if categories_lower[v] in diagnostics.lower()]
+        directory = os.open("outputs", flags, dir_fd=root)
+        try:
+            collect(directory, stage, result, save)
+            assert code == 0 and stage["outer_cpu_max"] == result["host"]["ancestor_cpu_max"] and stage["verified_samples"] == 26
+            assert bounded(directory, "summary.xml", 512) == (
+                b'<testsuites><testsuite tests="1"><testcase classname="native" name="matchedSave"/></testsuite></testsuites>\n')
+            stage["status"] = result["status"] = "PASS"
+        finally:
+            os.close(directory)
+    except (OSError, ValueError, AssertionError, KeyError, TypeError, ElementTree.ParseError) as exc:
+        stage["error"] = type(exc).__name__
+        stage["status"] = result["status"] = "FAIL" if code else "INCOMPLETE"
+        work = os.open("work", flags, dir_fd=root)
+        try:
+            try:
+                last = bounded(work, "test.log", 8 << 20)
+            except (FileNotFoundError, OSError, AssertionError):
+                last = b""
+            if last:
+                stage["last_log_sha256"] = hashlib.sha256(last).hexdigest()
+                text = last.decode(errors="replace")
+                stage["test_locations"] = list(dict.fromkeys(re.findall(r"\b(?:gc_reference_test|container_test|testutil)\.go:[1-9][0-9]{0,5}\b", text)))[:12]
+                stage["test_categories"] = [v for v in (*categories, "cannot set up cgroup", "mandatory cgroup controller",
+                    "rootless mode not supported", "unprivileged user", "failed to start", "permission denied",
+                    "no such file or directory", "exec format error", "out of memory", "operation not permitted")
+                    if v.lower() in text.lower()][:14]
+        finally:
+            os.close(work)
+    finally:
+        os.close(root)
+        save(result)
+    return result["status"] == "PASS"
+
+
 if __name__ == "__main__":
+    if sys.argv[1] == "receive":
+        sys.exit(not receive(int(sys.argv[2])))
     add_fixture(Path(sys.argv[1]))
