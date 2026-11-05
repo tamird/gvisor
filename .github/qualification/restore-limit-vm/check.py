@@ -34,15 +34,64 @@ def save(result):
     OUT.write_text(json.dumps(result, indent=2) + "\n")
 
 
+def host_diagnostic(console, events):
+    # This command uses only trusted, pinned VM inputs. Keep short Bazel
+    # errors, omitting URLs, host/user directories and sensitive strings.
+    import hashlib
+    result = {"console_sha256": report.file_record(console)["sha256"], "errors": [], "bep_codes": [], "invalid_bep_rows": 0}
+    def record(text):
+        for original in text.splitlines():
+            line = original.strip()
+            if not re.search(r"^(?:ERROR|FATAL)[: ]|no such (?:package|target)|failed to fetch|IOException|PKIX|not a declared prerequisite", line, re.I):
+                continue
+            digest = hashlib.sha256(line.encode()).hexdigest()
+            if any(row["sha256"] == digest for row in result["errors"]):
+                continue
+            line = re.sub(r"(?i)(?:https?|grpcs?|file)://\S+", "<uri>", line)
+            line = re.sub(r"(?<![A-Za-z0-9_.:/-])/(?:home|private|Users|tmp|var|etc|opt|usr|runner|__w)/[^\s:()'\"]+", "<host-path>", line)
+            if re.search(r"token|password|credential|authorization|secret|bearer|api.?key|github_pat_|gh[pousr]_|[A-Za-z0-9+/=_-]{40,}", line, re.I):
+                line = "<screened>"
+            if len(result["errors"]) < 5:
+                result["errors"].append({"sha256": digest, "line": line[:440]})
+    with console.open("rb") as stream:
+        for line in stream:
+            record(line[:8192].decode(errors="replace"))
+    if events.is_file():
+        for line in events.open("rb"):
+            try:
+                event = json.loads(line)
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                result["invalid_bep_rows"] += 1
+                continue
+            for part in ("finished", "aborted", "action"):
+                entry = event.get(part, {})
+                detail = entry.get("failureDetail") or {}
+                if detail:
+                    for key, value in detail.items():
+                        if isinstance(value, dict) and re.fullmatch(r"[a-zA-Z][a-zA-Z0-9_]{1,50}", key):
+                            code = value.get("code")
+                            if isinstance(code, str) and re.fullmatch(r"[A-Z][A-Z0-9_]{1,90}", code):
+                                if [key, code] not in result["bep_codes"] and len(result["bep_codes"]) < 5:
+                                    result["bep_codes"].append([key, code])
+                    record(detail.get("message", ""))
+                if part == "aborted":
+                    record(entry.get("description", ""))
+    return result
+
+
 def run(stage, result):
-    assert stage == "restore" and result["product"] == PRODUCT
-    assert git("rev-parse", "HEAD^").decode().strip() == GUEST and git("rev-parse", "HEAD").decode().strip() == SOURCE
+    assert stage == "preflight" and result["product"] == PRODUCT
+    result["original"] = {"run": 41979098313, "artifact": 13394000621,
+                          "zip_sha256": "ca143333eb7b8744e73acfd2a0a31448fd45f5aca961b606454a7240b5df7d80",
+                          "elf_sha256": "1134e818551bfc0ebf9f85e291d039c5f09b1ad618d96f1dab5b2833aff55f9c"}
+    assert git("rev-parse", "HEAD^").decode().strip() == "a9a052d363a1b93baa25b7a311b13f9f40b60cd7"
+    assert git("rev-parse", "HEAD^^").decode().strip() == GUEST and git("rev-parse", "HEAD").decode().strip() == SOURCE
     directory = TMP / ("restore-limit-" + stage)
     directory.mkdir()
     row = result["stages"][stage] = {"status": "INCOMPLETE"}
     save(result)
     target = f"//{PACKAGE}:{stage}"
-    required = CASES
+    required = ["cgroup2/delegated"]
     (directory / "owners").write_text(target + "\n")
     report.write_json(directory / "required.json", {target: required})
     raw = directory / "raw.jsonl"
@@ -61,6 +110,8 @@ def run(stage, result):
         original = subprocess.run(["timeout", "-k", "20", "2040", bazel, "--nosystem_rc", "--nohome_rc", *args],
                                   stdout=console, stderr=subprocess.STDOUT)
     row.update(native_exit=original.returncode, finished_utc=now())
+    save(result)
+    row["host_diagnostic"] = host_diagnostic(directory / "private-console", raw)
     save(result)
     (directory / "native_exit").write_text(str(original.returncode))
     (directory / "source_after").write_bytes(git("status", "--porcelain", "--untracked-files=no"))
@@ -135,6 +186,6 @@ if __name__ == "__main__":
     except Exception as error:
         row = state["stages"].setdefault(stage, {})
         row.update(status="FAIL" if row.get("native_exit") not in (None, 0) else "INCOMPLETE", reporter_error=type(error).__name__)
-    state["status"] = state["stages"][stage]["status"] if stage == "restore" else "INCOMPLETE"
+    state["status"] = state["stages"][stage]["status"]
     save(state)
     sys.exit(state["stages"][stage]["status"] != "PASS")
