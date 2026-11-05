@@ -2,6 +2,7 @@
 
 load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", _cc_grpc_library = "cc_grpc_library")
 load("@com_google_protobuf//bazel:cc_proto_library.bzl", _cc_proto_library = "cc_proto_library")
+load("@llvm//toolchain/runtimes:cc_runtime_binary.bzl", "cc_runtime_stage0_binary")
 load("@rules_cc//cc:defs.bzl", _cc_binary = "cc_binary", _cc_library = "cc_library", _cc_test = "cc_test")
 load(":defs.bzl", "transition_allowlist")
 
@@ -42,13 +43,14 @@ cc_flags_supplier = rule(
 def cc_grpc_library(name, **kwargs):
     _cc_grpc_library(name = name, grpc_only = True, **kwargs)
 
-def cc_binary(name, static = False, tcmalloc = False, **kwargs):
+def cc_binary(name, static = False, tcmalloc = False, freestanding = False, **kwargs):
     """Run cc_binary.
 
     Args:
         name: name of the target.
         static: make a static binary if True
         tcmalloc: use TCMalloc if True (not implemented)
+        freestanding: omit hosted runtimes while retaining the target platform.
         **kwargs: the rest of the args.
     """
     if static:
@@ -67,7 +69,15 @@ def cc_binary(name, static = False, tcmalloc = False, **kwargs):
         # buildifier: disable=print
         print("Warning: tcmalloc can't be enabled")
 
-    _cc_binary(
+    binary = _cc_binary
+    if freestanding:
+        if static or tcmalloc:
+            fail("freestanding binaries cannot request hosted runtimes")
+        # Stage0 leaves libc and runtime inputs out of the toolchain. The
+        # syscall-only sidecars still need the target's Linux UAPI headers.
+        binary = cc_runtime_stage0_binary
+        kwargs["deps"] = kwargs.get("deps", []) + ["@kernel_headers//:kernel_headers"]
+    binary(
         name = name,
         **kwargs
     )

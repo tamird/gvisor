@@ -45,6 +45,7 @@ def freestanding_sidecar(name, src, out):
             "-Wl,-n",
             "-Wl,-s",
         ],
+        freestanding = True,
         linkstatic = True,
         stamp = 0,
         tcmalloc = False,
