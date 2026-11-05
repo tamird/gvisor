@@ -1,35 +1,69 @@
-name: CI
-
-"on":
+name: Verify statically linked Go targets with default LLVM
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-race-filter-and-gnu]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  verify:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 76
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 3
+      - name: Select the product and pinned Bazel
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 3dab3494e2a2154244e8b2fc77699c02c2277a56
+          test "$(git diff --name-only HEAD^ HEAD)" = "$(printf '%s\n' .github/workflows/build.yml test/rbe/narrow_race.py)"
+          test "$(git rev-parse HEAD^^)" = 629d27e5ff9478b7d8d60f8245da07f275373170
+          test "$(git diff --name-only HEAD^^ HEAD^)" = tools/bazeldefs/BUILD
+          python3 -B - <<'PYTHON'
+          import subprocess as sp
+          def previous(rev):
+              return sp.check_output(["git", "show", rev + ":tools/bazeldefs/BUILD"])
+          old = previous("HEAD^^")
+          src = b'"platforms": ""'
+          assert old.count(src) == 2 and previous("HEAD^") == old.replace(src, b'"platforms": "@bazel_tools//tools:host_platform"')
+          PYTHON
+          cp test/rbe/narrow_race.py "$RUNNER_TEMP/narrow_race.py"
+          echo "605ed6fa922f45cdf4ea8223d23198f87d1c2cc5cddce759977a250896e23921  $RUNNER_TEMP/narrow_race.py" | sha256sum -c -
+          git checkout --detach HEAD^
+          test "$(cat .bazelversion)" = 9.3.1
+          d="$RUNNER_TEMP/static-go-check"
+          mkdir -p "$d/bin" "$d/public"
+          test "$(git rev-parse HEAD)" = 3dab3494e2a2154244e8b2fc77699c02c2277a56
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bin/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bin/bazel" | sha256sum -c -
+          chmod 755 "$d/bin/bazel"
+          echo "$d/bin" >> "$GITHUB_PATH"
+          echo "CHECK_DIR=$d" >> "$GITHUB_ENV"
+      - name: Trace the two public Nogo filters to original findings
+        timeout-minutes: 25
+        run: python3 -B "$RUNNER_TEMP/narrow_race.py" filters
+      - name: Link the explicit native GNU CLI
+        if: always() && !cancelled()
+        timeout-minutes: 46
+        run: python3 -B "$RUNNER_TEMP/narrow_race.py" gnu
+      - name: Validate bounded typed receipts
+        id: boundary
+        if: always()
+        run: |
+          python3 -B - <<'PY'
+          import json,os,re
+          from pathlib import Path
+          p=Path(os.environ["CHECK_DIR"])/"public";allowed={n+".json" for n in ("filters","gnu")}
+          files=list(p.iterdir());assert files and {f.name for f in files}<=allowed
+          for f in files:
+              b=f.read_bytes();assert f.is_file() and not f.is_symlink() and len(b)<65536 and json.loads(b)["source"]=="3dab3494e2a2154244e8b2fc77699c02c2277a56"
+              assert not re.search(rb"(?i)authorization\s*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}",b)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.boundary.outcome == 'success'
+        with:
+          name: narrow-static-race
+          path: ${{ runner.temp }}/static-go-check/public/*.json
+          if-no-files-found: error
