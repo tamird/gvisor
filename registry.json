@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-04T19:13:56.672254+00:00",
+    "updatedAt": "2026-11-05T02:54:29.301111+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4832,7 +4832,7 @@
       "group": "bazel",
       "status": "Agent work",
       "summary": "Bazel 9.3.1 and the declared clang++ built the NVIDIA ABI parser for x86_64-linux-gnu and aarch64-linux-gnu. With supplier source 17f6a3008, the generated LLVM configuration contained exactly AArch64 and X86. TestParser passed uncached on each native architecture. The earlier compiler integration passed all 871 selected Nogo targets (one cached result); those tests were not rerun on Bazel 9. Ordinary C binaries used GNU libc on both architectures. Static syscallbench ran all three modes on AMD64; its constraint excludes ARM64.\n\nThe fork-only packaging follow-up 50c1f8f6a lets a bare downstream Bazel module select exactly @kernel_dep//tools/bazeldefs:static.bzl for fsstress. All ten gVisor policy tags remain, with no consumer-supplied overrides. Stock 588e6f343 exits 7 at Gazelle; the corrected query exits 0, and the wrong-root load control exits 7. This qualifies loading and label selection only, not downstream compilation. The earlier root-workspace archives and AMD64 file-creation result remain separate.",
-      "updatedAt": "2026-11-04T20:16:20.916368+00:00",
+      "updatedAt": "2026-11-05T02:52:45.192796+00:00",
       "head": "a385bd2b0155b82faf4fc6a0c195a153ad57550c",
       "evidence": [
         {
@@ -4968,8 +4968,8 @@
         "owner": "Compiler integration",
         "sourceHead": "a385bd2b0155b82faf4fc6a0c195a153ad57550c",
         "disposition": "Bazel 9 parser passed; waiting for release and licensing",
-        "observedAt": "2026-11-03T21:35:51.320819+00:00",
-        "nextAction": "Use the first BCR llvm release that includes 17f6a3008, then verify its published configuration. Version 0.8.26 still enables nine backends. Keep the 6.18 Linux-header setting; the tested supplier already contains its configuration hook, so that pin needs no backport. The compiler no longer uses Coral or llvm-raw. The LLVM license classifier (#15146) and source inventory (#16249) still need to land.",
+        "observedAt": "2026-11-05T02:52:45.192796+00:00",
+        "nextAction": "Use the first BCR llvm release that includes 17f6a3008, then verify its published configuration. Version 0.8.26 still enables nine backends. Keep the 6.18 Linux-header setting; the tested supplier already contains its configuration hook, so that pin needs no backport. The compiler no longer uses Coral or llvm-raw. The LLVM source inventory landed in #16249. The license classifier in #15146 is still open.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
@@ -4987,7 +4987,8 @@
           "https://github.com/tamird/gvisor/actions/runs/41356215600/artifacts/13103158395",
           "https://github.com/tamird/gvisor/actions/runs/41357065776/artifacts/13104181385",
           "https://github.com/tamird/gvisor/commit/a899bf908",
-          "https://github.com/tamird/gvisor/actions/runs/41717072807/artifacts/13273383359"
+          "https://github.com/tamird/gvisor/actions/runs/41717072807/artifacts/13273383359",
+          "https://github.com/google/gvisor/commit/0245c1dfa"
         ]
       }
     },
@@ -23100,9 +23101,9 @@
       "ref": "license-llvm-source-current",
       "title": "Enumerate the declared LLVM source archive",
       "url": "https://github.com/google/gvisor/pull/16249",
-      "status": "open",
-      "summary": "The published amendment enumerates the declared LLVM source archive without changing artifact-license retention. Follow review and checks on the current head.",
-      "updatedAt": "2026-10-30T01:57:05.801498+00:00",
+      "status": "merged",
+      "summary": "The license audit enumerates the declared LLVM source archive. Artifact-license retention is unchanged.",
+      "updatedAt": "2026-11-05T02:52:45.192796+00:00",
       "number": 16249,
       "refinement": {
         "before": {
@@ -23124,6 +23125,10 @@
         {
           "label": "Published additive resolution on landed codeload base",
           "url": "https://github.com/google/gvisor/pull/16249/commits/996ce7aa0aba90e43c26a050fa2de3b04bf0b9b8"
+        },
+        {
+          "label": "Upstream source 0245c1dfa",
+          "url": "https://github.com/google/gvisor/commit/0245c1dfa"
         }
       ],
       "settledReviews": [
@@ -27494,14 +27499,14 @@
       "url": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-03T21:38:59.870561+00:00",
-      "summary": "The source migration uses the supplier’s LLVM libraries with the GNU toolchain. It passed native parser parity on AMD64 and ARM64 and the 201-entry license audit. A separate Bazel 9.3.1 integration with the declared clang++ confirmed the same two backends and passed both native parser tests. The standalone source change does not depend on switching compilers. The supplier release and licensing prerequisites remain open.",
+      "updatedAt": "2026-11-05T02:52:45.192796+00:00",
+      "summary": "The source migration uses the supplier’s LLVM libraries with the GNU toolchain. It passed native parser parity on AMD64 and ARM64 and the 201-entry license audit. A separate Bazel 9.3.1 integration with the declared clang++ confirmed the same two backends and passed both native parser tests. The standalone source change does not depend on switching compilers. The LLVM source inventory landed in #16249. The supplier release and #15146 remain outstanding.",
       "followup": {
         "owner": "root",
         "sourceHead": "17d37fc9ad63e02bd1e53862ae49136179ec11eb",
-        "observedAt": "2026-11-03T21:35:51.320819+00:00",
+        "observedAt": "2026-11-05T02:52:45.192796+00:00",
         "disposition": "Two backends verified; waiting for a registry release",
-        "nextAction": "Qualify the first BCR llvm release containing 17f6a3008; 0.8.26 predates it. Rebase the LLVM source migration independently once #15146 covers the license terms and #16249 inventories the source repository. Keep go-digest, QEMU and LTP policy work separate.",
+        "nextAction": "Qualify the first BCR llvm release containing 17f6a3008; 0.8.26 predates it. Once #15146 covers the license terms, rebase this source migration independently. The LLVM source inventory landed in #16249. Keep go-digest, QEMU and LTP policy work separate.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb",
           "https://app.buildbuddy.io/invocation/a0ed5b1c-6618-4291-9931-ec00d9183a9f",
@@ -27509,7 +27514,8 @@
           "https://app.buildbuddy.io/invocation/9870c3d7-b09b-4281-a17d-4a9c71382da9",
           "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a300884d73de0b903316f85c420c45471268",
           "https://app.buildbuddy.io/invocation/9f4b6536-8166-4896-9259-bce7f4f6b19b",
-          "https://tamird.github.io/gvisor/#branch%3Ahermetic-compiler-review"
+          "https://tamird.github.io/gvisor/#branch%3Ahermetic-compiler-review",
+          "https://github.com/google/gvisor/commit/0245c1dfa"
         ]
       },
       "evidence": [
@@ -33952,8 +33958,8 @@
       "title": "Preserve the full counter when converting an eventfd to a host fd",
       "url": "https://github.com/tamird/gvisor/commit/57e4b376dd945b7488aec22685f524dfe86970c1",
       "group": "runtime",
-      "status": "Published as #16627",
-      "updatedAt": "2026-10-28T21:39:20Z",
+      "status": "Merged as #16627",
+      "updatedAt": "2026-11-05T02:52:45.192796+00:00",
       "summary": "Converting a guest eventfd with a count of 4,294,967,297 produced a host eventfd with a count of 1. The patch transfers the full count before publishing the host descriptor.",
       "evidence": [
         {
@@ -33973,20 +33979,7 @@
           "url": "https://app.buildbuddy.io/invocation/ec568e32-29f1-49bc-99a3-b8ba097c60ef"
         }
       ],
-      "inactive": true,
-      "followup": {
-        "owner": "native_runtime",
-        "sourceHead": "57e4b376dd945b7488aec22685f524dfe86970c1",
-        "observedAt": "2026-10-28T21:39:20Z",
-        "disposition": "Published as #16627",
-        "nextAction": "Follow checks and review on #16627.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/16627",
-          "https://app.buildbuddy.io/invocation/922dd738-246e-43e4-b153-d22395d7b345",
-          "https://app.buildbuddy.io/invocation/d3f600d1-1c45-4715-bd40-8c27146afea5",
-          "https://app.buildbuddy.io/invocation/ec568e32-29f1-49bc-99a3-b8ba097c60ef"
-        ]
-      }
+      "inactive": true
     },
     {
       "id": "pr:16627",
@@ -33997,8 +33990,8 @@
       "title": "Preserve the full counter when converting an eventfd to a host fd",
       "url": "https://github.com/google/gvisor/pull/16627",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-30T15:44:14.108156+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-05T02:52:45.192796+00:00",
       "summary": "Converting a guest eventfd with a count of 4,294,967,297 produced a host eventfd with a count of 1. The patch transfers the full count before publishing the host descriptor.",
       "evidence": [
         {
@@ -34028,21 +34021,12 @@
         {
           "label": "Amended package and analyzer checks",
           "url": "https://github.com/tamird/gvisor/actions/runs/40774745270"
+        },
+        {
+          "label": "Upstream source 8ae1c243b",
+          "url": "https://github.com/google/gvisor/commit/8ae1c243b"
         }
       ],
-      "followup": {
-        "owner": "native_runtime",
-        "sourceHead": "d94cb4a5563d03e38f0b0d5e62ee1744c091cfbb",
-        "observedAt": "2026-10-28T21:55:52Z",
-        "disposition": "Signal now unlocks before the write to an installed host eventfd.",
-        "nextAction": "Follow maintainer review on #16627. The amended package and both analyzer targets passed in the Linux AMD64 qualification.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/16627",
-          "https://app.buildbuddy.io/invocation/922dd738-246e-43e4-b153-d22395d7b345",
-          "https://app.buildbuddy.io/invocation/d3f600d1-1c45-4715-bd40-8c27146afea5",
-          "https://app.buildbuddy.io/invocation/ec568e32-29f1-49bc-99a3-b8ba097c60ef"
-        ]
-      },
       "number": 16627
     },
     {
@@ -36717,8 +36701,8 @@
       "title": "Check the mutex protecting the overlay file cache",
       "url": "https://github.com/tamird/gvisor/commit/3fb1f05b5",
       "group": "analysis",
-      "status": "Published",
-      "updatedAt": "2026-10-29T17:29:11.211836+00:00",
+      "status": "Merged as #16682",
+      "updatedAt": "2026-11-05T02:52:45.192796+00:00",
       "summary": "Annotate copiedUp, cachedFD and cachedFlags with their existing mutex. Only final release has exclusive ownership without that mutex.",
       "evidence": [
         {
@@ -36728,37 +36712,21 @@
         {
           "label": "Removing the EventUnregister lock triggers both architecture analyzers",
           "url": "https://app.buildbuddy.io/invocation/62632a89-893e-4e1c-b4ff-762b7bbe330c"
+        },
+        {
+          "label": "Merged upstream proposal",
+          "url": "https://github.com/google/gvisor/pull/16682"
         }
       ],
-      "inactive": true,
-      "followup": {
-        "owner": "root",
-        "sourceHead": "3fb1f05b54b6c3cb7811c183b87d53650f21039c",
-        "observedAt": "2026-10-29T17:29:11.211836+00:00",
-        "disposition": "Published",
-        "nextAction": "Follow maintainer review on #16682.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/16682"
-        ]
-      }
+      "inactive": true
     },
     {
       "id": "pr:16682",
       "type": "pr",
       "number": 16682,
       "group": "analysis",
-      "updatedAt": "2026-10-29T17:29:11.211836+00:00",
+      "updatedAt": "2026-11-05T02:52:45.192796+00:00",
       "summary": "Annotate copiedUp, cachedFD and cachedFlags with their existing mutex. Only final release has exclusive ownership without that mutex.",
-      "followup": {
-        "owner": "root",
-        "sourceHead": "3fb1f05b54b6c3cb7811c183b87d53650f21039c",
-        "observedAt": "2026-10-29T17:29:11.211836+00:00",
-        "disposition": "Published",
-        "nextAction": "Follow maintainer review on #16682.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/16682"
-        ]
-      },
       "evidence": [
         {
           "label": "Positive checks on AMD64 and ARM64",
@@ -36767,13 +36735,17 @@
         {
           "label": "Removing the EventUnregister lock triggers both architecture analyzers",
           "url": "https://app.buildbuddy.io/invocation/62632a89-893e-4e1c-b4ff-762b7bbe330c"
+        },
+        {
+          "label": "Upstream source a11d17865",
+          "url": "https://github.com/google/gvisor/commit/a11d17865"
         }
       ],
       "repo": "google/gvisor",
       "ref": "review/overlay-file-cache-guards",
-      "head": "3fb1f05b54b6c3cb7811c183b87d53650f21039c",
+      "head": "05eca6e0c2d6d3b1c2826939d8a150c98b27935d",
       "title": "overlay: check the file cache mutex",
-      "status": "open",
+      "status": "merged",
       "reviewDecision": null,
       "url": "https://github.com/google/gvisor/pull/16682"
     },
@@ -39023,7 +38995,7 @@
       "url": "https://github.com/tamird/gvisor/commit/41d324e51",
       "status": "Contributor approved; waiting for #16743",
       "summary": "The same real VFIO PCI interrupt ioctl preserved at least 4,294,967,297 events on Linux and on corrected ordinary/direct gVisor. Both stock gVisor modes read 1. The positive test uses the device fixture from #16743 and the implementation from #16627; it adds one syscall test and shares setup with the open-device check.",
-      "updatedAt": "2026-10-30T15:57:13.800523+00:00",
+      "updatedAt": "2026-11-05T02:52:45.192796+00:00",
       "evidence": [
         {
           "label": "Pure test change against its integrated parent",
@@ -39059,9 +39031,9 @@
       "followup": {
         "owner": "overlay_owner",
         "sourceHead": "41d324e51e290a3b7a52bcdb6b0685147f74d2a9",
-        "observedAt": "2026-10-30T15:57:13.800523+00:00",
+        "observedAt": "2026-11-05T02:52:45.192796+00:00",
         "disposition": "Approved after #16743",
-        "nextAction": "Once the VFIO fixture lands, add the approved test to #16627 if still unapproved; otherwise submit it as a follow-up. Do not amend an approved PR.",
+        "nextAction": "Submit the approved syscall test as a separate follow-up after the VFIO fixture in #16743 lands. The eventfd implementation landed in #16627.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16743",
           "https://github.com/google/gvisor/pull/16627",
@@ -42146,9 +42118,9 @@
       "title": "Start packet capture and cooked socket delivery at the network header",
       "url": "https://github.com/google/gvisor/pull/16862",
       "group": "runtime",
-      "status": "open",
+      "status": "merged",
       "summary": "Start binary packet capture and cooked AF_PACKET delivery at the recorded network header offset. Looking up writable slices just to skip the link header can copy the shared packet. Raw sockets still see the link header. Writing binary PCAP to a discard sink took 21–33% less time across three packet sizes on AMD64.",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
+      "updatedAt": "2026-11-05T02:52:45.192796+00:00",
       "evidence": [
         {
           "label": "Benchstat: eight pairs per packet size; AMD64 analyzers",
@@ -42169,6 +42141,10 @@
         {
           "label": "Four AF_PACKET cases on gVisor",
           "url": "https://github.com/tamird/gvisor/actions/runs/41200454123/artifacts/13042397154"
+        },
+        {
+          "label": "Upstream source 3fd8669eb",
+          "url": "https://github.com/google/gvisor/commit/3fd8669eb"
         }
       ],
       "settledReviews": [
@@ -42187,11 +42163,11 @@
       "group": "analysis",
       "repo": "google/gvisor",
       "ref": "research/timekeeper-updater-locks",
-      "head": "5bb344423d08a2319d4f908b2bcc39e70b96e24b",
+      "head": "b40bb52d45af39bf7e4bdc2c337e2568d728a4e8",
       "title": "Check the mutexes required by the timekeeper updater",
       "url": "https://github.com/google/gvisor/pull/16859",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
-      "status": "open",
+      "updatedAt": "2026-11-05T02:52:45.192796+00:00",
+      "status": "merged",
       "summary": "Three annotations let Nogo verify the existing clock lifecycle and vDSO update locks. Starting and stopping the updater before acquiring the lifecycle mutex each produced the expected diagnostic on both architectures. Runtime locking and the restore sequence are unchanged.",
       "evidence": [
         {
@@ -42201,6 +42177,10 @@
         {
           "label": "Periodic update without the vDSO mutex",
           "url": "https://github.com/tamird/gvisor/blob/8270bcdf6/.github/qualification/timekeeper-reconciliation.json"
+        },
+        {
+          "label": "Upstream source 14deba723",
+          "url": "https://github.com/google/gvisor/commit/14deba723"
         }
       ],
       "settledReviews": [
@@ -42400,10 +42380,18 @@
         {
           "label": "Final test: object count and caller ownership",
           "url": "https://github.com/tamird/gvisor/actions/runs/41217378308/artifacts/13048817706"
+        },
+        {
+          "label": "Konstantin’s request to omit the subprocess test",
+          "url": "https://github.com/google/gvisor/pull/16854#discussion_r4474272667"
+        },
+        {
+          "label": "Production-only amendment on the master containing #16627",
+          "url": "https://github.com/tamird/gvisor/compare/94c03f66c...f0e414b08"
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
+      "updatedAt": "2026-11-05T02:54:29.301111+00:00",
       "head": "8b0c840b1aa2afe6bdfbf411bda92cd678dcc857",
       "settledReviews": [
         {
@@ -42413,7 +42401,18 @@
           "at": "2026-11-02T20:41:16Z"
         }
       ],
-      "number": 16854
+      "number": 16854,
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "f0e414b08b89f9486132955578fcb8d55346d33c",
+        "baseHead": "8b0c840b1aa2afe6bdfbf411bda92cd678dcc857",
+        "url": "https://github.com/tamird/gvisor/commit/f0e414b08",
+        "title": "Release the eventfd file after a failed host import",
+        "requestedAt": "2026-11-05T02:54:29.301111+00:00",
+        "summary": "Publish the production-only amendment and reply to Konstantin after the current-master package check passes?",
+        "body": "The amendment drops the subprocess regression Konstantin asked to omit. On master 94c03f66c it changes only eventfd.go, retaining the BUILD file and the tests merged in #16627. The production patch is identical to the one previously qualified. On the earlier base, the stock case reproduced the leak and the corrected package passed; the final EMFILE case also checked that the caller retained the descriptor. A separate Linux run will check the rebased package.\n\nProposed PR description (unchanged):\n\nNewFromHost creates a VFS file before registering the donated host FD.\nIf registration fails, this leaves the file counted in fs/file-nr and\nholds a reference to the anonymous mount.\n\nTransfer the host FD after registration succeeds so that dropping the\nVFS file on error leaves the caller responsible for the host FD.\n\nProposed reply on Konstantin’s existing thread after publishing the amendment:\n\nRemoved the subprocess test and rebased onto master, preserving the tests from #16627. The production fix is unchanged.\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "branch:checkpoint-page-read-error",
@@ -67293,8 +67292,8 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-04T20:45:45.283369+00:00",
-      "summary": "Supported builds need declared Bazel tools and inputs, including interpreters, system libraries and helpers. Literal zero-layer execution remains blocked before the action: the production probe failed at the worker mount and its executor revision is unknown. The latest native full-graph build is incomplete; the separately repaired license package reaches its held policy check and fails.",
+      "updatedAt": "2026-11-05T02:52:45.192796+00:00",
+      "summary": "The AMD64 DPDK archive built on a worker image containing only /hello. Both a zero-layer image and an image with one file-empty layer failed during worker setup, before the probe or DPDK ran. The deployed executor revision is unknown. The native full graph also remains incomplete.",
       "findings": [
         {
           "text": "On a bare Linux AMD64 worker, DPDK’s native Make build for static musl generated its own driver metadata. The separate Bazel helper and configuration targets left the build graph. The helper and header were byte-identical to the separate builds. Both archives contained the same 148 ordered members, 1,153 external symbols and three driver records. The archives differed in bytes. The check covered the build and archive contents.",
@@ -69206,9 +69205,26 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/41765228449/artifacts/13292873920"
             }
           ]
+        },
+        {
+          "text": "A second manifest supplied one physical 32-byte layer: it unpacks to a 1,024-byte empty tar with no files. The AMD64 OCI worker selected that exact image with recycling disabled. ObserveWorkerRoot action 1cc329ad7 returned code 14, “mount overlayfs: invalid argument,” before it started; no DPDK target executed. BuildBuddy v2.322.0 skips unpacked layer directories with no children, so such a layer supplies no OverlayFS lower directory in that release. The deployed worker version is unknown. The earlier /hello-only image did build the archive.",
+          "evidence": [
+            {
+              "label": "One empty layer: requested platform and original worker failure",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41957480987/artifacts/13383553265"
+            },
+            {
+              "label": "v2.322.0 skips unpacked layer directories with no children",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/blob/8e9fa833c/enterprise/server/remote_execution/containers/ociruntime/ociruntime.go#L1150-L1162"
+            },
+            {
+              "label": "Upstream guard when OverlayFS has no lower directories",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/commit/1002071ca"
+            }
+          ]
         }
       ],
-      "nextStep": "Wait for source or rollout evidence addressing the zero-layer mount behavior before another probe; v2.322.0 alone is not that signal. Full-graph completion remains unqualified after the fork-only compile repair. Keep the separate classifier policy issue on #15146’s maintainer hold, with the original catalog and approved exceptions intact.",
+      "nextStep": "Confirm the deployed executor contains the zero-lowerdir guard from BuildBuddy #14022 before repeating an empty-image probe. One physically present but file-empty layer did not change the result. Keep the separate full-graph build and #15146 license-policy hold distinct.",
       "evidence": [
         {
           "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
@@ -69525,6 +69541,14 @@
         {
           "label": "Classifier maintainer hold",
           "url": "https://github.com/google/gvisor/pull/15146"
+        },
+        {
+          "label": "One empty layer: requested platform and original worker failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41957480987/artifacts/13383553265"
+        },
+        {
+          "label": "v2.322.0 skips unpacked layer directories with no children",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/blob/8e9fa833c/enterprise/server/remote_execution/containers/ociruntime/ociruntime.go#L1150-L1162"
         }
       ],
       "group": "rbe"
@@ -71875,5 +71899,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-04T21:23:21.762115+00:00"
+  "updatedAt": "2026-11-05T02:54:29.301111+00:00"
 }
