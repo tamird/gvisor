@@ -1,0 +1,92 @@
+name: Verify the native plugin approval and delivery gates
+on:
+  push:
+    branches: [qualification/work-map-buildkite-plugin-approval]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 4
+          persist-credentials: false
+      - name: Run the canonical collector on the proposed Pages source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(git rev-parse HEAD^)" = 3a2669031d116db612610512476f855f8648cc9b
+          git checkout --detach 3a2669031d116db612610512476f855f8648cc9b
+          python3 -B update-status.py
+      - name: Validate the collected pair and run its existing tests
+        run: |
+          python3 -B - <<'PYTHON'
+          import datetime, hashlib, json, re, subprocess
+          from pathlib import Path
+
+          source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          assert source == '3a2669031d116db612610512476f855f8648cc9b'
+          commands = [['node', 'metadata-preflight.mjs', '.'],
+                      ['python3', '-B', '-m', 'unittest', 'work_states_test', 'update_status_test'],
+                      ['node', '--test', '--test-reporter=tap', 'app_test.mjs']]
+          expected = [' '.join(command) for command in commands]
+          record = dict(source=source, expected=expected, executed=[], failed=[], skipped=[], missing=expected.copy())
+          for command, label in zip(commands, expected, strict=True):
+              result = subprocess.run(command, capture_output=True, text=True)
+              if result.returncode:
+                  print(result.stdout[-5000:], result.stderr[-5000:])
+              record['executed'].append(label)
+              record['missing'].remove(label)
+              if result.returncode:
+                  record['failed'].append(label)
+              elif command == commands[0]:
+                  record['preflight'] = json.loads(result.stdout)
+              if command == commands[1]:
+                  record['pythonTests'] = [int(n) for n in re.findall(r'^Ran (\d+) tests?', result.stderr, re.M)]
+              elif command == commands[2]:
+                  record['jsCounts'] = {k:int(n) for k,n in re.findall(r'^# (tests|pass|fail|skipped) (\d+)$', result.stdout, re.M)}
+          snapshot = json.loads(Path('github-status.json').read_text())
+          before = json.loads(subprocess.check_output(['git', 'show', 'HEAD:github-status.json']))
+          current = {p['number']:p for p in snapshot['prs'] if p.get('repo', 'google/gvisor') == 'google/gvisor'}
+          handoffs = [p['number'] for p in current.values() if p.get('terminalImportHandoff')]
+          checks = dict(fresh=snapshot['checkedAt'] > before['checkedAt'],
+                        requestBudget=1 <= snapshot['limits']['requests'] <= 64,
+                        registryUnchanged=not subprocess.run(['git','diff','--quiet','HEAD','--','registry.json']).returncode)
+          registry = json.loads(Path('registry.json').read_text())
+          previous = json.loads(subprocess.check_output(['git','show',source+'^:registry.json']))
+          nodes = {n['id']:n for n in registry['nodes']}
+          old = {n['id']:n for n in previous['nodes']}
+          nid='branch:buildkite-native-plugin';n=nodes[nid];before_node=old[nid]
+          checks['sourceFiles']=subprocess.check_output(['git','diff','--name-only',source+'^',source],text=True).splitlines()==['registry.json']
+          checks['onlyPlugin']=nodes.keys()==old.keys() and {k for k in nodes if nodes[k]!=old[k]}=={nid} and all(registry[k]==v for k,v in previous.items() if k not in ('meta','updatedAt','nodes'))
+          q=before_node['contributorReview']; settled=n['settledReviews'][-1]
+          checks['exactApproval']=settled['outcome']=='approved' and settled['head']==n['head']=='3d576b2ffb5b3dce0e3ebc7651338d1de66f0e3a' and all(settled[k]==q[k] for k in ('kind','head','baseHead','url','title','body')) and n['settledReviews'][:-1]==before_node.get('settledReviews',[])
+          checks['retiredDecision']='contributorReview' not in n and 'contributor-review' not in snapshot['workStates'].get(nid,{})
+          checks['priorEvidence']=all(n[k]==v for k,v in before_node.items() if k not in ('updatedAt','followup','status','contributorReview','settledReviews'))
+          checks['queued']=n['status']=='Contributor approved; waiting for #15153 and #16904' and {e['from'] for e in registry['edges'] if e['to']==nid and e['type']=='depends_on'}=={'pr:15153','pr:16904'}
+          checks['ordinaryCompilerUnchanged']=nodes['branch:hermetic-compiler-review']==old['branch:hermetic-compiler-review']
+          for num,head in ((15153,'93993d354'),(16904,'896acc456')):
+              checks['open'+str(num)]=current[num]['status']=='open' and current[num]['head'].startswith(head)
+          record.update(requests=snapshot['limits']['requests'], requestLimit=64,
+                        checkedAt=snapshot['checkedAt'], previousCheckedAt=before['checkedAt'], reminderPosting=False,
+                        liveChecks=checks, terminalImportHandoffs=handoffs,
+                        cases={n:{'head':p['head'], 'status':p['status'], 'handoff':n in handoffs}
+                               for n,p in current.items() if n in (15153,16904)},
+                        finished=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                        exitCode=int(bool(record['failed']) or not all(checks.values())),
+                        hashes={p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in
+                                ('github-status.json','registry.json','app.js','update-status.py','work_states.py','update_status_test.py','README.md')})
+          Path('verdict.json').write_text(json.dumps(record, indent=2))
+          raise SystemExit(record['exitCode'])
+          PYTHON
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: work-map-verdict
+          path: |
+            verdict.json
+            github-status.json
+          if-no-files-found: error
