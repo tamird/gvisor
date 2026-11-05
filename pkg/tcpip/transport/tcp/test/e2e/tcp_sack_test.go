@@ -1189,3 +1189,152 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+// TestEifelFiniteApplicationFlight establishes a finite threshold through a
+// genuine timeout before growing cwnd and timing out an application-limited
+// flight. The timestamp echo distinguishes an original from its actual repair.
+func TestEifelFiniteApplicationFlight(t *testing.T) {
+	for _, scenario := range []string{"original_ack", "repair_ack"} {
+		t.Run(scenario, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			observed := make(chan tcp.TCPSenderState, 32)
+			c := context.NewWithOpts(t, context.Options{
+				MTU: mtu, EnableV4: true, Clock: clock,
+				Probe: func(s *tcp.TCPEndpointState) { observed <- s.Sender },
+			})
+			defer c.Cleanup()
+			e2e.SetStackSACKPermitted(t, c, true)
+			e2e.SetStackTCPRecovery(t, c, 0)
+			cc := tcpip.CongestionControlOption("reno")
+			if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &cc); err != nil {
+				t.Fatal(err)
+			}
+			peer := e2e.CreateConnectedWithSACKAndTS(c)
+			clock.Advance(time.Duration(uint32(1000)-peer.RecentTS) * time.Millisecond)
+			data := make([]byte, 200*maxPayload)
+			for i := range data {
+				data[i] = byte(i)
+			}
+			info := func() tcpip.TCPInfoOption {
+				t.Helper()
+				var result tcpip.TCPInfoOption
+				if err := c.EP.GetSockOpt(&result); err != nil {
+					t.Fatal(err)
+				}
+				return result
+			}
+			packet := func(offset int) uint32 {
+				t.Helper()
+				v := c.GetPacket()
+				defer v.Release()
+				h := header.TCP(header.IPv4(v.AsSlice()).Payload())
+				checkReceivedPacket(t, c, h, uint32(offset), v, data)
+				if len(h.Payload()) != maxPayload || !h.ParsedOptions().TS {
+					t.Fatalf("offset %d: payload=%d TS=%t", offset, len(h.Payload()), h.ParsedOptions().TS)
+				}
+				return h.ParsedOptions().TSVal
+			}
+			sent := 0
+			send := func(count int) uint32 {
+				t.Helper()
+				end := sent + count*maxPayload
+				if end > len(data) {
+					t.Fatal("packet budget exceeded")
+				}
+				if n, err := c.EP.Write(bytes.NewReader(data[sent:end]), tcpip.WriteOptions{}); err != nil || int(n) != end-sent {
+					t.Fatalf("write = (%d,%v), want (%d,nil)", n, err, end-sent)
+				}
+				var ts uint32
+				for sent < end {
+					ts = packet(sent)
+					sent += maxPayload
+				}
+				return ts
+			}
+			peerTS := uint32(10)
+			ack := func(echo uint32) tcp.TCPSenderState {
+				t.Helper()
+				peerTS++
+				want := c.IRS.Add(1 + seqnum.Size(sent))
+				c.SendPacket(nil, &context.Headers{
+					SrcPort: context.TestPort, DstPort: c.Port, Flags: header.TCPFlagAck,
+					SeqNum: peer.NextSeqNum, AckNum: want, RcvWnd: 30000,
+					TCPOpts: timestampOption(peerTS, echo),
+				})
+				deadline := time.NewTimer(time.Second)
+				defer deadline.Stop()
+				for {
+					select {
+					case s := <-observed:
+						if s.SndUna == want {
+							if s.SndNxt != want || s.Outstanding != 0 {
+								t.Fatalf("flight not drained: UNA=%d NXT=%d outstanding=%d", s.SndUna, s.SndNxt, s.Outstanding)
+							}
+							return s
+						}
+					case <-deadline.C:
+						t.Fatal("ACK was not processed")
+					}
+				}
+			}
+			rto := func(offset int, original uint32, wantTimeouts uint64) uint32 {
+				t.Helper()
+				wait := info().RTO
+				if wait < time.Millisecond || wait > time.Minute {
+					t.Fatalf("unexpected RTO %s", wait)
+				}
+				clock.Advance(wait + time.Millisecond)
+				repair := packet(offset)
+				if repair <= original || info().CcState != tcpip.RTORecovery || c.Stack().Stats().TCP.Timeouts.Value() != wantTimeouts {
+					t.Fatalf("missing real timeout: original=%d repair=%d state=%v timeouts=%d", original, repair, info().CcState, c.Stack().Stats().TCP.Timeouts.Value())
+				}
+				return repair
+			}
+
+			// Lose one original and acknowledge its repair. This creates a real,
+			// finite ssthresh; the initial sentinel is never the measured case.
+			original := send(1)
+			repair := rto(0, original, 1)
+			state := ack(repair)
+			if state.Ssthresh != 2 || state.SpuriousRecovery || info().CcState != tcpip.Open {
+				t.Fatalf("genuine recovery: threshold=%d spurious=%t state=%v", state.Ssthresh, state.SpuriousRecovery, info().CcState)
+			}
+			// Grow through ordinary Reno congestion avoidance, without assigning
+			// sender fields or invoking recovery helpers from the test.
+			for round := 0; state.SndCwnd < tcp.InitialCwnd && round < 16; round++ {
+				clock.Advance(time.Millisecond)
+				ts := send(state.SndCwnd)
+				clock.Advance(time.Millisecond)
+				state = ack(ts)
+			}
+			if state.SndCwnd != tcp.InitialCwnd || state.Ssthresh != 2 || info().CcState != tcpip.Open {
+				t.Fatalf("precondition: cwnd=%d threshold=%d state=%v", state.SndCwnd, state.Ssthresh, info().CcState)
+			}
+			before := state
+			offset := sent
+			clock.Advance(time.Millisecond)
+			original = send(1)
+			if got := info().SndCwnd; got != uint32(before.SndCwnd) {
+				t.Fatalf("window changed before RTO: %d", got)
+			}
+			// The preceding ACK drained every byte; exactly this one observed
+			// packet is now in flight, below both cwnd and the finite threshold.
+			wait := info().RTO
+			repair = rto(offset, original, 2)
+			afterRTO := info()
+			echo, wantSpurious := original, uint64(1)
+			if scenario == "repair_ack" {
+				echo, wantSpurious = repair, 0
+			}
+			state = ack(echo)
+			stats := c.Stack().Stats().TCP
+			if stats.SpuriousRecovery.Value() != wantSpurious || stats.SpuriousRTORecovery.Value() != wantSpurious || info().CcState != tcpip.Open {
+				t.Fatalf("wrong recovery path: spurious=%d RTOspurious=%d state=%v", stats.SpuriousRecovery.Value(), stats.SpuriousRTORecovery.Value(), info().CcState)
+			}
+			t.Logf("EIFEL_FINITE case=%s pre_cwnd=%d pre_ssthresh=%d flight=1 rto_ms=%d timeout_cwnd=%d timeout_ssthresh=%d original=%d repair=%d echo=%d post_cwnd=%d post_ssthresh=%d timeouts=%d spurious=%d", scenario, before.SndCwnd, before.Ssthresh, wait.Milliseconds(), afterRTO.SndCwnd, afterRTO.SndSsthresh, original, repair, echo, state.SndCwnd, state.Ssthresh, stats.Timeouts.Value(), stats.SpuriousRecovery.Value())
+			if state.Ssthresh != before.Ssthresh {
+				t.Errorf("finite application-limited threshold = %d, want max(1,%d)=%d", state.Ssthresh, before.Ssthresh, before.Ssthresh)
+			}
+		})
+	}
+}
