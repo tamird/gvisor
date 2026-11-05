@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T22:58:52.507429Z",
+    "updatedAt": "2026-11-05T23:13:27.259741Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4841,8 +4841,8 @@
       "url": "https://github.com/tamird/gvisor/commit/9310f06f9",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "The compiler proposal at 9310f06f9 needs an amendment for two required race builds. On that exact source, ld.lld could not find -lc, -ldl, -lm, -lpthread or -lresolv when linking runsc-race and gvisor_sentry-race for AMD64. Neither executable was built. The request to approve this head is withdrawn.\n\nReplace Coral’s host-installed GCC and target headers with the LLVM toolchains already declared by gVisor. The fork commit has 37 insertions and 1,937 deletions, including four obsolete patches. It changes the compiler and the three freestanding sidecars together so the release links at every step.\n\nThe identical source tree was built as fffadb2bb on one AMD64 Linux worker. Plain bazel build -c opt //:release built nine static AMD64 executables; --config=aarch64 built nine ARM64 executables. Make installed the same bytes for each target. On a separate native ARM64 worker the cross-built runsc, Sentry and prewarmer started a rootless systrap guest. The build uses released LLVM 0.8.24 and master’s existing kernel-header backport.\n\nAn ordinary, dynamically linked C++ syscall test also cross-built on AMD64 and passed all four TCP_NODELAY cases on native ARM64. The earlier full scratch-worker build was on 5388293bd. The stock project catalog check passed on upstream 61a70083c and the compiler integration fffadb2bb: both verified all 220 dependencies against the identical catalog and policy. Removing abseil-cpp from a disposable catalog produced exactly one missing-entry error. This check does not audit every transitive toolchain binary.\n\nThe optional TLDK archive built on 3f0bd3a70 with #15153 added (148 Clang objects). Both plugin executable links then failed: lld could not find static pthread or dl for runsc-plugin-stack and gvisor_sentry_plugin_stack. Neither executable started. The normal release and native guest results above are separate.\n\nThe broad musl transition linked both race executables for AMD64 and ARM64, and the native AMD64 pair booted a guest. The narrower design keeps the public Go target declarations and selects the C library in the Bazel adapter.\n\nThe fork integration at 87fd1b411 built and installed //:release for AMD64 and ARM64 on a shell-free AMD64 remote worker. Make, its Bazel build and its cquery exited 0 for each target. All 18 installed regular files were static ELFs of the requested architecture, with the exact hashes and sizes from the original build. The installation recorded 614 fresh remote actions and 4,155 cache hits for AMD64, and 582 fresh remote actions and 2,241 cache hits for ARM64; all six sidecar links ran remotely and their output digests matched the installed files. No TestRunner ran.\n\nA separate native ARM64 worker received the same installed CLI, Sentry and prewarmer without rebuilding. The rootless systrap guest printed the expected echo and exited 0, with matching Sentry and prewarmer startup witnesses. The minimal guest omitted optional fdparking; its installed binary was verified separately.\n\nThe first build succeeded before a stale three-owner link check prevented Make. The recovery above completes installation and native guest evidence. Its separate historical-action reader found all six original completed, uncached CppLinks and exit 0, but selected a GetInvocation projection that omits successful action events. That historical BEP/configuration/CAS lookup remains incomplete and caused the outer job to be red; it does not invalidate the independent Make or guest results. This is the composed 87fd1b411 source, including the declared bootstrap, stateify and ELF-extractor changes, not the unamended 9310f06f9 compiler proposal.\n\nWith the draft glibc 2.44 sysroot and LLVM unwinder, the DPDK archive built. Both optional plugin executables then failed to link because the sysroot lacks libresolv.a. The devices opened; there was no executable for the traffic test.",
-      "updatedAt": "2026-11-05T22:56:39.455356Z",
+      "summary": "The compiler proposal at 9310f06f9 requires a source amendment for its two race builds. Its original AMD64 links could not find -lc, -ldl, -lm, -lpthread or -lresolv, and produced neither executable. The narrower experimental adapter at 3dab3494e now has the scoped positive results below; it has not become a new contributor proposal. The request to approve 9310f06f9 remains withdrawn.\n\nReplace Coral’s host-installed GCC and target headers with the LLVM toolchains already declared by gVisor. The fork commit has 37 insertions and 1,937 deletions, including four obsolete patches. It changes the compiler and the three freestanding sidecars together so the release links at every step.\n\nThe identical source tree was built as fffadb2bb on one AMD64 Linux worker. Plain bazel build -c opt //:release built nine static AMD64 executables; --config=aarch64 built nine ARM64 executables. Make installed the same bytes for each target. On a separate native ARM64 worker the cross-built runsc, Sentry and prewarmer started a rootless systrap guest. The build uses released LLVM 0.8.24 and master’s existing kernel-header backport.\n\nAn ordinary, dynamically linked C++ syscall test also cross-built on AMD64 and passed all four TCP_NODELAY cases on native ARM64. The earlier full scratch-worker build was on 5388293bd. The stock project catalog check passed on upstream 61a70083c and the compiler integration fffadb2bb: both verified all 220 dependencies against the identical catalog and policy. Removing abseil-cpp from a disposable catalog produced exactly one missing-entry error. This check does not audit every transitive toolchain binary.\n\nThe optional TLDK archive built on 3f0bd3a70 with #15153 added (148 Clang objects). Both plugin executable links then failed: lld could not find static pthread or dl for runsc-plugin-stack and gvisor_sentry_plugin_stack. Neither executable started. The normal release and native guest results above are separate.\n\nThe broad musl transition linked both race executables for AMD64 and ARM64, and the native AMD64 pair booted a guest. The narrower design keeps the public Go target declarations and selects the C library in the Bazel adapter. On 3dab3494e, both default AMD64 public race binaries linked as static ELF62 files, retained their public paths and staging CopyFile identities, and runsc --version matched the source. The two public Nogo targets and two dependency tests actually ran fresh: four passes, no skips or failures. The first policy and GNU readers remained incomplete after the commands. A separate recovery joined all four public filter outputs to the original AMD64/ARM64 findings and verified an explicit native GNU selection: cc-compiler-k8 and x86_64-linux-gnu-gcc-11 supplied the actual runsc-race GoLink. That static GNU ELF was 26,004,208 bytes (SHA256 8b4e961462acdc9ba5b5806015e1f33ebbff8459f5e02edf00f41f7c4ec2064a) and its stamped --version exited 0. This is a specific explicit-toolchain path, not general compiler detection. GNU Sentry, ARM race execution and actual installation were not tested on 3dab3494e.\n\nThe fork integration at 87fd1b411 built and installed //:release for AMD64 and ARM64 on a shell-free AMD64 remote worker. Make, its Bazel build and its cquery exited 0 for each target. All 18 installed regular files were static ELFs of the requested architecture, with the exact hashes and sizes from the original build. The installation recorded 614 fresh remote actions and 4,155 cache hits for AMD64, and 582 fresh remote actions and 2,241 cache hits for ARM64; all six sidecar links ran remotely and their output digests matched the installed files. No TestRunner ran.\n\nA separate native ARM64 worker received the same installed CLI, Sentry and prewarmer without rebuilding. The rootless systrap guest printed the expected echo and exited 0, with matching Sentry and prewarmer startup witnesses. The minimal guest omitted optional fdparking; its installed binary was verified separately.\n\nThe first build succeeded before a stale three-owner link check prevented Make. The recovery above completes installation and native guest evidence. Its separate historical-action reader found all six original completed, uncached CppLinks and exit 0, but selected a GetInvocation projection that omits successful action events. That historical BEP/configuration/CAS lookup remains incomplete and caused the outer job to be red; it does not invalidate the independent Make or guest results. This is the composed 87fd1b411 source, including the declared bootstrap, stateify and ELF-extractor changes, not the unamended 9310f06f9 compiler proposal.\n\nWith the draft glibc 2.44 sysroot and LLVM unwinder, the DPDK archive built. Both optional plugin executables then failed to link because the sysroot lacks libresolv.a. The devices opened; there was no executable for the traffic test. The supplier correction now has separate AMD64 and ARM64 archive receipts: each matches GNU glibc 2.44’s 19 ordered ET_REL members and all 61 typed external symbols; 17 of 19 member bytes match exactly. Existing archives, CRT and headers are unchanged. The tested input was a60470fd4, with the AMD64 manifest patch applied before Bazel; the clean d779c2896 differs only by that exact generated patch. The compatibility source 29f9d4664 on released LLVM 0.8.24 retains those same static-libc sources and patch but is not itself the measured supplier run. This remains a fork correction on open supplier #768, not a released toolchain. The corrected optional consumer at b317c6e36 is being qualified separately; archive success does not yet establish its links, installed startup or traffic.",
+      "updatedAt": "2026-11-05T23:13:27.259741Z",
       "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
       "evidence": [
         {
@@ -5140,6 +5140,38 @@
         {
           "label": "GetInvocation top-level events omit successful actions in the paginated projection",
           "url": "https://github.com/buildbuddy-io/buildbuddy/blob/8e9fa833c/server/build_event_protocol/event_index/event_index.go#L174-L180"
+        },
+        {
+          "label": "Narrow adapter: actual default race links, four fresh tests and retained reader limitations",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42117886478/artifacts/13459164255"
+        },
+        {
+          "label": "Public analyzer origins and explicit native GNU runsc-race link/version recovery",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42125609399/artifacts/13461362085"
+        },
+        {
+          "label": "Experimental narrow race adapter; not a new contributor proposal",
+          "url": "https://github.com/tamird/gvisor/commit/3dab3494e"
+        },
+        {
+          "label": "Resolver archive versus genuine GNU reference: AMD64",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42125450746/artifacts/13461480803"
+        },
+        {
+          "label": "Resolver archive versus genuine GNU reference: ARM64",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42125450746/artifacts/13461465419"
+        },
+        {
+          "label": "Clean supplier correction retaining the measured generated manifest",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/d779c2896"
+        },
+        {
+          "label": "Same static-libc source and patch on the LLVM 0.8.24 compatibility base",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/29f9d4664"
+        },
+        {
+          "label": "Corrected optional plugin consumer qualification; separate from archive proof",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42127099486"
         }
       ],
       "refinement": {
@@ -5172,9 +5204,9 @@
       "followup": {
         "owner": "Compiler integration",
         "sourceHead": "9310f06f95b100725450a71fbb896fc8403ec0eb",
-        "disposition": "Amend the required race builds before contributor review; normal release and stock catalog remain qualified.",
-        "observedAt": "2026-11-05T22:56:39.455356Z",
-        "nextAction": "Qualify the narrow race binaries and their public analyzers. For optional TLDK, supply glibc’s real resolver archive before retrying the plugin links. Both Make installations and the native ARM64 guest are verified on 87fd1b411; retain the separate incomplete historical API projection without repeating those builds.",
+        "disposition": "The narrow experiment has default race links, public analyzers and explicit native GNU CLI proof; source review and separate consumer qualification remain.",
+        "observedAt": "2026-11-05T23:13:27.259741Z",
+        "nextAction": "Review the experimental 3dab3494e adapter against the existing static GNU selection contract before restoring a compiler decision. Its two default AMD64 race links, four executed policy tests, four public analyzer origins and explicit GNU CLI are verified; GNU Sentry, ARM race execution and installation remain untested on that source. Reconcile the running b317c6e36 optional plugin links/startup/traffic against the newly verified resolver archive, without treating supplier archive success as consumer success. Do not repeat the completed 87fd1b411 normal installations or native ARM guest.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
@@ -5235,7 +5267,15 @@
           "https://github.com/tamird/gvisor/actions/runs/42118568590/artifacts/13459111374",
           "https://github.com/tamird/gvisor/actions/runs/42124038703/artifacts/13459748412",
           "https://github.com/tamird/gvisor/actions/runs/42124038703/artifacts/13460685269",
-          "https://github.com/buildbuddy-io/buildbuddy/blob/8e9fa833c/server/build_event_protocol/event_index/event_index.go#L174-L180"
+          "https://github.com/buildbuddy-io/buildbuddy/blob/8e9fa833c/server/build_event_protocol/event_index/event_index.go#L174-L180",
+          "https://github.com/tamird/gvisor/actions/runs/42117886478/artifacts/13459164255",
+          "https://github.com/tamird/gvisor/actions/runs/42125609399/artifacts/13461362085",
+          "https://github.com/tamird/gvisor/commit/3dab3494e",
+          "https://github.com/tamird/hermetic-llvm/actions/runs/42125450746/artifacts/13461480803",
+          "https://github.com/tamird/hermetic-llvm/actions/runs/42125450746/artifacts/13461465419",
+          "https://github.com/tamird/hermetic-llvm/commit/d779c2896",
+          "https://github.com/tamird/hermetic-llvm/commit/29f9d4664",
+          "https://github.com/tamird/gvisor/actions/runs/42127099486"
         ]
       }
     },
@@ -69560,8 +69600,8 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-05T22:56:39.455356Z",
-      "summary": "A shell-free AMD64 remote worker built and installed nine static release ELFs per target architecture on 87fd1b411. All 18 files match the original build bytes. The cross-built ARM64 CLI, Sentry and prewarmer then started a native rootless systrap guest. A separate historical API projection remains incomplete.\n\nThe reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
+      "updatedAt": "2026-11-05T23:13:27.259741Z",
+      "summary": "A shell-free AMD64 remote worker built and installed nine static release ELFs per target architecture on 87fd1b411. All 18 files match the original build bytes. The cross-built ARM64 CLI, Sentry and prewarmer then started a native rootless systrap guest. A separate historical API projection remains incomplete. The verified directory-only image still awaits permission for public registry publication.",
       "findings": [
         {
           "text": "The fork integration at 87fd1b411 built and installed //:release for AMD64 and ARM64 on a shell-free AMD64 remote worker. Make, its Bazel build and its cquery exited 0 for each target. All 18 installed regular files were static ELFs of the requested architecture, with the exact hashes and sizes from the original build. The installation recorded 614 fresh remote actions and 4,155 cache hits for AMD64, and 582 fresh remote actions and 2,241 cache hits for ARM64; all six sidecar links ran remotely and their output digests matched the installed files. No TestRunner ran.\n\nA separate native ARM64 worker received the same installed CLI, Sentry and prewarmer without rebuilding. The rootless systrap guest printed the expected echo and exited 0, with matching Sentry and prewarmer startup witnesses. The minimal guest omitted optional fdparking; its installed binary was verified separately.\n\nThe first build succeeded before a stale three-owner link check prevented Make. The recovery above completes installation and native guest evidence. Its separate historical-action reader found all six original completed, uncached CppLinks and exit 0, but selected a GetInvocation projection that omits successful action events. That historical BEP/configuration/CAS lookup remains incomplete and caused the outer job to be red; it does not invalidate the independent Make or guest results. This is the composed 87fd1b411 source, including the declared bootstrap, stateify and ELF-extractor changes, not the unamended 9310f06f9 compiler proposal.",
@@ -71901,7 +71941,7 @@
           ]
         }
       ],
-      "nextStep": "Await Tamir’s permission to publish the verified layout as ghcr.io/tamird/gvisor-scratch-directory:v1 and make the new personal package public so both workers can pull it anonymously. If approved, verify the published digests and run the declared action on each worker. Check the shared test_app output and the race fixture build before proposing a boot change. Continue tracing the remaining sandbox failures. Choose between declaring the verified GNU runtime as test data and making the C++ example executable static. Continue the separate syscall qualification with the source-built RSEQ helper and native test launcher. Count builds, executed tests and guest workloads separately. Verify the remaining Sentry link outputs against ELF bytes. Track the hermetic-llvm and rules_go fixes and check the BuildBuddy deployment separately before retrying an image with no layer entries.",
+      "nextStep": "Await Tamir’s permission to publish the verified layout as ghcr.io/tamird/gvisor-scratch-directory:v1 and make the new personal package public so both workers can pull it anonymously. If approved, verify the published digests and run the declared action on each worker. For further graph or runtime coverage, select an exact still-uncovered owner from the existing ledger and identify its declared execution inputs first; do not repeat the completed release installations, native ARM guest, test_app/race-fixture checks, seccheck example or lifecycle/boot/corpus cases. Keep builds, TestRunner cases and guests separate. Follow the remaining compiler and supplier changes in the compiler record. The BuildBuddy production revision is still unknown: establish changed zero-layer behavior before repeating that probe.",
       "evidence": [
         {
           "label": "Verified OCI layout with a single empty directory",
@@ -74717,5 +74757,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T22:58:52.507429Z"
+  "updatedAt": "2026-11-05T23:13:27.259741Z"
 }
