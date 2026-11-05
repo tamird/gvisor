@@ -3,7 +3,7 @@
 load("@bazel_gazelle//:def.bzl", _gazelle = "gazelle")
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//lib:shell.bzl", "shell")
-load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "GoInfo", "GoLibrary", _go_binary = "go_binary", _go_context = "go_context", _go_library = "go_library", _go_path = "go_path", _go_reset_target = "go_reset_target", _go_rule = "go_rule", _go_test = "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "GoInfo", "GoLibrary", _go_binary = "go_binary", _go_context = "go_context", _go_cross_binary = "go_cross_binary", _go_library = "go_library", _go_path = "go_path", _go_reset_target = "go_reset_target", _go_rule = "go_rule", _go_test = "go_test")
 load("@io_bazel_rules_go//proto:def.bzl", _go_grpc_library = "go_grpc_library", _go_proto_library = "go_proto_library")
 load("//tools/bazeldefs:defs.bzl", "select_arch", "select_system")
 
@@ -51,6 +51,42 @@ def go_proto_library(name, **kwargs):
 def go_grpc_and_proto_libraries(name, **kwargs):
     _go_proto_or_grpc_library(_go_grpc_library, name, **kwargs)
 
+def _static_race_binary(name, tags = [], visibility = None, **kwargs):
+    # The default LLVM GNU sysroot contains shared stubs, not static libc.
+    impl = name + "_impl"
+    musl = name + "_musl"
+    _go_binary(
+        name = impl,
+        tags = tags + ["manual"],
+        visibility = ["//visibility:private"],
+        **kwargs
+    )
+    _go_cross_binary(
+        name = musl,
+        platform = select_arch(
+            amd64 = Label("@llvm//platforms:linux_x86_64_musl"),
+            arm64 = Label("@llvm//platforms:linux_aarch64_musl"),
+        ),
+        tags = ["manual"],
+        target = ":" + impl,
+        visibility = ["//visibility:private"],
+    )
+
+    # Keep a caller-supplied platform or toolchain on its own libc. Select the
+    # target here because the inner cross rule changes its own platform.
+    _go_cross_binary(
+        name = name,
+        tags = tags,
+        target = select({
+            "//tools/bazeldefs:race_link_amd64": ":" + musl,
+            "//tools/bazeldefs:race_link_arm64": ":" + musl,
+            "//tools/bazeldefs:race_link_native_amd64": ":" + musl,
+            "//tools/bazeldefs:race_link_native_arm64": ":" + musl,
+            "//conditions:default": ":" + impl,
+        }),
+        visibility = visibility,
+    )
+
 def go_binary(name, static = False, pure = False, x_defs = None, **kwargs):
     """Build a go binary.
 
@@ -82,7 +118,11 @@ def go_binary(name, static = False, pure = False, x_defs = None, **kwargs):
         "//tools:lockdep": ["lockdep"],
         "//conditions:default": [],
     })
-    _go_binary(
+    binary_rule = _go_binary
+    if static and kwargs.get("race") == "on":
+        binary_rule = _static_race_binary
+        kwargs.setdefault("basename", name.rsplit("/", 1)[-1])
+    binary_rule(
         name = name,
         x_defs = x_defs,
         gc_goopts = gc_goopts,
