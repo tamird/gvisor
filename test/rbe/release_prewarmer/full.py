@@ -1,4 +1,4 @@
-"""Build only the two interrupted race guests on the shared executable output."""
+"""Finish only the AMD64 race guest, building before a warmed provider query."""
 
 from collections import Counter
 import hashlib
@@ -34,6 +34,7 @@ def preflight():
     artifacts = {
         "supplier.zip": (13078732581, 77817582, "993e832b8f926876f2b935e97af3cc50493a507e79ed80d1da32309f00e94619"),
         "original.zip": (13428223649, 14356, ORIGINAL),
+        "race-original.zip": (13430644150, 4761, "0354699620d82d03330f044092d4b01f24c7c81a65cf70143a05965ba06a56c9"),
         "images.zip": (13100242102, 4965, "5f919ba8d820862f00522ab10658beb6738f31c12550c1cda1d8e15ce5973859"),
     }
     row = {"status": "INCOMPLETE", "started": q.now(), "artifacts": {},
@@ -115,6 +116,27 @@ def original(arch):
             "race_invocation": race["events"]["invocation"], "native_exit": 124, "bazel_exit": 8,
             "actions": race["actions"]["runners"], "normal_elf": normal["elf"],
             "prior_runtime_counts": result["xml"]["counts"], "prior_runtime_xml": result["xml"]["sha256"]}
+
+
+def unfinished_amd64():
+    raw = (q.TMP / "race-original.zip").read_bytes()
+    digest = "0354699620d82d03330f044092d4b01f24c7c81a65cf70143a05965ba06a56c9"
+    assert len(raw) == 4761 and hashlib.sha256(raw).hexdigest() == digest
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+        amd = json.loads(archive.read("amd64-boot-race-fixture.json"))
+        arm = json.loads(archive.read("arm64-boot-race-fixture.json"))
+    assert amd["source"] == arm["source"] == PRODUCT
+    assert amd["status"] == "INCOMPLETE" and amd["cquery_exit"] == 124
+    assert amd["cquery_events"]["exit"] == 8
+    assert amd["cquery_events"]["invocation"] == "32fbd676-0cae-4f0f-8233-074f3bc5de8f"
+    assert "native_exit" not in amd and "requested_invocation" not in amd
+    assert not amd["cquery_events"]["test_results"] and not amd["cquery_events"]["failures"]
+    assert arm["status"] == "PASS" and arm["native_exit"] == 0
+    assert arm["events"]["invocation"] == "30e3cbb4-591a-415c-a141-095eabfeeaa2"
+    assert arm["elf"]["sha256"] == "91690f1ef38b5ae58824cf15e9a71ae888f04eee39b23b9d154f0a923c3bdb74"
+    return {"artifact": 13430644150, "zip_sha256": digest,
+            "amd64_query_exit": amd["cquery_exit"], "amd64_build_attempted": False,
+            "arm64_status": "PASS", "arm64_elf": arm["elf"], "arm64_repeated": False}
 
 
 def source():
@@ -235,6 +257,7 @@ def fixture_actions(path, arch):
 
 
 def fixture(arch):
+    assert arch == "amd64"
     name = arch + "-boot-race-fixture"
     row = {"source": PRODUCT, "parent": PARENT, "producer": PRODUCER, "arch": arch,
            "scope": "race guest build and configured boot data edge; zero tests or guest execution",
@@ -245,42 +268,11 @@ def fixture(arch):
     try:
         source()
         row["original"] = original(arch)
+        row["unfinished_amd64"] = unfinished_amd64()
         row["worker_image"] = native.image(arch)
         cpu = {"amd64": "k8", "arm64": "aarch64"}[arch]
         flags = common_flags(arch) + ["--config=race", "--keep_going", "--remote_accept_cached",
                  "--remote_download_outputs=toplevel", "--nobuild_event_json_file_path_conversion", "--build_event_publish_all_actions"]
-        # The configured dependency path is retained even if the later build times out.
-        query_id = str(uuid.uuid4())
-        query = "allpaths(" + BOOT_TARGET + ", " + APP_BIN + ")"
-        row["requested_cquery_invocation"] = query_id
-        with (work / "providers").open("wb") as out, (work / "query-log").open("wb") as log:
-            child = subprocess.run(["timeout", "--signal=INT", "--kill-after=10", "120", str(BAZEL), *q.PROOF,
-                "cquery", *flags, "--invocation_id=" + query_id, "--build_event_json_file=" + str(work / "query-events"),
-                "--output=starlark", "--starlark:expr=" + FIXTURE_EXPR, query], stdout=out, stderr=log)
-        row["cquery_exit"] = child.returncode
-        row["cquery_diagnostics"] = q.diagnostics(work / "query-log")
-        row["cquery_events"] = events(work / "query-events", {}, {})
-        q.save(name, row)
-        qe = row["cquery_events"]
-        assert child.returncode == qe.get("exit") == 0 and qe.get("invocation") == query_id
-        assert not (qe["test_results"] or qe["failures"] or qe["malformed_lines"])
-        assert all(x["reason"] == "NO_BUILD" for x in qe["aborted"])
-        assert (work / "providers").stat().st_size <= 64 * 1024
-        providers = [json.loads(line) for line in (work / "providers").read_text().splitlines()]
-        row["configured_path"] = providers
-        q.save(name, row)
-        assert len(providers) == 3
-        providers = {identity(p["label"]): p for p in providers}
-        assert set(providers) == {APP, APP_BIN, BOOT_TARGET}
-        assert all(p["cpu"] == cpu and list(p["race"].values()) == [True] for p in providers.values())
-        app, = providers[APP]["files"]
-        inner, = providers[APP_BIN]["files"]
-        assert providers[APP]["executable"] == app
-        for path in (app, inner, providers[APP_BIN]["executable"]):
-            assert re.fullmatch(r"bazel-out/[A-Za-z0-9_.+-]+/bin/test/cmd/test_app/[A-Za-z0-9_./+-]+", path)
-            assert ".." not in Path(path).parts
-        runfile, = [f for f in providers[BOOT_TARGET]["runfiles"] if f["path"] == app]
-        assert runfile["short_path"] == "test/cmd/test_app/test_app" == app.split("/bin/", 1)[1]
         invocation = str(uuid.uuid4())
         row.update(requested_invocation=invocation, build_started=q.now(), build_limit_seconds=1500)
         q.save(name, row)
@@ -307,6 +299,38 @@ def fixture(arch):
         completed, = targets[APP]["completed"]
         assert completed["built"] and configs[completed["config"]] == cpu
         assert not any(row["actions"]["runners"].get(k) for k in ("wrong_execution", "failed_actions", "TestRunner"))
+        # Query only after the actual build has populated the configured graph.
+        query_id = str(uuid.uuid4())
+        query = "allpaths(" + BOOT_TARGET + ", " + APP_BIN + ")"
+        row.update(requested_cquery_invocation=query_id, cquery_limit_seconds=300)
+        with (work / "providers").open("wb") as out, (work / "query-log").open("wb") as log:
+            child = subprocess.run(["timeout", "--signal=INT", "--kill-after=10", "300", str(BAZEL), *q.PROOF,
+                "cquery", *flags, "--invocation_id=" + query_id, "--build_event_json_file=" + str(work / "query-events"),
+                "--output=starlark", "--starlark:expr=" + FIXTURE_EXPR, query], stdout=out, stderr=log)
+        row["cquery_exit"] = child.returncode
+        row["cquery_diagnostics"] = q.diagnostics(work / "query-log")
+        row["cquery_events"] = events(work / "query-events", {}, {})
+        q.save(name, row)
+        qe = row["cquery_events"]
+        assert child.returncode == qe.get("exit") == 0 and qe.get("invocation") == query_id
+        assert not (qe["test_results"] or qe["failures"] or qe["malformed_lines"])
+        assert all(x["reason"] == "NO_BUILD" for x in qe["aborted"])
+        assert (work / "providers").stat().st_size <= 64 * 1024
+        providers = [json.loads(line) for line in (work / "providers").read_text().splitlines()]
+        row["configured_path"] = providers
+        q.save(name, row)
+        assert len(providers) == 3
+        providers = {identity(p["label"]): p for p in providers}
+        assert set(providers) == {APP, APP_BIN, BOOT_TARGET}
+        assert all(p["cpu"] == cpu and list(p["race"].values()) == [True] for p in providers.values())
+        app, = providers[APP]["files"]
+        inner, = providers[APP_BIN]["files"]
+        assert providers[APP]["executable"] == app
+        for path in (app, inner, providers[APP_BIN]["executable"]):
+            assert re.fullmatch(r"bazel-out/[A-Za-z0-9_.+-]+/bin/test/cmd/test_app/[A-Za-z0-9_./+-]+", path)
+            assert ".." not in Path(path).parts
+        runfile, = [f for f in providers[BOOT_TARGET]["runfiles"] if f["path"] == app]
+        assert runfile["short_path"] == "test/cmd/test_app/test_app" == app.split("/bin/", 1)[1]
         root = Path("bazel-out").resolve(strict=True)
         path = Path(app)
         inner_path = Path(inner).resolve(strict=True)
@@ -342,7 +366,7 @@ if __name__ == "__main__":
     if sys.argv[1:] == ["preflight"]:
         good = preflight()
     elif sys.argv[1:] == ["verdict"]:
-        expected = [arch + "-boot-race-fixture" for arch in ("amd64", "arm64")]
+        expected = ["amd64-boot-race-fixture"]
         results = {name: json.loads((q.OUT / (name + ".json")).read_text()) for name in expected
                    if (q.OUT / (name + ".json")).exists()}
         statuses = {name: result["status"] for name, result in results.items()}
@@ -353,7 +377,6 @@ if __name__ == "__main__":
             "original_artifact": 13428223649, "preflight": before, "statuses": statuses, "pass": good,
             "scope": "build-only; no new TestRunner or guest execution", "verified_at": q.now()})
     else:
-        assert sys.argv[1:] == ["paired"]
-        results = [fixture(arch) for arch in ("amd64", "arm64")]
-        good = all(results)
+        assert sys.argv[1:] == ["amd64"]
+        good = fixture("amd64")
     raise SystemExit(0 if good else 1)
