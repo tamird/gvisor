@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T15:42:15.279811Z",
+    "updatedAt": "2026-11-05T15:56:30.976528Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -50273,13 +50273,13 @@
       "repo": "google/gvisor",
       "number": 16952,
       "ref": "stdclock-windows-qpc",
-      "head": "fb98ff4ca16818deea71b420bef46b956c4b258f",
+      "head": "bce7246e29577b596d3861096e3f9d88b7eaba4d",
       "title": "Review the Windows monotonic clock",
       "url": "https://github.com/google/gvisor/pull/16952",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-05T11:11:33Z",
-      "summary": "The revised tests count 10,000 positive steps under 50 µs before an independent one-second deadline and restore an hour-old clock with state.Save and state.Load into a fresh clock. The author reports that unmodified Go on Windows Server 2022 sometimes took a single fine step and that both stock runners failed the revised test. Go has merged the 100 ns Windows monotonic clock for its forthcoming 1.28 release. The question is whether newer Go builds should use the standard clock.",
+      "updatedAt": "2026-11-05T15:56:30.976528Z",
+      "summary": "The QPC fallback now builds on Windows only before Go 1.28. The resolution test remains enabled on all versions: it counts 10,000 positive steps below 50 µs before an independent deadline. The restore test still loads into a fresh clock. The author reports passing runs on Windows Server 2022 and 2025 with Go 1.27.3 and with the Go 1.28 development toolchain. Both test concerns and the version-gating request are addressed.",
       "evidence": [
         {
           "label": "Revised resolution and state round-trip tests",
@@ -50320,6 +50320,14 @@
         {
           "label": "Approved COMMENT review posted with both verified inline anchors",
           "url": "https://github.com/google/gvisor/pull/16952#pullrequestreview-5770180433"
+        },
+        {
+          "label": "Author confirms the version gate and reports Windows results",
+          "url": "https://github.com/google/gvisor/pull/16952#issuecomment-6662368836"
+        },
+        {
+          "label": "Windows fallback and Go version constraint",
+          "url": "https://github.com/google/gvisor/blob/bce7246e2/pkg/tcpip/stdclock_windows_unsafe.go"
         }
       ],
       "settledReviews": [
@@ -50345,18 +50353,19 @@
       ],
       "followup": {
         "owner": "Agent",
-        "sourceHead": "fb98ff4ca16818deea71b420bef46b956c4b258f",
-        "providerHead": "fb98ff4ca16818deea71b420bef46b956c4b258f",
-        "observedAt": "2026-11-05T11:11:33Z",
-        "disposition": "Answered the author’s question about Go 1.28 and acknowledged both revised tests.",
-        "nextAction": "The author has the Windows build-tag recommendation. No response is outstanding.",
+        "sourceHead": "bce7246e29577b596d3861096e3f9d88b7eaba4d",
+        "providerHead": "bce7246e29577b596d3861096e3f9d88b7eaba4d",
+        "observedAt": "2026-11-05T15:56:30.976528Z",
+        "disposition": "The author added the requested Windows version gate and retained both revised tests.",
+        "nextAction": "No response or code change is outstanding from this review.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16952#discussion_r4476840572",
           "https://github.com/google/gvisor/pull/16952#discussion_r4476840773",
           "https://github.com/google/gvisor/pull/16952#issuecomment-6650299149",
           "https://github.com/google/gvisor/blob/fb98ff4ca/pkg/tcpip/stdclock_test.go",
           "https://github.com/golang/go/commit/16d46baf6",
-          "https://github.com/google/gvisor/pull/16952#issuecomment-6656512634"
+          "https://github.com/google/gvisor/pull/16952#issuecomment-6656512634",
+          "https://github.com/google/gvisor/pull/16952#issuecomment-6662368836"
         ]
       }
     },
@@ -50756,13 +50765,13 @@
       "repo": "google/gvisor",
       "number": 17023,
       "ref": "spurious-rto-resume-unsent",
-      "head": "4cef606678b6d75bf62c4172ac84d035ba9b88fb",
+      "head": "465bf4e9edc2095d5673177f3be3cac1544fd26e",
       "title": "Review fast retransmit after a partial first ACK",
       "url": "https://github.com/google/gvisor/pull/17023",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-05T11:11:41Z",
-      "summary": "The author’s full-first-ACK control retransmitted segment 3. With only half of segment 1 acknowledged at first, the sender emitted no repair while the manual retransmission clock stayed fixed. Both cases then acknowledged segments 1 and 2 and newly SACKed segments 4 through 6. One uncached native AMD64 Bazel test attempt recorded the control passing and the partial-ACK case failing, with no skips.",
+      "updatedAt": "2026-11-05T15:56:30.976528Z",
+      "summary": "The author added TestSpuriousRTOPartialFirstACK for the previously failing trace and removed the extra ACK boundary after resuming transmission. Aditya asks whether the check should remain until the retransmitted bytes are acknowledged.",
       "evidence": [
         {
           "label": "Recovery decision after a spurious timeout",
@@ -50779,6 +50788,14 @@
         {
           "label": "SACK evidence used to infer loss",
           "url": "https://www.rfc-editor.org/rfc/rfc6675.html#section-4"
+        },
+        {
+          "label": "Author’s revised test and follow-up question",
+          "url": "https://github.com/google/gvisor/pull/17023#discussion_r4482630116"
+        },
+        {
+          "label": "RFC 4015 §4",
+          "url": "https://www.rfc-editor.org/rfc/rfc4015.html#section-4"
         }
       ],
       "settledReviews": [
@@ -50792,7 +50809,17 @@
           "at": "2026-11-05T11:11:41Z",
           "postedURL": "https://github.com/google/gvisor/pull/17023#discussion_r4479711190"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "head": "465bf4e9edc2095d5673177f3be3cac1544fd26e",
+        "url": "https://github.com/google/gvisor/pull/17023#discussion_r4482630116",
+        "title": "Reply about the partial first ACK after a spurious timeout",
+        "requestedAt": "2026-11-05T15:56:30.976528Z",
+        "summary": "Post the reply agreeing with Aditya’s removal of the extra ACK boundary after a spurious timeout?",
+        "body": "I agree with dropping the extra ACK boundary. [RFC 4015 §4](https://www.rfc-editor.org/rfc/rfc4015.html#section-4) ties the exception to resuming at step (8). The next RTO or entry into fast recovery sets its own recovery point and clears the exception. The partial-first-ACK test covers the trace I reported. Thanks for adding it.\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "branch:tcp-timeout-option-locks",
@@ -50846,13 +50873,13 @@
       "repo": "google/gvisor",
       "number": 17022,
       "ref": "carry-14458-spurious-recovery",
-      "head": "963e83a9586fe9ea5331bd4e3e30d53d45386d66",
+      "head": "d0439e8b83fafeff675910fc544a393fb5d9f85c",
       "title": "Review the slow-start threshold after a spurious timeout",
       "url": "https://github.com/google/gvisor/pull/17022",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-05T11:11:37Z",
-      "summary": "Two packets were outstanding before a timeout. The PR restored the slow-start threshold to 10 after detecting that timeout was spurious. Capturing flight size restored it to 2. When the ACK echoed the retransmitted packet’s timestamp, both versions kept the threshold at 2.",
+      "updatedAt": "2026-11-05T15:56:30.976528Z",
+      "summary": "The author adopted the finite two-packet regression and now saves the outstanding flight on timeout. The previous implementation restored a threshold of 10 in that trace; the revised implementation restores 2. Aditya asks whether the separate five-packet timeout case should restore the initial threshold rather than 5.",
       "evidence": [
         {
           "label": "Pre-loss capture in the proposed sender",
@@ -50869,6 +50896,10 @@
         {
           "label": "Eifel response algorithm, step 0",
           "url": "https://www.rfc-editor.org/rfc/rfc4015.html#section-3.1"
+        },
+        {
+          "label": "Author’s revised test and follow-up question",
+          "url": "https://github.com/google/gvisor/pull/17022#discussion_r4482626402"
         }
       ],
       "settledReviews": [
@@ -50882,7 +50913,17 @@
           "at": "2026-11-05T11:11:37Z",
           "postedURL": "https://github.com/google/gvisor/pull/17022#discussion_r4479710566"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "head": "d0439e8b83fafeff675910fc544a393fb5d9f85c",
+        "url": "https://github.com/google/gvisor/pull/17022#discussion_r4482626402",
+        "title": "Reply about restoring the initial slow-start threshold",
+        "requestedAt": "2026-11-05T15:56:30.976528Z",
+        "summary": "Post the reply asking Aditya to restore the initial slow-start threshold in the five-packet timeout case?",
+        "body": "Yes, I’d restore `InitialSsthresh` in the timeout case. [RFC 4015 §3.1](https://www.rfc-editor.org/rfc/rfc4015.html#section-3.1) step (0) saves max(FlightSize, ssthresh), so a false alarm with five packets in flight should preserve the initial threshold. Step (9) bounds the immediate send separately through cwnd. Could you update the existing five-packet RTO assertion? The finite-threshold two-packet case now matches the trace.\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "branch:tcp-yield-after-queue-pass",
@@ -73320,5 +73361,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T15:42:15.279811Z"
+  "updatedAt": "2026-11-05T15:56:30.976528Z"
 }
