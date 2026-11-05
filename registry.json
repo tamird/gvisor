@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T21:29:54.301949Z",
+    "updatedAt": "2026-11-05T21:56:59.120671Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4839,8 +4839,8 @@
       "url": "https://github.com/tamird/gvisor/commit/9310f06f9",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "The compiler proposal at 9310f06f9 needs an amendment for two required race builds. On that exact source, ld.lld could not find -lc, -ldl, -lm, -lpthread or -lresolv when linking runsc-race and gvisor_sentry-race for AMD64. Neither executable was built. The request to approve this head is withdrawn.\n\nReplace Coral’s host-installed GCC and target headers with the LLVM toolchains already declared by gVisor. The fork commit has 37 insertions and 1,937 deletions, including four obsolete patches. It changes the compiler and the three freestanding sidecars together so the release links at every step.\n\nThe identical source tree was built as fffadb2bb on one AMD64 Linux worker. Plain bazel build -c opt //:release built nine static AMD64 executables; --config=aarch64 built nine ARM64 executables. Make installed the same bytes for each target. On a separate native ARM64 worker the cross-built runsc, Sentry and prewarmer started a rootless systrap guest. The build uses released LLVM 0.8.24 and master’s existing kernel-header backport.\n\nAn ordinary, dynamically linked C++ syscall test also cross-built on AMD64 and passed all four TCP_NODELAY cases on native ARM64. The earlier full scratch-worker build was on 5388293bd. The stock project catalog check passed on upstream 61a70083c and the compiler integration fffadb2bb: both verified all 220 dependencies against the identical catalog and policy. Removing abseil-cpp from a disposable catalog produced exactly one missing-entry error. This check does not audit every transitive toolchain binary.\n\nThe optional TLDK archive built on 3f0bd3a70 with #15153 added (148 Clang objects). Both plugin executable links then failed: lld could not find static pthread or dl for runsc-plugin-stack and gvisor_sentry_plugin_stack. Neither executable started. The normal release and native guest results above are separate.\n\nA separate AMD64 control on older source 5b7afbced used released LLVM 0.8.24 with a musl transition and twice booted the matching race Sentry. It identifies a fix to qualify on the current stack.\n\nOn the shell-free AMD64 remote worker, neither target release reached installation. The Protobuf authenticity check invoked /bin/bash for both targets, and the AMD64 KVM mmap-filter generator also invoked /bin/bash. These are build-action failures on that worker; the ordinary Linux release results above remain valid.",
-      "updatedAt": "2026-11-05T21:24:09.459393Z",
+      "summary": "The compiler proposal at 9310f06f9 needs an amendment for two required race builds. On that exact source, ld.lld could not find -lc, -ldl, -lm, -lpthread or -lresolv when linking runsc-race and gvisor_sentry-race for AMD64. Neither executable was built. The request to approve this head is withdrawn.\n\nReplace Coral’s host-installed GCC and target headers with the LLVM toolchains already declared by gVisor. The fork commit has 37 insertions and 1,937 deletions, including four obsolete patches. It changes the compiler and the three freestanding sidecars together so the release links at every step.\n\nThe identical source tree was built as fffadb2bb on one AMD64 Linux worker. Plain bazel build -c opt //:release built nine static AMD64 executables; --config=aarch64 built nine ARM64 executables. Make installed the same bytes for each target. On a separate native ARM64 worker the cross-built runsc, Sentry and prewarmer started a rootless systrap guest. The build uses released LLVM 0.8.24 and master’s existing kernel-header backport.\n\nAn ordinary, dynamically linked C++ syscall test also cross-built on AMD64 and passed all four TCP_NODELAY cases on native ARM64. The earlier full scratch-worker build was on 5388293bd. The stock project catalog check passed on upstream 61a70083c and the compiler integration fffadb2bb: both verified all 220 dependencies against the identical catalog and policy. Removing abseil-cpp from a disposable catalog produced exactly one missing-entry error. This check does not audit every transitive toolchain binary.\n\nThe optional TLDK archive built on 3f0bd3a70 with #15153 added (148 Clang objects). Both plugin executable links then failed: lld could not find static pthread or dl for runsc-plugin-stack and gvisor_sentry_plugin_stack. Neither executable started. The normal release and native guest results above are separate.\n\nOn bb7176b37, selecting musl for static Go binaries linked the AMD64 race CLI and Sentry and booted a guest. That broader change also redirects callers that explicitly select a different platform. The narrower diagnostic keeps the public target declarations and selects the libc in the existing Bazel adapter.\n\nOn a shell-free AMD64 worker, the declared Protobuf and KVM generators and Go SDK builder now run. Both releases then stopped at GoImports: pkg/unet on AMD64 and pkg/marshal/primitive on ARM64 could not start goimports.sh. Neither release reached installation. #16710 removes this launcher from stateify.",
+      "updatedAt": "2026-11-05T21:56:59.120671Z",
       "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
       "evidence": [
         {
@@ -5090,6 +5090,22 @@
         {
           "label": "Lean release on the shell-free remote worker: three action failures; neither target installed",
           "url": "https://github.com/tamird/gvisor/actions/runs/42111502777/artifacts/13454667129"
+        },
+        {
+          "label": "Comparison: link and boot the static race Sentry using the wider musl transition",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42113608109"
+        },
+        {
+          "label": "Race-only compiler selection through the existing Bazel adapter",
+          "url": "https://github.com/tamird/gvisor/commit/629d27e5f"
+        },
+        {
+          "label": "Shell-free worker: SDK builder and both generators pass; GoImports fails for each architecture",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42115448931/artifacts/13457565460"
+        },
+        {
+          "label": "Static GNU archive: unwind symbols missing from the DPDK host-tool link",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42114412069/artifacts/13455846636"
         }
       ],
       "refinement": {
@@ -5123,8 +5139,8 @@
         "owner": "Compiler integration",
         "sourceHead": "9310f06f95b100725450a71fbb896fc8403ec0eb",
         "disposition": "Amend the required race builds before contributor review; normal release and stock catalog remain qualified.",
-        "observedAt": "2026-11-05T21:24:09.459393Z",
-        "nextAction": "Adapt the scoped musl transition and qualify runsc-race and gvisor_sentry-race on the amended source, including a matching race Sentry boot. Keep #16586, #16516, #17067 and #16522 as landing dependencies. Separately resolve the optional TLDK plugin links and test startup on their submission base.",
+        "observedAt": "2026-11-05T21:56:59.120671Z",
+        "nextAction": "Qualify the race-specific libc selection on the public targets, including their analyzers, dependency checks and explicit caller platforms. Keep #16586, #16516, #17067 and #16522 as landing dependencies. Recheck both shell-free releases with #16710. For optional TLDK, verify the DPDK host-tool link with its declared unwind archive before retrying the plugin executables.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
@@ -5173,7 +5189,11 @@
           "https://github.com/google/gvisor/pull/17067",
           "https://github.com/tamird/gvisor/actions/runs/42108464964/artifacts/13453527379",
           "https://github.com/tamird/gvisor/actions/runs/41608432080/artifacts/13218522690",
-          "https://github.com/tamird/gvisor/actions/runs/42111502777/artifacts/13454667129"
+          "https://github.com/tamird/gvisor/actions/runs/42111502777/artifacts/13454667129",
+          "https://github.com/tamird/gvisor/actions/runs/42113608109",
+          "https://github.com/tamird/gvisor/commit/629d27e5f",
+          "https://github.com/tamird/gvisor/actions/runs/42115448931/artifacts/13457565460",
+          "https://github.com/tamird/gvisor/actions/runs/42114412069/artifacts/13455846636"
         ]
       }
     },
@@ -37800,7 +37820,7 @@
       "url": "https://github.com/google/gvisor/pull/16710",
       "status": "open",
       "summary": "Published the patch-preserving rebase 66fbf023e8 on 92d3cc68c. Lucas’s November 3 approval remains on prior head 4bbf4d718; the rebased head has no ready-to-pull label. Current-head review and import checks remain separate. Stateify selects the imports used by its generated methods and formats the result with go/format, without goimports or a host shell. Earlier qualification matched all 485 official generated files, including the five seccomp-dependent outputs, and passed the sibling-file alias fixture.",
-      "updatedAt": "2026-11-04T20:45:45.283369+00:00",
+      "updatedAt": "2026-11-05T21:56:59.120671Z",
       "evidence": [
         {
           "label": "Seven identical production outputs and scratch qualification",
@@ -37901,6 +37921,10 @@
         {
           "label": "November 3 approval on the prior head",
           "url": "https://github.com/google/gvisor/pull/16710#pullrequestreview-5758453946"
+        },
+        {
+          "label": "Shell-free worker: SDK builder and both generators pass; GoImports fails for each architecture",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42115448931/artifacts/13457565460"
         }
       ],
       "settledReviews": [
@@ -50113,9 +50137,9 @@
       "title": "Report startup errors from the native syscall test runner",
       "group": "tests",
       "url": "https://github.com/tamird/gvisor/commit/f3527b352",
-      "status": "Delivered as #16959",
+      "status": "Merged in #16959",
       "head": "f3527b352413b8166aa536837460ed3b8faf8316",
-      "updatedAt": "2026-11-04T15:06:47.009477+00:00",
+      "updatedAt": "2026-11-05T21:56:59.120671Z",
       "summary": "The native runner assumed every cmd.Run failure carried a child exit status. When setup_container could not start, the runner panicked before GTest and hid the launch error.",
       "evidence": [
         {
@@ -50129,6 +50153,10 @@
         {
           "label": "Approved source published as #16959",
           "url": "https://github.com/google/gvisor/pull/16959"
+        },
+        {
+          "label": "Merged native runner startup diagnostic",
+          "url": "https://github.com/google/gvisor/commit/add07b5fa"
         }
       ],
       "settledReviews": [
@@ -69372,9 +69400,26 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-05T15:42:15.279811Z",
+      "updatedAt": "2026-11-05T21:56:59.120671Z",
       "summary": "Both remote architectures built all 231 selected runsc targets. The original 40-target runtime sweep and later focused checks are separate. Six specutils cases, six cmd cases and the finite seccomp filter corpus now pass on each architecture. With the declared test executable, all 87 boot cases passed on each worker. The directory-only scratch image is built; publishing it for the workers to pull is awaiting permission.",
       "findings": [
+        {
+          "text": "On a shell-free AMD64 worker, the declared Protobuf and KVM generators and Go SDK builder now run. Both releases then stopped at GoImports: pkg/unet on AMD64 and pkg/marshal/primitive on ARM64 could not start goimports.sh. Neither release reached installation. #16710 removes this launcher from stateify.",
+          "evidence": [
+            {
+              "label": "Original releases: the Protobuf and KVM actions attempted to start Bash",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42111502777/artifacts/13454667129"
+            },
+            {
+              "label": "Shell-free worker: SDK builder and both generators pass; GoImports fails for each architecture",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42115448931/artifacts/13457565460"
+            },
+            {
+              "label": "Stateify generation without the launcher",
+              "url": "https://github.com/google/gvisor/pull/16710"
+            }
+          ]
+        },
         {
           "text": "The verified two-platform OCI layout has one shared 125-byte compressed layer. Its only entry is the empty directory gvisor-worker-root/ (mode 0555); it contains no regular files or symlinks. This differs from the earlier empty tar, which had no entries. The AMD64 and ARM64 manifests are addressed by index sha256:cbcf9ce0d912dde87a4e76542ee47cf4ef1a8ef8e31f84ef62e5af5939cde1c3. The layout has not been published or used for a remote action.",
           "evidence": [
@@ -74478,5 +74523,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T21:29:54.301949Z"
+  "updatedAt": "2026-11-05T21:56:59.120671Z"
 }
