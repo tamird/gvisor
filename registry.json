@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T11:14:22.277195Z",
+    "updatedAt": "2026-11-05T12:06:54.043543Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32837,8 +32837,8 @@
       "url": "https://github.com/google/gvisor/pull/16597",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-28T15:10:14.979142+00:00",
-      "summary": "The RSEQ syscall tests exec a separate child so libc cannot register a restartable sequence before the test. Use the configured C++ toolchain to build and statically link that child for each target architecture. The actual test still uses the same Bazel label and runfile. The old internal genrule name :rseq_binary has no in-tree caller and is removed.\n\nNative Linux passed 14 cases on AMD64 and 13 on ARM64. The ARM64 carrier ran the original C++ test, which omits an x86-only membarrier case. The additional AMD64 systrap owner skipped all 14 on its RSEQ capability check, so the aggregate remains FAIL/incomplete. This does not establish systrap RSEQ support or code-coverage instrumentation. The GNU compiler driver still comes from the worker.",
+      "updatedAt": "2026-11-05T12:06:54.043543Z",
+      "summary": "The proposed amendment disables the implicit C++ runtime for the freestanding RSEQ child. With the declared LLVM toolchain, -nostdlib alone left explicit runtime libraries in the link arguments. The one added feature exclusion removes them. The published PR remains at the previously contributor-approved a0e3cf835; the proposed replacement is the single commit 9751bfaf9.\n\nGNU builds produced byte-identical static helpers before and after the change on AMD64 and ARM64. The same BUILD correction in the hermetic integration produced fresh remote static RSEQ links and verified ELF bytes on both architectures; those checks built targets and did not execute tests. The canonical native Bazel syscall target passed all 14 AMD64 RseqTest cases with zero skips or failures on the amended source. The earlier direct invocation failed to locate its helper and is retained separately. This amendment has new ARM64 build evidence, not a new ARM64 runtime run.\n\nOriginal proposal and qualification:\n\nThe RSEQ syscall tests exec a separate child so libc cannot register a restartable sequence before the test. Use the configured C++ toolchain to build and statically link that child for each target architecture. The actual test still uses the same Bazel label and runfile. The old internal genrule name :rseq_binary has no in-tree caller and is removed.\n\nNative Linux passed 14 cases on AMD64 and 13 on ARM64. The ARM64 carrier ran the original C++ test, which omits an x86-only membarrier case. The additional AMD64 systrap owner skipped all 14 on its RSEQ capability check, so the aggregate remains FAIL/incomplete. This does not establish systrap RSEQ support or code-coverage instrumentation. The GNU compiler driver still comes from the worker.",
       "evidence": [
         {
           "label": "Published upstream PR #16597",
@@ -32867,14 +32867,34 @@
         {
           "label": "Original aggregate: FAIL, producer INCOMPLETE",
           "url": "https://app.buildbuddy.io/invocation/a2f87768-8bba-43dd-bced-aa01a268f8f0"
+        },
+        {
+          "label": "Proposed one-commit RSEQ amendment",
+          "url": "https://github.com/tamird/gvisor/commit/9751bfaf9"
+        },
+        {
+          "label": "One-line change from the published proposal",
+          "url": "https://github.com/tamird/gvisor/compare/a0e3cf835..9751bfaf9"
+        },
+        {
+          "label": "GNU before/after: identical static AMD64 and ARM64 helpers; direct test invocation failed to locate the helper",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42020685444/artifacts/13410893893"
+        },
+        {
+          "label": "Hermetic LLVM: fresh static RSEQ links on AMD64 and ARM64, build-only",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42017764904/artifacts/13409484718"
+        },
+        {
+          "label": "Amended source: canonical native Bazel target passed all 14 AMD64 RSEQ cases, zero skips or failures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42022304102/artifacts/13413675212"
         }
       ],
       "followup": {
         "owner": "native_runtime",
-        "sourceHead": "a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
-        "observedAt": "2026-10-28T15:10:14.979142+00:00",
-        "disposition": "Approved RSEQ fixture build published as #16597",
-        "nextAction": "Follow checks and maintainer review on #16597. No contributor decision remains.",
+        "sourceHead": "9751bfaf98742849046e9b4e9178f3db32f846b2",
+        "observedAt": "2026-11-05T12:06:54.043543Z",
+        "disposition": "Review the freestanding RSEQ link amendment",
+        "nextAction": "Await contributor review of the single-commit amendment. Keep the public PR unchanged until approval.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16597",
           "https://github.com/tamird/gvisor/commit/a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
@@ -32882,8 +32902,24 @@
           "https://app.buildbuddy.io/invocation/b139a733-5dc3-447c-bde5-36b60a4fca66",
           "https://app.buildbuddy.io/invocation/bed88c36-e256-4b9a-8114-0d4de9f36769",
           "https://app.buildbuddy.io/invocation/ef48f3fb-dd12-46d3-a048-498046ae8510",
-          "https://app.buildbuddy.io/invocation/a2f87768-8bba-43dd-bced-aa01a268f8f0"
+          "https://app.buildbuddy.io/invocation/a2f87768-8bba-43dd-bced-aa01a268f8f0",
+          "https://github.com/tamird/gvisor/commit/9751bfaf9",
+          "https://github.com/tamird/gvisor/compare/a0e3cf835..9751bfaf9",
+          "https://github.com/tamird/gvisor/actions/runs/42020685444/artifacts/13410893893",
+          "https://github.com/tamird/gvisor/actions/runs/42017764904/artifacts/13409484718",
+          "https://github.com/tamird/gvisor/actions/runs/42022304102/artifacts/13413675212"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "9751bfaf98742849046e9b4e9178f3db32f846b2",
+        "baseHead": "a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
+        "url": "https://github.com/tamird/gvisor/commit/9751bfaf9",
+        "title": "Build the RSEQ fixture with the C++ toolchain",
+        "requestedAt": "2026-11-05T12:06:54.043543Z",
+        "summary": "Publish the one-line amendment to #16597 that disables implicit C++ runtime linkage for its freestanding RSEQ helper? The canonical native target passed all 14 AMD64 cases; both architectures have GNU byte-identity and static LLVM link evidence.",
+        "body": "The RSEQ syscall tests start a separate executable with its own entry point. Linking libc can register a restartable sequence before the test gets to exercise registration itself.\n\nGive Bazel the C++ and assembly sources for the selected architecture and link them without startup files or libraries. This removes the shell command that assembled the compiler and linker arguments and lets the configured C++ toolchain select its linker.\n\nWith hermetic-llvm, -nostdlib suppresses the compiler's default libraries, but Bazel still adds the C++ runtime. Disable that feature too so the static link does not pull in libunwind, pthread, or dl."
       }
     },
     {
@@ -71174,7 +71210,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-05T09:01:24.199484+00:00",
+      "updatedAt": "2026-11-05T11:48:39.851280Z",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the duplicate reconnect reply on #15019.",
       "findings": [
@@ -71192,7 +71228,7 @@
           ]
         },
         {
-          "text": "On #16887 at bba4c63b2, both fallback tests use the minimum three-iovec budget accepted by the constructor. The transmit path counts fragments once per batch to size its scratch allocation. For 48 datagrams with 64 fragments each, the author measured 49 to 2 allocations without virtio and 97 to 3 with it. The guest throughput comparison covered an earlier head.",
+          "text": "On #16887 at bba4c63b2, both fallback tests use a three-iovec budget and derive the writev limit as the constructor does. The transmit path counts fragments once per batch to size its scratch allocation. For 48 datagrams with 64 fragments each, the author measured 49 to 2 allocations without virtio and 97 to 3 with it. The guest throughput comparison covered an earlier head.",
           "evidence": [
             {
               "label": "Header-budget test uses three iovecs",
@@ -72781,5 +72817,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T11:14:22.277195Z"
+  "updatedAt": "2026-11-05T12:06:54.043543Z"
 }
