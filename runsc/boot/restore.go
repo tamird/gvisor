@@ -225,6 +225,8 @@ func newProcInternalData(conf *config.Config, spec *specs.Spec, containerName st
 // all containers and triggers the full sandbox restore after the last
 // container is restored.
 type restorer struct {
+	trialKernelNS int64
+
 	mu sync.Mutex
 
 	// totalContainers is the number of containers expected to be restored in
@@ -371,6 +373,7 @@ func (r *restoreMounts) String() string {
 }
 
 func (r *restorer) restore(l *Loader) error {
+	defer r.closeStateFile()
 	log.Infof("Starting to restore %d containers", len(r.containers))
 
 	// Validate the container specs to ensure they did not meaningfully change
@@ -560,6 +563,7 @@ func (r *restorer) restore(l *Loader) error {
 
 	// Load the state.
 	r.timer.Reached("loading kernel")
+	trialStart := time2.Now()
 	if r.extractRootFsMode {
 		if err := l.k.ExtractRootfsUpperLayer(ctx, r.stateFile, r.asyncMFLoader, nil, clocks, r.rootFsOutputTar); err != nil {
 			return fmt.Errorf("failed to extract rootfs upper layer: %w", err)
@@ -574,6 +578,7 @@ func (r *restorer) restore(l *Loader) error {
 	if err := r.stateFile.Verify(); err != nil {
 		return fmt.Errorf("statefile integrity check failed: %w", err)
 	}
+	r.trialKernelNS = time2.Since(trialStart).Nanoseconds()
 	r.timer.Reached("kernel loaded")
 	if oldNvidiaDriverVersion.Major() > 0 && !l.k.NvidiaDriverVersion.Equals(oldNvidiaDriverVersion) {
 		return fmt.Errorf("nvidia driver version changed during restore: was %v, now %v", oldNvidiaDriverVersion, l.k.NvidiaDriverVersion)
@@ -682,8 +687,6 @@ func (r *restorer) restore(l *Loader) error {
 		return fmt.Errorf("restorer.readyToStart callback failed: %w", err)
 	}
 
-	r.stateFile.Close()
-
 	// Transfer ownership of the `timer` to a new goroutine.
 	// This is because `timer.Log` blocks until all timed tasks are finished,
 	// but some restore tasks may still run in the background, and we don't
@@ -693,6 +696,14 @@ func (r *restorer) restore(l *Loader) error {
 	r.timer = nil
 
 	return nil
+}
+
+// closeStateFile closes r.stateFile if it is open.
+func (r *restorer) closeStateFile() {
+	if r.stateFile != nil {
+		r.stateFile.Close()
+		r.stateFile = nil
+	}
 }
 
 // restoreNamespacePathsLocked lets containers started after restore join the
