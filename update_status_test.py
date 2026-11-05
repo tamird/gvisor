@@ -84,6 +84,69 @@ def linked(pr: dict, source: int) -> dict:
     return item
 
 
+class TerminalImportHandoffTest(unittest.TestCase):
+    def source(self, number: int, final: str, export: int, imported: str) -> dict:
+        item = linked(raw_pr(export, "MERGED", author="copybara-service"), int(imported, 16))
+        item["matchesSourceHead"] = False
+        return retained(raw_pr(number, "CLOSED", head=int(final, 16)), [item])
+
+    def test_review_then_track_the_omitted_inotify_deletion(self) -> None:
+        pr = self.source(16812, "637158efcbee8244f5df020b57bb0296c0c15fe6", 16882,
+                         "b79fa85f739884e7544fb47a248640073f22d8c2")
+        export, = pr["imports"]
+        node = {"url": pr["url"]}
+        del pr["repo"], pr["authorLogin"]  # Older registered source records have only URL/fork provenance.
+        prior = {**pr, "status": "open"}
+        row = updater.terminal_import_handoff(pr, prior, node)
+        self.assertEqual((row["action"], row["sourceHead"], row["imports"][0]["sourceHead"]),
+                         ("inspect-terminal-import", pr["head"], export["sourceHead"]))
+        pending = {**pr, "terminalImportHandoff": row}
+        self.assertEqual(updater.terminal_import_handoff(pr, pending, node), row)
+        followup = {"sourceHead": pr["head"], "observedAt": LATER, "owner": "Source PR owner",
+                    "nextAction": "See the standalone Watch.OwnerID change.",
+                    "evidence": [export["url"], "https://github.com/tamird/gvisor/commit/3cc383db9"]}
+        self.assertIsNone(updater.terminal_import_handoff(pr, pending, {**node, "followup": followup}))
+        for stale in ({"sourceHead": export["sourceHead"]}, {"observedAt": "1999-11-01T00:00:00Z"},
+                      {"evidence": [pr["url"]]}):
+            self.assertEqual(updater.terminal_import_handoff(pr, pending, {**node, "followup": {**followup, **stale}}), row)
+        # Existing terminal rows are not new closures; an export merging later is new work.
+        self.assertIsNone(updater.terminal_import_handoff(pr, pr, node))
+        self.assertEqual(updater.terminal_import_handoff(pr, {**pr, "imports": [{**export, "status": "open"}]}, node), row)
+        for changed in ({"importsComplete": False}, {"status": "merged"}, {"authorLogin": "another-author"},
+                        {"url": "https://github.com/other/gvisor/pull/16812"},
+                        {"imports": [export, {**export, "number": 2, "sourceHead": pr["head"]}]}):
+            self.assertIsNone(updater.terminal_import_handoff({**pr, **changed}, pending, node))
+
+    def test_equivalence_must_cover_the_merged_footer(self) -> None:
+        pr = self.source(16382, "97aa81bc43f6d417a8a082c48f98adb87bb203ef", 16538,
+                         "f5e35772f5ff7143e634613dc55a0e2356556cec")
+        imported = pr["imports"][0]["sourceHead"]
+        patch_id = "fa278fd8b01f2ece38c72ab541dd2ed59478bf4a"
+        proof = {"method": "stable-patch-id", "head": pr["head"], "approvedHead": imported,
+                 "oldPatchId": patch_id, "newPatchId": patch_id, "reviewId": "review",
+                 "reviewer": "EtiennePerot", "submittedAt": OLD, "verifiedAt": LATER}
+        pr["feedback"]["items"] = [{"kind": "review", "id": "review", "state": "APPROVED",
+                                    "commit": {"oid": imported}, "submittedAt": OLD,
+                                    "author": {"login": "EtiennePerot"}}]
+        node = {"approvedPatch": proof}
+        self.assertIsNone(updater.terminal_import_handoff(pr, {}, node))
+        # As on #15981, an approval of another equal revision alone cannot attest to this footer.
+        pr["imports"][0]["sourceHead"] = "4cbfbc9d210184f78809d741642ece5f4e95b31a"
+        self.assertEqual(updater.terminal_import_handoff(pr, {}, node)["action"], "inspect-terminal-import")
+
+    def test_exact_landing_without_approval_equivalence(self) -> None:
+        # Model #16053 after closure using its independent tree replay, without its approvedPatch.
+        head = "5e04edceda66b502e1cb5be55e04019aaf9fcba8"
+        pr = self.source(16053, head, 16326, "46aadd608aa19c1bbc33a425475d8900d6c9b5a7")
+        tree = "bc4f33133291f2c571bdc5e4a863f0c7671e7be0"
+        node = {"landedPatch": {"head": head, "upstreamHead": "0424a4b4fa3105cbe3271c301e8bf6cb8adf0277",
+                                "method": "merge-tree-identical", "upstreamTree": tree, "replayedTree": tree,
+                                "verifiedAt": "2026-10-27T18:39:29+00:00", "evidence": [pr["imports"][0]["url"]]}}
+        self.assertIsNone(updater.terminal_import_handoff(pr, {}, node))
+        changed = {**pr, "head": "1" * 40, "branchHead": "1" * 40}
+        self.assertEqual(updater.terminal_import_handoff(changed, {}, node)["action"], "inspect-terminal-import")
+
+
 class ReleaseObservationTest(unittest.TestCase):
     def observe(self, wait: dict, metadata: dict) -> tuple[str | None, str]:
         with mock.patch.object(updater.urllib.request, "urlopen",
@@ -636,6 +699,29 @@ class CollectorHistoryTest(unittest.TestCase):
         self.assertEqual(current["workStates"]["pr:1"]["merged"]["observedAt"], OLD)
         self.assertEqual(current["limits"]["retainedSources"], 101)
         self.assertEqual(current["limits"]["retainedImports"], 2)
+
+    def test_known_export_merges_after_source_closes(self) -> None:
+        export = linked(imported(101, 1), 1)
+        export["matchesSourceHead"] = False
+        self.previous["prs"][0] = retained(raw_pr(1, "CLOSED", head=201), [export])
+        self.path.write_text(json.dumps(self.previous))
+        self.raw[101] = imported(101, 1, "MERGED")
+        self.raw[101].update(mergedAt=LATER, closedAt=LATER, updatedAt=LATER)
+        self.open_rows = [row for row in self.open_rows if row["number"] != 101]
+        with mock.patch("builtins.print") as log:
+            current = self.collect()
+        self.assertNotIn(1, self.requested)
+        self.assertIn(101, self.requested)
+        source = next(pr for pr in current["prs"] if pr["number"] == 1)
+        row = source["terminalImportHandoff"]
+        self.assertEqual((row["action"], row["sourceHead"], row["imports"][0]["sourceHead"]),
+                         ("inspect-terminal-import", f"{201:040x}", f"{1:040x}"))
+        self.assertEqual(row["imports"][0]["mergedAt"], LATER)
+        self.assertIn(mock.call(json.dumps({"publicImportHandoff": row})), log.call_args_list)
+        self.requested.clear()
+        repeated = self.collect()
+        self.assertNotIn(101, self.requested)
+        self.assertEqual(next(pr for pr in repeated["prs"] if pr["number"] == 1)["terminalImportHandoff"], row)
 
     def test_required_repositories_and_issues_get_budget_before_unknown_rechecks(self) -> None:
         second_repo = "other/project"

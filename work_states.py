@@ -310,9 +310,9 @@ def conflict_qualifier(pr: dict) -> str | None:
     return None
 
 
-def landed_patch(pr: dict, proof: dict | None) -> bool:
+def verified_landing(pr: dict, proof: dict | None) -> bool:
     """Accept an exact-head, reviewed replay that left the upstream tree intact."""
-    if (not proof or pr.get("status") != "open" or pr.get("revisionChanged")
+    if (not proof or pr.get("revisionChanged")
             or proof.get("head") != pr.get("head") or pr.get("branchHead", pr["head"]) not in {None, pr["head"]}
             or proof.get("method") != "merge-tree-identical"
             or not all(isinstance(proof.get(key), str) and re.fullmatch(r"[a-f0-9]{40}", proof[key])
@@ -325,6 +325,10 @@ def landed_patch(pr: dict, proof: dict | None) -> bool:
         return datetime.fromisoformat(proof["verifiedAt"].replace("Z", "+00:00")).tzinfo is not None
     except (KeyError, AttributeError, ValueError):
         return False
+
+
+def landed_patch(pr: dict, proof: dict | None) -> bool:
+    return pr.get("status") == "open" and verified_landing(pr, proof)
 
 
 def reviewed_amendment(pr: dict, proof: dict | None) -> bool:

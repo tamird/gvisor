@@ -500,6 +500,18 @@ keeps its existing author/agent priority. No service status establishes merge
 readiness or a test count. Titles, labels and comments never invent
 an import relationship or graph edge.
 
+If an authored source closes with a known merged export of an older revision,
+or a previously linked older export merges after closure, the refresh emits an
+agent inspection in `publicImportHandoff`. The collector follows known links
+without re-fetching every closed source. The handoff repeats until an exact or
+verified equivalent delivery is found, a tree replay proves the final change
+already landed, a current export is in progress, or the source owner records
+what happened. Use the existing `followup` on the final source head:
+cite the merged import, record the observation after closure and merge, and
+link any separate delivery or pending work. Different SHAs are not proof of a
+lost fix. This comparison does not send a reminder or create a contributor
+decision. Previously observed closures are not announced again on rollout.
+
 Every refreshed tracked PR also inspects the latest 100 cross-reference events
 and retains public PR sources with their author, body, URL, head and event time.
 Private or unavailable sources are omitted from both the snapshot and log. These

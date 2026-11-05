@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from reapproval import import_author_block, maintainer_logins, reminder_plan
-from work_states import FAILURES, check_purpose, check_states, effective_approval, is_advisory_check, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, with_maintainer_reviewers
+from work_states import FAILURES, check_purpose, check_states, effective_approval, import_lineage, is_advisory_check, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, verified_landing, with_maintainer_reviewers
 
 
 ROOT = Path(__file__).resolve().parent
@@ -174,6 +174,49 @@ def changed_references(current: dict, previous: dict) -> list[dict]:
     prior = {item["id"]: item for item in previous.get("crossReferences", {}).get("items", [])}
     return [item for item in current.get("crossReferences", {}).get("items", [])
             if prior.get(item["id"]) != item]
+
+
+def older_merged_imports(pr: dict) -> list[dict]:
+    """Return verified footer observations for a closed source with no current delivery."""
+    if pr.get("status") != "closed" or not pr.get("importsComplete"):
+        return []
+    imports = pr.get("imports", [])
+    if any(item["sourceHead"] == pr["head"] and item["status"] != "closed" for item in imports):
+        return []
+    return [{key: item.get(key) for key in ("number", "url", "head", "sourceHead", "mergedAt")}
+            for item in imports if item["status"] == "merged"]
+
+
+def terminal_import_handoff(pr: dict, previous: dict, node: dict) -> dict | None:
+    """Keep a newly observed source/export mismatch visible until inspected."""
+    canonical = f"https://github.com/{REPO}/pull/{pr['number']}"
+    if pr["url"] != canonical or pr.get("repo", REPO) != REPO:
+        return None
+    # Old registered snapshots have the source URL and fork owner, but no authorLogin.
+    if pr.get("authorLogin", pr.get("headOwner") if node.get("url") == canonical else None) != OWNER:
+        return None
+    imports = older_merged_imports(pr)
+    if not imports or (not previous.get("terminalImportHandoff") and previous.get("head") == pr["head"]
+                       and older_merged_imports(previous) == imports):
+        return None
+    if (verified_landing(pr, node.get("landedPatch"))
+            or any(item["status"] == "merged" for item in import_lineage(pr, node.get("approvedPatch")))):
+        return None
+    followup = node.get("followup", {})
+    if (followup.get("sourceHead") == pr["head"] and followup.get("owner") and followup.get("nextAction")
+            and (at := followup.get("observedAt") or followup.get("reviewedAt"))
+            and all(item["url"] in followup.get("evidence", []) for item in imports)):
+        try:
+            reviewed = datetime.fromisoformat(at.replace("Z", "+00:00"))
+            if all(stamp and reviewed >= datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+                   for stamp in [pr.get("closedAt"), *(item["mergedAt"] for item in imports)]):
+                return None
+        except (TypeError, ValueError):
+            pass  # An undated disposition cannot acknowledge this observation.
+    return {"repo": REPO, "number": pr["number"], "url": canonical, "sourceHead": pr["head"],
+            "imports": imports, "action": "inspect-terminal-import",
+            "nextAction": "Compare the final source with the merged export and check existing follow-up. Different SHAs do not establish missing changes.",
+            "posting": "Agent inspection only."}
 
 
 def reviewer_handoff(prs: list[dict], previous: dict) -> list[dict]:
@@ -1127,6 +1170,10 @@ def main() -> None:
     for pr in prs:
         key = pr.get("repo", REPO), pr["number"]
         node = nodes.get(key, {})
+        if handoff := terminal_import_handoff(pr, prior_prs.get(key, {}), node):
+            pr["terminalImportHandoff"] = handoff
+        else:
+            pr.pop("terminalImportHandoff", None)
         if receipt := posted_review(pr, node, prior_prs.get(key, {})):
             pr["postedReview"] = receipt
         else:
@@ -1171,6 +1218,8 @@ def main() -> None:
     for record in snapshot["mergeabilityHandoff"]:
         print(json.dumps({"mergeabilityHandoff": [record]}))
     for pr in prs:
+        if handoff := pr.get("terminalImportHandoff"):
+            print(json.dumps({"publicImportHandoff": handoff}))
         disposition = pr.get("publicImportDisposition")
         if disposition and disposition["action"]:
             print(json.dumps({"publicImportHandoff": {"repo": pr.get("repo"), "number": pr["number"],
