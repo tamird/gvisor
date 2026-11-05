@@ -22,7 +22,7 @@ CASES = {
 
 def collect(arch, where, row):
     q = full.q
-    assert q.git("rev-parse", "HEAD^") == PRODUCT
+    assert q.git("rev-parse", "HEAD^^") == PRODUCT
     assert q.git("rev-parse", "HEAD:runsc/sandbox") == q.git("rev-parse", PRODUCT + ":runsc/sandbox")
     with zipfile.ZipFile(q.TMP / "original.zip") as archive:
         prior = json.loads(archive.read(arch + ".json"))

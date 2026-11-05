@@ -1,14 +1,14 @@
 name: Check private user and network namespaces for the route tests
 on:
   push:
-    branches: [qualification/scratch-route-test-namespaces]
+    branches: [qualification/scratch-route-test-namespaces-noble]
 permissions:
   contents: read
   actions: read
 jobs:
   release:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -65,12 +65,14 @@ jobs:
       - name: Verify the unchanged network suite
         run: |
           set -eu
-          test "$(git rev-parse HEAD^)" = f35d725669ae45e7617cf66e7ceee2f0f6307490
+          test "$(git rev-parse HEAD^)" = eb182f6640623c095d53b4d4658c728ce32767a8
+          test "$(git rev-parse HEAD^^)" = f35d725669ae45e7617cf66e7ceee2f0f6307490
           test "$(git rev-parse HEAD:runsc/sandbox/network_test.go)" = e3dd1e78f88fc00f1a3118b17afc5ac2cdeda3dd
           test "$(git rev-parse HEAD:runsc)" = "$(git rev-parse HEAD^:runsc)"
           test "$(git rev-parse HEAD:test/rbe/release_prewarmer/BUILD)" = 0942c3a1b2856d6b31866ec8bb60e280ba38a011
           test "$(id -u)" -ne 0
           test "$(cat .bazelversion)" = 9.3.1
+          "$RUNNER_TEMP/release-rbe/bin/bazel" --version
       - name: Configure the trusted Bazel client for remote-only execution
         id: remote
         env:
