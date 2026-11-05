@@ -912,3 +912,32 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+# Fork-only: preserve the qualified declared protoc validation action.
+single_version_override(
+    module_name = "protobuf",
+    patch_strip = 1,
+    patches = ["//tools:protobuf_authenticity.patch"],
+)
+
+# Exercise rules_shell#64's actual declared-executable API before its release.
+archive_override(
+    module_name = "rules_shell",
+    integrity = "sha256-AHBCSc0o+MbsCSaLoOgM+ouU7VcFldsTSdJT3q9+otU=",
+    strip_prefix = "rules_shell-aa4ad1622a8f755f38cae724ef3abc63aed171c3",
+    urls = ["https://github.com/bazel-contrib/rules_shell/archive/aa4ad1622a8f755f38cae724ef3abc63aed171c3.tar.gz"],
+)
+
+bootstrap_busybox = use_repo_rule("//test/rbe/go_bootstrap:defs.bzl", "busybox_repository")
+bootstrap_busybox(
+    name = "bootstrap_busybox",
+    arch = "amd64",
+    mirror = "https://archive.ubuntu.com/ubuntu",
+    sha256 = "944b2728f53ceb3916cec2c962873c9951e612408099601751db2a0a5d81e0ed",
+)
+bootstrap_busybox(
+    name = "bootstrap_busybox_arm64",
+    arch = "arm64",
+    mirror = "https://ports.ubuntu.com/ubuntu-ports",
+    sha256 = "d96535e0402c011e0ee43449799df2f4504d44b842e4f2b3a6cbc845508eaafc",
+)

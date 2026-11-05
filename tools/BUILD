@@ -77,6 +77,7 @@ exports_files([
     "build_cover.sh",
     "go-allow-internal.patch",
     "llvm-linux-header-default.patch",
+    "protobuf_authenticity.patch",
 ])
 
 py_test(
