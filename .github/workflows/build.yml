@@ -1,35 +1,84 @@
-name: CI
-
-"on":
+name: Read the configured GNU allocator on the systrap link
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/systrap-allocator-option-readback]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  gnu:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 16
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Bind the published stub and the shared adapter
+        run: |
+          set -euo pipefail
+          umask 077
+          test "$(git rev-parse HEAD^)" = 7f6ecfff61b465c2ae00d20ee4ebaad09d430519
+          test "$(git rev-parse HEAD^^)" = 244010f9c48c93edcf25cfb4acdf91f7bed251c7
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/build.yml
+          git checkout --detach HEAD^
+          d="$RUNNER_TEMP/native-cross-inputs"
+          mkdir "$d"
+          test "$(cat .bazelversion)" = 9.3.1
+          test "$(uname -m)" = x86_64
+          curl --retry 3 --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Provide the compilers declared by the current GNU toolchain
+        run: |
+          set -euo pipefail
+          if ! test -x /usr/bin/aarch64-linux-gnu-g++; then
+            sudo apt-get -o Acquire::Retries=3 update
+            sudo apt-get -o Acquire::Retries=3 install --no-install-recommends -y g++-aarch64-linux-gnu
+          fi
+          for arch in x86_64 aarch64; do
+            compiler="/usr/bin/$arch-linux-gnu-g++"
+            test "$("$compiler" -dumpmachine)" = "$arch-linux-gnu"
+          done
+      - name: Read the public wrapper's own dependency and an ordinary C target
+        run: |
+          set -euo pipefail
+          pkg=test/rbe/allocator
+          mkdir -p "$pkg"
+          printf '%s\n' 'load("@rules_cc//cc:defs.bzl","cc_binary","cc_library")' 'cc_library(name="poison",srcs=["poison.c"],alwayslink=True,linkopts=["-Wl,-u,sidecar_qualification_allocator"],visibility=["//visibility:public"])' 'cc_binary(name="ordinary",srcs=["ordinary.c"])' > "$pkg/BUILD"
+          printf '%s\n' 'extern void requires_a_hosted_runtime(void); void sidecar_qualification_allocator(void) { requires_a_hosted_runtime(); }' > "$pkg/poison.c"
+          printf '%s\n' 'int main(void) { return 0; }' > "$pkg/ordinary.c"
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" USE_BAZEL_VERSION=9.3.1 python3 -B - <<'PYTHON'
+          import json, os, subprocess
+          from pathlib import Path
+          d=Path(os.environ["RUNNER_TEMP"])/"native-cross-inputs"
+          public="//pkg/sentry/platform/systrap/sysmsg:sighandler_object"
+          inner="//pkg/sentry/platform/systrap/sysmsg:_linked/sighandler.built-in.bin.o"
+          ordinary="//test/rbe/allocator:ordinary"; poison="//test/rbe/allocator:poison"
+          flags=["--config=x86_64","--jobs=4","--remote_cache=","--remote_executor=","--disk_cache=","--custom_malloc="+poison]
+          arg="--starlark:expr=json.encode([str(target.label), str(build_options(target).get('//command_line_option:custom_malloc'))])"
+          receipt={"source":"7f6ecfff61b465c2ae00d20ee4ebaad09d430519","first_run":42124536514,"rows":{},"builds":0}
+          for name,expr in (("consumer_edge","labels(binary, "+public+")"),("ordinary",ordinary),("prior_filter",'filter(":_linked/sighandler[.]built-in[.]bin[.]o$",deps('+public+'))')):
+              p=subprocess.run([str(d/"bazel"),"cquery",*flags,"--output=starlark",arg,expr],capture_output=True,text=True,timeout=480)
+              outs=[]
+              for line in p.stdout.splitlines():
+                  if not line.startswith("["): continue
+                  val=json.loads(line)
+                  assert len(val)==2 and all(isinstance(v,str) and len(v)<250 for v in val)
+                  outs.append(val)
+              receipt["rows"][name]={"exit":p.returncode,"values":outs}
+              (d/"verdict.json").write_text(json.dumps(receipt,indent=2))
+          rows=receipt["rows"]
+          chosen=rows["consumer_edge"]["values"]; control=rows["ordinary"]["values"]
+          receipt["verified"]=(all(r["exit"]==0 for r in rows.values()) and len(chosen)==len(control)==1
+                               and chosen[0][0].endswith(inner) and chosen[0][1]=="None"
+                               and control[0][0].endswith(ordinary) and control[0][1].endswith(poison))
+          (d/"verdict.json").write_text(json.dumps(receipt,indent=2))
+          raise SystemExit(not receipt["verified"])
+          PYTHON
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: systrap-allocator-option-readback
+          path: ${{ runner.temp }}/native-cross-inputs/verdict.json
+          if-no-files-found: error
+          retention-days: 14
