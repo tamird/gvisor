@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/state"
+	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
 func TestReferenceArrayWire(t *testing.T) {
@@ -32,10 +33,12 @@ func TestReferenceArrayWire(t *testing.T) {
 	if _, err := state.Save(t.Context(), &captured, &original); err != nil {
 		t.Fatal(err)
 	}
+	observeReferenceFrame(t, "addressable", &captured)
 	original.byValue = true
 	if _, err := state.Save(t.Context(), &reflected, &original); err != nil {
 		t.Fatal(err)
 	}
+	observeReferenceFrame(t, "by_value", &reflected)
 	if got, want := captured.Bytes(), reflected.Bytes(); !bytes.Equal(got, want) {
 		t.Fatalf("addressable encoding = %x, want value encoding %x", got, want)
 	}
@@ -84,6 +87,7 @@ func TestReferenceArraySnapshotTiming(t *testing.T) {
 	if _, err := state.Save(t.Context(), &encoded, &original); err != nil {
 		t.Fatal(err)
 	}
+	observeReferenceFrame(t, "snapshot", &encoded)
 	if got, want := source.values[0], &replacement; got != want {
 		t.Fatalf("later replacement = %p, want %p", got, want)
 	}
@@ -117,6 +121,7 @@ func TestReferenceArrayLateParent(t *testing.T) {
 	if _, err := state.Save(t.Context(), &encoded, &original); err != nil {
 		t.Fatal(err)
 	}
+	observeReferenceFrame(t, "late_parent", &encoded)
 	if got, want := backing[1], ([2]*int{}); got != want {
 		t.Fatalf("cleared backing tail = %v, want %v", got, want)
 	}
@@ -135,4 +140,14 @@ func TestReferenceArrayLateParent(t *testing.T) {
 	if got, want := *child, ([2]*int{}); got != want {
 		t.Errorf("recaptured tail = %v, want %v", got, want)
 	}
+}
+
+// observeReferenceFrame reads the produced bytes without consuming the test's buffer.
+func observeReferenceFrame(t *testing.T, site string, buf *bytes.Buffer) {
+	t.Helper()
+	header, err := state.ReadHeaderMode(&wire.Reader{Reader: bytes.NewReader(buf.Bytes())})
+	if err != nil {
+		t.Fatalf("reading %s frame: %v", site, err)
+	}
+	t.Logf("reference frame case=%s site=%s object=%t graph=%t length=%d bytes=%d", t.Name(), site, header.Object, header.Graph, header.Length, buf.Len())
 }
