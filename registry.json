@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T12:06:54.043543Z",
+    "updatedAt": "2026-11-05T12:16:49.790997Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -50846,6 +50846,71 @@
         "summary": "Open the standalone PR for the deletion omitted from the import?",
         "body": "Watch insertion and removal get the index key from the owning inotify\ninstance. The Watch.OwnerID accessor has no callers."
       }
+    },
+    {
+      "id": "branch:kernfs-ordered-child-locks",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "kernfs-ordered-child-locks",
+      "head": "199cf1558d95b4e029b3e52ff13e92e63e1a3d34",
+      "title": "Check the locks protecting kernfs directory children",
+      "url": "https://github.com/tamird/gvisor/commit/199cf1558",
+      "group": "analysis",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-05T12:16:49.790997Z",
+      "summary": "Have checklocks verify the mutex protecting kernfs's child-name map and ordered child list. Rename passes its locked directories to a helper so the analyzer can check the one-directory and two-directory paths. Lock ordering and rename behavior are unchanged.\n\nOn 199cf1558, the native AMD64 package target passed all 12 named cases with zero skips or failures. The Nogo wrapper passed with no findings for AMD64 or ARM64. Removing the destination write lock and directory-cursor read lock produced seven checklocks diagnostics on each architecture, all at the three intended locations: nthLocked (three), len(children.set) (three), and renameLocked (one). The edited control's locations are fd_impl_util.go:208 and :226, and inode_impl_util.go:711.\n\nThe outer job is red because its verifier expected one diagnostic per source location; the original records retain the actual positive results and the deliberate negative exit 3. The source links below point to the corresponding unmodified lines. This is not an ARM64 package runtime or race result.",
+      "evidence": [
+        {
+          "label": "Proposed source: checked directory readers, removal and both rename paths",
+          "url": "https://github.com/tamird/gvisor/commit/199cf1558"
+        },
+        {
+          "label": "Original Linux result: 12 package cases, clean analysis on both architectures and deliberate missing-lock findings",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42024013729/artifacts/13412948249"
+        },
+        {
+          "label": "Original qualification and exact lock-removal control",
+          "url": "https://github.com/tamird/gvisor/commit/1f4e06419"
+        },
+        {
+          "label": "Directory cursor calls nthLocked under the read lock",
+          "url": "https://github.com/tamird/gvisor/blob/199cf1558/pkg/sentry/fsimpl/kernfs/fd_impl_util.go#L210"
+        },
+        {
+          "label": "Directory cursor reads the child map under the read lock",
+          "url": "https://github.com/tamird/gvisor/blob/199cf1558/pkg/sentry/fsimpl/kernfs/fd_impl_util.go#L228"
+        },
+        {
+          "label": "Cross-directory rename passes both locked directories",
+          "url": "https://github.com/tamird/gvisor/blob/199cf1558/pkg/sentry/fsimpl/kernfs/inode_impl_util.go#L713"
+        }
+      ],
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "199cf1558d95b4e029b3e52ff13e92e63e1a3d34",
+        "observedAt": "2026-11-05T12:16:49.790997Z",
+        "disposition": "Contributor review requested",
+        "nextAction": "Review the standalone checked-lock change before opening an upstream PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/199cf1558",
+          "https://github.com/tamird/gvisor/actions/runs/42024013729/artifacts/13412948249",
+          "https://github.com/tamird/gvisor/commit/1f4e06419",
+          "https://github.com/tamird/gvisor/blob/199cf1558/pkg/sentry/fsimpl/kernfs/fd_impl_util.go#L210",
+          "https://github.com/tamird/gvisor/blob/199cf1558/pkg/sentry/fsimpl/kernfs/fd_impl_util.go#L228",
+          "https://github.com/tamird/gvisor/blob/199cf1558/pkg/sentry/fsimpl/kernfs/inode_impl_util.go#L713"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "199cf1558d95b4e029b3e52ff13e92e63e1a3d34",
+        "baseHead": "90d4e2253f004cdc73a35dbc4050eab3e9a8495d",
+        "url": "https://github.com/tamird/gvisor/commit/199cf1558",
+        "title": "Check the locks protecting kernfs directory children",
+        "requestedAt": "2026-11-05T12:16:49.790997Z",
+        "summary": "Publish the kernfs directory-lock annotations and rename helper? All 12 native AMD64 package cases passed, analysis was clean for both architectures, and removing the locks produced the intended diagnostics.",
+        "body": "Lookup reads a map of child names, while readdir walks a list in insertion order. Both use the directory mutex. Have checklocks verify that readers hold the mutex and that removal holds it for writing.\n\nA rename within one directory holds one lock. A rename between two directories must hold both. Pass the locked directories to the move so checklocks can verify both cases."
+      }
     }
   ],
   "edges": [
@@ -72817,5 +72882,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T12:06:54.043543Z"
+  "updatedAt": "2026-11-05T12:16:49.790997Z"
 }
