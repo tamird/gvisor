@@ -92,13 +92,6 @@ python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = "3.11")
 python.toolchain(python_version = "3.11")
 
-### Crosstool
-coral_crosstool_extension = use_extension("//tools/bazeldefs:extensions/coral_crosstool.bzl", "coral_crosstool_extension")
-use_repo(coral_crosstool_extension, "coral_crosstool")
-
-crosstool = use_extension("//tools/bazeldefs:extensions/crosstool.bzl", "crosstool_extension")
-use_repo(crosstool, "crosstool")
-
 ### Linux headers
 # Select current UAPI declarations independently of libc and test platforms.
 kernel_headers = use_extension("@llvm//kernel/extension:kernel_headers.bzl", "kernel_headers")
@@ -363,9 +356,7 @@ img_pull(
 )
 
 ### Toolchains
-register_toolchains("//:cc_toolchain_k8")
-
-register_toolchains("//:cc_toolchain_aarch64")
+register_toolchains("@llvm//toolchain:all")
 
 ### Go
 go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")
