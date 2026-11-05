@@ -733,6 +733,10 @@ func (d PacketData) Merge(oth PacketData) {
 
 // TrimFront removes up to count bytes from the front of d's payload.
 func (d PacketData) TrimFront(count int) {
+	if d.pk.dataOffset() == 0 {
+		d.pk.buf.TrimFront(int64(count))
+		return
+	}
 	if count >= d.Size() {
 		d.pk.buf.Truncate(int64(d.pk.dataOffset()))
 		return

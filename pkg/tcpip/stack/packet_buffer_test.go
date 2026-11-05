@@ -874,3 +874,28 @@ func TestPacketDataReadToPreservesHeaders(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkPacketDataReadToHeaderless(b *testing.B) {
+	for _, fragments := range []int{1, 16} {
+		b.Run(fmt.Sprintf("fragments=%d", fragments), func(b *testing.B) {
+			var payload buffer.Buffer
+			for range fragments {
+				fragment := buffer.MakeWithData(make([]byte, 1536/fragments))
+				payload.Merge(&fragment)
+			}
+			defer payload.Release()
+			var dst [64]byte
+			b.ReportAllocs()
+			b.SetBytes(int64(len(dst)))
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				pkt := NewPacketBuffer(PacketBufferOptions{Payload: payload.Clone()})
+				writer := tcpip.SliceWriter(dst[:])
+				if n, err := pkt.Data().ReadTo(&writer, false); n != len(dst) || err != io.ErrShortWrite {
+					b.Fatalf("ReadTo = %d, %v; want %d, %v", n, err, len(dst), io.ErrShortWrite)
+				}
+				pkt.DecRef()
+			}
+		})
+	}
+}
