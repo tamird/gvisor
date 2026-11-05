@@ -27,15 +27,25 @@ EXPECTED = {
 def project(raw):
     lines = []
     source_files = r"(?:loader|vfs|lifecyclecpus|fscheckpoint|mount_hints|restore|compat|seccomp)_test[.]go"
-    for line in raw.decode("utf-8", errors="replace").splitlines():
-        match = re.fullmatch(r"\s*(" + source_files + r"):(\d+):\s+(.*)", line)
-        if not match:
+    phrases = ("error creating loader:", "failed to create loader:", "error running container:",
+               "error on startResultChan:", "application exited with", "error calling StartRoot:",
+               "startup heap was not released", "startup heap was released more than once",
+               "mountAll:", "makeMountPoint failed:", "error calling SetNetworkConfig:",
+               "error calling NetworkConfig:", "permission denied")
+    text = raw.decode("utf-8", errors="replace").replace("\x16", "")
+    text = re.sub(r"\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)", "", text)
+    text = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", text)
+    for line in text.splitlines():
+        match = re.search(r"\b(" + source_files + r"):(\d+):\s+(.*)", line)
+        if not match and not any(phrase in line for phrase in phrases):
             continue
-        message = re.sub(r"https?://\S+", "<url>", match[3])
+        message = re.sub(r"https?://\S+", "<url>", match[3] if match else line)
         message = re.sub(r"/(?:buildbuddy-execroot|tmp|home|__w)/[^\s\"']+", "<worker-path>", message)
         message = re.sub(r"0x[0-9a-fA-F]{8,}", "<address>", message)
-        lines.append({"file": match[1], "line": int(match[2]), "message": message[:512]})
-    return {"source_lines": lines[:24], "source_line_count": len(lines)}
+        lines.append({"file": match[1] if match else None, "line": int(match[2]) if match else None,
+                      "message": message[:512]})
+    return {"source_lines": lines[:16], "source_line_count": len(lines),
+            "test2json_markers": raw.count(b"\x16"), "ansi_escape_bytes": raw.count(b"\x1b")}
 
 
 def main():

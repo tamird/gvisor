@@ -1,7 +1,7 @@
 name: Read the four original boot failures
 on:
   push:
-    branches: [qualification/boot-original-log-recovery]
+    branches: [qualification/boot-original-log-projection]
 permissions:
   contents: read
   actions: read
@@ -19,9 +19,9 @@ jobs:
           umask 077
           task="$RUNNER_TEMP/release-rbe"
           mkdir -p "$task/harness" "$task/public"
-          test "$(git rev-parse HEAD:test/rbe/release_prewarmer/original_boot_logs.py)" = a4b5bd7c926ab915d1ebab9246ee410b9d57d8c1
+          test "$(git rev-parse HEAD:test/rbe/release_prewarmer/original_boot_logs.py)" = 428e4866551d13e3ca9e1aa39efd04b0fef431e9
           cp test/rbe/release_prewarmer/original_boot_logs.py "$task/harness/"
-          echo '5c05cb24ab0e71f6dfcf9190e14e74e44e593b6ce1c9ff830877c7b29af1d890  '"$task/harness/original_boot_logs.py" | sha256sum -c -
+          echo '14dffea2b84fd5940eb615ee460b63eeaf5dedd27e02de096495499ab7742f4e  '"$task/harness/original_boot_logs.py" | sha256sum -c -
           git fetch --quiet --depth=1 https://github.com/tamird/gvisor.git dc3dc3dba86bb008499de9d959398a64c27c40ad
           test "$(git rev-parse dc3dc3dba:test/rbe/release_prewarmer/cas_inputs.py)" = b5c6f23eb5e3b94aaf412cae2a76843eaf0fa180
           git show dc3dc3dba:test/rbe/release_prewarmer/cas_inputs.py > "$task/harness/cas_inputs.py"
