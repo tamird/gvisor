@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T13:43:13.340425Z",
+    "updatedAt": "2026-11-05T14:11:43.746545Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -22713,16 +22713,17 @@
       "url": "https://github.com/tamird/gvisor/commit/15f2d7624e84c8d879d25b746da0f2c2517db962",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-11-05T13:38:34.214458Z",
-      "summary": "The approved wire-encoder optimization treats both signs of floating-point zero as an empty field. Its signed-zero prerequisite (#16718) requires preserving the sign: if a saved float64 is −0, its reciprocal after restore must still be −∞. The old optimization also explicitly expects an empty field for this input in its unit test.\n\nThe reported UDP Save improvement of 3.97% was measured on the earlier wire encoder. The optimization needs a new measurement after the signed-zero fix is incorporated.",
+      "updatedAt": "2026-11-05T14:11:43.746545Z",
+      "summary": "The approved wire-encoder optimization treats both signs of floating-point zero as an empty field. Its signed-zero prerequisite (#16718) requires preserving the sign: if a saved float64 is −0, its reciprocal after restore must still be −∞. The old optimization also explicitly expects an empty field for this input in its unit test.\n\nThe reported UDP Save improvement of 3.97% was measured on the earlier wire encoder. The optimization needs a new measurement after the signed-zero fix is incorporated. A revised fork candidate, 55a01989c, applies the optimization directly on #16718 and has had an independent source review. The new correctness checks and matched legacy UDP Save measurement are in progress; the earlier timing does not qualify this candidate.",
       "followup": {
         "owner": "node_tls_sni",
         "sourceHead": "15f2d7624e84c8d879d25b746da0f2c2517db962",
-        "observedAt": "2026-11-05T13:38:34.214458Z",
-        "disposition": "Rebase the approved optimization onto signed-zero semantics",
-        "nextAction": "Preserve the sign of float and complex components when rebasing onto #16718. Exercise the wire encoder explicitly, run the signed-zero regressions and remeasure the affected Save workload before submitting the revised code for review.",
+        "observedAt": "2026-11-05T14:11:43.746545Z",
+        "disposition": "Qualifying revised source on #16718",
+        "nextAction": "Verify the revised fork candidate with the signed-zero and wire representation checks, and remeasure the matched legacy UDP Save workload. Bring the exact revision for review after the results; the prior approval applies only to the earlier source.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/15f2d7624e84c8d879d25b746da0f2c2517db962"
+          "https://github.com/tamird/gvisor/commit/15f2d7624e84c8d879d25b746da0f2c2517db962",
+          "https://github.com/tamird/gvisor/commit/55a01989c"
         ]
       },
       "links": [
@@ -22737,6 +22738,10 @@
         {
           "label": "Signed-zero prerequisite",
           "url": "https://github.com/tamird/gvisor/blob/1f4905b21/pkg/state/encode.go#L629-L643"
+        },
+        {
+          "label": "Revised candidate directly on the signed-zero fix",
+          "url": "https://github.com/tamird/gvisor/commit/55a01989c"
         }
       ]
     },
@@ -51003,6 +51008,56 @@
         "summary": "Publish the kernfs directory-lock annotations and rename helper? All 12 native AMD64 package cases passed, analysis was clean for both architectures, and removing the locks produced the intended diagnostics.",
         "body": "Lookup reads a map of child names, while readdir walks a list in insertion order. Both use the directory mutex. Have checklocks verify that readers hold the mutex and that removal holds it for writing.\n\nA rename within one directory holds one lock. A rename between two directories must hold both. Pass the locked directories to the move so checklocks can verify both cases."
       }
+    },
+    {
+      "id": "branch:review/runsc-lifecycle-fixtures",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/runsc-lifecycle-fixtures",
+      "head": "cd8f6c54149718fdca08f268658db4a1d1b4c247",
+      "title": "Run the runsc lifecycle tests without host utilities",
+      "url": "https://github.com/tamird/gvisor/compare/90d4e2253...cd8f6c541",
+      "group": "tests",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-05T14:11:43.746545Z",
+      "summary": "The original specutils and cmd tests failed to start /bin/true or /bin/sleep. The two proposed commits use the test binaries themselves as children and retain the existing lifecycle assertions. The selected test and helper implementations match those on the separately tested integrations. Four fresh native TestRunners each passed all six selected cases: specutils and cmd on AMD64 and ARM64, with no failures or skips. Boot is a separate, failing qualification.",
+      "evidence": [
+        {
+          "label": "Two proposed commits on master",
+          "url": "https://github.com/tamird/gvisor/compare/90d4e2253...cd8f6c541"
+        },
+        {
+          "label": "Stock runsc test results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42030254826/artifacts/13415219314"
+        },
+        {
+          "label": "Six specutils and six cmd cases per architecture",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42037630464/artifacts/13422210533"
+        }
+      ],
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "cd8f6c54149718fdca08f268658db4a1d1b4c247",
+        "observedAt": "2026-11-05T14:11:43.746545Z",
+        "disposition": "Contributor review requested",
+        "nextAction": "Review the two test-only commits together before opening one upstream PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/compare/90d4e2253...cd8f6c541",
+          "https://github.com/tamird/gvisor/actions/runs/42037630464/artifacts/13422210533",
+          "https://github.com/tamird/gvisor/actions/runs/42030254826/artifacts/13415219314"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "cd8f6c54149718fdca08f268658db4a1d1b4c247",
+        "baseHead": "90d4e2253f004cdc73a35dbc4050eab3e9a8495d",
+        "url": "https://github.com/tamird/gvisor/compare/90d4e2253...cd8f6c541",
+        "title": "Run the runsc lifecycle tests without host utilities",
+        "requestedAt": "2026-11-05T14:11:43.746545Z",
+        "summary": "Open one upstream PR with the two test-only commits? Six specutils and six cmd cases passed on each architecture without the host utilities.",
+        "body": "The specutils tests use /bin/true and /bin/sleep to start children that\nexit successfully or stay alive until killed. The runsc command tests\nuse /bin/sleep for a live sandbox PID with no control server. On a\nworker without those programs, the tests fail before they can check\nprocess readiness, identity, or command behavior.\n\nStart a copy of the test binary for each child. Keep the exit and zombie\nchecks in specutils, and have both command fixtures reap the child when\nthe command kills it or the test ends."
+      }
     }
   ],
   "edges": [
@@ -68021,8 +68076,8 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-05T13:38:34.214458Z",
-      "summary": "Both remote architectures built all 231 selected runsc targets. A separate run requested 40 test targets per architecture. Of those, 31 passed, three passed with skips, five failed and one did not execute. Two additional container tests require KVM. The version test and six specutils cases have separate follow-up results.",
+      "updatedAt": "2026-11-05T14:11:43.746545Z",
+      "summary": "Both remote architectures built all 231 selected runsc targets. The original 40-target runtime sweep and later focused checks are separate. Six specutils cases, six cmd cases and the finite seccomp filter corpus now pass on each architecture. The full boot suite still fails on both.",
       "findings": [
         {
           "text": "On f35d72566, each distroless worker executed 39 of the 40 requested runsc test targets. AMD64 recorded 1,118 passing cases and ARM64 recorded 1,105. Each recorded 42 failures and 14 skips. The failed targets were boot, cmd, sandbox, specutils and version. The filter fuzz test did not execute. Both KVM-tagged container targets were excluded. The separate version check passed one case on each architecture at 89b55b4b6.",
@@ -68034,11 +68089,50 @@
           ]
         },
         {
-          "text": "The first specutils prototype (1e68829fe, tested on ddbb47b66) passed all six selected process and readiness cases on each architecture. The revised test selects the helper process by an explicit argument instead of an environment variable; that revision needs its own qualification.",
+          "text": "The first specutils prototype (1e68829fe, tested on ddbb47b66) passed all six selected process and readiness cases on each architecture. The later qualification below uses the revised explicit child argument.",
           "evidence": [
             {
               "label": "Six specutils cases per architecture on the first prototype",
               "url": "https://github.com/tamird/gvisor/actions/runs/42033516421/artifacts/13417087969"
+            }
+          ]
+        },
+        {
+          "text": "After replacing host utility children, all six selected specutils cases and all six selected cmd cases passed in four fresh native TestRunners across AMD64 and ARM64. No cases skipped. The combined proposal cd8f6c541 contains the same helper changes and selected test implementations as those two integrations.",
+          "evidence": [
+            {
+              "label": "Combined source",
+              "url": "https://github.com/tamird/gvisor/compare/90d4e2253...cd8f6c541"
+            },
+            {
+              "label": "Four lifecycle test results; boot reported separately",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42037630464/artifacts/13422210533"
+            }
+          ]
+        },
+        {
+          "text": "On cc47a1a58 the full boot suite recorded 66 passing and 13 failing named XML records on each CPU, with no skips. TestRun and TestStartupHeapReleaseOnStart also failed in the focused run. The normal and race fixture checks are incomplete; the missing executable resolution is still being diagnosed.",
+          "evidence": [
+            {
+              "label": "Original boot suite, focused failures and fixture records",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42037630464/artifacts/13422210533"
+            }
+          ]
+        },
+        {
+          "text": "The stock runsc sweep never executed filter_fuzz_test: its secfuzz generator failed to build. With the two #16604 generator changes on f35d72566, the generator and the native TestRunner ran fresh on each worker. TestFilterOptimizationsResultInConsistentProgram passed on both AMD64 and ARM64 with no skips. This runs the finite default-tag corpus against the optimized and unoptimized filters; it is not a fuzz campaign.",
+          "evidence": [
+            {
+              "label": "Paired finite corpus results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42041631383/artifacts/13424035443"
+            },
+            {
+              "label": "Generator changes in #16604",
+              "url": "https://github.com/google/gvisor/pull/16604"
+            },
+            {
+              "label": "Prior run with zero test executions for this owner",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42030254826/artifacts/13415219314"
             }
           ]
         },
@@ -70225,8 +70319,16 @@
           ]
         }
       ],
-      "nextStep": "Qualify the revised specutils process helper, the remaining boot, cmd and sandbox failures, and the filter fuzz test on their own sources. Choose between declaring the verified GNU runtime as test data and making the C++ example executable static. Continue the separate syscall qualification with the source-built RSEQ helper and native test launcher. Count builds, executed tests and guest workloads separately. Verify the remaining Sentry link outputs against ELF bytes. Track the hermetic-llvm and rules_go fixes and check that BuildBuddy has deployed its empty-root fix before retrying a file-empty worker.",
+      "nextStep": "Trace the unresolved boot executable and the remaining sandbox failures. Choose between declaring the verified GNU runtime as test data and making the C++ example executable static. Continue the separate syscall qualification with the source-built RSEQ helper and native test launcher. Count builds, executed tests and guest workloads separately. Verify the remaining Sentry link outputs against ELF bytes. Track the hermetic-llvm and rules_go fixes and check that BuildBuddy has deployed its empty-root fix before retrying a file-empty worker.",
       "evidence": [
+        {
+          "label": "Lifecycle tests and separate boot failures on AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42037630464/artifacts/13422210533"
+        },
+        {
+          "label": "Finite static seccomp filter corpus on AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42041631383/artifacts/13424035443"
+        },
         {
           "label": "Original runsc results and separate version test on both workers",
           "url": "https://github.com/tamird/gvisor/actions/runs/42030254826/artifacts/13415219314"
@@ -73021,5 +73123,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T13:43:13.340425Z"
+  "updatedAt": "2026-11-05T14:11:43.746545Z"
 }
