@@ -8,6 +8,7 @@ package(
 exports_files(glob([
     "*.BUILD",
     "*.patch",
+    "testdata/*.go",
 ]))
 
 bzl_library(
