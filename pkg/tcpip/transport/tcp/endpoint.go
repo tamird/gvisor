@@ -1221,6 +1221,7 @@ func (e *Endpoint) cleanupLocked() {
 		e.snd.corkTimer.cleanup()
 	}
 
+	e.mu.Unlock()
 	if e.finWait2Timer != nil {
 		e.finWait2Timer.Stop()
 	}
@@ -1228,6 +1229,7 @@ func (e *Endpoint) cleanupLocked() {
 	if e.timeWaitTimer != nil {
 		e.timeWaitTimer.Stop()
 	}
+	e.mu.Lock()
 
 	// Remove current EP from its lEP acceptQueue.pendingEndpoint if exists.
 	if e.h != nil && e.h.listenEP != nil {
