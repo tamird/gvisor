@@ -145,7 +145,11 @@ def receive(code):
                 stage["test_locations"] = list(dict.fromkeys(re.findall(r"\b(?:gc_reference_test|container_test|testutil)\.go:[1-9][0-9]{0,5}\b", text)))[:12]
                 stage["test_categories"] = [v for v in (*categories, "cannot set up cgroup", "mandatory cgroup controller",
                     "rootless mode not supported", "unprivileged user", "failed to start", "permission denied",
-                    "no such file or directory", "exec format error", "out of memory", "operation not permitted")
+                    "no such file or directory", "exec format error", "out of memory", "operation not permitted",
+                    "read-only file system", "failed to create sandbox", "creating sandbox", "creating gofer",
+                    "creating container", "invalid argument", "connection reset by peer",
+                    "mount namespace", "failed to mount", "failed to bind", "remount", "chroot",
+                    "cgroup.procs", "cgroup.subtree_control", "no space left on device")
                     if v.lower() in text.lower()][:14]
         finally:
             os.close(work)
@@ -156,6 +160,26 @@ def receive(code):
 
 
 if __name__ == "__main__":
+    if sys.argv[1] == "guard":
+        out = TMP / "restore-vm-verdict.json"
+        data = json.loads(out.read_text())
+        with (TMP / "private-guard.log").open("rb") as stream:
+            lines = stream.read(65536).decode(errors="replace").splitlines()
+        code = int(sys.argv[2])
+        row = data["stages"]["private_guard"] = {
+            "exit": code, "product_cases": 0,
+            "original_awk_exit": [int(m[1]) for line in lines if (m := re.fullmatch(r"OLD_AWK_EXIT=([0-9]{1,3})", line))],
+            "broken_awk_alternative": "OLD_AWK_BROKEN_ALTERNATIVE" in lines,
+            "uid_map_verified": "INNER_UID_MAP_VERIFIED" in lines,
+            "placement_verified": "PRIVATE_GUARD_PASSED" in lines,
+            "locations": [line for line in lines if re.fullmatch(r"(HOST_SETUP_LOCATION=(?:service|outer|namespace|pivot):|PAYLOAD_LOCATION=)[1-9][0-9]{0,3}", line)][:8],
+            "prior": {"run": 42021467138, "artifact": 13413007470,
+                      "zip_sha256": "e7a221e19f58c8b5fb683ec89f1845d437c149e63b3acb3ad682fa7b753f0b76"},
+        }
+        good = code == 0 and len(row["original_awk_exit"]) == 1 and row["uid_map_verified"] and row["placement_verified"]
+        row["status"] = "PASS" if good else "FAIL"
+        out.write_text(json.dumps(data, indent=2) + "\n")
+        sys.exit(not good)
     if sys.argv[1] == "receive":
         sys.exit(not receive(int(sys.argv[2])))
     add_fixture(Path(sys.argv[1]))

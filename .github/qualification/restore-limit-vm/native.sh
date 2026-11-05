@@ -4,6 +4,25 @@ set -Eeuo pipefail
 phase=$1
 trap 'printf "HOST_SETUP_LOCATION=%s:%d\n" "$phase" "$LINENO" >&2' ERR
 case "$1" in
+  prepare)
+    root=$2
+    pkg=${0%/*}
+    mkdir -p "$root"/{dev,proc,sys,usr,tmp,run,inputs,outputs,work,etc}
+    chmod 1777 "$root/tmp"
+    for dir in bin lib lib64 sbin; do
+        [[ -L /$dir ]]
+        ln -s "$(readlink "/$dir")" "$root/$dir"
+    done
+    printf 'root:x:0:0:root:/work:/bin/bash\n' > "$root/etc/passwd"
+    printf 'root:x:0:\n' > "$root/etc/group"
+    printf '127.0.0.1 localhost\n' > "$root/etc/hosts"
+    cp "$pkg/payload.sh" "$root/inputs/"
+    case "$3" in
+        guard) touch "$root/inputs/guard-only";;
+        measure) cp --reflink=auto "$pkg"/{parent,candidate}.tar "$root/inputs/";;
+        *) exit 2;;
+    esac
+    ;;
   service)
     root=$2
     uid=$(id -u)

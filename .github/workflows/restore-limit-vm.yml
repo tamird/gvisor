@@ -1,7 +1,7 @@
 name: Compare graph save policy in a precreated native systrap cgroup
 on:
   push:
-    branches: [qualification/gc-save-native-systrap]
+    branches: [qualification/gc-save-native-guard-recovery]
 permissions:
   contents: read
 jobs:
@@ -150,17 +150,27 @@ jobs:
         test "$(id -u)" != 0
         awk '$1 == "MemAvailable:" && $2 >= 7*1024*1024 { found=1 } END { exit !found }' /proc/meminfo
         test "$(df -PB1 . | awk 'END {print $4}')" -gt 10000000000
-        test "$(git rev-parse HEAD^)" = acd90fc2cbab4a3babb5299668baa23a0b8d4fd7
+        test "$(git rev-parse HEAD^)" = b6cbf2b98cee47fe8f13fb165254047bf84c9c9e
         test "$(git hash-object "$PKG/gc_reference_test.go")" = b70a9171605324eef57901601fdd6163572041be
-        test "$(git hash-object "$PKG/paired.py")" = 1d14a5bcf1caa04dd2b86a59582cbefbec5bd7e5
-        test "$(git hash-object "$PKG/native.sh")" = 76d3a70504cb6255cc7f07bafc55d47517d6d97f
-        test "$(git hash-object "$PKG/payload.sh")" = 007c7acdab3c8bc7eb6caf7fdaba5e457c92a72b
+        test "$(git hash-object "$PKG/paired.py")" = 6c2214179d14ddf23ced647e6ab0322dc36d943a
+        test "$(git hash-object "$PKG/native.sh")" = 28c33fe97dacba26350053483e93099a960da7ce
+        test "$(git hash-object "$PKG/payload.sh")" = 800af2caa8968e338fbf470fbc295e2c41aac081
         test "$(git hash-object "$PKG/handoff.py")" = a2c92929659a93d8f80041d4a3b9072a0f181826
         mkdir "$RUNNER_TEMP/restore-tools"
         curl -fsSL --max-time 90 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$RUNNER_TEMP/restore-tools/bazel"
         echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $RUNNER_TEMP/restore-tools/bazel" | sha256sum -c -
         chmod 755 "$RUNNER_TEMP/restore-tools/bazel"
         test "$(cat .bazelversion)" = 8.8.1
+    - name: Verify the detached private root and precreated cgroup before building either capsule
+      if: steps.host.outputs.eligible == 'true'
+      timeout-minutes: 2
+      run: |
+        set -euo pipefail
+        root="$RUNNER_TEMP/guard-root"
+        /bin/bash "$PKG/native.sh" prepare "$root" guard
+        rc=0
+        /bin/bash "$PWD/$PKG/native.sh" service "$root" > "$RUNNER_TEMP/private-guard.log" 2>&1 || rc=$?
+        python3 -B "$PKG/paired.py" guard "$rc"
     - name: Build both exact sources with the identical reference fixture
       if: steps.host.outputs.eligible == 'true'
       timeout-minutes: 80
@@ -224,22 +234,37 @@ jobs:
           if test "${rc:-0}" = 0; then rc=$handoff_rc; fi
           test "${rc:-0}" = 0 || exit "$rc"
         done
+    - name: Retain only the two validated public-source capsules for a bounded recovery
+      id: capsules
+      continue-on-error: true
+      if: steps.host.outputs.eligible == 'true'
+      run: |
+        set -eu
+        path="$RUNNER_TEMP/verified-capsules"
+        mkdir "$path"
+        for arm in parent candidate; do
+          ln "$PKG/$arm.tar" "$path/$arm.tar"
+          cp "$RUNNER_TEMP/restore-build-$arm/elf.sha256" "$path/$arm.elf.sha256"
+        done
+        cd "$path"
+        sha256sum parent.tar candidate.tar > capsules.sha256
+        printf '%s\n' "$GITHUB_SHA" "$BASE" "$PRODUCT" "$TEST_BLOB" > source.txt
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: steps.capsules.outcome == 'success'
+      continue-on-error: true
+      with:
+        name: verified-native-gc-capsules
+        path: ${{ runner.temp }}/verified-capsules/
+        retention-days: 1
+        compression-level: 1
+        if-no-files-found: error
     - name: Run both source-bound capsules in isolated native systrap
       if: steps.host.outputs.eligible == 'true'
       timeout-minutes: 58
       run: |
         set -euo pipefail
         root="$RUNNER_TEMP/native-root"
-        mkdir -p "$root"/{dev,proc,sys,usr,tmp,run,inputs,outputs,work,etc}
-        chmod 1777 "$root/tmp"
-        for dir in bin lib lib64 sbin; do
-          test -L "/$dir"
-          ln -s "$(readlink "/$dir")" "$root/$dir"
-        done
-        printf 'root:x:0:0:root:/work:/bin/bash\n' > "$root/etc/passwd"
-        printf 'root:x:0:\n' > "$root/etc/group"
-        printf '127.0.0.1 localhost\n' > "$root/etc/hosts"
-        cp --reflink=auto "$PKG"/{parent.tar,candidate.tar,payload.sh} "$root/inputs/"
+        /bin/bash "$PKG/native.sh" prepare "$root" measure
         rc=0
         /bin/bash "$PWD/$PKG/native.sh" service "$root" > "$RUNNER_TEMP/native-service.log" 2>&1 || rc=$?
         RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$PKG/paired.py" receive "$rc"

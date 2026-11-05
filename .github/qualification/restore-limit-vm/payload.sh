@@ -2,7 +2,18 @@
 # Run the same two capsules inside the ordinary-user offline namespace.
 set -Eeuo pipefail
 trap 'printf "PAYLOAD_LOCATION=%d\n" "$LINENO" >&2' ERR
-[[ $(readlink /proc/self/ns/user) != "$OUTER_USER_NS" && $(awk 'NR==1{print $1,$2,$3}' /proc/self/uid_map) == "0 0 1" ]]
+if [[ -f /inputs/guard-only ]]; then
+    old_rc=0
+    awk 'NR==1{print $1,$2,$3}' /proc/self/uid_map > /work/old-map 2>/work/old-error || old_rc=$?
+    echo "OLD_AWK_EXIT=$old_rc"
+    if [[ -L /usr/bin/awk && $(readlink /usr/bin/awk) == /etc/alternatives/awk && ! -e /etc/alternatives/awk ]]; then
+        echo OLD_AWK_BROKEN_ALTERNATIVE
+    fi
+fi
+[[ $(readlink /proc/self/ns/user) != "$OUTER_USER_NS" ]]
+read -r inside outside count extra < /proc/self/uid_map
+[[ "$inside:$outside:$count:$extra" == "0:0:1:" ]]
+echo INNER_UID_MAP_VERIFIED
 for mountpoint in /usr /inputs; do
     [[ ,$(findmnt -nr -o VFS-OPTIONS "$mountpoint"), == *,ro,* ]]
 done
@@ -10,6 +21,17 @@ cg=/sys/fs/cgroup
 [[ $(cat /proc/self/cgroup) == '0::/client' && $(cat "$cg/benchmark/memory.max") == 2147483648 ]]
 [[ $(getconf PAGESIZE) == 4096 && $(nproc) == 4 ]]
 grep -Fxq 'oom_kill 0' "$cg/benchmark/memory.events"
+if [[ -f /inputs/guard-only ]]; then
+    [[ ! -e /inputs/parent.tar && ! -e /inputs/candidate.tar ]]
+    (
+        child=$BASHPID
+        echo "$child" > "$cg/benchmark/cgroup.procs"
+        [[ $(cat /proc/self/cgroup) == '0::/benchmark' ]]
+        grep -Fxq "$child" "$cg/benchmark/cgroup.procs"
+    )
+    echo PRIVATE_GUARD_PASSED
+    exit 0
+fi
 out=/outputs
 source_dir=/inputs
 for arm in parent candidate; do
