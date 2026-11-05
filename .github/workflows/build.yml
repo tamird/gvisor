@@ -1,35 +1,42 @@
-name: CI
-
-"on":
+name: Compare native vDSO and systrap cross-target inputs
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/master-native-cross-inputs]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  cross:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 62
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 5}
+      - name: Bind the three sources and ordinary Bazel client
+        run: |
+          set -eu
+          umask 077
+          test "$(git rev-parse HEAD^)" = 105abcdc9d2d7a00000e6fe5dc2dd71af7987254
+          test "$(git rev-parse HEAD^^)" = 5fa51a2fc3eee86b3ecf12abb8c043481672daff
+          test "$(git rev-parse HEAD^^^^)" = 90d4e2253f004cdc73a35dbc4050eab3e9a8495d
+          test "$(git diff --name-only HEAD^ HEAD)" = "$(printf '%s\n' .github/workflows/build.yml test/rbe/native_cross_inputs.py)"
+          d="$RUNNER_TEMP/native-cross-inputs"
+          mkdir "$d"
+          cp test/rbe/native_cross_inputs.py "$d/probe.py"
+          echo "b0626fb5ecb5bb9c41d644ced5af036019cbefbeef7975c71878021f6e146653  $d/probe.py" | sha256sum -c -
+          test "$(cat .bazelversion)" = 9.3.1
+          grep -Fx 'bazel_dep(name = "llvm", version = "0.8.24")' MODULE.bazel
+          test "$(uname -m)" = x86_64
+          curl --retry 3 --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Build stock and native inputs; compare legacy selection independently
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" USE_BAZEL_VERSION=9.3.1 python3 -B "$RUNNER_TEMP/native-cross-inputs/probe.py"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: master-native-cross-inputs
+          path: ${{ runner.temp }}/native-cross-inputs/verdict.json
+          if-no-files-found: error
