@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T17:23:39.125240Z",
+    "updatedAt": "2026-11-05T18:04:53.570927Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4831,8 +4831,8 @@
       "url": "https://github.com/tamird/gvisor/commit/a385bd2b0",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Bazel 9.3.1 and the declared clang++ built the NVIDIA ABI parser for x86_64-linux-gnu and aarch64-linux-gnu. With supplier source 17f6a3008, the generated LLVM configuration contained exactly AArch64 and X86. TestParser passed uncached on each native architecture. The earlier compiler integration passed all 871 selected Nogo targets (one cached result); those tests were not rerun on Bazel 9. Ordinary C binaries used GNU libc on both architectures. Static syscallbench ran all three modes on AMD64; its constraint excludes ARM64.\n\nThe fork-only packaging follow-up 50c1f8f6a lets a bare downstream Bazel module select exactly @kernel_dep//tools/bazeldefs:static.bzl for fsstress. All ten gVisor policy tags remain, with no consumer-supplied overrides. Stock 588e6f343 exits 7 at Gazelle; the corrected query exits 0, and the wrong-root load control exits 7. This qualifies loading and label selection only, not downstream compilation. The earlier root-workspace archives and AMD64 file-creation result remain separate.",
-      "updatedAt": "2026-11-05T02:52:45.192796+00:00",
+      "summary": "On unmodified gVisor master 90d4e2253, one AMD64 worker built //tools/zstd:compressor for both x86-64 and ARM64 using the released @llvm 0.8.24 and --extra_toolchains=@llvm//toolchain:all. The same AMD64 clang and clang++ compiled and linked both executables. The action records show the corresponding GNU triples, Linux 6.18.33 and glibc 2.28 headers, and architecture-specific link directories. The physical outputs are ELF62 and ELF183. The AMD64 compressor produced a frame that decompressed to the original input. A separate ARM-only run reproduced the identical ARM executable. Project-declared QEMU 11.0 ran it on AMD64 with the GNU loader and libraries from the pinned @test_bun ARM test image; it produced the same 61 compressed bytes and recovered the original input. The image supplied runtime files for this check only. The first job had stopped before QEMU started. This demonstrates an opt-in cross-build without changing the compiler default, the NVIDIA parser or TLDK.\n\nA build of three real Sentry input targets exposed the next compiler issue. On master, the ARM sysmsg genrules invoked host clang without a target triple; x86-64 clang rejected the ARM-only -mno-outline-atomics flag. On 5fa51a2fc, the native vDSO and sysmsg rules used the released LLVM toolchain for 12 compiles and four links. All three targets completed. The two vDSOs matched their linked ELF62/ELF183 shared objects, and the split signal-handler binaries matched the corresponding 5,440- and 4,864-byte ELF sections. Both Go offsets files, however, were identical 105-byte package scaffolds with no exported offsets. The build did not execute the Sentry or a test.\n\nBazel 9.3.1 and the declared clang++ built the NVIDIA ABI parser for x86_64-linux-gnu and aarch64-linux-gnu. With supplier source 17f6a3008, the generated LLVM configuration contained exactly AArch64 and X86. TestParser passed uncached on each native architecture. The earlier compiler integration passed all 871 selected Nogo targets (one cached result); those tests were not rerun on Bazel 9. Ordinary C binaries used GNU libc on both architectures. Static syscallbench ran all three modes on AMD64; its constraint excludes ARM64.\n\nThe fork-only packaging follow-up 50c1f8f6a lets a bare downstream Bazel module select exactly @kernel_dep//tools/bazeldefs:static.bzl for fsstress. All ten gVisor policy tags remain, with no consumer-supplied overrides. Stock 588e6f343 exits 7 at Gazelle; the corrected query exits 0, and the wrong-root load control exits 7. This qualifies loading and label selection only, not downstream compilation. The earlier root-workspace archives and AMD64 file-creation result remain separate.",
+      "updatedAt": "2026-11-05T18:04:53.570927Z",
       "head": "a385bd2b0155b82faf4fc6a0c195a153ad57550c",
       "evidence": [
         {
@@ -4946,6 +4946,34 @@
         {
           "label": "Earlier query with explicit consumer policy",
           "url": "https://github.com/tamird/gvisor/actions/runs/41872028128/artifacts/13343998937"
+        },
+        {
+          "label": "One AMD64 host, released LLVM, two target architectures: actions, ELF identities and native round-trip",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42078042318/artifacts/13439397539"
+        },
+        {
+          "label": "Current master still registers the Coral C++ toolchains",
+          "url": "https://github.com/google/gvisor/blob/90d4e2253/MODULE.bazel#L318-L320"
+        },
+        {
+          "label": "Approved TLDK source, imported internally; internal checks failed",
+          "url": "https://api.github.com/repos/google/gvisor/commits/93993d354/status"
+        },
+        {
+          "label": "License classifier imported; internal checks passed",
+          "url": "https://api.github.com/repos/google/gvisor/commits/afd34241a/status"
+        },
+        {
+          "label": "Identical ARM executable under declared QEMU: loader, each needed library and compression round-trip",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42079033262/artifacts/13439813341"
+        },
+        {
+          "label": "Fork-only compiler default for ordinary runsc and its separate Sentry executable",
+          "url": "https://github.com/tamird/gvisor/commit/ce2fe79f3"
+        },
+        {
+          "label": "Sentry inputs on one AMD64 worker: 12 target compiles, four links, correct vDSOs and signal-handler bytes, missing Go offsets",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42080092292/artifacts/13439929508"
         }
       ],
       "refinement": {
@@ -4967,9 +4995,9 @@
       "followup": {
         "owner": "Compiler integration",
         "sourceHead": "a385bd2b0155b82faf4fc6a0c195a153ad57550c",
-        "disposition": "Bazel 9 parser passed; waiting for release and licensing",
-        "observedAt": "2026-11-05T02:52:45.192796+00:00",
-        "nextAction": "Use the first BCR llvm release that includes 17f6a3008, then verify its published configuration. Version 0.8.26 still enables nine backends. Keep the 6.18 Linux-header setting; the tested supplier already contains its configuration hook, so that pin needs no backport. The compiler no longer uses Coral or llvm-raw. The LLVM source inventory landed in #16249. The license classifier in #15146 is still open.",
+        "disposition": "Released LLVM cross-build verified; qualify the production compiler path separately",
+        "observedAt": "2026-11-05T18:04:53.570927Z",
+        "nextAction": "Restore the missing systrap sysmsg offsets for both architectures, using the existing #16516 generator proposal or a verified correction to the retained script. Match every generated offset to its linked symbol before building //runsc/cmd/sentry:gvisor_sentry, which consumes the vDSO and stub. Qualify //runsc:runsc separately as part of the fork-only compiler-default experiment ce2fe79f3. The ordinary lane can use the released compiler while keeping master’s NVIDIA parser sources and TLDK unchanged. Removing the two builder cross-compilers comes after switching the default.\n\nThe combined fork a385bd2b0 also changes the source used to build the NVIDIA parser. For that version, qualify the first published LLVM release containing 17f6a3008 (0.8.26 still enables nine backends); retain the 6.18 Linux-header setting and its required configuration support. The inventory landed in #16249. The classifier #15146 remains open with passing internal checks. For the combined TLDK path, #15153 was approved and imported; its internal checks failed without a public diagnostic. A maintainer can inspect those results. The already reviewed musl/VFIO successor follows #15153. Neither PR is a prerequisite for the ordinary compressor cross-build.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
@@ -4988,7 +5016,13 @@
           "https://github.com/tamird/gvisor/actions/runs/41357065776/artifacts/13104181385",
           "https://github.com/tamird/gvisor/commit/a899bf908",
           "https://github.com/tamird/gvisor/actions/runs/41717072807/artifacts/13273383359",
-          "https://github.com/google/gvisor/commit/0245c1dfa"
+          "https://github.com/google/gvisor/commit/0245c1dfa",
+          "https://github.com/tamird/gvisor/actions/runs/42078042318/artifacts/13439397539",
+          "https://github.com/google/gvisor/pull/15146",
+          "https://github.com/google/gvisor/pull/15153",
+          "https://github.com/tamird/gvisor/actions/runs/42079033262/artifacts/13439813341",
+          "https://github.com/tamird/gvisor/commit/ce2fe79f3",
+          "https://github.com/tamird/gvisor/actions/runs/42080092292/artifacts/13439929508"
         ]
       }
     },
@@ -52577,10 +52611,11 @@
       "from": "pr:15153",
       "to": "branch:hermetic-compiler-review",
       "type": "depends_on",
-      "reason": "Retains the current plugin sources, declared archive inputs, foreign build, musl portability and backtrace test. The compiler adds only its reviewed LLVM/musl specialization.",
+      "reason": "The combined fork carries the TLDK input declaration and its musl specialization. The approved input declaration is open: Google imported it, then reported failed internal checks. The compiler-only cross-build keeps the plugin unchanged.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/84f5f57bd79388ce5dec0b4c7d2f12bcdd89fe3a",
-        "https://github.com/tamird/gvisor/commit/dc22a991fd2d4676951c34a0f83e72fc352e23e1"
+        "https://github.com/tamird/gvisor/commit/dc22a991fd2d4676951c34a0f83e72fc352e23e1",
+        "https://api.github.com/repos/google/gvisor/commits/93993d354/status"
       ]
     },
     {
@@ -52607,10 +52642,11 @@
       "from": "pr:15146",
       "to": "branch:hermetic-compiler-review",
       "type": "depends_on",
-      "reason": "The current classifier supplies recognition needed by LLVM and preserves the scoped plugin records. Its explicit maintainer hold remains; the live PR is untouched.",
+      "reason": "The combined compiler proposal switches the NVIDIA parser to the LLVM source archive and needs its license classification. The narrower compiler-only path retains the existing parser source. The classifier is open; its internal checks pass.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/c5e943bc48ce63b12fc67b826919b872ebd01a55",
-        "https://github.com/tamird/gvisor/commit/dc22a991fd2d4676951c34a0f83e72fc352e23e1"
+        "https://github.com/tamird/gvisor/commit/dc22a991fd2d4676951c34a0f83e72fc352e23e1",
+        "https://api.github.com/repos/google/gvisor/commits/afd34241a/status"
       ]
     },
     {
@@ -73866,5 +73902,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T17:23:39.125240Z"
+  "updatedAt": "2026-11-05T18:04:53.570927Z"
 }
