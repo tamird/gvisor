@@ -1,35 +1,73 @@
-name: CI
-
-"on":
+name: Build the production runsc binary in the strict Linux sandbox
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/strict-runsc-declared-tools]
+permissions:
+  contents: read
 jobs:
   build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    if: github.repository == 'tamird/gvisor'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    env:
+      PRODUCT: c4361dee1c37284859a3b176a5e112af3d73c543
+      PYTHONDONTWRITEBYTECODE: '1'
+      USE_BAZEL_VERSION: 9.3.1
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Stage the bounded reader and existing Bazel bootstrap
+        run: |
+          set -euo pipefail
+          umask 077
+          d="$RUNNER_TEMP/continuous-build"
+          mkdir -p "$d/out"
+          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap","test_execution_claimed":false}' > "$d/out/verdict.json"
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          cp .github/qualification/buildkite-client-options.py "$d/check.py"
+          chmod 755 "$d/check.py"
+          donor=0a9bdf9bc331d6a66f35aefcbbb5cf466eb6f7f5
+          git fetch -q --no-tags --depth=1 origin "$donor"
+          test "$(git rev-parse "$donor:test/rbe/stdlib-provenance.py")" = 126ec85fbfd0c3b9595ff3a1b3b3223832e84a38
+          git show "$donor:test/rbe/stdlib-provenance.py" > "$d/stdlib_provenance.py"
+          git checkout --quiet --detach "$PRODUCT"
+          test "$(cat .bazelversion)" = 9.3.1
+          test "$(cat images/default/bazelversion)" = 9.3.1
+          git diff --exit-code HEAD --
+          curl --retry 3 -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+          python3 -B -c 'import yaml'
+          command -v zstd
+      - name: Inspect the release owner and build the production runsc binary
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" \
+            USE_BAZEL_VERSION=9.3.1 REAL_BAZEL="$RUNNER_TEMP/continuous-build/bazel" \
+            python3 -B "$RUNNER_TEMP/continuous-build/check.py"
+      - name: Check the fixed metadata upload boundary
+        id: privacy
+        if: always()
+        run: |
+          python3 -B - <<'PYTHON'
+          import json, os, re
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])/'continuous-build/out'
+          assert {p.name for p in root.iterdir()}=={'verdict.json'}
+          p=root/'verdict.json';assert p.is_file() and not p.is_symlink()
+          assert 0<p.stat().st_size<64*1024*1024
+          data=p.read_bytes()
+          assert not re.search(rb'(?i)x-buildbuddy-api-key|authorization\s*[:=]|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}',data)
+          assert json.loads(data)['status'] in ('PASS','FAIL','INCOMPLETE')
+          PYTHON
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.privacy.outcome == 'success'
+        with:
+          name: strict-runsc-declared-tools
+          path: ${{ runner.temp }}/continuous-build/out/verdict.json
+          if-no-files-found: error
+      - name: Stop the native Bazel server
+        if: always()
+        run: |
+          d="$RUNNER_TEMP/continuous-build"
+          if test -x "$d/bazel"; then timeout -k 5 30 "$d/bazel" --nosystem_rc --nohome_rc --host_jvm_args=-Xmx4g shutdown >/dev/null 2>&1 || true; fi
