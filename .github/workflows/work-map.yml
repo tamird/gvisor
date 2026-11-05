@@ -1,0 +1,98 @@
+name: Verify native ARM guest and current locking and plugin handoffs
+on:
+  push:
+    branches: [qualification/work-map-cross-guest-and-source-reviews]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 4
+          persist-credentials: false
+      - name: Run the canonical collector on the proposed Pages source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(git rev-parse HEAD^)" = af50d1aea24f782cd2f56e334accbb3ce1203e03
+          git checkout --detach af50d1aea24f782cd2f56e334accbb3ce1203e03
+          python3 -B update-status.py
+      - name: Validate the collected pair and run its existing tests
+        run: |
+          python3 -B - <<'PYTHON'
+          import datetime, hashlib, json, re, subprocess
+          from pathlib import Path
+
+          source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          assert source == 'af50d1aea24f782cd2f56e334accbb3ce1203e03'
+          commands = [['node', 'metadata-preflight.mjs', '.'],
+                      ['python3', '-B', '-m', 'unittest', 'work_states_test', 'update_status_test'],
+                      ['node', '--test', '--test-reporter=tap', 'app_test.mjs']]
+          expected = [' '.join(command) for command in commands]
+          record = dict(source=source, expected=expected, executed=[], failed=[], skipped=[], missing=expected.copy())
+          for command, label in zip(commands, expected, strict=True):
+              result = subprocess.run(command, capture_output=True, text=True)
+              if result.returncode:
+                  print(result.stdout[-5000:], result.stderr[-5000:])
+              record['executed'].append(label)
+              record['missing'].remove(label)
+              if result.returncode:
+                  record['failed'].append(label)
+              elif command == commands[0]:
+                  record['preflight'] = json.loads(result.stdout)
+              if command == commands[1]:
+                  record['pythonTests'] = [int(n) for n in re.findall(r'^Ran (\d+) tests?', result.stderr, re.M)]
+              elif command == commands[2]:
+                  record['jsCounts'] = {k:int(n) for k,n in re.findall(r'^# (tests|pass|fail|skipped) (\d+)$', result.stdout, re.M)}
+          snapshot = json.loads(Path('github-status.json').read_text())
+          before = json.loads(subprocess.check_output(['git', 'show', 'HEAD:github-status.json']))
+          current = {p['number']:p for p in snapshot['prs'] if p.get('repo', 'google/gvisor') == 'google/gvisor'}
+          handoffs = [p['number'] for p in current.values() if p.get('terminalImportHandoff')]
+          checks = dict(fresh=snapshot['checkedAt'] > before['checkedAt'],
+                        requestBudget=1 <= snapshot['limits']['requests'] <= 64,
+                        registryUnchanged=not subprocess.run(['git','diff','--quiet','HEAD','--','registry.json']).returncode)
+          registry = json.loads(Path('registry.json').read_text())
+          previous = json.loads(subprocess.check_output(['git','show',source+'^:registry.json']))
+          nodes = {n['id']:n for n in registry['nodes']}
+          old = {n['id']:n for n in previous['nodes']}
+          bid='branch:fd-table-writer-contracts'; pid='pr:17059'; p=nodes[pid]; n=nodes[bid]
+          checks['registryOnly']=subprocess.check_output(['git','diff','--name-only',source+'^',source],text=True).splitlines()==['registry.json']
+          checks['fdDelivered']=current[16805]['status']=='merged' and current[17059]['status']=='open' and current[17059]['head']==p['head']==n['head']=='a7429575661ff9d551e3627d6156c042513a4529' and n['status']=='Delivered' and 'contributorReview' not in n and 'contributorReview' not in p and n['settledReviews']==p['settledReviews']==old[bid]['settledReviews']
+          k='branch:fd-stale-lock-preconditions'; cleanup=nodes[k]; cr=cleanup['contributorReview']
+          checks['cleanupDecision']=cr['head']==cleanup['head']=='c74632e3cb3438ebf9322754e23c35bf56c9be58' and cr['baseHead'].startswith('a4071cb4d') and cr['status']=='pending' and cr['title']==cleanup['title'] and 'VFSPipe.newFD' in cr['body'] and cleanup['ref']=='proposal/fd-stale-lock-preconditions'
+          t=nodes['pr:17045']
+          checks['dispatcherSource']=t['head']==current[17045]['head'] and t['head'].startswith('2ec7b59ad') and t['status']==current[17045]['status']=='open' and t['settledReviews']==old[t['id']]['settledReviews']
+          checks['dispatcherEvidence']=any(e['url'].endswith('/ba2c7a721') for e in t['evidence']) and 'https://github.com/google/gvisor/pull/17045#discussion_r4484489337' in t['followup']['evidence'] and any('/42094383323' in e['url'] for e in t['evidence'])
+          c=nodes['branch:hermetic-compiler-review']; cu=[e['url'] for e in c['evidence']]
+          checks['compiler']=all(any(url.endswith('/'+i) for url in cu) for i in ('13443015162','13443573566','13447805581','13447102297')) and all(s in c['summary'] for s in ('native rootless systrap guest on an ARM64 worker','1,672-byte ARM64 prewarmer','7424610cf','1,520-byte')) and 'contributorReview' not in c
+          l=nodes['pr:15153'];checks['tldk']=l['head']==current[15153]['head'] and l['head'].startswith('93993d354') and current[15153]['status']=='open' and all(s in l['summary'] for s in ('ddd06cb4a','GNU','musl','1,644','1,435')) and any(e['url'].endswith('/13447067509') for e in l['evidence']) and l['settledReviews']==old[l['id']]['settledReviews']
+          expected_spacing={17050:'a935bba01',16865:'9f4158394',16820:'919f647f2',16661:'677a32859'}
+          checks['publicSpacing']=all(nodes['pr:'+str(i)]['head']==current[i]['head'] and current[i]['head'].startswith(h) and current[i]['status']=='open' and nodes['pr:'+str(i)].get('settledReviews')==old['pr:'+str(i)].get('settledReviews') and 'contributorReview' not in nodes['pr:'+str(i)] for i,h in expected_spacing.items())
+          fifo=nodes['pr:16588'];checks['fifoHeadApproved']=fifo['head']==current[16588]['head'] and fifo['head'].startswith('1dbbcd676') and current[16588]['approvedHead']==fifo['head'] and fifo['settledReviews']==old[fifo['id']]['settledReviews'] and 'contributorReview' not in fifo and fifo['evidence'][-1]['url'].endswith('/c16a4922a')
+          overlay=nodes['branch:mutable-overlay-poll-waiter'];v=overlay['contributorReview'];checks['overlay']=v['head']==overlay['head']=='424cb3f066912b7b0b8ac4a9b9be84278ae64654' and v['url'].endswith('...424cb3f06') and v['baseHead']==old[overlay['id']]['contributorReview']['baseHead'] and v['status']=='pending'
+          checks['surroundings']=previous['groups']==registry['groups'] and previous['edges']==registry['edges'] and previous['investigations']==registry['investigations'] and set(nodes)-set(old)=={k} and set(old)<=set(nodes) and {i for i in old if old[i]!=nodes[i]}==({bid,pid,'pr:17045','pr:15153',c['id'],fifo['id'],overlay['id']}|{'pr:'+str(i) for i in expected_spacing})
+          checks['dispatcherInProgress']='contributorReview' not in t
+          record.update(requests=snapshot['limits']['requests'], requestLimit=64,
+                        checkedAt=snapshot['checkedAt'], previousCheckedAt=before['checkedAt'], reminderPosting=False,
+                        liveChecks=checks, terminalImportHandoffs=handoffs,
+                        cases={n:{'head':p['head'], 'status':p['status'], 'handoff':n in handoffs}
+                               for n,p in current.items() if n in (15153,16805,17045,17059)},
+                        finished=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                        exitCode=int(bool(record['failed']) or not all(checks.values())),
+                        hashes={p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in
+                                ('github-status.json','registry.json','app.js','update-status.py','work_states.py','update_status_test.py','README.md')})
+          Path('verdict.json').write_text(json.dumps(record, indent=2))
+          raise SystemExit(record['exitCode'])
+          PYTHON
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: work-map-verdict
+          path: |
+            verdict.json
+            github-status.json
+          if-no-files-found: error
