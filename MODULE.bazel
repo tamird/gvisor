@@ -44,6 +44,7 @@ single_version_override(
         "//tools:rules_go_symbols.patch",
         "//tools:rules_cgo.patch",
         "//tools:rules_go_export.patch",
+        "//tools:rules_go_bootstrap_shell.patch",
     ],
     version = "0.63.0",
 )
@@ -52,6 +53,12 @@ single_version_override(
     module_name = "google_benchmark",
     patch_strip = 1,
     patches = ["//tools:benchmark-umbrella-exports.patch"],
+)
+
+single_version_override(
+    module_name = "protobuf",
+    patch_strip = 1,
+    patches = ["//tools:protobuf_authenticity.patch"],
 )
 
 # Qualify the merged two-backend default before it is available through BCR.
@@ -69,6 +76,22 @@ llvm_source = use_extension("@llvm//extensions:llvm.bzl", "llvm")
 use_repo(llvm_source, "llvm-project")
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# Qualification-only: explicitly selectable execution runtime and incompatible protoc.
+http_archive(
+    name = "protoc_check_static_python",
+    build_file = "//test/rbe/protoc_check:python.BUILD",
+    sha256 = "2fc493f8f14ff8bf743eb34934bf1edbac518b023e8aa72bc7c0006ee13495e4",
+    strip_prefix = "python/install",
+    urls = ["https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.11.18%2B20261026-x86_64-unknown-linux-musl-lto%2Bstatic-full.tar.zst"],
+)
+
+http_archive(
+    name = "protoc_check_incompatible",
+    build_file_content = "exports_files([\"bin/protoc\"])\n",
+    sha256 = "121f6c7afe1d4d0e3ea6aab9432038599250134cbf4474cb1167d2c7decd4278",
+    urls = ["https://github.com/protocolbuffers/protobuf/releases/download/v36.2/protoc-36.2-linux-x86_64.zip"],
+)
 
 http_archive(
     name = "kythe_release",
@@ -941,3 +964,14 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+# Exercise rules_shell#64's actual declared-executable API before its release.
+archive_override(
+    module_name = "rules_shell",
+    integrity = "sha256-AHBCSc0o+MbsCSaLoOgM+ouU7VcFldsTSdJT3q9+otU=",
+    strip_prefix = "rules_shell-aa4ad1622a8f755f38cae724ef3abc63aed171c3",
+    urls = ["https://github.com/bazel-contrib/rules_shell/archive/aa4ad1622a8f755f38cae724ef3abc63aed171c3.tar.gz"],
+)
+
+bootstrap_busybox = use_repo_rule("//test/rbe/go_bootstrap:defs.bzl", "busybox_repository")
+bootstrap_busybox(name = "bootstrap_busybox")
