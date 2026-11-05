@@ -787,3 +787,26 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+func BenchmarkRecvMMsgDispatcher(b *testing.B) {
+	fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_DGRAM, 0)
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.Cleanup(func() {
+		unix.Close(fds[0])
+		unix.Close(fds[1])
+	})
+	opts := Options{ProcessorsPerChannel: 1, GRO: true}
+	e := endpoint{}
+	b.ReportAllocs()
+	for b.Loop() {
+		d, err := newRecvMMsgDispatcher(fds[0], &e, &opts)
+		if err != nil {
+			b.Fatal(err)
+		}
+		d.release()
+		d.close()
+		d.(*recvMMsgDispatcher).mgr.processors[0].sleeper.Done()
+	}
+}
