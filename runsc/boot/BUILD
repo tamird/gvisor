@@ -186,7 +186,9 @@ go_test(
         "seccomp_test.go",
         "vfs_test.go",
     ],
+    data = ["//test/cmd/test_app"],
     embed = [":boot"],
+    env = {"GVISOR_BOOT_TEST_APP": "$(rootpath //test/cmd/test_app)"},
     deps = [
         "//pkg/abi/linux",
         "//pkg/bpf",
@@ -205,6 +207,7 @@ go_test(
         "//pkg/sentry/vfs",
         "//pkg/sync",
         "//pkg/test/capabilitytest",
+        "//pkg/test/testutil",
         "//pkg/unet",
         "//runsc/boot/sentryapi",
         "//runsc/config",

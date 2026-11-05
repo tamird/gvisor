@@ -19,6 +19,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -37,6 +38,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/test/capabilitytest"
+	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/pkg/unet"
 	"gvisor.dev/gvisor/runsc/boot/sentryapi"
 	"gvisor.dev/gvisor/runsc/config"
@@ -67,15 +69,35 @@ func testConfig() *config.Config {
 }
 
 // testSpec returns a simple spec that can be used in tests.
-func testSpec() *specs.Spec {
+func testSpec(t *testing.T) *specs.Spec {
+	t.Helper()
+	appPath, ok := os.LookupEnv("GVISOR_BOOT_TEST_APP")
+	if !ok {
+		t.Fatal("GVISOR_BOOT_TEST_APP is not set")
+	}
+	app, err := testutil.FindFile(appPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The runfiles symlink may point outside the root served by the gofer.
+	app, err = filepath.EvalSymlinks(app)
+	if err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Stat(app)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !info.Mode().IsRegular() {
+		t.Fatalf("test_app %q is not a regular file", app)
+	}
 	return &specs.Spec{
-		// The host filesystem root is the sandbox root.
 		Root: &specs.Root{
-			Path:     "/",
+			Path:     filepath.Dir(app),
 			Readonly: true,
 		},
 		Process: &specs.Process{
-			Args: []string{"/bin/true"},
+			Args: []string{"/" + filepath.Base(app), "echo"},
 		},
 	}
 }
@@ -164,7 +186,7 @@ func createLoader(conf *config.Config, spec *specs.Spec) (*Loader, func(), error
 
 // TestRun runs a simple application in a sandbox and checks that it succeeds.
 func TestRun(t *testing.T) {
-	l, cleanup, err := createLoader(testConfig(), testSpec())
+	l, cleanup, err := createLoader(testConfig(), testSpec(t))
 	if err != nil {
 		t.Fatalf("error creating loader: %v", err)
 	}
@@ -184,7 +206,7 @@ func TestRun(t *testing.T) {
 
 	// Run the container.
 	if err := l.Run(); err != nil {
-		t.Errorf("error running container: %v", err)
+		t.Fatalf("error running container: %v", err)
 	}
 
 	// We should have not gotten an error on the startResultChan.
@@ -202,7 +224,7 @@ func TestRun(t *testing.T) {
 // TestStartSignal tests that the controller Start message will cause
 // WaitForStartSignal to return.
 func TestStartSignal(t *testing.T) {
-	l, cleanup, err := createLoader(testConfig(), testSpec())
+	l, cleanup, err := createLoader(testConfig(), testSpec(t))
 	if err != nil {
 		t.Fatalf("error creating loader: %v", err)
 	}
@@ -252,7 +274,7 @@ func TestStartSignal(t *testing.T) {
 // TestRestoreFailBeforeStart checks that a restore that fails before it starts
 // restoring reports the failure.
 func TestRestoreFailBeforeStart(t *testing.T) {
-	l, cleanup, err := createLoader(testConfig(), testSpec())
+	l, cleanup, err := createLoader(testConfig(), testSpec(t))
 	if err != nil {
 		t.Fatalf("error creating loader: %v", err)
 	}
@@ -292,7 +314,7 @@ func expectOneStartupHeapRelease(t *testing.T, released <-chan struct{}) {
 // TestStartupHeapReleaseOnStart checks that the startup heap is released once
 // after the root container starts.
 func TestStartupHeapReleaseOnStart(t *testing.T) {
-	l, cleanup, err := createLoader(testConfig(), testSpec())
+	l, cleanup, err := createLoader(testConfig(), testSpec(t))
 	if err != nil {
 		t.Fatalf("error creating loader: %v", err)
 	}
@@ -313,7 +335,7 @@ func TestStartupHeapReleaseOnStart(t *testing.T) {
 // TestStartupHeapReleaseOnRestore checks that the startup heap is released
 // once after a restore is complete.
 func TestStartupHeapReleaseOnRestore(t *testing.T) {
-	l, cleanup, err := createLoader(testConfig(), testSpec())
+	l, cleanup, err := createLoader(testConfig(), testSpec(t))
 	if err != nil {
 		t.Fatalf("error creating loader: %v", err)
 	}
@@ -346,7 +368,7 @@ func TestHostnetWithRawSockets(t *testing.T) {
 	// Creating loader should fail.
 	l, err := New(Args{
 		ID:              "should-fail",
-		Spec:            testSpec(),
+		Spec:            testSpec(t),
 		Conf:            conf,
 		DevGoferFD:      -1,
 		PodInitConfigFD: -1,
@@ -535,7 +557,7 @@ func createMountTestcases() []*CreateMountTestcase {
 func TestCreateMountNamespace(t *testing.T) {
 	for _, tc := range createMountTestcases() {
 		t.Run(tc.name, func(t *testing.T) {
-			spec := testSpec()
+			spec := testSpec(t)
 			spec.Mounts = tc.spec.Mounts
 			spec.Root = tc.spec.Root
 
@@ -629,7 +651,7 @@ func TestCreateMountPoint(t *testing.T) {
 		},
 	}
 
-	spec := testSpec()
+	spec := testSpec(t)
 	spec.Root = &specs.Root{
 		Path: os.TempDir(),
 	}
@@ -694,7 +716,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestNetworkConfig(t *testing.T) {
-	l, cleanup, err := createLoader(testConfig(), testSpec())
+	l, cleanup, err := createLoader(testConfig(), testSpec(t))
 	if err != nil {
 		t.Fatalf("error creating loader: %v", err)
 	}
