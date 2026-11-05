@@ -42,6 +42,7 @@ cc_binary(
         "-coverage",
         "-default_link_flags",
         "-pie",
+        "-static_link_cpp_runtimes",
     ],
     link_extra_lib = None,
     linkopts = [
