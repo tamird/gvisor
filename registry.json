@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T21:24:09.459393Z",
+    "updatedAt": "2026-11-05T21:29:54.301949Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -51683,12 +51683,12 @@
       "group": "runtime",
       "repo": "google/gvisor",
       "ref": "proposal/tcp-yield-after-queue-pass",
-      "head": "2ec7b59ad33dfbd9c65b9b5ef7e4763eb4172063",
+      "head": "5d6ca5025d9dfe7e1dff121d55ee5a6027338237",
       "url": "https://github.com/google/gvisor/pull/17045",
-      "title": "tcp: yield after one queue pass on endpoint lock contention",
+      "title": "tcp: retry a contended endpoint after serving its queued peers",
       "status": "open",
-      "updatedAt": "2026-11-05T19:50:07.012903Z",
-      "summary": "When a timer holds an endpoint lock, the packet processor can retry the same endpoint until the Go scheduler preempts it. With one Go processor and no preemption the lock holder never gets to run. Martijn Hoekstra reported a hang under sustained TCP load on TamaGo. The fork revision ba2c7a721 changes how the packet processor retries a contended endpoint. It gives queued peers a turn, retries immediately if processing a peer freed the lock, and appends arrivals behind the retry. The public PR still has head 2ec7b59ad. With the same new regression, the published dispatcher yielded and processed zero packets after the listener unlocked. The amendment processed its packet without yielding. All 47 TCP case records (33 top-level tests) and both AMD64 and ARM64 Nogo sections passed on an AMD64 Linux runner; no cases were missing or skipped.",
+      "updatedAt": "2026-11-05T21:29:54.301949Z",
+      "summary": "PR #17045 now publishes the qualified dispatcher amendment at 5d6ca5025, with the two existing blank lines restored in dispatcher.go as requested. The approved description is live and the reply was posted in the reviewer’s thread.\n\nThe dispatcher gives queued peers a turn, retries a contended endpoint immediately if its lock has become available, and queues new arrivals behind the retry. On the previous head 2ec7b59ad with the regression test, it yielded after the listener unlocked and processed no packets. Candidate ba2c7a721 processed the packet without yielding. All 47 TCP case records (33 top-level tests) and both AMD64 and ARM64 Nogo sections passed on an AMD64 Linux runner. The only changes between that tested candidate and the public head are the two blank lines.",
       "evidence": [
         {
           "label": "Martijn asked for the tested change to be sent as a PR",
@@ -51721,6 +51721,14 @@
         {
           "label": "Published dispatcher fails after unlock; all corrected TCP cases and both Nogo sections pass",
           "url": "https://github.com/tamird/gvisor/actions/runs/42094383323/artifacts/13445984967"
+        },
+        {
+          "label": "Approved amendment as published with the two blank lines restored",
+          "url": "https://github.com/google/gvisor/pull/17045/commits/5d6ca5025d9dfe7e1dff121d55ee5a6027338237"
+        },
+        {
+          "label": "Posted response in the original reviewer thread",
+          "url": "https://github.com/google/gvisor/pull/17045#discussion_r4486289034"
         }
       ],
       "settledReviews": [
@@ -51733,39 +51741,39 @@
           "at": "2026-11-05T16:41:13.307421Z",
           "note": "Published as #17045.",
           "postedURL": "https://github.com/google/gvisor/pull/17045"
+        },
+        {
+          "kind": "amendment",
+          "head": "ba2c7a721f72098af19cce916ccaf1ddc5d6cf8d",
+          "outcome": "approved-with-changes",
+          "at": "2026-11-05T21:28:42Z",
+          "url": "https://github.com/tamird/gvisor/commit/ba2c7a721f72098af19cce916ccaf1ddc5d6cf8d",
+          "title": "tcp: retry a contended endpoint after serving its queued peers",
+          "summary": "Approved for upstream publication with two existing blank lines restored in dispatcher.go; delivered at 5d6ca5025."
         }
       ],
       "followup": {
         "owner": "Agent",
-        "sourceHead": "2ec7b59ad33dfbd9c65b9b5ef7e4763eb4172063",
-        "observedAt": "2026-11-05T19:50:07.012903Z",
-        "disposition": "Fork amendment verified; awaiting contributor review.",
-        "nextAction": "Review the proposed commit and reply before updating the open PR.",
+        "sourceHead": "5d6ca5025d9dfe7e1dff121d55ee5a6027338237",
+        "observedAt": "2026-11-05T21:29:54.301949Z",
+        "disposition": "Amendment, approved description and reviewer reply delivered.",
+        "nextAction": "Wait for maintainer review of the updated PR.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17045",
           "https://github.com/google/gvisor/pull/17045#discussion_r4484489337",
           "https://github.com/tamird/gvisor/commit/ba2c7a721",
           "https://github.com/tamird/gvisor/actions/runs/42094383323",
-          "https://github.com/tamird/gvisor/actions/runs/42094383323/artifacts/13445984967"
+          "https://github.com/tamird/gvisor/actions/runs/42094383323/artifacts/13445984967",
+          "https://github.com/google/gvisor/pull/17045/commits/5d6ca5025d9dfe7e1dff121d55ee5a6027338237",
+          "https://github.com/google/gvisor/pull/17045#discussion_r4486289034"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "ba2c7a721f72098af19cce916ccaf1ddc5d6cf8d",
-        "baseHead": "2ec7b59ad33dfbd9c65b9b5ef7e4763eb4172063",
-        "url": "https://github.com/tamird/gvisor/commit/ba2c7a721f72098af19cce916ccaf1ddc5d6cf8d",
-        "title": "tcp: retry a contended endpoint after serving its queued peers",
-        "requestedAt": "2026-11-05T19:50:07.012903Z",
-        "summary": "Publish the amendment, update the PR description to match the commit, and reply to the reviewer?",
-        "body": "When a timer holds an endpoint lock, the packet processor can retry the\nsame endpoint until the Go scheduler preempts it. With one Go processor\nand no preemption the lock holder never gets to run. Martijn Hoekstra\nreported a hang under sustained TCP load on TamaGo.\n\nRequeue the blocked endpoint behind its waiting peers. If it is still\nlocked when its turn comes around again, yield so the lock holder can\nrun. If it was unlocked while a peer was being served, process its\npackets immediately. New arrivals join behind the retry.\n\nFixes #16878\n\nProposed reply:\nThe dispatcher now retries the first contended endpoint when it comes around in the queue. If the peer’s turn gave the lock holder time to release it, the processor handles the packet immediately. The new test failed on the previous head with an unnecessary yield and zero packets processed.\n\nPosted by Codex on behalf of @tamird."
       },
       "refinement": {
         "before": {
-          "head": "2ec7b59ad33dfbd9c65b9b5ef7e4763eb4172063"
+          "head": "ba2c7a721f72098af19cce916ccaf1ddc5d6cf8d"
         },
         "after": {
-          "head": "ba2c7a721f72098af19cce916ccaf1ddc5d6cf8d"
+          "head": "5d6ca5025d9dfe7e1dff121d55ee5a6027338237"
         }
       }
     },
@@ -74470,5 +74478,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T21:24:09.459393Z"
+  "updatedAt": "2026-11-05T21:29:54.301949Z"
 }
