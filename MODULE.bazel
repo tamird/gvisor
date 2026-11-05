@@ -69,10 +69,17 @@ archive_override(
     integrity = "sha256-SNmmsaiYJRpowJMiSfYXoKgzlM0+W49zlwUKQ7IicUk=",
     # Use the upstream musl-linked Linux helpers (#908) and omit libunwind's
     # pthread/dl requirements on freestanding links (#909).
+    # The supplier omits e2e/ from source archives. Overlay #909's single
+    # production file without requiring its Git-only integration test.
+    remote_file_integrity = {
+        "toolchain/args/linux/BUILD.bazel": "sha256-qGNJX/fzjgBSp7/Pv5godXlTvPlzsNdKLgJjhYoaiLM=",
+    },
+    remote_file_urls = {
+        "toolchain/args/linux/BUILD.bazel": ["https://raw.githubusercontent.com/hermeticbuild/hermetic-llvm/ddd134580f7e2cb556c4ee3c7e2a0cc1ab696a11/toolchain/args/linux/BUILD.bazel"],
+    },
     remote_patch_strip = 1,
     remote_patches = {
         "https://github.com/hermeticbuild/hermetic-llvm/compare/413655560cc6269a1bf4eaac5100fd96830948bd...533981c365e8ee683926bd465efcc81bc31158bf.diff": "sha256-3tviMkAsaa+uxxXA3KJyc8bT1kjDGqZkH0IgVcQyuMs=",
-        "https://github.com/hermeticbuild/hermetic-llvm/commit/ddd134580f7e2cb556c4ee3c7e2a0cc1ab696a11.diff": "sha256-RDTQuNz7lkXJviquJ64hR9XiGwtF46HMqQmJSeLUJDc=",
     },
     strip_prefix = "hermetic-llvm-eb198127bdc4f7b737d08a7ea009869bc7a72e75",
     urls = ["https://github.com/hermeticbuild/hermetic-llvm/archive/eb198127bdc4f7b737d08a7ea009869bc7a72e75.tar.gz"],
