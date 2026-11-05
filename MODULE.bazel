@@ -56,7 +56,10 @@ single_version_override(
 single_version_override(
     module_name = "llvm",
     patch_strip = 1,
-    patches = ["//tools:llvm-linux-header-default.patch"],
+    patches = [
+        "//tools:llvm-linux-header-default.patch",
+        "//tools:llvm-freestanding-runtimes.patch",
+    ],
 )
 
 ### LLVM
