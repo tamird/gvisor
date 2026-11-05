@@ -1252,10 +1252,10 @@ func TestEifelFiniteApplicationFlight(t *testing.T) {
 				return ts
 			}
 			peerTS := uint32(10)
-			ack := func(echo uint32) tcp.TCPSenderState {
+			ack := func(n int, echo uint32) tcp.TCPSenderState {
 				t.Helper()
 				peerTS++
-				want := c.IRS.Add(1 + seqnum.Size(sent))
+				want := c.IRS.Add(1 + seqnum.Size(n))
 				c.SendPacket(nil, &context.Headers{
 					SrcPort: context.TestPort, DstPort: c.Port, Flags: header.TCPFlagAck,
 					SeqNum: peer.NextSeqNum, AckNum: want, RcvWnd: 30000,
@@ -1267,8 +1267,8 @@ func TestEifelFiniteApplicationFlight(t *testing.T) {
 					select {
 					case s := <-observed:
 						if s.SndUna == want {
-							if s.SndNxt != want || s.Outstanding != 0 {
-								t.Fatalf("flight not drained: UNA=%d NXT=%d outstanding=%d", s.SndUna, s.SndNxt, s.Outstanding)
+							if s.SndNxt != c.IRS.Add(1+seqnum.Size(sent)) || s.Outstanding != (sent-n)/maxPayload {
+								t.Fatalf("wrong remaining flight: UNA=%d NXT=%d outstanding=%d want=%d", s.SndUna, s.SndNxt, s.Outstanding, (sent-n)/maxPayload)
 							}
 							return s
 						}
@@ -1295,7 +1295,7 @@ func TestEifelFiniteApplicationFlight(t *testing.T) {
 			// finite ssthresh; the initial sentinel is never the measured case.
 			original := send(1)
 			repair := rto(0, original, 1)
-			state := ack(repair)
+			state := ack(sent, repair)
 			if state.Ssthresh != 2 || state.SpuriousRecovery || info().CcState != tcpip.Open {
 				t.Fatalf("genuine recovery: threshold=%d spurious=%t state=%v", state.Ssthresh, state.SpuriousRecovery, info().CcState)
 			}
@@ -1305,7 +1305,7 @@ func TestEifelFiniteApplicationFlight(t *testing.T) {
 				clock.Advance(time.Millisecond)
 				ts := send(state.SndCwnd)
 				clock.Advance(time.Millisecond)
-				state = ack(ts)
+				state = ack(sent, ts)
 			}
 			if state.SndCwnd != tcp.InitialCwnd || state.Ssthresh != 2 || info().CcState != tcpip.Open {
 				t.Fatalf("precondition: cwnd=%d threshold=%d state=%v", state.SndCwnd, state.Ssthresh, info().CcState)
@@ -1313,12 +1313,13 @@ func TestEifelFiniteApplicationFlight(t *testing.T) {
 			before := state
 			offset := sent
 			clock.Advance(time.Millisecond)
-			original = send(1)
+			original = send(2)
 			if got := info().SndCwnd; got != uint32(before.SndCwnd) {
 				t.Fatalf("window changed before RTO: %d", got)
 			}
-			// The preceding ACK drained every byte; exactly this one observed
-			// packet is now in flight, below both cwnd and the finite threshold.
+			// The preceding ACK drained every byte. These two packets form
+			// an application-limited flight, equal to the finite threshold.
+			// ACK only the first to meet RFC 3522 step 5 without prior DSACK.
 			wait := info().RTO
 			repair = rto(offset, original, 2)
 			afterRTO := info()
@@ -1326,14 +1327,28 @@ func TestEifelFiniteApplicationFlight(t *testing.T) {
 			if scenario == "repair_ack" {
 				echo, wantSpurious = repair, 0
 			}
-			state = ack(echo)
+			partial := ack(offset+maxPayload, echo)
 			stats := c.Stack().Stats().TCP
+			t.Logf("EIFEL_PARTIAL case=%s cwnd=%d ssthresh=%d outstanding=%d spurious=%d RTOspurious=%d", scenario, partial.SndCwnd, partial.Ssthresh, partial.Outstanding, stats.SpuriousRecovery.Value(), stats.SpuriousRTORecovery.Value())
+			if stats.SpuriousRecovery.Value() != wantSpurious || stats.SpuriousRTORecovery.Value() != wantSpurious || info().CcState != tcpip.RTORecovery {
+				t.Fatalf("wrong partial recovery path: spurious=%d RTOspurious=%d state=%v", stats.SpuriousRecovery.Value(), stats.SpuriousRTORecovery.Value(), info().CcState)
+			}
+			// The first advancing ACK permits the second packet's real replay.
+			// Consume it before acknowledging the full flight and exiting RTO.
+			tailRepair := packet(offset + maxPayload)
+			if tailRepair < repair {
+				t.Fatalf("second repair timestamp %d precedes first %d", tailRepair, repair)
+			}
+			if scenario == "repair_ack" {
+				echo = tailRepair
+			}
+			state = ack(sent, echo)
 			if stats.SpuriousRecovery.Value() != wantSpurious || stats.SpuriousRTORecovery.Value() != wantSpurious || info().CcState != tcpip.Open {
 				t.Fatalf("wrong recovery path: spurious=%d RTOspurious=%d state=%v", stats.SpuriousRecovery.Value(), stats.SpuriousRTORecovery.Value(), info().CcState)
 			}
-			t.Logf("EIFEL_FINITE case=%s pre_cwnd=%d pre_ssthresh=%d flight=1 rto_ms=%d timeout_cwnd=%d timeout_ssthresh=%d original=%d repair=%d echo=%d post_cwnd=%d post_ssthresh=%d timeouts=%d spurious=%d", scenario, before.SndCwnd, before.Ssthresh, wait.Milliseconds(), afterRTO.SndCwnd, afterRTO.SndSsthresh, original, repair, echo, state.SndCwnd, state.Ssthresh, stats.Timeouts.Value(), stats.SpuriousRecovery.Value())
+			t.Logf("EIFEL_FINITE case=%s pre_cwnd=%d pre_ssthresh=%d flight=2 rto_ms=%d timeout_cwnd=%d timeout_ssthresh=%d original=%d repair=%d tail_repair=%d echo=%d post_cwnd=%d post_ssthresh=%d timeouts=%d spurious=%d", scenario, before.SndCwnd, before.Ssthresh, wait.Milliseconds(), afterRTO.SndCwnd, afterRTO.SndSsthresh, original, repair, tailRepair, echo, state.SndCwnd, state.Ssthresh, stats.Timeouts.Value(), stats.SpuriousRecovery.Value())
 			if state.Ssthresh != before.Ssthresh {
-				t.Errorf("finite application-limited threshold = %d, want max(1,%d)=%d", state.Ssthresh, before.Ssthresh, before.Ssthresh)
+				t.Errorf("finite application-limited threshold = %d, want max(2,%d)=%d", state.Ssthresh, before.Ssthresh, before.Ssthresh)
 			}
 		})
 	}
