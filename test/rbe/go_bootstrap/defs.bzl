@@ -17,13 +17,24 @@ shell_toolchain = rule(
 )
 
 def _archive_impl(ctx):
-    # This is the exact Noble AMD64 package already pinned in gVisor's apt lock.
+    # Both Noble packages are pinned in gVisor's apt lock.
+    package = "pool/main/b/busybox/busybox-static_1.36.1-6ubuntu3.1_%s.deb" % ctx.attr.arch
     ctx.download_and_extract(
-        url = "https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/b/busybox/busybox-static_1.36.1-6ubuntu3.1_amd64.deb",
-        sha256 = "944b2728f53ceb3916cec2c962873c9951e612408099601751db2a0a5d81e0ed",
+        url = [
+            "https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/" + package,
+            ctx.attr.mirror + "/" + package,
+        ],
+        sha256 = ctx.attr.sha256,
         type = "deb",
     )
     ctx.extract("data.tar.zst", output = "payload")
     ctx.file("BUILD.bazel", 'exports_files(["payload/usr/bin/busybox"])\n')
 
-busybox_repository = repository_rule(implementation = _archive_impl)
+busybox_repository = repository_rule(
+    implementation = _archive_impl,
+    attrs = {
+        "arch": attr.string(mandatory = True),
+        "mirror": attr.string(mandatory = True),
+        "sha256": attr.string(mandatory = True),
+    },
+)

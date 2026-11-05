@@ -88,10 +88,25 @@ http_archive(
 )
 
 http_archive(
+    name = "protoc_check_static_python_arm64",
+    build_file = "//test/rbe/protoc_check:python.BUILD",
+    sha256 = "976cfd9b50e2fd37c21b74816f4372abc4db21ebaef4bdf3e1690dcb9d1c66c1",
+    strip_prefix = "python/install",
+    urls = ["https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.11.18%2B20261026-aarch64-unknown-linux-musl-lto%2Bstatic-full.tar.zst"],
+)
+
+http_archive(
     name = "protoc_check_incompatible",
     build_file_content = "exports_files([\"bin/protoc\"])\n",
     sha256 = "121f6c7afe1d4d0e3ea6aab9432038599250134cbf4474cb1167d2c7decd4278",
     urls = ["https://github.com/protocolbuffers/protobuf/releases/download/v36.2/protoc-36.2-linux-x86_64.zip"],
+)
+
+http_archive(
+    name = "protoc_check_incompatible_arm64",
+    build_file_content = "exports_files([\"bin/protoc\"])\n",
+    sha256 = "8b8f18bd2b30346efbc698dd5a73dd7c805f3ef8380f6dfc95c768f3f1852f6a",
+    urls = ["https://github.com/protocolbuffers/protobuf/releases/download/v36.2/protoc-36.2-linux-aarch_64.zip"],
 )
 
 http_archive(
@@ -975,4 +990,15 @@ archive_override(
 )
 
 bootstrap_busybox = use_repo_rule("//test/rbe/go_bootstrap:defs.bzl", "busybox_repository")
-bootstrap_busybox(name = "bootstrap_busybox")
+bootstrap_busybox(
+    name = "bootstrap_busybox",
+    arch = "amd64",
+    mirror = "https://archive.ubuntu.com/ubuntu",
+    sha256 = "944b2728f53ceb3916cec2c962873c9951e612408099601751db2a0a5d81e0ed",
+)
+bootstrap_busybox(
+    name = "bootstrap_busybox_arm64",
+    arch = "arm64",
+    mirror = "https://ports.ubuntu.com/ubuntu-ports",
+    sha256 = "d96535e0402c011e0ee43449799df2f4504d44b842e4f2b3a6cbc845508eaafc",
+)
