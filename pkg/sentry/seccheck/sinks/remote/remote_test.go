@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -84,7 +85,12 @@ func newExampleServer(quiet bool) (*exampleServer, error) {
 	}
 
 	server := &exampleServer{path: filepath.Join(dir, "remote.sock")}
-	server.cmd = exec.Command(exe, server.path)
+	loader, err := exampleLoader()
+	if err != nil {
+		os.RemoveAll(dir)
+		return nil, err
+	}
+	server.cmd = exec.Command(loader, "--inhibit-cache", "--library-path", filepath.Dir(loader), exe, server.path)
 	if quiet {
 		server.cmd.Args = append(server.cmd.Args, "-q")
 	}
@@ -193,6 +199,7 @@ func TestExample(t *testing.T) {
 		t.Fatalf("newExampleServer(): %v", err)
 	}
 	defer server.stop()
+	checkExampleRuntime(t, server.cmd)
 
 	endpoint, err := setup(server.path)
 	if err != nil {
@@ -225,6 +232,54 @@ func TestExample(t *testing.T) {
 	}
 	if err := testutil.Poll(check, time.Second); err != nil {
 		t.Errorf("%s", err.Error())
+	}
+}
+
+// exampleLoader locates the GNU runtime declared as test data by this fixture.
+func exampleLoader() (string, error) {
+	name := map[string]string{"amd64": "ld-linux-x86-64.so.2", "arm64": "ld-linux-aarch64.so.1"}[runtime.GOARCH]
+	return testutil.FindFile("pkg/sentry/seccheck/sinks/remote/runtime/" + runtime.GOARCH + "/" + name)
+}
+
+// Check the files the live peer actually mapped, including the original C++ server.
+func checkExampleRuntime(t *testing.T, cmd *exec.Cmd) {
+	t.Helper()
+	data, err := os.ReadFile(fmt.Sprintf("/proc/%d/maps", cmd.Process.Pid))
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := filepath.Dir(cmd.Path)
+	want := []string{cmd.Path, cmd.Args[4]}
+	for _, name := range []string{"libc.so.6", "libdl.so.2", "libm.so.6", "libpthread.so.0"} {
+		want = append(want, filepath.Join(dir, name))
+	}
+	mapped := make(map[string]bool)
+	for _, line := range strings.Split(string(data), "\n") {
+		fields := strings.Fields(line)
+		if len(fields) == 6 && filepath.IsAbs(fields[5]) {
+			mapped[fields[5]] = true
+		}
+	}
+	for _, file := range want {
+		info, err := os.Stat(file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		found := false
+		for path := range mapped {
+			if filepath.Base(path) != filepath.Base(file) {
+				continue
+			}
+			other, err := os.Stat(path)
+			if err == nil && os.SameFile(info, other) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Fatalf("peer did not map declared %s", filepath.Base(file))
+		}
+		t.Logf("seccheck mapped declared %s", filepath.Base(file))
 	}
 }
 

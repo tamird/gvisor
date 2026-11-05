@@ -30,7 +30,22 @@ go_test(
     srcs = ["remote_test.go"],
     data = [
         "//examples/seccheck:server_cc",
-    ],
+    ] + select({
+        "//tools/bazeldefs:amd64": ["runtime/amd64/" + name for name in [
+            "ld-linux-x86-64.so.2",
+            "libc.so.6",
+            "libdl.so.2",
+            "libm.so.6",
+            "libpthread.so.0",
+        ]],
+        "//tools/bazeldefs:arm64": ["runtime/arm64/" + name for name in [
+            "ld-linux-aarch64.so.1",
+            "libc.so.6",
+            "libdl.so.2",
+            "libm.so.6",
+            "libpthread.so.0",
+        ]],
+    }),
     embed = [":remote"],
     deps = [
         "//pkg/fd",
