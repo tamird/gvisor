@@ -1,17 +1,17 @@
-name: Qualify the reconciled musl plugin
+name: Qualify the external TLDK backtrace test
 on:
   push:
-    branches: [qualification/plugin-musl-current]
+    branches: [qualification/tldk-musl-pr15153-followup]
 permissions:
   contents: read
 jobs:
   qualify:
     if: github.repository == 'tamird/gvisor' && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 55
+    timeout-minutes: 95
     env:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      PRODUCT: b0713e2bcf6ccde362401912ae80d17a4e1738b5
+      PRODUCT: ddd06cb4a7d004178513c25c018ede20d8cc9449
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {path: carrier, persist-credentials: false, fetch-depth: 1}
@@ -22,24 +22,21 @@ jobs:
           umask 077
           mkdir -p "$RUNNER_TEMP/musl-current-evidence" "$RUNNER_TEMP/gnu-platform"
           echo '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$RUNNER_TEMP/musl-current-evidence/result.json"
-          git fetch -q --no-tags --depth=1 origin 725f2cb41ccb7cc4446f74c1594de1dfe6592f6d b8adfee03658810bdd209ef33190d0c0af16f303 7c639344dfffdb686c1952d9e62adbabea8ff2f6 fb60e127516defd6aab633f80be09a03022f0737
+          git fetch -q --no-tags --depth=1 origin 725f2cb41ccb7cc4446f74c1594de1dfe6592f6d fb60e127516defd6aab633f80be09a03022f0737
           for name in BUILD.bazel MODULE.bazel; do
             git show "725f2cb41ccb7cc4446f74c1594de1dfe6592f6d:test/rbe/gnu_platform/$name" > "$RUNNER_TEMP/gnu-platform/$name"
           done
           for name in qualification_report unit_matrix; do
             git show "fb60e127516defd6aab633f80be09a03022f0737:test/rbe/$name.py" > "$RUNNER_TEMP/$name.py"
           done
-          git show b8adfee03658810bdd209ef33190d0c0af16f303:test/rbe/plugin_vfio_original.py > "$RUNNER_TEMP/plugin_vfio_original.py"
-          git show 7c639344dfffdb686c1952d9e62adbabea8ff2f6:test/rbe/plugin_programs/cas_inputs.py > "$RUNNER_TEMP/cas_inputs.py"
-          test "$(git hash-object "$RUNNER_TEMP/cas_inputs.py")" = 54047870d2d32c621a5c8616687a74bdc75001d5
           cp test/rbe/plugin_musl_current.py "$RUNNER_TEMP/"
-          curl -fsSL https://github.com/buildbuddy-io/bazel/releases/download/5.0.485/bazel-5.0.485-linux-x86_64 -o "$RUNNER_TEMP/bb"
-          echo "bdb65b4bddb8405a80b3e45a3ef4c740819b151d0709d360e8add8dac534c224  $RUNNER_TEMP/bb" | sha256sum -c -
-          chmod 0755 "$RUNNER_TEMP/bb"
+          curl -fsSL https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$RUNNER_TEMP/bazel-9.3.1"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $RUNNER_TEMP/bazel-9.3.1" | sha256sum -c -
+          chmod 0755 "$RUNNER_TEMP/bazel-9.3.1"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           path: product
-          ref: b0713e2bcf6ccde362401912ae80d17a4e1738b5
+          ref: ddd06cb4a7d004178513c25c018ede20d8cc9449
           persist-credentials: false
           fetch-depth: 1
       - name: Prepare the existing GNU remote route
@@ -58,11 +55,9 @@ jobs:
           } > "$RUNNER_TEMP/gnu.bazelrc"
           timeout 180 docker pull --platform=linux/amd64 "$GNU"
           docker run -d --name gnu-profile --entrypoint /bin/bash --user root -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$RUNNER_TEMP:$RUNNER_TEMP" -w "$PWD" "$GNU" -c 'sleep infinity'
-      - name: Run only the affected musl archive and cgo test
+      - name: Run the plugin backtrace test with GNU and LLVM musl
         working-directory: product
-        env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: docker exec -e RUNNER_TEMP -e BUILDBUDDY_API_KEY -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$PWD" gnu-profile python3 -B "$RUNNER_TEMP/plugin_musl_current.py"
+        run: docker exec -e RUNNER_TEMP -e PRODUCT -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0="$PWD" gnu-profile python3 -B "$RUNNER_TEMP/plugin_musl_current.py"
       - name: Check the exact publication boundary
         id: privacy
         if: always()
