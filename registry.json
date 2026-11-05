@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T21:05:26.208344Z",
+    "updatedAt": "2026-11-05T21:24:09.459393Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4838,9 +4838,9 @@
       "title": "Build C and C++ with the declared LLVM toolchains",
       "url": "https://github.com/tamird/gvisor/commit/9310f06f9",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "summary": "Replace Coral’s host-installed GCC and target headers with the LLVM toolchains already declared by gVisor. The review commit has 37 insertions and 1,937 deletions, including four obsolete patches. It changes the compiler and the three freestanding sidecars together so the release links at every step.\n\nThe identical source tree was built as fffadb2bb on one AMD64 Linux worker. Plain bazel build -c opt //:release built nine static AMD64 executables; --config=aarch64 built nine ARM64 executables. Make installed the same bytes for each target. On a separate native ARM64 worker the cross-built runsc, Sentry and prewarmer started a rootless systrap guest. The build uses released LLVM 0.8.24 and master’s existing kernel-header backport.\n\nAn ordinary, dynamically linked C++ syscall test also cross-built on AMD64 and passed all four TCP_NODELAY cases on native ARM64. The earlier full scratch-worker build was on 5388293bd. The stock project catalog check passed on upstream 61a70083c and the compiler integration fffadb2bb: both verified all 220 dependencies against the identical catalog and policy. Removing abseil-cpp from a disposable catalog produced exactly one missing-entry error. This check does not audit every transitive toolchain binary.\n\nThe optional TLDK archive built on 3f0bd3a70 with #15153 added (148 Clang objects). Both plugin executable links then failed: lld could not find static pthread or dl for runsc-plugin-stack and gvisor_sentry_plugin_stack. Neither executable started. The normal release and native guest results above are separate.",
-      "updatedAt": "2026-11-05T21:05:26.208344Z",
+      "status": "Agent work",
+      "summary": "The compiler proposal at 9310f06f9 needs an amendment for two required race builds. On that exact source, ld.lld could not find -lc, -ldl, -lm, -lpthread or -lresolv when linking runsc-race and gvisor_sentry-race for AMD64. Neither executable was built. The request to approve this head is withdrawn.\n\nReplace Coral’s host-installed GCC and target headers with the LLVM toolchains already declared by gVisor. The fork commit has 37 insertions and 1,937 deletions, including four obsolete patches. It changes the compiler and the three freestanding sidecars together so the release links at every step.\n\nThe identical source tree was built as fffadb2bb on one AMD64 Linux worker. Plain bazel build -c opt //:release built nine static AMD64 executables; --config=aarch64 built nine ARM64 executables. Make installed the same bytes for each target. On a separate native ARM64 worker the cross-built runsc, Sentry and prewarmer started a rootless systrap guest. The build uses released LLVM 0.8.24 and master’s existing kernel-header backport.\n\nAn ordinary, dynamically linked C++ syscall test also cross-built on AMD64 and passed all four TCP_NODELAY cases on native ARM64. The earlier full scratch-worker build was on 5388293bd. The stock project catalog check passed on upstream 61a70083c and the compiler integration fffadb2bb: both verified all 220 dependencies against the identical catalog and policy. Removing abseil-cpp from a disposable catalog produced exactly one missing-entry error. This check does not audit every transitive toolchain binary.\n\nThe optional TLDK archive built on 3f0bd3a70 with #15153 added (148 Clang objects). Both plugin executable links then failed: lld could not find static pthread or dl for runsc-plugin-stack and gvisor_sentry_plugin_stack. Neither executable started. The normal release and native guest results above are separate.\n\nA separate AMD64 control on older source 5b7afbced used released LLVM 0.8.24 with a musl transition and twice booted the matching race Sentry. It identifies a fix to qualify on the current stack.\n\nOn the shell-free AMD64 remote worker, neither target release reached installation. The Protobuf authenticity check invoked /bin/bash for both targets, and the AMD64 KVM mmap-filter generator also invoked /bin/bash. These are build-action failures on that worker; the ordinary Linux release results above remain valid.",
+      "updatedAt": "2026-11-05T21:24:09.459393Z",
       "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
       "evidence": [
         {
@@ -5078,6 +5078,18 @@
         {
           "label": "Stock make license-check: both 220-dependency catalogs passed; removing abseil-cpp was rejected",
           "url": "https://github.com/tamird/gvisor/actions/runs/42106951758/artifacts/13451568393"
+        },
+        {
+          "label": "Required static race CLI and Sentry: both links failed on 9310f06f9",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42108464964/artifacts/13453527379"
+        },
+        {
+          "label": "Historical AMD64 control: two matching race Sentry boots with musl on 5b7afbced",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41608432080/artifacts/13218522690"
+        },
+        {
+          "label": "Lean release on the shell-free remote worker: three action failures; neither target installed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42111502777/artifacts/13454667129"
         }
       ],
       "refinement": {
@@ -5094,14 +5106,25 @@
           "head": "bcb5de5b245b8264e4db387120dbc3ac31b4e603",
           "outcome": "approved",
           "at": "2026-10-29T22:32:40.423771+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
+          "baseHead": "d96acc0400cec7c48d942c361dbddbc49299fa09",
+          "url": "https://github.com/tamird/gvisor/commit/9310f06f9",
+          "title": "Build C and C++ with the declared LLVM toolchains",
+          "requestedAt": "2026-11-05T20:50:11.117Z",
+          "summary": "Open the compiler switch after the native vDSO, systrap and sidecar prerequisites land and both optional plugin executables link and start on the submission base? Their current GNU links fail on missing static pthread and dl. The earlier approval covered a larger change with a separate NVIDIA parser migration.",
+          "outcome": "superseded",
+          "at": "2026-11-05T21:24:09.459393Z"
         }
       ],
       "followup": {
         "owner": "Compiler integration",
         "sourceHead": "9310f06f95b100725450a71fbb896fc8403ec0eb",
-        "disposition": "Normal release, native ARM guest and stock catalog passed; optional TLDK archive built, but both plugin executable links failed.",
-        "observedAt": "2026-11-05T21:05:26.208344Z",
-        "nextAction": "Submit after #16586, #16516 (offset generation), #17067 (native stub compilation) and #16522 land and optional plugin compatibility is verified on the submission base. The two plugin Go links on 3f0bd3a70 still need static GNU pthread and dl: resolve those inputs, rebuild runsc-plugin-stack and gvisor_sentry_plugin_stack, then test startup. The stock 220-dependency catalog check passed on the compiler integration. Track the NVIDIA parser source and its license classifier separately.",
+        "disposition": "Amend the required race builds before contributor review; normal release and stock catalog remain qualified.",
+        "observedAt": "2026-11-05T21:24:09.459393Z",
+        "nextAction": "Adapt the scoped musl transition and qualify runsc-race and gvisor_sentry-race on the amended source, including a matching race Sentry boot. Keep #16586, #16516, #17067 and #16522 as landing dependencies. Separately resolve the optional TLDK plugin links and test startup on their submission base.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
@@ -5147,19 +5170,11 @@
           "https://github.com/tamird/gvisor/actions/runs/42102214611/artifacts/13450870587",
           "https://github.com/tamird/gvisor/actions/runs/42105048733/artifacts/13451318656",
           "https://github.com/tamird/gvisor/actions/runs/42106951758/artifacts/13451568393",
-          "https://github.com/google/gvisor/pull/17067"
+          "https://github.com/google/gvisor/pull/17067",
+          "https://github.com/tamird/gvisor/actions/runs/42108464964/artifacts/13453527379",
+          "https://github.com/tamird/gvisor/actions/runs/41608432080/artifacts/13218522690",
+          "https://github.com/tamird/gvisor/actions/runs/42111502777/artifacts/13454667129"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
-        "baseHead": "d96acc0400cec7c48d942c361dbddbc49299fa09",
-        "url": "https://github.com/tamird/gvisor/commit/9310f06f9",
-        "title": "Build C and C++ with the declared LLVM toolchains",
-        "requestedAt": "2026-11-05T20:50:11.117Z",
-        "summary": "Open the compiler switch after the native vDSO, systrap and sidecar prerequisites land and both optional plugin executables link and start on the submission base? Their current GNU links fail on missing static pthread and dl. The earlier approval covered a larger change with a separate NVIDIA parser migration.",
-        "body": "The archived Coral toolchain looks for GCC and target headers under\n/usr. An AMD64 worker therefore needs an ARM64 cross-toolchain\ninstalled to build the vDSO and signal handler for an ARM64 Sentry.\n\nRegister the toolchains from the existing LLVM module so Bazel selects\nthe compiler for the worker and the sysroot for the target. Keep the\nGNU17 and C++17 dialects. Remove the two Coral repositories and the\nfour patches used to configure them.\n\nThe three C programs shipped alongside runsc supply their own entry\npoints and call the kernel directly. Build them with LLVM’s\nfreestanding rule and declare their Linux headers. This keeps startup\nobjects and hosted libraries out of their links."
       }
     },
     {
@@ -27849,20 +27864,20 @@
       "id": "branch:hermetic-llvm-project",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "llvm-project-qualified",
-      "head": "17d37fc9ad63e02bd1e53862ae49136179ec11eb",
+      "ref": "research/nvidia-parser-catalog-source",
+      "head": "74353add6098993e7cb22f2a5c443ef8fd3242f6",
       "title": "Build the NVIDIA parser against hermetic-llvm’s LLVM source",
-      "url": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb",
+      "url": "https://github.com/tamird/gvisor/commit/74353add6098993e7cb22f2a5c443ef8fd3242f6",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-05T02:52:45.192796+00:00",
-      "summary": "The source migration uses the supplier’s LLVM libraries with the GNU toolchain. It passed native parser parity on AMD64 and ARM64 and the 201-entry license audit. A separate Bazel 9.3.1 integration with the declared clang++ confirmed the same two backends and passed both native parser tests. The standalone source change does not depend on switching compilers. The LLVM source inventory landed in #16249. The supplier release and #15146 remain outstanding.",
+      "updatedAt": "2026-11-05T21:24:09.459393Z",
+      "summary": "The standalone parser migration imports hermetic-llvm’s source for the existing Clang and LLVM libraries. Draft 74353add6 on da95e9bce removes the llvm-raw Bazel 9 patch and private zlib rule. It keeps the zstd dependency used by tools/zstd. Source enumeration landed in #16249; switching the default compiler is independent.\n\nOn this draft, stock make license-check found 220 dependencies and rejected the LLVM record: NCSA and Spencer-94 were unknown. The five audited terms for the parser’s libraries are Apache-2.0 WITH LLVM-exception, BSD-3-Clause, CC0-1.0, NCSA and Spencer-94. A separate stock Fetch of just this source exited successfully but regenerated only Apache-2.0 WITH LLVM-exception and MIT from the pinned root notice. MIT is a misclassification of the NCSA text. The root notice cannot reproduce the regex and BLAKE3 terms. The prior archive audit compared five notices from the actual repack with upstream; its two Fetch passes kept an existing entry because the redistributor had no root license.\n\nThe stock 0.8.24 declaration selected nine backends. Released 0.8.26 still requests the same nine; a downstream request for just two cannot remove the others. With merged supplier #892, the earlier Bazel 9 integration executed the actual parser test on native AMD64 and ARM64 with only AArch64 and X86. The catalog job did not rebuild the parser.",
       "followup": {
         "owner": "root",
-        "sourceHead": "17d37fc9ad63e02bd1e53862ae49136179ec11eb",
-        "observedAt": "2026-11-05T02:52:45.192796+00:00",
-        "disposition": "Two backends verified; waiting for a registry release",
-        "nextAction": "Qualify the first BCR llvm release containing 17f6a3008; 0.8.26 predates it. Once #15146 covers the license terms, rebase this source migration independently. The LLVM source inventory landed in #16249. Keep go-digest, QEMU and LTP policy work separate.",
+        "sourceHead": "74353add6098993e7cb22f2a5c443ef8fd3242f6",
+        "observedAt": "2026-11-05T21:24:09.459393Z",
+        "disposition": "Source discovery landed; stock Verify rejects two terms and root-only Fetch loses the component record.",
+        "nextAction": "Use a release containing #892, or explicitly backport its two-backend default. Verify must recognize NCSA and Spencer-94 (#15146 addresses recognition). Fetch must preserve the reviewed, archive-bound root, regex and BLAKE3 terms, including the selected BLAKE3 license alternative. Qualify the five-term record before proposing the source migration.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb",
           "https://app.buildbuddy.io/invocation/a0ed5b1c-6618-4291-9931-ec00d9183a9f",
@@ -27871,7 +27886,11 @@
           "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a300884d73de0b903316f85c420c45471268",
           "https://app.buildbuddy.io/invocation/9f4b6536-8166-4896-9259-bce7f4f6b19b",
           "https://tamird.github.io/gvisor/#branch%3Ahermetic-compiler-review",
-          "https://github.com/google/gvisor/commit/0245c1dfa"
+          "https://github.com/google/gvisor/commit/0245c1dfa",
+          "https://github.com/tamird/gvisor/commit/74353add6098993e7cb22f2a5c443ef8fd3242f6",
+          "https://github.com/tamird/gvisor/actions/runs/42111586199/artifacts/13455172267",
+          "https://github.com/tamird/gvisor/actions/runs/40964802913/artifacts/12937627037",
+          "https://github.com/tamird/gvisor/actions/runs/41717072807/artifacts/13273383359"
         ]
       },
       "evidence": [
@@ -27942,14 +27961,34 @@
         {
           "label": "Bazel 9 verification with the separately proposed compiler",
           "url": "https://tamird.github.io/gvisor/#branch%3Ahermetic-compiler-review"
+        },
+        {
+          "label": "Five-term standalone source on current upstream",
+          "url": "https://github.com/tamird/gvisor/commit/74353add6098993e7cb22f2a5c443ef8fd3242f6"
+        },
+        {
+          "label": "Complete stock Verify and one-record Fetch; nine configured backends",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42111586199/artifacts/13455172267"
+        },
+        {
+          "label": "Five notices in the LLVM repack; both prior Fetch passes retained the existing entry",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40964802913/artifacts/12937627037"
+        },
+        {
+          "label": "Earlier native parser tests with exactly AArch64 and X86",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41717072807/artifacts/13273383359"
+        },
+        {
+          "label": "Merged source enumeration in #16249",
+          "url": "https://github.com/google/gvisor/commit/0245c1dfa"
         }
       ],
       "refinement": {
         "before": {
-          "head": "6aa2df662c64e3199b918197cf5d1684570cc6f8"
+          "head": "17d37fc9ad63e02bd1e53862ae49136179ec11eb"
         },
         "after": {
-          "head": "17d37fc9ad63e02bd1e53862ae49136179ec11eb"
+          "head": "74353add6098993e7cb22f2a5c443ef8fd3242f6"
         }
       }
     },
@@ -55011,15 +55050,22 @@
       "from": "pr:15146",
       "to": "branch:hermetic-llvm-project",
       "type": "depends_on",
-      "reason": "The standalone LLVM source catalog requires the existing complete-license classifier.",
-      "evidence": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb"
+      "reason": "The stock verifier rejects NCSA and Spencer-94. #15146 recognizes complete license texts; a single root notice still cannot regenerate the parser’s component record.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/15146",
+        "https://github.com/tamird/gvisor/actions/runs/42111586199/artifacts/13455172267",
+        "https://github.com/tamird/gvisor/actions/runs/40964802913/artifacts/12937627037"
+      ]
     },
     {
       "from": "pr:16249",
       "to": "branch:hermetic-llvm-project",
       "type": "depends_on",
-      "reason": "The standalone migration requires canonical enumeration of the public @llvm-project source repository.",
-      "evidence": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb"
+      "reason": "Satisfied: merged #16249 enumerates llvm_project_archive and the stock checker found the replaced source.",
+      "evidence": [
+        "https://github.com/google/gvisor/commit/0245c1dfa",
+        "https://github.com/tamird/gvisor/actions/runs/42111586199/artifacts/13455172267"
+      ]
     },
     {
       "from": "pr:15146",
@@ -55032,8 +55078,13 @@
       "from": "pr:hermeticbuild/hermetic-llvm:892",
       "to": "branch:hermetic-llvm-project",
       "type": "depends_on",
-      "reason": "Preserve selectable LLVM backends and transitive requirements when delivering the standalone source migration; upstream supplier #892 remains separate from the compiler switch.",
-      "evidence": "https://github.com/hermeticbuild/hermetic-llvm/pull/892"
+      "reason": "Merged #892 supplies the two-backend default. BCR release 0.8.26 still requests nine; a containing release or an explicit backport is needed.",
+      "evidence": [
+        "https://github.com/hermeticbuild/hermetic-llvm/pull/892",
+        "https://bcr.bazel.build/modules/llvm/0.8.26/MODULE.bazel",
+        "https://github.com/tamird/gvisor/actions/runs/41717072807/artifacts/13273383359",
+        "https://github.com/tamird/gvisor/actions/runs/42111586199/artifacts/13455172267"
+      ]
     },
     {
       "from": "branch:plugin-gnu-source",
@@ -74419,5 +74470,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T21:05:26.208344Z"
+  "updatedAt": "2026-11-05T21:24:09.459393Z"
 }
