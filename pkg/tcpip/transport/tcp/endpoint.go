@@ -2286,9 +2286,7 @@ func (e *Endpoint) GetSockOpt(opt tcpip.GettableSocketOption) tcpip.Error {
 		e.keepalive.Unlock()
 
 	case *tcpip.TCPUserTimeoutOption:
-		e.LockUser()
 		*o = tcpip.TCPUserTimeoutOption(e.userTimeout)
-		e.UnlockUser()
 
 	case *tcpip.CongestionControlOption:
 		e.LockUser()
@@ -2296,14 +2294,10 @@ func (e *Endpoint) GetSockOpt(opt tcpip.GettableSocketOption) tcpip.Error {
 		e.UnlockUser()
 
 	case *tcpip.TCPLingerTimeoutOption:
-		e.LockUser()
 		*o = tcpip.TCPLingerTimeoutOption(e.tcpLingerTimeout)
-		e.UnlockUser()
 
 	case *tcpip.TCPDeferAcceptOption:
-		e.LockUser()
 		*o = tcpip.TCPDeferAcceptOption(e.deferAccept)
-		e.UnlockUser()
 
 	case *tcpip.OriginalDestinationOption:
 		e.LockUser()
