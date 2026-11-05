@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T21:56:59.120671Z",
+    "updatedAt": "2026-11-05T22:23:08.487188Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -20,7 +20,8 @@
       "bazel-contrib/rules_distroless": "none",
       "periareon/rules_cc_autoconf": "none",
       "llvm/llvm-project": "none",
-      "protocolbuffers/protobuf": "none"
+      "protocolbuffers/protobuf": "none",
+      "bazel-contrib/buildtools": "none"
     },
     "registeredOnlyRepositories": [
       "nodejs/node",
@@ -32,7 +33,8 @@
       "bazel-contrib/rules_distroless",
       "periareon/rules_cc_autoconf",
       "llvm/llvm-project",
-      "protocolbuffers/protobuf"
+      "protocolbuffers/protobuf",
+      "bazel-contrib/buildtools"
     ],
     "registryDate": "2026-11-01"
   },
@@ -4839,8 +4841,8 @@
       "url": "https://github.com/tamird/gvisor/commit/9310f06f9",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "The compiler proposal at 9310f06f9 needs an amendment for two required race builds. On that exact source, ld.lld could not find -lc, -ldl, -lm, -lpthread or -lresolv when linking runsc-race and gvisor_sentry-race for AMD64. Neither executable was built. The request to approve this head is withdrawn.\n\nReplace Coral’s host-installed GCC and target headers with the LLVM toolchains already declared by gVisor. The fork commit has 37 insertions and 1,937 deletions, including four obsolete patches. It changes the compiler and the three freestanding sidecars together so the release links at every step.\n\nThe identical source tree was built as fffadb2bb on one AMD64 Linux worker. Plain bazel build -c opt //:release built nine static AMD64 executables; --config=aarch64 built nine ARM64 executables. Make installed the same bytes for each target. On a separate native ARM64 worker the cross-built runsc, Sentry and prewarmer started a rootless systrap guest. The build uses released LLVM 0.8.24 and master’s existing kernel-header backport.\n\nAn ordinary, dynamically linked C++ syscall test also cross-built on AMD64 and passed all four TCP_NODELAY cases on native ARM64. The earlier full scratch-worker build was on 5388293bd. The stock project catalog check passed on upstream 61a70083c and the compiler integration fffadb2bb: both verified all 220 dependencies against the identical catalog and policy. Removing abseil-cpp from a disposable catalog produced exactly one missing-entry error. This check does not audit every transitive toolchain binary.\n\nThe optional TLDK archive built on 3f0bd3a70 with #15153 added (148 Clang objects). Both plugin executable links then failed: lld could not find static pthread or dl for runsc-plugin-stack and gvisor_sentry_plugin_stack. Neither executable started. The normal release and native guest results above are separate.\n\nOn bb7176b37, selecting musl for static Go binaries linked the AMD64 race CLI and Sentry and booted a guest. That broader change also redirects callers that explicitly select a different platform. The narrower diagnostic keeps the public target declarations and selects the libc in the existing Bazel adapter.\n\nOn a shell-free AMD64 worker, the declared Protobuf and KVM generators and Go SDK builder now run. Both releases then stopped at GoImports: pkg/unet on AMD64 and pkg/marshal/primitive on ARM64 could not start goimports.sh. Neither release reached installation. #16710 removes this launcher from stateify.",
-      "updatedAt": "2026-11-05T21:56:59.120671Z",
+      "summary": "The compiler proposal at 9310f06f9 needs an amendment for two required race builds. On that exact source, ld.lld could not find -lc, -ldl, -lm, -lpthread or -lresolv when linking runsc-race and gvisor_sentry-race for AMD64. Neither executable was built. The request to approve this head is withdrawn.\n\nReplace Coral’s host-installed GCC and target headers with the LLVM toolchains already declared by gVisor. The fork commit has 37 insertions and 1,937 deletions, including four obsolete patches. It changes the compiler and the three freestanding sidecars together so the release links at every step.\n\nThe identical source tree was built as fffadb2bb on one AMD64 Linux worker. Plain bazel build -c opt //:release built nine static AMD64 executables; --config=aarch64 built nine ARM64 executables. Make installed the same bytes for each target. On a separate native ARM64 worker the cross-built runsc, Sentry and prewarmer started a rootless systrap guest. The build uses released LLVM 0.8.24 and master’s existing kernel-header backport.\n\nAn ordinary, dynamically linked C++ syscall test also cross-built on AMD64 and passed all four TCP_NODELAY cases on native ARM64. The earlier full scratch-worker build was on 5388293bd. The stock project catalog check passed on upstream 61a70083c and the compiler integration fffadb2bb: both verified all 220 dependencies against the identical catalog and policy. Removing abseil-cpp from a disposable catalog produced exactly one missing-entry error. This check does not audit every transitive toolchain binary.\n\nThe optional TLDK archive built on 3f0bd3a70 with #15153 added (148 Clang objects). Both plugin executable links then failed: lld could not find static pthread or dl for runsc-plugin-stack and gvisor_sentry_plugin_stack. Neither executable started. The normal release and native guest results above are separate.\n\nThe broad musl transition linked both race executables for AMD64 and ARM64, and the native AMD64 pair booted a guest. The narrower design keeps the public Go target declarations and selects the C library in the Bazel adapter.\n\nThe shell-free worker produced the Protobuf, KVM and Go SDK outputs. With #16710 composed, both release attempts next failed when the systrap raw stub genrule tried to execute /bin/bash. The two-architecture GNU comparison for the replacement extractor is on #16516.",
+      "updatedAt": "2026-11-05T22:23:08.487188Z",
       "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
       "evidence": [
         {
@@ -5106,6 +5108,18 @@
         {
           "label": "Static GNU archive: unwind symbols missing from the DPDK host-tool link",
           "url": "https://github.com/tamird/gvisor/actions/runs/42114412069/artifacts/13455846636"
+        },
+        {
+          "label": "Both race binaries linked on both architectures; native race guest booted",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42113608109/artifacts/13457113552"
+        },
+        {
+          "label": "Both release targets stopped at the raw systrap genrule",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42117263417/artifacts/13456983300"
+        },
+        {
+          "label": "DPDK archive built with the declared static unwind runtime",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42116658926/artifacts/13457576742"
         }
       ],
       "refinement": {
@@ -5139,8 +5153,8 @@
         "owner": "Compiler integration",
         "sourceHead": "9310f06f95b100725450a71fbb896fc8403ec0eb",
         "disposition": "Amend the required race builds before contributor review; normal release and stock catalog remain qualified.",
-        "observedAt": "2026-11-05T21:56:59.120671Z",
-        "nextAction": "Qualify the race-specific libc selection on the public targets, including their analyzers, dependency checks and explicit caller platforms. Keep #16586, #16516, #17067 and #16522 as landing dependencies. Recheck both shell-free releases with #16710. For optional TLDK, verify the DPDK host-tool link with its declared unwind archive before retrying the plugin executables.",
+        "observedAt": "2026-11-05T22:23:08.487188Z",
+        "nextAction": "Check the narrowed race binaries, their source analyzers and explicit GNU selection on 3dab3494e. Qualify both release targets with the combined systrap extractor on the shell-free worker. Separately run the installed optional TLDK binaries now that their static-GNU archive builds.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
@@ -5193,7 +5207,10 @@
           "https://github.com/tamird/gvisor/actions/runs/42113608109",
           "https://github.com/tamird/gvisor/commit/629d27e5f",
           "https://github.com/tamird/gvisor/actions/runs/42115448931/artifacts/13457565460",
-          "https://github.com/tamird/gvisor/actions/runs/42114412069/artifacts/13455846636"
+          "https://github.com/tamird/gvisor/actions/runs/42114412069/artifacts/13455846636",
+          "https://github.com/tamird/gvisor/actions/runs/42113608109/artifacts/13457113552",
+          "https://github.com/tamird/gvisor/actions/runs/42117263417/artifacts/13456983300",
+          "https://github.com/tamird/gvisor/actions/runs/42116658926/artifacts/13457576742"
         ]
       }
     },
@@ -30566,8 +30583,8 @@
       "url": "https://github.com/google/gvisor/pull/16516",
       "group": "bazel",
       "status": "open",
-      "summary": "Published the contributor-approved systrap generator as #16516 at the exact qualified 353fb55568 head. A declared Go executable replaces the worker nm/grep/tr/awk pipeline and preserves generated declarations for AMD64 and ARM64 objects. The isolated native AMD64 tool and installed AMD64 systrap smoke passed. This is not ARM runtime coverage. The contributor decision is consumed; follow the live PR for review and checks.",
-      "updatedAt": "2026-10-27T18:06:12+00:00",
+      "summary": "The open PR generates Go offsets from the systrap ELF. The proposed combined revision also extracts the embedded stub in that action. GNU builds on the submission base and candidate produced identical AMD64 and ARM64 bytes and all 10 and 11 exported offsets, respectively.",
+      "updatedAt": "2026-11-05T22:23:08.487188Z",
       "followup": {
         "owner": "pinring_source_scope",
         "sourceHead": "353fb5556844a9b683887f432cb19c123b3e4168",
@@ -30592,9 +30609,38 @@
         {
           "label": "Both object architectures, isolated tool and installed AMD64 smoke",
           "url": "https://app.buildbuddy.io/invocation/738bc9d8-2092-4096-8085-e199799246d0"
+        },
+        {
+          "label": "Combined extractor on the current GNU build",
+          "url": "https://github.com/tamird/gvisor/commit/b540bc616"
+        },
+        {
+          "label": "Both GNU stubs and their exported offsets match master",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42120482501/artifacts/13458670646"
         }
       ],
-      "number": 16516
+      "number": 16516,
+      "refinement": {
+        "before": {
+          "head": "353fb5556844a9b683887f432cb19c123b3e4168",
+          "base": "4777ee7811e235e66d5825f6c6ae5ccd3ccccfb3"
+        },
+        "after": {
+          "head": "b540bc61643afb589a8d465ed5c7b083cd6d3fa0",
+          "base": "add07b5fa1fdf48d20ed9b39277e1ebcc75b0aaf"
+        }
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "baseHead": "353fb5556844a9b683887f432cb19c123b3e4168",
+        "head": "b540bc61643afb589a8d465ed5c7b083cd6d3fa0",
+        "url": "https://github.com/tamird/gvisor/commit/b540bc616",
+        "title": "Extract the systrap stub and offsets from its ELF",
+        "requestedAt": "2026-11-05T22:23:08.487188Z",
+        "summary": "Combine the approved offsets and raw stub changes on #16516? A single tool reads the ELF once and produces both inputs used by the Sentry.",
+        "body": "The Sentry embeds the signal handler as raw bytes and uses Go offsets to find entry points within those bytes. Producing the two outputs requires objcopy for the bytes and a shell pipeline around nm for the offsets. An execution worker without Bash cannot embed even a fully linked stub.\n\nGenerate both outputs in one Bazel action. Read the bytes from .crblob and the offsets from the same ELF symbol table. The linker script places .crblob at address zero, so each exported symbol's address is its offset within the embedded bytes. Reject any other nonempty allocated section so the Sentry cannot silently omit part of the linked program."
+      }
     },
     {
       "id": "branch:hermetic-arch-copy",
@@ -31133,13 +31179,13 @@
       "group": "bazel",
       "status": "Contributor approved; waiting for #16516",
       "summary": "The offsets tool extracts .crblob from the same linked ELF. The raw stub and Go offsets match for AMD64 and ARM64 with 4 KiB and 64 KiB pages. A remote empty-root check ran the static tool with each ELF; installed AMD64 runsc started a systrap container. The outer empty-root job failed rereading its archived execution log; the original worker record verified all three cases.",
-      "updatedAt": "2026-11-02T07:51:17+00:00",
+      "updatedAt": "2026-11-05T22:23:08.487188Z",
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "6a54750c6a8b6836e3806faa63a5729b2f7621a7",
-        "observedAt": "2026-11-02T07:51:17+00:00",
+        "observedAt": "2026-11-05T22:23:08.487188Z",
         "disposition": "Approved; #16518 merged",
-        "nextAction": "Publish after #16516 lands. Keep support for generated input files and check that each architecture produces one output.",
+        "nextAction": "The contributor already reviewed this implementation. The decision on #16516 is whether to deliver both ELF outputs together. If they are combined, retire this separate submission.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6a54750c6a8b6836e3806faa63a5729b2f7621a7",
           "https://github.com/google/gvisor/pull/16516",
@@ -31175,6 +31221,10 @@
         {
           "label": "Fork revision",
           "url": "https://github.com/tamird/gvisor/commit/6ea2ab7b4b3d272f61677cfdfed3376cd156de85"
+        },
+        {
+          "label": "Combined delivery proposed on #16516",
+          "url": "https://github.com/tamird/gvisor/commit/b540bc616"
         }
       ],
       "refinement": {
@@ -52346,6 +52396,40 @@
           "at": "2026-10-28T14:25:13.716904+00:00"
         }
       ]
+    },
+    {
+      "id": "pr:bazel-contrib/buildtools:1527",
+      "type": "pr",
+      "repo": "bazel-contrib/buildtools",
+      "number": 1527,
+      "ref": "trailing-commas",
+      "head": "dae95786d45322bf0dba3c7e69936d01f1ea26c5",
+      "title": "Format trailing commas consistently",
+      "url": "https://github.com/bazel-contrib/buildtools/pull/1527",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-05T22:23:08.487188Z",
+      "summary": "Fabian asked whether the formatter should leave the comma off after **kwargs. At 61a70083c, gVisor has 37 multiline calls in 12 Starlark files with a bare ** expansion immediately before the closing parenthesis.",
+      "evidence": [
+        {
+          "label": "Question about the last argument",
+          "url": "https://github.com/bazel-contrib/buildtools/pull/1527#issuecomment-6670769692"
+        },
+        {
+          "label": "One of the 37 call sites",
+          "url": "https://github.com/google/gvisor/blob/61a70083c/test/benchmarks/defs.bzl#L23-L31"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "head": "dae95786d45322bf0dba3c7e69936d01f1ea26c5",
+        "url": "https://github.com/bazel-contrib/buildtools/pull/1527#issuecomment-6670769692",
+        "title": "Reply to Fabian about trailing commas after **kwargs",
+        "requestedAt": "2026-11-05T22:23:08.487188Z",
+        "summary": "Post the reply explaining the distinct cases for *args and **kwargs?",
+        "body": "I’d omit the comma after `**kwargs` in both calls and declarations. It has to come last. In gVisor alone, that would avoid changing 37 calls across 12 Starlark files. I’d keep the comma after `*args`: a call can still gain `**kwargs`, and a declaration can gain a keyword-only parameter.\n\nPosted by Codex on behalf of @tamird."
+      }
     }
   ],
   "edges": [
@@ -69400,9 +69484,22 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-05T21:56:59.120671Z",
+      "updatedAt": "2026-11-05T22:23:08.487188Z",
       "summary": "Both remote architectures built all 231 selected runsc targets. The original 40-target runtime sweep and later focused checks are separate. Six specutils cases, six cmd cases and the finite seccomp filter corpus now pass on each architecture. With the declared test executable, all 87 boot cases passed on each worker. The directory-only scratch image is built; publishing it for the workers to pull is awaiting permission.",
       "findings": [
+        {
+          "text": "After composing the stateify change, both release builds stopped at the systrap raw stub genrule. Its action tried to start /bin/bash on the shell-free worker. The combined extractor proposed on #16516 runs directly on the ELF; its GNU outputs match master on both target architectures.",
+          "evidence": [
+            {
+              "label": "Original failed actions on the shell-free worker",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42117263417/artifacts/13456983300"
+            },
+            {
+              "label": "Matched GNU outputs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42120482501/artifacts/13458670646"
+            }
+          ]
+        },
         {
           "text": "On a shell-free AMD64 worker, the declared Protobuf and KVM generators and Go SDK builder now run. Both releases then stopped at GoImports: pkg/unet on AMD64 and pkg/marshal/primitive on ARM64 could not start goimports.sh. Neither release reached installation. #16710 removes this launcher from stateify.",
           "evidence": [
@@ -74523,5 +74620,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T21:56:59.120671Z"
+  "updatedAt": "2026-11-05T22:23:08.487188Z"
 }
