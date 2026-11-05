@@ -1,35 +1,65 @@
-name: CI
-
-"on":
+name: Check the stock catalog on the NVIDIA parser source migration
+'on':
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/nvidia-parser-component-catalog]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  catalog:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {persist-credentials: false, fetch-depth: 3}
+    - name: Bind both revisions, the shared catalog and the native Bazel client
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -eu
+        umask 077
+        d="$RUNNER_TEMP/catalog-compare"
+        mkdir "$d"
+        echo '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$d/receipt.json"
+        test "$(git rev-parse HEAD^)" = 74353add6098993e7cb22f2a5c443ef8fd3242f6
+        test "$(git rev-parse HEAD^^)" = da95e9bce7391557f4cd4102a96ed7f97156f214
+        test "$(git diff --name-only HEAD^ HEAD)" = "$(printf '%s\n' .github/workflows/build.yml test/rbe/nvidia_parser_catalog.py)"
+        test "$(git rev-parse HEAD^:tools/licensecheck/licensecheck.go)" = 9b6e4e342e837e0f3ab74aa4461172b2be65ea85
+        test "$(git rev-parse HEAD^:tools/licensecheck/dependencies.yaml)" = 27833cb4e8c1cd703a88ab8bd14a329888231c72
+        test "$(git rev-parse HEAD^:governance/licensing.yaml)" = b253b0bd7df661b16970407efc8bc2a16a5e615c
+        test "$(cat .bazelversion)" = 9.3.1
+        test "$(uname -m)" = x86_64
+        cp test/rbe/nvidia_parser_catalog.py "$d/llvm_catalog.py"
+        echo "7a066ed2e6584fac9819fd9bc39c47460b1b96989ce37b17104fc465efa0d328  $d/llvm_catalog.py" | sha256sum -c -
+        curl --retry 3 --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+        echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+        chmod 755 "$d/bazel"
+        test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+    - name: Check the complete catalog, then fetch just the replaced source
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        d="$RUNNER_TEMP/catalog-compare"
+        env -i HOME="$HOME" USER="$USER" LANG=C.UTF-8 PATH="$d:$PATH" RUNNER_TEMP="$RUNNER_TEMP" \
+          USE_BAZEL_VERSION=9.3.1 DOCKER_HOST=unix:///nonexistent-license.sock MAKEFLAGS=DOCKER_BUILD=false \
+          CARRIER_SHA="$GITHUB_SHA" QUALIFICATION_RUN_ID="$GITHUB_RUN_ID" python3 -B "$d/llvm_catalog.py"
+    - name: Validate the bounded catalog receipt
+      id: boundary
+      if: always()
+      run: |
+        python3 -B - <<'PY'
+        import json,os,re
+        from pathlib import Path
+        p=Path(os.environ['RUNNER_TEMP'])/'catalog-compare'/'receipt.json'
+        assert p.is_file() and not p.is_symlink() and 0<p.stat().st_size<131072
+        b=p.read_bytes();r=json.loads(b)
+        assert r['status'] in ('STOCK_CLASSIFIER_GAP','INCOMPLETE')
+        assert not re.search(rb'(?i)authorization\s*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}',b)
+        PY
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: always() && steps.boundary.outcome == 'success'
       with:
-          name: runsc
-          path: bin/
+        name: nvidia-parser-source-catalog
+        path: ${{ runner.temp }}/catalog-compare/receipt.json
+        if-no-files-found: error
+    - name: Stop native Bazel
+      if: always()
+      run: |
+        d="$RUNNER_TEMP/catalog-compare"
+        if test -x "$d/bazel"; then timeout -k 5 30 "$d/bazel" shutdown >/dev/null 2>&1 || true; fi
