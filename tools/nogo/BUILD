@@ -1,9 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_sdk_tool")
 load("//tools:defs.bzl", "bzl_library", "go_binary", "go_reset_target", "select_goarch", "select_goos")
 load("//tools/nogo:defs.bzl", "nogo_stdlib", "nogo_target")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+go_sdk_tool(
+    name = "objdump",
+    tool = "objdump",
 )
 
 nogo_target(

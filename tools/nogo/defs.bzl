@@ -81,17 +81,13 @@ def _nogo_stdlib_impl(ctx):
         # sources in the inputs.
         inputs = inputs + stdlib_srcs,
         outputs = [facts_file, findings_file],
-        tools = depset(go_ctx.runfiles.to_list() + ctx.files._nogo),
+        tools = depset(ctx.files._nogo + [ctx.executable._objdump], transitive = [go_ctx.stdlib_libs]),
         executable = ctx.files._nogo[0],
         env = go_ctx.env,
         mnemonic = "GoStandardLibraryAnalysis",
         progress_message = "Analyzing Go Standard Library",
-        # Since these actions are generally I/O bound, reading source files,
-        # facts, binaries and serializing results, disable sandboxing. This can
-        # be enabled without any issues for correctness, but we want to avoid
-        # paying the FUSE penalty.
-        execution_requirements = {"no-sandbox": "1"},
         arguments = args + [
+            "-objdump=%s" % ctx.executable._objdump.path,
             "bundle",
             "-findings=%s" % findings_file.path,
             "-facts=%s" % facts_file.path,
@@ -117,6 +113,11 @@ nogo_stdlib = go_rule(
     attrs = {
         "_nogo": attr.label(
             default = "//tools/nogo:nogo_tool",
+            cfg = "exec",
+        ),
+        "_objdump": attr.label(
+            default = "//tools/nogo:objdump",
+            executable = True,
             cfg = "exec",
         ),
         "_target": attr.label(
@@ -171,7 +172,6 @@ def _nogo_config(ctx, deps, attr = None):
     nogo_target_info = ctx.attr._target[NogoTargetInfo]
     go_ctx = go_context(ctx, goos = nogo_target_info.goos, goarch = nogo_target_info.goarch, attr = attr)
     args = go_ctx.nogo_args + [
-        "-go=%s" % go_ctx.go.path,
         "-GOOS=%s" % go_ctx.goos,
         "-GOARCH=%s" % go_ctx.goarch,
         "-tags=%s" % (",".join(go_ctx.gotags)),
@@ -342,14 +342,13 @@ def _nogo_aspect_impl(target, ctx):
     ctx.actions.run(
         inputs = inputs + srcs,
         outputs = [findings_file, facts_file],
-        tools = depset(go_ctx.runfiles.to_list() + ctx.files._nogo),
+        tools = depset(ctx.files._nogo + [ctx.executable._objdump], transitive = [go_ctx.stdlib_libs]),
         executable = ctx.files._nogo[0],
         env = go_ctx.env,
         mnemonic = "GoStaticAnalysis",
         progress_message = "Analyzing %s" % target.label,
-        # See above.
-        execution_requirements = {"no-sandbox": "1"},
         arguments = args + [
+            "-objdump=%s" % ctx.executable._objdump.path,
             "check",
             "-findings=%s" % findings_file.path,
             "-facts=%s" % facts_file.path,
@@ -392,6 +391,11 @@ nogo_aspect = go_rule(
             default = "//tools/nogo:nogo_tool",
             cfg = "exec",
         ),
+        "_objdump": attr.label(
+            default = "//tools/nogo:objdump",
+            executable = True,
+            cfg = "exec",
+        ),
         "_target": attr.label(
             default = "//tools/nogo:target",
             cfg = "target",
@@ -431,8 +435,6 @@ def _nogo_test_impl(ctx):
             executable = ctx.files._nogo[0],
             mnemonic = "GoStaticAnalysis",
             progress_message = "Generating %s" % ctx.label,
-            # See above.
-            execution_requirements = {"no-sandbox": "1"},
             arguments = ["filter"] +
                         ["-config=%s" % f.path for f in config_srcs] +
                         ["-output=%s" % findings.path] +
@@ -524,13 +526,11 @@ def _nogo_facts_render_impl(ctx):
     ctx.actions.run(
         inputs = inputs + ctx.files.srcs + ctx.files.template,
         outputs = [ctx.outputs.output],
-        tools = depset(go_ctx.runfiles.to_list() + ctx.files._nogo),
+        tools = depset(ctx.files._nogo, transitive = [go_ctx.stdlib_libs]),
         executable = ctx.files._nogo[0],
         env = go_ctx.env,
         mnemonic = "GoStaticAnalysis",
         progress_message = "Generating %s" % ctx.label,
-        # See above.
-        execution_requirements = {"no-sandbox": "1"},
         arguments = args + [
             "render",
             "-template=%s" % ctx.files.template[0].path,
