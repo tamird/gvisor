@@ -1,35 +1,69 @@
-name: CI
-
-"on":
+name: Cross-build freestanding ARM sidecars with released LLVM stage0
+'on':
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/master-llvm-stage0-sidecars]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  sidecars:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        persist-credentials: false
+        fetch-depth: 3
+    - name: Bind the integration-only three-sidecar producer
+      run: |
+        set -eu
+        umask 077
+        test "$(git rev-parse HEAD^)" = 87eb7ae909ce35c63e3ffdecb7ea2eb8ca14a365
+        test "$(git rev-parse HEAD^^)" = 1e80b818243dd8132e9d14945f840d927753a2e3
+        test "$(git diff --name-only HEAD^ HEAD)" = "$(printf '%s\n' .github/workflows/build.yml test/rbe/native_cross_inputs.py test/rbe/runtime_cross.py test/rbe/runtime_sidecars.py)"
+        d="$RUNNER_TEMP/runtime-cross"
+        mkdir "$d"
+        mkdir "$d/public"
+        cp test/rbe/native_cross_inputs.py test/rbe/runtime_cross.py test/rbe/runtime_sidecars.py "$d/"
+        echo "b0626fb5ecb5bb9c41d644ced5af036019cbefbeef7975c71878021f6e146653  $d/native_cross_inputs.py" | sha256sum -c -
+        echo "e0fde0e7bed53e1dc2d9c2a57b1e82fe01d4f0a48aa3e926c323afc49eee0a0c  $d/runtime_cross.py" | sha256sum -c -
+        echo "8d7d5c577e3f52429b334551b50a900cab02f484acc4dd21aa05dee4c4778ed9  $d/runtime_sidecars.py" | sha256sum -c -
+        printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$d/public/sidecars.json"
+        test "$(cat .bazelversion)" = 9.3.1
+        grep -Fx 'bazel_dep(name = "llvm", version = "0.8.24")' MODULE.bazel
+        test "$(uname -m)" = x86_64
+        curl --retry 3 --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+        echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+        chmod 755 "$d/bazel"
+        test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+    - name: Build the three ARM sidecars under the ordinary GNU target
+      run: |
+        env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" USE_BAZEL_VERSION=9.3.1 \
+          CARRIER_SHA="$GITHUB_SHA" QUALIFICATION_RUN_ID="$GITHUB_RUN_ID" \
+          python3 -B "$RUNNER_TEMP/runtime-cross/runtime_sidecars.py"
+    - name: Validate the bounded typed result
+      id: receipt
+      if: always()
+      run: |
+        python3 -B - <<'PYTHON'
+        import json, os, re
+        from pathlib import Path
+        root = Path(os.environ['RUNNER_TEMP']) / 'runtime-cross/public'
+        assert {p.name for p in root.iterdir()} == {'sidecars.json'}
+        p = root / 'sidecars.json'
+        assert p.is_file() and not p.is_symlink() and 0 < p.stat().st_size < 524288
+        raw = p.read_bytes()
+        assert json.loads(raw)['status'] in ('PASS', 'FAIL', 'INCOMPLETE')
+        assert not re.search(rb'(?i)x-buildbuddy-api-key|authorization\s*[:=]|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}', raw)
+        PYTHON
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: always() && steps.receipt.outcome == 'success'
+      with:
+        name: master-llvm-stage0-arm-sidecars
+        path: ${{ runner.temp }}/runtime-cross/public/sidecars.json
+        if-no-files-found: error
+    - name: Stop the native Bazel server
+      if: always()
+      run: |
+        d="$RUNNER_TEMP/runtime-cross"
+        if test -x "$d/bazel"; then timeout -k 5 30 "$d/bazel" shutdown >/dev/null 2>&1 || true; fi
