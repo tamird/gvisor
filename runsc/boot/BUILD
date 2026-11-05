@@ -186,6 +186,7 @@ go_test(
         "seccomp_test.go",
         "vfs_test.go",
     ],
+    data = ["//test/cmd/test_app"],
     embed = [":boot"],
     deps = [
         "//pkg/abi/linux",
@@ -205,6 +206,7 @@ go_test(
         "//pkg/sentry/vfs",
         "//pkg/sync",
         "//pkg/test/capabilitytest",
+        "//pkg/test/testutil",
         "//pkg/unet",
         "//runsc/boot/sentryapi",
         "//runsc/config",
