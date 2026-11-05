@@ -19,6 +19,13 @@ config_setting(
     values = {"define": "plugin_tldk=true"},
 )
 
+_DPDK_ENV = {
+    "DPDK_MAKEFILE": "$(execpath @plugin_dpdk//:Makefile)",
+    "RTE_TARGET": "x86_64-native-linuxapp-$(C_COMPILER)",
+}
+
+_STATIC_GNU = "@llvm//constraints/glibc_linkage:static"
+
 plugin_toolchain(
     name = "toolchain",
     exec_compatible_with = [
@@ -43,20 +50,32 @@ make(
         "'TOOLCHAIN_LDFLAGS:=$(LDFLAGS)'",
         "'HOST_EXTRA_CFLAGS:=$(CFLAGS)'",
         "'HOST_EXTRA_CPPFLAGS:=$(CPPFLAGS)'",
-        "'EXTRA_HOST_LDFLAGS:=$(LDFLAGS)'",
         "'DPDK_TARGET:=$(RTE_TARGET)'",
         "DPDK_MACHINE=ivb",
         "EXTRA_CFLAGS='-g -O3 -fPIC -fno-omit-frame-pointer -DLOOK_ASIDE_BACKEND -Wno-error'",
-    ],
+    ] + select({
+        # Static glibc uses the unwinder even for C stdio. The foreign Make
+        # link receives the toolchain flags but not Bazel's runtime archives.
+        _STATIC_GNU: ["'EXTRA_HOST_LDFLAGS:=$(LDFLAGS) $(if $(filter /%,$(DPDK_HOST_UNWIND)),$(DPDK_HOST_UNWIND),$(EXT_BUILD_ROOT)/$(DPDK_HOST_UNWIND))'"],
+        "//conditions:default": ["'EXTRA_HOST_LDFLAGS:=$(LDFLAGS)'"],
+    }),
     build_data = [
         "@plugin_dpdk//:Makefile",
         "@plugin_dpdk//:sources",
-    ],
-    env = {
-        "DPDK_MAKEFILE": "$(execpath @plugin_dpdk//:Makefile)",
-        "OBJDUMP": "$(PLUGIN_OBJDUMP)",
-        "RTE_TARGET": "x86_64-native-linuxapp-$(C_COMPILER)",
-    },
+    ] + select({
+        _STATIC_GNU: [
+            "@llvm//runtimes/libunwind:libunwind.static",
+            "@llvm//tools:llvm-objdump",
+        ],
+        "//conditions:default": [],
+    }),
+    env = select({
+        _STATIC_GNU: _DPDK_ENV | {
+            "DPDK_HOST_UNWIND": "$(execpath @llvm//runtimes/libunwind:libunwind.static)",
+            "OBJDUMP": "$(execpath @llvm//tools:llvm-objdump)",
+        },
+        "//conditions:default": _DPDK_ENV | {"OBJDUMP": "$(PLUGIN_OBJDUMP)"},
+    }),
     exec_compatible_with = [
         "@platforms//cpu:x86_64",
         "@platforms//os:linux",
