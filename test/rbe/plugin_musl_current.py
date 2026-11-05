@@ -1,5 +1,4 @@
 """Exercise the opt-in plugin test using the two supported Linux libcs."""
-import ast
 from datetime import datetime, timedelta, timezone
 import hashlib
 import json
@@ -13,8 +12,10 @@ import qualification_report
 
 ROOT = Path(os.environ["RUNNER_TEMP"])
 SOURCE = os.environ["PRODUCT"]
-TEST = "@@+_repo_rules+libpluginstack//:backtrace_test"
-OWNER = "@@+_repo_rules+libpluginstack//:libpluginstack"
+TEST = "@@+http_archive+libpluginstack//:backtrace_test"
+SELECTION_SOURCE = "ddd06cb4a7d004178513c25c018ede20d8cc9449"
+SELECTION_INVOCATIONS = {"gnu": "aef50e3a-212a-41ca-9a1d-fa778ddc159f",
+                         "musl": "a9fc04b4-fffd-491c-8dfb-efefffd7a2c6"}
 PUBLIC_TEST = "@libpluginstack//:backtrace_test"
 
 PUBLIC = ROOT / "musl-current-evidence"
@@ -41,25 +42,9 @@ def run(profile: str, result: dict) -> None:
     private.mkdir(exist_ok=True)
     flags = FLAGS + (MUSL if profile == "musl" else [])
     assert git("rev-parse", "HEAD") == SOURCE and not git("diff", "HEAD", "--")
-    expr = "str(target.label) + '\\t' + str([f.path for f in target.files.to_list()])"
-    result["selection_invocation"] = str(uuid.uuid4())
-    with (private / "selection").open("wb") as out, (private / "selection.log").open("wb") as err:
-        result["selection_exit"] = subprocess.run([
-            "timeout", "12m", *BAZEL, "cquery", *flags, "--invocation_id=" + result["selection_invocation"],
-            "--output=starlark", "--starlark:expr=" + expr,
-            "set(@libpluginstack//:libpluginstack " + PUBLIC_TEST + ")"], stdout=out, stderr=err).returncode
-    if result["selection_exit"]:
-        result["status"] = "FAIL"
-    assert result["selection_exit"] == 0
-    selected = {}
-    for line in (private / "selection").read_text().splitlines():
-        label, files = line.split("\t")
-        label = label[2:] if label.startswith("@@//") else label
-        assert label not in selected
-        selected[label] = ast.literal_eval(files)
-    result["selected"] = selected
-    assert set(selected) == {OWNER, TEST}
-    result.update(command_started=now(), invocation=str(uuid.uuid4()))
+    assert SOURCE == SELECTION_SOURCE, "selection receipt is for different source"
+    result.update(selection_invocation=SELECTION_INVOCATIONS[profile],
+                  command_started=now(), invocation=str(uuid.uuid4()))
     with (private / "test.log").open("wb") as log:
         result["exit"] = subprocess.run([
             "timeout", "--signal=INT", "--kill-after=30s", "30m", *BAZEL, "test", *flags,
@@ -76,7 +61,9 @@ def run(profile: str, result: dict) -> None:
                            for e in events if "targetCompleted" in e["id"] and "completed" in e}
     finishes = [e["finished"] for e in events if "finished" in e]
     result["finish"] = {k: finishes[0][k] for k in ("overallSuccess", "finishTime", "finishTimeMillis") if k in finishes[0]} if len(finishes) == 1 else {}
-    attempts = [e for e in events if e["id"].get("testResult", {}).get("label") == TEST]
+    attempts = [e for e in events if "testResult" in e["id"]]
+    result["attempt_labels"] = [e["id"]["testResult"]["label"] for e in attempts]
+    assert all(label in (TEST, PUBLIC_TEST) for label in result["attempt_labels"]), result["attempt_labels"]
     result["attempts"] = [{"id": e["id"]["testResult"], "status": e["testResult"]["status"],
                            "cached": e["testResult"].get("cachedLocally", False) or e["testResult"].get("executionInfo", {}).get("cachedRemotely", False),
                            "strategy": e["testResult"].get("executionInfo", {}).get("strategy"),
@@ -84,7 +71,7 @@ def run(profile: str, result: dict) -> None:
                           for e in attempts]
     capture = qualification_report.capture(private / "raw.bep", private / "safe.bep", Path("/"), private / "reports")
     result["capture_errors"] = capture["errors"]
-    reports = [r for r in capture["reports"] if r["name"] == "test.xml" and r["identity"]["label"] == TEST]
+    reports = [r for r in capture["reports"] if r["name"] == "test.xml" and r["identity"]["label"] in (TEST, PUBLIC_TEST)]
     if len(reports) == 1:
         raw = (private / reports[0]["path"]).read_bytes()
         result["xml"] = {"sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw), "cases": [
@@ -97,7 +84,7 @@ def run(profile: str, result: dict) -> None:
     if any(c["status"] == "FAIL" for c in result.get("xml", {}).get("cases", [])) or any(a["status"] in ("FAILED", "TIMEOUT", "FLAKY") for a in result["attempts"]):
         result["runtime_status"] = result["status"] = "FAIL"
     assert result["exit"] == 0 and result["finish"]["overallSuccess"]
-    assert result["completed"].get(TEST) is True, result["completed"]
+    assert any(result["completed"].get(label) is True for label in (TEST, PUBLIC_TEST)), result["completed"]
     attempt, = result["attempts"]
     assert result["runtime_status"] == "PASS" and attempt["strategy"] == "remote" and not attempt["cached"]
     assert not capture["errors"] and len(reports) == 1
@@ -114,6 +101,8 @@ def run(profile: str, result: dict) -> None:
 def main() -> None:
     PUBLIC.mkdir(exist_ok=True)
     result = {"source": SOURCE, "baseline": "93993d354e440e71b7e6efaacd72be40e542de57",
+              "selection_artifact": 13440938628,
+              "selection_archive_sha256": "6038279aba5df8464d02994a0968a5f08b50418446c7cbd47bc52ad5919810f5",
               "status": "INCOMPLETE", "started": now(), "profiles": {},
               "scope": "two opt-in TestDumpStack executions, no runsc or VFIO device test"}
     save(result)
