@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T20:55:15.635508Z",
+    "updatedAt": "2026-11-05T21:05:26.208344Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4840,7 +4840,7 @@
       "group": "bazel",
       "status": "Contributor review requested",
       "summary": "Replace Coral’s host-installed GCC and target headers with the LLVM toolchains already declared by gVisor. The review commit has 37 insertions and 1,937 deletions, including four obsolete patches. It changes the compiler and the three freestanding sidecars together so the release links at every step.\n\nThe identical source tree was built as fffadb2bb on one AMD64 Linux worker. Plain bazel build -c opt //:release built nine static AMD64 executables; --config=aarch64 built nine ARM64 executables. Make installed the same bytes for each target. On a separate native ARM64 worker the cross-built runsc, Sentry and prewarmer started a rootless systrap guest. The build uses released LLVM 0.8.24 and master’s existing kernel-header backport.\n\nAn ordinary, dynamically linked C++ syscall test also cross-built on AMD64 and passed all four TCP_NODELAY cases on native ARM64. The earlier full scratch-worker build was on 5388293bd. The stock project catalog check passed on upstream 61a70083c and the compiler integration fffadb2bb: both verified all 220 dependencies against the identical catalog and policy. Removing abseil-cpp from a disposable catalog produced exactly one missing-entry error. This check does not audit every transitive toolchain binary.\n\nThe optional TLDK archive built on 3f0bd3a70 with #15153 added (148 Clang objects). Both plugin executable links then failed: lld could not find static pthread or dl for runsc-plugin-stack and gvisor_sentry_plugin_stack. Neither executable started. The normal release and native guest results above are separate.",
-      "updatedAt": "2026-11-05T20:55:15.635508Z",
+      "updatedAt": "2026-11-05T21:05:26.208344Z",
       "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
       "evidence": [
         {
@@ -5100,8 +5100,8 @@
         "owner": "Compiler integration",
         "sourceHead": "9310f06f95b100725450a71fbb896fc8403ec0eb",
         "disposition": "Normal release, native ARM guest and stock catalog passed; optional TLDK archive built, but both plugin executable links failed.",
-        "observedAt": "2026-11-05T20:55:15.635508Z",
-        "nextAction": "Submit after #16586, #16516, the native systrap C build and #16522 land and optional plugin compatibility is verified on the submission base. The two plugin Go links on 3f0bd3a70 still need static GNU pthread and dl: resolve those inputs, rebuild runsc-plugin-stack and gvisor_sentry_plugin_stack, then test startup. The stock 220-dependency catalog check passed on the compiler integration. Track the NVIDIA parser source and its license classifier separately.",
+        "observedAt": "2026-11-05T21:05:26.208344Z",
+        "nextAction": "Submit after #16586, #16516 (offset generation), #17067 (native stub compilation) and #16522 land and optional plugin compatibility is verified on the submission base. The two plugin Go links on 3f0bd3a70 still need static GNU pthread and dl: resolve those inputs, rebuild runsc-plugin-stack and gvisor_sentry_plugin_stack, then test startup. The stock 220-dependency catalog check passed on the compiler integration. Track the NVIDIA parser source and its license classifier separately.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
@@ -5146,7 +5146,8 @@
           "https://github.com/tamird/gvisor/actions/runs/42102214611/artifacts/13450616604",
           "https://github.com/tamird/gvisor/actions/runs/42102214611/artifacts/13450870587",
           "https://github.com/tamird/gvisor/actions/runs/42105048733/artifacts/13451318656",
-          "https://github.com/tamird/gvisor/actions/runs/42106951758/artifacts/13451568393"
+          "https://github.com/tamird/gvisor/actions/runs/42106951758/artifacts/13451568393",
+          "https://github.com/google/gvisor/pull/17067"
         ]
       },
       "contributorReview": {
@@ -30968,14 +30969,14 @@
       "id": "branch:systrap-native-stub",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/systrap-native-stub",
-      "head": "dfd4d477424bd6172344728a125ae8737fb68992",
+      "ref": "review/systrap-native-stub-current",
+      "head": "005743727b3d80d373085133b5da9cd906cc9d7c",
       "title": "Build the systrap signal stub with the C toolchain",
-      "url": "https://github.com/tamird/gvisor/commit/dfd4d477424bd6172344728a125ae8737fb68992",
+      "url": "https://github.com/tamird/gvisor/commit/005743727",
       "group": "bazel",
-      "status": "Approved; waiting for #16516",
-      "updatedAt": "2026-10-28T14:25:13.716904+00:00",
-      "summary": "The approved follow-up documents why ARM64 retains -O1: the older rule avoided an unoptimized memcpy call, and the stub now supplies memcpy; this does not rule out -O2. The linker script puts .debug* in the mapped blob, which explains -g0. Non-comment BUILD lines match the qualified source. In a separate GNU cross-build, ARM64 -O2 also linked without undefined symbols, dynamic dependencies or relocations. Each stub’s 11 generated offsets matched its own ELF. The blob grew by 192 bytes in both configurations (4K: 3,072 to 3,264; 64K: 3,104 to 3,296), staying within one configured page. The approved change retains -O1. This comparison did not run ARM64 code or measure speed, and does not establish Clang behavior.",
+      "status": "Delivered",
+      "updatedAt": "2026-11-05T21:05:26.208344Z",
+      "summary": "Published as #17067 at 005743727, the approved dfd4d4774 patch rebased without changes onto da95e9bce. On an AMD64 worker, GNU compiled and linked both target stubs. The two raw blobs matched their ELF sections, and the existing nm-based generator produced all 10 AMD64 and 11 ARM64 offsets with their exact ELF values. The job built both consumers; it ran no tests or guest. #16516 is not a prerequisite for this PR.\n\nThe approved follow-up documents why ARM64 retains -O1: the older rule avoided an unoptimized memcpy call, and the stub now supplies memcpy; this does not rule out -O2. The linker script puts .debug* in the mapped blob, which explains -g0. Non-comment BUILD lines match the qualified source. In a separate GNU cross-build, ARM64 -O2 also linked without undefined symbols, dynamic dependencies or relocations. Each stub’s 11 generated offsets matched its own ELF. The blob grew by 192 bytes in both configurations (4K: 3,072 to 3,264; 64K: 3,104 to 3,296), staying within one configured page. The approved change retains -O1. This comparison did not run ARM64 code or measure speed, and does not establish Clang behavior.",
       "evidence": [
         {
           "label": "GNU ARM64 -O1 versus -O2 cross-build",
@@ -31012,6 +31013,18 @@
         {
           "label": "Earlier formatting failure; no native stub attempts",
           "url": "https://app.buildbuddy.io/invocation/faf4bca8-828c-4ba9-8deb-90b5eaa1faf6"
+        },
+        {
+          "label": "Originally approved revision before the patch-preserving rebase",
+          "url": "https://github.com/tamird/gvisor/commit/dfd4d4774"
+        },
+        {
+          "label": "Published native stub: current upstream PR and review",
+          "url": "https://github.com/google/gvisor/pull/17067"
+        },
+        {
+          "label": "GNU on AMD64: native AMD64 and cross ARM64 stubs, both blobs and all old-parser offsets",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42108422248/artifacts/13451359635"
         }
       ],
       "refinement": {
@@ -31026,19 +31039,29 @@
       },
       "followup": {
         "owner": "root",
-        "sourceHead": "dfd4d477424bd6172344728a125ae8737fb68992",
-        "observedAt": "2026-10-28T14:25:13.716904+00:00",
-        "disposition": "Requested rationale addressed; approved",
-        "nextAction": "Wait for #16516 to land, then publish this source without another contributor decision.",
+        "sourceHead": "005743727b3d80d373085133b5da9cd906cc9d7c",
+        "observedAt": "2026-11-05T21:05:26.208344Z",
+        "disposition": "Approved patch delivered as #17067.",
+        "nextAction": "Follow #17067 for upstream review. The existing GNU offset generator already works with this native producer.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/dfd4d477424bd6172344728a125ae8737fb68992",
           "https://github.com/tamird/gvisor/commit/7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb",
           "https://github.com/google/gvisor/pull/16516",
           "https://app.buildbuddy.io/invocation/3dcbca23-1ea2-4140-9172-96ff2caa0f11",
           "https://app.buildbuddy.io/invocation/68cab630-0672-41ed-927c-2ea3ea2c1685",
-          "https://app.buildbuddy.io/invocation/4bec4010-5f9e-451a-b106-c22e55bd6ba2"
+          "https://app.buildbuddy.io/invocation/4bec4010-5f9e-451a-b106-c22e55bd6ba2",
+          "https://github.com/google/gvisor/pull/17067",
+          "https://github.com/tamird/gvisor/actions/runs/42108422248/artifacts/13451359635"
         ]
-      }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "dfd4d477424bd6172344728a125ae8737fb68992",
+          "outcome": "approved",
+          "at": "2026-10-28T14:25:13.716904+00:00"
+        }
+      ]
     },
     {
       "id": "branch:systrap-stub-data",
@@ -52176,6 +52199,78 @@
           "url": "https://github.com/google/gvisor/pull/17064"
         }
       ]
+    },
+    {
+      "id": "pr:17067",
+      "type": "pr",
+      "number": 17067,
+      "repo": "google/gvisor",
+      "ref": "review/systrap-native-stub-current",
+      "head": "005743727b3d80d373085133b5da9cd906cc9d7c",
+      "title": "Build the systrap signal stub with the C toolchain",
+      "url": "https://github.com/google/gvisor/pull/17067",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-05T21:05:26.208344Z",
+      "summary": "Published as #17067 at 005743727, the approved dfd4d4774 patch rebased without changes onto da95e9bce. On an AMD64 worker, GNU compiled and linked both target stubs. The two raw blobs matched their ELF sections, and the existing nm-based generator produced all 10 AMD64 and 11 ARM64 offsets with their exact ELF values. The job built both consumers; it ran no tests or guest. #16516 is not a prerequisite for this PR.",
+      "evidence": [
+        {
+          "label": "GNU ARM64 -O1 versus -O2 cross-build",
+          "url": "https://app.buildbuddy.io/invocation/3dcbca23-1ea2-4140-9172-96ff2caa0f11"
+        },
+        {
+          "label": "ARM64, 4K: -O2 linked stub",
+          "url": "https://app.buildbuddy.io/invocation/68cab630-0672-41ed-927c-2ea3ea2c1685"
+        },
+        {
+          "label": "ARM64, 64K: -O2 linked stub",
+          "url": "https://app.buildbuddy.io/invocation/4bec4010-5f9e-451a-b106-c22e55bd6ba2"
+        },
+        {
+          "label": "Clarify the compiler and debug options",
+          "url": "https://github.com/tamird/gvisor/commit/dfd4d477424bd6172344728a125ae8737fb68992"
+        },
+        {
+          "label": "Approved source",
+          "url": "https://github.com/tamird/gvisor/commit/7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb"
+        },
+        {
+          "label": "Comment-only revision restoring both flag rationales",
+          "url": "https://github.com/tamird/gvisor/compare/d68466bd10983234d1d530d1f4557282508ff53a..7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb"
+        },
+        {
+          "label": "Exact signed two-file proposal",
+          "url": "https://github.com/tamird/gvisor/compare/fe2049b9aa0e659ec0a3147e606a78e2332149d2...d68466bd10983234d1d530d1f4557282508ff53a"
+        },
+        {
+          "label": "GNU compile/link, Go blobs and installed AMD64 systrap",
+          "url": "https://app.buildbuddy.io/invocation/8b3c876c-fe5e-4113-88e9-d255194e704f"
+        },
+        {
+          "label": "Earlier formatting failure; no native stub attempts",
+          "url": "https://app.buildbuddy.io/invocation/faf4bca8-828c-4ba9-8deb-90b5eaa1faf6"
+        },
+        {
+          "label": "Originally approved revision before the patch-preserving rebase",
+          "url": "https://github.com/tamird/gvisor/commit/dfd4d4774"
+        },
+        {
+          "label": "Published native stub: current upstream PR and review",
+          "url": "https://github.com/google/gvisor/pull/17067"
+        },
+        {
+          "label": "GNU on AMD64: native AMD64 and cross ARM64 stubs, both blobs and all old-parser offsets",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42108422248/artifacts/13451359635"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "dfd4d477424bd6172344728a125ae8737fb68992",
+          "outcome": "approved",
+          "at": "2026-10-28T14:25:13.716904+00:00"
+        }
+      ]
     }
   ],
   "edges": [
@@ -55002,16 +55097,6 @@
     },
     {
       "from": "pr:16516",
-      "to": "branch:systrap-native-stub",
-      "type": "depends_on",
-      "reason": "Both changes edit the sysmsg BUILD load; sequence the native compiler revision after the offsets PR so it does not introduce a conflict.",
-      "evidence": [
-        "https://github.com/google/gvisor/pull/16516",
-        "https://github.com/tamird/gvisor/commit/7c9ca1cc770df6e5af0a5f0ee86c05475554c0fb"
-      ]
-    },
-    {
-      "from": "pr:16516",
       "to": "branch:systrap-stub-data",
       "type": "depends_on",
       "reason": "Extends the offsets tool from #16516 to emit the bytes embedded in the Sentry.",
@@ -55854,11 +55939,14 @@
       "evidence": "https://github.com/google/gvisor/pull/16516"
     },
     {
-      "from": "branch:systrap-native-stub",
+      "from": "pr:17067",
       "to": "branch:hermetic-compiler-review",
       "type": "depends_on",
       "reason": "Compile the signal handler with the selected C toolchain so an AMD64 builder emits an ARM64 handler.",
-      "evidence": "https://github.com/tamird/gvisor/commit/dfd4d477424bd6172344728a125ae8737fb68992"
+      "evidence": [
+        "https://github.com/google/gvisor/pull/17067",
+        "https://github.com/tamird/gvisor/actions/runs/42108422248/artifacts/13451359635"
+      ]
     }
   ],
   "investigations": [
@@ -74331,5 +74419,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T20:55:15.635508Z"
+  "updatedAt": "2026-11-05T21:05:26.208344Z"
 }
