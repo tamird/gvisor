@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T19:38:10.552336Z",
+    "updatedAt": "2026-11-05T19:50:07.012903Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4839,8 +4839,8 @@
       "url": "https://github.com/tamird/gvisor/commit/a385bd2b0",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "The ARM64 runsc and Sentry cross-built on AMD64 at 8169ff661 booted a native rootless systrap guest on an ARM64 worker. The worker received those exact static binaries, a 1,672-byte ARM64 prewarmer and a static BusyBox; it built nothing. The guest echoed the expected marker and exited 0. The original ARM-configured prewarmer rule had produced a 1,520-byte x86-64 executable. With #16522 applied, the C link targeted ARM64 but could not find pthread or dl. Applying the three production hunks from upstream LLVM #909 to the pinned 0.8.24 source (fork 7424610cf) produced the working prewarmer. Only that companion needed the two changes; the ARM64 runtime hashes still match the original two-target build.\n\nOn fork revision 8169ff661, the AMD64 runsc and Sentry built with LLVM 0.8.24 ran a native rootless systrap guest. The guest ran BusyBox echo and exited 0. Both runtime binaries matched the SHA-256 digests from the cross-build below. The startup log identified the matching Sentry and the 1,520-byte LLVM-built prewarmer. The optional fdparking helper was absent, as the log warned; rootless startup did not require procumounter. That earlier job exercised only the AMD64 guest.\n\nWith released LLVM 0.8.24 selected by default in the fork, one native AMD64 Bazel worker built both //runsc:runsc and //runsc/cmd/sentry:gvisor_sentry for AMD64 and ARM64 on 8169ff661. The ordinary architecture configurations used no --extra_toolchains override. All five requested targets completed for each architecture. The four fresh Go links produced two ELF62 and two ELF183 binaries, with no ELF interpreter or dynamic segment. The corrected #16516 generator emitted all 10 AMD64 and 11 ARM64 systrap offsets; every value matched its linked symbol. Both vDSOs and signal-handler blobs retained their verified bytes. The AMD64 runsc ran natively and the ARM64 runsc ran under declared QEMU. Both --version calls reported the source stamp and OCI spec 1.2.1. That build job ran no tests or guest.\n\nOn unmodified gVisor master 90d4e2253, one AMD64 worker built //tools/zstd:compressor for both x86-64 and ARM64 using the released @llvm 0.8.24 and --extra_toolchains=@llvm//toolchain:all. The same AMD64 clang and clang++ compiled and linked both executables. The action records show the corresponding GNU triples, Linux 6.18.33 and glibc 2.28 headers, and architecture-specific link directories. The physical outputs are ELF62 and ELF183. The AMD64 compressor produced a frame that decompressed to the original input. A separate ARM-only run reproduced the identical ARM executable. Project-declared QEMU 11.0 ran it on AMD64 with the GNU loader and libraries from the pinned @test_bun ARM test image; it produced the same 61 compressed bytes and recovered the original input. The image supplied runtime files for this check only. The first job had stopped before QEMU started. This demonstrates an opt-in cross-build without changing the compiler default, the NVIDIA parser or TLDK.\n\nThe preceding control showed why the systrap generator was needed. On master, the ARM sysmsg genrules invoked host clang without a target triple; x86-64 clang rejected the ARM-only -mno-outline-atomics flag. On 5fa51a2fc, the native vDSO and sysmsg rules used the released LLVM toolchain for 12 compiles and four links. All three targets completed. The two vDSOs matched their linked ELF62/ELF183 shared objects, and the split signal-handler binaries matched the corresponding 5,440- and 4,864-byte ELF sections. Both Go offsets files, however, were identical 105-byte package scaffolds with no exported offsets. The build did not execute the Sentry or a test.\n\nBazel 9.3.1 and the declared clang++ built the NVIDIA ABI parser for x86_64-linux-gnu and aarch64-linux-gnu. With supplier source 17f6a3008, the generated LLVM configuration contained exactly AArch64 and X86. TestParser passed uncached on each native architecture. The earlier compiler integration passed all 871 selected Nogo targets (one cached result); those tests were not rerun on Bazel 9. Ordinary C binaries used GNU libc on both architectures. Static syscallbench ran all three modes on AMD64; its constraint excludes ARM64.\n\nThe fork-only packaging follow-up 50c1f8f6a lets a bare downstream Bazel module select exactly @kernel_dep//tools/bazeldefs:static.bzl for fsstress. All ten gVisor policy tags remain, with no consumer-supplied overrides. Stock 588e6f343 exits 7 at Gazelle; the corrected query exits 0, and the wrong-root load control exits 7. This qualifies loading and label selection only, not downstream compilation. The earlier root-workspace archives and AMD64 file-creation result remain separate.",
-      "updatedAt": "2026-11-05T19:30:41.851004+00:00",
+      "summary": "Fork revision 820ec5f74 removes the two Coral cross-toolchain targets, their repositories and four patches. On 4145ade50, which also includes the prewarmer fixes, an AMD64 builder is checking the complete //:release outputs for AMD64 and ARM64. A passing result has not yet been verified.\n\nThe ARM64 runsc and Sentry cross-built on AMD64 at 8169ff661 booted a native rootless systrap guest on an ARM64 worker. The worker received those exact static binaries, a 1,672-byte ARM64 prewarmer and a static BusyBox; it built nothing. The guest echoed the expected marker and exited 0. The original ARM-configured prewarmer rule had produced a 1,520-byte x86-64 executable. With #16522 applied, the C link targeted ARM64 but could not find pthread or dl. Applying the three production hunks from upstream LLVM #909 to the pinned 0.8.24 source (fork 7424610cf) produced the working prewarmer. Only that companion needed the two changes; the ARM64 runtime hashes still match the original two-target build.\n\nOn fork revision 8169ff661, the AMD64 runsc and Sentry built with LLVM 0.8.24 ran a native rootless systrap guest. The guest ran BusyBox echo and exited 0. Both runtime binaries matched the SHA-256 digests from the cross-build below. The startup log identified the matching Sentry and the 1,520-byte LLVM-built prewarmer. The optional fdparking helper was absent, as the log warned; rootless startup did not require procumounter. That earlier job exercised only the AMD64 guest.\n\nWith released LLVM 0.8.24 selected by default in the fork, one native AMD64 Bazel worker built both //runsc:runsc and //runsc/cmd/sentry:gvisor_sentry for AMD64 and ARM64 on 8169ff661. The ordinary architecture configurations used no --extra_toolchains override. All five requested targets completed for each architecture. The four fresh Go links produced two ELF62 and two ELF183 binaries, with no ELF interpreter or dynamic segment. The corrected #16516 generator emitted all 10 AMD64 and 11 ARM64 systrap offsets; every value matched its linked symbol. Both vDSOs and signal-handler blobs retained their verified bytes. The AMD64 runsc ran natively and the ARM64 runsc ran under declared QEMU. Both --version calls reported the source stamp and OCI spec 1.2.1. That build job ran no tests or guest.\n\nOn unmodified gVisor master 90d4e2253, one AMD64 worker built //tools/zstd:compressor for both x86-64 and ARM64 using the released @llvm 0.8.24 and --extra_toolchains=@llvm//toolchain:all. The same AMD64 clang and clang++ compiled and linked both executables. The action records show the corresponding GNU triples, Linux 6.18.33 and glibc 2.28 headers, and architecture-specific link directories. The physical outputs are ELF62 and ELF183. The AMD64 compressor produced a frame that decompressed to the original input. A separate ARM-only run reproduced the identical ARM executable. Project-declared QEMU 11.0 ran it on AMD64 with the GNU loader and libraries from the pinned @test_bun ARM test image; it produced the same 61 compressed bytes and recovered the original input. The image supplied runtime files for this check only. The first job had stopped before QEMU started. This demonstrates an opt-in cross-build without changing the compiler default, the NVIDIA parser or TLDK.\n\nThe preceding control showed why the systrap generator was needed. On master, the ARM sysmsg genrules invoked host clang without a target triple; x86-64 clang rejected the ARM-only -mno-outline-atomics flag. On 5fa51a2fc, the native vDSO and sysmsg rules used the released LLVM toolchain for 12 compiles and four links. All three targets completed. The two vDSOs matched their linked ELF62/ELF183 shared objects, and the split signal-handler binaries matched the corresponding 5,440- and 4,864-byte ELF sections. Both Go offsets files, however, were identical 105-byte package scaffolds with no exported offsets. The build did not execute the Sentry or a test.\n\nBazel 9.3.1 and the declared clang++ built the NVIDIA ABI parser for x86_64-linux-gnu and aarch64-linux-gnu. With supplier source 17f6a3008, the generated LLVM configuration contained exactly AArch64 and X86. TestParser passed uncached on each native architecture. The earlier compiler integration passed all 871 selected Nogo targets (one cached result); those tests were not rerun on Bazel 9. Ordinary C binaries used GNU libc on both architectures. Static syscallbench ran all three modes on AMD64; its constraint excludes ARM64.\n\nThe fork-only packaging follow-up 50c1f8f6a lets a bare downstream Bazel module select exactly @kernel_dep//tools/bazeldefs:static.bzl for fsstress. All ten gVisor policy tags remain, with no consumer-supplied overrides. Stock 588e6f343 exits 7 at Gazelle; the corrected query exits 0, and the wrong-root load control exits 7. This qualifies loading and label selection only, not downstream compilation. The earlier root-workspace archives and AMD64 file-creation result remain separate.",
+      "updatedAt": "2026-11-05T19:50:07.012903Z",
       "head": "a385bd2b0155b82faf4fc6a0c195a153ad57550c",
       "evidence": [
         {
@@ -5010,6 +5010,18 @@
         {
           "label": "Freestanding link correction for the pinned LLVM toolchain",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/909"
+        },
+        {
+          "label": "Remove the unused Coral toolchains and their four downstream patches",
+          "url": "https://github.com/tamird/gvisor/commit/820ec5f74ad43b34274840f5768d36fb571c00ca"
+        },
+        {
+          "label": "Integrated source for the complete AMD64 and ARM64 release builds",
+          "url": "https://github.com/tamird/gvisor/commit/4145ade50acb0813d372bc5a8315c516ac5d98b6"
+        },
+        {
+          "label": "Full cross-release validation, started on 4145ade50",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42097395467"
         }
       ],
       "refinement": {
@@ -5032,8 +5044,8 @@
         "owner": "Compiler integration",
         "sourceHead": "a385bd2b0155b82faf4fc6a0c195a153ad57550c",
         "disposition": "Default LLVM cross-build and native rootless systrap guest verified on both architectures",
-        "observedAt": "2026-11-05T19:30:41.851004+00:00",
-        "nextAction": "The ordinary compiler proposal can proceed with the native vDSO, sysmsg and #16516 offset rules while keeping the existing NVIDIA parser and TLDK sources. For an AMD64 builder to produce the ARM64 prewarmer as well, use #16522 and a compatible freestanding link fix from hermetic-llvm #909; both are open. Remove the builder cross-compilers after the default switch.\n\nThe combined fork a385bd2b0 also changes the source used to build the NVIDIA parser. For that version, qualify the first published LLVM release containing 17f6a3008 (0.8.26 still enables nine backends); retain the 6.18 Linux-header setting and its required configuration support. The inventory landed in #16249. The classifier #15146 remains open with passing internal checks. For the combined TLDK path, #15153 was approved and imported; its internal checks failed without a public diagnostic. A maintainer can inspect those results. The already reviewed musl/VFIO successor follows #15153. Neither PR is a prerequisite for the ordinary runtime cross-build.",
+        "observedAt": "2026-11-05T19:50:07.012903Z",
+        "nextAction": "Check the complete AMD64 and ARM64 release outputs on 4145ade50. The ordinary compiler proposal can proceed with the native vDSO, sysmsg and #16516 offset rules while keeping the existing NVIDIA parser and TLDK sources. For an AMD64 builder to produce the ARM64 prewarmer as well, use #16522 and a compatible freestanding link fix from hermetic-llvm #909; both are open. Remove the builder cross-compilers after the default switch.\n\nThe combined fork a385bd2b0 also changes the source used to build the NVIDIA parser. For that version, qualify the first published LLVM release containing 17f6a3008 (0.8.26 still enables nine backends); retain the 6.18 Linux-header setting and its required configuration support. The inventory landed in #16249. The classifier #15146 remains open with passing internal checks. For the combined TLDK path, #15153 was approved and imported; its internal checks failed without a public diagnostic. A maintainer can inspect those results. The already reviewed musl/VFIO successor follows #15153. Neither PR is a prerequisite for the ordinary runtime cross-build.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
@@ -5065,7 +5077,10 @@
           "https://github.com/tamird/gvisor/actions/runs/42092960755/artifacts/13447805581",
           "https://github.com/tamird/gvisor/actions/runs/42092960755/artifacts/13447102297",
           "https://github.com/google/gvisor/pull/16522",
-          "https://github.com/hermeticbuild/hermetic-llvm/pull/909"
+          "https://github.com/hermeticbuild/hermetic-llvm/pull/909",
+          "https://github.com/tamird/gvisor/commit/820ec5f74ad43b34274840f5768d36fb571c00ca",
+          "https://github.com/tamird/gvisor/commit/4145ade50acb0813d372bc5a8315c516ac5d98b6",
+          "https://github.com/tamird/gvisor/actions/runs/42097395467"
         ]
       }
     },
@@ -51503,8 +51518,8 @@
       "url": "https://github.com/google/gvisor/pull/17045",
       "title": "tcp: yield after one queue pass on endpoint lock contention",
       "status": "open",
-      "updatedAt": "2026-11-05T19:30:41.851004+00:00",
-      "summary": "When a timer holds an endpoint lock, the packet processor can retry the same endpoint until the Go scheduler preempts it. With one Go processor and no preemption the lock holder never gets to run. Martijn Hoekstra reported a hang under sustained TCP load on TamaGo. The fork revision ba2c7a721 changes how the packet processor retries a contended endpoint. It gives queued peers a turn, retries immediately if processing a peer freed the lock, and appends arrivals behind the retry. The public PR still has head 2ec7b59ad.",
+      "updatedAt": "2026-11-05T19:50:07.012903Z",
+      "summary": "When a timer holds an endpoint lock, the packet processor can retry the same endpoint until the Go scheduler preempts it. With one Go processor and no preemption the lock holder never gets to run. Martijn Hoekstra reported a hang under sustained TCP load on TamaGo. The fork revision ba2c7a721 changes how the packet processor retries a contended endpoint. It gives queued peers a turn, retries immediately if processing a peer freed the lock, and appends arrivals behind the retry. The public PR still has head 2ec7b59ad. With the same new regression, the published dispatcher yielded and processed zero packets after the listener unlocked. The amendment processed its packet without yielding. All 47 TCP case records (33 top-level tests) and both AMD64 and ARM64 Nogo sections passed on an AMD64 Linux runner; no cases were missing or skipped.",
       "evidence": [
         {
           "label": "Martijn asked for the tested change to be sent as a PR",
@@ -51535,8 +51550,8 @@
           "url": "https://github.com/tamird/gvisor/commit/ba2c7a721"
         },
         {
-          "label": "Native dispatcher qualification for the corrected retry (in progress)",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42094383323"
+          "label": "Published dispatcher fails after unlock; all corrected TCP cases and both Nogo sections pass",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42094383323/artifacts/13445984967"
         }
       ],
       "settledReviews": [
@@ -51554,15 +51569,35 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "2ec7b59ad33dfbd9c65b9b5ef7e4763eb4172063",
-        "observedAt": "2026-11-05T19:30:41.851004+00:00",
-        "disposition": "Fork revision under qualification.",
-        "nextAction": "Check the corrected dispatcher and its packet-queue controls on the fork before requesting a decision.",
+        "observedAt": "2026-11-05T19:50:07.012903Z",
+        "disposition": "Fork amendment verified; awaiting contributor review.",
+        "nextAction": "Review the proposed commit and reply before updating the open PR.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17045",
           "https://github.com/google/gvisor/pull/17045#discussion_r4484489337",
           "https://github.com/tamird/gvisor/commit/ba2c7a721",
-          "https://github.com/tamird/gvisor/actions/runs/42094383323"
+          "https://github.com/tamird/gvisor/actions/runs/42094383323",
+          "https://github.com/tamird/gvisor/actions/runs/42094383323/artifacts/13445984967"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "head": "ba2c7a721f72098af19cce916ccaf1ddc5d6cf8d",
+        "baseHead": "2ec7b59ad33dfbd9c65b9b5ef7e4763eb4172063",
+        "url": "https://github.com/tamird/gvisor/commit/ba2c7a721f72098af19cce916ccaf1ddc5d6cf8d",
+        "title": "tcp: retry a contended endpoint after serving its queued peers",
+        "requestedAt": "2026-11-05T19:50:07.012903Z",
+        "summary": "Publish the amendment, update the PR description to match the commit, and reply to the reviewer?",
+        "body": "When a timer holds an endpoint lock, the packet processor can retry the\nsame endpoint until the Go scheduler preempts it. With one Go processor\nand no preemption the lock holder never gets to run. Martijn Hoekstra\nreported a hang under sustained TCP load on TamaGo.\n\nRequeue the blocked endpoint behind its waiting peers. If it is still\nlocked when its turn comes around again, yield so the lock holder can\nrun. If it was unlocked while a peer was being served, process its\npackets immediately. New arrivals join behind the retry.\n\nFixes #16878\n\nProposed reply:\nThe dispatcher now retries the first contended endpoint when it comes around in the queue. If the peer’s turn gave the lock holder time to release it, the processor handles the packet immediately. The new test failed on the previous head with an unnecessary yield and zero packets processed.\n\nPosted by Codex on behalf of @tamird."
+      },
+      "refinement": {
+        "before": {
+          "head": "2ec7b59ad33dfbd9c65b9b5ef7e4763eb4172063"
+        },
+        "after": {
+          "head": "ba2c7a721f72098af19cce916ccaf1ddc5d6cf8d"
+        }
       }
     },
     {
@@ -74109,5 +74144,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T19:38:10.552336Z"
+  "updatedAt": "2026-11-05T19:50:07.012903Z"
 }
