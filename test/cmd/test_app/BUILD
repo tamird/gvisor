@@ -51,5 +51,6 @@ go_binary(
 
 test_suite(
     name = "test_app_nogo",
+    tags = ["nogo"],
     tests = [":test_app_bin_nogo"],
 )
