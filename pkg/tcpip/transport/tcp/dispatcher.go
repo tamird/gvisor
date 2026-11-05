@@ -42,23 +42,21 @@ type epQueue struct {
 	list endpointList `state:"nosave"`
 }
 
-// enqueue reports whether it added e to this queue. An endpoint can be
-// pending on at most one processor.
+// enqueue adds e to the queue if the endpoint is not already on the queue.
 //
 // +checklocksexclude:q.mu
 // +checklocksexclude:e.pendingProcessingMu
-func (q *epQueue) enqueue(e *Endpoint) bool {
+func (q *epQueue) enqueue(e *Endpoint) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	e.pendingProcessingMu.Lock()
 	defer e.pendingProcessingMu.Unlock()
 
 	if e.pendingProcessing {
-		return false
+		return
 	}
 	q.list.PushBack(e)
 	e.pendingProcessing = true
-	return true
 }
 
 // dequeue removes and returns the first element from the queue if available,
@@ -80,6 +78,16 @@ func (q *epQueue) dequeue() *Endpoint {
 	}
 	q.mu.Unlock()
 	return nil
+}
+
+// back returns the last endpoint currently queued. Only the processor running
+// this queue removes entries, so this entry stays queued until it is visited.
+//
+// +checklocksexclude:q.mu
+func (q *epQueue) back() *Endpoint {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	return q.list.Back()
 }
 
 // empty returns true if the queue is empty, false otherwise.
@@ -329,32 +337,26 @@ func (p *processor) start(wg *sync.WaitGroup) {
 	}
 }
 
-// drainQueue returns true if a requeued endpoint is still locked after the
-// endpoints ahead of it have had a turn.
+// drainQueue processes queued segments. After a lock miss it gives each
+// endpoint already in the queue one turn, then returns true so the lock
+// holder can run. Packets arriving during that pass cannot extend it.
 func (p *processor) drainQueue() bool {
-	var blocked *Endpoint
+	var through *Endpoint
 	for ep := p.epQ.dequeue(); ep != nil; ep = p.epQ.dequeue() {
-		retrying := ep == blocked
-		if retrying {
-			blocked = nil
-		}
-		if ep.segmentQueue.empty() {
-			continue
-		}
-		acquired := processEndpoint(ep)
-		// UnlockUser queues the endpoint itself when a syscall holds it.
-		if ep.segmentQueue.empty() || ep.isOwnedByUser() {
-			continue
-		}
-		queued := p.epQ.enqueue(ep)
-		if !acquired {
-			if retrying {
-				return true
+		reachedTail := ep == through
+		if !ep.segmentQueue.empty() {
+			acquired := processEndpoint(ep)
+			// UnlockUser queues the endpoint itself when a syscall holds it.
+			if !ep.segmentQueue.empty() && !ep.isOwnedByUser() {
+				if !acquired && through == nil {
+					through = p.epQ.back()
+					reachedTail = through == nil
+				}
+				p.epQ.enqueue(ep)
 			}
-			// Only our processor can dequeue an endpoint we inserted.
-			if blocked == nil && queued {
-				blocked = ep
-			}
+		}
+		if reachedTail {
+			return true
 		}
 	}
 	return false
