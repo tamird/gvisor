@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T16:41:13.307421Z",
+    "updatedAt": "2026-11-05T17:23:39.125240Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32208,9 +32208,13 @@
         {
           "label": "Published patch-preserving rebase on 92d3cc68c; earlier qualification remains source-bound",
           "url": "https://github.com/tamird/gvisor/commit/28a27e004b"
+        },
+        {
+          "label": "Integration f1db0937c: matching generated host-layout tests on both architectures; 214 native AMD64 XML cases passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42066060475/artifacts/13433228880"
         }
       ],
-      "updatedAt": "2026-11-04T20:45:45.283369+00:00",
+      "updatedAt": "2026-11-05T17:23:39.125240Z",
       "status": "open",
       "summary": "Published the patch-preserving rebase 28a27e004b on 92d3cc68c. Contributor approval remains bound to 6264dbadc; the same four-file change and posted replies are preserved. The earlier 383-case qualification covers the public generator and modeled import prefix, not Google’s private integration. Copybara rewrites the Go provider load in tools/defs.bzl, and the internal template supplies the constructor that strips its repository prefix. Current-head CI is separate from those prior results.",
       "refinement": {
@@ -51191,9 +51195,9 @@
       "title": "Run the runsc lifecycle tests without host utilities",
       "url": "https://github.com/tamird/gvisor/compare/90d4e2253...b41ed9e0e",
       "group": "tests",
-      "status": "Agent work",
-      "updatedAt": "2026-11-05T16:41:13.307421Z",
-      "summary": "Both child fixtures check that unix.Pause returned EINTR, and the specutils mode is named pause. Native fixture tests are pending.",
+      "status": "Delivered",
+      "updatedAt": "2026-11-05T17:23:39.125240Z",
+      "summary": "Delivered as #17053 at b41ed9e0e with both requested edits. The cmd and specutils fixtures now wait for a signal and check that unix.Pause returns EINTR. On the integration source 90c2cbcaa, four fresh native TestRunners passed all six selected cmd and all six selected specutils cases on each architecture (AMD64 and ARM64), with no failures or skips.",
       "evidence": [
         {
           "label": "Two proposed commits on master",
@@ -51218,18 +51222,28 @@
         {
           "label": "Requested pause and EINTR edits",
           "url": "https://github.com/tamird/gvisor/compare/189840fde...b41ed9e0e"
+        },
+        {
+          "label": "24 passing native fixture cases after the requested edits",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42067001158/artifacts/13433958617"
+        },
+        {
+          "label": "Published as #17053",
+          "url": "https://github.com/google/gvisor/pull/17053"
         }
       ],
       "followup": {
         "owner": "Agent",
         "sourceHead": "b41ed9e0e61afdb555438a918d8d3d3e39927a98",
-        "observedAt": "2026-11-05T16:41:13.307421Z",
-        "disposition": "Both requested corrections implemented",
-        "nextAction": "Verify the revised fixtures on both native architectures, then open the combined PR.",
+        "observedAt": "2026-11-05T17:23:39.125240Z",
+        "disposition": "Both requested corrections qualified and published as #17053.",
+        "nextAction": "Follow the public PR for maintainer review and checks.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/90d4e2253...189840fde",
           "https://github.com/tamird/gvisor/actions/runs/42050193843/artifacts/13425913365",
-          "https://github.com/tamird/gvisor/actions/runs/42030254826/artifacts/13415219314"
+          "https://github.com/tamird/gvisor/actions/runs/42030254826/artifacts/13415219314",
+          "https://github.com/tamird/gvisor/actions/runs/42067001158/artifacts/13433958617",
+          "https://github.com/google/gvisor/pull/17053"
         ]
       },
       "settledReviews": [
@@ -51246,7 +51260,8 @@
           "title": "Run the runsc lifecycle tests without host utilities",
           "outcome": "approved",
           "at": "2026-11-05T16:41:13.307421Z",
-          "note": "Approved with two requested edits: check the error from unix.Pause and rename the sleep mode to pause."
+          "note": "Approved with two requested edits: check the error from unix.Pause and rename the sleep mode to pause. Delivered with those edits at b41ed9e0e in #17053.",
+          "postedURL": "https://github.com/google/gvisor/pull/17053"
         }
       ]
     },
@@ -51638,6 +51653,72 @@
           "at": "2026-11-05T16:41:13.307421Z",
           "note": "Published as #17051 after its prerequisite merged. Rebase preserved all added and removed lines.",
           "postedURL": "https://github.com/google/gvisor/pull/17051"
+        }
+      ]
+    },
+    {
+      "id": "pr:17053",
+      "type": "pr",
+      "number": 17053,
+      "group": "tests",
+      "repo": "google/gvisor",
+      "ref": "review/runsc-process-pause",
+      "head": "b41ed9e0e61afdb555438a918d8d3d3e39927a98",
+      "url": "https://github.com/google/gvisor/pull/17053",
+      "title": "Run the runsc lifecycle tests without host utilities",
+      "status": "open",
+      "updatedAt": "2026-11-05T17:23:39.125240Z",
+      "summary": "The cmd and specutils fixtures now wait for a signal and check that unix.Pause returns EINTR. On the integration source 90c2cbcaa, four fresh native TestRunners passed all six selected cmd and all six selected specutils cases on each architecture (AMD64 and ARM64), with no failures or skips.",
+      "evidence": [
+        {
+          "label": "Two proposed commits on master",
+          "url": "https://github.com/tamird/gvisor/compare/90d4e2253...cd8f6c541"
+        },
+        {
+          "label": "Stock runsc test results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42030254826/artifacts/13415219314"
+        },
+        {
+          "label": "Six specutils and six cmd cases per architecture",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42037630464/artifacts/13422210533"
+        },
+        {
+          "label": "Revised two commits on master",
+          "url": "https://github.com/tamird/gvisor/compare/90d4e2253...189840fde"
+        },
+        {
+          "label": "Four revised lifecycle test results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42050193843/artifacts/13425913365"
+        },
+        {
+          "label": "Requested pause and EINTR edits",
+          "url": "https://github.com/tamird/gvisor/compare/189840fde...b41ed9e0e"
+        },
+        {
+          "label": "24 passing native fixture cases after the requested edits",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42067001158/artifacts/13433958617"
+        },
+        {
+          "label": "Published as #17053",
+          "url": "https://github.com/google/gvisor/pull/17053"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "cd8f6c54149718fdca08f268658db4a1d1b4c247",
+          "outcome": "changes-requested",
+          "at": "2026-11-05T14:55:40.136006Z"
+        },
+        {
+          "kind": "proposal",
+          "head": "189840fde5ef96d32205f0c00c37575031ea3f23",
+          "url": "https://github.com/tamird/gvisor/compare/90d4e2253...189840fde",
+          "title": "Run the runsc lifecycle tests without host utilities",
+          "outcome": "approved",
+          "at": "2026-11-05T16:41:13.307421Z",
+          "note": "Approved with two requested edits: check the error from unix.Pause and rename the sleep mode to pause. Delivered with those edits at b41ed9e0e in #17053.",
+          "postedURL": "https://github.com/google/gvisor/pull/17053"
         }
       ]
     }
@@ -73785,5 +73866,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T16:41:13.307421Z"
+  "updatedAt": "2026-11-05T17:23:39.125240Z"
 }
