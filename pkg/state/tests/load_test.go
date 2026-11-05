@@ -27,7 +27,6 @@ func TestLoadHooks(t *testing.T) {
 		// Root object being a struct.
 		afterLoadStruct{v: 1},
 		valueLoadStruct{v: 1},
-		waitLoadStruct{v: &afterLoadStruct{v: 1}},
 		genericContainer{v: &afterLoadStruct{v: 1}},
 		genericContainer{v: &valueLoadStruct{v: 1}},
 		sliceContainer{v: []any{&afterLoadStruct{v: 1}}},
@@ -35,7 +34,6 @@ func TestLoadHooks(t *testing.T) {
 		// Root object being a pointer.
 		&afterLoadStruct{v: 1},
 		&valueLoadStruct{v: 1},
-		&waitLoadStruct{v: &afterLoadStruct{v: 1}},
 		&genericContainer{v: &afterLoadStruct{v: 1}},
 		&genericContainer{v: &valueLoadStruct{v: 1}},
 		&sliceContainer{v: []any{&afterLoadStruct{v: 1}}},
@@ -46,6 +44,15 @@ func TestLoadHooks(t *testing.T) {
 			{res: "a", ref: &valueLoadStruct{v: 10}, ready: true, refSet: true},
 			{res: "b", ref: &valueLoadStruct{v: 20}, ready: true, refSet: true},
 		}},
+	})
+}
+
+func TestInterfaceWaitOrdering(t *testing.T) {
+	runWithBothEngines(t, func(t *testing.T) {
+		runTestCases(t, false, "", []any{
+			waitLoadStruct{v: &afterLoadStruct{v: 1}},
+			&waitLoadStruct{v: &afterLoadStruct{v: 1}},
+		})
 	})
 }
 
