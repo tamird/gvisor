@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T09:02:39.377110+00:00",
+    "updatedAt": "2026-11-05T09:11:37.559398+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37121,7 +37121,7 @@
       "url": "https://github.com/google/gvisor/pull/16706",
       "status": "open",
       "summary": "Writing more data while the peer advertises a zero window postpones the first probe. Keep the pending probe’s deadline when the application writes again.",
-      "updatedAt": "2026-11-05T09:01:24.199484+00:00",
+      "updatedAt": "2026-11-05T09:11:37.559398+00:00",
       "evidence": [
         {
           "label": "Stock: no probe at the original deadline",
@@ -37150,6 +37150,10 @@
         {
           "label": "Four further writes: first probe at 209 ms on Linux and 206 ms on current gVisor. Historical build timed out before executing the case.",
           "url": "https://github.com/tamird/gvisor/actions/runs/41993496783/artifacts/13400808441"
+        },
+        {
+          "label": "The historical retry stopped while fetching a dependency. Bazel recorded zero completed targets and zero test executions.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41999508028/artifacts/13401971676"
         }
       ],
       "refinement": {
@@ -50498,7 +50502,7 @@
       "url": "https://github.com/tamird/gvisor/commit/2ec7b59ad",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-11-05T09:01:24.199484+00:00",
+      "updatedAt": "2026-11-05T09:11:37.559398+00:00",
       "summary": "When an endpoint timer holds the lock, a packet worker can keep the lock holder off a single Go processor. The worker now services the already-queued peers before yielding. A regression holds one listener and verifies a ready listener gets exactly one batch before that yield.",
       "evidence": [
         {
@@ -50516,6 +50520,10 @@
         {
           "label": "Implementation and permanent regression",
           "url": "https://github.com/tamird/gvisor/commit/2ec7b59ad"
+        },
+        {
+          "label": "TCP suite, analyzers and first-miss comparison on the proposed source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42000041108"
         }
       ],
       "followup": {
@@ -67547,9 +67555,22 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-05T08:20:47.043372+00:00",
-      "summary": "Both distroless workers built all 249 outstanding TCP/IP targets. Each also executed six faketime Go cases and one Nogo check. The separate nine-program release started its installed Sentry on native AMD64 and ARM64. The full production build and execution on an empty worker filesystem remain open.",
+      "updatedAt": "2026-11-05T09:11:37.559398+00:00",
+      "summary": "The AMD64 distroless worker built 229 of 231 runsc targets. Two targets need the secfuzz generator fixed in #16604. The ARM64 run stopped during dependency fetching before configuring a target. Both workers previously built all 249 outstanding TCP/IP targets and ran the six faketime cases and Nogo. The nine-program release started its installed Sentry on both architectures.",
       "findings": [
+        {
+          "text": "The 237 runsc targets from the original build ledger map to 231 current targets. On AMD64, both failed actions invoked secfuzz_covermeup, once for each target configuration. The artifact verifies the ELF bytes of runsc and the boot test binary. Three sidecar output checks failed in the reader. ARM64 hit a separate repository fetch failure. This run built test binaries without running them.",
+          "evidence": [
+            {
+              "label": "Per-architecture Bazel results, output checks and original target mapping",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41996779602/artifacts/13402650978"
+            },
+            {
+              "label": "Existing replacement for the shell generator",
+              "url": "https://github.com/google/gvisor/pull/16604"
+            }
+          ]
+        },
         {
           "text": "Both distroless workers built the Go SDK tool with its declared shell, then executed the faketime Go suite (six cases) and Nogo (one case) with zero failures, skips or cached test results. The original SDK action tried to execute the shell script directly and failed on both workers. Setting the shell flag to universal preserved it when Bazel built tools for the execution platform. These runs used a Bazel build containing the proposed native POSIX test runner and XML writer. Both Bazel invocations exited zero. Subsequent collection failed when it tried to read the test executable from disk, so the workflow is red and its report contains no executable hash.",
           "evidence": [
@@ -69686,7 +69707,7 @@
           ]
         }
       ],
-      "nextStep": "Continue the production //... build, excluding network_plugins, with the 237 outstanding runsc targets in the original ledger. Keep the 184 remaining original Sentry Go link outputs recorded as action evidence until their ELF bytes can be verified. Track adoption of hermetic-llvm #908 and #909 and the SDK executable in rules_go #4772. Before retrying the file-empty worker, confirm the deployed executor contains BuildBuddy #14022. The #15146 license-policy hold is separate.",
+      "nextStep": "Check the two AMD64 failures with #16604. Resolve the ARM64 fetch failure and verify the three sidecar ELFs. Keep the 184 remaining original Sentry Go link outputs recorded as action evidence until their ELF bytes can be verified. Track adoption of hermetic-llvm #908 and #909 and the SDK executable in rules_go #4772. Before retrying the file-empty worker, confirm the deployed executor contains BuildBuddy #14022. The #15146 license-policy hold is separate.",
       "evidence": [
         {
           "label": "Fresh SDK builds, native test events and XML counts on both workers",
@@ -72454,5 +72475,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T09:02:39.377110+00:00"
+  "updatedAt": "2026-11-05T09:11:37.559398+00:00"
 }
