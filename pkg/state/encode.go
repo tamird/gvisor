@@ -722,21 +722,21 @@ func (es *encodeState) encodeObject(obj reflect.Value, how encodeStrategy, dest 
 		return
 	case reflect.Float32:
 		v := obj.Float()
-		if how == encodeDefault && v == 0 {
+		if how == encodeDefault && math.Float64bits(v) == 0 {
 			break
 		}
 		*dest = wire.Float32(v)
 		return
 	case reflect.Float64:
 		v := obj.Float()
-		if how == encodeDefault && v == 0 {
+		if how == encodeDefault && math.Float64bits(v) == 0 {
 			break
 		}
 		*dest = wire.Float64(v)
 		return
 	case reflect.Complex64:
 		v := obj.Complex()
-		if how == encodeDefault && v == 0 {
+		if how == encodeDefault && isPositiveZeroComplex(v) {
 			break
 		}
 		c := wire.Complex64(v)
@@ -744,7 +744,7 @@ func (es *encodeState) encodeObject(obj reflect.Value, how encodeStrategy, dest 
 		return
 	case reflect.Complex128:
 		v := obj.Complex()
-		if how == encodeDefault && v == 0 {
+		if how == encodeDefault && isPositiveZeroComplex(v) {
 			break
 		}
 		c := wire.Complex128(v)
