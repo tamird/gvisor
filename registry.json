@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T14:11:43.746545Z",
+    "updatedAt": "2026-11-05T14:50:22.072974Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10926,15 +10926,15 @@
       "title": "Capture primitive state arrays in typed storage",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/e00f572e3",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-05T13:24:17.519774Z",
-      "summary": "The wire implementation was approved at 689706c88 and reparented at f76d229c0. Only the test revision needs review. On current master with #16718 applied, the original float32 and complex64 tests each read a 38-byte graph frame as one wire object and failed. The revision selects wire for five codec-specific tests and exercises the ordinary round trips with both engines. All seven selected native AMD64 tests passed, with 1,659 passing records and zero skips. Each engine ran 204 array and 612 slice round trips.\n\nThese array buffers serve the wire codec. The Nginx measurements below apply to wire-format checkpoints.\n\nPrimitive-array storage improved the Nginx checkpoint fixture on one AMD64 worker: decode 17.19→16.12 ms (−6.19%), encode 14.56→13.64 ms (−6.30%), and allocated bytes fell 9.26% and 13.29%, respectively. The sixteen paired AB/BA runs measured these two stages.",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-11-05T14:49:32.851579Z",
+      "summary": "The wire implementation was approved at 689706c88 and reparented at f76d229c0. The contributor also approved the test revision at e00f572e3. On current master with #16718 applied, the original float32 and complex64 tests each read a 38-byte graph frame as one wire object and failed. The revision selects wire for five codec-specific tests and exercises the ordinary round trips with both engines. All seven selected native AMD64 tests passed, with 1,659 passing records and zero skips. Each engine ran 204 array and 612 slice round trips.\n\nThese array buffers serve the wire codec. The Nginx measurements below apply to wire-format checkpoints.\n\nPrimitive-array storage improved the Nginx checkpoint fixture on one AMD64 worker: decode 17.19→16.12 ms (−6.19%), encode 14.56→13.64 ms (−6.30%), and allocated bytes fell 9.26% and 13.29%, respectively. The sixteen paired AB/BA runs measured these two stages.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "e00f572e3deaea5f1ce6b455d8d72d7749e0f359",
-        "observedAt": "2026-11-05T13:24:17.519774Z",
-        "disposition": "Test revision awaiting contributor review; implementation approval retained",
-        "nextAction": "Wait for review of the test-only diff and for signed-zero PR #16718 to land before opening the primitive-array PR. The wire payload loader in #16380 has landed.",
+        "observedAt": "2026-11-05T14:49:32.851579Z",
+        "disposition": "Implementation and test revision approved",
+        "nextAction": "Open the approved change after signed-zero PR #16718 lands.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/1368393db...e00f572e3",
           "https://github.com/tamird/gvisor/actions/runs/42034339074/artifacts/13417921774",
@@ -10988,19 +10988,14 @@
           "head": "689706c8805c86a0c79e0cf09de80d0245f0dc8b",
           "outcome": "approved",
           "at": "2026-10-26T22:23:56.114433+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "e00f572e3deaea5f1ce6b455d8d72d7749e0f359",
+          "outcome": "approved",
+          "at": "2026-11-05T14:49:32.851579Z"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "e00f572e3deaea5f1ce6b455d8d72d7749e0f359",
-        "baseHead": "1368393db90cf7d97a3c94954880c98f452f74a0",
-        "url": "https://github.com/tamird/gvisor/compare/1368393db...e00f572e3",
-        "title": "Exercise the wire array tests with the intended codec",
-        "summary": "Approve the test-only revision e00f572e3 for the pending primitive-array change? The diff is against the identical implementation on current master with #16718 applied.",
-        "body": "The wire array tests depend on object counts, capture order and load receivers. Select the wire engine for these cases and restore the previous setting afterward. Run ordinary array and slice round trips with both wire and graph.",
-        "requestedAt": "2026-11-05T13:24:17.519774Z"
-      }
+      ]
     },
     {
       "id": "pr:15643",
@@ -11364,15 +11359,15 @@
       "title": "Capture homogeneous state reference arrays",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/e1ec0fd6a",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-05T13:43:13.340425Z",
-      "summary": "The reference-array implementation was approved at 7b4e8579e. Only the three added test selectors need review. On the rebased implementation, the wire comparison and snapshot test passed using graph frames. The late-parent test failed before Load because its assertion expects the wire encoder to clear the unused slice tail during Save. All three tests passed on native AMD64 after selecting wire. Separate runs read all four output buffers and confirmed that the original tests wrote graph frames and the revised tests wrote wire frames.\n\nThe earlier qualification covered the approved implementation. The exact final pkg/state tree passed nine normal owners (10,931 positive records) and three race owners (10,969 positives, two existing eager-validation skips that pass normally), with no failures or missing records. Selected AMD64 container checkpoint/resume, DirectFS pipe-save and Docker checkpoint/resume coverage passed. The fresh twenty-leaf comparison establishes 1,024 fewer allocations in state slice and both adoption cases; separate-worker timing variation does not establish a latency improvement.\n\nHistorical superseded implementation:\n\nThis abandoned parallel proposal is preserved as investigation history. Its source-specific findings feed the single current destination-driven redesign; there is no separate implementation or contributor decision.\n\nHistorical findings:\n\nThe unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.\n\nThe independent master-based proposal captures addressable pointer arrays in one owned reference slice while retaining the existing graph resolver and wire format. Fourteen-owner compatibility and the eight-owner final refinement are closed, with baseline/candidate byte and digest equality. The balanced twelve-block three-arm comparison reports Slice Save time -28.30%, allocated bytes -18.43%, and allocations 1,067 to 43 versus master. UDP timing is nonsignificant; Map Load is -2.05% without a decoder-cause claim. State/UDP executables grow 4,096/8,192 bytes; observed UDP initialization is unchanged. Three final-code kernel restores pass, with the baseline reused from a separate invocation; this is compatibility only. The earlier significant UDP regression remains a separate cohort. No upstream PR exists.",
+      "status": "Contributor approved; waiting for prerequisites",
+      "updatedAt": "2026-11-05T14:49:32.851579Z",
+      "summary": "The reference-array implementation was approved at 7b4e8579e. The contributor also approved the test revision at e1ec0fd6a. On the rebased implementation, the wire comparison and snapshot test passed using graph frames. The late-parent test failed before Load because its assertion expects the wire encoder to clear the unused slice tail during Save. All three tests passed on native AMD64 after selecting wire. Separate runs read all four output buffers and confirmed that the original tests wrote graph frames and the revised tests wrote wire frames.\n\nThe earlier qualification covered the approved implementation. The exact final pkg/state tree passed nine normal owners (10,931 positive records) and three race owners (10,969 positives, two existing eager-validation skips that pass normally), with no failures or missing records. Selected AMD64 container checkpoint/resume, DirectFS pipe-save and Docker checkpoint/resume coverage passed. The fresh twenty-leaf comparison establishes 1,024 fewer allocations in state slice and both adoption cases; separate-worker timing variation does not establish a latency improvement.\n\nHistorical superseded implementation:\n\nThis abandoned parallel proposal is preserved as investigation history. Its source-specific findings feed the single current destination-driven redesign; there is no separate implementation or contributor decision.\n\nHistorical findings:\n\nThe unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.\n\nThe independent master-based proposal captures addressable pointer arrays in one owned reference slice while retaining the existing graph resolver and wire format. Fourteen-owner compatibility and the eight-owner final refinement are closed, with baseline/candidate byte and digest equality. The balanced twelve-block three-arm comparison reports Slice Save time -28.30%, allocated bytes -18.43%, and allocations 1,067 to 43 versus master. UDP timing is nonsignificant; Map Load is -2.05% without a decoder-cause claim. State/UDP executables grow 4,096/8,192 bytes; observed UDP initialization is unchanged. Three final-code kernel restores pass, with the baseline reused from a separate invocation; this is compatibility only. The earlier significant UDP regression remains a separate cohort. No upstream PR exists.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "e1ec0fd6a841da016483565d9f6548196c1c835b",
-        "observedAt": "2026-11-05T13:43:13.340425Z",
-        "disposition": "Test revision awaiting contributor review; approval retained for the original implementation",
-        "nextAction": "Wait for review of the three test selectors and for the primitive-array prerequisite to land before opening the reference-array PR.",
+        "observedAt": "2026-11-05T14:49:32.851579Z",
+        "disposition": "Implementation and test revision approved",
+        "nextAction": "Open the approved change after the primitive-array change lands.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/70df168c4...e1ec0fd6a",
           "https://github.com/tamird/gvisor/actions/runs/42037418674/artifacts/13418988079",
@@ -11406,19 +11401,14 @@
           "head": "7b4e8579e089e89a237fdd22cd0f5e83658d3776",
           "outcome": "approved",
           "at": "2026-10-26T22:23:56.114433+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "e1ec0fd6a841da016483565d9f6548196c1c835b",
+          "outcome": "approved",
+          "at": "2026-11-05T14:49:32.851579Z"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "e1ec0fd6a841da016483565d9f6548196c1c835b",
-        "baseHead": "70df168c4eda6463a3ff47dd635aa2e6a6c90a2a",
-        "url": "https://github.com/tamird/gvisor/compare/70df168c4...e1ec0fd6a",
-        "title": "Run the reference-array regressions with the wire encoder",
-        "summary": "Approve the three test selectors in e1ec0fd6a? The diff is against the approved reference-array implementation rebased on the primitive-array test revision.",
-        "body": "These tests check addressable and by-value wire encodings, pointer snapshots before a save hook mutates the array, and discovery of a parent after its interior array. Select the wire encoder for each case and restore the previous setting afterward.",
-        "requestedAt": "2026-11-05T13:43:13.340425Z"
-      }
+      ]
     },
     {
       "id": "pr:15650",
@@ -22707,23 +22697,25 @@
       "id": "branch:state-encoder-zero-dispatch",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "state-encoder-zero-dispatch-review",
-      "head": "15f2d7624e84c8d879d25b746da0f2c2517db962",
-      "title": "Encode zero values without repeated dispatch",
-      "url": "https://github.com/tamird/gvisor/commit/15f2d7624e84c8d879d25b746da0f2c2517db962",
+      "ref": "research/state-legacy-signed-zero-dispatch",
+      "head": "6a12948d7515d8f49b251a70c4108f8ca10ac228",
+      "title": "Check for zero values while encoding legacy checkpoints",
+      "url": "https://github.com/tamird/gvisor/commit/6a12948d7",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-05T14:11:43.746545Z",
-      "summary": "The approved wire-encoder optimization treats both signs of floating-point zero as an empty field. Its signed-zero prerequisite (#16718) requires preserving the sign: if a saved float64 is −0, its reciprocal after restore must still be −∞. The old optimization also explicitly expects an empty field for this input in its unit test.\n\nThe reported UDP Save improvement of 3.97% was measured on the earlier wire encoder. The optimization needs a new measurement after the signed-zero fix is incorporated. A revised fork candidate, 55a01989c, applies the optimization directly on #16718 and has had an independent source review. The new correctness checks and matched legacy UDP Save measurement are in progress; the earlier timing does not qualify this candidate.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-05T14:50:22.072974Z",
+      "summary": "The legacy checkpoint encoder now checks the value it has already read to decide whether to omit a field. Unlike the previously approved 15f2d7624, this revision preserves the sign of floating-point zero and of each complex component. It applies directly to #16718.\n\nOn Linux/amd64, saving a 32-packet UDP receive queue took 632.1 µs before and 607.0 µs after (−3.98%, p=0.000, 16 matched pairs). Both arms used the legacy encoder and produced the same 12,690 checkpoint bytes. This measures legacy Save; graph is the default encoder.\n\nReplacing the sign-aware checks with arithmetic comparisons lost negative zero in four wire cases; all six graph cases passed. The first run also exposed two missing test imports. With those imports fixed, ordinary and race builds each ran both test targets on the proposed tree: all 15 signed-zero records and 16 wire-representation and struct-hook records passed, with no skips.",
       "followup": {
-        "owner": "node_tls_sni",
-        "sourceHead": "15f2d7624e84c8d879d25b746da0f2c2517db962",
-        "observedAt": "2026-11-05T14:11:43.746545Z",
-        "disposition": "Qualifying revised source on #16718",
-        "nextAction": "Verify the revised fork candidate with the signed-zero and wire representation checks, and remeasure the matched legacy UDP Save workload. Bring the exact revision for review after the results; the prior approval applies only to the earlier source.",
+        "owner": "Contributor",
+        "sourceHead": "6a12948d7515d8f49b251a70c4108f8ca10ac228",
+        "observedAt": "2026-11-05T14:50:22.072974Z",
+        "disposition": "Contributor review requested",
+        "nextAction": "Review 6a12948d7 for submission after #16718 lands. The earlier approval covered 15f2d7624 only.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/15f2d7624e84c8d879d25b746da0f2c2517db962",
-          "https://github.com/tamird/gvisor/commit/55a01989c"
+          "https://github.com/tamird/gvisor/commit/6a12948d7",
+          "https://github.com/google/gvisor/pull/16718",
+          "https://github.com/tamird/gvisor/actions/runs/42047834918/artifacts/13426625360",
+          "https://github.com/tamird/gvisor/actions/runs/42042839654/artifacts/13423159446"
         ]
       },
       "links": [
@@ -22742,8 +22734,31 @@
         {
           "label": "Revised candidate directly on the signed-zero fix",
           "url": "https://github.com/tamird/gvisor/commit/55a01989c"
+        },
+        {
+          "label": "Candidate on #16718",
+          "url": "https://github.com/tamird/gvisor/commit/6a12948d7"
+        },
+        {
+          "label": "Matched legacy UDP benchmark and signed-zero negative control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42042839654/artifacts/13423159446"
+        },
+        {
+          "label": "Ordinary and race checks on the proposed tree",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42047834918/artifacts/13426625360"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "6a12948d7515d8f49b251a70c4108f8ca10ac228",
+        "baseHead": "1f4905b21f956027a76ded34b96584e00f9269f1",
+        "url": "https://github.com/tamird/gvisor/commit/6a12948d7",
+        "title": "Check for zero values while encoding legacy checkpoints",
+        "requestedAt": "2026-11-05T14:50:22.072974Z",
+        "summary": "Approve 6a12948d7 for submission after #16718 lands? It preserves negative zero and reduced the time to save a 32-packet UDP queue with the legacy encoder by 3.98% on Linux/amd64.",
+        "body": "The wire encoder inspects the type of each field to decide whether to\nomit it, then dispatches on its kind again to write it. Use the value\nalready read by each encoder case to decide whether the field can be\nomitted. Whole arrays still need to account for struct save hooks and\nthe sign bit of floating-point elements.\n\nTyped zeros in interfaces and other full-value contexts preserve their\nwire types. An ordinary field containing negative zero keeps its sign,\nincluding either component of a complex number.\n\nThe graph encoder is the default. The 32-packet UDP receive queue\nbenchmark [1] selects the legacy encoder on both sides. Sixteen\nalternating pairs on Linux/amd64 gave the following Save times.\n\nUDPReceiveQueueSave/32    632.1µ ± 1%   607.0µ ± 0%  -3.98% (p=0.000 n=16)\n\n[1]: https://github.com/tamird/gvisor/commit/04877bab5"
+      }
     },
     {
       "id": "branch:state-decoder-dependencies",
@@ -53101,11 +53116,11 @@
       "evidence": "https://github.com/tamird/gvisor/commit/ae68fad953586e472b8c275b3aaaf17d5f1a450f"
     },
     {
-      "from": "branch:state-destination-kind",
+      "from": "pr:16718",
       "to": "branch:state-encoder-zero-dispatch",
       "type": "depends_on",
-      "reason": "The approved encoder change is a direct child of the retained destination-kind proposal.",
-      "evidence": "https://github.com/tamird/gvisor/commit/15f2d7624e84c8d879d25b746da0f2c2517db962"
+      "reason": "The candidate applies directly to #16718 and preserves its signed-zero behavior. Submit after that PR lands.",
+      "evidence": "https://github.com/google/gvisor/pull/16718"
     },
     {
       "from": "branch:state-destination-kind",
@@ -73123,5 +73138,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T14:11:43.746545Z"
+  "updatedAt": "2026-11-05T14:50:22.072974Z"
 }
