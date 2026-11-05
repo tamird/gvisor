@@ -21,8 +21,10 @@ BOOT = "//runsc/container:boot_test"
 GTEST = "PrctlTest.OrphansReparentedToSubreaper"
 GO = "TestMinimalBoot"
 PKG = Path("test/cmd/test_app")
+DISTDIR = "--distdir=" + str(D / "dist")
+PRIOR_ELF = "995658ee367b4d62044197fc09ba1bf356a3242acc0ce82a4a13caf337280459"
 COMMON = ["--config=x86_64", "--jobs=4", "--remote_executor=", "--remote_cache=", "--bes_backend=",
-          "--lockfile_mode=off", "--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
+          DISTDIR, "--lockfile_mode=off", "--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
           "--extra_toolchains=//test/rbe/go_bootstrap:linux_amd64_ash,//test/rbe/protoc_check:static_python"]
 TEST = ["--nocache_test_results", "--flaky_test_attempts=1", "--runs_per_test=1", "--test_sharding_strategy=disabled",
         "--strategy=TestRunner=linux-sandbox", "--sandbox_default_allow_network=false", "--sandbox_add_mount_pair=/tmp",
@@ -30,7 +32,9 @@ TEST = ["--nocache_test_results", "--flaky_test_attempts=1", "--runs_per_test=1"
 R = {"status": "INCOMPLETE", "kernel": platform.release(), "historical_benchmark": {
     "source": "ca01b6885", "carrier": "de608f7a2", "run": 41691699509, "artifact":13259036378,
     "sha256":"692e4283970e8cb932c9a7cfed628d99f80bec092b6929d130e700d42b3b6f98"},
-    "arms": {}, "errors": {}}
+    "prior_revised_consumers": {"run": 42056452015, "artifact": 13428734445, "source": NEW,
+        "zip_sha256": "7b4b95ffe7e373eb5d8aed3a27cb385eaca00a785f1c07d14c02652ad602b85e",
+        "static_elf_sha256": PRIOR_ELF}, "arms": {}, "errors": {}}
 
 
 def save():
@@ -64,7 +68,7 @@ def invoke(row, name, argv, seconds):
     return text
 
 
-def named_output(events, label):
+def named_output(events, label, row):
     filesets = {e["id"]["namedSet"]["id"]: e["namedSetOfFiles"] for e in events if "namedSetOfFiles" in e}
     completed, = [e["completed"] for e in events
                   if e["id"].get("targetCompleted", {}).get("label") == label
@@ -79,6 +83,8 @@ def named_output(events, label):
             files.extend(filesets[key].get("files", []))
             pending.extend(s["id"] for s in filesets[key].get("fileSets", []))
     name = label.split(":")[1]
+    row["default_basenames"] = sorted({Path(f["name"]).name for f in files})[:16]
+    save()
     entry, = [f for f in files if Path(f["name"]).name == name]
     uri = urlsplit(entry["uri"])
     assert uri.scheme == "file" and not (uri.netloc or uri.query or uri.fragment)
@@ -155,7 +161,7 @@ def phase(arm, label, source, row):
         real = APP + ("_bin_nogo" if fixed else "_nogo")
         # One query binds the expanded named test and its directly analyzed Go target.
         query = "tests(%s) union labels(deps, tests(%s))" % (suite, suite)
-        body = invoke(row, name, ["query", "--keep_going", "--lockfile_mode=off", "--output=label", query], 150)
+        body = invoke(row, name, ["query", DISTDIR, "--keep_going", "--lockfile_mode=off", "--output=label", query], 240)
         row["labels"] = sorted(re.findall(r"(?m)^//test/cmd/test_app:[\w]+$", body))
         assert row["native_exit"] == 0 and row["labels"] == sorted([real, APP + ("_bin" if fixed else "")])
         return
@@ -171,19 +177,21 @@ def phase(arm, label, source, row):
     else:
         args.extend([*TEST, "--test_arg=--test_platforms=systrap", "--test_arg=-test.run=^TestMinimalBoot$/^systrap$",
                      "--test_arg=-test.v", "--test_env=GO_TEST_WRAP_TESTV=1", target])
-    body = invoke(row, name, args, {"public": 900 if not fixed else 240, "prctl": 1200 if not fixed else 420,
-                                   "boot": 1350 if not fixed else 600}[label])
+    body = invoke(row, name, args, {"public": 1200, "prctl": 1200, "boot": 1350}[label])
+    if run:
+        row["echo_lines"] = body.splitlines().count("declared-test-app")
+        save()
     events = [json.loads(line) for line in bep.open() if line.strip()]
     assert [e["started"]["uuid"] for e in events if "started" in e] == [uid]
     row["invocation"] = uid
     if run:
-        exe = named_output(events, target)
+        exe = named_output(events, target, row)
         row["elf"] = elf(exe)
-        row["echo_lines"] = body.splitlines().count("declared-test-app")
         row["output_name"] = exe.name
         assert row["native_exit"] == 0 and row["echo_lines"] == 1 and exe.name == "test_app"
         if fixed:
             assert exe.resolve(strict=True) == (Path("bazel-bin")/PKG/"test_app").resolve(strict=True)
+            assert row["elf"]["sha256"] == PRIOR_ELF
         return
     key, result = next((e["id"]["testResult"],e["testResult"]) for e in events if "testResult" in e)
     assert sum("testResult" in e for e in events) == 1 and key["label"] == target
@@ -197,14 +205,13 @@ def phase(arm, label, source, row):
     except (AssertionError, ET.ParseError, KeyError, OSError, ValueError) as exc:
         row["report_error"] = type(exc).__name__
         save()
-    exe = named_output(events, target)
+    exe = named_output(events, target, row)
     direct = Path(str(exe) + ".runfiles") / "_main" / PKG / "test_app"
     row["direct"] = "file" if direct.is_file() else "directory" if direct.is_dir() else "absent"
     save()
     row["runfile"] = elf(direct if fixed else direct / "test_app")
     save()
     assert row["direct"] == ("file" if fixed else "directory")
-    assert row["runfile"]["sha256"] == R["arms"][arm]["public"]["elf"]["sha256"]
     assert row["test"]["strategy"] == "linux-sandbox" and not row["test"]["cached"]
     status = "PASS" if fixed else "FAIL"
     if label == "prctl":
@@ -218,6 +225,9 @@ def phase(arm, label, source, row):
         if not fixed:
             assert {"Copy:", "is a directory"} <= set(row["diagnostics"])
     assert row["native_exit"] == (0 if fixed else 3) and row["test"]["status"] == ("PASSED" if fixed else "FAILED")
+    row["consumer_observed"] = True
+    save()
+    assert row["runfile"]["sha256"] == R["arms"][arm]["public"]["elf"]["sha256"]
 
 
 save()
@@ -228,7 +238,8 @@ for arm, src in (("original",OLD),("revised",NEW)):
     git("switch", "--quiet", "--detach", src)
     assert git("rev-parse","HEAD") == src and not git("status","--porcelain","--untracked-files=no")
     rows = R["arms"][arm] = {}
-    for label in ("nogo","public","prctl","boot"):
+    labels = ("public",) if src == NEW else ("nogo", "public", "prctl", "boot")
+    for label in labels:
         row = rows[label] = {"source": src,"status":"INCOMPLETE"}
         save()
         try:
