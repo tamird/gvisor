@@ -84,6 +84,28 @@ func (b *Buffer) TrimFront(count int64) {
 	}
 }
 
+// TakePrefix removes up to n bytes from the front of b and returns them in a
+// new Buffer. Whole views are transferred. If n falls inside a view, the two
+// buffers share its chunk until either writes to it.
+func (b *Buffer) TakePrefix(n int64) Buffer {
+	var prefix Buffer
+	for n > 0 && b.data.Front() != nil {
+		v := b.data.Front()
+		if n < int64(v.Size()) {
+			part := v.Clone()
+			part.CapLength(int(n))
+			v.TrimFront(int(n))
+			prefix.appendOwned(part)
+			break
+		}
+		n -= int64(v.Size())
+		b.data.Remove(v)
+		prefix.appendOwned(v)
+	}
+	b.size -= prefix.size
+	return prefix
+}
+
 // ReadAt implements io.ReaderAt.ReadAt.
 func (b *Buffer) ReadAt(p []byte, offset int64) (int, error) {
 	var (
