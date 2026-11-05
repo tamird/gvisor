@@ -315,9 +315,7 @@ img_pull(
 )
 
 ### Toolchains
-register_toolchains("//:cc_toolchain_k8")
-
-register_toolchains("//:cc_toolchain_aarch64")
+register_toolchains("@llvm//toolchain:all")
 
 ### Go
 go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")
