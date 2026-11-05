@@ -2,6 +2,7 @@
 
 load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", _cc_grpc_library = "cc_grpc_library")
 load("@com_google_protobuf//bazel:cc_proto_library.bzl", _cc_proto_library = "cc_proto_library")
+load("@llvm//toolchain/runtimes:cc_runtime_binary.bzl", _cc_runtime_stage0_binary = "cc_runtime_stage0_binary")
 load("@rules_cc//cc:defs.bzl", _cc_binary = "cc_binary", _cc_library = "cc_library", _cc_test = "cc_test")
 load(":defs.bzl", "transition_allowlist")
 
@@ -26,6 +27,7 @@ cc_test = _cc_test
 cc_toolchain = "@bazel_tools//tools/cpp:current_cc_toolchain"
 cc_objcopy = "@llvm//tools:llvm-objcopy"
 cc_objdump = "@llvm//tools:llvm-objdump"
+linux_headers = Label("@kernel_headers//:kernel_headers")
 gtest = "@com_google_googletest//:gtest"
 gbenchmark = "@com_google_benchmark//:benchmark"
 gbenchmark_internal = "@com_google_benchmark//:benchmark"
@@ -105,7 +107,7 @@ def _sidecar_executable_impl(ctx):
     ctx.actions.symlink(output = ctx.outputs.out, target_file = binary, is_executable = True)
     return [DefaultInfo(executable = ctx.outputs.out)]
 
-freestanding_executable = rule(
+_freestanding_executable = rule(
     implementation = _sidecar_executable_impl,
     doc = "Exposes a freestanding C executable without a hosted allocator or sanitizer.",
     executable = True,
@@ -115,6 +117,28 @@ freestanding_executable = rule(
         "_allowlist_function_transition": attr.label(default = transition_allowlist),
     },
 )
+
+def freestanding_executable(name, out, visibility = None, **kwargs):
+    """Builds and exposes an executable without hosted runtime dependencies.
+
+    Args:
+      name: Public target name.
+      out: Executable filename.
+      visibility: Visibility of the public executable.
+      **kwargs: Arguments for the private C binary, including explicit headers.
+    """
+    _cc_runtime_stage0_binary(
+        name = "_linked/" + out,
+        tags = ["manual"],
+        visibility = ["//visibility:private"],
+        **kwargs
+    )
+    _freestanding_executable(
+        name = name,
+        binary = ":_linked/" + out,
+        out = out,
+        visibility = visibility,
+    )
 
 def select_gtest():
     return [gtest]  # No select is needed.
