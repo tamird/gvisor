@@ -380,7 +380,6 @@ func (p *Pipe) HasWriters() bool {
 
 // rReadinessLocked calculates the read readiness.
 //
-// Precondition: mu must be held.
 // +checklocks:p.mu
 func (p *Pipe) rReadinessLocked(initialWriters int32) waiter.EventMask {
 	ready := waiter.EventMask(0)
