@@ -1,35 +1,54 @@
-name: CI
-
-"on":
+name: Collect the nested static GNU TLDK Make failure
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tldk-static-gnu-archive-diagnosis]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  archive:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 85
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Bind the same failed static GNU product
+        run: |
+          set -eu
+          d="$RUNNER_TEMP/tldk-llvm"
+          mkdir -p "$d/diagnostics"
+          echo '{"status":"INCOMPLETE"}' > "$d/diagnostics/receipt.json"
+          test "$(git rev-parse HEAD^)" = cad667dcd75b15f549be5d4eeb23406433d7faa5
+          cp .github/qualification/tldk_archive_diagnosis.py "$d/"
+          git checkout --detach HEAD^
+          test "$(cat .bazelversion)" = 9.3.1
+          test "$(uname -m)" = x86_64
+          curl -fsSL --retry 3 --max-time 120 https://raw.githubusercontent.com/tamird/gvisor/5d2fe309d11bb2af1e5ffdb02326f4b1d5f6bfaf/test/rbe/native_cross_inputs.py -o "$d/native_cross_inputs.py"
+          echo "b0626fb5ecb5bb9c41d644ced5af036019cbefbeef7975c71878021f6e146653  $d/native_cross_inputs.py" | sha256sum -c -
+          curl -fsSL --retry 3 --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod +x "$d/bazel"
+      - name: Run only the previously failing archive action
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" CARRIER="$GITHUB_SHA" python3 -B "$RUNNER_TEMP/tldk-llvm/tldk_archive_diagnosis.py"
+      - name: Verify the two bounded diagnostic outputs
+        id: boundary
+        if: always()
+        run: |
+          python3 - <<'PYTHON'
+          import os, re
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"]) / "tldk-llvm/diagnostics"
+          files = list(root.iterdir())
+          assert {p.name for p in files} <= {"receipt.json", "foreign-make.txt"}
+          assert (root / "receipt.json").is_file()
+          for p in files:
+              assert p.is_file() and not p.is_symlink() and p.stat().st_size < 1100000
+              assert not re.search(rb"(?i)authorization\s*[:=]|credential[.]|x-buildbuddy-api-key|gh[pousr]_[A-Za-z0-9]{18,}|github_pat_", p.read_bytes())
+          PYTHON
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.boundary.outcome == 'success'
+        with:
+          name: static-gnu-tldk-archive-diagnosis
+          path: ${{ runner.temp }}/tldk-llvm/diagnostics
+          if-no-files-found: error
