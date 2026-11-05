@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T06:27:21.503359+00:00",
+    "updatedAt": "2026-11-05T06:52:30.387119+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -50009,13 +50009,13 @@
       "repo": "google/gvisor",
       "number": 16953,
       "ref": "tcp-delayed-ack",
-      "head": "5e903e17232e9191f5c20fa48a9a3ab171826cb1",
+      "head": "e9a7c24cae7ecc457e1f27f5a82393be23f09a5d",
       "title": "Review the ACK for a segment that fills a gap",
       "url": "https://github.com/google/gvisor/pull/16953",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-04T18:46:10.077644+00:00",
-      "summary": "The rebased receiver immediately acknowledges a filled gap in both modes. With 500 bytes unread at checkpoint, the submitted receiver did not send the pending ACK by the 40 ms deadline after restore. The same fixture observed it with the fork fix; both receivers acknowledged the next 1,000 bytes.",
+      "updatedAt": "2026-11-05T06:52:30.387119+00:00",
+      "summary": "The author applied the restore fix. The new head has the same Git tree as the tested fix, including the regression. The original packet test showed that a filled gap was acknowledged immediately in both modes; the restore test confirmed that the outstanding 500 bytes were acknowledged without waiting for the next 1,000 bytes.",
       "evidence": [
         {
           "label": "Exact submitted ACK decision, line 1993",
@@ -50048,6 +50048,18 @@
         {
           "label": "Verified restore observation and suggested fix posted on the original thread",
           "url": "https://github.com/google/gvisor/pull/16953#discussion_r4471778679"
+        },
+        {
+          "label": "Author confirmed applying the tested fix",
+          "url": "https://github.com/google/gvisor/pull/16953#discussion_r4477311804"
+        },
+        {
+          "label": "Author head with the tested tree ff5260038",
+          "url": "https://github.com/google/gvisor/commit/e9a7c24ca"
+        },
+        {
+          "label": "Tested fix with the same tree",
+          "url": "https://github.com/tamird/gvisor/commit/0bb42c582"
         }
       ],
       "settledReviews": [
@@ -50071,17 +50083,15 @@
           "postedURL": "https://github.com/google/gvisor/pull/16953#discussion_r4471778679"
         }
       ],
-      "followup": {
-        "owner": "TCP review owner",
-        "sourceHead": "5e903e17232e9191f5c20fa48a9a3ab171826cb1",
-        "observedAt": "2026-11-04T18:46:10.077644+00:00",
-        "disposition": "Rechecked the revised gap ACK and replied on the original thread with the separate restore case and tested fix.",
-        "nextAction": "The PR author can flush the outstanding ACK on restore or rearm its timer. Watch for their response.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/16953#discussion_r4471202707",
-          "https://github.com/tamird/gvisor/actions/runs/41888812145/artifacts/13353715113",
-          "https://github.com/tamird/gvisor/actions/runs/41888812145/artifacts/13352788018",
-          "https://github.com/google/gvisor/pull/16953#discussion_r4471778679"
+      "reviewWatch": {
+        "inspected": [
+          {
+            "id": "PRRC_kwDOB9IlXs8AAAABCt5bPA",
+            "url": "https://github.com/google/gvisor/pull/16953#discussion_r4477311804",
+            "head": "e9a7c24cae7ecc457e1f27f5a82393be23f09a5d",
+            "updatedAt": "2026-11-05T06:30:02Z",
+            "evidence": "https://github.com/google/gvisor/commit/e9a7c24ca"
+          }
         ]
       }
     },
@@ -67391,9 +67401,34 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-05T05:53:50.961511+00:00",
-      "summary": "On fork 5388293bd, make copy of //:release installed all nine programs on AMD64 and ARM64. Each native Linux worker started the installed Sentry and ran BusyBox in a rootless guest. A separate paired build installed the same release selection on pinned distroless remote workers. These results cover //:release; the complete //... build remains open. For DPDK, the AMD64 archive built on a worker image containing only /hello. The two images with no files failed during worker setup, before DPDK ran. The deployed executor revision is unknown.",
+      "updatedAt": "2026-11-05T06:52:30.387119+00:00",
+      "summary": "The paired remote build of 433 Sentry targets exposed an LLVM generator that still invoked /bin/bash on both distroless workers. The separate nine-program release on 5388293bd built on both remote workers and started its installed Sentry in native AMD64 and ARM64 guests. The complete //... build remains open. For DPDK, the AMD64 archive built on a worker image containing only /hello. The two images with no files failed during worker setup, before DPDK ran. The deployed executor revision is unknown.",
       "findings": [
+        {
+          "text": "The Sentry cohort maps 436 previously outstanding targets to 433 on 5388293bd. On AMD64, 432 completed successfully; on ARM64, 430 did. The nvproxy_driver_parity_test build failed on both workers because the LLVM instrumentor header generator invoked /bin/bash. ARM64 analysis also rejected the SlimVM library and its test utility: both declare x86_64 compatibility. Each worker recorded 93 successful uncached remote Go links. The failed build stopped the verifier before it compared ELF bytes with the link outputs; no tests ran and there are no XML or Nogo test verdicts.",
+          "evidence": [
+            {
+              "label": "Original paired Sentry target and action records",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41980690645/artifacts/13394940473"
+            },
+            {
+              "label": "SlimVM target constraints",
+              "url": "https://github.com/tamird/gvisor/blob/5388293bd/pkg/sentry/platform/slimvm/BUILD#L38-L40"
+            },
+            {
+              "label": "SlimVM test utility target constraint",
+              "url": "https://github.com/tamird/gvisor/blob/5388293bd/pkg/sentry/platform/slimvm/testutil/BUILD#L19-L21"
+            },
+            {
+              "label": "Merged LLVM change generates the header without a shell",
+              "url": "https://github.com/llvm/llvm-project/commit/8cb8b5767"
+            },
+            {
+              "label": "Merged hermetic-llvm backport for LLVM 23",
+              "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/c04d527ee"
+            }
+          ]
+        },
         {
           "text": "On 5388293bd the strict native AMD64 and ARM64 builds completed all 5,263 and 5,479 spawns, respectively, in linux-sandbox without cache hits. On each architecture, six Go links, three C links and nine copy actions matched the installed ELF files. The static linker driver for each execution architecture produced both the x86-64 and AArch64 embedded vDSOs. The installed runsc passed --version and started its installed Sentry under systrap. In each rootless guest with networking disabled, the native BusyBox printed the expected marker and exited zero. Neither build invoked a Bazel TestRunner.",
           "evidence": [
@@ -69470,7 +69505,7 @@
           ]
         }
       ],
-      "nextStep": "Track upstream adoption of hermetic-llvm #908 and #909 and the SDK executable in rules_go #4772. The fork release is qualified; the separate Build everything selection (//... excluding network_plugins) still needs full coverage. Before retrying the file-empty worker, confirm the deployed executor contains the zero-lowerdir fix from BuildBuddy #14022. The #15146 license-policy hold is separate.",
+      "nextStep": "Qualify the merged hermetic-llvm fix on the failing nvproxy target under both remote workers, and compare the original Go link digests with the corresponding ELF bytes. The full //... selection excluding network_plugins still needs coverage. Track adoption of hermetic-llvm #908 and #909 and the SDK executable in rules_go #4772. Before retrying the file-empty worker, confirm the deployed executor contains BuildBuddy #14022. The #15146 license-policy hold is separate.",
       "evidence": [
         {
           "label": "Native AMD64: nine installed programs and a rootless Sentry guest",
