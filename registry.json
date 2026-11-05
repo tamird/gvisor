@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T14:50:22.072974Z",
+    "updatedAt": "2026-11-05T14:55:40.136006Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -22698,21 +22698,21 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/state-legacy-signed-zero-dispatch",
-      "head": "6a12948d7515d8f49b251a70c4108f8ca10ac228",
+      "head": "dffb3d3c3f7850994b8059fad487b379d1943862",
       "title": "Check for zero values while encoding legacy checkpoints",
-      "url": "https://github.com/tamird/gvisor/commit/6a12948d7",
+      "url": "https://github.com/tamird/gvisor/commit/dffb3d3c3",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-05T14:50:22.072974Z",
-      "summary": "The legacy checkpoint encoder now checks the value it has already read to decide whether to omit a field. Unlike the previously approved 15f2d7624, this revision preserves the sign of floating-point zero and of each complex component. It applies directly to #16718.\n\nOn Linux/amd64, saving a 32-packet UDP receive queue took 632.1 µs before and 607.0 µs after (−3.98%, p=0.000, 16 matched pairs). Both arms used the legacy encoder and produced the same 12,690 checkpoint bytes. This measures legacy Save; graph is the default encoder.\n\nReplacing the sign-aware checks with arithmetic comparisons lost negative zero in four wire cases; all six graph cases passed. The first run also exposed two missing test imports. With those imports fixed, ordinary and race builds each ran both test targets on the proposed tree: all 15 signed-zero records and 16 wire-representation and struct-hook records passed, with no skips.",
+      "updatedAt": "2026-11-05T14:55:40.136006Z",
+      "summary": "The legacy checkpoint encoder now checks the value it has already read to decide whether to omit a field. Unlike the previously approved 15f2d7624, this revision preserves the sign of floating-point zero and of each complex component. It applies directly to #16718.\n\nOn Linux/amd64, saving a 32-packet UDP receive queue took 632.1 µs before and 607.0 µs after (−3.98%, p=0.000, 16 matched pairs). Both arms used the legacy encoder and produced the same 12,690 checkpoint bytes. This measures legacy Save; graph is the default encoder.\n\nReplacing the sign-aware checks with arithmetic comparisons lost negative zero in four wire cases; all six graph cases passed. The first run also exposed two missing test imports. With those imports fixed, ordinary and race builds each ran both test targets on the proposed tree: all 15 signed-zero records and 16 wire-representation and struct-hook records passed, with no skips. The review commit has the same tree as the tested 139053514; its message links the measured legacy benchmark.",
       "followup": {
         "owner": "Contributor",
-        "sourceHead": "6a12948d7515d8f49b251a70c4108f8ca10ac228",
-        "observedAt": "2026-11-05T14:50:22.072974Z",
+        "sourceHead": "dffb3d3c3f7850994b8059fad487b379d1943862",
+        "observedAt": "2026-11-05T14:55:40.136006Z",
         "disposition": "Contributor review requested",
-        "nextAction": "Review 6a12948d7 for submission after #16718 lands. The earlier approval covered 15f2d7624 only.",
+        "nextAction": "Review dffb3d3c3 for submission after #16718 lands. The earlier approval covered 15f2d7624 only.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/6a12948d7",
+          "https://github.com/tamird/gvisor/commit/dffb3d3c3",
           "https://github.com/google/gvisor/pull/16718",
           "https://github.com/tamird/gvisor/actions/runs/42047834918/artifacts/13426625360",
           "https://github.com/tamird/gvisor/actions/runs/42042839654/artifacts/13423159446"
@@ -22737,7 +22737,7 @@
         },
         {
           "label": "Candidate on #16718",
-          "url": "https://github.com/tamird/gvisor/commit/6a12948d7"
+          "url": "https://github.com/tamird/gvisor/commit/dffb3d3c3"
         },
         {
           "label": "Matched legacy UDP benchmark and signed-zero negative control",
@@ -22746,18 +22746,22 @@
         {
           "label": "Ordinary and race checks on the proposed tree",
           "url": "https://github.com/tamird/gvisor/actions/runs/42047834918/artifacts/13426625360"
+        },
+        {
+          "label": "Exact source of the passing ordinary and race tests",
+          "url": "https://github.com/tamird/gvisor/commit/139053514"
         }
       ],
       "contributorReview": {
         "status": "pending",
         "kind": "proposal",
-        "head": "6a12948d7515d8f49b251a70c4108f8ca10ac228",
+        "head": "dffb3d3c3f7850994b8059fad487b379d1943862",
         "baseHead": "1f4905b21f956027a76ded34b96584e00f9269f1",
-        "url": "https://github.com/tamird/gvisor/commit/6a12948d7",
+        "url": "https://github.com/tamird/gvisor/commit/dffb3d3c3",
         "title": "Check for zero values while encoding legacy checkpoints",
-        "requestedAt": "2026-11-05T14:50:22.072974Z",
-        "summary": "Approve 6a12948d7 for submission after #16718 lands? It preserves negative zero and reduced the time to save a 32-packet UDP queue with the legacy encoder by 3.98% on Linux/amd64.",
-        "body": "The wire encoder inspects the type of each field to decide whether to\nomit it, then dispatches on its kind again to write it. Use the value\nalready read by each encoder case to decide whether the field can be\nomitted. Whole arrays still need to account for struct save hooks and\nthe sign bit of floating-point elements.\n\nTyped zeros in interfaces and other full-value contexts preserve their\nwire types. An ordinary field containing negative zero keeps its sign,\nincluding either component of a complex number.\n\nThe graph encoder is the default. The 32-packet UDP receive queue\nbenchmark [1] selects the legacy encoder on both sides. Sixteen\nalternating pairs on Linux/amd64 gave the following Save times.\n\nUDPReceiveQueueSave/32    632.1µ ± 1%   607.0µ ± 0%  -3.98% (p=0.000 n=16)\n\n[1]: https://github.com/tamird/gvisor/commit/04877bab5"
+        "requestedAt": "2026-11-05T14:55:40.136006Z",
+        "summary": "Approve dffb3d3c3 for submission after #16718 lands? It preserves negative zero and reduced the time to save a 32-packet UDP queue with the legacy encoder by 3.98% on Linux/amd64.",
+        "body": "The wire encoder inspects the type of each field to decide whether to\nomit it, then dispatches on its kind again to write it. Use the value\nalready read by each encoder case to decide whether the field can be\nomitted. Whole arrays still need to account for struct save hooks and\nthe sign bit of floating-point elements.\n\nTyped zeros in interfaces and other full-value contexts preserve their\nwire types. An ordinary field containing negative zero keeps its sign,\nincluding either component of a complex number.\n\nThe graph encoder is the default. The 32-packet UDP receive queue\nbenchmark [1] selects the legacy encoder on both sides. Sixteen\nalternating pairs on Linux/amd64 gave the following Save times.\n\nUDPReceiveQueueSave/32    632.1µ ± 1%   607.0µ ± 0%  -3.98% (p=0.000 n=16)\n\n[1]: https://github.com/tamird/gvisor/blob/d8fe8e3ef/pkg/tcpip/transport/udp/codec_queue_benchmark_test.go#L41-L47"
       }
     },
     {
@@ -51033,9 +51037,9 @@
       "title": "Run the runsc lifecycle tests without host utilities",
       "url": "https://github.com/tamird/gvisor/compare/90d4e2253...cd8f6c541",
       "group": "tests",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-05T14:11:43.746545Z",
-      "summary": "The original specutils and cmd tests failed to start /bin/true or /bin/sleep. The two proposed commits use the test binaries themselves as children and retain the existing lifecycle assertions. The selected test and helper implementations match those on the separately tested integrations. Four fresh native TestRunners each passed all six selected cases: specutils and cmd on AMD64 and ARM64, with no failures or skips. Boot is a separate, failing qualification.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-05T14:55:40.136006Z",
+      "summary": "The original specutils and cmd tests failed to start /bin/true or /bin/sleep. The two proposed commits use the test binaries themselves as children and retain the existing lifecycle assertions. The selected test and helper implementations match those on the separately tested integrations. Four fresh native TestRunners each passed all six selected cases: specutils and cmd on AMD64 and ARM64, with no failures or skips. Boot is a separate, failing qualification. The contributor requested changes to this revision: both waiting fixtures should stay alive until killed, and cmd.TestMain should sit near the child implementation.",
       "evidence": [
         {
           "label": "Two proposed commits on master",
@@ -51051,27 +51055,28 @@
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "state_current_path",
         "sourceHead": "cd8f6c54149718fdca08f268658db4a1d1b4c247",
-        "observedAt": "2026-11-05T14:11:43.746545Z",
-        "disposition": "Contributor review requested",
-        "nextAction": "Review the two test-only commits together before opening one upstream PR.",
+        "observedAt": "2026-11-05T14:55:40.136006Z",
+        "disposition": "Contributor requested changes",
+        "nextAction": "Keep both waiting fixtures alive until killed, move cmd.TestMain near the child implementation, and qualify the revision before requesting review.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/90d4e2253...cd8f6c541",
           "https://github.com/tamird/gvisor/actions/runs/42037630464/artifacts/13422210533",
           "https://github.com/tamird/gvisor/actions/runs/42030254826/artifacts/13415219314"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "cd8f6c54149718fdca08f268658db4a1d1b4c247",
+          "outcome": "changes-requested",
+          "at": "2026-11-05T14:55:40.136006Z"
+        }
+      ],
+      "contributorChangesRequested": {
         "head": "cd8f6c54149718fdca08f268658db4a1d1b4c247",
-        "baseHead": "90d4e2253f004cdc73a35dbc4050eab3e9a8495d",
-        "url": "https://github.com/tamird/gvisor/compare/90d4e2253...cd8f6c541",
-        "title": "Run the runsc lifecycle tests without host utilities",
-        "requestedAt": "2026-11-05T14:11:43.746545Z",
-        "summary": "Open one upstream PR with the two test-only commits? Six specutils and six cmd cases passed on each architecture without the host utilities.",
-        "body": "The specutils tests use /bin/true and /bin/sleep to start children that\nexit successfully or stay alive until killed. The runsc command tests\nuse /bin/sleep for a live sandbox PID with no control server. On a\nworker without those programs, the tests fail before they can check\nprocess readiness, identity, or command behavior.\n\nStart a copy of the test binary for each child. Keep the exit and zombie\nchecks in specutils, and have both command fixtures reap the child when\nthe command kills it or the test ends."
+        "url": "https://github.com/tamird/gvisor/commit/cd8f6c541"
       }
     }
   ],
@@ -73138,5 +73143,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T14:50:22.072974Z"
+  "updatedAt": "2026-11-05T14:55:40.136006Z"
 }

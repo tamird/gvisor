@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-11-05T14:54:17.319706+00:00",
-  "registryDate": "2026-11-05T14:50:22.072974Z",
+  "registryDate": "2026-11-05T14:55:40.136006Z",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -323235,7 +323235,7 @@
         "since": "2026-11-05T12:06:54.043543Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "pr:16598": {
@@ -323391,7 +323391,7 @@
         "since": "2026-11-04T05:00:25.863097+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "pr:16664": {
@@ -324270,7 +324270,7 @@
         "since": "2026-11-05T11:14:22.277195Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "pr:16857": {
@@ -325015,7 +325015,7 @@
         "since": "2026-10-31T16:57:06.135+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:bazel-python-release": {
@@ -325024,7 +325024,7 @@
         "since": "2026-10-30T16:55:14.197497+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -325033,7 +325033,7 @@
         "since": "2026-11-03T07:06:47.467598+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:rules-img-hackbench-image": {
@@ -325042,7 +325042,7 @@
         "since": "2026-11-03T04:16:24.163353+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:rules-img-wrk2-image": {
@@ -325051,16 +325051,16 @@
         "since": "2026-10-31T07:18:55.041730+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:state-encoder-zero-dispatch": {
       "contributor-review": {
-        "scope": "6a12948d7515d8f49b251a70c4108f8ca10ac228",
-        "since": "2026-11-05T14:50:22.072974Z",
+        "scope": "dffb3d3c3f7850994b8059fad487b379d1943862",
+        "since": "2026-11-05T14:55:40.136006Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:licensecheck-go-digest-notices": {
@@ -325069,7 +325069,7 @@
         "since": "2026-11-02T16:53:35.881136+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:package-clang-format": {
@@ -325078,7 +325078,7 @@
         "since": "2026-11-02T08:21:11+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:declared-codespell": {
@@ -325087,7 +325087,7 @@
         "since": "2026-11-02T08:21:11+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:release-archives-versioned": {
@@ -325096,7 +325096,7 @@
         "since": "2026-10-31T10:28:33.920382+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:tcp-restore-send-deadlines": {
@@ -325105,7 +325105,7 @@
         "since": "2026-10-29T21:52:21.505470+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:mutable-overlay-poll-waiter": {
@@ -325114,7 +325114,7 @@
         "since": "2026-10-30T05:07:07.633004+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:proc-forwarding-mounts": {
@@ -325123,7 +325123,7 @@
         "since": "2026-10-30T17:32:27.326543+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:staged-release-tag": {
@@ -325132,7 +325132,7 @@
         "since": "2026-10-31T09:29:02.218795+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:tcp-sack-reneging": {
@@ -325141,7 +325141,7 @@
         "since": "2026-10-31T15:23:16.789097+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:native-gazelle-check": {
@@ -325150,7 +325150,7 @@
         "since": "2026-11-02T16:20:02.085486+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:checkpoint-memory-file-registration": {
@@ -325159,7 +325159,7 @@
         "since": "2026-10-31T18:05:07.150+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:buildkite-native-packages": {
@@ -325168,7 +325168,7 @@
         "since": "2026-11-03T09:40:14.321194+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:tcp-cookie-window-packets": {
@@ -325177,7 +325177,7 @@
         "since": "2026-10-31T19:36:28.936+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:tcp-retain-fixed-source-port": {
@@ -325186,7 +325186,7 @@
         "since": "2026-11-01T01:51:20.575751+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:hostinet-exit-linger": {
@@ -325195,7 +325195,7 @@
         "since": "2026-11-01T05:08:12.703055+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:rack-checkpoint-recovery": {
@@ -325204,7 +325204,7 @@
         "since": "2026-11-01T07:12:21.056431+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:tcp-cookie-accepted-sack": {
@@ -325213,7 +325213,7 @@
         "since": "2026-11-01T08:08:39.992196+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:tcp-established-icmp-errors": {
@@ -325222,7 +325222,7 @@
         "since": "2026-11-01T09:30:13.357522+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -325231,7 +325231,7 @@
         "since": "2026-11-01T11:45:39.922159+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:state-graph-object-frame-bounds": {
@@ -325240,7 +325240,7 @@
         "since": "2026-11-01T13:49:13.599008+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:tcp-report-read-hangups": {
@@ -325249,7 +325249,7 @@
         "since": "2026-11-01T13:56:22.287550+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:buildkite-native-nogo": {
@@ -325258,7 +325258,7 @@
         "since": "2026-11-03T07:06:47.467598+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:tcp-passive-syn-retry": {
@@ -325267,7 +325267,7 @@
         "since": "2026-11-02T00:04:15+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:futex-requeue-count": {
@@ -325276,7 +325276,7 @@
         "since": "2026-11-02T02:29:36+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:buildkite-direct-smoke": {
@@ -325285,7 +325285,7 @@
         "since": "2026-11-03T09:26:23.862437+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:buildkite-native-plugin": {
@@ -325294,7 +325294,7 @@
         "since": "2026-11-03T08:23:27.485264+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:state-graph-print-errors": {
@@ -325303,7 +325303,7 @@
         "since": "2026-11-02T22:54:43.336654+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:ipc-object-guard": {
@@ -325312,7 +325312,7 @@
         "since": "2026-11-03T06:24:21.015903+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:buildkite-native-container-tests": {
@@ -325321,7 +325321,7 @@
         "since": "2026-11-03T20:35:54.663277+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:buildkite-native-gazelle": {
@@ -325330,7 +325330,7 @@
         "since": "2026-11-04T08:51:09.081212+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:tcp-timeout-option-locks": {
@@ -325339,7 +325339,7 @@
         "since": "2026-11-05T10:01:38.371236+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:tcp-yield-after-queue-pass": {
@@ -325348,7 +325348,7 @@
         "since": "2026-11-05T09:28:02.581262+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:syscall-test-native-setup": {
@@ -325357,7 +325357,7 @@
         "since": "2026-11-05T09:18:41.504053+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:inotify-remove-unused-watch-owner": {
@@ -325366,7 +325366,7 @@
         "since": "2026-11-05T10:45:41.558885Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:kernfs-ordered-child-locks": {
@@ -325375,16 +325375,16 @@
         "since": "2026-11-05T12:16:49.790997Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     },
     "branch:review/runsc-lifecycle-fixtures": {
-      "contributor-review": {
+      "changes-requested": {
         "scope": "cd8f6c54149718fdca08f268658db4a1d1b4c247",
-        "since": "2026-11-05T14:11:43.746545Z",
+        "since": "2026-11-05T14:55:40.136006Z",
         "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-05T14:50:22.072974Z"
+        "qualifier": "Contributor",
+        "observedAt": "2026-11-05T14:55:40.136006Z"
       }
     }
   },
