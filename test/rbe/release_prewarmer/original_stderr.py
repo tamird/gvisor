@@ -37,6 +37,48 @@ DRIVER = re.compile(r"^\s*((?:[^\s:]+/)?(?:clang(?:\+\+)?(?:-[0-9]+)?|cc1plus|cc
 FAILURE = re.compile(r"\b(?:killed|segmentation fault|permission denied|not found|not supported|unable to|cannot |failed to|terminated|assertion failed)\b", re.I)
 
 
+LOCATION = re.compile(r"^(.+?):([0-9]{1,8}):([0-9]{1,6}):\s*((?:fatal )?error|note):\s*(.*)$", re.I)
+WORD = re.compile(r"[A-Za-z_][A-Za-z0-9_]{0,70}\b")
+
+
+def locations(lines):
+    errors, notes = [], []
+    within_error = False
+    for i, line in enumerate(lines):
+        if ": warning:" in line:
+            within_error = False
+        match = LOCATION.match(line)
+        if not match:
+            continue
+        name, lineno, column, level, msg = match.groups()
+        name = Path(name).name
+        if not re.fullmatch(r"[A-Za-z0-9_.+-]{1,100}", name):
+            continue
+        macro = re.search(r"\b(?:expanded from|expansion of|definition of) macro ['\"]([A-Za-z_]\w{0,70})['\"]", msg, re.I)
+        if level.lower() != "note":
+            within_error = True
+        if level.lower() == "note" and not (within_error and macro):
+            continue
+        loc = {"basename": name, "line": int(lineno), "column": int(column), "level": level.lower()}
+        if macro:
+            loc["macro"] = macro[1]
+        # Record only the identifiers surrounding Clang's actual source column.
+        # A caret marker or a numbered clang source excerpt must accompany it.
+        if i+2 < len(lines) and re.fullmatch(r"(?:\s*\| ?)?[ ~\t]*\^[ ~\t^]*", lines[i+2]):
+            excerpt = re.sub(r"^\s*\d+\s*\| ?", "", lines[i+1]).expandtabs(8)
+            fields = list(WORD.finditer(excerpt))
+            col = int(column)-1
+            if 0 <= col < len(excerpt):
+                near = [m for m in fields if m.end() > col-80 and m.start() < col+80]
+                nearby = sorted(near, key=lambda m: min(abs(m.start()-col), abs(m.end()-1-col)))[:5]
+                loc["nearby_identifiers"] = [m[0] for m in sorted(nearby, key=lambda m: m.start())]
+                loc["caret_identifiers"] = [m[0] for m in near if m.start() <= col < m.end()]
+        dest = notes if level.lower() == "note" else errors
+        if loc not in dest and len(dest) < 3:
+            dest.append(loc)
+    return errors + notes
+
+
 def projection(raw):
     text = raw.decode(errors="replace")
     norm, n_osc = OSC.subn("", text)
@@ -73,7 +115,7 @@ def projection(raw):
         entry = prefix + ": " + msg
         if entry not in errors and len(errors) < 3:
             errors.append(entry)
-    return {"errors": errors, "shape": shape, "first_known_tokens": tokens}
+    return {"errors": errors, "shape": shape, "first_known_tokens": tokens, "locations": locations(norm.splitlines())}
 
 
 def read(invocation, previous, row):
@@ -85,7 +127,7 @@ def read(invocation, previous, row):
     raw = fetch("file/download?" + urlencode({"invocation_id": invocation, "bytestream_url": resource}))
     assert len(raw) == size and hashlib.sha256(raw).hexdigest() == sha
     row.update(action_sha256=previous["action_sha256"], bytes=size, sha256=sha, exit=1, **projection(raw))
-    row["status"] = "READ" if row["errors"] else "NO_COMPILER_MESSAGE"
+    row["status"] = "READ" if row["errors"] and row["locations"] else "NO_COMPILER_LOCATION"
 
 
 def main():

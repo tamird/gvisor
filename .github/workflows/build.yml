@@ -1,7 +1,7 @@
 name: Read the four original seccheck compiler errors
 on:
   push:
-    branches: [qualification/seccheck-normalized-cpp-errors]
+    branches: [qualification/seccheck-compiler-locations]
 permissions:
   contents: read
   actions: read
@@ -19,9 +19,9 @@ jobs:
           umask 077
           task="$RUNNER_TEMP/release-rbe"
           mkdir -p "$task/harness" "$task/public"
-          test "$(git rev-parse HEAD:test/rbe/release_prewarmer/original_stderr.py)" = fd4889dd666374deb2c4fe44fa277c6d69037a1b
+          test "$(git rev-parse HEAD:test/rbe/release_prewarmer/original_stderr.py)" = 0f61cdc3452ad38adbc7fa6b7a3f115d6d73d15c
           cp test/rbe/release_prewarmer/original_stderr.py "$task/harness/"
-          echo 'f8ef806078611a2aeca212da6fd668c948f17b4579a08e2c46d0b82c0f0ca1ae  '"$task/harness/original_stderr.py" | sha256sum -c -
+          echo '6e0f520b5936f91d85f482841580430f193d1723b861000f01a56d4d44a396e7  '"$task/harness/original_stderr.py" | sha256sum -c -
           git fetch --quiet --depth=1 https://github.com/tamird/gvisor.git dc3dc3dba86bb008499de9d959398a64c27c40ad
           test "$(git rev-parse dc3dc3dba:test/rbe/release_prewarmer/cas_inputs.py)" = b5c6f23eb5e3b94aaf412cae2a76843eaf0fa180
           git show dc3dc3dba:test/rbe/release_prewarmer/cas_inputs.py > "$task/harness/cas_inputs.py"
