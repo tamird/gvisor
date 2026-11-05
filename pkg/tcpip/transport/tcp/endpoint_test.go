@@ -18,6 +18,8 @@ import (
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/sync"
+	"gvisor.dev/gvisor/pkg/tcpip/header"
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
 func TestSendBufferStateSnapshot(t *testing.T) {
@@ -47,5 +49,46 @@ func TestSendBufferStateSnapshot(t *testing.T) {
 	}
 	if got := snapshot.AutoTuneSndBufDisabled.Load(); got > 1 {
 		t.Errorf("snapshot AutoTuneSndBufDisabled = %d, want 0 or 1", got)
+	}
+}
+
+func TestProcessorYieldsAfterReadyEndpoints(t *testing.T) {
+	st := stack.New(stack.Options{})
+	defer st.Destroy()
+	var p processor
+	queueListener := func(packets int, consumed func()) *Endpoint {
+		ep := &Endpoint{stack: st}
+		ep.segmentQueue.ep = ep
+		ep.state.Store(uint32(StateListen))
+		for range packets {
+			s := newSegment()
+			s.flags = header.TCPFlagRst
+			s.pkt = stack.NewPacketBuffer(stack.PacketBufferOptions{OnRelease: consumed})
+			queued := ep.enqueueSegment(s)
+			s.DecRef()
+			if !queued {
+				t.Fatal("listener rejected an empty RST segment")
+			}
+		}
+		p.epQ.enqueue(ep)
+		return ep
+	}
+	var blockedPackets, readyPackets int
+	blocked := queueListener(1, func() { blockedPackets++ })
+	queueListener(maxSegmentsPerWake+1, func() { readyPackets++ })
+
+	func() {
+		blocked.StopWork()
+		defer blocked.ResumeWork()
+		if !p.drainQueue() {
+			t.Error("processor drained the queue while the first listener was locked")
+		}
+		if blockedPackets != 0 || readyPackets != maxSegmentsPerWake {
+			t.Errorf("before yielding: processed %d blocked and %d ready packets, want 0 and %d", blockedPackets, readyPackets, maxSegmentsPerWake)
+		}
+	}()
+
+	if p.drainQueue() || blockedPackets != 1 || readyPackets != maxSegmentsPerWake+1 {
+		t.Errorf("after unlocking: processed %d blocked and %d ready packets, want 1 and %d with the queue drained", blockedPackets, readyPackets, maxSegmentsPerWake+1)
 	}
 }

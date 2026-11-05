@@ -18,6 +18,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/rand"
+	"runtime"
 	"time"
 
 	"golang.org/x/time/rate"
@@ -77,6 +78,16 @@ func (q *epQueue) dequeue() *Endpoint {
 	}
 	q.mu.Unlock()
 	return nil
+}
+
+// back returns the last endpoint currently queued. Only the processor running
+// this queue removes entries, so this entry stays queued until it is visited.
+//
+// +checklocksexclude:q.mu
+func (q *epQueue) back() *Endpoint {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	return q.list.Back()
 }
 
 // empty returns true if the queue is empty, false otherwise.
@@ -151,12 +162,10 @@ func deliverAccepted(ep *Endpoint) bool {
 // handleConnecting is responsible for TCP processing for an endpoint in one of
 // the connecting states.
 //
+// +checklocksrelease:ep.mu
 // +checklocksexclude:ep.segmentQueue.mu
 // +checklocksexclude:ep.pendingProcessingMu
 func handleConnecting(ep *Endpoint) {
-	if !ep.TryLock() {
-		return
-	}
 	cleanup := func() {
 		ep.mu.Unlock()
 		ep.drainClosingSegmentQueue()
@@ -181,7 +190,6 @@ func handleConnecting(ep *Endpoint) {
 		cleanup()
 		return
 	}
-
 	if ep.EndpointState() == StateEstablished && ep.h.listenEP != nil {
 		ep.isConnectNotified = true
 		ep.stack.Stats().TCP.PassiveConnectionOpenings.Increment()
@@ -197,12 +205,9 @@ func handleConnecting(ep *Endpoint) {
 // handleConnected is responsible for TCP processing for an endpoint in one of
 // the connected states(StateEstablished, StateFinWait1 etc.)
 //
+// +checklocksrelease:ep.mu
 // +checklocksexclude:ep.segmentQueue.mu
 func handleConnected(ep *Endpoint) {
-	if !ep.TryLock() {
-		return
-	}
-
 	if !ep.EndpointState().connected() {
 		// If the endpoint has already transitioned out of a connected
 		// state then just return (only possible if it was closed or
@@ -248,12 +253,9 @@ func startTimeWait(ep *Endpoint) {
 // handleTimeWait is responsible for TCP processing for an endpoint in TIME-WAIT
 // state.
 //
+// +checklocksrelease:ep.mu
 // +checklocksexclude:ep.segmentQueue.mu
 func handleTimeWait(ep *Endpoint) {
-	if !ep.TryLock() {
-		return
-	}
-
 	if ep.EndpointState() != StateTimeWait {
 		// If the endpoint has already transitioned out of a TIME-WAIT
 		// state then just return (only possible if it was closed or
@@ -282,13 +284,10 @@ var warnRateLimiter = rate.NewLimiter(rate.Every(time.Second), 1)
 // handleListen is responsible for TCP processing for an endpoint in LISTEN
 // state.
 //
+// +checklocksrelease:ep.mu
 // +checklocksexclude:ep.segmentQueue.mu
 func handleListen(ep *Endpoint) {
-	if !ep.TryLock() {
-		return
-	}
 	defer ep.mu.Unlock()
-
 	if ep.EndpointState() != StateListen {
 		// If the endpoint has already transitioned out of a LISTEN
 		// state then just return (only possible if it was closed or
@@ -331,44 +330,67 @@ func (p *processor) start(wg *sync.WaitGroup) {
 				<-p.resumeChan
 			}
 		case w == &p.newEndpointWaker:
-			for {
-				ep := p.epQ.dequeue()
-				if ep == nil {
-					break
-				}
-				if ep.segmentQueue.empty() {
-					continue
-				}
-				switch state := ep.EndpointState(); {
-				case state.connecting():
-					handleConnecting(ep)
-				case state.connected() && state != StateTimeWait:
-					handleConnected(ep)
-				case state == StateTimeWait:
-					handleTimeWait(ep)
-				case state == StateListen:
-					handleListen(ep)
-				case state == StateError || state == StateClose:
-					// Try to redeliver any still queued
-					// packets to another endpoint or send a
-					// RST if it can't be delivered.
-					ep.mu.Lock()
-					if st := ep.EndpointState(); st == StateError || st == StateClose {
-						ep.drainClosingSegmentQueue()
-					}
-					ep.mu.Unlock()
-				default:
-					panic(fmt.Sprintf("unexpected tcp state in processor: %v", state))
-				}
-				// If there are more segments to process and the
-				// endpoint lock is not held by user then
-				// requeue this endpoint for processing.
-				if !ep.segmentQueue.empty() && !ep.isOwnedByUser() {
-					p.epQ.enqueue(ep)
-				}
+			for p.drainQueue() {
+				runtime.Gosched()
 			}
 		}
 	}
+}
+
+// drainQueue processes queued segments. After a lock miss it gives each
+// endpoint already in the queue one turn, then returns true so the lock
+// holder can run. Packets arriving during that pass cannot extend it.
+func (p *processor) drainQueue() bool {
+	var through *Endpoint
+	for ep := p.epQ.dequeue(); ep != nil; ep = p.epQ.dequeue() {
+		reachedTail := ep == through
+		if !ep.segmentQueue.empty() {
+			acquired := processEndpoint(ep)
+			// UnlockUser queues the endpoint itself when a syscall holds it.
+			if !ep.segmentQueue.empty() && !ep.isOwnedByUser() {
+				if !acquired && through == nil {
+					through = p.epQ.back()
+					reachedTail = through == nil
+				}
+				p.epQ.enqueue(ep)
+			}
+		}
+		if reachedTail {
+			return true
+		}
+	}
+	return false
+}
+
+// processEndpoint reports whether it acquired the endpoint lock.
+func processEndpoint(ep *Endpoint) bool {
+	state := ep.EndpointState()
+	if state == StateError || state == StateClose {
+		// Try to redeliver any still queued packets to another endpoint
+		// or send a RST if they can't be delivered.
+		ep.mu.Lock()
+		if st := ep.EndpointState(); st == StateError || st == StateClose {
+			ep.drainClosingSegmentQueue()
+		}
+		ep.mu.Unlock()
+		return true
+	}
+	if !ep.TryLock() {
+		return false
+	}
+	switch {
+	case state.connecting():
+		handleConnecting(ep)
+	case state.connected() && state != StateTimeWait:
+		handleConnected(ep)
+	case state == StateTimeWait:
+		handleTimeWait(ep)
+	case state == StateListen:
+		handleListen(ep)
+	default:
+		panic(fmt.Sprintf("unexpected tcp state in processor: %v", state))
+	}
+	return true
 }
 
 // pause pauses the processor loop.
