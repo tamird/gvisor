@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T12:57:21.696487Z",
+    "updatedAt": "2026-11-05T13:24:17.519774Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -10921,21 +10921,23 @@
       "id": "branch:state-primitive-array-storage",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/state-primitive-arrays-current",
-      "head": "f76d229c04d56c4a800f0e3561d36e75410f91a1",
+      "ref": "review/state-wire-array-fixtures",
+      "head": "e00f572e3deaea5f1ce6b455d8d72d7749e0f359",
       "title": "Capture primitive state arrays in typed storage",
       "group": "runtime",
-      "url": "https://github.com/tamird/gvisor/commit/f76d229c0",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-11-01T21:29:32+00:00",
-      "summary": "These array buffers serve the wire codec. The Nginx measurements below apply to wire-format checkpoints.\n\nPrimitive-array storage improved the Nginx checkpoint fixture on one AMD64 worker: decode 17.19→16.12 ms (−6.19%), encode 14.56→13.64 ms (−6.30%), and allocated bytes fell 9.26% and 13.29%, respectively. The sixteen paired AB/BA runs measured these two stages.",
+      "url": "https://github.com/tamird/gvisor/commit/e00f572e3",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-05T13:24:17.519774Z",
+      "summary": "The wire implementation was approved at 689706c88 and reparented at f76d229c0. Only the test revision needs review. On current master with #16718 applied, the original float32 and complex64 tests each read a 38-byte graph frame as one wire object and failed. The revision selects wire for five codec-specific tests and exercises the ordinary round trips with both engines. All seven selected native AMD64 tests passed, with 1,659 passing records and zero skips. Each engine ran 204 array and 612 slice round trips.\n\nThese array buffers serve the wire codec. The Nginx measurements below apply to wire-format checkpoints.\n\nPrimitive-array storage improved the Nginx checkpoint fixture on one AMD64 worker: decode 17.19→16.12 ms (−6.19%), encode 14.56→13.64 ms (−6.30%), and allocated bytes fell 9.26% and 13.29%, respectively. The sixteen paired AB/BA runs measured these two stages.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "f76d229c04d56c4a800f0e3561d36e75410f91a1",
-        "observedAt": "2026-10-30T01:33:59.333384+00:00",
-        "disposition": "Approved for automatic opening after prerequisites",
-        "nextAction": "Open the reviewed primitive-array change after #16718 lands. #16380 has landed; the reparented pkg/state diff changes only BUILD context.",
+        "sourceHead": "e00f572e3deaea5f1ce6b455d8d72d7749e0f359",
+        "observedAt": "2026-11-05T13:24:17.519774Z",
+        "disposition": "Test revision awaiting contributor review; implementation approval retained",
+        "nextAction": "Wait for review of the test-only diff and for signed-zero PR #16718 to land before opening the primitive-array PR. The wire payload loader in #16380 has landed.",
         "evidence": [
+          "https://github.com/tamird/gvisor/compare/1368393db...e00f572e3",
+          "https://github.com/tamird/gvisor/actions/runs/42034339074/artifacts/13417921774",
           "https://github.com/tamird/gvisor/commit/689706c8805c86a0c79e0cf09de80d0245f0dc8b",
           "https://github.com/google/gvisor/pull/16380#pullrequestreview-5659901910",
           "https://app.buildbuddy.io/invocation/8da1f7ff-38b9-42fc-9863-673bb171a228"
@@ -10943,6 +10945,18 @@
       },
       "inactive": false,
       "evidence": [
+        {
+          "label": "Test-only diff against the same rebased implementation",
+          "url": "https://github.com/tamird/gvisor/compare/1368393db...e00f572e3"
+        },
+        {
+          "label": "Original two float failures and all seven corrected tests on native AMD64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42034339074/artifacts/13417921774"
+        },
+        {
+          "label": "Recorded approval of the wire implementation",
+          "url": "https://github.com/tamird/gvisor/blob/7dd7af1208/registry.json"
+        },
         {
           "label": "Sixteen paired Nginx measurements, raw samples and benchstat",
           "url": "https://github.com/tamird/gvisor/actions/runs/40975839764/artifacts/12943782591"
@@ -10967,6 +10981,25 @@
         "after": {
           "head": "f76d229c04d56c4a800f0e3561d36e75410f91a1"
         }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "689706c8805c86a0c79e0cf09de80d0245f0dc8b",
+          "outcome": "approved",
+          "at": "2026-10-26T22:23:56.114433+00:00"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "e00f572e3deaea5f1ce6b455d8d72d7749e0f359",
+        "baseHead": "1368393db90cf7d97a3c94954880c98f452f74a0",
+        "url": "https://github.com/tamird/gvisor/compare/1368393db...e00f572e3",
+        "title": "Exercise the wire array tests with the intended codec",
+        "summary": "Approve the test-only revision e00f572e3 for the pending primitive-array change? The diff is against the identical implementation on current master with #16718 applied.",
+        "body": "The wire array tests depend on object counts, capture order and load receivers. Select the wire engine for these cases and restore the previous setting afterward. Run ordinary array and slice round trips with both wire and graph.",
+        "requestedAt": "2026-11-05T13:24:17.519774Z"
       }
     },
     {
@@ -67951,9 +67984,36 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-05T10:21:46.859804Z",
-      "summary": "Both distroless workers built the 231 selected runsc targets. AMD64 covered 229 on the base and two after applying the secfuzz generator. ARM64 fetched the pinned LLVM tools and built all 231 on 21a462def. Five static ARM64 ELF files were verified, including runsc and boot_test. Test and analyzer execution are tracked separately.",
+      "updatedAt": "2026-11-05T13:24:17.519774Z",
+      "summary": "Both remote architectures built all 231 selected runsc targets. A separate run requested 40 test targets per architecture. Of those, 31 passed, three passed with skips, five failed and one did not execute. Two additional container tests require KVM. The version test and six specutils cases have separate follow-up results.",
       "findings": [
+        {
+          "text": "On f35d72566, each distroless worker executed 39 of the 40 requested runsc test targets. AMD64 recorded 1,118 passing cases and ARM64 recorded 1,105. Each recorded 42 failures and 14 skips. The failed targets were boot, cmd, sandbox, specutils and version. The filter fuzz test did not execute. Both KVM-tagged container targets were excluded. The separate version check passed one case on each architecture at 89b55b4b6.",
+          "evidence": [
+            {
+              "label": "Original runsc results and separate version test on both workers",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42030254826/artifacts/13415219314"
+            }
+          ]
+        },
+        {
+          "text": "The first specutils prototype (1e68829fe, tested on ddbb47b66) passed all six selected process and readiness cases on each architecture. The revised test selects the helper process by an explicit argument instead of an environment variable; that revision needs its own qualification.",
+          "evidence": [
+            {
+              "label": "Six specutils cases per architecture on the first prototype",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42033516421/artifacts/13417087969"
+            }
+          ]
+        },
+        {
+          "text": "The recovered seccheck compiler diagnostics report “expected unqualified-id” at the generated stdin, stdout and stderr accessors in sentry.pb.h on both architectures. This explains a compile failure; running the original C++ peer and verifying its socket exchange is a separate check.",
+          "evidence": [
+            {
+              "label": "Original seccheck C++ action diagnostics and source locations",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42032585985/artifacts/13416129011"
+            }
+          ]
+        },
         {
           "text": "The ARM64 worker resolved the same pinned LLVM repository that failed in the first attempt, then built all 231 requested runsc targets. The original records identify 63 Go and three C link actions. Five linked files were checked for ELF architecture and static linkage. The 41 Go test targets and 114 analyzer wrappers are build coverage only.",
           "evidence": [
@@ -70120,8 +70180,20 @@
           ]
         }
       ],
-      "nextStep": "Qualify the syscall targets on the integration containing the source-built RSEQ helper and native test launcher. Keep build, test and guest execution counts separate. Verify the remaining Sentry link outputs against ELF bytes. Track the hermetic-llvm and rules_go fixes and check that BuildBuddy has deployed its empty-root fix before retrying a file-empty worker.",
+      "nextStep": "Qualify the revised specutils process helper, the remaining boot, cmd and sandbox failures, and the filter fuzz test on their own sources. Verify the seccheck example’s live socket exchange separately from the compiler diagnosis. Continue the separate syscall qualification with the source-built RSEQ helper and native test launcher. Count builds, executed tests and guest workloads separately. Verify the remaining Sentry link outputs against ELF bytes. Track the hermetic-llvm and rules_go fixes and check that BuildBuddy has deployed its empty-root fix before retrying a file-empty worker.",
       "evidence": [
+        {
+          "label": "Original runsc results and separate version test on both workers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42030254826/artifacts/13415219314"
+        },
+        {
+          "label": "Six specutils cases per architecture on the first prototype",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42033516421/artifacts/13417087969"
+        },
+        {
+          "label": "Original seccheck C++ action diagnostics and source locations",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42032585985/artifacts/13416129011"
+        },
         {
           "label": "Native ARM64 repository fetch, 231 remote builds, 66 link records and five static executable files",
           "url": "https://github.com/tamird/gvisor/actions/runs/42005499889/artifacts/13406282574"
@@ -72904,5 +72976,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T12:57:21.696487Z"
+  "updatedAt": "2026-11-05T13:24:17.519774Z"
 }
