@@ -81,6 +81,45 @@ save_restore_platforms = _save_restore_platforms
 # Tags.
 local_test_tags = _local_test_tags
 
+def freestanding_cc_binary(name, out, features = [], visibility = None, **kwargs):
+    """Links a C binary without the caller's allocator or sanitizer runtime.
+
+    Args:
+      name: Public target for the linked binary.
+      out: Filename required by the consumer.
+      features: Additional compiler or linker feature settings.
+      visibility: Visibility of the public target.
+      **kwargs: Other cc_binary arguments, including sources and link options.
+    """
+    cc_binary(
+        name = "_linked/" + out,
+        # Freestanding binaries supply their own entry point and runtime.
+        # Do not add either toolchain's hosted libraries or startup code.
+        features = [
+            "-coverage",
+            "-default_link_flags",
+            "-default_linker_libraries",
+            "-heap_partitioning",
+            "-pie",
+            "-static_link_cpp_runtimes",
+            "-static_linking_mode",
+            "-use_header_modules",
+            "-use_pthread",
+        ] + features,
+        linkstatic = True,
+        stamp = 0,
+        tcmalloc = False,
+        tags = ["manual"],
+        visibility = ["//visibility:private"],
+        **kwargs
+    )
+    freestanding_executable(
+        name = name,
+        binary = ":_linked/" + out,
+        out = out,
+        visibility = visibility,
+    )
+
 def go_binary(name, nogo = True, pure = False, static = False, x_defs = None, **kwargs):
     """Wraps the standard go_binary.
 
