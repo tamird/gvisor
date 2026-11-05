@@ -1,35 +1,44 @@
-name: CI
-
-"on":
+name: Check the rebased inotify watch callers
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/inotify-mask-create-rebased]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  inotify:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 115
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Build the exact source and run the watch cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          product=aab0e06b4cf72fe170423d2b70b9cbc3eb9d86a6
+          test "$(git rev-parse HEAD^)" = "$product"
+          test "$(git rev-parse "$product^")" = 90d4e2253f004cdc73a35dbc4050eab3e9a8495d
+          test "$(git rev-parse "$product^{tree}")" = 5011c3905ee81ce17243a204163e8a29e96aeed0
+          job="$RUNNER_TEMP/inotify"
+          mkdir -p "$job/bin" "$job/results"
+          cp .github/qualification/inotify_watch_rebase.py "$job/"
+          git -c advice.detachedHead=false switch --detach "$product"
+          test "$(cat .bazelversion)" = 9.3.1
+          curl --fail --silent --show-error --location https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$job/bin/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $job/bin/bazel" | sha256sum -c -
+          chmod 755 "$job/bin/bazel"
+          image=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          docker run --rm --cap-drop=NET_ADMIN --cap-drop=SYS_ADMIN --security-opt=no-new-privileges \
+            --entrypoint /usr/bin/env -v "$job:$job" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE" "$image" \
+            -i HOME=/root USER=root LANG=C.UTF-8 PATH="$job/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+            GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" \
+            CHECK_DIR="$job" python3 -B "$job/inotify_watch_rebase.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: inotify-watch-results
+          path: ${{ runner.temp }}/inotify/results/*.json
+          if-no-files-found: warn
