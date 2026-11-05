@@ -1,0 +1,18 @@
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+# Use precisely one disposable guest. This test does not build either candidate.
+sh_test(
+    name = "delegation",
+    size = "small",
+    srcs = ["delegation.sh"],
+    exec_properties = {
+        "test.EstimatedMemory": "6GiB",
+        "test.container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+        "test.dockerUser": "65534:65534",
+        "test.network": "off",
+        "test.recycle-runner": "false",
+        "test.workload-isolation-type": "firecracker",
+    },
+    tags = ["manual", "no-local", "no-cache"],
+    target_compatible_with = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+)
