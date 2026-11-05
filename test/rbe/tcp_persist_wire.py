@@ -1,4 +1,4 @@
-"""Check the original native, pre-fix and current PacketImpact reports."""
+"""Check the original pre-fix PacketImpact report against the two retained positives."""
 from datetime import datetime, timezone
 from decimal import Decimal
 import hashlib
@@ -54,7 +54,16 @@ def inspect(arm, row):
     row.update(source=source, sender=read_text(d, "sender"), target=target,
                native_exit=int(read_text(d, "exit")), started=read_text(d, "start"),
                execution_finished_at=read_text(d, "finish"), bazel=read_text(d, "version"))
-    row["build_diagnostics"] = diagnostics((d / "console").read_bytes())
+    console = (d / "console").read_bytes()
+    row["build_diagnostics"] = diagnostics(console)
+    progress = re.findall(rb"\[([0-9,]+) / ([0-9,]+)\]", console)
+    if progress:
+        done, total = progress[-1]
+        row["last_action_progress"] = [int(done.replace(b",", b"")), int(total.replace(b",", b""))]
+    row["configured_events"] = 0
+    row["completed_events"] = 0
+    row["reported_phases"] = [phase for phase in ("Computing main repo mapping", "Loading", "Analyzing", "Executing", "Building")
+                                   if phase.encode() + b":" in console]
     expected_target = PREFIX + ("native_test" if arm == "native" else "netstack_test")
     row["source_matched"] = (target == expected_target and
         source == os.environ["STOCK" if arm == "stock" else "PRODUCT"] and
@@ -71,6 +80,10 @@ def inspect(arm, row):
                 row["torn_event"] = True
                 continue
             ident = event.get("id", {})
+            if "targetConfigured" in ident:
+                row["configured_events"] += 1
+            if "targetCompleted" in ident:
+                row["completed_events"] += 1
             if "started" in event:
                 uuid = event["started"].get("uuid", "")
                 if re.fullmatch(r"[0-9a-f-]{36}", uuid):
@@ -155,19 +168,20 @@ def inspect(arm, row):
             row["status"] = "EXPECTED_FAILURE" if stock else "PASS"
 
 
-arms = {}
-for name in ("native", "stock", "fixed"):
-    row = {"status": "INCOMPLETE"}
-    arms[name] = row
-    try:
-        inspect(name, row)
-    except (OSError, ValueError, KeyError, TypeError, ET.ParseError) as error:
-        row["collection_error"] = type(error).__name__
-verified = all(row["status"] in ("PASS", "EXPECTED_FAILURE") for row in arms.values())
+stock = {"status": "INCOMPLETE"}
+arms = {"stock": stock}
+try:
+    inspect("stock", stock)
+except (OSError, ValueError, KeyError, TypeError, ET.ParseError) as error:
+    stock["collection_error"] = type(error).__name__
+verified = stock["status"] == "EXPECTED_FAILURE"
 unexpected = [arm for arm, row in arms.items() if row["status"].startswith("UNEXPECTED_")]
 finished = max((row["execution_finished_at"] for row in arms.values() if "execution_finished_at" in row), default=None)
 now = datetime.now(timezone.utc)
 result = {"status": "PASS" if verified else "FAIL" if unexpected else "INCOMPLETE", "arms": arms, "case": CASE,
+          "previous": {"run": 41993496783, "artifact": 13400808441,
+                       "zip_sha256": "10e9ce401f58da1a183b87dcc275a07722740c0b6aba179235b50febd3d87184",
+                       "verified_positive_arms": ["native", "fixed"], "stock_exit_before_test": 124},
           "carrier": os.environ["GITHUB_SHA"], "fixture_blob": "3bff303f79e9d546b16ed052bfcedba621ff702d",
           "placement_blob": "f1a56b130ff2e42ff7b746cf649c70dae244dce1", "expected": list(arms),
           "executed": [name for name, row in arms.items() if row.get("test_attempts")],

@@ -1,7 +1,7 @@
-name: Compare zero-window probes during application writes
+name: Verify the historical zero-window sender during application writes
 on:
   push:
-    branches: [qualification/tcp-persist-probe-writes]
+    branches: [qualification/tcp-persist-probe-historical]
 permissions:
   contents: read
 jobs:
@@ -18,14 +18,15 @@ jobs:
       GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 3, persist-credentials: false}
+        with: {fetch-depth: 4, persist-credentials: false}
       - name: Bind the unchanged production senders, fixture and isolated worker definition
         run: |
           set -euo pipefail
           root="$RUNNER_TEMP/persist"
           mkdir -p "$root"/{out,records,platform,bin}
           printf '{"status":"INCOMPLETE","phase":"bootstrap","executed":[]}\n' > "$root/out/verdict.json"
-          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD^)" = 7bdf2aa53a336652825c22daed1054aa6fcd989b
+          test "$(git rev-parse HEAD^^)" = "$PRODUCT"
           test "$(git rev-parse "$PRODUCT^")" = "$CURRENT"
           test "$(git diff --name-only "$CURRENT" "$PRODUCT")" = "$FIXTURE"
           test "$(git rev-parse "$PRODUCT:$FIXTURE")" = 3bff303f79e9d546b16ed052bfcedba621ff702d
@@ -34,6 +35,12 @@ jobs:
           test "$(git rev-parse "$merge^1")" = "$STOCK"
           test "$(git rev-parse "$merge^2" | cut -c1-9)" = 51b6df1b5
           test "$(git rev-parse "$STOCK:$FIXTURE")" = "$(git rev-parse "$CURRENT:$FIXTURE")"
+          for source in "$STOCK" "$PRODUCT"; do
+            test "$(git rev-parse "$source:test/packetimpact/testbench")" = e71ff31ec8b44145be15f036b99ab1c8205a1993
+            test "$(git rev-parse "$source:test/packetimpact/runner")" = 71482be95a872e63ed2e73776eb5797bcab7eae1
+            test "$(git rev-parse "$source:test/packetimpact/tests/BUILD")" = b2fc4eef018fe6f7647fe42096975e84e7cb6701
+          done
+          test "$(git rev-parse "$STOCK:images/default/bazelversion")" = 8540c676063d1685b4734d537d1385390a08986c
           props=7d8e856ba30ef0271690d13d2ddb1c07111a558a
           profile=0ee70efe6d52576b8f173b40ad6b7ac117da3b72
           git fetch --quiet --no-tags --depth=1 https://github.com/tamird/gvisor.git "$props" "$profile"
@@ -65,7 +72,7 @@ jobs:
             printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$root/private.bazelrc"
-      - name: Run the named PacketImpact case on Linux and both netstack revisions
+      - name: Run the named PacketImpact case only on its original pre-fix sender
         timeout-minutes: 58
         run: |
           set -euo pipefail
@@ -89,8 +96,8 @@ jobs:
             docker exec persist-compiler "$root/bin/bazel" --version > "$d/version"
             test "$(cat "$d/version")" = "bazel $version"
             date -u +%FT%T.%3NZ > "$d/start"
-            timeout -k 15s 18m docker exec persist-compiler "$root/bin/bazel" --bazelrc="$root/private.bazelrc" test \
-              --config=x86_64 --jobs=32 --strategy=TestRunner=remote --nocache_test_results --flaky_test_attempts=1 \
+            timeout -k 15s 50m docker exec persist-compiler "$root/bin/bazel" --bazelrc="$root/private.bazelrc" test \
+              --color=no --curses=no --show_progress_rate_limit=30 --config=x86_64 --jobs=32 --strategy=TestRunner=remote --nocache_test_results --flaky_test_attempts=1 \
               --test_sharding_strategy=disabled --test_output=errors --test_timeout=100 --test_env=GO_TEST_WRAP_TESTV=1 \
               '--test_filter=^TestZeroWindowProbeDuringWrites$' --build_event_json_file="$d/bep" "$label" > "$d/console" 2>&1 || rc=$?
             printf '%s\n' "$rc" > "$d/exit"
@@ -101,10 +108,7 @@ jobs:
             git restore --source=HEAD -- "$PROPS" "$FIXTURE"
             git diff --quiet HEAD --
           }
-          native=//test/packetimpact/tests:tcp_zero_window_probe_native_test
           netstack=//test/packetimpact/tests:tcp_zero_window_probe_netstack_test
-          runarm native "$PRODUCT" "$native" 9.3.1
-          runarm fixed "$PRODUCT" "$netstack" 9.3.1
           runarm stock "$STOCK" "$netstack" 8.8.1
       - name: Close the coordinator and remove its private configuration
         if: always()
@@ -134,6 +138,6 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.safe.outcome == 'success'
         with:
-          name: tcp-first-persist-probe
+          name: tcp-first-persist-probe-historical
           path: ${{ runner.temp }}/persist/out/verdict.json
           if-no-files-found: error
