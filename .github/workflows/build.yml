@@ -1,35 +1,136 @@
-name: CI
-
-"on":
+name: Build the remaining syscall binaries and launch scaffolds on paired remote workers
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/paired-rbe-syscalls-runtime]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  release:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 125
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Stage the existing pinned coordinator tools and reviewed reader
+        run: |
+          set -eu
+          umask 077
+          task="$RUNNER_TEMP/release-rbe"
+          mkdir -p "$task/bin" "$task/public" "$task/harness"
+          cp test/rbe/release_prewarmer/{BUILD,full.py,qualify.py,image_inventory.py} "$task/harness/"
+          cd "$task/harness"
+          sha256sum --check <<'SUMS'
+          ae1f23a11f3cb747fbec49a34c510c5ab9dcb75d06d94bfd4d9a49d50c629271  BUILD
+          d00bc352a704db4fa35cc855c47b89ad29bf04d9d57c3c927f2977262f5efb28  full.py
+          fa0a3d1a578b51ff29adbaf50f23c76c8c50e2e1613eeb8f01b432ace77907fe  qualify.py
+          a61838c5c848386f2dd0b9abc82cd502ff6031040e94e91f5b2da204ed9e5bfe  image_inventory.py
+          SUMS
+          curl --location --fail --silent --show-error --proto '=https' --proto-redir '=https' --max-time 90 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$task/bin/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $task/bin/bazel" | sha256sum -c -
+          curl --location --fail --silent --show-error --proto '=https' --proto-redir '=https' --max-time 90 https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-x86_64 -o "$task/bb"
+          echo "205fb4074012858c858ec357cb0cf1ed0b1fbf8707c5f385efd4abd52bb2cead  $task/bb" | sha256sum -c -
+          chmod 755 "$task/bin/bazel" "$task/bb" "$task/harness/full.py"
+          echo "$task/bin" >> "$GITHUB_PATH"
+          echo "REAL_BAZEL=$task/bin/bazel" >> "$GITHUB_ENV"
+          echo 'USE_BAZEL_VERSION=9.3.1' >> "$GITHUB_ENV"
+          echo 'PYTHONDONTWRITEBYTECODE=1' >> "$GITHUB_ENV"
+      - name: Bind the product and retain only the reviewed platform declarations
+        env: {PRODUCT: a91019aa5c04b4428cd75d6dc10e33dc1c2b5309}
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD^^)" = 3e7f20cd67e5ef4b3c6715a167d5fbc9fab357aa
+          git checkout --detach "$PRODUCT"
+          mkdir test/rbe/release_prewarmer
+          cp "$RUNNER_TEMP/release-rbe/harness/BUILD" test/rbe/release_prewarmer/BUILD
+          test "$(git hash-object test/rbe/release_prewarmer/BUILD)" = 0942c3a1b2856d6b31866ec8bb60e280ba38a011
+          test -z "$(git diff --name-only HEAD)"
+          test "$(cat .bazelversion)" = 9.3.1
+          bazel --version | grep -Fx 'bazel 9.3.1'
+      - name: Retrieve the original whole-graph owner ledger
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api repos/tamird/gvisor/actions/artifacts/13355668355/zip > "$RUNNER_TEMP/release-rbe/original.zip"
+      - name: Retain the existing native-only overlap receipt independently
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api repos/tamird/gvisor/actions/artifacts/13385085477/zip > "$RUNNER_TEMP/release-rbe/prior-native.zip"
+      - name: Retain the original paired failure and successful output identities
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api repos/tamird/gvisor/actions/artifacts/13408670826/zip > "$RUNNER_TEMP/release-rbe/prior-cohort.zip"
+      - name: Configure the trusted Bazel client for remote-only execution
+        id: remote
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          test -n "$BUILDBUDDY_API_KEY"
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --remote_download_regex=^bazel-out/(k8|aarch64)-fastbuild(-[A-Za-z0-9_-]+)?/bin/test/(syscalls/linux/(proc_net_test|pidfd_test|rseq/rseq)|runner/setup_container/setup_container|syscalls/proc_net_test_(native|runsc_systrap_directfs))$'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$RUNNER_TEMP/release-rbe/private.bazelrc"
+          test "$(stat -c %a "$RUNNER_TEMP/release-rbe/private.bazelrc")" = 600
+          unset BUILDBUDDY_API_KEY
+      - name: Build the 301 compiled and library roots on native AMD64
+        if: always() && !cancelled() && steps.remote.outcome == 'success'
+        timeout-minutes: 34
+        run: python3 "$RUNNER_TEMP/release-rbe/harness/full.py" amd64 compiled
+      - name: Build the 301 compiled and library roots on native ARM64
+        if: always() && !cancelled() && steps.remote.outcome == 'success'
+        timeout-minutes: 34
+        run: python3 "$RUNNER_TEMP/release-rbe/harness/full.py" arm64 compiled
+      - name: Build the 3424 syscall launch scaffolds on native AMD64
+        if: always() && !cancelled() && steps.remote.outcome == 'success'
+        timeout-minutes: 24
+        run: python3 "$RUNNER_TEMP/release-rbe/harness/full.py" amd64 scaffolds
+      - name: Build the 3424 syscall launch scaffolds on native ARM64
+        if: always() && !cancelled() && steps.remote.outcome == 'success'
+        timeout-minutes: 24
+        run: python3 "$RUNNER_TEMP/release-rbe/harness/full.py" arm64 scaffolds
+      - name: Reconcile the original per-architecture dispositions
+        if: always() && !cancelled()
+        run: python3 "$RUNNER_TEMP/release-rbe/harness/full.py" verdict
+      - name: Stop the client and remove its private configuration
+        if: always()
+        run: |
+          if test -x "$RUNNER_TEMP/release-rbe/bin/bazel"; then
+            timeout --signal=INT --kill-after=10 30 "$RUNNER_TEMP/release-rbe/bin/bazel" --nosystem_rc --nohome_rc shutdown >/dev/null 2>&1 || true
+          fi
+          rm -f "$RUNNER_TEMP/release-rbe/private.bazelrc"
+      - name: Verify the bounded typed public receipts
+        id: privacy
+        if: always()
+        env:
+          ACCESS: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PYTHON'
+          import json, os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"]) / "release-rbe" / "public"
+          allowed = {"amd64-compiled.json", "arm64-compiled.json", "amd64-scaffolds.json", "arm64-scaffolds.json", "verdict.json", "selection.json"}
+          files = list(root.iterdir())
+          key = os.environ["ACCESS"].encode()
+          assert key and files
+          assert sum(path.stat().st_size for path in files) <= 32 * 1024 * 1024
+          assert not (root.parent / "private.bazelrc").exists()
+          for path in files:
+              assert path.name in allowed and path.is_file() and not path.is_symlink()
+              assert path.stat().st_size <= 8 * 1024 * 1024
+              raw = path.read_bytes()
+              assert isinstance(json.loads(raw), dict)
+              assert not any(value in raw for value in (key, b"remote_header", b"bes_header", b"Authorization:", b"X-Amz-Signature", b"Bearer "))
+          PYTHON
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.privacy.outcome == 'success'
+        with:
+          name: paired-remote-syscalls
+          path: ${{ runner.temp }}/release-rbe/public/*.json
+          if-no-files-found: error
+          retention-days: 14
