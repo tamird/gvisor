@@ -1,35 +1,68 @@
-name: CI
-
-"on":
+name: Verify a directory-only scratch image layout
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/scratch-directory-layout]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  layout:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 27
+    env:
+      PRODUCT: fa91c2d64c4a4cb1a449e722de3c662071262104
+      PYTHONDONTWRITEBYTECODE: '1'
+      USE_BAZEL_VERSION: 9.3.1
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Bind the original source and the local-only Bazel client
+        run: |
+          set -eu
+          umask 077
+          d="$RUNNER_TEMP/directory-layout"
+          mkdir -p "$d/out"
+          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap","worker_action_executed":false,"registry_write":false}' > "$d/out/receipt.json"
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD^^)" = f35d725669ae45e7617cf66e7ceee2f0f6307490
+          test "$(git hash-object .github/qualification/directory_layout.py)" = 75ab95b6dc4c1aa9f5da7451a9340959a2658be1
+          cp .github/qualification/directory_layout.py "$d/reader.py"
+          git checkout --quiet --detach "$PRODUCT"
+          test "$(git rev-parse HEAD:test/rbe/directory_worker/verify.py)" = ca1268a75c447593b78a0f4de008893399075cc9
+          test "$(cat .bazelversion)" = 9.3.1
+          curl --retry 2 -fsSL --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Build the OCI layout and verify its indexed contents
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" \
+            USE_BAZEL_VERSION=9.3.1 PYTHONDONTWRITEBYTECODE=1 python3 -B "$RUNNER_TEMP/directory-layout/reader.py"
+      - name: Bound the public layout and typed receipt
+        id: receipt
+        if: always()
+        run: |
+          python3 -B - <<'PY'
+          import hashlib, json, os, re
+          from pathlib import Path
+          out = Path(os.environ["RUNNER_TEMP"]) / "directory-layout" / "out"
+          receipt = out / "receipt.json"
+          result = json.loads(receipt.read_bytes())
+          assert result["status"] in ("PASS", "BUILD_FAILED", "INCOMPLETE")
+          assert result["worker_action_executed"] is False and result["registry_write"] is False
+          allowed = {"receipt.json"}
+          if result["status"] == "PASS":
+              p = out / "layout.tar"
+              assert p.is_file() and not p.is_symlink() and p.stat().st_size == result["tar_bytes"] <= 64*1024
+              assert hashlib.sha256(p.read_bytes()).hexdigest() == result["tar_sha256"]
+              allowed.add("layout.tar")
+          assert {p.name for p in out.iterdir()} == allowed
+          assert receipt.is_file() and not receipt.is_symlink() and 0 < receipt.stat().st_size <= 32*1024
+          assert not re.search(rb'(?i)x-buildbuddy-api-key|authorization\s*[:=]|github_pat_|gh[pousr]_[a-z0-9]{20,}',receipt.read_bytes())
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.receipt.outcome == 'success'
+        with:
+          name: directory-only-oci-layout
+          path: ${{ runner.temp }}/directory-layout/out/
+          retention-days: 14
+          if-no-files-found: error
