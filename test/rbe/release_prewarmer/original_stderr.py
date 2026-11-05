@@ -1,6 +1,5 @@
 """Read the first compiler errors from four completed seccheck CppCompile actions."""
 
-import base64
 from collections import Counter
 import hashlib
 import json
@@ -24,64 +23,68 @@ def save():
     (ROOT / "public/original-stderr.json").write_text(json.dumps(evidence) + "\n")
 
 
-def executions(invocation, owner, digest=None):
-    selector = {"invocationId": invocation, "targetLabel": owner}
-    if digest:
-        selector["actionDigestHash"] = digest
-    data = json.loads(fetch("rpc/BuildBuddyService/GetExecution", {
-        "executionLookup": selector, "inlineExecuteResponse": bool(digest)}))
-    rows = data.get("execution", [])
-    assert len(rows) <= 100 and all(r.get("targetLabel") == owner for r in rows)
-    return [r for r in rows if r.get("actionMnemonic") == "CppCompile" and r.get("stage") in (4, "COMPLETED")
-            and r.get("exitCode") == 1 and int(r.get("status", {}).get("code", 0)) == 0]
+PROOF_SHA = "bbee035bffda780f1e218b02637490c1af1d449e861ec5a2af945b1b4143c8ac"
+WORDS = ("error", "fatal", "warning", "note", "clang++", "clang", "lld", "compiler", "wrapper", "preprocessor",
+         "file not found", "no such file", "not found", "cannot find", "unsupported", "unrecognized",
+         "undeclared", "unknown", "undefined", "invalid", "incompatible", "candidate", "required", "missing",
+         "unable", "failed", "exception", "killed", "permission denied", "segmentation fault",
+         "musl", "protobuf", "absl", "cstdlib", "include", "static assertion", "linker")
+CSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+OSC = re.compile(r"\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)")
+QUOTE = str.maketrans({"\u2018": "'", "\u2019": "'", "\u201c": '"', "\u201d": '"', "\u00a0": " "})
+LABEL = re.compile(r"(?<![\w#])((?:fatal |internal compiler )?error|fatal|exception|panic):\s*(.+)$", re.I)
+DRIVER = re.compile(r"^\s*((?:[^\s:]+/)?(?:clang(?:\+\+)?(?:-[0-9]+)?|cc1plus|cc1|ld(?:[.]lld)?|lld|collect2|cc-wrapper|compiler-wrapper|bazel-out/[^ ]*/cc_wrapper)[^:]*):\s*(.+)$", re.I)
+FAILURE = re.compile(r"\b(?:killed|segmentation fault|permission denied|not found|not supported|unable to|cannot |failed to|terminated|assertion failed)\b", re.I)
 
 
-def messages(raw):
-    # Preserve the compiler's diagnostic, not the source line, command, environment,
-    # working directory, include-stack paths, or provider output.
+def projection(raw):
+    text = raw.decode(errors="replace")
+    norm, n_osc = OSC.subn("", text)
+    norm, n_csi = CSI.subn("", norm)
+    norm = norm.translate(QUOTE)
     errors = []
-    for line in raw.decode(errors="replace").splitlines():
-        match = re.search(r"(?:^|: )(fatal error|error): (.+)$", line)
-        if not match:
+    shape = {"lines": 0, "csi": n_csi, "osc": n_osc, "colon_error": 0, "driver": 0, "rejected": 0}
+    # These vocabulary tokens reveal the shape of an unfamiliar diagnostic
+    # without publishing the original command, source excerpt or stderr.
+    tokens = []
+    for line in norm.splitlines():
+        shape["lines"] += 1
+        low = line.lower()
+        for word in sorted((w for w in WORDS if w in low and w not in tokens), key=low.index):
+            if len(tokens) < 14:
+                tokens.append(word)
+        match = LABEL.search(line)
+        if match:
+            mode, prefix, msg = "colon_error", match[1].lower(), match[2]
+        else:
+            match = DRIVER.match(line)
+            if not match or not FAILURE.search(match[2]):
+                continue
+            mode, prefix, msg = "driver", "compiler driver", match[2]
+        shape[mode] += 1
+        # Ignore source-code and command echoes even if they include "error:".
+        if (len(line) > 1500 or not msg.isascii() or not msg.isprintable() or
+                re.search(r"(?i)https?://|bearer |authorization|api[_-]?key|token[ =:]|x-amz|remote_header|bes_header", msg) or
+                re.match(r"\s*(?:\d+\s*\||\^|\||#(?:define|error))", line)):
+            shape["rejected"] += 1
             continue
-        msg = match[2]
-        if len(msg) > 400 or not msg.isascii() or not msg.isprintable():
-            continue
-        if re.search(r"(?i)https?://|bearer |authorization|api[_-]?key|token[ =:]|x-amz|remote_header|bes_header", msg):
-            continue
-        # Paths relative to source such as linux/limits.h are useful. Absolute
-        # paths and opaque hashes are not needed to distinguish missing headers.
         msg = re.sub(r"(?<![A-Za-z0-9_./-])/(?:[^\s'\"<>;:,)]+)", "<path>", msg)
-        msg = re.sub(r"[A-Za-z0-9_+/=-]{40,}", "<identifier>", msg)
-        entry = match[1] + ": " + msg
-        if entry not in errors:
+        msg = re.sub(r"[A-Za-z0-9_+/=-]{40,}", "<identifier>", msg)[:340]
+        entry = prefix + ": " + msg
+        if entry not in errors and len(errors) < 3:
             errors.append(entry)
-        if len(errors) == 3:
-            break
-    return errors
+    return {"errors": errors, "shape": shape, "first_known_tokens": tokens}
 
 
-def read(invocation, owner, row):
-    action, = executions(invocation, owner)
-    digest = action["actionDigest"]
-    sha = digest["hash"]
-    assert re.fullmatch(r"[0-9a-f]{64}", sha)
-    row["action_sha256"] = sha
-    match, = [r for r in executions(invocation, owner, sha) if r["actionDigest"] == digest]
-    response = match["executeResponse"]
-    result = response["result"]
-    assert not response.get("cachedResult") and int(response.get("status", {}).get("code", 0)) == 0 and result.get("exitCode") == 1
-    if result.get("stderrRaw"):
-        raw = base64.b64decode(result["stderrRaw"], validate=True)
-        assert 0 < len(raw) <= 131072
-    else:
-        stderr = result["stderrDigest"]
-        size = int(stderr.get("sizeBytes", 0))
-        assert 0 < size <= 131072 and re.fullmatch(r"[0-9a-f]{64}", stderr["hash"])
-        resource = "bytestream://remote.buildbuddy.io/blobs/" + stderr["hash"] + "/" + str(size)
-        raw = fetch("file/download?" + urlencode({"invocation_id": invocation, "bytestream_url": resource}))
-        assert len(raw) == size and hashlib.sha256(raw).hexdigest() == stderr["hash"]
-    row.update(bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest(), exit=1, errors=messages(raw))
+def read(invocation, previous, row):
+    sha, size = previous["sha256"], previous["bytes"]
+    assert 0 < size <= 131072 and re.fullmatch(r"[0-9a-f]{64}", sha)
+    assert previous["invocation"] == invocation and previous["exit"] == 1 and previous["status"] == "NO_COMPILER_MESSAGE"
+    assert re.fullmatch(r"[0-9a-f]{64}", previous["action_sha256"])
+    resource = "bytestream://remote.buildbuddy.io/blobs/" + sha + "/" + str(size)
+    raw = fetch("file/download?" + urlencode({"invocation_id": invocation, "bytestream_url": resource}))
+    assert len(raw) == size and hashlib.sha256(raw).hexdigest() == sha
+    row.update(action_sha256=previous["action_sha256"], bytes=size, sha256=sha, exit=1, **projection(raw))
     row["status"] = "READ" if row["errors"] else "NO_COMPILER_MESSAGE"
 
 
@@ -89,6 +92,14 @@ def main():
     save()
     path = ROOT / "original.zip"
     assert path.stat().st_size == 4192 and hashlib.sha256(path.read_bytes()).hexdigest() == ORIGINAL
+    proof_path = ROOT / "stderr-identities.zip"
+    assert proof_path.stat().st_size == 841 and hashlib.sha256(proof_path.read_bytes()).hexdigest() == PROOF_SHA
+    with zipfile.ZipFile(proof_path) as z:
+        assert z.namelist() == ["original-stderr.json"]
+        proof = json.loads(z.read("original-stderr.json"))
+    assert proof["source"] == SOURCE and proof["artifact"] == 13416191933 and proof["sha256"] == ORIGINAL
+    assert set(proof["arches"]) == set(ARCHES) and all(set(rows) == set(OWNERS) for rows in proof["arches"].values())
+    evidence.update(identity_artifact=13415703414, identity_zip_sha256=PROOF_SHA)
     with zipfile.ZipFile(path) as archive:
         assert set(archive.namelist()) == {"amd64.json", "arm64.json", "gnu.json", "verdict.json"}
         for arch, invocation in ARCHES.items():
@@ -100,7 +111,7 @@ def main():
             for owner in OWNERS:
                 row = rows[owner] = {"invocation": invocation, "status": "INCOMPLETE"}
                 try:
-                    read(invocation, owner, row)
+                    read(invocation, proof["arches"][arch][owner], row)
                 except (AssertionError, OSError, KeyError, TypeError, ValueError) as err:
                     row.update(error=type(err).__name__, http=getattr(err, "code", None))
                 save()

@@ -1,7 +1,7 @@
 name: Read the four original seccheck compiler errors
 on:
   push:
-    branches: [qualification/seccheck-original-cpp-errors]
+    branches: [qualification/seccheck-normalized-cpp-errors]
 permissions:
   contents: read
   actions: read
@@ -19,9 +19,9 @@ jobs:
           umask 077
           task="$RUNNER_TEMP/release-rbe"
           mkdir -p "$task/harness" "$task/public"
-          test "$(git rev-parse HEAD:test/rbe/release_prewarmer/original_stderr.py)" = df5c33ebbf394b46a6eccee414b9e2f4ebba959f
+          test "$(git rev-parse HEAD:test/rbe/release_prewarmer/original_stderr.py)" = fd4889dd666374deb2c4fe44fa277c6d69037a1b
           cp test/rbe/release_prewarmer/original_stderr.py "$task/harness/"
-          echo '7d2d777cea27c5e65309637f6f83443a08d7f7d2334a7b5530b84c98ec77fcd2  '"$task/harness/original_stderr.py" | sha256sum -c -
+          echo 'f8ef806078611a2aeca212da6fd668c948f17b4579a08e2c46d0b82c0f0ca1ae  '"$task/harness/original_stderr.py" | sha256sum -c -
           git fetch --quiet --depth=1 https://github.com/tamird/gvisor.git dc3dc3dba86bb008499de9d959398a64c27c40ad
           test "$(git rev-parse dc3dc3dba:test/rbe/release_prewarmer/cas_inputs.py)" = b5c6f23eb5e3b94aaf412cae2a76843eaf0fa180
           git show dc3dc3dba:test/rbe/release_prewarmer/cas_inputs.py > "$task/harness/cas_inputs.py"
@@ -29,7 +29,10 @@ jobs:
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api repos/tamird/gvisor/actions/artifacts/13416191933/zip > "$RUNNER_TEMP/release-rbe/original.zip"
+        run: |
+          set -eu
+          gh api repos/tamird/gvisor/actions/artifacts/13416191933/zip > "$RUNNER_TEMP/release-rbe/original.zip"
+          gh api repos/tamird/gvisor/actions/artifacts/13415703414/zip > "$RUNNER_TEMP/release-rbe/stderr-identities.zip"
       - name: Read only the four original CppCompile stderr streams
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
