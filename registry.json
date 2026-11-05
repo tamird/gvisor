@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T06:07:04.940311+00:00",
+    "updatedAt": "2026-11-05T06:27:21.503359+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -50331,6 +50331,48 @@
         ]
       },
       "number": 16999
+    },
+    {
+      "id": "pr:17023",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17023,
+      "ref": "spurious-rto-resume-unsent",
+      "head": "4cef606678b6d75bf62c4172ac84d035ba9b88fb",
+      "title": "Review fast retransmit after a partial first ACK",
+      "url": "https://github.com/google/gvisor/pull/17023",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-05T06:27:21.503359+00:00",
+      "summary": "The author’s full-first-ACK control retransmitted segment 3. With only half of segment 1 acknowledged at first, the sender emitted no repair while the manual retransmission clock stayed fixed. Both cases then acknowledged segments 1 and 2 and newly SACKed segments 4 through 6. One uncached native AMD64 Bazel test attempt recorded the control passing and the partial-ACK case failing, with no skips.",
+      "evidence": [
+        {
+          "label": "Recovery decision after a spurious timeout",
+          "url": "https://github.com/google/gvisor/blob/4cef60667/pkg/tcpip/transport/tcp/snd.go#L1275"
+        },
+        {
+          "label": "Six-segment test with full and partial first ACKs",
+          "url": "https://github.com/tamird/gvisor/commit/7a60344d2"
+        },
+        {
+          "label": "Original packet test: full ACK passed, partial ACK failed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41979464545/artifacts/13393527468"
+        },
+        {
+          "label": "SACK evidence used to infer loss",
+          "url": "https://www.rfc-editor.org/rfc/rfc6675.html#section-4"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "review",
+        "head": "4cef606678b6d75bf62c4172ac84d035ba9b88fb",
+        "url": "https://github.com/google/gvisor/pull/17023",
+        "title": "Post the partial-first-ACK finding on #17023",
+        "requestedAt": "2026-11-05T06:27:21.503359+00:00",
+        "summary": "Post this one inline comment on pkg/tcpip/transport/tcp/snd.go:1275 (RIGHT) at the tested commit?",
+        "body": "If the first ACK covers half of the retransmitted segment, this leaves `spuriousTimeoutResumed` false. In [your six-segment test with that one change](https://github.com/tamird/gvisor/commit/7a60344d2), the next ACK still covers segments 1 and 2, and three duplicate ACKs then newly SACK segments 4 through 6. The full-ACK control retransmitted segment 3; the half-ACK case sent nothing with the retransmission clock held fixed. Could we honor that new SACK evidence once the retransmitted bytes have been cumulatively acknowledged? [Packet test results](https://github.com/tamird/gvisor/actions/runs/41979464545/artifacts/13393527468).\n\nPosted by Codex on behalf of @tamird."
+      }
     }
   ],
   "edges": [
