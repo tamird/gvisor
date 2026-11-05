@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T07:55:52.812536+00:00",
+    "updatedAt": "2026-11-05T08:06:56.615470+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -50395,6 +50395,40 @@
         "summary": "Post this one inline comment on pkg/tcpip/transport/tcp/snd.go:1275 (RIGHT) at the tested commit?",
         "body": "If the first ACK covers half of the retransmitted segment, this leaves `spuriousTimeoutResumed` false. In [your six-segment test with that one change](https://github.com/tamird/gvisor/commit/7a60344d2), the next ACK still covers segments 1 and 2, and three duplicate ACKs then newly SACK segments 4 through 6. The full-ACK control retransmitted segment 3; the half-ACK case sent nothing with the retransmission clock held fixed. Could we honor that new SACK evidence once the retransmitted bytes have been cumulatively acknowledged? [Packet test results](https://github.com/tamird/gvisor/actions/runs/41979464545/artifacts/13393527468).\n\nPosted by Codex on behalf of @tamird."
       }
+    },
+    {
+      "id": "branch:tcp-timeout-option-locks",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/tcp-timeout-option-locks",
+      "head": "44d1590083bf8e479a597f787a2fa731cf0a318a",
+      "title": "Check the locks on TCP timeout socket options",
+      "url": "https://github.com/tamird/gvisor/commit/44d159008",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-05T08:06:56.615470+00:00",
+      "summary": "Checklocks reported each unlocked getter on AMD64 and ARM64. With the guards in place, both reports were clean. The results collector expected a different spelling of the mutex and marked the job incomplete. The original log records all six diagnostics. Only the comments were reworded after the run.",
+      "evidence": [
+        {
+          "label": "Six diagnostics at the unlocked getters",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41990824589/job/127122377531"
+        },
+        {
+          "label": "Guarded and unguarded runs, including the collector mismatch",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41990824589/artifacts/13397499747"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "44d1590083bf8e479a597f787a2fa731cf0a318a",
+        "baseHead": "90d4e2253f004cdc73a35dbc4050eab3e9a8495d",
+        "url": "https://github.com/tamird/gvisor/commit/44d159008",
+        "title": "Check the locks on TCP timeout socket options",
+        "requestedAt": "2026-11-05T08:06:56.615470+00:00",
+        "summary": "Open a standalone PR to check the locks on the three TCP timeout options?",
+        "body": "Socket option calls take the endpoint mutex when changing the user\ntimeout, deferred accept interval, or FIN-WAIT-2 linger timeout. The\nTCP handshake, retransmission and close paths read those values under\nthe same mutex. Annotate the fields so checklocks can flag an unlocked\naccess."
+      }
     }
   ],
   "edges": [
@@ -69910,7 +69944,7 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-03T06:24:21.015903+00:00",
+      "updatedAt": "2026-11-05T08:06:56.615470+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
@@ -70128,6 +70162,19 @@
             {
               "label": "Normal analyzer test on the shared worker",
               "url": "https://github.com/tamird/gvisor/actions/runs/41349697013/artifacts/13100777899"
+            }
+          ]
+        },
+        {
+          "text": "Checklocks can verify the endpoint mutex on the user timeout, deferred accept and FIN-WAIT-2 linger interval. Removing the locks from the three getters produced three diagnostics per architecture.",
+          "evidence": [
+            {
+              "label": "Six diagnostics at the unlocked getters",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41990824589/job/127122377531"
+            },
+            {
+              "label": "Guarded and unguarded runs, including the collector mismatch",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41990824589/artifacts/13397499747"
             }
           ]
         }
@@ -72277,5 +72324,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T07:55:52.812536+00:00"
+  "updatedAt": "2026-11-05T08:06:56.615470+00:00"
 }
