@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T03:53:15.523503+00:00",
+    "updatedAt": "2026-11-05T04:16:24.647858+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -67296,8 +67296,8 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-05T03:53:15.523503+00:00",
-      "summary": "The AMD64 DPDK archive built on a worker image containing only /hello. Both a zero-layer image and an image with one file-empty layer failed during worker setup, before the probe or DPDK ran. The deployed executor revision is unknown. A separate native build completed 166 C++ targets. With the corrected LLVM generator, proc_net_test also builds in strict AMD64 and ARM64 sandboxes. The strict AMD64 runsc build failed before linking; the full graph remains incomplete.",
+      "updatedAt": "2026-11-05T04:16:24.647858+00:00",
+      "summary": "The AMD64 DPDK archive built on a worker image containing only /hello. Both a zero-layer image and an image with one file-empty layer failed during worker setup, before the probe or DPDK ran. The deployed executor revision is unknown. A separate native build completed 166 C++ targets. With the corrected LLVM generator, proc_net_test also builds in strict AMD64 and ARM64 sandboxes. The strict AMD64 runsc build now reaches Nogo. Six configurations of its standard-library check forbid the only permitted sandbox strategy. The build produced no runsc binary; the full graph remains incomplete.",
       "findings": [
         {
           "text": "On a bare Linux AMD64 worker, DPDK’s native Make build for static musl generated its own driver metadata. The separate Bazel helper and configuration targets left the build graph. The helper and header were byte-identical to the separate builds. Both archives contained the same 148 ordered members, 1,153 external symbols and three driver records. The archives differed in bytes. The check covered the build and archive contents.",
@@ -69150,7 +69150,7 @@
           ]
         },
         {
-          "text": "The production Build everything selection is //... with --build_tag_filters=-network_plugins. On fork integration f876b5047, the credential-free native AMD64 build exited 124 at 75 minutes: 2,098 targets completed successfully, one licensecheck_test compile failed, and 5,667 of the 7,766 selected targets had no completion record. The full build is INCOMPLETE; no tests ran and this was not RBE.\n\nFork-only 87e5ce851 repairs that compile. Its separate native licensecheck_test run passed 44 cases and failed TestLicensePolicy. All 21 catalog rows match the original Fetch result; neither catalog regeneration nor changes to approved exceptions are warranted. The classifier remains on the maintainer hold in #15146. This package result does not complete the full build.\n\nFork graph 9e6e8fa9c incorporates release staging. It adds the landed declared release-copy rule to 87e5ce851; the rule is identical to upstream, and the nine-file layout retains netgofer. Earlier qualification executed nine copies per architecture on its own source. The 75-minute full-graph result above predates this addition; the updated graph has no full-build completion result.\nOn 9e6e8fa9c, the native AMD64 build completed 166 previously unaccounted syscall targets (149 C++ binaries and 17 libraries). It ran no tests. On the same worker, proc_net_test initially failed in the strict Linux sandbox: Bazel could not start the declared CppModuleMap generator. The executable was present but required /lib64/ld-linux-x86-64.so.2. The ordinary native build could start it.\n\nUpstream hermetic-llvm commit eb198127b builds that generator with static musl on Linux. Fork 9636c0329 updates only the LLVM pin. In the strict AMD64 sandbox the declared generator had no interpreter or shared library dependencies and produced the 4,526-header module map. The declared compiler and linker both ran, producing a proc_net_test binary byte-identical to the ordinary build. This verifies one target under the strict sandbox. The full production build remains incomplete. On the native Ubuntu 24.04 ARM64 runner, both sandbox preflight controls failed at mount with permission denied. No ARM64 target was analyzed, built, or tested in that run. The same preflight passed on native Ubuntu 22.04 ARM64. Its first configuration query succeeded; the collector stopped on the expected NO_BUILD record before compilation. With the reader corrected, the ARM64 generator had no interpreter or shared library dependencies and produced 4,463 headers. The compiler and linker then produced the 6,690,128-byte AArch64 proc_net_test ELF. All three actions ran uncached in the strict sandbox. No tests ran.\n\nOn 9636c0329 the separate strict AMD64 //runsc:runsc build failed before linking. Four fresh actions reported ENOENT: the Protobuf authenticity check and two Gofer seccomp filter genrules tried /bin/bash, and rules_go’s SDK builder tried binary_wrapper.sh. Analysis also found no-sandbox requirements on six GoStaticAnalysis owners and one GoStandardLibraryAnalysis owner; none of the four observed failures was a Nogo action.",
+          "text": "The production Build everything selection is //... with --build_tag_filters=-network_plugins. On fork integration f876b5047, the credential-free native AMD64 build exited 124 at 75 minutes: 2,098 targets completed successfully, one licensecheck_test compile failed, and 5,667 of the 7,766 selected targets had no completion record. The full build is INCOMPLETE; no tests ran and this was not RBE.\n\nFork-only 87e5ce851 repairs that compile. Its separate native licensecheck_test run passed 44 cases and failed TestLicensePolicy. All 21 catalog rows match the original Fetch result; neither catalog regeneration nor changes to approved exceptions are warranted. The classifier remains on the maintainer hold in #15146. This package result does not complete the full build.\n\nFork graph 9e6e8fa9c incorporates release staging. It adds the landed declared release-copy rule to 87e5ce851; the rule is identical to upstream, and the nine-file layout retains netgofer. Earlier qualification executed nine copies per architecture on its own source. The 75-minute full-graph result above predates this addition; the updated graph has no full-build completion result.\nOn 9e6e8fa9c, the native AMD64 build completed 166 previously unaccounted syscall targets (149 C++ binaries and 17 libraries). It ran no tests. On the same worker, proc_net_test initially failed in the strict Linux sandbox: Bazel could not start the declared CppModuleMap generator. The executable was present but required /lib64/ld-linux-x86-64.so.2. The ordinary native build could start it.\n\nUpstream hermetic-llvm commit eb198127b builds that generator with static musl on Linux. Fork 9636c0329 updates only the LLVM pin. In the strict AMD64 sandbox the declared generator had no interpreter or shared library dependencies and produced the 4,526-header module map. The declared compiler and linker both ran, producing a proc_net_test binary byte-identical to the ordinary build. This verifies one target under the strict sandbox. The full production build remains incomplete. On the native Ubuntu 24.04 ARM64 runner, both sandbox preflight controls failed at mount with permission denied. No ARM64 target was analyzed, built, or tested in that run. The same preflight passed on native Ubuntu 22.04 ARM64. Its first configuration query succeeded; the collector stopped on the expected NO_BUILD record before compilation. With the reader corrected, the ARM64 generator had no interpreter or shared library dependencies and produced 4,463 headers. The compiler and linker then produced the 6,690,128-byte AArch64 proc_net_test ELF. All three actions ran uncached in the strict sandbox. No tests ran.\n\nOn 9636c0329 the separate strict AMD64 //runsc:runsc build failed before linking. Four fresh actions reported ENOENT: the Protobuf authenticity check and two Gofer seccomp filter genrules tried /bin/bash, and rules_go’s SDK builder tried binary_wrapper.sh. Analysis also found no-sandbox requirements on six GoStaticAnalysis owners and one GoStandardLibraryAnalysis owner; none of the four observed failures was a Nogo action.\n\nFork integration c4361dee1 cleared all four earlier host-shell failures. It incorporates the loader change from #16590, which removes one Gofer filter genrule from the configured build and expands the stub instead of invoking a shell. The Protobuf version check and the rules_go SDK builder also ran with declared tools. The check rejected an incompatible protoc in a separate control. The build then stopped on 211 GoImports actions that tried to start a generated /bin/sh wrapper.\n\nIntegration 24d291a8f adds the approved stateify change from #16710. Stateify now selects and formats its own imports. The production build ran 211 of the 212 configured GoStateify actions. All 211 succeeded, and the build configured and ran zero GoImports actions. A separate generated file contained the time import under its cross-file alias, the aliased type, and both save and load calls.\n\nThe same strict AMD64 runsc build recorded 785 successful uncached linux-sandbox spawns. Six configurations of //tools/nogo:stdlib failed before execution: each GoStandardLibraryAnalysis action declares no-sandbox, and Bazel reported NO_USABLE_STRATEGY_FOUND. The diagnostic reader missed the wording in the console and marked its verification incomplete; all six action records retain the structured error. Make exited 2 and Bazel exited 1. The release did not link, and no tests ran.",
           "evidence": [
             {
               "label": "Production Build everything job",
@@ -69239,6 +69239,38 @@
             {
               "label": "Strict native ARM64 module map, compile, link and AArch64 binary",
               "url": "https://github.com/tamird/gvisor/actions/runs/41963773903/artifacts/13386921777"
+            },
+            {
+              "label": "Fork integration with declared loader and bootstrap tools",
+              "url": "https://github.com/tamird/gvisor/commit/c4361dee1"
+            },
+            {
+              "label": "Generate seccomp program loaders without a shell",
+              "url": "https://github.com/google/gvisor/pull/16590"
+            },
+            {
+              "label": "Four earlier host-shell failures cleared; 211 GoImports actions failed",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41964322552/artifacts/13387461031"
+            },
+            {
+              "label": "Generate checkpoint methods without a host shell",
+              "url": "https://github.com/google/gvisor/pull/16710"
+            },
+            {
+              "label": "Fork integration of the approved stateify change",
+              "url": "https://github.com/tamird/gvisor/commit/24d291a8f"
+            },
+            {
+              "label": "211 stateify actions passed; six Nogo configurations lacked a usable strategy",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41965714024/artifacts/13386814324"
+            },
+            {
+              "label": "Existing Nogo package and standard-library sandboxing proposal",
+              "url": "https://tamird.github.io/gvisor/#branch%3Anogo-sandbox-actions"
+            },
+            {
+              "label": "rules_go: expose SDK commands as executable targets",
+              "url": "https://github.com/bazel-contrib/rules_go/pull/4772"
             }
           ]
         },
@@ -69260,7 +69292,7 @@
           ]
         }
       ],
-      "nextStep": "Confirm the deployed executor contains the zero-lowerdir guard from BuildBuddy #14022 before repeating an empty-image probe. One physically present but file-empty layer did not change the result. Keep the separate full-graph build and #15146 license-policy hold distinct.",
+      "nextStep": "For the strict runsc build, follow the existing Nogo sandboxing proposal and rules_go #4772. The analyzers need a declared SDK objdump for the execution platform so they can run in a sandbox without rebuilding it for each action. Once the tool is available, check //tools/nogo:stdlib and the dependent runsc build under the same strict strategy. For the empty worker image, confirm the deployed executor contains the zero-lowerdir guard from BuildBuddy #14022 before repeating the probe. The #15146 license-policy hold is separate.",
       "evidence": [
         {
           "label": "Eight shared-memory cases on native AMD64 and ARM64 scratch workers",
