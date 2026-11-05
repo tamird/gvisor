@@ -1,35 +1,152 @@
-name: CI
-
-"on":
+name: Run TestExample with its declared GNU runtime on the empty workers
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/seccheck-runtime-layer-location]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  release:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 92
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 4}
+      - name: Stage the existing pinned coordinator tools and reviewed reader
+        run: |
+          set -eu
+          umask 077
+          task="$RUNNER_TEMP/release-rbe"
+          mkdir -p "$task/bin" "$task/public" "$task/harness"
+          cp test/rbe/release_prewarmer/{BUILD,full.py,qualify.py,image_inventory.py,native_artifacts.py,wrapper.bzl,runtime_inputs.py} "$task/harness/"
+          cd "$task/harness"
+          sha256sum --check <<'SUMS'
+          8cda98711b2810025eca67fe657d809aa9fdba9100990ea067980f48538f8ac2  BUILD
+          79e0e73f1b3e7bec722ff1ab7945c9275947a4a5a9b20a6b3859e16723210b55  full.py
+          9c52435db8655acb5412e983df0577ca1dc28535b19fa079620c7d3762e6a338  runtime_inputs.py
+          67ac7e13ab62fa83e78ffa3fc3fcde1f1179e62df7162d20858ff8b16fdd4ad3  qualify.py
+          a61838c5c848386f2dd0b9abc82cd502ff6031040e94e91f5b2da204ed9e5bfe  image_inventory.py
+          e547b7de0629c7fb8d42b0ee62554c9c315152b037f48ef658820d61e9bdbaa8  native_artifacts.py
+          710d8a57ec8fe18f0c81b57b5627ab41b9784e0546a95b892a8838df9510b32d  wrapper.bzl
+          SUMS
+          reporter=c7606e0bf9b6cc89bfaaad56bd9e294e411f3f45
+          for name in qualification_report unit_matrix; do
+            curl --proto '=https' --fail --silent --show-error --max-time 90 "https://raw.githubusercontent.com/tamird/gvisor/$reporter/test/rbe/$name.py" -o "$name.py"
+          done
+          test "$(git hash-object --no-filters qualification_report.py)" = c2303e17753a1e836a5a254fbb0d0bd1fb07f854
+          test "$(git hash-object --no-filters unit_matrix.py)" = d01d9e319084e18ea2928671e417e1b4e86c4954
+          curl --location --fail --silent --show-error --proto '=https' --proto-redir '=https' --max-time 90 https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-x86_64 -o "$task/bb"
+          echo "205fb4074012858c858ec357cb0cf1ed0b1fbf8707c5f385efd4abd52bb2cead  $task/bb" | sha256sum -c -
+          chmod 755 "$task/bb"
+          echo "$task/bin" >> "$GITHUB_PATH"
+          echo "REAL_BAZEL=$task/bin/bazel" >> "$GITHUB_ENV"
+          echo 'PYTHONDONTWRITEBYTECODE=1' >> "$GITHUB_ENV"
+      - name: Reuse the already qualified static-wrapper Bazel supplier
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          task="$RUNNER_TEMP/release-rbe"
+          gh api repos/tamird/gvisor/actions/artifacts/13078732581/zip > "$task/supplier.zip"
+          gh api repos/tamird/gvisor/actions/artifacts/13413349620/zip > "$task/sentry-ledger.zip"
+          gh api repos/tamird/gvisor/actions/artifacts/13100242102/zip > "$task/images.zip"
+          unset GH_TOKEN
+          echo "993e832b8f926876f2b935e97af3cc50493a507e79ed80d1da32309f00e94619  $task/supplier.zip" | sha256sum -c -
+          python3 - <<'PYTHON'
+          import hashlib, os, json, zipfile
+          from pathlib import Path
+          task = Path(os.environ["RUNNER_TEMP"]) / "release-rbe"
+          with zipfile.ZipFile(task / "supplier.zip") as bundle:
+              item = json.loads(bundle.read("native-package-evidence/supplier.json"))
+              assert item["status"] == "PASS" and item["source"] == "c2f5f79dce24877679cede14b85666b7ca65c6de"
+              binary = bundle.read("bazel-candidate")
+          assert hashlib.sha256(binary).hexdigest() == item["binary_sha256"] == "556164c2874fc66cdac3a32b53f862e705e9b9643c0ad3dea12880c97687d250"
+          client = task / "bin" / "bazel"
+          client.write_bytes(binary)
+          client.chmod(0o755)
+          PYTHON
+      - name: Bind the product and retain only the reviewed platform declarations
+        env: {PRODUCT: c70b294365993a0eea4e787a3cea6f2466d4014f}
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD^^)" = f35d725669ae45e7617cf66e7ceee2f0f6307490
+          test "$(git diff --name-only HEAD^^ HEAD^ | tr '\n' ' ')" = 'pkg/sentry/seccheck/sinks/remote/BUILD pkg/sentry/seccheck/sinks/remote/remote_test.go '
+          test "$(git rev-parse HEAD^:pkg/sentry/seccheck/sinks/remote/BUILD)" = 77d053846c2a73132807524d82cc00766535b147
+          test "$(git rev-parse HEAD^:examples/seccheck)" = 2578182ecd4574a0c777448a2849a9514a0e43e7
+          test "$(git rev-parse HEAD^:pkg/sentry/seccheck/sinks/remote/remote_test.go)" = 3991f87ae74b726788566d750671fb846fb1a444
+          git checkout --detach "$PRODUCT"
+          mkdir test/rbe/release_prewarmer
+          cp "$RUNNER_TEMP"/release-rbe/harness/{BUILD,wrapper.bzl} test/rbe/release_prewarmer/
+          test "$(git hash-object test/rbe/release_prewarmer/BUILD)" = 80a004bdb76350e270b9de0b7785ae4d40d58461
+          test -z "$(git diff --name-only HEAD)"
+          test "$(git rev-parse HEAD:pkg/sentry)" = bdd54390b9a058487d8f9754dd3595d1ea91f885
+          test "$(cat .bazelversion)" = 9.3.1
+          bazel --version
+          bazel --ignore_all_rc_files help test > "$RUNNER_TEMP/release-rbe/help.txt"
+          grep -q 'incompatible_use_native_posix_test_wrapper' "$RUNNER_TEMP/release-rbe/help.txt"
+      - name: Verify and stage only the declared five GNU runtime files per architecture
+        run: python3 "$RUNNER_TEMP/release-rbe/harness/runtime_inputs.py"
+      - name: Configure the trusted Bazel client for remote-only execution
+        id: remote
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          test -n "$BUILDBUDDY_API_KEY"
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --modify_execution_info=^TestRunner$=+no-remote-cache'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$RUNNER_TEMP/release-rbe/private.bazelrc"
+          test "$(stat -c %a "$RUNNER_TEMP/release-rbe/private.bazelrc")" = 600
+          unset BUILDBUDDY_API_KEY
+      - name: Run the original TestExample on native AMD64
+        timeout-minutes: 38
+        run: python3 "$RUNNER_TEMP/release-rbe/harness/full.py" amd64
+      - name: Run the original TestExample on native ARM64
+        if: always() && !cancelled() && steps.remote.outcome == 'success'
+        timeout-minutes: 43
+        run: python3 "$RUNNER_TEMP/release-rbe/harness/full.py" arm64
+      - name: Stop the client and remove its private configuration
+        id: cleanup
+        if: always()
+        run: |
+          if test -x "$RUNNER_TEMP/release-rbe/bin/bazel"; then
+            timeout --signal=INT --kill-after=10 30 "$RUNNER_TEMP/release-rbe/bin/bazel" --nosystem_rc --nohome_rc shutdown >/dev/null 2>&1 || true
+          fi
+          rm -f "$RUNNER_TEMP/release-rbe/private.bazelrc"
+      - name: Reconcile the two unchanged workers
+        if: always() && !cancelled()
+        run: python3 "$RUNNER_TEMP/release-rbe/harness/full.py" verdict
+      - name: Verify the bounded typed public receipts
+        id: privacy
+        if: always()
+        env:
+          ACCESS: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PYTHON'
+          import json, os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"]) / "release-rbe" / "public"
+          allowed = {"amd64.json", "arm64.json", "runtime-input-amd64.json", "runtime-input-arm64.json", "verdict.json"}
+          files = list(root.iterdir())
+          key = os.environ["ACCESS"].encode()
+          assert key and files
+          assert not (root.parent / "private.bazelrc").exists()
+          for path in files:
+              assert path.name in allowed and path.is_file() and not path.is_symlink()
+              assert path.stat().st_size <= 131072
+              raw = path.read_bytes()
+              assert isinstance(json.loads(raw), dict)
+              assert not any(value in raw for value in (key, b"remote_header", b"bes_header", b"Authorization:", b"X-Amz-Signature", b"Bearer "))
+          PYTHON
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.privacy.outcome == 'success'
+        with:
+          name: seccheck-declared-gnu-runtime
+          path: ${{ runner.temp }}/release-rbe/public/*.json
+          if-no-files-found: error
+          retention-days: 14
