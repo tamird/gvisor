@@ -1,0 +1,91 @@
+name: Verify FDTable writer contract delivery and its merged prerequisite
+on:
+  push:
+    branches: [qualification/work-map-fd-writer-delivery]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 4
+          persist-credentials: false
+      - name: Run the canonical collector on the proposed Pages source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(git rev-parse HEAD^)" = 91e0c7385808436636b7515ef0817479b415e3a5
+          git checkout --detach 91e0c7385808436636b7515ef0817479b415e3a5
+          python3 -B update-status.py
+      - name: Validate the collected pair and run its existing tests
+        run: |
+          python3 -B - <<'PYTHON'
+          import datetime, hashlib, json, re, subprocess
+          from pathlib import Path
+
+          source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          assert source == '91e0c7385808436636b7515ef0817479b415e3a5'
+          commands = [['node', 'metadata-preflight.mjs', '.'],
+                      ['python3', '-B', '-m', 'unittest', 'work_states_test', 'update_status_test'],
+                      ['node', '--test', '--test-reporter=tap', 'app_test.mjs']]
+          expected = [' '.join(command) for command in commands]
+          record = dict(source=source, expected=expected, executed=[], failed=[], skipped=[], missing=expected.copy())
+          for command, label in zip(commands, expected, strict=True):
+              result = subprocess.run(command, capture_output=True, text=True)
+              if result.returncode:
+                  print(result.stdout[-5000:], result.stderr[-5000:])
+              record['executed'].append(label)
+              record['missing'].remove(label)
+              if result.returncode:
+                  record['failed'].append(label)
+              elif command == commands[0]:
+                  record['preflight'] = json.loads(result.stdout)
+              if command == commands[1]:
+                  record['pythonTests'] = [int(n) for n in re.findall(r'^Ran (\d+) tests?', result.stderr, re.M)]
+              elif command == commands[2]:
+                  record['jsCounts'] = {k:int(n) for k,n in re.findall(r'^# (tests|pass|fail|skipped) (\d+)$', result.stdout, re.M)}
+          snapshot = json.loads(Path('github-status.json').read_text())
+          before = json.loads(subprocess.check_output(['git', 'show', 'HEAD:github-status.json']))
+          current = {p['number']:p for p in snapshot['prs'] if p.get('repo', 'google/gvisor') == 'google/gvisor'}
+          handoffs = [p['number'] for p in current.values() if p.get('terminalImportHandoff')]
+          checks = dict(fresh=snapshot['checkedAt'] > before['checkedAt'],
+                        requestBudget=1 <= snapshot['limits']['requests'] <= 64,
+                        registryUnchanged=not subprocess.run(['git','diff','--quiet','HEAD','--','registry.json']).returncode)
+          registry = json.loads(Path('registry.json').read_text())
+          previous = json.loads(subprocess.check_output(['git','show',source+'^:registry.json']))
+          nodes = {n['id']:n for n in registry['nodes']}
+          old = {n['id']:n for n in previous['nodes']}
+          bid='branch:fd-table-writer-contracts';pid='pr:17059';p=nodes[pid];n=nodes[bid]
+          checks['sourceFiles']=subprocess.check_output(['git','diff','--name-only',source+'^',source],text=True).splitlines()==['registry.json']
+          checks['onlyDelivery']=set(nodes)-set(old)=={pid} and {k for k in old if nodes[k]!=old[k]}=={bid,'pr:16805'} and registry['groups']==previous['groups'] and registry['investigations']==previous['investigations']
+          h='94df6dd9ee37905808dbfed9b1adabdb8ceb5e3b'
+          checks['published']=current[17059]['status']=='open' and current[17059]['head']==p['head']==n['head']==h and p['url']==current[17059]['url']=='https://github.com/google/gvisor/pull/17059'
+          checks['prerequisite']=current[16805]['status']=='merged' and nodes['pr:16805']['status']=='merged'
+          checks['approval']=p['settledReviews']==n['settledReviews']==old[bid]['settledReviews'] and n['settledReviews'][-1]['head'].startswith('b5c5589ba') and n['settledReviews'][-1]['outcome']=='approved'
+          checks['delivered']=n['status']=='Delivered' and 'contributorReview' not in n and 'contributorReview' not in p and '#17059' in n['followup']['nextAction']
+          checks['history']=n['evidence'][:len(old[bid]['evidence'])]==old[bid]['evidence'] and all(k not in snapshot['workStates'].get(bid,{}) for k in ('contributor-review','proposal-ready'))
+          checks['compilerIntact']=nodes['branch:hermetic-compiler-review']==old['branch:hermetic-compiler-review'] and nodes['branch:hermetic-compiler-review']['evidence'][-1]['url'].endswith('/13443573566')
+          record.update(requests=snapshot['limits']['requests'], requestLimit=64,
+                        checkedAt=snapshot['checkedAt'], previousCheckedAt=before['checkedAt'], reminderPosting=False,
+                        liveChecks=checks, terminalImportHandoffs=handoffs,
+                        cases={n:{'head':p['head'], 'status':p['status'], 'handoff':n in handoffs}
+                               for n,p in current.items() if n in (16805,17059)},
+                        finished=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                        exitCode=int(bool(record['failed']) or not all(checks.values())),
+                        hashes={p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in
+                                ('github-status.json','registry.json','app.js','update-status.py','work_states.py','update_status_test.py','README.md')})
+          Path('verdict.json').write_text(json.dumps(record, indent=2))
+          raise SystemExit(record['exitCode'])
+          PYTHON
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: work-map-verdict
+          path: |
+            verdict.json
+            github-status.json
+          if-no-files-found: error
