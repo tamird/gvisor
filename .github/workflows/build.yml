@@ -1,51 +1,69 @@
-name: Verify the signed tcpdump dependency catalog
+name: Diagnose tcpdump capture startup on the same signed archive
 on:
   push:
     branches: [qualification/tcpdump-distro-capture]
 permissions:
   contents: read
+  actions: read
 env:
   PRODUCT: 77fbd4df0b319727914eec2f6112d724f06fed29
-  AUDITOR: 9041e61701db27bd85b9658385cf5d7803681ab1
+  TAG: gvisor.dev/images/basic/tcpdump:latest
 jobs:
-  catalog:
+  diagnostic:
     runs-on: ubuntu-22.04
-    timeout-minutes: 78
+    timeout-minutes: 36
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 5
           persist-credentials: false
-      - name: Bootstrap the exact licensechecker with native Linux Bazel
-        timeout-minutes: 18
-        run: |
-          set -euo pipefail
-          git fetch --no-tags --depth=1 origin "$AUDITOR"
-          git switch --detach "$AUDITOR"
-          command -v bazel
-          bazel build --strategy=GoStdlib=sandboxed --strategy=GoStdlibList=sandboxed //tools/licensecheck/main:licensecheck
-          path=$(bazel cquery --output=files //tools/licensecheck/main:licensecheck)
-          cp "$(bazel info execution_root)/$path" "$RUNNER_TEMP/licensecheck"
-          sha256sum "$RUNNER_TEMP/licensecheck"
-          git switch --detach "$PRODUCT"
-          test "$(git rev-parse HEAD)" = "$PRODUCT"
-      - name: Fetch notices from the locked sources
-        timeout-minutes: 47
-        run: |
-          export MAKEFLAGS="DOCKER_BUILD=false"
-          "$RUNNER_TEMP/licensecheck" --mode=fetch
-      - name: Preserve fetched entries and verify the unchanged policy
-        if: "${{ !cancelled() }}"
-        run: |
-          set -euo pipefail
-          test -x "$RUNNER_TEMP/licensecheck"
-          test "$(git rev-parse HEAD)" = "$PRODUCT"
-          git diff -- tools/licensecheck/dependencies.yaml > "$RUNNER_TEMP/catalog.diff"
-          MAKEFLAGS="DOCKER_BUILD=false" "$RUNNER_TEMP/licensecheck" --mode=verify
-      - if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
-          name: tcpdump-catalog
-          path: ${{ runner.temp }}/catalog.diff
-          if-no-files-found: ignore
-          retention-days: 3
+          github-token: ${{ github.token }}
+          run-id: 42064992797
+          name: tcpdump-amd64
+          path: ${{ runner.temp }}/transfer
+      - name: Load the unchanged signed archive
+        run: |
+          set -euo pipefail
+          cp test/rbe/tcpdump-diag.sh "$RUNNER_TEMP/diag.sh"
+          git switch --detach "$PRODUCT"
+          test "$(jq -er .source "$RUNNER_TEMP/transfer/inventory.json")" = "$PRODUCT"
+          echo "13726da574d970311d0dac89990243b91c4d0b5c51ab9a50efe5b4ef0fd055d7  $RUNNER_TEMP/transfer/image.tar" | sha256sum -c -
+          docker load --input "$RUNNER_TEMP/transfer/image.tar"
+          test "$(docker image inspect --format '{{.Id}}' "$TAG")" = sha256:9cccc46e0e54df004d3cc07da2b415c0bcf6c9c69590d0a50e3750afe7d6c268
+          sudo apt-get -qq update
+          sudo apt-get -qy install --no-install-recommends busybox-static
+          if [[ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+          sudo apt-get -qy install --no-install-recommends crossbuild-essential-arm64 libnuma-dev
+      - name: Build only the runtime and startup sidecars on native Linux
+        run: |
+          set -euo pipefail
+          targets=(//runsc:runsc //runsc/cmd/sentry:gvisor_sentry //runsc/prewarmer:prewarmer_binary //runsc/procumounter:procumounter_binary)
+          bazel build --config=x86_64 -c opt --strategy=GoStdlib=sandboxed --strategy=GoStdlibList=sandboxed "${targets[@]}"
+          release="$RUNNER_TEMP/diagnostic-runtime"
+          mkdir -p "$release/gvisor-bin" "$RUNNER_TEMP/tcpdump-trace"
+          mapfile -t files < <(bazel cquery --config=x86_64 -c opt --output=files "set(${targets[*]})")
+          test "${#files[@]}" = 4
+          for path in "${files[@]}"; do
+            name=${path##*/}
+            case "$name" in
+              runsc) cp -L "$path" "$release/runsc" ;;
+              gvisor_sentry|gvisor-sentry-prewarmer|gvisor-proc-umounter) cp -L "$path" "$release/gvisor-bin/$name" ;;
+              *) echo "unexpected executable: $name"; exit 1 ;;
+            esac
+          done
+      - name: Record the original gVisor process output and status
+        run: |
+          set -euo pipefail
+          release="$RUNNER_TEMP/diagnostic-runtime"
+          sudo "$release/runsc" install --runtime=tcpdump-diagnostic --download-sidecars=NEVER --require-sidecars=NEVER -- \
+            --platform=systrap --net-raw --strace --strace-syscalls=socket,ioctl,getsockopt,setsockopt,bind \
+            --debug-log="$RUNNER_TEMP/tcpdump-trace/"
+          sudo systemctl reload docker
+          for ((n=0; n<30; n++)); do
+            if docker info --format '{{json .Runtimes}}' | jq -e 'has("tcpdump-diagnostic")' >/dev/null; then break; fi
+            sleep 1
+          done
+          bash "$RUNNER_TEMP/diag.sh" tcpdump-diagnostic
+          sudo grep -h 'getsockopt' "$RUNNER_TEMP"/tcpdump-trace/* | grep -Ei 'errno|ENOPROTOOPT|0x107|SOL_PACKET' | tail -30 || true
