@@ -1,35 +1,114 @@
-name: CI
-
-"on":
+name: Compare the retained one-CPU graph restore samples
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/native-graph-restore-three-benchstat]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  report:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    env:
+      REPORTER: 2b51abee8530385431b7225198fdd5cd65e78696
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 2, persist-credentials: false}
+    - name: Verify the three inputs against the 111 original restore records
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@v5
-
-    - name: build
+        set -euo pipefail
+        d="$RUNNER_TEMP/graph-report"
+        mkdir -p "$d/tools" "$d/transfer"
+        python3 - <<'PY'
+        from pathlib import Path
+        import hashlib, io, json, os, subprocess, zipfile
+        out = Path(os.environ["RUNNER_TEMP"])/"graph-report/transfer"
+        archive = subprocess.check_output(["gh", "api", "repos/tamird/gvisor/actions/artifacts/13517728283/zip"])
+        assert hashlib.sha256(archive).hexdigest() == "e8add428a2c5041fa250c0ad8ca76d169eae70d34c026491b88689ecb6e1fb27"
+        with zipfile.ZipFile(io.BytesIO(archive)) as z:
+            assert set(z.namelist()) == {"restore-vm-verdict.json", "restore-warmup.json", "parent.bench", "reference.bench", "candidate.bench"}
+            j = json.loads(z.read("restore-vm-verdict.json"))
+            assert (j["parent"],j["product"],j["reference_tree"])==("706b124a2e5a587123d9844a83db5e55d318d3ea","c31b2adc27b1d19b1e647b3239cd2b3b536a5adf","f0c083455739574b1a9d4e8383c36e89d11ae1eb")
+            stage=j["stages"]["restore"]
+            rows=stage["samples"]
+            assert j["status"]=="PASS" and stage["service_exit"]==0 and stage["runtime_match"] and len(rows)==j["product_cases"]==111
+            assert all(v["verified"] and v["native_exit"]==0 and v["cpu_quotas"][0]=="100000 100000" and v["memory_limit"]==v["restored_limit"]==2**31 and v["files_verified"]==100000 and v["oom_kills"]==0 for v in rows)
+            assert all(v["runtime"]["proc_exe"]=="same-inode" and v["runtime"]["selected_sha256"]==stage["tested_capsules"][v["arm"]]["sentry_sha256"] for v in rows)
+            fields=["restore_first_read_ns","restore_reply_ns","first_read_rss","first_read_hwm"]
+            for a,digest in zip(("parent","reference","candidate"),("29e12569e8a72469949c11aee59286e87851f4a5df0cd57005673cf0ac798a53","dfcc281b5c0ecb4fb97d2d3435c3080ddec85dedbd232fa1bf2cb98cdff9a02e","b2b8c03cc46aadd6fa89141cdfd57ea2fe84d8ee2b48bcdd808004a5a571a429")):
+                raw=z.read(a+".bench")
+                assert hashlib.sha256(raw).hexdigest()==digest
+                expected=[f"BenchmarkRestore/{f} 1 {v[f]} {u}" for v in rows if v["arm"]==a and v["round"]>=0 for f,u in zip(fields,["ns/op","ns/op","B/op","B/op"])]
+                assert len(expected)==144 and raw.decode().splitlines()==expected
+                (out/a).write_bytes(raw)
+        PY
+    - name: Build only the pinned benchstat and format the verified samples
+      timeout-minutes: 25
       run: |
-          mkdir -p bin
-          make copy TARGETS=runsc DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@v4
+        set -euo pipefail
+        test "$(git rev-parse HEAD^)" = "$REPORTER"
+        git checkout --quiet --detach "$REPORTER"
+        test "$(git rev-parse HEAD:MODULE.bazel)" = 1665015b7719a98f2176b44a0f1c298854dadfab
+        test "$(cat .bazelversion)" = 8.5.0
+        d="$RUNNER_TEMP/graph-report"
+        curl -fsSL --retry 2 --max-time 90 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/tools/bazel"
+        echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/tools/bazel" | sha256sum -c -
+        chmod 755 "$d/tools/bazel"
+        docker run --rm --user "$(id -u):$(id -g)" --cap-drop=ALL --security-opt no-new-privileges -w /src \
+          -v "$GITHUB_WORKSPACE:/src" -v "$d/transfer:/transfer" -v "$d/tools:/tools:ro" \
+          -e HOME=/tmp/graph-build -e USER=runner \
+          -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/src \
+          --entrypoint /bin/bash "$GNU" -ec '
+          set -euo pipefail
+          mkdir -p "$HOME"
+          test "$(/tools/bazel --version)" = "bazel 8.5.0"
+          flags=(--config=x86_64 -c opt --jobs=4 --spawn_strategy=local --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox --remote_cache= --remote_executor= --bes_backend= --stamp --workspace_status_command=)
+          target=@org_golang_x_perf//cmd/benchstat
+          rc=0
+          timeout -k 20 1100 /tools/bazel build "${flags[@]}" "$target" >/transfer/build.log 2>&1 || rc=$?
+          echo "$rc" >/transfer/build.exit
+          test "$rc" = 0
+          p=$(/tools/bazel cquery "${flags[@]}" --output=files "$target")
+          test -f "$p" && test -x "$p"
+          cp -L "$p" /transfer/benchstat
+          cd /transfer
+          sha256sum benchstat > reporter.sha256
+          ./benchstat parent reference candidate > benchstat.txt
+          ./benchstat reference candidate > vs-reference.txt
+          test -s benchstat.txt
+          grep -Eq "n=36|n1=n2=36" benchstat.txt'
+    - name: Preserve the original inputs' identity and the reporter disposition
+      if: always()
+      run: |
+        python3 - <<'PY'
+        import hashlib, json, os, re
+        from pathlib import Path
+        root = Path(os.environ["RUNNER_TEMP"])/"graph-report/transfer"
+        root.mkdir(parents=True,exist_ok=True)
+        result = {"measurement_artifact":13517728283, "measurement_zip":"e8add428a2c5041fa250c0ad8ca76d169eae70d34c026491b88689ecb6e1fb27", "reporter":os.environ["REPORTER"], "new_product_runs":0}
+        for name in ("parent", "candidate", "benchstat.txt", "benchstat"):
+            p = root/name
+            if p.is_file(): result[name] = hashlib.sha256(p.read_bytes()).hexdigest()
+        p = root/"build.exit"
+        if p.exists(): result["bazel_exit"] = int(p.read_text())
+        log = root/"build.log"
+        if log.is_file():
+            content = log.read_bytes()
+            result["build_log_sha256"] = hashlib.sha256(content).hexdigest()
+            lines = [s[:680] for s in content.decode(errors="replace").splitlines() if s.startswith(("ERROR:", "FATAL:")) or "No space left on device" in s or "PKIX path building failed" in s]
+            result["errors"] = [re.sub(r"[a-z]+://[^ ]+", "[url]", s) for s in lines[:6]]
+        (root/"report.json").write_text(json.dumps(result, indent=2)+"\n")
+        PY
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always()
       with:
-          name: runsc
-          path: bin/runsc
+        name: original-one-cpu-restore-benchstat
+        path: |
+          ${{ runner.temp }}/graph-report/transfer/report.json
+          ${{ runner.temp }}/graph-report/transfer/benchstat.txt
+          ${{ runner.temp }}/graph-report/transfer/vs-reference.txt
+        if-no-files-found: error
