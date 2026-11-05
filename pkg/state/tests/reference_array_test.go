@@ -22,6 +22,7 @@ import (
 )
 
 func TestReferenceArrayWire(t *testing.T) {
+	useWireEngine(t)
 	first, second, third := 7, 11, 19
 	original := referenceArrayEncoding{
 		ordinary: [4]*int{nil, &first, &second, &first},
@@ -75,6 +76,7 @@ func TestReferenceArrayWire(t *testing.T) {
 }
 
 func TestReferenceArraySnapshotTiming(t *testing.T) {
+	useWireEngine(t)
 	first, second, replacement := 7, 11, 99
 	source := &referenceArraySource{values: [2]*int{&first, &second}}
 	original := system{v1: source, v2: &referenceArrayMutator{target: source, replacement: &replacement}}
@@ -105,6 +107,7 @@ func TestReferenceArraySnapshotTiming(t *testing.T) {
 }
 
 func TestReferenceArrayLateParent(t *testing.T) {
+	useWireEngine(t)
 	first, second := 7, 11
 	backing := [2][2]*int{{&first, &second}, {&second, &first}}
 	// The later slice clears its unused capacity after the interior array
