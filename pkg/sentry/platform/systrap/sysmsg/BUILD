@@ -1,5 +1,6 @@
+load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("//tools:arch.bzl", "arch_genrule", "select_arch")
-load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain", "go_library")
+load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain", "go_binary", "go_library")
 load("build.bzl", "cc_pie_obj")
 
 package(
@@ -83,35 +84,36 @@ genrule(
     ],
 )
 
-genrule(
-    name = "sighandler_binary",
+go_binary(
+    name = "gen_stub",
+    srcs = ["gen_stub/main.go"],
+    pure = True,
+)
+
+run_binary(
+    name = "sighandler_data",
     srcs = [":sighandler_object"],
-    outs = ["sighandler.built-in.bin"],
-    cmd = "$(OBJCOPY) -O binary $(SRCS) $@",
-    toolchains = [
-        cc_toolchain,
+    outs = [
+        "sighandler.built-in.bin",
+        "sighandler.go.arch",
     ],
+    args = [
+        "$(location :sighandler_object)",
+        "$(RULEDIR)/sighandler.built-in.bin",
+        "$(RULEDIR)/sighandler.go.arch",
+    ],
+    tool = ":gen_stub",
 )
 
 arch_genrule(
     name = "sighandler_binary_arch",
-    src = ":sighandler_binary",
+    src = ":sighandler.built-in.bin",
     template = "sighandler.built-in.%s.bin",
-)
-
-genrule(
-    name = "sighandler_go",
-    srcs = [":sighandler_object"],
-    outs = ["sighandler.go.arch"],
-    cmd = "bash -x $(location gen_offsets_go.sh) sighandler Sighandler " +
-          "$(SRCS) \"$(NM)\" > $@",
-    toolchains = [cc_toolchain],
-    tools = ["gen_offsets_go.sh"],
 )
 
 arch_genrule(
     name = "sighandler_go_arch",
-    src = ":sighandler_go",
+    src = ":sighandler.go.arch",
     template = "sighandler_%s.go",
 )
 
