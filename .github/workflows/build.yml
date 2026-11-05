@@ -1,35 +1,58 @@
-name: CI
-
-"on":
+name: Boot the default LLVM runtime with its required companions
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/master-llvm-native-guest]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  cross:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Bind the reviewed default compiler and ELF offset source
+        run: |
+          set -eu
+          umask 077
+          test "$(git rev-parse HEAD^)" = 8169ff661d26dba5df30ac8ecaec2f201659eff4
+          test "$(git diff --name-only HEAD^ HEAD)" = "$(printf '%s\n' .github/workflows/build.yml test/rbe/native_cross_inputs.py test/rbe/runtime_cross.py test/rbe/runtime_guest.py)"
+          d="$RUNNER_TEMP/runtime-cross"
+          mkdir "$d"
+          cp test/rbe/native_cross_inputs.py test/rbe/runtime_cross.py test/rbe/runtime_guest.py "$d/"
+          echo "b0626fb5ecb5bb9c41d644ced5af036019cbefbeef7975c71878021f6e146653  $d/native_cross_inputs.py" | sha256sum -c -
+          echo "be215d8dce45744f4eaa5183dee6cc3c69aa5a960bd4cf7635a445993f99bbaf  $d/runtime_cross.py" | sha256sum -c -
+          echo "858908777c1a28a29c0655210b312a9b3236aada1273240bfe25c9170366dea8  $d/runtime_guest.py" | sha256sum -c -
+          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$d/verdict.json"
+          command -v ar
+          command -v zstd
+          test "$(cat .bazelversion)" = 9.3.1
+          grep -Fx 'bazel_dep(name = "llvm", version = "0.8.24")' MODULE.bazel
+          test "$(uname -m)" = x86_64
+          curl --retry 3 --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Build the minimal native runtime and boot its isolated guest
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" USE_BAZEL_VERSION=9.3.1 python3 -B "$RUNNER_TEMP/runtime-cross/runtime_guest.py"
+      - name: Check the bounded receipt
+        id: receipt
+        if: always()
+        run: |
+          python3 -B - <<'PYTHON'
+          import json, os, re
+          from pathlib import Path
+          p = Path(os.environ['RUNNER_TEMP']) / 'runtime-cross/verdict.json'
+          assert p.is_file() and not p.is_symlink() and 0 < p.stat().st_size < 524288
+          raw = p.read_bytes()
+          assert json.loads(raw)['status'] in ('PASS', 'FAIL', 'INCOMPLETE')
+          assert not re.search(rb'(?i)x-buildbuddy-api-key|authorization\s*[:=]|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}', raw)
+          PYTHON
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.receipt.outcome == 'success'
+        with:
+          name: master-llvm-native-guest
+          path: ${{ runner.temp }}/runtime-cross/verdict.json
+          if-no-files-found: error
