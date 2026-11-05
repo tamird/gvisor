@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T09:11:37.559398+00:00",
+    "updatedAt": "2026-11-05T09:18:41.504053+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37121,7 +37121,7 @@
       "url": "https://github.com/google/gvisor/pull/16706",
       "status": "open",
       "summary": "Writing more data while the peer advertises a zero window postpones the first probe. Keep the pending probe’s deadline when the application writes again.",
-      "updatedAt": "2026-11-05T09:11:37.559398+00:00",
+      "updatedAt": "2026-11-05T09:18:41.504053+00:00",
       "evidence": [
         {
           "label": "Stock: no probe at the original deadline",
@@ -37154,6 +37154,10 @@
         {
           "label": "The historical retry stopped while fetching a dependency. Bazel recorded zero completed targets and zero test executions.",
           "url": "https://github.com/tamird/gvisor/actions/runs/41999508028/artifacts/13401971676"
+        },
+        {
+          "label": "On the modern build with the byte-identical historical timer function, a dependency download failed before any test ran.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42000731932/artifacts/13402212584"
         }
       ],
       "refinement": {
@@ -50536,6 +50540,40 @@
           "https://github.com/tamird/gvisor/commit/2ec7b59ad",
           "https://github.com/tamird/gvisor/actions/runs/41628817215/artifacts/13226843881"
         ]
+      }
+    },
+    {
+      "id": "branch:syscall-test-native-setup",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/syscall-test-native-setup",
+      "head": "9771751fff91a8c1cfaa92268967e4a1bb9a8e0f",
+      "title": "Start syscall tests without Bash",
+      "url": "https://github.com/tamird/gvisor/commit/9771751ff",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-05T09:18:41.504053+00:00",
+      "summary": "Bazel generates a Bash launcher for each syscall test variant. Use the existing setup_container executable to prepare the output directory and pass the test binary after the runner’s flags. The native AMD64 fork and atime targets executed four cases. The installed launcher preserved the sticky bit on an existing directory.",
+      "evidence": [
+        {
+          "label": "Four uncached cases, argument forwarding and directory permissions on this commit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41998752971/artifacts/13402616401"
+        },
+        {
+          "label": "AMD64 and ARM64 builds and native cases on the earlier musl integration",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41303505464/artifacts/13083255957"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "9771751fff91a8c1cfaa92268967e4a1bb9a8e0f",
+        "baseHead": "90d4e2253f004cdc73a35dbc4050eab3e9a8495d",
+        "url": "https://github.com/tamird/gvisor/commit/9771751ff",
+        "title": "Start syscall tests without Bash",
+        "requestedAt": "2026-11-05T09:18:41.504053+00:00",
+        "summary": "Approve opening this standalone PR. The GNU test runner executed all four selected cases on AMD64. A forced remount on a noatime filesystem was outside that run.",
+        "body": "A syscall test fails before the test runner starts on a worker without\n/bin/bash. Each test variant generates a Bash script to prepare its\noutput directory and put the test executable after any runner flags.\n\nUse the existing setup_container binary as the Bazel test entry point.\nIt grants the sandbox access to the output directory, enables host\natime when requested, and invokes the runner with the test binary\nlast. This lets callers keep using --test_arg for runner flags."
       }
     }
   ],
@@ -67555,11 +67593,11 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-05T09:11:37.559398+00:00",
+      "updatedAt": "2026-11-05T09:18:41.504053+00:00",
       "summary": "The AMD64 distroless worker built 229 of 231 runsc targets. Two targets need the secfuzz generator fixed in #16604. The ARM64 run stopped during dependency fetching before configuring a target. Both workers previously built all 249 outstanding TCP/IP targets and ran the six faketime cases and Nogo. The nine-program release started its installed Sentry on both architectures.",
       "findings": [
         {
-          "text": "The 237 runsc targets from the original build ledger map to 231 current targets. On AMD64, both failed actions invoked secfuzz_covermeup, once for each target configuration. The artifact verifies the ELF bytes of runsc and the boot test binary. Three sidecar output checks failed in the reader. ARM64 hit a separate repository fetch failure. This run built test binaries without running them.",
+          "text": "The 237 runsc targets from the original build ledger map to 231 current targets. On AMD64, both failed actions invoked secfuzz_covermeup, once for each target configuration. The artifact verifies the ELF bytes of runsc and the boot test binary. The three sidecar links also succeeded. Their SHA-256 digests and sizes match the AMD64 ELFs inspected in the nine-program release. The new reader rejected the direct clang++ command and did not reread those three binaries. ARM64 hit a separate repository fetch failure. This run built test binaries without running them.",
           "evidence": [
             {
               "label": "Per-architecture Bazel results, output checks and original target mapping",
@@ -67568,6 +67606,10 @@
             {
               "label": "Existing replacement for the shell generator",
               "url": "https://github.com/google/gvisor/pull/16604"
+            },
+            {
+              "label": "Sidecar ELF bytes from the paired release build",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41975504552/artifacts/13391208856"
             }
           ]
         },
@@ -69707,7 +69749,7 @@
           ]
         }
       ],
-      "nextStep": "Check the two AMD64 failures with #16604. Resolve the ARM64 fetch failure and verify the three sidecar ELFs. Keep the 184 remaining original Sentry Go link outputs recorded as action evidence until their ELF bytes can be verified. Track adoption of hermetic-llvm #908 and #909 and the SDK executable in rules_go #4772. Before retrying the file-empty worker, confirm the deployed executor contains BuildBuddy #14022. The #15146 license-policy hold is separate.",
+      "nextStep": "Check the two AMD64 failures with #16604. Resolve the ARM64 fetch failure and update the sidecar verifier to recognize the declared clang++ link. Keep the 184 remaining original Sentry Go link outputs recorded as action evidence until their ELF bytes can be verified. Track adoption of hermetic-llvm #908 and #909 and the SDK executable in rules_go #4772. Before retrying the file-empty worker, confirm the deployed executor contains BuildBuddy #14022. The #15146 license-policy hold is separate.",
       "evidence": [
         {
           "label": "Fresh SDK builds, native test events and XML counts on both workers",
@@ -72475,5 +72517,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T09:11:37.559398+00:00"
+  "updatedAt": "2026-11-05T09:18:41.504053+00:00"
 }
