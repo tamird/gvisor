@@ -1,35 +1,38 @@
-name: CI
-
-"on":
+name: Build the declared TLDK archive with the default GNU-targeted LLVM
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-gnu-tldk-archive]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  archive:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Select the unchanged TLDK proposal on the default compiler
+        run: |
+          set -eu
+          d="$RUNNER_TEMP/tldk-llvm"
+          mkdir -p "$d"
+          test "$(git rev-parse HEAD^)" = 3f0bd3a70008ffb0d43b4c202deb0133d6d6a823
+          cp .github/qualification/tldk_default_llvm.py "$d/"
+          git checkout --detach HEAD^
+          test "$(cat .bazelversion)" = 9.3.1
+          test "$(uname -m)" = x86_64
+          curl -fsSL --retry 3 --max-time 120 https://raw.githubusercontent.com/tamird/gvisor/5d2fe309d11bb2af1e5ffdb02326f4b1d5f6bfaf/test/rbe/native_cross_inputs.py -o "$d/native_cross_inputs.py"
+          echo "b0626fb5ecb5bb9c41d644ced5af036019cbefbeef7975c71878021f6e146653  $d/native_cross_inputs.py" | sha256sum -c -
+          curl -fsSL --retry 3 --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod +x "$d/bazel"
+      - name: Build the optional Linux AMD64 plugin archive
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$RUNNER_TEMP/tldk-llvm/tldk_default_llvm.py"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: default-llvm-tldk-archive
+          path: ${{ runner.temp }}/tldk-llvm/receipt.json
+          if-no-files-found: error
