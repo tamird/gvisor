@@ -80,18 +80,20 @@ def host_diagnostic(console, events):
 
 
 def run(stage, result):
-    assert stage == "preflight" and result["product"] == PRODUCT
+    assert stage in ("preflight", "restore") and result["product"] == PRODUCT
+    if stage == "restore":
+        assert result["stages"]["preflight"]["status"] == "PASS"
     result["original"] = {"run": 41979098313, "artifact": 13394000621,
                           "zip_sha256": "ca143333eb7b8744e73acfd2a0a31448fd45f5aca961b606454a7240b5df7d80",
                           "elf_sha256": "1134e818551bfc0ebf9f85e291d039c5f09b1ad618d96f1dab5b2833aff55f9c"}
-    assert git("rev-parse", "HEAD^").decode().strip() == "a9a052d363a1b93baa25b7a311b13f9f40b60cd7"
-    assert git("rev-parse", "HEAD^^").decode().strip() == GUEST and git("rev-parse", "HEAD").decode().strip() == SOURCE
+    assert git("rev-parse", "HEAD^").decode().strip() == "6c06316212f37ddc246d366ec60ccf930d15c6cd"
+    assert git("rev-parse", "HEAD^^^").decode().strip() == GUEST and git("rev-parse", "HEAD").decode().strip() == SOURCE
     directory = TMP / ("restore-limit-" + stage)
     directory.mkdir()
     row = result["stages"][stage] = {"status": "INCOMPLETE"}
     save(result)
     target = f"//{PACKAGE}:{stage}"
-    required = ["cgroup2/delegated"]
+    required = ["cgroup2/delegated"] if stage == "preflight" else CASES
     (directory / "owners").write_text(target + "\n")
     report.write_json(directory / "required.json", {target: required})
     raw = directory / "raw.jsonl"
@@ -100,6 +102,7 @@ def run(stage, result):
             "--test_tag_filters=", "--build_tag_filters=", "--build_tests_only=false",
             "--nocache_test_results", "--flaky_test_attempts=1", "--zip_undeclared_test_outputs",
             "--test_timeout=900", "--build_event_json_file_path_conversion=false",
+            f"--distdir={TMP / 'ubuntu-distdir'}", f"--downloader_config={TMP / 'ubuntu-mirrors'}",
             f"--build_event_json_file={raw}", target]
     (directory / "executed_arguments").write_text("\n".join(args) + "\n")
     (directory / "commit_file").write_bytes(git("cat-file", "commit", SOURCE))
@@ -170,8 +173,19 @@ def run(stage, result):
         row["capsule_verified"] = (expected == observed and re.fullmatch(r"[0-9a-f]{64}", elf) is not None
                                    and elf == (TMP/"restore-build/elf.sha256").read_text().strip())
         row["capsule_sha256"] = expected
-    if (v["status"] == "PASS" and row["fresh_local"] and not v["skips"]
-            and row["delegation_and_guest_exit"] and row.get("capsule_verified", True)):
+    # The preflight emits one literal XML case, byte-identical to the original
+    # verified guest result. The restore cases are the authored Go test XML.
+    if stage == "preflight":
+        row["source_clean"] = (not (directory / "source_before").read_bytes().strip()
+                               and not (directory / "source_after").read_bytes().strip()
+                               and (directory / "final_head").read_text().strip() == SOURCE)
+        completed = (row["source_clean"] and not captured["errors"] and row["xml"] == {"bytes": 107, "sha256": "936d97fd5273fe8167548a4ba73bf7e1be51323d908891c660509c30b3a3ae77"}
+                     and direct["required_passed"] == required and direct["passed"] == 1
+                     and direct["failed"] == direct["skipped"] == 0 and not v["missing"])
+    else:
+        completed = v["status"] == "PASS" and row.get("capsule_verified") is True
+    if (original.returncode == 0 and completed and row["fresh_local"] and not v["skips"]
+            and row["delegation_and_guest_exit"]):
         row["status"] = "PASS"
     elif original.returncode:
         row["status"] = "FAIL"
@@ -186,6 +200,6 @@ if __name__ == "__main__":
     except Exception as error:
         row = state["stages"].setdefault(stage, {})
         row.update(status="FAIL" if row.get("native_exit") not in (None, 0) else "INCOMPLETE", reporter_error=type(error).__name__)
-    state["status"] = state["stages"][stage]["status"]
+    state["status"] = state["stages"][stage]["status"] if stage == "restore" or state["stages"][stage]["status"] == "FAIL" else "INCOMPLETE"
     save(state)
     sys.exit(state["stages"][stage]["status"] != "PASS")
