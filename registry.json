@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T09:34:50.317618+00:00",
+    "updatedAt": "2026-11-05T10:01:38.371236+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41632,9 +41632,13 @@
       "url": "https://github.com/google/gvisor/pull/16472",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-05T09:34:50.317618+00:00",
-      "summary": "Buffering reduced cold kernel load for the 12.2 MiB checkpoint. Across 72 paired comparisons on small Nginx checkpoints, buffering reached the first verified HTTP response sooner in 33 pairs. All 216 restores served the expected bytes. Both comparisons used uncompressed checkpoints and the legacy wire decoder. The default graph decoder reads each entire graph frame into memory. Its cold and warm results are still open.",
+      "updatedAt": "2026-11-05T10:01:38.371236+00:00",
+      "summary": "Buffering reduced cold kernel load for the 12.2 MiB checkpoint. Across 72 paired comparisons on small Nginx checkpoints, buffering reached the first verified HTTP response sooner in 33 pairs. All 216 restores served the expected bytes. Both comparisons used uncompressed checkpoints and the legacy wire decoder. The default graph decoder reads each entire graph frame into memory. The first graph run wrote a checkpoint. Its restore command rejected rootless mode before reading it, so none of the 108 planned measurements completed.",
       "evidence": [
+        {
+          "label": "Graph checkpoint and first restore error",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42005100049/artifacts/13404084616"
+        },
         {
           "label": "Proposed reply to the readahead discussion",
           "url": "https://tamird.github.io/gvisor/restore-readers-review.md"
@@ -50436,15 +50440,27 @@
       "id": "branch:tcp-timeout-option-locks",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/tcp-timeout-option-locks",
-      "head": "44d1590083bf8e479a597f787a2fa731cf0a318a",
-      "title": "Check the locks on TCP timeout socket options",
-      "url": "https://github.com/tamird/gvisor/commit/44d159008",
+      "ref": "review/tcp-timeout-and-close-timer-locks",
+      "head": "f6e341d0b9ad32e924c88e863c00258982fc221e",
+      "title": "Check locking for TCP timeout options and close timers",
+      "url": "https://github.com/tamird/gvisor/commit/f6e341d0b",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-05T08:06:56.615470+00:00",
-      "summary": "Checklocks reported each unlocked getter on AMD64 and ARM64. With the guards in place, both reports were clean. The results collector expected a different spelling of the mutex and marked the job incomplete. The original log records all six diagnostics. Only the comments were reworded after the run.",
+      "updatedAt": "2026-11-05T09:55:28.610887+00:00",
+      "summary": "The endpoint mutex guards three timeout options and two close timers. The combined analyzer passed on AMD64 and ARM64. Removing the mutex in separate controls produced three option findings and ten timer findings on each architecture.",
       "evidence": [
+        {
+          "label": "Four lines added for the two close timers",
+          "url": "https://github.com/tamird/gvisor/commit/b4672b800"
+        },
+        {
+          "label": "Combined AMD64 and ARM64 analyzer results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42005412068/artifacts/13404881916"
+        },
+        {
+          "label": "Ten findings per architecture with the close timers unlocked",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42003794391/artifacts/13403847961"
+        },
         {
           "label": "Six diagnostics at the unlocked getters",
           "url": "https://github.com/tamird/gvisor/actions/runs/41990824589/job/127122377531"
@@ -50457,13 +50473,13 @@
       "contributorReview": {
         "status": "pending",
         "kind": "proposal",
-        "head": "44d1590083bf8e479a597f787a2fa731cf0a318a",
+        "head": "f6e341d0b9ad32e924c88e863c00258982fc221e",
         "baseHead": "90d4e2253f004cdc73a35dbc4050eab3e9a8495d",
-        "url": "https://github.com/tamird/gvisor/commit/44d159008",
-        "title": "Check the locks on TCP timeout socket options",
-        "requestedAt": "2026-11-05T08:06:56.615470+00:00",
-        "summary": "Open a standalone PR to check the locks on the three TCP timeout options?",
-        "body": "Socket option calls take the endpoint mutex when changing the user\ntimeout, deferred accept interval, or FIN-WAIT-2 linger timeout. The\nTCP handshake, retransmission and close paths read those values under\nthe same mutex. Annotate the fields so checklocks can flag an unlocked\naccess."
+        "url": "https://github.com/tamird/gvisor/commit/f6e341d0b",
+        "title": "Check locking for TCP timeout options and close timers",
+        "requestedAt": "2026-11-05T09:55:28.610887+00:00",
+        "summary": "Open one PR for the three timeout options and the FIN-WAIT-2 and TIME-WAIT timer handles?",
+        "body": "Socket option calls take the endpoint mutex when changing the user\ntimeout, deferred accept interval, or FIN-WAIT-2 linger timeout. The\nhandshake, retransmission and close paths read them under the same lock.\n\nThe endpoint also holds that mutex when it starts, restores or stops\nits FIN-WAIT-2 and TIME-WAIT timers. Annotate all five fields so\nchecklocks diagnoses unlocked accesses."
       }
     },
     {
@@ -70152,7 +70168,7 @@
       "group": "analysis",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-05T08:06:56.615470+00:00",
+      "updatedAt": "2026-11-05T09:55:28.610887+00:00",
       "summary": "Add annotations where actual callers establish a locking invariant. Check analyzer coverage and any effect on lock order or runtime behavior rather than adding locks solely to silence a diagnostic.",
       "findings": [
         {
@@ -70374,8 +70390,20 @@
           ]
         },
         {
-          "text": "Checklocks can verify the endpoint mutex on the user timeout, deferred accept and FIN-WAIT-2 linger interval. Removing the locks from the three getters produced three diagnostics per architecture.",
+          "text": "The endpoint mutex guards three timeout options and two close timers. The combined analyzer passed on AMD64 and ARM64. Removing the mutex in separate controls produced three option findings and ten timer findings on each architecture.",
           "evidence": [
+            {
+              "label": "Four lines added for the two close timers",
+              "url": "https://github.com/tamird/gvisor/commit/b4672b800"
+            },
+            {
+              "label": "Combined AMD64 and ARM64 analyzer results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42005412068/artifacts/13404881916"
+            },
+            {
+              "label": "Ten findings per architecture with the close timers unlocked",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42003794391/artifacts/13403847961"
+            },
             {
               "label": "Six diagnostics at the unlocked getters",
               "url": "https://github.com/tamird/gvisor/actions/runs/41990824589/job/127122377531"
@@ -72545,5 +72573,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T09:34:50.317618+00:00"
+  "updatedAt": "2026-11-05T10:01:38.371236+00:00"
 }
