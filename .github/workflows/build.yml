@@ -1,35 +1,41 @@
-name: CI
-
-"on":
+name: Verify kernfs directory child locking
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/kernfs-ordered-children-nogo-20261105]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  locks:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Prepare the exact source and result harness
+        run: |
+          set -euo pipefail
+          task="$RUNNER_TEMP/kernfs-children"
+          mkdir -p "$task/receipts"
+          cp .github/qualification/kernfs-children.py "$task/"
+          for name in qualification_report unit_matrix; do
+            curl --proto '=https' --fail --silent --show-error --retry 2 \
+              "https://raw.githubusercontent.com/tamird/gvisor/c7606e0bf9b6cc89bfaaad56bd9e294e411f3f45/test/rbe/$name.py" -o "$task/$name.py"
+          done
+          test "$(git hash-object "$task/qualification_report.py")" = c2303e17753a1e836a5a254fbb0d0bd1fb07f854
+          test "$(git hash-object "$task/unit_matrix.py")" = d01d9e319084e18ea2928671e417e1b4e86c4954
+          git checkout --detach HEAD^
+          test "$(git rev-parse HEAD)" = 199cf1558d95b4e029b3e52ff13e92e63e1a3d34
+          test -z "$(git status --porcelain)"
+          if ! test -x /usr/bin/aarch64-linux-gnu-g++; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends g++-aarch64-linux-gnu
+          fi
+      - name: Exercise kernfs and check the missing locks on both architectures
+        run: python3 -B "$RUNNER_TEMP/kernfs-children/kernfs-children.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: kernfs-children-locks
+          path: ${{ runner.temp }}/kernfs-children/receipts/
+          if-no-files-found: warn
+          retention-days: 14
