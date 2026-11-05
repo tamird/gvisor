@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T19:50:07.012903Z",
+    "updatedAt": "2026-11-05T20:06:26.868772Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4839,8 +4839,8 @@
       "url": "https://github.com/tamird/gvisor/commit/a385bd2b0",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Fork revision 820ec5f74 removes the two Coral cross-toolchain targets, their repositories and four patches. On 4145ade50, which also includes the prewarmer fixes, an AMD64 builder is checking the complete //:release outputs for AMD64 and ARM64. A passing result has not yet been verified.\n\nThe ARM64 runsc and Sentry cross-built on AMD64 at 8169ff661 booted a native rootless systrap guest on an ARM64 worker. The worker received those exact static binaries, a 1,672-byte ARM64 prewarmer and a static BusyBox; it built nothing. The guest echoed the expected marker and exited 0. The original ARM-configured prewarmer rule had produced a 1,520-byte x86-64 executable. With #16522 applied, the C link targeted ARM64 but could not find pthread or dl. Applying the three production hunks from upstream LLVM #909 to the pinned 0.8.24 source (fork 7424610cf) produced the working prewarmer. Only that companion needed the two changes; the ARM64 runtime hashes still match the original two-target build.\n\nOn fork revision 8169ff661, the AMD64 runsc and Sentry built with LLVM 0.8.24 ran a native rootless systrap guest. The guest ran BusyBox echo and exited 0. Both runtime binaries matched the SHA-256 digests from the cross-build below. The startup log identified the matching Sentry and the 1,520-byte LLVM-built prewarmer. The optional fdparking helper was absent, as the log warned; rootless startup did not require procumounter. That earlier job exercised only the AMD64 guest.\n\nWith released LLVM 0.8.24 selected by default in the fork, one native AMD64 Bazel worker built both //runsc:runsc and //runsc/cmd/sentry:gvisor_sentry for AMD64 and ARM64 on 8169ff661. The ordinary architecture configurations used no --extra_toolchains override. All five requested targets completed for each architecture. The four fresh Go links produced two ELF62 and two ELF183 binaries, with no ELF interpreter or dynamic segment. The corrected #16516 generator emitted all 10 AMD64 and 11 ARM64 systrap offsets; every value matched its linked symbol. Both vDSOs and signal-handler blobs retained their verified bytes. The AMD64 runsc ran natively and the ARM64 runsc ran under declared QEMU. Both --version calls reported the source stamp and OCI spec 1.2.1. That build job ran no tests or guest.\n\nOn unmodified gVisor master 90d4e2253, one AMD64 worker built //tools/zstd:compressor for both x86-64 and ARM64 using the released @llvm 0.8.24 and --extra_toolchains=@llvm//toolchain:all. The same AMD64 clang and clang++ compiled and linked both executables. The action records show the corresponding GNU triples, Linux 6.18.33 and glibc 2.28 headers, and architecture-specific link directories. The physical outputs are ELF62 and ELF183. The AMD64 compressor produced a frame that decompressed to the original input. A separate ARM-only run reproduced the identical ARM executable. Project-declared QEMU 11.0 ran it on AMD64 with the GNU loader and libraries from the pinned @test_bun ARM test image; it produced the same 61 compressed bytes and recovered the original input. The image supplied runtime files for this check only. The first job had stopped before QEMU started. This demonstrates an opt-in cross-build without changing the compiler default, the NVIDIA parser or TLDK.\n\nThe preceding control showed why the systrap generator was needed. On master, the ARM sysmsg genrules invoked host clang without a target triple; x86-64 clang rejected the ARM-only -mno-outline-atomics flag. On 5fa51a2fc, the native vDSO and sysmsg rules used the released LLVM toolchain for 12 compiles and four links. All three targets completed. The two vDSOs matched their linked ELF62/ELF183 shared objects, and the split signal-handler binaries matched the corresponding 5,440- and 4,864-byte ELF sections. Both Go offsets files, however, were identical 105-byte package scaffolds with no exported offsets. The build did not execute the Sentry or a test.\n\nBazel 9.3.1 and the declared clang++ built the NVIDIA ABI parser for x86_64-linux-gnu and aarch64-linux-gnu. With supplier source 17f6a3008, the generated LLVM configuration contained exactly AArch64 and X86. TestParser passed uncached on each native architecture. The earlier compiler integration passed all 871 selected Nogo targets (one cached result); those tests were not rerun on Bazel 9. Ordinary C binaries used GNU libc on both architectures. Static syscallbench ran all three modes on AMD64; its constraint excludes ARM64.\n\nThe fork-only packaging follow-up 50c1f8f6a lets a bare downstream Bazel module select exactly @kernel_dep//tools/bazeldefs:static.bzl for fsstress. All ten gVisor policy tags remain, with no consumer-supplied overrides. Stock 588e6f343 exits 7 at Gazelle; the corrected query exits 0, and the wrong-root load control exits 7. This qualifies loading and label selection only, not downstream compilation. The earlier root-workspace archives and AMD64 file-creation result remain separate.",
-      "updatedAt": "2026-11-05T19:50:07.012903Z",
+      "summary": "On Coral-free integration 5388293bd, Bazel and make copy produced the complete ARM64 //:release on a distroless AMD64 remote-execution platform. All six Go links, three C++ links and nine release copies ran fresh there. Make installed nine static ARM64 executables; every size and SHA-256 matched the earlier native ARM64 release. The AMD64 release was not rebuilt, and this job ran no tests or guest. This integration includes supplier patches; the smaller default-compiler proposal is a separate source.\n\nThe smaller compiler integration also built the full //:release. On 4145ade50, one AMD64 GitHub-hosted builder with LLVM 0.8.24 selected by default produced all nine static x86-64 executables and all nine static ARM64 executables using the ordinary architecture configurations. Native AMD64 runsc --version reported 4145ade50acb and OCI spec 1.2.1. This source removes both Coral toolchain targets, their repositories and four patches. It includes #16522, the #909 production changes for the GNU-target sidecars and the separate kernel-header default backport. It did not run the ARM64 binaries, a guest or a test.\n\nThe native ARM64 guest also passed without the LLVM #909 patch. On 1e80b8182 (#16522 on the compiler integration), an AMD64 worker built only the prewarmer for the declared ARM musl target, using released LLVM 0.8.24 and the existing kernel-header configuration backport. The two empty musl archives satisfied the linker’s pthread and dl arguments. Its 1,672-byte static ELF matched the prewarmer from the patched GNU link. An ARM64 worker ran it with the unchanged 8169ff661 runsc and Sentry; the systrap guest echoed its marker and exited 0. This qualifies the companion, not a switch of the entire release to musl or an unpatched GNU sidecar link.\n\nThe ARM64 runsc and Sentry cross-built on AMD64 at 8169ff661 booted a native rootless systrap guest on an ARM64 worker. The worker received those exact static binaries, a 1,672-byte ARM64 prewarmer and a static BusyBox; it built nothing. The guest echoed the expected marker and exited 0. The original ARM-configured prewarmer rule had produced a 1,520-byte x86-64 executable. With #16522 applied, the C link targeted ARM64 but could not find pthread or dl. Applying the three production hunks from upstream LLVM #909 to the pinned 0.8.24 source (fork 7424610cf) produced the working prewarmer. Only that companion used the #909 correction on the GNU route; the ARM64 runtime hashes still match the original two-target build.\n\nOn fork revision 8169ff661, the AMD64 runsc and Sentry built with LLVM 0.8.24 ran a native rootless systrap guest. The guest ran BusyBox echo and exited 0. Both runtime binaries matched the SHA-256 digests from the cross-build below. The startup log identified the matching Sentry and the 1,520-byte LLVM-built prewarmer. The optional fdparking helper was absent, as the log warned; rootless startup did not require procumounter. That earlier job exercised only the AMD64 guest.\n\nWith released LLVM 0.8.24 selected by default in the fork, one native AMD64 Bazel worker built both //runsc:runsc and //runsc/cmd/sentry:gvisor_sentry for AMD64 and ARM64 on 8169ff661. The ordinary architecture configurations used no --extra_toolchains override. All five requested targets completed for each architecture. The four fresh Go links produced two ELF62 and two ELF183 binaries, with no ELF interpreter or dynamic segment. The corrected #16516 generator emitted all 10 AMD64 and 11 ARM64 systrap offsets; every value matched its linked symbol. Both vDSOs and signal-handler blobs retained their verified bytes. The AMD64 runsc ran natively and the ARM64 runsc ran under declared QEMU. Both --version calls reported the source stamp and OCI spec 1.2.1. That build job ran no tests or guest.\n\nOn unmodified gVisor master 90d4e2253, one AMD64 worker built //tools/zstd:compressor for both x86-64 and ARM64 using the released @llvm 0.8.24 and --extra_toolchains=@llvm//toolchain:all. The same AMD64 clang and clang++ compiled and linked both executables. The action records show the corresponding GNU triples, Linux 6.18.33 and glibc 2.28 headers, and architecture-specific link directories. The physical outputs are ELF62 and ELF183. The AMD64 compressor produced a frame that decompressed to the original input. A separate ARM-only run reproduced the identical ARM executable. Project-declared QEMU 11.0 ran it on AMD64 with the GNU loader and libraries from the pinned @test_bun ARM test image; it produced the same 61 compressed bytes and recovered the original input. The image supplied runtime files for this check only. The first job had stopped before QEMU started. This demonstrates an opt-in cross-build without changing the compiler default, the NVIDIA parser or TLDK.\n\nThe preceding control showed why the systrap generator was needed. On master, the ARM sysmsg genrules invoked host clang without a target triple; x86-64 clang rejected the ARM-only -mno-outline-atomics flag. On 5fa51a2fc, the native vDSO and sysmsg rules used the released LLVM toolchain for 12 compiles and four links. All three targets completed. The two vDSOs matched their linked ELF62/ELF183 shared objects, and the split signal-handler binaries matched the corresponding 5,440- and 4,864-byte ELF sections. Both Go offsets files, however, were identical 105-byte package scaffolds with no exported offsets. The build did not execute the Sentry or a test.\n\nBazel 9.3.1 and the declared clang++ built the NVIDIA ABI parser for x86_64-linux-gnu and aarch64-linux-gnu. With supplier source 17f6a3008, the generated LLVM configuration contained exactly AArch64 and X86. TestParser passed uncached on each native architecture. The earlier compiler integration passed all 871 selected Nogo targets (one cached result); those tests were not rerun on Bazel 9. Ordinary C binaries used GNU libc on both architectures. Static syscallbench ran all three modes on AMD64; its constraint excludes ARM64.\n\nThe fork-only packaging follow-up 50c1f8f6a lets a bare downstream Bazel module select exactly @kernel_dep//tools/bazeldefs:static.bzl for fsstress. All ten gVisor policy tags remain, with no consumer-supplied overrides. Stock 588e6f343 exits 7 at Gazelle; the corrected query exits 0, and the wrong-root load control exits 7. This qualifies loading and label selection only, not downstream compilation. The earlier root-workspace archives and AMD64 file-creation result remain separate.",
+      "updatedAt": "2026-11-05T20:06:26.868772Z",
       "head": "a385bd2b0155b82faf4fc6a0c195a153ad57550c",
       "evidence": [
         {
@@ -5022,6 +5022,26 @@
         {
           "label": "Full cross-release validation, started on 4145ade50",
           "url": "https://github.com/tamird/gvisor/actions/runs/42097395467"
+        },
+        {
+          "label": "All nine ARM64 release files cross-built and installed on the AMD64 distroless RBE platform",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42098073009/artifacts/13448316801"
+        },
+        {
+          "label": "Native AMD64/ARM64 release controls; all nine native ARM64 file hashes match the cross-build",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41975504552/artifacts/13391208856"
+        },
+        {
+          "label": "LLVM 0.8.24 ARM musl prewarmer on AMD64: target, inputs and static ELF",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42097506601/artifacts/13446659898"
+        },
+        {
+          "label": "Native ARM64 systrap with that prewarmer and the existing runsc and Sentry: guest echo and exit 0",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42097506601/artifacts/13448735292"
+        },
+        {
+          "label": "Smaller default-LLVM integration: nine static ELF files on each target; native AMD64 version",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42097395467/artifacts/13449776074"
         }
       ],
       "refinement": {
@@ -5043,9 +5063,9 @@
       "followup": {
         "owner": "Compiler integration",
         "sourceHead": "a385bd2b0155b82faf4fc6a0c195a153ad57550c",
-        "disposition": "Default LLVM cross-build and native rootless systrap guest verified on both architectures",
-        "observedAt": "2026-11-05T19:50:07.012903Z",
-        "nextAction": "Check the complete AMD64 and ARM64 release outputs on 4145ade50. The ordinary compiler proposal can proceed with the native vDSO, sysmsg and #16516 offset rules while keeping the existing NVIDIA parser and TLDK sources. For an AMD64 builder to produce the ARM64 prewarmer as well, use #16522 and a compatible freestanding link fix from hermetic-llvm #909; both are open. Remove the builder cross-compilers after the default switch.\n\nThe combined fork a385bd2b0 also changes the source used to build the NVIDIA parser. For that version, qualify the first published LLVM release containing 17f6a3008 (0.8.26 still enables nine backends); retain the 6.18 Linux-header setting and its required configuration support. The inventory landed in #16249. The classifier #15146 remains open with passing internal checks. For the combined TLDK path, #15153 was approved and imported; its internal checks failed without a public diagnostic. A maintainer can inspect those results. The already reviewed musl/VFIO successor follows #15153. Neither PR is a prerequisite for the ordinary runtime cross-build.",
+        "disposition": "Full release built on both compiler integrations: both targets on the smaller default-LLVM stack, and ARM64 on the AMD64 remote worker",
+        "observedAt": "2026-11-05T20:06:26.868772Z",
+        "nextAction": "The full release is verified on 4145ade50 for both targets. The ordinary compiler proposal can proceed with the native vDSO, sysmsg and #16516 offset rules while keeping the existing NVIDIA parser and TLDK sources. For the ARM64 prewarmer, #16522 works either with the patched GNU link or with the tested musl target on released LLVM 0.8.24. That release used #909 for its GNU-target sidecars; avoiding the supplier patch on the ordinary GNU target needs a separate check. The native vDSO tools landed as 8f985c75c even though the public #16491 PR remains open. Remove the builder cross-compilers after the default switch.\n\nThe combined fork a385bd2b0 also changes the source used to build the NVIDIA parser. For that version, qualify the first published LLVM release containing 17f6a3008 (0.8.26 still enables nine backends); retain the 6.18 Linux-header setting and its required configuration support. The inventory landed in #16249. The classifier #15146 remains open with passing internal checks. For the combined TLDK path, #15153 was approved and imported; its internal checks failed without a public diagnostic. A maintainer can inspect those results. The already reviewed musl/VFIO successor follows #15153. Neither PR is a prerequisite for the ordinary runtime cross-build.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
@@ -5080,7 +5100,12 @@
           "https://github.com/hermeticbuild/hermetic-llvm/pull/909",
           "https://github.com/tamird/gvisor/commit/820ec5f74ad43b34274840f5768d36fb571c00ca",
           "https://github.com/tamird/gvisor/commit/4145ade50acb0813d372bc5a8315c516ac5d98b6",
-          "https://github.com/tamird/gvisor/actions/runs/42097395467"
+          "https://github.com/tamird/gvisor/actions/runs/42097395467",
+          "https://github.com/tamird/gvisor/actions/runs/42098073009/artifacts/13448316801",
+          "https://github.com/tamird/gvisor/actions/runs/41975504552/artifacts/13391208856",
+          "https://github.com/tamird/gvisor/actions/runs/42097506601/artifacts/13446659898",
+          "https://github.com/tamird/gvisor/actions/runs/42097506601/artifacts/13448735292",
+          "https://github.com/tamird/gvisor/actions/runs/42097395467/artifacts/13449776074"
         ]
       }
     },
@@ -30652,13 +30677,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "qualification/native-sidecar-cc",
-      "head": "1c90c430cd50f010f01f4dd79b63760c1a95137c",
+      "head": "244010f9c48c93edcf25cfb4acdf91f7bed251c7",
       "title": "Build the runsc sidecars with the C toolchain",
       "url": "https://github.com/google/gvisor/pull/16522",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-04T20:45:45.283369+00:00",
-      "summary": "Published all four commits as the patch-preserving rebase 1c90c430cd on 92d3cc68c. The inner C++ binary remains manual, so wildcard builds reach it through the public freestanding wrapper. On the prior source, the corrected wildcard built all three static AMD64 sidecars while the original direct link failed with a forced hosted allocator; a separate cquery confirmed that each inner target clears --custom_malloc. Those results do not attest the rebased head’s new CI. The private build adapter still needs upstream verification.",
+      "updatedAt": "2026-11-05T20:03:32.322267Z",
+      "summary": "Lucas said the earlier review points were addressed and requested a rebase over the vDSO tools change, which landed on master as 8f985c75c while #16491 remains open. The four commits are rebased at 244010f9c and GitHub reports the PR mergeable. His review is COMMENTED; formal approval is still outstanding.\n\nOn the separate 1e80b8182 integration, released LLVM 0.8.24 built the 1,672-byte ARM64 prewarmer on AMD64 using the declared musl target and no #909 link patch. With the original runsc and Sentry, it booted the native ARM64 systrap guest. The earlier GNU-target link on this integration failed to find pthread and dl until the supplier correction was applied. Neither guest run was CI on the rebased PR.\n\nThe inner C++ binary remains manual, so wildcard builds reach it through the public freestanding wrapper. On the prior source, the corrected wildcard built all three static AMD64 sidecars while the original direct link failed with a forced hosted allocator; a separate cquery confirmed that each inner target clears --custom_malloc. The private build adapter still needs upstream verification.",
       "evidence": [
         {
           "label": "Rebased three-commit change",
@@ -30755,6 +30780,26 @@
         {
           "label": "Published patch-preserving rebase on 92d3cc68c; earlier qualification remains source-bound",
           "url": "https://github.com/tamird/gvisor/commit/1c90c430cd"
+        },
+        {
+          "label": "Lucas requested a rebase after the vDSO tools landed",
+          "url": "https://github.com/google/gvisor/pull/16522#pullrequestreview-5791155097"
+        },
+        {
+          "label": "The vDSO tools are present in the master source",
+          "url": "https://github.com/google/gvisor/commit/8f985c75c"
+        },
+        {
+          "label": "Published four-commit rebase on the current master",
+          "url": "https://github.com/google/gvisor/pull/16522/commits/244010f9c48c93edcf25cfb4acdf91f7bed251c7"
+        },
+        {
+          "label": "Unpatched LLVM 0.8.24 Linux link flags, using the ARM musl target for the prewarmer",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42097506601/artifacts/13446659898"
+        },
+        {
+          "label": "Native ARM64 guest booted using the cross-built prewarmer",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42097506601/artifacts/13448735292"
         }
       ],
       "number": 16522,
@@ -74144,5 +74189,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T19:50:07.012903Z"
+  "updatedAt": "2026-11-05T20:06:26.868772Z"
 }
