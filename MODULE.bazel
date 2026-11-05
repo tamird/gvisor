@@ -58,9 +58,9 @@ single_version_override(
 # This revision also includes kernel_headers.configure (3dd710dd9).
 archive_override(
     module_name = "llvm",
-    integrity = "sha256-0jY4Xc0tIRFX1/MjTny70DUvMMAvOLM0jaCaCa2X1wA=",
-    strip_prefix = "hermetic-llvm-17f6a300884d73de0b903316f85c420c45471268",
-    urls = ["https://github.com/hermeticbuild/hermetic-llvm/archive/17f6a300884d73de0b903316f85c420c45471268.tar.gz"],
+    integrity = "sha256-SNmmsaiYJRpowJMiSfYXoKgzlM0+W49zlwUKQ7IicUk=",
+    strip_prefix = "hermetic-llvm-eb198127bdc4f7b737d08a7ea009869bc7a72e75",
+    urls = ["https://github.com/hermeticbuild/hermetic-llvm/archive/eb198127bdc4f7b737d08a7ea009869bc7a72e75.tar.gz"],
 )
 
 ### LLVM
