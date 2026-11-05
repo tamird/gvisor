@@ -28,6 +28,43 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/checksum"
 )
 
+func TestTakePrefix(t *testing.T) {
+	for _, n := range []int{0, 1, 3, 4, 6, 7} {
+		t.Run(fmt.Sprint(n), func(t *testing.T) {
+			b := MakeWithData([]byte("_abc"))
+			b.TrimFront(1)
+			tail := MakeWithData([]byte("def"))
+			b.Merge(&tail)
+			defer b.Release()
+			original := b.Clone()
+			defer original.Release()
+
+			prefix := b.TakePrefix(int64(n))
+			defer prefix.Release()
+			const want = "abcdef"
+			end := min(n, len(want))
+			if got := string(prefix.Flatten()); got != want[:end] || prefix.Size() != int64(end) {
+				t.Fatalf("prefix = %q (%d bytes), want %q", got, prefix.Size(), want[:end])
+			}
+			if got := string(b.Flatten()); got != want[end:] || b.Size() != int64(len(want)-end) {
+				t.Fatalf("remainder = %q (%d bytes), want %q", got, b.Size(), want[end:])
+			}
+			for _, part := range []*Buffer{&prefix, &b} {
+				if part.Size() != 0 {
+					v, ok := part.PullUp(0, 1)
+					if !ok {
+						t.Fatal("PullUp failed for nonempty buffer")
+					}
+					v.AsSlice()[0] = 'X'
+				}
+			}
+			if got := string(original.Flatten()); got != want {
+				t.Errorf("clone after writing split views = %q, want %q", got, want)
+			}
+		})
+	}
+}
+
 func BenchmarkReadAt(b *testing.B) {
 	b.ReportAllocs()
 	var buf Buffer

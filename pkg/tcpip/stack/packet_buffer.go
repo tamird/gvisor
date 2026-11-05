@@ -741,10 +741,10 @@ func (d PacketData) TrimFront(count int) {
 		d.pk.buf.Truncate(int64(d.pk.dataOffset()))
 		return
 	}
-	buf := d.pk.Data().ToBuffer()
-	buf.TrimFront(int64(count))
-	d.pk.buf.Truncate(int64(d.pk.dataOffset()))
-	d.pk.buf.Merge(&buf)
+	headers := d.pk.buf.TakePrefix(int64(d.pk.dataOffset()))
+	d.pk.buf.TrimFront(int64(count))
+	headers.Merge(&d.pk.buf)
+	d.pk.buf = headers
 }
 
 // Size returns the number of bytes in the data payload of the packet.
