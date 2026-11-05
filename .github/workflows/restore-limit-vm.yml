@@ -1,7 +1,7 @@
 name: Measure graph restore hook ordering on 100,000 tmpfs files
 on:
   push:
-    branches: [qualification/state-hook-order-native-restore]
+    branches: [qualification/state-hook-order-native-bazel8]
 permissions:
   contents: read
 jobs:
@@ -150,7 +150,7 @@ jobs:
         test "$(id -u)" != 0
         awk '$1 == "MemAvailable:" && $2 >= 7*1024*1024 { found=1 } END { exit !found }' /proc/meminfo
         test "$(df -PB1 . | awk 'END {print $4}')" -gt 10000000000
-        test "$(git rev-parse HEAD^)" = a11f51de8a6f00721df155c457ff777be9369ce4
+        test "$(git rev-parse HEAD^)" = 00c811f3c917891980efc3a1d3d14371b6ccdf56
         test "$(git hash-object "$PKG/gc_reference_test.go")" = b565e1c147592b473903dfbebff9b6a594b93822
         test "$(git hash-object "$PKG/paired.py")" = be72c146536fcacd062b486ba04ddbd73dd4f692
         test "$(git hash-object "$PKG/native.sh")" = 28c33fe97dacba26350053483e93099a960da7ce
@@ -160,6 +160,12 @@ jobs:
         curl -fsSL --max-time 90 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$RUNNER_TEMP/restore-tools/bazel"
         echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $RUNNER_TEMP/restore-tools/bazel" | sha256sum -c -
         chmod 755 "$RUNNER_TEMP/restore-tools/bazel"
+        mkdir "$RUNNER_TEMP/restore-tools/native"
+        direct="$RUNNER_TEMP/restore-tools/native/bazel"
+        curl -fsSL --retry 2 --max-time 120 https://releases.bazel.build/8.8.1/release/bazel-8.8.1-linux-x86_64 -o "$direct"
+        echo "5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160  $direct" | sha256sum -c -
+        chmod 755 "$direct"
+        test "$("$direct" --version)" = 'bazel 8.8.1'
         test "$(cat .bazelversion)" = 8.8.1
     - name: Verify the detached private root and precreated cgroup before building either capsule
       if: steps.host.outputs.eligible == 'true'
@@ -194,22 +200,24 @@ jobs:
           test "$(git -C "$d/src" hash-object runsc/container/gc_reference_test.go)" = "$TEST_BLOB"
           test "$(git -C "$d/src" rev-parse HEAD:runsc/config/flags.go)" = e31e1d89b7b44d958f06a16c64da7035bad8ee33
           test "$(git -C "$d/src" rev-parse HEAD:pkg/state/state.go)" = c7214909f9ceb6455faaedad00c71a773e00c2bf
-          test "$(cat "$d/src/.bazelversion")" = 9.3.1
+          test "$(git -C "$d/src" rev-parse HEAD:images/default/bazelversion)" = 8540c676063d1685b4734d537d1385390a08986c
+          test "$(cat "$d/src/.bazelversion")" = 8.8.1
           test -z "$(git -C "$d/src" remote)"
           test -z "$(git -C "$d/src" config --local --get-regexp 'extraheader|credential' || :)"
           # Only public source filenames and Bazel's own enum names may appear
           # in a diagnostic; keep both allowlists outside the compiler mounts.
           git -C "$d/src" ls-files -z > "$d/source-files"
-          curl -fsS --max-time 30 https://raw.githubusercontent.com/bazelbuild/bazel/9.3.1/src/main/protobuf/failure_details.proto > "$d/failure-details.proto"
-          test "$(git hash-object "$d/failure-details.proto")" = d867e1db512a1484a20d10b13bd05a97a7e5d020
+          curl -fsS --max-time 30 https://raw.githubusercontent.com/bazelbuild/bazel/8.8.1/src/main/protobuf/failure_details.proto > "$d/failure-details.proto"
+          test "$(git hash-object "$d/failure-details.proto")" = d77aded3e134c22308621f7c647f4ee5cc5f2717
           docker pull "$IMAGE" > "$d/pull.log" 2>&1
           docker run --rm --cap-drop=ALL --security-opt no-new-privileges \
             -v "$d/src:/src" -v "$d/output:/transfer" -v "$RUNNER_TEMP/restore-tools:/tools:ro" -w /src \
             -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/src \
             --entrypoint /bin/bash "$IMAGE" -c '
             set -euo pipefail
-            export PATH="/tools:$PATH"
-            test "$(bazel --version)" = "bazel 9.3.1"
+            export PATH="/tools/native:$PATH"
+            test "$(command -v bazel)" = /tools/native/bazel
+            test "$(bazel --version)" = "bazel 8.8.1"
             flags=(--config=x86_64 --jobs=4 --spawn_strategy=local --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox --remote_cache= --remote_executor= --bes_backend= --test_sharding_strategy=disabled)
             target=//runsc/container:container_test
             bazel cquery "${flags[@]}" --output=label --build_event_json_file=/transfer/analysis.bep "$target" || { rc=$?; echo "$rc" > /transfer/analysis.exit; exit "$rc"; }
@@ -298,6 +306,7 @@ jobs:
                 digest = (d / "elf.sha256").read_text().strip()
                 if re.fullmatch("[0-9a-f]{64}", digest): phase["elf_sha256"] = digest
         data["product_cases"] = sum("native_exit" in row for row in data["stages"].get("restore", {}).get("samples", []))
+        data["preceding_attempt"] = {"run":42128044129, "artifact":13461244317, "zip_sha256":"92eb15254fdaccd9f793c6ac4210184d879efe4f46ebdb55470c019f9fdbe09b", "product_cases":0, "phase":"source Bazel version before compiler"}
         data["original_workload"] = {"run":42025490439, "artifact":13415901422, "scope":"same 100000-file graph/none lifecycle, previous timing covered save only"}
         data["previous_hook_evidence"] = {"run":41391648482, "artifact":13118052075, "scope":"correctness and synthetic 20000-node graph"}
         data["guest_machine"] = "native AMD64 host, 4 allowed CPUs, 2 GiB precreated leaf, offline systrap guest"
