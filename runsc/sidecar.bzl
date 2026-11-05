@@ -1,6 +1,6 @@
 """C programs shipped alongside runsc that run without a C runtime."""
 
-load("//tools:defs.bzl", "cc_binary", "freestanding_executable")
+load("//tools:defs.bzl", "freestanding_executable", "linux_headers")
 
 def freestanding_sidecar(name, src, out):
     """Builds a static executable with its own process entry point.
@@ -10,8 +10,9 @@ def freestanding_sidecar(name, src, out):
       src: C source file defining _start.
       out: Filename used by runsc and the sidecar tests.
     """
-    cc_binary(
-        name = "_linked/" + out,
+    freestanding_executable(
+        name = name,
+        out = out,
         srcs = [src],
         copts = [
             "-Os",
@@ -22,6 +23,7 @@ def freestanding_sidecar(name, src, out):
             "-fno-asynchronous-unwind-tables",
             "-fno-unwind-tables",
         ],
+        deps = [linux_headers],
         # These executables have their own entry point and use only syscalls.
         # Do not add either toolchain's hosted libraries or startup code.
         features = [
@@ -47,13 +49,5 @@ def freestanding_sidecar(name, src, out):
         ],
         linkstatic = True,
         stamp = 0,
-        tcmalloc = False,
-        tags = ["manual"],
-        visibility = ["//visibility:private"],
-    )
-    freestanding_executable(
-        name = name,
-        binary = ":_linked/" + out,
-        out = out,
         visibility = ["//visibility:public"],
     )
