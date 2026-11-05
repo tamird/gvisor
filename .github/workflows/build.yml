@@ -1,35 +1,77 @@
-name: CI
-
-"on":
+name: Preserve test_app Nogo wildcard selection
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/test-app-nogo-wildcard-retry]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  consumers:
+    if: ${{ github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1 }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 4}
+      - name: Bind the candidate and existing native Bazel launcher
+        run: |
+          set -euo pipefail
+          umask 077
+          d="$RUNNER_TEMP/test-app-runfile"
+          mkdir -p "$d/out"
+          printf '%s\n' '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$d/out/verdict.json"
+          test "$(git rev-parse HEAD^)" = 9089ecec2eeee5575b1ccfba9f2eef60c345af89
+          test "$(git rev-parse HEAD^^)" = 90dd28479a2fbd8bbbf0c9bd79ad9e9f9abb5b4c
+          test "$(git rev-parse HEAD^^^)" = f35d725669ae45e7617cf66e7ceee2f0f6307490
+          test "$(git rev-parse HEAD^:test/cmd/test_app/BUILD)" = b0dacb8f00c136f30522742572cca308de843aec
+          test "$(git diff --name-only HEAD^ HEAD)" = "$(printf '%s\n' .github/qualification/test_app_runfile.py .github/workflows/build.yml)"
+          cp .github/qualification/test_app_runfile.py "$d/check.py"
+          echo "602009fee3289e450802530ac98a13182f98303ad6101b3e55d3ba9f1c756bd0  $d/check.py" | sha256sum -c -
+          test "$(cat .bazelversion)" = 9.3.1
+          curl --retry 3 -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Stage the two pinned Bazel dependencies before the original control
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/test-app-runfile"
+          mkdir -m 700 "$d/dist"
+          cd "$d/dist"
+          echo '{"status":"INCOMPLETE","phase":"fetch_bazel_skylib_1.9.2"}' > ../out/verdict.json
+          curl --retry 4 --retry-all-errors --max-time 45 -fsSL \
+            https://github.com/bazelbuild/bazel-skylib/releases/download/1.9.2/bazel-skylib-1.9.2.tar.gz -o bazel-skylib-1.9.2.tar.gz
+          echo '37cdfbc6faefea94f7b37760a305c98c08981116c2bc9e821e3b423221fad8c8  bazel-skylib-1.9.2.tar.gz' | sha256sum -c -
+          echo '{"status":"INCOMPLETE","phase":"fetch_rules_pkg_1.0.1"}' > ../out/verdict.json
+          curl --retry 4 --retry-all-errors --max-time 45 -fsSL \
+            https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/1.0.1/rules_pkg-1.0.1.tar.gz -o rules_pkg-1.0.1.tar.gz
+          echo 'd20c951960ed77cb7b341c2a59488534e494d5ad1d30c4818c736d57772a9fef  rules_pkg-1.0.1.tar.gz' | sha256sum -c -
+      - name: Analyze all three wildcard and explicit test selections
+        timeout-minutes: 28
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" \
+            USE_BAZEL_VERSION=9.3.1 GIT_TERMINAL_PROMPT=0 setpriv --no-new-privs python3 -B "$RUNNER_TEMP/test-app-runfile/check.py"
+      - name: Validate the bounded public result
+        id: public
+        if: always()
+        shell: python
+        run: |
+          import json, os, re
+          from pathlib import Path
+          d = Path(os.environ["RUNNER_TEMP"], "test-app-runfile/out")
+          p = d / "verdict.json"
+          assert list(d.iterdir()) == [p] and p.is_file() and not p.is_symlink()
+          raw = p.read_bytes()
+          assert 0 < len(raw) < 100000 and json.loads(raw)["status"] in ("PASS","FAIL","INCOMPLETE")
+          assert not re.search(rb"(?i)x-buildbuddy-api-key|authorization\s*[:=]|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}|https?://", raw)
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.public.outcome == 'success'
+        with:
+          name: test-app-nogo-selection
+          path: ${{ runner.temp }}/test-app-runfile/out/verdict.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Stop Bazel
+        if: always()
+        run: |
+          d="$RUNNER_TEMP/test-app-runfile"
+          if [[ -x "$d/bazel" ]]; then "$d/bazel" --nosystem_rc --nohome_rc --host_jvm_args=-Xmx4g shutdown; fi
