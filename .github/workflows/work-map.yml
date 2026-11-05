@@ -1,0 +1,91 @@
+name: Verify the race and parser catalog corrections
+on:
+  push:
+    branches: [qualification/work-map-race-and-parser-gates]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 4
+          persist-credentials: false
+      - name: Run the canonical collector on the proposed Pages source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(git rev-parse HEAD^)" = 43fe321e57b1f46d9180581249ad596cc1e00b87
+          git checkout --detach 43fe321e57b1f46d9180581249ad596cc1e00b87
+          python3 -B update-status.py
+      - name: Validate the collected pair and run its existing tests
+        run: |
+          python3 -B - <<'PYTHON'
+          import datetime, hashlib, json, re, subprocess
+          from pathlib import Path
+
+          source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          assert source == '43fe321e57b1f46d9180581249ad596cc1e00b87'
+          commands = [['node', 'metadata-preflight.mjs', '.'],
+                      ['python3', '-B', '-m', 'unittest', 'work_states_test', 'update_status_test'],
+                      ['node', '--test', '--test-reporter=tap', 'app_test.mjs']]
+          expected = [' '.join(command) for command in commands]
+          record = dict(source=source, expected=expected, executed=[], failed=[], skipped=[], missing=expected.copy())
+          for command, label in zip(commands, expected, strict=True):
+              result = subprocess.run(command, capture_output=True, text=True)
+              if result.returncode:
+                  print(result.stdout[-5000:], result.stderr[-5000:])
+              record['executed'].append(label)
+              record['missing'].remove(label)
+              if result.returncode:
+                  record['failed'].append(label)
+              elif command == commands[0]:
+                  record['preflight'] = json.loads(result.stdout)
+              if command == commands[1]:
+                  record['pythonTests'] = [int(n) for n in re.findall(r'^Ran (\d+) tests?', result.stderr, re.M)]
+              elif command == commands[2]:
+                  record['jsCounts'] = {k:int(n) for k,n in re.findall(r'^# (tests|pass|fail|skipped) (\d+)$', result.stdout, re.M)}
+          snapshot = json.loads(Path('github-status.json').read_text())
+          before = json.loads(subprocess.check_output(['git', 'show', 'HEAD:github-status.json']))
+          current = {p['number']:p for p in snapshot['prs'] if p.get('repo', 'google/gvisor') == 'google/gvisor'}
+          handoffs = [p['number'] for p in current.values() if p.get('terminalImportHandoff')]
+          checks = dict(fresh=snapshot['checkedAt'] > before['checkedAt'],
+                        requestBudget=1 <= snapshot['limits']['requests'] <= 64,
+                        registryUnchanged=not subprocess.run(['git','diff','--quiet','HEAD','--','registry.json']).returncode)
+          registry = json.loads(Path('registry.json').read_text())
+          previous = json.loads(subprocess.check_output(['git','show',source+'^:registry.json']))
+          nodes = {n['id']:n for n in registry['nodes']}
+          old = {n['id']:n for n in previous['nodes']}
+          cid='branch:hermetic-compiler-review'; pid='branch:hermetic-llvm-project'
+          c,p=nodes[cid],nodes[pid]
+          checks['scope']=set(nodes)==set(old) and {k for k in old if old[k]!=nodes[k]}=={pid,cid} and registry['groups']==previous['groups'] and registry['investigations']==previous['investigations']
+          checks['decisions']=c['settledReviews'][:-1]==old[cid]['settledReviews'] and c['settledReviews'][-1]['head']==old[cid]['contributorReview']['head']==c['head'] and c['settledReviews'][-1]['outcome']=='superseded' and 'contributorReview' not in c and 'contributorReview' not in p and c['status']==p['status']=='Agent work' and not any(x['outcome']=='approved' and x['head']==c['head'] for x in c['settledReviews']) and nodes['pr:16735']==old['pr:16735']
+          checks['race']=all(t in c['summary'] for t in ('9310f06f9','runsc-race','gvisor_sentry-race','-lc','-ldl','-lm','-lpthread','-lresolv','5b7afbced','twice booted','nine static AMD64','plugin executable links','neither target release reached installation','Protobuf','KVM','/bin/bash'))
+          checks['parser']=p['head']=='74353add6098993e7cb22f2a5c443ef8fd3242f6' and all(t in p['summary'] for t in ('llvm-raw','zlib','220 dependencies','NCSA and Spencer-94 were unknown','Apache-2.0 WITH LLVM-exception and MIT','BSD-3-Clause','CC0-1.0','regex and BLAKE3','nine backends','0.8.26','AArch64 and X86','did not rebuild the parser'))
+          def ids(n): return {e['url'].rsplit('/',1)[-1] for e in n['evidence']}
+          checks['receipts']={'13453527379','13218522690','13454667129','13451318656','13451568393'}<=ids(c) and {'13455172267','12937627037','13273383359'}<=ids(p)
+          scoped=lambda rows:[(e['from'],e['to'],e['type']) for e in rows]
+          checks['edges']=scoped(registry['edges'])==scoped(previous['edges']) and [e for e in registry['edges'] if e['to']!=pid]==[e for e in previous['edges'] if e['to']!=pid] and nodes['pr:16249']['status']==current[16249]['status']=='merged' and any(e['from']=='pr:16249' and e['to']==pid and e['reason'].startswith('Satisfied:') for e in registry['edges'])
+          record.update(requests=snapshot['limits']['requests'], requestLimit=64,
+                        checkedAt=snapshot['checkedAt'], previousCheckedAt=before['checkedAt'], reminderPosting=False,
+                        liveChecks=checks, terminalImportHandoffs=handoffs,
+                        cases={n:{'head':p['head'], 'status':p['status'], 'handoff':n in handoffs}
+                               for n,p in current.items() if n in (15146,16249,16516,16522,16735,17067)},
+                        finished=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                        exitCode=int(bool(record['failed']) or not all(checks.values())),
+                        hashes={p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in
+                                ('github-status.json','registry.json','app.js','update-status.py','work_states.py','update_status_test.py','README.md')})
+          Path('verdict.json').write_text(json.dumps(record, indent=2))
+          raise SystemExit(record['exitCode'])
+          PYTHON
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: work-map-verdict
+          path: |
+            verdict.json
+            github-status.json
+          if-no-files-found: error
