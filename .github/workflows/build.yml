@@ -1,35 +1,241 @@
-name: CI
-
-"on":
+name: Qualify the Ubuntu tcpdump fixture
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcpdump-distro-capture]
+permissions:
+  contents: read
+env:
+  PRODUCT: 77fbd4df0b319727914eec2f6112d724f06fed29
+  TAG: gvisor.dev/images/basic/tcpdump:latest
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  archives:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 5
+          persist-credentials: false
+      - name: Select the product source
+        run: |
+          cp test/rbe/tcpdump-image-receipt.py "$RUNNER_TEMP/receipt.py"
+          git switch --detach "$PRODUCT"
+      - name: Configure the pinned Linux execution platform
+        id: setup
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          echo "Coordinator $(gcc -dumpfullversion), worker GCC 11"
+          test "$(gcc -dumpversion | cut -d. -f1)" = 11
+          if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+          unshare --user --map-root-user true
+          mkdir -p "$RUNNER_TEMP/gnu"
+          GNU=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          printf 'module(name="epoll_gnu")\n' > "$RUNNER_TEMP/gnu/MODULE.bazel"
+          printf 'platform(name="gnu", constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"], exec_properties={"Arch":"amd64","OSFamily":"linux","EstimatedMemory":"2GB","workload-isolation-type":"firecracker","container-image":"docker://%s"}, visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu/BUILD"
+          test -n "$BUILDBUDDY_API_KEY"
+          rc=$RUNNER_TEMP/images.bazelrc
+          umask 077
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=linux-sandbox' "build --inject_repository=epoll_gnu=$RUNNER_TEMP/gnu" 'build --host_platform=@epoll_gnu//:gnu' 'build --extra_execution_platforms=@epoll_gnu//:gnu'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          cat >> "$rc" <<'RC'
+          build --jobs=8
+          build --strategy=ReleaseFiles=linux-sandbox
+          build --strategy=GoStdlib=linux-sandbox
+          build --strategy=GoStdlibList=linux-sandbox
+          build --strategy=GoStandardLibraryAnalysis=linux-sandbox
+          build --strategy=GoStaticAnalysis=linux-sandbox
+          build --modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache
+          build --noremote_upload_local_results
+          build --remote_download_outputs=toplevel
+          build --noshow_progress
+          RC
+      - name: Assemble the architecture-specific APT closure and image
+        run: |
+          set -euo pipefail
+          for pair in amd64:x86_64 arm64:aarch64; do
+            export CPU="${pair%:*}" ARCH="${pair#*:}"
+            bazel --bazelrc="$RUNNER_TEMP/images.bazelrc" build --config="$ARCH" \
+              //images/basic:tcpdump_context @tcpdump_packages//:lock.json @tcpdump_packages//:flat \
+              @image_ubuntu_archive_keys//file:ubuntu-archive-keyring.gpg
+            python3 "$RUNNER_TEMP/receipt.py" inventory
+            mv "$RUNNER_TEMP/transfer" "$RUNNER_TEMP/tcpdump-$CPU"
+          done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: tcpdump-amd64
+          path: |
+            ${{ runner.temp }}/tcpdump-amd64/image.tar
+            ${{ runner.temp }}/tcpdump-amd64/inventory.json
+          if-no-files-found: error
+          retention-days: 1
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: tcpdump-arm64
+          path: |
+            ${{ runner.temp }}/tcpdump-arm64/image.tar
+            ${{ runner.temp }}/tcpdump-arm64/inventory.json
+          if-no-files-found: error
+          retention-days: 1
+      - if: always()
+        run: rm -f "$RUNNER_TEMP/images.bazelrc"
+  native:
+    needs: archives
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {cpu: amd64, arch: x86_64, runner: ubuntu-22.04, cross: arm64}
+          - {cpu: arm64, arch: aarch64, runner: ubuntu-24.04-arm, cross: amd64}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 75
+    env:
+      CPU: ${{ matrix.cpu }}
+      ARCH: ${{ matrix.arch }}
+      CROSS: ${{ matrix.cross }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 5
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: tcpdump-${{ matrix.cpu }}
+          path: ${{ runner.temp }}/transfer
+      - name: Install this source's release and load its exact image
+        run: |
+          set -euo pipefail
+          cp test/rbe/tcpdump-image-receipt.py "$RUNNER_TEMP/receipt.py"
+          git switch --detach "$PRODUCT"
+          test "$(uname -m)" = "$ARCH"
+          release="$RUNNER_TEMP/tcpdump-runtime"
+          mkdir "$release"
+          checksum=$(jq -er '.archive_sha256' "$RUNNER_TEMP/transfer/inventory.json")
+          printf '%s  %s\n' "$checksum" "$RUNNER_TEMP/transfer/image.tar" | sha256sum -c -
+          docker load --input "$RUNNER_TEMP/transfer/image.tar"
+          test "$(docker image inspect --format '{{.Architecture}} {{.Id}}' "$TAG")" = "$CPU $(jq -er '.docker_image_id' "$RUNNER_TEMP/transfer/inventory.json")"
+          sudo apt-get -qq update
+          sudo apt-get -qy install --no-install-recommends "crossbuild-essential-$CROSS" libnuma-dev busybox-static
+          if [[ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+          bazelisk cquery --config="$ARCH" -c opt --lockfile_mode=update 'set(//:release //test/image:image_test)'
+          sha256sum MODULE.bazel.lock > "$RUNNER_TEMP/lock.sha256"
+          bazelisk build --config="$ARCH" -c opt --lockfile_mode=error \
+            --strategy=GoStdlib=sandboxed --strategy=GoStdlibList=sandboxed //:release
+          cp -RL bazel-bin/release/. "$release"
+          sudo "$release/runsc" install --runtime=qualification-images-docker --download-sidecars=NEVER --require-sidecars=ALWAYS -- --platform=systrap --net-raw
+          sudo systemctl reload docker
+          for ((n=0; n<30; n++)); do
+            if docker info --format '{{json .Runtimes}}' | jq -e 'has("qualification-images-docker")' >/dev/null; then break; fi
+            sleep 1
+          done
+          docker info --format '{{json .Runtimes}}' | jq -e 'has("qualification-images-docker")'
+      - name: Exercise both existing capture cases
+        run: |
+          bazelisk test --config="$ARCH" -c opt --lockfile_mode=error --strategy=GoStdlib=sandboxed \
+            --strategy=GoStdlibList=sandboxed --strategy=TestRunner=local --nocache_test_results \
+            --runs_per_test=1 --flaky_test_attempts=1 --test_env=GO_TEST_WRAP_TESTV=1 --test_timeout=900 \
+            --test_output=errors --test_arg=-runtime=qualification-images --test_arg='-test.run=^TestTcpdump$' //test/image:image_test
+          sha256sum -c "$RUNNER_TEMP/lock.sha256"
+      - name: Check tcpdump drops all user and group IDs after capture opens
+        run: |
+          set -euo pipefail
+          monitor=$(command -v busybox)
+          if readelf -l "$monitor" | grep -F 'Requesting program interpreter'; then exit 1; fi
+          id=$(docker run -d --runtime=qualification-images-docker --cap-add NET_RAW \
+            --mount "type=bind,src=$monitor,dst=/probe/busybox,readonly" "$TAG" tcpdump -l -nn -i lo port 9999)
+          trap 'docker rm -f "$id" >/dev/null' EXIT
+          for ((n=0; n<60; n++)); do
+            if docker logs "$id" 2>&1 | grep -q 'listening on lo'; then break; fi
+            sleep 1
+          done
+          docker logs "$id" 2>&1 | grep 'listening on lo'
+          docker exec "$id" /probe/busybox cat /proc/1/status > "$RUNNER_TEMP/tcpdump-ids"
+          docker exec "$id" tcpdump_sender
+          for ((n=0; n<60; n++)); do
+            if docker logs "$id" 2>&1 | grep -q 'UDP, length 8'; then break; fi
+            sleep 1
+          done
+          docker stop "$id"
+          test "$(docker wait "$id")" = 0
+          docker logs "$id" > "$RUNNER_TEMP/privilege-capture.log" 2>&1
+          export FINISHED
+          FINISHED=$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)
+          python3 "$RUNNER_TEMP/receipt.py" runtime | tee "$RUNNER_TEMP/runtime.json"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: tcpdump-native-${{ matrix.cpu }}
+          path: ${{ runner.temp }}/runtime.json
+          if-no-files-found: error
+  licensing:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 70
+    env:
+      AUDITOR: 9041e61701db27bd85b9658385cf5d7803681ab1
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 5
+          persist-credentials: false
+      - name: Configure the pinned Linux execution platform
+        id: setup
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          echo "Coordinator $(gcc -dumpfullversion), worker GCC 11"
+          test "$(gcc -dumpversion | cut -d. -f1)" = 11
+          if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0; fi
+          unshare --user --map-root-user true
+          mkdir -p "$RUNNER_TEMP/gnu"
+          GNU=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          printf 'module(name="epoll_gnu")\n' > "$RUNNER_TEMP/gnu/MODULE.bazel"
+          printf 'platform(name="gnu", constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"], exec_properties={"Arch":"amd64","OSFamily":"linux","EstimatedMemory":"2GB","workload-isolation-type":"firecracker","container-image":"docker://%s"}, visibility=["//visibility:public"])\n' "$GNU" > "$RUNNER_TEMP/gnu/BUILD"
+          test -n "$BUILDBUDDY_API_KEY"
+          rc=$RUNNER_TEMP/images.bazelrc
+          umask 077
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'test --strategy=TestRunner=linux-sandbox' "build --inject_repository=epoll_gnu=$RUNNER_TEMP/gnu" 'build --host_platform=@epoll_gnu//:gnu' 'build --extra_execution_platforms=@epoll_gnu//:gnu'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          cat >> "$rc" <<'RC'
+          build --jobs=8
+          build --strategy=ReleaseFiles=linux-sandbox
+          build --strategy=GoStdlib=linux-sandbox
+          build --strategy=GoStdlibList=linux-sandbox
+          build --strategy=GoStandardLibraryAnalysis=linux-sandbox
+          build --strategy=GoStaticAnalysis=linux-sandbox
+          build --modify_execution_info=^Go(StandardLibrary|Static)Analysis$=-no-sandbox,^Go(Stdlib(List)?|StandardLibraryAnalysis)$=+no-remote-cache
+          build --noremote_upload_local_results
+          build --remote_download_outputs=toplevel
+          build --noshow_progress
+          RC
+      - name: Fetch and verify the exact sources with the APT-aware licensechecker
+        run: |
+          set -euo pipefail
+          rc="$RUNNER_TEMP/images.bazelrc"
+          git fetch --no-tags --depth=1 origin "$AUDITOR"
+          git switch --detach "$AUDITOR"
+          target=//tools/licensecheck/main:licensecheck
+          bazel --bazelrc="$rc" build "$target"
+          path=$(bazel --bazelrc="$rc" cquery --output=files "$target")
+          cp "$(bazel --bazelrc="$rc" info execution_root)/$path" "$RUNNER_TEMP/licensecheck"
+          git switch --detach "$PRODUCT"
+          export MAKEFLAGS="DOCKER_BUILD=false STARTUP_OPTIONS=--bazelrc=$rc"
+          "$RUNNER_TEMP/licensecheck" --mode=fetch
+          git diff -- tools/licensecheck/dependencies.yaml > "$RUNNER_TEMP/catalog.diff"
+          "$RUNNER_TEMP/licensecheck" --mode=verify
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: tcpdump-catalog
+          path: ${{ runner.temp }}/catalog.diff
+          if-no-files-found: ignore
+      - if: always()
+        run: rm -f "$RUNNER_TEMP/images.bazelrc"
