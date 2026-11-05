@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T08:40:24.989712+00:00",
+    "updatedAt": "2026-11-05T09:02:39.377110+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -37121,7 +37121,7 @@
       "url": "https://github.com/google/gvisor/pull/16706",
       "status": "open",
       "summary": "Writing more data while the peer advertises a zero window postpones the first probe. Keep the pending probe’s deadline when the application writes again.",
-      "updatedAt": "2026-10-29T22:42:22.871924+00:00",
+      "updatedAt": "2026-11-05T09:01:24.199484+00:00",
       "evidence": [
         {
           "label": "Stock: no probe at the original deadline",
@@ -37146,6 +37146,10 @@
         {
           "label": "Bundled native packet observations and race verdict",
           "url": "https://github.com/tamird/gvisor/actions/runs/40965097392"
+        },
+        {
+          "label": "Four further writes: first probe at 209 ms on Linux and 206 ms on current gVisor. Historical build timed out before executing the case.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41993496783/artifacts/13400808441"
         }
       ],
       "refinement": {
@@ -39438,8 +39442,8 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-05T07:55:52.812536+00:00",
-      "summary": "On 71b5044a6, Parth’s 50,000-file restore test passed with the graph engine and flate best-speed compression in a 6 GiB AMD64 VM with delegated cgroup v2. One case created the restore sandbox at 200 MiB; the other lowered its limit from 2 GiB to 200 MiB before restore. Both read zero OOM kills and accessed the restored /tmpfs. Both ran under QEMU software emulation. On the native hosted worker, the delegated cgroup provided memory and pids; the fixture also needs cpu, cpuset and io. Native timing remains open. Posted the approved graph checkpoint comparison and asked Parth which state engine and compression setting the C4 workload used. Parth’s unchanged TestRestoreCgroupMemoryLimit passed on a48b7a12c with no skips in an isolated Linux VM. Both creating the sandbox at 200 MiB and lowering it from 2 GiB to 200 MiB immediately before restore finished with zero OOM kills. The restored process could access /tmpfs in both cases. The checkpoint and restore RPCs read the current cgroup limit before suspending GC. The test used direct limits; boot with a tighter ancestor remains a separate concern tracked in #16767. On the earlier 5068ecb10, resizing from 2 GiB to 200 MiB left Go with a 1,023 MiB limit and Linux killed the Sentry. The earlier wire-engine figures belong to 5068ecb10: over 12 balanced triplets at 2 GiB/4 vCPUs, median save time fell from 2.011 s to 1.817 s and peak sampled Sentry RSS rose from 630.9 MiB to 735.4 MiB. In the same comparison #16152 took 1.968 s and used 650.1 MiB. All 39 archives restored the 100,000 files. On a48b7a12c with the graph engine, a 100,000-file non-resuming save took 366.8 ms versus 354.4 ms on its parent (+3.50%, p=.020), and peak sampled Sentry RSS was 555.8 MiB versus 427.1 MiB (+30.12%, p<.001). All 39 graph archives restored their complete file trees. Parth’s C4 results do not specify a state engine or compression setting.",
+      "updatedAt": "2026-11-05T09:02:39.377110+00:00",
+      "summary": "On 71b5044a6, Parth’s 50,000-file restore test passed with the graph engine and flate best-speed compression in a 6 GiB AMD64 VM with delegated cgroup v2. One case created the restore sandbox at 200 MiB; the other lowered its limit from 2 GiB to 200 MiB before restore. Both read zero OOM kills and accessed the restored /tmpfs. Both ran under QEMU software emulation. The native hosted worker delegated memory and pids. The public Firecracker VM exposed all five required controllers, but its ordinary workload could not create a child cgroup. Timing the restore on native hardware still requires a writable subtree with cpu, cpuset, io, memory and pids. Posted the approved graph checkpoint comparison and asked Parth which state engine and compression setting the C4 workload used. Parth’s unchanged TestRestoreCgroupMemoryLimit passed on a48b7a12c with no skips in an isolated Linux VM. Both creating the sandbox at 200 MiB and lowering it from 2 GiB to 200 MiB immediately before restore finished with zero OOM kills. The restored process could access /tmpfs in both cases. The checkpoint and restore RPCs read the current cgroup limit before suspending GC. The test used direct limits; boot with a tighter ancestor remains a separate concern tracked in #16767. On the earlier 5068ecb10, resizing from 2 GiB to 200 MiB left Go with a 1,023 MiB limit and Linux killed the Sentry. The earlier wire-engine figures belong to 5068ecb10: over 12 balanced triplets at 2 GiB/4 vCPUs, median save time fell from 2.011 s to 1.817 s and peak sampled Sentry RSS rose from 630.9 MiB to 735.4 MiB. In the same comparison #16152 took 1.968 s and used 650.1 MiB. All 39 archives restored the 100,000 files. On a48b7a12c with the graph engine, a 100,000-file non-resuming save took 366.8 ms versus 354.4 ms on its parent (+3.50%, p=.020), and peak sampled Sentry RSS was 555.8 MiB versus 427.1 MiB (+30.12%, p<.001). All 39 graph archives restored their complete file trees. Parth’s C4 results do not specify a state engine or compression setting.",
       "evidence": [
         {
           "label": "Graph restore at 200 MiB: createAtLimit and lowerBeforeRestore, both passed without skips",
@@ -39572,6 +39576,10 @@
         {
           "label": "Approved reply posted",
           "url": "https://github.com/google/gvisor/pull/16735#issuecomment-6629323131"
+        },
+        {
+          "label": "Public Firecracker guest: five controllers visible, workload UID 65534 could not create a child cgroup",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41998591313/artifacts/13401656446"
         }
       ],
       "head": "71b5044a65ffac66a4d41cd289788d7b9ad5ea22",
@@ -48783,8 +48791,8 @@
       "url": "https://github.com/google/gvisor/issues/16878",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T14:48:57.209577+00:00",
-      "summary": "Martijn reported a TCP dispatcher spin on TamaGo. On Linux with one Go P, yielding on the first lock miss let the holder run but delayed an already runnable peer. A bounded variant lets existing peers take a turn before yielding, including when the listener moves to another processor. TamaGo was not tested.",
+      "updatedAt": "2026-11-05T09:01:24.199484+00:00",
+      "summary": "Martijn prefers giving ready TCP endpoints one turn before yielding to a lock holder. On Linux with one Go processor, a continuously busy peer completed one batch before the holder ran. His TamaGo workload remains the platform-specific check.",
       "evidence": [
         {
           "label": "Original single-P experiment",
@@ -48809,6 +48817,14 @@
         {
           "label": "Posted Linux scheduling comparison",
           "url": "https://github.com/google/gvisor/issues/16878#issuecomment-6606883108"
+        },
+        {
+          "label": "Reporter’s follow-up on the queue policy",
+          "url": "https://github.com/google/gvisor/issues/16878#issuecomment-6653475036"
+        },
+        {
+          "label": "Production dispatcher and a deterministic fairness regression",
+          "url": "https://github.com/tamird/gvisor/commit/2ec7b59ad"
         }
       ],
       "settledReviews": [
@@ -50470,6 +50486,48 @@
         "requestedAt": "2026-11-05T08:40:24.989712+00:00",
         "summary": "Post one inline comment on the assignment to pipePrev in snd.go, line 1253?",
         "body": "Could timeout recovery use the number of packets in flight here? In the [packet test](https://github.com/tamird/gvisor/commit/9696b5abe), an earlier timeout set the slow-start threshold to 2. ACKs then grew the congestion window to 10. Only two packets were in flight when the next timeout fired. Once the sender detected that timeout was spurious, this assignment restored the threshold to 10. [RFC 4015 §3.1, step 0](https://www.rfc-editor.org/rfc/rfc4015.html#section-3.1) gives max(2, 2) = 2.\n\n[Changing the timeout capture to use the outstanding count](https://github.com/tamird/gvisor/commit/a10d0b8eb) kept the threshold at 2. The control that echoed the retransmission’s timestamp also stayed at 2 on both versions. Could you add this application-limited case to the timeout tests? [Packet results](https://github.com/tamird/gvisor/actions/runs/41994453265/artifacts/13399329303)\n\nPosted by Codex on behalf of @tamird."
+      }
+    },
+    {
+      "id": "branch:tcp-yield-after-queue-pass",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/tcp-yield-after-queue-pass",
+      "head": "2ec7b59ad33dfbd9c65b9b5ef7e4763eb4172063",
+      "title": "Yield after one TCP dispatcher queue pass",
+      "url": "https://github.com/tamird/gvisor/commit/2ec7b59ad",
+      "group": "runtime",
+      "status": "Agent work",
+      "updatedAt": "2026-11-05T09:01:24.199484+00:00",
+      "summary": "When an endpoint timer holds the lock, a packet worker can keep the lock holder off a single Go processor. The worker now services the already-queued peers before yielding. A regression holds one listener and verifies a ready listener gets exactly one batch before that yield.",
+      "evidence": [
+        {
+          "label": "Reported TamaGo hang and single-processor Linux behavior",
+          "url": "https://github.com/google/gvisor/issues/16878"
+        },
+        {
+          "label": "Reporter’s reply",
+          "url": "https://github.com/google/gvisor/issues/16878#issuecomment-6653475036"
+        },
+        {
+          "label": "Earlier Linux FIFO and scheduler controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41628817215/artifacts/13226843881"
+        },
+        {
+          "label": "Implementation and permanent regression",
+          "url": "https://github.com/tamird/gvisor/commit/2ec7b59ad"
+        }
+      ],
+      "followup": {
+        "owner": "Netstack",
+        "sourceHead": "2ec7b59ad33dfbd9c65b9b5ef7e4763eb4172063",
+        "observedAt": "2026-11-05T09:01:24.199484+00:00",
+        "disposition": "Qualifying the dispatcher and its permanent test",
+        "nextAction": "Run the TCP package and both architecture analyzers. Compare the permanent test with a worker that yields on its first lock miss.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/2ec7b59ad",
+          "https://github.com/tamird/gvisor/actions/runs/41628817215/artifacts/13226843881"
+        ]
       }
     }
   ],
@@ -70789,10 +70847,23 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-05T07:55:52.812536+00:00",
+      "updatedAt": "2026-11-05T09:01:24.199484+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the duplicate reconnect reply on #15019.",
       "findings": [
+        {
+          "text": "The Docker-in-Docker checkpoint series names #16666 as its TCP prerequisite. #17026 covers bridge/veth and namespaces, #17027 covers legacy iptables and conntrack, and #17028 supplies the end-to-end fixture. Its author has built the fixture; the live Docker restore result is pending. The living guide links the review order from its first-send-after-restore row.",
+          "evidence": [
+            {
+              "label": "Author’s series and qualification scope",
+              "url": "https://github.com/google/gvisor/issues/17025"
+            },
+            {
+              "label": "TCP review guide",
+              "url": "https://github.com/google/gvisor/issues/16670"
+            }
+          ]
+        },
         {
           "text": "On #16887 at bba4c63b2, both fallback tests use the minimum three-iovec budget accepted by the constructor. The transmit path counts fragments once per batch to size its scratch allocation. For 48 datagrams with 64 fragments each, the author measured 49 to 2 allocations without virtio and 97 to 3 with it. The guest throughput comparison covered an earlier head.",
           "evidence": [
@@ -72383,5 +72454,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T08:40:24.989712+00:00"
+  "updatedAt": "2026-11-05T09:02:39.377110+00:00"
 }
