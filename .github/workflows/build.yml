@@ -1,35 +1,71 @@
-name: CI
-
-"on":
+name: Run the native RSEQ syscall suite
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/rseq-native-runfiles-20261105]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  rseq:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 9751bfaf98742849046e9b4e9178f3db32f846b2
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Install the checkout's Bazel
+        run: |
+          set -euo pipefail
+          task="$RUNNER_TEMP/rseq-gnu"
+          mkdir -p "$task/bin" "$task/receipts"
+          test "$(cat .bazelversion)" = 8.8.1
+          curl --fail --location --retry 3 --proto '=https' --proto-redir '=https' \
+            https://releases.bazel.build/8.8.1/release/bazel-8.8.1-linux-x86_64 -o "$task/bin/bazel"
+          echo "5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160  $task/bin/bazel" | sha256sum -c -
+          chmod +x "$task/bin/bazel"
+          echo "$task/bin" >> "$GITHUB_PATH"
+      - name: Run the native AMD64 syscall target with its Bazel runfiles
+        run: |
+          set -euo pipefail
+          ulimit -c 0
+          test "$(git rev-parse HEAD)" = 9751bfaf98742849046e9b4e9178f3db32f846b2
+          test "$(uname -m)" = x86_64
+          target=//test/syscalls:rseq_test_native
+          receipts="$RUNNER_TEMP/rseq-gnu/receipts"
+          cpu=$(python3 -c 'import os; print(min(os.sched_getaffinity(0)))')
+          flags=(--config=x86_64 --jobs=4 --run_under="taskset -c $cpu")
+          bazel build "${flags[@]}" "$target"
+          # These tests spin until preempted inside a restartable sequence.
+          taskset -c "$cpu" yes > /dev/null &
+          peer=$!
+          trap 'kill "$peer" 2>/dev/null || true' EXIT
+          result=0
+          bazel test "${flags[@]}" --nocache_test_results --test_env=GTEST_COLOR=no \
+            --test_timeout=180 --test_output=errors "$target" || result=$?
+          cp bazel-testlogs/test/syscalls/rseq_test_native/test.log "$receipts/native-amd64.log"
+          if test -f bazel-testlogs/test/syscalls/rseq_test_native/test.xml; then
+            cp bazel-testlogs/test/syscalls/rseq_test_native/test.xml "$receipts/native-amd64.xml"
+          fi
+          test "$result" -eq 0
+          python3 - "$receipts/native-amd64.log" <<'PY'
+          import collections
+          import re
+          import sys
+          from pathlib import Path
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+          expected = re.findall(r"^TEST\(RseqTest, (\w+)\)", Path("test/syscalls/linux/rseq.cc").read_text(), re.M)
+          log = Path(sys.argv[1]).read_text()
+          passed = re.findall(r"\[\s+OK\s+\]\s+RseqTest\.(\w+)", log)
+          assert len(set(expected)) == 14 and collections.Counter(passed) == collections.Counter(expected), (expected, passed)
+          assert not re.search(r"\[\s*(FAILED|SKIPPED)\s*\]\s+RseqTest\.", log)
+          print("Executed these 14 native cases:", ", ".join(passed))
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: rseq-native-gnu
+          path: ${{ runner.temp }}/rseq-gnu/receipts/
+          if-no-files-found: warn
+          retention-days: 14
