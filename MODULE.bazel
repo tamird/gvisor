@@ -61,6 +61,15 @@ single_version_override(
     patches = ["//tools:llvm-linux-header-default.patch"],
 )
 
+# Use this fork-only pin until the transitive dpkg status records from
+# https://github.com/bazel-contrib/rules_distroless/pull/294 are released.
+archive_override(
+    module_name = "rules_distroless",
+    integrity = "sha256-byvYMoZBAKqzZI+xkMZAMuYd16XyJkGsvPuKuiNopDM=",
+    strip_prefix = "rules_distroless-af1089c91c36bfc78719b2836c73d374a66ef092",
+    urls = ["https://github.com/tamird/rules_distroless/archive/af1089c91c36bfc78719b2836c73d374a66ef092.tar.gz"],
+)
+
 tar_toolchains = use_extension("@tar.bzl//tar:extensions.bzl", "toolchains")
 use_repo(tar_toolchains, "bsd_tar_toolchains")
 
@@ -68,6 +77,7 @@ use_repo(tar_toolchains, "bsd_tar_toolchains")
 # package installation scripts, on both supported architectures.
 image_apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt")
 image_apt.sources_list(
+    gpg_keys = ["@image_ubuntu_archive_keys//file:ubuntu-archive-keyring.gpg"],
     architectures = [
         "amd64",
         "arm64",
@@ -158,6 +168,13 @@ use_repo(llvm_zlib, "llvm_zlib")
 
 ### Repo rules
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
+http_file(
+    name = "image_ubuntu_archive_keys",
+    downloaded_file_path = "ubuntu-archive-keyring.gpg",
+    sha256 = "80a36b0a6de2f69f49d2df75ef473ccde121e9e190b9ea01d20a4f63778d5c31",
+    urls = ["https://archive.ubuntu.com/ubuntu/project/ubuntu-archive-keyring.gpg"],
+)
 
 new_local_repository = use_repo_rule("@bazel_tools//tools/build_defs/repo:local.bzl", "new_local_repository")
 
