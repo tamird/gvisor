@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T13:24:17.519774Z",
+    "updatedAt": "2026-11-05T13:43:13.340425Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -11359,21 +11359,23 @@
       "id": "branch:review/state-reference-arrays",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/state-reference-arrays-split",
-      "head": "7b4e8579e089e89a237fdd22cd0f5e83658d3776",
+      "ref": "review/state-wire-reference-fixtures",
+      "head": "e1ec0fd6a841da016483565d9f6548196c1c835b",
       "title": "Capture homogeneous state reference arrays",
       "group": "runtime",
-      "url": "https://github.com/tamird/gvisor/commit/7b4e8579e089e89a237fdd22cd0f5e83658d3776",
-      "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-11-01T21:29:32+00:00",
-      "summary": "These reference arrays serve the wire codec. New runsc checkpoints use the graph representation by default.\n\nThe contributor approved the reference-array stage 7b4e8579e after independent source review. It follows typed primitive arrays and will open after that prerequisite lands. The exact final pkg/state tree passed nine normal owners (10,931 positive records) and three race owners (10,969 positives, two existing eager-validation skips that pass normally), with no failures or missing records. Selected AMD64 container checkpoint/resume, DirectFS pipe-save and Docker checkpoint/resume coverage passed. The fresh twenty-leaf comparison establishes 1,024 fewer allocations in state slice and both adoption cases; separate-worker timing variation does not establish a latency improvement.\n\nHistorical superseded implementation:\n\nThis abandoned parallel proposal is preserved as investigation history. Its source-specific findings feed the single current destination-driven redesign; there is no separate implementation or contributor decision.\n\nHistorical findings:\n\nThe unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.\n\nThe independent master-based proposal captures addressable pointer arrays in one owned reference slice while retaining the existing graph resolver and wire format. Fourteen-owner compatibility and the eight-owner final refinement are closed, with baseline/candidate byte and digest equality. The balanced twelve-block three-arm comparison reports Slice Save time -28.30%, allocated bytes -18.43%, and allocations 1,067 to 43 versus master. UDP timing is nonsignificant; Map Load is -2.05% without a decoder-cause claim. State/UDP executables grow 4,096/8,192 bytes; observed UDP initialization is unchanged. Three final-code kernel restores pass, with the baseline reused from a separate invocation; this is compatibility only. The earlier significant UDP regression remains a separate cohort. No upstream PR exists.",
+      "url": "https://github.com/tamird/gvisor/commit/e1ec0fd6a",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-05T13:43:13.340425Z",
+      "summary": "The reference-array implementation was approved at 7b4e8579e. Only the three added test selectors need review. On the rebased implementation, the wire comparison and snapshot test passed using graph frames. The late-parent test failed before Load because its assertion expects the wire encoder to clear the unused slice tail during Save. All three tests passed on native AMD64 after selecting wire. Separate runs read all four output buffers and confirmed that the original tests wrote graph frames and the revised tests wrote wire frames.\n\nThe earlier qualification covered the approved implementation. The exact final pkg/state tree passed nine normal owners (10,931 positive records) and three race owners (10,969 positives, two existing eager-validation skips that pass normally), with no failures or missing records. Selected AMD64 container checkpoint/resume, DirectFS pipe-save and Docker checkpoint/resume coverage passed. The fresh twenty-leaf comparison establishes 1,024 fewer allocations in state slice and both adoption cases; separate-worker timing variation does not establish a latency improvement.\n\nHistorical superseded implementation:\n\nThis abandoned parallel proposal is preserved as investigation history. Its source-specific findings feed the single current destination-driven redesign; there is no separate implementation or contributor decision.\n\nHistorical findings:\n\nThe unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.\n\nThe independent master-based proposal captures addressable pointer arrays in one owned reference slice while retaining the existing graph resolver and wire format. Fourteen-owner compatibility and the eight-owner final refinement are closed, with baseline/candidate byte and digest equality. The balanced twelve-block three-arm comparison reports Slice Save time -28.30%, allocated bytes -18.43%, and allocations 1,067 to 43 versus master. UDP timing is nonsignificant; Map Load is -2.05% without a decoder-cause claim. State/UDP executables grow 4,096/8,192 bytes; observed UDP initialization is unchanged. Three final-code kernel restores pass, with the baseline reused from a separate invocation; this is compatibility only. The earlier significant UDP regression remains a separate cohort. No upstream PR exists.",
       "followup": {
         "owner": "work_map_current",
-        "sourceHead": "7b4e8579e089e89a237fdd22cd0f5e83658d3776",
-        "observedAt": "2026-10-26T22:23:56.114433+00:00",
-        "disposition": "Approved for automatic opening after prerequisites",
-        "nextAction": "Open the approved reference-array PR after the primitive-array prerequisite lands; no further contributor decision is required.",
+        "sourceHead": "e1ec0fd6a841da016483565d9f6548196c1c835b",
+        "observedAt": "2026-11-05T13:43:13.340425Z",
+        "disposition": "Test revision awaiting contributor review; approval retained for the original implementation",
+        "nextAction": "Wait for review of the three test selectors and for the primitive-array prerequisite to land before opening the reference-array PR.",
         "evidence": [
+          "https://github.com/tamird/gvisor/compare/70df168c4...e1ec0fd6a",
+          "https://github.com/tamird/gvisor/actions/runs/42037418674/artifacts/13418988079",
           "https://github.com/tamird/gvisor/commit/7b4e8579e089e89a237fdd22cd0f5e83658d3776",
           "https://github.com/google/gvisor/pull/16380#pullrequestreview-5659901910",
           "https://app.buildbuddy.io/invocation/b1695ab9-c0b9-45ef-b6fe-39a1dd339fc1"
@@ -11382,6 +11384,14 @@
       "inactive": false,
       "evidence": [
         {
+          "label": "Three test selectors against the rebased implementation",
+          "url": "https://github.com/tamird/gvisor/compare/70df168c4...e1ec0fd6a"
+        },
+        {
+          "label": "Native AMD64 results and the four frame headers on each test source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42037418674/artifacts/13418988079"
+        },
+        {
           "label": "Approved split source",
           "url": "https://github.com/tamird/gvisor/commit/7b4e8579e089e89a237fdd22cd0f5e83658d3776"
         },
@@ -11389,7 +11399,26 @@
           "label": "Exact stage normal qualification",
           "url": "https://app.buildbuddy.io/invocation/b1695ab9-c0b9-45ef-b6fe-39a1dd339fc1"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "7b4e8579e089e89a237fdd22cd0f5e83658d3776",
+          "outcome": "approved",
+          "at": "2026-10-26T22:23:56.114433+00:00"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "e1ec0fd6a841da016483565d9f6548196c1c835b",
+        "baseHead": "70df168c4eda6463a3ff47dd635aa2e6a6c90a2a",
+        "url": "https://github.com/tamird/gvisor/compare/70df168c4...e1ec0fd6a",
+        "title": "Run the reference-array regressions with the wire encoder",
+        "summary": "Approve the three test selectors in e1ec0fd6a? The diff is against the approved reference-array implementation rebased on the primitive-array test revision.",
+        "body": "These tests check addressable and by-value wire encodings, pointer snapshots before a save hook mutates the array, and discovery of a parent after its interior array. Select the wire encoder for each case and restore the previous setting afterward.",
+        "requestedAt": "2026-11-05T13:43:13.340425Z"
+      }
     },
     {
       "id": "pr:15650",
@@ -22683,15 +22712,15 @@
       "title": "Encode zero values without repeated dispatch",
       "url": "https://github.com/tamird/gvisor/commit/15f2d7624e84c8d879d25b746da0f2c2517db962",
       "group": "runtime",
-      "status": "Contributor approved; waiting for state prerequisites",
-      "updatedAt": "2026-11-01T21:29:32+00:00",
-      "summary": "This changes Save only when the caller selects the wire encoder. The UDP queue benchmark below measured that encoder.\n\nContributor approval is complete, including the requested changed UDP Save benchstat row in the commit and description. The final message-only amendment preserves the measured source. In the fixed production comparison, UDP Save improves 3.97% (489.5 to 470.1 microseconds); graph Save/Load and UDP Load have no detected timing difference. Allocation counts, wire data and binary sizes are unchanged; exact allocated bytes are not claimed.\n\nOpen after the existing array-storage and destination-kind prerequisites land.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-05T13:38:34.214458Z",
+      "summary": "The approved wire-encoder optimization treats both signs of floating-point zero as an empty field. Its signed-zero prerequisite (#16718) requires preserving the sign: if a saved float64 is −0, its reciprocal after restore must still be −∞. The old optimization also explicitly expects an empty field for this input in its unit test.\n\nThe reported UDP Save improvement of 3.97% was measured on the earlier wire encoder. The optimization needs a new measurement after the signed-zero fix is incorporated.",
       "followup": {
         "owner": "node_tls_sni",
         "sourceHead": "15f2d7624e84c8d879d25b746da0f2c2517db962",
-        "observedAt": "2026-10-22T20:18:13.441878+00:00",
-        "disposition": "Contributor approved; waiting for state prerequisites",
-        "nextAction": "Open after the existing array-storage and destination-kind prerequisites land.",
+        "observedAt": "2026-11-05T13:38:34.214458Z",
+        "disposition": "Rebase the approved optimization onto signed-zero semantics",
+        "nextAction": "Preserve the sign of float and complex components when rebasing onto #16718. Exercise the wire encoder explicitly, run the signed-zero regressions and remeasure the affected Save workload before submitting the revised code for review.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/15f2d7624e84c8d879d25b746da0f2c2517db962"
         ]
@@ -22700,6 +22729,14 @@
         {
           "label": "Fixed production comparison",
           "url": "https://app.buildbuddy.io/invocation/cd1eee73-f8e5-403a-9c27-1f3e8df30ded"
+        },
+        {
+          "label": "Original floating-point zero comparison",
+          "url": "https://github.com/tamird/gvisor/blob/15f2d7624/pkg/state/encode.go#L724-L753"
+        },
+        {
+          "label": "Signed-zero prerequisite",
+          "url": "https://github.com/tamird/gvisor/blob/1f4905b21/pkg/state/encode.go#L629-L643"
         }
       ]
     },
@@ -67984,7 +68021,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-05T13:24:17.519774Z",
+      "updatedAt": "2026-11-05T13:38:34.214458Z",
       "summary": "Both remote architectures built all 231 selected runsc targets. A separate run requested 40 test targets per architecture. Of those, 31 passed, three passed with skips, five failed and one did not execute. Two additional container tests require KVM. The version test and six specutils cases have separate follow-up results.",
       "findings": [
         {
@@ -68006,11 +68043,19 @@
           ]
         },
         {
-          "text": "The recovered seccheck compiler diagnostics report “expected unqualified-id” at the generated stdin, stdout and stderr accessors in sentry.pb.h on both architectures. This explains a compile failure; running the original C++ peer and verifying its socket exchange is a separate check.",
+          "text": "On both shell-free workers, the original C++ seccheck server passed TestExample when given its GNU loader and four libraries. Each live server mapped the five declared files and decoded the exit-status message (123) over the Unix socket. Its executable matched the binary that had failed to start on that architecture. A separate musl build failed before execution because the generated stdin, stdout and stderr accessors collide with standard I/O macros.",
           "evidence": [
+            {
+              "label": "Live socket and mapped-file checks on AMD64 and ARM64",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42036175667/artifacts/13419195548"
+            },
             {
               "label": "Original seccheck C++ action diagnostics and source locations",
               "url": "https://github.com/tamird/gvisor/actions/runs/42032585985/artifacts/13416129011"
+            },
+            {
+              "label": "Upstream protobuf report for the generated names",
+              "url": "https://github.com/protocolbuffers/protobuf/issues/9265"
             }
           ]
         },
@@ -70180,7 +70225,7 @@
           ]
         }
       ],
-      "nextStep": "Qualify the revised specutils process helper, the remaining boot, cmd and sandbox failures, and the filter fuzz test on their own sources. Verify the seccheck example’s live socket exchange separately from the compiler diagnosis. Continue the separate syscall qualification with the source-built RSEQ helper and native test launcher. Count builds, executed tests and guest workloads separately. Verify the remaining Sentry link outputs against ELF bytes. Track the hermetic-llvm and rules_go fixes and check that BuildBuddy has deployed its empty-root fix before retrying a file-empty worker.",
+      "nextStep": "Qualify the revised specutils process helper, the remaining boot, cmd and sandbox failures, and the filter fuzz test on their own sources. Choose between declaring the verified GNU runtime as test data and making the C++ example executable static. Continue the separate syscall qualification with the source-built RSEQ helper and native test launcher. Count builds, executed tests and guest workloads separately. Verify the remaining Sentry link outputs against ELF bytes. Track the hermetic-llvm and rules_go fixes and check that BuildBuddy has deployed its empty-root fix before retrying a file-empty worker.",
       "evidence": [
         {
           "label": "Original runsc results and separate version test on both workers",
@@ -72976,5 +73021,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T13:24:17.519774Z"
+  "updatedAt": "2026-11-05T13:43:13.340425Z"
 }
