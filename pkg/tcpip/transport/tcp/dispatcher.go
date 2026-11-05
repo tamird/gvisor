@@ -349,7 +349,7 @@ func (p *processor) drainQueue() bool {
 			// UnlockUser queues the endpoint itself when a syscall holds it.
 			if !ep.segmentQueue.empty() && !ep.isOwnedByUser() {
 				if !acquired && through == nil {
-					through = p.epQ.back()
+					through = nil
 					reachedTail = through == nil
 				}
 				p.epQ.enqueue(ep)
