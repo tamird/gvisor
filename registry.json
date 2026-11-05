@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T15:56:30.976528Z",
+    "updatedAt": "2026-11-05T16:25:38.134002Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -50770,8 +50770,8 @@
       "url": "https://github.com/google/gvisor/pull/17023",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-05T15:56:30.976528Z",
-      "summary": "The author added TestSpuriousRTOPartialFirstACK for the previously failing trace and removed the extra ACK boundary after resuming transmission. Aditya asks whether the check should remain until the retransmitted bytes are acknowledged.",
+      "updatedAt": "2026-11-05T16:22:20Z",
+      "summary": "The partial-ACK regression now passes. We confirmed to Aditya that he can remove the additional ACK check once transmission resumes after a spurious timeout.",
       "evidence": [
         {
           "label": "Recovery decision after a spurious timeout",
@@ -50796,6 +50796,10 @@
         {
           "label": "RFC 4015 §4",
           "url": "https://www.rfc-editor.org/rfc/rfc4015.html#section-4"
+        },
+        {
+          "label": "Reply to Aditya",
+          "url": "https://github.com/google/gvisor/pull/17023#discussion_r4483001034"
         }
       ],
       "settledReviews": [
@@ -50808,18 +50812,18 @@
           "outcome": "approved",
           "at": "2026-11-05T11:11:41Z",
           "postedURL": "https://github.com/google/gvisor/pull/17023#discussion_r4479711190"
+        },
+        {
+          "kind": "reply",
+          "head": "465bf4e9edc2095d5673177f3be3cac1544fd26e",
+          "url": "https://github.com/google/gvisor/pull/17023#discussion_r4482630116",
+          "title": "Reply about the partial first ACK after a spurious timeout",
+          "body": "I agree with dropping the extra ACK boundary. [RFC 4015 §4](https://www.rfc-editor.org/rfc/rfc4015.html#section-4) ties the exception to resuming at step (8). The next RTO or entry into fast recovery sets its own recovery point and clears the exception. The partial-first-ACK test covers the trace I reported. Thanks for adding it.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-05T16:22:20Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17023#discussion_r4483001034"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "reply",
-        "head": "465bf4e9edc2095d5673177f3be3cac1544fd26e",
-        "url": "https://github.com/google/gvisor/pull/17023#discussion_r4482630116",
-        "title": "Reply about the partial first ACK after a spurious timeout",
-        "requestedAt": "2026-11-05T15:56:30.976528Z",
-        "summary": "Post the reply agreeing with Aditya’s removal of the extra ACK boundary after a spurious timeout?",
-        "body": "I agree with dropping the extra ACK boundary. [RFC 4015 §4](https://www.rfc-editor.org/rfc/rfc4015.html#section-4) ties the exception to resuming at step (8). The next RTO or entry into fast recovery sets its own recovery point and clears the exception. The partial-first-ACK test covers the trace I reported. Thanks for adding it.\n\nPosted by Codex on behalf of @tamird."
-      }
+      ]
     },
     {
       "id": "branch:tcp-timeout-option-locks",
@@ -50878,8 +50882,8 @@
       "url": "https://github.com/google/gvisor/pull/17022",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-05T15:56:30.976528Z",
-      "summary": "The author adopted the finite two-packet regression and now saves the outstanding flight on timeout. The previous implementation restored a threshold of 10 in that trace; the revised implementation restores 2. Aditya asks whether the separate five-packet timeout case should restore the initial threshold rather than 5.",
+      "updatedAt": "2026-11-05T16:22:15Z",
+      "summary": "The two-packet test now preserves the finite threshold. We asked Aditya to update the five-packet test so a spurious timeout also preserves the initial unlimited threshold.",
       "evidence": [
         {
           "label": "Pre-loss capture in the proposed sender",
@@ -50900,6 +50904,10 @@
         {
           "label": "Author’s revised test and follow-up question",
           "url": "https://github.com/google/gvisor/pull/17022#discussion_r4482626402"
+        },
+        {
+          "label": "Reply to Aditya",
+          "url": "https://github.com/google/gvisor/pull/17022#discussion_r4483000252"
         }
       ],
       "settledReviews": [
@@ -50912,18 +50920,18 @@
           "outcome": "approved",
           "at": "2026-11-05T11:11:37Z",
           "postedURL": "https://github.com/google/gvisor/pull/17022#discussion_r4479710566"
+        },
+        {
+          "kind": "reply",
+          "head": "d0439e8b83fafeff675910fc544a393fb5d9f85c",
+          "url": "https://github.com/google/gvisor/pull/17022#discussion_r4482626402",
+          "title": "Reply about restoring the initial slow-start threshold",
+          "body": "Yes, I’d restore `InitialSsthresh` in the timeout case. [RFC 4015 §3.1](https://www.rfc-editor.org/rfc/rfc4015.html#section-3.1) step (0) saves max(FlightSize, ssthresh), so a false alarm with five packets in flight should preserve the initial threshold. Step (9) bounds the immediate send separately through cwnd. Could you update the existing five-packet RTO assertion? The finite-threshold two-packet case now matches the trace.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-05T16:22:15Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17022#discussion_r4483000252"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "reply",
-        "head": "d0439e8b83fafeff675910fc544a393fb5d9f85c",
-        "url": "https://github.com/google/gvisor/pull/17022#discussion_r4482626402",
-        "title": "Reply about restoring the initial slow-start threshold",
-        "requestedAt": "2026-11-05T15:56:30.976528Z",
-        "summary": "Post the reply asking Aditya to restore the initial slow-start threshold in the five-packet timeout case?",
-        "body": "Yes, I’d restore `InitialSsthresh` in the timeout case. [RFC 4015 §3.1](https://www.rfc-editor.org/rfc/rfc4015.html#section-3.1) step (0) saves max(FlightSize, ssthresh), so a false alarm with five packets in flight should preserve the initial threshold. Step (9) bounds the immediate send separately through cwnd. Could you update the existing five-packet RTO assertion? The finite-threshold two-packet case now matches the trace.\n\nPosted by Codex on behalf of @tamird."
-      }
+      ]
     },
     {
       "id": "branch:tcp-yield-after-queue-pass",
@@ -73361,5 +73369,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T15:56:30.976528Z"
+  "updatedAt": "2026-11-05T16:25:38.134002Z"
 }
