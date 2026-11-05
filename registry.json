@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T04:44:34.812881+00:00",
+    "updatedAt": "2026-11-05T05:53:50.961511+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40783,9 +40783,21 @@
       "url": "https://github.com/tamird/gvisor/commit/a2a76817d",
       "group": "rbe",
       "status": "Agent work",
-      "updatedAt": "2026-11-04T06:17:26.824975+00:00",
-      "summary": "Package and standard-library analysis run checkescape, which invokes go tool objdump. Their sandboxing still depends on a reusable disassembler for the execution platform. The original four-action experiment also included filtering and rendering, now split out at 55f8f34f4.\n\nOn AMD64, go tool objdump consumed 4.86–4.89 seconds of the 4.95-second sandboxed package check. The identical prebuilt SDK tool ran in 2 milliseconds and brought the action down to 0.060–0.066 seconds with all SDK inputs still present. Both target architectures produced unchanged facts and findings. In the follow-up checkout, Bazel supplied the AMD64 SDK disassembler to the analyzer for both AMD64 and ARM64 target archives.",
+      "updatedAt": "2026-11-05T05:53:50.961511+00:00",
+      "summary": "Package and standard-library analysis run checkescape, which invokes go tool objdump. The fork now supplies one reusable SDK disassembler for the execution platform. The original four-action experiment also included filtering and rendering, now split out at 55f8f34f4.\n\nOn AMD64, go tool objdump consumed 4.86–4.89 seconds of the 4.95-second sandboxed package check. The identical prebuilt SDK tool ran in 2 milliseconds and brought the action down to 0.060–0.066 seconds with all SDK inputs still present. Both target architectures produced unchanged facts and findings. The follow-up supplied the AMD64 SDK disassembler for both target archives. On 1668d83dc, strict native AMD64 and ARM64 runsc builds each built their execution SDK’s objdump once and checked the Noescape instructions in real input archives. Both architectures subsequently built and booted the full nine-program release on 5388293bd. The LLVM link fixes belong to that release integration; rules_go #4772 remains the dependency for adopting the SDK tool upstream.",
       "evidence": [
+        {
+          "label": "Native AMD64: SDK objdump and real analysis of both target architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41968655477/artifacts/13388882421"
+        },
+        {
+          "label": "Native ARM64: SDK objdump and real analysis of both target architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41968778680/artifacts/13388757467"
+        },
+        {
+          "label": "Release links and runtime results on the same workstream",
+          "url": "https://tamird.github.io/gvisor/#investigation%3Ascratch-build-actions"
+        },
         {
           "label": "Shared SDK disassembler: execution platform and both target architectures",
           "url": "https://github.com/tamird/gvisor/actions/runs/41166982711/artifacts/13029633072"
@@ -40822,14 +40834,17 @@
       "followup": {
         "owner": "Build analysis",
         "sourceHead": "a2a76817d2d66f2956059b464d2eadbb036078f9",
-        "observedAt": "2026-11-04T06:17:26.824975+00:00",
+        "observedAt": "2026-11-05T05:53:50.961511+00:00",
         "disposition": "rules_go #4772 is open for upstream review. The contributor approved the supplier proposal and its follow-up reply.",
-        "nextAction": "Once rules_go publishes the SDK tool, use it in the two checkescape-producing actions so an isolated analyzer can reuse objdump.",
+        "nextAction": "Once rules_go #4772 lands and is published, adopt the released SDK tool in the two checkescape-producing actions. The fork already qualified both native execution architectures.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41166982711/artifacts/13029633072",
           "https://github.com/tamird/gvisor/actions/runs/41165748432/artifacts/13028867522",
           "https://github.com/bazel-contrib/rules_go/issues/4535",
-          "https://github.com/bazel-contrib/rules_go/pull/4772#issuecomment-6602869919"
+          "https://github.com/bazel-contrib/rules_go/pull/4772#issuecomment-6602869919",
+          "https://github.com/tamird/gvisor/actions/runs/41968655477/artifacts/13388882421",
+          "https://github.com/tamird/gvisor/actions/runs/41968778680/artifacts/13388757467",
+          "https://tamird.github.io/gvisor/#investigation%3Ascratch-build-actions"
         ]
       }
     },
@@ -67296,9 +67311,76 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-05T04:44:34.812881+00:00",
-      "summary": "The AMD64 DPDK archive built on a worker image containing only /hello. Both a zero-layer image and an image with one file-empty layer failed during worker setup, before the probe or DPDK ran. The deployed executor revision is unknown. A separate native build completed 166 C++ targets. With the corrected LLVM generator, proc_net_test also builds in strict AMD64 and ARM64 sandboxes. The same fork source now builds runsc in strict native AMD64 and ARM64 Linux sandboxes. Each build used one declared SDK disassembler for both target architectures and ran the resulting binary with --version. The nine-program release and the full graph remain unverified on this source.",
+      "updatedAt": "2026-11-05T05:53:50.961511+00:00",
+      "summary": "On fork 5388293bd, make copy of //:release installed all nine programs on AMD64 and ARM64. Each native Linux worker started the installed Sentry and ran BusyBox in a rootless guest. A separate paired build installed the same release selection on pinned distroless remote workers. These results cover //:release; the complete //... build remains open. For DPDK, the AMD64 archive built on a worker image containing only /hello. The two images with no files failed during worker setup, before DPDK ran. The deployed executor revision is unknown.",
       "findings": [
+        {
+          "text": "On 5388293bd the strict native AMD64 and ARM64 builds completed all 5,263 and 5,479 spawns, respectively, in linux-sandbox without cache hits. On each architecture, six Go links, three C links and nine copy actions matched the installed ELF files. The static linker driver for each execution architecture produced both the x86-64 and AArch64 embedded vDSOs. The installed runsc passed --version and started its installed Sentry under systrap. In each rootless guest with networking disabled, the native BusyBox printed the expected marker and exited zero. Neither build invoked a Bazel TestRunner.",
+          "evidence": [
+            {
+              "label": "Native AMD64: nine installed programs and a rootless Sentry guest",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41974429292/artifacts/13391486689"
+            },
+            {
+              "label": "Native ARM64: nine installed programs and a rootless Sentry guest",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41975684304/artifacts/13391723562"
+            },
+            {
+              "label": "Release source shared by all three runs",
+              "url": "https://github.com/tamird/gvisor/commit/5388293bd"
+            },
+            {
+              "label": "LLVM #908: link Linux-hosted toolchain helpers with musl",
+              "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908"
+            },
+            {
+              "label": "LLVM #909: link pthread and dl only with the C++ runtimes",
+              "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/909"
+            }
+          ]
+        },
+        {
+          "text": "The separate RBE build on 5388293bd staged all nine AMD64 and all nine ARM64 programs with the expected ELF architecture. Both Bazel builds and both Make installations returned zero. Each arm recorded six uncached remote Go links and nine uncached remote copies. AMD64 recorded 481 remote executions and 4,303 cache hits; ARM64 recorded 533 and 4,356. These workers used the pinned distroless images. This job did not boot a guest or run tests.",
+          "evidence": [
+            {
+              "label": "AMD64 and ARM64 RBE: release links, copies and Make installations",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41975504552/artifacts/13391208856"
+            },
+            {
+              "label": "Release source shared by all three runs",
+              "url": "https://github.com/tamird/gvisor/commit/5388293bd"
+            }
+          ]
+        },
+        {
+          "text": "The native release first stopped at 13 actions that launched /bin/bash. With native sidecar, vDSO and systrap rules, both systrap links succeeded, but three freestanding sidecars requested pthread and dl, and two vDSO links could not start the dynamically linked driver. Three failed C++ link actions were also identified in the earlier RBE run; their stderr was not recovered, so its cause remains unconfirmed. The first attempt to apply the supplier fixes exited 37 before analysis because the LLVM source archive omits e2e/. The qualified integration applies #908 to its five shipped files and pins the one shipped production file from #909. Both supplier PRs remain open.",
+          "evidence": [
+            {
+              "label": "Before the native rules: 13 shell launches failed",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41970371311/artifacts/13389881117"
+            },
+            {
+              "label": "Before the LLVM fixes: five native link actions failed",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41971712161/artifacts/13390018761"
+            },
+            {
+              "label": "Original failed remote link actions on both workers",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41971849807/artifacts/13390432092"
+            },
+            {
+              "label": "Full supplier patch failed before analysis of the release",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41973980139/artifacts/13390204667"
+            },
+            {
+              "label": "LLVM #908: link Linux-hosted toolchain helpers with musl",
+              "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908"
+            },
+            {
+              "label": "LLVM #909: link pthread and dl only with the C++ runtimes",
+              "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/909"
+            }
+          ]
+        },
         {
           "text": "On a bare Linux AMD64 worker, DPDK’s native Make build for static musl generated its own driver metadata. The separate Bazel helper and configuration targets left the build graph. The helper and header were byte-identical to the separate builds. Both archives contained the same 148 ordered members, 1,153 external symbols and three driver records. The archives differed in bytes. The check covered the build and archive contents.",
           "evidence": [
@@ -69308,8 +69390,32 @@
           ]
         }
       ],
-      "nextStep": "Qualify //:release on the same fork source. It stages nine programs; the native AMD64 and ARM64 checks so far cover only runsc. Track the SDK tool through the existing Nogo sandboxing proposal and rules_go #4772. For the separate empty worker image, confirm that the deployed executor contains the zero-lowerdir guard from BuildBuddy #14022 before repeating the probe. The #15146 license-policy hold is separate.",
+      "nextStep": "Track upstream adoption of hermetic-llvm #908 and #909 and the SDK executable in rules_go #4772. The fork release is qualified; the separate Build everything selection (//... excluding network_plugins) still needs full coverage. Before retrying the file-empty worker, confirm the deployed executor contains the zero-lowerdir fix from BuildBuddy #14022. The #15146 license-policy hold is separate.",
       "evidence": [
+        {
+          "label": "Native AMD64: nine installed programs and a rootless Sentry guest",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41974429292/artifacts/13391486689"
+        },
+        {
+          "label": "Native ARM64: nine installed programs and a rootless Sentry guest",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41975684304/artifacts/13391723562"
+        },
+        {
+          "label": "AMD64 and ARM64 RBE: release links, copies and Make installations",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41975504552/artifacts/13391208856"
+        },
+        {
+          "label": "Release source shared by all three runs",
+          "url": "https://github.com/tamird/gvisor/commit/5388293bd"
+        },
+        {
+          "label": "LLVM #908: link Linux-hosted toolchain helpers with musl",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/908"
+        },
+        {
+          "label": "LLVM #909: link pthread and dl only with the C++ runtimes",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/909"
+        },
         {
           "label": "AMD64 strict runsc, SDK objdump and binary version",
           "url": "https://github.com/tamird/gvisor/actions/runs/41968655477/artifacts/13388882421"
