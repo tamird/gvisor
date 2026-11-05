@@ -1,73 +1,114 @@
-"""Read one immutable RSEQ linker diagnostic through the existing CAS route."""
+"""Read the first compiler errors from four completed seccheck CppCompile actions."""
 
-from datetime import datetime, timezone
+import base64
+from collections import Counter
 import hashlib
-import io
 import json
 import os
 from pathlib import Path
 import re
-import traceback
+from urllib.parse import urlencode
 import zipfile
 
-from cas_inputs import blob
+from cas_inputs import fetch
 
 ROOT = Path(os.environ["RUNNER_TEMP"]) / "release-rbe"
-SHA = "c12d20039f18ded628c9c94446645f63fb19a4e0595641fd777399a1d0f201e4"
-SOURCE = "3e7f20cd67e5ef4b3c6715a167d5fbc9fab357aa"
-OWNER = "//test/syscalls/linux/rseq:rseq"
-ORIGINALS = {
-    "amd64": ("0409305b-5a65-4040-8173-92038d20b979", "74502e906727bb07803b4980efdbf74c8981d6a2bf5ec9c5b7906664b22531fd"),
-    "arm64": ("9201f32f-391d-494d-a327-cf552fb09742", "e53a24b5d46a10317b78d683700580ab7d22cb5b307af6afc5ec91edda02f10b"),
-}
+ARCHES = {"amd64": "17efbeba-7def-406e-aebf-a2f5fe2df4d0", "arm64": "66ffbadd-2836-44bc-a4a3-7a93fe4d979c"}
+OWNERS = ("//examples/seccheck:server_cc", "//pkg/sentry/seccheck/points:points_proto")
+SOURCE = "7dcefe2b25074371960c9a1372f2423eaece2694"
+ORIGINAL = "a71aca92d3cf0f87cc0a9e8082a1dab45d21d8b85cbcd43a07faf1228d690777"
+evidence = {"source": SOURCE, "run": 42028439038, "artifact": 13416191933, "sha256": ORIGINAL, "arches": {}}
 
 
-def main() -> int:
-    result = {"source": SOURCE, "carrier": os.environ["GITHUB_SHA"], "status": "INCOMPLETE",
-              "original_run": 42013558121, "original_artifact": 13408670826,
-              "scope": "Original stderr read only; no build, test, or source execution", "actions": []}
-    try:
-        raw = (ROOT / "original.zip").read_bytes()
-        assert len(raw) == 173029 and hashlib.sha256(raw).hexdigest() == "370eacc2134cf49e094cb933820fd72c9982a114782cf59bb554bbf08b6323d6"
-        with zipfile.ZipFile(io.BytesIO(raw)) as archive:
-            assert len(archive.infolist()) == 6
-            for arch, (invocation, digest) in ORIGINALS.items():
-                member = archive.getinfo(arch + "-compiled.json")
-                assert member.file_size < 1024 * 1024
-                row = json.loads(archive.read(member))
-                assert row["source"] == SOURCE and row["build"]["invocation"] == invocation
-                assert row["build"]["native_exit"] == row["build"]["exit"] == 1
-                failed, = row["build"]["failed_actions"]
-                assert failed["owner"] == OWNER and failed["mnemonic"] == "CppLink" and failed["exit"] == 1
-                assert failed["stderr"] == {"bytes": 484, "scope": "CAS_IDENTITY_ONLY", "sha256": SHA}
-                action, = [a for a in row["actions"] if a["label"] == OWNER and a["mnemonic"] == "CppLink"]
-                assert action["digest"] == {"hash": digest, "sizeBytes": "376"}
-                assert action["exit"] == 1 and action["runner"] == "remote" and action["worker_matches"] and not action["cache"]
-                result["actions"].append({"arch": arch, "invocation": invocation, "digest": action["digest"], "exit": 1})
-        # Both original actions name this same immutable stderr object. One
-        # authenticated read is sufficient; no action or command is replayed.
-        data = blob({"hash": SHA, "sizeBytes": "484"}, ORIGINALS["amd64"][0])
-        assert len(data) == 484 and hashlib.sha256(data).hexdigest() == SHA
-        text = data.decode()
-        libraries = re.findall(r"unable to find library -l([A-Za-z0-9_+.-]+)", text)
-        allowed = {"c", "c++", "c++abi", "stdc++", "unwind", "gcc", "gcc_s", "m", "rt", "dl", "pthread", "atomic", "tcmalloc"}
-        symbols = re.findall(r"undefined symbol: ([A-Za-z0-9_.$@:+-]+)", text)
-        known_symbols = {"_start", "main", "__libc_start_main", "__stack_chk_fail", "malloc", "free", "memcpy", "memmove", "memset"}
-        result["stderr"] = {"sha256": SHA, "bytes": len(data),
-            "missing_libraries": sorted(set(libraries) & allowed),
-            "unclassified_library_count": len(set(libraries) - allowed),
-            "undefined_symbols": sorted(set(symbols) & known_symbols),
-            "unclassified_symbol_count": len(set(symbols) - known_symbols),
-            "classes": [reason for reason in ("no such file or directory", "cannot find", "unable to find library", "undefined symbol", "unknown argument", "unused during compilation", "cannot open", "permission denied", "attempted static link of dynamic object", "linker command failed") if reason in text.lower()]}
-        result["status"] = "RECOVERED"
-    except (AssertionError, KeyError, ValueError, OSError) as error:
-        result["error"] = {"type": type(error).__name__, "line": traceback.extract_tb(error.__traceback__)[-1].lineno}
-    finally:
-        result["verified_at"] = datetime.now(timezone.utc).isoformat()
-        destination = ROOT / "public" / "original-stderr.json"
-        destination.write_text(json.dumps(result, indent=2) + "\n")
-    return int(result["status"] != "RECOVERED")
+def save():
+    (ROOT / "public/original-stderr.json").write_text(json.dumps(evidence) + "\n")
+
+
+def executions(invocation, owner, digest=None):
+    selector = {"invocationId": invocation, "targetLabel": owner}
+    if digest:
+        selector["actionDigestHash"] = digest
+    data = json.loads(fetch("rpc/BuildBuddyService/GetExecution", {
+        "executionLookup": selector, "inlineExecuteResponse": bool(digest)}))
+    rows = data.get("execution", [])
+    assert len(rows) <= 100 and all(r.get("targetLabel") == owner for r in rows)
+    return [r for r in rows if r.get("actionMnemonic") == "CppCompile" and r.get("stage") in (4, "COMPLETED")
+            and r.get("exitCode") == 1 and int(r.get("status", {}).get("code", 0)) == 0]
+
+
+def messages(raw):
+    # Preserve the compiler's diagnostic, not the source line, command, environment,
+    # working directory, include-stack paths, or provider output.
+    errors = []
+    for line in raw.decode(errors="replace").splitlines():
+        match = re.search(r"(?:^|: )(fatal error|error): (.+)$", line)
+        if not match:
+            continue
+        msg = match[2]
+        if len(msg) > 400 or not msg.isascii() or not msg.isprintable():
+            continue
+        if re.search(r"(?i)https?://|bearer |authorization|api[_-]?key|token[ =:]|x-amz|remote_header|bes_header", msg):
+            continue
+        # Paths relative to source such as linux/limits.h are useful. Absolute
+        # paths and opaque hashes are not needed to distinguish missing headers.
+        msg = re.sub(r"(?<![A-Za-z0-9_./-])/(?:[^\s'\"<>;:,)]+)", "<path>", msg)
+        msg = re.sub(r"[A-Za-z0-9_+/=-]{40,}", "<identifier>", msg)
+        entry = match[1] + ": " + msg
+        if entry not in errors:
+            errors.append(entry)
+        if len(errors) == 3:
+            break
+    return errors
+
+
+def read(invocation, owner, row):
+    action, = executions(invocation, owner)
+    digest = action["actionDigest"]
+    sha = digest["hash"]
+    assert re.fullmatch(r"[0-9a-f]{64}", sha)
+    row["action_sha256"] = sha
+    match, = [r for r in executions(invocation, owner, sha) if r["actionDigest"] == digest]
+    response = match["executeResponse"]
+    result = response["result"]
+    assert not response.get("cachedResult") and int(response.get("status", {}).get("code", 0)) == 0 and result.get("exitCode") == 1
+    if result.get("stderrRaw"):
+        raw = base64.b64decode(result["stderrRaw"], validate=True)
+        assert 0 < len(raw) <= 131072
+    else:
+        stderr = result["stderrDigest"]
+        size = int(stderr.get("sizeBytes", 0))
+        assert 0 < size <= 131072 and re.fullmatch(r"[0-9a-f]{64}", stderr["hash"])
+        resource = "bytestream://remote.buildbuddy.io/blobs/" + stderr["hash"] + "/" + str(size)
+        raw = fetch("file/download?" + urlencode({"invocation_id": invocation, "bytestream_url": resource}))
+        assert len(raw) == size and hashlib.sha256(raw).hexdigest() == stderr["hash"]
+    row.update(bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest(), exit=1, errors=messages(raw))
+    row["status"] = "READ" if row["errors"] else "NO_COMPILER_MESSAGE"
+
+
+def main():
+    save()
+    path = ROOT / "original.zip"
+    assert path.stat().st_size == 4192 and hashlib.sha256(path.read_bytes()).hexdigest() == ORIGINAL
+    with zipfile.ZipFile(path) as archive:
+        assert set(archive.namelist()) == {"amd64.json", "arm64.json", "gnu.json", "verdict.json"}
+        for arch, invocation in ARCHES.items():
+            old = json.loads(archive.read(arch + ".json"))
+            assert old["source"] == SOURCE and old["requested_invocation"] == old["events"]["invocation"] == invocation
+            assert old["native_exit"] == old["events"]["exit"] == 1 and old["outcomes"] == {"NOT_EXECUTED": 1}
+            assert Counter((r["type"], r["owner"]) for r in old["events"]["failures"]) == Counter(("CppCompile", o) for o in OWNERS)
+            rows = evidence["arches"][arch] = {}
+            for owner in OWNERS:
+                row = rows[owner] = {"invocation": invocation, "status": "INCOMPLETE"}
+                try:
+                    read(invocation, owner, row)
+                except (AssertionError, OSError, KeyError, TypeError, ValueError) as err:
+                    row.update(error=type(err).__name__, http=getattr(err, "code", None))
+                save()
+    good = all(row["status"] == "READ" for rows in evidence["arches"].values() for row in rows.values())
+    evidence["complete"] = good
+    save()
+    return good
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(0 if main() else 1)

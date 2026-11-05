@@ -1,7 +1,7 @@
-name: Read the original RSEQ linker diagnostic
+name: Read the four original seccheck compiler errors
 on:
   push:
-    branches: [qualification/rseq-original-stderr]
+    branches: [qualification/seccheck-original-cpp-errors]
 permissions:
   contents: read
   actions: read
@@ -19,18 +19,18 @@ jobs:
           umask 077
           task="$RUNNER_TEMP/release-rbe"
           mkdir -p "$task/harness" "$task/public"
-          test "$(git rev-parse HEAD:test/rbe/release_prewarmer/original_stderr.py)" = 58e55a76d6e52e4900c6a981522e5a50dcbad280
+          test "$(git rev-parse HEAD:test/rbe/release_prewarmer/original_stderr.py)" = df5c33ebbf394b46a6eccee414b9e2f4ebba959f
           cp test/rbe/release_prewarmer/original_stderr.py "$task/harness/"
-          echo '8274275ef9cf5a547e17044693bdf220e0cfc3be0f708dbf593f390eb9e5181a  '"$task/harness/original_stderr.py" | sha256sum -c -
-          git fetch --quiet --depth=1 https://github.com/tamird/gvisor.git 7aa5d441a1078a4e9e77547a2a56e23faa6fc238
-          test "$(git rev-parse 7aa5d441a:test/rbe/plugin_programs/cas_inputs.py)" = 54047870d2d32c621a5c8616687a74bdc75001d5
-          git show 7aa5d441a:test/rbe/plugin_programs/cas_inputs.py > "$task/harness/cas_inputs.py"
+          echo '7d2d777cea27c5e65309637f6f83443a08d7f7d2334a7b5530b84c98ec77fcd2  '"$task/harness/original_stderr.py" | sha256sum -c -
+          git fetch --quiet --depth=1 https://github.com/tamird/gvisor.git dc3dc3dba86bb008499de9d959398a64c27c40ad
+          test "$(git rev-parse dc3dc3dba:test/rbe/release_prewarmer/cas_inputs.py)" = b5c6f23eb5e3b94aaf412cae2a76843eaf0fa180
+          git show dc3dc3dba:test/rbe/release_prewarmer/cas_inputs.py > "$task/harness/cas_inputs.py"
       - name: Retrieve the immutable original typed receipt
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api repos/tamird/gvisor/actions/artifacts/13408670826/zip > "$RUNNER_TEMP/release-rbe/original.zip"
-      - name: Read only the exact original 484-byte stderr
+        run: gh api repos/tamird/gvisor/actions/artifacts/13416191933/zip > "$RUNNER_TEMP/release-rbe/original.zip"
+      - name: Read only the four original CppCompile stderr streams
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: python3 -B "$RUNNER_TEMP/release-rbe/harness/original_stderr.py"
@@ -47,7 +47,7 @@ jobs:
           paths = list(root.iterdir())
           assert len(paths) == 1 and paths[0].name == 'original-stderr.json'
           path = paths[0]
-          assert path.is_file() and not path.is_symlink() and path.stat().st_size < 8192
+          assert path.is_file() and not path.is_symlink() and path.stat().st_size < 12288
           raw = path.read_bytes()
           assert isinstance(json.loads(raw), dict)
           key = os.environ['ACCESS'].encode()
@@ -56,7 +56,7 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
-          name: original-rseq-stderr
+          name: original-seccheck-cpp-stderr
           path: ${{ runner.temp }}/release-rbe/public/*.json
           if-no-files-found: error
           retention-days: 14
