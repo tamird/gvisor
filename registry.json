@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T14:55:40.136006Z",
+    "updatedAt": "2026-11-05T15:03:31.586169Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -51032,14 +51032,14 @@
       "id": "branch:review/runsc-lifecycle-fixtures",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "review/runsc-lifecycle-fixtures",
-      "head": "cd8f6c54149718fdca08f268658db4a1d1b4c247",
+      "ref": "research/lifecycle-fixture-wait",
+      "head": "189840fde5ef96d32205f0c00c37575031ea3f23",
       "title": "Run the runsc lifecycle tests without host utilities",
-      "url": "https://github.com/tamird/gvisor/compare/90d4e2253...cd8f6c541",
+      "url": "https://github.com/tamird/gvisor/compare/90d4e2253...189840fde",
       "group": "tests",
-      "status": "Agent work",
-      "updatedAt": "2026-11-05T14:55:40.136006Z",
-      "summary": "The original specutils and cmd tests failed to start /bin/true or /bin/sleep. The two proposed commits use the test binaries themselves as children and retain the existing lifecycle assertions. The selected test and helper implementations match those on the separately tested integrations. Four fresh native TestRunners each passed all six selected cases: specutils and cmd on AMD64 and ARM64, with no failures or skips. Boot is a separate, failing qualification. The contributor requested changes to this revision: both waiting fixtures should stay alive until killed, and cmd.TestMain should sit near the child implementation.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-05T15:03:31.586169Z",
+      "summary": "The specutils and runsc command tests now start the test binary instead of relying on /bin/true and /bin/sleep. Both waiting fixtures stay alive until killed, and cmd.TestMain is next to the helper that starts the child. These are the two changes requested on cd8f6c541.\n\nThe selected helpers and tests in 189840fde match the tested integration d96586779. Four fresh native TestRunners ran six specutils cases and six cmd cases on each of AMD64 and ARM64. All 24 passed; none skipped.",
       "evidence": [
         {
           "label": "Two proposed commits on master",
@@ -51052,17 +51052,25 @@
         {
           "label": "Six specutils and six cmd cases per architecture",
           "url": "https://github.com/tamird/gvisor/actions/runs/42037630464/artifacts/13422210533"
+        },
+        {
+          "label": "Revised two commits on master",
+          "url": "https://github.com/tamird/gvisor/compare/90d4e2253...189840fde"
+        },
+        {
+          "label": "Four revised lifecycle test results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42050193843/artifacts/13425913365"
         }
       ],
       "followup": {
-        "owner": "state_current_path",
-        "sourceHead": "cd8f6c54149718fdca08f268658db4a1d1b4c247",
-        "observedAt": "2026-11-05T14:55:40.136006Z",
-        "disposition": "Contributor requested changes",
-        "nextAction": "Keep both waiting fixtures alive until killed, move cmd.TestMain near the child implementation, and qualify the revision before requesting review.",
+        "owner": "Contributor",
+        "sourceHead": "189840fde5ef96d32205f0c00c37575031ea3f23",
+        "observedAt": "2026-11-05T15:03:31.586169Z",
+        "disposition": "Contributor review requested",
+        "nextAction": "Review the revised wait behavior and placement of cmd.TestMain before opening one upstream PR.",
         "evidence": [
-          "https://github.com/tamird/gvisor/compare/90d4e2253...cd8f6c541",
-          "https://github.com/tamird/gvisor/actions/runs/42037630464/artifacts/13422210533",
+          "https://github.com/tamird/gvisor/compare/90d4e2253...189840fde",
+          "https://github.com/tamird/gvisor/actions/runs/42050193843/artifacts/13425913365",
           "https://github.com/tamird/gvisor/actions/runs/42030254826/artifacts/13415219314"
         ]
       },
@@ -51074,9 +51082,61 @@
           "at": "2026-11-05T14:55:40.136006Z"
         }
       ],
-      "contributorChangesRequested": {
-        "head": "cd8f6c54149718fdca08f268658db4a1d1b4c247",
-        "url": "https://github.com/tamird/gvisor/commit/cd8f6c541"
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "189840fde5ef96d32205f0c00c37575031ea3f23",
+        "baseHead": "90d4e2253f004cdc73a35dbc4050eab3e9a8495d",
+        "url": "https://github.com/tamird/gvisor/compare/90d4e2253...189840fde",
+        "title": "Run the runsc lifecycle tests without host utilities",
+        "requestedAt": "2026-11-05T15:03:31.586169Z",
+        "summary": "Open one PR for 189840fde? Both waiting fixtures stay alive until killed, cmd.TestMain now sits beside the helper, and all 24 selected native case executions passed.",
+        "body": "The specutils tests use /bin/true and /bin/sleep to start children that\nexit or stay alive. The runsc command tests use /bin/sleep for a live\nsandbox PID with no control server. On a worker without these programs\nthe tests fail before checking process readiness, identity or command\nbehavior.\n\nStart the test binary as the child. For the live cases, keep the child\nwaiting until killed. Preserve the exit and zombie checks in specutils\nand reap the command fixture when the command kills it or the test ends."
+      }
+    },
+    {
+      "id": "branch:research/boot-failed-exec-stdio",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/boot-failed-exec-stdio",
+      "head": "8f08865cd81854f19a643d18e5c63f939ce28c39",
+      "title": "Release the sandbox file table when starting a process fails",
+      "url": "https://github.com/tamird/gvisor/commit/8f08865cd",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-05T15:03:31.586169Z",
+      "summary": "When a guest executable is missing, CreateProcess returns before taking its own reference to the file table. The caller previously dropped its reference only after a successful start, leaving the sandbox standard streams open. The fix drops that reference on every return.\n\nTestFailedRunClosesStdio ran on both AMD64 and ARM64. On the unchanged production code (test-only control eea08498e), /missing returned ENOENT and all three reserved descriptors, 253–255, remained open. With the fix at c6713d5df, the same test passed on each architecture without a skip. The proposed commit has the same production change and test body. The overall job is red: the reporter did not accept the failed control’s nonempty action status, and independent boot-path checks stopped before execution.",
+      "evidence": [
+        {
+          "label": "Proposed fix and regression on master",
+          "url": "https://github.com/tamird/gvisor/commit/8f08865cd"
+        },
+        {
+          "label": "AMD64 and ARM64 missing-executable controls and fixes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42050141418/artifacts/13425788812"
+        }
+      ],
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "8f08865cd81854f19a643d18e5c63f939ce28c39",
+        "observedAt": "2026-11-05T15:03:31.586169Z",
+        "disposition": "Contributor review requested",
+        "nextAction": "Review the file-table reference fix and its missing-executable regression for an upstream PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/8f08865cd",
+          "https://github.com/tamird/gvisor/actions/runs/42050141418/artifacts/13425788812"
+        ]
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "8f08865cd81854f19a643d18e5c63f939ce28c39",
+        "baseHead": "90d4e2253f004cdc73a35dbc4050eab3e9a8495d",
+        "url": "https://github.com/tamird/gvisor/commit/8f08865cd",
+        "title": "Release the sandbox file table when starting a process fails",
+        "requestedAt": "2026-11-05T15:03:31.586169Z",
+        "summary": "Open a PR for 8f08865cd? A failed guest start left all three sandbox standard streams open on both native workers. The same regression passed on each after the fix.",
+        "body": "A missing guest executable leaves the sandbox holding its standard\nstreams. In the boot tests, the next loader cannot start because its\nfirst reserved descriptor, 253, is still open.\n\ncreateContainerProcess owns the initial reference to the file table.\nCreateProcess takes a separate reference for the task only after it\nloads the executable. Drop the caller’s reference on every return,\nincluding errors while preparing the mount namespace or loading the\nprocess."
       }
     }
   ],
@@ -68096,7 +68156,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-05T14:11:43.746545Z",
+      "updatedAt": "2026-11-05T15:03:31.586169Z",
       "summary": "Both remote architectures built all 231 selected runsc targets. The original 40-target runtime sweep and later focused checks are separate. Six specutils cases, six cmd cases and the finite seccomp filter corpus now pass on each architecture. The full boot suite still fails on both.",
       "findings": [
         {
@@ -68118,7 +68178,7 @@
           ]
         },
         {
-          "text": "After replacing host utility children, all six selected specutils cases and all six selected cmd cases passed in four fresh native TestRunners across AMD64 and ARM64. No cases skipped. The combined proposal cd8f6c541 contains the same helper changes and selected test implementations as those two integrations.",
+          "text": "After replacing host utility children, all six selected specutils cases and all six selected cmd cases passed in four fresh native TestRunners across AMD64 and ARM64. No cases skipped. The combined proposal cd8f6c541 contains the same helper changes and selected test implementations as those two integrations. Revision 189840fde keeps the waiting children alive until killed. All six selected cases in each package passed again in four fresh native TestRunners on the revised integration d96586779, with no skips.",
           "evidence": [
             {
               "label": "Combined source",
@@ -68127,15 +68187,40 @@
             {
               "label": "Four lifecycle test results; boot reported separately",
               "url": "https://github.com/tamird/gvisor/actions/runs/42037630464/artifacts/13422210533"
+            },
+            {
+              "label": "Four native results on the revised waiting fixtures",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42050193843/artifacts/13425913365"
             }
           ]
         },
         {
-          "text": "On cc47a1a58 the full boot suite recorded 66 passing and 13 failing named XML records on each CPU, with no skips. TestRun and TestStartupHeapReleaseOnStart also failed in the focused run. The normal and race fixture checks are incomplete; the missing executable resolution is still being diagnosed.",
+          "text": "On cc47a1a58 the full boot suite recorded 66 passing and 13 failing named XML records on each CPU, with no skips. TestRun and TestStartupHeapReleaseOnStart also failed in the focused run. The original log reported permission denied for /test_app, and the prior lookup could select a directory. The revised boot fixture at 2289dbad7 selects the declared executable. Its separate paired qualification stopped in source preflight before running either the named/full suites or the normal/race fixture build on either CPU. This does not qualify the path change.",
           "evidence": [
             {
               "label": "Original boot suite, focused failures and fixture records",
               "url": "https://github.com/tamird/gvisor/actions/runs/42037630464/artifacts/13422210533"
+            },
+            {
+              "label": "Declared boot executable proposal",
+              "url": "https://github.com/tamird/gvisor/commit/2289dbad7"
+            },
+            {
+              "label": "Unexecuted boot-path phases and independent FD results",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42050141418/artifacts/13425788812"
+            }
+          ]
+        },
+        {
+          "text": "A separate regression exercised the missing-executable error with an empty guest root. On both native CPUs the stock control left all three standard-stream descriptors open; the fix closed them and passed the exact test on both. This result does not qualify the full boot suite or its guest fixture.",
+          "evidence": [
+            {
+              "label": "Proposed fix and regression on master",
+              "url": "https://github.com/tamird/gvisor/commit/8f08865cd"
+            },
+            {
+              "label": "AMD64 and ARM64 missing-executable controls and fixes",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42050141418/artifacts/13425788812"
             }
           ]
         },
@@ -70339,8 +70424,12 @@
           ]
         }
       ],
-      "nextStep": "Trace the unresolved boot executable and the remaining sandbox failures. Choose between declaring the verified GNU runtime as test data and making the C++ example executable static. Continue the separate syscall qualification with the source-built RSEQ helper and native test launcher. Count builds, executed tests and guest workloads separately. Verify the remaining Sentry link outputs against ELF bytes. Track the hermetic-llvm and rules_go fixes and check that BuildBuddy has deployed its empty-root fix before retrying a file-empty worker.",
+      "nextStep": "Qualify the declared boot executable on both architectures now that the independent file-table regression is covered. Continue tracing the remaining sandbox failures. Choose between declaring the verified GNU runtime as test data and making the C++ example executable static. Continue the separate syscall qualification with the source-built RSEQ helper and native test launcher. Count builds, executed tests and guest workloads separately. Verify the remaining Sentry link outputs against ELF bytes. Track the hermetic-llvm and rules_go fixes and check that BuildBuddy has deployed its empty-root fix before retrying a file-empty worker.",
       "evidence": [
+        {
+          "label": "Missing-executable FD regression on AMD64 and ARM64; boot path checks stopped in preflight",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42050141418/artifacts/13425788812"
+        },
         {
           "label": "Lifecycle tests and separate boot failures on AMD64 and ARM64",
           "url": "https://github.com/tamird/gvisor/actions/runs/42037630464/artifacts/13422210533"
@@ -73143,5 +73232,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T14:55:40.136006Z"
+  "updatedAt": "2026-11-05T15:03:31.586169Z"
 }
