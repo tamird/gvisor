@@ -16,10 +16,10 @@ import qualification_report as report
 TMP = Path(os.environ["RUNNER_TEMP"])
 OUT = TMP / "restore-vm-verdict.json"
 PACKAGE = ".github/qualification/restore-limit-vm"
-PRODUCT = "71b5044a65ffac66a4d41cd289788d7b9ad5ea22"
+PRODUCT = "c31b2adc27b1d19b1e647b3239cd2b3b536a5adf"
 GUEST = "38745c527784376e0b5d915fe5ebd85e1d1385fd"
 SOURCE = os.environ["GITHUB_SHA"]
-CASES = ["container/TestRestoreCgroupMemoryLimit/" + name for name in ("createAtLimit", "lowerBeforeRestore")]
+CASES = ["native/matchedSave"]
 
 
 def now():
@@ -83,11 +83,8 @@ def run(stage, result):
     assert stage in ("preflight", "restore") and result["product"] == PRODUCT
     if stage == "restore":
         assert result["stages"]["preflight"]["status"] == "PASS"
-    result["original"] = {"run": 41979098313, "artifact": 13394000621,
-                          "zip_sha256": "ca143333eb7b8744e73acfd2a0a31448fd45f5aca961b606454a7240b5df7d80",
-                          "elf_sha256": "1134e818551bfc0ebf9f85e291d039c5f09b1ad618d96f1dab5b2833aff55f9c"}
-    assert git("rev-parse", "HEAD^").decode().strip() == "3b7222e8325e06b7a56c45c96bc304b18bd0ed54"
-    assert git("rev-parse", "HEAD^^^^").decode().strip() == GUEST and git("rev-parse", "HEAD").decode().strip() == SOURCE
+    assert git("rev-parse", "HEAD^").decode().strip() == "3da1a3fcdf66ad21987cad1be1fa5b81f882df55"
+    assert git("merge-base", "--is-ancestor", GUEST, SOURCE) == b""
     directory = TMP / ("restore-limit-" + stage)
     directory.mkdir()
     row = result["stages"][stage] = {"status": "INCOMPLETE"}
@@ -154,7 +151,7 @@ def run(stage, result):
                           and attempt["execution_info"].get("strategy") == "local")
     logs = Path("bazel-testlogs", PACKAGE, stage)
     log = (logs / "test.log").read_text(errors="replace")
-    row["delegation_and_guest_exit"] = "GVISOR_RESTORE_DELEGATED_MEMORY=5368709120" in log and "phase=guest_status_read status=0" in log
+    row["delegation_and_guest_exit"] = "GC_SAVE_VALIDATED_MEMORY=2147483648" in log and "phase=guest_status_read status=0" in log
     row["host_phases"] = re.findall(r"^host_uptime_seconds=[0-9.]+ phase=([a-z_]{1,32}) status=(-|[0-9]{1,3}) outer_test_timeout_seconds=(?:900|2700)$", log, re.M)[:24]
     row["image_size"] = re.findall(r"^Payload filesystem template: (\d{1,12}) bytes; scratch capacity: (\d{1,2}) GiB$", log, re.M)[:1]
     row["guest_work_fs"] = re.findall(r"^Guest work filesystem: block_size=(\d{1,6}) blocks=(\d{1,12})\s*$", log, re.M)[:1]
@@ -175,13 +172,9 @@ def run(stage, result):
     row["test_error_locations"] = sorted(set(re.findall(r"\b(container_save_restore_test\.go:\d{1,7})", log)))[:8]
     save(result)
     if stage == "restore":
+        import paired
         with ZipFile(logs / "test.outputs/outputs.zip") as bundle:
-            observed = bundle.read("guest/outputs/capsule-sha256").decode().strip()
-            elf = bundle.read("guest/outputs/owner-elf-sha256").decode().strip()
-        expected = report.file_record(Path(PACKAGE, "capsule.tar"))["sha256"]
-        row["capsule_verified"] = (expected == observed and re.fullmatch(r"[0-9a-f]{64}", elf) is not None
-                                   and elf == (TMP/"restore-build/elf.sha256").read_text().strip())
-        row["capsule_sha256"] = expected
+            paired.collect(bundle, row, result, save)
     # The preflight emits one literal XML case, byte-identical to the original
     # verified guest result. The restore cases are the authored Go test XML.
     if stage == "preflight":
@@ -192,7 +185,9 @@ def run(stage, result):
                      and direct["required_passed"] == required and direct["passed"] == 1
                      and direct["failed"] == direct["skipped"] == 0 and not v["missing"])
     else:
-        completed = v["status"] == "PASS" and row.get("capsule_verified") is True
+        completed = (not captured["errors"] and not v["missing"] and direct["required_passed"] == required
+                     and (direct["passed"], direct["failed"], direct["skipped"]) == (1, 0, 0)
+                     and row.get("verified_samples") == 26)
     if (original.returncode == 0 and completed and row["fresh_local"] and not v["skips"]
             and row["delegation_and_guest_exit"]):
         row["status"] = "PASS"

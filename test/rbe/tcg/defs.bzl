@@ -271,7 +271,7 @@ def _tcg_test_impl(ctx):
             shell.quote(ctx.executable.run_under.short_path if ctx.executable.run_under else ""),
             shell.quote(ctx.file.emulator.short_path if ctx.file.emulator != None else ""),
             "true" if ctx.attr.arm64_el2 else "false",
-            shell.quote("2,sockets=1,cores=1,threads=2" if ctx.attr.smt else "2"),
+            shell.quote("2,sockets=1,cores=1,threads=2" if ctx.attr.smt else str(ctx.attr.vcpus)),
         ) +
         "guest_user=%s\n" % shell.quote(ctx.attr.guest_user) +
         "guest_env=(%s)\nguest_inherited_env=(%s)\n" % (
@@ -330,6 +330,7 @@ _tcg_test = rule(
         "machine": attr.string(default = "arm64_tcg", values = ["arm64_tcg", "amd64_tcg", "amd64_kvm"]),
         "arm64_el2": attr.bool(default = False),
         "smt": attr.bool(default = False),
+        "vcpus": attr.int(default = 2),
         "image": attr.label(default = Label(":guest"), providers = [TcgImageInfo]),
         "run_under": attr.label(executable = True, cfg = "target"),
         "guest_env": attr.string_dict(),
