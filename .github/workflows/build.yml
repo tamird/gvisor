@@ -1,35 +1,147 @@
-name: CI
-
-"on":
+name: Verify a reconstructed pre-fix probe timer on the current tree
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-persist-reconstructed]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  wire:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 66
+    env:
+      PRODUCT: b146f64418389311c570bd750fc7c8bd71a15917
+      CURRENT: 90d4e2253f004cdc73a35dbc4050eab3e9a8495d
+      CONTROL: 669c4dff80987c7c0729287b6fdf8a124850b92f
+      FIXTURE: test/packetimpact/tests/tcp_zero_window_probe_test.go
+      PROPS: test/packetimpact/runner/defs.bzl
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 4, persist-credentials: false}
+      - name: Bind the unchanged production senders, fixture and isolated worker definition
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/persist"
+          mkdir -p "$root"/{out,records,platform,bin}
+          printf '{"status":"INCOMPLETE","phase":"bootstrap","executed":[]}\n' > "$root/out/verdict.json"
+          test "$(git rev-parse HEAD^)" = "$CONTROL"
+          test "$(git rev-parse HEAD^^)" = "$PRODUCT"
+          test "$(git rev-parse "$PRODUCT^")" = "$CURRENT"
+          test "$(git diff --name-only "$CURRENT" "$PRODUCT")" = "$FIXTURE"
+          test "$(git rev-parse "$PRODUCT:$FIXTURE")" = 3bff303f79e9d546b16ed052bfcedba621ff702d
+          sender=pkg/tcpip/transport/tcp/snd.go
+          test "$(git diff --name-only "$PRODUCT" "$CONTROL")" = "$sender"
+          test "$(git rev-parse "$CONTROL:$sender")" = ead74d5de7f221142b8e74cef7cc241dbbdbdeee
+          python3 - <<'PYFUNC'
+          import hashlib, os, re, subprocess
+          path = "pkg/tcpip/transport/tcp/snd.go"
+          def read(ref):
+              src = subprocess.check_output(["git", "show", os.environ[ref] + ":" + path])
+              body, = re.findall(rb"^func \(s \*sender\) enableZeroWindowProbing\(\) \{.*?^\}\n", src, re.S | re.M)
+              return src, body
+          current, fixed = read("PRODUCT")
+          source, old = read("CONTROL")
+          assert hashlib.sha256(fixed).hexdigest() == "245b30453e75c6d3977f80aa2eab2472bb1bbc6b720b503c41f8b319bdd306bf"
+          assert hashlib.sha256(old).hexdigest() == "d55541f911e6f801173e563b47976671979701ed6baaaff59cc73366e2a267a6"
+          assert current.replace(fixed, old, 1) == source
+          PYFUNC
+          props=7d8e856ba30ef0271690d13d2ddb1c07111a558a
+          profile=0ee70efe6d52576b8f173b40ad6b7ac117da3b72
+          git fetch --quiet --no-tags --depth=1 https://github.com/tamird/gvisor.git "$props" "$profile"
+          test "$(git rev-parse "$CURRENT:$PROPS")" = 9b4dc31ce9c91887b7a77634a498ad9f9feab57b
+          test "$(git rev-parse "$props:$PROPS")" = f1a56b130ff2e42ff7b746cf649c70dae244dce1
+          test "$(git rev-parse "$profile:test/rbe/gnu_platform/BUILD.bazel")" = 904096b1a9274759b200ab816ad638fd04865f6d
+          test "$(git rev-parse "$profile:test/rbe/gnu_platform/MODULE.bazel")" = 43348379d69993635c53140c66c680fd183a8e8e
+          for file in BUILD.bazel MODULE.bazel; do git show "$profile:test/rbe/gnu_platform/$file" > "$root/platform/$file"; done
+          git show "$props:$PROPS" > "$root/placement.bzl"
+          git show "$PRODUCT:$FIXTURE" > "$root/fixture.go"
+          cp test/rbe/tcp_persist_wire.py "$root/"
+          curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$root/bin/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $root/bin/bazel" | sha256sum -c -
+          chmod 755 "$root/bin/bazel"
+          docker pull --platform linux/amd64 "$GNU"
+          docker run -d --init --name persist-compiler --entrypoint /bin/sleep \
+            -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$root:$root" -w "$GITHUB_WORKSPACE" "$GNU" infinity
+      - name: Configure the existing remote GNU and Firecracker coordinator
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/persist"
+          umask 077
+          test -n "$BUILDBUDDY_API_KEY"
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' "build --inject_repository=tcp_gnu=$root/platform" 'build --extra_execution_platforms=@tcp_gnu//:gnu' 'build --host_platform=@tcp_gnu//:gnu'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$root/private.bazelrc"
+      - name: Run the named PacketImpact case only on the reconstructed sender
+        timeout-minutes: 58
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/persist"
+          runarm() {
+            local arm=$1 source=$2 label=$3 version=$4 rc=0
+            local d="$root/records/$arm" path="${label#//}"
+            path="${path/:/\/}"
+            mkdir -p "$d"
+            git checkout --quiet --detach "$source"
+            test "$(git rev-parse HEAD)" = "$source"
+            git diff --quiet HEAD --
+            cp "$root/placement.bzl" "$PROPS"
+            cp "$root/fixture.go" "$FIXTURE"
+            test "$(git hash-object "$PROPS")" = f1a56b130ff2e42ff7b746cf649c70dae244dce1
+            test "$(git hash-object "$FIXTURE")" = 3bff303f79e9d546b16ed052bfcedba621ff702d
+            test "$(cat .bazelversion)" = "$version"
+            printf '%s\n' "$source" > "$d/source"
+            printf '%s\n' "$label" > "$d/target"
+            git rev-parse "$source:pkg/tcpip/transport/tcp/snd.go" > "$d/sender"
+            docker exec persist-compiler "$root/bin/bazel" --version > "$d/version"
+            test "$(cat "$d/version")" = "bazel $version"
+            date -u +%FT%T.%3NZ > "$d/start"
+            timeout -k 15s 50m docker exec persist-compiler "$root/bin/bazel" --bazelrc="$root/private.bazelrc" test \
+              --color=no --curses=no --show_progress_rate_limit=30 --config=x86_64 --jobs=32 --strategy=TestRunner=remote --nocache_test_results --flaky_test_attempts=1 \
+              --test_sharding_strategy=disabled --test_output=errors --test_timeout=100 --test_env=GO_TEST_WRAP_TESTV=1 \
+              '--test_filter=^TestZeroWindowProbeDuringWrites$' --build_event_json_file="$d/bep" "$label" > "$d/console" 2>&1 || rc=$?
+            printf '%s\n' "$rc" > "$d/exit"
+            date -u +%FT%T.%3NZ > "$d/finish"
+            for file in test.log test.xml; do
+              docker exec persist-compiler cat "bazel-testlogs/$path/$file" > "$d/$file" 2>/dev/null || true
+            done
+            git restore --source=HEAD -- "$PROPS" "$FIXTURE"
+            git diff --quiet HEAD --
+          }
+          netstack=//test/packetimpact/tests:tcp_zero_window_probe_netstack_test
+          runarm reconstructed "$CONTROL" "$netstack" 9.3.1
+      - name: Close the coordinator and remove its private configuration
+        if: always()
+        run: |
+          docker rm -f persist-compiler >/dev/null 2>&1 || true
+          rm -f -- "$RUNNER_TEMP/persist/private.bazelrc"
+      - name: Check original outcomes and the observed write intervals
+        if: always()
+        run: python3 -B "$RUNNER_TEMP/persist/tcp_persist_wire.py"
+      - name: Check the bounded public result
+        if: always()
+        id: safe
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          d = Path(os.environ["RUNNER_TEMP"], "persist/out")
+          p, = d.iterdir()
+          assert p.name == "verdict.json" and p.is_file() and not p.is_symlink() and 0 < p.stat().st_size <= 65536
+          data = p.read_bytes()
+          assert json.loads(data)["status"] in {"PASS", "FAIL", "INCOMPLETE"}
+          key = os.environ["BUILDBUDDY_API_KEY"].encode()
+          assert key and key not in data and not re.search(rb"(?i)x-buildbuddy-api-key|authorization|github_pat_|gh[pousr]_|(?:https?|grpcs?)://", data)
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.safe.outcome == 'success'
+        with:
+          name: tcp-first-persist-probe-reconstructed
+          path: ${{ runner.temp }}/persist/out/verdict.json
+          if-no-files-found: error
