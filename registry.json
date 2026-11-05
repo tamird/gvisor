@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T18:31:46.488951Z",
+    "updatedAt": "2026-11-05T18:38:23.383949Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -46254,8 +46254,8 @@
       "title": "Build the plugin runtime on the Buildkite agent",
       "group": "bazel",
       "url": "https://github.com/tamird/gvisor/commit/3d576b2ff",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-03T08:23:27.485264+00:00",
+      "status": "Contributor approved; waiting for #15153 and #16904",
+      "updatedAt": "2026-11-05T18:38:23.383949Z",
       "summary": "The AMD64 plugin also builds an ARM64 cgo standard library. The plugin configuration selects its cross-compiler. Buildkite runs the existing Make target on the agent, so its remote-cache options reach both Bazel calls. On the Linux integration source, the resulting static AMD64 executable contained the plugin and ran successfully.",
       "evidence": [
         {
@@ -46284,11 +46284,11 @@
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "work_map_current",
         "sourceHead": "3d576b2ffb5b3dce0e3ebc7651338d1de66f0e3a",
-        "observedAt": "2026-11-03T08:23:27.485264+00:00",
-        "disposition": "Contributor review requested",
-        "nextAction": "Review the four-line change. Submit after the GNU plugin and native Buildkite bootstrap land.",
+        "observedAt": "2026-11-05T18:38:23.383949Z",
+        "disposition": "Contributor approved; both prerequisites remain open",
+        "nextAction": "Submit the approved four-line Buildkite change after both the GNU plugin (#15153) and native Buildkite bootstrap (#16904) land. This queues the optional plugin only; the ordinary LLVM runtime build proceeds independently.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/3d576b2ff",
           "https://github.com/tamird/gvisor/actions/runs/41601509314/artifacts/13214452029"
@@ -46302,17 +46302,18 @@
           "head": "3d576b2ffb5b3dce0e3ebc7651338d1de66f0e3a"
         }
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "3d576b2ffb5b3dce0e3ebc7651338d1de66f0e3a",
-        "baseHead": "eafcb8392effca7769ef6e220d24feaadb3bdf17",
-        "url": "https://github.com/tamird/gvisor/commit/3d576b2ff",
-        "title": "Build the plugin runtime on the Buildkite agent",
-        "summary": "The AMD64 plugin also builds an ARM64 cgo standard library. The plugin configuration selects its cross-compiler. Buildkite runs the existing Make target on the agent, so its remote-cache options reach both Bazel calls. On the Linux integration source, the resulting static AMD64 executable contained the plugin and ran successfully.",
-        "body": "Run the existing plugin Make target with DOCKER_BUILD=false so the\nagent cache and quoted caller options reach both Bazel invocations.\n\nThe AMD64 plugin runtime also builds an ARM64 cgo standard library.\nSelect the declared LLVM cross compiler in plugin-tldk, where cgo is\nenabled, instead of requiring the native worker to install cross GCC.\nThe AMD64 DPDK build and runtime link retain the GNU toolchain.",
-        "requestedAt": "2026-11-03T08:23:27.485264+00:00"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "3d576b2ffb5b3dce0e3ebc7651338d1de66f0e3a",
+          "baseHead": "eafcb8392effca7769ef6e220d24feaadb3bdf17",
+          "url": "https://github.com/tamird/gvisor/commit/3d576b2ff",
+          "title": "Build the plugin runtime on the Buildkite agent",
+          "body": "Run the existing plugin Make target with DOCKER_BUILD=false so the\nagent cache and quoted caller options reach both Bazel invocations.\n\nThe AMD64 plugin runtime also builds an ARM64 cgo standard library.\nSelect the declared LLVM cross compiler in plugin-tldk, where cgo is\nenabled, instead of requiring the native worker to install cross GCC.\nThe AMD64 DPDK build and runtime link retain the GNU toolchain.",
+          "outcome": "approved",
+          "at": "2026-11-05T18:38:23.383949Z"
+        }
+      ]
     },
     {
       "id": "branch:goimports-bazel-action",
@@ -73928,5 +73929,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T18:31:46.488951Z"
+  "updatedAt": "2026-11-05T18:38:23.383949Z"
 }
