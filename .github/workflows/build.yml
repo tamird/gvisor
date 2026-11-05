@@ -1,35 +1,72 @@
-name: CI
-
-"on":
+name: Qualify signed-zero encoding and measure UDP queue Save
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/state-signed-zero-udp]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  signed-zero:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 135
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 6
+          persist-credentials: false
+      - name: Bind the public tool and report helpers
+        timeout-minutes: 5
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/state-signed-zero-udp"
+          mkdir -p "$root"/{bin,out}
+          printf '{"status":"INCOMPLETE","phase":"bootstrap"}\n' > "$root/out/verdict.json"
+          cp .github/qualification/state_zero.py "$root/"
+          git fetch --quiet --depth=1 --no-tags https://github.com/tamird/gvisor.git 2b51abee8530385431b7225198fdd5cd65e78696
+          test "$(git rev-parse FETCH_HEAD)" = 2b51abee8530385431b7225198fdd5cd65e78696
+          test "$(cat .bazelversion)" = 8.8.1
+          curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$root/bin/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $root/bin/bazel" | sha256sum -c -
+          chmod 755 "$root/bin/bazel"
+      - name: Run ordinary and race checks and the existing native paired benchmark
+        timeout-minutes: 123
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/state-signed-zero-udp"
+          image=gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
+          docker pull --platform linux/amd64 "$image"
+          # Only the public source and task output are mounted into the Linux builder.
+          docker run --rm --platform linux/amd64 --user root \
+            --entrypoint /usr/bin/env \
+            -v "$root:$root" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE" "$image" \
+            -i HOME=/root USER=root LANG=C.UTF-8 PATH="$root/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+            GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$GITHUB_WORKSPACE" \
+            GITHUB_SHA="$GITHUB_SHA" RUNNER_TEMP="$root" GIT_TERMINAL_PROMPT=0 \
+            bash -euc 'test "$(bazel --version)" = "bazel 8.8.1"; command -v aarch64-linux-gnu-gcc; python3 -B "$RUNNER_TEMP/state_zero.py"'
+      - name: Validate the public receipt
+        if: always()
+        id: safe
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"], "state-signed-zero-udp/out/verdict.json")
+          assert p.is_file() and not p.is_symlink() and 0 < p.stat().st_size < 131072
+          data=p.read_bytes()
+          assert json.loads(data)["status"] in ("INCOMPLETE", "FAIL", "PASS")
+          if json.loads(data)["status"] == "PASS":
+              assert {q.name for q in p.parent.iterdir()} == {"verdict.json","benchstat.txt","before.bench","after.bench"}
+          for q in p.parent.iterdir():
+              assert q.name in {"verdict.json","benchstat.txt","before.bench","after.bench"}
+              assert q.is_file() and not q.is_symlink() and q.stat().st_size < 131072
+              data=q.read_bytes()
+              assert not re.search(rb'(?i)authorization\s*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_|https?://', data)
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.safe.outcome == 'success'
+        with:
+          name: state-signed-zero-udp
+          path: ${{ runner.temp }}/state-signed-zero-udp/out/
+          if-no-files-found: error
