@@ -1,35 +1,89 @@
-name: CI
-
-"on":
+name: Check the runsc version test against an empty stamp
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/runsc-version-gnu]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    container:
+      image: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 746e8820ba6cca6595f34aec7b508de092da39e3
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Select the repository's Bazel
+        shell: bash
+        run: |
+          set -eu
+          mkdir "$RUNNER_TEMP/runsc-version"
+          if [[ $(bazel --version) != "bazel $(cat .bazelversion)" ]]; then
+            cd "$RUNNER_TEMP/runsc-version"
+            curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o bazel
+            echo 'e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  bazel' | sha256sum -c -
+            chmod +x bazel
+            echo "$PWD" >> "$GITHUB_PATH"
+          fi
+      - name: Test the stamped binary and compare both tests on an empty stamp
+        shell: python3 {0}
+        run: |
+          import json
+          import os
+          from pathlib import Path
+          import subprocess
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+          os.environ.update(GIT_CONFIG_COUNT="1", GIT_CONFIG_KEY_0="safe.directory",
+                            GIT_CONFIG_VALUE_0=os.environ["GITHUB_WORKSPACE"])
+          root = Path(os.environ["RUNNER_TEMP"]) / "runsc-version"
+          build = Path("runsc/BUILD")
+          original = "90d4e2253f004cdc73a35dbc4050eab3e9a8495d"
+          candidate = "746e8820ba6cca6595f34aec7b508de092da39e3"
+          def git(*args):
+              return subprocess.check_output(["git", *args], text=True).strip()
+          assert git("rev-parse", "HEAD") == candidate
+          assert git("rev-parse", "HEAD^") == original
+          expected = Path(".bazelversion").read_text().strip()
+          assert subprocess.check_output(["bazel", "--version"], text=True).strip() == "bazel " + expected
+          results = {"candidate": candidate, "parent": original, "bazel": expected, "cases": {}}
+          args = ["bazel", "--nosystem_rc", "--nohome_rc", "--host_jvm_args=-Xmx3g", "test",
+                  "--config=x86_64", "--lockfile_mode=off", "--jobs=4", "--local_resources=memory=8192",
+                  "--strategy=GoStdlib=processwrapper-sandbox", "--remote_executor=", "--remote_cache=",
+                  "--bes_backend=", "--strategy=GoStdlibList=processwrapper-sandbox", "--strategy=TestRunner=local",
+                  "--test_env=GO_TEST_WRAP_TESTV=1", "--nocache_test_results", "--test_output=all", "--test_arg=-test.v"]
+          def run(name, code, marker):
+              log = root / (name + ".log")
+              with log.open("w") as f:
+                  proc = subprocess.run([*args, "//runsc:version_test"], stdout=f, stderr=subprocess.STDOUT)
+              output = log.read_text(errors="replace")
+              hits = [line[:500] for line in output.splitlines() if marker in line]
+              results["cases"][name] = {"exit": proc.returncode, "matching_lines": hits}
+              print(name, proc.returncode, hits, flush=True)
+              if proc.returncode != code or not hits:
+                  print(output[-6000:])
+                  raise SystemExit(1)
+          def empty_binary_stamp():
+              s = build.read_text()
+              attr = 'x_defs = {"gvisor.dev/gvisor/runsc/version.version": "{STABLE_VERSION}"}'
+              assert s.index(attr) < s.index('name = "runsc-plugin-stack"')
+              build.write_text(s.replace(attr, attr.replace("{STABLE_VERSION}", ""), 1))
+          try:
+              run("candidate-valid", 0, "--- PASS: TestVersion")
+              empty_binary_stamp()
+              run("candidate-empty", 3, 'first line of runsc --version = "runsc version ", want "runsc version ')
+              git("restore", "--source", original, "--worktree", "--", "runsc/BUILD", "runsc/version_test.sh")
+              empty_binary_stamp()
+              run("original-empty", 0, "PASS: Got OK version runsc version ")
+          finally:
+              (root / "results.json").write_text(json.dumps(results, indent=2) + "\n")
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: runsc-version-comparison
+          path: ${{ runner.temp }}/runsc-version/results.json
+          if-no-files-found: ignore
+          retention-days: 1
