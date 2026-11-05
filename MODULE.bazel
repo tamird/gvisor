@@ -79,6 +79,8 @@ archive_override(
     },
     remote_patch_strip = 1,
     remote_patches = {
+        # Merged hermetic-llvm#907 removes the instrumentor header's shell action.
+        "https://github.com/hermeticbuild/hermetic-llvm/compare/413655560cc6269a1bf4eaac5100fd96830948bd...15809f084e3c473b0e3fbcc57ce8dda167f24a6c.diff": "sha256-zceM8zMmoJvHKY3XR/SC7O6M1kfy4OxjzddRWRNY5aA=",
         "https://github.com/hermeticbuild/hermetic-llvm/compare/413655560cc6269a1bf4eaac5100fd96830948bd...533981c365e8ee683926bd465efcc81bc31158bf.diff": "sha256-3tviMkAsaa+uxxXA3KJyc8bT1kjDGqZkH0IgVcQyuMs=",
     },
     strip_prefix = "hermetic-llvm-eb198127bdc4f7b737d08a7ea009869bc7a72e75",
