@@ -181,6 +181,10 @@ func TestArrayDestinationFlags(t *testing.T) {
 // Preserve supported array-to-slice and interface delegation at the same
 // public Load boundary that rejects wrong-shaped empty values below.
 func TestLegacyValueDestinations(t *testing.T) {
+	prev := GraphEngineEnabled()
+	EnableGraphEngine(false)
+	defer EnableGraphEngine(prev)
+
 	var nilInterface any
 	var integerInterface any = int64(17)
 	for _, test := range []struct {
