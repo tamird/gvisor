@@ -26,6 +26,7 @@ go_binary(
     ],
     static = True,
     visibility = [
+        "//runsc/boot:__pkg__",
         "//runsc/container:__pkg__",
         "//test/syscalls/linux:__pkg__",
     ],
