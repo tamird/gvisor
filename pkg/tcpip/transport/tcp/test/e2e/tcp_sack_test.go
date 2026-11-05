@@ -1059,6 +1059,150 @@ func TestNoSpuriousRecoveryWithDSACK(t *testing.T) {
 	verifySpuriousRecoveryMetric(t, c, 0 /* numSpuriousRecovery */, 0 /* numSpuriousRTO */)
 }
 
+// sendSpuriousRTOFlight sends data[:flight] as one flight of maxPayload
+// segments on a connection with SACK and timestamps but no RACK, and lets the
+// retransmission timer resend the first segment. It returns a function that
+// acknowledges bytesReceived, with optional SACK blocks. Every ACK echoes the
+// timestamp of the original transmissions, so the first one shows that the
+// timeout was spurious (RFC 3522).
+func sendSpuriousRTOFlight(t *testing.T, c *context.Context, clock *faketime.ManualClock, data []byte, flight int) func(bytesReceived int, sacked ...header.SACKBlock) {
+	t.Helper()
+	e2e.SetStackSACKPermitted(t, c, true)
+	e2e.SetStackTCPRecovery(t, c, 0) // Only the retransmission timer fires.
+	peer := e2e.CreateConnectedWithSACKAndTS(c)
+	info := func() tcpip.TCPInfoOption {
+		t.Helper()
+		var v tcpip.TCPInfoOption
+		if err := c.EP.GetSockOpt(&v); err != nil {
+			t.Fatalf("TCP_INFO: %v", err)
+		}
+		return v
+	}
+	// The address pair has a randomized timestamp offset. Move the clock
+	// (uint32 arithmetic) so that the wire timestamps start at 1000 and the
+	// retransmission's is larger than the original's.
+	clock.Advance(time.Duration(1000-peer.RecentTS) * time.Millisecond)
+
+	if n, err := c.EP.Write(bytes.NewReader(data[:flight]), tcpip.WriteOptions{}); err != nil || n != int64(flight) {
+		t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, flight)
+	}
+	var original uint32
+	for offset := 0; offset < flight; offset += maxPayload {
+		b := c.GetPacket()
+		tcpHdr := header.TCP(header.IPv4(b.AsSlice()).Payload())
+		checkReceivedPacket(t, c, tcpHdr, uint32(offset), b, data)
+		if offset == 0 {
+			original = tcpHdr.ParsedOptions().TSVal
+		}
+		b.Release()
+	}
+
+	// No ACK arrives in time, so the first segment is sent again.
+	clock.Advance(info().RTO + time.Millisecond)
+	c.ReceiveAndCheckPacketWithOptions(data, 0, maxPayload, tsOptionSize)
+	if got := info().CcState; got != tcpip.RTORecovery {
+		t.Fatalf("got CcState = %v, want %v", got, tcpip.RTORecovery)
+	}
+
+	tsVal := peer.TSVal
+	return func(bytesReceived int, sacked ...header.SACKBlock) {
+		t.Helper()
+		tsVal++
+		opts := make([]byte, header.TCPOptionsMaximumSize)
+		n := copy(opts, timestampOption(tsVal, original))
+		if len(sacked) > 0 {
+			n += header.EncodeNOP(opts[n:])
+			n += header.EncodeNOP(opts[n:])
+			n += header.EncodeSACKBlocks(sacked, opts[n:])
+		}
+		c.SendPacket(nil, &context.Headers{
+			SrcPort: context.TestPort,
+			DstPort: c.Port,
+			Flags:   header.TCPFlagAck,
+			SeqNum:  peer.NextSeqNum,
+			AckNum:  c.IRS.Add(1 + seqnum.Size(bytesReceived)),
+			RcvWnd:  30000,
+			TCPOpts: opts[:n],
+		})
+	}
+}
+
+// TestSpuriousRTOResumesWithUnsentData checks RFC 4015 step (8): once an ACK
+// for an original transmission shows that a timeout was spurious, the sender
+// moves on to new data instead of resending the rest of the flight, which the
+// peer already has.
+func TestSpuriousRTOResumesWithUnsentData(t *testing.T) {
+	clock := faketime.NewManualClock()
+	c := context.NewWithOpts(t, context.Options{EnableV4: true, MTU: mtu, Clock: clock})
+	defer c.Cleanup()
+	const numPackets = 5
+	data := make([]byte, (numPackets+1)*maxPayload)
+	for i := range data {
+		data[i] = byte(i)
+	}
+	flight := numPackets * maxPayload
+	ack := sendSpuriousRTOFlight(t, c, clock, data, flight)
+
+	ack(maxPayload)
+	if n, err := c.EP.Write(bytes.NewReader(data[flight:]), tcpip.WriteOptions{}); err != nil || n != maxPayload {
+		t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, maxPayload)
+	}
+	c.CheckNoPacket("segments 2 to 5 were sent again after a spurious timeout")
+
+	// Once the originals of segments 2 to 5 are acknowledged, the next
+	// packet is new data.
+	ack(flight)
+	c.ReceiveAndCheckPacketWithOptions(data, flight, maxPayload, tsOptionSize)
+
+	stats := c.Stack().Stats().TCP
+	if got := stats.SpuriousRTORecovery.Value(); got != 1 {
+		t.Errorf("got SpuriousRTORecovery = %d, want 1", got)
+	}
+	if got := stats.Retransmits.Value(); got != 1 {
+		t.Errorf("got Retransmits = %d, want 1", got)
+	}
+}
+
+// TestSpuriousRTOFastRetransmit checks RFC 4015 Section 4: when a segment of
+// the flight was really lost, duplicate ACKs repair it after a spurious
+// timeout, without waiting for another timeout.
+func TestSpuriousRTOFastRetransmit(t *testing.T) {
+	clock := faketime.NewManualClock()
+	c := context.NewWithOpts(t, context.Options{EnableV4: true, MTU: mtu, Clock: clock})
+	defer c.Cleanup()
+	const numPackets = 6
+	data := make([]byte, numPackets*maxPayload)
+	for i := range data {
+		data[i] = byte(i)
+	}
+	ack := sendSpuriousRTOFlight(t, c, clock, data, len(data))
+
+	// Segment 3 was lost. The peer acknowledges segments 1 and 2, then
+	// reports segments 4 to 6 with three duplicate ACKs.
+	ack(maxPayload)
+	ack(2 * maxPayload)
+	c.CheckNoPacket("segments 3 to 6 were sent again after a spurious timeout")
+	start := c.IRS.Add(1 + 3*maxPayload)
+	for end := 4; end <= numPackets; end++ {
+		ack(2*maxPayload, header.SACKBlock{Start: start, End: c.IRS.Add(1 + seqnum.Size(end*maxPayload))})
+	}
+	c.ReceiveAndCheckPacketWithOptions(data, 2*maxPayload, maxPayload, tsOptionSize)
+
+	// The counter is incremented after the packet is sent.
+	stats := c.Stack().Stats().TCP
+	if err := testutil.Poll(func() error {
+		if got := stats.Timeouts.Value(); got != 1 {
+			return fmt.Errorf("got Timeouts = %d, want 1", got)
+		}
+		if got := stats.FastRetransmit.Value(); got != 1 {
+			return fmt.Errorf("got FastRetransmit = %d, want 1", got)
+		}
+		return nil
+	}, time.Second); err != nil {
+		t.Error(err)
+	}
+}
+
 func TestSACKRetransmissionTimer(t *testing.T) {
 	clock := faketime.NewManualClock()
 	c := context.NewWithOpts(t, context.Options{EnableV4: true, MTU: 1500, Clock: clock})
