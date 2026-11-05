@@ -58,11 +58,9 @@ jobs:
         [[ $(stat -f -c %T .) == cgroup2fs ]]
         controllers=$(cat cgroup.controllers)
         echo PHASE=controllers_read
-        add=()
         for key in $controllers; do
           [[ $key =~ ^[a-z_]+$ ]]
           echo "CONTROLLER=$key"
-          add+=("+$key")
         done
         [[ " $controllers " == *" memory "* ]]
         echo PHASE=create_children
@@ -71,7 +69,7 @@ jobs:
         echo $$ > client/cgroup.procs
         [[ $(cat /proc/self/cgroup) == '0::/client' ]]
         echo PHASE=enable_controllers
-        echo "${add[*]}" > cgroup.subtree_control
+        echo +memory > cgroup.subtree_control
         echo PHASE=memory_write
         echo 2147483648 > probe/memory.max
         [[ $(cat probe/memory.max) == 2147483648 ]]
