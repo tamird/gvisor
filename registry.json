@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T08:06:56.615470+00:00",
+    "updatedAt": "2026-11-05T08:20:47.043372+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -67447,9 +67447,22 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-05T07:55:52.812536+00:00",
-      "summary": "Both distroless workers built all 249 TCP/IP targets left unresolved by the original build. The separate nine-program release started its installed Sentry on native AMD64 and ARM64. The remaining production //... targets and execution on a worker with an empty filesystem are still open.",
+      "updatedAt": "2026-11-05T08:20:47.043372+00:00",
+      "summary": "Both distroless workers built all 249 outstanding TCP/IP targets. Each also executed six faketime Go cases and one Nogo check. The separate nine-program release started its installed Sentry on native AMD64 and ARM64. The full production build and execution on an empty worker filesystem remain open.",
       "findings": [
+        {
+          "text": "Both distroless workers built the Go SDK tool with its declared shell, then executed the faketime Go suite (six cases) and Nogo (one case) with zero failures, skips or cached test results. The original SDK action tried to execute the shell script directly and failed on both workers. Setting the shell flag to universal preserved it when Bazel built tools for the execution platform. These runs used a Bazel build containing the proposed native POSIX test runner and XML writer. Both Bazel invocations exited zero. Subsequent collection failed when it tried to read the test executable from disk, so the workflow is red and its report contains no executable hash.",
+          "evidence": [
+            {
+              "label": "Fresh SDK builds, native test events and XML counts on both workers",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41992069213/artifacts/13397969377"
+            },
+            {
+              "label": "Original SDK action failure before any tests ran",
+              "url": "https://github.com/tamird/gvisor/actions/runs/41990605622/artifacts/13397697363"
+            }
+          ]
+        },
         {
           "text": "On c43bcb023, each worker built 52 libraries, 67 Go test binaries, 128 Nogo targets and two TUN programs. All 69 Go links ran remotely on each architecture. The TCP test binary and both TUN programs were downloaded and checked against their link digests and ELF architecture on each worker. These are build results; this invocation executed zero tests.",
           "evidence": [
@@ -69573,8 +69586,12 @@
           ]
         }
       ],
-      "nextStep": "Continue coverage of the production //... selection excluding network_plugins from the remaining target ledger. Keep the 184 remaining original Sentry Go link outputs recorded as action evidence until their ELF bytes can be verified. Track adoption of hermetic-llvm #908 and #909 and the SDK executable in rules_go #4772. Before retrying the file-empty worker, confirm the deployed executor contains BuildBuddy #14022. The #15146 license-policy hold is separate.",
+      "nextStep": "Continue the production //... build, excluding network_plugins, with the 237 outstanding runsc targets in the original ledger. Keep the 184 remaining original Sentry Go link outputs recorded as action evidence until their ELF bytes can be verified. Track adoption of hermetic-llvm #908 and #909 and the SDK executable in rules_go #4772. Before retrying the file-empty worker, confirm the deployed executor contains BuildBuddy #14022. The #15146 license-policy hold is separate.",
       "evidence": [
+        {
+          "label": "Fresh SDK builds, native test events and XML counts on both workers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41992069213/artifacts/13397969377"
+        },
         {
           "label": "Original target list, both builds and six executable hashes",
           "url": "https://github.com/tamird/gvisor/actions/runs/41989402963/artifacts/13397995643"
@@ -72324,5 +72341,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T08:06:56.615470+00:00"
+  "updatedAt": "2026-11-05T08:20:47.043372+00:00"
 }
