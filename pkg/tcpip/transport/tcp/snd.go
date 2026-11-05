@@ -1250,7 +1250,7 @@ func (s *sender) capturePipePrev() {
 	// have been decimated by the ACKs that triggered the detection. An
 	// Ssthresh that was never reduced (InitialSsthresh) holds no pipe
 	// estimate to restore and is skipped.
-	s.pipePrev = s.SndCwnd
+	s.pipePrev = s.Outstanding
 	if s.Ssthresh != InitialSsthresh && s.Ssthresh > s.pipePrev {
 		s.pipePrev = s.Ssthresh
 	}
