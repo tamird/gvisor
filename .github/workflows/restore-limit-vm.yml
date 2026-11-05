@@ -1,7 +1,7 @@
-name: Check the native cgroup needed for graph restore timing
+name: Check a precreated 2 GiB cgroup for native systrap checkpoint timing
 on:
   push:
-    branches: [qualification/gc-restore-native-delegation]
+    branches: [qualification/gc-save-precreated-cgroup]
 permissions: {}
 jobs:
   preflight:
@@ -14,7 +14,7 @@ jobs:
       run: |
         set -euo pipefail
         export LC_ALL=C
-        unit=gvisor-first-guest-probe.service
+        unit=gvisor-precreated-leaf-probe.service
         uid=$(id -u)
         test "$uid" -ne 0
         if [[ -S /run/user/$uid/bus && $(stat -c %u "/run/user/$uid") == "$uid" ]]; then
@@ -26,8 +26,27 @@ jobs:
         if [[ "${1:-}" != inner ]]; then
           echo PHASE=service
           membership=$(awk -F: '$1=="0" {print $3}' /proc/self/cgroup)
-          [[ "${membership##*/}" == gvisor-first-guest-probe.service ]]
+          [[ "${membership##*/}" == gvisor-precreated-leaf-probe.service ]]
           [[ $(id -u) != 0 ]]
+          # Read effective ancestor limits before changing cgroup namespace.
+          python3 - "$membership" <<'LIMITS'
+        import os, sys
+        from pathlib import Path
+        root = Path("/sys/fs/cgroup")
+        mount = [line.split() for line in Path("/proc/self/mountinfo").read_text().splitlines()
+                 if line.split()[4] == str(root)]
+        assert len(mount) == 1 and mount[0][3] == "/" and mount[0][mount[0].index("-") + 1] == "cgroup2"
+        service = (root / sys.argv[1].lstrip("/")).resolve(strict=True)
+        assert root in service.parents
+        print("AFFINITY=", len(os.sched_getaffinity(0)), sep="")
+        for path in (service, *service.parents):
+            for name in ("cpu.max", "memory.max"):
+                limit = path / name
+                if limit.exists():
+                    print(name, "=", limit.read_text().strip(), sep="")
+            if path == root:
+                break
+        LIMITS
           echo PHASE=user_namespace
           exec setpriv --no-new-privs unshare --user --map-root-user --mount --cgroup --propagation private \
             /bin/bash "$0" inner "$2" "$(readlink /proc/self/ns/cgroup)"
@@ -37,20 +56,34 @@ jobs:
         mount -t cgroup2 none "$2"
         cd "$2"
         [[ $(stat -f -c %T .) == cgroup2fs ]]
-        # The unchanged runsc cgroupV2.Install requires all five controllers.
         controllers=$(cat cgroup.controllers)
         echo PHASE=controllers_read
-        for key in cpu cpuset io memory pids; do
-          if [[ " $controllers " == *" $key "* ]]; then echo "CONTROLLER=$key"; fi
+        add=()
+        for key in $controllers; do
+          [[ $key =~ ^[a-z_]+$ ]]
+          echo "CONTROLLER=$key"
+          add+=("+$key")
         done
-        for key in cpu cpuset io memory pids; do [[ " $controllers " == *" $key "* ]]; done
-        echo PHASE=private_subtree
+        [[ " $controllers " == *" memory "* ]]
+        echo PHASE=create_children
         mkdir client probe
+        echo PHASE=move_client
         echo $$ > client/cgroup.procs
-        echo '+cpu +cpuset +io +memory +pids' > cgroup.subtree_control
+        [[ $(cat /proc/self/cgroup) == '0::/client' ]]
+        echo PHASE=enable_controllers
+        echo "${add[*]}" > cgroup.subtree_control
+        echo PHASE=memory_write
         echo 2147483648 > probe/memory.max
         [[ $(cat probe/memory.max) == 2147483648 ]]
         grep -Fxq 'oom_kill 0' probe/memory.events
+        echo PHASE=join_precreated
+        (
+          child=$BASHPID
+          echo "$child" > probe/cgroup.procs
+          [[ $(cat /proc/self/cgroup) == '0::/probe' ]]
+          grep -Fxq "$child" probe/cgroup.procs
+          [[ $(cat probe/memory.max) == 2147483648 ]]
+        )
         echo PHASE=complete
         PROBE
         mkdir "$RUNNER_TEMP/native-cgroup"
@@ -61,32 +94,42 @@ jobs:
         code=$?
         set -e
         python3 - "$code" <<'PY'
-        import json, os, platform, sys
+        import json, os, platform, re, sys
         from pathlib import Path
         root = Path(os.environ["RUNNER_TEMP"])
         lines = (root / "probe.log").read_text(errors="replace").splitlines()
-        phases = [p for p in ("service", "user_namespace", "private_mount", "controllers_read", "private_subtree", "complete")
-                  if f"PHASE={p}" in lines]
+        steps = ("service", "user_namespace", "private_mount", "controllers_read", "create_children",
+                 "move_client", "enable_controllers", "memory_write", "join_precreated", "complete")
+        phases = [p for p in steps if f"PHASE={p}" in lines]
+        cpu = [line.split("=", 1)[1] for line in lines if re.fullmatch(r"cpu\.max=(max|[0-9]{1,18}) [1-9][0-9]{0,11}", line)]
+        memory = [line.split("=", 1)[1] for line in lines if re.fullmatch(r"memory\.max=(max|[0-9]{1,20})", line)]
+        affinity = [int(line.split("=")[1]) for line in lines if re.fullmatch(r"AFFINITY=[1-9][0-9]{0,3}", line)]
+        assert len(cpu) <= 32 and len(memory) <= 32 and len(affinity) <= 1
         controllers = [c for c in ("cpu", "cpuset", "io", "memory", "pids") if f"CONTROLLER={c}" in lines]
         errors = [s for s in ("No medium found", "No such file or directory", "Permission denied",
                               "Operation not permitted", "Failed to connect to bus", "Access denied",
                               "Read-only file system", "Device or resource busy", "Failed to start transient service")
                   if any(s.lower() in line.lower() for line in lines)]
         exit_code = int(sys.argv[1])
-        ready = exit_code == 0 and phases == ["service", "user_namespace", "private_mount", "controllers_read", "private_subtree", "complete"] and len(controllers) == 5
+        leaf = exit_code == 0 and phases == list(steps) and "memory" in controllers
+        comparable = (affinity == [4] and cpu and all(v.startswith("max ") for v in cpu)
+                      and memory and all(v == "max" or int(v) >= 2**31 for v in memory))
+        ready = leaf and bool(comparable)
         result = {"carrier":os.environ["GITHUB_SHA"], "kernel":platform.release(), "machine":platform.machine(),
-                  "native_exit":exit_code,"phases":phases,"controllers":controllers,"diagnostics":errors,
-                  "eligible":ready,"product_cases":0,"product_revisions":["706b124a2","71b5044a6"],
-                  "fixture":"648edf16f","verified_memory_max":2147483648 if ready else None}
+                  "native_exit":exit_code, "phases":phases, "controllers":controllers, "diagnostics":errors,
+                  "ancestor_cpu_max":cpu, "ancestor_memory_max":memory, "affinity":affinity,
+                  "precreated_leaf":leaf, "eligible":ready, "product_cases":0,
+                  "product_revisions":["706b124a2","c31b2adc2"], "fixture":"acd90fc2c",
+                  "verified_memory_max":2**31 if leaf else None}
         (root / "eligibility.json").write_text(json.dumps(result, indent=2) + "\n")
-        # A proven missing prerequisite is a finished eligibility check.
-        missing = exit_code != 0 and (bool(errors) or ("controllers_read" in phases and len(controllers) < 5))
+        missing = (leaf and not ready) or (exit_code != 0 and
+                  (bool(errors) or ("controllers_read" in phases and "memory" not in controllers)))
         if not (ready or missing):
             sys.exit("incomplete eligibility observation")
         PY
     - if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: native-graph-restore-eligibility
+        name: precreated-cgroup-systrap-eligibility
         path: ${{ runner.temp }}/eligibility.json
         if-no-files-found: error
