@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T05:53:50.961511+00:00",
+    "updatedAt": "2026-11-05T06:07:04.940311+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -49866,14 +49866,38 @@
       "repo": "google/gvisor",
       "number": 16952,
       "ref": "stdclock-windows-qpc",
-      "head": "d164666c63241ac965864c976a0e9cf447f96c02",
-      "title": "Review the Windows clock resolution and restore tests",
+      "head": "fb98ff4ca16818deea71b420bef46b956c4b258f",
+      "title": "Review the Windows monotonic clock",
       "url": "https://github.com/google/gvisor/pull/16952",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-04T14:42:09.216096+00:00",
-      "summary": "Posted the approved questions about the resolution witness and a real clock Save/Load round trip. Source inspection found that the resolution test passes for a stalled clock and can fail when the test goroutine is descheduled. The restore test calls hooks on one object instead of exercising generated Save/Load. The author's Windows Server 2022/2025 lossy-transfer measurements are author-reported and were not reproduced here.",
+      "updatedAt": "2026-11-05T06:07:04.940311+00:00",
+      "summary": "The revised tests count 10,000 positive steps under 50 µs before an independent one-second deadline and restore an hour-old clock with state.Save and state.Load into a fresh clock. The author reports that unmodified Go on Windows Server 2022 sometimes took a single fine step and that both stock runners failed the revised test. Go has merged the 100 ns Windows monotonic clock for its forthcoming 1.28 release. The question is whether newer Go builds should use the standard clock.",
       "evidence": [
+        {
+          "label": "Revised resolution and state round-trip tests",
+          "url": "https://github.com/google/gvisor/blob/fb98ff4ca/pkg/tcpip/stdclock_test.go"
+        },
+        {
+          "label": "Windows Server 2022 and 2025 results reported by the author",
+          "url": "https://github.com/google/gvisor/pull/16952#discussion_r4476840572"
+        },
+        {
+          "label": "Author’s restore controls",
+          "url": "https://github.com/google/gvisor/pull/16952#discussion_r4476840773"
+        },
+        {
+          "label": "Go version question and author-reported tip results",
+          "url": "https://github.com/google/gvisor/pull/16952#issuecomment-6650299149"
+        },
+        {
+          "label": "Merged Windows monotonic clock change",
+          "url": "https://github.com/golang/go/commit/16d46baf6"
+        },
+        {
+          "label": "Go 1.28 draft release notes: time",
+          "url": "https://tip.golang.org/doc/go1.28#timepkgtime"
+        },
         {
           "label": "Exact submitted clock tests: resolution condition at 43; beforeSave at 67",
           "url": "https://github.com/google/gvisor/blob/d164666c6/pkg/tcpip/stdclock_test.go"
@@ -49904,14 +49928,28 @@
       ],
       "followup": {
         "owner": "Agent",
-        "observedAt": "2026-11-04T14:39:21Z",
-        "disposition": "Approved review posted",
-        "nextAction": "Follow the author's response to the clock-test review.",
+        "sourceHead": "fb98ff4ca16818deea71b420bef46b956c4b258f",
+        "providerHead": "fb98ff4ca16818deea71b420bef46b956c4b258f",
+        "observedAt": "2026-11-05T06:07:04.940311+00:00",
+        "disposition": "Read both author responses and the revised tests. Go’s Windows clock change is merged; Go 1.28 is not yet released.",
+        "nextAction": "After contributor approval, answer the author’s question once on the PR conversation.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16952#pullrequestreview-5770180433"
-        ],
-        "sourceHead": "d164666c63241ac965864c976a0e9cf447f96c02",
-        "providerHead": "d164666c63241ac965864c976a0e9cf447f96c02"
+          "https://github.com/google/gvisor/pull/16952#discussion_r4476840572",
+          "https://github.com/google/gvisor/pull/16952#discussion_r4476840773",
+          "https://github.com/google/gvisor/pull/16952#issuecomment-6650299149",
+          "https://github.com/google/gvisor/blob/fb98ff4ca/pkg/tcpip/stdclock_test.go",
+          "https://github.com/golang/go/commit/16d46baf6"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "head": "fb98ff4ca16818deea71b420bef46b956c4b258f",
+        "url": "https://github.com/google/gvisor/pull/16952#issuecomment-6650299149",
+        "title": "Reply about the Windows clock tests and Go 1.28",
+        "requestedAt": "2026-11-05T06:07:04.940311+00:00",
+        "summary": "Post one answer to the author’s question on #16952, acknowledging both revised tests and recommending the Windows QPC fallback only before Go 1.28?",
+        "body": "Thanks, @adios-404. Your Server 2022 result explains why one fine step isn’t enough. Counting positive steps against a separate deadline addresses my resolution concern, and loading the saved state into a fresh clock addresses my restore concern.\n\nI’d use `windows && !go1.28` for the QPC file and keep the resolution test enabled on Go 1.28 and later. [Go’s change](https://github.com/golang/go/commit/16d46baf6) gives `time.Since` a 100 ns monotonic clock on Windows. The test will still catch a regression before Go 1.28 ships.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
