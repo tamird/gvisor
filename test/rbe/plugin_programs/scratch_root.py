@@ -1,4 +1,5 @@
 """Prove the OCI root separately from the real foreign_cc compiler action."""
+import gzip
 import hashlib
 import io
 import json
@@ -11,7 +12,12 @@ import uuid
 from qualify import COMPILER_IMAGE, OUT, TMP, audit, now
 
 ZERO = "docker://docker.io/tianon/scratch@sha256:3d455195f1141b05cb8cc6deb07ea96b617e5436c7a259d9f3e7b1985f4d3f51"
-IMAGES = {"no_layers": (ZERO, "tianon/scratch"), "one_file": (COMPILER_IMAGE, "library/hello-world")}
+EMPTY_LAYER = "docker://docker.io/shinsenter/scratch@sha256:c449cc2b6ce7a85442b7cc27bb7c52c0bc7e8601449a91a7567f1692869c4bcb"
+IMAGES = {
+    "no_layers": (ZERO, "tianon/scratch"),
+    "empty_layer": (EMPTY_LAYER, "shinsenter/scratch"),
+    "one_file": (COMPILER_IMAGE, "library/hello-world"),
+}
 PLATFORM = "//test/rbe/empty_worker:amd64_musl"
 
 
@@ -46,9 +52,18 @@ def inventory(name):
         manifest = json.loads(get("manifests", digest))
     config = json.loads(get("blobs", manifest["config"]["digest"]))
     assert (config["os"], config["architecture"]) == ("linux", "amd64")
+    diff_ids = config["rootfs"].get("diff_ids", [])
+    assert len(manifest["layers"]) == len(diff_ids) == (0 if name == "no_layers" else 1)
     files = {}
     for layer in manifest["layers"]:
-        with tarfile.open(fileobj=io.BytesIO(get("blobs", layer["digest"])), mode="r:*") as tf:
+        raw = get("blobs", layer["digest"])
+        if name == "empty_layer":
+            # Two zero tar blocks mark the end of an archive with no members.
+            assert len(raw) == layer["size"] == 32
+            content = gzip.decompress(raw)
+            assert content == bytes(1024)
+            assert diff_ids == ["sha256:" + hashlib.sha256(content).hexdigest()]
+        with tarfile.open(fileobj=io.BytesIO(raw), mode="r:*") as tf:
             for entry in tf:
                 path = entry.name.removeprefix("./")
                 if path in ("", "."):
@@ -56,8 +71,7 @@ def inventory(name):
                     continue
                 assert path == "hello" and name == "one_file" and entry.isfile() and path not in files
                 files[path] = hashlib.sha256(tf.extractfile(entry).read()).hexdigest()
-    assert list(files) == ([] if name == "no_layers" else ["hello"])
-    assert len(manifest["layers"]) == len(config["rootfs"].get("diff_ids", [])) == len(files)
+    assert list(files) == (["hello"] if name == "one_file" else [])
     return {"image": image, "platform_manifest": digest, "config_digest": manifest["config"]["digest"],
             "rootfs": config["rootfs"], "layers": [layer["digest"] for layer in manifest["layers"]], "files": files}
 

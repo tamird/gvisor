@@ -62,7 +62,7 @@ def check_selection(r, bazel, flags, platform, control):
 
 
 def build(r):
-    from scratch_root import ZERO, checkpoint, run_probe
+    from scratch_root import EMPTY_LAYER, checkpoint, run_probe
     r.update(source=git("rev-parse", "HEAD"), product=PRODUCT, base=BASE, target=TARGET, started=now(),
              original={"invocation": "9ac98d9c-7337-4b54-a37d-5276517a46ab", "run": 41426238851, "artifact": 13132865042},
              arm="native-empty-worker")
@@ -85,19 +85,19 @@ def build(r):
              "--jobs=400", "--color=no", "--curses=no", "--registry=" + (Path(os.environ["GITHUB_WORKSPACE"]) / "registry").as_uri(),
              "--registry=https://bcr.bazel.build"]
     probe = {"probes": {}, "selected": None}
-    r.update(phase="worker-probe", image=ZERO, expected_target=TARGET, executed_targets=[])
+    r.update(phase="worker-probe", image=EMPTY_LAYER, expected_target=TARGET, executed_targets=[])
     save(r)
-    if not run_probe(probe, "no_layers", bazel, flags):
-        row = probe["probes"]["no_layers"]
+    if not run_probe(probe, "empty_layer", bazel, flags):
+        row = probe["probes"]["empty_layer"]
         r["worker_mount_failed"] = row.get("bound_instantiation_failure", False)
         save(r)
         return
-    probe["selected"] = "no_layers"
+    probe["selected"] = "empty_layer"
     checkpoint(probe)
     # Set the image on the two DPDK rules. Other actions retain their cache keys.
     key = b"_EXEC_PROPERTIES = {\n"
     assert original.count(key) == 1
-    current = original.replace(key, key + ('    "container-image": "' + ZERO + '",\n').encode())
+    current = original.replace(key, key + ('    "container-image": "' + EMPTY_LAYER + '",\n').encode())
     Path(src).write_bytes(current)
     r["consumer"] = {"product_sha256": sha256(original).hexdigest(), "qualified_sha256": sha256(current).hexdigest(),
                      "only_delta": "container-image"}
@@ -150,7 +150,7 @@ def build(r):
         return
     owner, = [a for a in r["actions"] if a["targetLabel"] == OWNER and a["mnemonic"] == "CcMakeMakeRule"]
     props = {p["name"]: p["value"] for p in owner["platform"]}
-    assert props == {"Arch": "amd64", "OSFamily": "linux", "container-image": ZERO,
+    assert props == {"Arch": "amd64", "OSFamily": "linux", "container-image": EMPTY_LAYER,
                      "recycle-runner": "false", "workload-isolation-type": "oci"}
     assert owner["runner"] == "remote" and not owner["cacheHit"]
     assert owner["args"][0].endswith("plugin_programs/bin/bash")

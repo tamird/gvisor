@@ -1,7 +1,7 @@
-name: Build the DPDK archive without a worker filesystem
+name: Build the DPDK archive on a file-empty OCI image
 on:
   push:
-    branches: [qualification/foreign-cc-empty-root]
+    branches: [qualification/foreign-cc-empty-layer]
 permissions:
   contents: read
   actions: read
@@ -96,12 +96,12 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
-          name: foreign-cc-empty-root
+          name: foreign-cc-empty-layer
           path: |
             ${{ runner.temp }}/plugin-evidence/result.json
             ${{ runner.temp }}/plugin-evidence/image.json
           if-no-files-found: error
-      - name: Require a zero-layer worker and a verified archive
+      - name: Require an empty image layer and a verified archive
         if: always()
         run: |
           cd "$RUNNER_TEMP/plugin-evidence"
@@ -109,7 +109,7 @@ jobs:
             .status == "PASS" and .build_exit == 0 and .source_clean and .source_matches
             and .executed_targets == [.expected_target]
             and .selection.verified and .proof.byte_identical_archive and .proof.verified and .launch.verified
-            and $image[0].selected == "no_layers"
-            and ($image[0].probes.no_layers | .verified and .inventory.layers == [] and .inventory.files == {})
-            and .image == $image[0].probes.no_layers.inventory.image
+            and $image[0].selected == "empty_layer"
+            and ($image[0].probes.empty_layer | .verified and (.inventory.layers | length) == 1 and .inventory.files == {})
+            and .image == $image[0].probes.empty_layer.inventory.image
           ' result.json

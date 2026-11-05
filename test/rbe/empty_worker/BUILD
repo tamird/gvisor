@@ -37,6 +37,15 @@ observed_root(
 )
 
 observed_root(
+    name = "empty_layer",
+    exec_properties = {
+        "container-image": "docker://docker.io/shinsenter/scratch@sha256:c449cc2b6ce7a85442b7cc27bb7c52c0bc7e8601449a91a7567f1692869c4bcb",
+        "recycle-runner": "false",
+    },
+    tool = "@bootstrap_busybox//:payload/usr/bin/busybox",
+)
+
+observed_root(
     name = "one_file",
     exec_properties = {"recycle-runner": "false"},
     tool = "@bootstrap_busybox//:payload/usr/bin/busybox",
