@@ -66,6 +66,17 @@ def logs(iid):
         "action_seconds": r"\b([0-9]+s) [\w,-]*(?:remote|worker|disk-cache)",
     }
     numbers = {k: list(dict.fromkeys(re.findall(v, text)))[-18:] for k, v in groups.items()}
+    # Bazel progress text before "; 123s remote" identifies a stuck action
+    # even when the supplier did not retain its execution timestamps.
+    progress = {}
+    for event in re.finditer(r"\[[0-9,]+ / [0-9,]+\]\s*([^;\r\n]{1,240});\s*([0-9]+)s", text):
+        action, elapsed = event.groups()
+        if int(elapsed) < 60 or not re.fullmatch(r"[A-Za-z0-9 _+./(),:@\[\]~-]{1,200}", action):
+            continue
+        if any(secret in action.lower() for secret in ("//http", "://", "password", "bearer", "credential", "header", "token")):
+            continue
+        progress[action] = max(int(elapsed), progress.get(action, 0))
+    numbers["long_remote_actions"] = sorted(progress.items(), key=lambda pair: pair[1], reverse=True)[:12]
     return {"bytes": len(log.encode()), "sha256": hashlib.sha256(log.encode()).hexdigest(),
             "indicators": {k: len(re.findall(v, text, re.IGNORECASE)) for k, v in CATEGORIES.items()},
             "progress": numbers}
@@ -78,13 +89,29 @@ def execution(item):
     end = datetime.fromisoformat(item["command_finished"]).timestamp()
     stage_counts = Counter()
     status_counts = Counter()
+    failures = []
     samples = []
     for row in rows:
         stage = row.get("stage", "UNKNOWN")
         mnemonic = row.get("actionMnemonic", "?")
         assert re.fullmatch(r"[a-zA-Z_0-9?]{1,80}", mnemonic)
         stage_counts[f"{stage}/{mnemonic}"] += 1
-        status_counts[str(row.get("status", {}).get("code", 0))] += 1
+        status = row.get("status", {})
+        code = status.get("code", 0)
+        status_counts[str(code)] += 1
+        row_label = row.get("targetLabel", "")
+        if not re.fullmatch(TERM, row_label):
+            row_label = "(no public label)"
+        if code:
+            message = status.get("message", "").lower()
+            categories = [category for category in ("lease", "deadline", "cancel", "lost", "scheduler", "connection",
+                          "shutdown", "full", "memory", "evicted", "worker", "executor", "unavailable")
+                          if category in message]
+            digest = row.get("actionDigest", {}).get("hash", "")
+            if digest:
+                assert re.fullmatch(r"[a-f0-9]{64}", digest)
+            failures.append({"code": code, "stage": stage, "mnemonic": mnemonic, "label": row_label,
+                             "digest": digest, "categories": categories})
         md = row.get("executedActionMetadata", {})
         queued = md.get("queuedTimestamp")
         if not queued:
@@ -92,13 +119,10 @@ def execution(item):
         start = datetime.fromisoformat(queued.replace("Z", "+00:00")).timestamp()
         fin = md.get("executionCompletedTimestamp")
         seconds = round((datetime.fromisoformat(fin.replace("Z", "+00:00")).timestamp() if fin else end) - start)
-        row_label = row.get("targetLabel", "")
-        if not re.fullmatch(TERM, row_label):
-            row_label = "(no public label)"
         samples.append((seconds, stage, mnemonic, row_label, bool(md.get("workerStartTimestamp")),
                         bool(md.get("executionStartTimestamp")), bool(fin)))
     return {"rows": len(rows), "stages": dict(stage_counts), "grpc_codes": dict(status_counts),
-            "longest": sorted(samples, key=lambda row: row[0], reverse=True)[:12]}
+            "non_ok": failures[:30], "longest": sorted(samples, key=lambda row: row[0], reverse=True)[:12]}
 
 
 def main():
