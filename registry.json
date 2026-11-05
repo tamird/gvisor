@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T19:00:38.548596Z",
+    "updatedAt": "2026-11-05T19:16:21.877538Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -44162,13 +44162,13 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/fd-table-writer-contracts",
-      "head": "b5c5589bad4519a4bd03ae2939379ebf0d09d2b1",
+      "head": "94df6dd9ee37905808dbfed9b1adabdb8ceb5e3b",
       "title": "Check the descriptor table’s writer lock",
-      "url": "https://github.com/tamird/gvisor/commit/b5c5589ba",
+      "url": "https://github.com/tamird/gvisor/commit/94df6dd9e",
       "group": "runtime",
-      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
-      "status": "Contributor approved; waiting for prerequisites",
-      "summary": "Check the mutex that serializes descriptor replacement and flag updates. Removing the mutex from the flag-only paths made both AMD64 and ARM64 Nogo reject the swaps. Removing it from RemoveIf also failed at the outer iterator call.",
+      "updatedAt": "2026-11-05T19:16:21.877538Z",
+      "status": "Delivered",
+      "summary": "Published as #17059 after #16805 merged. Both source files match the approved revision b5c5589ba. Check the mutex that serializes descriptor replacement and flag updates. Removing the mutex from the flag-only paths made both AMD64 and ARM64 Nogo reject the swaps. Removing it from RemoveIf also failed at the outer iterator call.",
       "evidence": [
         {
           "label": "Three final analyzer owners and six deliberate missing-lock diagnostics on both architectures",
@@ -44177,6 +44177,18 @@
         {
           "label": "Original guard and deliberately unlocked RemoveIf control",
           "url": "https://github.com/tamird/gvisor/actions/runs/41278383474/artifacts/13071759313"
+        },
+        {
+          "label": "Approved FDTable writer contract",
+          "url": "https://github.com/tamird/gvisor/commit/b5c5589ba"
+        },
+        {
+          "label": "Merged prerequisite: descriptor replacement",
+          "url": "https://github.com/google/gvisor/commit/a4071cb4d"
+        },
+        {
+          "label": "Published FDTable writer contract on the merged prerequisite",
+          "url": "https://github.com/google/gvisor/pull/17059"
         }
       ],
       "settledReviews": [
@@ -44188,11 +44200,16 @@
         }
       ],
       "followup": {
-        "owner": "coordinator",
-        "sourceHead": "b5c5589bad4519a4bd03ae2939379ebf0d09d2b1",
-        "observedAt": "2026-11-02T16:25:23.256481+00:00",
-        "disposition": "Approved for submission after #16805",
-        "nextAction": "Open the standalone FDTable lock annotation once the descriptor replacement fix in #16805 lands."
+        "owner": "Agent",
+        "sourceHead": "94df6dd9ee37905808dbfed9b1adabdb8ceb5e3b",
+        "observedAt": "2026-11-05T19:16:21.877538Z",
+        "disposition": "Approved writer contracts delivered as #17059.",
+        "nextAction": "Follow #17059 for maintainer review and checks.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/b5c5589ba",
+          "https://github.com/google/gvisor/commit/a4071cb4d",
+          "https://github.com/google/gvisor/pull/17059"
+        ]
       }
     },
     {
@@ -47168,8 +47185,8 @@
       "title": "Release POSIX locks when duplicating over the same file",
       "url": "https://github.com/google/gvisor/pull/16805",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-11-02T16:25:23.256481+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-05T19:16:21.877538Z",
       "summary": "Two descriptors referred to the same open file. Replacing one with dup2 or dup3 must release the process’s POSIX locks. Stock kept the write lock, while Linux and the fix released it. Passing the same descriptor twice to dup2 preserved the lock on all three.",
       "evidence": [
         {
@@ -51787,6 +51804,50 @@
           "postedURL": "https://github.com/google/gvisor/pull/17053"
         }
       ]
+    },
+    {
+      "id": "pr:17059",
+      "type": "pr",
+      "number": 17059,
+      "group": "runtime",
+      "repo": "google/gvisor",
+      "ref": "proposal/fd-table-writer-contracts",
+      "head": "94df6dd9ee37905808dbfed9b1adabdb8ceb5e3b",
+      "url": "https://github.com/google/gvisor/pull/17059",
+      "title": "Check the FDTable writer locking contract",
+      "status": "open",
+      "updatedAt": "2026-11-05T19:16:21.877538Z",
+      "summary": "Check the mutex that serializes descriptor replacement and flag updates. Removing the mutex from the flag-only paths made both AMD64 and ARM64 Nogo reject the swaps. Removing it from RemoveIf also failed at the outer iterator call. The two files in 94df6dd9e match the previously qualified revision b5c5589ba.",
+      "evidence": [
+        {
+          "label": "Three final analyzer owners and six deliberate missing-lock diagnostics on both architectures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41279221605/artifacts/13072043420"
+        },
+        {
+          "label": "Original guard and deliberately unlocked RemoveIf control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41278383474/artifacts/13071759313"
+        },
+        {
+          "label": "Approved FDTable writer contract",
+          "url": "https://github.com/tamird/gvisor/commit/b5c5589ba"
+        },
+        {
+          "label": "Merged prerequisite: descriptor replacement",
+          "url": "https://github.com/google/gvisor/commit/a4071cb4d"
+        },
+        {
+          "label": "Published FDTable writer contract on the merged prerequisite",
+          "url": "https://github.com/google/gvisor/pull/17059"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "b5c5589bad4519a4bd03ae2939379ebf0d09d2b1",
+          "outcome": "approved",
+          "at": "2026-11-02T16:25:23.256481+00:00"
+        }
+      ]
     }
   ],
   "edges": [
@@ -55134,9 +55195,11 @@
       "from": "pr:16805",
       "to": "branch:fd-table-writer-contracts",
       "type": "depends_on",
-      "reason": "The descriptor replacement fix introduces the raw swap used for flag-only updates. Both writers require the table mutex.",
+      "reason": "#16805 introduced the raw descriptor swap and is merged. The approved writer contract now follows it in #17059.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/75a95f0a8"
+        "https://github.com/tamird/gvisor/commit/75a95f0a8",
+        "https://github.com/google/gvisor/commit/a4071cb4d",
+        "https://github.com/google/gvisor/pull/17059"
       ]
     },
     {
@@ -73934,5 +73997,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T19:00:38.548596Z"
+  "updatedAt": "2026-11-05T19:16:21.877538Z"
 }
