@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T15:27:44.402237Z",
+    "updatedAt": "2026-11-05T15:42:15.279811Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -68214,9 +68214,22 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-05T15:03:31.586169Z",
-      "summary": "Both remote architectures built all 231 selected runsc targets. The original 40-target runtime sweep and later focused checks are separate. Six specutils cases, six cmd cases and the finite seccomp filter corpus now pass on each architecture. The full boot suite still fails on both.",
+      "updatedAt": "2026-11-05T15:42:15.279811Z",
+      "summary": "Both remote architectures built all 231 selected runsc targets. The original 40-target runtime sweep and later focused checks are separate. Six specutils cases, six cmd cases and the finite seccomp filter corpus now pass on each architecture. With the declared test executable, all 87 boot cases passed on each worker. The directory-only scratch image is built; publishing it for the workers to pull is awaiting permission.",
       "findings": [
+        {
+          "text": "The verified two-platform OCI layout has one shared 125-byte compressed layer. Its only entry is the empty directory gvisor-worker-root/ (mode 0555); it contains no regular files or symlinks. This differs from the earlier empty tar, which had no entries. The AMD64 and ARM64 manifests are addressed by index sha256:cbcf9ce0d912dde87a4e76542ee47cf4ef1a8ef8e31f84ef62e5af5939cde1c3. The layout has not been published or used for a remote action.",
+          "evidence": [
+            {
+              "label": "Verified OCI layout with a single empty directory",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42055761353/artifacts/13430325785"
+            },
+            {
+              "label": "Directory-only OCI targets and declared action",
+              "url": "https://github.com/tamird/gvisor/commit/fa91c2d64"
+            }
+          ]
+        },
         {
           "text": "On f35d72566, each distroless worker executed 39 of the 40 requested runsc test targets. AMD64 recorded 1,118 passing cases and ARM64 recorded 1,105. Each recorded 42 failures and 14 skips. The failed targets were boot, cmd, sandbox, specutils and version. The filter fuzz test did not execute. Both KVM-tagged container targets were excluded. The separate version check passed one case on each architecture at 89b55b4b6.",
           "evidence": [
@@ -68266,6 +68279,15 @@
             {
               "label": "Unexecuted boot-path phases and independent FD results",
               "url": "https://github.com/tamird/gvisor/actions/runs/42050141418/artifacts/13425788812"
+            }
+          ]
+        },
+        {
+          "text": "On 9ccd97431, the revised lookup found the declared test_app executable. TestRun and TestStartupHeapReleaseOnStart passed in a focused run on each native worker. The full boot suite passed all 87 named XML records on each (29 top-level tests, zero failures or skips), including all 13 earlier failures. The normal fixture resolved to the expected static ELF and runfile on AMD64 and ARM64. Both separate race fixture builds timed out after 600 seconds before linking test_app; neither produced a race ELF or a test result.",
+          "evidence": [
+            {
+              "label": "Boot tests and fixture builds on AMD64 and ARM64",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42051987472/artifacts/13428223649"
             }
           ]
         },
@@ -70482,8 +70504,16 @@
           ]
         }
       ],
-      "nextStep": "Qualify the declared boot executable on both architectures now that the independent file-table regression is covered. Continue tracing the remaining sandbox failures. Choose between declaring the verified GNU runtime as test data and making the C++ example executable static. Continue the separate syscall qualification with the source-built RSEQ helper and native test launcher. Count builds, executed tests and guest workloads separately. Verify the remaining Sentry link outputs against ELF bytes. Track the hermetic-llvm and rules_go fixes and check that BuildBuddy has deployed its empty-root fix before retrying a file-empty worker.",
+      "nextStep": "Await Tamir’s permission to publish the verified layout as ghcr.io/tamird/gvisor-scratch-directory:v1 and make the new personal package public so both workers can pull it anonymously. If approved, verify the published digests and run the declared action on each worker. Check the shared test_app output and the race fixture build before proposing a boot change. Continue tracing the remaining sandbox failures. Choose between declaring the verified GNU runtime as test data and making the C++ example executable static. Continue the separate syscall qualification with the source-built RSEQ helper and native test launcher. Count builds, executed tests and guest workloads separately. Verify the remaining Sentry link outputs against ELF bytes. Track the hermetic-llvm and rules_go fixes and check the BuildBuddy deployment separately before retrying an image with no layer entries.",
       "evidence": [
+        {
+          "label": "Verified OCI layout with a single empty directory",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42055761353/artifacts/13430325785"
+        },
+        {
+          "label": "Boot tests and fixture builds on AMD64 and ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42051987472/artifacts/13428223649"
+        },
         {
           "label": "Missing-executable FD regression on AMD64 and ARM64; boot path checks stopped in preflight",
           "url": "https://github.com/tamird/gvisor/actions/runs/42050141418/artifacts/13425788812"
@@ -73290,5 +73320,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T15:27:44.402237Z"
+  "updatedAt": "2026-11-05T15:42:15.279811Z"
 }
