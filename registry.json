@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T08:20:47.043372+00:00",
+    "updatedAt": "2026-11-05T08:40:24.989712+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -50429,6 +50429,48 @@
         "summary": "Open a standalone PR to check the locks on the three TCP timeout options?",
         "body": "Socket option calls take the endpoint mutex when changing the user\ntimeout, deferred accept interval, or FIN-WAIT-2 linger timeout. The\nTCP handshake, retransmission and close paths read those values under\nthe same mutex. Annotate the fields so checklocks can flag an unlocked\naccess."
       }
+    },
+    {
+      "id": "pr:17022",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17022,
+      "ref": "carry-14458-spurious-recovery",
+      "head": "963e83a9586fe9ea5331bd4e3e30d53d45386d66",
+      "title": "Review the slow-start threshold after a spurious timeout",
+      "url": "https://github.com/google/gvisor/pull/17022",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-05T08:40:24.989712+00:00",
+      "summary": "Two packets were outstanding before a timeout. The PR restored the slow-start threshold to 10 after detecting that timeout was spurious. Capturing flight size restored it to 2. When the ACK echoed the retransmitted packet’s timestamp, both versions kept the threshold at 2.",
+      "evidence": [
+        {
+          "label": "Pre-loss capture in the proposed sender",
+          "url": "https://github.com/google/gvisor/blob/963e83a95/pkg/tcpip/transport/tcp/snd.go#L1253"
+        },
+        {
+          "label": "Two-packet regression and repair-timestamp control",
+          "url": "https://github.com/tamird/gvisor/commit/9696b5abe"
+        },
+        {
+          "label": "Native AMD64 packet results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41994453265/artifacts/13399329303"
+        },
+        {
+          "label": "Eifel response algorithm, step 0",
+          "url": "https://www.rfc-editor.org/rfc/rfc4015.html#section-3.1"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "review",
+        "head": "963e83a9586fe9ea5331bd4e3e30d53d45386d66",
+        "url": "https://github.com/google/gvisor/pull/17022",
+        "title": "Post the two-packet timeout finding on #17022",
+        "requestedAt": "2026-11-05T08:40:24.989712+00:00",
+        "summary": "Post one inline comment on the assignment to pipePrev in snd.go, line 1253?",
+        "body": "Could timeout recovery use the number of packets in flight here? In the [packet test](https://github.com/tamird/gvisor/commit/9696b5abe), an earlier timeout set the slow-start threshold to 2. ACKs then grew the congestion window to 10. Only two packets were in flight when the next timeout fired. Once the sender detected that timeout was spurious, this assignment restored the threshold to 10. [RFC 4015 §3.1, step 0](https://www.rfc-editor.org/rfc/rfc4015.html#section-3.1) gives max(2, 2) = 2.\n\n[Changing the timeout capture to use the outstanding count](https://github.com/tamird/gvisor/commit/a10d0b8eb) kept the threshold at 2. The control that echoed the retransmission’s timestamp also stayed at 2 on both versions. Could you add this application-limited case to the timeout tests? [Packet results](https://github.com/tamird/gvisor/actions/runs/41994453265/artifacts/13399329303)\n\nPosted by Codex on behalf of @tamird."
+      }
     }
   ],
   "edges": [
@@ -72341,5 +72383,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T08:20:47.043372+00:00"
+  "updatedAt": "2026-11-05T08:40:24.989712+00:00"
 }
