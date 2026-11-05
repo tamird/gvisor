@@ -1,35 +1,112 @@
-name: CI
-
-"on":
+name: Compare cold and warm graph checkpoint readers
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/graph-reader-mapped-restore]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created
+    runs-on: ubuntu-22.04
+    timeout-minutes: 115
+    env:
+      SOURCE: be307dbecab303afd7c90c6de77d112bf0e86ef7
+      BASE: 90d4e2253f004cdc73a35dbc4050eab3e9a8495d
+      REPORTER: 2b51abee8530385431b7225198fdd5cd65e78696
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {fetch-depth: 3, persist-credentials: false}
+    - name: Prepare the pinned source and ordinary UID
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -euo pipefail
+        d="$RUNNER_TEMP/graph-readers"
+        mkdir -p "$d/tools" "$d/transfer" "$d/capsule/work/restore-advice-results"
+        echo '{"result":"INCOMPLETE","phase":"setup","executed":[]}' > "$d/capsule/work/restore-advice-results/summary.json"
+        test "$(git rev-parse HEAD^)" = "$SOURCE" && test "$(git rev-parse HEAD^^)" = "$BASE"
+        cp .github/qualification/graph-readers/* "$d/tools/"
+        git checkout --quiet --detach "$SOURCE"
+        test -z "$(git status --porcelain --untracked-files=no)"
+        test "$(cat .bazelversion)" = 9.3.1
+        test -z "$(git config --local --get-regexp 'extraheader|credential' || :)"
+        test "$(id -u)" -ne 0
+        setpriv --no-new-privs unshare --user --map-root-user --mount --net --pid --fork true
+        curl -fsSL --retry 2 --max-time 90 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/tools/bazel"
+        echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/tools/bazel" | sha256sum -c -
+        chmod 755 "$d/tools/bazel"
+    - name: Build the product, original guest and off-clock inspector with native Bazel
+      id: build
+      timeout-minutes: 50
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        set -euo pipefail
+        d="$RUNNER_TEMP/graph-readers"
+        # The benchmark tool has its own already-qualified public module graph.
+        git fetch --no-tags --depth=1 https://github.com/tamird/gvisor.git "$REPORTER"
+        test "$(git rev-parse FETCH_HEAD)" = "$REPORTER"
+        docker pull "$GNU"
+        docker run --rm --user "$(id -u):$(id -g)" --cap-drop=ALL --security-opt no-new-privileges -w /src \
+          -v "$GITHUB_WORKSPACE:/src" -v "$d/transfer:/transfer" -v "$d/tools:/tools:ro" \
+          -e HOME=/tmp/graph-build -e USER=runner -e REPORTER -e SOURCE \
+          -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/src \
+          --entrypoint /bin/bash "$GNU" -ec '
+          set -euo pipefail
+          mkdir -p "$HOME"
+          test "$(/tools/bazel --version)" = "bazel 9.3.1"
+          flags=(--config=x86_64 -c opt --jobs=4 --spawn_strategy=local --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox --remote_cache= --remote_executor= --bes_backend= --stamp --workspace_status_command=)
+          labels=(//:release //test/rbe/restore_advice:guest //test/rbe/restore_advice:inspect)
+          rc=0
+          timeout -k 20 2000 /tools/bazel build "${flags[@]}" --build_event_json_file=/transfer/build.bep "${labels[@]}" > /transfer/build.log 2>&1 || rc=$?
+          echo "$rc" > /transfer/build.exit
+          test "$rc" = 0
+          cp -rL bazel-bin/release /transfer/advice-install
+          for name in guest inspect; do
+              p=$(/tools/bazel cquery "${flags[@]}" --output=files "//test/rbe/restore_advice:$name")
+              test -f "$p" && test -x "$p" && test "$(basename "$p")" = "$name"
+              cp -L "$p" "/transfer/$name"
+          done
+          test -z "$(git status --porcelain --untracked-files=no)"
+          # All product artifacts are already materialized and separate from the reporting tool.
+          git checkout --quiet --detach "$REPORTER"
+          trap "git checkout --quiet --detach $SOURCE" EXIT
+          test "$(git rev-parse HEAD:MODULE.bazel)" = 1665015b7719a98f2176b44a0f1c298854dadfab
+          test "$(cat .bazelversion)" = 8.5.0
+          test "$(/tools/bazel --version)" = "bazel 8.5.0"
+          rc=0
+          timeout -k 20 760 /tools/bazel build "${flags[@]}" @org_golang_x_perf//cmd/benchstat > /transfer/benchstat.log 2>&1 || rc=$?
+          echo "$rc" > /transfer/benchstat.exit
+          if test "$rc" = 0; then
+              p=$(/tools/bazel cquery "${flags[@]}" --output=files @org_golang_x_perf//cmd/benchstat)
+              test -x "$p" && cp -L "$p" /transfer/benchstat
+          fi'
+    - name: Read the build disposition and bind the actual executable bytes
+      id: evidence
+      if: always()
+      run: |
+        python3 -B "$RUNNER_TEMP/graph-readers/tools/evidence.py" build
+    - name: Measure and verify eighteen balanced rounds in a private native namespace
+      id: measure
+      if: steps.evidence.outcome == 'success' && !cancelled()
+      timeout-minutes: 50
+      run: |
+        set -euo pipefail
+        d="$RUNNER_TEMP/graph-readers"
+        cp "$d/tools/measure.py" "$d/capsule/work/"
+        cp -r "$d/transfer/advice-install" "$d/capsule/work/"
+        cp "$d/transfer/guest" "$d/capsule/work/advice-guest"
+        cp "$d/transfer/inspect" "$d/capsule/work/inspect"
+        timeout -k 20 2730 bash "$d/tools/isolate.sh" "$d/capsule" "$SOURCE" "$BASE"
+    - name: Verify the individual restorations and run the original benchstat
+      if: always()
+      run: |
+        python3 -B "$RUNNER_TEMP/graph-readers/tools/evidence.py" finish
+    - name: Check bounded report files
+      id: privacy
+      if: always()
+      run: |
+        python3 -B "$RUNNER_TEMP/graph-readers/tools/evidence.py" privacy
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.privacy.outcome == 'success'
       with:
-          name: runsc
-          path: bin/
+        name: graph-restore-reader-modes
+        path: ${{ runner.temp }}/graph-readers/capsule/work/restore-advice-results
+        if-no-files-found: error
