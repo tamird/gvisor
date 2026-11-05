@@ -85,7 +85,7 @@ platform(
             "x86_64",
             {
                 "host_platform": "@bazel_tools//tools:host_platform",
-                "platforms": "",
+                "platforms": "@bazel_tools//tools:host_platform",
             },
         ),
         (
@@ -93,7 +93,7 @@ platform(
             "aarch64",
             {
                 "host_platform": "@bazel_tools//tools:host_platform",
-                "platforms": "",
+                "platforms": "@bazel_tools//tools:host_platform",
             },
         ),
     ]
