@@ -82,10 +82,12 @@ var allArrayPrimitives = []any{
 }
 
 func TestArrayPrimitives(t *testing.T) {
-	runTestCases(t, false, "plain", flatten(allArrayPrimitives))
-	runTestCases(t, false, "pointers", pointersTo(flatten(allArrayPrimitives)))
-	runTestCases(t, false, "interfaces", interfacesTo(flatten(allArrayPrimitives)))
-	runTestCases(t, false, "interfacesToPointers", interfacesTo(pointersTo(flatten(allArrayPrimitives))))
+	runWithBothEngines(t, func(t *testing.T) {
+		runTestCases(t, false, "plain", flatten(allArrayPrimitives))
+		runTestCases(t, false, "pointers", pointersTo(flatten(allArrayPrimitives)))
+		runTestCases(t, false, "interfaces", interfacesTo(flatten(allArrayPrimitives)))
+		runTestCases(t, false, "interfacesToPointers", interfacesTo(pointersTo(flatten(allArrayPrimitives))))
+	})
 }
 
 func TestSlices(t *testing.T) {
@@ -114,10 +116,12 @@ func TestSlices(t *testing.T) {
 			return v.Slice(0, v.Len()-1).Interface(), true
 		}),
 	)
-	runTestCases(t, false, "plain", allSlices)
-	runTestCases(t, false, "pointers", pointersTo(allSlices))
-	runTestCases(t, false, "interfaces", interfacesTo(allSlices))
-	runTestCases(t, false, "interfacesToPointers", interfacesTo(pointersTo(allSlices)))
+	runWithBothEngines(t, func(t *testing.T) {
+		runTestCases(t, false, "plain", allSlices)
+		runTestCases(t, false, "pointers", pointersTo(allSlices))
+		runTestCases(t, false, "interfaces", interfacesTo(allSlices))
+		runTestCases(t, false, "interfacesToPointers", interfacesTo(pointersTo(allSlices)))
+	})
 }
 
 func TestArrayContainers(t *testing.T) {
@@ -155,7 +159,15 @@ func TestSliceContainers(t *testing.T) {
 	})
 }
 
+// useWireEngine selects the codec whose array storage these tests exercise.
+func useWireEngine(t *testing.T) {
+	previous := state.GraphEngineEnabled()
+	state.EnableGraphEngine(false)
+	t.Cleanup(func() { state.EnableGraphEngine(previous) })
+}
+
 func TestArraySnapshotTiming(t *testing.T) {
+	useWireEngine(t)
 	first := &arraySnapshotSource{values: [2]uint64{7, 11}}
 	original := system{v1: first, v2: &arraySnapshotMutator{target: first}}
 	var encoded bytes.Buffer
@@ -179,6 +191,7 @@ func TestArraySnapshotTiming(t *testing.T) {
 }
 
 func TestArrayLateParent(t *testing.T) {
+	useWireEngine(t)
 	backing := [2][2]uint64{{7, 11}, {13, 17}}
 	// Encode the interior array first. Later slice discovery clears the unused
 	// capacity and reparents that object under the complete backing array.
@@ -209,6 +222,7 @@ func TestArrayLateParent(t *testing.T) {
 }
 
 func TestPrimitiveArrayFloatEncoding(t *testing.T) {
+	useWireEngine(t)
 	positiveSignal := math.Float32frombits(0x7f800001)
 	negativeSignal := math.Float32frombits(0xff800001)
 	quiet := math.Float32frombits(0x7fc00042)
@@ -252,6 +266,7 @@ func TestPrimitiveArrayFloatEncoding(t *testing.T) {
 }
 
 func TestArrayRetainedLoadReceivers(t *testing.T) {
+	useWireEngine(t)
 	for _, first := range []string{"slice", "dynamic", "interior", "pointer_dynamic", "pointer_interior"} {
 		for _, deferred := range []bool{false, true} {
 			t.Run(fmt.Sprintf("%s/deferred=%t", first, deferred), func(t *testing.T) {
@@ -355,6 +370,7 @@ func TestArrayRetainedLoadReceivers(t *testing.T) {
 // Array-to-slice operation. A first hook changes the actual header, so a
 // captured []T view would restore the wrong second receiver.
 func TestArrayLiveSliceHeader(t *testing.T) {
+	useWireEngine(t)
 	for _, field := range []bool{false, true} {
 		for _, shrink := range []bool{false, true} {
 			t.Run(fmt.Sprintf("field=%t/shrink=%t", field, shrink), func(t *testing.T) {
