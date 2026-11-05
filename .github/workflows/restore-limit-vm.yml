@@ -1,14 +1,14 @@
-name: Check both graph restores under the current cgroup bound
+name: Check the current cgroup-limited graph restores in an unprivileged VM
 on:
   push:
-    branches: [qualification/gc-graph-restore-ubuntu-mirrors]
+    branches: [qualification/gc-graph-restore-tcg]
 permissions:
   contents: read
 jobs:
   restore:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
     runs-on: ubuntu-22.04
-    timeout-minutes: 130
+    timeout-minutes: 145
     env:
       IMAGE: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
       PRODUCT: 71b5044a65ffac66a4d41cd289788d7b9ad5ea22
@@ -20,14 +20,16 @@ jobs:
         printf '{"status":"INCOMPLETE","stages":{},"product":"%s","carrier":"%s","test_blob":"%s"}\n' \
           "$PRODUCT" "$GITHUB_SHA" "$TEST_BLOB" > "$RUNNER_TEMP/restore-vm-verdict.json"
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      with: {fetch-depth: 4, persist-credentials: false}
+      with: {fetch-depth: 5, persist-credentials: false}
     - name: Bind the native Bazel launcher and unchanged isolated guest
       run: |
         set -euo pipefail
-        test -c /dev/kvm
-        test "$(git rev-parse HEAD^)" = 6c06316212f37ddc246d366ec60ccf930d15c6cd
-        test "$(git rev-parse HEAD^^^)" = 38745c527784376e0b5d915fe5ebd85e1d1385fd
-        test "$(git hash-object "$PKG/BUILD")" = 8fdaf8d3db2888f59a2222d2881eb4a7100a7316
+        test "$(id -u)" != 0
+        awk '$1 == "MemAvailable:" && $2 >= 7*1024*1024 { found=1 } END { exit !found }' /proc/meminfo
+        test "$(df -PB1 . | awk 'END {print $4}')" -gt 10000000000
+        test "$(git rev-parse HEAD^)" = 3b7222e8325e06b7a56c45c96bc304b18bd0ed54
+        test "$(git rev-parse HEAD^^^^)" = 38745c527784376e0b5d915fe5ebd85e1d1385fd
+        test "$(git hash-object "$PKG/BUILD")" = e8568dd5965a83cee7a70e25ddcf612f0e369f19
         test "$(git hash-object "$PKG/payload.sh")" = c7edf4a7179600722a36e9994d7c846e0196c216
         mkdir "$RUNNER_TEMP/restore-tools"
         curl -fsSL --max-time 90 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$RUNNER_TEMP/restore-tools/bazel"
@@ -106,8 +108,8 @@ jobs:
         if test "${rc:-0}" = 0; then rc=$handoff_rc; fi
         if test "${rc:-0}" = 0; then test "$(cat "$d/elf.sha256")" = 1134e818551bfc0ebf9f85e291d039c5f09b1ad618d96f1dab5b2833aff55f9c; fi
         exit "${rc:-0}"
-    - name: Run the public binary, unchanged and offline, in that VM
-      timeout-minutes: 38
+    - name: Run the public binary, unchanged and offline, in the software-emulated VM
+      timeout-minutes: 59
       run: |
         env -i HOME="$HOME" USER="$USER" PATH=/usr/bin:/bin LANG=C.UTF-8 \
           RUNNER_TEMP="$RUNNER_TEMP" GITHUB_SHA="$GITHUB_SHA" \
@@ -143,6 +145,8 @@ jobs:
             }.items() if re.search(pattern, log, re.I)]
         data["prior_wire_control"] = {"run":41656648310,"artifact":13240389451,"source":"a48b7a12cb3bd615c48f9b36d353c02a6463a929","zip_sha256":"87b8b3c54fbc410ed86ed45532d8d3e883567290333a8272a7966795cc03a216"}
         data["host_preflight_500"] = {"run":41980926817,"artifact":13393737426,"zip_sha256":"75b23c7d5f7610073e68b6dc33555350c6a4f241f566ff6af1f856fcd9480e81"}
+        data["kvm_preflight"] = {"run":41981584255,"artifact":13394067657,"zip_sha256":"23107266eaade423953ea4dd1cfed2863d097b3eda36f1b152f4f0ac6dd0cb11"}
+        data["guest_machine"] = "amd64_tcg"
         data["default_from_public_source"] = "graph"
         data["requested_compression"] = "flate-best-speed"
         data["verified_utc"] = datetime.now(timezone.utc).isoformat()
@@ -151,6 +155,6 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: graph-cgroup-restore-mirror-result
+        name: graph-cgroup-restore-tcg-result
         path: ${{ runner.temp }}/restore-vm-verdict.json
         if-no-files-found: error

@@ -1,5 +1,5 @@
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
-load("//test/rbe/tcg:defs.bzl", "amd64_kvm_test")
+load("//test/rbe/tcg:defs.bzl", "amd64_tcg_test")
 
 sh_binary(
     name = "probe",
@@ -13,7 +13,7 @@ sh_binary(
 )
 
 [
-    amd64_kvm_test(
+    amd64_tcg_test(
         name = name,
         size = "large",
         args = [name],

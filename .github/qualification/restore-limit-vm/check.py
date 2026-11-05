@@ -86,8 +86,8 @@ def run(stage, result):
     result["original"] = {"run": 41979098313, "artifact": 13394000621,
                           "zip_sha256": "ca143333eb7b8744e73acfd2a0a31448fd45f5aca961b606454a7240b5df7d80",
                           "elf_sha256": "1134e818551bfc0ebf9f85e291d039c5f09b1ad618d96f1dab5b2833aff55f9c"}
-    assert git("rev-parse", "HEAD^").decode().strip() == "6c06316212f37ddc246d366ec60ccf930d15c6cd"
-    assert git("rev-parse", "HEAD^^^").decode().strip() == GUEST and git("rev-parse", "HEAD").decode().strip() == SOURCE
+    assert git("rev-parse", "HEAD^").decode().strip() == "3b7222e8325e06b7a56c45c96bc304b18bd0ed54"
+    assert git("rev-parse", "HEAD^^^^").decode().strip() == GUEST and git("rev-parse", "HEAD").decode().strip() == SOURCE
     directory = TMP / ("restore-limit-" + stage)
     directory.mkdir()
     row = result["stages"][stage] = {"status": "INCOMPLETE"}
@@ -98,10 +98,11 @@ def run(stage, result):
     report.write_json(directory / "required.json", {target: required})
     raw = directory / "raw.jsonl"
     args = ["test", "--config=x86_64", "--jobs=3", "--local_test_jobs=1",
-            "--strategy=TestRunner=local", "--remote_executor=", "--remote_cache=", "--bes_backend=",
+            "--strategy=TestRunner=local", "--modify_execution_info=TestRunner=-no-local",
+            "--remote_executor=", "--remote_cache=", "--bes_backend=",
             "--test_tag_filters=", "--build_tag_filters=", "--build_tests_only=false",
             "--nocache_test_results", "--flaky_test_attempts=1", "--zip_undeclared_test_outputs",
-            "--test_timeout=900", "--build_event_json_file_path_conversion=false",
+            f"--test_timeout={900 if stage == 'preflight' else 2700}", "--build_event_json_file_path_conversion=false",
             f"--distdir={TMP / 'ubuntu-distdir'}", f"--downloader_config={TMP / 'ubuntu-mirrors'}",
             f"--build_event_json_file={raw}", target]
     (directory / "executed_arguments").write_text("\n".join(args) + "\n")
@@ -110,7 +111,7 @@ def run(stage, result):
     bazel = TMP / "restore-tools/bazel"
     assert subprocess.check_output([bazel, "--version"], text=True).strip() == "bazel 8.8.1"
     with (directory / "private-console").open("wb") as console:
-        original = subprocess.run(["timeout", "-k", "20", "2040", bazel, "--nosystem_rc", "--nohome_rc", *args],
+        original = subprocess.run(["timeout", "-k", "20", "2040" if stage == "preflight" else "3300", bazel, "--nosystem_rc", "--nohome_rc", *args],
                                   stdout=console, stderr=subprocess.STDOUT)
     row.update(native_exit=original.returncode, finished_utc=now())
     save(result)
@@ -154,6 +155,14 @@ def run(stage, result):
     logs = Path("bazel-testlogs", PACKAGE, stage)
     log = (logs / "test.log").read_text(errors="replace")
     row["delegation_and_guest_exit"] = "GVISOR_RESTORE_DELEGATED_MEMORY=5368709120" in log and "phase=guest_status_read status=0" in log
+    row["host_phases"] = re.findall(r"^host_uptime_seconds=[0-9.]+ phase=([a-z_]{1,32}) status=(-|[0-9]{1,3}) outer_test_timeout_seconds=(?:900|2700)$", log, re.M)[:24]
+    row["image_size"] = re.findall(r"^Payload filesystem template: (\d{1,12}) bytes; scratch capacity: (\d{1,2}) GiB$", log, re.M)[:1]
+    row["guest_work_fs"] = re.findall(r"^Guest work filesystem: block_size=(\d{1,6}) blocks=(\d{1,12})\s*$", log, re.M)[:1]
+    row["fixture_errors"] = [kind for kind in ("Payload is missing or not executable", "No space left on device",
+        "Read-only file system", "Permission denied", "Operation not permitted", "No such file or directory",
+        "Input/output error", "Kernel panic", "Timed out", "exceeds scratch capacity")
+        if kind.lower() in log.lower()]
+    save(result)
     row["xml"] = report.file_record(logs / "test.xml")
     direct = report.xml_cases(logs / "test.xml", frozenset(required))
     row["original_xml"] = {k:direct[k] for k in ("passed", "failed", "skipped", "required_passed")}
