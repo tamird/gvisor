@@ -104,9 +104,9 @@ func gcSaveMemory(pid int) (rss, hwm uint64, err error) {
 	return rss, hwm, nil
 }
 
-// TestGCReferenceSave reuses the native tmpfs lifecycle fixture. It measures a
-// non-resuming save, then independently restores and verifies its archive.
-func TestGCReferenceSave(t *testing.T) {
+// TestGraphHookRestore times a native restore of a completed tmpfs checkpoint.
+// Saving, file verification, and collecting resource data are outside the timed interval.
+func TestGraphHookRestore(t *testing.T) {
 	const memoryLimit int64 = 2 << 30
 	spec, conf := sleepSpecConf(t)
 	conf.Overlay2.Set("none")
@@ -347,9 +347,11 @@ func TestGCReferenceSave(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer restored.Destroy()
+	restoreStart := time.Now()
 	if err := restored.Restore(conf, imageDir, sandbox.DirectIOOff, false, nil); err != nil {
 		t.Fatal(err)
 	}
+	row["restore_ns"] = time.Since(restoreStart).Nanoseconds()
 	work(restored, "fsTreeVerify")
 	restoredMembership, err := os.ReadFile(fmt.Sprintf("/proc/%d/cgroup", restored.SandboxPid()))
 	if err != nil || !strings.Contains("\n"+string(restoredMembership), "\n0::"+cgPath+"\n") {
@@ -371,5 +373,5 @@ func TestGCReferenceSave(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("GC-SAVE-ROW %s", data)
+	t.Logf("GRAPH-RESTORE-ROW %s", data)
 }

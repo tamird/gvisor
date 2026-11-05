@@ -1,7 +1,7 @@
-name: Compare graph save policy in a precreated native systrap cgroup
+name: Measure graph restore hook ordering on 100,000 tmpfs files
 on:
   push:
-    branches: [qualification/gc-save-native-guard-recovery]
+    branches: [qualification/state-hook-order-native-restore]
 permissions:
   contents: read
 jobs:
@@ -11,10 +11,10 @@ jobs:
     timeout-minutes: 195
     env:
       IMAGE: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      PRODUCT: c31b2adc27b1d19b1e647b3239cd2b3b536a5adf
-      BASE: 706b124a2e5a587123d9844a83db5e55d318d3ea
+      PRODUCT: d125b1fbc17eb4b51e4eb1a9b8ee7fd5ac8990da
+      BASE: aa767e4c43d011121271551fe24da501a56f729d
       REPORTER: 2b51abee8530385431b7225198fdd5cd65e78696
-      TEST_BLOB: b70a9171605324eef57901601fdd6163572041be
+      TEST_BLOB: b565e1c147592b473903dfbebff9b6a594b93822
       PKG: .github/qualification/restore-limit-vm
     steps:
     - name: Check the ordinary user's delegated cgroup
@@ -126,7 +126,7 @@ jobs:
                   "native_exit":exit_code, "phases":phases, "controllers":controllers, "diagnostics":errors,
                   "ancestor_cpu_max":cpu, "ancestor_memory_max":memory, "affinity":affinity,
                   "precreated_leaf":leaf, "eligible":ready, "product_cases":0,
-                  "product_revisions":["706b124a2","c31b2adc2"], "fixture":"acd90fc2c",
+                  "product_revisions":["aa767e4c4","d125b1fbc"], "placement_fixture":"a11f51de8",
                   "verified_memory_max":2**31 if leaf else None}
         (root / "eligibility.json").write_text(json.dumps(result, indent=2) + "\n")
         missing = (leaf and not ready) or (exit_code != 0 and
@@ -150,11 +150,11 @@ jobs:
         test "$(id -u)" != 0
         awk '$1 == "MemAvailable:" && $2 >= 7*1024*1024 { found=1 } END { exit !found }' /proc/meminfo
         test "$(df -PB1 . | awk 'END {print $4}')" -gt 10000000000
-        test "$(git rev-parse HEAD^)" = b6cbf2b98cee47fe8f13fb165254047bf84c9c9e
-        test "$(git hash-object "$PKG/gc_reference_test.go")" = b70a9171605324eef57901601fdd6163572041be
-        test "$(git hash-object "$PKG/paired.py")" = 6c2214179d14ddf23ced647e6ab0322dc36d943a
+        test "$(git rev-parse HEAD^)" = a11f51de8a6f00721df155c457ff777be9369ce4
+        test "$(git hash-object "$PKG/gc_reference_test.go")" = b565e1c147592b473903dfbebff9b6a594b93822
+        test "$(git hash-object "$PKG/paired.py")" = be72c146536fcacd062b486ba04ddbd73dd4f692
         test "$(git hash-object "$PKG/native.sh")" = 28c33fe97dacba26350053483e93099a960da7ce
-        test "$(git hash-object "$PKG/payload.sh")" = 800af2caa8968e338fbf470fbc295e2c41aac081
+        test "$(git hash-object "$PKG/payload.sh")" = a478416df5616cfebed5fe1013f11e461c8012a6
         test "$(git hash-object "$PKG/handoff.py")" = a2c92929659a93d8f80041d4a3b9072a0f181826
         mkdir "$RUNNER_TEMP/restore-tools"
         curl -fsSL --max-time 90 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$RUNNER_TEMP/restore-tools/bazel"
@@ -188,11 +188,11 @@ jobs:
           git -C "$d/src" checkout -q --detach FETCH_HEAD
           test "$(git -C "$d/src" rev-parse HEAD)" = "$rev"
           if [[ "$arm" == candidate ]]; then test "$(git -C "$d/src" rev-parse HEAD^)" = "$BASE"; fi
-          test "$(git -C "$d/src" rev-parse HEAD:runsc/container/BUILD)" = 64be27011edc6d0c29efe6b1b15b3ebe599cacad
+          test "$(git -C "$d/src" rev-parse HEAD:runsc/container/BUILD)" = aba8ad960a604553f33de236c8dcccfc326a9d90
           python3 -B "$PKG/paired.py" "$d/src/runsc/container/BUILD"
           cp "$PKG/gc_reference_test.go" "$d/src/runsc/container/"
           test "$(git -C "$d/src" hash-object runsc/container/gc_reference_test.go)" = "$TEST_BLOB"
-          test "$(git -C "$d/src" rev-parse HEAD:runsc/config/flags.go)" = b14ed8816390f90b261cf9f7cfd923cf9085de25
+          test "$(git -C "$d/src" rev-parse HEAD:runsc/config/flags.go)" = e31e1d89b7b44d958f06a16c64da7035bad8ee33
           test "$(git -C "$d/src" rev-parse HEAD:pkg/state/state.go)" = c7214909f9ceb6455faaedad00c71a773e00c2bf
           test "$(cat "$d/src/.bazelversion")" = 9.3.1
           test -z "$(git -C "$d/src" remote)"
@@ -234,30 +234,6 @@ jobs:
           if test "${rc:-0}" = 0; then rc=$handoff_rc; fi
           test "${rc:-0}" = 0 || exit "$rc"
         done
-    - name: Retain only the two validated public-source capsules for a bounded recovery
-      id: capsules
-      continue-on-error: true
-      if: steps.host.outputs.eligible == 'true'
-      run: |
-        set -eu
-        path="$RUNNER_TEMP/verified-capsules"
-        mkdir "$path"
-        for arm in parent candidate; do
-          ln "$PKG/$arm.tar" "$path/$arm.tar"
-          cp "$RUNNER_TEMP/restore-build-$arm/elf.sha256" "$path/$arm.elf.sha256"
-        done
-        cd "$path"
-        sha256sum parent.tar candidate.tar > capsules.sha256
-        printf '%s\n' "$GITHUB_SHA" "$BASE" "$PRODUCT" "$TEST_BLOB" > source.txt
-    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      if: steps.capsules.outcome == 'success'
-      continue-on-error: true
-      with:
-        name: verified-native-gc-capsules
-        path: ${{ runner.temp }}/verified-capsules/
-        retention-days: 1
-        compression-level: 1
-        if-no-files-found: error
     - name: Run both source-bound capsules in isolated native systrap
       if: steps.host.outputs.eligible == 'true'
       timeout-minutes: 58
@@ -268,9 +244,9 @@ jobs:
         rc=0
         /bin/bash "$PWD/$PKG/native.sh" service "$root" > "$RUNNER_TEMP/native-service.log" 2>&1 || rc=$?
         RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$PKG/paired.py" receive "$rc"
-    - name: Compare the twelve verified saves per arm with the qualified benchstat
+    - name: Compare twelve verified restore RPCs per arm with the pinned benchstat
       if: steps.host.outputs.eligible == 'true'
-      timeout-minutes: 16
+      timeout-minutes: 25
       run: |
         set -euo pipefail
         git fetch -q --depth=1 https://github.com/tamird/gvisor.git "$REPORTER"
@@ -282,18 +258,23 @@ jobs:
         cp "$RUNNER_TEMP/parent.bench" "$RUNNER_TEMP/bench-out/parent"
         cp "$RUNNER_TEMP/candidate.bench" "$RUNNER_TEMP/bench-out/candidate"
         chmod a+w "$RUNNER_TEMP/bench-out"
-        docker run --rm --cap-drop=ALL --security-opt no-new-privileges \
-          -v "$PWD:/src" -v "$RUNNER_TEMP/bench-out:/transfer" -v "$RUNNER_TEMP/restore-tools:/tools:ro" -w /src \
-          --entrypoint /bin/bash "$IMAGE" -c '
+        docker run --rm --user "$(id -u):$(id -g)" --cap-drop=ALL --security-opt no-new-privileges -w /src \
+          -v "$PWD:/src" -v "$RUNNER_TEMP/bench-out:/transfer" -v "$RUNNER_TEMP/restore-tools:/tools:ro" \
+          -e HOME=/tmp/graph-build -e USER=runner \
+          -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/src \
+          --entrypoint /bin/bash "$IMAGE" -ec '
           set -euo pipefail
+          mkdir -p "$HOME"
           test "$(/tools/bazel --version)" = "bazel 8.5.0"
           flags=(--config=x86_64 -c opt --jobs=4 --spawn_strategy=local --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox --remote_cache= --remote_executor= --bes_backend= --stamp --workspace_status_command=)
-          /tools/bazel build "${flags[@]}" @org_golang_x_perf//cmd/benchstat >/dev/null 2>&1
-          file=$(/tools/bazel cquery "${flags[@]}" --output=files @org_golang_x_perf//cmd/benchstat)
-          base=$(/tools/bazel info execution_root)
-          tool=$base/$file
+          target=@org_golang_x_perf//cmd/benchstat
+          timeout -k 20 1100 /tools/bazel build "${flags[@]}" "$target" >/transfer/build.log 2>&1
+          p=$(/tools/bazel cquery "${flags[@]}" --output=files "$target")
+          test -f "$p" && test -x "$p"
+          cp -L "$p" /transfer/benchstat
           cd /transfer
-          "$tool" parent candidate > benchstat.txt'
+          ./benchstat parent candidate > benchstat.txt
+          grep -Eq "n=12|n1=n2=12" benchstat.txt'
         test -s "$RUNNER_TEMP/bench-out/benchstat.txt"
     - name: Record individual phases and original measurement scope
       if: always()
@@ -317,11 +298,10 @@ jobs:
                 digest = (d / "elf.sha256").read_text().strip()
                 if re.fullmatch("[0-9a-f]{64}", digest): phase["elf_sha256"] = digest
         data["product_cases"] = sum("native_exit" in row for row in data["stages"].get("restore", {}).get("samples", []))
-        data["original_workload"] = {"run":41802364888, "artifact":13309574814, "source":"1d5db90e0"}
-        data["prior_200MiB_correctness"] = {"carrier":"3da1a3fcd","source":"71b5044a6","engine":"graph","compression":"flate-best-speed","measured_performance":False}
-        data["host_preflight"] = {"run":42020023134, "artifact":13411067235, "previous_kvm_no_cases":13405209658}
-        data["guest_machine"] = "native AMD64 host, 4 allowed CPUs, ordinary delegated service, offline namespaces; systrap Sentry"
-        data["planned_workload"] = "100000 empty tmpfs files; 2GiB; native systrap; non-resuming save; graph+none; sampled Sentry RSS through exit; full restore verified"
+        data["original_workload"] = {"run":42025490439, "artifact":13415901422, "scope":"same 100000-file graph/none lifecycle, previous timing covered save only"}
+        data["previous_hook_evidence"] = {"run":41391648482, "artifact":13118052075, "scope":"correctness and synthetic 20000-node graph"}
+        data["guest_machine"] = "native AMD64 host, 4 allowed CPUs, 2 GiB precreated leaf, offline systrap guest"
+        data["planned_workload"] = "Each arm saves its own 100000 empty tmpfs files uncompressed. Time only Container.Restore; verify every file, memory limit and zero OOM kills afterward. One warmup plus twelve alternating measured pairs."
         stats = tmp / "bench-out/benchstat.txt"
         data["benchstat"] = {"source":os.environ["REPORTER"], "available":stats.is_file() and 0 < stats.stat().st_size < 65536}
         if data["benchstat"]["available"]: data["benchstat"]["sha256"] = hashlib.sha256(stats.read_bytes()).hexdigest()
@@ -331,7 +311,7 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: native-graph-save-comparison
+        name: native-graph-hook-restore-comparison
         path: |
           ${{ runner.temp }}/restore-vm-verdict.json
           ${{ runner.temp }}/parent.bench

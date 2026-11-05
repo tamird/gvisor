@@ -53,7 +53,7 @@ def collect(bundle, row, result, save):
             xml = bounded(bundle, prefix + ".xml", 256 << 10)
             item["xml_sha256"] = hashlib.sha256(xml).hexdigest()
             case, = ElementTree.fromstring(xml).iter("testcase")
-            assert case.get("name") == "TestGCReferenceSave" and case.get("status") != "notrun" and case.get("result") != "suppressed"
+            assert case.get("name") == "TestGraphHookRestore" and case.get("status") != "notrun" and case.get("result") != "suppressed"
             assert all(case.find(tag) is None for tag in ("skipped", "failure", "error"))
             data = json.loads(bounded(bundle, prefix + ".row", 8192))
             assert data["files_verified"] == 100000 and data["memory_limit"] == 2 << 30 and data["direct_child"] is True
@@ -73,18 +73,16 @@ def collect(bundle, row, result, save):
                 assert set(file) == {"bytes", "sha256"} and type(file["bytes"]) is int and 0 < file["bytes"] < (4 << 30)
                 assert re.fullmatch(r"[0-9a-f]{64}", file["sha256"])
             item["archive"] = data["archive"]
-            assert data["checkpoint_exit_ns"] >= data["checkpoint_ns"]
-            for field in ("checkpoint_ns", "checkpoint_exit_ns", "observed_save_exit_rss", "before_rss", "before_hwm", "lifetime_maxrss", "samples", "max_sample_gap_ns"):
-                assert type(data[field]) is int and 0 < data[field] < 300_000_000_000
-                item[field] = data[field]
+            restore_ns = data["restore_ns"]
+            assert type(restore_ns) is int and 0 < restore_ns < 300_000_000_000, restore_ns
+            item["restore_ns"] = restore_ns
             if i >= 0:
-                for field, unit in (("checkpoint_ns", "ns/op"), ("checkpoint_exit_ns", "ns/op"), ("observed_save_exit_rss", "B/op"), ("before_rss", "B/op"), ("before_hwm", "B/op"), ("lifetime_maxrss", "B/op")):
-                    lines[arm].append(f"BenchmarkSave/{field} 1 {item[field]} {unit}")
+                lines[arm].append(f"BenchmarkRestore/100000Files 1 {restore_ns} ns/op")
             item["verified"] = True
             save(result)
     assert len({(v["sentry_allowed_cpus"], tuple(v["cpu_quotas"]), tuple(sorted(v["boot"].items()))) for v in samples}) == 1
     for arm in ARMS:
-        assert len(lines[arm]) == 72
+        assert len(lines[arm]) == 12
         (TMP / (arm + ".bench")).write_text("\n".join(lines[arm]) + "\n")
     row["verified_samples"] = len(samples)
 
@@ -126,7 +124,7 @@ def receive(code):
             collect(directory, stage, result, save)
             assert code == 0 and stage["outer_cpu_max"] == result["host"]["ancestor_cpu_max"] and stage["verified_samples"] == 26
             assert bounded(directory, "summary.xml", 512) == (
-                b'<testsuites><testsuite tests="1"><testcase classname="native" name="matchedSave"/></testsuite></testsuites>\n')
+                b'<testsuites><testsuite tests="1"><testcase classname="native" name="matchedRestore"/></testsuite></testsuites>\n')
             stage["status"] = result["status"] = "PASS"
         finally:
             os.close(directory)

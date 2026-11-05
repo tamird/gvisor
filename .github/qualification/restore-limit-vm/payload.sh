@@ -49,11 +49,11 @@ test_one() {
         export XML_OUTPUT_FILE="$out/$prefix.xml"
         unset TEST_UNDECLARED_OUTPUTS_DIR
         cd "$tree/_main"
-        "/work/$arm/container_test" -test.v '-test.run=^TestGCReferenceSave$'
+        "/work/$arm/container_test" -test.v '-test.run=^TestGraphHookRestore$'
     ) > "/work/test.log" 2>&1 || code=$?
     echo "$code" > "$out/$prefix.exit"
     sha256sum /work/test.log | cut -d' ' -f1 > "$out/$prefix.loghash"
-    sed -n 's/^.*GC-SAVE-ROW \({.*}\)$/\1/p' /work/test.log > "$out/$prefix.row"
+    sed -n 's/^.*GRAPH-RESTORE-ROW \({.*}\)$/\1/p' /work/test.log > "$out/$prefix.row"
     [[ $code == 0 ]] || { grep -oE 'gc_reference_test\.go:[0-9]+' /work/test.log | head -4 > "$out/$prefix.locations" || :; return "$code"; }
     [[ $(wc -l < "$out/$prefix.row") == 1 ]]
 }
@@ -61,4 +61,4 @@ for ((i=-1; i<12; i++)); do
     if ((i >= 0 && i % 2 == 1)); then order=(candidate parent); else order=(parent candidate); fi
     for arm in "${order[@]}"; do test_one "$i" "$arm"; done
 done
-printf '<testsuites><testsuite tests="1"><testcase classname="native" name="matchedSave"/></testsuite></testsuites>\n' > /outputs/summary.xml
+printf '<testsuites><testsuite tests="1"><testcase classname="native" name="matchedRestore"/></testsuite></testsuites>\n' > /outputs/summary.xml
