@@ -1,35 +1,120 @@
-name: CI
-
-"on":
+name: Cross-build a hosted TCP syscall test and run it on native ARM64
+'on':
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/master-llvm-tcp-socket-cross]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  producer:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 75
+    outputs:
+      handoff: ${{ steps.check.outputs.handoff }}
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {persist-credentials: false, fetch-depth: 2}
+    - name: Bind the unmodified source and the existing native Bazel client
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -eu
+        umask 077
+        test "$(git rev-parse HEAD^)" = fffadb2bb858399110f8de18d04cbbf5e5c28997
+        test "$(git diff --name-only HEAD^ HEAD)" = "$(printf '%s\n' .github/workflows/build.yml test/rbe/llvm_tcp_socket_cross.py test/rbe/native_cross_inputs.py)"
+        test "$(uname -m)" = x86_64
+        d="$RUNNER_TEMP/tcp-cross"
+        mkdir -p "$d/public"
+        cp test/rbe/{native_cross_inputs,llvm_tcp_socket_cross}.py "$d/"
+        echo "b0626fb5ecb5bb9c41d644ced5af036019cbefbeef7975c71878021f6e146653  $d/native_cross_inputs.py" | sha256sum -c -
+        echo "2de08335cc2578ef31c9cf48be3bc7fbf7e20e512b316aa04b42545b587a39ef  $d/llvm_tcp_socket_cross.py" | sha256sum -c -
+        echo "c001ed4b6b4fe6ca726d7f722bce7ba52083a82b984dbf10f954b3cc3882c8b3  test/syscalls/linux/tcp_socket.cc" | sha256sum -c -
+        echo '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$d/public/producer.json"
+        test "$(cat .bazelversion)" = '9.3.1'
+        grep -Fx 'bazel_dep(name = "llvm", version = "0.8.24")' MODULE.bazel
+        curl --retry 3 --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+        echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+        chmod 755 "$d/bazel"
+        test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+    - name: Build the ordinary ARM64 target and join its actions to the output
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" \
+          USE_BAZEL_VERSION=9.3.1 CARRIER_SHA="$GITHUB_SHA" QUALIFICATION_RUN_ID="$GITHUB_RUN_ID" \
+          python3 -B "$RUNNER_TEMP/tcp-cross/llvm_tcp_socket_cross.py" producer
+    - name: Validate the typed receipt and exact artifact files
+      if: always()
+      id: check
+      run: |
+        python3 -B - <<'PY'
+        import hashlib,json,os,re
+        from pathlib import Path
+        d=Path(os.environ['RUNNER_TEMP'])/'tcp-cross';p=d/'public/producer.json'
+        assert p.is_file() and not p.is_symlink() and p.stat().st_size<131072
+        b=p.read_bytes();r=json.loads(b);assert r['status'] in ('PASS','FAIL','INCOMPLETE')
+        assert not re.search(rb'(?i)authorization\s*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}',b)
+        if r.get('handoff_ready'):
+            h=d/'handoff'
+            assert {x.name for x in h.iterdir()}=={'tcp_socket_test','identity.json'}
+            assert all(x.is_file() and not x.is_symlink() for x in h.iterdir())
+            b=(h/'tcp_socket_test').read_bytes();m=json.loads((h/'identity.json').read_text())
+            assert len(b)==m['elf']['bytes']<100*1024*1024 and hashlib.sha256(b).hexdigest()==m['elf']['sha256']==r['elf']['sha256']
+            with open(os.environ['GITHUB_OUTPUT'],'a') as out: print('handoff=ready',file=out)
+        PY
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: always() && steps.check.outcome == 'success'
       with:
-          name: runsc
-          path: bin/
+        name: llvm-tcp-socket-arm-cross
+        path: ${{ runner.temp }}/tcp-cross/public/producer.json
+        if-no-files-found: error
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: always() && steps.check.outputs.handoff == 'ready'
+      with:
+        name: llvm-tcp-socket-elf-handoff
+        path: ${{ runner.temp }}/tcp-cross/handoff/
+        if-no-files-found: error
+    - name: Stop the native Bazel server
+      if: always()
+      run: |
+        d="$RUNNER_TEMP/tcp-cross"
+        if test -x "$d/bazel"; then timeout -k 5 30 "$d/bazel" shutdown >/dev/null 2>&1 || true; fi
+  consumer:
+    needs: producer
+    if: always() && github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && needs.producer.outputs.handoff == 'ready'
+    runs-on: ubuntu-22.04-arm
+    timeout-minutes: 8
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {persist-credentials: false, fetch-depth: 1}
+    - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+      with:
+        name: llvm-tcp-socket-elf-handoff
+        path: ${{ runner.temp }}/tcp-cross/handoff/
+    - name: Run only the four existing connected TCP_NODELAY cases on Linux ARM64
+      run: |
+        set -eu
+        umask 077
+        test "$(uname -m)" = aarch64
+        d="$RUNNER_TEMP/tcp-cross"
+        mkdir -p "$d/public"
+        cp test/rbe/{llvm_tcp_socket_cross,native_cross_inputs}.py "$d/"
+        echo "b0626fb5ecb5bb9c41d644ced5af036019cbefbeef7975c71878021f6e146653  $d/native_cross_inputs.py" | sha256sum -c -
+        echo "2de08335cc2578ef31c9cf48be3bc7fbf7e20e512b316aa04b42545b587a39ef  $d/llvm_tcp_socket_cross.py" | sha256sum -c -
+        env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" \
+          CARRIER_SHA="$GITHUB_SHA" QUALIFICATION_RUN_ID="$GITHUB_RUN_ID" \
+          python3 -B "$d/llvm_tcp_socket_cross.py" consumer
+    - name: Validate the bounded native receipt
+      if: always()
+      id: check
+      run: |
+        python3 -B - <<'PY'
+        import json,os,re
+        from pathlib import Path
+        p=Path(os.environ['RUNNER_TEMP'])/'tcp-cross/public/consumer.json'
+        assert p.is_file() and not p.is_symlink() and p.stat().st_size<131072
+        b=p.read_bytes();assert json.loads(b)['status'] in ('PASS','FAIL','INCOMPLETE')
+        assert not re.search(rb'(?i)authorization\s*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}',b)
+        PY
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: always() && steps.check.outcome == 'success'
+      with:
+        name: llvm-tcp-socket-arm-native
+        path: ${{ runner.temp }}/tcp-cross/public/consumer.json
+        if-no-files-found: error
