@@ -1,35 +1,98 @@
-name: CI
-
-"on":
+name: Verify statically linked Go targets with default LLVM
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-default-static-go]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  verify:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 115
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Select the product and pinned Bazel
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = bb7176b379aba4759b197f9e94a802b024054d67
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/build.yml
+          git checkout --detach HEAD^
+          test "$(cat .bazelversion)" = 9.3.1
+          d="$RUNNER_TEMP/static-go-check"
+          mkdir -p "$d/bin" "$d/public"
+          git rev-parse HEAD > "$d/public/source"
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bin/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bin/bazel" | sha256sum -c -
+          chmod 755 "$d/bin/bazel"
+          echo "$d/bin" >> "$GITHUB_PATH"
+          echo "CHECK_DIR=$d" >> "$GITHUB_ENV"
+      - name: Link both public race binaries for AMD64
+        id: amd64
+        run: |
+          set -euo pipefail
+          cat > "$CHECK_DIR/build-pair" <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          arch=$1
+          flags=(--config=race -c opt --jobs=4 --remote_cache= --remote_executor= --disk_cache=)
+          if [[ "$arch" == arm64 ]]; then flags+=(--config=aarch64); fi
+          labels=(//runsc:runsc-race //runsc/cmd/sentry:gvisor_sentry-race //runsc/prewarmer:prewarmer_binary)
+          paths=(runsc gvisor-bin/gvisor_sentry gvisor-bin/gvisor-sentry-prewarmer)
+          dest="$CHECK_DIR/$arch"
+          mkdir -p "$dest/gvisor-bin"
+          result=0
+          bazel build "${flags[@]}" --keep_going "--build_event_json_file=$dest/events" "${labels[@]}" > "$dest/build.log" 2>&1 || result=$?
+          echo "$result" > "$CHECK_DIR/public/$arch-build-exit"
+          jq -c 'select(.id.targetCompleted or .id.buildFinished) | {id,success:.completed.success,code:.finished.exitCode}' "$dest/events" > "$CHECK_DIR/public/$arch-events"
+          if ((result)); then tail -40 "$dest/build.log"; exit "$result"; fi
+          for i in 0 1 2; do
+            binary=$(bazel cquery "${flags[@]}" --output=files "${labels[i]}")
+            test -x "$binary"
+            install -m 755 "$binary" "$dest/${paths[i]}"
+            readelf -lWh "$binary" > "$dest/elf"
+            if grep -Eq ' (INTERP|DYNAMIC) ' "$dest/elf"; then exit 1; fi
+            if [[ "$arch" == amd64 ]]; then grep -q 'Machine:.*X86-64' "$dest/elf"; else grep -q 'Machine:.*AArch64' "$dest/elf"; fi
+            if ((i < 2)); then
+              grep -aq 'runtime.raceinit' "$binary"
+              grep -aq '__tsan_' "$binary"
+            fi
+            (cd "$dest" && sha256sum "${paths[i]}") >> "$CHECK_DIR/public/$arch-static-outputs"
+          done
+          SH
+          chmod 755 "$CHECK_DIR/build-pair"
+          "$CHECK_DIR/build-pair" amd64
+      - name: Boot the matched native race Sentry through runsc
+        if: steps.amd64.outcome == 'success'
+        run: |
+          set -euo pipefail
+          test "$(id -u)" -ne 0
+          unset GVISOR_SIDECAR_BINARIES_DIR
+          rc=0
+          timeout 120 "$CHECK_DIR/amd64/runsc" --alsologtostderr --debug --root="$CHECK_DIR/runtime" --rootless --TESTONLY-unsafe-nonroot=true --ignore-cgroups=true --network=none --platform=systrap --sidecar-release-enforcement-policy=ALWAYS do /bin/echo gvisor-static-race-guest > "$CHECK_DIR/guest.out" 2> "$CHECK_DIR/guest.err" || rc=$?
+          echo "$rc" > "$CHECK_DIR/public/guest-exit"
+          if ((rc)); then tail -35 "$CHECK_DIR/guest.err"; exit "$rc"; fi
+          grep -Fx 'gvisor-static-race-guest' "$CHECK_DIR/guest.out" > "$CHECK_DIR/public/guest-marker"
+          grep -F 'Sidecar "gvisor_sentry" found: booting sandbox' "$CHECK_DIR/guest.err" > /dev/null
+          grep -F 'matches the expected release' "$CHECK_DIR/guest.err" | grep -F 'bb7176b379ab' > /dev/null
+          echo matched > "$CHECK_DIR/public/sentry"
+      - name: Cross-link both race binaries for ARM64
+        if: always() && !cancelled() && steps.amd64.outcome == 'success'
+        run: '"$CHECK_DIR/build-pair" arm64'
+      - name: Verify the stock catalog and run the static test app analyzer
+        if: always() && !cancelled() && steps.amd64.outcome == 'success'
+        run: |
+          set -euo pipefail
+          make DOCKER_BUILD=false license-check > "$CHECK_DIR/license.log" 2>&1 || { tail -30 "$CHECK_DIR/license.log"; exit 1; }
+          grep -E '^all [0-9]+ dependencies have up-to-date license entries' "$CHECK_DIR/license.log" > "$CHECK_DIR/public/license"
+          bazel test --jobs=4 --nocache_test_results --test_output=errors "--build_event_json_file=$CHECK_DIR/nogo.events" //test/cmd/test_app:test_app_nogo
+          jq -c 'select(.id.testResult or .id.testSummary) | {id,status:(.testResult.status//.testSummary.overallStatus)}' "$CHECK_DIR/nogo.events" > "$CHECK_DIR/public/nogo"
+          grep -q 'PASSED' "$CHECK_DIR/public/nogo"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: static-go-llvm
+          path: ${{ runner.temp }}/static-go-check/public
+          if-no-files-found: error
