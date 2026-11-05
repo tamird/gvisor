@@ -32,6 +32,24 @@ import (
 	"gvisor.dev/gvisor/runsc/config"
 )
 
+func TestMain(m *testing.M) {
+	if len(os.Args) == 2 {
+		switch os.Args[1] {
+		case "--specutils-process=exit":
+			os.Exit(0)
+		case "--specutils-process=sleep":
+			time.Sleep(1000 * time.Second)
+			os.Exit(0)
+		}
+	}
+	os.Exit(m.Run())
+}
+
+// testProcess runs this test binary as a child that exits or waits to be killed.
+func testProcess(mode string) *exec.Cmd {
+	return exec.Command("/proc/self/exe", "--specutils-process="+mode)
+}
+
 func TestIsProcessRunning(t *testing.T) {
 	for _, tc := range []struct {
 		pid  int
@@ -46,7 +64,7 @@ func TestIsProcessRunning(t *testing.T) {
 		}
 	}
 
-	cmd := exec.Command("/bin/true")
+	cmd := testProcess("exit")
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +96,7 @@ func TestIsProcessRunning(t *testing.T) {
 }
 
 func TestWaitForReadyHappy(t *testing.T) {
-	cmd := exec.Command("/bin/sleep", "1000")
+	cmd := testProcess("sleep")
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("cmd.Start() failed, err: %v", err)
 	}
@@ -101,7 +119,7 @@ func TestWaitForReadyHappy(t *testing.T) {
 }
 
 func TestWaitForReadyFail(t *testing.T) {
-	cmd := exec.Command("/bin/sleep", "1000")
+	cmd := testProcess("sleep")
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("cmd.Start() failed, err: %v", err)
 	}
@@ -124,7 +142,7 @@ func TestWaitForReadyFail(t *testing.T) {
 }
 
 func TestWaitForReadyNotRunning(t *testing.T) {
-	cmd := exec.Command("/bin/true")
+	cmd := testProcess("exit")
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("cmd.Start() failed, err: %v", err)
 	}
@@ -142,7 +160,7 @@ func TestWaitForReadyNotRunning(t *testing.T) {
 }
 
 func TestWaitForReadyTimeout(t *testing.T) {
-	cmd := exec.Command("/bin/sleep", "1000")
+	cmd := testProcess("sleep")
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("cmd.Start() failed, err: %v", err)
 	}
@@ -1071,7 +1089,7 @@ func TestProcessIdentity(t *testing.T) {
 	var procs [2]*exec.Cmd
 	var identities [2]uint64
 	for i := range procs {
-		procs[i] = exec.Command("/bin/sleep", "1000")
+		procs[i] = testProcess("sleep")
 		if err := procs[i].Start(); err != nil {
 			t.Fatalf("cmd.Start() failed: %v", err)
 		}
