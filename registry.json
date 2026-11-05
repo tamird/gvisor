@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T16:25:38.134002Z",
+    "updatedAt": "2026-11-05T16:41:13.307421Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32984,13 +32984,13 @@
       "repo": "google/gvisor",
       "number": 16597,
       "ref": "review/rseq-native-cc",
-      "head": "a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
+      "head": "9751bfaf98742849046e9b4e9178f3db32f846b2",
       "title": "Build the RSEQ fixture with the C++ toolchain",
       "url": "https://github.com/google/gvisor/pull/16597",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-05T12:06:54.043543Z",
-      "summary": "The proposed amendment disables the implicit C++ runtime for the freestanding RSEQ child. With the declared LLVM toolchain, -nostdlib alone left explicit runtime libraries in the link arguments. The one added feature exclusion removes them. The published PR remains at the previously contributor-approved a0e3cf835; the proposed replacement is the single commit 9751bfaf9.\n\nGNU builds produced byte-identical static helpers before and after the change on AMD64 and ARM64. The same BUILD correction in the hermetic integration produced fresh remote static RSEQ links and verified ELF bytes on both architectures; those checks built targets and did not execute tests. The canonical native Bazel syscall target passed all 14 AMD64 RseqTest cases with zero skips or failures on the amended source. The earlier direct invocation failed to locate its helper and is retained separately. This amendment has new ARM64 build evidence, not a new ARM64 runtime run.\n\nOriginal proposal and qualification:\n\nThe RSEQ syscall tests exec a separate child so libc cannot register a restartable sequence before the test. Use the configured C++ toolchain to build and statically link that child for each target architecture. The actual test still uses the same Bazel label and runfile. The old internal genrule name :rseq_binary has no in-tree caller and is removed.\n\nNative Linux passed 14 cases on AMD64 and 13 on ARM64. The ARM64 carrier ran the original C++ test, which omits an x86-only membarrier case. The additional AMD64 systrap owner skipped all 14 on its RSEQ capability check, so the aggregate remains FAIL/incomplete. This does not establish systrap RSEQ support or code-coverage instrumentation. The GNU compiler driver still comes from the worker.",
+      "updatedAt": "2026-11-05T16:41:13.307421Z",
+      "summary": "The published RSEQ helper disables implicit C++ runtime linkage so the freestanding executable links with GNU and LLVM.",
       "evidence": [
         {
           "label": "Published upstream PR #16597",
@@ -33042,11 +33042,11 @@
         }
       ],
       "followup": {
-        "owner": "native_runtime",
+        "owner": "Maintainer",
         "sourceHead": "9751bfaf98742849046e9b4e9178f3db32f846b2",
-        "observedAt": "2026-11-05T12:06:54.043543Z",
-        "disposition": "Review the freestanding RSEQ link amendment",
-        "nextAction": "Await contributor review of the single-commit amendment. Keep the public PR unchanged until approval.",
+        "observedAt": "2026-11-05T16:41:13.307421Z",
+        "disposition": "Published on #16597",
+        "nextAction": "Await upstream review and checks.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16597",
           "https://github.com/tamird/gvisor/commit/a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
@@ -33062,17 +33062,18 @@
           "https://github.com/tamird/gvisor/actions/runs/42022304102/artifacts/13413675212"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "head": "9751bfaf98742849046e9b4e9178f3db32f846b2",
-        "baseHead": "a0e3cf835fb57e9b08fb595a2854f0ddcb491f91",
-        "url": "https://github.com/tamird/gvisor/commit/9751bfaf9",
-        "title": "Build the RSEQ fixture with the C++ toolchain",
-        "requestedAt": "2026-11-05T12:06:54.043543Z",
-        "summary": "Publish the one-line amendment to #16597 that disables implicit C++ runtime linkage for its freestanding RSEQ helper? The canonical native target passed all 14 AMD64 cases; both architectures have GNU byte-identity and static LLVM link evidence.",
-        "body": "The RSEQ syscall tests start a separate executable with its own entry point. Linking libc can register a restartable sequence before the test gets to exercise registration itself.\n\nGive Bazel the C++ and assembly sources for the selected architecture and link them without startup files or libraries. This removes the shell command that assembled the compiler and linker arguments and lets the configured C++ toolchain select its linker.\n\nWith hermetic-llvm, -nostdlib suppresses the compiler's default libraries, but Bazel still adds the C++ runtime. Disable that feature too so the static link does not pull in libunwind, pthread, or dl."
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "9751bfaf98742849046e9b4e9178f3db32f846b2",
+          "url": "https://github.com/tamird/gvisor/commit/9751bfaf9",
+          "title": "Build the RSEQ fixture with the C++ toolchain",
+          "outcome": "approved",
+          "at": "2026-11-05T16:41:13.307421Z",
+          "note": "Tamir approved this change. Published on #16597.",
+          "postedURL": "https://github.com/google/gvisor/pull/16597"
+        }
+      ]
     },
     {
       "id": "pr:16598",
@@ -39946,7 +39947,7 @@
       "head": "abf9202abb9b44fe397f96e10caa4ac7e5b17dcd",
       "title": "Read IP forwarding from the network stack",
       "url": "https://github.com/tamird/gvisor/commit/abf9202ab",
-      "summary": "Linux and corrected gVisor read 1 through the original proc mount after enabling IPv4 or IPv6 forwarding through a second mount. Stock returned 0 in both cases. Read the network stack’s existing default, preserving host-networking write rejection. The syscall tests reuse #16745’s fixture; the production change does not depend on #16745.",
+      "summary": "Published as #17051 after its prerequisite merged. Rebase preserved all added and removed lines.",
       "evidence": [
         {
           "label": "Identical Linux, original and corrected two-mount cases",
@@ -39959,20 +39960,26 @@
         {
           "label": "Fixture prerequisite",
           "url": "https://github.com/google/gvisor/pull/16745"
+        },
+        {
+          "label": "Published on #17051",
+          "url": "https://github.com/google/gvisor/pull/17051"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "abf9202abb9b44fe397f96e10caa4ac7e5b17dcd",
-        "baseHead": "db2a858e8c6cceba5324a10a457327d5f23fa888",
-        "url": "https://github.com/tamird/gvisor/commit/abf9202ab",
-        "title": "Read IP forwarding from the network stack",
-        "summary": "Linux and corrected gVisor read 1 through the original proc mount after enabling IPv4 or IPv6 forwarding through a second mount. Stock returned 0 in both cases. Read the network stack’s existing default, preserving host-networking write rejection. The syscall tests reuse #16745’s fixture; the production change does not depend on #16745.",
-        "body": "Writing 1 to ipv4/ip_forward through a second proc mount left the first\nmount reporting 0. The same happened with ipv6/conf/all/forwarding.\nBoth mounts were in the same network namespace; each proc inode kept\nits own copy of the last value written.\n\nLinux stores these settings in the network namespace. Changing either\none updates the default for new interfaces and the setting on existing\ninterfaces [1, 2]. gVisor's network stack already records that default.\nRead it directly so every mount reports the setting the stack uses.\n\nThe same userspace test writes through one mount and reads through the\nother on Linux and gVisor. Keep the Go test for a stack that refuses\nthe write. Host networking still refuses these writes.\n\n[1]: https://github.com/torvalds/linux/blob/7d0a66e4b/net/ipv4/devinet.c#L2423\n[2]: https://github.com/torvalds/linux/blob/7d0a66e4b/net/ipv6/addrconf.c#L894"
-      },
-      "updatedAt": "2026-10-30T17:46:38.208685+00:00",
-      "status": "Awaiting contributor review"
+      "updatedAt": "2026-11-05T16:41:13.307421Z",
+      "status": "Delivered",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "abf9202abb9b44fe397f96e10caa4ac7e5b17dcd",
+          "url": "https://github.com/tamird/gvisor/commit/abf9202ab",
+          "title": "Read IP forwarding from the network stack",
+          "outcome": "approved",
+          "at": "2026-11-05T16:41:13.307421Z",
+          "note": "Tamir approved this change. Published on #17051.",
+          "postedURL": "https://github.com/google/gvisor/pull/17051"
+        }
+      ]
     },
     {
       "id": "pr:16753",
@@ -43638,26 +43645,31 @@
       "head": "6d477a9ff29aa36c805d06b74086403339acd716",
       "title": "Keep an explicitly bound TCP source port after refusal",
       "url": "https://github.com/tamird/gvisor/commit/6d477a9ff",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T01:51:20.575751+00:00",
-      "summary": "An IPv4 connect refusal lets another socket claim a still-open descriptor’s fixed local port. Preserve the existing reservation until close. Both wildcard/loopback fixed ports and port-zero controls agreed with Linux. Dual-stack family selection and reconnect are separate.",
+      "status": "Delivered",
+      "updatedAt": "2026-11-05T16:41:13.307421Z",
+      "summary": "Published as #17050 after its prerequisite merged. Rebase preserved all added and removed lines.",
       "evidence": [
         {
           "label": "Same source on native Linux, exact #16180 and corrected netstack; two failing fixed-port comparisons on #16180, port-zero and final-close controls passed",
           "url": "https://github.com/tamird/gvisor/actions/runs/41262155428/artifacts/13065353930"
+        },
+        {
+          "label": "Published on #17050",
+          "url": "https://github.com/google/gvisor/pull/17050"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "6d477a9ff29aa36c805d06b74086403339acd716",
-        "baseHead": "48e209b56058f40e422daa3d5308d5c18a29a1ae",
-        "url": "https://github.com/tamird/gvisor/commit/6d477a9ff",
-        "title": "Keep an explicitly bound TCP source port after refusal",
-        "requestedAt": "2026-11-01T01:51:20.575751+00:00",
-        "summary": "Review this isolated socket ownership correction for submission after #16180 lands.",
-        "body": "A competing socket can bind a caller-selected source port after an\nIPv4 connect reports ECONNREFUSED, while the refused socket is still\nopen. Linux keeps that port until the socket closes. A port selected\nby bind with port zero remains available to other sockets.\n\nRemember whether bind requested a nonzero port. On a failed active\nopen, keep the reservation already owned by the descriptor while\nunregistering its failed connection. Final close releases the port.\n\nThe same syscall test checks wildcard and loopback addresses with\nfixed and dynamically allocated ports. On #16180 the competing bind\nsucceeded for both fixed ports; on Linux and the correction it\nreturned EADDRINUSE until close. Both port-zero controls passed.\n\nThis follows #16180's reservation-key correction. It does not change\nwhich family a dual-stack wildcard connect releases, or implement\nreuse of the refused socket for a new connection."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "6d477a9ff29aa36c805d06b74086403339acd716",
+          "url": "https://github.com/tamird/gvisor/commit/6d477a9ff",
+          "title": "Keep an explicitly bound TCP source port after refusal",
+          "outcome": "approved",
+          "at": "2026-11-05T16:41:13.307421Z",
+          "note": "Tamir approved this change. Published on #17050.",
+          "postedURL": "https://github.com/google/gvisor/pull/17050"
+        }
+      ]
     },
     {
       "id": "pr:16858",
@@ -44460,13 +44472,13 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/nogo-native-test-runner",
-      "head": "25115956066576e83f5543c275d57b59d6578ed0",
+      "head": "cfd4aa8454d0f2d95ac0e8538b6e4a17c0642b6e",
       "title": "Run Nogo tests with the analyzer executable",
       "url": "https://github.com/google/gvisor/pull/16856",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-11-05T11:13:40.630361Z",
-      "summary": "The shell launcher could not start on a scratch worker. Bazel can run the analyzer directly with the two filtered reports. Tricorder still receives each architecture’s report.",
+      "updatedAt": "2026-11-05T16:41:13.307421Z",
+      "summary": "The published sanity test invokes the analyzer with its filter arguments. The analyzer reported the deliberate printf error and the sanity test passed. Carzh has been asked to re-approve.",
       "evidence": [
         {
           "label": "Public import #16997: sanity test failed on both architectures",
@@ -44479,6 +44491,14 @@
         {
           "label": "Original scratch TestRunner inputs, logs, and checklocks findings",
           "url": "https://github.com/tamird/gvisor/actions/runs/41298618219/artifacts/13080411787"
+        },
+        {
+          "label": "Request for fresh review",
+          "url": "https://github.com/google/gvisor/pull/16856#issuecomment-6663424436"
+        },
+        {
+          "label": "Published on #16856",
+          "url": "https://github.com/google/gvisor/pull/16856"
         }
       ],
       "settledReviews": [
@@ -44487,20 +44507,19 @@
           "head": "25115956066576e83f5543c275d57b59d6578ed0",
           "outcome": "approved",
           "at": "2026-11-02T20:41:24Z"
+        },
+        {
+          "kind": "amendment",
+          "head": "cfd4aa8454d0f2d95ac0e8538b6e4a17c0642b6e",
+          "url": "https://github.com/tamird/gvisor/commit/cfd4aa845",
+          "title": "Pass the filter arguments to the Nogo sanity test",
+          "outcome": "approved",
+          "at": "2026-11-05T16:41:13.307421Z",
+          "note": "Tamir approved this change. Published on #16856.",
+          "postedURL": "https://github.com/google/gvisor/pull/16856"
         }
       ],
-      "number": 16856,
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "cfd4aa8454d0f2d95ac0e8538b6e4a17c0642b6e",
-        "baseHead": "25115956066576e83f5543c275d57b59d6578ed0",
-        "url": "https://github.com/tamird/gvisor/commit/cfd4aa845",
-        "title": "Pass the filter arguments to the Nogo sanity test",
-        "requestedAt": "2026-11-05T11:13:40.630361Z",
-        "summary": "After the focused check passes, publish this amendment and ask carzh to re-approve it? If #16856 lands first, send it as a follow-up.",
-        "body": "Import #16997 failed //tools/nogo/sanity:sanity_test on AMD64 and ARM64. The test ran the analyzer executable without the filter arguments that Bazel normally supplies. It printed its usage instead of the expected printf diagnostic.\n\nThe amendment shares the filter arguments with the Go sanity test. The test invokes the analyzer, checks that it exits with status 1, and requires the diagnostic for the deliberately invalid fmt.Fprintf call.\n\nThe focused native AMD64 check runs both the deliberately failing analyzer and the sanity test that must recognize the finding. Publish only after both outcomes are verified.\n\nProposed request after publishing on #16856 (use the verified published SHA if the commits are folded):\n\n@carzh, [cfd4aa845](https://github.com/tamird/gvisor/commit/cfd4aa845) fixes the sanity test that failed in the import. It now passes the filter arguments to the analyzer and checks for the expected printf finding. Could you re-approve this revision?\n\nPosted by Codex on behalf of @tamird.\n\nIf the original PR lands first, put the correction in a follow-up PR and request review there."
-      }
+      "number": 16856
     },
     {
       "id": "branch:semop-last-pid",
@@ -50834,9 +50853,9 @@
       "title": "Check locking for TCP timeout options and close timers",
       "url": "https://github.com/tamird/gvisor/commit/f6e341d0b",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-05T09:55:28.610887+00:00",
-      "summary": "The endpoint mutex guards three timeout options and two close timers. The combined analyzer passed on AMD64 and ARM64. Removing the mutex in separate controls produced three option findings and ten timer findings on each architecture.",
+      "status": "Delivered",
+      "updatedAt": "2026-11-05T16:41:13.307421Z",
+      "summary": "Published as #17046.",
       "evidence": [
         {
           "label": "Four lines added for the two close timers",
@@ -50857,19 +50876,24 @@
         {
           "label": "Guarded and unguarded runs, including the collector mismatch",
           "url": "https://github.com/tamird/gvisor/actions/runs/41990824589/artifacts/13397499747"
+        },
+        {
+          "label": "Published on #17046",
+          "url": "https://github.com/google/gvisor/pull/17046"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "f6e341d0b9ad32e924c88e863c00258982fc221e",
-        "baseHead": "90d4e2253f004cdc73a35dbc4050eab3e9a8495d",
-        "url": "https://github.com/tamird/gvisor/commit/f6e341d0b",
-        "title": "Check locking for TCP timeout options and close timers",
-        "requestedAt": "2026-11-05T09:55:28.610887+00:00",
-        "summary": "Open one PR for the three timeout options and the FIN-WAIT-2 and TIME-WAIT timer handles?",
-        "body": "Socket option calls take the endpoint mutex when changing the user\ntimeout, deferred accept interval, or FIN-WAIT-2 linger timeout. The\nhandshake, retransmission and close paths read them under the same lock.\n\nThe endpoint also holds that mutex when it starts, restores or stops\nits FIN-WAIT-2 and TIME-WAIT timers. Annotate all five fields so\nchecklocks diagnoses unlocked accesses."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "f6e341d0b9ad32e924c88e863c00258982fc221e",
+          "url": "https://github.com/tamird/gvisor/commit/f6e341d0b",
+          "title": "Check locking for TCP timeout options and close timers",
+          "outcome": "approved",
+          "at": "2026-11-05T16:41:13.307421Z",
+          "note": "Tamir approved this change. Published on #17046.",
+          "postedURL": "https://github.com/google/gvisor/pull/17046"
+        }
+      ]
     },
     {
       "id": "pr:17022",
@@ -50942,9 +50966,394 @@
       "title": "Yield after one TCP dispatcher queue pass",
       "url": "https://github.com/tamird/gvisor/commit/2ec7b59ad",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-05T12:57:21.696487Z",
-      "summary": "When an endpoint timer holds the lock, a packet worker can keep the lock holder off a single Go processor. The worker now services the already-queued peers before yielding. A regression holds one listener and verifies a ready listener gets exactly one batch before that yield.",
+      "status": "Delivered",
+      "updatedAt": "2026-11-05T16:41:13.307421Z",
+      "summary": "Published as #17045.",
+      "evidence": [
+        {
+          "label": "Martijn asked for the tested change to be sent as a PR",
+          "url": "https://github.com/google/gvisor/issues/16878#issuecomment-6657846358"
+        },
+        {
+          "label": "Reported TamaGo hang and single-processor Linux behavior",
+          "url": "https://github.com/google/gvisor/issues/16878"
+        },
+        {
+          "label": "Reporter’s reply",
+          "url": "https://github.com/google/gvisor/issues/16878#issuecomment-6653475036"
+        },
+        {
+          "label": "Earlier Linux FIFO and scheduler controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41628817215/artifacts/13226843881"
+        },
+        {
+          "label": "Implementation and permanent regression",
+          "url": "https://github.com/tamird/gvisor/commit/2ec7b59ad"
+        },
+        {
+          "label": "32 top-level TCP tests on AMD64, both architecture analyzers, and the first-miss comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42000041108/artifacts/13403275708"
+        },
+        {
+          "label": "Published on #17045",
+          "url": "https://github.com/google/gvisor/pull/17045"
+        }
+      ],
+      "followup": {
+        "owner": "Maintainer",
+        "sourceHead": "2ec7b59ad33dfbd9c65b9b5ef7e4763eb4172063",
+        "observedAt": "2026-11-05T16:41:13.307421Z",
+        "disposition": "Published on #17045",
+        "nextAction": "Await upstream review and checks.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/2ec7b59ad",
+          "https://github.com/tamird/gvisor/actions/runs/41628817215/artifacts/13226843881",
+          "https://github.com/tamird/gvisor/actions/runs/42000041108/artifacts/13403275708",
+          "https://github.com/google/gvisor/pull/17045"
+        ]
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "2ec7b59ad33dfbd9c65b9b5ef7e4763eb4172063",
+          "url": "https://github.com/tamird/gvisor/commit/2ec7b59ad",
+          "title": "tcp: yield after one queue pass on endpoint lock contention",
+          "outcome": "approved",
+          "at": "2026-11-05T16:41:13.307421Z",
+          "note": "Tamir approved this change. Published on #17045.",
+          "postedURL": "https://github.com/google/gvisor/pull/17045"
+        }
+      ]
+    },
+    {
+      "id": "branch:syscall-test-native-setup",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/syscall-test-native-setup",
+      "head": "9771751fff91a8c1cfaa92268967e4a1bb9a8e0f",
+      "title": "Start syscall tests without Bash",
+      "url": "https://github.com/tamird/gvisor/commit/9771751ff",
+      "group": "bazel",
+      "status": "Delivered",
+      "updatedAt": "2026-11-05T16:41:13.307421Z",
+      "summary": "Published as #17049.",
+      "evidence": [
+        {
+          "label": "Native ARM64 FileRead, runner argument and directory permissions on the standalone commit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42007160315/artifacts/13405402171"
+        },
+        {
+          "label": "Four uncached cases, argument forwarding and directory permissions on this commit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41998752971/artifacts/13402616401"
+        },
+        {
+          "label": "AMD64 and ARM64 builds and native cases on the earlier musl integration",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41303505464/artifacts/13083255957"
+        },
+        {
+          "label": "Published on #17049",
+          "url": "https://github.com/google/gvisor/pull/17049"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "9771751fff91a8c1cfaa92268967e4a1bb9a8e0f",
+          "url": "https://github.com/tamird/gvisor/commit/9771751ff",
+          "title": "Start syscall tests without Bash",
+          "outcome": "approved",
+          "at": "2026-11-05T16:41:13.307421Z",
+          "note": "Tamir approved this change. Published on #17049.",
+          "postedURL": "https://github.com/google/gvisor/pull/17049"
+        }
+      ]
+    },
+    {
+      "id": "branch:inotify-remove-unused-watch-owner",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/remove-inotify-watch-owner-id",
+      "head": "3cc383db92702eb8dac738b9d11bb9725f1374fa",
+      "title": "Remove the unused inotify Watch.OwnerID method",
+      "url": "https://github.com/tamird/gvisor/commit/3cc383db9",
+      "group": "analysis",
+      "status": "Delivered",
+      "updatedAt": "2026-11-05T16:41:13.307421Z",
+      "summary": "Published as #17044.",
+      "evidence": [
+        {
+          "label": "Import of the earlier head",
+          "url": "https://github.com/google/gvisor/pull/16882"
+        },
+        {
+          "label": "Lucas approved the five-line deletion",
+          "url": "https://github.com/google/gvisor/pull/16812#pullrequestreview-5758478567"
+        },
+        {
+          "label": "40 VFS cases on the original amended source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41566873882/artifacts/13199093632"
+        },
+        {
+          "label": "Published on #17044",
+          "url": "https://github.com/google/gvisor/pull/17044"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "3cc383db92702eb8dac738b9d11bb9725f1374fa",
+          "url": "https://github.com/tamird/gvisor/commit/3cc383db9",
+          "title": "Remove the unused inotify Watch.OwnerID method",
+          "outcome": "approved",
+          "at": "2026-11-05T16:41:13.307421Z",
+          "note": "Tamir approved this change. Published on #17044.",
+          "postedURL": "https://github.com/google/gvisor/pull/17044"
+        }
+      ]
+    },
+    {
+      "id": "branch:kernfs-ordered-child-locks",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "kernfs-ordered-child-locks",
+      "head": "199cf1558d95b4e029b3e52ff13e92e63e1a3d34",
+      "title": "Check the locks protecting kernfs directory children",
+      "url": "https://github.com/tamird/gvisor/commit/199cf1558",
+      "group": "analysis",
+      "status": "Delivered",
+      "updatedAt": "2026-11-05T16:41:13.307421Z",
+      "summary": "Published as #17047.",
+      "evidence": [
+        {
+          "label": "Proposed source: checked directory readers, removal and both rename paths",
+          "url": "https://github.com/tamird/gvisor/commit/199cf1558"
+        },
+        {
+          "label": "Original Linux result: 12 package cases, clean analysis on both architectures and deliberate missing-lock findings",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42024013729/artifacts/13412948249"
+        },
+        {
+          "label": "Original qualification and exact lock-removal control",
+          "url": "https://github.com/tamird/gvisor/commit/1f4e06419"
+        },
+        {
+          "label": "Directory cursor calls nthLocked under the read lock",
+          "url": "https://github.com/tamird/gvisor/blob/199cf1558/pkg/sentry/fsimpl/kernfs/fd_impl_util.go#L210"
+        },
+        {
+          "label": "Directory cursor reads the child map under the read lock",
+          "url": "https://github.com/tamird/gvisor/blob/199cf1558/pkg/sentry/fsimpl/kernfs/fd_impl_util.go#L228"
+        },
+        {
+          "label": "Cross-directory rename passes both locked directories",
+          "url": "https://github.com/tamird/gvisor/blob/199cf1558/pkg/sentry/fsimpl/kernfs/inode_impl_util.go#L713"
+        },
+        {
+          "label": "Published on #17047",
+          "url": "https://github.com/google/gvisor/pull/17047"
+        }
+      ],
+      "followup": {
+        "owner": "Maintainer",
+        "sourceHead": "199cf1558d95b4e029b3e52ff13e92e63e1a3d34",
+        "observedAt": "2026-11-05T16:41:13.307421Z",
+        "disposition": "Published on #17047",
+        "nextAction": "Await upstream review and checks.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/199cf1558",
+          "https://github.com/tamird/gvisor/actions/runs/42024013729/artifacts/13412948249",
+          "https://github.com/tamird/gvisor/commit/1f4e06419",
+          "https://github.com/tamird/gvisor/blob/199cf1558/pkg/sentry/fsimpl/kernfs/fd_impl_util.go#L210",
+          "https://github.com/tamird/gvisor/blob/199cf1558/pkg/sentry/fsimpl/kernfs/fd_impl_util.go#L228",
+          "https://github.com/tamird/gvisor/blob/199cf1558/pkg/sentry/fsimpl/kernfs/inode_impl_util.go#L713",
+          "https://github.com/google/gvisor/pull/17047"
+        ]
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "199cf1558d95b4e029b3e52ff13e92e63e1a3d34",
+          "url": "https://github.com/tamird/gvisor/commit/199cf1558",
+          "title": "Check the locks protecting kernfs directory children",
+          "outcome": "approved",
+          "at": "2026-11-05T16:41:13.307421Z",
+          "note": "Tamir approved this change. Published on #17047.",
+          "postedURL": "https://github.com/google/gvisor/pull/17047"
+        }
+      ]
+    },
+    {
+      "id": "branch:review/runsc-lifecycle-fixtures",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/runsc-process-pause",
+      "head": "b41ed9e0e61afdb555438a918d8d3d3e39927a98",
+      "title": "Run the runsc lifecycle tests without host utilities",
+      "url": "https://github.com/tamird/gvisor/compare/90d4e2253...b41ed9e0e",
+      "group": "tests",
+      "status": "Agent work",
+      "updatedAt": "2026-11-05T16:41:13.307421Z",
+      "summary": "Both child fixtures check that unix.Pause returned EINTR, and the specutils mode is named pause. Native fixture tests are pending.",
+      "evidence": [
+        {
+          "label": "Two proposed commits on master",
+          "url": "https://github.com/tamird/gvisor/compare/90d4e2253...cd8f6c541"
+        },
+        {
+          "label": "Stock runsc test results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42030254826/artifacts/13415219314"
+        },
+        {
+          "label": "Six specutils and six cmd cases per architecture",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42037630464/artifacts/13422210533"
+        },
+        {
+          "label": "Revised two commits on master",
+          "url": "https://github.com/tamird/gvisor/compare/90d4e2253...189840fde"
+        },
+        {
+          "label": "Four revised lifecycle test results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42050193843/artifacts/13425913365"
+        },
+        {
+          "label": "Requested pause and EINTR edits",
+          "url": "https://github.com/tamird/gvisor/compare/189840fde...b41ed9e0e"
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "b41ed9e0e61afdb555438a918d8d3d3e39927a98",
+        "observedAt": "2026-11-05T16:41:13.307421Z",
+        "disposition": "Both requested corrections implemented",
+        "nextAction": "Verify the revised fixtures on both native architectures, then open the combined PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/compare/90d4e2253...189840fde",
+          "https://github.com/tamird/gvisor/actions/runs/42050193843/artifacts/13425913365",
+          "https://github.com/tamird/gvisor/actions/runs/42030254826/artifacts/13415219314"
+        ]
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "cd8f6c54149718fdca08f268658db4a1d1b4c247",
+          "outcome": "changes-requested",
+          "at": "2026-11-05T14:55:40.136006Z"
+        },
+        {
+          "kind": "proposal",
+          "head": "189840fde5ef96d32205f0c00c37575031ea3f23",
+          "url": "https://github.com/tamird/gvisor/compare/90d4e2253...189840fde",
+          "title": "Run the runsc lifecycle tests without host utilities",
+          "outcome": "approved",
+          "at": "2026-11-05T16:41:13.307421Z",
+          "note": "Approved with two requested edits: check the error from unix.Pause and rename the sleep mode to pause."
+        }
+      ]
+    },
+    {
+      "id": "branch:research/boot-failed-exec-stdio",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/boot-failed-exec-stdio",
+      "head": "8f08865cd81854f19a643d18e5c63f939ce28c39",
+      "title": "Release the sandbox file table when starting a process fails",
+      "url": "https://github.com/tamird/gvisor/commit/8f08865cd",
+      "group": "runtime",
+      "status": "Delivered",
+      "updatedAt": "2026-11-05T16:41:13.307421Z",
+      "summary": "Published as #17048.",
+      "evidence": [
+        {
+          "label": "Proposed fix and regression on master",
+          "url": "https://github.com/tamird/gvisor/commit/8f08865cd"
+        },
+        {
+          "label": "AMD64 and ARM64 missing-executable controls and fixes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42050141418/artifacts/13425788812"
+        },
+        {
+          "label": "Published on #17048",
+          "url": "https://github.com/google/gvisor/pull/17048"
+        }
+      ],
+      "followup": {
+        "owner": "Maintainer",
+        "sourceHead": "8f08865cd81854f19a643d18e5c63f939ce28c39",
+        "observedAt": "2026-11-05T16:41:13.307421Z",
+        "disposition": "Published on #17048",
+        "nextAction": "Await upstream review and checks.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/8f08865cd",
+          "https://github.com/tamird/gvisor/actions/runs/42050141418/artifacts/13425788812",
+          "https://github.com/google/gvisor/pull/17048"
+        ]
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "8f08865cd81854f19a643d18e5c63f939ce28c39",
+          "url": "https://github.com/tamird/gvisor/commit/8f08865cd",
+          "title": "Release the sandbox file table when starting a process fails",
+          "outcome": "approved",
+          "at": "2026-11-05T16:41:13.307421Z",
+          "note": "Tamir approved this change. Published on #17048.",
+          "postedURL": "https://github.com/google/gvisor/pull/17048"
+        }
+      ]
+    },
+    {
+      "id": "pr:17044",
+      "type": "pr",
+      "number": 17044,
+      "group": "analysis",
+      "repo": "google/gvisor",
+      "ref": "review/remove-inotify-watch-owner-id",
+      "head": "3cc383db92702eb8dac738b9d11bb9725f1374fa",
+      "url": "https://github.com/google/gvisor/pull/17044",
+      "title": "Remove the unused inotify Watch.OwnerID method",
+      "status": "open",
+      "updatedAt": "2026-11-05T16:41:13.307421Z",
+      "summary": "Watch insertion and removal get the index key from the owning inotify instance. The Watch.OwnerID accessor has no callers.",
+      "evidence": [
+        {
+          "label": "Import of the earlier head",
+          "url": "https://github.com/google/gvisor/pull/16882"
+        },
+        {
+          "label": "Lucas approved the five-line deletion",
+          "url": "https://github.com/google/gvisor/pull/16812#pullrequestreview-5758478567"
+        },
+        {
+          "label": "40 VFS cases on the original amended source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41566873882/artifacts/13199093632"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "3cc383db92702eb8dac738b9d11bb9725f1374fa",
+          "url": "https://github.com/tamird/gvisor/commit/3cc383db9",
+          "title": "Remove the unused inotify Watch.OwnerID method",
+          "outcome": "approved",
+          "at": "2026-11-05T16:41:13.307421Z",
+          "note": "Published as #17044.",
+          "postedURL": "https://github.com/google/gvisor/pull/17044"
+        }
+      ]
+    },
+    {
+      "id": "pr:17045",
+      "type": "pr",
+      "number": 17045,
+      "group": "runtime",
+      "repo": "google/gvisor",
+      "ref": "proposal/tcp-yield-after-queue-pass",
+      "head": "2ec7b59ad33dfbd9c65b9b5ef7e4763eb4172063",
+      "url": "https://github.com/google/gvisor/pull/17045",
+      "title": "tcp: yield after one queue pass on endpoint lock contention",
+      "status": "open",
+      "updatedAt": "2026-11-05T16:41:13.307421Z",
+      "summary": "When a timer holds an endpoint lock, the packet processor can retry the same endpoint until the Go scheduler preempts it. With one Go processor and no preemption the lock holder never gets to run. Martijn Hoekstra reported a hang under sustained TCP load on TamaGo.",
       "evidence": [
         {
           "label": "Martijn asked for the tested change to be sent as a PR",
@@ -50971,117 +51380,80 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42000041108/artifacts/13403275708"
         }
       ],
-      "followup": {
-        "owner": "Netstack",
-        "sourceHead": "2ec7b59ad33dfbd9c65b9b5ef7e4763eb4172063",
-        "observedAt": "2026-11-05T09:28:02.581262+00:00",
-        "disposition": "TCP suite and first-miss comparison verified",
-        "nextAction": "Open the standalone PR after contributor review.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/2ec7b59ad",
-          "https://github.com/tamird/gvisor/actions/runs/41628817215/artifacts/13226843881",
-          "https://github.com/tamird/gvisor/actions/runs/42000041108/artifacts/13403275708"
-        ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "2ec7b59ad33dfbd9c65b9b5ef7e4763eb4172063",
-        "baseHead": "90d4e2253f004cdc73a35dbc4050eab3e9a8495d",
-        "url": "https://github.com/tamird/gvisor/commit/2ec7b59ad",
-        "title": "tcp: yield after one queue pass on endpoint lock contention",
-        "requestedAt": "2026-11-05T09:28:02.581262+00:00",
-        "summary": "Approve opening the FIFO queue-pass fix for #16878. The ready listener processed 100 packets before yielding. Yielding on the first miss processed zero. TamaGo runtime behavior remains unmeasured.",
-        "body": "When a timer holds an endpoint lock, the packet processor can retry the\nsame endpoint until the Go scheduler preempts it. With one Go processor\nand no preemption the lock holder never gets to run. Martijn Hoekstra\nreported a hang under sustained TCP load on TamaGo.\n\nAfter a lock miss, give the other endpoints already in the queue one\nturn before yielding. Stop at the tail observed on the miss so newly\narrived packets and a busy peer cannot postpone the yield.\n\nFixes #16878"
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "2ec7b59ad33dfbd9c65b9b5ef7e4763eb4172063",
+          "url": "https://github.com/tamird/gvisor/commit/2ec7b59ad",
+          "title": "tcp: yield after one queue pass on endpoint lock contention",
+          "outcome": "approved",
+          "at": "2026-11-05T16:41:13.307421Z",
+          "note": "Published as #17045.",
+          "postedURL": "https://github.com/google/gvisor/pull/17045"
+        }
+      ]
     },
     {
-      "id": "branch:syscall-test-native-setup",
-      "type": "branch",
-      "repo": "tamird/gvisor",
-      "ref": "research/syscall-test-native-setup",
-      "head": "9771751fff91a8c1cfaa92268967e4a1bb9a8e0f",
-      "title": "Start syscall tests without Bash",
-      "url": "https://github.com/tamird/gvisor/commit/9771751ff",
-      "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-05T10:21:46.859804Z",
-      "summary": "A Bash script currently starts each Bazel syscall test. The proposal lets the existing setup_container binary prepare the output directory and pass the test executable after the runner flags. Four native AMD64 cases and one native ARM64 atime case passed on the standalone commit. Both architectures preserved the sticky bit on an existing directory.",
+      "id": "pr:17046",
+      "type": "pr",
+      "number": 17046,
+      "group": "runtime",
+      "repo": "google/gvisor",
+      "ref": "review/tcp-timeout-and-close-timer-locks",
+      "head": "f6e341d0b9ad32e924c88e863c00258982fc221e",
+      "url": "https://github.com/google/gvisor/pull/17046",
+      "title": "Check locking for TCP timeout options and close timers",
+      "status": "open",
+      "updatedAt": "2026-11-05T16:41:13.307421Z",
+      "summary": "Socket option calls take the endpoint mutex when changing the user timeout, deferred accept interval, or FIN-WAIT-2 linger timeout. The handshake, retransmission and close paths read them under the same lock.",
       "evidence": [
         {
-          "label": "Native ARM64 FileRead, runner argument and directory permissions on the standalone commit",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42007160315/artifacts/13405402171"
+          "label": "Four lines added for the two close timers",
+          "url": "https://github.com/tamird/gvisor/commit/b4672b800"
         },
         {
-          "label": "Four uncached cases, argument forwarding and directory permissions on this commit",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41998752971/artifacts/13402616401"
+          "label": "Combined AMD64 and ARM64 analyzer results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42005412068/artifacts/13404881916"
         },
         {
-          "label": "AMD64 and ARM64 builds and native cases on the earlier musl integration",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41303505464/artifacts/13083255957"
+          "label": "Ten findings per architecture with the close timers unlocked",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42003794391/artifacts/13403847961"
+        },
+        {
+          "label": "Six diagnostics at the unlocked getters",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41990824589/job/127122377531"
+        },
+        {
+          "label": "Guarded and unguarded runs, including the collector mismatch",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41990824589/artifacts/13397499747"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "9771751fff91a8c1cfaa92268967e4a1bb9a8e0f",
-        "baseHead": "90d4e2253f004cdc73a35dbc4050eab3e9a8495d",
-        "url": "https://github.com/tamird/gvisor/commit/9771751ff",
-        "title": "Start syscall tests without Bash",
-        "requestedAt": "2026-11-05T09:18:41.504053+00:00",
-        "summary": "Approve opening the standalone PR. Four AMD64 cases and the ARM64 atime case ran on this commit. Both architectures covered argument forwarding and directory permissions. A forced remount on a noatime filesystem remains untested.",
-        "body": "A syscall test fails before the test runner starts on a worker without\n/bin/bash. Each test variant generates a Bash script to prepare its\noutput directory and put the test executable after any runner flags.\n\nUse the existing setup_container binary as the Bazel test entry point.\nIt grants the sandbox access to the output directory, enables host\natime when requested, and invokes the runner with the test binary\nlast. This lets callers keep using --test_arg for runner flags."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "f6e341d0b9ad32e924c88e863c00258982fc221e",
+          "url": "https://github.com/tamird/gvisor/commit/f6e341d0b",
+          "title": "Check locking for TCP timeout options and close timers",
+          "outcome": "approved",
+          "at": "2026-11-05T16:41:13.307421Z",
+          "note": "Published as #17046.",
+          "postedURL": "https://github.com/google/gvisor/pull/17046"
+        }
+      ]
     },
     {
-      "id": "branch:inotify-remove-unused-watch-owner",
-      "type": "branch",
-      "repo": "tamird/gvisor",
-      "ref": "review/remove-inotify-watch-owner-id",
-      "head": "3cc383db92702eb8dac738b9d11bb9725f1374fa",
-      "title": "Remove the unused inotify Watch.OwnerID method",
-      "url": "https://github.com/tamird/gvisor/commit/3cc383db9",
+      "id": "pr:17047",
+      "type": "pr",
+      "number": 17047,
       "group": "analysis",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-05T10:45:41.558885Z",
-      "summary": "The locking change from #16812 is on master. Its import omitted the five-line deletion Lucas approved. The standalone patch removes the unused accessor. Its diff matches the approved amendment, which passed all 40 VFS cases.",
-      "evidence": [
-        {
-          "label": "Import of the earlier head",
-          "url": "https://github.com/google/gvisor/pull/16882"
-        },
-        {
-          "label": "Lucas approved the five-line deletion",
-          "url": "https://github.com/google/gvisor/pull/16812#pullrequestreview-5758478567"
-        },
-        {
-          "label": "40 VFS cases on the original amended source",
-          "url": "https://github.com/tamird/gvisor/actions/runs/41566873882/artifacts/13199093632"
-        }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "3cc383db92702eb8dac738b9d11bb9725f1374fa",
-        "url": "https://github.com/tamird/gvisor/commit/3cc383db9",
-        "title": "Remove the unused inotify Watch.OwnerID method",
-        "requestedAt": "2026-11-05T10:45:41.558885Z",
-        "summary": "Open the standalone PR for the deletion omitted from the import?",
-        "body": "Watch insertion and removal get the index key from the owning inotify\ninstance. The Watch.OwnerID accessor has no callers."
-      }
-    },
-    {
-      "id": "branch:kernfs-ordered-child-locks",
-      "type": "branch",
-      "repo": "tamird/gvisor",
-      "ref": "kernfs-ordered-child-locks",
+      "repo": "google/gvisor",
+      "ref": "review/kernfs-ordered-child-locks",
       "head": "199cf1558d95b4e029b3e52ff13e92e63e1a3d34",
+      "url": "https://github.com/google/gvisor/pull/17047",
       "title": "Check the locks protecting kernfs directory children",
-      "url": "https://github.com/tamird/gvisor/commit/199cf1558",
-      "group": "analysis",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-05T12:16:49.790997Z",
-      "summary": "Have checklocks verify the mutex protecting kernfs's child-name map and ordered child list. Rename passes its locked directories to a helper so the analyzer can check the one-directory and two-directory paths. Lock ordering and rename behavior are unchanged.\n\nOn 199cf1558, the native AMD64 package target passed all 12 named cases with zero skips or failures. The Nogo wrapper passed with no findings for AMD64 or ARM64. Removing the destination write lock and directory-cursor read lock produced seven checklocks diagnostics on each architecture, all at the three intended locations: nthLocked (three), len(children.set) (three), and renameLocked (one). The edited control's locations are fd_impl_util.go:208 and :226, and inode_impl_util.go:711.\n\nThe outer job is red because its verifier expected one diagnostic per source location; the original records retain the actual positive results and the deliberate negative exit 3. The source links below point to the corresponding unmodified lines. This is not an ARM64 package runtime or race result.",
+      "status": "open",
+      "updatedAt": "2026-11-05T16:41:13.307421Z",
+      "summary": "Lookup reads a map of child names, while readdir walks a list in insertion order. Both use the directory mutex. Have checklocks verify that readers hold the mutex and that removal holds it for writing.",
       "evidence": [
         {
           "label": "Proposed source: checked directory readers, removal and both rename paths",
@@ -51108,111 +51480,32 @@
           "url": "https://github.com/tamird/gvisor/blob/199cf1558/pkg/sentry/fsimpl/kernfs/inode_impl_util.go#L713"
         }
       ],
-      "followup": {
-        "owner": "Contributor",
-        "sourceHead": "199cf1558d95b4e029b3e52ff13e92e63e1a3d34",
-        "observedAt": "2026-11-05T12:16:49.790997Z",
-        "disposition": "Contributor review requested",
-        "nextAction": "Review the standalone checked-lock change before opening an upstream PR.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/199cf1558",
-          "https://github.com/tamird/gvisor/actions/runs/42024013729/artifacts/13412948249",
-          "https://github.com/tamird/gvisor/commit/1f4e06419",
-          "https://github.com/tamird/gvisor/blob/199cf1558/pkg/sentry/fsimpl/kernfs/fd_impl_util.go#L210",
-          "https://github.com/tamird/gvisor/blob/199cf1558/pkg/sentry/fsimpl/kernfs/fd_impl_util.go#L228",
-          "https://github.com/tamird/gvisor/blob/199cf1558/pkg/sentry/fsimpl/kernfs/inode_impl_util.go#L713"
-        ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "199cf1558d95b4e029b3e52ff13e92e63e1a3d34",
-        "baseHead": "90d4e2253f004cdc73a35dbc4050eab3e9a8495d",
-        "url": "https://github.com/tamird/gvisor/commit/199cf1558",
-        "title": "Check the locks protecting kernfs directory children",
-        "requestedAt": "2026-11-05T12:16:49.790997Z",
-        "summary": "Publish the kernfs directory-lock annotations and rename helper? All 12 native AMD64 package cases passed, analysis was clean for both architectures, and removing the locks produced the intended diagnostics.",
-        "body": "Lookup reads a map of child names, while readdir walks a list in insertion order. Both use the directory mutex. Have checklocks verify that readers hold the mutex and that removal holds it for writing.\n\nA rename within one directory holds one lock. A rename between two directories must hold both. Pass the locked directories to the move so checklocks can verify both cases."
-      }
-    },
-    {
-      "id": "branch:review/runsc-lifecycle-fixtures",
-      "type": "branch",
-      "repo": "tamird/gvisor",
-      "ref": "research/lifecycle-fixture-wait",
-      "head": "189840fde5ef96d32205f0c00c37575031ea3f23",
-      "title": "Run the runsc lifecycle tests without host utilities",
-      "url": "https://github.com/tamird/gvisor/compare/90d4e2253...189840fde",
-      "group": "tests",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-05T15:03:31.586169Z",
-      "summary": "The specutils and runsc command tests now start the test binary instead of relying on /bin/true and /bin/sleep. Both waiting fixtures stay alive until killed, and cmd.TestMain is next to the helper that starts the child. These are the two changes requested on cd8f6c541.\n\nThe selected helpers and tests in 189840fde match the tested integration d96586779. Four fresh native TestRunners ran six specutils cases and six cmd cases on each of AMD64 and ARM64. All 24 passed; none skipped.",
-      "evidence": [
-        {
-          "label": "Two proposed commits on master",
-          "url": "https://github.com/tamird/gvisor/compare/90d4e2253...cd8f6c541"
-        },
-        {
-          "label": "Stock runsc test results",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42030254826/artifacts/13415219314"
-        },
-        {
-          "label": "Six specutils and six cmd cases per architecture",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42037630464/artifacts/13422210533"
-        },
-        {
-          "label": "Revised two commits on master",
-          "url": "https://github.com/tamird/gvisor/compare/90d4e2253...189840fde"
-        },
-        {
-          "label": "Four revised lifecycle test results",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42050193843/artifacts/13425913365"
-        }
-      ],
-      "followup": {
-        "owner": "Contributor",
-        "sourceHead": "189840fde5ef96d32205f0c00c37575031ea3f23",
-        "observedAt": "2026-11-05T15:03:31.586169Z",
-        "disposition": "Contributor review requested",
-        "nextAction": "Review the revised wait behavior and placement of cmd.TestMain before opening one upstream PR.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/compare/90d4e2253...189840fde",
-          "https://github.com/tamird/gvisor/actions/runs/42050193843/artifacts/13425913365",
-          "https://github.com/tamird/gvisor/actions/runs/42030254826/artifacts/13415219314"
-        ]
-      },
       "settledReviews": [
         {
           "kind": "proposal",
-          "head": "cd8f6c54149718fdca08f268658db4a1d1b4c247",
-          "outcome": "changes-requested",
-          "at": "2026-11-05T14:55:40.136006Z"
+          "head": "199cf1558d95b4e029b3e52ff13e92e63e1a3d34",
+          "url": "https://github.com/tamird/gvisor/commit/199cf1558",
+          "title": "Check the locks protecting kernfs directory children",
+          "outcome": "approved",
+          "at": "2026-11-05T16:41:13.307421Z",
+          "note": "Published as #17047.",
+          "postedURL": "https://github.com/google/gvisor/pull/17047"
         }
-      ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "189840fde5ef96d32205f0c00c37575031ea3f23",
-        "baseHead": "90d4e2253f004cdc73a35dbc4050eab3e9a8495d",
-        "url": "https://github.com/tamird/gvisor/compare/90d4e2253...189840fde",
-        "title": "Run the runsc lifecycle tests without host utilities",
-        "requestedAt": "2026-11-05T15:03:31.586169Z",
-        "summary": "Open one PR for 189840fde? Both waiting fixtures stay alive until killed, cmd.TestMain now sits beside the helper, and all 24 selected native case executions passed.",
-        "body": "The specutils tests use /bin/true and /bin/sleep to start children that\nexit or stay alive. The runsc command tests use /bin/sleep for a live\nsandbox PID with no control server. On a worker without these programs\nthe tests fail before checking process readiness, identity or command\nbehavior.\n\nStart the test binary as the child. For the live cases, keep the child\nwaiting until killed. Preserve the exit and zombie checks in specutils\nand reap the command fixture when the command kills it or the test ends."
-      }
+      ]
     },
     {
-      "id": "branch:research/boot-failed-exec-stdio",
-      "type": "branch",
-      "repo": "tamird/gvisor",
-      "ref": "research/boot-failed-exec-stdio",
-      "head": "8f08865cd81854f19a643d18e5c63f939ce28c39",
-      "title": "Release the sandbox file table when starting a process fails",
-      "url": "https://github.com/tamird/gvisor/commit/8f08865cd",
+      "id": "pr:17048",
+      "type": "pr",
+      "number": 17048,
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-05T15:03:31.586169Z",
-      "summary": "When a guest executable is missing, CreateProcess returns before taking its own reference to the file table. The caller previously dropped its reference only after a successful start, leaving the sandbox standard streams open. The fix drops that reference on every return.\n\nTestFailedRunClosesStdio ran on both AMD64 and ARM64. On the unchanged production code (test-only control eea08498e), /missing returned ENOENT and all three reserved descriptors, 253–255, remained open. With the fix at c6713d5df, the same test passed on each architecture without a skip. The proposed commit has the same production change and test body. The overall job is red: the reporter did not accept the failed control’s nonempty action status, and independent boot-path checks stopped before execution.",
+      "repo": "google/gvisor",
+      "ref": "review/boot-failed-exec-stdio",
+      "head": "8f08865cd81854f19a643d18e5c63f939ce28c39",
+      "url": "https://github.com/google/gvisor/pull/17048",
+      "title": "Release the sandbox file table when starting a process fails",
+      "status": "open",
+      "updatedAt": "2026-11-05T16:41:13.307421Z",
+      "summary": "A missing guest executable leaves the sandbox holding its standard streams. In the boot tests, the next loader cannot start because its first reserved descriptor, 253, is still open.",
       "evidence": [
         {
           "label": "Proposed fix and regression on master",
@@ -51223,28 +51516,130 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42050141418/artifacts/13425788812"
         }
       ],
-      "followup": {
-        "owner": "Contributor",
-        "sourceHead": "8f08865cd81854f19a643d18e5c63f939ce28c39",
-        "observedAt": "2026-11-05T15:03:31.586169Z",
-        "disposition": "Contributor review requested",
-        "nextAction": "Review the file-table reference fix and its missing-executable regression for an upstream PR.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/8f08865cd",
-          "https://github.com/tamird/gvisor/actions/runs/42050141418/artifacts/13425788812"
-        ]
-      },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "8f08865cd81854f19a643d18e5c63f939ce28c39",
-        "baseHead": "90d4e2253f004cdc73a35dbc4050eab3e9a8495d",
-        "url": "https://github.com/tamird/gvisor/commit/8f08865cd",
-        "title": "Release the sandbox file table when starting a process fails",
-        "requestedAt": "2026-11-05T15:03:31.586169Z",
-        "summary": "Open a PR for 8f08865cd? A failed guest start left all three sandbox standard streams open on both native workers. The same regression passed on each after the fix.",
-        "body": "A missing guest executable leaves the sandbox holding its standard\nstreams. In the boot tests, the next loader cannot start because its\nfirst reserved descriptor, 253, is still open.\n\ncreateContainerProcess owns the initial reference to the file table.\nCreateProcess takes a separate reference for the task only after it\nloads the executable. Drop the caller’s reference on every return,\nincluding errors while preparing the mount namespace or loading the\nprocess."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "8f08865cd81854f19a643d18e5c63f939ce28c39",
+          "url": "https://github.com/tamird/gvisor/commit/8f08865cd",
+          "title": "Release the sandbox file table when starting a process fails",
+          "outcome": "approved",
+          "at": "2026-11-05T16:41:13.307421Z",
+          "note": "Published as #17048.",
+          "postedURL": "https://github.com/google/gvisor/pull/17048"
+        }
+      ]
+    },
+    {
+      "id": "pr:17049",
+      "type": "pr",
+      "number": 17049,
+      "group": "bazel",
+      "repo": "google/gvisor",
+      "ref": "review/syscall-test-native-setup",
+      "head": "9771751fff91a8c1cfaa92268967e4a1bb9a8e0f",
+      "url": "https://github.com/google/gvisor/pull/17049",
+      "title": "Start syscall tests without Bash",
+      "status": "open",
+      "updatedAt": "2026-11-05T16:41:13.307421Z",
+      "summary": "A syscall test fails before the test runner starts on a worker without /bin/bash. Each test variant generates a Bash script to prepare its output directory and put the test executable after any runner flags.",
+      "evidence": [
+        {
+          "label": "Native ARM64 FileRead, runner argument and directory permissions on the standalone commit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42007160315/artifacts/13405402171"
+        },
+        {
+          "label": "Four uncached cases, argument forwarding and directory permissions on this commit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41998752971/artifacts/13402616401"
+        },
+        {
+          "label": "AMD64 and ARM64 builds and native cases on the earlier musl integration",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41303505464/artifacts/13083255957"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "9771751fff91a8c1cfaa92268967e4a1bb9a8e0f",
+          "url": "https://github.com/tamird/gvisor/commit/9771751ff",
+          "title": "Start syscall tests without Bash",
+          "outcome": "approved",
+          "at": "2026-11-05T16:41:13.307421Z",
+          "note": "Published as #17049.",
+          "postedURL": "https://github.com/google/gvisor/pull/17049"
+        }
+      ]
+    },
+    {
+      "id": "pr:17050",
+      "type": "pr",
+      "number": 17050,
+      "group": "runtime",
+      "repo": "google/gvisor",
+      "ref": "review/tcp-retain-fixed-source-port",
+      "head": "9af03174e9a6c9a9e75473ff222745c01cc373f2",
+      "url": "https://github.com/google/gvisor/pull/17050",
+      "title": "Keep an explicitly bound TCP source port after refusal",
+      "status": "open",
+      "updatedAt": "2026-11-05T16:41:13.307421Z",
+      "summary": "A competing socket can bind a caller-selected source port after an IPv4 connect reports ECONNREFUSED, while the refused socket is still open. Linux keeps that port until the socket closes. A port selected by bind with port zero remains available to other sockets.",
+      "evidence": [
+        {
+          "label": "Same source on native Linux, exact #16180 and corrected netstack; two failing fixed-port comparisons on #16180, port-zero and final-close controls passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41262155428/artifacts/13065353930"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "6d477a9ff29aa36c805d06b74086403339acd716",
+          "url": "https://github.com/tamird/gvisor/commit/6d477a9ff",
+          "title": "Keep an explicitly bound TCP source port after refusal",
+          "outcome": "approved",
+          "at": "2026-11-05T16:41:13.307421Z",
+          "note": "Published as #17050 after its prerequisite merged. Rebase preserved all added and removed lines.",
+          "postedURL": "https://github.com/google/gvisor/pull/17050"
+        }
+      ]
+    },
+    {
+      "id": "pr:17051",
+      "type": "pr",
+      "number": 17051,
+      "group": "runtime",
+      "repo": "google/gvisor",
+      "ref": "review/proc-forwarding-mounts",
+      "head": "83c48b7fa27beb7f00f02c0dbc46cac96d10a61a",
+      "url": "https://github.com/google/gvisor/pull/17051",
+      "title": "Read IP forwarding from the network stack",
+      "status": "open",
+      "updatedAt": "2026-11-05T16:41:13.307421Z",
+      "summary": "Writing 1 to ipv4/ip_forward through a second proc mount left the first mount reporting 0. The same happened with ipv6/conf/all/forwarding. Both mounts were in the same network namespace; each proc inode kept its own copy of the last value written.",
+      "evidence": [
+        {
+          "label": "Identical Linux, original and corrected two-mount cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41091066394/artifacts/12994107918"
+        },
+        {
+          "label": "Exact review source: checkpoint, procfs, and static analysis",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41092498034/artifacts/12999370245"
+        },
+        {
+          "label": "Fixture prerequisite",
+          "url": "https://github.com/google/gvisor/pull/16745"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "abf9202abb9b44fe397f96e10caa4ac7e5b17dcd",
+          "url": "https://github.com/tamird/gvisor/commit/abf9202ab",
+          "title": "Read IP forwarding from the network stack",
+          "outcome": "approved",
+          "at": "2026-11-05T16:41:13.307421Z",
+          "note": "Published as #17051 after its prerequisite merged. Rebase preserved all added and removed lines.",
+          "postedURL": "https://github.com/google/gvisor/pull/17051"
+        }
+      ]
     }
   ],
   "edges": [
@@ -54897,6 +55292,27 @@
       "to": "branch:buildkite-native-gazelle",
       "reason": "These jobs use the agent Bazelisk setup and cleanup introduced by #16904.",
       "evidence": "https://github.com/google/gvisor/pull/16904"
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:16180",
+      "to": "pr:17050",
+      "reason": "Uses the original reservation address and protocol list from #16180 to preserve and later release the correct fixed port.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16180",
+        "https://github.com/tamird/gvisor/commit/6d477a9ff",
+        "https://github.com/tamird/gvisor/actions/runs/41262155428/artifacts/13065353930"
+      ]
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:16745",
+      "to": "pr:17051",
+      "reason": "Both forwarding cases use the two-mount syscall fixture in #16745.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16745",
+        "https://github.com/tamird/gvisor/commit/abf9202ab"
+      ]
     }
   ],
   "investigations": [
@@ -73369,5 +73785,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T16:25:38.134002Z"
+  "updatedAt": "2026-11-05T16:41:13.307421Z"
 }
