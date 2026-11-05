@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T18:04:53.570927Z",
+    "updatedAt": "2026-11-05T18:31:46.488951Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4831,8 +4831,8 @@
       "url": "https://github.com/tamird/gvisor/commit/a385bd2b0",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "On unmodified gVisor master 90d4e2253, one AMD64 worker built //tools/zstd:compressor for both x86-64 and ARM64 using the released @llvm 0.8.24 and --extra_toolchains=@llvm//toolchain:all. The same AMD64 clang and clang++ compiled and linked both executables. The action records show the corresponding GNU triples, Linux 6.18.33 and glibc 2.28 headers, and architecture-specific link directories. The physical outputs are ELF62 and ELF183. The AMD64 compressor produced a frame that decompressed to the original input. A separate ARM-only run reproduced the identical ARM executable. Project-declared QEMU 11.0 ran it on AMD64 with the GNU loader and libraries from the pinned @test_bun ARM test image; it produced the same 61 compressed bytes and recovered the original input. The image supplied runtime files for this check only. The first job had stopped before QEMU started. This demonstrates an opt-in cross-build without changing the compiler default, the NVIDIA parser or TLDK.\n\nA build of three real Sentry input targets exposed the next compiler issue. On master, the ARM sysmsg genrules invoked host clang without a target triple; x86-64 clang rejected the ARM-only -mno-outline-atomics flag. On 5fa51a2fc, the native vDSO and sysmsg rules used the released LLVM toolchain for 12 compiles and four links. All three targets completed. The two vDSOs matched their linked ELF62/ELF183 shared objects, and the split signal-handler binaries matched the corresponding 5,440- and 4,864-byte ELF sections. Both Go offsets files, however, were identical 105-byte package scaffolds with no exported offsets. The build did not execute the Sentry or a test.\n\nBazel 9.3.1 and the declared clang++ built the NVIDIA ABI parser for x86_64-linux-gnu and aarch64-linux-gnu. With supplier source 17f6a3008, the generated LLVM configuration contained exactly AArch64 and X86. TestParser passed uncached on each native architecture. The earlier compiler integration passed all 871 selected Nogo targets (one cached result); those tests were not rerun on Bazel 9. Ordinary C binaries used GNU libc on both architectures. Static syscallbench ran all three modes on AMD64; its constraint excludes ARM64.\n\nThe fork-only packaging follow-up 50c1f8f6a lets a bare downstream Bazel module select exactly @kernel_dep//tools/bazeldefs:static.bzl for fsstress. All ten gVisor policy tags remain, with no consumer-supplied overrides. Stock 588e6f343 exits 7 at Gazelle; the corrected query exits 0, and the wrong-root load control exits 7. This qualifies loading and label selection only, not downstream compilation. The earlier root-workspace archives and AMD64 file-creation result remain separate.",
-      "updatedAt": "2026-11-05T18:04:53.570927Z",
+      "summary": "With released LLVM 0.8.24 selected by default in the fork, one native AMD64 Bazel worker built both //runsc:runsc and //runsc/cmd/sentry:gvisor_sentry for AMD64 and ARM64 on 8169ff661. The ordinary architecture configurations used no --extra_toolchains override. All five requested targets completed for each architecture. The four fresh Go links produced two ELF62 and two ELF183 binaries, with no ELF interpreter or dynamic segment. The corrected #16516 generator emitted all 10 AMD64 and 11 ARM64 systrap offsets; every value matched its linked symbol. Both vDSOs and signal-handler blobs retained their verified bytes. The AMD64 runsc ran natively and the ARM64 runsc ran under declared QEMU. Both --version calls reported the source stamp and OCI spec 1.2.1. No guest launched and no tests ran.\n\nOn unmodified gVisor master 90d4e2253, one AMD64 worker built //tools/zstd:compressor for both x86-64 and ARM64 using the released @llvm 0.8.24 and --extra_toolchains=@llvm//toolchain:all. The same AMD64 clang and clang++ compiled and linked both executables. The action records show the corresponding GNU triples, Linux 6.18.33 and glibc 2.28 headers, and architecture-specific link directories. The physical outputs are ELF62 and ELF183. The AMD64 compressor produced a frame that decompressed to the original input. A separate ARM-only run reproduced the identical ARM executable. Project-declared QEMU 11.0 ran it on AMD64 with the GNU loader and libraries from the pinned @test_bun ARM test image; it produced the same 61 compressed bytes and recovered the original input. The image supplied runtime files for this check only. The first job had stopped before QEMU started. This demonstrates an opt-in cross-build without changing the compiler default, the NVIDIA parser or TLDK.\n\nThe preceding control showed why the systrap generator was needed. On master, the ARM sysmsg genrules invoked host clang without a target triple; x86-64 clang rejected the ARM-only -mno-outline-atomics flag. On 5fa51a2fc, the native vDSO and sysmsg rules used the released LLVM toolchain for 12 compiles and four links. All three targets completed. The two vDSOs matched their linked ELF62/ELF183 shared objects, and the split signal-handler binaries matched the corresponding 5,440- and 4,864-byte ELF sections. Both Go offsets files, however, were identical 105-byte package scaffolds with no exported offsets. The build did not execute the Sentry or a test.\n\nBazel 9.3.1 and the declared clang++ built the NVIDIA ABI parser for x86_64-linux-gnu and aarch64-linux-gnu. With supplier source 17f6a3008, the generated LLVM configuration contained exactly AArch64 and X86. TestParser passed uncached on each native architecture. The earlier compiler integration passed all 871 selected Nogo targets (one cached result); those tests were not rerun on Bazel 9. Ordinary C binaries used GNU libc on both architectures. Static syscallbench ran all three modes on AMD64; its constraint excludes ARM64.\n\nThe fork-only packaging follow-up 50c1f8f6a lets a bare downstream Bazel module select exactly @kernel_dep//tools/bazeldefs:static.bzl for fsstress. All ten gVisor policy tags remain, with no consumer-supplied overrides. Stock 588e6f343 exits 7 at Gazelle; the corrected query exits 0, and the wrong-root load control exits 7. This qualifies loading and label selection only, not downstream compilation. The earlier root-workspace archives and AMD64 file-creation result remain separate.",
+      "updatedAt": "2026-11-05T18:31:46.488951Z",
       "head": "a385bd2b0155b82faf4fc6a0c195a153ad57550c",
       "evidence": [
         {
@@ -4974,6 +4974,14 @@
         {
           "label": "Sentry inputs on one AMD64 worker: 12 target compiles, four links, correct vDSOs and signal-handler bytes, missing Go offsets",
           "url": "https://github.com/tamird/gvisor/actions/runs/42080092292/artifacts/13439929508"
+        },
+        {
+          "label": "Both ordinary runtime binaries built for AMD64 and ARM64 with default LLVM; matching offsets and stamped runsc startup",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42082145768/artifacts/13443015162"
+        },
+        {
+          "label": "Fork compiler default with the corrected ELF offset generator",
+          "url": "https://github.com/tamird/gvisor/commit/8169ff661"
         }
       ],
       "refinement": {
@@ -4995,9 +5003,9 @@
       "followup": {
         "owner": "Compiler integration",
         "sourceHead": "a385bd2b0155b82faf4fc6a0c195a153ad57550c",
-        "disposition": "Released LLVM cross-build verified; qualify the production compiler path separately",
-        "observedAt": "2026-11-05T18:04:53.570927Z",
-        "nextAction": "Restore the missing systrap sysmsg offsets for both architectures, using the existing #16516 generator proposal or a verified correction to the retained script. Match every generated offset to its linked symbol before building //runsc/cmd/sentry:gvisor_sentry, which consumes the vDSO and stub. Qualify //runsc:runsc separately as part of the fork-only compiler-default experiment ce2fe79f3. The ordinary lane can use the released compiler while keeping master’s NVIDIA parser sources and TLDK unchanged. Removing the two builder cross-compilers comes after switching the default.\n\nThe combined fork a385bd2b0 also changes the source used to build the NVIDIA parser. For that version, qualify the first published LLVM release containing 17f6a3008 (0.8.26 still enables nine backends); retain the 6.18 Linux-header setting and its required configuration support. The inventory landed in #16249. The classifier #15146 remains open with passing internal checks. For the combined TLDK path, #15153 was approved and imported; its internal checks failed without a public diagnostic. A maintainer can inspect those results. The already reviewed musl/VFIO successor follows #15153. Neither PR is a prerequisite for the ordinary compressor cross-build.",
+        "disposition": "Ordinary split runtime cross-build verified with source-default LLVM",
+        "observedAt": "2026-11-05T18:31:46.488951Z",
+        "nextAction": "Qualify a native systrap guest with the built runsc, its matching Sentry and required companion files. The two --version calls establish CLI startup only. The ordinary compiler proposal can proceed with the native vDSO, sysmsg and #16516 offset rules while keeping the existing NVIDIA parser and TLDK sources. Remove the builder cross-compilers after the default switch.\n\nThe combined fork a385bd2b0 also changes the source used to build the NVIDIA parser. For that version, qualify the first published LLVM release containing 17f6a3008 (0.8.26 still enables nine backends); retain the 6.18 Linux-header setting and its required configuration support. The inventory landed in #16249. The classifier #15146 remains open with passing internal checks. For the combined TLDK path, #15153 was approved and imported; its internal checks failed without a public diagnostic. A maintainer can inspect those results. The already reviewed musl/VFIO successor follows #15153. Neither PR is a prerequisite for the ordinary runtime cross-build.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
@@ -5022,7 +5030,9 @@
           "https://github.com/google/gvisor/pull/15153",
           "https://github.com/tamird/gvisor/actions/runs/42079033262/artifacts/13439813341",
           "https://github.com/tamird/gvisor/commit/ce2fe79f3",
-          "https://github.com/tamird/gvisor/actions/runs/42080092292/artifacts/13439929508"
+          "https://github.com/tamird/gvisor/actions/runs/42080092292/artifacts/13439929508",
+          "https://github.com/tamird/gvisor/actions/runs/42082145768/artifacts/13443015162",
+          "https://github.com/tamird/gvisor/commit/8169ff661"
         ]
       }
     },
@@ -22060,8 +22070,8 @@
       "url": "https://github.com/tamird/gvisor/commit/e7fc3626fce8184c2dd35debe8d413dd989b05ee",
       "group": "bazel",
       "status": "Contributor approved; resource layout complete; awaiting prerequisites",
-      "updatedAt": "2026-10-26T15:34:48.482883+00:00",
-      "summary": "Current foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nRequested resource relocation and equivalent base refresh are complete at e7fc3626fc. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nContributor approved exact1393 for opening after basic-image #16097 and manual-artifact #16051 actually land.\n\nPreserved qualification record:\n\nThe final source and complete shipped notices are independently accepted. Both architecture archives and static binaries, Make rebuild/reload, both owning analyzers and TestTcpdump lo/any pass with five positive records and no skips. Earlier authenticated compiler evidence is reused through unchanged executable identities; the final run makes no fresh compilation claim. Canonical Fetch and the subsequent exact-catalog Verify now pass. Earlier launch visibility and timeout failures remain preserved without a claimed cause. Exact1393 contributor approval remains conditional on the basic-image and manual-artifact prerequisites. This graph does not require the shared gawk/native Go prerequisite.",
+      "updatedAt": "2026-11-05T18:31:46.488951Z",
+      "summary": "The signed Ubuntu Jammy tcpdump has a separate compatibility result: under gVisor it captured on loopback (lo), but failed on any on both AMD64 and ARM64. On AMD64, tcpdump reported that any did not support LINUX_SLL2. The trace recorded PACKET_HDRLEN returning EINVAL on both any and lo, so that error alone does not explain the difference. On native Linux the same AMD64 archive selected LINUX_SLL2 on any and captured packets. These distro results do not change the source-built tcpdump approval below.\n\nCurrent foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nRequested resource relocation and equivalent base refresh are complete at e7fc3626fc. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nContributor approved exact1393 for opening after basic-image #16097 and manual-artifact #16051 actually land.\n\nPreserved qualification record:\n\nThe final source and complete shipped notices are independently accepted. Both architecture archives and static binaries, Make rebuild/reload, both owning analyzers and TestTcpdump lo/any pass with five positive records and no skips. Earlier authenticated compiler evidence is reused through unchanged executable identities; the final run makes no fresh compilation claim. Canonical Fetch and the subsequent exact-catalog Verify now pass. Earlier launch visibility and timeout failures remain preserved without a claimed cause. Exact1393 contributor approval remains conditional on the basic-image and manual-artifact prerequisites. This graph does not require the shared gawk/native Go prerequisite.",
       "links": [
         {
           "label": "Final image source and notices",
@@ -22082,6 +22092,22 @@
         {
           "label": "Published resource-layout refinement",
           "url": "https://github.com/tamird/gvisor/commit/e7fc3626fce8184c2dd35debe8d413dd989b05ee"
+        },
+        {
+          "label": "AMD64 gVisor syscall trace: Jammy tcpdump on any and lo",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42080245869/job/127431087419"
+        },
+        {
+          "label": "Native Linux control with the same AMD64 archive: capture on any",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42074007243/job/127409209114"
+        },
+        {
+          "label": "AMD64 original Jammy runtime: TestTcpdump/lo passed, TestTcpdump/any failed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42064992797/job/127381140186"
+        },
+        {
+          "label": "ARM64 original Jammy runtime: TestTcpdump/lo passed, TestTcpdump/any failed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42064992797/job/127381140487"
         }
       ],
       "followup": {
@@ -73902,5 +73928,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T18:04:53.570927Z"
+  "updatedAt": "2026-11-05T18:31:46.488951Z"
 }
