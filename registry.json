@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T20:06:26.868772Z",
+    "updatedAt": "2026-11-05T20:18:04.949703Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -51788,12 +51788,12 @@
       "group": "bazel",
       "repo": "google/gvisor",
       "ref": "review/syscall-test-native-setup",
-      "head": "9771751fff91a8c1cfaa92268967e4a1bb9a8e0f",
+      "head": "b0b2a33254ea8cc25320a078fba8d3e1852fad61",
       "url": "https://github.com/google/gvisor/pull/17049",
       "title": "Start syscall tests without Bash",
       "status": "open",
-      "updatedAt": "2026-11-05T16:41:13.307421Z",
-      "summary": "A syscall test fails before the test runner starts on a worker without /bin/bash. Each test variant generates a Bash script to prepare its output directory and put the test executable after any runner flags.",
+      "updatedAt": "2026-11-05T20:18:04.949703Z",
+      "summary": "A syscall test fails before the test runner starts on a worker without /bin/bash. Each test variant generates a Bash script to prepare its output directory and put the test executable after any runner flags. Public lint on the earlier head rejected the C++ system_error header and Starlark spacing. The published amendment uses the existing filesystem helpers to create the output directory and grant access without clearing special permission bits. All four native AMD64 cases, both supported umasks, sticky/setgid permissions, regular-file rejection, and the three affected lint checks passed on the fork.",
       "evidence": [
         {
           "label": "Native ARM64 FileRead, runner argument and directory permissions on the standalone commit",
@@ -51806,6 +51806,18 @@
         {
           "label": "AMD64 and ARM64 builds and native cases on the earlier musl integration",
           "url": "https://github.com/tamird/gvisor/actions/runs/41303505464/artifacts/13083255957"
+        },
+        {
+          "label": "Published PR: C++ header and Starlark formatting failures",
+          "url": "https://github.com/google/gvisor/actions/runs/42065986282"
+        },
+        {
+          "label": "Fork amendment using the test filesystem helpers",
+          "url": "https://github.com/tamird/gvisor/commit/b0b2a33254ea8cc25320a078fba8d3e1852fad61"
+        },
+        {
+          "label": "Four uncached native cases, exact file and directory permissions, and public-source lint",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42099523815/artifacts/13449273904"
         }
       ],
       "settledReviews": [
@@ -51817,6 +51829,16 @@
           "outcome": "approved",
           "at": "2026-11-05T16:41:13.307421Z",
           "note": "Published as #17049.",
+          "postedURL": "https://github.com/google/gvisor/pull/17049"
+        },
+        {
+          "kind": "amendment",
+          "head": "b0b2a33254ea8cc25320a078fba8d3e1852fad61",
+          "url": "https://github.com/tamird/gvisor/commit/b0b2a33254ea8cc25320a078fba8d3e1852fad61",
+          "title": "Start syscall tests without Bash",
+          "outcome": "approved",
+          "at": "2026-11-05T20:18:04.949703Z",
+          "note": "Published the contributor-approved lint amendment.",
           "postedURL": "https://github.com/google/gvisor/pull/17049"
         }
       ]
