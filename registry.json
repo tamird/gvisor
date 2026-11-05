@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T09:28:02.581262+00:00",
+    "updatedAt": "2026-11-05T09:34:50.317618+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41632,8 +41632,8 @@
       "url": "https://github.com/google/gvisor/pull/16472",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
-      "summary": "Buffering reduced cold kernel load for the 12.2 MiB checkpoint. Across 72 paired comparisons on small Nginx checkpoints, buffering reached the first verified HTTP response sooner in 33 pairs. All 216 restores served the expected bytes.",
+      "updatedAt": "2026-11-05T09:34:50.317618+00:00",
+      "summary": "Buffering reduced cold kernel load for the 12.2 MiB checkpoint. Across 72 paired comparisons on small Nginx checkpoints, buffering reached the first verified HTTP response sooner in 33 pairs. All 216 restores served the expected bytes. Both comparisons used uncompressed checkpoints and the legacy wire decoder. The default graph decoder reads each entire graph frame into memory. Its cold and warm results are still open.",
       "evidence": [
         {
           "label": "Proposed reply to the readahead discussion",
@@ -41654,6 +41654,10 @@
         {
           "label": "Posted review",
           "url": "https://github.com/google/gvisor/pull/16472#issuecomment-6581373723"
+        },
+        {
+          "label": "Graph decoder reads the complete frame before decoding objects",
+          "url": "https://github.com/google/gvisor/blob/90d4e2253/pkg/state/graph_decode_callbacks_unsafe.go#L414-L440"
         }
       ],
       "settledReviews": [
@@ -41894,8 +41898,8 @@
       "url": "https://github.com/google/gvisor/issues/16742",
       "group": "runtime",
       "status": "open",
-      "summary": "The issue author has an IPv4 TTL fix, and another contributor offered to send it with a concurrent regression. Offer them a two-line change inside DeepCopyForForwarding. Reading header lengths from packet metadata preserves the original header storage while the forwarded packet keeps its writable copy.",
-      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
+      "summary": "We proposed preserving the source header in DeepCopyForForwarding. A second contributor independently verified the change and reported that the IPv4 and stack tests passed, including under the race detector.",
+      "updatedAt": "2026-11-05T09:34:50.317618+00:00",
       "evidence": [
         {
           "label": "Original TTL report",
@@ -41916,6 +41920,10 @@
         {
           "label": "Posted reply",
           "url": "https://github.com/google/gvisor/issues/16742#issuecomment-6581368835"
+        },
+        {
+          "label": "Independent verification from the contributor offering the fix",
+          "url": "https://github.com/google/gvisor/issues/16742#issuecomment-6653812487"
         }
       ],
       "settledReviews": [
@@ -67609,12 +67617,16 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-05T09:18:41.504053+00:00",
-      "summary": "The AMD64 distroless worker built 229 of 231 runsc targets. Two targets need the secfuzz generator fixed in #16604. The ARM64 run stopped during dependency fetching before configuring a target. Both workers previously built all 249 outstanding TCP/IP targets and ran the six faketime cases and Nogo. The nine-program release started its installed Sentry on both architectures.",
+      "updatedAt": "2026-11-05T09:34:50.317618+00:00",
+      "summary": "The AMD64 distroless worker built all 231 current runsc targets across two revisions. The first run built 229. Applying the secfuzz generator from #16604 built the two remaining targets. The original ARM64 run could not fetch LLVM’s extra toolchain binaries and configured zero targets. Both workers previously built all 249 TCP/IP targets, ran six faketime tests and Nogo, and started the Sentry from the nine-program release.",
       "findings": [
         {
-          "text": "The 237 runsc targets from the original build ledger map to 231 current targets. On AMD64, both failed actions invoked secfuzz_covermeup, once for each target configuration. The artifact verifies the ELF bytes of runsc and the boot test binary. The three sidecar links also succeeded. Their SHA-256 digests and sizes match the AMD64 ELFs inspected in the nine-program release. The new reader rejected the direct clang++ command and did not reread those three binaries. ARM64 hit a separate repository fetch failure. This run built test binaries without running them.",
+          "text": "The 237 original runsc targets map to 231 current targets. On AMD64, 229 built on c43bcb023. With #16604 applied, Bazel built the two remaining targets, filter_fuzz_test and its Nogo wrapper. Both target configurations ran the declared coverage generator remotely. The linked test binary was a static 22,282,400-byte AMD64 ELF. Neither build ran the tests. The three original sidecar links matched the sizes and digests of the inspected release ELFs. On ARM64, fetching LLVM’s extra-prebuilts repository failed before any targets were configured.",
           "evidence": [
+            {
+              "label": "Two remaining AMD64 targets, generated outputs, linked test ELF and original ARM64 fetch diagnostic",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42002779916/artifacts/13403018303"
+            },
             {
               "label": "Per-architecture Bazel results, output checks and original target mapping",
               "url": "https://github.com/tamird/gvisor/actions/runs/41996779602/artifacts/13402650978"
@@ -69765,7 +69777,7 @@
           ]
         }
       ],
-      "nextStep": "Check the two AMD64 failures with #16604. Resolve the ARM64 fetch failure and update the sidecar verifier to recognize the declared clang++ link. Keep the 184 remaining original Sentry Go link outputs recorded as action evidence until their ELF bytes can be verified. Track adoption of hermetic-llvm #908 and #909 and the SDK executable in rules_go #4772. Before retrying the file-empty worker, confirm the deployed executor contains BuildBuddy #14022. The #15146 license-policy hold is separate.",
+      "nextStep": "Check the LLVM extra-prebuilts download on the native ARM64 worker before building its runsc targets. Teach the sidecar verifier to accept the declared clang++ link. Keep the 184 remaining original Sentry Go link outputs recorded as action evidence until their ELF bytes can be verified. Track adoption of hermetic-llvm #908 and #909 and the SDK executable in rules_go #4772. Before retrying the file-empty worker, confirm the deployed executor contains BuildBuddy #14022. The #15146 license-policy hold is separate.",
       "evidence": [
         {
           "label": "Fresh SDK builds, native test events and XML counts on both workers",
@@ -72533,5 +72545,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T09:28:02.581262+00:00"
+  "updatedAt": "2026-11-05T09:34:50.317618+00:00"
 }
