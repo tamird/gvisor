@@ -1,35 +1,93 @@
-name: CI
-
-"on":
+name: Check finite application-limited Eifel recovery
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/eifel-finite-two-native]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  native:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 80
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
-          name: runsc
-          path: bin/
+        fetch-depth: 5
+        persist-credentials: false
+    - name: Bind the two sources, existing report helpers and native Bazel
+      timeout-minutes: 7
+      shell: bash
+      run: |
+        set -euo pipefail
+        umask 077
+        root="$RUNNER_TEMP/eifel-finite-flight"
+        mkdir -p "$root"/{bin,out,tmp}
+        for phase in submitted flight_control; do
+          mkdir "$root/out/$phase"
+          printf '{"status":"INCOMPLETE","phase":"bootstrap"}\n' > "$root/out/$phase/result.json"
+        done
+        test "$(git rev-parse HEAD^)" = a10d0b8eb531bd7c87b54ba33644703efcec4f7a
+        test "$(git rev-parse HEAD~2)" = 9696b5abe4e7daeabe17bc832d360ed2946b0266
+        test "$(git rev-parse HEAD~3)" = 36059e7fc549757067a24b8ca5fc35f2b6e6949e
+        test "$(git rev-parse HEAD~4)" = 963e83a9586fe9ea5331bd4e3e30d53d45386d66
+        test "$(git hash-object test/rbe/eifel_finite_receipt.py)" = 3667702037f6d7bac8b7dfc55aa6e2495dba989b
+        cp test/rbe/eifel_finite_receipt.py "$root/"
+        donor=611a6ff017c528dddbd0d2e643aaf23c6ddac488
+        git fetch --quiet --depth=1 https://github.com/tamird/gvisor.git "$donor"
+        test "$(git rev-parse "$donor:test/rbe/qualification_report.py")" = d2e3eedabc2ad911d958aa448fd916aa6835aa86
+        test "$(git rev-parse "$donor:test/rbe/unit_matrix.py")" = d01d9e319084e18ea2928671e417e1b4e86c4954
+        for helper in unit_matrix qualification_report; do git show "$donor:test/rbe/$helper.py" > "$root/$helper.py"; done
+        git switch --detach --quiet 9696b5abe4e7daeabe17bc832d360ed2946b0266
+        test "$(cat .bazelversion)" = 9.3.1
+        curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$root/bin/bazel"
+        echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $root/bin/bazel" | sha256sum -c -
+        chmod 755 "$root/bin/bazel"
+        test "$(env -i HOME="$HOME" PATH="$PATH" "$root/bin/bazel" --version)" = 'bazel 9.3.1'
+        ctl=(env -i HOME="$HOME" PATH="$root/bin:/usr/local/bin:/usr/bin:/bin" USER=runner LANG=C.UTF-8 TMPDIR="$root/tmp" GIT_TERMINAL_PROMPT=0)
+        install_base=$("${ctl[@]}" bazel --ignore_all_rc_files --host_jvm_args=-Xmx3g info install_base)
+        host_ns=$(readlink /proc/self/ns/net)
+        "${ctl[@]}" "$install_base/linux-sandbox" -n -- python3 -c '
+        import os, socket, sys
+        assert os.readlink("/proc/self/ns/net") != sys.argv[1]
+        assert all(name == "lo" for _, name in socket.if_nameindex())
+        assert all(line.split()[1] != "00000000" for line in open("/proc/self/net/route").read().splitlines()[1:])
+        ' "$host_ns"
+    - name: Run the same real packet case on both capture assignments
+      timeout-minutes: 70
+      run: |
+        set -eu
+        root="$RUNNER_TEMP/eifel-finite-flight"
+        failed=0
+        for phase in submitted flight_control; do
+          case "$phase" in
+            submitted) source=9696b5abe4e7daeabe17bc832d360ed2946b0266 ;;
+            flight_control) source=a10d0b8eb531bd7c87b54ba33644703efcec4f7a ;;
+          esac
+          git switch --quiet --detach "$source"
+          env -i HOME="$HOME" PATH="$root/bin:/usr/local/bin:/usr/bin:/bin" USER=runner LANG=C.UTF-8 TMPDIR="$root/tmp" GIT_TERMINAL_PROMPT=0 \
+            python3 -B "$root/eifel_finite_receipt.py" "$phase" "$source" "$root/out/$phase" || failed=1
+        done
+        exit "$failed"
+    - name: Validate the two bounded original receipts
+      if: always()
+      id: privacy
+      run: |
+        python3 - <<'PYTHON'
+        import json, os, pathlib, re
+        root = pathlib.Path(os.environ["RUNNER_TEMP"], "eifel-finite-flight/out")
+        for phase in ("submitted", "flight_control"):
+            p = root / phase / "result.json"
+            assert not p.is_symlink() and 0 < p.stat().st_size < 100000
+            b = p.read_bytes()
+            assert json.loads(b)["status"] in {"INCOMPLETE", "FAIL", "PASS"}
+            assert not re.search(rb'(?i)authorization\s*[:=]|github_pat_|gh[pousr]_', b)
+        PYTHON
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && steps.privacy.outcome == 'success'
+      with:
+        name: eifel-finite-flight
+        path: |
+          ${{ runner.temp }}/eifel-finite-flight/out/submitted/result.json
+          ${{ runner.temp }}/eifel-finite-flight/out/flight_control/result.json
+        if-no-files-found: error
+        retention-days: 14
