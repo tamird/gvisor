@@ -1167,6 +1167,19 @@ func TestSpuriousRTOResumesWithUnsentData(t *testing.T) {
 // the flight was really lost, duplicate ACKs repair it after a spurious
 // timeout, without waiting for another timeout.
 func TestSpuriousRTOFastRetransmit(t *testing.T) {
+	testSpuriousRTOFastRetransmit(t, maxPayload)
+}
+
+// TestSpuriousRTOPartialFirstACK delivers the same six segments as
+// TestSpuriousRTOFastRetransmit. Only the first ACK changes: it covers
+// half the first segment. The next ACK covers the first two in full,
+// before the peer reports that it has segments 4 through 6.
+func TestSpuriousRTOPartialFirstACK(t *testing.T) {
+	testSpuriousRTOFastRetransmit(t, maxPayload/2)
+}
+
+func testSpuriousRTOFastRetransmit(t *testing.T, firstACK int) {
+	t.Helper()
 	clock := faketime.NewManualClock()
 	c := context.NewWithOpts(t, context.Options{EnableV4: true, MTU: mtu, Clock: clock})
 	defer c.Cleanup()
@@ -1179,13 +1192,14 @@ func TestSpuriousRTOFastRetransmit(t *testing.T) {
 
 	// Segment 3 was lost. The peer acknowledges segments 1 and 2, then
 	// reports segments 4 to 6 with three duplicate ACKs.
-	ack(maxPayload)
+	ack(firstACK)
 	ack(2 * maxPayload)
 	c.CheckNoPacket("segments 3 to 6 were sent again after a spurious timeout")
 	start := c.IRS.Add(1 + 3*maxPayload)
 	for end := 4; end <= numPackets; end++ {
 		ack(2*maxPayload, header.SACKBlock{Start: start, End: c.IRS.Add(1 + seqnum.Size(end*maxPayload))})
 	}
+	t.Log("Reported all three SACKs; waiting for repair of segment 3")
 	c.ReceiveAndCheckPacketWithOptions(data, 2*maxPayload, maxPayload, tsOptionSize)
 
 	// The counter is incremented after the packet is sent.
