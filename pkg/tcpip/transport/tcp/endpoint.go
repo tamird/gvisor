@@ -614,10 +614,14 @@ type Endpoint struct {
 	// is yet to send a FIN but on our end the socket is fully closed i.e. endpoint.Close()
 	// has been called on the socket. This timer is not started for sockets that
 	// are waiting for a peer FIN but are not closed.
+	//
+	// +checklocks:mu
 	finWait2Timer tcpip.Timer `state:"nosave"`
 
 	// timeWaitTimer is used to reap a socket once a socket has been in TIME-WAIT state
 	// for tcp.DefaultTCPTimeWaitTimeout seconds.
+	//
+	// +checklocks:mu
 	timeWaitTimer tcpip.Timer `state:"nosave"`
 
 	// listenCtx is used by listening endpoints to store state used while listening for
