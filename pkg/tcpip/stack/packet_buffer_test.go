@@ -899,3 +899,140 @@ func BenchmarkPacketDataReadToHeaderless(b *testing.B) {
 		})
 	}
 }
+
+// packetReadFixture retains the parsed headers in the first view, as an inbound
+// TCP packet does. Merge preserves each independently allocated view boundary.
+func packetReadFixture(tb testing.TB, size, views, headers int) (*PacketBuffer, []byte, []byte) {
+	tb.Helper()
+	data := make([]byte, size)
+	for i := range data {
+		data[i] = byte((i*31 + 7) % 251)
+	}
+	head := make([]byte, headers)
+	for i := range head {
+		head[i] = byte(0xd0 + i%31)
+	}
+	raw := append(append([]byte(nil), head...), data...)
+	var buf buffer.Buffer
+	start := 0
+	for i := 0; i < views; i++ {
+		end := headers + size*(i+1)/views
+		part := buffer.MakeWithData(raw[start:end])
+		buf.Merge(&part)
+		start = end
+	}
+	pk := NewPacketBuffer(PacketBufferOptions{Payload: buf})
+	if headers != 0 {
+		for _, h := range []struct {
+			header PacketHeader
+			size   int
+		}{
+			{pk.LinkHeader(), 14},
+			{pk.NetworkHeader(), 20},
+			{pk.TransportHeader(), 20},
+		} {
+			if _, ok := h.header.Consume(h.size); !ok {
+				tb.Fatal("header Consume failed")
+			}
+		}
+	}
+	count := 0
+	list := pk.buf.AsViewList()
+	for v := list.Front(); v != nil; v = v.Next() {
+		count++
+	}
+	if count != views || pk.dataOffset() != headers || pk.Data().Size() != size {
+		tb.Fatalf("fixture: views=%d offset=%d size=%d; want %d/%d/%d", count, pk.dataOffset(), pk.Data().Size(), views, headers, size)
+	}
+	return pk, head, data
+}
+
+func TestPacketReadQualification(t *testing.T) {
+	for _, size := range []int{1460, 65536} {
+		for _, views := range []int{1, 4, 16} {
+			for _, headers := range []int{0, 54} {
+				for _, read := range []int{64, size} {
+					for _, peek := range []bool{false, true} {
+						name := fmt.Sprintf("size=%d/views=%d/headers=%d/read=%d/peek=%t", size, views, headers, read, peek)
+						t.Run(name, func(t *testing.T) {
+							pk, head, data := packetReadFixture(t, size, views, headers)
+							defer pk.DecRef()
+							dst := make([]byte, read)
+							writer := tcpip.SliceWriter(dst)
+							n, err := pk.Data().ReadTo(&writer, peek)
+							var wantErr error
+							if read < size {
+								wantErr = io.ErrShortWrite
+							}
+							if n != read || err != wantErr || !bytes.Equal(dst, data[:read]) {
+								t.Fatalf("ReadTo: count=%d err=%v; want %d/%v with exact output", n, err, read, wantErr)
+							}
+							removed := read
+							if peek {
+								removed = 0
+							}
+							if got := pk.Data().AsRange().ToSlice(); !bytes.Equal(got, data[removed:]) {
+								t.Fatal("remaining payload differs")
+							}
+							var retained []byte
+							for _, h := range []PacketHeader{pk.LinkHeader(), pk.NetworkHeader(), pk.TransportHeader()} {
+								retained = append(retained, h.Slice()...)
+							}
+							preserved := bytes.Equal(retained, head)
+							if !preserved {
+								t.Fatal("ReadTo changed the parsed headers")
+							}
+							t.Logf("PACKET_READ size=%d views=%d headers=%d read=%d peek=%t payload=true retained_headers=%t", size, views, headers, read, peek, preserved)
+						})
+					}
+				}
+			}
+		}
+	}
+}
+
+func BenchmarkPacketReadQualification(b *testing.B) {
+	for _, size := range []int{1460, 65536} {
+		for _, views := range []int{1, 4, 16} {
+			for _, headers := range []int{0, 54} {
+				for _, read := range []int{64, size} {
+					name := fmt.Sprintf("size=%d/views=%d/headers=%d/read=%d", size, views, headers, read)
+					b.Run(name, func(b *testing.B) {
+						b.StopTimer()
+						template, _, _ := packetReadFixture(b, size, views, headers)
+						defer template.DecRef()
+						dst := make([]byte, read)
+						writer := tcpip.SliceWriter(dst)
+						var packets [1024]*PacketBuffer
+						var wantErr error
+						if read < size {
+							wantErr = io.ErrShortWrite
+						}
+						b.ReportAllocs()
+						b.ResetTimer()
+						for done := 0; done < b.N; {
+							count := min(len(packets), b.N-done)
+							for i := 0; i < count; i++ {
+								packets[i] = template.Clone()
+							}
+							b.StartTimer()
+							for i := 0; i < count; i++ {
+								writer = dst
+								n, err := packets[i].Data().ReadTo(&writer, false)
+								if n != read || err != wantErr {
+									b.Fatalf("ReadTo=(%d,%v), want (%d,%v)", n, err, read, wantErr)
+								}
+							}
+							b.StopTimer()
+							for i := 0; i < count; i++ {
+								packets[i].DecRef()
+								packets[i] = nil
+							}
+							done += count
+						}
+					})
+				}
+			}
+		}
+	}
+}

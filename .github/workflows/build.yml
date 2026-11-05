@@ -1,35 +1,76 @@
-name: CI
-
-"on":
+name: Measure packet partial-read descriptor costs
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/packet-header-read-compare]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  benchmark:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      FIXTURE: ${{ github.sha }}
+      PRODUCT: b35c34fa430bd3217fbfe85313034ca84b3dc200
+      BASE: 46571d17eb49c7b983ffeb32f3365d2a058983b9
+      VERIFIER: 6b3fe9ab6c03facafe6340c85f8d60ca3591566b
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 4
+          persist-credentials: false
+      - name: Benchmark both packet read implementations on the same Linux CPU
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/results"
+          printf '{"status":"INCOMPLETE","phase":"bootstrap"}\n' > "$RUNNER_TEMP/results/verdict.json"
+          test "$(git rev-parse HEAD)" = "$FIXTURE"
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD^^)" = "$BASE"
+          cp .github/qualification/window_benchmark.py "$RUNNER_TEMP"
+          git fetch --quiet --depth=1 origin "$VERIFIER"
+          for helper in unit_matrix qualification_report; do
+            git show "$VERIFIER:test/rbe/$helper.py" > "$RUNNER_TEMP/$helper.py"
+          done
+          if ! command -v bazelisk; then
+            GOBIN="$RUNNER_TEMP" go install github.com/bazelbuild/bazelisk@v1.30.0
+            export PATH="$RUNNER_TEMP:$PATH"
+          fi
+          test "$(bazelisk --version)" = "bazel $(cat .bazelversion)"
+          buffer_exit=0
+          bazelisk test -c opt --jobs=4 --remote_cache= --remote_executor= --nocache_test_results --test_arg=-test.v //pkg/buffer:buffer_test || buffer_exit=$?
+          printf '//pkg/buffer:buffer_test %d\n' "$buffer_exit" > "$RUNNER_TEMP/results/buffer-exit.txt"
+          if test -s bazel-testlogs/pkg/buffer/buffer_test/test.xml; then
+            cp bazel-testlogs/pkg/buffer/buffer_test/test.xml "$RUNNER_TEMP/results/buffer.xml"
+          fi
+          test "$buffer_exit" -eq 0
+          test -s "$RUNNER_TEMP/results/buffer.xml"
+          grep -E -- '--- PASS: TestTakePrefix(/| )' bazel-testlogs/pkg/buffer/buffer_test/test.log > "$RUNNER_TEMP/results/buffer-cases.txt"
+          test "$(wc -l < "$RUNNER_TEMP/results/buffer-cases.txt")" -eq 7
+          python3 "$RUNNER_TEMP/window_benchmark.py"
+      - name: Calculate benchstat for the 16 observed TestRunner attempts
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/results"
+          go run golang.org/x/perf/cmd/benchstat@v0.0.0-20261009192801-be2c69fb417e author prefix | tee benchstat.txt
+          for metric in sec/op B/op allocs/op; do grep -Fq "$metric" benchstat.txt; done
+      - name: Check the bounded original benchmark evidence
+        id: scan
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, re
+          root = pathlib.Path(os.environ["RUNNER_TEMP"]) / "results"
+          for path in root.iterdir():
+              assert path.is_file() and not path.is_symlink()
+              assert re.fullmatch(r"verdict\.json|benchstat\.txt|buffer-(cases|exit)\.txt|buffer\.xml|author|prefix|pair-[1-8]-(author|prefix)\.(log|xml)", path.name), path
+              data = path.read_bytes()
+              assert len(data) < 1024**2
+              assert not re.search(rb"gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|BEGIN (RSA |OPENSSH )?PRIVATE KEY|(?i:authorization|x-buildbuddy-api-key)\s*[:=]", data)
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.scan.outcome == 'success'
+        with:
+          name: packet-partial-read-benchstat
+          path: ${{ runner.temp }}/results/
+          if-no-files-found: error
