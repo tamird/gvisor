@@ -16,6 +16,8 @@ package eventfd
 
 import (
 	"math"
+	"os"
+	"os/exec"
 	"testing"
 
 	"golang.org/x/sys/unix"
@@ -157,5 +159,52 @@ func testHostFDCounter(t *testing.T, count uint64, semaphore bool) {
 		if _, err := unix.Write(fd, buf[:]); err != unix.EAGAIN {
 			t.Fatalf("write to full host semaphore: got %v, want EAGAIN", err)
 		}
+	}
+}
+
+func TestNewFromHostRegistrationFailure(t *testing.T) {
+	// The descriptor limit and the notifier's first registration are process-wide.
+	const probe = "GVISOR_EVENTFD_REGISTRATION_FAILURE"
+	if _, ok := os.LookupEnv(probe); !ok {
+		cmd := exec.Command(os.Args[0], "-test.run=^TestNewFromHostRegistrationFailure$")
+		cmd.Env = append(os.Environ(), probe+"=1")
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("%v\n%s", err, out)
+		}
+		return
+	}
+
+	ctx := contexttest.Context(t)
+	var vfsObj vfs.VirtualFilesystem
+	if err := vfsObj.Init(ctx); err != nil {
+		t.Fatal(err)
+	}
+	defer vfsObj.Release(ctx)
+	hostfd, err := unix.Eventfd(0, unix.EFD_CLOEXEC)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unix.Close(hostfd)
+
+	want := vfsObj.NumFiles()
+	var limit unix.Rlimit
+	if err := unix.Getrlimit(unix.RLIMIT_NOFILE, &limit); err != nil {
+		t.Fatal(err)
+	}
+	if err := unix.Setrlimit(unix.RLIMIT_NOFILE, &unix.Rlimit{Max: limit.Max}); err != nil {
+		t.Fatal(err)
+	}
+	fd, err := NewFromHost(ctx, &vfsObj, hostfd, linux.O_RDWR)
+	if err := unix.Setrlimit(unix.RLIMIT_NOFILE, &limit); err != nil {
+		t.Fatal(err)
+	}
+	if fd != nil || err != unix.EMFILE {
+		t.Fatalf("NewFromHost = (%v, %v), want (nil, EMFILE)", fd, err)
+	}
+	if _, err := unix.FcntlInt(uintptr(hostfd), unix.F_GETFD, 0); err != nil {
+		t.Errorf("caller lost host fd after failed import: %v", err)
+	}
+	if got := vfsObj.NumFiles(); got != want {
+		t.Errorf("live files after failed import = %d, want %d", got, want)
 	}
 }
