@@ -1,0 +1,140 @@
+"""Use the maintained guest and reporter; publish only the two restore cases."""
+
+from datetime import datetime, timezone
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+from zipfile import ZipFile
+
+sys.path.insert(0, str(Path("test/rbe").resolve()))
+import qualification_report as report
+
+
+TMP = Path(os.environ["RUNNER_TEMP"])
+OUT = TMP / "restore-vm-verdict.json"
+PACKAGE = ".github/qualification/restore-limit-vm"
+PRODUCT = "71b5044a65ffac66a4d41cd289788d7b9ad5ea22"
+GUEST = "38745c527784376e0b5d915fe5ebd85e1d1385fd"
+SOURCE = os.environ["GITHUB_SHA"]
+CASES = ["container/TestRestoreCgroupMemoryLimit/" + name for name in ("createAtLimit", "lowerBeforeRestore")]
+
+
+def now():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def git(*args):
+    return subprocess.check_output(["git", *args], stderr=subprocess.DEVNULL)
+
+
+def save(result):
+    OUT.write_text(json.dumps(result, indent=2) + "\n")
+
+
+def run(stage, result):
+    assert stage == "restore" and result["product"] == PRODUCT
+    assert git("rev-parse", "HEAD^").decode().strip() == GUEST and git("rev-parse", "HEAD").decode().strip() == SOURCE
+    directory = TMP / ("restore-limit-" + stage)
+    directory.mkdir()
+    row = result["stages"][stage] = {"status": "INCOMPLETE"}
+    save(result)
+    target = f"//{PACKAGE}:{stage}"
+    required = CASES
+    (directory / "owners").write_text(target + "\n")
+    report.write_json(directory / "required.json", {target: required})
+    raw = directory / "raw.jsonl"
+    args = ["test", "--config=x86_64", "--jobs=3", "--local_test_jobs=1",
+            "--strategy=TestRunner=local", "--remote_executor=", "--remote_cache=", "--bes_backend=",
+            "--test_tag_filters=", "--build_tag_filters=", "--build_tests_only=false",
+            "--nocache_test_results", "--flaky_test_attempts=1", "--zip_undeclared_test_outputs",
+            "--test_timeout=900", "--build_event_json_file_path_conversion=false",
+            f"--build_event_json_file={raw}", target]
+    (directory / "executed_arguments").write_text("\n".join(args) + "\n")
+    (directory / "commit_file").write_bytes(git("cat-file", "commit", SOURCE))
+    (directory / "source_before").write_bytes(git("status", "--porcelain", "--untracked-files=no"))
+    bazel = TMP / "restore-tools/bazel"
+    assert subprocess.check_output([bazel, "--version"], text=True).strip() == "bazel 8.8.1"
+    with (directory / "private-console").open("wb") as console:
+        original = subprocess.run(["timeout", "-k", "20", "2040", bazel, "--nosystem_rc", "--nohome_rc", *args],
+                                  stdout=console, stderr=subprocess.STDOUT)
+    row.update(native_exit=original.returncode, finished_utc=now())
+    save(result)
+    (directory / "native_exit").write_text(str(original.returncode))
+    (directory / "source_after").write_bytes(git("status", "--porcelain", "--untracked-files=no"))
+    (directory / "final_head").write_bytes(git("rev-parse", "HEAD"))
+    events = directory / "events.jsonl"
+    captured = report.capture(raw, events, Path("bazel-out"), directory / "reports", expected_kind="test")
+    (directory / "capture_exit").write_text(str(int(bool(captured["errors"]))))
+    keys = "executed_arguments commit_file source_before source_after native_exit capture_exit final_head".split()
+    report.write_json(directory / "context.json", {**{k:k for k in keys}, "expected_source":SOURCE,
+                      "command_kind":"test", "execution_finished_at":row["finished_utc"]})
+    v = report.verdict(events, report.manifest_path(events), directory / "context.json", directory / "owners",
+                       case_manifest=directory / "required.json")
+    row.update(qualified_status=v["status"], counts=v["case_counts"], missing_owners=len(v["missing"]),
+               capture_errors=len(captured["errors"]), verdict_errors=len(v["errors"]), verdict_failures=len(v["failures"]),
+               error_classes=[label for label, pattern in {"local_file":"Expected a local report URI",
+                   "capture_bound":"is not in the subpath|retention bounds|No such file|Expected one original",
+                   "source":"dirty|source HEAD", "zero_cases":"no executed named cases",
+                   "xml":"XML declares|Unexpected XML", "owner":"Expected target|coverage is incomplete",
+               }.items() if any(re.search(pattern, str(e), re.I) for e in [*captured["errors"], *v["errors"]])],
+               nonpassing_required=[r["name"] for r in v["unpassed_required_cases"] if r["name"] in required])
+    row["action_failures"] = []
+    for line in raw.open():
+        event = json.loads(line)
+        if "action" in event and not event["action"].get("success", False):
+            action = event["action"]
+            identifier = event.get("id", {}).get("actionCompleted", {})
+            label, mnemonic = identifier.get("label", ""), action.get("type", "")
+            if re.fullmatch(r"[@+A-Za-z0-9_./:~=-]{1,240}", label) and re.fullmatch(r"[A-Za-z0-9_]{1,80}", mnemonic):
+                row["action_failures"].append([label, mnemonic, action.get("exitCode")])
+        if len(row["action_failures"]) == 4:
+            break
+    save(result)
+    (attempt,) = v["executed"]
+    row["fresh_local"] = (attempt["owner"]["label"] == target and not attempt["cached_locally"]
+                          and not attempt["execution_info"].get("cachedRemotely")
+                          and attempt["execution_info"].get("strategy") == "local")
+    logs = Path("bazel-testlogs", PACKAGE, stage)
+    log = (logs / "test.log").read_text(errors="replace")
+    row["delegation_and_guest_exit"] = "GVISOR_RESTORE_DELEGATED_MEMORY=5368709120" in log and "phase=guest_status_read status=0" in log
+    row["xml"] = report.file_record(logs / "test.xml")
+    direct = report.xml_cases(logs / "test.xml", frozenset(required))
+    row["original_xml"] = {k:direct[k] for k in ("passed", "failed", "skipped", "required_passed")}
+    row["log"] = report.file_record(logs / "test.log")
+    row["diagnostic_classes"] = [name for name, expression in {
+        "oom_kill":r"^oom_kill [1-9]\d*$", "permission":r"permission denied|operation not permitted",
+        "restore":r"restoring container under", "fixture":r"FindFile\(test_app\)|creating container:",
+    }.items() if re.search(expression, log, re.M | re.I)]
+    row["oom_kill_counts"] = [int(n) for n in re.findall(r"^\s*oom_kill ([0-9]{1,9})\s*$", log, re.M)[:8]]
+    row["test_error_locations"] = sorted(set(re.findall(r"\b(container_save_restore_test\.go:\d{1,7})", log)))[:8]
+    save(result)
+    if stage == "restore":
+        with ZipFile(logs / "test.outputs/outputs.zip") as bundle:
+            observed = bundle.read("guest/outputs/capsule-sha256").decode().strip()
+            elf = bundle.read("guest/outputs/owner-elf-sha256").decode().strip()
+        expected = report.file_record(Path(PACKAGE, "capsule.tar"))["sha256"]
+        row["capsule_verified"] = (expected == observed and re.fullmatch(r"[0-9a-f]{64}", elf) is not None
+                                   and elf == (TMP/"restore-build/elf.sha256").read_text().strip())
+        row["capsule_sha256"] = expected
+    if (v["status"] == "PASS" and row["fresh_local"] and not v["skips"]
+            and row["delegation_and_guest_exit"] and row.get("capsule_verified", True)):
+        row["status"] = "PASS"
+    elif original.returncode:
+        row["status"] = "FAIL"
+    row["verified_utc"] = now()
+
+
+if __name__ == "__main__":
+    stage = sys.argv[1]
+    state = json.loads(OUT.read_text())
+    try:
+        run(stage, state)
+    except Exception as error:
+        row = state["stages"].setdefault(stage, {})
+        row.update(status="FAIL" if row.get("native_exit") not in (None, 0) else "INCOMPLETE", reporter_error=type(error).__name__)
+    state["status"] = state["stages"][stage]["status"] if stage == "restore" else "INCOMPLETE"
+    save(state)
+    sys.exit(state["stages"][stage]["status"] != "PASS")
