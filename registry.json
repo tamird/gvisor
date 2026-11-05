@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T22:33:00.052693Z",
+    "updatedAt": "2026-11-05T22:58:52.507429Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4841,8 +4841,8 @@
       "url": "https://github.com/tamird/gvisor/commit/9310f06f9",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "The compiler proposal at 9310f06f9 needs an amendment for two required race builds. On that exact source, ld.lld could not find -lc, -ldl, -lm, -lpthread or -lresolv when linking runsc-race and gvisor_sentry-race for AMD64. Neither executable was built. The request to approve this head is withdrawn.\n\nReplace Coral’s host-installed GCC and target headers with the LLVM toolchains already declared by gVisor. The fork commit has 37 insertions and 1,937 deletions, including four obsolete patches. It changes the compiler and the three freestanding sidecars together so the release links at every step.\n\nThe identical source tree was built as fffadb2bb on one AMD64 Linux worker. Plain bazel build -c opt //:release built nine static AMD64 executables; --config=aarch64 built nine ARM64 executables. Make installed the same bytes for each target. On a separate native ARM64 worker the cross-built runsc, Sentry and prewarmer started a rootless systrap guest. The build uses released LLVM 0.8.24 and master’s existing kernel-header backport.\n\nAn ordinary, dynamically linked C++ syscall test also cross-built on AMD64 and passed all four TCP_NODELAY cases on native ARM64. The earlier full scratch-worker build was on 5388293bd. The stock project catalog check passed on upstream 61a70083c and the compiler integration fffadb2bb: both verified all 220 dependencies against the identical catalog and policy. Removing abseil-cpp from a disposable catalog produced exactly one missing-entry error. This check does not audit every transitive toolchain binary.\n\nThe optional TLDK archive built on 3f0bd3a70 with #15153 added (148 Clang objects). Both plugin executable links then failed: lld could not find static pthread or dl for runsc-plugin-stack and gvisor_sentry_plugin_stack. Neither executable started. The normal release and native guest results above are separate.\n\nThe broad musl transition linked both race executables for AMD64 and ARM64, and the native AMD64 pair booted a guest. The narrower design keeps the public Go target declarations and selects the C library in the Bazel adapter.\n\nThe fork integration at 87fd1b411 built //:release for AMD64 and ARM64 on a shell-free AMD64 remote worker. Each Bazel invocation exited 0. All 18 staged files were static ELFs for the requested architecture. Both stateify actions ran, and the systrap bytes and offsets matched the linked ELF. The verifier expected three old C++ link labels and stopped before invoking Make. Installation and native execution of these particular files still need verification.\n\nWith the draft glibc 2.44 sysroot and LLVM unwinder, the DPDK archive built. Both optional plugin executables then failed to link because the sysroot lacks libresolv.a. The devices opened; there was no executable for the traffic test.",
-      "updatedAt": "2026-11-05T22:33:00.052693Z",
+      "summary": "The compiler proposal at 9310f06f9 needs an amendment for two required race builds. On that exact source, ld.lld could not find -lc, -ldl, -lm, -lpthread or -lresolv when linking runsc-race and gvisor_sentry-race for AMD64. Neither executable was built. The request to approve this head is withdrawn.\n\nReplace Coral’s host-installed GCC and target headers with the LLVM toolchains already declared by gVisor. The fork commit has 37 insertions and 1,937 deletions, including four obsolete patches. It changes the compiler and the three freestanding sidecars together so the release links at every step.\n\nThe identical source tree was built as fffadb2bb on one AMD64 Linux worker. Plain bazel build -c opt //:release built nine static AMD64 executables; --config=aarch64 built nine ARM64 executables. Make installed the same bytes for each target. On a separate native ARM64 worker the cross-built runsc, Sentry and prewarmer started a rootless systrap guest. The build uses released LLVM 0.8.24 and master’s existing kernel-header backport.\n\nAn ordinary, dynamically linked C++ syscall test also cross-built on AMD64 and passed all four TCP_NODELAY cases on native ARM64. The earlier full scratch-worker build was on 5388293bd. The stock project catalog check passed on upstream 61a70083c and the compiler integration fffadb2bb: both verified all 220 dependencies against the identical catalog and policy. Removing abseil-cpp from a disposable catalog produced exactly one missing-entry error. This check does not audit every transitive toolchain binary.\n\nThe optional TLDK archive built on 3f0bd3a70 with #15153 added (148 Clang objects). Both plugin executable links then failed: lld could not find static pthread or dl for runsc-plugin-stack and gvisor_sentry_plugin_stack. Neither executable started. The normal release and native guest results above are separate.\n\nThe broad musl transition linked both race executables for AMD64 and ARM64, and the native AMD64 pair booted a guest. The narrower design keeps the public Go target declarations and selects the C library in the Bazel adapter.\n\nThe fork integration at 87fd1b411 built and installed //:release for AMD64 and ARM64 on a shell-free AMD64 remote worker. Make, its Bazel build and its cquery exited 0 for each target. All 18 installed regular files were static ELFs of the requested architecture, with the exact hashes and sizes from the original build. The installation recorded 614 fresh remote actions and 4,155 cache hits for AMD64, and 582 fresh remote actions and 2,241 cache hits for ARM64; all six sidecar links ran remotely and their output digests matched the installed files. No TestRunner ran.\n\nA separate native ARM64 worker received the same installed CLI, Sentry and prewarmer without rebuilding. The rootless systrap guest printed the expected echo and exited 0, with matching Sentry and prewarmer startup witnesses. The minimal guest omitted optional fdparking; its installed binary was verified separately.\n\nThe first build succeeded before a stale three-owner link check prevented Make. The recovery above completes installation and native guest evidence. Its separate historical-action reader found all six original completed, uncached CppLinks and exit 0, but selected a GetInvocation projection that omits successful action events. That historical BEP/configuration/CAS lookup remains incomplete and caused the outer job to be red; it does not invalidate the independent Make or guest results. This is the composed 87fd1b411 source, including the declared bootstrap, stateify and ELF-extractor changes, not the unamended 9310f06f9 compiler proposal.\n\nWith the draft glibc 2.44 sysroot and LLVM unwinder, the DPDK archive built. Both optional plugin executables then failed to link because the sysroot lacks libresolv.a. The devices opened; there was no executable for the traffic test.",
+      "updatedAt": "2026-11-05T22:56:39.455356Z",
       "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
       "evidence": [
         {
@@ -5128,6 +5128,18 @@
         {
           "label": "Both optional static GNU plugin links fail on libresolv.a",
           "url": "https://github.com/tamird/gvisor/actions/runs/42118568590/artifacts/13459111374"
+        },
+        {
+          "label": "Both Make installations: 18 original ELF byte matches and six fresh remote sidecar links",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42124038703/artifacts/13459748412"
+        },
+        {
+          "label": "Native ARM64 systrap guest using the same installed cross-built files",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42124038703/artifacts/13460685269"
+        },
+        {
+          "label": "GetInvocation top-level events omit successful actions in the paginated projection",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/blob/8e9fa833c/server/build_event_protocol/event_index/event_index.go#L174-L180"
         }
       ],
       "refinement": {
@@ -5161,8 +5173,8 @@
         "owner": "Compiler integration",
         "sourceHead": "9310f06f95b100725450a71fbb896fc8403ec0eb",
         "disposition": "Amend the required race builds before contributor review; normal release and stock catalog remain qualified.",
-        "observedAt": "2026-11-05T22:33:00.052693Z",
-        "nextAction": "Verify the three sidecar owners from the original release actions and run the Make installation against those outputs. Qualify the narrow race binaries and their public analyzers. For optional TLDK, supply glibc’s real resolver archive before retrying the plugin links.",
+        "observedAt": "2026-11-05T22:56:39.455356Z",
+        "nextAction": "Qualify the narrow race binaries and their public analyzers. For optional TLDK, supply glibc’s real resolver archive before retrying the plugin links. Both Make installations and the native ARM64 guest are verified on 87fd1b411; retain the separate incomplete historical API projection without repeating those builds.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
@@ -5220,7 +5232,10 @@
           "https://github.com/tamird/gvisor/actions/runs/42117263417/artifacts/13456983300",
           "https://github.com/tamird/gvisor/actions/runs/42116658926/artifacts/13457576742",
           "https://github.com/tamird/gvisor/actions/runs/42119709559/artifacts/13457819044",
-          "https://github.com/tamird/gvisor/actions/runs/42118568590/artifacts/13459111374"
+          "https://github.com/tamird/gvisor/actions/runs/42118568590/artifacts/13459111374",
+          "https://github.com/tamird/gvisor/actions/runs/42124038703/artifacts/13459748412",
+          "https://github.com/tamird/gvisor/actions/runs/42124038703/artifacts/13460685269",
+          "https://github.com/buildbuddy-io/buildbuddy/blob/8e9fa833c/server/build_event_protocol/event_index/event_index.go#L174-L180"
         ]
       }
     },
@@ -52350,8 +52365,8 @@
       "url": "https://github.com/google/gvisor/pull/17067",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-05T21:05:26.208344Z",
-      "summary": "Published as #17067 at 005743727, the approved dfd4d4774 patch rebased without changes onto da95e9bce. On an AMD64 worker, GNU compiled and linked both target stubs. The two raw blobs matched their ELF sections, and the existing nm-based generator produced all 10 AMD64 and 11 ARM64 offsets with their exact ELF values. The job built both consumers; it ran no tests or guest. #16516 is not a prerequisite for this PR.",
+      "updatedAt": "2026-11-05T22:56:39.455356Z",
+      "summary": "Published as #17067 at 005743727, the approved dfd4d4774 patch rebased without changes onto da95e9bce. On an AMD64 worker, GNU compiled and linked both target stubs. The two raw blobs matched their ELF sections, and the existing nm-based generator produced all 10 AMD64 and 11 ARM64 offsets with their exact ELF values. The job built both consumers; it ran no tests or guest. #16516 is not a prerequisite for this PR.\n\nThe review on the published head reports an implicit allocator and internal toolchain features that do not suit a freestanding stub. Fork amendment 7f6ecfff6 reuses #16522’s freestanding adapter at 244010f9c and disables the x86 medium code model. It has not been applied to the public PR and must wait for #16522 to land. #16516 remains independent.\n\nIn the GNU control, a forced allocator made the published stub fail to link; enabling the named x86 medium-model feature produced a 60-byte .lbss outside .crblob. The amendment built all three sidecars and both stub architectures with those settings. Both raw blobs and all 10 AMD64 / 11 ARM64 offsets matched the published baseline. The configured-option reporter failed after those builds; the initial raw option values were not retained, so its exact comparison failure is unknown. A separate readback ran three successful cqueries and no builds: both the direct wrapper edge and prior filter selected the private producer with allocator None, while an ordinary target retained the forced allocator. The private toolchain has not been tested.",
       "evidence": [
         {
           "label": "GNU ARM64 -O1 versus -O2 cross-build",
@@ -52400,6 +52415,22 @@
         {
           "label": "GNU on AMD64: native AMD64 and cross ARM64 stubs, both blobs and all old-parser offsets",
           "url": "https://github.com/tamird/gvisor/actions/runs/42108422248/artifacts/13451359635"
+        },
+        {
+          "label": "Review feedback on the published source",
+          "url": "https://github.com/google/gvisor/pull/17067#discussion_r4486895273"
+        },
+        {
+          "label": "Tested fork amendment on the #16522 adapter",
+          "url": "https://github.com/tamird/gvisor/commit/7f6ecfff61b465c2ae00d20ee4ebaad09d430519"
+        },
+        {
+          "label": "GNU allocator and medium-model controls; matching stub bytes and offsets",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42124536514/artifacts/13459304305"
+        },
+        {
+          "label": "Option-only recovery: private allocator None, ordinary override retained; no builds",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42125221095/artifacts/13460736149"
         }
       ],
       "settledReviews": [
@@ -52409,7 +52440,31 @@
           "outcome": "approved",
           "at": "2026-10-28T14:25:13.716904+00:00"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "baseHead": "005743727b3d80d373085133b5da9cd906cc9d7c",
+        "head": "7f6ecfff61b465c2ae00d20ee4ebaad09d430519",
+        "url": "https://github.com/tamird/gvisor/commit/7f6ecfff6",
+        "title": "Approve the freestanding amendment and reply",
+        "requestedAt": "2026-11-05T22:56:39.455356Z",
+        "summary": "Approve the tested fork amendment and post the thread reply below now? Publish the amended PR head only after #16522 lands, rebasing then and seeking fresh review for any substantive delta. The reply links the ready fork and states the remaining private-toolchain gap. The PR description remains the commit message; the text below is only the delegated thread reply.",
+        "body": "I reproduced both problems. The forced allocator broke the link, and the x86 medium code model put 60 bytes of globals outside `.crblob`. [7f6ecfff6](https://github.com/tamird/gvisor/commit/7f6ecfff6) uses #16522’s freestanding link rule and disables `mcmodel_medium` for the stub. With those settings, the stub bytes and every exported offset matched on AMD64 and ARM64. [GNU builds](https://github.com/tamird/gvisor/actions/runs/42124536514/artifacts/13459304305) · [Allocator selection](https://github.com/tamird/gvisor/actions/runs/42125221095/artifacts/13460736149).\n\nI’ll update this PR once #16522 lands so the import can check the internal toolchain.\n\nPosted by Codex on behalf of @tamird."
+      },
+      "followup": {
+        "owner": "Systrap native stub",
+        "sourceHead": "005743727b3d80d373085133b5da9cd906cc9d7c",
+        "observedAt": "2026-11-05T22:56:39.455356Z",
+        "disposition": "Tested fork amendment and thread reply await contributor approval; live PR head is unchanged.",
+        "nextAction": "After approval, post the exact reply in the existing review thread. Keep 7f6ecfff6 on the fork until #16522 lands; then rebase, review any real source changes and publish the dependent amendment. Do not claim private-toolchain validation.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17067#discussion_r4486895273",
+          "https://github.com/tamird/gvisor/commit/7f6ecfff61b465c2ae00d20ee4ebaad09d430519",
+          "https://github.com/google/gvisor/pull/16522",
+          "https://github.com/tamird/gvisor/actions/runs/42125221095/artifacts/13460736149"
+        ]
+      }
     },
     {
       "id": "pr:bazel-contrib/buildtools:1527",
@@ -56132,6 +56187,13 @@
         "https://github.com/google/gvisor/pull/17067",
         "https://github.com/tamird/gvisor/actions/runs/42108422248/artifacts/13451359635"
       ]
+    },
+    {
+      "from": "pr:16522",
+      "to": "pr:17067",
+      "type": "depends_on",
+      "reason": "The proposed 7f6ecfff6 amendment uses #16522’s shared freestanding rule and can be published only after that prerequisite lands. The unchanged public 005743727 head does not need it; approving the fork amendment and sending its reply is actionable now.",
+      "evidence": "https://github.com/tamird/gvisor/commit/7f6ecfff6"
     }
   ],
   "investigations": [
@@ -69498,15 +69560,27 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-05T22:33:00.052693Z",
-      "summary": "A shell-free AMD64 remote worker built both release targets and staged nine static ELF files per target architecture on 87fd1b411. Make installation is pending.\n\nThe reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
+      "updatedAt": "2026-11-05T22:56:39.455356Z",
+      "summary": "A shell-free AMD64 remote worker built and installed nine static release ELFs per target architecture on 87fd1b411. All 18 files match the original build bytes. The cross-built ARM64 CLI, Sentry and prewarmer then started a native rootless systrap guest. A separate historical API projection remains incomplete.\n\nThe reporter’s original stall has a tested repair. Separately, gVisor enlarged its post-loss congestion window on writes that never filled it. The candidate keeps its window stable across three write schedules; Linux kept its window stable in all four sparse-write flows.",
       "findings": [
         {
-          "text": "The fork integration at 87fd1b411 built //:release for AMD64 and ARM64 on a shell-free AMD64 remote worker. Each Bazel invocation exited 0. All 18 staged files were static ELFs for the requested architecture. Both stateify actions ran, and the systrap bytes and offsets matched the linked ELF. The verifier expected three old C++ link labels and stopped before invoking Make. Installation and native execution of these particular files still need verification.",
+          "text": "The fork integration at 87fd1b411 built and installed //:release for AMD64 and ARM64 on a shell-free AMD64 remote worker. Make, its Bazel build and its cquery exited 0 for each target. All 18 installed regular files were static ELFs of the requested architecture, with the exact hashes and sizes from the original build. The installation recorded 614 fresh remote actions and 4,155 cache hits for AMD64, and 582 fresh remote actions and 2,241 cache hits for ARM64; all six sidecar links ran remotely and their output digests matched the installed files. No TestRunner ran.\n\nA separate native ARM64 worker received the same installed CLI, Sentry and prewarmer without rebuilding. The rootless systrap guest printed the expected echo and exited 0, with matching Sentry and prewarmer startup witnesses. The minimal guest omitted optional fdparking; its installed binary was verified separately.\n\nThe first build succeeded before a stale three-owner link check prevented Make. The recovery above completes installation and native guest evidence. Its separate historical-action reader found all six original completed, uncached CppLinks and exit 0, but selected a GetInvocation projection that omits successful action events. That historical BEP/configuration/CAS lookup remains incomplete and caused the outer job to be red; it does not invalidate the independent Make or guest results. This is the composed 87fd1b411 source, including the declared bootstrap, stateify and ELF-extractor changes, not the unamended 9310f06f9 compiler proposal.",
           "evidence": [
             {
               "label": "Both release targets succeeded on the shell-free worker; nine static executables per architecture",
               "url": "https://github.com/tamird/gvisor/actions/runs/42119709559/artifacts/13457819044"
+            },
+            {
+              "label": "Both Make installations: 18 original ELF byte matches and six fresh remote sidecar links",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42124038703/artifacts/13459748412"
+            },
+            {
+              "label": "Native ARM64 systrap guest using the same installed cross-built files",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42124038703/artifacts/13460685269"
+            },
+            {
+              "label": "GetInvocation top-level events omit successful actions in the paginated projection",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/blob/8e9fa833c/server/build_event_protocol/event_index/event_index.go#L174-L180"
             }
           ]
         },
@@ -74643,5 +74717,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T22:33:00.052693Z"
+  "updatedAt": "2026-11-05T22:58:52.507429Z"
 }
