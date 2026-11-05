@@ -28,6 +28,54 @@ func init() {
 	testbench.Initialize(flag.CommandLine)
 }
 
+// TestZeroWindowProbeDuringWrites checks that an application can keep writing
+// to a socket without postponing its first zero-window probe indefinitely.
+func TestZeroWindowProbeDuringWrites(t *testing.T) {
+	dut := testbench.NewDUT(t)
+	listener, port := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1)
+	defer dut.Close(t, listener)
+	conn := dut.Net.NewTCPIPv4(t, testbench.TCP{DstPort: &port, WindowSize: testbench.Uint16(0)}, testbench.TCP{SrcPort: &port})
+	defer conn.Close(t)
+	conn.Connect(t)
+	fd, _ := dut.Accept(t, listener)
+	defer dut.Close(t, fd)
+	dut.SetSockOptInt(t, fd, unix.IPPROTO_TCP, unix.TCP_NODELAY, 1)
+
+	rto := time.Duration(dut.GetSockOptTCPInfo(t, fd).RTO) * time.Microsecond
+	if rto <= 0 {
+		t.Fatalf("TCP_INFO returned RTO %v", rto)
+	}
+	probe := testbench.TCP{
+		Flags:  testbench.TCPFlags(header.TCPFlagAck),
+		SeqNum: testbench.Uint32(uint32(*conn.RemoteSeqNum(t) - 1)),
+		AckNum: testbench.Uint32(uint32(*conn.LocalSeqNum(t))),
+	}
+	// Queue more data several times per RTO. A sender that rearms its timer
+	// on every write will never probe while these writes continue.
+	start := time.Now()
+	lastWrite := start
+	var longestGap time.Duration
+	defer func() {
+		t.Logf("longest write gap including the final packet wait: %v", max(longestGap, time.Since(lastWrite)))
+	}()
+	for writes := 1; ; writes++ {
+		beforeWrite := time.Now()
+		if n := dut.Send(t, fd, []byte{1}, 0); n != 1 {
+			t.Fatalf("send returned %d, want 1", n)
+		}
+		// Include both RPCs to bound the time between writes on the DUT.
+		longestGap = max(longestGap, time.Since(lastWrite))
+		lastWrite = beforeWrite
+		if _, err := conn.Expect(t, probe, rto/4); err == nil {
+			t.Logf("received first probe after %d writes in %v (RTO %v)", writes, time.Since(start), rto)
+			return
+		}
+		if elapsed := time.Since(start); elapsed >= max(4*rto, 2*time.Second) {
+			t.Fatalf("no first probe after %d writes in %v (RTO %v)", writes, elapsed, rto)
+		}
+	}
+}
+
 // TestZeroWindowProbe tests few cases of zero window probing over the
 // same connection.
 func TestZeroWindowProbe(t *testing.T) {
