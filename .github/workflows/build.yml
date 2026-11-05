@@ -1,35 +1,137 @@
-name: CI
-
-"on":
+name: Qualify the declared SDK bootstrap and both lean scratch releases
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/lean-scratch-declared-sdk]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  release:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 98
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 5}
+      - name: Stage the existing pinned coordinator tools and reviewed reader
+        run: |
+          set -eu
+          umask 077
+          task="$RUNNER_TEMP/release-rbe"
+          mkdir -p "$task/bin" "$task/public" "$task/harness"
+          cp test/rbe/release_prewarmer/{BUILD,full.py,qualify.py,image_inventory.py,failure_diagnostics.py} "$task/harness/"
+          cd "$task/harness"
+          sha256sum --check <<'SUMS'
+          ae1f23a11f3cb747fbec49a34c510c5ab9dcb75d06d94bfd4d9a49d50c629271  BUILD
+          067f71639e91a03c0d60cf494df628acf85de20a32befd55af970bc9f54dc195  full.py
+          8442ac4f8f565ee305075b7ac58f52f43bebb756c3b527d4a7eba030a95fcceb  qualify.py
+          a61838c5c848386f2dd0b9abc82cd502ff6031040e94e91f5b2da204ed9e5bfe  image_inventory.py
+          f069bb8b9cf17749bb6b33450a5ee28c8438b9a29f2bfd089301af07807004a1  failure_diagnostics.py
+          SUMS
+          curl --retry 3 --retry-delay 2 --location --fail --silent --show-error --proto '=https' --proto-redir '=https' --max-time 90 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$task/bin/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $task/bin/bazel" | sha256sum -c -
+          curl --retry 3 --retry-delay 2 --location --fail --silent --show-error --proto '=https' --proto-redir '=https' --max-time 90 https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-x86_64 -o "$task/bb"
+          echo "205fb4074012858c858ec357cb0cf1ed0b1fbf8707c5f385efd4abd52bb2cead  $task/bb" | sha256sum -c -
+          chmod 755 "$task/bin/bazel" "$task/bb"
+          echo "$task/bin" >> "$GITHUB_PATH"
+          echo 'USE_BAZEL_VERSION=9.3.1' >> "$GITHUB_ENV"
+          echo 'PYTHONDONTWRITEBYTECODE=1' >> "$GITHUB_ENV"
+      - name: Bind the product and retain only the reviewed platform declarations
+        env: {PRODUCT: f4717ffbfc7a0f3f138224bcaf6404835a24477f}
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          test "$(git rev-parse HEAD^^)" = 3a98bb3fe7c8d0c7921aafed88b5262836a8a7f9
+          test "$(git rev-parse HEAD^^^)" = d6067d9eb79b81e87ca0e3778d574d8a4e6a3bbb
+          test "$(git rev-parse HEAD~4)" = 9310f06f95b100725450a71fbb896fc8403ec0eb
+          test "$(git rev-parse "$PRODUCT^{tree}")" = 6f6647524e27e902ea0f745ecc7d4fd45c4b4aae
+          git checkout --detach "$PRODUCT"
+          mkdir -p test/rbe/release_prewarmer
+          cp "$RUNNER_TEMP/release-rbe/harness/BUILD" test/rbe/release_prewarmer/BUILD
+          test "$(git hash-object test/rbe/release_prewarmer/BUILD)" = 0942c3a1b2856d6b31866ec8bb60e280ba38a011
+          test -z "$(git diff --name-only HEAD)"
+          test "$(git ls-files --others --exclude-standard)" = test/rbe/release_prewarmer/BUILD
+          test "$(cat .bazelversion)" = 9.3.1
+          bazel --version | grep -Fx 'bazel 9.3.1'
+      - name: Configure the trusted Bazel client for remote-only execution
+        id: remote
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          test -n "$BUILDBUDDY_API_KEY"
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback' 'build --modify_execution_info=^(CopyFile|GoLink|CppLink|GoToolchainBinaryBuild)$=+no-remote-cache'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$RUNNER_TEMP/release-rbe/private.bazelrc"
+          test "$(stat -c %a "$RUNNER_TEMP/release-rbe/private.bazelrc")" = 600
+          unset BUILDBUDDY_API_KEY
+      - name: Build and install the AMD64 release with the declared SDK bootstrap
+        if: steps.remote.outcome == 'success'
+        continue-on-error: true
+        timeout-minutes: 42
+        run: python3 "$RUNNER_TEMP/release-rbe/harness/full.py" amd64
+      - name: Cross-build and install the ARM64 release with the same execution SDK
+        if: always() && steps.remote.outcome == 'success'
+        continue-on-error: true
+        timeout-minutes: 42
+        run: python3 "$RUNNER_TEMP/release-rbe/harness/full.py" arm64
+      - name: Stop the client and remove its private configuration
+        if: always()
+        run: |
+          if test -x "$RUNNER_TEMP/release-rbe/bin/bazel"; then
+            timeout --signal=INT --kill-after=10 30 "$RUNNER_TEMP/release-rbe/bin/bazel" --nosystem_rc --nohome_rc shutdown >/dev/null 2>&1 || true
+          fi
+          rm -f "$RUNNER_TEMP/release-rbe/private.bazelrc"
+      - name: Read bounded diagnostics from the original failed remote actions
+        if: always() && steps.remote.outcome == 'success'
+        continue-on-error: true
+        timeout-minutes: 4
+        env:
+          ACCESS: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 "$RUNNER_TEMP/release-rbe/harness/failure_diagnostics.py"
+      - name: Require both original release and installation verdicts
+        if: always()
+        run: |
+          python3 - <<'PYTHON'
+          import json, os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"]) / "release-rbe" / "public"
+          for name in ("amd64", "arm64"):
+              result = json.loads((root / (name + ".json")).read_text())
+              assert result["source"] == "f4717ffbfc7a0f3f138224bcaf6404835a24477f"
+              assert result["status"] == "PASS" and result["native_exit"] == 0
+              assert result["make_exit"] == 0
+              assert result["bootstrap"]["status"] == "PASS"
+              assert result["generator_outputs"]["status"] == "PASS"
+          PYTHON
+      - name: Verify the bounded typed public receipts
+        id: privacy
+        if: always()
+        env:
+          ACCESS: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          python3 - <<'PYTHON'
+          import json, os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"]) / "release-rbe" / "public"
+          allowed = {"amd64.json", "arm64.json", "original-failures.json"}
+          files = list(root.iterdir())
+          key = os.environ["ACCESS"].encode()
+          assert key and files
+          assert not (root.parent / "private.bazelrc").exists()
+          for path in files:
+              assert path.name in allowed and path.is_file() and not path.is_symlink()
+              assert path.stat().st_size <= 256 * 1024
+              raw = path.read_bytes()
+              assert isinstance(json.loads(raw), dict)
+              assert not any(value in raw for value in (key, b"remote_header", b"bes_header", b"Authorization:", b"X-Amz-Signature", b"Bearer "))
+          PYTHON
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.privacy.outcome == 'success'
+        with:
+          name: lean-scratch-declared-sdk
+          path: ${{ runner.temp }}/release-rbe/public/*.json
+          if-no-files-found: error
+          retention-days: 14
