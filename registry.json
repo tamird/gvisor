@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T12:16:49.790997Z",
+    "updatedAt": "2026-11-05T12:57:21.696487Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -39528,9 +39528,21 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-05T10:26:25.645415Z",
-      "summary": "The revised buffering policy (c31b2adc2) has no native timing result. The available four-CPU AMD64 worker denied the runner access to /dev/kvm. On an earlier head (71b5044a6), both 50,000-file graph restores under a 200 MiB memory limit completed under QEMU software emulation with zero OOM kills. The 3.50% increase in save time and 30.12% increase in peak sampled RSS were measured on a48b7a12c with the previous buffering policy. All 39 archives in that comparison restored the complete 100,000-file tree.",
+      "updatedAt": "2026-11-05T12:57:21.696487Z",
+      "summary": "On c31b2adc2, saving 100,000 empty tmpfs files took 3.98% longer than on its parent 706b124a2. Time through Sentry exit increased 3.64% and peak sampled Sentry RSS increased 1.33%. Each revision ran one warmup and 12 measured saves on native AMD64 with systrap, four CPUs, a 2 GiB limit, and uncompressed graph checkpoints. All 26 checkpoints restored the full tree with zero OOM kills. The earlier 30.12% RSS increase was measured on a48b7a12c against its own parent.",
       "evidence": [
+        {
+          "label": "Benchstat for c31b2adc2 versus its parent 706b124a2 (12 measured saves per revision)",
+          "url": "https://tamird.github.io/gvisor/checkpoint-gc-benchstat.txt"
+        },
+        {
+          "label": "26 checkpoints, source-bound executables and verified restores",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42025490439/artifacts/13415901422"
+        },
+        {
+          "label": "Pinned benchstat and original input digests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42030809627/artifacts/13415334206"
+        },
         {
           "label": "Current-head native placement check stopped at EACCES opening /dev/kvm, before either revision ran",
           "url": "https://github.com/tamird/gvisor/actions/runs/42010129165/artifacts/13405209658"
@@ -39710,14 +39722,16 @@
       ],
       "followup": {
         "owner": "Agent",
-        "observedAt": "2026-11-05T10:26:25.645415Z",
-        "disposition": "Approved reply posted",
-        "nextAction": "Run the paired comparison when a native worker can run KVM and delegate the required controllers. Keep the prior policy measurements separate.",
+        "observedAt": "2026-11-05T12:57:21.696487Z",
+        "disposition": "Current head measured on native AMD64",
+        "nextAction": "Compare results for the C4 bigheap workload if the author supplies the state engine and compression settings.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16735#issuecomment-6629323131",
-          "https://github.com/tamird/gvisor/actions/runs/42010129165/artifacts/13405209658"
+          "https://tamird.github.io/gvisor/checkpoint-gc-benchstat.txt",
+          "https://github.com/tamird/gvisor/actions/runs/42025490439/artifacts/13415901422",
+          "https://github.com/tamird/gvisor/actions/runs/42030809627/artifacts/13415334206",
+          "https://github.com/google/gvisor/pull/16735#issuecomment-6629323131"
         ],
-        "sourceHead": "a48b7a12cb3bd615c48f9b36d353c02a6463a929",
+        "sourceHead": "c31b2adc27b1d19b1e647b3239cd2b3b536a5adf",
         "providerHead": "c31b2adc27b1d19b1e647b3239cd2b3b536a5adf"
       },
       "reviewWatch": {
@@ -48996,9 +49010,13 @@
       "url": "https://github.com/google/gvisor/issues/16878",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-05T09:28:02.581262+00:00",
-      "summary": "When a timer holds an endpoint lock, the TCP worker can keep the lock holder off a single Go processor. Martijn prefers giving ready peers one turn before yielding. On AMD64, the ready listener processed 100 packets with that policy and zero with an immediate yield. The TamaGo run remains open.",
+      "updatedAt": "2026-11-05T12:57:21.696487Z",
+      "summary": "On a single Go processor, a busy packet worker can keep an endpoint timer from releasing its lock. Giving already-queued peers one turn before yielding serviced 100 packets on AMD64. Yielding immediately serviced zero. Martijn asked for the proposed change to be submitted. Its behavior on TamaGo still needs verification.",
       "evidence": [
+        {
+          "label": "Martijn asked for the tested change to be sent as a PR",
+          "url": "https://github.com/google/gvisor/issues/16878#issuecomment-6657846358"
+        },
         {
           "label": "Original single-P experiment",
           "url": "https://github.com/tamird/gvisor/actions/runs/41626190812/artifacts/13225822564"
@@ -50724,9 +50742,13 @@
       "url": "https://github.com/tamird/gvisor/commit/2ec7b59ad",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-05T09:28:02.581262+00:00",
+      "updatedAt": "2026-11-05T12:57:21.696487Z",
       "summary": "When an endpoint timer holds the lock, a packet worker can keep the lock holder off a single Go processor. The worker now services the already-queued peers before yielding. A regression holds one listener and verifies a ready listener gets exactly one batch before that yield.",
       "evidence": [
+        {
+          "label": "Martijn asked for the tested change to be sent as a PR",
+          "url": "https://github.com/google/gvisor/issues/16878#issuecomment-6657846358"
+        },
         {
           "label": "Reported TamaGo hang and single-processor Linux behavior",
           "url": "https://github.com/google/gvisor/issues/16878"
@@ -72882,5 +72904,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T12:16:49.790997Z"
+  "updatedAt": "2026-11-05T12:57:21.696487Z"
 }
