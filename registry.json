@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-05T09:18:41.504053+00:00",
+    "updatedAt": "2026-11-05T09:28:02.581262+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -48799,8 +48799,8 @@
       "url": "https://github.com/google/gvisor/issues/16878",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-05T09:01:24.199484+00:00",
-      "summary": "Martijn prefers giving ready TCP endpoints one turn before yielding to a lock holder. On Linux with one Go processor, a continuously busy peer completed one batch before the holder ran. His TamaGo workload remains the platform-specific check.",
+      "updatedAt": "2026-11-05T09:28:02.581262+00:00",
+      "summary": "When a timer holds an endpoint lock, the TCP worker can keep the lock holder off a single Go processor. Martijn prefers giving ready peers one turn before yielding. On AMD64, the ready listener processed 100 packets with that policy and zero with an immediate yield. The TamaGo run remains open.",
       "evidence": [
         {
           "label": "Original single-P experiment",
@@ -48833,6 +48833,10 @@
         {
           "label": "Production dispatcher and a deterministic fairness regression",
           "url": "https://github.com/tamird/gvisor/commit/2ec7b59ad"
+        },
+        {
+          "label": "Permanent two-listener regression and first-miss comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42000041108/artifacts/13403275708"
         }
       ],
       "settledReviews": [
@@ -50505,8 +50509,8 @@
       "title": "Yield after one TCP dispatcher queue pass",
       "url": "https://github.com/tamird/gvisor/commit/2ec7b59ad",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-05T09:11:37.559398+00:00",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-05T09:28:02.581262+00:00",
       "summary": "When an endpoint timer holds the lock, a packet worker can keep the lock holder off a single Go processor. The worker now services the already-queued peers before yielding. A regression holds one listener and verifies a ready listener gets exactly one batch before that yield.",
       "evidence": [
         {
@@ -50526,20 +50530,32 @@
           "url": "https://github.com/tamird/gvisor/commit/2ec7b59ad"
         },
         {
-          "label": "TCP suite, analyzers and first-miss comparison on the proposed source",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42000041108"
+          "label": "32 top-level TCP tests on AMD64, both architecture analyzers, and the first-miss comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42000041108/artifacts/13403275708"
         }
       ],
       "followup": {
         "owner": "Netstack",
         "sourceHead": "2ec7b59ad33dfbd9c65b9b5ef7e4763eb4172063",
-        "observedAt": "2026-11-05T09:01:24.199484+00:00",
-        "disposition": "Qualifying the dispatcher and its permanent test",
-        "nextAction": "Run the TCP package and both architecture analyzers. Compare the permanent test with a worker that yields on its first lock miss.",
+        "observedAt": "2026-11-05T09:28:02.581262+00:00",
+        "disposition": "TCP suite and first-miss comparison verified",
+        "nextAction": "Open the standalone PR after contributor review.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/2ec7b59ad",
-          "https://github.com/tamird/gvisor/actions/runs/41628817215/artifacts/13226843881"
+          "https://github.com/tamird/gvisor/actions/runs/41628817215/artifacts/13226843881",
+          "https://github.com/tamird/gvisor/actions/runs/42000041108/artifacts/13403275708"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "2ec7b59ad33dfbd9c65b9b5ef7e4763eb4172063",
+        "baseHead": "90d4e2253f004cdc73a35dbc4050eab3e9a8495d",
+        "url": "https://github.com/tamird/gvisor/commit/2ec7b59ad",
+        "title": "tcp: yield after one queue pass on endpoint lock contention",
+        "requestedAt": "2026-11-05T09:28:02.581262+00:00",
+        "summary": "Approve opening the FIFO queue-pass fix for #16878. The ready listener processed 100 packets before yielding. Yielding on the first miss processed zero. TamaGo runtime behavior remains unmeasured.",
+        "body": "When a timer holds an endpoint lock, the packet processor can retry the\nsame endpoint until the Go scheduler preempts it. With one Go processor\nand no preemption the lock holder never gets to run. Martijn Hoekstra\nreported a hang under sustained TCP load on TamaGo.\n\nAfter a lock miss, give the other endpoints already in the queue one\nturn before yielding. Stop at the tail observed on the miss so newly\narrived packets and a busy peer cannot postpone the yield.\n\nFixes #16878"
       }
     },
     {
@@ -72517,5 +72533,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-05T09:18:41.504053+00:00"
+  "updatedAt": "2026-11-05T09:28:02.581262+00:00"
 }
