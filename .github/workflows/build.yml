@@ -1,35 +1,106 @@
-name: CI
-
-"on":
+name: Compare the freestanding GNU RSEQ fixture
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/rseq-gnu-runtime-20261105]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  rseq:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Install the checkout's Bazel
+        run: |
+          set -euo pipefail
+          task="$RUNNER_TEMP/rseq-gnu"
+          mkdir -p "$task/bin" "$task/receipts"
+          test "$(cat .bazelversion)" = 8.8.1
+          curl --fail --location --retry 3 --proto '=https' --proto-redir '=https' \
+            https://releases.bazel.build/8.8.1/release/bazel-8.8.1-linux-x86_64 -o "$task/bin/bazel"
+          echo "5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160  $task/bin/bazel" | sha256sum -c -
+          chmod +x "$task/bin/bazel"
+          echo "$task/bin" >> "$GITHUB_PATH"
+      - name: Provide the compilers used by the GNU toolchain
+        run: |
+          set -euo pipefail
+          if ! test -x /usr/bin/aarch64-linux-gnu-g++; then
+            sudo apt-get -o Acquire::Retries=3 update
+            sudo apt-get -o Acquire::Retries=3 install --no-install-recommends -y g++-aarch64-linux-gnu
+          fi
+          for arch in x86_64 aarch64; do
+            compiler="/usr/bin/$arch-linux-gnu-g++"
+            test "$("$compiler" -dumpmachine)" = "$arch-linux-gnu"
+            "$compiler" --version | head -1
+          done
+      - name: Build and compare both GNU helpers
+        env:
+          BEFORE: a0e3cf835fb57e9b08fb595a2854f0ddcb491f91
+          AFTER: 9751bfaf98742849046e9b4e9178f3db32f846b2
+        run: |
+          set -euo pipefail
+          task="$RUNNER_TEMP/rseq-gnu"
+          test "$(git rev-parse HEAD^)" = "$AFTER"
+          git fetch --depth=1 --no-tags https://github.com/tamird/gvisor.git "$BEFORE"
+          test "$(git diff --name-only "$BEFORE" "$AFTER")" = test/syscalls/linux/rseq/BUILD
+          for rev in "$BEFORE" "$AFTER"; do
+            git checkout --detach "$rev"
+            for arch in x86_64 aarch64; do
+              bazel build --config="$arch" //test/syscalls/linux/rseq:rseq
+              elf="bazel-bin/test/syscalls/linux/rseq/rseq"
+              test -x "$elf"
+              program="$task/$rev-$arch"
+              cp "$elf" "$program"
+              readelf -hldW "$program" > "$task/receipts/$rev-$arch.txt"
+              printf '%s  %s %s\n' "$(sha256sum "$program" | cut -d ' ' -f 1)" "$rev" "$arch" >> "$task/receipts/digests.txt"
+              if grep -Eq '(^ *INTERP +|\(NEEDED\))' "$task/receipts/$rev-$arch.txt"; then exit 1; fi
+              case "$arch" in
+                x86_64) machine='Advanced Micro Devices X86-64' ;;
+                aarch64) machine='AArch64' ;;
+              esac
+              grep -Eq "Machine:[[:space:]]+$machine$" "$task/receipts/$rev-$arch.txt"
+            done
+          done
+          for arch in x86_64 aarch64; do cmp "$task/$BEFORE-$arch" "$task/$AFTER-$arch"; done
+          cat "$task/receipts/digests.txt"
+      - name: Execute the amended syscall tests on native AMD64
+        run: |
+          set -euo pipefail
+          ulimit -c 0
+          test "$(git rev-parse HEAD)" = 9751bfaf98742849046e9b4e9178f3db32f846b2
+          test "$(uname -m)" = x86_64
+          report="$RUNNER_TEMP/rseq-gnu/receipts/native-amd64.xml"
+          export TEST_SRCDIR="$PWD/bazel-bin/test/syscalls/linux/rseq_test.runfiles"
+          export TEST_WORKSPACE=_main
+          bazel build --config=x86_64 //test/syscalls/linux:rseq_test
+          # The abort cases wait for the kernel to preempt the child.
+          cpu=$(python3 -c 'import os; print(min(os.sched_getaffinity(0)))')
+          taskset -c "$cpu" yes > /dev/null &
+          peer=$!
+          trap 'kill "$peer" 2>/dev/null || true' EXIT
+          timeout --kill-after=10s 120s bazel run --config=x86_64 --run_under="taskset -c $cpu" \
+            //test/syscalls/linux:rseq_test -- --gtest_output="xml:$report" | tee "${report%.xml}.log"
+          python3 - "$report" <<'PY'
+          import re
+          import sys
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          expected = set(re.findall(r"^TEST\(RseqTest, (\w+)\)", Path("test/syscalls/linux/rseq.cc").read_text(), re.M))
+          cases = ET.parse(sys.argv[1]).getroot().findall(".//testcase")
+          assert len(expected) == len(cases) == 14, (expected, len(cases))
+          assert {(c.get("classname"), c.get("name")) for c in cases} == {("RseqTest", n) for n in expected}
+          assert all(c.get("status") == "run" and c.get("result") == "completed" and
+                     all(c.find(t) is None for t in ("error", "failure", "skipped")) for c in cases)
+          print("Executed all 14 RseqTest cases")
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: rseq-gnu
+          path: ${{ runner.temp }}/rseq-gnu/receipts/
+          if-no-files-found: warn
+          retention-days: 14
