@@ -1,35 +1,61 @@
-name: CI
-
-"on":
+name: Check static Go race links with the released LLVM compiler
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-default-race-link]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  race:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Build the race-enabled runsc and Sentry
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 9310f06f95b100725450a71fbb896fc8403ec0eb
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/build.yml
+          git checkout --detach HEAD^
+          test "$(cat .bazelversion)" = 9.3.1
+          bazel="$RUNNER_TEMP/bazel"
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $bazel" | sha256sum -c -
+          chmod 755 "$bazel"
+          out="$RUNNER_TEMP/race-link"
+          mkdir "$out"
+          git rev-parse HEAD > "$out/source"
+          "$bazel" --version > "$out/bazel"
+          flags=(--config=race -c opt --jobs=4 --remote_cache= --remote_executor= --disk_cache=)
+          targets=(//runsc:runsc-race //runsc/cmd/sentry:gvisor_sentry-race)
+          rc=0
+          "$bazel" build "${flags[@]}" --keep_going "--build_event_json_file=$RUNNER_TEMP/events" "${targets[@]}" > "$RUNNER_TEMP/build.log" 2>&1 || rc=$?
+          echo "$rc" > "$out/build-exit"
+          jq -c 'select(.id.targetCompleted or .id.buildFinished) | {id,success:.completed.success,code:.finished.exitCode}' "$RUNNER_TEMP/events" > "$out/events"
+          if (( rc != 0 )); then
+            grep -E 'GoLink .*failed|ld.lld: error: unable to find library' "$RUNNER_TEMP/build.log" | sort -u > "$out/link-errors" || true
+            cat "$out/link-errors"
+            grep -q 'runsc-race_.*failed' "$out/link-errors" && grep -q 'gvisor_sentry-race_.*failed' "$out/link-errors" && grep -q 'library -lpthread' "$out/link-errors" && grep -q 'library -ldl' "$out/link-errors" || { tail -35 "$RUNNER_TEMP/build.log"; exit "$rc"; }
+            echo 'Both race links rejected missing static libraries' > "$out/outcome"
+          else
+            "$bazel" cquery "${flags[@]}" --output=files "set(${targets[*]})" > "$out/outputs"
+            test "$(wc -l < "$out/outputs")" -eq 2
+            while IFS= read -r binary; do
+              test -x "$binary"
+              readelf -lW "$binary" > "$RUNNER_TEMP/segments"
+              if grep -Eq ' (INTERP|DYNAMIC) ' "$RUNNER_TEMP/segments"; then exit 1; fi
+              sha256sum "$binary" >> "$out/static-outputs"
+            done < "$out/outputs"
+            echo 'Both static race executables linked' > "$out/outcome"
+          fi
+          cat "$out/outcome"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: static-go-race-link
+          path: ${{ runner.temp }}/race-link
+          if-no-files-found: error
