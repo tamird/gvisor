@@ -1,0 +1,95 @@
+name: Verify the directory-only layout and boot evidence
+on:
+  push:
+    branches: [qualification/work-map-scratch-directory-boot]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 4
+          persist-credentials: false
+      - name: Run the canonical collector on the proposed Pages source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(git rev-parse HEAD^)" = 20babdfff5daf7c18f00ae2d1fc52adaf54b679f
+          git checkout --detach 20babdfff5daf7c18f00ae2d1fc52adaf54b679f
+          python3 -B update-status.py
+      - name: Validate the collected pair and run its existing tests
+        run: |
+          python3 -B - <<'PYTHON'
+          import datetime, hashlib, json, re, subprocess
+          from pathlib import Path
+
+          source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          assert source == '20babdfff5daf7c18f00ae2d1fc52adaf54b679f'
+          commands = [['node', 'metadata-preflight.mjs', '.'],
+                      ['python3', '-B', '-m', 'unittest', 'work_states_test', 'update_status_test'],
+                      ['node', '--test', '--test-reporter=tap', 'app_test.mjs']]
+          expected = [' '.join(command) for command in commands]
+          record = dict(source=source, expected=expected, executed=[], failed=[], skipped=[], missing=expected.copy())
+          for command, label in zip(commands, expected, strict=True):
+              result = subprocess.run(command, capture_output=True, text=True)
+              if result.returncode:
+                  print(result.stdout[-5000:], result.stderr[-5000:])
+              record['executed'].append(label)
+              record['missing'].remove(label)
+              if result.returncode:
+                  record['failed'].append(label)
+              elif command == commands[0]:
+                  record['preflight'] = json.loads(result.stdout)
+              if command == commands[1]:
+                  record['pythonTests'] = [int(n) for n in re.findall(r'^Ran (\d+) tests?', result.stderr, re.M)]
+              elif command == commands[2]:
+                  record['jsCounts'] = {k:int(n) for k,n in re.findall(r'^# (tests|pass|fail|skipped) (\d+)$', result.stdout, re.M)}
+          snapshot = json.loads(Path('github-status.json').read_text())
+          before = json.loads(subprocess.check_output(['git', 'show', 'HEAD:github-status.json']))
+          current = {p['number']:p for p in snapshot['prs'] if p.get('repo', 'google/gvisor') == 'google/gvisor'}
+          handoffs = [p['number'] for p in current.values() if p.get('terminalImportHandoff')]
+          checks = dict(fresh=snapshot['checkedAt'] > before['checkedAt'],
+                        requestBudget=1 <= snapshot['limits']['requests'] <= 64,
+                        registryUnchanged=not subprocess.run(['git','diff','--quiet','HEAD','--','registry.json']).returncode)
+          registry = json.loads(Path('registry.json').read_text())
+          previous = json.loads(subprocess.check_output(['git','show',source+'^:registry.json']))
+          checks['sourceFiles'] = subprocess.check_output(['git','diff','--name-only',source+'^',source], text=True).splitlines() == ['registry.json']
+          sid = 'investigation:scratch-build-actions'
+          items = {x['id']:x for x in registry['investigations']}
+          baseline = {x['id']:x for x in previous['investigations']}
+          checks['onlyOneInvestigation'] = items.keys()==baseline.keys() and {i for i in items if items[i]!=baseline[i]}=={sid}
+          checks['noOtherRecordsChanged'] = all(registry[k]==v for k,v in previous.items() if k not in ('meta','updatedAt','investigations'))
+          checks['metadata'] = (registry['meta'] | {'updatedAt':previous['meta']['updatedAt']}) == previous['meta']
+          entry = items[sid]
+          checks['headlinesCurrent'] = all(t in entry['summary'] for t in ('all 87 boot cases passed', 'publishing it for the workers to pull is awaiting permission'))
+          findings = {f['evidence'][0]['url'].rsplit('/',1)[-1]:f['text'] for f in entry['findings'] if f.get('evidence')}
+          checks['directoryOnly'] = all(v in findings['13430325785'] for v in ('125-byte','0555','no regular files or symlinks','cbcf9ce0d912dde87a4e76542ee47cf4ef1a8ef8e31f84ef62e5af5939cde1c3','has not been published or used for a remote action'))
+          checks['bootRuntimeAndRace'] = all(v in findings['13428223649'] for v in ('9ccd97431','TestRun','TestStartupHeapReleaseOnStart','87 named XML records','zero failures or skips','600 seconds before linking','neither produced a race ELF'))
+          checks['permissionAndNextStep'] = all(v in entry['nextStep'] for v in ('Await Tamir’s permission','ghcr.io/tamird/gvisor-scratch-directory:v1','make the new personal package public','If approved','Check the shared test_app output'))
+          checks['historicalEvidencePreserved'] = all(f in entry['findings'] for f in baseline[sid]['findings'])
+          nodes = {n['head'][:9]:n for n in registry['nodes'] if n.get('head')}
+          checks['decoderDecisionsPreserved'] = all(nodes[h]['contributorReview']['status']=='pending' and snapshot['workStates'][nodes[h]['id']]['contributor-review']['scope']==nodes[h]['head'] for h in ('b3d4c6163','27451d0c2'))
+          record.update(requests=snapshot['limits']['requests'], requestLimit=64,
+                        checkedAt=snapshot['checkedAt'], previousCheckedAt=before['checkedAt'], reminderPosting=False,
+                        liveChecks=checks, terminalImportHandoffs=handoffs,
+                        cases={n:{'head':p['head'], 'status':p['status'], 'handoff':n in handoffs}
+                               for n,p in current.items() if n == 16718},
+                        finished=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                        exitCode=int(bool(record['failed']) or not all(checks.values())),
+                        hashes={p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in
+                                ('github-status.json','registry.json','app.js','update-status.py','work_states.py','update_status_test.py','README.md')})
+          Path('verdict.json').write_text(json.dumps(record, indent=2))
+          raise SystemExit(record['exitCode'])
+          PYTHON
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: work-map-verdict
+          path: |
+            verdict.json
+            github-status.json
+          if-no-files-found: error
