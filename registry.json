@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T04:09:01.919534Z",
+    "updatedAt": "2026-11-06T04:55:09.086169Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4845,8 +4845,8 @@
       "url": "https://github.com/tamird/gvisor/commit/9310f06f9",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Replace the archived Coral GCC toolchain with hermetic-llvm so one builder can produce both AMD64 and ARM64 gVisor releases. The GNU sysroot needs libresolv.a for cgo DNS and the LLVM unwinder for static C links. Both fixes are available on the hermetic-llvm #768 draft base.\n\nWith those fixes, both public AMD64 Go race binaries linked on 333d010a9 and runsc-race reported its version. Separately, the installed static GNU TLDK Sentry on b317c6e36 exchanged TCP and UDP over docker0 on native AMD64.\n\nThe ARM64 race build stopped before either GoLink. The AMD64 go_merge tool requested a musl loader absent from the scratch worker. The ARM64 race executables and native guest still need qualification.",
-      "updatedAt": "2026-11-06T04:09:01.919534Z",
+      "summary": "Replace the archived Coral GCC toolchain with hermetic-llvm so one builder can produce both AMD64 and ARM64 gVisor releases. The GNU sysroot needs libresolv.a for cgo DNS and the LLVM unwinder for static C links. Both fixes are available on the hermetic-llvm #768 draft base.\n\nWith those fixes, both public AMD64 Go race binaries linked on 333d010a9 and runsc-race reported its version. Separately, the installed static GNU TLDK Sentry on b317c6e36 exchanged TCP and UDP over docker0 on native AMD64.\n\nAll four Go source generators ran on the scratch worker after disabling cgo for those tools. Standard-library analysis then failed to start Nogo, the only remaining Go tool in the configured executable inventory that requested the missing musl loader. The ARM64 race links and native guest still need qualification.",
+      "updatedAt": "2026-11-06T04:55:09.086169Z",
       "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
       "evidence": [
         {
@@ -5224,6 +5224,22 @@
         {
           "label": "LLVM unwinder for static C links",
           "url": "https://github.com/tamird/hermetic-llvm/commit/1273f916b"
+        },
+        {
+          "label": "Four actual scratch source-generation actions and original ELF interpreters",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42160971883/artifacts/13477121576"
+        },
+        {
+          "label": "Three original Nogo process-start failures",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42162984284/artifacts/13477447959"
+        },
+        {
+          "label": "Configured Go tools and their ELF interpreters",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42164046123/artifacts/13478527159"
+        },
+        {
+          "label": "Six matching GNU generator outputs and executed go_merge test",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42162746853/job/127712040459"
         }
       ],
       "refinement": {
@@ -5256,9 +5272,9 @@
       "followup": {
         "owner": "Compiler integration",
         "sourceHead": "9310f06f95b100725450a71fbb896fc8403ec0eb",
-        "disposition": "The static GNU race links and plugin traffic are qualified on AMD64. The ARM64 race producer stopped during Go source generation.",
-        "observedAt": "2026-11-06T04:09:01.919534Z",
-        "nextAction": "Replace or supply go_merge’s exec-platform loader, then complete both ARM64 race links and run the native guest. Follow the static GNU supplier fixes on hermetic-llvm #768. The gVisor compiler switch waits for the sidecar rule (#16522), the systrap stub rule that uses it (#17067), systrap offsets (#16516), and the vDSO rule (#16586).",
+        "disposition": "Both public AMD64 race binaries linked and the installed AMD64 plugin handled TCP and UDP. ARM64 advanced through source generation to the standard-library analyzer.",
+        "observedAt": "2026-11-06T04:55:09.086169Z",
+        "nextAction": "Verify Nogo on the scratch worker, then complete both ARM64 race links and run the native guest. Follow the static GNU supplier fixes on hermetic-llvm #768. The gVisor compiler switch waits for the sidecar rule (#16522), the systrap stub rule that uses it (#17067), systrap offsets (#16516), and the vDSO rule (#16586).",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
@@ -5333,7 +5349,23 @@
           "https://github.com/tamird/gvisor/actions/runs/42152990020/artifacts/13475120488",
           "https://github.com/tamird/gvisor/actions/runs/42157962719/artifacts/13475689298",
           "https://github.com/tamird/gvisor/actions/runs/42160377510/artifacts/13476656432",
-          "https://github.com/tamird/hermetic-llvm/commit/1273f916b"
+          "https://github.com/tamird/hermetic-llvm/commit/1273f916b",
+          {
+            "label": "Four actual scratch source-generation actions and original ELF interpreters",
+            "url": "https://github.com/tamird/gvisor/actions/runs/42160971883/artifacts/13477121576"
+          },
+          {
+            "label": "Three original Nogo process-start failures",
+            "url": "https://github.com/tamird/gvisor/actions/runs/42162984284/artifacts/13477447959"
+          },
+          {
+            "label": "Configured Go tools and their ELF interpreters",
+            "url": "https://github.com/tamird/gvisor/actions/runs/42164046123/artifacts/13478527159"
+          },
+          {
+            "label": "Six matching GNU generator outputs and executed go_merge test",
+            "url": "https://github.com/tamird/gvisor/actions/runs/42162746853/job/127712040459"
+          }
         ]
       }
     },
@@ -52761,6 +52793,51 @@
         "summary": "Closing a newly constructed FD endpoint before it is attached to a NIC leaves its two receive workers running. The change starts them once, on first attachment. Both Readv and RecvMMsg reproduced the leak on stock; all 83 package records passed normally and under the race detector with the fix.",
         "body": "Closing an endpoint before attaching it to a NIC leaves its receive\nprocessors asleep. New starts the goroutines, but only the receive\nloop wakes them on exit. An unattached endpoint never runs that loop.\nWith two processors, both are still running after Close and Wait.\n\nStart the processors when the receive loop starts. Each manager starts\nits workers once so reattaching cannot put two goroutines on the same\nsleeper. A single processor still delivers packets inline."
       }
+    },
+    {
+      "id": "branch:packet-mmap-host-pages",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/packet-mmap-host-pages",
+      "head": "dec1b82660c2974f5b98b2c5ab88d0857b34adb8",
+      "title": "Align packet ring blocks to the host page size",
+      "url": "https://github.com/tamird/gvisor/commit/dec1b8266",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T04:55:09.086169Z",
+      "summary": "On a 64 KiB ARM64 Linux kernel, fdbased.PacketMMap rejects its own block size before asking Linux to allocate the ring. Rounding the block from 2,101,248 to 2,162,688 bytes let the receiver deliver 40 UDP datagrams through its 32-frame ring. On native AMD64 with 4 KiB pages, both versions used the same 2,101,248-byte block and delivered all 40. This affects callers selecting PacketMMap on an AF_PACKET socket. Normal runsc boot selects RecvMMsg.",
+      "evidence": [
+        {
+          "label": "Standalone ring alignment change",
+          "url": "https://github.com/tamird/gvisor/commit/dec1b8266"
+        },
+        {
+          "label": "Original kernel page sizes, ring lengths and packet results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42164603993/artifacts/13478946169"
+        },
+        {
+          "label": "ARM64 64 KiB Linux guest under full-system QEMU",
+          "url": "https://app.buildbuddy.io/invocation/fba74a66-c1ad-4d6d-823b-87052b5ec1f0"
+        },
+        {
+          "label": "Native AMD64 stock",
+          "url": "https://app.buildbuddy.io/invocation/58572e5f-61bd-4fa6-aeda-cc032cd5213f"
+        },
+        {
+          "label": "Native AMD64 corrected",
+          "url": "https://app.buildbuddy.io/invocation/7c8476c8-f9f3-4595-8411-57ca9d81adfd"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "dec1b82660c2974f5b98b2c5ab88d0857b34adb8",
+        "url": "https://github.com/tamird/gvisor/commit/dec1b8266",
+        "requestedAt": "2026-11-06T04:55:09.086169Z",
+        "title": "Open the PacketMMap host-page fix",
+        "summary": "On a 64 KiB ARM64 Linux kernel, fdbased.PacketMMap rejects its own block size before asking Linux to allocate the ring. Rounding the block from 2,101,248 to 2,162,688 bytes let the receiver deliver 40 UDP datagrams through its 32-frame ring. On native AMD64 with 4 KiB pages, both versions used the same 2,101,248-byte block and delivered all 40. This affects callers selecting PacketMMap on an AF_PACKET socket. Normal runsc boot selects RecvMMsg.",
+        "body": "The fd-based PacketMMap receiver needs 32 frames of 65,664 bytes.\nTheir combined size is a multiple of 4 KiB, but not 64 KiB. On a\n64 KiB host the endpoint rejects its own ring size before asking Linux\nto allocate the ring.\n\nRound the single block up to a host page and map the entire block.\nThe padding is smaller than a frame, so Linux still counts 32 frames\nand the receiver can use the same offsets on both hosts."
+      }
     }
   ],
   "edges": [
@@ -73459,10 +73536,19 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-05T11:48:39.851280Z",
+      "updatedAt": "2026-11-06T04:55:09.086169Z",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the duplicate reconnect reply on #15019.",
       "findings": [
+        {
+          "text": "Review #17082’s ACK timing after the first 16 immediate ACKs. The author has already identified checkpoint restore, test coverage, default enablement and TCP_QUICKACK as open questions. The independent packet comparison checks when the receiver acknowledges the segment that fills a gap.",
+          "evidence": [
+            {
+              "label": "Ayush’s delayed-ACK proposal and open design choices",
+              "url": "https://github.com/google/gvisor/pull/17082"
+            }
+          ]
+        },
         {
           "text": "The Docker-in-Docker checkpoint series names #16666 as its TCP prerequisite. #17026 covers bridge/veth and namespaces, #17027 covers legacy iptables and conntrack, and #17028 supplies the end-to-end fixture. Its author has built the fixture; the live Docker restore result is pending. The living guide links the review order from its first-send-after-restore row.",
           "evidence": [
@@ -74293,6 +74379,10 @@
         {
           "label": "Matched flight-accounting comparison with Linux",
           "url": "https://github.com/tamird/gvisor/actions/runs/41291435255"
+        },
+        {
+          "label": "Ayush’s delayed-ACK proposal and open design choices",
+          "url": "https://github.com/google/gvisor/pull/17082"
         }
       ],
       "reviewWatch": {
@@ -74309,7 +74399,8 @@
           16659,
           16660,
           16793,
-          16887
+          16887,
+          17082
         ],
         "owner": "Netstack",
         "reviewers": [
@@ -75066,5 +75157,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-06T04:09:01.919534Z"
+  "updatedAt": "2026-11-06T04:55:09.086169Z"
 }
