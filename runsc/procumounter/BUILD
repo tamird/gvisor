@@ -6,6 +6,11 @@ package(
     licenses = ["notice"],
 )
 
+exports_files(
+    ["procumounter.c"],
+    visibility = ["//:__pkg__"],
+)
+
 # gvisor-proc-umounter must remain a statically-linked, freestanding (no libc)
 # C binary that fits in a single 4KiB page. Read its comments as to why.
 freestanding_sidecar(

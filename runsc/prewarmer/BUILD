@@ -6,6 +6,11 @@ package(
     licenses = ["notice"],
 )
 
+exports_files(
+    ["prewarmer.c"],
+    visibility = ["//:__pkg__"],
+)
+
 # gvisor-sentry-prewarmer must remain a statically-linked, freestanding (no libc),
 # single-threaded C binary that fits in a single 4KiB page.
 # Do NOT rewrite it in Go; it must be single-threaded.

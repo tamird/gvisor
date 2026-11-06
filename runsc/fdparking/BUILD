@@ -6,6 +6,11 @@ package(
     licenses = ["notice"],
 )
 
+exports_files(
+    ["fdparking.c"],
+    visibility = ["//:__pkg__"],
+)
+
 # runsc-fd-parking must remain a statically-linked, freestanding
 # (no libc) C binary. It exists for the lifetime of each sandbox just to hold
 # some FDs, so its runtime memory footprint *must* stay absolutely minimal.
