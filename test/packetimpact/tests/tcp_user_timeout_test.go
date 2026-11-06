@@ -17,6 +17,7 @@ package tcp_user_timeout_test
 import (
 	"bytes"
 	"flag"
+	"fmt"
 	"testing"
 	"time"
 
@@ -185,6 +186,182 @@ func testUserTimeoutOnNextFlight(t *testing.T, retryOldest bool) {
 	}
 	time.Sleep(time.Until(checkAt))
 	errno := dut.GetSockOptInt(t, fd, unix.SOL_SOCKET, unix.SO_ERROR)
+	if errno != 0 {
+		t.Fatalf("SO_ERROR=%d (%s) on new flight", errno, unix.Errno(errno))
+	}
+	ack(3 * mss)
+	send('d')
+	expect('d', 3*mss, time.Second)
+	ack(4 * mss)
+}
+
+func TestUserTimeoutBoundaryProbe(t *testing.T) {
+	for _, mode := range []string{"fresh", "partial", "expires"} {
+		t.Run(mode, func(t *testing.T) { testUserTimeoutBoundaryProbe(t, mode) })
+	}
+}
+
+func testUserTimeoutBoundaryProbe(t *testing.T, mode string) {
+	dut := testbench.NewDUT(t)
+	listener, port := dut.CreateListener(t, unix.SOCK_STREAM, unix.IPPROTO_TCP, 1)
+	defer dut.Close(t, listener)
+	conn := dut.Net.NewTCPIPv4(t, testbench.TCP{DstPort: &port}, testbench.TCP{SrcPort: &port})
+	defer conn.Close(t)
+	const mss = 512
+	conn.ConnectWithOptions(t, []byte{header.TCPOptionMSS, 4, mss >> 8, mss & 255})
+	fd, _ := dut.Accept(t, listener)
+	defer dut.Close(t, fd)
+	dut.SetSockOptInt(t, fd, unix.IPPROTO_TCP, unix.TCP_NODELAY, 1)
+	base := uint32(*conn.RemoteSeqNum(t))
+	origin := time.Now()
+	send := func(ch byte) {
+		t.Helper()
+		if n := dut.Send(t, fd, bytes.Repeat([]byte{ch}, mss), 0); n != mss {
+			t.Fatalf("Send(%c)=%d, want %d", ch, n, mss)
+		}
+	}
+	type observation struct {
+		letter byte
+		offset uint32
+		when   time.Time
+	}
+	next := func(until time.Time) (observation, bool) {
+		t.Helper()
+		for time.Until(until) > 0 {
+			frame := conn.NextObservedFrame(t, time.Until(until))
+			if frame == nil {
+				return observation{}, false
+			}
+			if len(frame) < 4 {
+				continue
+			}
+			tcp, ok := frame[2].(*testbench.TCP)
+			if !ok || tcp.SrcPort == nil || *tcp.SrcPort != port {
+				continue
+			}
+			payload, ok := frame[3].(*testbench.Payload)
+			if !ok || len(payload.Bytes) == 0 {
+				continue
+			}
+			ch := payload.Bytes[0]
+			if tcp.SeqNum == nil || (len(payload.Bytes) != mss && !(mode == "partial" && ch == 'b' && len(payload.Bytes) == mss/2)) || !bytes.Equal(payload.Bytes, bytes.Repeat([]byte{ch}, len(payload.Bytes))) {
+				t.Fatalf("unexpected payload size=%d ch=%d", len(payload.Bytes), ch)
+			}
+			o := observation{ch, *tcp.SeqNum - base, time.Now()}
+			fmt.Printf("BOUNDARY_WIRE mode=%s letter=%c offset=%d us=%d\n", mode, o.letter, o.offset, o.when.Sub(origin).Microseconds())
+			return o, true
+		}
+		return observation{}, false
+	}
+	expect := func(ch byte, offset int, within time.Duration) time.Time {
+		t.Helper()
+		until := time.Now().Add(within)
+		for {
+			o, ok := next(until)
+			if !ok {
+				t.Fatalf("missing %c at %d", ch, offset)
+			}
+			if o.letter == ch && o.offset == uint32(offset) {
+				return o.when
+			}
+		}
+	}
+	ack := func(size int) {
+		conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(base + uint32(size))})
+	}
+	send('w')
+	expect('w', 0, time.Second)
+	time.Sleep(30 * time.Millisecond)
+	ack(mss)
+	base += mss
+	wait := time.Now().Add(time.Second)
+	for {
+		info := dut.GetSockOptTCPInfo(t, fd)
+		if info.Unacked == 0 {
+			break
+		}
+		if time.Now().After(wait) {
+			t.Fatal("warm-up data still outstanding")
+		}
+		time.Sleep(time.Millisecond)
+	}
+	rto := time.Duration(dut.GetSockOptTCPInfo(t, fd).RTO) * time.Microsecond
+	if rto < 50*time.Millisecond || rto > 2*time.Second {
+		t.Fatalf("unexpected starting RTO: %s", rto)
+	}
+	uto := 8 * rto
+	dut.SetSockOptInt(t, fd, unix.IPPROTO_TCP, unix.TCP_USER_TIMEOUT, int32(uto.Milliseconds()))
+	t0 := time.Now()
+	origin = t0
+	send('a')
+	expect('a', 0, time.Second)
+	send('b')
+	expect('b', mss, time.Second)
+	expect('a', 0, 2*rto+time.Second)
+	first := time.Since(t0)
+	// The sender's window fell to one segment. Queue c now so the ACK
+	// for a can send c while b remains in the old recovery window.
+	send('c')
+	expect('a', 0, 3*rto+time.Second)
+	second := time.Since(t0)
+	ack(mss)
+	cSent := expect('c', 2*mss, 3*rto)
+	infoC := dut.GetSockOptTCPInfo(t, fd)
+	fmt.Printf("MULTI_INFO phase=c rto_us=%d retransmits=%d backoff=%d\n", infoC.RTO, infoC.Retransmits, infoC.Backoff)
+	// Ignore any immediate loss repair already triggered by ACK A. No more
+	// ACKs are sent until the delayed retransmission of B appears.
+	var bRetry time.Time
+	bLimit := t0.Add(uto - rto/4)
+	for {
+		o, ok := next(bLimit)
+		if !ok {
+			t.Fatalf("no delayed B retransmission before old deadline: initial=%s fresh=%s", rto, cSent.Sub(t0))
+		}
+		if o.letter == 'b' && o.offset == mss && o.when.Sub(cSent) >= rto/2 {
+			bRetry = o.when
+			break
+		}
+	}
+	infoB := dut.GetSockOptTCPInfo(t, fd)
+	fmt.Printf("MULTI_INFO phase=b rto_us=%d retransmits=%d backoff=%d\n", infoB.RTO, infoB.Retransmits, infoB.Backoff)
+	// Record any data emitted by the same timer before acknowledging B.
+	quiet := bRetry.Add(rto / 8)
+	for {
+		if _, ok := next(quiet); !ok {
+			break
+		}
+	}
+	acked := 2 * mss
+	if mode == "partial" {
+		acked -= mss / 2
+	}
+	ack(acked)
+	bAck := time.Now()
+	fmt.Printf("MULTI_ACK bytes=%d us=%d\n", acked, bAck.Sub(t0).Microseconds())
+	checkAt := t0.Add(uto + 3*rto/2)
+	if bAck.Sub(t0) >= uto || time.Until(checkAt) <= 0 || checkAt.Sub(cSent) >= uto {
+		t.Fatalf("deadlines overlap")
+	}
+	for {
+		if _, ok := next(checkAt); !ok {
+			break
+		}
+	}
+	if mode == "expires" {
+		// Probe between a timeout measured from c's first send and one
+		// measured from its retransmission triggered by ACK b.
+		checkAt = cSent.Add(uto + bAck.Sub(cSent)/2)
+		for {
+			if _, ok := next(checkAt); !ok {
+				break
+			}
+		}
+	}
+	errno := dut.GetSockOptInt(t, fd, unix.SOL_SOCKET, unix.SO_ERROR)
+	fmt.Printf("BOUNDARY_RESULT mode=%s rto_us=%d uto_us=%d first_us=%d second_us=%d fresh_us=%d retry_us=%d ack_us=%d probe_us=%d errno=%d\n", mode, rto.Microseconds(), uto.Microseconds(), first.Microseconds(), second.Microseconds(), cSent.Sub(t0).Microseconds(), bRetry.Sub(t0).Microseconds(), bAck.Sub(t0).Microseconds(), time.Since(t0).Microseconds(), errno)
+	if mode != "fresh" {
+		return
+	}
 	if errno != 0 {
 		t.Fatalf("SO_ERROR=%d (%s) on new flight", errno, unix.Errno(errno))
 	}
