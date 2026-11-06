@@ -79,7 +79,12 @@ into the node’s `settledReviews` with the outcome and time (and the body for a
 comment). Remove the pending request immediately, including when publication
 has to wait. Keep these records when promoting a branch to a PR. The metadata
 preflight rejects a pending request for work that has already been reviewed.
-A changed proposal gets its own head and range-diff.
+A changed proposal gets its own head and range-diff. Include the runnable Git
+command in the card and in the outgoing contributor request itself, on its own
+line as plain text, without backticks, quotation marks, or a code fence. For an
+amendment, compare the published PR head with the proposed head. When the
+contributor last reviewed a different proposal, include a second command
+comparing that revision with the proposed head.
 
 Repository policies in `meta.repositories` select the existing Copybara workflow
 for gVisor and ordinary direct PR review for BuildBuddy. Every live PR carries
@@ -358,10 +363,6 @@ reviewer's concern has been resolved.
 During each steering sweep, link proposed new PRs to the single commit a
 contributor is being asked to send. Keep range-diffs in the evidence. If a
 series is necessary, explain why and link its constituent commits separately.
-For an amendment to a published PR, include the runnable range-diff command
-in the decision summary and in the outgoing question to the contributor. Put it
-on its own line as plain text, without quoting or fencing it. Compare the
-published commit or series with the exact proposed replacement.
 
 The active gVisor supervisor runs
 `python3 update-status.py --incoming-review-handoff` from this checkout at
