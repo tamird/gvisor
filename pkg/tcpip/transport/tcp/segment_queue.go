@@ -61,12 +61,11 @@ func (q *segmentQueue) enqueue(s *segment) bool {
 		// bound the memory they can use.
 		limit += int(q.ep.ops.GetSendBufferSize()) + zeroPayloadHeadroom
 	}
-	used := q.ep.receiveMemUsed()
 
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
-	allow := used <= limit && !q.frozen
+	allow := q.ep.receiveMemUsed() <= limit && !q.frozen
 
 	if allow {
 		s.IncRef()
