@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T22:38:16.247Z",
+    "updatedAt": "2026-11-06T22:48:16.956Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -31118,17 +31118,18 @@
       "url": "https://github.com/google/gvisor/pull/16507",
       "group": "bazel",
       "status": "open",
-      "summary": "The rebased source is mergeable. Coverage CLI and Sentry binaries use rules_go and the declared SDK. The previous AMD64 KCOV and two-architecture checks are recorded on their measured versions.",
-      "updatedAt": "2026-11-06T20:16:18.017Z",
+      "summary": "Upgrade with_cfg to 1.0.2 and refresh its license catalog entry. On AMD64 and ARM64, the coverage CLI and Sentry built both with and without the race detector. All four pairs ran the KCOV syscall test under systrap. The optional host-kernel control skipped on both workers.",
+      "updatedAt": "2026-11-06T22:48:16.956Z",
       "followup": {
-        "owner": "Agent",
+        "owner": "Contributor",
         "sourceHead": "7f56b080d9f7485957f3514133ffa5f5490a6185",
-        "observedAt": "2026-11-06T20:16:18.017Z",
-        "disposition": "All normal, race, KCOV and race+KCOV CLI variants built on both target architectures. The four AMD64 versions ran natively. The two non-race ARM64 versions ran under QEMU user mode; both emulated race CLIs exited 66. The build deadline passed before a Sentry result.",
-        "nextAction": "Recover the missing Sentry owners and verify ARM64 program behavior using the matching native environment.",
+        "observedAt": "2026-11-06T22:48:16.956Z",
+        "disposition": "The proposed with_cfg 1.0.2 amendment passed native coverage and race+coverage KCOV on both architectures.",
+        "nextAction": "Review the two-file dependency update for publication on #16507.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16507",
-          "https://github.com/tamird/gvisor/compare/5dbef4de9...7f56b080d"
+          "https://github.com/tamird/gvisor/commit/c2a942643",
+          "https://github.com/tamird/gvisor/actions/runs/42303507853/artifacts/13547220519",
+          "https://github.com/tamird/gvisor/actions/runs/42303507853/artifacts/13546536906"
         ]
       },
       "evidence": [
@@ -31163,16 +31164,35 @@
         {
           "label": "Before and after on native ARM64",
           "url": "https://github.com/tamird/gvisor/actions/runs/40830394553/job/123303013828"
+        },
+        {
+          "label": "Native AMD64 coverage and race+coverage KCOV results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42303507853/artifacts/13547220519"
+        },
+        {
+          "label": "Native ARM64 coverage and race+coverage KCOV results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42303507853/artifacts/13546536906"
         }
       ],
       "number": 16507,
       "refinement": {
         "before": {
-          "head": "5dbef4de9b117461804e0db26baee37769ef4ee7"
+          "head": "7f56b080d9f7485957f3514133ffa5f5490a6185"
         },
         "after": {
-          "head": "7f56b080d9f7485957f3514133ffa5f5490a6185"
+          "head": "c2a9426436643ee79e60d34a4e3b6bf4a88decce"
         }
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "c2a9426436643ee79e60d34a4e3b6bf4a88decce",
+        "baseHead": "7f56b080d9f7485957f3514133ffa5f5490a6185",
+        "url": "https://github.com/tamird/gvisor/commit/c2a942643",
+        "title": "Build runsc and Sentry coverage binaries with rules_go",
+        "body": "The coverage genrules fetch two Go distributions, rebuild the toolchain\nto disable cmd/go's internal-import check, and fetch modules during the\nbuild. None of those downloads are inputs to the action. A change to a\nGo package also makes the coverage target rebuild the entire SDK.\n\nKCOV reads Go's internal coverage data because the Sentry must decode\nit in process [1]. Build the coverage variants with the same declared\nSDK and dependencies as runsc and Sentry. rules_go invokes the compiler\ndirectly and uses atomic counters, so KCOV needs no modified SDK.\nAll four binaries built from runsc/main.go share its direct imports.\n\nKeep the existing package exclusions. Disable cgo in ordinary coverage\nbinaries so they run in a minimal mount namespace, and retain race\ndetection and lock checking in the race variants.\n\n[1]: https://github.com/golang/go/issues/76098",
+        "summary": "Upgrade with_cfg to 1.0.2 and refresh its license catalog entry. On AMD64 and ARM64, the coverage CLI and Sentry built both with and without the race detector. All four pairs ran the KCOV syscall test under systrap. The optional host-kernel control skipped on both workers.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 7f56b080d^! c2a942643^!\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 5dbef4de9^! c2a942643^!",
+        "requestedAt": "2026-11-06T22:48:16.956Z"
       }
     },
     {
