@@ -123,3 +123,46 @@ func TestSegmentQueueFrozen(t *testing.T) {
 		t.Errorf("segment refused after thaw, want it queued")
 	}
 }
+
+func TestSegmentQueueTwoProducersAtLimit(t *testing.T) {
+	ep := newTestQueueEndpoint()
+	// Represent bytes already held by the endpoint, without allocating a backlog.
+	limit := testRcvBufSize + testSndBufSize + zeroPayloadHeadroom
+	ep.updateReceiveMemUsed(limit)
+	defer ep.updateReceiveMemUsed(-limit)
+
+	probe := newTestSegment(0)
+	charge := probe.segMemSize()
+	probe.DecRef()
+
+	ready := make(chan struct{}, 2)
+	start := make(chan struct{})
+	results := make(chan bool, 2)
+	for range 2 {
+		go func() {
+			s := newTestSegment(0)
+			ready <- struct{}{}
+			<-start
+			ok := ep.segmentQueue.enqueue(s)
+			s.DecRef()
+			results <- ok
+		}()
+	}
+	<-ready
+	<-ready
+	close(start)
+
+	accepted := 0
+	for range 2 {
+		if <-results {
+			accepted++
+		}
+	}
+	after := ep.receiveMemUsed()
+	drainQueue(ep)
+	drained := ep.receiveMemUsed()
+	t.Logf("admission limit=%d charge=%d accepted=%d after=%d drained=%d", limit, charge, accepted, after, drained)
+	if accepted != 1 || after != limit+charge || drained != limit {
+		t.Errorf("got (%d accepted, %d charged, %d after drain), want (1, %d, %d)", accepted, after, drained, limit+charge, limit)
+	}
+}
