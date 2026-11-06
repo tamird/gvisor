@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T22:51:21.450Z",
+    "updatedAt": "2026-11-06T22:56:48.441Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -32222,23 +32222,48 @@
       "title": "Build the resolver-symlink image with Bazel",
       "group": "bazel",
       "url": "https://github.com/google/gvisor/pull/16549",
-      "head": "7c32498331da0aa2e946a59685556e32a1107deb",
+      "head": "a869d645affee8384c7e6b063a0ebec9f1a64360",
       "status": "open",
-      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
+      "updatedAt": "2026-11-06T22:56:48.441Z",
       "summary": "Declare the relative /etc/resolv.conf symlink as a layer on the pinned BusyBox image. #16549 preserves the approved resolver edits and the merged fsstress target. Earlier qualification covered both architecture archives, Make loading and AMD64 containerd mount-over-symlink tests.",
       "followup": {
-        "observedAt": "2026-10-31T00:17:49.384556+00:00",
-        "nextAction": "Follow upstream review, CI and import.",
-        "disposition": "Approved resolver submitted",
-        "sourceHead": "7c32498331da0aa2e946a59685556e32a1107deb",
-        "owner": "root"
+        "owner": "Agent",
+        "sourceHead": "a869d645affee8384c7e6b063a0ebec9f1a64360",
+        "observedAt": "2026-11-06T22:56:48.441Z",
+        "disposition": "Rebased after the approved head received an import/copybara migration error. The approved edits and commit message are preserved.",
+        "nextAction": "Watch for a public import of the new head; use the existing import-trigger reminder if its label is removed.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/compare/7c3249833...a869d645a",
+          "https://github.com/google/gvisor/pull/16549"
+        ]
       },
       "evidence": [
         {
           "label": "Rebased resolver",
           "url": "https://github.com/tamird/gvisor/commit/e4d530d2aa5499b279d08a1c88abc17c99abf933"
+        },
+        {
+          "label": "Published patch-equivalent rebase after the failed import",
+          "url": "https://github.com/tamird/gvisor/compare/7c3249833...a869d645a"
         }
-      ]
+      ],
+      "reapproval": {
+        "kind": "patch-preserving-rebase",
+        "method": "reviewed-source-diff",
+        "head": "a869d645affee8384c7e6b063a0ebec9f1a64360",
+        "approvedHead": "7c32498331da0aa2e946a59685556e32a1107deb",
+        "diffSha256": "62324e20019c325d13f85088465e65c4f24b91133cae9aa2cd13efad4d85dab1",
+        "summary": "The ordered additions, deletions, paths, modes and binary edits match the approved patch. The surrounding Make rules now include Bun and PostgreSQL images.",
+        "evidence": "https://github.com/tamird/gvisor/compare/7c3249833...a869d645a"
+      },
+      "refinement": {
+        "before": {
+          "head": "7c32498331da0aa2e946a59685556e32a1107deb"
+        },
+        "after": {
+          "head": "a869d645affee8384c7e6b063a0ebec9f1a64360"
+        }
+      }
     },
     {
       "id": "branch:udp-destination-checksum-zero",
@@ -38858,12 +38883,12 @@
       "number": 16710,
       "group": "bazel",
       "ref": "review/stateify-output-path",
-      "head": "66fbf023e8a61b269c104bea321ffe75f49b8115",
+      "head": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e",
       "title": "Generate checkpoint methods without a host shell",
       "url": "https://github.com/google/gvisor/pull/16710",
       "status": "open",
       "summary": "Published the patch-preserving rebase 66fbf023e8 on 92d3cc68c. Lucas’s November 3 approval remains on prior head 4bbf4d718; the rebased head has no ready-to-pull label. Current-head review and import checks remain separate. Stateify selects the imports used by its generated methods and formats the result with go/format, without goimports or a host shell. Earlier qualification matched all 485 official generated files, including the five seccomp-dependent outputs, and passed the sibling-file alias fixture.",
-      "updatedAt": "2026-11-05T21:56:59.120671Z",
+      "updatedAt": "2026-11-06T22:56:48.441Z",
       "evidence": [
         {
           "label": "Seven identical production outputs and scratch qualification",
@@ -38968,6 +38993,10 @@
         {
           "label": "Shell-free worker: SDK builder and both generators pass; GoImports fails for each architecture",
           "url": "https://github.com/tamird/gvisor/actions/runs/42115448931/artifacts/13457565460"
+        },
+        {
+          "label": "Published patch-equivalent rebase after the failed import",
+          "url": "https://github.com/tamird/gvisor/compare/66fbf023e...7ef8ae5df"
         }
       ],
       "settledReviews": [
@@ -39007,20 +39036,32 @@
         }
       ],
       "followup": {
-        "owner": "root",
-        "sourceHead": "66fbf023e8a61b269c104bea321ffe75f49b8115",
-        "observedAt": "2026-11-04T20:45:45.283369+00:00",
-        "disposition": "Patch-preserving rebase published",
-        "nextAction": "Follow current-head maintainer review and the ready-to-pull label; the prior-head approval is not a new review.",
+        "owner": "Agent",
+        "sourceHead": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e",
+        "observedAt": "2026-11-06T22:56:48.441Z",
+        "disposition": "Rebased after the approved head received an import/copybara migration error. The approved edits and commit message are preserved.",
+        "nextAction": "Watch for a public import of the new head; use the existing import-trigger reminder if its label is removed.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16710",
-          "https://github.com/tamird/gvisor/commit/4bbf4d718",
-          "https://github.com/tamird/gvisor/actions/runs/41694952054/artifacts/13260638404",
-          "https://github.com/google/gvisor/pull/16710#discussion_r4459026110",
-          "https://github.com/google/gvisor/pull/16710#discussion_r4459026564",
-          "https://github.com/google/gvisor/pull/16710#discussion_r4459027083",
-          "https://github.com/tamird/gvisor/commit/66fbf023e8"
+          "https://github.com/tamird/gvisor/compare/66fbf023e...7ef8ae5df",
+          "https://github.com/google/gvisor/pull/16710"
         ]
+      },
+      "reapproval": {
+        "kind": "patch-preserving-rebase",
+        "method": "reviewed-source-diff",
+        "head": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e",
+        "approvedHead": "66fbf023e8a61b269c104bea321ffe75f49b8115",
+        "diffSha256": "790bdae8281f0cf92562937829d069a6849e7a62ba15d4b474bba4d8dd96113a",
+        "summary": "The ordered additions, deletions, paths, modes and binary edits match the approved patch. The adjacent C++ load changed on master. The merged generic receiver support remains present.",
+        "evidence": "https://github.com/tamird/gvisor/compare/66fbf023e...7ef8ae5df"
+      },
+      "refinement": {
+        "before": {
+          "head": "66fbf023e8a61b269c104bea321ffe75f49b8115"
+        },
+        "after": {
+          "head": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e"
+        }
       }
     },
     {
@@ -53787,11 +53828,11 @@
       "group": "runtime",
       "repo": "google/gvisor",
       "ref": "proposal/fd-stale-lock-preconditions",
-      "head": "c74632e3cb3438ebf9322754e23c35bf56c9be58",
+      "head": "1ee6b64aea00e1895fc67b71cc7a853a20319851",
       "url": "https://github.com/google/gvisor/pull/17064",
       "title": "Remove stale file descriptor lock requirements",
       "status": "open",
-      "updatedAt": "2026-11-05T20:30:49.511803Z",
+      "updatedAt": "2026-11-06T22:56:48.441Z",
       "summary": "Remove the incorrect caller-lock comments on FDTable.GetFDs and VFSPipe.newFD. Published at the approved revision c74632e3c; four comment lines removed in two files.",
       "evidence": [
         {
@@ -53801,6 +53842,10 @@
         {
           "label": "Approved revision published upstream as #17064",
           "url": "https://github.com/google/gvisor/pull/17064"
+        },
+        {
+          "label": "Published patch-equivalent rebase after the failed import",
+          "url": "https://github.com/tamird/gvisor/compare/c74632e3c...1ee6b64ae"
         }
       ],
       "settledReviews": [
@@ -53814,7 +53859,35 @@
           "at": "2026-11-05T20:30:49.511803Z",
           "url": "https://github.com/google/gvisor/pull/17064"
         }
-      ]
+      ],
+      "reapproval": {
+        "kind": "patch-preserving-rebase",
+        "method": "reviewed-source-diff",
+        "head": "1ee6b64aea00e1895fc67b71cc7a853a20319851",
+        "approvedHead": "c74632e3cb3438ebf9322754e23c35bf56c9be58",
+        "diffSha256": "720fa75d60e0d6a4916cdc1ccdab14fd7e9d05434182ed98184205237a97e3f3",
+        "summary": "The ordered additions, deletions, paths, modes and binary edits match the approved patch. The rebase removes the same four stale comment lines.",
+        "evidence": "https://github.com/tamird/gvisor/compare/c74632e3c...1ee6b64ae"
+      },
+      "refinement": {
+        "before": {
+          "head": "c74632e3cb3438ebf9322754e23c35bf56c9be58"
+        },
+        "after": {
+          "head": "1ee6b64aea00e1895fc67b71cc7a853a20319851"
+        }
+      },
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "1ee6b64aea00e1895fc67b71cc7a853a20319851",
+        "observedAt": "2026-11-06T22:56:48.441Z",
+        "disposition": "Rebased after the approved head received an import/copybara migration error. The approved edits and commit message are preserved.",
+        "nextAction": "Watch for a public import of the new head; use the existing import-trigger reminder if its label is removed.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/compare/c74632e3c...1ee6b64ae",
+          "https://github.com/google/gvisor/pull/17064"
+        ]
+      }
     },
     {
       "id": "pr:17067",
