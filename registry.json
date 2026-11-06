@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T19:15:56.025Z",
+    "updatedAt": "2026-11-06T19:19:07.294Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -50765,9 +50765,17 @@
       "url": "https://github.com/google/gvisor/issues/16908",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-04T21:23:21.762115+00:00",
-      "summary": "A matched comparison of source-built July runsc 9f3e9a3fb and July plus only the landed bridge change d4be3ed28 (9ffcd1079) recorded two ECONNRESETs in 4,000 stock exchanges and none in 4,000 patched exchanges. Each arm ran 2,000 exchanges per close order in a separate offline Linux VM. Both stock errors were server-first: one on sendall and one on recv_echo.\n\nThe first failed stock connection had two different server initial sequence numbers for one SYN and no recorded server accept. Both successful sampled stock controls had duplicate SYN-ACKs with the same initial sequence number and were accepted; both patched sampled controls had one observed server initial sequence number and were accepted. The packet observation timestamps do not establish causal ordering. Conntrack data was unavailable in both arms. This bounded comparison does not prove elimination or establish a GKE cause or a confirmed match to the reporter’s failure.\n\nEarlier source-specific observations:\n\nThe packet-instrumented July public runsc 20260727.0 / Docker 27.5.1 fixture recorded 13 client-first and one server-first ECONNRESET among 2,000 exchanges per order. The first failure in each order was recv_echo after connect and send succeeded. Both endpoint captures showed two SYN-ACKs acknowledging the same SYN with different server initial sequence numbers. The client acknowledged the first server sequence plus one, then received an RST at that acknowledged sequence. At the server interface, the first SYN-ACK was outgoing and the second was received as OTHERHOST.\n\nNeither failing tuple had a recorded server accept, echo or FIN. Successful controls completed the handshake, echo and FINs before late resets. Conntrack data was unavailable; the traces establish neither a cause nor a confirmed GKE match. The earlier uninstrumented July results (three and two resets) and Linux controls (zero in both orders) remain independent. The reporter has already been asked which socket call and errno they observed on GKE.",
+      "updatedAt": "2026-11-06T19:19:07.294Z",
+      "summary": "Lorenzo captured both ends of 14 failed exchanges. In every pair the client reset a copy of the SYN-ACK from the bridge MAC with a changed source port. The server received the reset on port 9000 before accepting the connection. The first public runsc release containing bridge fix d4be3ed28 is 20261012.0. Its inclusion in the affected GKE version is still open.\n\nA matched comparison of source-built July runsc 9f3e9a3fb and July plus only the landed bridge change d4be3ed28 (9ffcd1079) recorded two ECONNRESETs in 4,000 stock exchanges and none in 4,000 patched exchanges. Each arm ran 2,000 exchanges per close order in a separate offline Linux VM. Both stock errors were server-first: one on sendall and one on recv_echo.",
       "evidence": [
+        {
+          "label": "Lorenzo’s captures from both endpoints",
+          "url": "https://github.com/google/gvisor/issues/16908#issuecomment-6688383442"
+        },
+        {
+          "label": "First public runsc release containing the bridge fix",
+          "url": "https://github.com/google/gvisor/releases/tag/release-20261012.0"
+        },
         {
           "label": "Public July release: client-first and server-first close orders",
           "url": "https://github.com/tamird/gvisor/actions/runs/41696247019/artifacts/13262175985"
@@ -50813,7 +50821,16 @@
           "outcome": "approved",
           "url": "https://github.com/google/gvisor/issues/16908#issuecomment-6613679645"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "requestedAt": "2026-11-06T19:19:07.294Z",
+        "url": "https://github.com/google/gvisor/issues/16908#issuecomment-6688383442",
+        "title": "Reply to Lorenzo about the reset during the TCP handshake",
+        "summary": "Confirm the common handshake failure in the 14 paired captures and ask whether the affected GKE version contains the bridge fix.",
+        "body": "Thank you for capturing both ends. In all 14 failed exchanges, the client saw a copy of the server’s SYN-ACK from the bridge MAC with its source port changed. The client reset that port, and the server saw the same reset translated back to 9000 before it accepted the connection. That puts the failure in the handshake, before either side chooses who closes first.\n\n[d4be3ed28](https://github.com/google/gvisor/commit/d4be3ed28) stops delivering transit unicast to the bridge’s local IP stack, which removes the routed copy in this path. With just that change our July Docker fixture went from 2 resets in 4,000 exchanges to 0 in 4,000. [Matched runs](https://github.com/tamird/gvisor/actions/runs/41910309875/artifacts/13364018365)\n\nThe first public runsc release containing the fix is [20261012.0](https://github.com/google/gvisor/releases/tag/release-20261012.0). Can someone on the GKE side confirm whether v1.36.4-gke.2377000 includes it?\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "branch:tcp-info-cookie-send-error",
@@ -54963,9 +54980,13 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T19:08:28.692Z",
-      "summary": "One remote Bazel invocation on the released LLVM integration recorded all 3,235 presubmit targets. Of 2,874 build-only targets, 2,811 built. Of 361 runnable targets, 344 ran and 342 passed. There were 352 passing shards in 354 fresh remote executions. The sandbox test failed its default-route assertions and the vDSO checker could not start readelf. Three C++ compile actions failed in the NVIDIA driver's Clang parser on the pinned RegisterRef comparator. The two failed test targets passed in separate runs with the declared vDSO reader and #15866’s route expectations. #17114 built all four previously failing NVIDIA targets and the parser test passed remotely. All 34 structure parity cases then failed to start git, and all 34 installer checksum cases failed TLS verification.\n\nOn master before the compiler change, the graph selected all 360 runnable and 2,881 build-only targets from the AMD64 cgroup-v2 presubmit, plus a native uname control. Of the resulting 3,242 roots, 2,650 build-only targets built and 295 tests ran. The OCI and Firecracker workers reported cgroup2fs and observed the expected cache separation for CGROUPV2 true and false. The earlier six-target pilot and full per-owner data are linked.",
+      "updatedAt": "2026-11-06T19:19:07.294Z",
+      "summary": "One remote Bazel invocation on the released LLVM integration recorded all 3,235 presubmit targets. Of 2,874 build-only targets, 2,811 built. Of 361 runnable targets, 344 ran and 342 passed. There were 352 passing shards in 354 fresh remote executions. The sandbox test failed its default-route assertions and the vDSO checker could not start readelf. Three C++ compile actions failed in the NVIDIA driver's Clang parser on the pinned RegisterRef comparator. The two failed test targets passed in separate runs with the declared vDSO reader and #15866’s route expectations. #17114 built all four previously failing NVIDIA targets and the parser test passed remotely. All 34 structure parity cases then failed to start git, and all 34 installer checksum cases failed TLS verification.\n\nOn master before the compiler change, the graph selected all 360 runnable and 2,881 build-only targets from the AMD64 cgroup-v2 presubmit, plus a native uname control. Of the resulting 3,242 roots, 2,650 build-only targets built and 295 tests ran. The OCI and Firecracker workers reported cgroup2fs and observed the expected cache separation for CGROUPV2 true and false. The earlier six-target pilot and full per-owner data are linked. The five previously unexecuted owners failed together during analysis in an isolated run. Bazel found duplicate outputs for LLVM’s libm and empty runtime objects before any test ran. The remaining unknown owners still need their own evidence.",
       "evidence": [
+        {
+          "label": "Five isolated owners stopped at duplicate libm and empty runtime object outputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42278158964/artifacts/13533667943"
+        },
         {
           "label": "Fresh full sandbox test with only five route expectations from #15866. All three formerly failing cases passed in Go and XML.",
           "url": "https://github.com/tamird/gvisor/actions/runs/42275765374/artifacts/13532748468"
@@ -55115,9 +55136,12 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "e46a101fc0aebb325ec25977697a012a2e11a11b",
-        "observedAt": "2026-11-06T19:08:28.692Z",
+        "observedAt": "2026-11-06T19:19:07.294Z",
         "disposition": "The contributor requested one remote Bazel graph for CI targets across areas and configurations.",
-        "nextAction": "Use the declared package sources for the structure parity tests and investigate the installer TLS failures separately. Follow #17122, #15866 and #17114. Native uname and the other four inspected build-only or unexecuted outcomes still have no underlying cause recorded."
+        "nextAction": "Fix the duplicate LLVM runtime object outputs for the five isolated owners, then rerun those targets. Continue comparing the remaining unknown owners, the NVIDIA parity inputs, #17122, #15866 and #17114.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42278158964/artifacts/13533667943"
+        ]
       }
     },
     {
@@ -76225,7 +76249,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-06T17:16:58.443Z",
+      "updatedAt": "2026-11-06T19:19:07.294Z",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the duplicate reconnect reply on #15019.",
       "findings": [
@@ -77017,6 +77041,22 @@
         }
       ],
       "evidence": [
+        {
+          "label": "TCP_USER_TIMEOUT outstanding-flight comparison pending source review against #17113",
+          "url": "https://github.com/tamird/gvisor/compare/f51a205a8...a848809a5"
+        },
+        {
+          "label": "Two complete packet owners passed on Linux and the backed-off RTO correction",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42274444739/artifacts/13533507976"
+        },
+        {
+          "label": "Earlier boundary-only change still timed out before Linux",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42267413085/artifacts/13530857318"
+        },
+        {
+          "label": "The preceding timeout change still expired a fresh flight",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42261484858/artifacts/13526394419"
+        },
         {
           "label": "#14101 ACK-handler benchmark for a late SACK with RACK disabled",
           "url": "https://github.com/tamird/gvisor/actions/runs/41757174160/artifacts/13289470471"
