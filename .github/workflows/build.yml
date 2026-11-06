@@ -1,35 +1,37 @@
-name: CI
-
-"on":
+name: Compare native Go source paths before and after Bazel output mapping
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/generated-go-path-controls]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 75
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Bind the two original source and configuration inputs
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = aarch64
+          test "$(git rev-parse HEAD^)" = bb983b988802b854bd03dd7a0a5220e7e7b4440e
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/generated_go_paths.py' ':!test/rbe/release_prewarmer/**' ':!test/rbe/generated_go_paths/**'
+          sha256sum --check <<'SUMS'
+          655b5bff434c5024b1fc6f3712241d3027d2cea5ed63f70517d775270cd7bb7a  test/rbe/release_prewarmer/native.bzl
+          061a1178b5937611110ee473f3d77987a420437d474d5569efe0c6d159913f23  test/rbe/release_prewarmer/BUILD
+          SUMS
+          d="$RUNNER_TEMP/go-paths"
+          mkdir -m 700 "$d"
+          curl --fail --location --retry 3 --proto '=https' --proto-redir '=https' --max-time 100 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-arm64 -o "$d/bazel"
+          echo "bb608519a440d45d10304eb684a73a2b6bb7699c5b0e5434361661b25f113a5d  $d/bazel" | sha256sum --check
+          chmod 755 "$d/bazel"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Compare direct and transitioned atomicbitops source positions
+        run: python3 -IB .github/qualification/generated_go_paths.py "$RUNNER_TEMP/go-paths/bazel"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && !cancelled()
+        with:
+          name: generated-go-path-controls
+          path: ${{ runner.temp }}/go-paths/result.json
+          if-no-files-found: warn
