@@ -1,35 +1,79 @@
-name: CI
-
-"on":
+name: Compile and link the release sidecar on two utility-free Linux workers
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/chainguard-native-sidecars]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  native:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Bind the production C source, compiler registration, and native observers
+        run: |
+          set -euo pipefail
+          source=aac447b2302ffb8811a60cc1eeefda55aa8bfba0
+          test "$(git rev-parse HEAD^)" = "$source"
+          test "$(git rev-parse HEAD^^)" = 127967d3179491381f2a85e4804ae8236fc89e35
+          git diff --exit-code HEAD^^ HEAD^ -- . ':!test/rbe/chainguard_native/**' ':!tools/bazeldefs/BUILD'
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/rebased_owners/chainguard_sidecar.py' ':!.github/qualification/rebased_owners/image_execution.py'
+          d="$RUNNER_TEMP/chainguard-native"
+          mkdir -m 700 "$d"
+          cp .github/qualification/rebased_owners/{chainguard_sidecar,image_execution}.py "$d/"
+          git checkout -q --detach "$source"
+          test "$(bazelisk --version)" = 'bazel 9.3.1'
+          grep -Fxq 'register_toolchains("@llvm//toolchain:all")' MODULE.bazel
+      - name: Build both actual release binaries and run the two static kernel observers remotely
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          d="$RUNNER_TEMP/chainguard-native"
+          rc="$d/client.rc"
+          trap 'rm -f "$rc"' EXIT
+          test "$(git rev-parse HEAD)" = aac447b2302ffb8811a60cc1eeefda55aa8bfba0
+          cat >"$rc" <<'RC'
+          build --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
+          build --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/
+          build --spawn_strategy=remote --noremote_local_fallback --jobs=32 --remote_timeout=8m
+          build --host_platform=//tools/bazeldefs:linux_amd64
+          build --extra_execution_platforms=//tools/bazeldefs:linux_amd64,//tools/bazeldefs:linux_arm64
+          build --remote_default_exec_properties=OSFamily=linux
+          build --remote_default_exec_properties=workload-isolation-type=oci
+          build --remote_default_exec_properties=container-image=docker://cgr.dev/chainguard/static@sha256:fc42af33e643f20d08baf03cddcc1c02ba57052dfb02edb0d79f3fc47bcea8d9
+          RC
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" "$BUILDBUDDY_API_KEY" >>"$rc"
+          unset BUILDBUDDY_API_KEY
+          status=0
+          timeout --signal=INT --kill-after=45s 35m bazelisk --bazelrc="$rc" build --keep_going --config=x86_64 -c opt \
+            --color=no --curses=no --remote_download_outputs=toplevel --build_event_publish_all_actions \
+            '--modify_execution_info=^(CppCompile|CppLink|ObserveNativeKernel)$=+no-remote-cache' \
+            --build_event_json_file_path_conversion=false --build_event_json_file="$d/build.bep" \
+            --execution_log_json_file="$d/build.spawn" \
+            //test/rbe/chainguard_native:fdparking_amd64 //test/rbe/chainguard_native:fdparking_arm64 >"$d/build.log" 2>&1 || status=$?
+          printf '%s\n' "$status" >"$d/exit"
+      - name: Collect original ELF, native worker, and compile or link results without credentials
+        id: receipt
+        if: always() && !cancelled()
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/chainguard-native"
+          test ! -e "$d/client.rc"
+          python3 -B "$d/chainguard_sidecar.py"
+          test ! -L "$d/result.json" && test "$(wc -c < "$d/result.json")" -lt 65536
+          jq -e '.product=="aac447b2302ffb8811a60cc1eeefda55aa8bfba0"' "$d/result.json" >/dev/null
+          ! grep -Eiq 'x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}' "$d/result.json"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.receipt.outcome == 'success'
+        with:
+          name: chainguard-native-sidecars
+          path: ${{ runner.temp }}/chainguard-native/result.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Require both fresh production compilers, linkers and native kernel observations
+        if: always() && steps.receipt.outcome == 'success'
+        run: jq -e '.verified' "$RUNNER_TEMP/chainguard-native/result.json"
