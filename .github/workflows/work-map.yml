@@ -1,0 +1,23 @@
+name: Verify imported and rebased gVisor sources
+on:
+  push:
+    branches: [qualification/work-map-landed-source-conflicts]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Run the canonical site tests on the exact source
+        run: |
+          test "$(git rev-parse HEAD^)" = 7b24f1aaab4c77413cfa3c655cf38f90b17ee318
+          git checkout --detach 7b24f1aaab4c77413cfa3c655cf38f90b17ee318
+          node --test app_test.mjs
+          python3 -B -m unittest discover -p '*_test.py'
+          node metadata-preflight.mjs .
