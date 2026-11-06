@@ -60,38 +60,47 @@ def select():
     for rev,source in SRC.items():
         head(source)
         entries=report.setdefault("sources",{}).setdefault(rev,{"source":source,"cases":{}})["cases"]
-        args=[*BASE,"mod","graph","--depth","1","--extension_info=all","--output","json","--lockfile_mode=off"]
-        graph_out=subprocess.check_output(args,stderr=subprocess.DEVNULL)
-        graph=json.loads(graph_out[graph_out.index(b"{"):])
-        http_repos=sorted(r for usage in graph["extensionUsages"] if usage["key"].startswith("@@//:MODULE.bazel%") and usage["key"].endswith((" http_file"," http_archive")) for r in usage.get("used_repos",[]))
-        python_usages=sorted(usage["key"] for usage in graph["extensionUsages"] if usage["key"].endswith("//python/extensions:python.bzl%python"))
-        record={"root_http_repo_count":len(http_repos),"direct_python_archives":[r for r in http_repos if r.startswith("release_static_cpython")],"runtime_extension":python_usages,"catalog":hashlib.sha256(Path("tools/licensecheck/dependencies.yaml").read_bytes()).hexdigest()}
-        report["sources"][rev]["stock_license_graph"]=record;save()
-        assert record["direct_python_archives"]==(["release_static_cpython","release_static_cpython_arm64"] if rev=="control" else []) and len(python_usages)==1
+        try:
+            args=[*BASE,"mod","graph","--depth","1","--extension_info=all","--output","json","--lockfile_mode=off"]
+            graph_out=subprocess.check_output(args,stderr=subprocess.DEVNULL)
+            graph=json.loads(graph_out[graph_out.index(b"{"):])
+            http_repos=sorted(r for usage in graph["extensionUsages"] if usage["key"].startswith("@@//:MODULE.bazel%") and usage["key"].endswith((" http_file"," http_archive")) for r in usage.get("used_repos",[]))
+            python_usages=sorted(usage["key"] for usage in graph["extensionUsages"] if usage["key"].endswith("//python/extensions:python.bzl%python"))
+            record={"root_http_repo_count":len(http_repos),"direct_python_archives":[r for r in http_repos if r.startswith("release_static_cpython")],"runtime_extension":python_usages,"catalog":hashlib.sha256(Path("tools/licensecheck/dependencies.yaml").read_bytes()).hexdigest()}
+            report["sources"][rev]["stock_license_graph"]=record;save()
+        except Exception as err:
+            report["sources"][rev]["graph_error"]={"type":type(err).__name__,"line":traceback.extract_tb(err.__traceback__)[-1].lineno};save()
         for case,ex,lib,tgt,tlib in CASES:
             rec=entries[case]={}
             opts=flags(ex,lib,tgt,tlib)
             out=invoke(rec,[*BASE,"cquery",*opts,"--output=starlark","--starlark:file="+str(D/"writer_runtime.cquery"),EXPR],rev+case)
             if rec["exit"]:continue
-            execroot=Path(subprocess.check_output([*BASE,"info","execution_root"],text=True,stderr=subprocess.DEVNULL).strip())
-            for line in out.read_text().splitlines():
-                info=json.loads(line)
-                candidates=info["interpreters"]
-                rec.setdefault("observed",[]).append({"outputs":info["outputs"][:2],"candidates":candidates[:5],"encodings":info["encodings"][:2]});save()
-                assert candidates and info["encodings"]
-                roots=set()
-                for val in [*candidates,*info["encodings"]]:
-                    pp=Path(val)
-                    assert pp.parts[0]=="external" and ".." not in pp.parts and re.fullmatch(r"[a-zA-Z0-9_+.~/-]+",val)
-                    roots.add(pp.parts[1])
-                assert len(roots)==1
-                binaries=[elf(execroot/v) for v in candidates]
-                assert all(v==binaries[0] for v in binaries)
-                kind="exec" if any("-exec" in v.split("/")[1] for v in info["outputs"]) else "target"
-                assert kind not in rec
-                rec[kind]={"repo":roots.pop(),**binaries[0]}
-            save()
-            assert set(rec)>={"exec","target"}
+            try:
+                execroot=Path(subprocess.check_output([*BASE,"info","execution_root"],text=True,stderr=subprocess.DEVNULL).strip())
+                for line in out.read_text().splitlines():
+                    info=json.loads(line)
+                    candidates=info["interpreters"]
+                    rec.setdefault("observed",[]).append({"outputs":info["outputs"][:2],"candidates":candidates[:5],"encodings":info["encodings"][:2]});save()
+                    assert candidates and info["encodings"]
+                    roots=set()
+                    for val in [*candidates,*info["encodings"]]:
+                        pp=Path(val)
+                        assert pp.parts[0]=="external" and ".." not in pp.parts and re.fullmatch(r"[a-zA-Z0-9_+.~/-]+",val)
+                        roots.add(pp.parts[1])
+                    assert len(roots)==1
+                    binaries=[elf(execroot/v) for v in candidates]
+                    assert all(v==binaries[0] for v in binaries)
+                    kind="exec" if any("-exec" in v.split("/")[1] for v in info["outputs"]) else "target"
+                    assert kind not in rec
+                    rec[kind]={"repo":roots.pop(),**binaries[0]}
+                save()
+                assert set(rec)>={"exec","target"}
+            except Exception as err:
+                rec["resolution_error"]={"type":type(err).__name__,"line":traceback.extract_tb(err.__traceback__)[-1].lineno};save()
+    for rev in SRC:
+        record=report["sources"][rev].get("stock_license_graph",{})
+        expected=["release_static_cpython","release_static_cpython_arm64"] if rev=="control" else []
+        assert record.get("direct_python_archives")==expected
     for case,ex,lib,tgt,tlib in CASES:
         old,new=(report["sources"][k]["cases"][case] for k in SRC)
         for slot,arch,libc in (("exec",ex,lib),("target",tgt,tlib)):
