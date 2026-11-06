@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T07:46:49.356Z",
+    "updatedAt": "2026-11-06T08:03:48.838Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28149,35 +28149,51 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/nvidia-parser-catalog-source",
-      "head": "5c019e9e6d5116841ee1dcbdee426437e9739027",
+      "head": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
       "title": "Build the NVIDIA parser against hermetic-llvm’s LLVM source",
-      "url": "https://github.com/tamird/gvisor/commit/5c019e9e6",
+      "url": "https://github.com/tamird/gvisor/commit/7fca7c54f",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T07:46:49.356Z",
-      "summary": "The NVIDIA parser uses the LLVM module’s source in place of its private archive, zlib rule and Bazel 9 patch. On 5c019e9e6, the classifier from #15146 accepts the five terms recorded for the parser’s libraries. Two focused Fetch runs preserved the reviewed entry byte for byte because the release distributor has no root notice. The public license check verified all 224 dependencies. Changing the archive checksum or removing the regex and BLAKE3 terms failed verification. Starting with an empty catalog required a manual entry.\n\nThe registry’s latest LLVM release (0.8.26) still enables nine backends. Merged hermetic-llvm #892 makes just AArch64 and X86 the production defaults. The earlier two-backend parser ran on native AMD64 and ARM64. The current catalog qualification used nine configured backends.",
+      "updatedAt": "2026-11-06T08:03:48.838Z",
+      "summary": "Build the NVIDIA driver parser from the LLVM archive supplied by the pinned module. This removes the local Bazel 9 patch and zlib rule. The released module enables nine LLVM backends where gVisor’s archive enabled twenty. The parser configures 141 fewer C++ compilations on each architecture.\n\nThe standalone change teaches the existing license verifier two SPDX identifiers. It verified all 223 records. Two Fetch runs preserved the five terms recorded for the parser libraries; the verifier rejected a changed archive checksum and a record with only the root notice’s terms.",
       "followup": {
         "owner": "root",
-        "sourceHead": "5c019e9e6d5116841ee1dcbdee426437e9739027",
-        "observedAt": "2026-11-06T07:46:49.356Z",
-        "disposition": "Five-term component audit qualified with the proposed classifier",
-        "nextAction": "Wait for #15146 before submitting. Check the native parser on released LLVM independently of the two-backend optimization. The existing catalog format represents the component audit.",
+        "sourceHead": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
+        "observedAt": "2026-11-06T08:03:48.838Z",
+        "disposition": "Standalone catalog verified; released LLVM configures a smaller parser build on both architectures",
+        "nextAction": "Finish the native AMD64 and ARM64 parser tests and present the standalone change for contributor review. The tests use the same parser and LLVM source declarations on 5c019e9e6.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb",
+          "https://github.com/tamird/gvisor/commit/7fca7c54f",
+          "https://github.com/tamird/gvisor/actions/runs/42183956039/artifacts/13486364802",
+          "https://github.com/tamird/gvisor/actions/runs/42183941511/artifacts/13486474282",
+          "https://github.com/tamird/gvisor/actions/runs/42183941511",
+          "https://github.com/tamird/gvisor/commit/17d37fc9a",
           "https://app.buildbuddy.io/invocation/a0ed5b1c-6618-4291-9931-ec00d9183a9f",
           "https://app.buildbuddy.io/invocation/2476c02c-1d7a-4ecd-9ce5-9ed8c5635e55",
           "https://app.buildbuddy.io/invocation/9870c3d7-b09b-4281-a17d-4a9c71382da9",
-          "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a300884d73de0b903316f85c420c45471268",
+          "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a3008",
           "https://app.buildbuddy.io/invocation/9f4b6536-8166-4896-9259-bce7f4f6b19b",
           "https://tamird.github.io/gvisor/#branch%3Ahermetic-compiler-review",
           "https://github.com/google/gvisor/commit/0245c1dfa",
-          "https://github.com/tamird/gvisor/commit/74353add6098993e7cb22f2a5c443ef8fd3242f6",
+          "https://github.com/tamird/gvisor/commit/74353add6",
           "https://github.com/tamird/gvisor/actions/runs/42111586199/artifacts/13455172267",
           "https://github.com/tamird/gvisor/actions/runs/40964802913/artifacts/12937627037",
           "https://github.com/tamird/gvisor/actions/runs/41717072807/artifacts/13273383359"
         ]
       },
       "evidence": [
+        {
+          "label": "Standalone 223-entry audit, repeated Fetch and negative controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42183956039/artifacts/13486364802"
+        },
+        {
+          "label": "20 and 9 backends; 141 fewer configured C++ compilations per architecture",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42183941511/artifacts/13486474282"
+        },
+        {
+          "label": "Native AMD64 and ARM64 parser checks with the released source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42183941511"
+        },
         {
           "label": "Current LLVM registry versions",
           "url": "https://bcr.bazel.build/modules/llvm/metadata.json"
@@ -28192,7 +28208,7 @@
         },
         {
           "label": "Current source migration",
-          "url": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb"
+          "url": "https://github.com/tamird/gvisor/commit/17d37fc9a"
         },
         {
           "label": "Canonical Fetch and Verify: 201 records",
@@ -28212,7 +28228,7 @@
         },
         {
           "label": "Current fork proposal with corrected archive metadata",
-          "url": "https://github.com/tamird/gvisor/commit/6aa2df662c64e3199b918197cf5d1684570cc6f8"
+          "url": "https://github.com/tamird/gvisor/commit/6aa2df662"
         },
         {
           "label": "Authoritative redistributed LLVM source archive and SHA-256",
@@ -28220,7 +28236,7 @@
         },
         {
           "label": "Prior source proposal before catalog correction",
-          "url": "https://github.com/tamird/gvisor/commit/4872f66c2adecaa9ad7540b8003a3a69ffb38efd"
+          "url": "https://github.com/tamird/gvisor/commit/4872f66c2"
         },
         {
           "label": "GNU AMD64 qualification on the original source metadata",
@@ -28236,7 +28252,7 @@
         },
         {
           "label": "Upstream merge of hermetic-llvm #892",
-          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a300884d73de0b903316f85c420c45471268"
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/17f6a3008"
         },
         {
           "label": "The two migration trees differ only in the independent go-digest policy and catalog record",
@@ -28248,7 +28264,7 @@
         },
         {
           "label": "Five-term standalone source on current upstream",
-          "url": "https://github.com/tamird/gvisor/commit/74353add6098993e7cb22f2a5c443ef8fd3242f6"
+          "url": "https://github.com/tamird/gvisor/commit/74353add6"
         },
         {
           "label": "Complete stock Verify and one-record Fetch; nine configured backends",
@@ -28281,10 +28297,10 @@
       ],
       "refinement": {
         "before": {
-          "head": "17d37fc9ad63e02bd1e53862ae49136179ec11eb"
+          "head": "5c019e9e6d5116841ee1dcbdee426437e9739027"
         },
         "after": {
-          "head": "74353add6098993e7cb22f2a5c443ef8fd3242f6"
+          "head": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63"
         }
       }
     },
@@ -49583,7 +49599,7 @@
       "url": "https://github.com/google/gvisor/pull/16834",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-02T19:50:18.494436+00:00",
+      "updatedAt": "2026-11-06T08:03:48.838Z",
       "summary": "Gazelle can run repository commands on a client without a host env executable. The gVisor module declares its Bazel 8 minimum.",
       "evidence": [
         {
@@ -49593,6 +49609,10 @@
         {
           "label": "All five client checks, including the empty-variable and missing-env cases",
           "url": "https://github.com/tamird/gvisor/actions/runs/41506063956/artifacts/13170238787"
+        },
+        {
+          "label": "Cold Bazel client with empty PATH directories: original failure and corrected release graph",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42184534786/artifacts/13487051834"
         }
       ],
       "settledReviews": [
@@ -55996,16 +56016,6 @@
       "evidence": "https://github.com/google/gvisor/pull/16419"
     },
     {
-      "from": "pr:15146",
-      "to": "branch:hermetic-llvm-project",
-      "type": "depends_on",
-      "reason": "The stock verifier rejects NCSA and Spencer-94. The proposed classifier accepted all five audited terms; the standard manual-entry fallback preserved the component record.",
-      "evidence": [
-        "https://github.com/tamird/gvisor/actions/runs/42181292873/artifacts/13485775774",
-        "https://github.com/tamird/gvisor/actions/runs/42182345142/artifacts/13485284841"
-      ]
-    },
-    {
       "from": "pr:16249",
       "to": "branch:hermetic-llvm-project",
       "type": "depends_on",
@@ -56021,18 +56031,6 @@
       "type": "depends_on",
       "reason": "The independent documentation notice/catalog change follows the complete-license classifier.",
       "evidence": "https://github.com/tamird/gvisor/commit/ea27b4806607c7640e2c1f43a5996f80374a78af"
-    },
-    {
-      "from": "pr:hermeticbuild/hermetic-llvm:892",
-      "to": "branch:hermetic-llvm-project",
-      "type": "depends_on",
-      "reason": "Merged #892 supplies the two-backend default. BCR release 0.8.26 still requests nine; a containing release or an explicit backport is needed.",
-      "evidence": [
-        "https://github.com/hermeticbuild/hermetic-llvm/pull/892",
-        "https://bcr.bazel.build/modules/llvm/0.8.26/MODULE.bazel",
-        "https://github.com/tamird/gvisor/actions/runs/41717072807/artifacts/13273383359",
-        "https://github.com/tamird/gvisor/actions/runs/42111586199/artifacts/13455172267"
-      ]
     },
     {
       "from": "branch:plugin-gnu-source",
@@ -70330,9 +70328,18 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-06T07:40:46.780Z",
+      "updatedAt": "2026-11-06T08:03:48.838Z",
       "summary": "A shell-free AMD64 RBE worker packaged the nine-file public release for AMD64 and ARM64. The ARM64 tarball booted a rootless systrap guest on a native runner. This integration uses a forked rules_python launcher and a declared static CPython. Earlier cross-builds also linked race-enabled releases in both directions. Publication of the verified directory-only worker image awaits permission.",
       "findings": [
+        {
+          "text": "On a cold Linux Bazel client with no executables in PATH, the original Gazelle repository command failed at execvp(env). With #16834 and the same explicitly registered shell, Bazel configured the public release and a real Go dependency. This tested configuration. The two published architecture archives were built separately with a conventional Linux client.",
+          "evidence": [
+            {
+              "label": "Cold Bazel client with empty PATH directories: original failure and corrected release graph",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42184534786/artifacts/13487051834"
+            }
+          ]
+        },
         {
           "text": "Both original PackageTar actions ran uncached for each architecture on 102ffa219. All 18 members matched their declared input bytes and had mode 0755. On native ARM64, the installed Sentry from that tarball ran the guest to completion. On the baseline, the first tar action failed to execute its Bash launcher.",
           "evidence": [
@@ -75633,5 +75640,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-06T07:46:49.356Z"
+  "updatedAt": "2026-11-06T08:03:48.838Z"
 }
