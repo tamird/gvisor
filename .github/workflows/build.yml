@@ -1,35 +1,35 @@
-name: CI
-
-"on":
+name: Check RACK loss after Eifel has flagged the timeout
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/eifel-rack-loss-placement]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  packet:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 4}
+      - name: Compare the final congestion response on all three sources
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/eifel-check"; mkdir -m 700 "$d"
+          test "$(git rev-parse HEAD^)" = 83c64f1f96d23974b51efcc75dedf9661ef40c06
+          test "$(git rev-parse HEAD^^)" = cf5569cbd09f643696444f83cffd4dde753e627d
+          test "$(git rev-parse HEAD^^^)" = 1b9768b199524246fe8e4fa66a0b623069778780
+          test "$(git rev-parse HEAD^^^{tree})" = e94e317a7a3705909b762fa99fc0fa30fbfcc59c
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/eifel_loss_placement.py'
+          cp .github/qualification/eifel_loss_placement.py "$d/"
+          git fetch -q --no-tags --depth=1 https://github.com/tamird/gvisor.git 7e3d55e35d58bfc8c63bdf5582b36e50bc5824dc
+          git checkout -q --detach HEAD^
+          curl -fsSL --retry 3 --max-time 100 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazelisk"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazelisk" | sha256sum -c -
+          chmod 755 "$d/bazelisk"
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" LANG=C.UTF-8 python3 -B "$d/eifel_loss_placement.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: eifel-rack-placement
+          path: ${{ runner.temp }}/eifel-check/receipts.json
+          retention-days: 14
