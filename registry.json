@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T05:50:44.014972Z",
+    "updatedAt": "2026-11-06T06:07:33.401634Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -52751,8 +52751,8 @@
       "url": "https://github.com/bazel-contrib/buildtools/pull/1527",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-05T22:23:08.487188Z",
-      "summary": "Fabian asked whether the formatter should leave the comma off after **kwargs. At 61a70083c, gVisor has 37 multiline calls in 12 Starlark files with a bare ** expansion immediately before the closing parenthesis.",
+      "updatedAt": "2026-11-06T06:07:33.401634Z",
+      "summary": "Tamir asked Fabian whether Buildifier can preserve a trailing comma after **kwargs so the closing parenthesis can go on its own line. The PR is waiting for a response on that formatting policy.",
       "evidence": [
         {
           "label": "Question about the last argument",
@@ -52761,18 +52761,22 @@
         {
           "label": "One of the 37 call sites",
           "url": "https://github.com/google/gvisor/blob/61a70083c/test/benchmarks/defs.bzl#L23-L31"
+        },
+        {
+          "label": "Tamir’s reply about preserving the comma",
+          "url": "https://github.com/bazel-contrib/buildtools/pull/1527#issuecomment-6672580185"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "reply",
-        "head": "dae95786d45322bf0dba3c7e69936d01f1ea26c5",
-        "url": "https://github.com/bazel-contrib/buildtools/pull/1527#issuecomment-6670769692",
-        "title": "Reply to Fabian about trailing commas after **kwargs",
-        "requestedAt": "2026-11-05T22:23:08.487188Z",
-        "summary": "Post the reply explaining the distinct cases for *args and **kwargs?",
-        "body": "I’d omit the comma after `**kwargs` in both calls and declarations. It has to come last. In gVisor alone, that would avoid changing 37 calls across 12 Starlark files. I’d keep the comma after `*args`: a call can still gain `**kwargs`, and a declaration can gain a keyword-only parameter.\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "head": "dae95786d45322bf0dba3c7e69936d01f1ea26c5",
+          "body": "I’d omit the comma after `**kwargs` in both calls and declarations. It has to come last. In gVisor alone, that would avoid changing 37 calls across 12 Starlark files. I’d keep the comma after `*args`: a call can still gain `**kwargs`, and a declaration can gain a keyword-only parameter.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "answered-separately",
+          "at": "2026-11-05T23:47:57Z",
+          "url": "https://github.com/bazel-contrib/buildtools/pull/1527#issuecomment-6672580185"
+        }
+      ]
     },
     {
       "id": "pr:17060",
@@ -75323,5 +75327,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-06T05:50:44.014972Z"
+  "updatedAt": "2026-11-06T06:07:33.401634Z"
 }
