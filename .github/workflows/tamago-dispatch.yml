@@ -1,0 +1,57 @@
+name: Run the TCP dispatcher under TamaGo
+on:
+  push:
+    branches: [qualification/tamago-dispatch-progress]
+permissions: {contents: read}
+
+jobs:
+  scheduler:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && !github.event.deleted
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false}
+      - name: Prepare the AMD64 guest and host
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/tamago-dispatch"
+          mkdir -p "$d/results"
+          test -c /dev/kvm
+          if [[ ! -r /dev/kvm || ! -w /dev/kvm ]]; then
+            sudo setfacl -m "u:$USER:rw" /dev/kvm
+          fi
+          if ! command -v qemu-system-x86_64; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends qemu-system-x86
+          fi
+          qemu-system-x86_64 --version
+          curl --fail --location --retry 3 -o "$d/bazel" https://github.com/bazelbuild/bazel/releases/download/9.3.1/bazel-9.3.1-linux-x86_64
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $d/bazel" | sha256sum --check
+          chmod +x "$d/bazel"
+          "$d/bazel" --version
+          env -i PATH="$PATH" HOME="$HOME" USER="$USER" RUNNER_TEMP="$RUNNER_TEMP" python3 -B test/tamago_dispatch/prepare.py
+      - name: Build both guests and test with KVM
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/tamago-dispatch"
+          env -i PATH="$PATH" HOME="$HOME" USER="$USER" "$d/bazel" test \
+            --override_repository="tamago_sdk=$d/sdk" --nocache_test_results --test_output=errors \
+            --build_event_json_file="$d/results/bep.json" \
+            //:stock_guest //:fixed_guest //:scheduler_guest_test
+      - name: Collect test and serial output
+        if: always()
+        run: |
+          set -eu
+          out="$RUNNER_TEMP/tamago-dispatch/results"
+          mkdir -p "$out"
+          if [[ -d bazel-testlogs/scheduler_guest_test ]]; then
+            cp -RL bazel-testlogs/scheduler_guest_test "$out/"
+          fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: tamago-dispatch-results
+          path: ${{ runner.temp }}/tamago-dispatch/results
+          if-no-files-found: warn
+          retention-days: 14

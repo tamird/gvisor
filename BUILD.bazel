@@ -1,0 +1,30 @@
+load("@rules_python//python:defs.bzl", "py_binary", "py_test")
+load("//:guest.bzl", "tamago_guest")
+
+py_binary(
+    name = "guest_compiler",
+    srcs = ["test/tamago_dispatch/compile_guest.py"],
+    main = "test/tamago_dispatch/compile_guest.py",
+)
+
+filegroup(
+    name = "guest_sources",
+    srcs = ["go.mod", "go.sum"] + glob([
+        "pkg/**",
+        "test/tamago_dispatch/guest/**",
+        "test/tamago_dispatch/proxy/**",
+    ]),
+)
+
+tamago_guest(name = "stock_guest")
+tamago_guest(name = "fixed_guest", fixed = True)
+
+py_test(
+    name = "scheduler_guest_test",
+    srcs = ["test/tamago_dispatch/run_guests.py"],
+    main = "test/tamago_dispatch/run_guests.py",
+    args = ["$(rootpath :stock_guest)", "$(rootpath :fixed_guest)"],
+    data = [":stock_guest", ":fixed_guest"],
+    tags = ["exclusive", "local"],
+    timeout = "long",
+)
