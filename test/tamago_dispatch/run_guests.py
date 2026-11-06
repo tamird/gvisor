@@ -65,10 +65,12 @@ def observe(vm, serial):
                     text in line.lower() for text in ("exception: vector", "fatal error:", "panic:", "halting")
                 ):
                     raise RuntimeError(f"guest failed: {line}")
-                if line.startswith("DISPATCH BOOT "):
-                    if not re.fullmatch(r"DISPATCH BOOT tamago amd64 .*1\.27\.3.* 1", line):
+                # SeaBIOS can hand off the UART in the middle of its boot line.
+                _, banner, target = line.partition("DISPATCH BOOT ")
+                if banner:
+                    if version is not None or not re.fullmatch(r"tamago amd64 .*1\.27\.3.* 1", target):
                         raise RuntimeError(f"unexpected target or CPU count: {line}")
-                    version = line
+                    version = banner + target
                 elif line.startswith("DISPATCH "):
                     event = line.removeprefix("DISPATCH ")
                     events.append(event)
