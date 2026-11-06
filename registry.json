@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T19:48:46.660Z",
+    "updatedAt": "2026-11-06T20:00:54.961Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -11844,28 +11844,61 @@
       "id": "branch:nvproxy-declared-sources",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "nvproxy-declared-sources",
-      "head": "7012ff5d9c7fb77b22713bb2849f9ae0a144c237",
-      "title": "Declare NVIDIA driver ABI test inputs",
+      "ref": "research/nvproxy-native-source-parity-ready",
+      "head": "efa9acfb4e2d91c5944c166a9f2269e0b3ba4322",
+      "title": "Declare NVIDIA driver headers for the offline ABI comparison",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/7012ff5d9c7fb77b22713bb2849f9ae0a144c237",
-      "status": "code dependency",
-      "updatedAt": "2026-10-11T03:13:46.462739+00:00",
-      "summary": "This existing public component requires the hermetic LLVM C++ toolchain: its ABI extraction rule rejects a selected compiler without an explicit Clang resource directory and declared toolchain inputs. Current GNU master therefore is not a valid standalone base. The retained branch has 28 commits beyond master 309599c1e and includes unrelated Python-namespace ancestry before its own proposal. The current 7012ff5d9 amendment preserves that ancestry and changes only the updater’s explicit Git working directory. It exactly matches the validated integration updater. Root will preserve the proposal while preparing an independent extraction and regenerating its index for current SupportedDrivers. The canonical updater working-directory correction is already validated in integration run 87fe4603: all four affected checks and license Fetch/Verify pass, and the generated index adds only two unavailable-source entries. The old proposal’s source index and license catalog remain unchanged. No matching PR or unanswered contributor question is recorded; the source dependency remains.",
+      "url": "https://github.com/tamird/gvisor/commit/efa9acfb4",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T20:00:54.961Z",
+      "summary": "The ABI test used git to fetch each supported NVIDIA driver. The proposed change feeds the parser declared archives, using the Clang headers from #17112 and the parser dependency from #17114. With network access denied, all 25 versions with a source release passed parity and TestParser passed. The nine versions with no public tag were recorded as skips. A separate test still checks the live installer checksums. Its previous run failed TLS verification on all 34 versions.",
       "followup": {
-        "disposition": "Hermetic LLVM C++ dependency; extraction required",
-        "owner": "root",
-        "sourceHead": "7012ff5d9c7fb77b22713bb2849f9ae0a144c237",
-        "reviewedAt": "2026-10-11T03:13:46.462739+00:00",
-        "nextAction": "The validated updater correction is folded into the retained proposal. Before standalone submission, compose the real LLVM prerequisite, prune unrelated ancestry and regenerate against current SupportedDrivers. This is a source dependency, not a contributor-review hold.",
+        "sourceHead": "efa9acfb4e2d91c5944c166a9f2269e0b3ba4322",
+        "observedAt": "2026-11-06T20:00:54.961Z",
+        "owner": "Contributor",
+        "disposition": "Ready for source review of the measured offline ABI change.",
+        "nextAction": "After contributor review, wait for #17112, #17114 and a successful build and run of the separated live installer test before submission.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/7012ff5d9c7fb77b22713bb2849f9ae0a144c237",
-          "https://github.com/tamird/gvisor/commit/94fefcd495287037c50384bf6d85efa35d9f286f",
-          "https://github.com/tamird/gvisor/blob/94fefcd49/tools/nvidia_driver_differ/defs.bzl",
-          "https://github.com/tamird/gvisor/commit/26643f1b6b4739574b8c6a52c8c8ad151e338959",
-          "https://app.buildbuddy.io/invocation/87fe4603-392e-4c20-9b2c-46da8a86759c"
+          "https://github.com/tamird/gvisor/compare/acedf056b...efa9acfb4",
+          "https://github.com/tamird/gvisor/commit/63f10e43e",
+          "https://github.com/tamird/gvisor/actions/runs/42282261080/artifacts/13536367145",
+          "https://github.com/tamird/gvisor/actions/runs/42279392380/artifacts/13534569286",
+          "https://github.com/tamird/gvisor/actions/runs/42283984978"
         ]
-      }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "efa9acfb4e2d91c5944c166a9f2269e0b3ba4322",
+        "baseHead": "acedf056bb9dce1d8ff9e5fe169241b743683848",
+        "url": "https://github.com/tamird/gvisor/compare/acedf056b...efa9acfb4",
+        "title": "Give the NVIDIA ABI test its driver headers",
+        "body": "The ABI test starts a Git checkout for each supported driver. On a\nworker without Git, every version fails before the parser compares\na driver definition with its Go type.\n\nPin NVIDIA’s public driver archives and pass their header directories\nto the existing parser as test data. The parser already carries its\nClang builtin headers. The command-line differ can still check out\nthe version selected by its caller.\n\nRecord supported versions that have no public source tag separately.\nRun the source updater when the supported driver list changes.",
+        "requestedAt": "2026-11-06T20:00:54.961Z",
+        "summary": "Review the offline driver-header change and its separate test split. Open after #17112 and #17114 land and the live installer test has run on the split source."
+      },
+      "evidence": [
+        {
+          "label": "Review the native ABI source change",
+          "url": "https://github.com/tamird/gvisor/compare/acedf056b...efa9acfb4"
+        },
+        {
+          "label": "Separate the live installer checksum test",
+          "url": "https://github.com/tamird/gvisor/commit/63f10e43e"
+        },
+        {
+          "label": "25 driver ABIs and TestParser passed offline; 9 versions had no source tag",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42282261080/artifacts/13536367145"
+        },
+        {
+          "label": "Regenerated pins and recorded absences matched; original live checks failed TLS",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42279392380/artifacts/13534569286"
+        },
+        {
+          "label": "Full presubmit with live installer checks and declared trust roots",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42283984978"
+        }
+      ]
     },
     {
       "id": "pr:15645",
@@ -54984,9 +55017,17 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T19:48:46.660Z",
+      "updatedAt": "2026-11-06T20:00:54.961Z",
       "summary": "One remote Bazel invocation on the released LLVM integration recorded all 3,235 presubmit targets. Of 2,874 build-only targets, 2,811 built. Of 361 runnable targets, 344 ran and 342 passed. There were 352 passing shards in 354 fresh remote executions. The sandbox test failed its default-route assertions and the vDSO checker could not start readelf. Three C++ compile actions failed in the NVIDIA driver's Clang parser on the pinned RegisterRef comparator. The two failed test targets passed in separate runs with the declared vDSO reader and #15866’s route expectations. #17114 built all four previously failing NVIDIA targets and the parser test passed remotely. All 34 structure parity cases then failed to start git, and all 34 installer checksum cases failed TLS verification.\n\nOn master before the compiler change, the graph selected all 360 runnable and 2,881 build-only targets from the AMD64 cgroup-v2 presubmit, plus a native uname control. Of the resulting 3,242 roots, 2,650 build-only targets built and 295 tests ran. The OCI and Firecracker workers reported cgroup2fs and observed the expected cache separation for CGROUPV2 true and false. The earlier six-target pilot and full per-owner data are linked. The five previously unexecuted owners failed together during analysis in an isolated run. Bazel reported 730 action conflicts before execution. Two representative LLVM runtime objects had identical compiler commands in two tool configurations. The only reported difference was the target-platform label: //tools/bazeldefs:linux_amd64 versus //test/rbe:linux_amd64. The remaining unknown owners still need their own evidence. The canonical AMD64 execution platform eliminated the conflicts in that six-target comparison. Three fresh remote test owners passed. Uname recorded four executed cases and version one. The netgofer XML listed no cases. All three fastbuild filter outputs were identical 1,474-byte stubs.",
       "evidence": [
+        {
+          "label": "Full presubmit on the canonical AMD64 worker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42283984978"
+        },
+        {
+          "label": "Native NVIDIA ABI parity and parser passed without network access",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42282261080/artifacts/13536367145"
+        },
         {
           "label": "All six canonical-worker targets built, with three fresh remote test owners",
           "url": "https://github.com/tamird/gvisor/actions/runs/42280834294/artifacts/13534254869"
@@ -55160,10 +55201,12 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "e46a101fc0aebb325ec25977697a012a2e11a11b",
-        "observedAt": "2026-11-06T19:48:46.660Z",
+        "observedAt": "2026-11-06T20:00:54.961Z",
         "disposition": "The contributor requested one remote Bazel graph for CI targets across areas and configurations.",
-        "nextAction": "Qualify the optimized filters and rerun the full selection with the canonical platform. The netgofer result is at the test-owner level until the original log is recovered. Continue diagnosing the other unknown owners separately.",
+        "nextAction": "Check the in-progress full canonical-platform presubmit on the exact source selection, including native ABI parity, the live checksums and named netgofer cases. Keep the optimized filter-generation result separate from the previously qualified fastbuild stubs.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42283984978",
+          "https://github.com/tamird/gvisor/actions/runs/42282261080/artifacts/13536367145",
           "https://github.com/tamird/gvisor/actions/runs/42280834294/artifacts/13534254869",
           "https://github.com/tamird/gvisor/actions/runs/42279392380/artifacts/13534569286",
           "https://github.com/tamird/gvisor/actions/runs/42280834294",
@@ -56750,15 +56793,6 @@
         "https://github.com/tamird/gvisor/commit/ab69615a33e0dd897e44eac8e7e4b07785c6d66a",
         "https://github.com/tamird/gvisor/commit/4a91176643e763316f2d4a222f92beb9a7eab891",
         "https://github.com/tamird/gvisor/commit/791d920ba7f740f2d81db95bbf1904eb62dd17dd"
-      ]
-    },
-    {
-      "from": "branch:hermetic-compiler-review",
-      "to": "branch:nvproxy-declared-sources",
-      "type": "depends_on",
-      "reason": "The NVIDIA ABI extraction rule requires the selected LLVM C++ toolchain to supply an explicit Clang resource directory and its declared inputs; current GNU master is not a valid standalone base.",
-      "evidence": [
-        "https://github.com/tamird/gvisor/blob/94fefcd49/tools/nvidia_driver_differ/defs.bzl"
       ]
     },
     {
@@ -59188,6 +59222,26 @@
       "evidence": [
         "https://github.com/tamird/gvisor/commit/4867d503b",
         "https://github.com/google/gvisor/pull/16419"
+      ]
+    },
+    {
+      "from": "pr:17112",
+      "to": "branch:nvproxy-declared-sources",
+      "type": "depends_on",
+      "reason": "Supplies the Clang resource headers carried by the parser.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/compare/acedf056b...efa9acfb4",
+        "https://github.com/tamird/gvisor/actions/runs/42282261080/artifacts/13536367145"
+      ]
+    },
+    {
+      "from": "pr:17114",
+      "to": "branch:nvproxy-declared-sources",
+      "type": "depends_on",
+      "reason": "Builds the NVIDIA parser with the compiler dependency used in this source.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/compare/acedf056b...efa9acfb4",
+        "https://github.com/tamird/gvisor/actions/runs/42282261080/artifacts/13536367145"
       ]
     }
   ],
