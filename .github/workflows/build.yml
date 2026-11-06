@@ -1,35 +1,60 @@
-name: CI
-
-"on":
+name: Inspect the final queued frame on a sequenced-packet socket
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/source-netgofer-empty-prefix-native]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  native:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 5, persist-credentials: false}
+      - name: Replay the same real kernel queue on the original and proposed receivers
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = e12ccfeb263a09802c01640b6e92d10ad41b0dd3
+          test "$(git rev-parse HEAD^^)" = 3abd433515437ea263321eeead064993e3b842b9
+          test "$(git rev-parse HEAD~4)" = 949d4871550821371649ae873beab69ead0b36c1
+          d="$RUNNER_TEMP/netgofer-queue"
+          mkdir -m 700 "$d"
+          cp .github/qualification/queued_frame.py "$d/"
+          curl -fsSL --retry 3 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          test "$("$d/bazel" --version)" = "bazel 9.3.1"
+          for arm in stock poll; do
+            case "$arm" in
+              stock) src=949d4871550821371649ae873beab69ead0b36c1;;
+              poll) src=3abd433515437ea263321eeead064993e3b842b9;;
+            esac
+            git checkout --quiet --detach "$src"
+            python3 -IB "$d/queued_frame.py" "$arm" stage
+            code=0
+            env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 USE_BAZEL_VERSION=9.3.1 \
+              "$d/bazel" --nosystem_rc --nohome_rc --bazelrc=/dev/null --host_jvm_args=-Xmx3g test \
+              --config=x86_64 -c opt --jobs=4 --local_resources=memory=8192 \
+              --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox \
+              '--modify_execution_info=^(GoStandardLibraryAnalysis|GoStaticAnalysis)$=-no-sandbox' --build_event_publish_all_actions \
+              --spawn_strategy=linux-sandbox --strategy=TestRunner=linux-sandbox --sandbox_default_allow_network=false \
+              --remote_cache= --remote_executor= --bes_backend= \
+              --nocache_test_results --flaky_test_attempts=1 --test_arg=-test.v --test_env=GO_TEST_WRAP_TESTV=1 \
+              --test_arg=-test.run='^TestRecvMMsgQueuedFrameControl$' --test_arg=-test.count=3 \
+              --build_event_json_file="$d/$arm.jsonl" //pkg/tcpip/link/fdbased:fdbased_test >"$d/$arm.console" 2>&1 || code=$?
+            python3 -IB "$d/queued_frame.py" "$arm" result "$code"
+            git restore -- pkg/tcpip/link/fdbased/endpoint_test.go
+          done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: netgofer-empty-prefix-kernel
+          path: |
+            ${{ runner.temp }}/netgofer-queue/stock.json
+            ${{ runner.temp }}/netgofer-queue/poll.json
+          retention-days: 14
+      - name: Confirm the actual queued and deliverable payload
+        run: |
+          d="$RUNNER_TEMP/netgofer-queue"
+          jq -e '.exit==0 and .passed and (.cached|not) and .rows==[[8,true,15,15,1,0],[8,true,15,15,1,0],[8,true,15,15,1,0]]' "$d/stock.json" >/dev/null
+          jq -e '.exit!=0 and (.passed|not) and (.cached|not) and .rows==[[8,false,15,15,1,0],[8,false,15,15,1,0],[8,false,15,15,1,0]]' "$d/poll.json" >/dev/null
