@@ -1,0 +1,44 @@
+name: Diagnose the APT toolchain's package analysis
+on:
+  push:
+    branches: [qualification/apt-publisher-analysis]
+permissions: {contents: read}
+jobs:
+  analysis:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && !github.event.deleted
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Compare the two immutable package locks without executing actions
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 00195784d5612a823bcd624dd83a4127d0cd2e50
+          d="$RUNNER_TEMP/apt-analysis"
+          mkdir -p "$d/public"
+          git show HEAD:MODULE.bazel.lock >"$d/prior.lock"
+          curl -fsSLo "$d/qualified.lock" https://raw.githubusercontent.com/tamird/gvisor/eea5baa2c18850e0c708eea060c5a290babc83ea/MODULE.bazel.lock
+          test "$(git hash-object "$d/prior.lock")" = 32e3c5291e42bd48a5c283f43c5836abbdcd8896
+          test "$(git hash-object "$d/qualified.lock")" = ebaac6770681355957b2dda6ca9b3c3d761a24dc
+          for arm in prior qualified; do
+            cp "$d/$arm.lock" MODULE.bazel.lock
+            status=0
+            env -i HOME="$HOME" USER="$USER" PATH="$PATH" bazel --nosystem_rc --nohome_rc build \
+              --nobuild --define=rbe=true --jobs=16 --color=no --curses=no \
+              --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64,//tools/bazeldefs:rbe_linux_arm64 \
+              --host_platform=//tools/bazeldefs:rbe_linux_amd64 \
+              //test/release:publisher_local_test >"$d/$arm.console" 2>&1 || status=$?
+            printf '%s\n' "$status" >"$d/public/$arm.exit"
+            git hash-object MODULE.bazel.lock > "$d/public/$arm.resolved-lock"
+            # No private client rc, remote service or credentials are used.
+            sed -E 's|(https?://[^?[:space:]]+)\?[^[:space:]]+|\1|g' "$d/$arm.console" | tail -c 16000 > "$d/public/$arm.log"
+            printf '%s ' "$arm"; cat "$d/public/$arm.exit"
+          done
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: apt-module-analysis
+          path: ${{ runner.temp }}/apt-analysis/public/
+          retention-days: 14
+          if-no-files-found: error
