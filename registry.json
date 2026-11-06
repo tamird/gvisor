@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T15:53:23.363Z",
+    "updatedAt": "2026-11-06T15:58:09.697Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40564,9 +40564,13 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T15:53:23.363Z",
+      "updatedAt": "2026-11-06T15:58:09.697Z",
       "summary": "The 36 measured one-CPU restores on each build reached the first verified read in 670.0 ms on the parent, 554.0 ms with #16134 alone and 547.9 ms on this PR. Benchstat found no difference between the PR and #16134 on this workload (p=0.750).\n\nOn c31b2adc2, saving 100,000 empty tmpfs files took 3.98% longer than on its parent 706b124a2. Time through Sentry exit increased 3.64% and peak sampled Sentry RSS increased 1.33%. Each revision ran one warmup and 12 measured saves on native AMD64 with systrap, four CPUs, a 2 GiB limit, and uncompressed graph checkpoints. All 26 checkpoints restored the full tree with zero OOM kills. The earlier 30.12% RSS increase was measured on a48b7a12c against its own parent.",
       "evidence": [
+        {
+          "label": "Published restore comparison",
+          "url": "https://github.com/google/gvisor/pull/16735#issuecomment-6689167201"
+        },
         {
           "label": "Original one-CPU restore samples and 100,000-file readback on all 111 runs",
           "url": "https://github.com/tamird/gvisor/actions/runs/42228461079/artifacts/13517728283"
@@ -40773,15 +40777,27 @@
           "at": "2026-11-06T13:18:48.077Z",
           "note": "Updated the existing benchmark comment in place at 13:16 UTC. The earlier results remain in the comment.",
           "postedURL": "https://github.com/google/gvisor/pull/16735#issuecomment-6629323131"
+        },
+        {
+          "kind": "reply",
+          "head": "c31b2adc27b1d19b1e647b3239cd2b3b536a5adf",
+          "url": "https://github.com/google/gvisor/pull/16735",
+          "title": "Post the one-CPU restore comparison on #16735",
+          "body": "@parth-opensrc, on a one-CPU restore of 100,000 empty tmpfs files, both your PR and Etienne’s #16134 reference got the guest running sooner. From the start of restore to the first verified guest read, the median was 670.0 ms on parent 706b124a2, 554.0 ms with the reference patch 4a7ccbd2c applied to that parent, and 547.9 ms on c31b2adc2. Benchstat found no timing difference between the reference and the PR on this workload.\n\n```text\n                              │  reference  │             candidate              │\n                              │   sec/op    │   sec/op     vs base               │\nRestore/restore_first_read_ns   554.0m ± 2%   547.9m ± 2%       ~ (p=0.750 n=36)\n```\n\nSentry RSS at the first read was 308.0 MiB on the parent, 315.7 MiB on the reference and 315.9 MiB on the PR. Each run restored a fresh Sentry under a 2 GiB limit; all 111 runs, including warmups, read back the 100,000-file tree. [Original measurements](https://github.com/tamird/gvisor/actions/runs/42228461079/artifacts/13517728283) · [Benchstat](https://github.com/tamird/gvisor/actions/runs/42246215285/artifacts/13519255748).\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-06T15:57:11Z",
+          "note": "Posted the approved restore comparison on the original PR.",
+          "postedURL": "https://github.com/google/gvisor/pull/16735#issuecomment-6689167201"
         }
       ],
       "followup": {
         "owner": "Agent",
-        "observedAt": "2026-11-06T15:53:23.363Z",
-        "disposition": "Updated the checkpoint save measurements on the original comment.",
-        "nextAction": "Await permission to post the restore comparison. The prior save comment is already published.",
+        "observedAt": "2026-11-06T15:58:09.697Z",
+        "disposition": "Published the save and restore measurements.",
+        "nextAction": "Await maintainer review.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16735#issuecomment-6629323131"
+          "https://github.com/google/gvisor/pull/16735#issuecomment-6629323131",
+          "https://github.com/google/gvisor/pull/16735#issuecomment-6689167201"
         ],
         "sourceHead": "c31b2adc27b1d19b1e647b3239cd2b3b536a5adf",
         "providerHead": "c31b2adc27b1d19b1e647b3239cd2b3b536a5adf"
@@ -40803,16 +40819,6 @@
             "evidence": "https://github.com/google/gvisor/pull/16735#discussion_r4456530300"
           }
         ]
-      },
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "c31b2adc27b1d19b1e647b3239cd2b3b536a5adf",
-        "requestedAt": "2026-11-06T15:53:23.363Z",
-        "url": "https://github.com/google/gvisor/pull/16735",
-        "title": "Post the one-CPU restore comparison on #16735",
-        "summary": "Compare the PR with its parent and Etienne’s #16134 reference using 36 fresh restores per variant. The earlier comment measured checkpoint saves.",
-        "body": "@parth-opensrc, on a one-CPU restore of 100,000 empty tmpfs files, both your PR and Etienne’s #16134 reference got the guest running sooner. From the start of restore to the first verified guest read, the median was 670.0 ms on parent 706b124a2, 554.0 ms with the reference patch 4a7ccbd2c applied to that parent, and 547.9 ms on c31b2adc2. Benchstat found no timing difference between the reference and the PR on this workload.\n\n```text\n                              │  reference  │             candidate              │\n                              │   sec/op    │   sec/op     vs base               │\nRestore/restore_first_read_ns   554.0m ± 2%   547.9m ± 2%       ~ (p=0.750 n=36)\n```\n\nSentry RSS at the first read was 308.0 MiB on the parent, 315.7 MiB on the reference and 315.9 MiB on the PR. Each run restored a fresh Sentry under a 2 GiB limit; all 111 runs, including warmups, read back the 100,000-file tree. [Original measurements](https://github.com/tamird/gvisor/actions/runs/42228461079/artifacts/13517728283) · [Benchstat](https://github.com/tamird/gvisor/actions/runs/42246215285/artifacts/13519255748).\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -54464,9 +54470,13 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T15:53:23.363Z",
-      "summary": "On current master, one Bazel command selects the same 360 runnable tests and 2,881 build-only targets as the AMD64 cgroup-v2 unit presubmit, plus a native uname control. Bazel assigns 366 test shards to OCI workers and five to Firecracker workers with root and IPv6. The two worker probes both measured cgroup2fs with CGROUPV2=true and false. Each setting ran remotely the first time, and both repeat runs reused the cached true result. The full invocation reported all 3,242 target outcomes. It built 2,650 of 2,881 build-only targets and ran 295 of 361 test owners. Of the executed shards, 303 passed, one sandbox test failed, and one netgofer test timed out. Sixty-six test owners, including the native uname control, never built. The GNU compiler was absent on part of the build graph.\n\nA single Bazel invocation executed six tests remotely. AMD64 and ARM64 workers ran the Go atomicbitops and C++ posix_error tests. AMD64 workers also ran uname on native Linux and under gVisor systrap. All six TestRunner actions passed uncached. Four of the six tests exercise parts of three presubmit jobs. Two serve as architecture controls. Each of those three jobs still has additional coverage to verify. The fork’s Buildkite file contains one submission command. GitHub Actions submitted it for this trial.\n\nThe previous proposals kept separate unit, Nogo, package, container, smoke, Gazelle, plugin, source-lint and syscall jobs. Their target lists, test fixtures and earlier results are linked. Staged release checks still have distinct artifact inputs.",
+      "updatedAt": "2026-11-06T15:58:09.697Z",
+      "summary": "On current master, one Bazel command selects the same 360 runnable tests and 2,881 build-only targets as the AMD64 cgroup-v2 unit presubmit, plus a native uname control. Bazel assigns 366 test shards to OCI workers and five to Firecracker workers with root and IPv6. The two worker probes both measured cgroup2fs with CGROUPV2=true and false. Each setting ran remotely the first time, and both repeat runs reused the cached true result. The full invocation reported all 3,242 target outcomes. It built 2,650 of 2,881 build-only targets and ran 295 of 361 test owners. Of the executed shards, 303 passed, one sandbox test failed, and one netgofer test timed out. Sixty-six test owners, including the native uname control, never built. The GNU compiler was absent on part of the build graph. Replaying the two test owners on #15866 ran both remotely without cache hits and both passed. The cause of the original netgofer timeout remains open.\n\nA single Bazel invocation executed six tests remotely. AMD64 and ARM64 workers ran the Go atomicbitops and C++ posix_error tests. AMD64 workers also ran uname on native Linux and under gVisor systrap. All six TestRunner actions passed uncached. Four of the six tests exercise parts of three presubmit jobs. Two serve as architecture controls. Each of those three jobs still has additional coverage to verify. The fork’s Buildkite file contains one submission command. GitHub Actions submitted it for this trial.\n\nThe previous proposals kept separate unit, Nogo, package, container, smoke, Gazelle, plugin, source-lint and syscall jobs. Their target lists, test fixtures and earlier results are linked. Staged release checks still have distinct artifact inputs.",
       "evidence": [
+        {
+          "label": "Remote replay of the sandbox and netgofer owners on #15866",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42247320345/artifacts/13518777315"
+        },
         {
           "label": "Full remote invocation, including the failure, timeout and unbuilt targets",
           "url": "https://github.com/tamird/gvisor/actions/runs/42241955125/artifacts/13517404379"
@@ -54608,9 +54618,13 @@
       "url": "https://github.com/google/gvisor/pull/16081",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T15:31:00.180Z",
+      "updatedAt": "2026-11-06T15:58:09.697Z",
       "summary": "The master sender closed after fast retransmissions exhausted the retry count on the segment the client was missing. The same seed finished on the PR in 985 ms. The cause of the reporter’s occasional stalls on the PR remains open.",
       "evidence": [
+        {
+          "label": "Published retry-counter finding",
+          "url": "https://github.com/google/gvisor/pull/16081#issuecomment-6689168373"
+        },
         {
           "label": "Same-socket ErrTimeout, missing byte range, and PR comparison",
           "url": "https://github.com/tamird/gvisor/actions/runs/42242371414/artifacts/13516598012"
@@ -54628,16 +54642,19 @@
           "url": "https://github.com/google/gvisor/blob/f51a205a8/pkg/tcpip/transport/tcp/snd.go#L695-L705"
         }
       ],
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "1b9768b199524246fe8e4fa66a0b623069778780",
-        "requestedAt": "2026-11-06T15:21:26.740Z",
-        "url": "https://github.com/google/gvisor/pull/16081#issuecomment-6686863923",
-        "title": "Reply to Kekawia about the two 30-second reads",
-        "summary": "Show where the master sender closed on its second timeout and how the same seed completed on the PR.",
-        "body": "@kekawia, I reproduced the 30-second read on master with your flags. The client had read 2,576,304 of 2,800,000 bytes. The link dropped all 16 transmissions of the next 1,200 bytes. On the second RTO the sender saw `xmitCount=16`, above its retry limit of 15, and closed with `ErrTimeout` before sending that segment again. Fast retransmissions count toward that limit. The client still advertised about 4 MiB and waited until its own read deadline. [Byte and timer trace](https://github.com/tamird/gvisor/actions/runs/42242371414/artifacts/13516598012) · [Retry check](https://github.com/google/gvisor/blob/f51a205a8/pkg/tcpip/transport/tcp/snd.go#L695-L703)\n\nOn your PR the same seed also had two RTOs and finished in 985 ms. All 12 heavy transfers in my earlier run finished on your PR, so I can confirm the cause on master only.\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "reply",
+          "head": "1b9768b199524246fe8e4fa66a0b623069778780",
+          "url": "https://github.com/google/gvisor/pull/16081#issuecomment-6686863923",
+          "title": "Reply to Kekawia about the two 30-second reads",
+          "body": "@kekawia, I reproduced the 30-second read on master with your flags. The client had read 2,576,304 of 2,800,000 bytes. The link dropped all 16 transmissions of the next 1,200 bytes. On the second RTO the sender saw `xmitCount=16`, above its retry limit of 15, and closed with `ErrTimeout` before sending that segment again. Fast retransmissions count toward that limit. The client still advertised about 4 MiB and waited until its own read deadline. [Byte and timer trace](https://github.com/tamird/gvisor/actions/runs/42242371414/artifacts/13516598012) · [Retry check](https://github.com/google/gvisor/blob/f51a205a8/pkg/tcpip/transport/tcp/snd.go#L695-L703)\n\nOn your PR the same seed also had two RTOs and finished in 985 ms. All 12 heavy transfers in my earlier run finished on your PR, so I can confirm the cause on master only.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-06T15:57:14Z",
+          "note": "Posted the approved retry-counter finding on the original PR.",
+          "postedURL": "https://github.com/google/gvisor/pull/16081#issuecomment-6689168373"
+        }
+      ]
     }
   ],
   "edges": [

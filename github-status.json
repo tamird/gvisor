@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-11-06T15:19:54.496598+00:00",
-  "registryDate": "2026-11-06T15:53:23.363Z",
+  "registryDate": "2026-11-06T15:58:09.697Z",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -331516,6 +331516,42 @@
       "owner": "Netstack",
       "assigned": false,
       "feedbackComplete": true
+    },
+    {
+      "repo": "google/gvisor",
+      "number": 17060,
+      "head": "4779d2d0a8535b5b4a42148e705cce16f7dcd671",
+      "firstObservedHead": "4779d2d0a8535b5b4a42148e705cce16f7dcd671",
+      "reviewHead": null,
+      "kind": "inline",
+      "id": "PRRC_kwDOB9IlXs8AAAABC9Ms6w",
+      "url": "https://github.com/google/gvisor/pull/17060#discussion_r4493356267",
+      "author": "botirkhaltaev",
+      "updatedAt": "2026-11-06T14:16:55Z",
+      "threadId": "PRRT_kwDOB9IlXs60hE8-",
+      "rootURL": "https://github.com/google/gvisor/pull/17060#discussion_r4492765452",
+      "rootId": "PRRC_kwDOB9IlXs8AAAABC8opDA",
+      "owner": "Agent",
+      "assigned": false,
+      "feedbackComplete": true
+    },
+    {
+      "repo": "google/gvisor",
+      "number": 17060,
+      "head": "4779d2d0a8535b5b4a42148e705cce16f7dcd671",
+      "firstObservedHead": "4779d2d0a8535b5b4a42148e705cce16f7dcd671",
+      "reviewHead": null,
+      "kind": "comment",
+      "id": "IC_kwDOB9IlXs8AAAABjpOCAQ",
+      "url": "https://github.com/google/gvisor/pull/17060#issuecomment-6686999041",
+      "author": "botirkhaltaev",
+      "updatedAt": "2026-11-06T14:19:38Z",
+      "threadId": null,
+      "rootURL": null,
+      "rootId": null,
+      "owner": "Agent",
+      "assigned": false,
+      "feedbackComplete": true
     }
   ],
   "mergeabilityHandoff": [
@@ -336677,7 +336713,7 @@
         "since": "2026-11-04T05:00:25.863097+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "pr:16664": {
@@ -336863,13 +336899,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-06T15:19:31.776485+00:00"
-      },
-      "contributor-review": {
-        "scope": "c31b2adc27b1d19b1e647b3239cd2b3b536a5adf",
-        "since": "2026-11-06T15:53:23.363Z",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
       }
     },
     "pr:16736": {
@@ -338586,7 +338615,7 @@
         "since": "2026-10-31T16:57:06.135+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:bazel-python-release": {
@@ -338595,7 +338624,7 @@
         "since": "2026-10-30T16:55:14.197497+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -338604,7 +338633,7 @@
         "since": "2026-11-03T07:06:47.467598+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:rules-img-hackbench-image": {
@@ -338613,7 +338642,7 @@
         "since": "2026-11-03T04:16:24.163353+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:rules-img-wrk2-image": {
@@ -338622,7 +338651,7 @@
         "since": "2026-10-31T07:18:55.041730+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:state-destination-kind": {
@@ -338631,7 +338660,7 @@
         "since": "2026-11-05T15:27:44.402237Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:state-encoder-zero-dispatch": {
@@ -338640,7 +338669,7 @@
         "since": "2026-11-05T14:55:40.136006Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:state-decoder-dependencies": {
@@ -338649,7 +338678,7 @@
         "since": "2026-11-05T15:27:44.402237Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:hermetic-llvm-project": {
@@ -338658,7 +338687,7 @@
         "since": "2026-11-06T08:32:16.199Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:licensecheck-go-digest-notices": {
@@ -338667,7 +338696,7 @@
         "since": "2026-11-02T16:53:35.881136+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:plugin-toolchain-unwind": {
@@ -338676,7 +338705,7 @@
         "since": "2026-11-06T13:14:58.461Z",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:package-clang-format": {
@@ -338685,7 +338714,7 @@
         "since": "2026-11-02T08:21:11+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:declared-codespell": {
@@ -338694,7 +338723,7 @@
         "since": "2026-11-02T08:21:11+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:release-archives-versioned": {
@@ -338703,7 +338732,7 @@
         "since": "2026-10-31T10:28:33.920382+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:tcp-restore-send-deadlines": {
@@ -338712,7 +338741,7 @@
         "since": "2026-10-29T21:52:21.505470+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:mutable-overlay-poll-waiter": {
@@ -338721,7 +338750,7 @@
         "since": "2026-11-05T19:38:10.552336Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:staged-release-tag": {
@@ -338730,7 +338759,7 @@
         "since": "2026-10-31T09:29:02.218795+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:tcp-sack-reneging": {
@@ -338739,7 +338768,7 @@
         "since": "2026-10-31T15:23:16.789097+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:native-gazelle-check": {
@@ -338748,7 +338777,7 @@
         "since": "2026-11-02T16:20:02.085486+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:checkpoint-memory-file-registration": {
@@ -338757,7 +338786,7 @@
         "since": "2026-10-31T18:05:07.150+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:tcp-cookie-window-packets": {
@@ -338766,7 +338795,7 @@
         "since": "2026-10-31T19:36:28.936+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:hostinet-exit-linger": {
@@ -338775,7 +338804,7 @@
         "since": "2026-11-01T05:08:12.703055+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:rack-checkpoint-recovery": {
@@ -338784,7 +338813,7 @@
         "since": "2026-11-01T07:12:21.056431+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:tcp-cookie-accepted-sack": {
@@ -338793,7 +338822,7 @@
         "since": "2026-11-01T08:08:39.992196+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:tcp-established-icmp-errors": {
@@ -338802,7 +338831,7 @@
         "since": "2026-11-01T09:30:13.357522+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:semaphore-waiter-lock": {
@@ -338811,7 +338840,7 @@
         "since": "2026-11-01T11:45:39.922159+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:state-graph-object-frame-bounds": {
@@ -338820,7 +338849,7 @@
         "since": "2026-11-01T13:49:13.599008+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:tcp-report-read-hangups": {
@@ -338829,7 +338858,7 @@
         "since": "2026-11-01T13:56:22.287550+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:tcp-passive-syn-retry": {
@@ -338838,7 +338867,7 @@
         "since": "2026-11-02T00:04:15+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:futex-requeue-count": {
@@ -338847,7 +338876,7 @@
         "since": "2026-11-02T02:29:36+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:state-graph-print-errors": {
@@ -338856,7 +338885,7 @@
         "since": "2026-11-02T22:54:43.336654+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:ipc-object-guard": {
@@ -338865,7 +338894,7 @@
         "since": "2026-11-03T06:24:21.015903+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:fdbased-start-on-attach": {
@@ -338874,7 +338903,7 @@
         "since": "2026-11-06T14:44:47.570Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:native-install-archive": {
@@ -338883,7 +338912,7 @@
         "since": "2026-11-06T06:48:31.766413Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "issue:bazel-contrib/rules_python:2500": {
@@ -338892,7 +338921,7 @@
         "since": "2026-11-06T11:35:55.690Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     },
     "branch:buildkite-source-syscalls": {
@@ -338901,16 +338930,7 @@
         "since": "2026-11-06T14:13:12.896Z",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-06T15:53:23.363Z"
-      }
-    },
-    "pr:16081": {
-      "contributor-review": {
-        "scope": "1b9768b199524246fe8e4fa66a0b623069778780",
-        "since": "2026-11-06T15:21:26.740Z",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-06T15:53:23.363Z"
+        "observedAt": "2026-11-06T15:58:09.697Z"
       }
     }
   },
