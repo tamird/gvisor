@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T13:03:27.377Z",
+    "updatedAt": "2026-11-06T13:18:48.077Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4845,8 +4845,8 @@
       "url": "https://github.com/tamird/gvisor/commit/9310f06f9",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Replace Coral GCC with hermetic-llvm for AMD64 and ARM64 releases. gVisor d5fe3c2ee uses the static C runtime on supplier be935b828 and removes its local unwinder and Linux-header patches.\n\nA Linux Bazel client drove each cross-build. The shell-free AMD64 worker ran Nogo and linked the two public ARM64 race binaries. The shell-free ARM64 worker ran Nogo and linked the two AMD64 binaries. Both pairs of links ran uncached. Each native target runner verified all five installed files and ran a systrap guest with its matching Sentry.\n\nThe supplier uses the first four static C commits from #768, the per-version glibc sources, libresolv.a for cgo DNS, and the LLVM unwinder for pthread cancellation. The earlier 0.8.24 release passed with an unavailable static C++ runtime. On b317c6e36 the static GNU TLDK Sentry exchanged TCP and UDP on native AMD64.\n\nWith the native Python bootstrap and an explicit source stamp, an AMD64 Bazel client with empty PATH directories built the public release on a shell-free AMD64 worker. Both pack actions ran uncached. All nine archive members matched their installed executables. The archived Sentry saved its source identity and restored the guest.\n\nThe reverse cross-build also packaged the public release. A static AArch64 Python writer executed both tar actions uncached on an ARM64 worker. The nine AMD64 archive members matched their inputs and the unpacked Sentry booted a rootless guest on native AMD64.\n\nOn bb983b988, Bazel selected static Python for each worker without a Python --extra_toolchains override. The public //shim:config tar and a fork-only bzip2 variant each ran uncached on AMD64 and ARM64. Each format was byte-identical across workers and contained the expected runsc.toml with mode 0644. The forked rules_python launcher and --@rules_python//python/config_settings:bootstrap_impl=native are still required. The ARM64 worker also linked ARM64 runsc and Sentry and executed both actions that package the public bzip2 release, all uncached. All nine installed executables matched their inputs, and the unpacked Sentry ran a rootless systrap guest on native ARM64.\n\nAt 224fdf968, a stripped AMD64 Bazel client built the public Debian package for both architectures. The distroless AMD64 worker ran the version writer, changelog writer, four tar actions and final Debian writer uncached for each package. Both packages had the expected version, date, configuration and maintainer script. All nine installed executables matched their release inputs and modes. The packaged AMD64 runsc reported the release tag; the ARM64 package was inspected. The builds used the forked native Python bootstrap.",
-      "updatedAt": "2026-11-06T11:28:05.597Z",
+      "summary": "Replace Coral GCC with hermetic-llvm for AMD64 and ARM64 releases. Both ordinary releases built and installed without the static-glibc branch. The AMD64 race binaries also linked and staged with musl. gVisor d5fe3c2ee uses the static C runtime on supplier be935b828 and removes its local unwinder and Linux-header patches.\n\nA Linux Bazel client drove each cross-build. The shell-free AMD64 worker ran Nogo and linked the two public ARM64 race binaries. The shell-free ARM64 worker ran Nogo and linked the two AMD64 binaries. Both pairs of links ran uncached. Each native target runner verified all five installed files and ran a systrap guest with its matching Sentry.\n\nThe supplier uses the first four static C commits from #768, the per-version glibc sources, libresolv.a for cgo DNS, and the LLVM unwinder for pthread cancellation. The earlier 0.8.24 release passed with an unavailable static C++ runtime. On b317c6e36 the static GNU TLDK Sentry exchanged TCP and UDP on native AMD64.\n\nWith the native Python bootstrap and an explicit source stamp, an AMD64 Bazel client with empty PATH directories built the public release on a shell-free AMD64 worker. Both pack actions ran uncached. All nine archive members matched their installed executables. The archived Sentry saved its source identity and restored the guest.\n\nThe reverse cross-build also packaged the public release. A static AArch64 Python writer executed both tar actions uncached on an ARM64 worker. The nine AMD64 archive members matched their inputs and the unpacked Sentry booted a rootless guest on native AMD64.\n\nOn bb983b988, Bazel selected static Python for each worker without a Python --extra_toolchains override. The public //shim:config tar and a fork-only bzip2 variant each ran uncached on AMD64 and ARM64. Each format was byte-identical across workers and contained the expected runsc.toml with mode 0644. The forked rules_python launcher and --@rules_python//python/config_settings:bootstrap_impl=native are still required. The ARM64 worker also linked ARM64 runsc and Sentry and executed both actions that package the public bzip2 release, all uncached. All nine installed executables matched their inputs, and the unpacked Sentry ran a rootless systrap guest on native ARM64.\n\nAt 224fdf968, a stripped AMD64 Bazel client built the public Debian package for both architectures. The distroless AMD64 worker ran the version writer, changelog writer, four tar actions and final Debian writer uncached for each package. Both packages had the expected version, date, configuration and maintainer script. All nine installed executables matched their release inputs and modes. The packaged AMD64 runsc reported the release tag; the ARM64 package was inspected. The builds used the forked native Python bootstrap.",
+      "updatedAt": "2026-11-06T13:18:48.077Z",
       "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
       "evidence": [
         {
@@ -5366,7 +5366,7 @@
         "sourceHead": "9310f06f95b100725450a71fbb896fc8403ec0eb",
         "disposition": "Both public race releases cross-built on workers of the other architecture with the current C-only supplier. Both native target runners verified the five delivered files and ran systrap.",
         "observedAt": "2026-11-06T06:43:56.321915Z",
-        "nextAction": "Follow the C runtime portion of hermetic-llvm #768. The gVisor compiler switch waits for the sidecar rule (#16522), its systrap stub consumer (#17067), systrap offsets (#16516), and the vDSO rule (#16586).",
+        "nextAction": "The gVisor compiler switch waits for the sidecar rule (#16522), its systrap stub consumer (#17067), systrap offsets (#16516), and the vDSO rule (#16586).",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42209485090/artifacts/13498582036",
           "https://github.com/tamird/gvisor/actions/runs/42209002950/artifacts/13497608629",
@@ -28790,22 +28790,23 @@
       "title": "Build the TLDK plugin against musl",
       "url": "https://github.com/tamird/gvisor/commit/dd63198c6",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T03:28:51.612533Z",
-      "summary": "The approved musl port keeps the DPDK stack trace available across the Go-to-C boundary. #15153 moved the optional plugin build into its external repository. The revision defines the same TestDumpStack there, supplies the two Go sources to its build sandbox, and runs it from make plugin-network-tests. The source files and both vendor patches match the approved revision byte for byte. TestDumpStack passed through Bazel on native AMD64 with GNU and musl. The default build excludes the plugin.\n\nIn a separate musl link comparison at f28370914, the plugin runsc binary linked. The plugin Sentry stopped at the systrap stub link rule tracked by #17067. The successful TCP and UDP guest tests at b317c6e36 used static GNU libc.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-06T13:18:48.077Z",
+      "summary": "The proposed musl port is on hold for a DPDK and toolchain investigation. The plugin patch applied to DPDK 18.11. It failed on 18.11.11, 19.11.14 and 25.11.4 even when applied alone. The TLDK fork calls rte_pktmbuf_dynamic_pool_create, which the current LTS lacks. An upgrade needs a TLDK port. The separate question of who supplies queue.h remains open.\n\nThe approved musl port keeps the DPDK stack trace available across the Go-to-C boundary. #15153 moved the optional plugin build into its external repository. The revision defines the same TestDumpStack there, supplies the two Go sources to its build sandbox, and runs it from make plugin-network-tests. The source files and both vendor patches match the approved revision byte for byte. TestDumpStack passed through Bazel on native AMD64 with GNU and musl. The default build excludes the plugin.\n\nIn a separate musl link comparison at f28370914, the plugin runsc binary linked. The plugin Sentry stopped at the systrap stub link rule tracked by #17067. The successful TCP and UDP guest tests at b317c6e36 used static GNU libc.",
       "followup": {
-        "owner": "root",
+        "owner": "Agent",
         "sourceHead": "dd63198c66946d7a38279478369bf269243a6ef4",
-        "observedAt": "2026-11-06T03:28:51.612533Z",
-        "disposition": "GNU and musl stack-trace tests passed; the contributor decision covers the revised test registration.",
-        "nextAction": "After review, open the tested change. Follow the separate musl Sentry link failure on #17067.",
+        "observedAt": "2026-11-06T13:13:00.663Z",
+        "disposition": "The proposed musl port is on hold for a DPDK and toolchain investigation.",
+        "nextAction": "Identify which component should supply queue.h and whether the optional plugin still needs each local fix. An upgrade also needs a port of the TLDK-specific API.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41384852262",
           "https://github.com/google/gvisor/pull/15153",
           "https://github.com/tamird/gvisor/actions/runs/42152793818/artifacts/13473926707",
           "https://github.com/tamird/gvisor/actions/runs/42155923250/artifacts/13474517191",
           "https://github.com/tamird/gvisor/actions/runs/42151189673/artifacts/13473036461",
-          "https://github.com/tamird/gvisor/commit/dd63198c6"
+          "https://github.com/tamird/gvisor/commit/dd63198c6",
+          "https://github.com/tamird/gvisor/actions/runs/42223787884/artifacts/13503664258"
         ]
       },
       "evidence": [
@@ -28908,6 +28909,10 @@
         {
           "label": "Review the external test registration",
           "url": "https://github.com/tamird/gvisor/commit/dd63198c6"
+        },
+        {
+          "label": "TLDK patch application on original DPDK and three later versions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42223787884/artifacts/13503664258"
         }
       ],
       "refinement": {
@@ -28926,17 +28931,21 @@
           "head": "603b1231738582ca6559d2a5e098598669842c3c",
           "outcome": "approved",
           "at": "2026-11-02T16:20:02.085486+00:00"
+        },
+        {
+          "kind": "proposal",
+          "head": "dd63198c66946d7a38279478369bf269243a6ef4",
+          "url": "https://github.com/tamird/gvisor/commit/dd63198c6",
+          "title": "Register the approved stack-trace test with the external plugin",
+          "body": "#15153 moved the optional plugin into its own Bazel repository. Register the existing TestDumpStack with the plugin, make the Go test sources available in its sandbox, and run it through make plugin-network-tests. The test code and both vendor patches match the revision you approved.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 603b12317^! dd63198c6^!",
+          "outcome": "changes-requested",
+          "at": "2026-11-06T13:13:00.663Z",
+          "note": "The proposed musl port is on hold for a DPDK and toolchain investigation."
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
+      "contributorChangesRequested": {
         "head": "dd63198c66946d7a38279478369bf269243a6ef4",
-        "url": "https://github.com/tamird/gvisor/commit/dd63198c6",
-        "title": "Register the approved stack-trace test with the external plugin",
-        "requestedAt": "2026-11-06T03:28:51.612533Z",
-        "summary": "May I open this revision? The change since 603b12317 is how the optional plugin owns its two test sources and how make plugin-network-tests runs the test. The same test passed with GNU and musl on AMD64.",
-        "body": "#15153 moved the optional plugin into its own Bazel repository. Register the existing TestDumpStack with the plugin, make the Go test sources available in its sandbox, and run it through make plugin-network-tests. The test code and both vendor patches match the revision you approved.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 603b12317^! dd63198c6^!"
+        "url": "https://github.com/tamird/gvisor/commit/dd63198c6"
       }
     },
     {
@@ -40497,7 +40506,7 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-05T20:42:50.885Z",
+      "updatedAt": "2026-11-06T13:18:48.077Z",
       "summary": "On c31b2adc2, saving 100,000 empty tmpfs files took 3.98% longer than on its parent 706b124a2. Time through Sentry exit increased 3.64% and peak sampled Sentry RSS increased 1.33%. Each revision ran one warmup and 12 measured saves on native AMD64 with systrap, four CPUs, a 2 GiB limit, and uncompressed graph checkpoints. All 26 checkpoints restored the full tree with zero OOM kills. The earlier 30.12% RSS increase was measured on a48b7a12c against its own parent.",
       "evidence": [
         {
@@ -40687,17 +40696,25 @@
           "outcome": "approved",
           "at": "2026-11-04T11:23:04Z",
           "url": "https://github.com/google/gvisor/pull/16735#issuecomment-6629323131"
+        },
+        {
+          "kind": "reply",
+          "head": "c31b2adc27b1d19b1e647b3239cd2b3b536a5adf",
+          "url": "https://github.com/google/gvisor/pull/16735#issuecomment-6629323131",
+          "title": "Update the existing checkpoint benchmark comment",
+          "body": "@parth-opensrc, I reran the 100,000-file tmpfs checkpoint on c31b2adc2 and its parent 706b124a2. The earlier 30.12% increase in peak Sentry RSS was on a48b7a12c. On this revision, peak RSS was 1.33% higher than on its parent, and save took 3.98% longer.\n\nThe run used the graph engine without compression, native AMD64 systrap, four CPUs and a 2 GiB limit. Both revisions restored all 100,000 files from every checkpoint, including the warmups.\n\n```text\n                        │   parent    │             candidate              │\n                        │   sec/op    │   sec/op     vs base               │\nSave/checkpoint_ns        473.1m ± 1%   491.9m ± 1%  +3.98% (p=0.000 n=12)\nSave/checkpoint_exit_ns   536.2m ± 1%   555.7m ± 1%  +3.64% (p=0.000 n=12)\n\n                            │    parent    │              candidate              │\n                            │     B/op     │     B/op      vs base               │\nSave/observed_save_exit_rss   424.3Mi ± 2%   429.9Mi ± 2%  +1.33% (p=0.000 n=12)\n```\n\nThe time rows measure return from checkpoint and exit of the saving Sentry. The RSS row measures the peak sampled through exit. [Measurements and restore results](https://github.com/tamird/gvisor/actions/runs/42025490439/artifacts/13415901422) · [Full benchstat](https://github.com/tamird/gvisor/actions/runs/42030809627/artifacts/13415334206)\n\n<details>\n<summary>Earlier revisions</summary>\n\nI tried a non-resuming checkpoint with the graph state engine, now the default on master. On 100,000 empty tmpfs files, the PR took longer to save and used more memory than its parent.\n\nI used systrap on Linux/amd64, four CPUs, no sandbox CPU quota, a 2 GiB memory limit, and uncompressed checkpoints. Each column has 12 measured saves after one warmup, in balanced order. The columns are the parent (`0bbcbf9de`), the #16152 save-only reference (`79637cb45`), and this PR (`a48b7a12c`). Both deltas are relative to the parent.\n\n```text\nSave/checkpoint_ns                                               354.4m ± 2%                    360.2m ± 4%       ~ (p=0.143 n=12)                   366.8m ± 4%  +3.50% (p=0.020 n=12)\nSave/checkpoint_exit_ns                                          426.7m ± 2%                    432.1m ± 3%       ~ (p=0.319 n=12)                   447.3m ± 4%  +4.81% (p=0.001 n=12)\nSave/observed_save_exit_rss                                         427.1Mi ± 1%                   430.4Mi ± 0%       ~ (p=0.101 n=12)                 555.8Mi ± 0%  +30.12% (p=0.000 n=12)\n```\n\nThe first two rows are time to checkpoint return and to Sentry exit (`m` = milliseconds). The last is peak sampled Sentry RSS over that interval. All 39 archives contained graph frames and restored all 100,000 files. [Full benchstat and results](https://github.com/tamird/gvisor/actions/runs/41802364888/artifacts/13309574814).\n\n</details>\n\nWhich state engine and compression setting did your C4 `bigheap` runs use? That would let us compare the same save path across the two workloads.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-06T13:18:48.077Z",
+          "note": "Updated the existing benchmark comment in place at 13:16 UTC. The earlier results remain in the comment.",
+          "postedURL": "https://github.com/google/gvisor/pull/16735#issuecomment-6629323131"
         }
       ],
       "followup": {
         "owner": "Agent",
-        "observedAt": "2026-11-05T12:57:21.696487Z",
-        "disposition": "Current head measured on native AMD64",
-        "nextAction": "Compare results for the C4 bigheap workload if the author supplies the state engine and compression settings.",
+        "observedAt": "2026-11-06T13:18:48.077Z",
+        "disposition": "Updated the checkpoint save measurements on the original comment.",
+        "nextAction": "Follow the author’s response. Restore timings have a separate study.",
         "evidence": [
-          "https://tamird.github.io/gvisor/checkpoint-gc-benchstat.txt",
-          "https://github.com/tamird/gvisor/actions/runs/42025490439/artifacts/13415901422",
-          "https://github.com/tamird/gvisor/actions/runs/42030809627/artifacts/13415334206",
           "https://github.com/google/gvisor/pull/16735#issuecomment-6629323131"
         ],
         "sourceHead": "c31b2adc27b1d19b1e647b3239cd2b3b536a5adf",
@@ -40720,16 +40737,6 @@
             "evidence": "https://github.com/google/gvisor/pull/16735#discussion_r4456530300"
           }
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "reply",
-        "head": "c31b2adc27b1d19b1e647b3239cd2b3b536a5adf",
-        "url": "https://github.com/google/gvisor/pull/16735#issuecomment-6629323131",
-        "title": "Update the existing checkpoint benchmark comment",
-        "summary": "Edit our existing comment on #16735 to report the smaller RSS difference on the current revision? Keep the previous measurements under Earlier revisions.",
-        "body": "@parth-opensrc, I reran the 100,000-file tmpfs checkpoint on c31b2adc2 and its parent 706b124a2. The earlier 30.12% increase in peak Sentry RSS was on a48b7a12c. On this revision, peak RSS was 1.33% higher than on its parent, and save took 3.98% longer.\n\nThe run used the graph engine without compression, native AMD64 systrap, four CPUs and a 2 GiB limit. Both revisions restored all 100,000 files from every checkpoint, including the warmups.\n\n```text\n                        │   parent    │             candidate              │\n                        │   sec/op    │   sec/op     vs base               │\nSave/checkpoint_ns        473.1m ± 1%   491.9m ± 1%  +3.98% (p=0.000 n=12)\nSave/checkpoint_exit_ns   536.2m ± 1%   555.7m ± 1%  +3.64% (p=0.000 n=12)\n\n                            │    parent    │              candidate              │\n                            │     B/op     │     B/op      vs base               │\nSave/observed_save_exit_rss   424.3Mi ± 2%   429.9Mi ± 2%  +1.33% (p=0.000 n=12)\n```\n\nThe time rows measure return from checkpoint and exit of the saving Sentry. The RSS row measures the peak sampled through exit. [Measurements and restore results](https://github.com/tamird/gvisor/actions/runs/42025490439/artifacts/13415901422) · [Full benchstat](https://github.com/tamird/gvisor/actions/runs/42030809627/artifacts/13415334206)\n\n<details>\n<summary>Earlier revisions</summary>\n\nI tried a non-resuming checkpoint with the graph state engine, now the default on master. On 100,000 empty tmpfs files, the PR took longer to save and used more memory than its parent.\n\nI used systrap on Linux/amd64, four CPUs, no sandbox CPU quota, a 2 GiB memory limit, and uncompressed checkpoints. Each column has 12 measured saves after one warmup, in balanced order. The columns are the parent (`0bbcbf9de`), the #16152 save-only reference (`79637cb45`), and this PR (`a48b7a12c`). Both deltas are relative to the parent.\n\n```text\nSave/checkpoint_ns                                               354.4m ± 2%                    360.2m ± 4%       ~ (p=0.143 n=12)                   366.8m ± 4%  +3.50% (p=0.020 n=12)\nSave/checkpoint_exit_ns                                          426.7m ± 2%                    432.1m ± 3%       ~ (p=0.319 n=12)                   447.3m ± 4%  +4.81% (p=0.001 n=12)\nSave/observed_save_exit_rss                                         427.1Mi ± 1%                   430.4Mi ± 0%       ~ (p=0.101 n=12)                 555.8Mi ± 0%  +30.12% (p=0.000 n=12)\n```\n\nThe first two rows are time to checkpoint return and to Sentry exit (`m` = milliseconds). The last is peak sampled Sentry RSS over that interval. All 39 archives contained graph frames and restored all 100,000 files. [Full benchstat and results](https://github.com/tamird/gvisor/actions/runs/41802364888/artifacts/13309574814).\n\n</details>\n\nWhich state engine and compression setting did your C4 `bigheap` runs use? That would let us compare the same save path across the two workloads.\n\nPosted by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-05T20:42:50.885Z"
       }
     },
     {
@@ -45798,8 +45805,8 @@
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/768",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-06T04:09:01.919534Z",
-      "summary": "The supplier proposal provides a static glibc for downstream C++ binaries. Its assembly compilation needs a writable temporary directory on scratch workers.\n\nTwo downstream links also need archives from the static GNU sysroot. The Go DNS resolver links against libresolv.a. Static C programs using pthread cancellation need LLVM’s unwinder. Two cherry-picks on the author’s draft supply these archives.",
+      "updatedAt": "2026-11-06T13:18:48.077Z",
+      "summary": "The ordinary declared-LLVM release has run on AMD64 and ARM64 without this static-glibc branch. The AMD64 musl race binaries also linked and staged on 3dab3494e. The static GNU TLDK runtime passed a guest TCP and UDP exchange on AMD64 in one optional plugin configuration. A separate assembly build on a scratch worker required a writable temporary directory.",
       "evidence": [
         {
           "label": "Two-line proposed correction",
@@ -45844,6 +45851,22 @@
         {
           "label": "Final unwinder patch: native ARM64 pthread cancellation",
           "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42160110897/artifacts/13476900865"
+        },
+        {
+          "label": "AMD64 musl race link and staging",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42117886478/artifacts/13459164255"
+        },
+        {
+          "label": "Static GNU plugin exchanges over TCP and UDP",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42151090138/artifacts/13474526238"
+        },
+        {
+          "label": "Both ordinary declared-LLVM release builds and installations",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42103026284/artifacts/13451067474"
+        },
+        {
+          "label": "Native ARM64 guest using the ordinary declared-LLVM release",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42103026284/artifacts/13451557204"
         }
       ],
       "settledReviews": [
@@ -45854,17 +45877,27 @@
           "outcome": "approved",
           "at": "2026-11-02T15:46:59.054342+00:00",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/768#issuecomment-6581425427"
+        },
+        {
+          "kind": "reply",
+          "head": "6f070847add9ac9bf0d19c96dee873e84f9594d9",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/768",
+          "title": "Ask Stephan to cherry-pick the resolver and C unwinder fixes",
+          "body": "@geligeli, could you cherry-pick these two fixes onto `glibc-static` in order?\n\n1. Go’s cgo DNS resolver links with `-lresolv`. The static sysroot needs `libresolv.a` for that link. Its 19 archive members and 61 defined symbols match glibc 2.44 on AMD64 and ARM64. [Resolver commit](https://github.com/tamird/hermetic-llvm/commit/d779c2896) · [Reference builds](https://github.com/tamird/hermetic-llvm/actions/runs/42125450746)\n2. A static C program that calls `pthread_cancel` still fails to link without the C++ runtime archives. glibc needs eight `_Unwind_*` symbols. With the LLVM unwinder on the C link, the native AMD64 test joins the canceled thread and observes `PTHREAD_CANCELED`. The ARM64 archive also defines all eight symbols. [Unwinder commit](https://github.com/tamird/hermetic-llvm/commit/1273f916b) · [Failing link](https://github.com/tamird/hermetic-llvm/actions/runs/42157263660) · [Native test](https://github.com/tamird/hermetic-llvm/actions/runs/42158767867)\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "declined",
+          "at": "2026-11-06T13:18:48.077Z",
+          "note": "The contributor declined a request for the author to cherry-pick these commits."
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "reply",
-        "head": "6f070847add9ac9bf0d19c96dee873e84f9594d9",
-        "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/768",
-        "requestedAt": "2026-11-06T03:56:11.203356Z",
-        "title": "Ask Stephan to cherry-pick the resolver and C unwinder fixes",
-        "summary": "May I post this comment on the open static glibc PR? Both commits apply in order to its exact head. The existing TMPDIR reply is separate.",
-        "body": "@geligeli, could you cherry-pick these two fixes onto `glibc-static` in order?\n\n1. Go’s cgo DNS resolver links with `-lresolv`. The static sysroot needs `libresolv.a` for that link. Its 19 archive members and 61 defined symbols match glibc 2.44 on AMD64 and ARM64. [Resolver commit](https://github.com/tamird/hermetic-llvm/commit/d779c2896) · [Reference builds](https://github.com/tamird/hermetic-llvm/actions/runs/42125450746)\n2. A static C program that calls `pthread_cancel` still fails to link without the C++ runtime archives. glibc needs eight `_Unwind_*` symbols. With the LLVM unwinder on the C link, the native AMD64 test joins the canceled thread and observes `PTHREAD_CANCELED`. The ARM64 archive also defines all eight symbols. [Unwinder commit](https://github.com/tamird/hermetic-llvm/commit/1273f916b) · [Failing link](https://github.com/tamird/hermetic-llvm/actions/runs/42157263660) · [Native test](https://github.com/tamird/hermetic-llvm/actions/runs/42158767867)\n\nPosted by Codex on behalf of @tamird."
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "6f070847add9ac9bf0d19c96dee873e84f9594d9",
+        "observedAt": "2026-11-06T13:18:48.077Z",
+        "disposition": "The contributor declined a request for the author to cherry-pick these commits.",
+        "nextAction": "Check whether an existing gVisor target requires an upstream change before proposing one.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42151090138/artifacts/13474526238"
+        ]
       }
     },
     {
@@ -53098,7 +53131,7 @@
       "url": "https://github.com/google/gvisor/pull/17060",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T03:23:01.474331Z",
+      "updatedAt": "2026-11-06T13:13:00.663Z",
       "summary": "The benchmark disconnects the sleeper on every iteration, although it discards the dispatcher. Removing that call preserved the measured 9,992 B/op and 31 allocs/op.",
       "evidence": [
         {
@@ -53112,17 +53145,35 @@
         {
           "label": "Native constructor benchmark",
           "url": "https://github.com/tamird/gvisor/actions/runs/42154474405/job/127685212376"
+        },
+        {
+          "label": "Published inline review comment",
+          "url": "https://github.com/google/gvisor/pull/17060#discussion_r4492765452"
         }
       ],
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "06137917f324997963633cbefe75194177c5f7a7",
-        "url": "https://github.com/google/gvisor/pull/17060",
-        "requestedAt": "2026-11-06T03:23:01.474331Z",
-        "title": "Post one inline benchmark comment",
-        "summary": "Post the comment below on the sleeper.Done call at endpoint_test.go:810. The accompanying review body carries attribution.",
-        "body": "Could you drop this call from the timed loop? `Sleeper.Done` disconnects wakers for reuse, and each iteration discards the whole dispatcher. [Production removed this call](https://github.com/google/gvisor/commit/88b974cd4) for that reason. With just `release` and `close`, [the benchmark](https://github.com/tamird/gvisor/actions/runs/42154474405/job/127685212376) still measured 9,992 B/op and 31 allocs/op.\n\nReview body:\nPosted by Codex on behalf of @tamird."
+      "settledReviews": [
+        {
+          "kind": "review",
+          "head": "06137917f324997963633cbefe75194177c5f7a7",
+          "url": "https://github.com/google/gvisor/pull/17060",
+          "title": "Post one inline benchmark comment",
+          "body": "Could you drop this call from the timed loop? `Sleeper.Done` disconnects wakers for reuse, and each iteration discards the whole dispatcher. [Production removed this call](https://github.com/google/gvisor/commit/88b974cd4) for that reason. With just `release` and `close`, [the benchmark](https://github.com/tamird/gvisor/actions/runs/42154474405/job/127685212376) still measured 9,992 B/op and 31 allocs/op.\n\nReview body:\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-06T13:13:00.663Z",
+          "note": "Posted and verified against the approved head.",
+          "postedURL": "https://github.com/google/gvisor/pull/17060#pullrequestreview-5800533622"
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "06137917f324997963633cbefe75194177c5f7a7",
+        "observedAt": "2026-11-06T13:13:00.663Z",
+        "disposition": "Posted the approved inline review.",
+        "nextAction": "Follow the author’s response and any revision.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17060#pullrequestreview-5800533622",
+          "https://github.com/google/gvisor/pull/17060#discussion_r4492765452"
+        ]
       }
     },
     {
@@ -53134,9 +53185,9 @@
       "title": "Start packet processors when the endpoint is attached",
       "url": "https://github.com/tamird/gvisor/commit/8311cfcae",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T04:09:01.919534Z",
-      "summary": "Closing a newly constructed FD endpoint before it is attached to a NIC leaves its two receive workers running. The change starts them once, on first attachment. Both Readv and RecvMMsg reproduced the leak on stock; all 83 package records passed normally and under the race detector with the fix. Real packet-ring sockets delivered a private UDP marker on both AMD64 and ARM64 Linux kernels with 4 KiB pages. Closing before attachment retained workers on stock in both cases; the correction passed both lifecycle checks.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-06T13:13:00.663Z",
+      "summary": "Review the early return when there are fewer than two receive processors. Trace the single-processor path and revise the startup guard before resubmission.\n\nClosing a newly constructed FD endpoint before it is attached to a NIC leaves its two receive workers running. The change starts them once, on first attachment. Both Readv and RecvMMsg reproduced the leak on stock; all 83 package records passed normally and under the race detector with the fix. Real packet-ring sockets delivered a private UDP marker on both AMD64 and ARM64 Linux kernels with 4 KiB pages. Closing before attachment retained workers on stock in both cases; the correction passed both lifecycle checks.",
       "evidence": [
         {
           "label": "Standalone endpoint lifecycle fix",
@@ -53155,15 +53206,28 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42159641713/artifacts/13476880632"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "8311cfcaedcaf8dfbd221e0a09ef4ff4fd36af37",
+          "url": "https://github.com/tamird/gvisor/commit/8311cfcae",
+          "title": "Open the FD endpoint worker-lifetime PR",
+          "body": "Closing an endpoint before attaching it to a NIC leaves its receive\nprocessors asleep. New starts the goroutines, but only the receive\nloop wakes them on exit. An unattached endpoint never runs that loop.\nWith two processors, both are still running after Close and Wait.\n\nStart the processors when the receive loop starts. Each manager starts\nits workers once so reattaching cannot put two goroutines on the same\nsleeper. A single processor still delivers packets inline.",
+          "outcome": "changes-requested",
+          "at": "2026-11-06T13:13:00.663Z",
+          "note": "Review the early return when there are fewer than two receive processors."
+        }
+      ],
+      "contributorChangesRequested": {
         "head": "8311cfcaedcaf8dfbd221e0a09ef4ff4fd36af37",
-        "url": "https://github.com/tamird/gvisor/commit/8311cfcae",
-        "requestedAt": "2026-11-06T03:37:05.476314Z",
-        "title": "Open the FD endpoint worker-lifetime PR",
-        "summary": "Closing a newly constructed FD endpoint before it is attached to a NIC leaves its two receive workers running. The change starts them once, on first attachment. Both Readv and RecvMMsg reproduced the leak on stock; all 83 package records passed normally and under the race detector with the fix.",
-        "body": "Closing an endpoint before attaching it to a NIC leaves its receive\nprocessors asleep. New starts the goroutines, but only the receive\nloop wakes them on exit. An unattached endpoint never runs that loop.\nWith two processors, both are still running after Close and Wait.\n\nStart the processors when the receive loop starts. Each manager starts\nits workers once so reattaching cannot put two goroutines on the same\nsleeper. A single processor still delivers packets inline."
+        "url": "https://github.com/tamird/gvisor/commit/8311cfcae"
+      },
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "8311cfcaedcaf8dfbd221e0a09ef4ff4fd36af37",
+        "observedAt": "2026-11-06T13:13:00.663Z",
+        "disposition": "Review the early return when there are fewer than two receive processors.",
+        "nextAction": "Trace the single-processor path and revise the startup guard before resubmission."
       }
     },
     {
@@ -53216,12 +53280,12 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/pure-go-source-generators",
-      "head": "e667d39b868cac9946369777b6c4ef0fbad946a1",
+      "head": "37dca4d683f695539ff6c47ea8f661882e588f61",
       "title": "Build Go source generators and Nogo without cgo",
-      "url": "https://github.com/tamird/gvisor/commit/e667d39b8",
+      "url": "https://github.com/tamird/gvisor/commit/37dca4d68",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T05:06:53.841060Z",
+      "status": "Published",
+      "updatedAt": "2026-11-06T13:13:00.663Z",
       "summary": "The ARM64 race build stopped on an AMD64 scratch worker because go_merge, then Nogo, required a missing musl loader. Five BUILD attributes disable cgo for the Go tools. All four generators and Nogo then ran on that worker. The ordinary GNU build produced the same six generated files and analyzed the standard library. On master, the stateify comparison covers the output passed to the separate goimports step.",
       "evidence": [
         {
@@ -53255,17 +53319,35 @@
         {
           "label": "Native ARM64 guest using that race installation",
           "url": "https://github.com/tamird/gvisor/actions/runs/42164915209/artifacts/13477949675"
+        },
+        {
+          "label": "Published as #17104",
+          "url": "https://github.com/google/gvisor/pull/17104"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "e667d39b868cac9946369777b6c4ef0fbad946a1",
-        "url": "https://github.com/tamird/gvisor/commit/e667d39b8",
-        "requestedAt": "2026-11-06T05:06:53.841060Z",
-        "title": "Open the Go build tools PR",
-        "summary": "The ARM64 race build stopped on an AMD64 scratch worker because go_merge, then Nogo, required a missing musl loader. Five BUILD attributes disable cgo for the Go tools. All four generators and Nogo then ran on that worker. The ordinary GNU build produced the same six generated files and analyzed the standard library. On master, the stateify comparison covers the output passed to the separate goimports step.",
-        "body": "Cross-compiling the ARM64 race runtime on a worker without libc failed\nwhile generating the page-table walker. Bazel built go_merge for the\nworker’s CPU, but the executable required a musl loader. The same\nloader was needed to start Nogo’s analysis of the Go standard library.\n\nBuild the four Go source generators and Nogo without cgo. Each uses Go\nlibraries to generate or analyze code, so it can run on the build\nworker regardless of the target runtime’s libc."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "e667d39b868cac9946369777b6c4ef0fbad946a1",
+          "url": "https://github.com/tamird/gvisor/commit/e667d39b8",
+          "title": "Open the Go build tools PR",
+          "body": "Cross-compiling the ARM64 race runtime on a worker without libc failed\nwhile generating the page-table walker. Bazel built go_merge for the\nworker’s CPU, but the executable required a musl loader. The same\nloader was needed to start Nogo’s analysis of the Go standard library.\n\nBuild the four Go source generators and Nogo without cgo. Each uses Go\nlibraries to generate or analyze code, so it can run on the build\nworker regardless of the target runtime’s libc.",
+          "outcome": "approved",
+          "at": "2026-11-06T13:13:00.663Z",
+          "note": "Published as #17104 at 37dca4d68. The rebase onto current master has an identical patch.",
+          "postedURL": "https://github.com/google/gvisor/pull/17104"
+        }
+      ],
+      "inactive": true,
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "37dca4d683f695539ff6c47ea8f661882e588f61",
+        "observedAt": "2026-11-06T13:13:00.663Z",
+        "disposition": "Published as #17104 at 37dca4d68. The rebase onto current master has an identical patch.",
+        "nextAction": "Follow upstream review on #17104.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17104"
+        ]
       }
     },
     {
@@ -53279,7 +53361,7 @@
       "url": "https://github.com/google/gvisor/pull/17082",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T05:07:30.821799Z",
+      "updatedAt": "2026-11-06T13:13:00.663Z",
       "summary": "After the 16 quick ACKs, a segment filling the receive gap waited 40 ms for a cumulative ACK. In a separate trace, the link rejected the reply that would have carried the ACK and the timer expired in silence. Accepted replies still carried the ACK.",
       "evidence": [
         {
@@ -53289,17 +53371,40 @@
         {
           "label": "Delayed ACK after a rejected outgoing reply",
           "url": "https://github.com/tamird/gvisor/actions/runs/42166057647/artifacts/13478329386"
+        },
+        {
+          "label": "Published inline review comment",
+          "url": "https://github.com/google/gvisor/pull/17082#discussion_r4492765687"
+        },
+        {
+          "label": "Published inline review comment",
+          "url": "https://github.com/google/gvisor/pull/17082#discussion_r4492765694"
         }
       ],
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "f2447eb8a6a1ef5f8bf7447b11605e56ec02a83c",
-        "url": "https://github.com/google/gvisor/pull/17082",
-        "requestedAt": "2026-11-06T05:07:30.821799Z",
-        "title": "Post one review with two packet traces",
-        "summary": "Post the two inline comments together on Ayush’s draft. The first belongs at pkg/tcpip/transport/tcp/rcv.go:84 and the second at pkg/tcpip/transport/tcp/snd.go:1909, both on the right side of the diff.",
-        "body": "pkg/tcpip/transport/tcp/rcv.go:84\n\nCould we send the cumulative ACK immediately when a segment fills the last receive gap? By the time this condition runs, the queue is empty. After the 16 quick ACKs, the [packet test](https://github.com/tamird/gvisor/commit/79dc3a63d) sent byte 807 before byte 806. On this head, ACK 808 waited 40 ms after byte 806 arrived. The [four-line change](https://github.com/tamird/gvisor/commit/aa0c1c8cc) sent ACK 808 immediately and still delayed the ordinary in-order ACK for 40 ms. [Packet traces](https://github.com/tamird/gvisor/actions/runs/42165403428/artifacts/13478877935) · [RFC 5681 §4.2](https://www.rfc-editor.org/rfc/rfc5681#section-4.2).\n\npkg/tcpip/transport/tcp/snd.go:1909\n\nCould we keep the ACK pending if the link accepts no packet carrying it? Here `MaxSentAck` advances and the timer stops before `sendRaw` reports whether anything went out. In this [packet test](https://github.com/tamird/gvisor/commit/ef3c057c1), the link rejects the one-byte response with `ErrNoBufferSpace` but accepts pure ACKs. The socket stayed established and sent no ACK by 40 ms. With the write accepted, the response carried the ACK and no extra packet was needed. [Packet traces](https://github.com/tamird/gvisor/actions/runs/42166057647/artifacts/13478329386).\n\nReview body:\nSubmitted by Codex on behalf of @tamird."
+      "settledReviews": [
+        {
+          "kind": "review",
+          "head": "f2447eb8a6a1ef5f8bf7447b11605e56ec02a83c",
+          "url": "https://github.com/google/gvisor/pull/17082",
+          "title": "Post one review with two packet traces",
+          "body": "pkg/tcpip/transport/tcp/rcv.go:84\n\nCould we send the cumulative ACK immediately when a segment fills the last receive gap? By the time this condition runs, the queue is empty. After the 16 quick ACKs, the [packet test](https://github.com/tamird/gvisor/commit/79dc3a63d) sent byte 807 before byte 806. On this head, ACK 808 waited 40 ms after byte 806 arrived. The [four-line change](https://github.com/tamird/gvisor/commit/aa0c1c8cc) sent ACK 808 immediately and still delayed the ordinary in-order ACK for 40 ms. [Packet traces](https://github.com/tamird/gvisor/actions/runs/42165403428/artifacts/13478877935) · [RFC 5681 §4.2](https://www.rfc-editor.org/rfc/rfc5681#section-4.2).\n\npkg/tcpip/transport/tcp/snd.go:1909\n\nCould we keep the ACK pending if the link accepts no packet carrying it? Here `MaxSentAck` advances and the timer stops before `sendRaw` reports whether anything went out. In this [packet test](https://github.com/tamird/gvisor/commit/ef3c057c1), the link rejects the one-byte response with `ErrNoBufferSpace` but accepts pure ACKs. The socket stayed established and sent no ACK by 40 ms. With the write accepted, the response carried the ACK and no extra packet was needed. [Packet traces](https://github.com/tamird/gvisor/actions/runs/42166057647/artifacts/13478329386).\n\nReview body:\nSubmitted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-06T13:13:00.663Z",
+          "note": "Posted and verified against the approved head.",
+          "postedURL": "https://github.com/google/gvisor/pull/17082#pullrequestreview-5800533890"
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "f2447eb8a6a1ef5f8bf7447b11605e56ec02a83c",
+        "observedAt": "2026-11-06T13:13:00.663Z",
+        "disposition": "Posted the approved inline review.",
+        "nextAction": "Follow the author’s response and any revision.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17082#pullrequestreview-5800533890",
+          "https://github.com/google/gvisor/pull/17082#discussion_r4492765687",
+          "https://github.com/google/gvisor/pull/17082#discussion_r4492765694"
+        ]
       }
     },
     {
@@ -53352,9 +53457,9 @@
       "title": "Check both locks when a listener accepts a SYN",
       "url": "https://github.com/tamird/gvisor/commit/dcad6d567",
       "group": "analysis",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T07:16:57.053556Z",
-      "summary": "A listening socket must hold both endpoint mutexes when it copies socket options to a new child. Only the listener copies those options. Both listeners and forwarders still register the child before sending its SYN-ACK.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-06T13:13:00.663Z",
+      "summary": "The listener refactor is approved subject to explaining the moved checklocks suppressions. Document why each retained checklocksignore is necessary or remove the suppression where the analyzer can check the lock.\n\nA listening socket must hold both endpoint mutexes when it copies socket options to a new child. Only the listener copies those options. Both listeners and forwarders still register the child before sending its SYN-ACK.",
       "evidence": [
         {
           "label": "Final Nogo on both architectures and eight native Linux socket cases",
@@ -53369,15 +53474,32 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42176263021/artifacts/13484286201"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "dcad6d56792cbd5c65195ad64f3a57628e605f70",
+          "url": "https://github.com/tamird/gvisor/commit/dcad6d567",
+          "title": "Open the TCP listener handshake lock PR",
+          "body": "A TCP listener copies its socket options into a new child while both\nendpoint mutexes are held. A forwarder starts the same handshake\nwithout a listening endpoint. Sharing an optional listener pointer hid\nthe listener lock from checklocks and required suppressing the check at\nthe option copy.\n\nCopy the options and reserve the tuple on the locked listener. Let the\nforwarder create its child directly, and share registration and the\nSYN-ACK on the locked child. Only the forwarder waits for the handshake\nto finish.",
+          "outcome": "approved-with-changes",
+          "at": "2026-11-06T13:13:00.663Z",
+          "note": "The listener refactor is approved subject to explaining the moved checklocks suppressions."
+        }
+      ],
+      "contributorChangesRequested": {
         "head": "dcad6d56792cbd5c65195ad64f3a57628e605f70",
-        "url": "https://github.com/tamird/gvisor/commit/dcad6d567",
-        "requestedAt": "2026-11-06T07:16:57.053556Z",
-        "title": "Open the TCP listener handshake lock PR",
-        "summary": "The socket-option copy used a forced check because a forwarder had no listening endpoint. Moving the copy onto the listener lets Nogo check both locks. An intentional unlock produced one diagnostic per mutex on AMD64 and ARM64. The final analyzer and eight existing forwarder, inheritance, backlog and deferred-accept cases passed.",
-        "body": "A TCP listener copies its socket options into a new child while both\nendpoint mutexes are held. A forwarder starts the same handshake\nwithout a listening endpoint. Sharing an optional listener pointer hid\nthe listener lock from checklocks and required suppressing the check at\nthe option copy.\n\nCopy the options and reserve the tuple on the locked listener. Let the\nforwarder create its child directly, and share registration and the\nSYN-ACK on the locked child. Only the forwarder waits for the handshake\nto finish."
+        "url": "https://github.com/tamird/gvisor/commit/dcad6d567"
+      },
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "dcad6d56792cbd5c65195ad64f3a57628e605f70",
+        "observedAt": "2026-11-06T13:13:00.663Z",
+        "disposition": "The listener refactor is approved subject to explaining the moved checklocks suppressions.",
+        "nextAction": "Qualify the revision that replaces the three suppressions with a constructor that always returns a locked child. The three callers find the route first.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/compare/dcad6d567...abc461928",
+          "https://github.com/tamird/gvisor/actions/runs/42223748997"
+        ]
       }
     },
     {
@@ -53469,8 +53591,8 @@
       "url": "https://github.com/tamird/gvisor/commit/39d28d4ef",
       "title": "Release the stack mutex before draining a removed NIC",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T08:56:42.948Z",
+      "status": "Published",
+      "updatedAt": "2026-11-06T13:13:00.663Z",
       "summary": "Stack.Wait held the stack mutex while waiting for a receive worker. That worker needed the mutex to find the input interface. Unlink the interface under the mutex, then drain its workers after unlocking. Wait for all links before closing any because closing one end of a veth can close its peer. Six lifecycle cases passed under the race detector and 16 real socket transfers completed teardown. After those runtime checks, the only source change removed an obsolete comment. Nogo passed the final revision on AMD64 and ARM64. On both, it rejected moving the unlock below the call to closeRemovedNICs.",
       "evidence": [
         {
@@ -53496,17 +53618,35 @@
         {
           "label": "Only change after runtime qualification",
           "url": "https://github.com/tamird/gvisor/compare/890afa390...39d28d4ef"
+        },
+        {
+          "label": "Published as #17103",
+          "url": "https://github.com/google/gvisor/pull/17103"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "39d28d4ef5d4a11aa5f8756d62bf99e1cd02816d",
-        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
-        "title": "Open the NIC teardown fix",
-        "url": "https://github.com/tamird/gvisor/commit/39d28d4ef",
-        "requestedAt": "2026-11-06T08:41:38.294Z",
-        "summary": "Stack.Wait held the stack mutex while waiting for a receive worker. That worker needed the mutex to find the input interface. Unlink the interface under the mutex, then drain its workers after unlocking. Wait for all links before closing any because closing one end of a veth can close its peer."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "39d28d4ef5d4a11aa5f8756d62bf99e1cd02816d",
+          "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+          "title": "Open the NIC teardown fix",
+          "url": "https://github.com/tamird/gvisor/commit/39d28d4ef",
+          "outcome": "approved",
+          "at": "2026-11-06T13:13:00.663Z",
+          "note": "Published as #17103.",
+          "postedURL": "https://github.com/google/gvisor/pull/17103"
+        }
+      ],
+      "inactive": true,
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "39d28d4ef5d4a11aa5f8756d62bf99e1cd02816d",
+        "observedAt": "2026-11-06T13:13:00.663Z",
+        "disposition": "Published as #17103.",
+        "nextAction": "Follow upstream review on #17103.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17103"
+        ]
       }
     },
     {
@@ -53520,7 +53660,7 @@
       "url": "https://github.com/google/gvisor/pull/17028",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T11:04:06.381Z",
+      "updatedAt": "2026-11-06T13:13:00.663Z",
       "summary": "Docker 27.5.1 rejected the outer container name in both checkpoint modes on a772fedd6 with #16666 applied. The subtest names contain an equals sign.\n\nWith hyphenated names and the Docker/containerd test setup corrected, both modes started the inner Moby 29.8.1 daemon. Each daemon exited while creating its default bridge because /proc/sys/net/ipv4/conf/docker0/route_localnet was missing. This gVisor revision exposes route_localnet under all and default. Both tests stopped before checkpoint.",
       "evidence": [
         {
@@ -53546,17 +53686,35 @@
         {
           "label": "IPv4 route_localnet entries under all and default on the tested revision",
           "url": "https://github.com/google/gvisor/blob/a772fedd6/pkg/sentry/fsimpl/proc/tasks_sys.go#L307-L313"
+        },
+        {
+          "label": "Published inline review comment",
+          "url": "https://github.com/google/gvisor/pull/17028#discussion_r4492765208"
         }
       ],
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "a772fedd6521ac693b8e25a41c01e00f2e023461",
-        "url": "https://github.com/google/gvisor/pull/17028",
-        "requestedAt": "2026-11-06T10:22:05.384Z",
-        "title": "Post the Docker container-name finding on #17028",
-        "summary": "Post one inline comment on the subtest name at test/e2e/dind_checkpoint_test.go:82, on the right side of the diff.",
-        "body": "test/e2e/dind_checkpoint_test.go:82\n\n@hky1999, could you use `leave-running-%t` here? `dockerutil.MakeContainer` derives the outer container name from `t.Name()`, including the `=`. With #16666 applied, Docker 27.5.1 rejected both names at `outer.Spawn`. Neither subtest reached its first checkpoint. [One-character fix](https://github.com/tamird/gvisor/commit/053b485ea) · [Test results](https://github.com/tamird/gvisor/actions/runs/42196365253/artifacts/13494781551)\n\nReview body:\nSubmitted by Codex on behalf of @tamird."
+      "settledReviews": [
+        {
+          "kind": "review",
+          "head": "a772fedd6521ac693b8e25a41c01e00f2e023461",
+          "url": "https://github.com/google/gvisor/pull/17028",
+          "title": "Post the Docker container-name finding on #17028",
+          "body": "test/e2e/dind_checkpoint_test.go:82\n\n@hky1999, could you use `leave-running-%t` here? `dockerutil.MakeContainer` derives the outer container name from `t.Name()`, including the `=`. With #16666 applied, Docker 27.5.1 rejected both names at `outer.Spawn`. Neither subtest reached its first checkpoint. [One-character fix](https://github.com/tamird/gvisor/commit/053b485ea) · [Test results](https://github.com/tamird/gvisor/actions/runs/42196365253/artifacts/13494781551)\n\nReview body:\nSubmitted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-06T13:13:00.663Z",
+          "note": "Posted and verified against the approved head.",
+          "postedURL": "https://github.com/google/gvisor/pull/17028#pullrequestreview-5800533338"
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "a772fedd6521ac693b8e25a41c01e00f2e023461",
+        "observedAt": "2026-11-06T13:13:00.663Z",
+        "disposition": "Posted the approved inline review.",
+        "nextAction": "Follow the author’s response and any revision.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17028#pullrequestreview-5800533338",
+          "https://github.com/google/gvisor/pull/17028#discussion_r4492765208"
+        ]
       }
     },
     {
@@ -53570,7 +53728,7 @@
       "url": "https://github.com/google/gvisor/pull/17026",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T10:53:11.488Z",
+      "updatedAt": "2026-11-06T13:13:00.663Z",
       "summary": "The existing netlink syscall test passed on Linux. On fdd009fd9 the guest entered the test and panicked on the second unshare. With the two production call sites corrected, GoogleTest recorded OK and the guest exited 0. The fork reporter subsequently marked the expected test-log output missing.",
       "evidence": [
         {
@@ -53584,17 +53742,35 @@
         {
           "label": "Two production call sites on the author’s head",
           "url": "https://github.com/tamird/gvisor/commit/edee8e74f"
+        },
+        {
+          "label": "Published inline review comment",
+          "url": "https://github.com/google/gvisor/pull/17026#discussion_r4492764964"
         }
       ],
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "fdd009fd9c0752b3f9fc3bf1a8c3deeff105a8c3",
-        "url": "https://github.com/google/gvisor/pull/17026",
-        "requestedAt": "2026-11-06T10:53:11.488Z",
-        "title": "Post the nested network namespace finding on #17026",
-        "summary": "Post one inline comment on root.registerChild(n) at pkg/sentry/inet/namespace.go:109, on the right side of the diff.",
-        "body": "pkg/sentry/inet/namespace.go:109\n\n@hky1999, the existing `NetlinkRouteTest.ChangeNetnsAndOtherAttrsTogether` unshares its network namespace twice. It passes on Linux. On this head the second unshare panics here with `registerChild called on a non-root namespace`. Could `Task.Clone` and `Task.Unshare` pass `t.k.RootNetworkNamespace()` to `NewNamespace`? Both currently pass the task’s current namespace. With that [two-call change](https://github.com/tamird/gvisor/commit/edee8e74f), the same test passed in the guest. [Native Linux](https://github.com/tamird/gvisor/actions/runs/42202594185/artifacts/13495073469) · [Guest runs](https://github.com/tamird/gvisor/actions/runs/42204481246/artifacts/13495984170)\n\nReview body:\nSubmitted by Codex on behalf of @tamird."
+      "settledReviews": [
+        {
+          "kind": "review",
+          "head": "fdd009fd9c0752b3f9fc3bf1a8c3deeff105a8c3",
+          "url": "https://github.com/google/gvisor/pull/17026",
+          "title": "Post the nested network namespace finding on #17026",
+          "body": "pkg/sentry/inet/namespace.go:109\n\n@hky1999, the existing `NetlinkRouteTest.ChangeNetnsAndOtherAttrsTogether` unshares its network namespace twice. It passes on Linux. On this head the second unshare panics here with `registerChild called on a non-root namespace`. Could `Task.Clone` and `Task.Unshare` pass `t.k.RootNetworkNamespace()` to `NewNamespace`? Both currently pass the task’s current namespace. With that [two-call change](https://github.com/tamird/gvisor/commit/edee8e74f), the same test passed in the guest. [Native Linux](https://github.com/tamird/gvisor/actions/runs/42202594185/artifacts/13495073469) · [Guest runs](https://github.com/tamird/gvisor/actions/runs/42204481246/artifacts/13495984170)\n\nReview body:\nSubmitted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-06T13:13:00.663Z",
+          "note": "Posted and verified against the approved head.",
+          "postedURL": "https://github.com/google/gvisor/pull/17026#pullrequestreview-5800533049"
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "fdd009fd9c0752b3f9fc3bf1a8c3deeff105a8c3",
+        "observedAt": "2026-11-06T13:13:00.663Z",
+        "disposition": "Posted the approved inline review.",
+        "nextAction": "Follow the author’s response and any revision.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17026#pullrequestreview-5800533049",
+          "https://github.com/google/gvisor/pull/17026#discussion_r4492764964"
+        ]
       }
     },
     {
@@ -53606,8 +53782,8 @@
       "title": "Decode benchmark fixtures into empty roots",
       "url": "https://github.com/tamird/gvisor/commit/93305f85d",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T11:23:32.377Z",
+      "status": "Published",
+      "updatedAt": "2026-11-06T13:13:00.663Z",
       "summary": "BenchmarkDecoding supplied the object it had just encoded as the destination. Gob reused the original slice and its 1,024 pointers. Clearing the destination made Gob allocate new storage, raising its measured slice decode time from 34.95 to 75.66 µs. The graph decoder allocated fresh storage in both cases. The change is confined to the benchmark fixture.",
       "evidence": [
         {
@@ -53621,18 +53797,36 @@
         {
           "label": "Five benchmark-only additions relative to master",
           "url": "https://github.com/tamird/gvisor/compare/f51a205a8...93305f85d"
+        },
+        {
+          "label": "Published as #17102",
+          "url": "https://github.com/google/gvisor/pull/17102"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "93305f85d83ce534321bb231e0d09af6dd4bf8b5",
-        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
-        "url": "https://github.com/tamird/gvisor/commit/93305f85d",
-        "requestedAt": "2026-11-06T11:23:32.377Z",
-        "title": "Open the decoder benchmark fixture PR",
-        "summary": "May I open this benchmark-only change? Starting each decode with an empty destination measures the allocations a fresh restore needs. The updated Gob timings reflect that extra work in the fixture.",
-        "body": "Since 364ac92ba, BenchmarkDecoding has passed the object it just\nencoded back to the decoder. That lets gob reuse objects from the\nsource. A new Sentry cannot reuse the objects in the old one.\n\nClear the root before each decode. With the populated slice fixture,\ngob reused the backing array and all 1,024 pointers to a single\nobject. From an empty root it decoded 1,024 distinct objects. The\ngraph decoder allocated a new backing array and one shared pointee\nin both cases.\n\nTen interleaved pairs on linux/amd64 measured the cost of decoding\ninto the two destinations [1].\n\n```text\n                       │  populated   │                 empty                  │\n                       │    sec/op    │    sec/op      vs base                 │\nDecoding/ptr/gob-2       69.90µ ±  3%   107.23µ ±  6%   +53.41% (p=0.000 n=10)\nDecoding/map/gob-2       142.3µ ±  6%    149.8µ ±  3%    +5.33% (p=0.011 n=10)\nDecoding/slice/gob-2     34.95µ ±  5%    75.66µ ± 11%  +116.48% (p=0.000 n=10)\n\n                       │  populated  │                 empty                  │\n                       │  allocs/op  │  allocs/op   vs base                   │\nDecoding/slice/gob-2      166.0 ± 1%   1192.0 ± 0%  +618.07% (p=0.000 n=10)\n```\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42208846434/artifacts/13498656355"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "93305f85d83ce534321bb231e0d09af6dd4bf8b5",
+          "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+          "url": "https://github.com/tamird/gvisor/commit/93305f85d",
+          "title": "Open the decoder benchmark fixture PR",
+          "body": "Since 364ac92ba, BenchmarkDecoding has passed the object it just\nencoded back to the decoder. That lets gob reuse objects from the\nsource. A new Sentry cannot reuse the objects in the old one.\n\nClear the root before each decode. With the populated slice fixture,\ngob reused the backing array and all 1,024 pointers to a single\nobject. From an empty root it decoded 1,024 distinct objects. The\ngraph decoder allocated a new backing array and one shared pointee\nin both cases.\n\nTen interleaved pairs on linux/amd64 measured the cost of decoding\ninto the two destinations [1].\n\n```text\n                       │  populated   │                 empty                  │\n                       │    sec/op    │    sec/op      vs base                 │\nDecoding/ptr/gob-2       69.90µ ±  3%   107.23µ ±  6%   +53.41% (p=0.000 n=10)\nDecoding/map/gob-2       142.3µ ±  6%    149.8µ ±  3%    +5.33% (p=0.011 n=10)\nDecoding/slice/gob-2     34.95µ ±  5%    75.66µ ± 11%  +116.48% (p=0.000 n=10)\n\n                       │  populated  │                 empty                  │\n                       │  allocs/op  │  allocs/op   vs base                   │\nDecoding/slice/gob-2      166.0 ± 1%   1192.0 ± 0%  +618.07% (p=0.000 n=10)\n```\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42208846434/artifacts/13498656355",
+          "outcome": "approved",
+          "at": "2026-11-06T13:13:00.663Z",
+          "note": "Published as #17102.",
+          "postedURL": "https://github.com/google/gvisor/pull/17102"
+        }
+      ],
+      "inactive": true,
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "93305f85d83ce534321bb231e0d09af6dd4bf8b5",
+        "observedAt": "2026-11-06T13:13:00.663Z",
+        "disposition": "Published as #17102.",
+        "nextAction": "Follow upstream review on #17102.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17102"
+        ]
       }
     },
     {
@@ -53713,8 +53907,8 @@
       "title": "Run syscall tests with the runtime declared by Bazel",
       "url": "https://github.com/tamird/gvisor/commit/7e2c0ff44",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T13:03:27.377Z",
+      "status": "Published",
+      "updatedAt": "2026-11-06T13:14:58.461Z",
       "summary": "The old Make target copied runsc and the Sentry to the client. On the remote AMD64 Firecracker worker, the runner found runsc in its Bazel runfiles but looked for the Sentry in the client directory. The guest never started. With the Makefile change, the same systrap eventfd test passed six cases on partition 1 and the other five on partition 2. Explicitly selecting the client installation paths still staged the release and reproduced the missing-Sentry error on the remote worker.",
       "evidence": [
         {
@@ -53740,19 +53934,267 @@
         {
           "label": "Explicit client paths took precedence on the remote worker",
           "url": "https://app.buildbuddy.io/invocation/04004c5b-7678-426a-9230-3b8d74e5ab07"
+        },
+        {
+          "label": "Published as #17105",
+          "url": "https://github.com/google/gvisor/pull/17105"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "7e2c0ff44c64f2c4261c876abb687cbbf5f80ed2",
-        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
-        "url": "https://github.com/tamird/gvisor/commit/7e2c0ff44",
-        "requestedAt": "2026-11-06T13:03:27.377Z",
-        "title": "Run syscall tests with the runtime declared by Bazel",
-        "summary": "May I open this standalone Makefile PR? The remote systrap test found its Sentry in Bazel runfiles and ran all 11 eventfd cases across the two partitions. Requesting the client installation still takes precedence.",
-        "body": "make syscall-tests copies runsc and its sidecars to the client and\npasses their absolute paths to every test. On a remote worker the\nrunner can fall back to its own runsc, but it still sends that runsc\nto the client directory for its Sentry.\n\nUse the release files already declared by the runner. Bazel selects\nthe matching runsc and Sentry for the test configuration, including\nrace builds. Keep staging when the caller requests a release tarball,\ncustom binaries or an installation path.\n\nOn an AMD64 Firecracker worker, the old default stopped before the first eventfd case. With the declared release, one partition passed six cases and the other passed five. Explicitly selecting the client installation reproduced the original missing-Sentry error on that worker."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "7e2c0ff44c64f2c4261c876abb687cbbf5f80ed2",
+          "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+          "url": "https://github.com/tamird/gvisor/commit/7e2c0ff44",
+          "title": "Run syscall tests with the runtime declared by Bazel",
+          "body": "make syscall-tests copies runsc and its sidecars to the client and\npasses their absolute paths to every test. On a remote worker the\nrunner can fall back to its own runsc, but it still sends that runsc\nto the client directory for its Sentry.\n\nUse the release files already declared by the runner. Bazel selects\nthe matching runsc and Sentry for the test configuration, including\nrace builds. Keep staging when the caller requests a release tarball,\ncustom binaries or an installation path.\n\nOn an AMD64 Firecracker worker, the old default stopped before the first eventfd case. With the declared release, one partition passed six cases and the other passed five. Explicitly selecting the client installation reproduced the original missing-Sentry error on that worker.",
+          "outcome": "approved",
+          "at": "2026-11-06T13:14:58.461Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17105",
+          "note": "Published as #17105."
+        }
+      ],
+      "inactive": true,
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "7e2c0ff44c64f2c4261c876abb687cbbf5f80ed2",
+        "observedAt": "2026-11-06T13:14:58.461Z",
+        "disposition": "Published as #17105.",
+        "nextAction": "Follow upstream review of the Makefile change.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17105"
+        ]
       }
+    },
+    {
+      "id": "pr:17102",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17102,
+      "ref": "research/state-fresh-decode-benchmark",
+      "title": "Decode benchmark fixtures into empty roots",
+      "url": "https://github.com/google/gvisor/pull/17102",
+      "group": "runtime",
+      "head": "93305f85d83ce534321bb231e0d09af6dd4bf8b5",
+      "status": "open",
+      "updatedAt": "2026-11-06T13:13:00.663Z",
+      "summary": "BenchmarkDecoding supplied the object it had just encoded as the destination. Gob reused the original slice and its 1,024 pointers. Clearing the destination made Gob allocate new storage, raising its measured slice decode time from 34.95 to 75.66 µs. The graph decoder allocated fresh storage in both cases. The change is confined to the benchmark fixture.",
+      "evidence": [
+        {
+          "label": "Full benchstat output for all six benchmark cases",
+          "url": "https://tamird.github.io/gvisor/state-decode-destination-benchstat.txt"
+        },
+        {
+          "label": "Ten paired measurements on Linux AMD64, original samples and pointer identity checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42208846434/artifacts/13498656355"
+        },
+        {
+          "label": "Five benchmark-only additions relative to master",
+          "url": "https://github.com/tamird/gvisor/compare/f51a205a8...93305f85d"
+        },
+        {
+          "label": "Published as #17102",
+          "url": "https://github.com/google/gvisor/pull/17102"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "93305f85d83ce534321bb231e0d09af6dd4bf8b5",
+          "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+          "url": "https://github.com/tamird/gvisor/commit/93305f85d",
+          "title": "Open the decoder benchmark fixture PR",
+          "body": "Since 364ac92ba, BenchmarkDecoding has passed the object it just\nencoded back to the decoder. That lets gob reuse objects from the\nsource. A new Sentry cannot reuse the objects in the old one.\n\nClear the root before each decode. With the populated slice fixture,\ngob reused the backing array and all 1,024 pointers to a single\nobject. From an empty root it decoded 1,024 distinct objects. The\ngraph decoder allocated a new backing array and one shared pointee\nin both cases.\n\nTen interleaved pairs on linux/amd64 measured the cost of decoding\ninto the two destinations [1].\n\n```text\n                       │  populated   │                 empty                  │\n                       │    sec/op    │    sec/op      vs base                 │\nDecoding/ptr/gob-2       69.90µ ±  3%   107.23µ ±  6%   +53.41% (p=0.000 n=10)\nDecoding/map/gob-2       142.3µ ±  6%    149.8µ ±  3%    +5.33% (p=0.011 n=10)\nDecoding/slice/gob-2     34.95µ ±  5%    75.66µ ± 11%  +116.48% (p=0.000 n=10)\n\n                       │  populated  │                 empty                  │\n                       │  allocs/op  │  allocs/op   vs base                   │\nDecoding/slice/gob-2      166.0 ± 1%   1192.0 ± 0%  +618.07% (p=0.000 n=10)\n```\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42208846434/artifacts/13498656355",
+          "outcome": "approved",
+          "at": "2026-11-06T13:13:00.663Z",
+          "note": "Published as #17102.",
+          "postedURL": "https://github.com/google/gvisor/pull/17102"
+        }
+      ]
+    },
+    {
+      "id": "pr:17103",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17103,
+      "ref": "proposal/nic-detach-after-unlock",
+      "title": "Release the stack mutex before draining a removed NIC",
+      "url": "https://github.com/google/gvisor/pull/17103",
+      "group": "runtime",
+      "head": "39d28d4ef5d4a11aa5f8756d62bf99e1cd02816d",
+      "status": "open",
+      "updatedAt": "2026-11-06T13:13:00.663Z",
+      "summary": "Stack.Wait held the stack mutex while waiting for a receive worker. That worker needed the mutex to find the input interface. Unlink the interface under the mutex, then drain its workers after unlocking. Wait for all links before closing any because closing one end of a veth can close its peer. Six lifecycle cases passed under the race detector and 16 real socket transfers completed teardown. After those runtime checks, the only source change removed an obsolete comment. Nogo passed the final revision on AMD64 and ARM64. On both, it rejected moving the unlock below the call to closeRemovedNICs.",
+      "evidence": [
+        {
+          "label": "Original TCP transfer and blocked goroutines",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42182737590/artifacts/13486607377"
+        },
+        {
+          "label": "Stock deadlocks during detach and wait",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42184816858/artifacts/13487049924"
+        },
+        {
+          "label": "Two-link close ordering, checkpoint, both architecture analyzers and 16 completed socket transfers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42186032271/artifacts/13488745937"
+        },
+        {
+          "label": "All six lifecycle cases executed under the race detector",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42188134979/artifacts/13488836429"
+        },
+        {
+          "label": "AMD64 and ARM64 Nogo pass the final revision and reject draining with the mutex held",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42189378873/artifacts/13489174154"
+        },
+        {
+          "label": "Only change after runtime qualification",
+          "url": "https://github.com/tamird/gvisor/compare/890afa390...39d28d4ef"
+        },
+        {
+          "label": "Published as #17103",
+          "url": "https://github.com/google/gvisor/pull/17103"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "39d28d4ef5d4a11aa5f8756d62bf99e1cd02816d",
+          "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+          "title": "Open the NIC teardown fix",
+          "url": "https://github.com/tamird/gvisor/commit/39d28d4ef",
+          "outcome": "approved",
+          "at": "2026-11-06T13:13:00.663Z",
+          "note": "Published as #17103.",
+          "postedURL": "https://github.com/google/gvisor/pull/17103"
+        }
+      ]
+    },
+    {
+      "id": "pr:17104",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17104,
+      "ref": "proposal/pure-go-source-generators",
+      "title": "Build Go source generators and Nogo without cgo",
+      "url": "https://github.com/google/gvisor/pull/17104",
+      "group": "bazel",
+      "head": "37dca4d683f695539ff6c47ea8f661882e588f61",
+      "status": "open",
+      "updatedAt": "2026-11-06T13:13:00.663Z",
+      "summary": "The ARM64 race build stopped on an AMD64 scratch worker because go_merge, then Nogo, required a missing musl loader. Five BUILD attributes disable cgo for the Go tools. All four generators and Nogo then ran on that worker. The ordinary GNU build produced the same six generated files and analyzed the standard library. On master, the stateify comparison covers the output passed to the separate goimports step.",
+      "evidence": [
+        {
+          "label": "Standalone five-line change",
+          "url": "https://github.com/tamird/gvisor/commit/e667d39b8"
+        },
+        {
+          "label": "Four stock and corrected source generators",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42160971883/artifacts/13477121576"
+        },
+        {
+          "label": "Original Nogo ELF in all three failed actions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42162984284/artifacts/13477447959"
+        },
+        {
+          "label": "Go executable inventory in the configured race targets",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42164046123/artifacts/13478527159"
+        },
+        {
+          "label": "Six generated GNU outputs and executed go_merge suite",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42162746853/job/127712040459"
+        },
+        {
+          "label": "Standalone GNU standard-library facts and findings",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42164960442/artifacts/13478402785"
+        },
+        {
+          "label": "Uncached scratch Nogo and both ARM64 race links",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42164915209/artifacts/13479570031"
+        },
+        {
+          "label": "Native ARM64 guest using that race installation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42164915209/artifacts/13477949675"
+        },
+        {
+          "label": "Published as #17104",
+          "url": "https://github.com/google/gvisor/pull/17104"
+        },
+        {
+          "label": "Identical five-declaration patch rebased on master",
+          "url": "https://github.com/tamird/gvisor/commit/37dca4d68"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "e667d39b868cac9946369777b6c4ef0fbad946a1",
+          "url": "https://github.com/tamird/gvisor/commit/e667d39b8",
+          "title": "Open the Go build tools PR",
+          "body": "Cross-compiling the ARM64 race runtime on a worker without libc failed\nwhile generating the page-table walker. Bazel built go_merge for the\nworker’s CPU, but the executable required a musl loader. The same\nloader was needed to start Nogo’s analysis of the Go standard library.\n\nBuild the four Go source generators and Nogo without cgo. Each uses Go\nlibraries to generate or analyze code, so it can run on the build\nworker regardless of the target runtime’s libc.",
+          "outcome": "approved",
+          "at": "2026-11-06T13:13:00.663Z",
+          "note": "Published as #17104 at 37dca4d68. The rebase onto current master has an identical patch.",
+          "postedURL": "https://github.com/google/gvisor/pull/17104"
+        }
+      ]
+    },
+    {
+      "id": "pr:17105",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17105,
+      "ref": "proposal/syscall-tests-use-runfiles",
+      "title": "Run syscall tests with the runtime declared by Bazel",
+      "url": "https://github.com/google/gvisor/pull/17105",
+      "group": "bazel",
+      "head": "7e2c0ff44c64f2c4261c876abb687cbbf5f80ed2",
+      "status": "open",
+      "updatedAt": "2026-11-06T13:14:58.461Z",
+      "summary": "The old Make target copied runsc and the Sentry to the client. On the remote AMD64 Firecracker worker, the runner found runsc in its Bazel runfiles but looked for the Sentry in the client directory. The guest never started. With the Makefile change, the same systrap eventfd test passed six cases on partition 1 and the other five on partition 2. Explicitly selecting the client installation paths still staged the release and reproduced the missing-Sentry error on the remote worker.",
+      "evidence": [
+        {
+          "label": "One-file Makefile change on master",
+          "url": "https://github.com/tamird/gvisor/commit/7e2c0ff44"
+        },
+        {
+          "label": "Four paired Make runs on the same compiler and Firecracker worker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42221640624/artifacts/13503173108"
+        },
+        {
+          "label": "Stock looked for the Sentry in the client installation",
+          "url": "https://app.buildbuddy.io/invocation/149f49e7-000a-4a6b-aac9-575c0309458d"
+        },
+        {
+          "label": "First partition passed six eventfd cases",
+          "url": "https://app.buildbuddy.io/invocation/f733d137-d164-48d4-918b-163e52130edd"
+        },
+        {
+          "label": "Second partition passed the other five cases",
+          "url": "https://app.buildbuddy.io/invocation/3da06e8b-d2d4-40be-b92a-8e2306f52a9b"
+        },
+        {
+          "label": "Explicit client paths took precedence on the remote worker",
+          "url": "https://app.buildbuddy.io/invocation/04004c5b-7678-426a-9230-3b8d74e5ab07"
+        },
+        {
+          "label": "Published as #17105",
+          "url": "https://github.com/google/gvisor/pull/17105"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "7e2c0ff44c64f2c4261c876abb687cbbf5f80ed2",
+          "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+          "url": "https://github.com/tamird/gvisor/commit/7e2c0ff44",
+          "title": "Run syscall tests with the runtime declared by Bazel",
+          "body": "make syscall-tests copies runsc and its sidecars to the client and\npasses their absolute paths to every test. On a remote worker the\nrunner can fall back to its own runsc, but it still sends that runsc\nto the client directory for its Sentry.\n\nUse the release files already declared by the runner. Bazel selects\nthe matching runsc and Sentry for the test configuration, including\nrace builds. Keep staging when the caller requests a release tarball,\ncustom binaries or an installation path.\n\nOn an AMD64 Firecracker worker, the old default stopped before the first eventfd case. With the declared release, one partition passed six cases and the other passed five. Explicitly selecting the client installation reproduced the original missing-Sentry error on that worker.",
+          "outcome": "approved",
+          "at": "2026-11-06T13:14:58.461Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17105",
+          "note": "Published as #17105."
+        }
+      ]
     }
   ],
   "edges": [
@@ -76170,5 +76612,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-06T08:41:38.294Z"
+  "updatedAt": "2026-11-06T13:18:48.077Z"
 }
