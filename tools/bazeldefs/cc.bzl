@@ -4,7 +4,6 @@ load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", _cc_grpc_library = "cc_
 load("@com_google_protobuf//bazel:cc_proto_library.bzl", _cc_proto_library = "cc_proto_library")
 load("@llvm//toolchain/runtimes:cc_runtime_binary.bzl", "cc_runtime_stage0_binary", "cc_runtime_stage1_hosted_binary")
 load("@rules_cc//cc:defs.bzl", _cc_binary = "cc_binary", _cc_library = "cc_library", _cc_test = "cc_test")
-load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load(":defs.bzl", "transition_allowlist")
 
 def cc_library(**kwargs):
@@ -34,29 +33,26 @@ gbenchmark = "@com_google_benchmark//:benchmark"
 gbenchmark_internal = "@com_google_benchmark//:benchmark"
 grpcpp = "@com_github_grpc_grpc//:grpc++"
 
-def _llvm_registration_impl(_settings, _attr):
-    return {"//command_line_option:extra_toolchains": [str(Label("@llvm//toolchain:all"))]}
+_CC_TOOLCHAIN_TYPE = Label("@bazel_tools//tools/cpp:toolchain_type")
 
-_llvm_registration = transition(
-    implementation = _llvm_registration_impl,
-    inputs = [],
-    outputs = ["//command_line_option:extra_toolchains"],
+def _cc_toolchain_repo_impl(_target, ctx):
+    if ctx.rule.toolchains and _CC_TOOLCHAIN_TYPE in ctx.rule.toolchains:
+        selected = ctx.rule.toolchains[_CC_TOOLCHAIN_TYPE].label
+        return [config_common.FeatureFlagInfo(value = selected.repo_name)]
+    return []
+
+_cc_toolchain_repo = aspect(
+    implementation = _cc_toolchain_repo_impl,
+    toolchains_aspects = [_CC_TOOLCHAIN_TYPE],
 )
 
-def _using_llvm_impl(ctx):
-    [llvm] = ctx.attr._llvm
-    selected = ctx.attr._selected[cc_common.CcToolchainInfo]
-    reference = llvm[cc_common.CcToolchainInfo]
-    return [config_common.FeatureFlagInfo(value = str(selected.toolchain_id == reference.toolchain_id))]
+def _cc_toolchain_repo_flag_impl(ctx):
+    return [ctx.attr._cc_toolchain[config_common.FeatureFlagInfo]]
 
-using_llvm = rule(
-    implementation = _using_llvm_impl,
-    doc = "Whether the selected C toolchain is the one registered by hermetic-llvm.",
-    attrs = {
-        "_allowlist_function_transition": attr.label(default = transition_allowlist),
-        "_llvm": attr.label(default = cc_toolchain, cfg = _llvm_registration),
-        "_selected": attr.label(default = cc_toolchain),
-    },
+cc_toolchain_repo = rule(
+    implementation = _cc_toolchain_repo_flag_impl,
+    doc = "Exposes the repository of the selected C toolchain to config_setting.",
+    attrs = {"_cc_toolchain": attr.label(default = cc_toolchain, aspects = [_cc_toolchain_repo])},
 )
 
 def _cc_flags_supplier_impl(_ctx):
