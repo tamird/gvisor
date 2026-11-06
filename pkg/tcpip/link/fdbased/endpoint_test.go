@@ -662,6 +662,76 @@ func TestRecvMMsgPeerShutdown(t *testing.T) {
 	}
 }
 
+// TestRecvMMsgQueuedFrameControl measures the kernel queue after the peer
+// shuts down with one full receive batch of empty records before a real frame.
+func TestRecvMMsgQueuedFrameControl(t *testing.T) {
+	fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET|unix.SOCK_CLOEXEC, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unix.Close(fds[0])
+	defer unix.Close(fds[1])
+	sink := &fakeNetworkDispatcher{}
+	d, err := newRecvMMsgDispatcher(fds[0], &endpoint{
+		hdrSize:    header.EthernetMinimumSize,
+		dispatcher: sink,
+	}, &Options{ProcessorsPerChannel: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer d.close()
+	defer d.release()
+
+	for range MaxMsgsPerRecv {
+		if err := unix.Sendmsg(fds[1], nil, nil, nil, 0); err != nil {
+			t.Fatal(err)
+		}
+	}
+	frame := make([]byte, header.EthernetMinimumSize+1)
+	header.Ethernet(frame).Encode(&header.EthernetFields{
+		DstAddr: header.EthernetBroadcastAddress,
+		Type:    header.ARPProtocolNumber,
+	})
+	if err := unix.Sendmsg(fds[1], frame, nil, nil, 0); err != nil {
+		t.Fatal(err)
+	}
+	if err := unix.Shutdown(fds[1], unix.SHUT_WR); err != nil {
+		t.Fatal(err)
+	}
+	// These ioctl calls belong only to the observation on the native host.
+	queued := func() int {
+		n, err := unix.IoctlGetInt(fds[0], unix.TIOCINQ)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return n
+	}
+	before := queued()
+	keep, recvErr := d.dispatch()
+	if recvErr != nil {
+		t.Fatal(recvErr)
+	}
+	after := queued()
+	if before != len(frame) || after != len(frame) || len(sink.pkts) != 0 {
+		t.Fatalf("unexpected queue state: %d, %d, delivered %d", before, after, len(sink.pkts))
+	}
+	// Continue manually to establish that the queued record was deliverable.
+	if _, recvErr := d.dispatch(); recvErr != nil {
+		t.Fatal(recvErr)
+	}
+	if len(sink.pkts) != 1 {
+		t.Fatalf("manual drain delivered %d frames", len(sink.pkts))
+	}
+	defer sink.pkts[0].DecRef()
+	if queued() != 0 {
+		t.Fatal("queue still holds data after drain")
+	}
+	t.Logf("prefix=%d keep=%t before=%d after=%d manual=%d remaining=0", MaxMsgsPerRecv, keep, before, after, len(sink.pkts))
+	if !keep {
+		t.Error("dispatcher stopped with a deliverable frame still queued")
+	}
+}
+
 func TestDispatchPacketFormat(t *testing.T) {
 	for _, test := range []struct {
 		name          string
