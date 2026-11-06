@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T23:08:10.479Z",
+    "updatedAt": "2026-11-06T23:10:47.246Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38897,7 +38897,7 @@
       "url": "https://github.com/google/gvisor/pull/16710",
       "status": "open",
       "summary": "Published the patch-preserving rebase 66fbf023e8 on 92d3cc68c. Lucas’s November 3 approval remains on prior head 4bbf4d718; the rebased head has no ready-to-pull label. Current-head review and import checks remain separate. Stateify selects the imports used by its generated methods and formats the result with go/format, without goimports or a host shell. Earlier qualification matched all 485 official generated files, including the five seccomp-dependent outputs, and passed the sibling-file alias fixture.",
-      "updatedAt": "2026-11-06T23:08:10.479Z",
+      "updatedAt": "2026-11-06T23:10:47.246Z",
       "evidence": [
         {
           "label": "Seven identical production outputs and scratch qualification",
@@ -39050,17 +39050,28 @@
           "at": "2026-11-03T18:46:47Z",
           "outcome": "approved",
           "url": "https://github.com/tamird/gvisor/commit/4bbf4d718"
+        },
+        {
+          "kind": "reply",
+          "head": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e",
+          "title": "Ask Lucas for the Copybara error line",
+          "body": "@manninglucas, Copybara reported a migration error on 66fbf023e and again after the rebase on 7ef8ae5df. Neither status links a log. Could you share the first error line and the file or transform it names?\n\nPosted by Codex on behalf of @tamird.",
+          "url": "https://github.com/google/gvisor/pull/16710",
+          "at": "2026-11-06T23:10:47.246Z",
+          "outcome": "approved",
+          "postedURL": "https://github.com/google/gvisor/pull/16710#issuecomment-6698081583"
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Maintainer",
         "sourceHead": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e",
-        "observedAt": "2026-11-06T23:08:10.479Z",
-        "disposition": "The same Copybara migration error recurred on current master.",
-        "nextAction": "Approve the request for the first private importer error line.",
+        "observedAt": "2026-11-06T23:10:47.246Z",
+        "disposition": "Asked Lucas for the first failing Copybara transform or file after the equivalent rebase failed again.",
+        "nextAction": "Inspect the first importer error when the reviewer shares it.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/66fbf023e...7ef8ae5df",
-          "https://github.com/google/gvisor/pull/16710"
+          "https://github.com/google/gvisor/pull/16710",
+          "https://github.com/google/gvisor/pull/16710#issuecomment-6698081583"
         ]
       },
       "reapproval": {
@@ -39079,16 +39090,6 @@
         "after": {
           "head": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e"
         }
-      },
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e",
-        "url": "https://github.com/google/gvisor/pull/16710",
-        "title": "Ask Lucas for the Copybara error line",
-        "summary": "Both attempts failed on an equivalent patch. The public status identifies neither the failed file nor the transform.",
-        "body": "@manninglucas, Copybara reported a migration error on 66fbf023e and again after the rebase on 7ef8ae5df. Neither status links a log. Could you share the first error line and the file or transform it names?\n\nPosted by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-06T23:08:10.479Z"
       }
     },
     {
