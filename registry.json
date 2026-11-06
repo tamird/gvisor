@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T13:31:05.085Z",
+    "updatedAt": "2026-11-06T13:53:01.710Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -53193,9 +53193,9 @@
       "title": "Start packet processors when the endpoint is attached",
       "url": "https://github.com/tamird/gvisor/commit/4e0324239",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T13:31:05.085Z",
-      "summary": "The receive loop drains a single queue itself after each batch. Only managers with multiple queues need worker goroutines and wakers. Ten Linux cases passed on this source, including the one-processor packet-ring case. The earlier stock failure and race run apply to the preceding revision.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-06T13:53:01.710Z",
+      "summary": "The contributor asked to remove startOnce by making one owner responsible for the receive workers’ lifetime. The receive loop drains a single queue itself after each batch. Only managers with multiple queues need worker goroutines and wakers. Ten Linux cases passed on this source, including the one-processor packet-ring case. The earlier stock failure and race run apply to the preceding revision.",
       "evidence": [
         {
           "label": "Changes since the contributor review",
@@ -53232,6 +53232,17 @@
           "outcome": "changes-requested",
           "at": "2026-11-06T13:13:00.663Z",
           "note": "Review the early return when there are fewer than two receive processors."
+        },
+        {
+          "kind": "proposal",
+          "head": "4e0324239c7e64cb4d1cb12e804603aa85a963f3",
+          "baseHead": "1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d",
+          "url": "https://github.com/tamird/gvisor/commit/4e0324239",
+          "title": "fdbased: start packet processors when the endpoint is attached",
+          "body": "Closing an endpoint before attaching it to a NIC leaves its receive\nprocessors asleep. New starts the goroutines, but only the receive\nloop wakes them on exit. An unattached endpoint never runs that loop.\nWith two processors, both are still running after Close and Wait.\n\nStart the workers when the receive loop starts. Register their wakers\nonce so reattaching cannot put two goroutines on the same sleeper.\nWhen there is one processor, the receive loop drains its queue itself\nafter each batch. That queue needs neither a goroutine nor any wakers.",
+          "outcome": "changes-requested",
+          "at": "2026-11-06T13:53:01.710Z",
+          "note": "The contributor asked to remove startOnce by making one owner responsible for the receive workers’ lifetime."
         }
       ],
       "refinement": {
@@ -53242,16 +53253,16 @@
           "head": "4e0324239c7e64cb4d1cb12e804603aa85a963f3"
         }
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
+      "contributorChangesRequested": {
         "head": "4e0324239c7e64cb4d1cb12e804603aa85a963f3",
-        "baseHead": "1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d",
-        "url": "https://github.com/tamird/gvisor/commit/4e0324239",
-        "requestedAt": "2026-11-06T13:31:05.085Z",
-        "title": "fdbased: start packet processors when the endpoint is attached",
-        "summary": "May I open the revision that separates the inline, single-processor queue from the workers started for multiple processors?",
-        "body": "Closing an endpoint before attaching it to a NIC leaves its receive\nprocessors asleep. New starts the goroutines, but only the receive\nloop wakes them on exit. An unattached endpoint never runs that loop.\nWith two processors, both are still running after Close and Wait.\n\nStart the workers when the receive loop starts. Register their wakers\nonce so reattaching cannot put two goroutines on the same sleeper.\nWhen there is one processor, the receive loop drains its queue itself\nafter each batch. That queue needs neither a goroutine nor any wakers."
+        "url": "https://github.com/tamird/gvisor/commit/4e0324239"
+      },
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "4e0324239c7e64cb4d1cb12e804603aa85a963f3",
+        "observedAt": "2026-11-06T13:53:01.710Z",
+        "disposition": "The contributor asked to remove startOnce by making one owner responsible for the receive workers’ lifetime.",
+        "nextAction": "Revise worker ownership so attachment and detachment determine whether the workers exist. Check the single-processor and reattachment cases."
       }
     },
     {
@@ -53477,14 +53488,18 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/tcp-listener-handshake-locks",
-      "head": "abc461928f2488ac0aaf1a3ec046a3ee0b200c79",
+      "head": "065bb7a8de487c05a87db399dad9dbef03c172a9",
       "title": "Check both locks when a listener accepts a SYN",
-      "url": "https://github.com/tamird/gvisor/commit/abc461928",
+      "url": "https://github.com/tamird/gvisor/commit/065bb7a8d",
       "group": "analysis",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T13:31:05.085Z",
+      "status": "Published",
+      "updatedAt": "2026-11-06T13:52:23.950Z",
       "summary": "The callers now find the route before constructing the child endpoint. The constructor always returns it locked, so all three checklocksignore annotations could be removed. Nogo passed for AMD64 and ARM64, and unlocking the child before returning it failed on both. All four forwarder and five listener cases passed.",
       "evidence": [
+        {
+          "label": "Published as #17109",
+          "url": "https://github.com/google/gvisor/pull/17109"
+        },
         {
           "label": "Changes since the contributor review",
           "url": "https://github.com/tamird/gvisor/compare/dcad6d567...abc461928"
@@ -53516,6 +53531,18 @@
           "outcome": "approved-with-changes",
           "at": "2026-11-06T13:13:00.663Z",
           "note": "The listener refactor is approved subject to explaining the moved checklocks suppressions."
+        },
+        {
+          "kind": "proposal",
+          "head": "abc461928f2488ac0aaf1a3ec046a3ee0b200c79",
+          "baseHead": "1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d",
+          "url": "https://github.com/tamird/gvisor/commit/abc461928",
+          "title": "Check both locks when a listener accepts a SYN",
+          "body": "A TCP listener copies its socket options into a new child while both\nendpoint mutexes are held. A forwarder starts the same handshake\nwithout a listening endpoint. Sharing an optional listener pointer hid\nthe listener lock from checklocks and required suppressing the check at\nthe option copy.\n\nCopy the options and reserve the tuple on the locked listener. Let the\nforwarder create its child directly, and share registration and the\nSYN-ACK on the locked child. Only the forwarder waits for the handshake\nto finish.\n\nLook up the route before creating the child. If the lookup fails there\nis no child to lock. The constructor can now transfer the child lock to\neach caller without suppressing checks on the error paths.",
+          "outcome": "approved",
+          "at": "2026-11-06T13:52:23.950Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17109",
+          "note": "Published as #17109. The patch-identical rebase on current master is 065bb7a8d."
         }
       ],
       "refinement": {
@@ -53526,16 +53553,16 @@
           "head": "abc461928f2488ac0aaf1a3ec046a3ee0b200c79"
         }
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "abc461928f2488ac0aaf1a3ec046a3ee0b200c79",
-        "baseHead": "1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d",
-        "url": "https://github.com/tamird/gvisor/commit/abc461928",
-        "requestedAt": "2026-11-06T13:31:05.085Z",
-        "title": "Check both locks when a listener accepts a SYN",
-        "summary": "May I open the revision that removes all three lock-check suppressions from the listener and forwarder?",
-        "body": "A TCP listener copies its socket options into a new child while both\nendpoint mutexes are held. A forwarder starts the same handshake\nwithout a listening endpoint. Sharing an optional listener pointer hid\nthe listener lock from checklocks and required suppressing the check at\nthe option copy.\n\nCopy the options and reserve the tuple on the locked listener. Let the\nforwarder create its child directly, and share registration and the\nSYN-ACK on the locked child. Only the forwarder waits for the handshake\nto finish.\n\nLook up the route before creating the child. If the lookup fails there\nis no child to lock. The constructor can now transfer the child lock to\neach caller without suppressing checks on the error paths."
+      "inactive": true,
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "065bb7a8de487c05a87db399dad9dbef03c172a9",
+        "observedAt": "2026-11-06T13:52:23.950Z",
+        "disposition": "Published as #17109. The patch-identical rebase on current master is 065bb7a8d.",
+        "nextAction": "Follow maintainer review on #17109.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17109"
+        ]
       }
     },
     {
@@ -53909,10 +53936,14 @@
       "title": "Check the mutex protecting TCP keepalive options and probe counts",
       "url": "https://github.com/tamird/gvisor/commit/902bee917",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T12:01:47.262Z",
+      "status": "Published",
+      "updatedAt": "2026-11-06T13:52:23.950Z",
       "summary": "The TCP endpoint uses its keepalive mutex for the idle duration, probe interval, probe count and unacknowledged probes. After removing three getter locks and moving the unacknowledged-probe increment past unlock, Nogo accepted all four accesses on the parent. With the annotations, Nogo diagnosed each access on AMD64 and ARM64, including the increment that still held the endpoint lock. Both analyzers and the two existing Linux AMD64 packet tests passed on the proposed source.",
       "evidence": [
+        {
+          "label": "Published as #17108",
+          "url": "https://github.com/google/gvisor/pull/17108"
+        },
         {
           "label": "Keepalive field annotations",
           "url": "https://github.com/tamird/gvisor/commit/902bee917"
@@ -53922,16 +53953,30 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42212852632/artifacts/13500307492"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "902bee9176a0a78a435db3df2ebffe1d2a9794e5",
-        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
-        "url": "https://github.com/tamird/gvisor/commit/902bee917",
-        "requestedAt": "2026-11-06T12:01:47.262Z",
-        "title": "Check the mutex protecting TCP keepalive options and probe counts",
-        "summary": "May I open this standalone PR? With the guards removed, Nogo now diagnoses accesses to idle, interval, count and unacked on both architectures. Both existing packet tests passed with the guards in place.",
-        "body": "TCP_KEEPIDLE, TCP_KEEPINTVL and TCP_KEEPCNT can be read without\nlocking the endpoint. Their getters take the keepalive mutex, which\nalso protects updates to the probe count when an ACK arrives or the\nkeepalive timer expires. Annotate these fields so checklocks can\ndetect accesses that hold only the endpoint mutex."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "902bee9176a0a78a435db3df2ebffe1d2a9794e5",
+          "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+          "url": "https://github.com/tamird/gvisor/commit/902bee917",
+          "title": "Check the mutex protecting TCP keepalive options and probe counts",
+          "body": "TCP_KEEPIDLE, TCP_KEEPINTVL and TCP_KEEPCNT can be read without\nlocking the endpoint. Their getters take the keepalive mutex, which\nalso protects updates to the probe count when an ACK arrives or the\nkeepalive timer expires. Annotate these fields so checklocks can\ndetect accesses that hold only the endpoint mutex.",
+          "outcome": "approved",
+          "at": "2026-11-06T13:52:23.950Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17108",
+          "note": "Published as #17108."
+        }
+      ],
+      "inactive": true,
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "902bee9176a0a78a435db3df2ebffe1d2a9794e5",
+        "observedAt": "2026-11-06T13:52:23.950Z",
+        "disposition": "Published as #17108.",
+        "nextAction": "Follow maintainer review on #17108.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17108"
+        ]
       }
     },
     {
@@ -54231,6 +54276,158 @@
           "note": "Published as #17105."
         }
       ]
+    },
+    {
+      "id": "pr:17109",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17109,
+      "ref": "proposal/tcp-listener-handshake-locks",
+      "title": "Check both locks when a listener accepts a SYN",
+      "url": "https://github.com/google/gvisor/pull/17109",
+      "group": "analysis",
+      "head": "065bb7a8de487c05a87db399dad9dbef03c172a9",
+      "status": "open",
+      "updatedAt": "2026-11-06T13:52:23.950Z",
+      "summary": "The callers now find the route before constructing the child endpoint. The constructor always returns it locked, so all three checklocksignore annotations could be removed. Nogo passed for AMD64 and ARM64, and unlocking the child before returning it failed on both. All four forwarder and five listener cases passed.",
+      "evidence": [
+        {
+          "label": "Published as #17109",
+          "url": "https://github.com/google/gvisor/pull/17109"
+        },
+        {
+          "label": "Changes since the contributor review",
+          "url": "https://github.com/tamird/gvisor/compare/dcad6d567...abc461928"
+        },
+        {
+          "label": "Checks on the revised source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42223748997/artifacts/13505133163"
+        },
+        {
+          "label": "Final Nogo on both architectures and eight native Linux socket cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42178272456/artifacts/13484308117"
+        },
+        {
+          "label": "Releasing both locks at the copy produces two diagnostics per architecture",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42174510664/artifacts/13482484540"
+        },
+        {
+          "label": "Master’s clean Nogo output and the receiver spelling caught during qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42176263021/artifacts/13484286201"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "dcad6d56792cbd5c65195ad64f3a57628e605f70",
+          "url": "https://github.com/tamird/gvisor/commit/dcad6d567",
+          "title": "Open the TCP listener handshake lock PR",
+          "body": "A TCP listener copies its socket options into a new child while both\nendpoint mutexes are held. A forwarder starts the same handshake\nwithout a listening endpoint. Sharing an optional listener pointer hid\nthe listener lock from checklocks and required suppressing the check at\nthe option copy.\n\nCopy the options and reserve the tuple on the locked listener. Let the\nforwarder create its child directly, and share registration and the\nSYN-ACK on the locked child. Only the forwarder waits for the handshake\nto finish.",
+          "outcome": "approved-with-changes",
+          "at": "2026-11-06T13:13:00.663Z",
+          "note": "The listener refactor is approved subject to explaining the moved checklocks suppressions."
+        },
+        {
+          "kind": "proposal",
+          "head": "abc461928f2488ac0aaf1a3ec046a3ee0b200c79",
+          "baseHead": "1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d",
+          "url": "https://github.com/tamird/gvisor/commit/abc461928",
+          "title": "Check both locks when a listener accepts a SYN",
+          "body": "A TCP listener copies its socket options into a new child while both\nendpoint mutexes are held. A forwarder starts the same handshake\nwithout a listening endpoint. Sharing an optional listener pointer hid\nthe listener lock from checklocks and required suppressing the check at\nthe option copy.\n\nCopy the options and reserve the tuple on the locked listener. Let the\nforwarder create its child directly, and share registration and the\nSYN-ACK on the locked child. Only the forwarder waits for the handshake\nto finish.\n\nLook up the route before creating the child. If the lookup fails there\nis no child to lock. The constructor can now transfer the child lock to\neach caller without suppressing checks on the error paths.",
+          "outcome": "approved",
+          "at": "2026-11-06T13:52:23.950Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17109",
+          "note": "Published as #17109. The patch-identical rebase on current master is 065bb7a8d."
+        }
+      ]
+    },
+    {
+      "id": "pr:17108",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17108,
+      "ref": "proposal/tcp-keepalive-locks",
+      "title": "Check the mutex protecting TCP keepalive options and probe counts",
+      "url": "https://github.com/google/gvisor/pull/17108",
+      "group": "runtime",
+      "head": "902bee9176a0a78a435db3df2ebffe1d2a9794e5",
+      "status": "open",
+      "updatedAt": "2026-11-06T13:52:23.950Z",
+      "summary": "The TCP endpoint uses its keepalive mutex for the idle duration, probe interval, probe count and unacknowledged probes. After removing three getter locks and moving the unacknowledged-probe increment past unlock, Nogo accepted all four accesses on the parent. With the annotations, Nogo diagnosed each access on AMD64 and ARM64, including the increment that still held the endpoint lock. Both analyzers and the two existing Linux AMD64 packet tests passed on the proposed source.",
+      "evidence": [
+        {
+          "label": "Published as #17108",
+          "url": "https://github.com/google/gvisor/pull/17108"
+        },
+        {
+          "label": "Keepalive field annotations",
+          "url": "https://github.com/tamird/gvisor/commit/902bee917"
+        },
+        {
+          "label": "TestKeepalive and TestKeepaliveWithUserTimeout on Linux AMD64, plus both Nogo controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42212852632/artifacts/13500307492"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "902bee9176a0a78a435db3df2ebffe1d2a9794e5",
+          "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+          "url": "https://github.com/tamird/gvisor/commit/902bee917",
+          "title": "Check the mutex protecting TCP keepalive options and probe counts",
+          "body": "TCP_KEEPIDLE, TCP_KEEPINTVL and TCP_KEEPCNT can be read without\nlocking the endpoint. Their getters take the keepalive mutex, which\nalso protects updates to the probe count when an ACK arrives or the\nkeepalive timer expires. Annotate these fields so checklocks can\ndetect accesses that hold only the endpoint mutex.",
+          "outcome": "approved",
+          "at": "2026-11-06T13:52:23.950Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17108",
+          "note": "Published as #17108."
+        }
+      ]
+    },
+    {
+      "id": "branch:buildkite-source-syscalls",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/buildkite-source-syscalls",
+      "head": "e46a101fc0aebb325ec25977697a012a2e11a11b",
+      "title": "Run source-only syscall jobs directly with Bazel",
+      "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T13:53:01.710Z",
+      "summary": "Six Buildkite jobs test a runtime built from source. They can use the runtime and Sentry from Bazel runfiles. The offline Buildkite Agent compared all eight syscall job definitions. Both AMD64 jobs that accept staged binaries kept their existing commands.\n\nOn native AMD64 Linux with Docker stopped, master tried to compile the ARM64 systrap stub with a missing cross-compiler. With only #16753 added, two disjoint partitions ran all 11 eventfd cases and all four host-FIFO read/write cases. All four test actions ran uncached in the Linux sandbox without mounting the host’s /tmp. The source-only jobs use the native Bazelisk setup in #16904. The ARM64, 64 KiB page and save-mode step definitions were checked by the pipeline parser.",
+      "evidence": [
+        {
+          "label": "Exact source and reviewed pipeline selectors",
+          "url": "https://github.com/tamird/gvisor/commit/e46a101fc"
+        },
+        {
+          "label": "Eight Buildkite step definitions, stock native failure, 15 passing guest cases across two partitions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42226886193/artifacts/13506279822"
+        },
+        {
+          "label": "Native Bazelisk installation and cleanup on Buildkite",
+          "url": "https://github.com/google/gvisor/pull/16904"
+        },
+        {
+          "label": "Build the generated inputs for the selected architecture",
+          "url": "https://github.com/google/gvisor/pull/16753"
+        },
+        {
+          "label": "Separate Make path for local or explicitly staged runtimes",
+          "url": "https://github.com/google/gvisor/pull/17105"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "e46a101fc0aebb325ec25977697a012a2e11a11b",
+        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+        "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
+        "requestedAt": "2026-11-06T13:53:01.710Z",
+        "title": "Run source-only syscall jobs directly with Bazel",
+        "summary": "May I open this change after #16904 and #16753 land? Six source-only Buildkite jobs would call Bazel directly. Two AMD64 jobs that also accept staged binaries keep their Make command.",
+        "body": "Six Buildkite syscall jobs only test a runtime built from source. They\nstart the Docker builder through Make even though the test runner\nalready declares its runtime and sidecars.\n\nRun Bazel on the agent for those jobs. Pass the kernel release and\npartition to Bazel so cached results belong to the right worker and\nshard. Keep the build event file used to report failures. The two\nAMD64 jobs that accept a staged release still use Make to install it."
+      }
     }
   ],
   "edges": [
@@ -57914,6 +58111,20 @@
         "https://github.com/tamird/gvisor/actions/runs/42174590321/artifacts/13482448479",
         "https://github.com/tamird/gvisor/actions/runs/42173048776/artifacts/13481609279"
       ]
+    },
+    {
+      "from": "pr:16904",
+      "to": "branch:buildkite-source-syscalls",
+      "type": "depends_on",
+      "reason": "The source jobs use the native Bazelisk setup selected by DOCKER_BUILD=false.",
+      "evidence": "https://github.com/google/gvisor/pull/16904"
+    },
+    {
+      "from": "pr:16753",
+      "to": "branch:buildkite-source-syscalls",
+      "type": "depends_on",
+      "reason": "A native source job otherwise invokes the foreign compiler for the systrap stub before reaching the tests.",
+      "evidence": "https://github.com/tamird/gvisor/actions/runs/42226886193/artifacts/13506279822"
     }
   ],
   "investigations": [
@@ -76648,5 +76859,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-06T13:31:05.085Z"
+  "updatedAt": "2026-11-06T13:53:01.710Z"
 }
