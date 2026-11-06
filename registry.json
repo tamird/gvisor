@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T14:32:32.751Z",
+    "updatedAt": "2026-11-06T14:44:47.570Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4845,10 +4845,18 @@
       "url": "https://github.com/tamird/gvisor/commit/9310f06f9",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Replace Coral GCC with hermetic-llvm for AMD64 and ARM64 releases. Both ordinary releases built and installed without the static-glibc branch. The AMD64 race binaries also linked and staged with musl. gVisor d5fe3c2ee uses the static C runtime on supplier be935b828 and removes its local unwinder and Linux-header patches.\n\nA Linux Bazel client drove each cross-build. The shell-free AMD64 worker ran Nogo and linked the two public ARM64 race binaries. The shell-free ARM64 worker ran Nogo and linked the two AMD64 binaries. Both pairs of links ran uncached. Each native target runner verified all five installed files and ran a systrap guest with its matching Sentry.\n\nThe supplier uses the first four static C commits from #768, the per-version glibc sources, libresolv.a for cgo DNS, and the LLVM unwinder for pthread cancellation. The earlier 0.8.24 release passed with an unavailable static C++ runtime. On b317c6e36 the static GNU TLDK Sentry exchanged TCP and UDP on native AMD64.\n\nWith the native Python bootstrap and an explicit source stamp, an AMD64 Bazel client with empty PATH directories built the public release on a shell-free AMD64 worker. Both pack actions ran uncached. All nine archive members matched their installed executables. The archived Sentry saved its source identity and restored the guest.\n\nThe reverse cross-build also packaged the public release. A static AArch64 Python writer executed both tar actions uncached on an ARM64 worker. The nine AMD64 archive members matched their inputs and the unpacked Sentry booted a rootless guest on native AMD64.\n\nOn bb983b988, Bazel selected static Python for each worker without a Python --extra_toolchains override. The public //shim:config tar and a fork-only bzip2 variant each ran uncached on AMD64 and ARM64. Each format was byte-identical across workers and contained the expected runsc.toml with mode 0644. The forked rules_python launcher and --@rules_python//python/config_settings:bootstrap_impl=native are still required. The ARM64 worker also linked ARM64 runsc and Sentry and executed both actions that package the public bzip2 release, all uncached. All nine installed executables matched their inputs, and the unpacked Sentry ran a rootless systrap guest on native ARM64.\n\nAt 224fdf968, a stripped AMD64 Bazel client built the public Debian package for both architectures. The distroless AMD64 worker ran the version writer, changelog writer, four tar actions and final Debian writer uncached for each package. Both packages had the expected version, date, configuration and maintainer script. All nine installed executables matched their release inputs and modes. The packaged AMD64 runsc reported the release tag; the ARM64 package was inspected. The builds used the forked native Python bootstrap.",
-      "updatedAt": "2026-11-06T13:18:48.077Z",
+      "summary": "Replace Coral GCC with hermetic-llvm for AMD64 and ARM64 releases. Both ordinary releases built and installed without the static-glibc branch. On 3dab3494e with released LLVM 0.8.24, the native AMD64 normal and musl race CLI/Sentry pairs each ran a rootless systrap guest as UID 1001. All nine installed race files matched their release hashes. The dynamically linked containerd shim was staged only. gVisor d5fe3c2ee uses the static C runtime on supplier be935b828 and removes its local unwinder and Linux-header patches.\n\nA Linux Bazel client drove each cross-build. The shell-free AMD64 worker ran Nogo and linked the two public ARM64 race binaries. The shell-free ARM64 worker ran Nogo and linked the two AMD64 binaries. Both pairs of links ran uncached. Each native target runner verified all five installed files and ran a systrap guest with its matching Sentry.\n\nThe supplier uses the first four static C commits from #768, the per-version glibc sources, libresolv.a for cgo DNS, and the LLVM unwinder for pthread cancellation. The earlier 0.8.24 release passed with an unavailable static C++ runtime. On b317c6e36 the static GNU TLDK Sentry exchanged TCP and UDP on native AMD64.\n\nWith the native Python bootstrap and an explicit source stamp, an AMD64 Bazel client with empty PATH directories built the public release on a shell-free AMD64 worker. Both pack actions ran uncached. All nine archive members matched their installed executables. The archived Sentry saved its source identity and restored the guest.\n\nThe reverse cross-build also packaged the public release. A static AArch64 Python writer executed both tar actions uncached on an ARM64 worker. The nine AMD64 archive members matched their inputs and the unpacked Sentry booted a rootless guest on native AMD64.\n\nOn bb983b988, Bazel selected static Python for each worker without a Python --extra_toolchains override. The public //shim:config tar and a fork-only bzip2 variant each ran uncached on AMD64 and ARM64. Each format was byte-identical across workers and contained the expected runsc.toml with mode 0644. The forked rules_python launcher and --@rules_python//python/config_settings:bootstrap_impl=native are still required. The ARM64 worker also linked ARM64 runsc and Sentry and executed both actions that package the public bzip2 release, all uncached. All nine installed executables matched their inputs, and the unpacked Sentry ran a rootless systrap guest on native ARM64.\n\nAt 224fdf968, a stripped AMD64 Bazel client built the public Debian package for both architectures. The distroless AMD64 worker ran the version writer, changelog writer, four tar actions and final Debian writer uncached for each package. Both packages had the expected version, date, configuration and maintainer script. All nine installed executables matched their release inputs and modes. The packaged AMD64 runsc reported the release tag; the ARM64 package was inspected. The builds used the forked native Python bootstrap.",
+      "updatedAt": "2026-11-06T14:35:28.137Z",
       "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
       "evidence": [
+        {
+          "label": "Native AMD64 musl race guest and all nine staged file hashes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42230903371/artifacts/13510997881"
+        },
+        {
+          "label": "Matching native AMD64 normal guest control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42226845457/artifacts/13507627714"
+        },
         {
           "label": "Both public Debian packages, all seven uncached packaging actions per architecture, package metadata and nine installed executables verified",
           "url": "https://github.com/tamird/gvisor/actions/runs/42209485090/artifacts/13498582036"
@@ -53119,14 +53127,22 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/fdbased-start-on-attach",
-      "head": "c0e6b2876b97d87503e115d87c905c45926245b9",
+      "head": "95ca4e7317b6418d4ba8674a4f8d96b4c950ae78",
       "title": "Give each receive loop its own packet processors",
-      "url": "https://github.com/tamird/gvisor/commit/c0e6b2876",
+      "url": "https://github.com/tamird/gvisor/commit/95ca4e731",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-06T14:32:32.751Z",
-      "summary": "The contributor requested one authoritative dispatcher for the endpoint and its receive loop, and a lifecycle regression that exercises behavior without scanning pprof profiles.\n\nThe receive loop creates and stops its own workers. A single queue drains inline. Closing an unattached endpoint starts no workers. Eleven native receive cases and both live-checkpoint cases passed. Both the previous revision and this one panicked during a namespace move in Readv and RecvMMsg while releasing a buffer. That separate result limits what the tests establish about moves.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T14:44:47.570Z",
+      "summary": "The receive loop owns its workers and the dispatcher used to deliver packets. A batch queued on an old attachment was delivered after reattach on the previous revision. The new test drops that batch and delivers a fresh one. A second test verifies that an injectable endpoint reports its real attachment and delivers only the packet injected while attached. Both tests failed before and passed on this source. The FD and muxed suites, two live-save cases and Nogo passed. An earlier real namespace move exposed a separate buffer-release panic on both versions tested there.",
       "evidence": [
+        {
+          "label": "Changes since the contributor requested one dispatcher and a behavioral test",
+          "url": "https://github.com/tamird/gvisor/compare/c0e6b2876...95ca4e731"
+        },
+        {
+          "label": "Two failing controls, both corrected regressions, live saves, FD and muxed suites and Nogo",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42235591426/artifacts/13512476043"
+        },
         {
           "label": "Changes since the contributor requested removal of startOnce",
           "url": "https://github.com/tamird/gvisor/compare/4e0324239...c0e6b2876"
@@ -53196,22 +53212,22 @@
       ],
       "refinement": {
         "before": {
-          "head": "4e0324239c7e64cb4d1cb12e804603aa85a963f3"
+          "head": "c0e6b2876b97d87503e115d87c905c45926245b9"
         },
         "after": {
-          "head": "c0e6b2876b97d87503e115d87c905c45926245b9"
+          "head": "95ca4e7317b6418d4ba8674a4f8d96b4c950ae78"
         }
       },
-      "contributorChangesRequested": {
-        "head": "c0e6b2876b97d87503e115d87c905c45926245b9",
-        "url": "https://github.com/tamird/gvisor/commit/c0e6b2876"
-      },
-      "followup": {
-        "owner": "Agent",
-        "observedAt": "2026-11-06T14:32:32.751Z",
-        "sourceHead": "c0e6b2876b97d87503e115d87c905c45926245b9",
-        "disposition": "The contributor requested one authoritative dispatcher for the endpoint and its receive loop, and a lifecycle regression that exercises behavior without scanning pprof profiles.",
-        "nextAction": "Revise dispatcher ownership and test the attachment lifetime. Check ordinary and injectable endpoints, including how Attach, IsAttached and delivery observe the receiver."
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "95ca4e7317b6418d4ba8674a4f8d96b4c950ae78",
+        "baseHead": "1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d",
+        "url": "https://github.com/tamird/gvisor/commit/95ca4e731",
+        "requestedAt": "2026-11-06T14:44:47.570Z",
+        "title": "fdbased: give each receive loop its own packet processors",
+        "body": "Closing an endpoint before attaching it to a NIC leaves its receive\nprocessors asleep. New starts the goroutines, but only the receive\nloop wakes them on exit. An unattached endpoint never runs that loop.\n\nCreate the queues in the receive loop and signal its workers to stop\nwhen it returns. Each loop delivers through the dispatcher passed to\nAttach. Before draining a batch, a worker checks whether its own\nattachment ended. A subsequent attach cannot make an old batch\neligible for delivery again. A channel with one processor still\ndelivers its packets inline.\n\nAn injectable endpoint receives packets from its caller instead of an\nFD. Have IsAttached consult the dispatcher that InjectInbound uses.",
+        "summary": "May I open the revised packet-worker PR? The receive loop owns its dispatcher. The tests check stale versus fresh delivery after reattach and the public injectable endpoint’s reported state and payload. Both failed on the version you last reviewed and passed here.\n\ngit -C ~/code/gvisor range-diff c0e6b2876^! 95ca4e731^!"
       }
     },
     {
@@ -54345,8 +54361,8 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T14:29:43.022Z",
-      "summary": "A single Bazel invocation executed six tests remotely. AMD64 and ARM64 workers ran the Go atomicbitops and C++ posix_error tests. AMD64 workers also ran uname on native Linux and under gVisor systrap. All six TestRunner actions passed uncached. The fork’s Buildkite file contains one submission command. GitHub Actions submitted it for this trial.\n\nThe previous proposals kept separate unit, Nogo, package, container, smoke, Gazelle, plugin, source-lint and syscall jobs. Their target lists, test fixtures and earlier results are linked. Staged release checks still have distinct artifact inputs.",
+      "updatedAt": "2026-11-06T14:35:28.137Z",
+      "summary": "A single Bazel invocation executed six tests remotely. AMD64 and ARM64 workers ran the Go atomicbitops and C++ posix_error tests. AMD64 workers also ran uname on native Linux and under gVisor systrap. All six TestRunner actions passed uncached. Four of the six tests exercise parts of three presubmit jobs. Two serve as architecture controls. Each of those three jobs still has additional coverage to verify. The fork’s Buildkite file contains one submission command. GitHub Actions submitted it for this trial.\n\nThe previous proposals kept separate unit, Nogo, package, container, smoke, Gazelle, plugin, source-lint and syscall jobs. Their target lists, test fixtures and earlier results are linked. Staged release checks still have distinct artifact inputs.",
       "evidence": [
         {
           "label": "Six uncached remote TestRunner results",
@@ -54355,6 +54371,14 @@
         {
           "label": "One Bazel invocation for both architectures, native Linux and systrap",
           "url": "https://app.buildbuddy.io/invocation/167a7eaf-bf6c-4391-ad0a-4bd571c43d00"
+        },
+        {
+          "label": "Comparison with 70 source-PR jobs and their remaining requirements",
+          "url": "https://github.com/tamird/gvisor/blob/94475284c/test/rbe/source-presubmit-coverage.md"
+        },
+        {
+          "label": "Complete pipeline inventory, 109 primary rows and 12 first-pass rows",
+          "url": "https://github.com/tamird/gvisor/blob/94475284c/test/rbe/source-presubmit-rows.jsonl"
         },
         {
           "label": "Single Buildkite command and four Bazel targets",
@@ -76878,5 +76902,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-06T14:32:32.751Z"
+  "updatedAt": "2026-11-06T14:44:47.570Z"
 }
