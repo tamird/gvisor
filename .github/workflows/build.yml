@@ -1,35 +1,65 @@
-name: CI
-
-"on":
+name: Boot the complete musl race release
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/arm64-llvm-musl-race-systrap]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  smoke:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-22.04-arm
+    timeout-minutes: 100
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Prepare the exact compiler source, Bazel and static guest
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = aarch64
+          test "$(id -u)" -ne 0
+          test -x /usr/sbin/pivot_root
+          /usr/sbin/pivot_root --version
+          test "$(git rev-parse HEAD^)" = 3dab3494e2a2154244e8b2fc77699c02c2277a56
+          d="$RUNNER_TEMP/musl-race-smoke"
+          mkdir -m 700 "$d"
+          cp -a test/rbe/musl_smoke "$d/fixture"
+          cp .github/qualification/musl_race_trial.py "$d/"
+          git checkout -q --detach HEAD^
+          git diff --exit-code
+          test "$(cat .bazelversion)" = 9.3.1
+          grep -Fx 'bazel_dep(name = "llvm", version = "0.8.24")' MODULE.bazel
+          grep -F 'patches = ["//tools:llvm-linux-header-default.patch"]' MODULE.bazel
+          mkdir -p test/rbe
+          cp -a "$d/fixture" test/rbe/musl_smoke
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' --max-time 100 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-arm64 -o "$d/bazel"
+          echo "bb608519a440d45d10304eb684a73a2b6bb7699c5b0e5434361661b25f113a5d  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          file=pool/main/b/busybox/busybox-static_1.36.1-6ubuntu3.1_arm64.deb
+          for mirror in https://snapshot.ubuntu.com/ubuntu/20260928T000000Z https://ports.ubuntu.com/ubuntu-ports; do
+            if curl -fsSL --proto '=https' --proto-redir '=https' --connect-timeout 10 --max-time 30 "$mirror/$file" -o "$d/busybox.deb"; then break; fi
+          done
+          echo "d96535e0402c011e0ee43449799df2f4504d44b842e4f2b3a6cbc845508eaafc  $d/busybox.deb" | sha256sum -c -
+          dpkg-deb -x "$d/busybox.deb" "$d/package"
+          install -m 755 "$d/package/usr/bin/busybox" test/rbe/musl_smoke/busybox
+          echo "52151e7f322f926b64049cdaa1410dc3ea6485525e0624b05813791c219ae933  test/rbe/musl_smoke/busybox" | sha256sum -c -
+      - name: Run the race release Bazel test on native unprivileged Linux
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$RUNNER_TEMP/musl-race-smoke/musl_race_trial.py"
+      - name: Validate the typed receipt
+        if: always()
+        id: receipt
+        run: |
+          set -eu
+          p="$RUNNER_TEMP/musl-race-smoke/receipt.json"
+          test -s "$p"
+          test ! -L "$p"
+          test "$(wc -c < "$p")" -lt 128000
+          jq -e '.source == "3dab3494e2a2154244e8b2fc77699c02c2277a56"' "$p" >/dev/null
+          if grep -Eiq 'authorization[[:space:]]*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}' "$p"; then exit 1; fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.receipt.outcome == 'success'
+        with:
+          name: arm64-musl-race-guest
+          path: ${{ runner.temp }}/musl-race-smoke/receipt.json
+          if-no-files-found: error
