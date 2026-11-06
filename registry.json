@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T17:16:58.443Z",
+    "updatedAt": "2026-11-06T17:28:54.545Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4857,10 +4857,18 @@
       "url": "https://github.com/tamird/gvisor/commit/f6df263f8",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 to read its offsets, and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn f6df263f8, one Bazel invocation linked the public race runsc and Sentry for both AMD64 and ARM64. All four links ran uncached on a pinned AMD64 Ubuntu worker. Each ELF was static, matched its target architecture, and contained the race runtime. An unrelated QEMU toolchain, an explicit GCC override, and a custom GNU target all selected the intended compiler and libc.\n\nNative AMD64 and ARM64 ran a rootless systrap guest with the released LLVM toolchain on 3dab3494e. Next, package and run the installed binaries from the current integration.",
-      "updatedAt": "2026-11-06T17:16:58.443Z",
+      "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 to read its offsets, and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn f6df263f8, one Bazel invocation linked the public race runsc and Sentry for both AMD64 and ARM64. All four links ran uncached on a pinned AMD64 Ubuntu worker. Each ELF was static, matched its target architecture, and contained the race runtime. An unrelated QEMU toolchain, an explicit GCC override, and a custom GNU target all selected the intended compiler and libc.\n\nA separate native AMD64 Linux build checked both vDSOs and the approved raw stub extraction. All 10 AMD64 and 11 ARM64 offsets matched the embedded bytes; both vDSOs had the expected versioned ABI and passed the repository’s ELF mapping check.\n\nNative AMD64 and ARM64 ran a rootless systrap guest with the released LLVM toolchain on 3dab3494e. Next, package and run the installed binaries from the current integration.",
+      "updatedAt": "2026-11-06T17:28:15.846Z",
       "head": "f6df263f8e2ce2cbe6a497356613f6785c4800a4",
       "evidence": [
+        {
+          "label": "Native AMD64 Linux build of both stubs and vDSOs. Embedded bytes, symbol offsets, loader relocations, ELF mapping and versioned ABI.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42261353662/artifacts/13525466589"
+        },
+        {
+          "label": "The approved extractor on the current released LLVM compiler",
+          "url": "https://github.com/tamird/gvisor/commit/1f9c6adcc"
+        },
         {
           "label": "Four uncached public race links on an AMD64 Ubuntu worker, with target ELF and race symbols",
           "url": "https://github.com/tamird/gvisor/actions/runs/42255872935/artifacts/13525085703"
@@ -31684,8 +31692,8 @@
       "url": "https://github.com/tamird/gvisor/commit/6a54750c6a8b6836e3806faa63a5729b2f7621a7",
       "group": "bazel",
       "status": "Contributor approved; waiting for #16516",
-      "summary": "The offsets tool extracts .crblob from the same linked ELF. The raw stub and Go offsets match for AMD64 and ARM64 with 4 KiB and 64 KiB pages. A remote empty-root check ran the static tool with each ELF; installed AMD64 runsc started a systrap container. The outer empty-root job failed rereading its archived execution log; the original worker record verified all three cases.",
-      "updatedAt": "2026-11-05T22:23:08.487188Z",
+      "summary": "The offsets tool extracts .crblob from the same linked ELF. The raw stub and Go offsets match for AMD64 and ARM64 with 4 KiB and 64 KiB pages. A remote empty-root check ran the static tool with each ELF; installed AMD64 runsc started a systrap container. The outer empty-root job failed rereading its archived execution log; the original worker record verified all three cases.\n\nWith the current native C rule, the approved Go tool extracted 5,280 bytes on AMD64 and 4,864 on ARM64. All 10 and 11 generated offsets matched the ELF symbols. The same bytes linked at zero and 2 MiB. Both stubs had zero load-time relocations with the relocation tables retained. Adding an absolute pointer produced one relocation on each CPU.",
+      "updatedAt": "2026-11-06T17:28:15.846Z",
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "6a54750c6a8b6836e3806faa63a5729b2f7621a7",
@@ -31700,6 +31708,14 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Native AMD64 Linux build of both stubs and vDSOs. Embedded bytes, symbol offsets, loader relocations, ELF mapping and versioned ABI.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42261353662/artifacts/13525466589"
+        },
+        {
+          "label": "The approved extractor on the current released LLVM compiler",
+          "url": "https://github.com/tamird/gvisor/commit/1f9c6adcc"
+        },
         {
           "label": "Outer harness: archival callback failed after the worker finished",
           "url": "https://app.buildbuddy.io/invocation/cf01acfc-5718-4f07-85de-aff1fc057278"
