@@ -1,0 +1,36 @@
+{
+  "amd64": {
+    "archive": "cc9a9f25796ad8da4de6bdac9113680bd8b8541b8839c2acc06e141b4faa246e",
+    "artifactSHA256": "922be7b5874bb23da48e0d0ea58516718e38fe6abfc55c219c1c3c77273b3317",
+    "files": {
+      "containerd-shim-runsc-v1": "bf48035c8012520a0bb06a1121b4582aec49031859ad17a6e806e18a69d0da16",
+      "gvisor-bin/checkpointgofer": "c72b7fccb3c3b361c22ff8494230a31455d2b28f59325e5c0b5e70547eef9dfe",
+      "gvisor-bin/gvisor-proc-umounter": "62e0e37cdcebba6e991218e262fa08c0681ac71e4b479c45796769305c52f8aa",
+      "gvisor-bin/gvisor-sentry-prewarmer": "6a1f4a9f47fd067be7d0703c4449024934548f9d9a8a68de8a237b364bb4b588",
+      "gvisor-bin/gvisor_sentry": "de0dd687e0015c1c500b04c1279309c610cb190decb33a1b6b3f0e067cd2eeb9",
+      "gvisor-bin/runsc-fd-parking": "14927600c8430229d50d895e395f51f79c721ed825d9b13880e9bb0cbfc86d68",
+      "gvisor-bin/runsc-metric-server": "a5f20088a274badb558e810a7da73652d87397d47246845cd5ae32b91f452a7f",
+      "gvisor-bin/runsc-netgofer": "a397e9516c914823771a1673c7df2a458e0e9eea057f9f3797704125fdf4d7c2",
+      "runsc": "dbc9896895781c55b44824753d2a2440cf5fb6fd1a20395da1c51b2a7956b880"
+    },
+    "id": 13488448734,
+    "source": "bbbed5b2b84fe21597c740789d841e618f912def"
+  },
+  "arm64": {
+    "archive": "8439ae2402db2d0996884157d74e7418ccf0cfc8cdb0eee9a8efc4ff5eacd0c3",
+    "artifactSHA256": "3fbaab587b942edecd145a894dd56bedb9dcf73034a2d6360ad1710a7a6e1f3e",
+    "files": {
+      "containerd-shim-runsc-v1": "121ed629c549c6762e7258a9ae69a1efa534bd15d3c1c79a161af55e84d7b53c",
+      "gvisor-bin/checkpointgofer": "61f95207e4591af5bcc0296f474146a579e0f2ac5118ecf81145337ed73492a1",
+      "gvisor-bin/gvisor-proc-umounter": "c58adb3e05f2d8116a28b4588a17bdb07975b00bdc5a617d14ce08037ab5da36",
+      "gvisor-bin/gvisor-sentry-prewarmer": "5108438e45f485b9843daa27537921cf65ef71d1cc0878fec62cda5507ada09c",
+      "gvisor-bin/gvisor_sentry": "84abd8fa534ac52c63b6b7d85dd9153d87e86f7b71cd11a3628d62d3f1e87b10",
+      "gvisor-bin/runsc-fd-parking": "28f5206c05ce4cffb2a7e55090c3ba7e1fbb285aa59b1f6f152939b964e32600",
+      "gvisor-bin/runsc-metric-server": "4c296c323d87f2c40cf05353c32714ef48701e4e15b8db94e69e6126286319a2",
+      "gvisor-bin/runsc-netgofer": "8220802ab4b2c6d46dd0832850bd843ed251d67dd2c4f312ed5005dc1b78c91b",
+      "runsc": "bbaf50e2fcba01307c17dd01ed0b7f9c74905daa3f9de32b3e6c2e080b62b994"
+    },
+    "id": 13497608629,
+    "source": "bb983b988802b854bd03dd7a0a5220e7e7b4440e"
+  }
+}
