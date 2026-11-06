@@ -610,6 +610,58 @@ func (*fakeNetworkDispatcher) DeliverLinkPacket(tcpip.NetworkProtocolNumber, *st
 	panic("not implemented")
 }
 
+func TestRecvMMsgPeerShutdown(t *testing.T) {
+	fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET|unix.SOCK_CLOEXEC, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unix.Close(fds[0])
+	defer unix.Close(fds[1])
+
+	sink := &fakeNetworkDispatcher{}
+	d, err := newRecvMMsgDispatcher(fds[0], &endpoint{
+		hdrSize:    header.EthernetMinimumSize,
+		dispatcher: sink,
+	}, &Options{ProcessorsPerChannel: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer d.close()
+	defer d.release()
+
+	// An empty record from a live peer is not the end of the link.
+	if err := unix.Sendmsg(fds[1], nil, nil, nil, 0); err != nil {
+		t.Fatal(err)
+	}
+	if more, err := d.dispatch(); !more || err != nil {
+		t.Fatalf("dispatch after empty record = (%t, %v), want to keep receiving", more, err)
+	}
+
+	// Preserve the last frame even when EOF shares its receive batch.
+	frame := make([]byte, header.EthernetMinimumSize+1)
+	header.Ethernet(frame).Encode(&header.EthernetFields{
+		DstAddr: header.EthernetBroadcastAddress,
+		Type:    header.ARPProtocolNumber,
+	})
+	if err := unix.Sendmsg(fds[1], frame, nil, nil, 0); err != nil {
+		t.Fatal(err)
+	}
+	if err := unix.Shutdown(fds[1], unix.SHUT_WR); err != nil {
+		t.Fatal(err)
+	}
+	more, recvErr := d.dispatch()
+	if got := len(sink.pkts); got != 1 {
+		t.Fatalf("delivered %d packets, want the final frame", got)
+	}
+	defer sink.pkts[0].DecRef()
+	if more {
+		more, recvErr = d.dispatch()
+	}
+	if more || recvErr != nil {
+		t.Fatalf("dispatch after peer shutdown = (%t, %v), want (false, nil)", more, recvErr)
+	}
+}
+
 func TestDispatchPacketFormat(t *testing.T) {
 	for _, test := range []struct {
 		name          string
