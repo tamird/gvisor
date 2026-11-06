@@ -207,6 +207,11 @@ type Loader struct {
 	// k is the kernel.
 	k *kernel.Kernel
 
+	// checkpointVersion is read before /proc is unmounted. A binary without
+	// an identity can still run containers, but cannot save or restore them.
+	checkpointVersion    string
+	checkpointVersionErr error
+
 	// ctrl is the control server.
 	ctrl *controller
 
@@ -723,6 +728,7 @@ func New(args Args) (*Loader, error) {
 		fsSaveFDs:             args.FSSaveFDs,
 		fsSaveCheckpointGofer: args.FSSaveCheckpointGofer,
 	}
+	l.checkpointVersion, l.checkpointVersionErr = checkpointVersion()
 	l.restoreDone = sync.NewCond(&l.mu)
 
 	if args.NumCPU == 0 {
