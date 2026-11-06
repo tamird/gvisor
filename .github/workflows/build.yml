@@ -1,35 +1,40 @@
-name: CI
-
-"on":
+name: Compare FD attachment allocations and exercise the revised receiver
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/fdbased-wg-go-final]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  verify:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 100
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Select the pinned versions on native Linux
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 66eb55f0e3c5a734303e99b6b28baccadba1fb31
+          test "$(git rev-parse HEAD^^)" = f51a205a8f4afbc5ab41aded070df74951b081ea
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/fd_bench.go.inc' ':!.github/qualification/fd_allocs.py'
+          git fetch -q --no-tags --depth=1 https://github.com/tamird/gvisor.git d4e65b135f3f4e6dbb811a59c38917bdb382d6c3 2b51abee8530385431b7225198fdd5cd65e78696
+          test "$(uname -m)" = x86_64
+          test "$(cat .bazelversion)" = 9.3.1
+          /usr/bin/unshare --user --map-root-user --net -- /usr/bin/test -e /sys/class/net/lo
+          d="$RUNNER_TEMP/fd-attach-allocs"; mkdir -m 700 "$d"
+          cp .github/qualification/{fd_allocs.py,fd_bench.go.inc} "$d/"
+          curl -fsSL --max-time 90 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Exercise real receivers and compare the same four lifecycle benchmarks
+        run: python3 -B "$RUNNER_TEMP/fd-attach-allocs/fd_allocs.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: fdbased-attach-allocs
+          path: |
+            ${{ runner.temp }}/fd-attach-allocs/*.bench
+            ${{ runner.temp }}/fd-attach-allocs/*benchstat.txt
+            ${{ runner.temp }}/fd-attach-allocs/result.json
+          retention-days: 14
