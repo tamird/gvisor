@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T17:12:30.114Z",
+    "updatedAt": "2026-11-06T17:16:58.443Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4852,15 +4852,23 @@
       "id": "branch:hermetic-compiler-review",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "proposal/llvm-default-release",
+      "ref": "research/released-llvm-current-prerequisites",
       "title": "Build C and C++ with the declared LLVM toolchains",
-      "url": "https://github.com/tamird/gvisor/commit/9310f06f9",
+      "url": "https://github.com/tamird/gvisor/commit/f6df263f8",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Replace Coral GCC with hermetic-llvm for AMD64 and ARM64 releases. Master already pins LLVM 0.8.24. Master and the compiler revision passed the existing checker on the same 223 catalog entries and policy. Removing the LLVM entry produced exactly one error. The compiler uses the existing NVIDIA parser source. The separate source cleanup and the proposed google/licensecheck dependency in #15146 can wait.\n\nOn the current master integration, Bazel kept LLVM’s musl sysroot when QEMU was registered, honored an explicit GCC override, and preserved an explicit GNU 2.28 target. Both AMD64 public race binaries linked statically under LLVM and GCC. The AMD64 and ARM64 stub offsets matched all 10 and 11 ELF symbols, respectively. All three sidecars built on both targets and the native prewarmer size test passed. The vDSO built on both targets; the reporter looked up its alias and omitted the ELF headers.\n\nBoth ordinary releases built and installed without the static-glibc branch. With released LLVM 0.8.24, native AMD64 and ARM64 each ran a rootless systrap guest as UID 1001 with their own static musl race runsc and Sentry. All nine installed files matched the declared release on both machines. The dynamically linked race containerd shim was staged only. The ordinary AMD64 CLI/Sentry pair also ran a rootless guest. These runs used gVisor 3dab3494e. gVisor d5fe3c2ee uses the static C runtime on supplier be935b828 and removes its local unwinder and Linux-header patches.\n\nA Linux Bazel client drove each cross-build. The shell-free AMD64 worker ran Nogo and linked the two public ARM64 race binaries. The shell-free ARM64 worker ran Nogo and linked the two AMD64 binaries. Both pairs of links ran uncached. Each native target runner verified all five installed files and ran a systrap guest with its matching Sentry.\n\nThe supplier uses the first four static C commits from #768, the per-version glibc sources, libresolv.a for cgo DNS, and the LLVM unwinder for pthread cancellation. The earlier 0.8.24 release passed with an unavailable static C++ runtime. On b317c6e36 the static GNU TLDK Sentry exchanged TCP and UDP on native AMD64.\n\nWith the native Python bootstrap and an explicit source stamp, an AMD64 Bazel client with empty PATH directories built the public release on a shell-free AMD64 worker. Both pack actions ran uncached. All nine archive members matched their installed executables. The archived Sentry saved its source identity and restored the guest.\n\nThe reverse cross-build also packaged the public release. A static AArch64 Python writer executed both tar actions uncached on an ARM64 worker. The nine AMD64 archive members matched their inputs and the unpacked Sentry booted a rootless guest on native AMD64.\n\nOn bb983b988, Bazel selected static Python for each worker without a Python --extra_toolchains override. The public //shim:config tar and a fork-only bzip2 variant each ran uncached on AMD64 and ARM64. Each format was byte-identical across workers and contained the expected runsc.toml with mode 0644. The forked rules_python launcher and --@rules_python//python/config_settings:bootstrap_impl=native are still required. The ARM64 worker also linked ARM64 runsc and Sentry and executed both actions that package the public bzip2 release, all uncached. All nine installed executables matched their inputs, and the unpacked Sentry ran a rootless systrap guest on native ARM64.\n\nAt 224fdf968, a stripped AMD64 Bazel client built the public Debian package for both architectures. The distroless AMD64 worker ran the version writer, changelog writer, four tar actions and final Debian writer uncached for each package. Both packages had the expected version, date, configuration and maintainer script. All nine installed executables matched their release inputs and modes. The packaged AMD64 runsc reported the release tag; the ARM64 package was inspected. The builds used the forked native Python bootstrap.",
-      "updatedAt": "2026-11-06T16:55:55.698Z",
-      "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
+      "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 to read its offsets, and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn f6df263f8, one Bazel invocation linked the public race runsc and Sentry for both AMD64 and ARM64. All four links ran uncached on a pinned AMD64 Ubuntu worker. Each ELF was static, matched its target architecture, and contained the race runtime. An unrelated QEMU toolchain, an explicit GCC override, and a custom GNU target all selected the intended compiler and libc.\n\nNative AMD64 and ARM64 ran a rootless systrap guest with the released LLVM toolchain on 3dab3494e. Next, package and run the installed binaries from the current integration.",
+      "updatedAt": "2026-11-06T17:16:58.443Z",
+      "head": "f6df263f8e2ce2cbe6a497356613f6785c4800a4",
       "evidence": [
+        {
+          "label": "Four uncached public race links on an AMD64 Ubuntu worker, with target ELF and race symbols",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42255872935/artifacts/13525085703"
+        },
+        {
+          "label": "Single AMD64 and ARM64 Bazel invocation",
+          "url": "https://app.buildbuddy.io/invocation/0bcc5f40-0c93-4faa-b6bd-522da62ba81c"
+        },
         {
           "label": "Current joint source with approved freestanding stub and resolved compiler selection",
           "url": "https://github.com/tamird/gvisor/commit/f6df263f8"
@@ -4868,10 +4876,6 @@
         {
           "label": "Static race links under LLVM and explicitly selected GCC; current stubs, offsets and sidecars",
           "url": "https://github.com/tamird/gvisor/actions/runs/42249418000/artifacts/13523051477"
-        },
-        {
-          "label": "Joint two-architecture remote release qualification",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42255872935"
         },
         {
           "label": "Existing checker passed all 223 entries on master and the compiler; deleting LLVM was rejected",
@@ -5376,10 +5380,10 @@
       ],
       "refinement": {
         "before": {
-          "head": "a385bd2b0155b82faf4fc6a0c195a153ad57550c"
+          "head": "9310f06f95b100725450a71fbb896fc8403ec0eb"
         },
         "after": {
-          "head": "9310f06f95b100725450a71fbb896fc8403ec0eb"
+          "head": "f6df263f8e2ce2cbe6a497356613f6785c4800a4"
         }
       },
       "settledReviews": [
@@ -5403,11 +5407,13 @@
       ],
       "followup": {
         "owner": "Compiler integration",
-        "sourceHead": "9310f06f95b100725450a71fbb896fc8403ec0eb",
-        "disposition": "Both public race releases cross-built on workers of the other architecture with the current C-only supplier. Both native target runners verified the five delivered files and ran systrap.",
-        "observedAt": "2026-11-06T06:43:56.321915Z",
-        "nextAction": "The gVisor compiler switch waits for the sidecar rule (#16522), its systrap stub consumer (#17067), systrap offsets (#16516), and the vDSO rule (#16586).",
+        "sourceHead": "f6df263f8e2ce2cbe6a497356613f6785c4800a4",
+        "disposition": "Four public race links passed for both target CPUs in one Bazel graph using the released supplier.",
+        "observedAt": "2026-11-06T17:16:58.443Z",
+        "nextAction": "Check the current release archive and run its installed CLI and matching Sentry. Upstream submission waits for #16522, #17067, #16516, and #16586.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42255872935/artifacts/13525085703",
+          "https://github.com/tamird/gvisor/commit/f6df263f8",
           "https://github.com/tamird/gvisor/actions/runs/42209485090/artifacts/13498582036",
           "https://github.com/tamird/gvisor/actions/runs/42209002950/artifacts/13497608629",
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
@@ -53448,9 +53454,13 @@
       "url": "https://github.com/tamird/gvisor/commit/d4e65b135",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T16:55:55.698Z",
+      "updatedAt": "2026-11-06T17:16:58.443Z",
       "summary": "Closing an FD endpoint before attaching it leaves receive workers asleep on stock gVisor. The revision starts workers on attach and gives each FD its own queues. Explicit detach drops pending packets and late reads. An in-flight worker can finish delivering packets it already took. In the test, the earlier revision delivered all three packets; this one delivered only the first. Peer EOF retains the original wake order.",
       "evidence": [
+        {
+          "label": "On 95ca4e731 the old receive batch delivered all three packets. With #17060 and the fix, both detach tests and 100 constructor iterations completed.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42258461813/artifacts/13523827603"
+        },
         {
           "label": "Exact native receive, live-save, muxed and Nogo results; earlier stale delivery",
           "url": "https://github.com/tamird/gvisor/actions/runs/42255611643/artifacts/13523126699"
@@ -75822,7 +75832,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-06T12:18:32.411Z",
+      "updatedAt": "2026-11-06T17:16:58.443Z",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the duplicate reconnect reply on #15019.",
       "findings": [
@@ -76689,6 +76699,10 @@
         {
           "label": "Delayed ACK after a rejected outgoing reply",
           "url": "https://github.com/tamird/gvisor/actions/runs/42166057647/artifacts/13478329386"
+        },
+        {
+          "label": "#17099 registers the listener before the handshake ACK and before Accept in two Go tests. The author reports both lost wakeups disappeared in repeated race tests.",
+          "url": "https://github.com/google/gvisor/pull/17099"
         }
       ],
       "reviewWatch": {
