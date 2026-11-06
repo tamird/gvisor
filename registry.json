@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T21:34:46.570Z",
+    "updatedAt": "2026-11-06T21:38:31.977Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -6537,25 +6537,26 @@
       "group": "bazel",
       "status": "open",
       "head": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-      "updatedAt": "2026-11-06T21:27:18.472Z",
-      "summary": "On the published rebase, Bazel 9 sent the ARM64 Go test to AMD64. Constraining the test execution group let all 10,933 atomicbitops cases run on native ARM64. All three C++ PosixError cases passed on native AMD64 with declared LLVM. The C++ macro’s forwarding test still targeted AMD64. With the fork’s rule-valued public cc_test, an AMD64-targeted Bazel invocation ran all three cases on native ARM64 with an AArch64 ELF. The configured target retained link_extra_lib and its .dwp and .stripped output labels.",
+      "updatedAt": "2026-11-06T21:38:31.977Z",
+      "summary": "The published ARM64 Go test was assigned an AMD64 worker. The proposed revision constrains each test’s execution group and extends rules_cc’s supported C++ test rule so its runner takes the target transition. From an AMD64-targeted Bazel 9.3.1 invocation, all three PosixError cases ran uncached on a native ARM64 worker using the pinned rules_cc 0.2.25. The test executable was AArch64. Its configured dependencies included link_extra_lib, and both public .dwp and .stripped output labels resolved. Separate native AMD64 ordinary and configured macro-caller controls passed under Bazel 7.7.2, 8.8.2 and 9.3.1, including the injected link symbol.",
       "followup": {
-        "owner": "Agent",
+        "owner": "Contributor",
         "sourceHead": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-        "observedAt": "2026-11-06T21:27:18.472Z",
-        "disposition": "The two action graphs establish the placement change. The physical native ARM64 Go test passed on the fork.",
-        "nextAction": "Qualify the gVisor-only version using rules_cc 0.2.25’s documented extension-support cc_test rule. Verify the variant’s link_extra_lib input and implicit outputs while ordinary C++ targets keep using the original macro.",
+        "observedAt": "2026-11-06T21:38:31.977Z",
+        "disposition": "The gVisor-only source uses the existing public rules_cc extension API.",
+        "nextAction": "Review the single replacement commit for #15370.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42290157453",
-          "https://github.com/tamird/gvisor/actions/runs/42288153554/artifacts/13537709088",
-          "https://github.com/tamird/gvisor/actions/runs/42288613378/artifacts/13538188546",
-          "https://github.com/tamird/gvisor/actions/runs/42289518844/artifacts/13539170934",
-          "https://github.com/tamird/gvisor/actions/runs/42272993483/artifacts/13537866543"
+          "https://github.com/tamird/gvisor/commit/5f651fdc0",
+          "https://github.com/tamird/gvisor/actions/runs/42297038959/artifacts/13542766701"
         ]
       },
       "number": 15370,
       "reviewDecision": null,
       "evidence": [
+        {
+          "label": "Unpatched rules_cc, three real ARM64 C++ cases, and separate native AMD64 caller compatibility tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42297038959/artifacts/13542766701"
+        },
         {
           "label": "Public rule for inheritance in the already pinned rules_cc release",
           "url": "https://github.com/bazelbuild/rules_cc/blob/0.2.25/cc/cc_rules_extension_support.bzl"
@@ -6619,11 +6620,24 @@
       ],
       "refinement": {
         "before": {
-          "head": "47be1e2b5e4aa429c39e6b9a681f9012a0405f6a"
+          "head": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
+          "base": "f51a205a8f4afbc5ab41aded070df74951b081ea"
         },
         "after": {
-          "head": "fafff7eba5044b4585ea89fde2db7cbfb7861310"
+          "head": "5f651fdc090433d2f5f8d370793e57e90745c40f",
+          "base": "f51a205a8f4afbc5ab41aded070df74951b081ea"
         }
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "baseHead": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
+        "head": "5f651fdc090433d2f5f8d370793e57e90745c40f",
+        "url": "https://github.com/tamird/gvisor/commit/5f651fdc0",
+        "requestedAt": "2026-11-06T21:38:31.977Z",
+        "title": "Run Go and C++ tests on native architectures",
+        "body": "The test runner for a C++ test can still target AMD64 when its binary\nhas been cross-compiled for ARM64. Select the target platform on the\ntest rule itself and constrain its test execution group to a native\nworker. Use the real C++ test rule exported by rules_cc for inheritance\nso its test transition also applies to the runner.\n\nAdd optional architecture variants to Go and C++ test declarations.\nProvide suites for atomicbitops and posix_error so one invocation can\nexercise both architectures. Ordinary test targets remain available.",
+        "summary": "May I replace the single commit on #15370 with the gVisor-only correction? From an AMD64-targeted Bazel 9.3.1 invocation, all three PosixError cases ran uncached on a native ARM64 worker using the pinned rules_cc 0.2.25. The test executable was AArch64. Its configured dependencies included link_extra_lib, and both public .dwp and .stripped output labels resolved. Separate native AMD64 ordinary and configured macro-caller controls passed under Bazel 7.7.2, 8.8.2 and 9.3.1, including the injected link symbol."
       }
     },
     {
@@ -46191,9 +46205,13 @@
       "url": "https://github.com/google/gvisor/pull/16840",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T21:34:46.570Z",
-      "summary": "A single type pointer describes map, array and value payloads. Each 64-bit object descriptor shrinks from 56 to 40 bytes. The commit includes benchstat for the paired 50,000-file checkpoint decodes.",
+      "updatedAt": "2026-11-06T21:38:31.977Z",
+      "summary": "Each checkpoint graph object descriptor shrinks from 56 to 40 bytes on 64-bit systems. The published PR description now includes the 50,000-file decoder results and the 100,000-file standalone restore RSS comparison.",
       "evidence": [
+        {
+          "label": "Published PR description with both standalone benchmark studies",
+          "url": "https://github.com/google/gvisor/pull/16840"
+        },
         {
           "label": "Standalone restore comparison, original benchstat and per-restore Sentry RSS",
           "url": "https://github.com/tamird/gvisor/actions/runs/42282670588/artifacts/13541049555"
@@ -46221,19 +46239,19 @@
           "head": "14abba8a46275b24c69c53fc0ff79f61c9665e31",
           "outcome": "approved",
           "at": "2026-11-02T20:29:20Z"
+        },
+        {
+          "kind": "reply",
+          "head": "14abba8a46275b24c69c53fc0ff79f61c9665e31",
+          "url": "https://github.com/google/gvisor/pull/16840",
+          "title": "Edit #16840’s existing PR description only",
+          "body": "The graph decoder keeps a descriptor for every object in a checkpoint.\nMaps get their type from a reference. A value or array whose header\ndescribes only its layout also needs a reference to supply its type.\nThe two cases can share a single type pointer. Once it is set, the\ndecoder and the checkpoint printer both know how to read the payload.\n\nOn 64-bit systems each descriptor shrinks from 56 to 40 bytes.\nBenchstat from 16 paired AMD64 decodes of the same 50,000-file tmpfs\ncheckpoint [1]. DecodeGC runs with garbage collection enabled.\nDecodeStatefile disables it during decoding.\n\n```text\n                               │ /home/runner/work/_temp/pair/records/stock.bench │ /home/runner/work/_temp/pair/records/fixed.bench │\n                               │                      sec/op                      │          sec/op            vs base               │\nCheckpointFile/DecodeGC                                               185.4m ± 3%                 179.5m ± 1%  -3.18% (p=0.003 n=16)\n\n                               │ /home/runner/work/_temp/pair/records/stock.bench │ /home/runner/work/_temp/pair/records/fixed.bench │\n                               │                     cpu-sec                      │          cpu-sec           vs base               │\nCheckpointFile/DecodeGC                                               185.3m ± 3%                 179.5m ± 1%  -3.14% (p=0.003 n=16)\n\n                        │ /home/runner/work/_temp/pair/records/stock.bench │ /home/runner/work/_temp/pair/records/fixed.bench │\n                        │                   heap-live-B                    │        heap-live-B         vs base               │\nCheckpointFile/DecodeGC                                       67.04Mi ± 0%                65.49Mi ± 0%  -2.31% (p=0.000 n=16)\n\n                               │ /home/runner/work/_temp/pair/records/stock.bench │ /home/runner/work/_temp/pair/records/fixed.bench │\n                               │                       B/op                       │          B/op            vs base                 │\nCheckpointFile/DecodeGC                                              137.5Mi ± 0%              136.0Mi ± 0%  -1.13% (p=0.000 n=16)\nCheckpointFile/DecodeStatefile                                       137.5Mi ± 0%              136.0Mi ± 0%  -1.12% (p=0.000 n=16)\n```\n\nOn native AMD64 systrap, we restored a checkpoint of 100,000 empty tmpfs files under a one-CPU quota and a 2 GiB limit. We measured Sentry RSS at the first verified guest read. The `parent` column is master at f51a205a8 and `reference` adds this change. Time to the first read showed no significant difference [2].\n\n```text\n                       │    parent    │              reference              │\n                       │     B/op     │     B/op      vs base               │\nRestore/first_read_rss   308.5Mi ± 0%   304.6Mi ± 1%  -1.27% (p=0.000 n=36)\n```\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41310990566/artifacts/13086186114\n[2]: https://github.com/tamird/gvisor/actions/runs/42282670588/artifacts/13541049555\n",
+          "outcome": "approved",
+          "at": "2026-11-06T21:38:31.977Z",
+          "note": "Approved existing PR description edited in place. The original 1,780-byte benchstat block remained byte-identical and the new standalone RSS row occurs once."
         }
       ],
-      "number": 16840,
-      "contributorReview": {
-        "status": "pending",
-        "kind": "reply",
-        "head": "14abba8a46275b24c69c53fc0ff79f61c9665e31",
-        "url": "https://github.com/google/gvisor/pull/16840",
-        "title": "Edit #16840’s existing PR description only",
-        "summary": "Approve replacing the description on the current PR with the exact text below. Preserve the existing 50,000-file decoder results and add only the standalone Sentry RSS result from 36 measured restores per arm. This permission applies only to the PR body.",
-        "requestedAt": "2026-11-06T21:34:46.570Z",
-        "body": "The graph decoder keeps a descriptor for every object in a checkpoint.\nMaps get their type from a reference. A value or array whose header\ndescribes only its layout also needs a reference to supply its type.\nThe two cases can share a single type pointer. Once it is set, the\ndecoder and the checkpoint printer both know how to read the payload.\n\nOn 64-bit systems each descriptor shrinks from 56 to 40 bytes.\nBenchstat from 16 paired AMD64 decodes of the same 50,000-file tmpfs\ncheckpoint [1]. DecodeGC runs with garbage collection enabled.\nDecodeStatefile disables it during decoding.\n\n```text\n                               │ /home/runner/work/_temp/pair/records/stock.bench │ /home/runner/work/_temp/pair/records/fixed.bench │\n                               │                      sec/op                      │          sec/op            vs base               │\nCheckpointFile/DecodeGC                                               185.4m ± 3%                 179.5m ± 1%  -3.18% (p=0.003 n=16)\n\n                               │ /home/runner/work/_temp/pair/records/stock.bench │ /home/runner/work/_temp/pair/records/fixed.bench │\n                               │                     cpu-sec                      │          cpu-sec           vs base               │\nCheckpointFile/DecodeGC                                               185.3m ± 3%                 179.5m ± 1%  -3.14% (p=0.003 n=16)\n\n                        │ /home/runner/work/_temp/pair/records/stock.bench │ /home/runner/work/_temp/pair/records/fixed.bench │\n                        │                   heap-live-B                    │        heap-live-B         vs base               │\nCheckpointFile/DecodeGC                                       67.04Mi ± 0%                65.49Mi ± 0%  -2.31% (p=0.000 n=16)\n\n                               │ /home/runner/work/_temp/pair/records/stock.bench │ /home/runner/work/_temp/pair/records/fixed.bench │\n                               │                       B/op                       │          B/op            vs base                 │\nCheckpointFile/DecodeGC                                              137.5Mi ± 0%              136.0Mi ± 0%  -1.13% (p=0.000 n=16)\nCheckpointFile/DecodeStatefile                                       137.5Mi ± 0%              136.0Mi ± 0%  -1.12% (p=0.000 n=16)\n```\n\nOn native AMD64 systrap, we restored a checkpoint of 100,000 empty tmpfs files under a one-CPU quota and a 2 GiB limit. We measured Sentry RSS at the first verified guest read. The `parent` column is master at f51a205a8 and `reference` adds this change. Time to the first read showed no significant difference [2].\n\n```text\n                       │    parent    │              reference              │\n                       │     B/op     │     B/op      vs base               │\nRestore/first_read_rss   308.5Mi ± 0%   304.6Mi ± 1%  -1.27% (p=0.000 n=36)\n```\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41310990566/artifacts/13086186114\n[2]: https://github.com/tamird/gvisor/actions/runs/42282670588/artifacts/13541049555\n"
-      }
+      "number": 16840
     },
     {
       "id": "branch:state-graph-object-frame-bounds",
