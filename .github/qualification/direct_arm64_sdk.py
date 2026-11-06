@@ -26,6 +26,41 @@ def sha(path):
     with path.open("rb") as f:
         return hashlib.file_digest(f,"sha256").hexdigest() if hasattr(hashlib,"file_digest") else hashlib.sha256(f.read()).hexdigest()
 
+def stdlib_probe():
+    console = work/"stdlib.log"; events=work/"stdlib.events"
+    inv=str(uuid.uuid4());row=receipt["stdlib"]={"invocation":inv};save()
+    with console.open("wb") as out:
+        p=subprocess.run(["timeout","-k","15","1050",str(work/"bazel"),"--nosystem_rc","--nohome_rc","build",
+            "--invocation_id="+inv,"--config=aarch64","--jobs=4","--spawn_strategy=local","--lockfile_mode=off",
+            "--build_event_publish_all_actions","--build_event_json_file="+str(events),"--noshow_progress","--color=no","--curses=no",
+            "//tools/nogo:stdlib"],stdout=out,stderr=subprocess.STDOUT)
+    row["exit"]=p.returncode;row["log_sha256"]=sha(console)
+    lines=console.read_text(errors="replace").splitlines()
+    row["diagnostic"]=[]
+    window=0
+    for line in lines:
+        if line.startswith("ERROR:") or "error walking" in line or "error resolving" in line or "panic:" in line:window=14
+        if window and len(row["diagnostic"])<45:
+            row["diagnostic"].append(line[:900]);window-=1
+    if p.returncode and not row["diagnostic"]:row["diagnostic"]=lines[-15:]
+    row["actions"]=[]
+    if events.is_file():
+        for line in events.open():
+            ev=json.loads(line);act=ev.get("action",{})
+            if act.get("type")!="GoStandardLibraryAnalysis":continue
+            output=act.get("stderr",{});uri=output.get("uri","")
+            action={"exit":act.get("exitCode",0),"success":act.get("success",False),"key":ev.get("id",{}).get("actionCompleted",{}).get("label")}
+            if uri.startswith("file://"):
+                f=Path(unquote(urlparse(uri).path))
+                if f.is_file():
+                    action["stderr_sha256"]=sha(f);action["stderr"]=f.read_text(errors="replace").splitlines()[:12]
+                    action["stderr"]=[l[:900] for l in action["stderr"]]
+            if len(row["actions"])<8:row["actions"].append(action)
+    binpath=Path("bazel-bin/tools/nogo/stdlib.facts")
+    if binpath.is_file():row["facts"]={"bytes":binpath.stat().st_size,"sha256":sha(binpath)}
+    save()
+    return p.returncode==0 and binpath.is_file()
+
 def summarize(name, labels, extra, limit):
     bep = work / (name+".events")
     console = work / (name+".log")
@@ -44,6 +79,9 @@ def summarize(name, labels, extra, limit):
         if l.startswith("ERROR:") or "No space left on device" in l or "OutOfMemoryError" in l:
             if len(limit_errors)<6:limit_errors.append(l.strip()[:750])
     entry["first_errors"]=limit_errors
+    raw_lines=console.read_text(errors="replace").splitlines()
+    first=next((i for i,l in enumerate(raw_lines) if l.startswith("ERROR:")),None)
+    if first is not None:entry["first_failure_context"]=[line[:800] for line in raw_lines[first:first+16]]
     if bep.exists():
         for line in bep.open():
             evt=json.loads(line)
@@ -78,7 +116,9 @@ receipt["unprivileged_userns"]=subprocess.run(["unshare","--user","--map-root-us
 receipt["cgroup_v2"]=Path("/sys/fs/cgroup/cgroup.controllers").is_file()
 receipt["initial_free_bytes"]=shutil.disk_usage(work).free
 save()
-summarize("go",go,[],2400)
+if not stdlib_probe():
+    raise SystemExit("Native standard-library analyzer failed before SDK tests")
+summarize("go",go,[],2100)
 summarize("python",[python_suite],["--test_arg=-v"],1050)
 binary=Path("bazel-bin/release/runsc")
 if binary.is_file():
