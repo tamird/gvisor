@@ -1,0 +1,239 @@
+diff --git a/pkg/sentry/kernel/semaphore/BUILD b/pkg/sentry/kernel/semaphore/BUILD
+index a23309dc70ff9ae4ba5cca42c1543675b25e4df0..7bc7537d6aa7bba9dc35743cb39be29f563861ec 100644
+--- a/pkg/sentry/kernel/semaphore/BUILD
++++ b/pkg/sentry/kernel/semaphore/BUILD
+@@ -1,29 +1,13 @@
+ load("//tools:defs.bzl", "go_library", "go_test")
+-load("//tools/go_generics:defs.bzl", "go_template_instance")
+ 
+ package(
+     default_applicable_licenses = ["//:license"],
+     licenses = ["notice"],
+ )
+ 
+-go_template_instance(
+-    name = "waiter_list",
+-    out = "waiter_list.go",
+-    package = "semaphore",
+-    prefix = "waiter",
+-    template = "//pkg/ilist:generic_list",
+-    types = {
+-        "Element": "*waiter",
+-        "Linker": "*waiter",
+-    },
+-)
+-
+ go_library(
+     name = "semaphore",
+-    srcs = [
+-        "semaphore.go",
+-        "waiter_list.go",
+-    ],
++    srcs = ["semaphore.go"],
+     importpath = "gvisor.dev/gvisor/pkg/sentry/kernel/semaphore",
+     visibility = ["//pkg/sentry:internal"],
+     deps = [
+@@ -34,7 +18,6 @@ go_library(
+         "//pkg/sentry/kernel/ipc",
+         "//pkg/sentry/ktime",
+         "//pkg/sentry/vfs",
+-        "//pkg/state",
+         "//pkg/sync",
+     ],
+ )
+diff --git a/pkg/sentry/kernel/semaphore/semaphore.go b/pkg/sentry/kernel/semaphore/semaphore.go
+index d983cb4b3fc166b47332877a785e73daae4e2493..a14ddad0424f6f7d79532beb0308a99843d5f9e7 100644
+--- a/pkg/sentry/kernel/semaphore/semaphore.go
++++ b/pkg/sentry/kernel/semaphore/semaphore.go
+@@ -17,6 +17,7 @@ package semaphore
+ 
+ import (
+ 	"fmt"
++	"slices"
+ 
+ 	"gvisor.dev/gvisor/pkg/abi/linux"
+ 	"gvisor.dev/gvisor/pkg/context"
+@@ -25,7 +26,6 @@ import (
+ 	"gvisor.dev/gvisor/pkg/sentry/kernel/ipc"
+ 	"gvisor.dev/gvisor/pkg/sentry/ktime"
+ 	"gvisor.dev/gvisor/pkg/sentry/vfs"
+-	"gvisor.dev/gvisor/pkg/state"
+ 	"gvisor.dev/gvisor/pkg/sync"
+ )
+ 
+@@ -86,11 +86,11 @@ type Set struct {
+ 	// initialization; access to mutable fields of its elements requires mu.
+ 	sems []sem
+ 
+-	// waiters holds one queue per semaphore, allocated on the first wait.
+-	// beforeSave checks that every queue is empty.
++	// waiters groups blocked operations by semaphore number in arrival order.
++	// Blocked tasks leave their queues before checkpoint.
+ 	//
+ 	// +checklocks:mu
+-	waiters []waiterList `state:"nosave"`
++	waiters map[int][]waiter `state:"zerovalue"`
+ 
+ 	// dead is set to true when the set is removed and can't be reached anymore.
+ 	// All waiters must wake up and fail when set is dead.
+@@ -112,12 +112,7 @@ type sem struct {
+ 
+ // waiter represents a caller that is waiting for the semaphore value to
+ // become positive or zero.
+-//
+-// +stateify savable
+ type waiter struct {
+-	// waiterEntry links this waiter into its semaphore's queue.
+-	waiterEntry
+-
+ 	// value represents how much resource the waiter needs to wake up.
+ 	// The value is either 0 or negative. Immutable.
+ 	value int16
+@@ -563,7 +558,7 @@ func (s *Set) GetPID(num int32, creds *auth.Credentials) (int32, error) {
+ // reacquire that mutex.
+ //
+ // +checklocksexclude:s.mu
+-func (s *Set) countWaiters(num int32, creds *auth.Credentials, pred func(w *waiter) bool) (uint16, error) {
++func (s *Set) countWaiters(num int32, creds *auth.Credentials, pred func(w waiter) bool) (uint16, error) {
+ 	s.mu.Lock()
+ 	defer s.mu.Unlock()
+ 
+@@ -575,11 +570,8 @@ func (s *Set) countWaiters(num int32, creds *auth.Credentials, pred func(w *wait
+ 	if s.findSem(num) == nil {
+ 		return 0, linuxerr.ERANGE
+ 	}
+-	if s.waiters == nil {
+-		return 0, nil
+-	}
+ 	var cnt uint16
+-	for w := s.waiters[num].Front(); w != nil; w = w.Next() {
++	for _, w := range s.waiters[int(num)] {
+ 		if pred(w) {
+ 			cnt++
+ 		}
+@@ -591,7 +583,7 @@ func (s *Set) countWaiters(num int32, creds *auth.Credentials, pred func(w *wait
+ //
+ // +checklocksexclude:s.mu
+ func (s *Set) CountZeroWaiters(num int32, creds *auth.Credentials) (uint16, error) {
+-	return s.countWaiters(num, creds, func(w *waiter) bool {
++	return s.countWaiters(num, creds, func(w waiter) bool {
+ 		return w.value == 0
+ 	})
+ }
+@@ -600,7 +592,7 @@ func (s *Set) CountZeroWaiters(num int32, creds *auth.Credentials) (uint16, erro
+ //
+ // +checklocksexclude:s.mu
+ func (s *Set) CountNegativeWaiters(num int32, creds *auth.Credentials) (uint16, error) {
+-	return s.countWaiters(num, creds, func(w *waiter) bool {
++	return s.countWaiters(num, creds, func(w waiter) bool {
+ 		return w.value < 0
+ 	})
+ }
+@@ -700,8 +692,10 @@ func (s *Set) executeOps(ctx context.Context, ops []linux.Sembuf, pid int32) (ch
+ 	}
+ 	// A multi-operation waiter may now hit an error before reaching the
+ 	// semaphore on which it blocked.
+-	for i := range s.waiters {
+-		s.wakeWaiters(i)
++	if s.waiters != nil {
++		for i := range s.sems {
++			s.wakeWaiters(i)
++		}
+ 	}
+ 	s.opTime = ktime.NowFromContext(ctx)
+ 	return nil, 0, nil
+@@ -715,16 +709,8 @@ func (s *Set) AbortWait(num int32, ch chan struct{}) {
+ 	s.mu.Lock()
+ 	defer s.mu.Unlock()
+ 
+-	if s.waiters == nil {
+-		return
+-	}
+-	for w := s.waiters[num].Front(); w != nil; w = w.Next() {
+-		if w.ch == ch {
+-			s.waiters[num].Remove(w)
+-			return
+-		}
+-	}
+-	// Waiter may not be found in case it raced with wakeWaiters().
++	// The waiter may already have been removed by wakeWaiters.
++	s.removeWaiters(int(num), func(w waiter) bool { return w.ch == ch })
+ }
+ 
+ // Destroy implements ipc.Mechanism.Destroy.
+@@ -734,8 +720,8 @@ func (s *Set) Destroy() {
+ 	// Notify all waiters. They will fail on the next attempt to execute
+ 	// operations and return error.
+ 	s.dead = true
+-	for i := range s.waiters {
+-		for w := s.waiters[i].Front(); w != nil; w = w.Next() {
++	for i := range s.sems {
++		for _, w := range s.waiters[i] {
+ 			w.ch <- struct{}{}
+ 		}
+ 	}
+@@ -753,41 +739,41 @@ func abs(val int16) int16 {
+ //
+ // +checklocks:s.mu
+ func (s *Set) wakeWaiters(num int) {
+-	if s.waiters == nil {
+-		return
+-	}
+ 	value := s.sems[num].value
+ 	// Note that this will release all waiters waiting for 0 too.
+-	for w := s.waiters[num].Front(); w != nil; {
++	s.removeWaiters(num, func(w waiter) bool {
+ 		if value < abs(w.value) {
+-			// Still blocked, skip it.
+-			w = w.Next()
+-			continue
++			return false
+ 		}
+ 		w.ch <- struct{}{}
+-		old := w
+-		w = w.Next()
+-		s.waiters[num].Remove(old)
+-	}
++		return true
++	})
+ }
+ 
+ // +checklocks:s.mu
+ func (s *Set) enqueueWaiter(op linux.Sembuf) chan struct{} {
+ 	if s.waiters == nil {
+-		s.waiters = make([]waiterList, len(s.sems))
++		s.waiters = make(map[int][]waiter)
+ 	}
+-	w := &waiter{value: op.SemOp, ch: make(chan struct{}, 1)}
+-	s.waiters[op.SemNum].PushBack(w)
+-	return w.ch
++	ch := make(chan struct{}, 1)
++	num := int(op.SemNum)
++	s.waiters[num] = append(s.waiters[num], waiter{value: op.SemOp, ch: ch})
++	return ch
+ }
+ 
+-// beforeSave is invoked by stateify.
+-func (s *Set) beforeSave() {
+-	s.mu.Lock()
+-	defer s.mu.Unlock()
+-	for i := range s.waiters {
+-		if !state.IsZeroValue(&s.waiters[i]) {
+-			state.Failf("semaphore %d still has waiters at checkpoint", i)
+-		}
++// +checklocks:s.mu
++func (s *Set) removeWaiters(num int, remove func(waiter) bool) {
++	queue := s.waiters[num]
++	if len(queue) == 0 {
++		return
++	}
++	queue = slices.DeleteFunc(queue, remove)
++	if len(queue) != 0 {
++		s.waiters[num] = queue
++		return
++	}
++	delete(s.waiters, num)
++	if len(s.waiters) == 0 {
++		s.waiters = nil
+ 	}
+ }
