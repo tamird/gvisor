@@ -1,35 +1,38 @@
-name: CI
-
-"on":
+name: Qualify TCP keepalive mutex guards
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-keepalive-locks]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Check the owning analyzer and TCP packet cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/keepalive-qualification"
+          mkdir -p "$d"
+          cp .github/qualification/tcp_keepalive.py "$d/"
+          test "$(git rev-parse HEAD^)" = 902bee9176a0a78a435db3df2ebffe1d2a9794e5
+          test "$(git rev-parse HEAD^^)" = f51a205a8f4afbc5ab41aded070df74951b081ea
+          if ! command -v aarch64-linux-gnu-g++ >/dev/null; then
+            echo 'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu/ noble main universe' >"$d/ubuntu.list"
+            echo 'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu/ noble-updates main universe' >>"$d/ubuntu.list"
+            echo 'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://security.ubuntu.com/ubuntu/ noble-security main universe' >>"$d/ubuntu.list"
+            apt=(-o "Dir::Etc::sourcelist=$d/ubuntu.list" -o Dir::Etc::sourceparts=- -o Acquire::Retries=2 -o Acquire::https::Timeout=20)
+            sudo apt-get "${apt[@]}" -qq update
+            sudo apt-get "${apt[@]}" -qq install --no-install-recommends g++-aarch64-linux-gnu
+          fi
+          env -i PATH="$PATH" HOME="$HOME" USER="$USER" RUNNER_TEMP="$RUNNER_TEMP" python3 "$d/tcp_keepalive.py"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: keepalive-guards
+          path: ${{ runner.temp }}/keepalive-qualification/results.json
+          if-no-files-found: error
