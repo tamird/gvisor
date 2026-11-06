@@ -79,7 +79,7 @@ func TestDinDCheckpointRestore(t *testing.T) {
 	}
 	dockerutil.EnsureDockerExperimentalEnabled()
 	for _, leaveRunning := range []bool{false, true} {
-		t.Run(fmt.Sprintf("leave-running=%t", leaveRunning), func(t *testing.T) {
+		t.Run(fmt.Sprintf("leave-running-%t", leaveRunning), func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 			defer cancel()
 			outer := dockerutil.MakeContainer(ctx, t)
