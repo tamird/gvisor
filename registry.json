@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T17:33:33.842Z",
+    "updatedAt": "2026-11-06T17:44:22.830Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -53515,10 +53515,22 @@
       "title": "Start FD packet processors when a receiver attaches",
       "url": "https://github.com/tamird/gvisor/commit/d4e65b135",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T17:16:58.443Z",
-      "summary": "Closing an FD endpoint before attaching it leaves receive workers asleep on stock gVisor. The revision starts workers on attach and gives each FD its own queues. Explicit detach drops pending packets and late reads. An in-flight worker can finish delivering packets it already took. In the test, the earlier revision delivered all three packets; this one delivered only the first. Peer EOF retains the original wake order.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-06T17:44:22.830Z",
+      "summary": "The revised source launches the reader through e.wg.Go. Each existing reader registration holds its own active queue handle. That removes the additional per-attachment processor-manager slice. Native normal and race tests and a three-way constructor allocation comparison are running.",
       "evidence": [
+        {
+          "label": "Revision using the existing reader registration and WaitGroup.Go",
+          "url": "https://github.com/tamird/gvisor/commit/073784f4f"
+        },
+        {
+          "label": "Native worker tests, race and allocation comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42264237918"
+        },
+        {
+          "label": "Compatibility with the constructor benchmark on #17060",
+          "url": "https://github.com/tamird/gvisor/commit/af2ba6ac2"
+        },
         {
           "label": "On 95ca4e731 the old receive batch delivered all three packets. With #17060 and the fix, both detach tests and 100 constructor iterations completed.",
           "url": "https://github.com/tamird/gvisor/actions/runs/42258461813/artifacts/13523827603"
@@ -53618,6 +53630,18 @@
           "outcome": "changes-requested",
           "at": "2026-11-06T16:32:56.778Z",
           "note": "Tamir requested removal of the per-attachment channel and the duplicated dispatcher access."
+        },
+        {
+          "kind": "proposal",
+          "head": "d4e65b135f3f4e6dbb811a59c38917bdb382d6c3",
+          "baseHead": "1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d",
+          "url": "https://github.com/tamird/gvisor/commit/d4e65b135",
+          "title": "fdbased: start packet processors when a receiver attaches",
+          "summary": "Open this receive-worker fix? Native AMD64 passed 18 receive cases, three live-save cases, four muxed cases and Nogo.",
+          "body": "Closing an FD endpoint before attaching it to a NIC leaves its receive\nworkers asleep. The constructor starts the workers, but only the read\nloop signals them to stop. An unattached endpoint never runs that loop.\n\nCreate the queues and their workers when a dispatcher attaches. Each\nreceive loop delivers to that dispatcher and stops its own workers on\nexit. A single processor still delivers inline.\n\nOn detach, close each queue before waking its reader. A reader already\nreturning from a receive syscall can then neither deliver the pending\nbatch nor enqueue the rest of it. Workers can finish delivering packets\nalready removed from their queues without blocking NIC removal on a\nnetwork stack callback.\n\nFor injectable endpoints, report attachment from the dispatcher used by\nInjectInbound.",
+          "outcome": "changes-requested",
+          "at": "2026-11-06T17:44:22.830Z",
+          "note": "Use e.wg.Go and reconsider the extra processor-manager slice allocated for each attachment."
         }
       ],
       "refinement": {
@@ -53628,16 +53652,16 @@
           "head": "d4e65b135f3f4e6dbb811a59c38917bdb382d6c3"
         }
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "d4e65b135f3f4e6dbb811a59c38917bdb382d6c3",
-        "baseHead": "1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d",
-        "url": "https://github.com/tamird/gvisor/commit/d4e65b135",
-        "title": "fdbased: start packet processors when a receiver attaches",
-        "requestedAt": "2026-11-06T16:55:55.698Z",
-        "summary": "Open this receive-worker fix? Native AMD64 passed 18 receive cases, three live-save cases, four muxed cases and Nogo.",
-        "body": "Closing an FD endpoint before attaching it to a NIC leaves its receive\nworkers asleep. The constructor starts the workers, but only the read\nloop signals them to stop. An unattached endpoint never runs that loop.\n\nCreate the queues and their workers when a dispatcher attaches. Each\nreceive loop delivers to that dispatcher and stops its own workers on\nexit. A single processor still delivers inline.\n\nOn detach, close each queue before waking its reader. A reader already\nreturning from a receive syscall can then neither deliver the pending\nbatch nor enqueue the rest of it. Workers can finish delivering packets\nalready removed from their queues without blocking NIC removal on a\nnetwork stack callback.\n\nFor injectable endpoints, report attachment from the dispatcher used by\nInjectInbound."
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "073784f4fc8576908e841abdfca013e26af5eba8",
+        "observedAt": "2026-11-06T17:44:22.830Z",
+        "disposition": "Contributor requested a simpler attachment and worker lifetime.",
+        "nextAction": "Verify native behavior and compare allocations with master and the previously reviewed change.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/073784f4f",
+          "https://github.com/tamird/gvisor/actions/runs/42264237918"
+        ]
       }
     },
     {
