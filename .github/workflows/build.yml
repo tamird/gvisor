@@ -1,35 +1,46 @@
-name: CI
-
-"on":
+name: Verify the existing Debian vDSO checker entry point
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/vdso-distro-compat]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  packages:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff
+        with: {go-version: '1.22.2', cache: false}
+      - name: Run the existing packaging command from both directories
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 14f43c8fc0e83728c1d8cc1fb92662fd1e098ab7
+          echo "cb323e05e2c12d52614d9d6cf46156c91289684c36dc047df2eee28a68754701  vdso/debian_vdso.mk" | sha256sum -c -
+          test "$(grep -c 'python3 ./vdso/check_vdso.py --check-data --vdso=\$@' vdso/debian_vdso.mk)" = 1
+          test "$(bazelisk --version)" = "bazel 9.3.1"
+          d="$RUNNER_TEMP/distro-vdso"
+          mkdir -p "$d"
+          host_bin=$(dirname "$(command -v go)")
+          test "$(cd "$RUNNER_TEMP" && GOTOOLCHAIN=local "$host_bin/go" version)" = "go version go1.22.2 linux/amd64"
+          rc=0
+          bazelisk --nosystem_rc --nohome_rc test --config=x86_64 --jobs=4 --nocache_test_results \
+            --flaky_test_attempts=1 --strategy=TestRunner=linux-sandbox --sandbox_default_allow_network=false \
+            --test_env=PATH="$host_bin:/usr/bin:/bin" --test_timeout=600 --test_output=all \
+            --build_event_json_file="$d/events" //vdso:distro_wrapper_test > "$d/run.log" 2>&1 || rc=$?
+          echo "$rc" > "$d/exit"
+      - name: Retain the actual Bazel result and the packaging outcomes
+        id: collect
+        if: always() && !cancelled()
+        run: |
+          d="$RUNNER_TEMP/distro-vdso"
+          python3 -IB .github/qualification/vdso_distro.py "$d"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.collect.outcome == 'success'
+        with:
+          name: vdso-source-packaging
+          path: ${{ runner.temp }}/distro-vdso/report.json
+          retention-days: 14
+      - name: Check the native execution and the linked data rejection
+        run: jq -e .verified "$RUNNER_TEMP/distro-vdso/report.json"

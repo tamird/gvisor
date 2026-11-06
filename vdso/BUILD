@@ -4,6 +4,7 @@
 #   timekeeping parameters managed by the sandbox kernel.
 
 load("@bazel_skylib//rules:native_binary.bzl", "native_test")
+load("@rules_python//python:py_test.bzl", "py_test")
 load("//tools:arch.bzl", "select_arch")
 load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain", "go_binary")
 
@@ -82,4 +83,17 @@ native_test(
         "--vdso=$(rootpath :vdso)",
     ],
     data = [":vdso"],
+)
+
+
+py_test(
+    name = "distro_wrapper_test",
+    srcs = ["distro_wrapper_test.py"],
+    data = glob(["*.cc", "*.h", "*.lds"]) + [
+        "check/main.go",
+        "check_vdso.py",
+        "debian_vdso.mk",
+        "//:go.mod",
+    ],
+    tags = ["block-network"],
 )
