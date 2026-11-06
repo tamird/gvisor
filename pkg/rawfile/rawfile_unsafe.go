@@ -183,6 +183,16 @@ func BlockingReadvUntilStopped(efd int, fd int, iovecs []unix.Iovec) (int, unix.
 // the file descriptor becomes readable or stop is signalled (efd becomes
 // readable). Returns -1 in the latter case.
 func BlockingRecvMMsgUntilStopped(efd int, fd int, msgHdrs []MMsgHdr) (int, unix.Errno) {
+	return recvMMsgUntilStopped(efd, fd, msgHdrs, false)
+}
+
+// DrainRecvMMsgUntilStopped retries the read when poll reports both data and a
+// hangup. The caller must recognize EOF returned by the receive itself.
+func DrainRecvMMsgUntilStopped(efd int, fd int, msgHdrs []MMsgHdr) (int, unix.Errno) {
+	return recvMMsgUntilStopped(efd, fd, msgHdrs, true)
+}
+
+func recvMMsgUntilStopped(efd int, fd int, msgHdrs []MMsgHdr, drain bool) (int, unix.Errno) {
 	for {
 		n, _, e := unix.RawSyscall6(unix.SYS_RECVMMSG, uintptr(fd), uintptr(unsafe.Pointer(&msgHdrs[0])), uintptr(len(msgHdrs)), unix.MSG_DONTWAIT, 0, 0)
 		if e == 0 {
@@ -193,7 +203,7 @@ func BlockingRecvMMsgUntilStopped(efd int, fd int, msgHdrs []MMsgHdr) (int, unix
 			return 0, e
 		}
 
-		stopped, e := BlockingPollUntilStopped(efd, fd, unix.POLLIN)
+		stopped, e := blockingPollUntilStopped(efd, fd, unix.POLLIN, drain)
 		if stopped {
 			return -1, e
 		}
@@ -206,6 +216,10 @@ func BlockingRecvMMsgUntilStopped(efd int, fd int, msgHdrs []MMsgHdr) (int, unix
 // BlockingPollUntilStopped polls for events on fd or until a stop is signalled
 // on the event fd efd. Returns true if stopped, i.e., efd has event POLLIN.
 func BlockingPollUntilStopped(efd int, fd int, events int16) (bool, unix.Errno) {
+	return blockingPollUntilStopped(efd, fd, events, false)
+}
+
+func blockingPollUntilStopped(efd int, fd int, events int16, drain bool) (bool, unix.Errno) {
 	pevents := [...]PollEvent{
 		{
 			FD:     int32(efd),
@@ -221,7 +235,7 @@ func BlockingPollUntilStopped(efd int, fd int, events int16) (bool, unix.Errno) 
 		return pevents[0].Revents&unix.POLLIN != 0, errno
 	}
 
-	if pevents[1].Revents&unix.POLLHUP != 0 || pevents[1].Revents&unix.POLLERR != 0 {
+	if pevents[1].Revents&(unix.POLLHUP|unix.POLLERR) != 0 && !(drain && pevents[1].Revents&events != 0) {
 		errno = unix.ECONNRESET
 	}
 
