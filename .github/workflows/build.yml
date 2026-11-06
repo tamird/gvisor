@@ -1,35 +1,72 @@
-name: CI
-
-"on":
+name: Run the source syscall command on a native Linux agent
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/buildkite-source-syscalls-native-linux]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  syscalls:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 95
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 4
+      - name: Verify the native source and tools
+        run: |
+          set -euo pipefail
+          umask 077
+          test "$(git rev-parse HEAD^)" = ee4401662324ea22a54682fef2513d3612a5db2c
+          test "$(git rev-parse HEAD^^)" = e46a101fc0aebb325ec25977697a012a2e11a11b
+          test "$(git rev-parse HEAD^^^)" = f51a205a8f4afbc5ab41aded070df74951b081ea
+          test "$(git rev-parse HEAD^^:.buildkite/pipeline.yaml)" = 51d67d88d309f3819f9194528056664b6513471c
+          test "$(git rev-parse HEAD^^:.buildkite/first-pass.yaml)" = 7a7c5a2747b182ac0cc52f9ceaced69e0e8d6d0e
+          d="$RUNNER_TEMP/source-syscalls"
+          mkdir "$d"
+          cp .github/qualification/source_syscall_steps.py "$d/"
+          curl -fsSL --retry 3 --max-time 90 --proto '=https' --proto-redir '=https' https://github.com/buildkite/agent/releases/download/v4.10.1/buildkite-agent-linux-amd64-4.10.1.tar.gz -o "$d/agent.tar.gz"
+          curl -fsSL --retry 3 --max-time 90 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.30.0/bazelisk-linux-amd64 -o "$d/bazelisk"
+          (cd "$d" && sha256sum --check <<'SUMS'
+          f7ecf75a3be41a786f25e9cdbff332dc49b7f18ef63a1fd73bf77056fd4d7fe0  agent.tar.gz
+          a248ae2b2b62b5baebb748f6fba7203bff1a27e5d01b55399a8406744cb539e8  bazelisk
+          SUMS
+          )
+          tar -xzf "$d/agent.tar.gz" -C "$d" ./buildkite-agent
+          chmod 755 "$d/bazelisk"
+          ln -s "$d/bazelisk" "$d/bazel"
+          sudo systemctl stop docker.socket docker.service
+          if docker info >/dev/null 2>&1; then exit 1; fi
+          if [[ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+      - name: Run the command rendered by Buildkite in both partitions
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/source-syscalls"
+          test "$(cat .bazelversion)" = 9.3.1
+          env -i HOME="$HOME" USER="$USER" PATH="$d:$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" BAZELISK_VERIFY_SHA256=7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c \
+            python3 -I -B "$d/source_syscall_steps.py"
+      - name: Check the bounded test result
+        id: check
+        if: always()
+        run: |
+          set -euo pipefail
+          python3 -I -B - <<'PY'
+          import json, os
+          from pathlib import Path
+          p = Path(os.environ['RUNNER_TEMP'])/'source-syscalls'/'result.json'
+          assert p.is_file() and not p.is_symlink() and p.stat().st_size < 32000
+          result = json.loads(p.read_text())
+          assert result['product'] == 'e46a101fc0aebb325ec25977697a012a2e11a11b'
+          assert result['base'] == 'f51a205a8f4afbc5ab41aded070df74951b081ea'
+          assert len(result['steps']) <= 8 and len(result['tests']) <= 3
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.check.outcome == 'success'
+        with:
+          name: native-source-syscall-steps
+          path: ${{ runner.temp }}/source-syscalls/result.json
+          if-no-files-found: error
+          retention-days: 7
