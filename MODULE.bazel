@@ -57,14 +57,9 @@ single_version_override(
 # only declare the ABI for programs that load libc from the host.
 archive_override(
     module_name = "llvm",
-    urls = ["https://github.com/tamird/hermetic-llvm/archive/29f9d466421fa99fb1ed6cb477a90a71d7755ee6.tar.gz"],
-    sha256 = "bf95c202b354da28a6114282e7a78006dc612c58afb2eb1de407ac7082803050",
-    strip_prefix = "hermetic-llvm-29f9d466421fa99fb1ed6cb477a90a71d7755ee6",
-    patch_strip = 1,
-    patches = [
-        "//tools:llvm-linux-header-default.patch",
-        "//tools:llvm-static-glibc-unwind.patch",
-    ],
+    urls = ["https://github.com/tamird/hermetic-llvm/archive/be935b8288c180ea99f86b5c7f6aa191a854c563.tar.gz"],
+    sha256 = "a1b8a91b20f47018be31eecd7a9fa2b5ce36740bc81adb58a496c2e751660f24",
+    strip_prefix = "hermetic-llvm-be935b8288c180ea99f86b5c7f6aa191a854c563",
 )
 
 ### LLVM
