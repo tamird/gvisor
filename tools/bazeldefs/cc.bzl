@@ -33,7 +33,7 @@ gbenchmark = "@com_google_benchmark//:benchmark"
 gbenchmark_internal = "@com_google_benchmark//:benchmark"
 grpcpp = "@com_github_grpc_grpc//:grpc++"
 
-_CC_TOOLCHAIN_TYPE = Label("@bazel_tools//tools/cpp:toolchain_type")
+_CC_TOOLCHAIN_TYPE = "@bazel_tools//tools/cpp:toolchain_type"
 _LLVM_REPO = Label("@llvm//toolchain:all").repo_name
 
 def _using_llvm_aspect_impl(_target, ctx):
