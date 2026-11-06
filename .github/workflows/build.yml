@@ -1,35 +1,64 @@
-name: CI
-
-"on":
+name: Check TCP receive queue admission on native Linux
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-queue-admission-two-producers]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  test:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 4, persist-credentials: false}
+      - name: Bind the exact PR, correction and test-only addition
+        run: |
+          set -euo pipefail
+          source=pkg/tcpip/transport/tcp/segment_queue.go
+          fixture=pkg/tcpip/transport/tcp/segment_queue_test.go
+          test "$(git rev-parse HEAD^)" = 4789b3e4ecdd6a5b5636c65a718cb990026ee116
+          test "$(git rev-parse HEAD~2)" = b1e619c134d6ac1fef5a1b276e8accf8435944c8
+          test "$(git rev-parse HEAD~3)" = e99e0b9307259f006be7036a047272b3880910a2
+          test "$(git diff --name-only HEAD~3 HEAD~2)" = "$source"
+          test "$(git diff --name-only HEAD~2 HEAD^)" = "$fixture"
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/queue_admission.py'
+          test "$(uname -m)" = x86_64
+          test "$(bazelisk --version)" = 'bazel 9.3.1'
+      - name: Run the PR controls and the in-memory two-producer check
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/queue-admission"
+          mkdir -m 700 "$root"
+          cp .github/qualification/queue_admission.py "$root/"
+          for phase in original correction; do
+            if [[ $phase == original ]]; then
+              rev=e99e0b9307259f006be7036a047272b3880910a2
+              source=$rev
+            else
+              rev=4789b3e4ecdd6a5b5636c65a718cb990026ee116
+              source=b1e619c134d6ac1fef5a1b276e8accf8435944c8
+            fi
+            git switch --quiet --detach "$rev"
+            rc=0
+            env -i HOME="$HOME" USER=runner PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" bazelisk --nosystem_rc --nohome_rc --bazelrc=/dev/null --host_jvm_args=-Xmx3g test \
+              --config=x86_64 --lockfile_mode=off -c opt --jobs=4 --local_resources=memory=8192 \
+              --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox \
+              '--modify_execution_info=^(GoStandardLibraryAnalysis|GoStaticAnalysis)$=-no-sandbox' \
+              --spawn_strategy=linux-sandbox --strategy=TestRunner=linux-sandbox --sandbox_default_allow_network=false \
+              --remote_cache= --remote_executor= --bes_backend= --flaky_test_attempts=1 --nocache_test_results \
+              --test_arg=-test.v --test_env=GO_TEST_WRAP_TESTV=1 --test_timeout=150 '--test_filter=^TestSegmentQueue' \
+              --test_output=errors --build_event_json_file="$root/$phase.bep" //pkg/tcpip/transport/tcp:tcp_test || rc=$?
+            python3 -IB "$root/queue_admission.py" "$root" "$phase" "$source" "$(git rev-parse HEAD:pkg/tcpip/transport/tcp/segment_queue_test.go)" "$rc"
+          done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: tcp-receive-admission
+          path: |
+            ${{ runner.temp }}/queue-admission/*.json
+            ${{ runner.temp }}/queue-admission/*-test.xml
+            ${{ runner.temp }}/queue-admission/*-test.log
+          retention-days: 14
+          if-no-files-found: warn
+      - if: always()
+        run: jq -se 'length == 2 and all(.[]; .verified)' "$RUNNER_TEMP"/queue-admission/{original,correction}.json
