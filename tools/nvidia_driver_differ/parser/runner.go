@@ -189,20 +189,28 @@ func (r *Runner) runParserConfig(config []ClangASTConfig) (*OutputJSON, error) {
 // ParseDriver checks out the git repo for the given version, and runs the driver_ast_parser on the
 // source code.
 func (r *Runner) ParseDriver(version nvconf.DriverVersion) (*OutputJSON, error) {
-	// Create a temp directory to run the parser in.
-	// This is needed to set up compile_commands.json, since it needs to be named that exactly.
+	dir, err := os.MkdirTemp(r.dir, "source_*")
+	if err != nil {
+		return nil, fmt.Errorf("create driver checkout directory: %w", err)
+	}
+	defer os.RemoveAll(dir)
+	source, err := CloneDriverSource(dir, version)
+	if err != nil {
+		return nil, fmt.Errorf("failed to clone git repo: %w", err)
+	}
+	return r.ParseSourceDirectory(source.Directory)
+}
+
+// ParseSourceDirectory runs driver_ast_parser against an existing driver source tree.
+func (r *Runner) ParseSourceDirectory(sourceDir string) (*OutputJSON, error) {
+	// Each parse needs its own directory for compile_commands.json.
 	dir, err := os.MkdirTemp(r.dir, "run_differ_*")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temporary directory: %w", err)
 	}
 	defer os.RemoveAll(dir)
 
-	source, err := CloneDriverSource(dir, version)
-	if err != nil {
-		return nil, fmt.Errorf("failed to clone git repo: %w", err)
-	}
-
-	config, err := CreateIncludeFiles(dir, *source, r.nonUVMIoctls, r.uvmIoctls, r.uvmConstants)
+	config, err := CreateIncludeFiles(dir, DriverSourceDir{Directory: sourceDir}, r.nonUVMIoctls, r.uvmIoctls, r.uvmConstants)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create include files: %w", err)
 	}

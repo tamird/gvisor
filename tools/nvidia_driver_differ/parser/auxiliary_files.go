@@ -52,8 +52,7 @@ func CloneDriverSource(dir string, version nvconf.DriverVersion) (*DriverSourceD
 		return nil, fmt.Errorf("failed to clone %s: %w\n%s", version, err, string(out))
 	}
 	return &DriverSourceDir{
-		ParentDirectory: dir,
-		Version:         version,
+		Directory: path.Join(dir, version.String()),
 	}, nil
 }
 
