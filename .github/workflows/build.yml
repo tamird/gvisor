@@ -1,35 +1,75 @@
-name: CI
-
-"on":
+name: Check the ordinary GNU standard-library analyzer
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/pure-nogo-master]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  analyze:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Generate Go standard-library facts and findings
+        run: |
+          set -euo pipefail
+          product=e667d39b868cac9946369777b6c4ef0fbad946a1
+          test "$(git rev-parse HEAD^)" = "$product"
+          test "$(git rev-parse HEAD^^)" = 1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d
+          git checkout -q --detach "$product"
+          test "$(cat .bazelversion)" = 9.3.1
+          bazel="$RUNNER_TEMP/bazelisk"
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' --max-time 100 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $bazel" | sha256sum -c
+          chmod 755 "$bazel"
+          "$bazel" --nosystem_rc --nohome_rc build --config=x86_64 --lockfile_mode=off --color=no --curses=no --build_event_publish_all_actions --build_event_json_file="$RUNNER_TEMP/nogo.bep" //tools/nogo:stdlib
+      - name: Retain the selected action and the two output identities
+        id: receipt
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          import subprocess
+          root = Path(os.environ['RUNNER_TEMP'])
+          receipt = {'source': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+                     'action': [], 'target': [], 'outputs': {}}
+          events = root / 'nogo.bep'
+          if events.is_file():
+              with events.open() as stream:
+                  for line in stream:
+                      event = json.loads(line)
+                      key = event['id']
+                      if key.get('actionCompleted', {}).get('label') == '//tools/nogo:stdlib':
+                          action = event.get('action', {})
+                          if action.get('type') == 'GoStandardLibraryAnalysis':
+                              receipt['action'].append(bool(action.get('success')))
+                      if key.get('targetCompleted', {}).get('label') == '//tools/nogo:stdlib':
+                          receipt['target'].append(bool(event.get('completed', {}).get('success')))
+          for name in ('stdlib.facts', 'stdlib.raw_findings'):
+              path = Path('bazel-bin/tools/nogo') / name
+              if path.is_file():
+                  digest = hashlib.sha256()
+                  with path.open('rb') as stream:
+                      for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+                          digest.update(chunk)
+                  receipt['outputs'][name] = {'bytes': path.stat().st_size, 'sha256': digest.hexdigest()}
+          assert len(receipt['source']) == 40 and len(receipt['action']) <= 10 and len(receipt['target']) <= 10
+          output = root / 'nogo-receipt.json'
+          output.write_text(json.dumps(receipt) + chr(10))
+          print(output.read_text())
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.receipt.outcome == 'success'
+        with:
+          name: master-gnu-nogo-stdlib
+          path: ${{ runner.temp }}/nogo-receipt.json
+          if-no-files-found: error
+          retention-days: 5
+      - name: Verify the real analyzer action and facts
+        run: |
+          jq -e '.source == "e667d39b868cac9946369777b6c4ef0fbad946a1" and .action == [true] and .target == [true] and .outputs["stdlib.facts"].bytes > 0 and .outputs["stdlib.raw_findings"] != null' "$RUNNER_TEMP/nogo-receipt.json"
