@@ -485,9 +485,21 @@ func TestRunProxyModeWithSeccomp(t *testing.T) {
 	destroyClientStack()
 	closeClientFD()
 	cmdWaited = true
-	if err := cmd.Wait(); err != nil {
+	// The child already uses GOTRACEBACK=system. Ask it for its own stack if
+	// it still hasn't exited five seconds after its socket peer closed.
+	signalResult := make(chan error, 1)
+	watchdog := time.AfterFunc(5*time.Second, func() {
+		signalResult <- cmd.Process.Signal(unix.SIGQUIT)
+	})
+	waitErr := cmd.Wait()
+	if !watchdog.Stop() {
+		signalErr := <-signalResult
 		<-readerDone
-		t.Fatalf("seccomp child process failed: %v\noutput:\n%s", err, getChildOutput())
+		t.Fatalf("child stalled in final Wait; SIGQUIT=%v, Wait=%v\nchild output:\n%s", signalErr, waitErr, getChildOutput())
+	}
+	if waitErr != nil {
+		<-readerDone
+		t.Fatalf("seccomp child process failed: %v\noutput:\n%s", waitErr, getChildOutput())
 	}
 }
 
