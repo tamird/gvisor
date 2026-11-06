@@ -1,35 +1,41 @@
-name: CI
-
-"on":
+name: Compare the LLVM parser notices with the proposed classifier
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-parser-notice-recognition]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  notices:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Select the exact classifier and the three archive notices
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = afd34241a1b7e38e196e5d173632f658b7e5defc
+          git diff --exit-code HEAD^ HEAD -- tools/licensecheck/classify.go tools/licensecheck/licensecheck.go MODULE.bazel go.mod go.sum
+          test "$(cat .bazelversion)" = 8.8.1
+          p=tools/licensecheck/testdata
+          src=https://raw.githubusercontent.com/llvm/llvm-project/85ac560262434c9ccfc0c183ec22d4138ed647fb
+          for entry in 'root LICENSE.TXT' 'regex llvm/lib/Support/COPYRIGHT.regex' 'blake3 llvm/lib/Support/BLAKE3/LICENSE'; do
+            read -r name path <<< "$entry"
+            curl -fsSL --max-time 45 --retry 3 "$src/$path" -o "$p/parser-$name.txt"
+          done
+          curl -fsSL --max-time 90 --retry 3 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$RUNNER_TEMP/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $RUNNER_TEMP/bazel" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/bazel"
+      - name: Run the owning test against the archive bytes
+        run: |
+          set -euo pipefail
+          "$RUNNER_TEMP/bazel" test --nozip_undeclared_test_outputs --nocache_test_results --test_output=errors --test_filter='^TestParserArchiveNotices$' //tools/licensecheck:licensecheck_test
+          result=bazel-testlogs/tools/licensecheck/licensecheck_test/test.outputs/recognition.json
+          test -s "$result"
+          cp "$result" "$RUNNER_TEMP/recognition.json"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: llvm-parser-notice-recognition
+          path: ${{ runner.temp }}/recognition.json
+          if-no-files-found: error

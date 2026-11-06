@@ -28,7 +28,10 @@ go_library(
 go_test(
     name = "licensecheck_test",
     size = "small",
-    srcs = ["licensecheck_test.go"],
+    srcs = [
+        "licensecheck_test.go",
+        "parser_notices_test.go",
+    ],
     data = [
         "dependencies.yaml",
         "//governance:licensing.yaml",
@@ -39,6 +42,9 @@ go_test(
         "testdata/llvm.txt",
         "testdata/openssl.txt",
         "testdata/overflow-readme.txt",
+        "testdata/parser-blake3.txt",
+        "testdata/parser-regex.txt",
+        "testdata/parser-root.txt",
         "testdata/udiff-bsd.txt",
         "testdata/udiff-mit.txt",
     ],
