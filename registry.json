@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T21:20:00.639Z",
+    "updatedAt": "2026-11-06T21:22:50.061Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -55205,9 +55205,17 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T21:02:48.594Z",
-      "summary": "The full source presubmit on the canonical AMD64 worker ran 373 fresh remote test shards. Of those, 371 passed. The docprocessor and Python sandbox tests failed. Of 2,880 build-only targets, 2,876 succeeded and four legacy coverage genrules failed. All 34 live NVIDIA installer checks passed. ABI parity passed on the 25 versions with published source; the nine absent versions were skipped. All six netgofer cases passed. Earlier full-run, worker-placement and cache comparisons remain in the evidence. The four coverage genrules stopped at a missing curl in tools/build_cover.sh. Docprocessor could not create its container on the read-only OCI filesystem. Sandbox Python reported six EBUSYs during temporary-directory cleanup and an undeleted runtime directory. Both failing test owners passed in a focused remote run. Docprocessor ran on the namespace worker. With the existing namespace cleanup, Python ran 39 tests on the root worker, including one expected skip.",
+      "updatedAt": "2026-11-06T21:22:50.061Z",
+      "summary": "The full source presubmit on the canonical AMD64 worker ran 373 fresh remote test shards. Of those, 371 passed. The docprocessor and Python sandbox tests failed. Of 2,880 build-only targets, 2,876 succeeded and four legacy coverage genrules failed. All 34 live NVIDIA installer checks passed. ABI parity passed on the 25 versions with published source; the nine absent versions were skipped. All six netgofer cases passed. Earlier full-run, worker-placement and cache comparisons remain in the evidence. The four coverage genrules stopped at a missing curl in tools/build_cover.sh. Docprocessor could not create its container on the read-only OCI filesystem. Sandbox Python reported six EBUSYs during temporary-directory cleanup and an undeleted runtime directory. Both failing test owners passed in a focused remote run. Docprocessor ran on the namespace worker. With the existing namespace cleanup, Python ran 39 tests on the root worker, including one expected skip. On the combined LLVM source, all four replacement coverage targets built and all four AMD64 coverage ELFs verified, including the race CLI and Sentry.",
       "evidence": [
+        {
+          "label": "Four declared coverage targets on the combined LLVM source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42292881614/artifacts/13540783719"
+        },
+        {
+          "label": "Original race coverage CLI and Sentry ELFs with coverage and race symbols",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42295919283/artifacts/13541312295"
+        },
         {
           "label": "Fresh remote docprocessor and Python sandbox results with corrected placement and cleanup",
           "url": "https://github.com/tamird/gvisor/actions/runs/42292079622/artifacts/13539248755"
@@ -55401,9 +55409,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "e46a101fc0aebb325ec25977697a012a2e11a11b",
-        "observedAt": "2026-11-06T21:02:48.594Z",
+        "observedAt": "2026-11-06T21:22:50.061Z",
         "disposition": "Two tests and four legacy coverage build owners failed on the complete graph.",
-        "nextAction": "Compare #16507’s declared Go coverage builds against the four missing-curl failures. Apply the two qualified test changes to the next full presubmit.",
+        "nextAction": "Run the full source presubmit with the qualified sandbox placement and cleanup plus the four declared coverage outputs. The original full run still has its six recorded failures.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42283984978/artifacts/13537369674",
           "https://github.com/tamird/gvisor/actions/runs/42283984978",
@@ -55667,9 +55675,13 @@
       "url": "https://github.com/google/gvisor/pull/17122",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-06T21:11:20.345Z",
-      "summary": "The vDSO layout test invokes readelf from PATH. A remote worker without binutils failed before inspecting the ELF. The standalone fix and the LLVM integration both passed the AMD64 test. The AMD64 checker also passed on the generated ARM64 ELF and rejected a deliberately nonempty .data section.",
+      "updatedAt": "2026-11-06T21:22:50.061Z",
+      "summary": "The open PR declares LLVM readelf for the existing Python test. This revision reads the ELF directly in Go under Bazel. The classifiers agreed on all 20 fixtures per architecture. Debian’s unchanged Make rule accepted its valid x86 vDSO and rejected an injected data section with networking disabled. External callers of the Python entry point now need host Go and the checker source. Copying the Python file alone fails. Debian’s *.py prerequisite also misses subsequent Go-only edits in incremental builds.",
       "evidence": [
+        {
+          "label": "Unchanged downstream Make rule and Python entry point with host Go; source-only copy control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42295738426/artifacts/13541257890"
+        },
         {
           "label": "Go and readelf agree on all 20 vDSO fixtures per architecture",
           "url": "https://github.com/tamird/gvisor/actions/runs/42288051802/artifacts/13541545373"
@@ -55677,10 +55689,6 @@
         {
           "label": "Original Bazel vDSO layout test using the Go checker",
           "url": "https://github.com/tamird/gvisor/actions/runs/42287343145/artifacts/13538850799"
-        },
-        {
-          "label": "Fork-only Go checker under compatibility review",
-          "url": "https://github.com/tamird/gvisor/commit/330ddbeb2"
         },
         {
           "label": "Open upstream PR",
@@ -55713,16 +55721,36 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
-        "observedAt": "2026-11-06T21:11:20.345Z",
+        "owner": "Contributor",
         "sourceHead": "466dbf7a9a4ff6d12693d0fa94ba37c2bc353d48",
-        "disposition": "The open PR declares readelf. A fork-only Go checker matched Python and GNU readelf on 20 AMD64 and 20 ARM64 fixtures.",
-        "nextAction": "Check compatibility for Debian’s existing invocation of the Python checker before proposing an update to #17122.",
+        "observedAt": "2026-11-06T21:22:50.061Z",
+        "disposition": "The approved readelf declaration is still the public PR. The new Go checker preserves Debian’s clean full-source command.",
+        "nextAction": "Review the single proposed replacement of #17122, including the host Go and incremental dependency changes for external callers.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42288051802/artifacts/13541545373",
-          "https://github.com/tamird/gvisor/actions/runs/42287343145/artifacts/13538850799",
-          "https://github.com/tamird/gvisor/commit/330ddbeb2"
+          "https://github.com/tamird/gvisor/commit/14f43c8fc",
+          "https://github.com/tamird/gvisor/actions/runs/42295738426/artifacts/13541257890"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "kind": "amendment",
+        "baseHead": "466dbf7a9a4ff6d12693d0fa94ba37c2bc353d48",
+        "head": "14f43c8fc0e83728c1d8cc1fb92662fd1e098ab7",
+        "url": "https://github.com/tamird/gvisor/commit/14f43c8fc",
+        "title": "Check the vDSO layout without readelf",
+        "body": "The vDSO layout test starts readelf three times to inspect an ELF that\nthe Sentry maps directly. On a worker without binutils it fails before\nchecking a single segment.\n\nRead the segment, section and relocation tables with Go’s debug/elf\npackage. Debian invokes vdso/check_vdso.py after linking its own vDSO.\nKeep that entry point and its flags for source packages, using the Go\ntoolchain already required by the distribution build.",
+        "summary": "May I update #17122 to this Go checker? The open PR declares LLVM readelf for the existing Python test. This revision reads the ELF directly in Go under Bazel. The classifiers agreed on all 20 fixtures per architecture. Debian’s unchanged Make rule accepted its valid x86 vDSO and rejected an injected data section with networking disabled. External callers of the Python entry point now need host Go and the checker source. Copying the Python file alone fails. Debian’s *.py prerequisite also misses subsequent Go-only edits in incremental builds.",
+        "requestedAt": "2026-11-06T21:22:50.061Z"
+      },
+      "refinement": {
+        "before": {
+          "head": "466dbf7a9a4ff6d12693d0fa94ba37c2bc353d48",
+          "base": "f51a205a8f4afbc5ab41aded070df74951b081ea"
+        },
+        "after": {
+          "head": "14f43c8fc0e83728c1d8cc1fb92662fd1e098ab7",
+          "base": "f51a205a8f4afbc5ab41aded070df74951b081ea"
+        }
       }
     },
     {
