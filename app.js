@@ -1815,8 +1815,12 @@ function applyLive(snapshot, nextRegistry = registry) {
   const openSections = new Set([...$("details").querySelectorAll(".check-details[open], .curated-notes[open]")].map((section) => section.dataset.pr));
   registry = nextRegistry;
   updateRegistryControls();
-  const nodes = registryNodes(registry).map((node) => ({ ...node, workStates: stateRecords(snapshot, node) })), ids = new Map(nodes.map((node) => [node.id, node])), aliases = new Map();
-  for (const original of [...snapshot.prs, ...(snapshot.resolved || [])]) {
+  const mergedURLs = snapshot.mergedOnly && new Set(snapshot.prs.map(pr => pr.url));
+  const nodes = registryNodes(registry).map(node => {
+    if (node.type === "pr" && mergedURLs && mergedURLs.has(node.url)) node = { ...node, status: "merged" };
+    return { ...node, workStates: stateRecords(snapshot, node) };
+  }), ids = new Map(nodes.map((node) => [node.id, node])), aliases = new Map();
+  for (const original of mergedURLs ? [] : [...snapshot.prs, ...(snapshot.resolved || [])]) {
     const pr = withConflictResult(original);
     const id = prIdentity(pr), existing = ids.get(id);
     const branch = pr.ref && pr.headRepo ? nodes.find((node) => node.type === "branch" && node.ref === pr.ref && node.repo === pr.headRepo) : null;
@@ -1848,6 +1852,11 @@ function applyLive(snapshot, nextRegistry = registry) {
   for (const section of $("details").querySelectorAll(".check-details, .curated-notes")) section.open = openSections.has(section.dataset.pr);
   for (const { id, top, left } of scrollPositions) $(id).scrollTo(left, top);
   if (focusedInvestigation) document.getElementById(focusedInvestigation)?.focus({ preventScroll: true });
+  if (snapshot.mergedOnly) {
+    setFreshness(`Work map · ${date(registry.meta.updatedAt)} | GitHub snapshot predates this registry`, true);
+    $("freshness-detail").textContent = "Showing the current registry and previously confirmed GitHub merges. Current reviews and checks are awaiting the next matching snapshot.";
+    return;
+  }
   const stale = Date.now() - new Date(snapshot.checkedAt).getTime() > STALE_AGE;
   setFreshness(`Work map · ${date(registry.meta.updatedAt)} | GitHub snapshot · ${date(snapshot.checkedAt)}${stale ? " · older than 2 hours" : ""}`, stale);
   $("freshness-detail").textContent = "Review decisions, labels and visible checks are public GitHub API snapshots tied to each PR head. Import PR checks are separate. Checks are not test-case counts or inspected logs. Reload fetches the latest published snapshot. Scheduled collection publishes new snapshots when its workflow completes; the timestamp remains authoritative. Selected PR details can check conflicts directly on GitHub without a token. Investigations are curated research records with their own update dates.";
@@ -2041,10 +2050,13 @@ function updateRegistryControls() {
   $("group-filter").value = [...$("group-filter").options].some((option) => option.value === group) ? group : "";
   $("registry-age").textContent = `Registry reviewed ${date(registry.meta.updatedAt)}`;
 }
-function validateSnapshot(snapshot, nextRegistry = registry) {
+function validateSnapshotSource(snapshot, nextRegistry) {
   if (snapshot?.schema !== 1 || snapshot.repo !== nextRegistry.meta.repo || snapshot.owner !== nextRegistry.meta.owner ||
       !Number.isFinite(Date.parse(snapshot.checkedAt)) || !Array.isArray(snapshot.prs) || !snapshot.issues) throw new Error("Invalid GitHub snapshot");
-  if (snapshot.registryDate !== nextRegistry.meta.updatedAt) throw new Error("Published registry and GitHub snapshot revisions differ");
+}
+function validateSnapshot(snapshot, nextRegistry = registry) {
+  validateSnapshotSource(snapshot, nextRegistry);
+  if (snapshot.mergedOnly || snapshot.registryDate !== nextRegistry.meta.updatedAt) throw new Error("Published registry and GitHub snapshot revisions differ");
   if (snapshot.incomingReviewRequests !== undefined) {
     if (!Array.isArray(snapshot.incomingReviewRequests) || snapshot.incomingReviewRequests.some(item => {
       if (!item || !/^[\w.-]+\/[\w.-]+$/.test(item.repo) || !Number.isSafeInteger(item.number) || item.number < 1) return true;
@@ -2148,6 +2160,32 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
     }
   }
 }
+function snapshotForRegistry(snapshot, nextRegistry) {
+  if (!(Date.parse(snapshot?.registryDate) < Date.parse(nextRegistry.meta.updatedAt))) {
+    validateSnapshot(snapshot, nextRegistry);
+    return snapshot;
+  }
+  validateSnapshotSource(snapshot, nextRegistry);
+  // A merged PR cannot reopen. All other provider data belongs to the old registry.
+  const prs = [];
+  for (const pr of snapshot.prs) {
+    if (pr?.status === "merged" && Number.isSafeInteger(pr.number) && pr.number > 0 &&
+        pr.url === `https://github.com/${prRepo(pr, nextRegistry)}/pull/${pr.number}` &&
+        Date.parse(pr.mergedAt) <= Date.parse(snapshot.checkedAt)) {
+      prs.push({ repo: prRepo(pr, nextRegistry), number: pr.number, url: pr.url, status: "merged", mergedAt: pr.mergedAt });
+    }
+  }
+  const { schema, repo, owner, registryDate, checkedAt } = snapshot;
+  return { schema, repo, owner, registryDate, checkedAt, prs, issues: {}, mergedOnly: true };
+}
+function preferSnapshot(first, second) {
+  if (first.mergedOnly && !second.mergedOnly) return second;
+  if (!first.mergedOnly && second.mergedOnly) return first;
+  const latest = Date.parse(first.checkedAt) >= Date.parse(second.checkedAt) ? first : second;
+  if (!latest.mergedOnly) return latest;
+  const merges = new Map([...first.prs, ...second.prs].map(pr => [pr.url, pr]));
+  return { ...latest, prs: [...merges.values()] };
+}
 function scheduleRefresh() {
   clearTimeout(refreshTimer);
   if (!refreshing && document.visibilityState === "visible") {
@@ -2165,18 +2203,29 @@ async function readSnapshot(base) {
   const [nextRegistry, snapshot] = await Promise.all([registryResponse.json(), snapshotResponse.json()]);
   validateRegistry(nextRegistry);
   if (nextRegistry.meta.repo !== registry.meta.repo || nextRegistry.meta.owner !== registry.meta.owner) throw new Error("Registry repository changed");
-  validateSnapshot(snapshot, nextRegistry);
-  return [nextRegistry, snapshot];
+  if (Date.parse(nextRegistry.meta.updatedAt) < Date.parse(registry.meta.updatedAt)) throw new Error("Published registry is older than the displayed registry");
+  return [nextRegistry, snapshotForRegistry(snapshot, nextRegistry)];
 }
 async function publishedSnapshot() {
   // A failed Pages deployment can leave the site serving an old review queue.
   // GitHub publishes the data files as soon as their commit reaches gh-pages.
   if (globalThis.location?.hostname === "tamird.github.io") {
+    let latest;
     try {
-      return await readSnapshot("https://raw.githubusercontent.com/tamird/gvisor/refs/heads/gh-pages/");
+      latest = await readSnapshot("https://raw.githubusercontent.com/tamird/gvisor/refs/heads/gh-pages/");
     } catch (error) {
       if (model.checkedAt) throw error;
       // On the first visit the deployed pair can still provide an offline snapshot.
+    }
+    if (latest) {
+      if (!latest[1].mergedOnly) return latest;
+      // The two hosts can cache the same files at different revisions.
+      try {
+        let deployed = await readSnapshot("");
+        if (Date.parse(deployed[0].meta.updatedAt) > Date.parse(latest[0].meta.updatedAt)) [latest, deployed] = [deployed, latest];
+        latest[1] = preferSnapshot(latest[1], snapshotForRegistry(deployed[1], latest[0]));
+      } catch { /* The newer registry is still usable. */ }
+      return latest;
     }
   }
   return readSnapshot("");
@@ -2186,13 +2235,14 @@ async function refresh(force = false) {
   let cached;
   try {
     cached = JSON.parse(localStorage.getItem(CACHE_KEY));
-    if (cached?.registryDate !== registry.meta.updatedAt) cached = null;
-    if (cached) { validateSnapshot(cached); if (!force) applyLive(cached); }
+    if (cached && !force) applyLive(snapshotForRegistry(cached, registry));
   } catch { cached = null; }
   refreshing = true; lastAttempt = Date.now(); $("refresh").disabled = true;
   setFreshness("Loading published GitHub snapshot…");
   try {
-    const [nextRegistry, snapshot] = await publishedSnapshot();
+    let [nextRegistry, snapshot] = await publishedSnapshot();
+    if (liveSnapshot && (snapshot.mergedOnly || liveSnapshot.registryDate === nextRegistry.meta.updatedAt))
+      snapshot = preferSnapshot(snapshot, snapshotForRegistry(liveSnapshot, nextRegistry));
     applyLive(snapshot, nextRegistry);
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(snapshot)); } catch { /* Storage is optional. */ }
   } catch (error) {
