@@ -1,35 +1,116 @@
-name: CI
-
-"on":
+name: Check the rebased native-test and coverage owners
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/rebased-native-tests-and-coverage]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  qualify:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 130
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Verify the two source revisions and native worker definitions
+        run: |
+          set -euo pipefail
+          tests=fafff7eba5044b4585ea89fde2db7cbfb7861310
+          coverage=7f56b080d9f7485957f3514133ffa5f5490a6185
+          base=f51a205a8f4afbc5ab41aded070df74951b081ea
+          test "$(git rev-parse HEAD^)" = "$tests"
+          test "$(git rev-parse HEAD^^)" = "$base"
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/rebased_owners/'
+          git fetch --no-tags --depth=2 https://github.com/tamird/gvisor.git "$coverage"
+          test "$(git rev-parse "$coverage^")" = "$base"
+          work="$RUNNER_TEMP/owners"
+          mkdir -m 700 "$work" "$work/worker"
+          cp .github/qualification/rebased_owners/*.py "$work/"
+          git checkout --detach "$tests"
+          test "$(cat .bazelversion)" = 9.3.1
+          test "$(git show "$coverage":images/default/bazelversion)" = 9.3.1
+          test "$(bazelisk --version)" = 'bazel 9.3.1'
+          command -v qemu-aarch64 >/dev/null || { sudo apt-get -qq update && sudo apt-get -qq install -y qemu-user libc6-arm64-cross; }
+          printf '%s\n' 'module(name="rebased_workers")' >"$work/worker/MODULE.bazel"
+          cat > "$work/worker/BUILD" <<'BUILD'
+          package(default_visibility = ["//visibility:public"])
+          platform(
+              name = "gnu_amd64",
+              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              exec_properties = {
+                  "Arch": "amd64",
+                  "OSFamily": "linux",
+                  "workload-isolation-type": "firecracker",
+                  "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+              },
+          )
+          platform(
+              name = "native_arm64",
+              constraint_values = ["@platforms//cpu:aarch64", "@platforms//os:linux"],
+              exec_properties = {
+                  "Arch": "arm64",
+                  "OSFamily": "linux",
+                  "workload-isolation-type": "oci",
+                  "container-image": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+              },
+          )
+          BUILD
+      - name: Run four maintained native variants and their analyzer, then build both coverage releases
+        timeout-minutes: 115
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          work="$RUNNER_TEMP/owners"
+          rc="$work/client.rc"
+          trap 'rm -f "$rc"' EXIT
+          cat >"$rc" <<'RC'
+          build --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
+          build --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/
+          build --spawn_strategy=remote --noremote_local_fallback --jobs=80 --remote_timeout=10m
+          build --host_platform=@rebased_workers//:gnu_amd64
+          build --extra_execution_platforms=@rebased_workers//:gnu_amd64,@rebased_workers//:native_arm64
+          RC
+          printf 'build --inject_repository=rebased_workers=%s/worker\n' "$work" >> "$rc"
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "${BUILDBUDDY_API_KEY:?}" "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          test "$(git rev-parse HEAD)" = fafff7eba5044b4585ea89fde2db7cbfb7861310
+          python3 -B "$work/check.py" variants || printf 'Native variant qualification incomplete.\n'
+          git checkout --detach 7f56b080d9f7485957f3514133ffa5f5490a6185
+          for arch in amd64 arm64; do
+            python3 -B "$work/check.py" "$arch" || printf 'Coverage qualification incomplete on %s.\n' "$arch"
+          done
+      - name: Check the bounded result files without credentials
+        id: report
+        if: always() && !cancelled()
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/owners"
+          rm -f "$work/client.rc"
+          mkdir -p "$work/publish"
+          for name in variants coverage-amd64 coverage-arm64; do
+            f="$work/$name.json"
+            sha=7f56b080d9f7485957f3514133ffa5f5490a6185
+            if [[ "$name" == variants ]]; then sha=fafff7eba5044b4585ea89fde2db7cbfb7861310; fi
+            if [[ -f "$f" && ! -L "$f" ]] && (( $(wc -c < "$f") < 65536 )) &&
+                jq -e --arg sha "$sha" '(.verified|type)=="boolean" and .source==$sha' "$f" >/dev/null &&
+                ! grep -Eiq 'authorization[[:space:]]*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}' "$f"; then
+              cp "$f" "$work/publish/$name.json"
+            else
+              jq -n --arg sha "$sha" '{source:$sha,verified:false,reason:"No complete bounded receipt"}' > "$work/publish/$name.json"
+            fi
+          done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.report.outcome == 'success'
+        with:
+          name: native-variant-and-coverage-results
+          path: |
+            ${{ runner.temp }}/owners/publish/variants.json
+            ${{ runner.temp }}/owners/publish/coverage-amd64.json
+            ${{ runner.temp }}/owners/publish/coverage-arm64.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Require all measured owners and binaries
+        if: always() && steps.report.outcome == 'success'
+        run: jq -es 'length==3 and all(.[]; .verified)' "$RUNNER_TEMP/owners/publish/variants.json" "$RUNNER_TEMP/owners/publish/coverage-amd64.json" "$RUNNER_TEMP/owners/publish/coverage-arm64.json" >/dev/null
