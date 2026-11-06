@@ -73,6 +73,7 @@ common --incompatible_enable_proto_toolchain_resolution=true
 # service endpoint and credentials come from the coordinator's Bazel rc.
 build:source-presubmit --define=source_presubmit=true
 build:source-presubmit --extra_execution_platforms=//test/rbe:linux_amd64
+build:source-presubmit --extra_toolchains=@llvm//toolchain:all
 build:source-presubmit --spawn_strategy=remote --noremote_local_fallback
 build:source-presubmit --strip=never --test_env=CGROUPV2=true
 test:source-presubmit --strategy=TestRunner=remote
