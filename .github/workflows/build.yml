@@ -1,35 +1,89 @@
-name: CI
-
-"on":
+name: Run the source-built AMD64 and ARM64 test variants together
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-native-four-test-variants]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  variants:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Bind the compiler integration and both original test suites
+        run: |
+          set -euo pipefail
+          product=8608d36e539ff13b35ce2e91b918bce698633aef
+          test "$(git rev-parse HEAD^^)" = 04238eea04899c21015c4abdac19509e1adfd916
+          test "$(git rev-parse HEAD^)" = "$product"
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/rebased_owners/check.py' ':!.github/qualification/rebased_owners/image_execution.py'
+          git diff --exit-code HEAD^^ HEAD^ -- MODULE.bazel .bazelrc tools/licensecheck/dependencies.yaml 'pkg/atomicbitops/*.go' test/util/posix_error_test.cc
+          work="$RUNNER_TEMP/owners"
+          mkdir -m 700 "$work" "$work/worker"
+          cp .github/qualification/rebased_owners/{check,image_execution}.py "$work/"
+          git checkout --quiet --detach "$product"
+          test "$(bazelisk --version)" = 'bazel 9.3.1'
+          grep -Fxq 'register_toolchains("@llvm//toolchain:all")' MODULE.bazel
+          grep -Fq 'cc_rules_extension_support.bzl' tools/bazeldefs/cc.bzl
+          test ! -e tools/rules_cc-test-initializer.patch
+          printf '%s\n' 'module(name = "native_test_workers")' > "$work/worker/MODULE.bazel"
+          cat > "$work/worker/BUILD" <<'BUILD'
+          platform(
+              name = "native_arm64",
+              constraint_values = ["@platforms//cpu:aarch64", "@platforms//os:linux"],
+              exec_properties = {
+                  "Arch": "arm64",
+                  "OSFamily": "linux",
+                  "workload-isolation-type": "oci",
+                  "container-image": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+              },
+              visibility = ["//visibility:public"],
+          )
+          BUILD
+      - name: Submit all four native variants in one Bazel test invocation
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          work="$RUNNER_TEMP/owners"
+          rc="$work/client.rc"
+          trap 'rm -f "$rc"' EXIT
+          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
+          cat > "$rc" <<'RC'
+          build --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
+          build --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/
+          build --spawn_strategy=remote --noremote_local_fallback --jobs=64 --remote_timeout=10m
+          build --extra_execution_platforms=//tools/bazeldefs:linux_amd64,@native_test_workers//:native_arm64
+          build --remote_default_exec_properties=Arch=amd64
+          build --remote_default_exec_properties=OSFamily=linux
+          build --remote_default_exec_properties=workload-isolation-type=oci
+          build --remote_default_exec_properties=container-image=docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02
+          RC
+          printf 'build --inject_repository=native_test_workers=%s/worker\n' "$work" >> "$rc"
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          code=0
+          python3 -B "$work/check.py" variants > "$work/check.log" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$work/check.exit"
+      - name: Retain the four actual original test results
+        id: receipt
+        if: always() && !cancelled()
+        run: |
+          set -eu
+          d="$RUNNER_TEMP/owners"
+          trap 'rm -f "$d/variants.spawn" "$d/variants.bep" "$d/variants.log" "$d/check.log"' EXIT
+          test ! -e "$d/client.rc"
+          f="$d/variants.json"
+          test -f "$f" && test ! -L "$f" && test "$(wc -c < "$f")" -lt 65536
+          jq -e '.source=="8608d36e539ff13b35ce2e91b918bce698633aef"' "$f" >/dev/null
+          if grep -Eiq 'authorization[[:space:]]*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}' "$f"; then exit 1; fi
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.receipt.outcome == 'success'
+        with:
+          name: llvm-native-variants
+          path: ${{ runner.temp }}/owners/variants.json
+          retention-days: 14
+      - name: Require four fresh native runs from one test command
+        run: jq -e '.verified == true' "$RUNNER_TEMP/owners/variants.json" >/dev/null
