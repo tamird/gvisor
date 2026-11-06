@@ -1,35 +1,75 @@
-name: CI
-
-"on":
+name: Check the existing route fix and locate the netgofer timeout
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/source-rbe-route-netgofer]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  readback:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Verify the exact source and the two owners
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 66d356953fc8c9e155a8d15494c9f715173460cc
+          test "$(git rev-parse HEAD^^)" = 949d4871550821371649ae873beab69ead0b36c1
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/source_test_readback.py'
+          test "$(git diff --name-only HEAD^^ HEAD^)" = "$(printf '%s\n' runsc/sandbox/BUILD runsc/sandbox/network.go runsc/sandbox/network_test.go)"
+          d="$RUNNER_TEMP/source-test-readback"
+          mkdir -m 700 "$d"
+          cp .github/qualification/source_test_readback.py "$d/"
+          git fetch --quiet --depth=1 origin 1819ee51a2f541b0adc7cacd60bea59ddc4712e6
+          git show 1819ee51a2:.github/qualification/three_source_failures.py > "$d/three_source_failures.py"
+          echo "e8e678e77c5ecb816da2eb33b07f5c6e365648ea4fb36fadf6597f276b02c49d  $d/three_source_failures.py" | sha256sum -c
+          git checkout -q --detach HEAD^
+      - name: Run both original tests on the same remote worker profiles
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
+          umask 077
+          d="$RUNNER_TEMP/source-test-readback"
+          rc="$d/private.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          # Copy the production worker and test options, replacing only its
+          # full target list with the two explicit labels in this invocation.
+          awk '/^(build|test):source-presubmit / && !/--target_pattern_file=/ {sub(/:source-presubmit /, ":readback "); print}' .bazelrc > "$rc"
+          test "$(wc -l < "$rc")" -eq 6
+          cat >> "$rc" <<'RC'
+          build:readback --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
+          build:readback --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/
+          build:readback --remote_download_outputs=toplevel --jobs=20 --keep_going
+          test:readback --nocache_test_results --flaky_test_attempts=1
+          RC
+          printf 'build:readback --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          code=0
+          bazelisk --nosystem_rc --nohome_rc --bazelrc="$rc" test --config=readback --build_event_json_file="$d/run.bep" \
+            --test_timeout=100 --test_arg=-test.timeout=45s --test_arg=-test.v --test_env=GO_TEST_WRAP_TESTV=1 \
+            //runsc/sandbox:sandbox_test //runsc/gofer/net:netgofer_test > "$d/run.console" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$d/exit"
+      - name: Collect the original test cases and timeout stack
+        id: collect
+        if: always() && !cancelled()
+        run: |
+          d="$RUNNER_TEMP/source-test-readback"
+          trap 'rm -f "$d/run.bep" "$d/run.console" "$d/private.bazelrc"' EXIT
+          python3 -B "$d/source_test_readback.py"
+      - name: Verify the result boundary
+        id: receipt
+        if: always() && !cancelled()
+        run: |
+          p="$RUNNER_TEMP/source-test-readback/receipt.json"
+          test -s "$p" && test ! -L "$p" && test "$(wc -c < "$p")" -lt 240000
+          if grep -Eiq 'authorization[[:space:]]*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}' "$p"; then exit 1; fi
+          jq -e '.source=="66d356953fc8c9e155a8d15494c9f715173460cc"' "$p" >/dev/null
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.receipt.outcome == 'success'
+        with:
+          name: route-netgofer-readback
+          path: ${{ runner.temp }}/source-test-readback/receipt.json
+          retention-days: 14
