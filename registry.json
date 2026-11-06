@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T22:56:48.441Z",
+    "updatedAt": "2026-11-06T22:58:19.265Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -73787,8 +73787,8 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-06T22:32:39.883Z",
-      "summary": "The release sidecar runsc-fd-parking builds with declared LLVM tools on native AMD64 and ARM64 workers whose image contains no executables. Both ELF hashes match the independently unpacked releases. Full nine-file archives have passed on shell-free workers with a different image.",
+      "updatedAt": "2026-11-06T22:58:19.265Z",
+      "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs.",
       "findings": [
         {
           "text": "With current rules_python main, both native launchers ran their extracted programs on Linux with an empty PATH. The ARM64 Python distribution needed libgcc_s.so.1 from a pinned distroless/cc image. Both architectures passed 26 bootstrap tests. Invoking the program through a symlink or passing another program’s runfiles directory still failed only with the native launcher. The supplier change remains on the fork.",
@@ -76255,9 +76255,26 @@
               "url": "https://github.com/tamird/gvisor/blob/aac447b23/test/rbe/chainguard_native/worker_identity.c#L38-L56"
             }
           ]
+        },
+        {
+          "text": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both arms used the previously qualified static Python toolchain and forked launcher. The three C sidecars matched the earlier packages, but the six Go executables differed even on ARM64, where the earlier run used the same source. The earlier native ARM64 guest boot applies to those earlier bytes.",
+          "evidence": [
+            {
+              "label": "Both native release archives, original action counts and all 18 member hashes",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42306168961/artifacts/13547361872"
+            },
+            {
+              "label": "Earlier native ARM64 archive from the same source and its guest smoke",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42209002950/artifacts/13497608629"
+            },
+            {
+              "label": "Frozen release source",
+              "url": "https://github.com/tamird/gvisor/commit/bb983b988"
+            }
+          ]
         }
       ],
-      "nextStep": "Run the full release archive on the same public image and check both archives’ contents. Keep the literal zero-layer worker failure separate. Track hermeticbuild/hermetic-launcher#95 for packaging independently installed Python children.",
+      "nextStep": "Boot the exact two new archives under native Linux and compare the two ARM64 configurations to explain the changed Go binaries. Track hermeticbuild/hermetic-launcher#95 for the upstream Python launcher; a literal zero-layer OCI root is a separate worker issue.",
       "evidence": [
         {
           "label": "Verified OCI layout with a single empty directory",
@@ -76702,6 +76719,10 @@
         {
           "label": "Independent fdparking hashes and ELF headers from both release archive formats",
           "url": "https://github.com/tamird/gvisor/actions/runs/42263217060/artifacts/13527310655"
+        },
+        {
+          "label": "Both native release archives, original action counts and all 18 member hashes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42306168961/artifacts/13547361872"
         }
       ],
       "group": "rbe"
