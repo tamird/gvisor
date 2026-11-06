@@ -1,35 +1,93 @@
-name: CI
-
-"on":
+name: Test the FD parker from the public sidecar change
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/source-cc-sidecar-pr16522]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  verify:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 57
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Check the sidecar source and capture the reporting script
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = ce1bb4b5f1753035f3c1cfe1f0d89cab0f1a6854
+          test "$(git rev-parse HEAD^^)" = 66243bc605cf17bcb190c4762031001b3ae95c3d
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/sidecar_check.py'
+          test "$(git show --pretty=format: HEAD^ | git patch-id --stable | cut -d' ' -f1)" = 0d508651101540f18b409a3a62174a391be98a7e
+          d="$RUNNER_TEMP/source-cc-sidecar"
+          mkdir -m 700 "$d"
+          cp .github/qualification/sidecar_check.py "$d/"
+          git checkout -q --detach HEAD^
+          test "$(bazelisk --version)" = 'bazel 9.3.1'
+      - name: Identify the prior 195-byte compiler error
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -IB "$RUNNER_TEMP/source-cc-sidecar/sidecar_check.py" baseline
+      - name: Run the existing package test on the same worker and inspect the public binary
+        timeout-minutes: 49
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
+          d="$RUNNER_TEMP/source-cc-sidecar"
+          rc="$d/client.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          awk '/^(build|test):source-presubmit / && !/--target_pattern_file=/ {sub(/:source-presubmit /, ":sidecar "); print}' .bazelrc > "$rc"
+          test "$(wc -l < "$rc")" -eq 7
+          cat >> "$rc" <<'RC'
+          build:sidecar --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
+          build:sidecar --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/
+          build:sidecar --remote_download_outputs=toplevel --jobs=24 --keep_going --build_event_publish_all_actions
+          test:sidecar --nocache_test_results --flaky_test_attempts=1
+          RC
+          printf 'build:sidecar --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          code=0
+          timeout --signal=INT --kill-after=60s 46m bazelisk --nosystem_rc --nohome_rc --bazelrc="$rc" test --config=sidecar \
+            --build_event_json_file="$d/events.jsonl" --test_arg=-test.v --test_env=GO_TEST_WRAP_TESTV=1 \
+            //runsc/fdparking:fdparking_binary //runsc/fdparking:fdparking_test > "$d/console" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$d/exit"
+      - name: Record the actual compiler, linker, ELF, and test results
+        if: always() && !cancelled()
+        run: |
+          d="$RUNNER_TEMP/source-cc-sidecar"
+          trap 'rm -f "$d/console" "$d/events.jsonl" "$d/client.bazelrc"' EXIT
+          python3 -IB "$d/sidecar_check.py" collect
+      - name: Validate the two bounded result files
+        if: always() && !cancelled()
+        id: check
+        run: |
+          set -eu
+          d="$RUNNER_TEMP/source-cc-sidecar"
+          for f in "$d/baseline.json" "$d/sidecar.json"; do
+            test -s "$f" && test ! -L "$f" && test "$(wc -c < "$f")" -lt 36000
+            if grep -Eiq 'authorization[[:space:]]*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}' "$f"; then exit 1; fi
+          done
+          jq -e '.source=="ce1bb4b5f1753035f3c1cfe1f0d89cab0f1a6854"' "$d/sidecar.json" >/dev/null
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.check.outcome == 'success'
+        with:
+          name: existing-source-sidecar-results
+          path: |
+            ${{ runner.temp }}/source-cc-sidecar/baseline.json
+            ${{ runner.temp }}/source-cc-sidecar/sidecar.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Require a freestanding AMD64 binary and its three native package cases
+        if: always() && steps.check.outcome == 'success'
+        run: |
+          jq -e '
+            .exit==0 and .bazel_exit==0 and
+            .targets["//runsc/fdparking:fdparking_binary"] and .targets["//runsc/fdparking:fdparking_test"] and
+            any(.actions[]; .owner=="//runsc/fdparking:_linked/runsc-fd-parking" and .mnemonic=="CppCompile" and .success) and
+            any(.actions[]; .owner=="//runsc/fdparking:_linked/runsc-fd-parking" and .mnemonic=="CppLink" and .success) and
+            .elf.machine==62 and .elf.type==2 and .elf.executable and (.elf.interpreter|not) and (.elf.dynamic|not) and
+            .elf.loads==[5,6] and (.tests|length)==1 and .tests[0].remote and .tests[0].passed and (.tests[0].cached|not) and
+            .cases.TestParking=="pass" and .cases.TestParkingBinaryLayout=="pass" and .cases.TestParkingMemoryFootprint=="pass"
+          ' "$RUNNER_TEMP/source-cc-sidecar/sidecar.json" >/dev/null
