@@ -1,35 +1,68 @@
-name: CI
-
-"on":
+name: Compare the stock gVisor project catalog on the compiler integration
+'on':
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/compiler-license-without-google-classifier]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  catalog:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {persist-credentials: false, fetch-depth: 13}
+    - name: Bind both revisions, the shared catalog and the native Bazel client
       run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
+        set -eu
+        umask 077
+        d="$RUNNER_TEMP/catalog-compare"
+        mkdir "$d"
+        echo '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$d/receipt.json"
+        test "$(git rev-parse HEAD^)" = fcd2cc824cf0523364c9e9bab534fc8b5f70e2ab
+        test "$(git diff --name-only HEAD^ HEAD)" = "$(printf '%s\n' .github/qualification/llvm_catalog.py .github/workflows/build.yml)"
+        git merge-base --is-ancestor f51a205a8f4afbc5ab41aded070df74951b081ea HEAD^
+        for sha in f51a205a8f4afbc5ab41aded070df74951b081ea fcd2cc824cf0523364c9e9bab534fc8b5f70e2ab; do
+          test "$(git rev-parse "$sha:tools/licensecheck/dependencies.yaml")" = b9c9dd29517b7705f32a2301e743a9f59ce92b9b
+          test "$(git rev-parse "$sha:governance/licensing.yaml")" = 071919debf7ab969ac9e2b9749e367c4c59a0621
+          if git grep -q -i -e google/licensecheck -e google_licensecheck "$sha" -- go.mod go.sum MODULE.bazel MODULE.bazel.lock tools/licensecheck; then exit 1; fi
+          test "$(git show "$sha:.bazelversion")" = images/default/bazelversion
+          test "$(git show "$sha:images/default/bazelversion")" = 9.3.1
+        done
+        test "$(uname -m)" = x86_64
+        cp .github/qualification/llvm_catalog.py "$d/"
+        echo "eec66367eb9bb33d988bfabb83f84480189a8cc0e16a3cc789205bea19364f7b  $d/llvm_catalog.py" | sha256sum -c -
+        curl --retry 3 --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+        echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+        chmod 755 "$d/bazel"
+        test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+    - name: Run the canonical license check on upstream and the compiler candidate
       run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        d="$RUNNER_TEMP/catalog-compare"
+        env -i HOME="$HOME" USER="$USER" LANG=C.UTF-8 PATH="$d:$PATH" RUNNER_TEMP="$RUNNER_TEMP" \
+          USE_BAZEL_VERSION=9.3.1 DOCKER_HOST=unix:///nonexistent-license.sock MAKEFLAGS=DOCKER_BUILD=false \
+          CARRIER_SHA="$GITHUB_SHA" QUALIFICATION_RUN_ID="$GITHUB_RUN_ID" python3 -B "$d/llvm_catalog.py"
+    - name: Validate the bounded catalog receipt
+      id: boundary
+      if: always()
+      run: |
+        python3 -B - <<'PY'
+        import json,os,re
+        from pathlib import Path
+        p=Path(os.environ['RUNNER_TEMP'])/'catalog-compare'/'receipt.json'
+        assert p.is_file() and not p.is_symlink() and 0<p.stat().st_size<131072
+        b=p.read_bytes();r=json.loads(b)
+        assert r['status'] in ('PASS','INCOMPLETE','BOTH_CATALOGS_REJECTED','CATALOG_DIFFERENCE')
+        assert not re.search(rb'(?i)authorization\s*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}',b)
+        PY
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: always() && steps.boundary.outcome == 'success'
       with:
-          name: runsc
-          path: bin/
+        name: llvm-project-license-catalog
+        path: ${{ runner.temp }}/catalog-compare/receipt.json
+        if-no-files-found: error
+    - name: Stop native Bazel
+      if: always()
+      run: |
+        d="$RUNNER_TEMP/catalog-compare"
+        if test -x "$d/bazel"; then timeout -k 5 30 "$d/bazel" shutdown >/dev/null 2>&1 || true; fi
