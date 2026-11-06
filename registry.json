@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T19:19:07.294Z",
+    "updatedAt": "2026-11-06T19:36:10.962Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -54980,9 +54980,21 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T19:19:07.294Z",
-      "summary": "One remote Bazel invocation on the released LLVM integration recorded all 3,235 presubmit targets. Of 2,874 build-only targets, 2,811 built. Of 361 runnable targets, 344 ran and 342 passed. There were 352 passing shards in 354 fresh remote executions. The sandbox test failed its default-route assertions and the vDSO checker could not start readelf. Three C++ compile actions failed in the NVIDIA driver's Clang parser on the pinned RegisterRef comparator. The two failed test targets passed in separate runs with the declared vDSO reader and #15866’s route expectations. #17114 built all four previously failing NVIDIA targets and the parser test passed remotely. All 34 structure parity cases then failed to start git, and all 34 installer checksum cases failed TLS verification.\n\nOn master before the compiler change, the graph selected all 360 runnable and 2,881 build-only targets from the AMD64 cgroup-v2 presubmit, plus a native uname control. Of the resulting 3,242 roots, 2,650 build-only targets built and 295 tests ran. The OCI and Firecracker workers reported cgroup2fs and observed the expected cache separation for CGROUPV2 true and false. The earlier six-target pilot and full per-owner data are linked. The five previously unexecuted owners failed together during analysis in an isolated run. Bazel found duplicate outputs for LLVM’s libm and empty runtime objects before any test ran. The remaining unknown owners still need their own evidence.",
+      "updatedAt": "2026-11-06T19:36:10.962Z",
+      "summary": "One remote Bazel invocation on the released LLVM integration recorded all 3,235 presubmit targets. Of 2,874 build-only targets, 2,811 built. Of 361 runnable targets, 344 ran and 342 passed. There were 352 passing shards in 354 fresh remote executions. The sandbox test failed its default-route assertions and the vDSO checker could not start readelf. Three C++ compile actions failed in the NVIDIA driver's Clang parser on the pinned RegisterRef comparator. The two failed test targets passed in separate runs with the declared vDSO reader and #15866’s route expectations. #17114 built all four previously failing NVIDIA targets and the parser test passed remotely. All 34 structure parity cases then failed to start git, and all 34 installer checksum cases failed TLS verification.\n\nOn master before the compiler change, the graph selected all 360 runnable and 2,881 build-only targets from the AMD64 cgroup-v2 presubmit, plus a native uname control. Of the resulting 3,242 roots, 2,650 build-only targets built and 295 tests ran. The OCI and Firecracker workers reported cgroup2fs and observed the expected cache separation for CGROUPV2 true and false. The earlier six-target pilot and full per-owner data are linked. The five previously unexecuted owners failed together during analysis in an isolated run. Bazel reported 730 action conflicts before execution. Two representative LLVM runtime objects had identical compiler commands in two tool configurations. The only reported difference was the target-platform label: //tools/bazeldefs:linux_amd64 versus //test/rbe:linux_amd64. The remaining unknown owners still need their own evidence.",
       "evidence": [
+        {
+          "label": "Canonical AMD64 target and execution platform under test",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42280834294"
+        },
+        {
+          "label": "Configuration differences for both duplicate runtime object paths",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42279220474/artifacts/13534682362"
+        },
+        {
+          "label": "Original compiler actions have the same arguments and action keys",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42278631677/artifacts/13534051869"
+        },
         {
           "label": "Five isolated owners stopped at duplicate libm and empty runtime object outputs",
           "url": "https://github.com/tamird/gvisor/actions/runs/42278158964/artifacts/13533667943"
@@ -55136,10 +55148,13 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "e46a101fc0aebb325ec25977697a012a2e11a11b",
-        "observedAt": "2026-11-06T19:19:07.294Z",
+        "observedAt": "2026-11-06T19:36:10.962Z",
         "disposition": "The contributor requested one remote Bazel graph for CI targets across areas and configurations.",
-        "nextAction": "Fix the duplicate LLVM runtime object outputs for the five isolated owners, then rerun those targets. Continue comparing the remaining unknown owners, the NVIDIA parity inputs, #17122, #15866 and #17114.",
+        "nextAction": "Check the six-root run with the canonical AMD64 platform and the same OCI and Firecracker routing. Continue tracing the other unknown owners separately.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42280834294",
+          "https://github.com/tamird/gvisor/actions/runs/42279220474/artifacts/13534682362",
+          "https://github.com/tamird/gvisor/actions/runs/42278631677/artifacts/13534051869",
           "https://github.com/tamird/gvisor/actions/runs/42278158964/artifacts/13533667943"
         ]
       }
@@ -55243,7 +55258,7 @@
       "url": "https://github.com/tamird/gvisor/commit/4867d503b",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T17:33:33.842Z",
+      "updatedAt": "2026-11-06T19:36:10.962Z",
       "summary": "Upstream #17113 addresses the same premature timeout as this fork patch. Compare the two on the existing heavy-loss and TCP_USER_TIMEOUT cases before deciding whether any separate change is useful.\n\nUnder the loss burst reported on #16081, master closed a TCP connection on its second retransmission timeout. Sixteen sends of the first missing segment exhausted the configured limit of 15, including fast retransmits. This change measures how long data remains unacknowledged across timer expirations. All six heavy-loss transfers finished with the fix. The comparison covers the timeout decision independently of #16081’s recovery-performance changes.\n\nA second packet test sets TCP_USER_TIMEOUT. Before the fix, the socket closed with ETIMEDOUT when newly outstanding data was only 497 ms old on an 800 ms timeout. Linux and the fix both transmitted the fourth segment. The submitted source drops six telemetry-only lines from the tested fixture.",
       "evidence": [
         {
@@ -55292,9 +55307,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "4867d503b71f6c13f0346778ca61373df04ed0ae",
-        "observedAt": "2026-11-06T17:33:33.842Z",
-        "disposition": "Contributor approved the fork source after #16419. Upstream #17113 addresses the same failure.",
-        "nextAction": "Hold submission while the agent compares #17113 against the existing retry-limit and next-flight timeout tests.",
+        "observedAt": "2026-11-06T19:36:10.962Z",
+        "disposition": "Contributor approved this source for submission after #16419. The author closed upstream #17113 unmerged.",
+        "nextAction": "Wait for #16419. Compare the separate timeout changes with the closed #17113 implementation; that comparison does not impose an upstream merge prerequisite.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17113",
           "https://github.com/tamird/gvisor/commit/4867d503b"
@@ -55311,10 +55326,14 @@
       "title": "Count only timeouts against the TCP retry limit",
       "url": "https://github.com/google/gvisor/pull/17113",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-11-06T17:11:56.663Z",
-      "summary": "This PR counts retransmission timeouts since the last advancing ACK. Its author reports that fast retransmits no longer exhaust the timeout budget on the loss workload in #16081. Compare it with the existing tests for the elapsed timeout budget and TCP_USER_TIMEOUT on the next flight.",
+      "status": "closed",
+      "updatedAt": "2026-11-06T19:36:10.962Z",
+      "summary": "The author closed #17113 unmerged on November 6. The downstream implementation in kekawia/net-switch#130 merged one second earlier. The upstream discussion gives no reason for closing. The PR counts retransmission timeouts since the last advancing ACK. Its source remains available for compatibility comparisons with the separate TCP_USER_TIMEOUT work.",
       "evidence": [
+        {
+          "label": "Downstream retry-count change merged",
+          "url": "https://github.com/kekawia/net-switch/pull/130"
+        },
         {
           "label": "Author’s change and measurements",
           "url": "https://github.com/google/gvisor/pull/17113"
