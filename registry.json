@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T22:19:05.943Z",
+    "updatedAt": "2026-11-06T22:26:02.069Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -46390,8 +46390,8 @@
       "title": "tcp: report hangups when a stream closes",
       "url": "https://github.com/tamird/gvisor/commit/6e1f1e700",
       "group": "runtime",
-      "status": "Approved; waiting for #16808 and #17123",
-      "updatedAt": "2026-11-06T20:16:18.017Z",
+      "status": "Approved; waiting for #16808",
+      "updatedAt": "2026-11-06T22:26:02.069Z",
       "summary": "TCP shutdown flags now use atomicbitops.Int[tcpip.ShutdownFlags], with their mutex and atomic access checked at the declaration. The checkpoint retains the original wire scalar. All six IPv4/IPv6 readiness cases ran in the Sentry. Each of the 15 analyzer owners passed on both architectures across two runs. Removing the restore annotation produced the expected store diagnostic on both CPUs.",
       "refinement": {
         "before": {
@@ -46441,6 +46441,10 @@
         {
           "label": "Original benchstat comparison of 12 paired established-socket readiness samples",
           "url": "https://github.com/tamird/gvisor/actions/runs/41313774639/artifacts/13085808246"
+        },
+        {
+          "label": "Stateify generic receiver support landed on master",
+          "url": "https://github.com/google/gvisor/commit/e717d25a2"
         }
       ],
       "settledReviews": [
@@ -46468,13 +46472,14 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "6e1f1e7005d85fa0e2f04d75c530abf1ba384490",
-        "observedAt": "2026-11-06T20:16:18.017Z",
+        "observedAt": "2026-11-06T22:26:02.069Z",
         "disposition": "Contributor approved the typed flags, lock contract and tested TCP readiness change.",
-        "nextAction": "Submit this TCP change after #16808 and #17123 land.",
+        "nextAction": "Submit the approved change after #16808 lands. Master includes the stateify fix, and both the prerequisite and the combined change apply cleanly to e717d25a2.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6e1f1e700",
           "https://github.com/google/gvisor/pull/17123",
-          "https://github.com/google/gvisor/pull/16808"
+          "https://github.com/google/gvisor/pull/16808",
+          "https://github.com/google/gvisor/commit/e717d25a2"
         ]
       }
     },
@@ -55870,8 +55875,8 @@
       "type": "branch",
       "head": "1de5b54a98a37c10fc0e71f7340df386ffaea4c3",
       "ref": "proposal/stateify-generic-receivers",
-      "status": "Published as #17123",
-      "updatedAt": "2026-11-06T20:16:18.017Z",
+      "status": "Merged as #17123",
+      "updatedAt": "2026-11-06T22:26:02.069Z",
       "title": "Recognize instantiated method receivers in stateify",
       "summary": "Stateify panics while scanning a generic method receiver, even if the type has no stateify annotation. The same one-file correction on the shutdown-flags integration recognized receivers with one or two type parameters. Its standalone patch applies directly to master.",
       "url": "https://github.com/tamird/gvisor/commit/1de5b54a9",
@@ -55883,6 +55888,10 @@
         {
           "label": "Same one-file change on the TCP integration",
           "url": "https://github.com/tamird/gvisor/commit/bc4805e31"
+        },
+        {
+          "label": "Stateify generic receiver support landed on master",
+          "url": "https://github.com/google/gvisor/commit/e717d25a2"
         }
       ],
       "settledReviews": [
@@ -55987,8 +55996,8 @@
       "title": "Recognize instantiated method receivers in stateify",
       "url": "https://github.com/google/gvisor/pull/17123",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-11-06T20:16:18.017Z",
+      "status": "merged",
+      "updatedAt": "2026-11-06T22:26:02.069Z",
       "summary": "Stateify panics while scanning a generic method receiver, even if the type has no stateify annotation. The same one-file correction on the shutdown-flags integration recognized receivers with one or two type parameters. Its standalone patch applies directly to master.",
       "evidence": [
         {
@@ -55998,6 +56007,10 @@
         {
           "label": "Same one-file change on the TCP integration",
           "url": "https://github.com/tamird/gvisor/commit/bc4805e31"
+        },
+        {
+          "label": "Stateify generic receiver support landed on master",
+          "url": "https://github.com/google/gvisor/commit/e717d25a2"
         }
       ],
       "settledReviews": [
