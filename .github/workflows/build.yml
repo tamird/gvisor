@@ -1,184 +1,43 @@
-name: CI
-
-"on":
-  workflow_dispatch:
-    inputs:
-      profile:
-        description: One selection or the complete supported public CPU matrix
-        type: choice
-        options: [single, public-cpu]
-        default: single
-      lanes:
-        description: Space-separated qualification lanes
-        type: string
-        default: smoke
-        required: true
-      architecture:
-        description: Target architecture selection
-        type: choice
-        options: [amd64, arm64, all]
-        default: amd64
-      execution:
-        description: Run tests on BuildBuddy or this Actions runner
-        type: choice
-        options: [remote, local]
-        default: remote
-      clock_source:
-        description: Explicit runtime clock source for qualification
-        type: choice
-        options: [calibrated, reference]
-        default: calibrated
-      local_test_requirements:
-        description: Comma-separated requirements missing from remote workers for hybrid lanes
-        type: string
-        default: namespace
-      syscall_bucket:
-        description: Optional increasing comma-separated hash15 buckets (0..14) for local or guest syscall lanes
-        type: string
-      targets:
-        description: Optional build/test/syscall owner labels, or continuous benchmark labels
-        type: string
-      test_filter:
-        description: Optional Bazel test filter for the test, container-v1 or docker lane
-        type: string
-      header_base:
-        description: Full comparison commit SHA for license-headers
-        type: string
-      cos_catalog_gzip_base64:
-        description: Gzip/base64-encoded complete gcloud COS image catalog
-        type: string
-      cos_catalog_sha256:
-        description: SHA256 of the uncompressed COS catalog
-        type: string
-
-concurrency:
-  # Explicit target lists can exceed GitHub's concurrency-key length limit.
-  # Keep those runs independent; different selections must not cancel each other.
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.profile }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ (contains(fromJSON('["build","test","benchmarks","pgo"]'), inputs.lanes) || inputs.targets != '') && github.run_id || '' }}-${{ inputs.clock_source }}
-  cancel-in-progress: true
-
+name: Run the current SDK and docprocessor owners on native ARM64
+on:
+  push:
+    branches: [qualification/current-integration-native-arm64-sdk]
+permissions:
+  contents: read
 jobs:
-  qualification-plan:
-    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((startsWith(github.ref, 'refs/heads/qualification/') || github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-nftables' || github.ref == 'refs/heads/rbe-actions-kvm-startup' || github.ref == 'refs/heads/rbe-unit-mixed-hybrid' || github.ref == 'refs/heads/diagnostics/unit-mixed-continuation')))
-    # All remote rows use this coordinator; run a sole matching row here.
-    name: ${{ inputs.profile == 'single' && inputs.execution == 'remote' && format('Qualification {0} remote {1}', inputs.architecture, inputs.lanes) || 'Plan qualification' }}
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    outputs:
-      plan: ${{ steps.plan.outputs.plan }}
-      in_place: ${{ steps.plan.outputs.in_place }}
-    env:
-      QUALIFICATION_PROFILE: ${{ inputs.profile || 'single' }}
-      QUALIFICATION_COMMIT: ${{ github.sha }}
-      QUALIFICATION_LANES: ${{ inputs.lanes || 'smoke' }}
-      QUALIFICATION_ARCH: ${{ inputs.architecture || 'amd64' }}
-      QUALIFICATION_EXECUTION: ${{ inputs.execution || 'remote' }}
-      QUALIFICATION_CLOCK_SOURCE: ${{ inputs.clock_source || 'calibrated' }}
-      QUALIFICATION_LOCAL_TEST_REQUIREMENTS: ${{ inputs.local_test_requirements }}
-      QUALIFICATION_TARGETS: ${{ inputs.targets }}
-      QUALIFICATION_TEST_FILTER: ${{ inputs.test_filter }}
-      QUALIFICATION_SYSCALL_BUCKET: ${{ inputs.syscall_bucket }}
-      QUALIFICATION_HEADER_BASE: ${{ inputs.header_base }}
-      QUALIFICATION_COS_GZIP_BASE64: ${{ inputs.cos_catalog_gzip_base64 }}
-      QUALIFICATION_COS_SHA256: ${{ inputs.cos_catalog_sha256 }}
+  sdk:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04-arm
+    timeout-minutes: 63
     steps:
-    - name: Checkout the triggering commit
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      with:
-        ref: ${{ github.sha }}
-        persist-credentials: false
-    - name: Resolve the source-owned qualification plan
-      id: plan
-      shell: bash
-      run: |
-        plan=$(bash test/rbe/qualify.sh --dispatch-plan)
-        printf 'plan=%s\n' "$plan" >> "$GITHUB_OUTPUT"
-        in_place=$(jq -r '.profile == "single" and (.rows | length <= 2) and all(.rows[]; .runner == "ubuntu-24.04")' <<<"$plan")
-        printf 'in_place=%s\n' "$in_place" >> "$GITHUB_OUTPUT"
-
-    - name: Run the selected checks
-      id: row
-      if: steps.plan.outputs.in_place == 'true'
-      timeout-minutes: ${{ fromJSON(steps.plan.outputs.plan).rows[0].job_minutes }}
-      uses: ./.github/actions/qualification-row
-      with:
-        plan: ${{ steps.plan.outputs.plan }}
-        row: ${{ toJSON(fromJSON(steps.plan.outputs.plan).rows[0]) }}
-        cos: ${{ inputs.cos_catalog_gzip_base64 }}
-        key: ${{ secrets.BUILDBUDDY_API_KEY }}
-
-    - name: Run the remaining Nogo checks
-      id: nogo
-      if: always() && steps.plan.outputs.in_place == 'true' && fromJSON(steps.plan.outputs.plan).rows[1].id != ''
-      timeout-minutes: ${{ fromJSON(steps.plan.outputs.plan).rows[1].job_minutes }}
-      uses: ./.github/actions/qualification-row
-      with:
-        plan: ${{ steps.plan.outputs.plan }}
-        row: ${{ toJSON(fromJSON(steps.plan.outputs.plan).rows[1]) }}
-        cos: ${{ inputs.cos_catalog_gzip_base64 }}
-        key: ${{ secrets.BUILDBUDDY_API_KEY }}
-
-    - name: Verify the original row bytes
-      if: always() && steps.plan.outputs.in_place == 'true'
-      uses: ./.github/actions/qualification-result
-      with:
-        plan: ${{ steps.plan.outputs.plan }}
-        outcome: ${{ steps.nogo.outcome == 'failure' && 'failure' || steps.row.outcome }}
-        label: ${{ inputs.architecture }}
-
-  remote-qualification:
-    needs: qualification-plan
-    if: needs.qualification-plan.outputs.in_place != 'true'
-    strategy:
-      fail-fast: false
-      matrix:
-        include: ${{ fromJSON(needs.qualification-plan.outputs.plan).rows }}
-    name: Qualification ${{ matrix.id }}
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: ${{ matrix.job_minutes }}
-    permissions:
-      contents: read
-    steps:
-    - name: Checkout the triggering commit
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      with:
-        ref: ${{ github.sha }}
-        persist-credentials: false
-    - name: Run this planned row on its selected coordinator
-      id: row
-      timeout-minutes: ${{ matrix.job_minutes }}
-      uses: ./.github/actions/qualification-row
-      with:
-        plan: ${{ needs.qualification-plan.outputs.plan }}
-        row: ${{ toJSON(matrix) }}
-        cos: ${{ inputs.cos_catalog_gzip_base64 }}
-        key: ${{ secrets.BUILDBUDDY_API_KEY }}
-
-    - name: Verify a lone row on its native runner
-      if: always() && inputs.profile == 'single'
-      uses: ./.github/actions/qualification-result
-      with:
-        plan: ${{ needs.qualification-plan.outputs.plan }}
-        outcome: ${{ steps.row.outcome }}
-        label: ${{ inputs.architecture }}
-
-  qualification-result:
-    needs: [qualification-plan, remote-qualification]
-    if: always() && inputs.profile == 'public-cpu' && needs.qualification-plan.result == 'success'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    permissions:
-      contents: read
-    steps:
-    - name: Checkout the triggering commit
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      with:
-        ref: ${{ github.sha }}
-        persist-credentials: false
-    - name: Verify every planned public CPU row
-      uses: ./.github/actions/qualification-result
-      with:
-        plan: ${{ needs.qualification-plan.outputs.plan }}
-        outcome: ${{ needs.remote-qualification.result }}
-        label: all
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Check out the exact integration and run the Bazel suites on the agent
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/native-sdk"
+          mkdir -p "$d"
+          test "$(git rev-parse HEAD^)" = 38745c527784376e0b5d915fe5ebd85e1d1385fd
+          cp .github/qualification/direct_arm64_sdk.py "$d/"
+          git checkout --quiet --detach HEAD^
+          test "$(cat .bazelversion)" = 8.8.1
+          curl -fsSL --retry 3 --max-time 90 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-arm64 -o "$d/bazel"
+          echo "bb608519a440d45d10304eb684a73a2b6bb7699c5b0e5434361661b25f113a5d  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          test "$("$d/bazel" --version)" = 'bazel 8.8.1'
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" DOCKER_HOST=unix:///nonexistent-sdk-docker.sock python3 -B "$d/direct_arm64_sdk.py"
+      - name: Verify the allowed evidence
+        if: always()
+        id: evidence
+        run: |
+          python3 - "$RUNNER_TEMP/native-sdk/result.json" <<'PY'
+          import json,pathlib,sys
+          p=pathlib.Path(sys.argv[1]);assert p.is_file() and not p.is_symlink() and p.stat().st_size<100000
+          obj=json.loads(p.read_bytes());assert obj["source"]=="38745c527784376e0b5d915fe5ebd85e1d1385fd"
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.evidence.outcome == 'success'
+        with:
+          name: native-arm64-sdk-owners
+          path: ${{ runner.temp }}/native-sdk/result.json
+          retention-days: 7
