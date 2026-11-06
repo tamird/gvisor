@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T12:58:13.738Z",
+    "updatedAt": "2026-11-06T13:03:27.377Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -53702,6 +53702,56 @@
         "title": "Check the mutex protecting TCP keepalive options and probe counts",
         "summary": "May I open this standalone PR? With the guards removed, Nogo now diagnoses accesses to idle, interval, count and unacked on both architectures. Both existing packet tests passed with the guards in place.",
         "body": "TCP_KEEPIDLE, TCP_KEEPINTVL and TCP_KEEPCNT can be read without\nlocking the endpoint. Their getters take the keepalive mutex, which\nalso protects updates to the probe count when an ACK arrives or the\nkeepalive timer expires. Annotate these fields so checklocks can\ndetect accesses that hold only the endpoint mutex."
+      }
+    },
+    {
+      "id": "branch:syscall-tests-use-runfiles",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/syscall-tests-use-runfiles",
+      "head": "7e2c0ff44c64f2c4261c876abb687cbbf5f80ed2",
+      "title": "Run syscall tests with the runtime declared by Bazel",
+      "url": "https://github.com/tamird/gvisor/commit/7e2c0ff44",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T13:03:27.377Z",
+      "summary": "The old Make target copied runsc and the Sentry to the client. On the remote AMD64 Firecracker worker, the runner found runsc in its Bazel runfiles but looked for the Sentry in the client directory. The guest never started. With the Makefile change, the same systrap eventfd test passed six cases on partition 1 and the other five on partition 2. Explicitly selecting the client installation paths still staged the release and reproduced the missing-Sentry error on the remote worker.",
+      "evidence": [
+        {
+          "label": "One-file Makefile change on master",
+          "url": "https://github.com/tamird/gvisor/commit/7e2c0ff44"
+        },
+        {
+          "label": "Four paired Make runs on the same compiler and Firecracker worker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42221640624/artifacts/13503173108"
+        },
+        {
+          "label": "Stock looked for the Sentry in the client installation",
+          "url": "https://app.buildbuddy.io/invocation/149f49e7-000a-4a6b-aac9-575c0309458d"
+        },
+        {
+          "label": "First partition passed six eventfd cases",
+          "url": "https://app.buildbuddy.io/invocation/f733d137-d164-48d4-918b-163e52130edd"
+        },
+        {
+          "label": "Second partition passed the other five cases",
+          "url": "https://app.buildbuddy.io/invocation/3da06e8b-d2d4-40be-b92a-8e2306f52a9b"
+        },
+        {
+          "label": "Explicit client paths took precedence on the remote worker",
+          "url": "https://app.buildbuddy.io/invocation/04004c5b-7678-426a-9230-3b8d74e5ab07"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "7e2c0ff44c64f2c4261c876abb687cbbf5f80ed2",
+        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+        "url": "https://github.com/tamird/gvisor/commit/7e2c0ff44",
+        "requestedAt": "2026-11-06T13:03:27.377Z",
+        "title": "Run syscall tests with the runtime declared by Bazel",
+        "summary": "May I open this standalone Makefile PR? The remote systrap test found its Sentry in Bazel runfiles and ran all 11 eventfd cases across the two partitions. Requesting the client installation still takes precedence.",
+        "body": "make syscall-tests copies runsc and its sidecars to the client and\npasses their absolute paths to every test. On a remote worker the\nrunner can fall back to its own runsc, but it still sends that runsc\nto the client directory for its Sentry.\n\nUse the release files already declared by the runner. Bazel selects\nthe matching runsc and Sentry for the test configuration, including\nrace builds. Keep staging when the caller requests a release tarball,\ncustom binaries or an installation path.\n\nOn an AMD64 Firecracker worker, the old default stopped before the first eventfd case. With the declared release, one partition passed six cases and the other passed five. Explicitly selecting the client installation reproduced the original missing-Sentry error on that worker."
       }
     }
   ],
