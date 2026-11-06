@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T03:37:05.476314Z",
+    "updatedAt": "2026-11-06T03:56:11.203356Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -45436,8 +45436,8 @@
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/768",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-02T15:46:59.054342+00:00",
-      "summary": "The supplier proposal provides a static glibc for downstream C++ binaries. Its assembly compilation needs a writable temporary directory on scratch workers.",
+      "updatedAt": "2026-11-06T03:56:11.203356Z",
+      "summary": "The supplier proposal provides a static glibc for downstream C++ binaries. Its assembly compilation needs a writable temporary directory on scratch workers.\n\nTwo downstream links also need archives from the static GNU sysroot. The Go DNS resolver links against libresolv.a. Static C programs using pthread cancellation need LLVM’s unwinder. Two cherry-picks on the author’s draft supply these archives.",
       "evidence": [
         {
           "label": "Two-line proposed correction",
@@ -45454,6 +45454,30 @@
         {
           "label": "Posted reply",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/768#issuecomment-6581425427"
+        },
+        {
+          "label": "Resolver patch on the supplier draft",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/d779c2896"
+        },
+        {
+          "label": "glibc 2.44 resolver reference builds on both architectures",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42125450746"
+        },
+        {
+          "label": "Static GNU C unwinder patch, after the resolver patch",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/1273f916b"
+        },
+        {
+          "label": "Original static C pthread cancellation link failure",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42157263660"
+        },
+        {
+          "label": "Native AMD64 cancellation test and exit result",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42158767867"
+        },
+        {
+          "label": "ARM64 archive providing the eight unwind symbols",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42158025088/artifacts/13475442956"
         }
       ],
       "settledReviews": [
@@ -45465,7 +45489,17 @@
           "at": "2026-11-02T15:46:59.054342+00:00",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/768#issuecomment-6581425427"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "head": "6f070847add9ac9bf0d19c96dee873e84f9594d9",
+        "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/768",
+        "requestedAt": "2026-11-06T03:56:11.203356Z",
+        "title": "Ask Stephan to cherry-pick the resolver and C unwinder fixes",
+        "summary": "May I post this comment on the open static glibc PR? Both commits apply in order to its exact head. The existing TMPDIR reply is separate.",
+        "body": "@geligeli, could you cherry-pick these two fixes onto `glibc-static` in order?\n\n1. Go’s cgo DNS resolver links with `-lresolv`. The static sysroot needs `libresolv.a` for that link. Its 19 archive members and 61 defined symbols match glibc 2.44 on AMD64 and ARM64. [Resolver commit](https://github.com/tamird/hermetic-llvm/commit/d779c2896) · [Reference builds](https://github.com/tamird/hermetic-llvm/actions/runs/42125450746)\n2. A static C program that calls `pthread_cancel` still fails to link without the C++ runtime archives. glibc needs eight `_Unwind_*` symbols. With the LLVM unwinder on the C link, the native AMD64 test joins the canceled thread and observes `PTHREAD_CANCELED`. The ARM64 archive also defines all eight symbols. [Unwinder commit](https://github.com/tamird/hermetic-llvm/commit/1273f916b) · [Failing link](https://github.com/tamird/hermetic-llvm/actions/runs/42157263660) · [Native test](https://github.com/tamird/hermetic-llvm/actions/runs/42158767867)\n\nPosted by Codex on behalf of @tamird."
+      }
     },
     {
       "id": "branch:tcp-limited-transmit-credit",
@@ -74975,5 +75009,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-06T03:37:05.476314Z"
+  "updatedAt": "2026-11-06T03:56:11.203356Z"
 }
