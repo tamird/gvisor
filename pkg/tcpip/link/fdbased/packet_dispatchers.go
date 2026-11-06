@@ -317,20 +317,35 @@ func (d *recvMMsgDispatcher) dispatch() (bool, tcpip.Error) {
 	d.gro.Dispatcher = dsp
 	defer d.pkts.Reset()
 
+	receivedPacket := false
 	for k := 0; k < nMsgs; k++ {
 		n := int(d.msgHdrs[k].Len)
+		// Mark that this iovec has been processed.
+		d.msgHdrs[k].Msg.Iovlen = 0
+		if n == 0 {
+			continue
+		}
+		receivedPacket = true
 		pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 			Payload: d.bufs[k].pullBuffer(n),
 		})
 		d.pkts.PushBack(pkt)
 
-		// Mark that this iovec has been processed.
-		d.msgHdrs[k].Msg.Iovlen = 0
-
 		if d.e.parseInboundHeader(pkt, addr) {
 			pkt.RXChecksumValidated = d.e.caps&stack.CapabilityRXChecksumOffload != 0
 			d.mgr.queuePacket(pkt, d.e.hdrSize > 0)
 		}
+	}
+	if !receivedPacket {
+		// A SOCK_SEQPACKET peer that shuts down its write side leaves the
+		// socket readable. recvmmsg can then fill every entry with zero
+		// bytes without ever returning EAGAIN. An empty record is also
+		// valid on a live socket, so check for a read hangup.
+		poll := rawfile.PollEvent{FD: int32(d.fd), Events: unix.POLLRDHUP}
+		if _, errno := rawfile.BlockingPoll(&poll, 1, &unix.Timespec{}); errno != 0 && errno != unix.EINTR {
+			return false, tcpip.TranslateErrno(errno)
+		}
+		return poll.Revents&(unix.POLLHUP|unix.POLLRDHUP) == 0, nil
 	}
 	d.mgr.wakeReady()
 
