@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T16:55:55.698Z",
+    "updatedAt": "2026-11-06T17:03:22.665Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -46907,22 +46907,26 @@
       "id": "branch:tcp-passive-syn-retry",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/tcp-passive-syn-paws",
-      "head": "22d8cfc02a0c99c00fc9e9a97160d3dae8208b48",
+      "ref": "review/tcp-handshake-owned-options",
+      "head": "3c8aa1d51dcfb99a39d967c45046483cd42c561d",
       "title": "Retransmit the SYN-ACK when a peer repeats its SYN",
-      "url": "https://github.com/tamird/gvisor/commit/22d8cfc02",
+      "url": "https://github.com/tamird/gvisor/commit/3c8aa1d51",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-06T16:20:27.112Z",
-      "summary": "The replacement makes sendSyn parameterless. Only the passive reply updates a packet-local timestamp, and only retransmitSyn counts a retry. Linux qualification is in progress.\n\nWhen the client repeats its SYN before the retransmission timer fires, stock gVisor answers with a bare ACK. Linux and the fix reply immediately with the missing SYN-ACK, suppress a third immediate request, and report 1 ms RTT on the accepted socket. A prototype that reused the first local timestamp reported 1,553 ms. The final revision also matches Linux at the signed timestamp boundary.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T17:01:23.113Z",
+      "summary": "When the client repeats its SYN, stock gVisor sends a bare ACK. Linux and the fix resend the SYN-ACK immediately. sendSyn now takes no arguments. It sets the passive SYN-ACK timestamp on a packet-local copy. Only retransmitSyn charges retries.\n\nLinux and this revision passed the same four packet cases. The peer requested a retransmission 550 ms after its SYN. Linux replied after 2.3 ms and gVisor after 3.3 ms. Both waited one more second for the timed retry. All three handshake tests and both architecture analyzers also passed. Submission waits for #16809, which provides the accepted socket’s TCP_INFO retransmission count.",
       "evidence": [
         {
-          "label": "Revised source under qualification",
-          "url": "https://github.com/tamird/gvisor/commit/3c8aa1d51"
+          "label": "Changes since the previous source review",
+          "url": "https://github.com/tamird/gvisor/compare/22d8cfc02...3c8aa1d51"
         },
         {
-          "label": "Source-specific Linux qualification",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42251069517"
+          "label": "Four original packet cases and retry timestamps on native Linux and gVisor",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42257460969/artifacts/13522064442"
+        },
+        {
+          "label": "Three handshake tests and AMD64/ARM64 Nogo",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42251069517/artifacts/13523330695"
         },
         {
           "label": "Stock and Linux before the handshake timer fires",
@@ -46949,16 +46953,24 @@
           "note": "Separate SYN retransmission accounting from sending the SYN."
         }
       ],
-      "followup": {
-        "owner": "Agent",
-        "sourceHead": "3c8aa1d51dcfb99a39d967c45046483cd42c561d",
-        "observedAt": "2026-11-06T16:20:27.112Z",
-        "disposition": "Separate SYN retransmission accounting from sending the SYN.",
-        "nextAction": "Verify the original test and analyzer results before requesting review of the revised source.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/3c8aa1d51",
-          "https://github.com/tamird/gvisor/actions/runs/42251069517"
-        ]
+      "refinement": {
+        "before": {
+          "head": "22d8cfc02a0c99c00fc9e9a97160d3dae8208b48"
+        },
+        "after": {
+          "head": "3c8aa1d51dcfb99a39d967c45046483cd42c561d"
+        }
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "3c8aa1d51dcfb99a39d967c45046483cd42c561d",
+        "baseHead": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689",
+        "url": "https://github.com/tamird/gvisor/commit/3c8aa1d51",
+        "title": "Retransmit the SYN-ACK when a peer repeats its SYN",
+        "body": "A passive TCP handshake answered a repeated SYN with a bare ACK. A\npeer that missed the SYN-ACK then had to wait for the handshake timer\nto retransmit it.\n\nResend the SYN-ACK for the original sequence number, subject to the\nexisting out-of-window response limit. A successful send restarts the\npending timer at its current interval and is charged to the accepted\nsocket. Give each passive retry its current transmit timestamp so the\nfinal ACK can supply the initial RTT. This follows the Linux\nrequest-socket path [1].\n\nThe packet test repeats the SYN before the initial timeout and checks\nthe sequence and acknowledgment numbers on the second SYN-ACK. A third\nSYN immediately afterward leaves the accepted socket with one retry.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp_minisocks.c#L679-L719",
+        "requestedAt": "2026-11-06T17:01:23.113Z",
+        "summary": "Open the revised passive SYN retry fix after #16809 lands? The four packet cases passed on native Linux and corrected gVisor."
       }
     },
     {
@@ -54900,6 +54912,48 @@
           "postedURL": "https://github.com/google/gvisor/pull/16081#issuecomment-6689168373"
         }
       ]
+    },
+    {
+      "id": "branch:tcp-rto-retry-budget",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/tcp-rto-retry-budget",
+      "head": "4867d503b71f6c13f0346778ca61373df04ed0ae",
+      "title": "Allow TCP timeout repair after fast retransmissions",
+      "url": "https://github.com/tamird/gvisor/commit/4867d503b",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T17:03:22.665Z",
+      "summary": "Under the loss burst reported on #16081, master closed a TCP connection on its second retransmission timeout. Sixteen sends of the first missing segment exhausted the configured limit of 15, including fast retransmits. This change measures how long data remains unacknowledged across timer expirations. All six heavy-loss transfers finished with the fix. The comparison covers the timeout decision independently of #16081’s recovery-performance changes.\n\nA second packet test sets TCP_USER_TIMEOUT. Before the fix, the socket closed with ETIMEDOUT when newly outstanding data was only 497 ms old on an 800 ms timeout. Linux and the fix both transmitted the fourth segment. The submitted source drops six telemetry-only lines from the tested fixture. Submit after #16419 lands.",
+      "evidence": [
+        {
+          "label": "Master closed on the second timeout with 16 sends of the first missing segment",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42242371414/artifacts/13516598012"
+        },
+        {
+          "label": "Six heavy-loss transfers, Linux timeout repair at 417 ms, and retry bounds",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42247592348/artifacts/13519218116"
+        },
+        {
+          "label": "Two-flight packet test on native Linux, #16419, and the correction",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42249668868/artifacts/13520439315"
+        },
+        {
+          "label": "Only change after the two-flight packet test removed its timing printouts",
+          "url": "https://github.com/tamird/gvisor/compare/928962c92...4867d503b"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "4867d503b71f6c13f0346778ca61373df04ed0ae",
+        "baseHead": "f47e3a56425482ba7090735302d6454757086d51",
+        "url": "https://github.com/tamird/gvisor/commit/4867d503b",
+        "title": "Allow TCP timeout repair after fast retransmissions",
+        "body": "Under the loss burst in #16081, the sender closed a connection after\ntwo retransmission timeouts. It had sent the first missing segment 16\ntimes. RACK repairs and tail probes consumed the same per-segment limit\nas the retransmission timer.\n\nApply the configured retry budget to unacknowledged data on a repeated\ntimeout. Model the elapsed time with exponential backoff as Linux does\nin tcp_model_timeout. A cumulative ACK permits the next timeout repair.\nPersist probes keep their separate unanswered-probe limit.\n\nTCP_USER_TIMEOUT selects an explicit deadline. When an ACK covers the\nold recovery window, start a fresh deadline for later data still in\nflight. The socket test checks that the sender can transmit again\nafter the old deadline has passed.",
+        "requestedAt": "2026-11-06T17:03:22.665Z",
+        "summary": "Open the TCP timeout repair after #16419 lands? The packet tests cover the exhausted segment counter and a new flight’s user timeout."
+      }
     }
   ],
   "edges": [
@@ -58271,9 +58325,10 @@
       "type": "depends_on",
       "from": "pr:16809",
       "to": "branch:tcp-passive-syn-retry",
-      "reason": "Both timed and peer-requested SYN-ACK retries use the per-socket TCP_INFO counter.",
+      "reason": "The retry increments the socket counter introduced by #16809. The permanent packet test reads TCP_INFO.TotalRetrans on the accepted socket.",
       "evidence": [
-        "https://github.com/tamird/gvisor/compare/bc9ffcc0d...22d8cfc02"
+        "https://github.com/tamird/gvisor/commit/3c8aa1d51",
+        "https://github.com/google/gvisor/pull/16809"
       ]
     },
     {
@@ -58622,6 +58677,16 @@
       "to": "branch:buildkite-source-syscalls",
       "reason": "The contributor approved the pinned Bazelisk bootstrap. It can start Bazel on the coordinator, as in #16904. Integrate source lint through declared Bazel tests instead of submitting the separate native-Make lint jobs.",
       "evidence": "https://github.com/tamird/gvisor/commit/eafcb8392effca7769ef6e220d24feaadb3bdf17"
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:16419",
+      "to": "branch:tcp-rto-retry-budget",
+      "reason": "Uses #16419’s repeated-timeout state to distinguish the first repair after an advancing ACK.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/4867d503b",
+        "https://github.com/google/gvisor/pull/16419"
+      ]
     }
   ],
   "investigations": [
