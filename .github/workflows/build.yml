@@ -1,35 +1,80 @@
-name: CI
-
-"on":
+name: Build both public Debian packages without host tools
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/public-debian-empty-client]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  package:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 115
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Prepare the stripped Bazel client and pinned worker
+        run: |
+          set -euo pipefail
+          umask 077
+          src=224fdf968222fd45d5af77f671b7b52c2e278ebe
+          test "$(git rev-parse HEAD^)" = "$src"
+          cp .github/qualification/{debian_release,lean_release_client}.py "$RUNNER_TEMP/"
+          cp .github/qualification/release-worker.BUILD "$RUNNER_TEMP/"
+          echo "1f69d151f9bed2a904fea1e141633add759e521367dfe1cf570c5efe0e508142  $RUNNER_TEMP/lean_release_client.py" | sha256sum -c -
+          echo "ae1f23a11f3cb747fbec49a34c510c5ab9dcb75d06d94bfd4d9a49d50c629271  $RUNNER_TEMP/release-worker.BUILD" | sha256sum -c -
+          git switch --quiet --detach "$src"
+          mkdir -p test/rbe/release_prewarmer
+          cp "$RUNNER_TEMP/release-worker.BUILD" test/rbe/release_prewarmer/BUILD
+          python3 -EBs "$RUNNER_TEMP/debian_release.py" setup
+          d="$RUNNER_TEMP/lean-delivery"
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' --max-time 100 https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-x86_64 -o "$d/bb"
+          echo "205fb4074012858c858ec357cb0cf1ed0b1fbf8707c5f385efd4abd52bb2cead  $d/bb" | sha256sum -c -
+          chmod 755 "$d/bb"
+      - name: Build and inspect AMD64 and ARM64 packages on the empty AMD64 worker
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          d="$RUNNER_TEMP/lean-delivery"
+          rc="$d/private.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          test -n "$BUILDBUDDY_API_KEY"
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          verdict=0
+          for arch in amd64 arm64; do
+            env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" GITHUB_RUN_ID="$GITHUB_RUN_ID" python3 -EBs "$RUNNER_TEMP/debian_release.py" "$arch" || verdict=1
+          done
+          exit "$verdict"
+      - name: Check the two bounded receipts
+        if: always()
+        id: receipt
+        run: |
+          set -euo pipefail
+          test ! -e "$RUNNER_TEMP/lean-delivery/private.bazelrc"
+          python3 - <<'PYTHON'
+          import json, os, pathlib, re
+          d = pathlib.Path(os.environ["RUNNER_TEMP"]) / "lean-delivery"
+          files = [d / "amd64.json", d / "arm64.json"]
+          assert any(p.is_file() for p in files)
+          for p in files:
+              if p.exists():
+                  assert p.is_file() and not p.is_symlink() and p.stat().st_size < 30000
+                  raw = p.read_bytes()
+                  assert not re.search(rb"(?i)x-buildbuddy-api-key|authorization\s*[:=]|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}", raw)
+                  receipt = json.loads(raw)
+                  assert receipt["source"] == "224fdf968222fd45d5af77f671b7b52c2e278ebe"
+                  assert receipt["arch"] == p.stem
+          PYTHON
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.receipt.outcome == 'success'
+        with:
+          name: public-debian-package-results
+          path: |
+            ${{ runner.temp }}/lean-delivery/amd64.json
+            ${{ runner.temp }}/lean-delivery/arm64.json
+          retention-days: 14
