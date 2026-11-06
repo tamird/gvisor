@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T06:07:33.401634Z",
+    "updatedAt": "2026-11-06T06:48:31.766413Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4845,8 +4845,8 @@
       "url": "https://github.com/tamird/gvisor/commit/9310f06f9",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Replace Coral GCC with hermetic-llvm for AMD64 and ARM64 releases. gVisor d5fe3c2ee uses the static C runtime on supplier be935b828 and removes the local unwinder and Linux-header patches. The shell-free AMD64 worker ran Nogo and linked both public ARM64 race binaries. All five installed files matched on native ARM64, where the Sentry ran a systrap guest.\n\nOn supplier main d01e636de, the first four #768 commits supply the C runtime. Three updated source lookups, libresolv.a for cgo DNS, and the LLVM unwinder for pthread cancellation passed their native ARM64 checks. The earlier 0.8.24-based release used the C runtime with a failing libstdc++.a placeholder.\n\nBoth public AMD64 race binaries also linked on 333d010a9. The installed static GNU TLDK Sentry exchanged TCP and UDP on native AMD64 on b317c6e36.",
-      "updatedAt": "2026-11-06T05:50:44.014972Z",
+      "summary": "Replace Coral GCC with hermetic-llvm for AMD64 and ARM64 releases. gVisor d5fe3c2ee uses the static C runtime on supplier be935b828 and removes its local unwinder and Linux-header patches.\n\nA Linux Bazel client drove each cross-build. The shell-free AMD64 worker ran Nogo and linked the two public ARM64 race binaries. The shell-free ARM64 worker ran Nogo and linked the two AMD64 binaries. Both pairs of links ran uncached. Each native target runner verified all five installed files and ran a systrap guest with its matching Sentry.\n\nThe supplier uses the first four static C commits from #768, the per-version glibc sources, libresolv.a for cgo DNS, and the LLVM unwinder for pthread cancellation. The earlier 0.8.24 release passed with an unavailable static C++ runtime. On b317c6e36 the static GNU TLDK Sentry exchanged TCP and UDP on native AMD64.",
+      "updatedAt": "2026-11-06T06:43:56.321915Z",
       "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
       "evidence": [
         {
@@ -5280,6 +5280,18 @@
         {
           "label": "Five matching installed files and native ARM64 systrap guest",
           "url": "https://github.com/tamird/gvisor/actions/runs/42168301478/artifacts/13480568715"
+        },
+        {
+          "label": "Uncached AMD64 race links and x86-target Nogo on the shell-free ARM64 worker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42172691284/artifacts/13483092284"
+        },
+        {
+          "label": "Five matching installed files and native AMD64 systrap guest",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42172691284/artifacts/13483037329"
+        },
+        {
+          "label": "ARM64 worker’s original Bazel invocation for the AMD64 release",
+          "url": "https://app.buildbuddy.io/invocation/31a729dd-af14-48c7-8e2a-a753b09ba34c"
         }
       ],
       "refinement": {
@@ -5312,8 +5324,8 @@
       "followup": {
         "owner": "Compiler integration",
         "sourceHead": "9310f06f95b100725450a71fbb896fc8403ec0eb",
-        "disposition": "The cross-built ARM64 race installation passed on native ARM64 using the current C-only supplier. gVisor removed both local backports in the tested consumer.",
-        "observedAt": "2026-11-06T05:50:44.014972Z",
+        "disposition": "Both public race releases cross-built on workers of the other architecture with the current C-only supplier. Both native target runners verified the five delivered files and ran systrap.",
+        "observedAt": "2026-11-06T06:43:56.321915Z",
         "nextAction": "Follow the C runtime portion of hermetic-llvm #768. The gVisor compiler switch waits for the sidecar rule (#16522), its systrap stub consumer (#17067), systrap offsets (#16516), and the vDSO rule (#16586).",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
@@ -5424,7 +5436,10 @@
           "https://github.com/tamird/hermetic-llvm/actions/runs/42167414456/artifacts/13480260561",
           "https://github.com/tamird/gvisor/commit/d5fe3c2ee",
           "https://github.com/tamird/gvisor/actions/runs/42168301478/artifacts/13480633265",
-          "https://github.com/tamird/gvisor/actions/runs/42168301478/artifacts/13480568715"
+          "https://github.com/tamird/gvisor/actions/runs/42168301478/artifacts/13480568715",
+          "https://github.com/tamird/gvisor/actions/runs/42172691284/artifacts/13483092284",
+          "https://github.com/tamird/gvisor/actions/runs/42172691284/artifacts/13483037329",
+          "https://app.buildbuddy.io/invocation/31a729dd-af14-48c7-8e2a-a753b09ba34c"
         ]
       }
     },
@@ -37676,8 +37691,8 @@
       "url": "https://github.com/tamird/rules_pkg/commit/1702e63c4",
       "group": "bazel",
       "status": "Withdrawn",
-      "summary": "The archive-specific workaround was not submitted. With rules_python 2.4.5, a plain Python action and the unchanged ZIP writer have identical host bootstrap requirements. The existing rules_pkg CI already runs the ZIP tests; its examples need no new Python dependency.",
-      "updatedAt": "2026-10-29T20:38:34.195870+00:00",
+      "summary": "The archive-specific workaround was not submitted. With rules_python 2.4.5, a plain Python action and the unchanged ZIP writer have identical host bootstrap requirements. The existing rules_pkg CI already runs the ZIP tests; its examples need no new Python dependency. The scratch tar, Debian and relocation prototypes used a native first-stage launcher on top of rules_python #4183. That draft alone did not provide the launcher used in those builds. rules_python 2.5.0-rc0 still offers the script and system-Python bootstrap choices. The native tool in #4216 creates executable ZIPs.",
+      "updatedAt": "2026-11-06T06:48:31.766413Z",
       "evidence": [
         {
           "label": "Stock Linux ZIP archives",
@@ -37706,19 +37721,44 @@
         {
           "label": "Upstream discussion of native bootstrap requirements",
           "url": "https://github.com/bazel-contrib/rules_python/issues/3794#issuecomment-4585546768"
+        },
+        {
+          "label": "Original tar, Debian package and relocation results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/40806036191/artifacts/12867624535"
+        },
+        {
+          "label": "Original package invocation",
+          "url": "https://app.buildbuddy.io/invocation/813b647f-0118-4b22-9e90-4fadd8dae6c3"
+        },
+        {
+          "label": "Native first-stage launcher override used in the prototypes",
+          "url": "https://github.com/tamird/gvisor/blob/2c71fe0cd/MODULE.bazel#L40-L48"
+        },
+        {
+          "label": "Bootstrap choices in rules_python 2.5.0-rc0",
+          "url": "https://github.com/bazel-contrib/rules_python/blob/6fee02b2b/python/private/flags.bzl#L174-L178"
+        },
+        {
+          "label": "Executable Python ZIP creation",
+          "url": "https://github.com/bazel-contrib/rules_python/pull/4216"
         }
       ],
       "inactive": true,
       "followup": {
         "owner": "root",
         "sourceHead": "1702e63c4673bf8c00df82a1613c2359895fbe20",
-        "observedAt": "2026-10-29T20:38:34.195870+00:00",
+        "observedAt": "2026-11-06T06:48:31.766413Z",
         "disposition": "Withdrawn",
-        "nextAction": "Assess the general Python launcher in the scratch-build investigation. No contributor action is pending.",
+        "nextAction": "The scratch packaging investigation owns ordinary Python tool startup. This archive-specific proposal is withdrawn.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/40950484790",
           "https://github.com/bazelbuild/rules_pkg/blob/01446201f/.bazelci/tests.yml#L22-L40",
-          "https://github.com/bazel-contrib/rules_python/issues/3794#issuecomment-4585546768"
+          "https://github.com/bazel-contrib/rules_python/issues/3794#issuecomment-4585546768",
+          "https://github.com/tamird/gvisor/actions/runs/40806036191/artifacts/12867624535",
+          "https://app.buildbuddy.io/invocation/813b647f-0118-4b22-9e90-4fadd8dae6c3",
+          "https://github.com/tamird/gvisor/blob/2c71fe0cd/MODULE.bazel#L40-L48",
+          "https://github.com/bazel-contrib/rules_python/blob/6fee02b2b/python/private/flags.bzl#L174-L178",
+          "https://github.com/bazel-contrib/rules_python/pull/4216"
         ]
       }
     },
@@ -52992,6 +53032,47 @@
         "summary": "Post the two inline comments together on Ayush’s draft. The first belongs at pkg/tcpip/transport/tcp/rcv.go:84 and the second at pkg/tcpip/transport/tcp/snd.go:1909, both on the right side of the diff.",
         "body": "pkg/tcpip/transport/tcp/rcv.go:84\n\nCould we send the cumulative ACK immediately when a segment fills the last receive gap? By the time this condition runs, the queue is empty. After the 16 quick ACKs, the [packet test](https://github.com/tamird/gvisor/commit/79dc3a63d) sent byte 807 before byte 806. On this head, ACK 808 waited 40 ms after byte 806 arrived. The [four-line change](https://github.com/tamird/gvisor/commit/aa0c1c8cc) sent ACK 808 immediately and still delayed the ordinary in-order ACK for 40 ms. [Packet traces](https://github.com/tamird/gvisor/actions/runs/42165403428/artifacts/13478877935) · [RFC 5681 §4.2](https://www.rfc-editor.org/rfc/rfc5681#section-4.2).\n\npkg/tcpip/transport/tcp/snd.go:1909\n\nCould we keep the ACK pending if the link accepts no packet carrying it? Here `MaxSentAck` advances and the timer stops before `sendRaw` reports whether anything went out. In this [packet test](https://github.com/tamird/gvisor/commit/ef3c057c1), the link rejects the one-byte response with `ErrNoBufferSpace` but accepts pure ACKs. The socket stayed established and sent no ACK by 40 ms. With the write accepted, the response carried the ACK and no extra packet was needed. [Packet traces](https://github.com/tamird/gvisor/actions/runs/42166057647/artifacts/13478329386).\n\nReview body:\nSubmitted by Codex on behalf of @tamird."
       }
+    },
+    {
+      "id": "branch:native-install-archive",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/native-install-archive",
+      "head": "e77cb0cd69301da42cd45d8651d94cd6d700e12f",
+      "title": "Lead the Linux installation guide with the Bazel archive",
+      "url": "https://github.com/tamird/gvisor/commit/e77cb0cd6",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T06:48:31.766413Z",
+      "summary": "Build the bzip2 runtime archive directly with Bazelisk on Linux. The installation includes runsc, its Sentry, shim and sidecars. Docker remains an option. The documentation can land after #16753 selects only the host architecture’s generators.",
+      "evidence": [
+        {
+          "label": "Native AMD64 build, nine executables and systrap guest",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42175442583/artifacts/13482599775"
+        },
+        {
+          "label": "Native ARM64 build, nine executables and systrap guest",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42174590321/artifacts/13482448479"
+        },
+        {
+          "label": "Stock ARM64 build requested x86_64-linux-gnu-gcc",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42173048776/artifacts/13481609279"
+        },
+        {
+          "label": "README used for the native command and guest checks",
+          "url": "https://github.com/tamird/gvisor/commit/a1b8ee4af"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "e77cb0cd69301da42cd45d8651d94cd6d700e12f",
+        "url": "https://github.com/tamird/gvisor/commit/e77cb0cd6",
+        "requestedAt": "2026-11-06T06:48:31.766413Z",
+        "title": "Open the Linux installation guide PR after #16753",
+        "summary": "On native AMD64 and ARM64, the documented command built nine executables with only the host GNU tools and Docker stopped. Each installed Sentry ran a guest under systrap. Stock ARM64 failed looking for an x86 cross-compiler. Both runs used a1b8ee4af; the final text names Bazelisk and clarifies the Linux 5.6+ build-host requirement.",
+        "body": "Installing runsc needs one archive with its Sentry, containerd shim and\nsidecars. The Docker Make target also builds the zstd archive and copies\nboth outputs. Show Linux developers how to build and extract the bzip2\narchive directly with Bazel, and keep the Docker workflow as an option.\n\nThe systrap and vDSO generators select the requested architecture, so a\nnative build can use the host’s GNU tools."
+      }
     }
   ],
   "edges": [
@@ -56687,6 +56768,17 @@
       "type": "depends_on",
       "reason": "The approved amendment 7f6ecfff6 uses the freestanding link rule from #16522. Publish it after #16522 lands.",
       "evidence": "https://github.com/tamird/gvisor/commit/7f6ecfff6"
+    },
+    {
+      "type": "depends_on",
+      "from": "pr:16753",
+      "to": "branch:native-install-archive",
+      "reason": "Stock ARM64 tries to invoke an x86 GNU compiler. Selecting only target-architecture generators makes the documented build work with just native GNU tools.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/16753",
+        "https://github.com/tamird/gvisor/actions/runs/42174590321/artifacts/13482448479",
+        "https://github.com/tamird/gvisor/actions/runs/42173048776/artifacts/13481609279"
+      ]
     }
   ],
   "investigations": [
@@ -75327,5 +75419,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-06T06:07:33.401634Z"
+  "updatedAt": "2026-11-06T06:48:31.766413Z"
 }
