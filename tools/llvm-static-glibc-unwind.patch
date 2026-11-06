@@ -1,0 +1,83 @@
+diff --git a/runtimes/libunwind/BUILD.bazel b/runtimes/libunwind/BUILD.bazel
+index 420949c..0016086 100644
+--- a/runtimes/libunwind/BUILD.bazel
++++ b/runtimes/libunwind/BUILD.bazel
+@@ -1,3 +1,4 @@
++load("@bazel_lib//lib:copy_file.bzl", "copy_file")
+ load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+ load("//runtimes:defs.bzl", "stub_library")
+ 
+@@ -30,13 +31,26 @@ config_setting(
+     },
+ )
+ 
++# glibc uses the unwinder for pthread cancellation, including in C programs.
++copy_file(
++    name = "static_unwind",
++    src = ":libunwind.static",
++    out = "static/libunwind.a",
++    allow_symlink = True,
++)
++
+ copy_to_directory(
+     name = "libunwind_library_search_directory",
+-    srcs = [
+-        ":unwind",
+-    ] + select({
++    srcs = select({
++        "//toolchain:static_glibc_runtime": [":static_unwind"],
++        "//conditions:default": [":unwind"],
++    }) + select({
+         ":stub_libgcc_s": [":gcc_s"],
+         "//conditions:default": [],
+     }),
++    root_paths = [
++        ".",
++        "runtimes/libunwind/static",
++    ],
+     visibility = ["//visibility:public"],
+ )
+diff --git a/toolchain/BUILD.bazel b/toolchain/BUILD.bazel
+index f7efc96..fc44cf3 100644
+--- a/toolchain/BUILD.bazel
++++ b/toolchain/BUILD.bazel
+@@ -57,6 +57,14 @@ string_flag(
+     visibility = ["//visibility:public"],
+ )
+ 
++# libunwind itself builds with the stage0 toolchain.
++config_setting(
++    name = "static_glibc_runtime",
++    constraint_values = ["//constraints/glibc_linkage:static"],
++    flag_values = {":runtime_stage": "complete"},
++    visibility = ["//visibility:public"],
++)
++
+ config_setting(
+     name = "runtimes_all",
+     flag_values = {
+@@ -270,6 +278,7 @@ cc_args_list(
+ cc_args_list(
+     name = "unwindlib",
+     args = select({
++        ":static_glibc_runtime": ["//toolchain/args:unwindlib_compiler_rt"],
+         "@platforms//os:windows": ["//toolchain/args/windows:unwindlib"],
+         "//conditions:default": ["//toolchain/args:unwindlib_none"],
+     }),
+diff --git a/toolchain/args/BUILD.bazel b/toolchain/args/BUILD.bazel
+index 99c8ad6..de74cc2 100644
+--- a/toolchain/args/BUILD.bazel
++++ b/toolchain/args/BUILD.bazel
+@@ -1007,6 +1007,12 @@ cc_args(
+     ],
+ )
+ 
++cc_args(
++    name = "unwindlib_compiler_rt",
++    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
++    args = ["--unwindlib=libunwind"],
++)
++
+ cc_args(
+     name = "unwindlib_none",
+     actions = [
