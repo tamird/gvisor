@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T12:18:32.411Z",
+    "updatedAt": "2026-11-06T12:58:13.738Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -51853,13 +51853,13 @@
       "repo": "google/gvisor",
       "number": 17022,
       "ref": "carry-14458-spurious-recovery",
-      "head": "c02d0940fd57e7c31432c81164f3e58f41795286",
+      "head": "7e3d55e35d58bfc8c63bdf5582b36e50bc5824dc",
       "title": "Review the slow-start threshold after a spurious timeout",
       "url": "https://github.com/google/gvisor/pull/17022",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T09:31:33.637Z",
-      "summary": "On the revised sender, a spurious five-packet timeout preserves the initial slow-start threshold and sets the congestion window to four packets. The two-packet case restores its prior threshold of 2. The same five-packet test on the previous revision restored a threshold of 5.",
+      "updatedAt": "2026-11-06T12:58:13.738Z",
+      "summary": "The author revised #17022 to preserve Reno’s response when it detects a real loss after Eifel has identified a spurious recovery. With #16851, both timeout and RACK loss now leave the slow-start threshold at 2 packets. The previous revision restored the unlimited threshold. Two timeouts before detection still distinguish an ACK of the original transmission from an ACK of its repair. On #17022 alone, a tail probe that repairs real loss now leaves the threshold at 2 packets instead of 13.",
       "evidence": [
         {
           "label": "Pre-loss capture in the proposed sender",
@@ -51892,6 +51892,14 @@
         {
           "label": "Identical five-packet test on both revisions and all ten named records on the new head",
           "url": "https://github.com/tamird/gvisor/actions/runs/42194565719/artifacts/13491802727"
+        },
+        {
+          "label": "Author’s revision and explanation",
+          "url": "https://github.com/google/gvisor/pull/17022#issuecomment-6684884560"
+        },
+        {
+          "label": "Standalone and stacked packet replays on the revised and preceding heads",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42220388804/artifacts/13504305289"
         }
       ],
       "settledReviews": [
@@ -51914,29 +51922,29 @@
           "outcome": "approved",
           "at": "2026-11-05T16:22:15Z",
           "postedURL": "https://github.com/google/gvisor/pull/17022#discussion_r4483000252"
+        },
+        {
+          "kind": "reply",
+          "head": "c02d0940fd57e7c31432c81164f3e58f41795286",
+          "url": "https://github.com/google/gvisor/pull/17022#discussion_r4490860289",
+          "title": "Confirm the revised timeout result on #17022",
+          "body": "Thanks, Aditya. This addresses my concern. I ran the same five-packet test on both revisions. The earlier sender restored a threshold of 5. On c02d0940f the initial threshold survived and cwnd was 4. The two-packet case still restored 2. [Packet tests](https://github.com/tamird/gvisor/actions/runs/42194565719/artifacts/13491802727)\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "superseded",
+          "at": "2026-11-06T12:58:13.738Z"
         }
       ],
       "followup": {
         "owner": "TCP review",
-        "sourceHead": "c02d0940fd57e7c31432c81164f3e58f41795286",
-        "providerHead": "c02d0940fd57e7c31432c81164f3e58f41795286",
-        "observedAt": "2026-11-06T09:31:33.637Z",
-        "disposition": "The revised sender addresses the threshold review. All ten focused packet-test records passed on the author’s head.",
-        "nextAction": "Post the proposed acknowledgment on the original thread after contributor approval. GitHub reports that @tamird cannot resolve the thread.",
+        "sourceHead": "7e3d55e35d58bfc8c63bdf5582b36e50bc5824dc",
+        "providerHead": "7e3d55e35d58bfc8c63bdf5582b36e50bc5824dc",
+        "observedAt": "2026-11-06T12:58:13.738Z",
+        "disposition": "The author addressed the finding. The earlier acknowledgement on the previous head is superseded.",
+        "nextAction": "Follow maintainer review and import. The living TCP issue records the packet results.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17022#discussion_r4490860289",
-          "https://github.com/tamird/gvisor/actions/runs/42194565719/artifacts/13491802727"
+          "https://github.com/google/gvisor/pull/17022#issuecomment-6684884560",
+          "https://github.com/tamird/gvisor/actions/runs/42220388804/artifacts/13504305289",
+          "https://github.com/google/gvisor/issues/16670"
         ]
-      },
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "head": "c02d0940fd57e7c31432c81164f3e58f41795286",
-        "url": "https://github.com/google/gvisor/pull/17022#discussion_r4490860289",
-        "title": "Confirm the revised timeout result on #17022",
-        "summary": "Post once on our original thread to confirm the five-packet and two-packet results. GitHub reports that @tamird cannot mark this thread resolved.",
-        "body": "Thanks, Aditya. This addresses my concern. I ran the same five-packet test on both revisions. The earlier sender restored a threshold of 5. On c02d0940f the initial threshold survived and cwnd was 4. The two-packet case still restored 2. [Packet tests](https://github.com/tamird/gvisor/actions/runs/42194565719/artifacts/13491802727)\n\nPosted by Codex on behalf of @tamird.",
-        "requestedAt": "2026-11-06T09:31:33.637Z"
       }
     },
     {
