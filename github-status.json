@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-11-06T18:19:00.222303+00:00",
-  "registryDate": "2026-11-06T20:16:18.017Z",
+  "registryDate": "2026-11-06T20:22:14.946Z",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -338197,7 +338197,7 @@
         "since": "2026-11-04T05:00:25.863097+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "pr:16664": {
@@ -340119,14 +340119,14 @@
         "since": "2026-11-06T20:16:18.017Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:16:19.302244+00:00"
       },
       "maintainer-review": {
         "scope": "1de5b54a98a37c10fc0e71f7340df386ffaea4c3",
         "since": "2026-11-06T20:16:18.017Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:16:19.302244+00:00"
       }
     },
     "branch:builder-without-cross-compilers": {
@@ -340135,7 +340135,7 @@
         "since": "2026-10-31T16:57:06.135+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:bazel-python-release": {
@@ -340144,7 +340144,7 @@
         "since": "2026-10-30T16:55:14.197497+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -340153,7 +340153,7 @@
         "since": "2026-11-03T07:06:47.467598+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:rules-img-hackbench-image": {
@@ -340162,7 +340162,7 @@
         "since": "2026-11-03T04:16:24.163353+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:rules-img-wrk2-image": {
@@ -340171,7 +340171,7 @@
         "since": "2026-10-31T07:18:55.041730+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:state-destination-kind": {
@@ -340180,7 +340180,7 @@
         "since": "2026-11-05T15:27:44.402237Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:state-encoder-zero-dispatch": {
@@ -340189,7 +340189,7 @@
         "since": "2026-11-05T14:55:40.136006Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:state-decoder-dependencies": {
@@ -340198,7 +340198,7 @@
         "since": "2026-11-05T15:27:44.402237Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:plugin-toolchain-unwind": {
@@ -340207,7 +340207,7 @@
         "since": "2026-11-06T13:14:58.461Z",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:package-clang-format": {
@@ -340216,7 +340216,7 @@
         "since": "2026-11-02T08:21:11+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:declared-codespell": {
@@ -340225,7 +340225,7 @@
         "since": "2026-11-02T08:21:11+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:release-archives-versioned": {
@@ -340234,7 +340234,7 @@
         "since": "2026-10-31T10:28:33.920382+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:mutable-overlay-poll-waiter": {
@@ -340243,7 +340243,7 @@
         "since": "2026-11-05T19:38:10.552336Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:staged-release-tag": {
@@ -340252,7 +340252,7 @@
         "since": "2026-10-31T09:29:02.218795+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:native-gazelle-check": {
@@ -340261,7 +340261,7 @@
         "since": "2026-11-02T16:20:02.085486+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:checkpoint-memory-file-registration": {
@@ -340270,7 +340270,7 @@
         "since": "2026-10-31T18:05:07.150+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:hostinet-exit-linger": {
@@ -340279,7 +340279,16 @@
         "since": "2026-11-01T05:08:12.703055+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
+      }
+    },
+    "branch:semaphore-waiter-lock": {
+      "contributor-review": {
+        "scope": "0b655a94a96adaba21fe6e74a5325b06e88f017b",
+        "since": "2026-11-06T20:22:14.946Z",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:state-graph-object-frame-bounds": {
@@ -340288,7 +340297,7 @@
         "since": "2026-11-01T13:49:13.599008+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:state-graph-print-errors": {
@@ -340297,7 +340306,7 @@
         "since": "2026-11-02T22:54:43.336654+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "issue:16908": {
@@ -340306,7 +340315,7 @@
         "since": "2026-11-06T19:19:07.294Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:fdbased-start-on-attach": {
@@ -340315,7 +340324,7 @@
         "since": "2026-11-06T18:22:25.827Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:native-install-archive": {
@@ -340324,7 +340333,7 @@
         "since": "2026-11-06T16:20:27.112Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:buildkite-source-syscalls": {
@@ -340333,7 +340342,7 @@
         "since": "2026-11-06T14:13:12.896Z",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     },
     "branch:tcp-user-timeout-outstanding-flight": {
@@ -340342,7 +340351,16 @@
         "since": "2026-11-06T20:16:18.017Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T20:16:18.017Z"
+        "observedAt": "2026-11-06T20:22:14.946Z"
+      }
+    },
+    "branch:semaphore-clear-removed-waiters": {
+      "contributor-review": {
+        "scope": "317c232321bfa6eddbc2e657d5dc4172fa4d959f",
+        "since": "2026-11-06T20:22:14.946Z",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-06T20:22:14.946Z"
       }
     }
   },
@@ -342185,6 +342203,14 @@
       },
       "https://github.com/tamird/gvisor/commit/de11f9e09": {
         "head": "de11f9e09290b75ab5aa7291fb0d308244b72067",
+        "status": "Contributor review requested"
+      },
+      "https://github.com/tamird/gvisor/commit/0b655a94a": {
+        "head": "0b655a94a96adaba21fe6e74a5325b06e88f017b",
+        "status": "Contributor review requested"
+      },
+      "https://github.com/tamird/gvisor/commit/317c23232": {
+        "head": "317c232321bfa6eddbc2e657d5dc4172fa4d959f",
         "status": "Contributor review requested"
       }
     }

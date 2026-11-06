@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T20:16:18.017Z",
+    "updatedAt": "2026-11-06T20:22:14.946Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -45851,14 +45851,30 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/semaphore-waiter-lock",
-      "head": "b68f40e4e358798ba034116cdb4c8194bb1c7c07",
-      "title": "Check the mutex protecting semaphore waiters",
-      "url": "https://github.com/tamird/gvisor/commit/b68f40e4e",
+      "head": "0b655a94a96adaba21fe6e74a5325b06e88f017b",
+      "title": "Check the set lock when accessing SysV semaphores",
+      "url": "https://github.com/tamird/gvisor/commit/0b655a94a",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-06T16:48:35.207Z",
-      "summary": "Tamir asked to annotate sem.waiters and suggested giving sem a pointer to its owner’s mutex to keep the change small. The wakeup helper reads a semaphore value and removes waiters from its queue. Giving the helper its owning set lets checklocks verify the existing mutex at every call.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T20:22:14.946Z",
+      "summary": "Guard the existing Set.sems storage with Set.mu and keep each sem lookup inside the caller’s critical section. Nogo passed on both CPUs. Removing the lock before directly indexing a queue or value generated diagnostics on both CPUs; a pointer retained past unlock escaped the analyzer. The existing field layout and checkpoint format are preserved. The qualified stack also contained the independent removal fix. The guard applies identically to #16806 alone.",
       "evidence": [
+        {
+          "label": "Smallest existing-storage guard, direct negatives and Size exception",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42280280575/artifacts/13536444234"
+        },
+        {
+          "label": "Owner-pointer control produced 17 false diagnostics on each CPU",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42255265608/artifacts/13523131185"
+        },
+        {
+          "label": "Tested base with the independent destruction correction",
+          "url": "https://github.com/tamird/gvisor/commit/d9f9c4a0b"
+        },
+        {
+          "label": "Change since the earlier conditional contributor review",
+          "url": "https://github.com/tamird/gvisor/compare/b68f40e4e...0b655a94a"
+        },
         {
           "label": "Checklocks results on AMD64 and ARM64 with the mutex held and deliberately released",
           "url": "https://github.com/tamird/gvisor/actions/runs/41302709182/artifacts/13082132841"
@@ -45876,15 +45892,24 @@
           "note": "Tamir asked to annotate sem.waiters and suggested giving sem a pointer to its owner’s mutex to keep the change small."
         }
       ],
-      "followup": {
-        "owner": "Agent",
-        "sourceHead": "b68f40e4e358798ba034116cdb4c8194bb1c7c07",
-        "observedAt": "2026-11-06T16:48:35.207Z",
-        "disposition": "Tamir asked to annotate sem.waiters and suggested giving sem a pointer to its owner’s mutex to keep the change small.",
-        "nextAction": "Compare a field-level waiter guard using the owning mutex with the alternative representation. Check which accesses Nogo can prove.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/b68f40e4e"
-        ]
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "0b655a94a96adaba21fe6e74a5325b06e88f017b",
+        "baseHead": "b68f40e4e358798ba034116cdb4c8194bb1c7c07",
+        "url": "https://github.com/tamird/gvisor/commit/0b655a94a",
+        "title": "Check the set lock when accessing SysV semaphores",
+        "body": "Waking a waiter reads the semaphore value and removes the waiter from\nits queue. Direct access to those elements previously went unchecked\nbecause checklocks could not associate each sem with its owning set.\n\nGuard the existing slice with the set mutex and require the lock to\nlook up a member or wake its waiters. Size can read the length without\nthe lock because a semaphore set cannot be resized.",
+        "requestedAt": "2026-11-06T20:22:14.946Z",
+        "summary": "Open the lock-contract change after #16806 lands. The separate waiter-removal change is independently applicable."
+      },
+      "refinement": {
+        "before": {
+          "head": "b68f40e4e358798ba034116cdb4c8194bb1c7c07"
+        },
+        "after": {
+          "head": "0b655a94a96adaba21fe6e74a5325b06e88f017b"
+        }
       }
     },
     {
@@ -55687,6 +55712,44 @@
           "at": "2026-11-06T20:16:18.017Z",
           "note": "Contributor approved this standalone source for submission. Published as #17123 at the exact approved head.",
           "postedURL": "https://github.com/google/gvisor/pull/17123"
+        }
+      ]
+    },
+    {
+      "id": "branch:semaphore-clear-removed-waiters",
+      "group": "runtime",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/semaphore-clear-removed-waiters",
+      "head": "317c232321bfa6eddbc2e657d5dc4172fa4d959f",
+      "url": "https://github.com/tamird/gvisor/commit/317c23232",
+      "title": "Clear the semaphore waiter lists on removal",
+      "summary": "Removing a SysV semaphore set notified all five waiters in the regression. Resetting a copied list left all five attached to the removed Set object. The correction reset its actual waiter queues and left zero entries. This retention is visible to code holding the removed Set; ordinary semctl queries cannot inspect it.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T20:22:14.946Z",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "317c232321bfa6eddbc2e657d5dc4172fa4d959f",
+        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+        "url": "https://github.com/tamird/gvisor/commit/317c23232",
+        "title": "Clear the semaphore waiter lists on removal",
+        "body": "Destroy wakes every blocked caller, but its range loop copies each\nsemaphore. Reset clears the copy. A reference to the removed set still\nsees every waiter after they were notified. Reset the list in the set\nitself.\n\nGive the TestUnregister fixture mode 0600 so its owner can read the\nwaiter count after removal. The old hexadecimal 0x600 sets no read or\nwrite permission bits.",
+        "requestedAt": "2026-11-06T20:22:14.946Z",
+        "summary": "Open this standalone correction on master. Its regression checks both the notifications and the removed set’s retained queues."
+      },
+      "evidence": [
+        {
+          "label": "Original and corrected TestUnregister results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42271680689/artifacts/13528724296"
+        },
+        {
+          "label": "Seven host Linux syscall controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42279386904/artifacts/13533439729"
+        },
+        {
+          "label": "Sentry semaphore wake, signal and removal controls on the composed changes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42272487181/artifacts/13533338658"
         }
       ]
     }
