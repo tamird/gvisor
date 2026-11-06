@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T13:53:01.710Z",
+    "updatedAt": "2026-11-06T14:13:12.896Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -53189,14 +53189,22 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/fdbased-start-on-attach",
-      "head": "4e0324239c7e64cb4d1cb12e804603aa85a963f3",
-      "title": "Start packet processors when the endpoint is attached",
-      "url": "https://github.com/tamird/gvisor/commit/4e0324239",
+      "head": "c0e6b2876b97d87503e115d87c905c45926245b9",
+      "title": "Give each receive loop its own packet processors",
+      "url": "https://github.com/tamird/gvisor/commit/c0e6b2876",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-06T13:53:01.710Z",
-      "summary": "The contributor asked to remove startOnce by making one owner responsible for the receive workers’ lifetime. The receive loop drains a single queue itself after each batch. Only managers with multiple queues need worker goroutines and wakers. Ten Linux cases passed on this source, including the one-processor packet-ring case. The earlier stock failure and race run apply to the preceding revision.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T14:13:12.896Z",
+      "summary": "The receive loop creates and stops its own workers. A single queue drains inline. Closing an unattached endpoint starts no workers. Eleven native receive cases and both live-checkpoint cases passed. Both the previous revision and this one panicked during a namespace move in Readv and RecvMMsg while releasing a buffer. That separate result limits what the tests establish about moves.",
       "evidence": [
+        {
+          "label": "Changes since the contributor requested removal of startOnce",
+          "url": "https://github.com/tamird/gvisor/compare/4e0324239...c0e6b2876"
+        },
+        {
+          "label": "Native receive, live checkpoint, and namespace move results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42230964441/artifacts/13510400372"
+        },
         {
           "label": "Changes since the contributor review",
           "url": "https://github.com/tamird/gvisor/compare/8311cfcae...4e0324239"
@@ -53247,35 +53255,35 @@
       ],
       "refinement": {
         "before": {
-          "head": "8311cfcaedcaf8dfbd221e0a09ef4ff4fd36af37"
+          "head": "4e0324239c7e64cb4d1cb12e804603aa85a963f3"
         },
         "after": {
-          "head": "4e0324239c7e64cb4d1cb12e804603aa85a963f3"
+          "head": "c0e6b2876b97d87503e115d87c905c45926245b9"
         }
       },
-      "contributorChangesRequested": {
-        "head": "4e0324239c7e64cb4d1cb12e804603aa85a963f3",
-        "url": "https://github.com/tamird/gvisor/commit/4e0324239"
-      },
-      "followup": {
-        "owner": "Agent",
-        "sourceHead": "4e0324239c7e64cb4d1cb12e804603aa85a963f3",
-        "observedAt": "2026-11-06T13:53:01.710Z",
-        "disposition": "The contributor asked to remove startOnce by making one owner responsible for the receive workers’ lifetime.",
-        "nextAction": "Revise worker ownership so attachment and detachment determine whether the workers exist. Check the single-processor and reattachment cases."
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "c0e6b2876b97d87503e115d87c905c45926245b9",
+        "baseHead": "1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d",
+        "url": "https://github.com/tamird/gvisor/commit/c0e6b2876",
+        "requestedAt": "2026-11-06T14:13:12.896Z",
+        "title": "fdbased: give each receive loop its own packet processors",
+        "body": "Closing an endpoint before attaching it to a NIC leaves its receive\nprocessors asleep. New starts the goroutines, but only the receive\nloop wakes them on exit. An unattached endpoint never runs that loop.\n\nCreate the queues in the receive loop and signal its workers to stop\nwhen it returns. Saving a live endpoint leaves that loop running.\nEach loop uses its own sleepers and the dispatcher passed to Attach.\nA channel with one processor still delivers its packets inline.",
+        "summary": "May I open the revised FD endpoint worker-lifetime PR? Each attached receive loop now owns its workers, and its single-processor case still dispatches inline. Native packet delivery and live save passed. Both versions hit the same buffer-release panic on a namespace move.\n\ngit -C ~/code/gvisor range-diff 4e0324239^! c0e6b2876^!"
       }
     },
     {
-      "id": "branch:packet-mmap-host-pages",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:17110",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "proposal/packet-mmap-host-pages",
       "head": "dec1b82660c2974f5b98b2c5ab88d0857b34adb8",
       "title": "Align packet ring blocks to the host page size",
-      "url": "https://github.com/tamird/gvisor/commit/dec1b8266",
+      "url": "https://github.com/google/gvisor/pull/17110",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T04:55:09.086169Z",
+      "status": "open",
+      "updatedAt": "2026-11-06T14:13:12.896Z",
       "summary": "On a 64 KiB ARM64 Linux kernel, fdbased.PacketMMap rejects its own block size before asking Linux to allocate the ring. Rounding the block from 2,101,248 to 2,162,688 bytes let the receiver deliver 40 UDP datagrams through its 32-frame ring. On native AMD64 with 4 KiB pages, both versions used the same 2,101,248-byte block and delivered all 40. This affects callers selecting PacketMMap on an AF_PACKET socket. Normal runsc boot selects RecvMMsg.",
       "evidence": [
         {
@@ -53299,16 +53307,19 @@
           "url": "https://app.buildbuddy.io/invocation/7c8476c8-f9f3-4595-8411-57ca9d81adfd"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "dec1b82660c2974f5b98b2c5ab88d0857b34adb8",
-        "url": "https://github.com/tamird/gvisor/commit/dec1b8266",
-        "requestedAt": "2026-11-06T04:55:09.086169Z",
-        "title": "Open the PacketMMap host-page fix",
-        "summary": "On a 64 KiB ARM64 Linux kernel, fdbased.PacketMMap rejects its own block size before asking Linux to allocate the ring. Rounding the block from 2,101,248 to 2,162,688 bytes let the receiver deliver 40 UDP datagrams through its 32-frame ring. On native AMD64 with 4 KiB pages, both versions used the same 2,101,248-byte block and delivered all 40. This affects callers selecting PacketMMap on an AF_PACKET socket. Normal runsc boot selects RecvMMsg.",
-        "body": "The fd-based PacketMMap receiver needs 32 frames of 65,664 bytes.\nTheir combined size is a multiple of 4 KiB, but not 64 KiB. On a\n64 KiB host the endpoint rejects its own ring size before asking Linux\nto allocate the ring.\n\nRound the single block up to a host page and map the entire block.\nThe padding is smaller than a frame, so Linux still counts 32 frames\nand the receiver can use the same offsets on both hosts."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "dec1b82660c2974f5b98b2c5ab88d0857b34adb8",
+          "url": "https://github.com/tamird/gvisor/commit/dec1b8266",
+          "title": "Open the PacketMMap host-page fix",
+          "body": "The fd-based PacketMMap receiver needs 32 frames of 65,664 bytes.\nTheir combined size is a multiple of 4 KiB, but not 64 KiB. On a\n64 KiB host the endpoint rejects its own ring size before asking Linux\nto allocate the ring.\n\nRound the single block up to a host page and map the entire block.\nThe padding is smaller than a frame, so Linux still counts 32 frames\nand the receiver can use the same offsets on both hosts.",
+          "outcome": "approved",
+          "at": "2026-11-06T14:13:12.896Z",
+          "note": "Published as #17110 at the reviewed commit."
+        }
+      ],
+      "number": 17110
     },
     {
       "id": "branch:pure-go-source-generators",
@@ -54389,12 +54400,12 @@
       "repo": "tamird/gvisor",
       "ref": "proposal/buildkite-source-syscalls",
       "head": "e46a101fc0aebb325ec25977697a012a2e11a11b",
-      "title": "Run source-only syscall jobs directly with Bazel",
+      "title": "Run source syscall tests in one Bazel invocation on RBE",
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T13:53:01.710Z",
-      "summary": "Six Buildkite jobs test a runtime built from source. They can use the runtime and Sentry from Bazel runfiles. The offline Buildkite Agent compared all eight syscall job definitions. Both AMD64 jobs that accept staged binaries kept their existing commands.\n\nOn native AMD64 Linux with Docker stopped, master tried to compile the ARM64 systrap stub with a missing cross-compiler. With only #16753 added, two disjoint partitions ran all 11 eventfd cases and all four host-FIFO read/write cases. All four test actions ran uncached in the Linux sandbox without mounting the host’s /tmp. The source-only jobs use the native Bazelisk setup in #16904. The ARM64, 64 KiB page and save-mode step definitions were checked by the pipeline parser.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-06T14:13:12.896Z",
+      "summary": "Buildkite currently assigns syscall target groups and configurations to separate jobs. The contributor wants Bazel to select the execution requirements for each test in one invocation on RBE. The six-job patch was withdrawn.\n\nThe earlier experiment covered 15 native AMD64 syscall cases across two partitions with Docker stopped. The two staged-binary jobs retained their commands in that experiment.",
       "evidence": [
         {
           "label": "Exact source and reviewed pipeline selectors",
@@ -54417,16 +54428,29 @@
           "url": "https://github.com/google/gvisor/pull/17105"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "e46a101fc0aebb325ec25977697a012a2e11a11b",
+          "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+          "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
+          "title": "Run source-only syscall jobs directly with Bazel",
+          "body": "Six Buildkite syscall jobs only test a runtime built from source. They\nstart the Docker builder through Make even though the test runner\nalready declares its runtime and sidecars.\n\nRun Bazel on the agent for those jobs. Pass the kernel release and\npartition to Bazel so cached results belong to the right worker and\nshard. Keep the build event file used to report failures. The two\nAMD64 jobs that accept a staged release still use Make to install it.",
+          "outcome": "changes-requested",
+          "at": "2026-11-06T14:13:12.896Z",
+          "note": "The contributor rejected a separate Buildkite job for each source-test configuration and requested one Bazel invocation spanning the targets and configurations on RBE."
+        }
+      ],
+      "contributorChangesRequested": {
         "head": "e46a101fc0aebb325ec25977697a012a2e11a11b",
-        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
-        "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
-        "requestedAt": "2026-11-06T13:53:01.710Z",
-        "title": "Run source-only syscall jobs directly with Bazel",
-        "summary": "May I open this change after #16904 and #16753 land? Six source-only Buildkite jobs would call Bazel directly. Two AMD64 jobs that also accept staged binaries keep their Make command.",
-        "body": "Six Buildkite syscall jobs only test a runtime built from source. They\nstart the Docker builder through Make even though the test runner\nalready declares its runtime and sidecars.\n\nRun Bazel on the agent for those jobs. Pass the kernel release and\npartition to Bazel so cached results belong to the right worker and\nshard. Keep the build event file used to report failures. The two\nAMD64 jobs that accept a staged release still use Make to install it."
+        "url": "https://github.com/tamird/gvisor/commit/e46a101fc"
+      },
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "e46a101fc0aebb325ec25977697a012a2e11a11b",
+        "observedAt": "2026-11-06T14:13:12.896Z",
+        "disposition": "The contributor rejected a separate Buildkite job for each source-test configuration and requested one Bazel invocation spanning the targets and configurations on RBE.",
+        "nextAction": "Identify the Bazel targets and execution-platform requirements needed to run the source configurations together. Account separately for callers that supply staged binaries."
       }
     }
   ],
@@ -58111,20 +58135,6 @@
         "https://github.com/tamird/gvisor/actions/runs/42174590321/artifacts/13482448479",
         "https://github.com/tamird/gvisor/actions/runs/42173048776/artifacts/13481609279"
       ]
-    },
-    {
-      "from": "pr:16904",
-      "to": "branch:buildkite-source-syscalls",
-      "type": "depends_on",
-      "reason": "The source jobs use the native Bazelisk setup selected by DOCKER_BUILD=false.",
-      "evidence": "https://github.com/google/gvisor/pull/16904"
-    },
-    {
-      "from": "pr:16753",
-      "to": "branch:buildkite-source-syscalls",
-      "type": "depends_on",
-      "reason": "A native source job otherwise invokes the foreign compiler for the systrap stub before reaching the tests.",
-      "evidence": "https://github.com/tamird/gvisor/actions/runs/42226886193/artifacts/13506279822"
     }
   ],
   "investigations": [
@@ -76859,5 +76869,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-06T13:53:01.710Z"
+  "updatedAt": "2026-11-06T14:13:12.896Z"
 }
