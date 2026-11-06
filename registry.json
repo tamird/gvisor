@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T21:59:06.193Z",
+    "updatedAt": "2026-11-06T22:12:34.788Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -6545,23 +6545,26 @@
       "group": "bazel",
       "status": "open",
       "head": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-      "updatedAt": "2026-11-06T21:59:06.193Z",
-      "summary": "The published source assigned an ARM64 Go test to an AMD64 worker. The fork correction uses the supported rules_cc test rule and selects the native test worker. With declared LLVM on integration 8608d36e5, one invocation ran 10,933 atomicbitops cases and three PosixError cases on each native architecture. Tamir requested updating with_cfg to 1.0.2 before reviewing a replacement commit.",
+      "updatedAt": "2026-11-06T22:12:34.788Z",
+      "summary": "The revision uses with_cfg 1.0.2 and the public rules_cc test-extension API. All four test owners ran uncached on the requested native CPUs: 10,933 atomicbitops cases and three PosixError cases passed on each of AMD64 and ARM64. With the same pin, wrapping only the public macro still selects the AMD64 test toolchain for the ARM64 binary and fails before execution. The catalog regenerated its exact new row and verified all 224 entries.",
       "followup": {
-        "owner": "Agent",
+        "owner": "Contributor",
         "sourceHead": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-        "observedAt": "2026-11-06T21:59:06.193Z",
-        "disposition": "Contributor requested a with_cfg 1.0.2 revision.",
-        "nextAction": "Check with_cfg 1.0.2 on the revised source. Include the plain range-diff command from the published head in both its amendment card and the outgoing review question.",
+        "observedAt": "2026-11-06T22:12:34.788Z",
+        "disposition": "The requested with_cfg 1.0.2 revision passed native AMD64 and ARM64 tests.",
+        "nextAction": "Review the proposed source amendment to the existing PR.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/5f651fdc0",
-          "https://github.com/tamird/gvisor/actions/runs/42299934575/artifacts/13543547403",
-          "https://github.com/tamird/gvisor/actions/runs/42297038959/artifacts/13542766701"
+          "https://github.com/tamird/gvisor/commit/da88f239e",
+          "https://github.com/tamird/gvisor/actions/runs/42301517765/artifacts/13543619587"
         ]
       },
       "number": 15370,
       "reviewDecision": null,
       "evidence": [
+        {
+          "label": "Exact with_cfg 1.0.2 native owners, macro control, Bazel 7/8/9 caller checks and complete license regeneration",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42301517765/artifacts/13543619587"
+        },
         {
           "label": "Integrated declared LLVM run on 8608d36e5: four uncached native tests in one invocation",
           "url": "https://github.com/tamird/gvisor/actions/runs/42299934575/artifacts/13543547403"
@@ -6633,12 +6636,10 @@
       ],
       "refinement": {
         "before": {
-          "head": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-          "base": "f51a205a8f4afbc5ab41aded070df74951b081ea"
+          "head": "fafff7eba5044b4585ea89fde2db7cbfb7861310"
         },
         "after": {
-          "head": "5f651fdc090433d2f5f8d370793e57e90745c40f",
-          "base": "f51a205a8f4afbc5ab41aded070df74951b081ea"
+          "head": "da88f239eb2f37f2a58db6c3a70296c562ed006a"
         }
       },
       "settledReviews": [
@@ -6652,7 +6653,18 @@
           "at": "2026-11-06T21:59:06.193Z",
           "note": "Tamir asked to use with_cfg 1.0.2 and to include the range-diff in the amendment question."
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "da88f239eb2f37f2a58db6c3a70296c562ed006a",
+        "baseHead": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
+        "url": "https://github.com/tamird/gvisor/commit/da88f239e",
+        "title": "Run Go and C++ tests on native architectures",
+        "body": "The test runner for a C++ test can still target AMD64 when its binary\nhas been cross-compiled for ARM64. Select the target platform on the\ntest rule itself and constrain its test execution group to a native\nworker. Use the real C++ test rule exported by rules_cc for inheritance\nso its test transition also applies to the runner.\n\nAdd optional architecture variants to Go and C++ test declarations.\nProvide suites for atomicbitops and posix_error so one invocation can\nexercise both architectures. Ordinary test targets remain available.",
+        "requestedAt": "2026-11-06T22:12:34.788Z",
+        "summary": "May I update #15370 to this single commit using with_cfg 1.0.2? The revision uses with_cfg 1.0.2 and the public rules_cc test-extension API. All four test owners ran uncached on the requested native CPUs: 10,933 atomicbitops cases and three PosixError cases passed on each of AMD64 and ARM64. With the same pin, wrapping only the public macro still selects the AMD64 test toolchain for the ARM64 binary and fails before execution. The catalog regenerated its exact new row and verified all 224 entries.\n\nFrom the public PR head\ngit -C ~/code/gvisor range-diff --creation-factor=999 fafff7eba^! da88f239e^!\n\nFrom the previously reviewed proposal\ngit -C ~/code/gvisor range-diff --creation-factor=999 5f651fdc0^! da88f239e^!"
+      }
     },
     {
       "id": "pr:15371",
