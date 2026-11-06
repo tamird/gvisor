@@ -669,3 +669,114 @@ func TestNetgoferEarlyValidationClosesUDSFD(t *testing.T) {
 		_ = unix.Close(fds[0])
 	}
 }
+
+// TestTimestampProxyTransport measures two socket settings on the same established
+// TCP connection. Both directions traverse the production netgofer proxy and
+// its sequenced-packet link. Setup and shutdown are outside the timed region.
+func TestTimestampProxyTransport(t *testing.T) {
+	n := &Netgofer{dialContext: dialLoopback}
+	client := startInProcessProxy(t, n)
+	setTimestamp := func(on int) {
+		t.Helper()
+		if err := unix.SetsockoptInt(n.udsFD, unix.SOL_SOCKET, unix.SO_TIMESTAMPNS, on); err != nil {
+			t.Fatal(err)
+		}
+		val, err := unix.GetsockoptInt(n.udsFD, unix.SOL_SOCKET, unix.SO_TIMESTAMPNS)
+		if err != nil || val != on {
+			t.Fatalf("timestamp=%d %v want %d", val, err, on)
+		}
+	}
+	// Use the corrected shutdown even if the final timed block disabled timestamps.
+	t.Cleanup(func() { setTimestamp(1) })
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ln.Close()
+	server := make(chan error, 1)
+	go func() {
+		conn, err := ln.Accept()
+		if err != nil {
+			server <- err
+			return
+		}
+		defer conn.Close()
+		buf := make([]byte, 64<<10)
+		for {
+			n, err := conn.Read(buf)
+			if n > 0 {
+				w, werr := conn.Write(buf[:n])
+				if werr != nil {
+					server <- werr
+					return
+				}
+				if w != n {
+					server <- io.ErrShortWrite
+					return
+				}
+			}
+			if err == io.EOF {
+				server <- nil
+				return
+			}
+			if err != nil {
+				server <- err
+				return
+			}
+		}
+	}()
+	addr := tcpip.FullAddress{NIC: 1, Addr: testServerAddr4, Port: uint16(ln.Addr().(*net.TCPAddr).Port)}
+	conn, err := gonet.DialTCP(client, addr, ipv4.ProtocolNumber)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	if err := conn.SetDeadline(time.Now().Add(100 * time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name            string
+		size, exchanges int
+	}{{"RPC64", 64, 512}, {"Chunk32K", 32 << 10, 128}} {
+		send := make([]byte, tc.size)
+		recv := make([]byte, tc.size)
+		for i := range send {
+			send[i] = byte(i)
+		}
+		run := func(n int) int64 {
+			start := time.Now()
+			for i := 0; i < n; i++ {
+				send[0] = byte(i)
+				w, err := conn.Write(send)
+				if err != nil || w != len(send) {
+					t.Fatalf("write=%d %v", w, err)
+				}
+				if _, err := io.ReadFull(conn, recv); err != nil {
+					t.Fatal(err)
+				}
+				if !bytes.Equal(send, recv) {
+					t.Fatalf("echo mismatch at %d", i)
+				}
+			}
+			return time.Since(start).Nanoseconds()
+		}
+		for _, on := range []int{0, 1} {
+			setTimestamp(on)
+			run(tc.exchanges / 4)
+		}
+		for pair := 0; pair < 24; pair++ {
+			for pos := 0; pos < 2; pos++ {
+				on := (pair + pos) % 2
+				setTimestamp(on)
+				dt := run(tc.exchanges)
+				t.Logf("MEASURE workload=%s pair=%d position=%d timestamp=%d n=%d bytes=%d elapsed_ns=%d", tc.name, pair, pos, on, tc.exchanges, tc.size, dt)
+			}
+		}
+	}
+	if err := conn.CloseWrite(); err != nil {
+		t.Fatal(err)
+	}
+	if err := <-server; err != nil {
+		t.Fatal(err)
+	}
+}

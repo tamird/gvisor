@@ -787,3 +787,77 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+func TestTimestampQueuedSeqpacketRecords(t *testing.T) {
+	for _, setup := range []string{"before", "after"} {
+		t.Run(setup, func(t *testing.T) {
+			fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET|unix.SOCK_NONBLOCK, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer unix.Close(fds[0])
+			defer unix.Close(fds[1])
+			sink := &fakeNetworkDispatcher{}
+			makeReceiver := func() *recvMMsgDispatcher {
+				link, err := newRecvMMsgDispatcher(fds[0], &endpoint{hdrSize: header.EthernetMinimumSize, dispatcher: sink}, &Options{ProcessorsPerChannel: 1, DetectSeqpacketEOF: true})
+				if err != nil {
+					t.Fatal(err)
+				}
+				t.Cleanup(func() { link.release(); link.close() })
+				return link.(*recvMMsgDispatcher)
+			}
+			var d *recvMMsgDispatcher
+			if setup == "before" {
+				d = makeReceiver()
+			}
+			for range MaxMsgsPerRecv {
+				if err := unix.Sendmsg(fds[1], nil, nil, nil, 0); err != nil {
+					t.Fatal(err)
+				}
+			}
+			frame := make([]byte, header.EthernetMinimumSize+1)
+			header.Ethernet(frame).Encode(&header.EthernetFields{DstAddr: header.EthernetBroadcastAddress, Type: header.ARPProtocolNumber})
+			frame[len(frame)-1] = 0x5a
+			if err := unix.Sendmsg(fds[1], frame, nil, nil, 0); err != nil {
+				t.Fatal(err)
+			}
+			if err := unix.Shutdown(fds[1], unix.SHUT_WR); err != nil {
+				t.Fatal(err)
+			}
+			if setup == "after" {
+				d = makeReceiver()
+			}
+			more, recvErr := d.dispatch()
+			if !more || recvErr != nil || len(sink.pkts) != 0 {
+				t.Fatalf("empty prefix: more=%t err=%v deliveries=%d", more, recvErr, len(sink.pkts))
+			}
+			marked := 0
+			for _, h := range d.msgHdrs {
+				if h.Len != 0 {
+					t.Fatal("nonempty prefix")
+				}
+				if h.Msg.Flags&unix.MSG_CTRUNC != 0 {
+					marked++
+				}
+			}
+			if marked != MaxMsgsPerRecv {
+				t.Fatalf("marked %d of %d empty records", marked, MaxMsgsPerRecv)
+			}
+			more, recvErr = d.dispatch()
+			if more || recvErr != nil || len(sink.pkts) != 1 {
+				t.Fatalf("frame+EOF: more=%t err=%v deliveries=%d", more, recvErr, len(sink.pkts))
+			}
+			defer sink.pkts[0].DecRef()
+			payload, ok := sink.pkts[0].Data().PullUp(1)
+			if !ok || payload[0] != 0x5a {
+				t.Fatalf("final payload=%x", payload)
+			}
+			for i, h := range d.msgHdrs {
+				if (h.Msg.Flags&unix.MSG_CTRUNC != 0) != (i == 0) {
+					t.Fatalf("slot %d flags %d", i, h.Msg.Flags)
+				}
+			}
+			t.Logf("QUEUED setup=%s empties=%d delivered=1 eof=%d", setup, marked, MaxMsgsPerRecv-1)
+		})
+	}
+}

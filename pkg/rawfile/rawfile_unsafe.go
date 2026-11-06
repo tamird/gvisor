@@ -183,16 +183,16 @@ func BlockingReadvUntilStopped(efd int, fd int, iovecs []unix.Iovec) (int, unix.
 // the file descriptor becomes readable or stop is signalled (efd becomes
 // readable). Returns -1 in the latter case.
 func BlockingRecvMMsgUntilStopped(efd int, fd int, msgHdrs []MMsgHdr) (int, unix.Errno) {
-	return recvMMsgUntilStopped(efd, fd, msgHdrs, false)
+	return recvMMsgUntilStopped(efd, fd, msgHdrs, false, nil)
 }
 
 // DrainRecvMMsgUntilStopped retries the read when poll reports both data and a
 // hangup. The caller must recognize EOF returned by the receive itself.
 func DrainRecvMMsgUntilStopped(efd int, fd int, msgHdrs []MMsgHdr) (int, unix.Errno) {
-	return recvMMsgUntilStopped(efd, fd, msgHdrs, true)
+	return recvMMsgUntilStopped(efd, fd, msgHdrs, true, nil)
 }
 
-func recvMMsgUntilStopped(efd int, fd int, msgHdrs []MMsgHdr, drain bool) (int, unix.Errno) {
+func recvMMsgUntilStopped(efd int, fd int, msgHdrs []MMsgHdr, drain bool, beforePoll func()) (int, unix.Errno) {
 	for {
 		n, _, e := unix.RawSyscall6(unix.SYS_RECVMMSG, uintptr(fd), uintptr(unsafe.Pointer(&msgHdrs[0])), uintptr(len(msgHdrs)), unix.MSG_DONTWAIT, 0, 0)
 		if e == 0 {
@@ -203,6 +203,9 @@ func recvMMsgUntilStopped(efd int, fd int, msgHdrs []MMsgHdr, drain bool) (int, 
 			return 0, e
 		}
 
+		if beforePoll != nil {
+			beforePoll()
+		}
 		stopped, e := blockingPollUntilStopped(efd, fd, unix.POLLIN, drain)
 		if stopped {
 			return -1, e
