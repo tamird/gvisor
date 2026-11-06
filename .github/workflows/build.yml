@@ -1,35 +1,76 @@
-name: CI
-
-"on":
+name: Run all three seccomp generators and their consumers on the canonical worker
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-source-canonical-worker]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  submit:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 140
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Verify the original source and the Buildkite command
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 3bc6638027277f0851bf4590125d333809ad0cca
+          test "$(git rev-parse HEAD^^)" = 53c458937842fb431ef351c39781850f5a817234
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/source_filter_consumers.py' ':!.github/qualification/source_presubmit_memory.py'
+          cp .github/qualification/{source_filter_consumers.py,source_presubmit_memory.py} "$RUNNER_TEMP/"
+          git checkout --quiet --detach 3bc6638027277f0851bf4590125d333809ad0cca
+          test "$(bazelisk --version)" = "bazel 9.3.1"
+      - name: Size and check the Bazel server heap on this coordinator
+        run: python3 -IB "$RUNNER_TEMP/source_presubmit_memory.py"
+      - name: Run all three filter generators and the three original test owners
+        timeout-minutes: 95
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
+          rc="$RUNNER_TEMP/source-presubmit.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          cat > "$rc" <<'RC'
+          build:original-filter-consumers --remote_executor=grpcs://remote.buildbuddy.io
+          build:original-filter-consumers --remote_cache=grpcs://remote.buildbuddy.io
+          build:original-filter-consumers --bes_backend=grpcs://remote.buildbuddy.io
+          build:original-filter-consumers --bes_results_url=https://app.buildbuddy.io/invocation/
+          build:original-filter-consumers --remote_download_outputs=toplevel --build_event_publish_all_actions
+          build:original-filter-consumers --jobs=64 --keep_going
+          test:original-filter-consumers --nocache_test_results --flaky_test_attempts=1
+          RC
+          printf 'build:original-filter-consumers --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          printf 'build:original-filter-consumers --build_event_json_file=%s/source-presubmit.bep\n' "$RUNNER_TEMP" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          printf '%s\n' //runsc/boot/filter:filter_precompiled //runsc/gofer/fs/filter:filter_precompiled \
+            //runsc/gofer/net/filter:filter_precompiled //runsc:version_test //runsc/gofer/net:netgofer_test \
+            //test/syscalls:uname_test_native > "$RUNNER_TEMP/selected-targets"
+          code=0
+          timeout --signal=INT --kill-after=60s 90m bazelisk --bazelrc="$rc" test --config=source-presubmit --config=original-filter-consumers \
+            --target_pattern_file="$RUNNER_TEMP/selected-targets" > "$RUNNER_TEMP/source-presubmit.log" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$RUNNER_TEMP/source-presubmit-exit"
+      - name: Verify all three produced Go files and all original test attempts
+        id: collect
+        if: always() && !cancelled()
+        run: |
+          set -eu
+          test ! -e "$RUNNER_TEMP/source-presubmit.bazelrc"
+          trap 'rm -f "$RUNNER_TEMP/source-presubmit.log" "$RUNNER_TEMP/source-presubmit.bep"' EXIT
+          python3 -IB "$RUNNER_TEMP/source_presubmit_memory.py" diagnose
+          python3 -IB "$RUNNER_TEMP/source_filter_consumers.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: llvm-source-canonical-worker
+          path: ${{ runner.temp }}/source-filter-consumers.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Require the generated source and all three uncached remote test results
+        if: always() && !cancelled()
+        run: |
+          python3 -c 'import os,json,pathlib; r=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"source-filter-consumers.json").read_text()); assert r["verified"]'
