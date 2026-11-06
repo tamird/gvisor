@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T23:10:47.246Z",
+    "updatedAt": "2026-11-06T23:11:36.682Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -42124,9 +42124,9 @@
       "group": "runtime",
       "repo": "tamird/gvisor",
       "ref": "research/ipv6-multicast-socket-options",
-      "head": "972a7152fa77dc23d98e4cdd3f03a330e615c222",
+      "head": "0a70689c3640ab660307b0548f76087316803748",
       "title": "Implement IPv6 multicast hop and loopback options",
-      "url": "https://github.com/tamird/gvisor/compare/89a7d2beb...972a7152f",
+      "url": "https://github.com/tamird/gvisor/commit/0a70689c3",
       "summary": "OpenJDK reached eth0 with the interface flags from #16059, then failed to read IPV6_MULTICAST_HOPS. Five shared syscall cases on both gVisor network modes now agree with Linux, including which packet a connected dual-stack sender loops back.",
       "evidence": [
         {
@@ -42164,13 +42164,13 @@
       ],
       "refinement": {
         "before": {
-          "head": "4724a5fcd92228f319166b0d2451311b2dc958c2"
+          "head": "972a7152fa77dc23d98e4cdd3f03a330e615c222"
         },
         "after": {
-          "head": "972a7152fa77dc23d98e4cdd3f03a330e615c222"
+          "head": "0a70689c3640ab660307b0548f76087316803748"
         }
       },
-      "updatedAt": "2026-11-02T21:49:41.876026+00:00",
+      "updatedAt": "2026-11-06T23:11:36.682Z",
       "status": "Published as #16875",
       "settledReviews": [
         {
@@ -42183,10 +42183,10 @@
       ],
       "followup": {
         "owner": "Existing upstream review",
-        "sourceHead": "972a7152fa77dc23d98e4cdd3f03a330e615c222",
-        "observedAt": "2026-11-02T21:49:41.876026+00:00",
+        "sourceHead": "0a70689c3640ab660307b0548f76087316803748",
+        "observedAt": "2026-11-06T23:11:36.682Z",
         "disposition": "Approved and published as #16875",
-        "nextAction": "Follow the upstream checks and maintainer review. No contributor decision remains.",
+        "nextAction": "Follow the published PR #16875.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16875"
         ]
@@ -43148,11 +43148,11 @@
       "group": "runtime",
       "repo": "tamird/gvisor",
       "ref": "review/gofer-dgram-host-writable",
-      "head": "2a8882a8c441ccbb0b3a825e60cc08cc916b7721",
+      "head": "6b8479b9f8ce19e15e5aa804b12bf5d7e6799704",
       "title": "Wake poll on a drained host Unix datagram socket",
-      "url": "https://github.com/tamird/gvisor/commit/2a8882a8c",
+      "url": "https://github.com/tamird/gvisor/commit/6b8479b9f",
       "summary": "When an external Unix datagram receiver drained, stock gVisor left the writer asleep even though a separate poll confirmed it was writable. Linux and the tested correction delivered EPOLLOUT.",
-      "updatedAt": "2026-11-02T18:34:02.855318+00:00",
+      "updatedAt": "2026-11-06T23:11:36.682Z",
       "evidence": [
         {
           "label": "Upstream pull request",
@@ -43170,12 +43170,10 @@
       "status": "Published",
       "refinement": {
         "before": {
-          "head": "9963cb1a8fb4782b1bfa1c645db449a091397982",
-          "base": "8a84b240f0f85882e3aacb5b550476fe09e11e25"
+          "head": "2a8882a8c441ccbb0b3a825e60cc08cc916b7721"
         },
         "after": {
-          "head": "2a8882a8c441ccbb0b3a825e60cc08cc916b7721",
-          "base": "7a675ac66a1e2357abdaa6cccedabcd3cce9aa5c"
+          "head": "6b8479b9f8ce19e15e5aa804b12bf5d7e6799704"
         }
       },
       "settledReviews": [
@@ -50519,12 +50517,12 @@
       "repo": "google/gvisor",
       "number": 16830,
       "ref": "review/gofer-dgram-host-writable",
-      "head": "2a8882a8c441ccbb0b3a825e60cc08cc916b7721",
+      "head": "6b8479b9f8ce19e15e5aa804b12bf5d7e6799704",
       "title": "Watch writable host datagrams on the endpoint queue",
       "url": "https://github.com/google/gvisor/pull/16830",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T23:08:10.479Z",
+      "updatedAt": "2026-11-06T23:11:36.682Z",
       "summary": "When an external Unix datagram receiver drained, stock gVisor left the writer asleep even though a separate poll confirmed it was writable. Linux and the tested correction delivered EPOLLOUT.",
       "evidence": [
         {
@@ -50538,6 +50536,10 @@
         {
           "label": "Pinned Linux formatter output and exact resulting file hashes",
           "url": "https://github.com/tamird/gvisor/actions/runs/42309240103/artifacts/13546953613"
+        },
+        {
+          "label": "Published source with canonical syscall formatting",
+          "url": "https://github.com/tamird/gvisor/commit/6b8479b9f"
         }
       ],
       "settledReviews": [
@@ -50546,19 +50548,18 @@
           "head": "9963cb1a8fb4782b1bfa1c645db449a091397982",
           "outcome": "approved-with-changes",
           "at": "2026-11-02T18:30:15.670469+00:00"
+        },
+        {
+          "kind": "amendment",
+          "head": "6b8479b9f8ce19e15e5aa804b12bf5d7e6799704",
+          "baseHead": "2a8882a8c441ccbb0b3a825e60cc08cc916b7721",
+          "at": "2026-11-06T23:11:36.682Z",
+          "outcome": "approved",
+          "title": "Watch writable host datagrams on the endpoint queue",
+          "body": "Connect to a gofer-backed Unix datagram socket using the connecting\nendpoint's queue for host notifications. The previous empty private\nqueue had no guest waiters. When a full peer drained, an existing\nEPOLLOUT watch could miss the wakeup although the socket was writable.\n\nInstall the queue before replacing the old peer. One-shot sends own\ntheir host descriptor only for the send and need no registration.",
+          "url": "https://github.com/tamird/gvisor/commit/6b8479b9f"
         }
       ],
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "6b8479b9f8ce19e15e5aa804b12bf5d7e6799704",
-        "baseHead": "2a8882a8c441ccbb0b3a825e60cc08cc916b7721",
-        "title": "Watch writable host datagrams on the endpoint queue",
-        "body": "Connect to a gofer-backed Unix datagram socket using the connecting\nendpoint's queue for host notifications. The previous empty private\nqueue had no guest waiters. When a full peer drained, an existing\nEPOLLOUT watch could miss the wakeup although the socket was writable.\n\nInstall the queue before replacing the old peer. One-shot sends own\ntheir host descriptor only for the send and need no registration.",
-        "summary": "Clang-format was the only failed lint on this PR. The repository’s pinned formatter corrected the syscall tests, and the full formatting check passed on Linux. All C++ tokens, including comments and string literals, match the published tests.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 2a8882a8c^! 6b8479b9f^!\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 9963cb1a8^! 6b8479b9f^!",
-        "url": "https://github.com/tamird/gvisor/commit/6b8479b9f",
-        "requestedAt": "2026-11-06T23:08:10.479Z"
-      },
       "refinement": {
         "before": {
           "head": "2a8882a8c441ccbb0b3a825e60cc08cc916b7721"
@@ -50568,12 +50569,13 @@
         }
       },
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "2a8882a8c441ccbb0b3a825e60cc08cc916b7721",
-        "observedAt": "2026-11-06T23:08:10.479Z",
-        "disposition": "Canonical formatting correction verified.",
-        "nextAction": "Review the amendment to the existing PR.",
+        "owner": "Agent",
+        "sourceHead": "6b8479b9f8ce19e15e5aa804b12bf5d7e6799704",
+        "observedAt": "2026-11-06T23:11:36.682Z",
+        "disposition": "The approved single-commit source is published. The two complete checkouts passed the pinned formatter.",
+        "nextAction": "Check upstream lint on the published revision, then follow review.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16830",
           "https://github.com/tamird/gvisor/commit/6b8479b9f",
           "https://github.com/tamird/gvisor/actions/runs/42309240103/artifacts/13546953613"
         ]
@@ -56696,7 +56698,7 @@
       "repo": "google/gvisor",
       "number": 16875,
       "ref": "research/ipv6-multicast-socket-options",
-      "head": "972a7152fa77dc23d98e4cdd3f03a330e615c222",
+      "head": "0a70689c3640ab660307b0548f76087316803748",
       "title": "Implement IPv6 multicast hop and loopback options",
       "url": "https://github.com/google/gvisor/pull/16875",
       "group": "runtime",
@@ -56738,6 +56740,10 @@
         {
           "label": "Pinned Linux formatter output and exact resulting file hashes",
           "url": "https://github.com/tamird/gvisor/actions/runs/42309240103/artifacts/13546953613"
+        },
+        {
+          "label": "Published source with canonical syscall formatting",
+          "url": "https://github.com/tamird/gvisor/commit/0a70689c3"
         }
       ],
       "settledReviews": [
@@ -56747,19 +56753,18 @@
           "outcome": "approved",
           "at": "2026-11-02T21:49:41.876026+00:00",
           "postedURL": "https://github.com/google/gvisor/pull/16875"
+        },
+        {
+          "kind": "amendment",
+          "head": "0a70689c3640ab660307b0548f76087316803748",
+          "baseHead": "972a7152fa77dc23d98e4cdd3f03a330e615c222",
+          "at": "2026-11-06T23:11:36.682Z",
+          "outcome": "approved",
+          "title": "Implement IPv6 multicast hop and loopback options",
+          "body": "OpenJDK’s DatagramSocketMulticasting test failed when #16059 exposed a\nmulticast-capable interface. Its default DatagramSocket reads\nIPV6_MULTICAST_HOPS even when sending to an IPv4 group. Netstack\nreturned ENOPROTOOPT. In IPv4-only mode, the JDK reads IP_MULTICAST_TTL\nand IP_MULTICAST_LOOP into a one-byte buffer, which netstack also\nrejected [1] [2].\n\nKeep IPv4 and IPv6 multicast settings independent. On a dual-stack\nsocket sending to an IPv4-mapped group, Linux uses the IPv4 TTL and the\nIPv6 socket’s loopback setting [3]. Change the connected route’s\nloopback policy when the application sets the option. A send that\nalready acquired the route keeps its original policy. With host\nnetworking, forward IPV6_MULTICAST_LOOP to the host socket.\n\nFive shared syscall cases cover option lengths, independent values, and\ndelivery over a real multicast interface. Stock delivered a packet after\nthe sender disabled loopback. Linux, corrected netstack and corrected\nhostinet delivered the following packet with IPv4 TTL 11 [4] [5]. The\noriginal Java test also completed on eth0 in both its default and\nIPv4-only modes [6]. A focused writer test sends two packets after\nchanging the option. Mutating the old route incorrectly disables\nloopback for the first packet; retaining its acquired route passes, as\ndo the full network suite and its analyzer [7].\n\n[1]: https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/52852/jobs/01a18479-3be3-4571-8423-f723c54a33b6/log\n[2]: https://github.com/tamird/gvisor/actions/runs/41131750771/artifacts/13013753296\n[3]: https://github.com/torvalds/linux/blob/7d0a66e4b/net/core/sock.c#L774-L790\n[4]: https://github.com/tamird/gvisor/actions/runs/41139775803/artifacts/13017933283\n[5]: https://github.com/tamird/gvisor/actions/runs/41143755175/artifacts/13020224398\n[6]: https://github.com/tamird/gvisor/actions/runs/41143755175/artifacts/13020616149\n[7]: https://github.com/tamird/gvisor/actions/runs/41145500718/artifacts/13021260853",
+          "url": "https://github.com/tamird/gvisor/commit/0a70689c3"
         }
       ],
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "0a70689c3640ab660307b0548f76087316803748",
-        "baseHead": "972a7152fa77dc23d98e4cdd3f03a330e615c222",
-        "title": "Implement IPv6 multicast hop and loopback options",
-        "body": "OpenJDK’s DatagramSocketMulticasting test failed when #16059 exposed a\nmulticast-capable interface. Its default DatagramSocket reads\nIPV6_MULTICAST_HOPS even when sending to an IPv4 group. Netstack\nreturned ENOPROTOOPT. In IPv4-only mode, the JDK reads IP_MULTICAST_TTL\nand IP_MULTICAST_LOOP into a one-byte buffer, which netstack also\nrejected [1] [2].\n\nKeep IPv4 and IPv6 multicast settings independent. On a dual-stack\nsocket sending to an IPv4-mapped group, Linux uses the IPv4 TTL and the\nIPv6 socket’s loopback setting [3]. Change the connected route’s\nloopback policy when the application sets the option. A send that\nalready acquired the route keeps its original policy. With host\nnetworking, forward IPV6_MULTICAST_LOOP to the host socket.\n\nFive shared syscall cases cover option lengths, independent values, and\ndelivery over a real multicast interface. Stock delivered a packet after\nthe sender disabled loopback. Linux, corrected netstack and corrected\nhostinet delivered the following packet with IPv4 TTL 11 [4] [5]. The\noriginal Java test also completed on eth0 in both its default and\nIPv4-only modes [6]. A focused writer test sends two packets after\nchanging the option. Mutating the old route incorrectly disables\nloopback for the first packet; retaining its acquired route passes, as\ndo the full network suite and its analyzer [7].\n\n[1]: https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/52852/jobs/01a18479-3be3-4571-8423-f723c54a33b6/log\n[2]: https://github.com/tamird/gvisor/actions/runs/41131750771/artifacts/13013753296\n[3]: https://github.com/torvalds/linux/blob/7d0a66e4b/net/core/sock.c#L774-L790\n[4]: https://github.com/tamird/gvisor/actions/runs/41139775803/artifacts/13017933283\n[5]: https://github.com/tamird/gvisor/actions/runs/41143755175/artifacts/13020224398\n[6]: https://github.com/tamird/gvisor/actions/runs/41143755175/artifacts/13020616149\n[7]: https://github.com/tamird/gvisor/actions/runs/41145500718/artifacts/13021260853",
-        "summary": "Clang-format was the only failed lint on this PR. The repository’s pinned formatter corrected the syscall tests, and the full formatting check passed on Linux. All C++ tokens, including comments and string literals, match the published tests. The proposed single commit retains both published changes and uses the existing PR description as its message.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 89a7d2beb..972a7152f 0a70689c3^!\n\ngit -C ~/code/gvisor diff 972a7152f 0a70689c3",
-        "url": "https://github.com/tamird/gvisor/commit/0a70689c3",
-        "requestedAt": "2026-11-06T23:08:10.479Z"
-      },
       "refinement": {
         "before": {
           "head": "972a7152fa77dc23d98e4cdd3f03a330e615c222"
@@ -56769,17 +56774,18 @@
         }
       },
       "followup": {
-        "owner": "Contributor",
-        "sourceHead": "972a7152fa77dc23d98e4cdd3f03a330e615c222",
-        "observedAt": "2026-11-06T23:08:10.479Z",
-        "disposition": "Canonical formatting correction verified.",
-        "nextAction": "Review the amendment to the existing PR.",
+        "owner": "Agent",
+        "sourceHead": "0a70689c3640ab660307b0548f76087316803748",
+        "observedAt": "2026-11-06T23:11:36.682Z",
+        "disposition": "The approved single-commit source is published. The two complete checkouts passed the pinned formatter.",
+        "nextAction": "Check upstream lint on the published revision, then follow review.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/16875",
           "https://github.com/tamird/gvisor/commit/0a70689c3",
           "https://github.com/tamird/gvisor/actions/runs/42309240103/artifacts/13546953613"
         ]
       },
-      "updatedAt": "2026-11-06T23:08:10.479Z"
+      "updatedAt": "2026-11-06T23:11:36.682Z"
     }
   ],
   "edges": [
