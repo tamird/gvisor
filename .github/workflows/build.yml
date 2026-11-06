@@ -1,35 +1,58 @@
-name: CI
-
-"on":
+name: Measure the receive dispatcher constructor and worker lifetime
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/fdbased-constructor-lifecycle]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  dispatcher:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Run the one-processor benchmark and sample the two-processor lifetime
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 9a7151bcd6e0e186223cc822ff0b94b3d3b7a91e
+          test "$(git rev-parse HEAD^^)" = 06137917f324997963633cbefe75194177c5f7a7
+          test "$(git diff --name-only HEAD^^ HEAD)" = "$(printf '%s\n' .github/workflows/build.yml pkg/tcpip/link/fdbased/endpoint_test.go)"
+          platform="$RUNNER_TEMP/dispatcher-platform"
+          mkdir "$platform"
+          printf '%s\n' 'module(name="dispatcher_worker")' > "$platform/MODULE.bazel"
+          cat > "$platform/BUILD" <<'BUILD'
+          platform(
+              name = "gnu",
+              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              exec_properties = {
+                  "Arch": "amd64",
+                  "OSFamily": "linux",
+                  "workload-isolation-type": "firecracker",
+                  "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+              },
+              visibility = ["//visibility:public"],
+          )
+          BUILD
+          rc="$RUNNER_TEMP/dispatcher.bazelrc"
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" > "$rc"
+          unset BUILDBUDDY_API_KEY
+          bazelisk --bazelrc="$rc" test --config=x86_64 \
+            --inject_repository="dispatcher_worker=$platform" \
+            --extra_execution_platforms=@dispatcher_worker//:gnu --host_platform=@dispatcher_worker//:gnu \
+            --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io \
+            --spawn_strategy=remote --noremote_local_fallback --jobs=100 \
+            --test_output=all --nocache_test_results \
+            --test_arg=-test.v --test_arg=-test.run='^TestUnattachedProcessorLifetime$' \
+            --test_arg=-test.bench='^BenchmarkRecvMMsgDispatcher$' --test_arg=-test.benchtime=100x \
+            //pkg/tcpip/link/fdbased:fdbased_test 2>&1 | tee "$RUNNER_TEMP/test.log"
+          grep -E 'processor workers: before New=|^BenchmarkRecvMMsgDispatcher.*[[:space:]]100[[:space:]]' "$RUNNER_TEMP/test.log" > "$RUNNER_TEMP/measurements"
+          test "$(grep -c 'processor workers:' "$RUNNER_TEMP/measurements")" -eq 2
+          grep -E '^BenchmarkRecvMMsgDispatcher.*[[:space:]]100[[:space:]]' "$RUNNER_TEMP/measurements"
+          cat "$RUNNER_TEMP/measurements" >> "$GITHUB_STEP_SUMMARY"

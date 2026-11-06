@@ -21,6 +21,8 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"runtime"
+	"runtime/pprof"
 	"slices"
 	"strings"
 	"testing"
@@ -807,5 +809,67 @@ func BenchmarkRecvMMsgDispatcher(b *testing.B) {
 		}
 		d.release()
 		d.close()
+	}
+}
+
+func TestUnattachedProcessorLifetime(t *testing.T) {
+	workers := func() int {
+		var stacks bytes.Buffer
+		if err := pprof.Lookup("goroutine").WriteTo(&stacks, 2); err != nil {
+			t.Fatal(err)
+		}
+		return strings.Count(stacks.String(), "/fdbased.(*processor).start(")
+	}
+	for _, mode := range []PacketDispatchMode{Readv, RecvMMsg} {
+		t.Run(mode.String(), func(t *testing.T) {
+			before := workers()
+			fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_DGRAM, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer unix.Close(fds[0])
+			defer unix.Close(fds[1])
+			link, err := New(&Options{
+				FDs:                  []int{fds[0]},
+				MTU:                  1500,
+				PacketDispatchMode:   mode,
+				ProcessorsPerChannel: 2,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			deadline := time.Now().Add(5 * time.Second)
+			started := workers()
+			for started != before+2 && time.Now().Before(deadline) {
+				runtime.Gosched()
+				started = workers()
+			}
+			link.Attach(nil)
+			link.Close()
+			link.Wait()
+			runtime.Gosched()
+			after := workers()
+
+			// Shut down the two diagnostic workers before running the next case.
+			d := link.(*endpoint).inboundDispatchers[0]
+			var mgr *processorManager
+			switch d := d.(type) {
+			case *readVDispatcher:
+				mgr = d.mgr
+			case *recvMMsgDispatcher:
+				mgr = d.mgr
+			default:
+				t.Fatalf("unexpected dispatcher %T", d)
+			}
+			mgr.close()
+			mgr.wg.Wait()
+			if got := workers(); got != before {
+				t.Fatalf("cleanup left %d workers, started with %d", got, before)
+			}
+			if started != before+2 {
+				t.Fatalf("observed %d workers after New, want %d", started, before+2)
+			}
+			t.Logf("processor workers: before New=%d, after New=%d, after Close and Wait=%d", before, started, after)
+		})
 	}
 }
