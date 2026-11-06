@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T21:48:30.832Z",
+    "updatedAt": "2026-11-06T21:55:33.037Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -45947,15 +45947,27 @@
       "id": "branch:semaphore-waiter-lock",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "proposal/semaphore-waiter-lock",
-      "head": "9385a07c9a80422e092a786b68303b1686102095",
+      "ref": "proposal/semaphore-wake-resolved-member",
+      "head": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
       "title": "Check the set lock when accessing SysV semaphores",
-      "url": "https://github.com/tamird/gvisor/commit/9385a07c9",
+      "url": "https://github.com/tamird/gvisor/commit/8d8a461be",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-06T20:48:54.951Z",
-      "summary": "Guard the existing Set.sems storage with Set.mu and keep each sem lookup inside the caller’s critical section. Nogo passed on both CPUs. Removing the lock before directly indexing a queue or value generated diagnostics on both CPUs; a pointer retained past unlock escaped the analyzer. The existing field layout and checkpoint format are preserved. The qualified stack also contained the independent removal fix. The guard applies identically to #16806 alone.",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-11-06T21:55:33.037Z",
+      "summary": "Each caller passes its locked Set to the member’s wake method. SetVal reuses the member it already looked up, and each semaphore keeps its existing fields. Checklocks on AMD64 and ARM64 caught unlocked indexed access to waiters and value, and a wake after unlock. Both writes through previously saved pointers escaped the analyzer. The caller must supply the Set that owns the member. All four native Linux package tests passed, including TestUnregister.",
       "evidence": [
+        {
+          "label": "Change from the previously reviewed guard",
+          "url": "https://github.com/tamird/gvisor/compare/9385a07c9...8d8a461be"
+        },
+        {
+          "label": "Checklocks on AMD64 and ARM64, direct access and retained pointers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42291965723/artifacts/13542971144"
+        },
+        {
+          "label": "Four native Linux package cases in original Go log and XML",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42299643596/artifacts/13544341014"
+        },
         {
           "label": "Same guard ported without the independent removal fix",
           "url": "https://github.com/tamird/gvisor/compare/b68f40e4e...9385a07c9"
@@ -46001,22 +46013,34 @@
       ],
       "refinement": {
         "before": {
-          "head": "b68f40e4e358798ba034116cdb4c8194bb1c7c07"
+          "head": "9385a07c9a80422e092a786b68303b1686102095"
         },
         "after": {
-          "head": "9385a07c9a80422e092a786b68303b1686102095"
+          "head": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557"
         }
       },
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "9385a07c9a80422e092a786b68303b1686102095",
-        "observedAt": "2026-11-06T20:48:54.951Z",
-        "disposition": "Contributor requested that each sem keep its lock link and wake its waiters without a second lookup.",
-        "nextAction": "Revise sem.wakeWaiters and validate the member’s lock link and queue access. The independent removal fix is already in #17127.",
+        "owner": "Contributor",
+        "sourceHead": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
+        "observedAt": "2026-11-06T21:55:33.037Z",
+        "disposition": "Review requested for the revised member wake method.",
+        "nextAction": "Review this commit for submission after #16806 merges.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/9385a07c9",
-          "https://github.com/google/gvisor/pull/17127"
+          "https://github.com/tamird/gvisor/commit/8d8a461be",
+          "https://github.com/tamird/gvisor/actions/runs/42299643596/artifacts/13544341014",
+          "https://github.com/tamird/gvisor/actions/runs/42291965723/artifacts/13542971144"
         ]
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557",
+        "baseHead": "c4231067d198ea1b38bd629b7c87a5426f44b2c8",
+        "url": "https://github.com/tamird/gvisor/commit/8d8a461be",
+        "title": "Check the set lock when accessing SysV semaphores",
+        "body": "Waking a waiter reads the semaphore value and removes the waiter from\nits queue. Guard the slice with the set mutex and require that mutex\nwhen waking waiters. Callers pass the set whose lock they hold and\nreuse the semaphore they just updated.\n\nSize only reads the length of the slice. That length is fixed when the\nset is created, so callers can read it without the mutex.",
+        "summary": "May I open this change once #16806 merges? Each caller passes its locked Set to the member’s wake method. SetVal reuses the member it already looked up, and each semaphore keeps its existing fields. Checklocks on AMD64 and ARM64 caught unlocked indexed access to waiters and value, and a wake after unlock. Both writes through previously saved pointers escaped the analyzer. The caller must supply the Set that owns the member. All four native Linux package tests passed, including TestUnregister.",
+        "requestedAt": "2026-11-06T21:55:33.037Z"
       }
     },
     {
