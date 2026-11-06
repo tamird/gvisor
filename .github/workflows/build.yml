@@ -1,71 +1,52 @@
-name: Execute the Bazel 9 source presubmit
+name: Read the three original source failure records
 on:
   push:
-    branches: [qualification/execute-bazel9-source-presubmit]
-permissions:
-  contents: read
+    branches: [qualification/source-presubmit-first-cpp-failure]
+permissions: {contents: read}
 jobs:
-  submit:
+  retrieve:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 105
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 2
-          persist-credentials: false
-      - name: Verify the original source and the Buildkite command
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Verify parser, original invocation, and source code
         run: |
           set -eu
-          test "$(git rev-parse HEAD^)" = 949d4871550821371649ae873beab69ead0b36c1
-          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/source_presubmit_results.py'
-          cp .github/qualification/source_presubmit_results.py "$RUNNER_TEMP/"
-          git fetch --quiet --depth=1 origin 5a20420be7638149db4afe7c2ac559e696f5f3fd
-          git show '5a20420be:test/rbe/unit-cgroup-v2-owners.tsv' > "$RUNNER_TEMP/source-unit-oracle.tsv"
-          test "$(git hash-object "$RUNNER_TEMP/source-unit-oracle.tsv")" = 5042de1f9d481e27c47eccd0e94f7cdfcb037fbf
-          git checkout --quiet --detach 949d4871550821371649ae873beab69ead0b36c1
-          test "$(bazelisk --version)" = "bazel 9.3.1"
-          ruby -ryaml -e 'a=YAML.load_file(".buildkite/rbe-source.yaml").fetch("steps"); abort unless a.size==1 && a.first.fetch("command")=="bazel test --config=source-presubmit"'
-      - name: Submit the complete graph to the remote executor
-        timeout-minutes: 95
+          test "$(git rev-parse HEAD^)" = c17c75a75a8ac1bac84d5369d8050f84ce8b5bff
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/three_source_failures.py'
+          cp .github/qualification/three_source_failures.py "$RUNNER_TEMP/"
+          echo "e8e678e77c5ecb816da2eb33b07f5c6e365648ea4fb36fadf6597f276b02c49d  $RUNNER_TEMP/three_source_failures.py" | sha256sum -c
+      - name: Retrieve the exact C++ stderr and two test logs
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -eu
           umask 077
-          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
-          rc="$RUNNER_TEMP/source-presubmit.bazelrc"
-          trap 'rm -f "$rc"' EXIT
-          cat > "$rc" <<'RC'
-          build:source-presubmit --remote_executor=grpcs://remote.buildbuddy.io
-          build:source-presubmit --remote_cache=grpcs://remote.buildbuddy.io
-          build:source-presubmit --bes_backend=grpcs://remote.buildbuddy.io
-          build:source-presubmit --bes_results_url=https://app.buildbuddy.io/invocation/
-          build:source-presubmit --remote_download_outputs=minimal
-          build:source-presubmit --jobs=64 --keep_going
-          test:source-presubmit --nocache_test_results --flaky_test_attempts=1
-          RC
-          printf 'build:source-presubmit --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
-          printf 'build:source-presubmit --build_event_json_file=%s/source-presubmit.bep\n' "$RUNNER_TEMP" >> "$rc"
-          unset BUILDBUDDY_API_KEY
-          code=0
-          timeout --signal=INT --kill-after=60s 90m bazelisk --bazelrc="$rc" test --config=source-presubmit > "$RUNNER_TEMP/source-presubmit.log" 2>&1 || code=$?
-          printf '%s\n' "$code" > "$RUNNER_TEMP/source-presubmit-exit"
-      - name: Collect typed target, shard and failure receipts
-        id: collect
-        if: always() && !cancelled()
+          python3 -IB "$RUNNER_TEMP/three_source_failures.py"
+      - name: Validate the closed receipt
+        id: validate
+        if: always()
         run: |
-          set -eu
-          trap 'rm -f "$RUNNER_TEMP/source-presubmit.log" "$RUNNER_TEMP/source-presubmit.bep" "$RUNNER_TEMP/source-presubmit.bazelrc"' EXIT
-          python3 "$RUNNER_TEMP/source_presubmit_results.py"
+          python3 -IB - <<'PY'
+          import json,os,re
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"closed-source-failures.json"
+          assert p.is_file() and not p.is_symlink() and p.stat().st_size<70000
+          b=p.read_bytes()
+          assert not re.search(rb"(?i)x-buildbuddy-api-key|authorization\s*[:=]|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}",b)
+          r=json.loads(b); assert r["invocation"]=="2e8e8f7d-8d06-4b9e-83c6-e6134aaf7924"
+          assert set(r["blobs"])=={"cstate_wake_probe","sandbox_test","netgofer_test"}
+          PY
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: always() && steps.collect.outcome == 'success' && !cancelled()
+        if: steps.validate.outcome == 'success'
         with:
-          name: bazel9-source-presubmit-results
-          path: ${{ runner.temp }}/source-presubmit-results/receipt.json
+          name: original-source-failures
+          path: ${{ runner.temp }}/closed-source-failures.json
           if-no-files-found: error
           retention-days: 14
-      - name: Check the full presubmit result
-        if: always() && steps.collect.outcome == 'success' && !cancelled()
+      - name: Require exact CAS returns
+        if: steps.validate.outcome == 'success'
         run: |
-          python3 -c 'import json, os, pathlib; row=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"source-presubmit-results/receipt.json").read_text()); raise SystemExit(0 if row["complete_pass"] else 1)'
+          python3 -c 'import json,os,pathlib; r=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"closed-source-failures.json").read_text()); assert all(b.get("verified") for b in r["blobs"].values())'
