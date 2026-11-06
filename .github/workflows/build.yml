@@ -1,35 +1,47 @@
-name: CI
-
-"on":
+name: Identify the public race release's configured execution tools
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/scratch-race-exec-inventory]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  inventory:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 28
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Map GoLink outputs to their configured execution consumers
+        run: |
+          set -euo pipefail
+          umask 077
+          d="$RUNNER_TEMP/exec-inventory"
+          mkdir "$d"
+          test "$(git rev-parse HEAD^)" = 709cd18c362576aaea12aa6d36c72034dbe001c8
+          cp .github/qualification/{exec_inventory.py,exec_cas.py} test/rbe/release_prewarmer/BUILD "$d/"
+          git checkout -q --detach HEAD^
+          mkdir -p test/rbe/release_prewarmer
+          cp "$d/BUILD" test/rbe/release_prewarmer/BUILD
+          test "$(cat .bazelversion)" = 9.3.1
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' --max-time 100 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum --check
+          chmod 755 "$d/bazel"
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$d/exec_inventory.py" graph
+      - name: Identify executable bytes from the original invocation
+        env:
+          ACCESS: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          test -n "$ACCESS"
+          d="$RUNNER_TEMP/exec-inventory"
+          env -i PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" ACCESS="$ACCESS" python3 -B "$d/exec_inventory.py" elf
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: arm-race-execution-tools
+          path: |
+            ${{ runner.temp }}/exec-inventory/graph-receipt.json
+            ${{ runner.temp }}/exec-inventory/elf-receipt.json
+          if-no-files-found: warn
+          retention-days: 5
