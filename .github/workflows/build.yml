@@ -1,35 +1,39 @@
-name: CI
-
-"on":
+name: Verify the vDSO checker on real AMD64 and ARM64 ELFs
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/vdso-elf-debian-controls]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Install the distro compilers for the native and cross-linked vDSOs
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = f61f120296dfe1af832a6a30a7b6bd0d8b8cc0d7
+          sudo apt-get -qq update
+          sudo apt-get -yq --no-install-recommends install g++-aarch64-linux-gnu golang-go
+          /usr/bin/go version
+          aarch64-linux-gnu-g++ -dumpmachine
+          d="$RUNNER_TEMP/vdso-checker"
+          mkdir -p "$d"
+          curl -fsSL https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          test "$("$d/bazel" --version)" = "bazel 9.3.1"
+      - name: Run the normal Bazel test and exercise the standalone checker
+        run: python3 -IB .github/qualification/vdso_go.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: vdso-elf-controls
+          path: ${{ runner.temp }}/vdso-checker/result.json
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Require both target ELFs, the normal test and the rejected inputs
+        if: always() && !cancelled()
+        run: python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"vdso-checker"/"result.json"; assert json.loads(p.read_text())["verified"]'
