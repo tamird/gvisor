@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T21:11:20.345Z",
+    "updatedAt": "2026-11-06T21:20:00.639Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -11883,23 +11883,24 @@
       "id": "branch:nvproxy-declared-sources",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/nvproxy-native-source-parity-ready",
-      "head": "efa9acfb4e2d91c5944c166a9f2269e0b3ba4322",
-      "title": "Declare NVIDIA driver headers for the offline ABI comparison",
+      "ref": "research/nvproxy-dev-source-index",
+      "head": "be4b12bea9fae089b93d87b9f09246eeec6aa702",
+      "title": "Give the NVIDIA ABI test its driver headers",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/efa9acfb4",
-      "status": "Agent work",
-      "updatedAt": "2026-11-06T21:02:48.594Z",
-      "summary": "The ABI test used git to fetch each supported NVIDIA driver. The proposed change feeds the parser declared archives, using the Clang headers from #17112 and the parser dependency from #17114. With network access denied, all 25 versions with a source release passed parity and TestParser passed. The nine versions with no public tag were recorded as skips. A separate test still checks the live installer checksums. The full compiler presubmit passed all 34 live installer checks with declared trust roots.",
+      "url": "https://github.com/tamird/gvisor/commit/be4b12bea",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-11-06T21:20:00.639Z",
+      "summary": "The ABI test compared all 25 available NVIDIA source releases with outbound networking denied. It skipped the nine recorded versions without published source. The development-only extension gave gVisor all 25 archive repositories and a downstream module zero, down from 25. Both downstream build attempts stopped at the existing Gazelle restriction before compilation. The separate online test checked all 34 installer hashes with declared trust roots.",
       "followup": {
-        "sourceHead": "efa9acfb4e2d91c5944c166a9f2269e0b3ba4322",
-        "observedAt": "2026-11-06T20:45:16.012Z",
-        "owner": "Agent",
-        "disposition": "The dev-only declarations expose all 25 driver archives to gVisor and zero to a downstream module. The existing Gazelle restriction stopped both downstream builds before compilation.",
-        "nextAction": "Verify root ABI parity on the changed aliases before returning the source for contributor review. The separate live installer test passed all 34 checks with declared trust roots.",
+        "sourceHead": "be4b12bea9fae089b93d87b9f09246eeec6aa702",
+        "observedAt": "2026-11-06T21:20:00.639Z",
+        "owner": "Contributor",
+        "disposition": "The final development-only source is ready for review.",
+        "nextAction": "Review the single fork commit. If approved, submit after #17112 and #17114 merge.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/be4b12bea",
+          "https://github.com/tamird/gvisor/actions/runs/42294413136/artifacts/13541966193",
           "https://github.com/tamird/gvisor/actions/runs/42287343098/artifacts/13539170567",
-          "https://github.com/tamird/gvisor/compare/acedf056b...efa9acfb4",
           "https://github.com/tamird/gvisor/commit/63f10e43e",
           "https://github.com/tamird/gvisor/actions/runs/42282261080/artifacts/13536367145",
           "https://github.com/tamird/gvisor/actions/runs/42279392380/artifacts/13534569286",
@@ -11908,12 +11909,12 @@
       },
       "evidence": [
         {
-          "label": "Dev-only root and downstream repo-mapping controls; 248 license checks passed",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42287343098/artifacts/13539170567"
+          "label": "Final native ABI comparison with test-only development repositories",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42294413136/artifacts/13541966193"
         },
         {
-          "label": "Review the native ABI source change",
-          "url": "https://github.com/tamird/gvisor/compare/acedf056b...efa9acfb4"
+          "label": "Dev-only root and downstream repo-mapping controls; 248 license checks passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42287343098/artifacts/13539170567"
         },
         {
           "label": "Separate the live installer checksum test",
@@ -11931,7 +11932,18 @@
           "label": "Full presubmit with live installer checks and declared trust roots",
           "url": "https://github.com/tamird/gvisor/actions/runs/42283984978"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "be4b12bea9fae089b93d87b9f09246eeec6aa702",
+        "baseHead": "acedf056bb9dce1d8ff9e5fe169241b743683848",
+        "url": "https://github.com/tamird/gvisor/commit/be4b12bea",
+        "title": "Give the NVIDIA ABI test its driver headers",
+        "body": "The ABI test checks out every supported driver at test time. On a\nworker without Git or outbound network access, it fails before the\nparser can compare a driver definition with its Go type.\n\nRecord the public source commit and archive digest for each driver,\nincluding which versions have no public tag. A development-only\nmodule extension makes those sources available to the ABI test and\nthe license audit when gVisor is the root module.\n\nPass the declared headers to the existing parser. The standalone\ndiffer can still check out the version selected on its command line.",
+        "summary": "May I open this change after #17112 and #17114 merge? The ABI test compared all 25 available NVIDIA source releases with outbound networking denied. It skipped the nine recorded versions without published source. The development-only extension gave gVisor all 25 archive repositories and a downstream module zero, down from 25. Both downstream build attempts stopped at the existing Gazelle restriction before compilation. The separate online test checked all 34 installer hashes with declared trust roots.",
+        "requestedAt": "2026-11-06T21:20:00.639Z"
+      }
     },
     {
       "id": "pr:15645",
@@ -53199,10 +53211,14 @@
       "head": "199cf1558d95b4e029b3e52ff13e92e63e1a3d34",
       "url": "https://github.com/google/gvisor/pull/17047",
       "title": "Check the locks protecting kernfs directory children",
-      "status": "open",
-      "updatedAt": "2026-11-05T16:41:13.307421Z",
+      "status": "merged",
+      "updatedAt": "2026-11-06T21:20:00.639Z",
       "summary": "Lookup reads a map of child names, while readdir walks a list in insertion order. Both use the directory mutex. Have checklocks verify that readers hold the mutex and that removal holds it for writing.",
       "evidence": [
+        {
+          "label": "Merged through Copybara #17071",
+          "url": "https://github.com/google/gvisor/commit/30e890a96"
+        },
         {
           "label": "Proposed source: checked directory readers, removal and both rename paths",
           "url": "https://github.com/tamird/gvisor/commit/199cf1558"
@@ -59890,8 +59906,8 @@
       "type": "depends_on",
       "reason": "Supplies the Clang resource headers carried by the parser.",
       "evidence": [
-        "https://github.com/tamird/gvisor/compare/acedf056b...efa9acfb4",
-        "https://github.com/tamird/gvisor/actions/runs/42282261080/artifacts/13536367145"
+        "https://github.com/tamird/gvisor/commit/be4b12bea",
+        "https://github.com/tamird/gvisor/actions/runs/42294413136/artifacts/13541966193"
       ]
     },
     {
@@ -59900,8 +59916,8 @@
       "type": "depends_on",
       "reason": "Builds the NVIDIA parser with the compiler dependency used in this source.",
       "evidence": [
-        "https://github.com/tamird/gvisor/compare/acedf056b...efa9acfb4",
-        "https://github.com/tamird/gvisor/actions/runs/42282261080/artifacts/13536367145"
+        "https://github.com/tamird/gvisor/commit/be4b12bea",
+        "https://github.com/tamird/gvisor/actions/runs/42294413136/artifacts/13541966193"
       ]
     },
     {
@@ -75732,7 +75748,7 @@
           ]
         }
       ],
-      "nextStep": "The posting decision on rules_python#2500 covers how a separately installed Python child finds its runfiles. Keep the native launcher proposal on hold for that discussion. The separate zero-layer worker experiment awaits authorization to publish ghcr.io/tamird/gvisor-scratch-directory:v1 as a public package. Verify that deployment and the actual BuildBuddy worker version before repeating that probe.",
+      "nextStep": "Wait for a maintainer response on hermeticbuild/hermetic-launcher#95 about runfiles for separately installed Python children before advancing the native rules_python launcher. The separate zero-layer worker experiment awaits authorization to publish ghcr.io/tamird/gvisor-scratch-directory:v1 as a public package. Verify that deployment and the actual BuildBuddy worker version before repeating that probe.",
       "evidence": [
         {
           "label": "Verified OCI layout with a single empty directory",
