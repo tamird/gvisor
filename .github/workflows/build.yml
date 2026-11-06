@@ -1,35 +1,55 @@
-name: CI
-
-"on":
+name: Observe local delayed ACK rejection
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/delayed-ack-pure-link-error]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  packet:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Run the three socket cases on native Linux
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^^)" = 10555b8fe8ee142f6a956ab3f7fbc717d38b0639
+          test "$(git rev-parse HEAD^)" = 3cb9a3f9b0741aedf3fc75773b77316ffd5b10c6
+          test "$(git diff --name-only HEAD^^ HEAD^)" = pkg/tcpip/transport/tcp/test/e2e/tcp_delayed_ack_test.go
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/build.yml
+          git checkout --quiet --detach HEAD^
+          d="$RUNNER_TEMP/delayed-ack-pure-error"; mkdir -m 700 "$d"
+          rc=0
+          env -i HOME="$HOME" USER=runner PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" bazelisk --nosystem_rc --nohome_rc --bazelrc=/dev/null --host_jvm_args=-Xmx3g test \
+            --config=x86_64 --lockfile_mode=off -c opt --jobs=4 --local_resources=memory=8192 \
+            --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox \
+            '--modify_execution_info=^(GoStandardLibraryAnalysis|GoStaticAnalysis)$=-no-sandbox' \
+            --spawn_strategy=linux-sandbox --strategy=TestRunner=linux-sandbox --sandbox_default_allow_network=false \
+            --remote_cache= --remote_executor= --bes_backend= --flaky_test_attempts=1 --nocache_test_results \
+            --test_arg=-test.v --test_env=GO_TEST_WRAP_TESTV=1 --test_timeout=150 \
+            '--test_filter=^(TestDelayedACK|TestDelayedACKLinkWriteError|TestDelayedACKRefusedByLink)$' \
+            --test_output=all --build_event_json_file="$d/run.bep" //pkg/tcpip/transport/tcp/test/e2e:tcp_delayed_ack_test >"$d/run.log" 2>&1 || rc=$?
+          python3 - "$rc" "$d" <<'PY'
+          from pathlib import Path
+          import hashlib, json, re, sys
+          code, work = int(sys.argv[1]), Path(sys.argv[2])
+          text = (work / "run.log").read_text(errors="replace")
+          report = {"fixture":"3cb9a3f9b0741aedf3fc75773b77316ffd5b10c6","source":"10555b8fe8ee142f6a956ab3f7fbc717d38b0639","exit":code}
+          report["cases"] = dict((name, result) for result,name in re.findall(r"(?m)^\s*--- (PASS|SKIP|FAIL): (TestDelayedACK(?:RefusedByLink|LinkWriteError)?) \(",text))
+          attempts = re.search(r"after five more ACK deadlines: link attempts=(\d+)", text)
+          report["idle_attempts"] = int(attempts[1]) if attempts else None
+          report["recovered_after_duplicate"] = "duplicate elicited the cumulative ACK" in text
+          report["log_sha256"] = hashlib.sha256((work/"run.log").read_bytes()).hexdigest()
+          report["diagnostics"] = [l[:520] for l in text.splitlines() if re.search(r"ERROR:|undefined:|\.go:\d+:.*(?:want|got|error)|timed out",l,re.I)][:12]
+          report["verified"] = code == 0 and set(report["cases"]) == {"TestDelayedACK","TestDelayedACKRefusedByLink","TestDelayedACKLinkWriteError"} and all(v=="PASS" for v in report["cases"].values()) and report["idle_attempts"] is not None and (report["idle_attempts"]>1 or report["recovered_after_duplicate"])
+          (work/"observation.json").write_text(json.dumps(report,indent=2)+"\n")
+          print(json.dumps(report))
+          raise SystemExit(not report["verified"])
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: pure-ack-link-error
+          path: ${{ runner.temp }}/delayed-ack-pure-error/observation.json
+          retention-days: 14
