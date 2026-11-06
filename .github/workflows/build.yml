@@ -1,35 +1,45 @@
-name: CI
-
-"on":
+name: Check final TCP listener lock ownership
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-listener-handshake-final]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 50
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Run the TCP Nogo owner and the socket cases
+        run: |
+          set -euo pipefail
+          dir="$RUNNER_TEMP/handshake-locks"
+          mkdir -m 700 "$dir"
+          cp .github/qualification/handshake_locks.py "$dir/"
+          test "$(git rev-parse HEAD^)" = dcad6d56792cbd5c65195ad64f3a57628e605f70
+          test "$(git rev-parse HEAD^^)" = 1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d
+          git checkout -q --detach HEAD^
+          test "$(cat .bazelversion)" = 9.3.1
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' --max-time 100 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$dir/bazelisk"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $dir/bazelisk" | sha256sum -c
+          chmod 755 "$dir/bazelisk"
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" LANG=C.UTF-8 python3 -B "$dir/handshake_locks.py"
+      - name: Verify the evidence boundary
+        if: always()
+        id: boundary
+        run: |
+          set -eu
+          p="$RUNNER_TEMP/handshake-locks/receipt.json"
+          test -f "$p"
+          test ! -L "$p"
+          test "$(wc -c < "$p")" -lt 96000
+          if grep -Eiq 'authorization[[:space:]]*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}' "$p"; then exit 1; fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.boundary.outcome == 'success'
+        with:
+          name: tcp-listener-final
+          path: ${{ runner.temp }}/handshake-locks/receipt.json
+          if-no-files-found: error
+          retention-days: 5
