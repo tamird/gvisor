@@ -8,6 +8,18 @@ The Bazel 9 graph on upstream `f51a205a8` selects **all 360 runnable tests and 2
 | Action placement | Bazel assigned 366 test shard actions to OCI and five to Firecracker. The five are `cmd_test`, the runsc sandbox test, both sandboxexec binding tests and the native syscall. Ten Go compile actions and one C++ compile action sampled from the graph selected the ordinary OCI worker. [Action records](https://github.com/tamird/gvisor/actions/runs/42240826638/artifacts/13517195079) |
 | Worker cgroup and cache | Both worker types returned cgroup2fs magic `0x63677270`, only hierarchy 0 and `IsOnlyV2() == true`. The OCI worker reported kernel `6.12.113+`; the VM reported `6.18.57`. Each test ran remotely with both values of `CGROUPV2`. Repeating `true` hit both remote cache entries. A v1 row still requires a real v1 fixture. [Measured workers](https://github.com/tamird/gvisor/actions/runs/42240363852/artifacts/13516160486) |
 
+### Full remote run
+
+One Bazel invocation reported a terminal build status for every target. Of 2,881 build-only targets, 2,650 built and 231 failed. Of 361 runnable owners, 295 built and produced a test result. The other 66 failed to build, including the native `uname` control. [All 3,242 target records](https://github.com/tamird/gvisor/actions/runs/42241955125/artifacts/13517404379)
+
+| Test owners that ran | Fresh remote shards | Outcome |
+|---:|---:|---|
+| 293 | 303 | Passed |
+| 1 | 1 | `//runsc/sandbox:sandbox_test` failed route assertions. |
+| 1 | 1 | `//runsc/gofer/net:netgofer_test` timed out. |
+
+The first failed C compilation was `//tools/cstate_wake_probe:cstate_wake_probe`. Its wrapper invoked `x86_64-linux-gnu-gcc`, which the worker could not find. Registering the declared LLVM toolchain let the same worker compile and link the probe into a 16,752-byte AMD64 ELF. The FD parker’s genrule selected Clang too, then failed to include `asm/poll.h`. Applying the existing sidecar PR made the C compilation succeed. The link then failed on `-lpthread` and `-ldl`, before it produced an ELF or ran the FD parker tests. [Original stderr and test diagnostics](https://github.com/tamird/gvisor/actions/runs/42245953833/artifacts/13515909941) · [Compiler comparison](https://github.com/tamird/gvisor/actions/runs/42246718362/artifacts/13518991712) · [Standalone sidecar comparison](https://github.com/tamird/gvisor/actions/runs/42247927391/artifacts/13519042921)
+
 ### Comparison with the older integration
 
 The original mixed smoke ran one logical test from the AMD64 unit row, atomicbitops. The broader unit profile on that older source selects 319 of the 360 by their upstream labels. [Original six remote results](https://github.com/tamird/gvisor/actions/runs/42232937931/artifacts/13510273674)
