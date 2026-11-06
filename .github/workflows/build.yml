@@ -1,35 +1,108 @@
-name: CI
-
-"on":
+name: Qualify NIC shutdown under the race detector
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/nic-join-gnu-race]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  race:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Select the reviewed product and pinned execution platform
+        run: |
+          set -euo pipefail
+          product=890afa390aa44699ecbe493699b5260ad50dbaba
+          test "$(git rev-parse HEAD^)" = "$product"
+          git checkout --detach "$product"
+          test -z "$(git status --short)"
+          platform="$RUNNER_TEMP/dispatcher-platform"
+          mkdir "$platform"
+          printf '%s\n' 'module(name="dispatcher_worker")' > "$platform/MODULE.bazel"
+          cat > "$platform/BUILD" <<'BUILD'
+          platform(
+              name = "gnu",
+              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              exec_properties = {
+                  "Arch": "amd64",
+                  "OSFamily": "linux",
+                  "workload-isolation-type": "firecracker",
+                  "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+              },
+              visibility = ["//visibility:public"],
+          )
+          BUILD
+      - name: Run the six NIC lifecycle cases under the race detector
+        id: test
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          rc="$RUNNER_TEMP/dispatcher.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" > "$rc"
+          unset BUILDBUDDY_API_KEY
+          tests='^(TestStackWaitAllowsReceiveLookup|TestRemoveNIC|TestNICMTULimitsSurviveMove|TestRemoveRoutes|TestNICContextPreservation|TestNICKindPreservation)$'
+          bazelisk --nosystem_rc --nohome_rc --bazelrc="$rc" test --config=x86_64 --config=race \
+            --inject_repository="dispatcher_worker=$RUNNER_TEMP/dispatcher-platform" \
+            --extra_execution_platforms=@dispatcher_worker//:gnu --host_platform=@dispatcher_worker//:gnu \
+            --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io \
+            --spawn_strategy=remote --noremote_local_fallback --jobs=100 --nocache_test_results \
+            --test_sharding_strategy=disabled --flaky_test_attempts=1 --test_timeout=150 \
+            --test_env=GO_TEST_WRAP_TESTV=1 --test_arg=-test.v --test_filter="$tests" \
+            --build_event_json_file="$RUNNER_TEMP/race.bep" --test_output=errors \
+            //pkg/tcpip/stack:stack_x_test > "$RUNNER_TEMP/race-console.log" 2>&1
+      - name: Summarize the original test result
+        if: always()
+        run: |
+          python3 - <<'CHECK'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          import re
+          import subprocess
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+          root = Path(os.environ['RUNNER_TEMP'])
+          source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          assert source == '890afa390aa44699ecbe493699b5260ad50dbaba'
+          owner = '//pkg/tcpip/stack:stack_x_test'
+          cases = ['TestStackWaitAllowsReceiveLookup', 'TestRemoveNIC', 'TestNICMTULimitsSurviveMove',
+                   'TestRemoveRoutes', 'TestNICContextPreservation', 'TestNICKindPreservation']
+          records = []
+          bep = root / 'race.bep'
+          if bep.is_file():
+              for line in bep.open():
+                  event = json.loads(line)
+                  if event['id'].get('testResult', {}).get('label') == owner:
+                      t = event['testResult']
+                      records.append({'passed': t.get('status') == 'PASSED',
+                                      'remote': t.get('executionInfo', {}).get('strategy') == 'remote',
+                                      'uncached': not t.get('cachedLocally', False) and
+                                      not t.get('executionInfo', {}).get('cachedRemotely', False)})
+          log = Path('bazel-testlogs/pkg/tcpip/stack/stack_x_test/test.log')
+          data = log.read_bytes() if log.is_file() else b''
+          text = data.decode(errors='replace')
+          passed = [case for case in cases if re.search(r'^\s*--- PASS: ' + case + r' \(', text, re.MULTILINE)]
+          console = root / 'race-console.log'
+          diagnostics = console.read_text(errors='replace') if console.is_file() else ''
+          result = {'source': source, 'owner': owner, 'results': records, 'passed_cases': passed,
+                    'test_log_sha256': hashlib.sha256(data).hexdigest() if data else None,
+                    'missing_cc': 'cc: no such file or directory' in diagnostics,
+                    'resource_exhausted': 'Resource Exhausted:' in diagnostics}
+          (root / 'nic-race.json').write_text(json.dumps(result, indent=2) + '\n')
+          print(json.dumps(result))
+          assert records == [{'passed': True, 'remote': True, 'uncached': True}] and passed == cases
+          CHECK
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: nic-drain-gnu-race
+          path: ${{ runner.temp }}/nic-race.json
+          if-no-files-found: error
