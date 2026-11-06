@@ -1,35 +1,83 @@
-name: CI
-
-"on":
+name: Check packet ring unmapping on native Linux
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/packet-ring-unmap-native]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  receive:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Verify the two sources and prepare Bazelisk with a private loopback
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 1a8b1b84cac3d9b55e561bd913af49dc0de1455a
+          test "$(git rev-parse HEAD^^)" = f51a205a8f4afbc5ab41aded070df74951b081ea
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!pkg/tcpip/link/fdbased/BUILD' ':!pkg/tcpip/link/fdbased/packet_ring_linux_test.go'
+          test "$(git diff --name-only HEAD^^ HEAD^)" = pkg/tcpip/link/fdbased/mmap.go
+          test "$(uname -m)" = x86_64
+          test "$(cat .bazelversion)" = 9.3.1
+          curl -fsSL --max-time 90 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$RUNNER_TEMP/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $RUNNER_TEMP/bazel" | sha256sum -c -
+          chmod 755 "$RUNNER_TEMP/bazel"
+          if /usr/bin/unshare --user --map-root-user --net -- /usr/bin/test -e /sys/class/net/lo; then
+            echo 'namespace=/usr/bin/unshare --user --map-root-user --net --' >> "$GITHUB_ENV"
+          else
+            sudo -n /usr/bin/unshare --net -- /usr/bin/test -e /sys/class/net/lo
+            echo 'namespace=/usr/bin/sudo -n --preserve-env=TEST_SRCDIR,TEST_WORKSPACE,TEST_TMPDIR,XML_OUTPUT_FILE,RUNFILES_DIR,RUNFILES_MANIFEST_FILE,GO_TEST_WRAP_TESTV -- /usr/bin/unshare --net --' >> "$GITHUB_ENV"
+          fi
+          mkdir "$RUNNER_TEMP/packet-ring"
+      - name: Test the original and corrected method with the same AF_PACKET fixture
+        run: |
+          set -eu
+          for arm in stock fixed; do
+            src=HEAD^^
+            if test "$arm" = fixed; then src=HEAD^; fi
+            git restore --source="$src" --worktree -- pkg/tcpip/link/fdbased/mmap.go
+            git diff --exit-code "$src" -- pkg/tcpip/link/fdbased/mmap.go
+            out="$RUNNER_TEMP/packet-ring/$arm"
+            mkdir "$out"
+            git rev-parse "$src" > "$out/source"
+            rc=0
+            "$RUNNER_TEMP/bazel" --nosystem_rc --nohome_rc --host_jvm_args=-Xmx3g test --config=x86_64 --jobs=3 --strategy=TestRunner=local --nocache_test_results --test_timeout=180 --test_output=errors --test_env=GO_TEST_WRAP_TESTV=1 --test_arg=-test.v --run_under="$namespace" --test_filter='^TestPacketRingMapping$' //pkg/tcpip/link/fdbased:fdbased_test || rc=$?
+            printf '%s\n' "$rc" > "$out/bazel-exit"
+            base=bazel-testlogs/pkg/tcpip/link/fdbased/fdbased_test
+            if test -s "$base/test.xml"; then cp "$base/test.xml" "$out/test.xml"; fi
+            if test -s "$base/test.log"; then
+              grep -E 'ring-bytes=|mapping ([a-z-]+):|retained-packet=|msync [a-z-]+: got|restored dispatcher held' "$base/test.log" > "$out/observations" || true
+            fi
+          done
+      - name: Check both source-specific verdicts
+        if: always() && !cancelled()
+        run: |
+          python3 - <<'PYTHON'
+          import os
+          from pathlib import Path
+          from xml.etree import ElementTree
+          root = Path(os.environ["RUNNER_TEMP"]) / "packet-ring"
+          for arm, rc, failing in [("stock", 3, True), ("fixed", 0, False)]:
+              case = root / arm
+              assert int((case / "bazel-exit").read_text()) == rc, arm
+              observations = (case / "observations").read_text()
+              for marker in ("mapping before-attach: <nil>", "mapping after-detach: <nil>", "mapping after-restored-close: <nil>", "expected UDP marker", "stop-fd=-1"):
+                  assert marker in observations, (arm, marker)
+              for point in ("after-close", "after-double-close", "after-owner-close", "after-double-close-and-fd-close"):
+                  result = "<nil>" if failing else "cannot allocate memory"
+                  assert f"mapping {point}: {result}" in observations, (arm, point)
+              rows = {r.get("name"):r for r in ElementTree.parse(case / "test.xml").findall(".//testcase")}
+              for name in ("never-attached", "after-delivery", "restored"):
+                  row = rows["TestPacketRingMapping/" + name]
+                  assert row.find("skipped") is None
+                  assert (row.find("failure") is not None or row.find("error") is not None) == failing, (arm, name)
+          PYTHON
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: private-loopback-packet-ring
+          path: ${{ runner.temp }}/packet-ring/
+          if-no-files-found: warn
+          retention-days: 14

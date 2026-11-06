@@ -67,6 +67,7 @@ go_test(
     size = "small",
     srcs = [
         "endpoint_test.go",
+        "packet_ring_linux_test.go",
         "processors_test.go",
     ],
     embed = [":fdbased"],
@@ -74,6 +75,7 @@ go_test(
         "//pkg/buffer",
         "//pkg/rand",
         "//pkg/refs",
+        "//pkg/state",
         "//pkg/tcpip",
         "//pkg/tcpip/header",
         "//pkg/tcpip/stack",
