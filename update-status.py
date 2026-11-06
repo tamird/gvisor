@@ -11,6 +11,7 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
+from incoming_reviews import discover as incoming_reviews
 from reapproval import import_author_block, maintainer_logins, reminder_plan
 from work_states import FAILURES, check_purpose, check_states, effective_approval, import_lineage, is_advisory_check, matches_feedback_assignment, public_import_disposition, record_states, remember_mergeability, review_decision, repository_policies, verified_landing, with_maintainer_reviewers
 
@@ -1157,6 +1158,9 @@ def main() -> None:
     issues = collect_issues(previous)
     review_prs = external_review_prs(prs)
     observe_release_versions(prs)
+    # Discover requests before spending the optional mergeability recheck budget.
+    since = datetime.now(timezone.utc).isoformat()
+    incoming, scan = incoming_review_intake(previous, [*prs, *review_prs], since)
     # Use only the budget left by all repositories and issues. Otherwise
     # UNKNOWNs in the first repository can crowd out required observations.
     for repo, inventory in inventories.items():
@@ -1188,6 +1192,7 @@ def main() -> None:
     report = check_report(prs, previous)
     snapshot = {"schema": 1, "repo": REPO, "owner": OWNER, "checkedAt": checked_at,
                 "registryDate": REGISTRY["meta"]["updatedAt"], "repositories": policies, "prs": prs, "issues": issues,
+                "incomingReviewRequests": incoming, "incomingReviewScan": scan,
                 "reviewPRs": review_prs, "reviewerHandoff": reviewer_handoff(prs, previous),
                 "reviewWatchHandoff": review_watch_handoff(prs + review_prs, previous),
                 "mergeabilityHandoff": mergeability_handoff(report, previous),
@@ -1211,6 +1216,8 @@ def main() -> None:
     temporary.replace(output)
     print(f"Retained {len(prs)} PRs across {len(policies)} repositories; refreshed "
           f"{len(refreshed)} records in {requests} GitHub requests ({query_cost} GraphQL points).")
+    for record in snapshot["incomingReviewRequests"]:
+        print(json.dumps({"incomingReviewRequest": record}))
     for record in snapshot["reviewerHandoff"]:
         print(json.dumps({"reviewerHandoff": [record]}))
     for record in snapshot["reviewWatchHandoff"]:
@@ -1249,12 +1256,34 @@ def main() -> None:
                                   "crossReferencesComplete": references["complete"], "crossReferences": changed}))
 
 
+def incoming_review_intake(previous: dict, rows: list[dict], now: str) -> tuple[list[dict], dict]:
+    inspected = [
+        record for item in [*REGISTRY["nodes"], *REGISTRY.get("investigations", [])]
+        if item.get("reviewWatch", {}).get("repo", item.get("repo")) == REPO
+        for record in item.get("reviewWatch", {}).get("inspected", [])
+    ]
+    return incoming_reviews(previous, rows, OWNER, graphql, now, min(6, REQUEST_LIMIT - requests), inspected)
+
+
+def incoming_review_handoff() -> None:
+    """Recheck the first-priority queue when the supervisor starts or resumes."""
+    previous = json.loads((ROOT / "github-status.json").read_text())
+    checked = datetime.now(timezone.utc).isoformat()
+    rows, _ = incoming_review_intake(previous, [], checked)
+    print(json.dumps({"checkedAt": checked, "repo": REPO, "incomingReviewRequests": rows}))
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--reapproval-reminders", choices=("plan", "post"),
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--incoming-review-handoff", action="store_true",
+                      help="Read gVisor review requests at supervisor startup, including newly opened PRs")
+    mode.add_argument("--reapproval-reminders", choices=("plan", "post"),
                         help="Use the existing snapshot and fresh GitHub reads for approved amendments")
     arguments = parser.parse_args()
-    if arguments.reapproval_reminders:
+    if arguments.incoming_review_handoff:
+        incoming_review_handoff()
+    elif arguments.reapproval_reminders:
         reapproval_reminders(post=arguments.reapproval_reminders == "post")
     else:
         main()

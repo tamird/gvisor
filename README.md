@@ -355,6 +355,23 @@ reported. Review/comment lists retain the latest 100 entries per connection;
 the existing 100-thread bound still applies. These records do not imply that a
 reviewer's concern has been resolved.
 
+At supervisor startup or on resuming work, run
+`python3 update-status.py --incoming-review-handoff` from this checkout
+before starting qualifications. On a scheduled refresh, read
+`github-status.json`'s `incomingReviewRequests` first. The command also
+checks GitHub directly, so a new request can be handled before the next
+scheduled publication. For each request, read the linked conversation and
+the current PR head, then conduct the requested review.
+
+The collector checks open PRs from other authors in `google/gvisor`,
+including PRs absent from the registry. It looks for formal reviewer
+assignments and explicit requests addressed to the contributor in PR
+descriptions, comments, reviews and inline threads. Each refresh resumes a
+bounded backfill across open PRs and long discussions. GitHub review and
+thread replies clear the requests they answer. Exact inspection receipts
+in `reviewWatch.inspected` apply to the recorded revision of a message.
+The workflow publishes the queue. The active supervisor owns the review.
+
 Each refresh puts a compact `reviewerHandoff` before routine check output and
 retains it in the snapshot. It routes new human comments, reviews and replies
 on source and linked import PRs to the source's existing `followup.owner`;
