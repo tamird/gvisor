@@ -508,6 +508,11 @@ class CollectorHistoryTest(unittest.TestCase):
                       "Maintainer | [@kerumeto](https://github.com/kerumeto) | Core\n"
                       "\n## Emeritus Maintainers\n")
             return {"repository": {"object": {"oid": "b" * 40, "text": roster}}}
+        if "formal:search(" in query:
+            self.assertIn("repo:google/gvisor is:pr is:open", query)
+            self.assertNotIn("repo:other/", query)
+            empty = {"pageInfo": {"hasNextPage": False, "endCursor": None}, "nodes": []}
+            return {"formal": empty, "mentioned": empty, "repository": {"latest": empty, "backfill": empty}}
         if "pullRequests(states:OPEN" in query:
             self.inventory_pages += 1
             offset = int((variables or {}).get("after") or 0)
@@ -540,6 +545,18 @@ class CollectorHistoryTest(unittest.TestCase):
                 mock.patch.object(updater.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "", "")):
             updater.main()
         return json.loads(self.path.read_text())
+
+    def test_publication_hands_incoming_request_to_supervisor(self) -> None:
+        pr = self.raw[2]
+        message = {"body": "@tamird PTAL", "createdAt": OLD, "updatedAt": OLD,
+                   "author": {"login": "other", "__typename": "User"},
+                   "id": "request", "url": pr["url"] + "#issuecomment-123"}
+        pr["comments"]["nodes"].append(message)
+        with mock.patch("builtins.print") as log:
+            snapshot = self.collect()
+        request, = snapshot["incomingReviewRequests"]
+        self.assertEqual((request["repo"], request["id"], request["url"]), ("google/gvisor", "request", message["url"]))
+        self.assertIn(mock.call(json.dumps({"incomingReviewRequest": request})), log.call_args_list)
 
     def test_main_publishes_fresh_release_observation_and_survives_unavailability(self) -> None:
         self.registry["nodes"].append({"id": "pr:3", "type": "pr", "repo": "google/gvisor", "number": 3,
