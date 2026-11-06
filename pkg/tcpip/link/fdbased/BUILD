@@ -67,11 +67,17 @@ go_test(
     size = "small",
     srcs = [
         "endpoint_test.go",
+        "packet_ring_linux_test.go",
+        "receive_lifetime_test.go",
         "processors_test.go",
     ],
     embed = [":fdbased"],
     deps = [
         "//pkg/buffer",
+        "//pkg/state",
+        "//pkg/tcpip/adapters/gonet",
+        "//pkg/tcpip/network/ipv4",
+        "//pkg/tcpip/transport/udp",
         "//pkg/rand",
         "//pkg/refs",
         "//pkg/tcpip",
