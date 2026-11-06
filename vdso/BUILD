@@ -3,16 +3,14 @@
 #   normal system VDSO (time, gettimeofday, clock_gettimeofday) but which uses
 #   timekeeping parameters managed by the sandbox kernel.
 
-load("@rules_python//python:py_test.bzl", "py_test")
+load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 load("//tools:arch.bzl", "select_arch")
-load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain")
+load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain", "go_binary")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
 )
-
-exports_files(["check_vdso.py"])
 
 genrule(
     name = "vdso",
@@ -69,13 +67,17 @@ cc_flags_supplier(
     features = ["-pie"],
 )
 
-py_test(
+go_binary(
+    name = "check_vdso",
+    srcs = ["check/main.go"],
+)
+
+native_test(
     name = "vdso_test",
-    srcs = ["check_vdso.py"],
+    src = ":check_vdso",
     args = [
         "--check-data",
-        "--vdso=$(location :vdso)",
+        "--vdso=$(rootpath :vdso)",
     ],
     data = [":vdso"],
-    main = "check_vdso.py",
 )
