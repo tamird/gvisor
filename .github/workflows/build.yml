@@ -1,7 +1,7 @@
 name: Qualify the registered Python package writer
 on:
   push:
-    branches: [qualification/module-selected-python-writers]
+    branches: [qualification/registered-shim-package-writers]
 permissions:
   contents: read
 jobs:
@@ -11,24 +11,20 @@ jobs:
     timeout-minutes: 64
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 5}
+        with: {persist-credentials: false, fetch-depth: 6}
       - name: Pin the product sources and Bazel client
         run: |
           set -euo pipefail
           d="$RUNNER_TEMP/writer-runtime"
           mkdir -p "$d"
-          cp .github/qualification/writer_runtime.{py,cquery} "$d/"
-          test "$(git rev-parse HEAD^^^)" = bb983b988802b854bd03dd7a0a5220e7e7b4440e
-          test "$(git rev-parse HEAD^^^^)" = bbbed5b2b84fe21597c740789d841e618f912def
+          cp .github/qualification/package_writers.py "$d/"
+          test "$(git rev-parse HEAD^^^^)" = bb983b988802b854bd03dd7a0a5220e7e7b4440e
+          test "$(git rev-parse HEAD^^^^^)" = bbbed5b2b84fe21597c740789d841e618f912def
           curl --fail --location --silent --show-error --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
           echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
           chmod 755 "$d/bazel"
           test "$("$d/bazel" --version)" = 'bazel 9.3.1'
-      - name: Resolve the writer and target runtimes
-        id: selection
-        run: python3 -B "$RUNNER_TEMP/writer-runtime/writer_runtime.py" select
-      - name: Execute the shim and bzip2 package writers
-        if: steps.selection.outcome == 'success'
+      - name: Execute the exact shim and compressed fixture separately on both workers
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
@@ -44,7 +40,7 @@ jobs:
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$rc"
           unset BUILDBUDDY_API_KEY
-          env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$d/writer_runtime.py" packages
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$d/package_writers.py"
       - name: Verify the bounded evidence
         if: always()
         id: receipt
