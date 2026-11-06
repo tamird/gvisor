@@ -442,25 +442,21 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 	// (gvisor#9707/#9778). detectLoss arms the timer from rcvdTime-derived
 	// values, so evaluating it at the timer target keeps the two consistent.
 	numLost := rc.detectLoss(rc.snd.reorderTimer.target)
-	if numLost == 0 {
+	// A reordering timer must not start fast recovery while timeout recovery
+	// is still draining the pre-RTO flight. See RFC 6675, section 5.1.
+	if numLost == 0 || rc.snd.state == tcpip.RTORecovery {
 		return nil
 	}
 
-	fastRetransmit := rc.snd.enterRACKRecovery()
+	fastRetransmit := false
+	if !rc.snd.FastRecovery.Active {
+		rc.snd.cc.HandleLossDetected()
+		rc.snd.enterRecovery()
+		fastRetransmit = true
+	}
+
 	rc.DoRecovery(nil, fastRetransmit)
 	return nil
-}
-
-// enterRACKRecovery reports whether the loss starts a new recovery episode.
-//
-// +checklocks:s.ep.mu
-func (s *sender) enterRACKRecovery() bool {
-	if s.FastRecovery.Active || s.sackRecoveryInterrupted {
-		return false
-	}
-	s.cc.HandleLossDetected()
-	s.enterRecovery()
-	return true
 }
 
 // DoRecovery implements lossRecovery.DoRecovery.
@@ -491,24 +487,16 @@ func (rc *rackControl) DoRecovery(_ *segment, fastRetransmit bool) {
 			continue
 		}
 
-		limit := int(snd.ep.scoreboard.SMSS())
-		outstanding := snd.Outstanding
-		if snd.sackRecoveryInterrupted {
-			// After an RTO, sendData charged the transmission before
-			// advancing writeNext. Replace one lost packet from that
-			// transmission without charging its replacement twice.
-			outstanding = max(0, outstanding-1)
-			limit = min(limit, snd.MaxPayloadSize)
-		}
-		if outstanding >= snd.SndCwnd {
+		// Check the congestion window after entering recovery.
+		if snd.Outstanding >= snd.SndCwnd {
 			break
 		}
 
-		if sent := snd.maybeSendSegment(seg, limit, snd.SndUna.Add(snd.SndWnd)); !sent {
+		if sent := snd.maybeSendSegment(seg, int(snd.ep.scoreboard.SMSS()), snd.SndUna.Add(snd.SndWnd)); !sent {
 			break
 		}
 		dataSent = true
-		snd.Outstanding = outstanding + snd.pCount(seg, snd.MaxPayloadSize)
+		snd.Outstanding += snd.pCount(seg, snd.MaxPayloadSize)
 	}
 
 	snd.postXmit(dataSent, true /* shouldScheduleProbe */)
