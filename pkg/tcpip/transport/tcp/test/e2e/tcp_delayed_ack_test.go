@@ -17,6 +17,7 @@ package tcp_delayed_ack_test
 import (
 	"bytes"
 	"fmt"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -233,6 +234,55 @@ func TestDelayedACKLinkWriteError(t *testing.T) {
 		t.Fatalf("Write: %s", err)
 	}
 	c.checkDelayedACK()
+}
+
+// TestDelayedACKRefusedByLink checks how the receiver recovers when its link
+// rejects a timed ACK before any packet reaches the peer.
+func TestDelayedACKRefusedByLink(t *testing.T) {
+	var watch atomic.Bool
+	var attempts atomic.Int32
+	c := newDelayedAckContext(t, func(pkts stack.PacketBufferList) tcpip.Error {
+		if watch.Load() {
+			for _, pkt := range pkts.AsSlice() {
+				h := header.TCP(pkt.TransportHeader().Slice())
+				if len(h) >= header.TCPMinimumSize && h.Flags() == header.TCPFlagAck && pkt.Data().Size() == 0 {
+					if attempts.Add(1) == 1 {
+						return &tcpip.ErrNoBufferSpace{}
+					}
+				}
+			}
+		}
+		return nil
+	}, nil)
+	c.warmUp()
+	watch.Store(true)
+	c.send(1)
+	c.checkNoPacket("ACK sent before its deadline")
+	c.clock.Advance(delayedAckTimeout)
+	c.checkNoPacket("the link accepted the refused ACK")
+	if n := attempts.Load(); n != 1 {
+		t.Fatalf("timed ACK attempts = %d, want 1", n)
+	}
+
+	// No new segment or application write triggers another transmission.
+	for range 5 {
+		c.clock.Advance(delayedAckTimeout)
+	}
+	t.Logf("after five more ACK deadlines: link attempts=%d", attempts.Load())
+	if n := attempts.Load(); n > 1 {
+		c.checkACK()
+		return
+	}
+	c.checkNoPacket("ACK reached the peer without a link attempt")
+
+	// The peer retransmits the byte whose ACK it never received.
+	c.peer.NextSeqNum--
+	c.peer.SendPacket([]byte{0}, nil)
+	c.checkACK()
+	if n := attempts.Load(); n != 2 {
+		t.Fatalf("link attempts after duplicate = %d, want 2", n)
+	}
+	t.Log("duplicate elicited the cumulative ACK")
 }
 
 func TestDelayedACKQuickAck(t *testing.T) {
