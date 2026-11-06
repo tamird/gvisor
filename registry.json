@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T09:31:33.637Z",
+    "updatedAt": "2026-11-06T09:54:02.252Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -8675,16 +8675,19 @@
       "title": "Current public-CI qualification",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/38745c527",
-      "status": "ARM64 guest image built on AMD64; full unit qualification remains incomplete",
-      "summary": "An AMD64 worker built the ARM64 kernel and ext4 guest image at 38745c527. The image assembly action now selects tar for the worker’s architecture. Its output digests matched the Bazel build report.\n\nAt its deadline the AMD64/ARM64 unit run at d943b4a177 had attempted 656 of 668 targets: 174,566 cases passed, 52 failed and 69 skipped. Five more targets passed all 34 cases on the same source. The root build test and both AMD64 NVIDIA tests ran in a second job. A native ARM64 run executed both NVIDIA tests: 60 cases passed, and nine skipped for unavailable driver sources. Only the AMD64 and ARM64 cgroup tests still have no attempt at d943b4a177. Both passed on the corrected source in #16496.\n\nOf 357 analyzer-dependent targets, 356 built; the remaining cgroup target required local compilation. These builds do not count as test attempts. The ARM64 SDK and docprocessor guest run separately stopped before any of its 58 cases because QEMU exhausted temporary disk.\n\nRelease qualification is separate. On cb548161f5, the mixed release smoke ran 32 cases successfully and skipped one bwrap case. AMD64 ran in Firecracker and ARM64 under QEMU. The optimized releases have also passed CLI checks on both native architectures.",
-      "updatedAt": "2026-11-03T09:08:16.452060+00:00",
+      "status": "Native ARM64 SDK tests passed; QEMU SDK tests and full unit run remain incomplete",
+      "summary": "On a native ARM64 Ubuntu 22.04 worker, Bazel ran the docprocessor (9 cases), Go SDK (49), and Python SDK (43) tests at 38745c527. All three test targets ran uncached and passed. Nogo analyzed the standard library and produced 10,895,578 bytes of facts.\n\nAn AMD64 worker built the ARM64 kernel and ext4 guest image at 38745c527. The image assembly action now selects tar for the worker’s architecture. Its output digests matched the Bazel build report.\n\nAt its deadline the AMD64/ARM64 unit run at d943b4a177 had attempted 656 of 668 targets: 174,566 cases passed, 52 failed and 69 skipped. Five more targets passed all 34 cases on the same source. The root build test and both AMD64 NVIDIA tests ran in a second job. A native ARM64 run executed both NVIDIA tests: 60 cases passed, and nine skipped for unavailable driver sources. Only the AMD64 and ARM64 cgroup tests still have no attempt at d943b4a177. Both passed on the corrected source in #16496.\n\nOf 357 analyzer-dependent targets, 356 built; the remaining cgroup target required local compilation. These builds do not count as test attempts. The ARM64 SDK and docprocessor guest run separately stopped before any of its 58 cases because QEMU exhausted temporary disk.\n\nRelease qualification is separate. On cb548161f5, the mixed release smoke ran 32 cases successfully and skipped one bwrap case. AMD64 ran in Firecracker and ARM64 under QEMU. The optimized releases have also passed CLI checks on both native architectures.",
+      "updatedAt": "2026-11-06T09:54:02.252Z",
       "followup": {
         "owner": "root",
-        "sourceHead": "d943b4a1776c8c2281cff19eed2ff02a2a892619",
-        "observedAt": "2026-10-27T14:27:09+00:00",
-        "disposition": "Mixed unit results are incomplete; no contributor action required",
-        "nextAction": "Check the QEMU extraction with an explicit disk request before retrying the ARM64 SDK and docprocessor guest tests. Qualify the coordinator and sentry coverage builds, and record the baseline cgroup gap separately from the corrected result.",
+        "sourceHead": "38745c527784376e0b5d915fe5ebd85e1d1385fd",
+        "observedAt": "2026-11-06T09:50:03Z",
+        "disposition": "The SDK suites passed on native ARM64. The earlier QEMU run exhausted temporary disk before testing.",
+        "nextAction": "Check the QEMU disk request if guest-image coverage is needed. Qualify the coordinator and sentry coverage builds, and keep the historical unit and cgroup results separate.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42196504834/artifacts/13493196540",
+          "https://app.buildbuddy.io/invocation/fb131001-b318-4986-8cb8-e84e571109ca",
+          "https://github.com/tamird/gvisor/actions/runs/42195858249/artifacts/13491997135",
           "https://app.buildbuddy.io/invocation/8dd0fedd-1622-46af-b721-75831f948b57",
           "https://app.buildbuddy.io/invocation/b76d82d8-8231-463c-8e98-71a4c8919ed3",
           "https://app.buildbuddy.io/invocation/a9d4d547-0267-4772-bfbc-1ed4ab4e3a16",
@@ -8759,6 +8762,18 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Native ARM64 results on Ubuntu 22.04. Python reported 43 tests and OK. Its verbose output put two network-test descriptions on separate lines, so the fork reporter recognized 41 individual results and failed after Bazel passed.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42196504834/artifacts/13493196540"
+        },
+        {
+          "label": "Native ARM64 Nogo standard-library facts. Both sandboxed GoStdlib actions produced 366 archives, including fmt.",
+          "url": "https://app.buildbuddy.io/invocation/fb131001-b318-4986-8cb8-e84e571109ca"
+        },
+        {
+          "label": "Standalone compilation control. Nogo rejected an undeclared log/slog/internal/benchmarks archive before the tests started.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42195858249/artifacts/13491997135"
+        },
         {
           "label": "ARM64 kernel and ext4 image assembled on AMD64",
           "url": "https://github.com/tamird/gvisor/actions/runs/41607275200/artifacts/13217740917"
