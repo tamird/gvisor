@@ -1059,6 +1059,12 @@
   license:
     - BSD-3-Clause
     - MIT
+- dependency: image_ubuntu_archive_keys
+  version: https://archive.ubuntu.com/ubuntu/project/ubuntu-archive-keyring.gpg
+  retrieved: "2026-11-06"
+  commit: ""
+  sha256: 80a36b0a6de2f69f49d2df75ef473ccde121e9e190b9ea01d20a4f63778d5c31
+  license: NOASSERTION
 - dependency: k8s.io/api
   version: v0.32.3
   retrieved: "2026-08-27"
@@ -1315,6 +1321,12 @@
   retrieved: "2026-10-02"
   commit: 77064f0caa37d0fb2232f54feb5fba275aeebbd3
   sha256: bd7124a844d0403b4b353bcea34d6c8b2ba88dc26881c26c9ee668da89b71846
+  license: Apache-2.0
+- dependency: rules_distroless
+  version: https://github.com/bazel-contrib/rules_distroless/releases/download/v0.11.1/rules_distroless-v0.11.1.tar.gz
+  retrieved: "2026-11-06"
+  commit: 15f9fc8d39ba3178c313e61d94feb3f6eb88f95f
+  sha256: 418d996ef937d7e069610830876981cfba1c72245f9b32d55ce20b6b5e600b43
   license: Apache-2.0
 - dependency: rules_foreign_cc
   version: https://github.com/bazel-contrib/rules_foreign_cc/releases/download/0.16.0/rules_foreign_cc-0.16.0.tar.gz

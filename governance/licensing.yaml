@@ -44,6 +44,12 @@ exceptions:
       bundled components, including the MPL-2.0 text covering Mozilla's CA
       certificate data (etc/roots.pem). Used by Bazel build and test tooling
       only. Released gVisor binaries use the pure-Go google.golang.org/grpc.
+  - dependency: image_ubuntu_archive_keys
+    license: NOASSERTION
+    exception_rationale: >-
+      Bazel uses these public keys to verify the Ubuntu package index for
+      the tcpdump test image. The keyring matches ubuntu-keyring 2023.11.28.1,
+      whose debian/copyright says the keys are outside copyright.
   - dependency: libpluginstack
     license:
       - Apache-2.0
