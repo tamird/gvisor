@@ -1,35 +1,52 @@
-name: CI
-
-"on":
+name: Check formatting on the Unix datagram and IPv6 multicast syscall tests
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/syscall-formatter-two-prs]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  format:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 2a8882a8c441ccbb0b3a825e60cc08cc916b7721
+          path: unix
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 972a7152fa77dc23d98e4cdd3f03a330e615c222
+          path: ipv6
+          persist-credentials: false
+      - name: Format the two public sources and verify each complete checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          export LINT_CACHE_DIR="$RUNNER_TEMP/lint"
+          results="$RUNNER_TEMP/syscall-format"
+          mkdir -p "$results"
+          check() (
+            cd "$1"
+            revision="$2"
+            shift 2
+            test "$(git rev-parse HEAD)" = "$revision"
+            tools/lint.sh --fix clang-format
+            tools/lint.sh clang-format
+            git diff --check
+            exclude=()
+            for source in "$@"; do exclude+=(":(exclude)$source"); done
+            git diff --exit-code -- . "${exclude[@]}"
+            git diff --binary -- "$@" > "$results/$revision.patch"
+            test "$(wc -c < "$results/$revision.patch")" -lt 30000
+            git hash-object "$@" > "$results/$revision.blobs"
+          )
+          check unix 2a8882a8c441ccbb0b3a825e60cc08cc916b7721 test/syscalls/linux/connect_external.cc
+          check ipv6 972a7152fa77dc23d98e4cdd3f03a330e615c222 test/syscalls/linux/socket_ipv4_udp_unbound_external_networking.cc test/syscalls/linux/socket_ipv6_udp_unbound.cc
+          "$LINT_CACHE_DIR/clang-format-23.1.1" --version
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: syscall-format
+          path: ${{ runner.temp }}/syscall-format/
+          retention-days: 7
