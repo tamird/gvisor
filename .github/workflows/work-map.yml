@@ -1,0 +1,21 @@
+name: Verify PR history across registry updates
+on:
+  push:
+    branches: [qualification/work-map-merge-source-precedence]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Run all frontend tests on the proposed source
+        run: |
+          test "$(git rev-parse HEAD^)" = 74d16244432347af1526c11f3a9c3d8b799bc7f9
+          git checkout --detach 74d16244432347af1526c11f3a9c3d8b799bc7f9
+          node --test app_test.mjs
