@@ -1,35 +1,72 @@
-name: CI
-
-"on":
+name: Check the two sandboxexec owners on namespace workers
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-sandboxexec-namespace]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  sandboxexec:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 4, persist-credentials: false}
+      - name: Check the two product changes
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = c0511e1cd383b0f2870c15a104222f0d285aac6f
+          test "$(git rev-parse HEAD^^^)" = 68b91be391fe21377ceccb31f6c32928127a64d8
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/sandboxexec_owners.py'
+          test "$(git diff --name-only HEAD^^ HEAD^)" = examples/sandboxexec/go/docprocessor/BUILD
+          test "$(git diff --name-only HEAD^^^ HEAD^^)" = sandboxexec/sandbox/python/gvisor/sandbox.py
+          d="$RUNNER_TEMP/sandboxexec-owners"
+          mkdir -m 700 "$d"
+          cp .github/qualification/sandboxexec_owners.py "$d/"
+          git checkout --quiet --detach HEAD^
+          test "$(bazelisk --version)" = "bazel 9.3.1"
+      - name: Run both unchanged owners with the source-presubmit configuration
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
+          d="$RUNNER_TEMP/sandboxexec-owners"
+          rc="$d/private.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          awk '/^(build|test):source-presubmit / && !/--target_pattern_file=/ {sub(/:source-presubmit /, ":readback "); print}' .bazelrc > "$rc"
+          test "$(wc -l < "$rc")" -eq 11
+          cat >> "$rc" <<'RC'
+          build:readback --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
+          build:readback --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/
+          build:readback --remote_download_outputs=toplevel --jobs=32 --keep_going
+          test:readback --nocache_test_results --flaky_test_attempts=1 --test_env=GO_TEST_WRAP_TESTV=1
+          RC
+          printf 'build:readback --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          code=0
+          bazelisk --nosystem_rc --nohome_rc --bazelrc="$rc" test --config=readback \
+            --build_event_json_file="$d/run.bep" \
+            //examples/sandboxexec/go/docprocessor:docprocessor_test \
+            //sandboxexec/sandbox/python:sandbox_py_test > "$d/run.console" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$d/exit"
+      - name: Keep source test outcomes
+        id: receipt
+        if: always() && !cancelled()
+        run: |
+          set -eu
+          d="$RUNNER_TEMP/sandboxexec-owners"
+          trap 'rm -f "$d/run.bep" "$d/run.console"' EXIT
+          test ! -e "$d/private.bazelrc"
+          python3 -IB "$d/sandboxexec_owners.py"
+          p="$d/receipt.json"
+          test -s "$p" && test ! -L "$p" && test "$(wc -c < "$p")" -lt 36000
+          if grep -Eiq 'authorization[[:space:]]*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}' "$p"; then exit 1; fi
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.receipt.outcome == 'success'
+        with:
+          name: sandboxexec-source-owners
+          path: ${{ runner.temp }}/sandboxexec-owners/receipt.json
+          retention-days: 14
+      - name: Require the real sandbox test cases
+        run: jq -e .passed "$RUNNER_TEMP/sandboxexec-owners/receipt.json"
