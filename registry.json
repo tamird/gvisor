@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T16:48:35.207Z",
+    "updatedAt": "2026-11-06T16:55:55.698Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4857,10 +4857,22 @@
       "url": "https://github.com/tamird/gvisor/commit/9310f06f9",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Replace Coral GCC with hermetic-llvm for AMD64 and ARM64 releases. Master already pins LLVM 0.8.24. Master and the compiler revision passed the existing checker on the same 223 catalog entries and policy. Removing the LLVM entry produced exactly one error. The compiler uses the existing NVIDIA parser source. The separate source cleanup and the proposed google/licensecheck dependency in #15146 can wait.\n\nBoth ordinary releases built and installed without the static-glibc branch. With released LLVM 0.8.24, native AMD64 and ARM64 each ran a rootless systrap guest as UID 1001 with their own static musl race runsc and Sentry. All nine installed files matched the declared release on both machines. The dynamically linked race containerd shim was staged only. The ordinary AMD64 CLI/Sentry pair also ran a rootless guest. These runs used gVisor 3dab3494e. gVisor d5fe3c2ee uses the static C runtime on supplier be935b828 and removes its local unwinder and Linux-header patches.\n\nA Linux Bazel client drove each cross-build. The shell-free AMD64 worker ran Nogo and linked the two public ARM64 race binaries. The shell-free ARM64 worker ran Nogo and linked the two AMD64 binaries. Both pairs of links ran uncached. Each native target runner verified all five installed files and ran a systrap guest with its matching Sentry.\n\nThe supplier uses the first four static C commits from #768, the per-version glibc sources, libresolv.a for cgo DNS, and the LLVM unwinder for pthread cancellation. The earlier 0.8.24 release passed with an unavailable static C++ runtime. On b317c6e36 the static GNU TLDK Sentry exchanged TCP and UDP on native AMD64.\n\nWith the native Python bootstrap and an explicit source stamp, an AMD64 Bazel client with empty PATH directories built the public release on a shell-free AMD64 worker. Both pack actions ran uncached. All nine archive members matched their installed executables. The archived Sentry saved its source identity and restored the guest.\n\nThe reverse cross-build also packaged the public release. A static AArch64 Python writer executed both tar actions uncached on an ARM64 worker. The nine AMD64 archive members matched their inputs and the unpacked Sentry booted a rootless guest on native AMD64.\n\nOn bb983b988, Bazel selected static Python for each worker without a Python --extra_toolchains override. The public //shim:config tar and a fork-only bzip2 variant each ran uncached on AMD64 and ARM64. Each format was byte-identical across workers and contained the expected runsc.toml with mode 0644. The forked rules_python launcher and --@rules_python//python/config_settings:bootstrap_impl=native are still required. The ARM64 worker also linked ARM64 runsc and Sentry and executed both actions that package the public bzip2 release, all uncached. All nine installed executables matched their inputs, and the unpacked Sentry ran a rootless systrap guest on native ARM64.\n\nAt 224fdf968, a stripped AMD64 Bazel client built the public Debian package for both architectures. The distroless AMD64 worker ran the version writer, changelog writer, four tar actions and final Debian writer uncached for each package. Both packages had the expected version, date, configuration and maintainer script. All nine installed executables matched their release inputs and modes. The packaged AMD64 runsc reported the release tag; the ARM64 package was inspected. The builds used the forked native Python bootstrap.",
-      "updatedAt": "2026-11-06T16:05:25.166Z",
+      "summary": "Replace Coral GCC with hermetic-llvm for AMD64 and ARM64 releases. Master already pins LLVM 0.8.24. Master and the compiler revision passed the existing checker on the same 223 catalog entries and policy. Removing the LLVM entry produced exactly one error. The compiler uses the existing NVIDIA parser source. The separate source cleanup and the proposed google/licensecheck dependency in #15146 can wait.\n\nOn the current master integration, Bazel kept LLVM’s musl sysroot when QEMU was registered, honored an explicit GCC override, and preserved an explicit GNU 2.28 target. Both AMD64 public race binaries linked statically under LLVM and GCC. The AMD64 and ARM64 stub offsets matched all 10 and 11 ELF symbols, respectively. All three sidecars built on both targets and the native prewarmer size test passed. The vDSO built on both targets; the reporter looked up its alias and omitted the ELF headers.\n\nBoth ordinary releases built and installed without the static-glibc branch. With released LLVM 0.8.24, native AMD64 and ARM64 each ran a rootless systrap guest as UID 1001 with their own static musl race runsc and Sentry. All nine installed files matched the declared release on both machines. The dynamically linked race containerd shim was staged only. The ordinary AMD64 CLI/Sentry pair also ran a rootless guest. These runs used gVisor 3dab3494e. gVisor d5fe3c2ee uses the static C runtime on supplier be935b828 and removes its local unwinder and Linux-header patches.\n\nA Linux Bazel client drove each cross-build. The shell-free AMD64 worker ran Nogo and linked the two public ARM64 race binaries. The shell-free ARM64 worker ran Nogo and linked the two AMD64 binaries. Both pairs of links ran uncached. Each native target runner verified all five installed files and ran a systrap guest with its matching Sentry.\n\nThe supplier uses the first four static C commits from #768, the per-version glibc sources, libresolv.a for cgo DNS, and the LLVM unwinder for pthread cancellation. The earlier 0.8.24 release passed with an unavailable static C++ runtime. On b317c6e36 the static GNU TLDK Sentry exchanged TCP and UDP on native AMD64.\n\nWith the native Python bootstrap and an explicit source stamp, an AMD64 Bazel client with empty PATH directories built the public release on a shell-free AMD64 worker. Both pack actions ran uncached. All nine archive members matched their installed executables. The archived Sentry saved its source identity and restored the guest.\n\nThe reverse cross-build also packaged the public release. A static AArch64 Python writer executed both tar actions uncached on an ARM64 worker. The nine AMD64 archive members matched their inputs and the unpacked Sentry booted a rootless guest on native AMD64.\n\nOn bb983b988, Bazel selected static Python for each worker without a Python --extra_toolchains override. The public //shim:config tar and a fork-only bzip2 variant each ran uncached on AMD64 and ARM64. Each format was byte-identical across workers and contained the expected runsc.toml with mode 0644. The forked rules_python launcher and --@rules_python//python/config_settings:bootstrap_impl=native are still required. The ARM64 worker also linked ARM64 runsc and Sentry and executed both actions that package the public bzip2 release, all uncached. All nine installed executables matched their inputs, and the unpacked Sentry ran a rootless systrap guest on native ARM64.\n\nAt 224fdf968, a stripped AMD64 Bazel client built the public Debian package for both architectures. The distroless AMD64 worker ran the version writer, changelog writer, four tar actions and final Debian writer uncached for each package. Both packages had the expected version, date, configuration and maintainer script. All nine installed executables matched their release inputs and modes. The packaged AMD64 runsc reported the release tag; the ARM64 package was inspected. The builds used the forked native Python bootstrap.",
+      "updatedAt": "2026-11-06T16:55:55.698Z",
       "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
       "evidence": [
+        {
+          "label": "Current joint source with approved freestanding stub and resolved compiler selection",
+          "url": "https://github.com/tamird/gvisor/commit/f6df263f8"
+        },
+        {
+          "label": "Static race links under LLVM and explicitly selected GCC; current stubs, offsets and sidecars",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42249418000/artifacts/13523051477"
+        },
+        {
+          "label": "Joint two-architecture remote release qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42255872935"
+        },
         {
           "label": "Existing checker passed all 223 entries on master and the compiler; deleting LLVM was rejected",
           "url": "https://github.com/tamird/gvisor/actions/runs/42248501235/artifacts/13517809405"
@@ -53418,22 +53430,26 @@
       "id": "branch:fdbased-start-on-attach",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "proposal/fdbased-start-on-attach",
-      "head": "95ca4e7317b6418d4ba8674a4f8d96b4c950ae78",
-      "title": "Give each receive loop its own packet processors",
-      "url": "https://github.com/tamird/gvisor/commit/95ca4e731",
+      "ref": "research/fdbased-reader-queues",
+      "head": "d4e65b135f3f4e6dbb811a59c38917bdb382d6c3",
+      "title": "Start FD packet processors when a receiver attaches",
+      "url": "https://github.com/tamird/gvisor/commit/d4e65b135",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-06T16:48:35.207Z",
-      "summary": "The requested revision removes the per-attachment channel and the separate dispatcher argument. The receive loop owns its workers and the dispatcher used to deliver packets. A batch queued on an old attachment was delivered after reattach on the previous revision. The new test drops that batch and delivers a fresh one. A second test verifies that an injectable endpoint reports its real attachment and delivers only the packet injected while attached. Both tests failed before and passed on this source. The FD and muxed suites, two live-save cases and Nogo passed. An earlier real namespace move exposed a separate buffer-release panic on both versions tested there.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T16:55:55.698Z",
+      "summary": "Closing an FD endpoint before attaching it leaves receive workers asleep on stock gVisor. The revision starts workers on attach and gives each FD its own queues. Explicit detach drops pending packets and late reads. An in-flight worker can finish delivering packets it already took. In the test, the earlier revision delivered all three packets; this one delivered only the first. Peer EOF retains the original wake order.",
       "evidence": [
+        {
+          "label": "Exact native receive, live-save, muxed and Nogo results; earlier stale delivery",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42255611643/artifacts/13523126699"
+        },
+        {
+          "label": "Changes since the previously reviewed dispatcher source",
+          "url": "https://github.com/tamird/gvisor/compare/95ca4e731...d4e65b135"
+        },
         {
           "label": "Revised per-reader ownership, including explicit detach and peer EOF",
           "url": "https://github.com/tamird/gvisor/commit/d4e65b135"
-        },
-        {
-          "label": "Native in-flight receive and attachment qualification",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42255611643"
         },
         {
           "label": "Changes since the contributor requested one dispatcher and a behavioral test",
@@ -53522,21 +53538,22 @@
       ],
       "refinement": {
         "before": {
-          "head": "c0e6b2876b97d87503e115d87c905c45926245b9"
+          "head": "95ca4e7317b6418d4ba8674a4f8d96b4c950ae78"
         },
         "after": {
-          "head": "95ca4e7317b6418d4ba8674a4f8d96b4c950ae78"
+          "head": "d4e65b135f3f4e6dbb811a59c38917bdb382d6c3"
         }
       },
-      "followup": {
-        "owner": "Agent",
-        "sourceHead": "d4e65b135f3f4e6dbb811a59c38917bdb382d6c3",
-        "observedAt": "2026-11-06T16:48:35.207Z",
-        "disposition": "Tamir requested removal of the per-attachment channel and the duplicated dispatcher access.",
-        "nextAction": "Verify the native in-flight receive test and peer-EOF behavior before asking for review.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/95ca4e731"
-        ]
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "d4e65b135f3f4e6dbb811a59c38917bdb382d6c3",
+        "baseHead": "1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d",
+        "url": "https://github.com/tamird/gvisor/commit/d4e65b135",
+        "title": "fdbased: start packet processors when a receiver attaches",
+        "requestedAt": "2026-11-06T16:55:55.698Z",
+        "summary": "Open this receive-worker fix? Native AMD64 passed 18 receive cases, three live-save cases, four muxed cases and Nogo.",
+        "body": "Closing an FD endpoint before attaching it to a NIC leaves its receive\nworkers asleep. The constructor starts the workers, but only the read\nloop signals them to stop. An unattached endpoint never runs that loop.\n\nCreate the queues and their workers when a dispatcher attaches. Each\nreceive loop delivers to that dispatcher and stops its own workers on\nexit. A single processor still delivers inline.\n\nOn detach, close each queue before waking its reader. A reader already\nreturning from a receive syscall can then neither deliver the pending\nbatch nor enqueue the rest of it. Workers can finish delivering packets\nalready removed from their queues without blocking NIC removal on a\nnetwork stack callback.\n\nFor injectable endpoints, report attachment from the dispatcher used by\nInjectInbound."
       }
     },
     {
@@ -54694,8 +54711,8 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T16:20:27.112Z",
-      "summary": "On current master, one Bazel command selects the same 360 runnable tests and 2,881 build-only targets as the AMD64 cgroup-v2 unit presubmit, plus a native uname control. Bazel assigns 366 test shards to OCI workers and five to Firecracker workers with root and IPv6. The two worker probes both measured cgroup2fs with CGROUPV2=true and false. Each setting ran remotely the first time, and both repeat runs reused the cached true result. The full invocation reported all 3,242 target outcomes. It built 2,650 of 2,881 build-only targets and ran 295 of 361 test owners. Of the executed shards, 303 passed, one sandbox test failed, and one netgofer test timed out. Sixty-six test owners, including the native uname control, never built. The GNU compiler was absent on part of the build graph. Replaying the two test owners on #15866 ran both remotely without cache hits and both passed. On the original source, six repetitions of TestRunProxyModeWithSeccomp finished. The seventh timed out waiting in cmd.Wait. Why the child remained alive is still unverified.\n\nA single Bazel invocation executed six tests remotely. AMD64 and ARM64 workers ran the Go atomicbitops and C++ posix_error tests. AMD64 workers also ran uname on native Linux and under gVisor systrap. All six TestRunner actions passed uncached. Four of the six tests exercise parts of three presubmit jobs. Two serve as architecture controls. Each of those three jobs still has additional coverage to verify. The fork’s Buildkite file contains one submission command. GitHub Actions submitted it for this trial.\n\nThe previous proposals kept separate unit, Nogo, package, container, smoke, Gazelle, plugin, source-lint and syscall jobs. Their target lists, test fixtures and earlier results are linked. Staged release checks still have distinct artifact inputs.",
+      "updatedAt": "2026-11-06T16:55:55.698Z",
+      "summary": "On current master, one Bazel command selects the same 360 runnable tests and 2,881 build-only targets as the AMD64 cgroup-v2 unit presubmit, plus a native uname control. Bazel assigns 366 test shards to OCI workers and five to Firecracker workers with root and IPv6. The two worker probes both measured cgroup2fs with CGROUPV2=true and false. Each setting ran remotely the first time, and both repeat runs reused the cached true result. The full invocation reported all 3,242 target outcomes. It built 2,650 of 2,881 build-only targets and ran 295 of 361 test owners. Of the executed shards, 303 passed, one sandbox test failed, and one netgofer test timed out. Sixty-six test owners, including the native uname control, never built. The GNU compiler was absent on part of the build graph. Replaying the two test owners on #15866 ran both remotely without cache hits and both passed. On the original source, six repetitions of TestRunProxyModeWithSeccomp finished. The seventh timed out waiting in cmd.Wait. The child continued processing receive batches after the peer shut down. A first repair lost a queued frame in a native control and remains under investigation.\n\nA single Bazel invocation executed six tests remotely. AMD64 and ARM64 workers ran the Go atomicbitops and C++ posix_error tests. AMD64 workers also ran uname on native Linux and under gVisor systrap. All six TestRunner actions passed uncached. Four of the six tests exercise parts of three presubmit jobs. Two serve as architecture controls. Each of those three jobs still has additional coverage to verify. The fork’s Buildkite file contains one submission command. GitHub Actions submitted it for this trial.\n\nThe previous proposals kept separate unit, Nogo, package, container, smoke, Gazelle, plugin, source-lint and syscall jobs. Their target lists, test fixtures and earlier results are linked. Staged release checks still have distinct artifact inputs.",
       "evidence": [
         {
           "label": "Original-source netgofer repetition: six completions, then cmd.Wait blocked",
@@ -54730,8 +54747,8 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42232937931/artifacts/13510273674"
         },
         {
-          "label": "Full remote run of the 3,242 targets, with compiler and sidecar comparisons",
-          "url": "https://github.com/tamird/gvisor/blob/6f6dbc439/test/rbe/source-unit-cgroup-v2.md"
+          "label": "Full 3,242-target run and netgofer shutdown diagnosis",
+          "url": "https://github.com/tamird/gvisor/blob/28bbd9676/test/rbe/source-unit-cgroup-v2.md"
         },
         {
           "label": "One Bazel invocation for both architectures, native Linux and systrap",
