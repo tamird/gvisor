@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T22:48:16.956Z",
+    "updatedAt": "2026-11-06T22:48:49.450Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -24132,8 +24132,8 @@
       "title": "Package Clang headers with the NVIDIA parser",
       "url": "https://github.com/google/gvisor/pull/17112",
       "status": "open",
-      "summary": "The NVIDIA ABI differ can use the Clang builtin headers from the LLVM source that gVisor master already declares. On native AMD64, its original TestParser passed uncached. The run_differ executable contains the complete 291-member archive, including the headers and their matching LLVM license. The existing contributor approval covers the rebase onto current master.",
-      "updatedAt": "2026-11-06T15:17:14.247Z",
+      "summary": "Gazelle scans the source tree before Bazel creates builtin_headers.zip. Declaring the filename on pkg_zip lets Gazelle resolve the existing Go embed. The upstream Gazelle command passed in a clean checkout; the original parser test ran uncached and the CLI still contains the complete archive.",
+      "updatedAt": "2026-11-06T22:48:49.450Z",
       "evidence": [
         {
           "label": "Master configures the existing LLVM source",
@@ -24158,6 +24158,14 @@
         {
           "label": "Remote Bazel invocation with the existing master LLVM supplier",
           "url": "https://app.buildbuddy.io/invocation/404d7d2a-60b4-4ce8-baa7-b3c71e285f49"
+        },
+        {
+          "label": "Upstream Gazelle could not resolve the generated ZIP",
+          "url": "https://github.com/google/gvisor/actions/runs/42241581885/job/127972940686"
+        },
+        {
+          "label": "Clean Gazelle, uncached TestParser and the embedded archive",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42306698223/artifacts/13546574154"
         }
       ],
       "settledReviews": [
@@ -24180,13 +24188,36 @@
       ],
       "refinement": {
         "before": {
-          "head": "52feb7b78d512aeae72111b0b4de7d25a0fa6f6c"
+          "head": "5967bbde193112cce575c5443c6b241d99589f59"
         },
         "after": {
-          "head": "5967bbde193112cce575c5443c6b241d99589f59"
+          "head": "76747cfd5daf8bc061c2fb5f0af3019805d8e387"
         }
       },
-      "number": 17112
+      "number": 17112,
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "76747cfd5daf8bc061c2fb5f0af3019805d8e387",
+        "baseHead": "5967bbde193112cce575c5443c6b241d99589f59",
+        "url": "https://github.com/tamird/gvisor/commit/76747cfd5",
+        "title": "Package Clang headers with the NVIDIA parser",
+        "body": "The NVIDIA driver differ writes driver_ast_parser to a temporary\ndirectory before parsing driver headers. That detached executable can\nfail to find Clang's builtin stddef.h and stdint.h because those files\nare not beside it. Package the headers from the parser's LLVM source\nwith the Go wrapper and pass their resource directory explicitly.\nDisable host standard-header lookup so worker-installed headers cannot\nsilently supply the parser's inputs.\n\nKeep the Clang license text and inline notices with the header archive.\nGive the direct parser test the same declared resource archive and\nexercise stddef.h and stdint.h in its existing fixture. Clean up the\nwrapper's resource directory after each driver parity subtest.\n\nDeclare the ZIP output explicitly so Gazelle can resolve the Go embed\nbefore Bazel builds the archive.",
+        "summary": "Gazelle scans the source tree before Bazel creates builtin_headers.zip. Declaring the filename on pkg_zip lets Gazelle resolve the existing Go embed. The upstream Gazelle command passed in a clean checkout; the original parser test ran uncached and the CLI still contains the complete archive.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 5967bbde1^! 76747cfd5^!",
+        "requestedAt": "2026-11-06T22:48:49.450Z"
+      },
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "5967bbde193112cce575c5443c6b241d99589f59",
+        "observedAt": "2026-11-06T22:48:49.450Z",
+        "disposition": "The source change fixes the failing upstream Gazelle check.",
+        "nextAction": "Review the proposed amendment to #17112.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/76747cfd5",
+          "https://github.com/google/gvisor/actions/runs/42241581885/job/127972940686",
+          "https://github.com/tamird/gvisor/actions/runs/42306698223/artifacts/13546574154"
+        ]
+      }
     },
     {
       "id": "branch:source-image-utilities",
