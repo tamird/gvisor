@@ -220,6 +220,10 @@ func (d *readVDispatcher) dispatch() (bool, tcpip.Error) {
 type recvMMsgDispatcher struct {
 	detectEOF bool
 
+	// queuedAtShutdown counts bytes left after the first empty batch at
+	// hangup. A long prefix of empty records needs only one queue scan.
+	queuedAtShutdown int
+
 	stopfd.StopFD
 	// fd is the file descriptor used to send and receive packets.
 	fd int
@@ -253,11 +257,6 @@ const (
 )
 
 func newRecvMMsgDispatcher(fd int, e *endpoint, opts *Options) (linkDispatcher, error) {
-	if opts.DetectSeqpacketEOF {
-		if err := unix.SetsockoptInt(fd, unix.SOL_SOCKET, unix.SO_TIMESTAMPNS, 1); err != nil {
-			return nil, err
-		}
-	}
 	stopFD, err := stopfd.New()
 	if err != nil {
 		return nil, err
@@ -329,17 +328,17 @@ func (d *recvMMsgDispatcher) dispatch() (bool, tcpip.Error) {
 	d.gro.Dispatcher = dsp
 	defer d.pkts.Reset()
 
-	more := true
+	batchBytes := 0
+	truncated := false
 	for k := 0; k < nMsgs; k++ {
 		n := int(d.msgHdrs[k].Len)
-		if d.detectEOF && n == 0 {
-			// No ancillary buffer is supplied, so a real record's timestamp
-			// sets MSG_CTRUNC. Linux supplies no control data for EOF.
-			if d.msgHdrs[k].Msg.Flags&unix.MSG_CTRUNC == 0 {
-				more = false
+		if d.detectEOF {
+			if n == 0 {
+				d.msgHdrs[k].Msg.Iovlen = 0
+				continue
 			}
-			d.msgHdrs[k].Msg.Iovlen = 0
-			continue
+			batchBytes += n
+			truncated = truncated || d.msgHdrs[k].Msg.Flags&unix.MSG_TRUNC != 0
 		}
 		pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 			Payload: d.bufs[k].pullBuffer(n),
@@ -356,5 +355,48 @@ func (d *recvMMsgDispatcher) dispatch() (bool, tcpip.Error) {
 	}
 	d.mgr.wakeReady()
 
-	return more, nil
+	if !d.detectEOF {
+		return true, nil
+	}
+	if d.queuedAtShutdown > 0 {
+		// FIONREAD counts original payload lengths. If a record exceeded
+		// our receive buffer, take a fresh snapshot at the next empty batch.
+		if truncated {
+			d.queuedAtShutdown = 0
+			return true, nil
+		}
+		d.queuedAtShutdown -= batchBytes
+		return d.queuedAtShutdown > 0, nil
+	}
+	if batchBytes != 0 {
+		return true, nil
+	}
+	p := rawfile.PollEvent{FD: int32(d.fd), Events: unix.POLLRDHUP}
+	if _, errno := rawfile.BlockingPoll(&p, 1, &unix.Timespec{}); errno != 0 {
+		if errno == unix.EINTR {
+			return true, nil
+		}
+		return false, tcpip.TranslateErrno(errno)
+	}
+	if p.Revents&unix.POLLERR != 0 {
+		errno, err := unix.GetsockoptInt(d.fd, unix.SOL_SOCKET, unix.SO_ERROR)
+		if err != nil {
+			return false, tcpip.TranslateErrno(err.(unix.Errno))
+		}
+		if errno != 0 {
+			return false, tcpip.TranslateErrno(unix.Errno(errno))
+		}
+	}
+	if p.Revents&(unix.POLLHUP|unix.POLLRDHUP) == 0 {
+		return true, nil
+	}
+	// The peer cannot queue more records after write shutdown. On a Unix
+	// seqpacket socket FIONREAD sums all queued payloads, including data
+	// behind empty records. An empty record alone has no packet to deliver.
+	n, err := unix.IoctlGetInt(d.fd, unix.TIOCINQ)
+	if err != nil {
+		return false, tcpip.TranslateErrno(err.(unix.Errno))
+	}
+	d.queuedAtShutdown = n
+	return n > 0, nil
 }

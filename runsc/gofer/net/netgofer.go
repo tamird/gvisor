@@ -303,6 +303,7 @@ func (n *Netgofer) runProxyMode(conf *config.Config) subcommands.ExitStatus {
 
 	if !n.disableSeccomp {
 		if err := netgoferfilter.Install(netgoferfilter.Options{
+			UDSFD:          n.udsFD,
 			ProfileEnabled: conf.ProfileEnable || n.profileEnabled,
 			CgoEnabled:     config.CgoEnabled,
 		}); err != nil {
