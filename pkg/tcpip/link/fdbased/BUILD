@@ -67,6 +67,7 @@ go_test(
     size = "small",
     srcs = [
         "endpoint_test.go",
+        "packet_ring_linux_test.go",
         "processors_test.go",
     ],
     embed = [":fdbased"],
