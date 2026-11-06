@@ -2,6 +2,7 @@ load("@bazel_lib//lib:write_source_files.bzl", "write_source_files")
 load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_license//rules:license.bzl", "license")
+load("//tools:arch.bzl", "arch_genrule")
 load("//tools:defs.bzl", "build_test", "gazelle", "go_path")
 load("//tools:gazelle.bzl", "GAZELLE_PACKAGES")
 load("//tools:release.bzl", "RELEASE_RUNSC", "RELEASE_SIDECARS", "release_files")
@@ -305,4 +306,27 @@ exports_files([
 exports_files(
     [".clang-format"],
     visibility = ["//tools:__pkg__"],
+)
+
+arch_genrule(
+    name = "qualify_cross_runsc",
+    src = "//runsc:runsc-race",
+    template = "cross-race/runsc-%s",
+)
+
+arch_genrule(
+    name = "qualify_cross_sentry",
+    src = "//runsc/cmd/sentry:gvisor_sentry-race",
+    template = "cross-race/sentry-%s",
+)
+
+platform(
+    name = "qualify_linux_executor",
+    exec_properties = {
+        "Arch": "amd64",
+        "OSFamily": "linux",
+        "container-image": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+        "workload-isolation-type": "oci",
+    },
+    parents = ["//tools/bazeldefs:linux_amd64"],
 )

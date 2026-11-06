@@ -1,35 +1,63 @@
-name: CI
-
-"on":
+name: Cross-compile four LLVM race executables in one Bazel build
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-cross-race-products]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  products:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Check the source and prepare the coordinator
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = f6df263f8e2ce2cbe6a497356613f6785c4800a4
+          git diff --exit-code HEAD^ HEAD -- . ':!BUILD' ':!.github/workflows/build.yml' ':!.github/qualification/cross_race.py' ':!.github/qualification/cross_race_elf.py'
+          d="$RUNNER_TEMP/llvm-cross-race"
+          mkdir -m 700 "$d"
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' --max-time 100 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' --max-time 100 https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-x86_64 -o "$d/bb"
+          (cd "$d" && sha256sum --check <<'SUMS'
+          e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  bazel
+          205fb4074012858c858ec357cb0cf1ed0b1fbf8707c5f385efd4abd52bb2cead  bb
+          SUMS
+          )
+          chmod 755 "$d/bazel" "$d/bb"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Build and inspect the four executables
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          d="$RUNNER_TEMP/llvm-cross-race"
+          rc="$d/private.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          test -n "$BUILDBUDDY_API_KEY"
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B .github/qualification/cross_race.py
+      - name: Check the public result
+        id: boundary
+        if: always()
+        run: |
+          set -eu
+          d="$RUNNER_TEMP/llvm-cross-race"
+          test ! -e "$d/private.bazelrc"
+          test -s "$d/receipt.json" && test ! -L "$d/receipt.json"
+          test "$(wc -c < "$d/receipt.json")" -lt 16000
+          jq -e '.source=="f6df263f8e2ce2cbe6a497356613f6785c4800a4"' "$d/receipt.json" >/dev/null
+          if grep -Eiq 'authorization[[:space:]]*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}' "$d/receipt.json"; then exit 1; fi
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.boundary.outcome == 'success'
+        with:
+          name: llvm-cross-race-products
+          path: ${{ runner.temp }}/llvm-cross-race/receipt.json
+          retention-days: 14
