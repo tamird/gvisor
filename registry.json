@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T18:43:53.566Z",
+    "updatedAt": "2026-11-06T18:50:20.369Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -29313,32 +29313,29 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-tomcat-upstream-current",
-      "head": "d754a40f1fa4dd0be2ac92f7d2c604a6cf02d1c0",
+      "head": "5186abc509b59e4c5a997757db4d87e1e82f49d3",
       "title": "Pin the existing Tomcat fixture images",
       "url": "https://github.com/google/gvisor/pull/16462",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
-      "summary": "The contributor-approved image change is published as #16462 at 235ec4262 on current master. The basic image and shared mirror prerequisites have landed. No contributor decision remains. Current checks, matching imports and maintainer review are shown from the GitHub snapshot.\n\nSource-specific qualification:\n\nPins the original AMD64 Tomcat 8.0.53 and ARM64 Tomcat 8.0.52 manifests. The five-file change removes two FROM-only Dockerfiles and exposes existing archive/Make interfaces, preserving all eleven upstream layers and complete configs without added layers or a server/Java upgrade. Both architecture archive/context checks pass. The unchanged TestTomcat executes once each on AMD64 runc and the authenticated retained systrap runtime, with two positive uncached cases and cleanup. ARM64 coverage is image construction and config/layer identity, not runtime execution. The contributor approved this exact head; no contributor decision remains pending.",
+      "updatedAt": "2026-11-06T18:50:14.461Z",
+      "summary": "The rebased Tomcat fixture retains the two architecture-specific base images and master’s PostgreSQL context. The source is mergeable.",
       "followup": {
-        "owner": "work_map_current",
-        "sourceHead": "d754a40f1fa4dd0be2ac92f7d2c604a6cf02d1c0",
-        "observedAt": "2026-10-31T00:17:49.384556+00:00",
-        "disposition": "Approved image migration published as #16462",
-        "nextAction": "Follow current-head CI, matching imports and maintainer review through the existing intake. Preserve the earlier qualification source and scope; no repeated contributor question or courtesy reply.",
+        "owner": "Maintainer",
+        "sourceHead": "5186abc509b59e4c5a997757db4d87e1e82f49d3",
+        "observedAt": "2026-11-06T18:50:14.461Z",
+        "disposition": "Published the reviewed changes on the current base. GitHub reports the source is mergeable.",
+        "nextAction": "Follow the published source, its checks and import.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/728c76fdcd6a7947176e015c8259f386270b7177",
-          "https://app.buildbuddy.io/invocation/ce5443d5-8e5c-49f8-8118-49e69e50599d",
-          "https://github.com/google/gvisor/pull/16097",
-          "https://github.com/tamird/gvisor/commit/c96b1ceb4b6f327edb0032cfb0178bca28e724bf",
-          "https://github.com/tamird/gvisor/compare/728c76fdcd6a7947176e015c8259f386270b7177...c96b1ceb4b6f327edb0032cfb0178bca28e724bf",
-          "https://github.com/google/gvisor/pull/16379",
-          "https://github.com/google/gvisor/pull/16430",
-          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9",
-          "https://github.com/google/gvisor/pull/16462"
+          "https://github.com/google/gvisor/pull/16462",
+          "https://github.com/tamird/gvisor/compare/d754a40f1...5186abc50"
         ]
       },
       "evidence": [
+        {
+          "label": "Rebase onto the PostgreSQL landing",
+          "url": "https://github.com/tamird/gvisor/compare/d754a40f1...5186abc50"
+        },
         {
           "label": "Published approved image migration",
           "url": "https://github.com/google/gvisor/pull/16462"
@@ -29364,7 +29361,15 @@
           "url": "https://github.com/tamird/gvisor/compare/781d64d84443b4bfffaa5cbdcf75e748d4d826d7...728c76fdcd6a7947176e015c8259f386270b7177"
         }
       ],
-      "number": 16462
+      "number": 16462,
+      "refinement": {
+        "before": {
+          "head": "d754a40f1fa4dd0be2ac92f7d2c604a6cf02d1c0"
+        },
+        "after": {
+          "head": "5186abc509b59e4c5a997757db4d87e1e82f49d3"
+        }
+      }
     },
     {
       "id": "branch:proc-immutable-pid-dirs-synthetic",
@@ -29426,33 +29431,29 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-httpd-upstream-current",
-      "head": "2595b792845f88b24f0ff1d2b1a5c749bead8807",
+      "head": "c1511cf4b2c77691c04dfa148c48313bca09b23a",
       "title": "Pin upstream Apache test images",
       "url": "https://github.com/google/gvisor/pull/16466",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
-      "summary": "The approved image migration is published as #16466 at 0be1230ab. No contributor decision remains. Current checks, imports and maintainer review come from the GitHub snapshot.\n\nThe combined image qualification 63f7b7ba passed all 34 archive/context owners and all 16 image config/layer comparisons on AMD64 and ARM64. Its corrected aggregate source archives contained all 178 tracked files with matching bytes and modes, plus two architecture-correct generated CUDA helpers. This includes Bun's unchanged spawn.js and the Apache source forwarding; it is archive evidence, not a new runtime execution.\n\nSource-specific earlier qualification:\n\nBasic HTTPD retains the official 2.4.43 server; benchmark HTTPD uses official 2.4.69-trixie with the existing fixture settings and payloads. Both CPU image assembly and AMD64 consumer checks passed. Sixteen balanced before/after pairs measured the complete fixture/version/configuration change: the two 1 MiB rows improved by 8.04% and 6.60%; the other four differences were not statistically significant. No ARM runtime or isolated packaging-effect claim is made. The required image_outputs and Make interfaces are now on master; no shared BusyBox/compiler output is consumed.",
+      "updatedAt": "2026-11-06T18:50:14.461Z",
+      "summary": "The rebased Apache fixtures preserve the two image contexts and master’s PostgreSQL context. The source is mergeable. Carzh approved the equivalent earlier patch. Open import #16879 still names that head.",
       "followup": {
-        "owner": "root",
-        "sourceHead": "2595b792845f88b24f0ff1d2b1a5c749bead8807",
-        "observedAt": "2026-10-31T00:17:49.384556+00:00",
-        "disposition": "Approved image migration published as #16466",
-        "nextAction": "Follow current-head checks, matching imports and maintainer review through the existing intake. No repeated contributor decision or runtime replay.",
+        "owner": "Maintainer",
+        "sourceHead": "c1511cf4b2c77691c04dfa148c48313bca09b23a",
+        "observedAt": "2026-11-06T18:50:14.461Z",
+        "disposition": "Published the reviewed changes on the current base. GitHub reports the source is mergeable.",
+        "nextAction": "Follow the published source, its checks and import.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d",
-          "https://github.com/google/gvisor/pull/16097",
-          "https://app.buildbuddy.io/invocation/7b51f160-f39a-4e55-8189-d38a04010805",
-          "https://github.com/tamird/gvisor/commit/8b2c4cbe03cc70e2f14e849b952b2216e130197a",
-          "https://github.com/tamird/gvisor/compare/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d...8b2c4cbe03cc70e2f14e849b952b2216e130197a",
-          "https://github.com/google/gvisor/pull/16379",
-          "https://github.com/google/gvisor/pull/16430",
-          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9",
           "https://github.com/google/gvisor/pull/16466",
-          "https://app.buildbuddy.io/invocation/63f7b7ba-d75b-43fb-bb39-d90886e01f1e"
+          "https://github.com/tamird/gvisor/compare/2595b7928...c1511cf4b"
         ]
       },
       "evidence": [
+        {
+          "label": "Rebase onto the PostgreSQL landing",
+          "url": "https://github.com/tamird/gvisor/compare/2595b7928...c1511cf4b"
+        },
         {
           "label": "Published approved image migration",
           "url": "https://github.com/google/gvisor/pull/16466"
@@ -29470,7 +29471,26 @@
           "url": "https://github.com/tamird/gvisor/compare/eab6a14ae890cae1a6e827b0235c44c2ead6ef0d...8b2c4cbe03cc70e2f14e849b952b2216e130197a"
         }
       ],
-      "number": 16466
+      "number": 16466,
+      "approvedPatch": {
+        "head": "c1511cf4b2c77691c04dfa148c48313bca09b23a",
+        "approvedHead": "2595b792845f88b24f0ff1d2b1a5c749bead8807",
+        "reviewId": "PRR_kwDOB9IlXs8AAAABVlnY1A",
+        "reviewer": "carzh",
+        "submittedAt": "2026-11-02T21:35:41Z",
+        "verifiedAt": "2026-11-06T18:50:14.461Z",
+        "method": "reviewed-context-only",
+        "oldPatchId": "082c29a543fbee7818a03095132be05b251930f9",
+        "newPatchId": "9ae7ab1d41f0a6c0295720f441a5325cccdf2b59"
+      },
+      "refinement": {
+        "before": {
+          "head": "2595b792845f88b24f0ff1d2b1a5c749bead8807"
+        },
+        "after": {
+          "head": "c1511cf4b2c77691c04dfa148c48313bca09b23a"
+        }
+      }
     },
     {
       "id": "pr:16467",
@@ -50225,14 +50245,18 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/go-helper-images",
-      "head": "cea9b0192347cc0ec34ef72f51915ecdf07774c3",
+      "head": "99b9970fb29c9848816aac6cd1f6550c16ffa1d6",
       "title": "Build the Hey, Ollama client and profiling images with Bazel",
-      "url": "https://github.com/tamird/gvisor/commit/cea9b0192",
+      "url": "https://github.com/tamird/gvisor/commit/99b9970fb",
       "group": "bazel",
       "status": "Published as #16871",
-      "updatedAt": "2026-11-02T21:09:35.198072+00:00",
-      "summary": "Three image conversions share one rule for installing an executable. On AMD64 and ARM64 all six manifests, configs and Docker load archives matched the original proposals byte for byte. Make loaded the expected images; the Hey, Ollama and profiling consumer tests passed. The ARM64 programs ran under emulation.",
+      "updatedAt": "2026-11-06T18:50:14.461Z",
+      "summary": "The published PR is mergeable. The Ollama client, profiling helper and Hey image remain three separate commits. Removing their new Make entries restores the original PostgreSQL context mapping. The earlier six-image output and runtime checks remain tied to the measured source.",
       "evidence": [
+        {
+          "label": "Rebase onto the PostgreSQL landing",
+          "url": "https://github.com/tamird/gvisor/compare/cea9b0192...99b9970fb"
+        },
         {
           "label": "Published three-commit image conversion",
           "url": "https://github.com/google/gvisor/pull/16871"
@@ -50267,15 +50291,23 @@
         }
       ],
       "followup": {
-        "owner": "Workstream owner",
-        "sourceHead": "cea9b0192347cc0ec34ef72f51915ecdf07774c3",
-        "observedAt": "2026-11-02T21:09:35.198072+00:00",
-        "disposition": "Approved and published as #16871",
-        "nextAction": "Follow the published pull request.",
+        "owner": "Maintainer",
+        "sourceHead": "99b9970fb29c9848816aac6cd1f6550c16ffa1d6",
+        "observedAt": "2026-11-06T18:50:14.461Z",
+        "disposition": "Published the reviewed changes on the current base. GitHub reports the source is mergeable.",
+        "nextAction": "Follow the published source, its checks and import.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16871",
-          "https://github.com/tamird/gvisor/actions/runs/41521259446/artifacts/13178112095"
+          "https://github.com/tamird/gvisor/compare/cea9b0192...99b9970fb"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "cea9b0192347cc0ec34ef72f51915ecdf07774c3"
+        },
+        "after": {
+          "head": "99b9970fb29c9848816aac6cd1f6550c16ffa1d6"
+        }
       }
     },
     {
@@ -54918,9 +54950,21 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T18:24:42.424Z",
-      "summary": "On current master, one Bazel command selects the same 360 runnable tests and 2,881 build-only targets as the AMD64 cgroup-v2 unit presubmit, plus a native uname control. Bazel assigns 366 test shards to OCI workers and five to Firecracker workers with root and IPv6. The two worker probes both measured cgroup2fs with CGROUPV2=true and false. Each setting ran remotely the first time, and both repeat runs reused the cached true result. The full invocation reported all 3,242 target outcomes. It built 2,650 of 2,881 build-only targets and ran 295 of 361 test owners. Of the executed shards, 303 passed, one sandbox test failed, and one netgofer test timed out. Sixty-six test owners, including the native uname control, never built. The GNU compiler was absent on part of the build graph. Replaying the two test owners on #15866 ran both remotely without cache hits and both passed. On the original source, six repetitions of TestRunProxyModeWithSeccomp finished. The seventh timed out waiting in cmd.Wait. The child continued processing receive batches after the peer shut down. A first repair lost a queued frame in a native control and remains under investigation.\n\nA single Bazel invocation executed six tests remotely. AMD64 and ARM64 workers ran the Go atomicbitops and C++ posix_error tests. AMD64 workers also ran uname on native Linux and under gVisor systrap. All six TestRunner actions passed uncached. Four of the six tests exercise parts of three presubmit jobs. Two serve as architecture controls. Each of those three jobs still has additional coverage to verify. The fork’s Buildkite file contains one submission command. GitHub Actions submitted it for this trial.\n\nThe previous proposals kept separate unit, Nogo, package, container, smoke, Gazelle, plugin, source-lint and syscall jobs. Their target lists, test fixtures and earlier results are linked. Staged release checks still have distinct artifact inputs.",
+      "updatedAt": "2026-11-06T18:50:14.461Z",
+      "summary": "One remote Bazel invocation on the released LLVM integration recorded all 3,235 presubmit targets. Of 2,874 build-only targets, 2,811 built. Of 361 runnable targets, 344 ran and 342 passed. There were 352 passing shards in 354 fresh remote executions. The sandbox test failed its default-route assertions and the vDSO checker could not start readelf. Three C++ compile actions failed in the NVIDIA driver's Clang parser on the pinned RegisterRef comparator.\n\nOn master before the compiler change, the graph selected all 360 runnable and 2,881 build-only targets from the AMD64 cgroup-v2 presubmit, plus a native uname control. Of the resulting 3,242 roots, 2,650 build-only targets built and 295 tests ran. The OCI and Firecracker workers reported cgroup2fs and observed the expected cache separation for CGROUPV2 true and false. The earlier six-target pilot and full per-owner data are linked.",
       "evidence": [
+        {
+          "label": "Full released LLVM source run: all 3,235 roots, 352 of 354 fresh remote shards passed, original failures identified",
+          "url": "https://github.com/tamird/gvisor/blob/247f6deb6/test/rbe/source-unit-cgroup-v2.md#released-llvm-compiler"
+        },
+        {
+          "label": "Every LLVM root and all 354 fresh remote shards",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42266767492/artifacts/13529188552"
+        },
+        {
+          "label": "Five original LLVM failures: missing readelf and the llvm-raw RegisterRef comparator",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42273255642/artifacts/13532960461"
+        },
         {
           "label": "Released LLVM run and complete source selection: the Bazel client ran out of memory after seven formerly failing build-only targets built, the vDSO test binary built, and two fresh tests passed",
           "url": "https://github.com/tamird/gvisor/blob/06b6f058e/test/rbe/source-unit-cgroup-v2.md#released-llvm-compiler"
@@ -55030,9 +55074,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "e46a101fc0aebb325ec25977697a012a2e11a11b",
-        "observedAt": "2026-11-06T15:53:23.363Z",
+        "observedAt": "2026-11-06T18:50:14.461Z",
         "disposition": "The contributor requested one remote Bazel graph for CI targets across areas and configurations.",
-        "nextAction": "Use the declared compiler for targets that invoked the missing GNU compiler, and investigate the executed sandbox failure and netgofer timeout before counting the full presubmit row."
+        "nextAction": "Qualify the existing LLVM dependency update for the Clang parser and supply readelf to the vDSO checker. Track the sandbox route assertions with #15866. Native uname still lacks a result in the full graph."
       }
     },
     {
