@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T20:22:14.946Z",
+    "updatedAt": "2026-11-06T20:24:36.012Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -45851,14 +45851,18 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/semaphore-waiter-lock",
-      "head": "0b655a94a96adaba21fe6e74a5325b06e88f017b",
+      "head": "9385a07c9a80422e092a786b68303b1686102095",
       "title": "Check the set lock when accessing SysV semaphores",
-      "url": "https://github.com/tamird/gvisor/commit/0b655a94a",
+      "url": "https://github.com/tamird/gvisor/commit/9385a07c9",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T20:22:14.946Z",
+      "updatedAt": "2026-11-06T20:24:36.012Z",
       "summary": "Guard the existing Set.sems storage with Set.mu and keep each sem lookup inside the caller’s critical section. Nogo passed on both CPUs. Removing the lock before directly indexing a queue or value generated diagnostics on both CPUs; a pointer retained past unlock escaped the analyzer. The existing field layout and checkpoint format are preserved. The qualified stack also contained the independent removal fix. The guard applies identically to #16806 alone.",
       "evidence": [
+        {
+          "label": "Same guard ported without the independent removal fix",
+          "url": "https://github.com/tamird/gvisor/compare/b68f40e4e...9385a07c9"
+        },
         {
           "label": "Smallest existing-storage guard, direct negatives and Size exception",
           "url": "https://github.com/tamird/gvisor/actions/runs/42280280575/artifacts/13536444234"
@@ -45870,10 +45874,6 @@
         {
           "label": "Tested base with the independent destruction correction",
           "url": "https://github.com/tamird/gvisor/commit/d9f9c4a0b"
-        },
-        {
-          "label": "Change since the earlier conditional contributor review",
-          "url": "https://github.com/tamird/gvisor/compare/b68f40e4e...0b655a94a"
         },
         {
           "label": "Checklocks results on AMD64 and ARM64 with the mutex held and deliberately released",
@@ -45895,9 +45895,9 @@
       "contributorReview": {
         "status": "pending",
         "kind": "proposal",
-        "head": "0b655a94a96adaba21fe6e74a5325b06e88f017b",
+        "head": "9385a07c9a80422e092a786b68303b1686102095",
         "baseHead": "b68f40e4e358798ba034116cdb4c8194bb1c7c07",
-        "url": "https://github.com/tamird/gvisor/commit/0b655a94a",
+        "url": "https://github.com/tamird/gvisor/commit/9385a07c9",
         "title": "Check the set lock when accessing SysV semaphores",
         "body": "Waking a waiter reads the semaphore value and removes the waiter from\nits queue. Direct access to those elements previously went unchecked\nbecause checklocks could not associate each sem with its owning set.\n\nGuard the existing slice with the set mutex and require the lock to\nlook up a member or wake its waiters. Size can read the length without\nthe lock because a semaphore set cannot be resized.",
         "requestedAt": "2026-11-06T20:22:14.946Z",
@@ -45908,7 +45908,7 @@
           "head": "b68f40e4e358798ba034116cdb4c8194bb1c7c07"
         },
         "after": {
-          "head": "0b655a94a96adaba21fe6e74a5325b06e88f017b"
+          "head": "9385a07c9a80422e092a786b68303b1686102095"
         }
       }
     },
