@@ -22,7 +22,7 @@ def run(*args, env=None):
 
 
 def main():
-    publisher, signer, oracle, amd64, arm64 = map(lambda arg: Path(arg).resolve(), sys.argv[1:])
+    publisher, signer, oracle, oracle_config, amd64, arm64 = map(lambda arg: Path(arg).resolve(), sys.argv[1:])
     output = Path(os.environ["TEST_UNDECLARED_OUTPUTS_DIR"]) / "receipt.json"
     receipt = {"phases": [], "packages": {}, "suites": {}}
 
@@ -56,6 +56,8 @@ def main():
             raise ValueError("the Ubuntu 24.04 comparison must start without dpkg-sig")
         oracle_root = root / "oracle"
         run("dpkg-deb", "-x", oracle, oracle_root)
+        run("dpkg-deb", "-x", oracle_config, oracle_root)
+        oracle_env = dict(env, PERL5LIB=str(oracle_root / "usr/share/perl5"))
         old_signer = oracle_root / "usr/bin/dpkg-sig"
         receipt["host_has_dpkg_sig"] = not absent
         receipt["fingerprint"] = fp
@@ -74,7 +76,10 @@ def main():
             signed = src.with_name("runsc.deb")
             run(signer, "--config", config, "sign", "--key", "release",
                 "--file", src, "--output", signed, "--role", "builder", env=env)
-            actual = run(old_signer, "--verify", signed, env=env).decode()
+            oracle_result = subprocess.run([old_signer, "--verify", signed], stdout=subprocess.PIPE, env=oracle_env)
+            actual = oracle_result.stdout.decode()
+            if oracle_result.returncode:
+                raise ValueError(f"dpkg-sig --verify exited {oracle_result.returncode}: {actual}")
             if f"GOODSIG _gpgbuilder {fp}" not in actual:
                 raise ValueError(f"original verifier did not accept {arch}: {actual}")
             signed_paths.append(signed)
@@ -83,7 +88,7 @@ def main():
             phase(f"{arch} native signature accepted by Ubuntu dpkg-sig")
         repo = root / "repo"
         suite_names = ("20261102", "release")
-        script_env = dict(env, PATH=f"{old_signer.parent}:{env['PATH']}")
+        script_env = dict(oracle_env, PATH=f"{old_signer.parent}:{env['PATH']}")
         for suite in suite_names:
             # The unmodified publisher verifies pre-signed inputs before deciding
             # whether to sign them. Equal hashes below prove it kept those bytes.

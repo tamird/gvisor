@@ -992,3 +992,8 @@ http_file(
     sha256 = "96f680452ec1bd94e693b3aade78d9c09f90ecfe8ee05dbe29782a6e725cad7a",
     urls = ["https://storage.googleapis.com/gvisor/releases/pool/20261102.0/binary-arm64/runsc.deb"],
 )
+http_file(
+    name = "dpkg_sig_oracle_config",
+    sha256 = "04f13cd3f4fa9ed73555c05e1d6cc0cbf58ba898e77f334cce1f2432d4235a8c",
+    urls = ["https://archive.ubuntu.com/ubuntu/pool/universe/libc/libconfig-file-perl/libconfig-file-perl_1.54-2_all.deb"],
+)
