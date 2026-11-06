@@ -1,35 +1,35 @@
-name: CI
-
-"on":
+name: Check the netgofer final frame and scoped receive-queue query
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/netgofer-fd-fionread]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  native:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 5, persist-credentials: false}
+      - name: Run native queue and poll controls, including real seccomp rejections
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 0d511aa607007f3800bbd423f7c13dd46e4940fd
+          test "$(git rev-parse HEAD^^)" = da3d577f4213ba49bb96e378a9d4609694df5e8f
+          test "$(git rev-parse HEAD~4)" = 949d4871550821371649ae873beab69ead0b36c1
+          d="$RUNNER_TEMP/netgofer-fionread"
+          mkdir -m 700 "$d"
+          cp .github/qualification/netgofer_fionread.py "$d/"
+          curl -fsSL --retry 3 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod +x "$d/bazel"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+          git switch --quiet --detach 0d511aa607007f3800bbd423f7c13dd46e4940fd
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$d/netgofer_fionread.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: netgofer-fionread
+          path: |
+            ${{ runner.temp }}/netgofer-fionread/result.json
+          retention-days: 14
