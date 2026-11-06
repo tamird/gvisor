@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T16:32:56.778Z",
+    "updatedAt": "2026-11-06T16:36:37.169Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28284,16 +28284,16 @@
       ]
     },
     {
-      "id": "branch:hermetic-llvm-project",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:17114",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "research/nvidia-parser-catalog-source",
       "head": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
-      "title": "Build the NVIDIA parser against hermetic-llvm’s LLVM source",
-      "url": "https://github.com/tamird/gvisor/commit/7fca7c54f",
+      "title": "Use hermetic-llvm's source archive for the NVIDIA driver parser",
+      "url": "https://github.com/google/gvisor/pull/17114",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T08:32:16.199Z",
+      "status": "open",
+      "updatedAt": "2026-11-06T16:36:37.169Z",
       "summary": "Build the NVIDIA driver parser from the LLVM archive supplied by the pinned module. This removes the local Bazel 9 patch and zlib rule. The released module enables nine LLVM backends where gVisor’s archive enabled twenty. The parser configures 141 fewer C++ compilations on each architecture.\n\nThe standalone change teaches the existing license verifier two SPDX identifiers. It verified all 223 records. Two Fetch runs preserved the five terms recorded for the parser libraries; the verifier rejected a changed archive checksum and a record with only the root notice’s terms.\n\nTestParser executed uncached on native AMD64 and ARM64 with the released LLVM source. Those runs used 5c019e9e6. The standalone commit has identical parser and LLVM declarations and its own 223-entry catalog check.",
       "followup": {
         "owner": "root",
@@ -28447,16 +28447,19 @@
           "head": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63"
         }
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
-        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
-        "url": "https://github.com/tamird/gvisor/commit/7fca7c54f",
-        "title": "Use hermetic-llvm’s source archive for the NVIDIA driver parser",
-        "requestedAt": "2026-11-06T08:32:16.199Z",
-        "summary": "Open the standalone change. It removes the duplicate LLVM source, zlib rule and Bazel 9 patch. The released module configures 141 fewer C++ compilations on each architecture. The native parser tests used the same parser and LLVM declarations on 5c019e9e6; all 223 catalog entries passed on the proposed source tree."
-      }
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
+          "url": "https://github.com/tamird/gvisor/commit/7fca7c54f",
+          "title": "Use hermetic-llvm’s source archive for the NVIDIA driver parser",
+          "outcome": "approved",
+          "at": "2026-11-06T16:36:37.169Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17114",
+          "note": "Opened the standalone NVIDIA parser source PR at the reviewed commit."
+        }
+      ],
+      "number": 17114
     },
     {
       "id": "branch:licensecheck-go-digest-notices",
@@ -44407,8 +44410,8 @@
       "title": "Test the send window after a SYN cookie handshake",
       "url": "https://github.com/tamird/gvisor/commit/52c3ca860",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-31T19:36:28.936+00:00",
+      "status": "Approved; waiting for #16841 and #16784",
+      "updatedAt": "2026-11-06T16:36:37.169Z",
       "summary": "Linux and gVisor sent 128 bytes after a timestamped cookie handshake and 16 without timestamps. Both held the next byte until the peer ACKed. This covers the peer window on the wire and removes the overlapping Go assertion; the clock and listener-resize checks remain.",
       "evidence": [
         {
@@ -44436,16 +44439,29 @@
           "head": "52c3ca8600e7b1e0bf7b3e40932e65387925fad6"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "52c3ca8600e7b1e0bf7b3e40932e65387925fad6",
-        "baseHead": "6316929fac62357ded49788855298576264fe4f6",
-        "url": "https://github.com/tamird/gvisor/commit/52c3ca860",
-        "title": "Test the send window after a SYN cookie handshake",
-        "requestedAt": "2026-10-31T19:36:28.936+00:00",
-        "summary": "Open the peer-window test after #16784 and the handshake fixture land?",
-        "body": "Fill a listener's SYN queue, then offer a window of 16 with a shift of\nthree. With timestamps, the server can send 128 bytes before its next\nACK; without timestamps it must stop at 16. In both cases a queued byte\nmust wait for the ACK that reopens the window.\n\nShare the existing handshake test's queue-boundary detection. Keep the\nmanual clock and listener-buffer resize checks in the endpoint test;\nthe packet test covers the peer's send window on Linux and gVisor."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "52c3ca8600e7b1e0bf7b3e40932e65387925fad6",
+          "url": "https://github.com/tamird/gvisor/commit/52c3ca860",
+          "title": "Test the send window after a SYN cookie handshake",
+          "body": "Fill a listener's SYN queue, then offer a window of 16 with a shift of\nthree. With timestamps, the server can send 128 bytes before its next\nACK; without timestamps it must stop at 16. In both cases a queued byte\nmust wait for the ACK that reopens the window.\n\nShare the existing handshake test's queue-boundary detection. Keep the\nmanual clock and listener-buffer resize checks in the endpoint test;\nthe packet test covers the peer's send window on Linux and gVisor.",
+          "outcome": "approved",
+          "at": "2026-11-06T16:36:37.169Z",
+          "note": "Tamir approved submission after #16841 and #16784."
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "52c3ca8600e7b1e0bf7b3e40932e65387925fad6",
+        "observedAt": "2026-11-06T16:36:37.169Z",
+        "disposition": "Tamir approved submission after #16841 and #16784.",
+        "nextAction": "Open the approved PR after #16841 and #16784.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/52c3ca860",
+          "https://github.com/google/gvisor/pull/16784",
+          "https://github.com/google/gvisor/pull/16841"
+        ]
       }
     },
     {
@@ -45298,8 +45314,8 @@
       "title": "Test SACK on a connection accepted with a SYN cookie",
       "url": "https://github.com/tamird/gvisor/commit/858aa5b72",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T08:05:34.708942+00:00",
+      "status": "Approved; waiting for #16841",
+      "updatedAt": "2026-11-06T16:36:37.169Z",
       "summary": "A SYN-ACK advertised SACK even when a deliberate fault prevented the accepted socket from remembering it. Linux and unmodified gVisor reported the received byte beyond a gap only when both SACK and timestamps were negotiated. The packet test replaces three overlapping Go cases.",
       "evidence": [
         {
@@ -45311,16 +45327,28 @@
           "url": "https://app.buildbuddy.io/invocation/4959fc4c-9efa-4b02-858c-934ee220d9b1"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "858aa5b72f7172309231b6352886973414c28f44",
-        "baseHead": "e62e48e9a8ba9523323071f011c1390b7873852f",
-        "url": "https://github.com/tamird/gvisor/commit/858aa5b72",
-        "title": "Test SACK on a connection accepted with a SYN cookie",
-        "requestedAt": "2026-11-01T08:05:34.708942+00:00",
-        "summary": "Open the packet-test follow-up after the SYN-cookie identification helper lands?",
-        "body": "Queue three bytes in the order a, c, b on an accepted cookie connection. Linux and gVisor acknowledge 1, 1, then 3 bytes. When the peer negotiated SACK and timestamps, the middle ACK also reports the received interval [2,3). Omitting either option suppresses the block. Clearing SACK only on the accepted socket breaks that assertion even though the SYN-ACK still advertised it.\n\nThe ordinary handshakes and the stack-wide SACK-disabled cases stay in the Go suite. This test and the separate peer-window test apply in either order."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "858aa5b72f7172309231b6352886973414c28f44",
+          "url": "https://github.com/tamird/gvisor/commit/858aa5b72",
+          "title": "Test SACK on a connection accepted with a SYN cookie",
+          "body": "Queue three bytes in the order a, c, b on an accepted cookie connection. Linux and gVisor acknowledge 1, 1, then 3 bytes. When the peer negotiated SACK and timestamps, the middle ACK also reports the received interval [2,3). Omitting either option suppresses the block. Clearing SACK only on the accepted socket breaks that assertion even though the SYN-ACK still advertised it.\n\nThe ordinary handshakes and the stack-wide SACK-disabled cases stay in the Go suite. This test and the separate peer-window test apply in either order.",
+          "outcome": "approved",
+          "at": "2026-11-06T16:36:37.169Z",
+          "note": "Tamir approved submission after #16841."
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "858aa5b72f7172309231b6352886973414c28f44",
+        "observedAt": "2026-11-06T16:36:37.169Z",
+        "disposition": "Tamir approved submission after #16841.",
+        "nextAction": "Open the approved PR after #16841.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/858aa5b72",
+          "https://github.com/google/gvisor/pull/16841"
+        ]
       }
     },
     {
@@ -45431,8 +45459,8 @@
       "title": "Check that an ICMP error quotes outstanding TCP data",
       "url": "https://github.com/tamird/gvisor/commit/c5c3a66ce",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T09:30:13.357522+00:00",
+      "status": "Approved; waiting for #16933",
+      "updatedAt": "2026-11-06T16:36:37.169Z",
       "summary": "On an established socket with IP_RECVERR, Linux reports EHOSTUNREACH once for an outstanding segment and ignores a quote for data already acknowledged. Both sockets remain usable. gVisor reported the stale error and placed the quote in MSG_ERRQUEUE. The TCP receive worker can check the quoted sequence under the endpoint lock, including when a locally generated error arrives during a send.",
       "evidence": [
         {
@@ -45444,16 +45472,28 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41291743859/artifacts/13077374128"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "c5c3a66ceb0fa35736f3d26e3a8a29aae6446e91",
-        "baseHead": "31698e51e22cdf8ba72fbc117edda9bbec5a8d3c",
-        "url": "https://github.com/tamird/gvisor/commit/c5c3a66ce",
-        "title": "Check that an ICMP error quotes outstanding TCP data",
-        "requestedAt": "2026-11-01T09:30:13.357522+00:00",
-        "summary": "Open after the socket-error readiness fix lands?",
-        "body": "On an established socket with IP_RECVERR, Linux reports EHOSTUNREACH once for an outstanding segment and ignores a quote for data already acknowledged. Both sockets remain usable. gVisor reported the stale error and placed the quote in MSG_ERRQUEUE. The TCP receive worker can check the quoted sequence under the endpoint lock, including when a locally generated error arrives during a send."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "c5c3a66ceb0fa35736f3d26e3a8a29aae6446e91",
+          "url": "https://github.com/tamird/gvisor/commit/c5c3a66ce",
+          "title": "Check that an ICMP error quotes outstanding TCP data",
+          "body": "On an established socket with IP_RECVERR, Linux reports EHOSTUNREACH once for an outstanding segment and ignores a quote for data already acknowledged. Both sockets remain usable. gVisor reported the stale error and placed the quote in MSG_ERRQUEUE. The TCP receive worker can check the quoted sequence under the endpoint lock, including when a locally generated error arrives during a send.",
+          "outcome": "approved",
+          "at": "2026-11-06T16:36:37.169Z",
+          "note": "Tamir approved submission after #16933."
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "c5c3a66ceb0fa35736f3d26e3a8a29aae6446e91",
+        "observedAt": "2026-11-06T16:36:37.169Z",
+        "disposition": "Tamir approved submission after #16933.",
+        "nextAction": "Open the approved PR after #16933.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/c5c3a66ce",
+          "https://github.com/google/gvisor/pull/16933"
+        ]
       }
     },
     {
@@ -57556,7 +57596,7 @@
     },
     {
       "from": "pr:16249",
-      "to": "branch:hermetic-llvm-project",
+      "to": "pr:17114",
       "type": "depends_on",
       "reason": "Satisfied: merged #16249 enumerates llvm_project_archive and the stock checker found the replaced source.",
       "evidence": [
