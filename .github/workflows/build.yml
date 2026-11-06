@@ -1,35 +1,46 @@
-name: CI
-
-"on":
+name: Check static GNU race links with the LLVM unwinder
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/static-gnu-race-unwind-sections]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  race:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 100
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Select the product source and original link verifier
+        id: prepare
+        run: |
+          d="$RUNNER_TEMP/unwind"
+          mkdir -p "$d"
+          cp .github/qualification/static_glibc_unwinder.py "$d/"
+          source=333d010a99a71c87d6f308feb6b69471ea341cd3
+          test "$(git rev-parse HEAD^)" = "$source"
+          git checkout --detach "$source"
+          curl -fsSL --retry 3 https://raw.githubusercontent.com/tamird/gvisor/6793d023256b69e67d34856d3fa4571410dc0097/.github/qualification/static_gnu_race.py -o "$d/race.py"
+          echo "4744c6c9e972bdeaa8c67eb6c8158d75e841c1cbc73be18b6ab1ef2540c21903  $d/race.py" | sha256sum -c -
+          curl -fsSL --retry 3 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod +x "$d/bazel"
+      - name: Link the public runsc and Sentry race binaries
+        timeout-minutes: 63
+        run: |
+          d="$RUNNER_TEMP/unwind"
+          env -i HOME="$HOME" USER="$USER" PATH="$d:$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$d/race.py" 333d010a99a71c87d6f308feb6b69471ea341cd3 "$d/race.json"
+      - name: Check static GNU, default GNU, musl and freestanding selections
+        if: always() && !cancelled() && steps.prepare.outcome == 'success'
+        timeout-minutes: 27
+        run: |
+          d="$RUNNER_TEMP/unwind"
+          env -i HOME="$HOME" USER="$USER" PATH="$d:$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$d/static_glibc_unwinder.py" "$d/configs.json"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: static-gnu-race-unwinder
+          path: ${{ runner.temp }}/unwind/*.json
+          if-no-files-found: error
+          retention-days: 3
