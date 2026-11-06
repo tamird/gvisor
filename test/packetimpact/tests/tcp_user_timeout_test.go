@@ -177,6 +177,11 @@ func testUserTimeoutOnNextFlight(t *testing.T, retryOldest bool) {
 		if elapsed := time.Since(t0) - fresh; elapsed < rto/2 {
 			t.Fatalf("b arrived %s after c, before another RTO", elapsed)
 		}
+		// There is less than one initial RTO left before the old user
+		// timeout. The actual RTO must still reflect the backoff.
+		if got := time.Duration(dut.GetSockOptTCPInfo(t, fd).RTO) * time.Microsecond; got < 2*rto {
+			t.Fatalf("RTO after retransmitting b = %s, want at least %s", got, 2*rto)
+		}
 	}
 	ack(2 * mss)
 	checkAt := t0.Add(uto + 3*rto/2)
