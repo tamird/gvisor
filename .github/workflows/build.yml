@@ -1,35 +1,83 @@
-name: CI
-
-"on":
+name: Check the ARM64 race source generators on the AMD64 scratch worker
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/scratch-race-generator-controls]
+permissions:
+  contents: read
 jobs:
   build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Select the scratch release and the verified supplier patch
+        run: |
+          set -euo pipefail
+          umask 077
+          d="$RUNNER_TEMP/release-rbe"
+          mkdir -p "$d"/harness
+          cp .github/qualification/race_generators.py "$d/harness/"
+          cp test/rbe/release_prewarmer/BUILD "$d/harness/"
+          test "$(git rev-parse HEAD^)" = 709cd18c362576aaea12aa6d36c72034dbe001c8
+          test "$(git rev-parse HEAD^^)" = 83f2d8568e1799eab47b02dc92da2988bdb001d9
+          git checkout -q --detach HEAD^^
+          mkdir -p test/rbe/release_prewarmer
+          cp "$d/harness/BUILD" test/rbe/release_prewarmer/BUILD
+          test "$(cat .bazelversion)" = 9.3.1
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' --max-time 100 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' --max-time 100 https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-x86_64 -o "$d/bb"
+          (cd "$d" && sha256sum --check <<'SUMS'
+          e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  bazel
+          205fb4074012858c858ec357cb0cf1ed0b1fbf8707c5f385efd4abd52bb2cead  bb
+          SUMS
+          )
+          chmod 755 "$d/bazel" "$d/bb"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Run the original and corrected source-generation actions
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          d="$RUNNER_TEMP/release-rbe"
+          rc="$d/private.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          test -n "$BUILDBUDDY_API_KEY"
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          fail=0
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$d/harness/race_generators.py" stock || fail=1
+          git checkout -q --detach 709cd18c362576aaea12aa6d36c72034dbe001c8
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$d/harness/race_generators.py" fixed || fail=1
+          exit "$fail"
+      - name: Check the private configuration and public evidence
+        id: boundary
+        if: always()
+        run: |
+          test ! -e "$RUNNER_TEMP/release-rbe/private.bazelrc"
+          python3 - <<'PYTHON'
+          import json,os,re
+          from pathlib import Path
+          d=Path(os.environ["RUNNER_TEMP"])/"release-rbe"
+          for name in ("stock","fixed"):
+              p=d/(name+".json")
+              assert p.is_file() and not p.is_symlink() and 0 < p.stat().st_size < 65536
+              data=p.read_bytes()
+              assert not re.search(rb"(?i)x-buildbuddy-api-key|authorization\s*[:=]|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}",data)
+              assert json.loads(data)["mode"]==name
+          PYTHON
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.boundary.outcome == 'success'
+        with:
+          name: arm64-race-generator-controls
+          path: |
+            ${{ runner.temp }}/release-rbe/stock.json
+            ${{ runner.temp }}/release-rbe/fixed.json
+          if-no-files-found: error
+          retention-days: 5
