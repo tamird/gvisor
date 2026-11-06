@@ -22,6 +22,8 @@ import (
 	"runtime"
 	"strings"
 
+	"golang.org/x/sys/unix"
+
 	"gvisor.dev/gvisor/pkg/seccomp"
 	"gvisor.dev/gvisor/pkg/seccomp/precompiledseccomp"
 	"gvisor.dev/gvisor/runsc/gofer/filter"
@@ -29,6 +31,8 @@ import (
 
 // Options are seccomp filter related options.
 type Options struct {
+	// UDSFD is the one inherited descriptor on which the packet receiver queries queued bytes.
+	UDSFD          int
 	ProfileEnabled bool
 	CgoEnabled     bool
 	ExtraRules     []seccomp.SyscallRules
@@ -80,6 +84,7 @@ func Warnings(opt Options) []string {
 // program.
 func (opt Options) Vars() precompiledseccomp.Values {
 	vars := precompiledseccomp.Values{}
+	vars.SetUint64("netgoferUDSFD", uint64(opt.UDSFD))
 	vars.SetUint64(filter.SelfPIDVarName, uint64(os.Getpid()))
 	return vars
 }
@@ -98,6 +103,10 @@ func Rules(opt Options) (seccomp.SyscallRules, seccomp.SyscallRules) {
 // using `vars` as override for variables defined during precompilation.
 func rules(opt Options, vars precompiledseccomp.Values) (seccomp.SyscallRules, seccomp.SyscallRules) {
 	s := allowedSyscalls.Copy()
+	s.Add(unix.SYS_IOCTL, seccomp.PerArg{
+		seccomp.EqualTo(vars.GetUint64("netgoferUDSFD")),
+		seccomp.EqualTo(unix.TIOCINQ),
+	})
 	s.Merge(filter.SelfPIDFilters(vars.GetUint64(filter.SelfPIDVarName)))
 	if opt.ProfileEnabled {
 		s.Merge(filter.ProfileFilters())

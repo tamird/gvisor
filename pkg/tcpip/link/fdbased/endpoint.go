@@ -213,6 +213,10 @@ type Options struct {
 	// used for this endpoint.
 	PacketDispatchMode PacketDispatchMode
 
+	// DetectSeqpacketEOF lets an AF_UNIX SOCK_SEQPACKET link stop after peer
+	// shutdown once all queued packet data has been received.
+	DetectSeqpacketEOF bool
+
 	// TXChecksumOffload if true, indicates that this endpoints capability
 	// set should include CapabilityTXChecksumOffload.
 	TXChecksumOffload bool

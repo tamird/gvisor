@@ -52,9 +52,17 @@ func TestOptionsConfigKey(t *testing.T) {
 	t.Run("fields are exhaustive", func(t *testing.T) {
 		for i := 0; i < reflect.ValueOf(defaultOpt).NumField(); i++ {
 			f := reflect.TypeOf(defaultOpt).Field(i)
-			if _, found := configFields[f.Name]; !found {
+			if _, found := configFields[f.Name]; !found && f.Name != "UDSFD" {
 				t.Fatalf("field `Options.%s` is not known to TestOptionsConfigKey; please add it", f.Name)
 			}
+		}
+	})
+
+	t.Run("descriptor is a runtime variable", func(t *testing.T) {
+		other := defaultOpt
+		other.UDSFD = 37
+		if other.ConfigKey() != defaultOpt.ConfigKey() || reflect.DeepEqual(other.Vars(), defaultOpt.Vars()) {
+			t.Fatal("changing UDSFD should only change the rendered variable")
 		}
 	})
 
