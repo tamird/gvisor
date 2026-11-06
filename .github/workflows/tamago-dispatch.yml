@@ -18,9 +18,6 @@ jobs:
           d="$RUNNER_TEMP/tamago-dispatch"
           mkdir -p "$d/results"
           test -c /dev/kvm
-          if [[ ! -r /dev/kvm || ! -w /dev/kvm ]]; then
-            sudo setfacl -m "u:$USER:rw" /dev/kvm
-          fi
           if ! command -v qemu-system-x86_64; then
             sudo apt-get update -qq
             sudo apt-get install -y --no-install-recommends qemu-system-x86
@@ -35,7 +32,10 @@ jobs:
         run: |
           set -euo pipefail
           d="$RUNNER_TEMP/tamago-dispatch"
-          env -i PATH="$PATH" HOME="$HOME" USER="$USER" "$d/bazel" test \
+          stat -c '%U:%G %a %t:%T' /dev/kvm
+          # Each QEMU process opens the current device node. Use its normal
+          # group permissions for all six boots, including after udev runs.
+          sudo -u "$USER" -g kvm -- env -i PATH="$PATH" HOME="$HOME" USER="$USER" "$d/bazel" --batch test \
             --override_repository="tamago_sdk=$d/sdk" --nocache_test_results --test_output=errors \
             --build_event_json_file="$d/results/bep.json" \
             //:stock_guest //:fixed_guest //:scheduler_guest_test
