@@ -355,6 +355,10 @@ reported. Review/comment lists retain the latest 100 entries per connection;
 the existing 100-thread bound still applies. These records do not imply that a
 reviewer's concern has been resolved.
 
+During each steering sweep, link proposed new PRs to the single commit a
+contributor is being asked to send. Keep range-diffs in the evidence. If a
+series is necessary, explain why and link its constituent commits separately.
+
 The active gVisor supervisor runs
 `python3 update-status.py --incoming-review-handoff` from this checkout at
 startup, on resumption and before selecting the next batch of engineering

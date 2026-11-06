@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T20:07:31.468Z",
+    "updatedAt": "2026-11-06T20:16:18.017Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -6537,14 +6537,14 @@
       "group": "bazel",
       "status": "open",
       "head": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-      "updatedAt": "2026-11-06T18:43:53.566Z",
+      "updatedAt": "2026-11-06T20:16:18.017Z",
       "summary": "The rebased source is mergeable. The same maintained Go and C++ test variants run on the matching native CPU while Nogo checks both architectures.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-        "observedAt": "2026-11-06T18:43:09.619Z",
-        "disposition": "Published the patch-equivalent rebase. GitHub reports the source is mergeable.",
-        "nextAction": "Read the native test and Nogo results for this head.",
+        "observedAt": "2026-11-06T20:16:18.017Z",
+        "disposition": "On the rebased PR, native AMD64 atomicbitops passed 10,933 XML records and its Nogo owner passed both architectures. The ARM64 test runner landed on AMD64 and exited 126. Neither C++ owner reported a test.",
+        "nextAction": "Trace the with_cfg frontend’s test execution group under Bazel 9 and qualify native ARM64 plus both C++ test owners.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15370",
           "https://github.com/tamird/gvisor/compare/47be1e2b5...fafff7eba"
@@ -6553,6 +6553,10 @@
       "number": 15370,
       "reviewDecision": null,
       "evidence": [
+        {
+          "label": "AMD64 atomicbitops and both Nogo sections passed; ARM64 TestRunner ran on AMD64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42272993483/artifacts/13537866543"
+        },
         {
           "label": "Qualification in progress on this published head",
           "url": "https://github.com/tamird/gvisor/actions/runs/42272993483"
@@ -21722,12 +21726,16 @@
       "ref": "review/hackbench-2.11-standalone",
       "head": "e3ea0022cb30bf8f5646ef29955998501a425d8e",
       "title": "Build the hackbench image from pinned source",
-      "url": "https://github.com/tamird/gvisor/compare/471d6dff5...e3ea0022c",
+      "url": "https://github.com/tamird/gvisor/commit/e3ea0022c",
       "group": "bazel",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-03T04:16:24.163353+00:00",
+      "updatedAt": "2026-11-06T20:16:18.017Z",
       "summary": "The rt-tests 2.11 image passed pipe/thread and socket/process in both configurations: AMD64 natively under runc, and ARM64 via QEMU on AMD64 runc. Both Go test attempts were uncached and used the exact previously built image and context. The 221-dependency license verification is retained from the original run.",
       "evidence": [
+        {
+          "label": "Compare this source with its previously reviewed base",
+          "url": "https://github.com/tamird/gvisor/compare/471d6dff5...e3ea0022c"
+        },
         {
           "label": "Revised fork source",
           "url": "https://github.com/tamird/gvisor/commit/7c63124a2"
@@ -21810,7 +21818,7 @@
         "kind": "proposal",
         "head": "e3ea0022cb30bf8f5646ef29955998501a425d8e",
         "baseHead": "471d6dff5229b99208bf6fec985601067f1f9d69",
-        "url": "https://github.com/tamird/gvisor/compare/471d6dff5...e3ea0022c",
+        "url": "https://github.com/tamird/gvisor/commit/e3ea0022c",
         "title": "Build the Hackbench image from pinned source",
         "requestedAt": "2026-11-03T04:16:24.163353+00:00",
         "summary": "The standalone patch matches the qualified rt-tests 2.11 change byte for byte. All prerequisites have landed. Both benchmark modes passed on native AMD64 and emulated ARM64; the original 221-dependency license audit still applies.",
@@ -22106,10 +22114,10 @@
       "ref": "review/standalone-wrk2-image",
       "head": "5bb80cbb9c07ec3f597f3e5200102b6c8e0a95f4",
       "title": "Build the wrk2 image from pinned source",
-      "url": "https://github.com/tamird/gvisor/compare/6e6276344...5bb80cbb9",
+      "url": "https://github.com/tamird/gvisor/commit/5bb80cbb9",
       "group": "bazel",
       "status": "Contributor review",
-      "updatedAt": "2026-10-31T07:18:55.041730+00:00",
+      "updatedAt": "2026-11-06T20:16:18.017Z",
       "summary": "Build wrk2 and LuaJIT from pinned sources on Ubuntu Jammy. Use the upstream ARM option-parser fix and the OpenSSL module’s public license file. The four installed notices cover three sources. The full 223-record catalog verifies on the current classifier.",
       "followup": {
         "owner": "Build and release",
@@ -22124,6 +22132,14 @@
         ]
       },
       "evidence": [
+        {
+          "label": "The image needs the license checker to recognize LuaJIT’s COPYRIGHT file. Review the two-line license lookup separately.",
+          "url": "https://github.com/tamird/gvisor/commit/dbb96525c"
+        },
+        {
+          "label": "Compare this source with its previously reviewed base",
+          "url": "https://github.com/tamird/gvisor/compare/6e6276344...5bb80cbb9"
+        },
         {
           "label": "Previously approved shared-runtime revision",
           "url": "https://github.com/tamird/gvisor/commit/f258c589b"
@@ -22248,9 +22264,9 @@
         "status": "pending",
         "baseHead": "6e6276344dce3728a09a8271c8360269e7d881a4",
         "head": "5bb80cbb9c07ec3f597f3e5200102b6c8e0a95f4",
-        "url": "https://github.com/tamird/gvisor/compare/6e6276344...5bb80cbb9",
+        "url": "https://github.com/tamird/gvisor/commit/5bb80cbb9",
         "title": "Review the standalone wrk2 image and its license lookup",
-        "summary": "The approved f258c589b used a shared libc layer and shell-driven Lua generators. This revision uses Ubuntu Jammy and declared Bazel tools, fixes ARM option parsing and removes unused zlib. A two-line preparation recognizes LuaJIT’s COPYRIGHT notice. Review those changes."
+        "summary": "The approved f258c589b used a shared libc layer and shell-driven Lua generators. This revision uses Ubuntu Jammy and declared Bazel tools, fixes ARM option parsing and removes unused zlib. A two-line preparation recognizes LuaJIT’s COPYRIGHT notice. Review those changes. The image needs the license checker to recognize LuaJIT’s COPYRIGHT file. Review the two-line license lookup separately. [Prerequisite commit](https://github.com/tamird/gvisor/commit/dbb96525c)."
       }
     },
     {
@@ -22815,7 +22831,7 @@
       "url": "https://github.com/tamird/gvisor/commit/b3d4c6163",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-05T15:27:44.402237Z",
+      "updatedAt": "2026-11-06T20:16:18.017Z",
       "summary": "Three tests used the default encoder to create inputs for the legacy decoder. After graph became the default all three failed. Selecting wire makes Load exercise the intended array-to-slice and interface-to-scalar conversions. All three passed on native AMD64.\n\nThe implementation was approved at 6a5814d55. Only the test revision needs review. The implementation rejected incompatible empty wire values in normal and race tests. The 16-pair comparison detected no timing or allocation change.",
       "links": [
         {
@@ -22865,11 +22881,17 @@
         "head": "b3d4c616328d4b266091f465628cb074d4afaa2f",
         "baseHead": "b45fba8d8a303c438706d3c00b174f2736193731",
         "title": "Test legacy destination conversions with wire checkpoints",
-        "url": "https://github.com/tamird/gvisor/compare/b45fba8d8...b3d4c6163",
+        "url": "https://github.com/tamird/gvisor/commit/b3d4c6163",
         "requestedAt": "2026-11-05T15:27:44.402237Z",
         "summary": "Include the test revision b3d4c6163 in the approved change after the reference-array change lands?",
         "body": "The legacy decoder accepts arrays in slices and unwraps interfaces into\nscalar destinations. Save these three inputs with the wire engine so\nLoad exercises those conversions when graph checkpoints are the default."
-      }
+      },
+      "evidence": [
+        {
+          "label": "Compare this source with its previously reviewed base",
+          "url": "https://github.com/tamird/gvisor/compare/b45fba8d8...b3d4c6163"
+        }
+      ]
     },
     {
       "id": "branch:rules-img-libacl",
@@ -23436,7 +23458,7 @@
       "url": "https://github.com/tamird/gvisor/commit/27451d0c2",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-05T15:27:44.402237Z",
+      "updatedAt": "2026-11-06T20:16:18.017Z",
       "summary": "Two tests passed using graph checkpoints without reaching the legacy decoder being changed. The revised test loads both a value root and a pointer root on each engine. The four native AMD64 cases passed, and the recorded headers confirm which encoder wrote each input.\n\nThe implementation was approved at b9797d128. Only the test revision needs review. The implementation registers dependencies during decoding. Normal and race tests passed; the paired comparison found no timing or allocation change.",
       "followup": {
         "owner": "Contributor",
@@ -23482,11 +23504,17 @@
         "head": "27451d0c2c88e30eee03cf92ae9252600a7d40c7",
         "baseHead": "268638e5a85cbfe0f0c22e024be79a4e7087748f",
         "title": "Test interface wait ordering on both checkpoint engines",
-        "url": "https://github.com/tamird/gvisor/compare/268638e5a...27451d0c2",
+        "url": "https://github.com/tamird/gvisor/commit/27451d0c2",
         "requestedAt": "2026-11-05T15:27:44.402237Z",
         "summary": "Include the test revision 27451d0c2 in the approved change after the destination-type decoder change lands?",
         "body": "The post-load hook must see the initialized object behind a waiting\ninterface. Exercise that ordering for value and pointer roots with each\nengine, including the legacy decoder that registers the dependency."
-      }
+      },
+      "evidence": [
+        {
+          "label": "Compare this source with its previously reviewed base",
+          "url": "https://github.com/tamird/gvisor/compare/268638e5a...27451d0c2"
+        }
+      ]
     },
     {
       "id": "pr:16198",
@@ -30932,19 +30960,23 @@
       "group": "bazel",
       "status": "open",
       "summary": "The rebased source is mergeable. Coverage CLI and Sentry binaries use rules_go and the declared SDK. The previous AMD64 KCOV and two-architecture checks are recorded on their measured versions.",
-      "updatedAt": "2026-11-06T18:43:53.566Z",
+      "updatedAt": "2026-11-06T20:16:18.017Z",
       "followup": {
         "owner": "Agent",
         "sourceHead": "7f56b080d9f7485957f3514133ffa5f5490a6185",
-        "observedAt": "2026-11-06T18:43:09.619Z",
-        "disposition": "Published the patch-equivalent rebase. GitHub reports the source is mergeable.",
-        "nextAction": "Read the coverage build and CLI version results on both architectures.",
+        "observedAt": "2026-11-06T20:16:18.017Z",
+        "disposition": "All normal, race, KCOV and race+KCOV CLI variants built on both target architectures. The four AMD64 versions ran natively. The two non-race ARM64 versions ran under QEMU user mode; both emulated race CLIs exited 66. The build deadline passed before a Sentry result.",
+        "nextAction": "Recover the missing Sentry owners and verify ARM64 program behavior using the matching native environment.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16507",
           "https://github.com/tamird/gvisor/compare/5dbef4de9...7f56b080d"
         ]
       },
       "evidence": [
+        {
+          "label": "Eight CLI ELFs built across the two CPUs; Sentry build timed out",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42272993483/artifacts/13537866543"
+        },
         {
           "label": "Qualification in progress on this published head",
           "url": "https://github.com/tamird/gvisor/actions/runs/42272993483"
@@ -39016,15 +39048,19 @@
       "ref": "research/overlay-overlap-waiters",
       "head": "424cb3f066912b7b0b8ac4a9b9be84278ae64654",
       "title": "Unregister overlay poll waiters from their original backing file",
-      "url": "https://github.com/tamird/gvisor/compare/85d46891e...424cb3f06",
+      "url": "https://github.com/tamird/gvisor/commit/424cb3f06",
       "group": "runtime",
       "status": "Awaiting contributor review",
-      "updatedAt": "2026-11-05T19:38:10.552336Z",
+      "updatedAt": "2026-11-06T20:16:18.017Z",
       "summary": "After overlay copies a file to the upper filesystem, canceling a poll must still unregister its waiter from the lower file. The fix keeps that lower file until its registrations drain and records upper registrations only during the overlap.",
       "evidence": [
         {
-          "label": "Only unregister successful poll registrations",
+          "label": "The overlay change uses poll registrations only after they succeed. Review the preceding unregister correction separately.",
           "url": "https://github.com/tamird/gvisor/commit/85cb9f489"
+        },
+        {
+          "label": "Compare this source with its previously reviewed base",
+          "url": "https://github.com/tamird/gvisor/compare/85d46891e...424cb3f06"
         },
         {
           "label": "Retain lower overlay until its waiters drain",
@@ -39129,9 +39165,9 @@
         "kind": "proposal",
         "head": "424cb3f066912b7b0b8ac4a9b9be84278ae64654",
         "baseHead": "85d46891e97cf43c1e30935dc56f77b2ec5a5bf7",
-        "url": "https://github.com/tamird/gvisor/compare/85d46891e...424cb3f06",
+        "url": "https://github.com/tamird/gvisor/commit/424cb3f06",
         "title": "Unregister overlay poll waiters from their original backing file",
-        "summary": "After overlay copies a file to the upper filesystem, canceling a poll must still unregister its waiter from the lower file. The fix keeps that lower file until its registrations drain and records upper registrations only during the overlap.",
+        "summary": "After overlay copies a file to the upper filesystem, canceling a poll must still unregister its waiter from the lower file. The fix keeps that lower file until its registrations drain and records upper registrations only during the overlap. The overlay change uses poll registrations only after they succeed. Review the preceding unregister correction separately. [Prerequisite commit](https://github.com/tamird/gvisor/commit/85cb9f489).",
         "body": "This series follows the Unix waiter rollback. The first commit makes poll unregister only entries it successfully registered. The second keeps the lower overlay file until its last waiter is removed after copy-up. The checkpoint test restores registrations on both backing files in the same build. This changes the checkpoint representation of regular overlay file descriptions.\n\nEach benchmark operation registers and removes one or eight waiters on a warmed overlay file. Both versions measured zero allocations per operation for all overlay and direct-file cases. The table shows the overlay timings for tmpfs and proc, with 20 samples per version. [1]\n\n```\n                               │ stock.bench  │            fixed.bench             │\n                               │    sec/op    │   sec/op     vs base               │\nOverlayPoll/tmpfs/live1          48.50n ± 20%   45.65n ± 6%  -5.87% (p=0.045 n=20)\nOverlayPoll/tmpfs/live8          350.9n ±  0%   343.1n ± 0%  -2.21% (p=0.000 n=20)\nOverlayPoll/proc/live1           105.0n ±  0%   106.0n ± 0%  +0.93% (p=0.000 n=20)\nOverlayPoll/proc/live8           830.3n ±  1%   839.0n ± 0%  +1.05% (p=0.000 n=20)\n```\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41007120186/artifacts/12956227771\n"
       }
     },
@@ -46122,8 +46158,8 @@
       "title": "tcp: report hangups when a stream closes",
       "url": "https://github.com/tamird/gvisor/commit/6e1f1e700",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T20:07:31.468Z",
+      "status": "Approved; waiting for #16808 and #17123",
+      "updatedAt": "2026-11-06T20:16:18.017Z",
       "summary": "TCP shutdown flags now use atomicbitops.Int[tcpip.ShutdownFlags], with their mutex and atomic access checked at the declaration. The checkpoint retains the original wire scalar. All six IPv4/IPv6 readiness cases ran in the Sentry. Each of the 15 analyzer owners passed on both architectures across two runs. Removing the restore annotation produced the expected store diagnostic on both CPUs.",
       "refinement": {
         "before": {
@@ -46185,18 +46221,29 @@
           "outcome": "changes-requested",
           "at": "2026-11-06T16:20:27.112Z",
           "note": "Use a typed atomic for the shutdown flags and express its lock contract."
+        },
+        {
+          "kind": "proposal",
+          "head": "6e1f1e7005d85fa0e2f04d75c530abf1ba384490",
+          "url": "https://github.com/tamird/gvisor/commit/6e1f1e700",
+          "title": "tcp: report hangups when a stream closes",
+          "body": "An application can wait for EPOLLRDHUP without requesting EPOLLIN. If\nthe peer sent FIN, that wait timed out on gVisor. A socket shut down\nlocally for reading likewise appeared open until a poll for readable\ndata updated the cached receive state. Closing both directions then\nhid the read hangup and did not report POLLHUP.\n\nRead the receive queue's closed flag directly. Once the local endpoint\nhas queued FIN, a closed receive queue also means both directions have\nshut down. Linux reports POLLRDHUP for the first condition and POLLHUP\nfor the second [1].\n\nProcessing a peer FIN takes a socket out of ESTABLISHED before closing\nthe receive queue. Skip the queue lock for EPOLLRDHUP on an established\nsocket without a local read shutdown request. Check the queue if there\nwas a request since it may have failed before connect.\n\nWake read-hangup waiters on a peer FIN or local read shutdown, and wake\nhangup waiters when the second direction closes. Exercise both paths on\nIPv4 and IPv6, including the EPOLLRDHUP-only watch from #6015 and a\nwatch that requests no events when SHUT_RDWR leaves data unread.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp.c#L558-L562",
+          "outcome": "approved",
+          "at": "2026-11-06T20:16:18.017Z",
+          "note": "Contributor approved 6e1f1e700 for submission after both #16808 and #17123 merge."
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "6e1f1e7005d85fa0e2f04d75c530abf1ba384490",
-        "baseHead": "1b4eaf08e996c4741c8114a33b683b6312fe59ed",
-        "url": "https://github.com/tamird/gvisor/commit/6e1f1e700",
-        "requestedAt": "2026-11-06T20:07:31.468Z",
-        "title": "tcp: report hangups when a stream closes",
-        "summary": "Review the typed flags and lock contract. Open the TCP correction after #16808 and the independent stateify generic-receiver fix have landed.",
-        "body": "An application can wait for EPOLLRDHUP without requesting EPOLLIN. If\nthe peer sent FIN, that wait timed out on gVisor. A socket shut down\nlocally for reading likewise appeared open until a poll for readable\ndata updated the cached receive state. Closing both directions then\nhid the read hangup and did not report POLLHUP.\n\nRead the receive queue's closed flag directly. Once the local endpoint\nhas queued FIN, a closed receive queue also means both directions have\nshut down. Linux reports POLLRDHUP for the first condition and POLLHUP\nfor the second [1].\n\nProcessing a peer FIN takes a socket out of ESTABLISHED before closing\nthe receive queue. Skip the queue lock for EPOLLRDHUP on an established\nsocket without a local read shutdown request. Check the queue if there\nwas a request since it may have failed before connect.\n\nWake read-hangup waiters on a peer FIN or local read shutdown, and wake\nhangup waiters when the second direction closes. Exercise both paths on\nIPv4 and IPv6, including the EPOLLRDHUP-only watch from #6015 and a\nwatch that requests no events when SHUT_RDWR leaves data unread.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp.c#L558-L562"
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "6e1f1e7005d85fa0e2f04d75c530abf1ba384490",
+        "observedAt": "2026-11-06T20:16:18.017Z",
+        "disposition": "Contributor approved the typed flags, lock contract and tested TCP readiness change.",
+        "nextAction": "Submit this TCP change after #16808 and #17123 land.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/6e1f1e700",
+          "https://github.com/google/gvisor/pull/17123",
+          "https://github.com/google/gvisor/pull/16808"
+        ]
       }
     },
     {
@@ -55512,22 +55559,11 @@
       "type": "branch",
       "head": "1de5b54a98a37c10fc0e71f7340df386ffaea4c3",
       "ref": "proposal/stateify-generic-receivers",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T20:07:31.468Z",
+      "status": "Published as #17123",
+      "updatedAt": "2026-11-06T20:16:18.017Z",
       "title": "Recognize instantiated method receivers in stateify",
       "summary": "Stateify panics while scanning a generic method receiver, even if the type has no stateify annotation. The same one-file correction on the shutdown-flags integration recognized receivers with one or two type parameters. Its standalone patch applies directly to master.",
       "url": "https://github.com/tamird/gvisor/commit/1de5b54a9",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "1de5b54a98a37c10fc0e71f7340df386ffaea4c3",
-        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
-        "url": "https://github.com/tamird/gvisor/commit/1de5b54a9",
-        "requestedAt": "2026-11-06T20:07:31.468Z",
-        "title": "Recognize instantiated method receivers in stateify",
-        "summary": "Open the standalone generator correction on master. It supplies the receiver support used by the typed TCP shutdown proposal.",
-        "body": "Stateify scans every method in a package to find save and restore hooks.\nA method on *Int[T] therefore makes generation panic even when Int has\nno stateify annotation. The receiver scanner expects an identifier\nwhere the Go parser supplies an index expression.\n\nTake the declaration name through an instantiation, including receivers\nwith several type parameters. Both callers use only that name. Drop the\nunused qualified spelling."
-      },
       "evidence": [
         {
           "label": "Original stateify panic and generated code for one and two type parameters",
@@ -55537,32 +55573,49 @@
           "label": "Same one-file change on the TCP integration",
           "url": "https://github.com/tamird/gvisor/commit/bc4805e31"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "1de5b54a98a37c10fc0e71f7340df386ffaea4c3",
+          "url": "https://github.com/tamird/gvisor/commit/1de5b54a9",
+          "title": "Recognize instantiated method receivers in stateify",
+          "body": "Stateify scans every method in a package to find save and restore hooks.\nA method on *Int[T] therefore makes generation panic even when Int has\nno stateify annotation. The receiver scanner expects an identifier\nwhere the Go parser supplies an index expression.\n\nTake the declaration name through an instantiation, including receivers\nwith several type parameters. Both callers use only that name. Drop the\nunused qualified spelling.",
+          "outcome": "approved",
+          "at": "2026-11-06T20:16:18.017Z",
+          "note": "Contributor approved this standalone source for submission. Published as #17123 at the exact approved head.",
+          "postedURL": "https://github.com/google/gvisor/pull/17123"
+        }
+      ],
+      "followup": {
+        "owner": "Maintainer",
+        "sourceHead": "1de5b54a98a37c10fc0e71f7340df386ffaea4c3",
+        "observedAt": "2026-11-06T20:16:18.017Z",
+        "disposition": "Published #17123 at the approved source.",
+        "nextAction": "Follow upstream review and checks on #17123.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17123",
+          "https://github.com/tamird/gvisor/commit/1de5b54a9"
+        ]
+      }
     },
     {
       "id": "branch:tcp-user-timeout-outstanding-flight",
       "group": "runtime",
       "repo": "tamird/gvisor",
       "type": "branch",
-      "head": "a848809a530e40d0556b02c8f028189c343f1350",
-      "ref": "research/tcp-user-timeout-preserve-rto",
+      "head": "de11f9e09290b75ab5aa7291fb0d308244b72067",
+      "ref": "proposal/tcp-user-timeout-outstanding-flight",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T20:07:31.468Z",
-      "title": "Apply TCP_USER_TIMEOUT to the oldest remaining data",
+      "updatedAt": "2026-11-06T20:16:18.017Z",
+      "title": "Keep TCP_USER_TIMEOUT tied to the oldest outstanding data",
       "summary": "The sender can time out new data at the old flight’s deadline and give its next retransmission the shortened timer. The two commits track which flight is still outstanding and retain the backed-off RTO. Linux and gVisor agreed on all four socket outcomes, with backed-off RTOs of 1.64 s and 1.60 s. Their exact retransmitted byte ranges differed in the partial-ACK case.",
-      "url": "https://github.com/tamird/gvisor/compare/f51a205a8...a848809a5",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "a848809a530e40d0556b02c8f028189c343f1350",
-        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
-        "url": "https://github.com/tamird/gvisor/compare/f51a205a8...a848809a5",
-        "requestedAt": "2026-11-06T20:07:31.468Z",
-        "title": "Apply TCP_USER_TIMEOUT to the oldest remaining data",
-        "summary": "Open these two commits together on master. A separate comparison with the withdrawn #17113 also passed. The already-approved retry-limit change remains separate.",
-        "body": "TCP_USER_TIMEOUT can expire new data at the deadline for an earlier flight. A partial ACK lets the sender transmit new bytes before a later ACK covers all the old bytes. Another RTO can move the congestion recovery boundary without retransmitting the new bytes.\n\nTrack the end of the retransmitted flight independently of congestion recovery. Once the peer acknowledges that flight, use the original transmit time of the oldest remaining data. If time is running out for the current flight, shorten its pending timer while preserving the backed-off RTO for the next flight. Retain the deadline for probes when the receive window is closed.\n\nIn the packet test, Linux and corrected gVisor kept the new flight alive after a full ACK of the old data. After a partial ACK, both eventually returned ETIMEDOUT for the outstanding data."
-      },
+      "url": "https://github.com/tamird/gvisor/commit/de11f9e09",
       "evidence": [
+        {
+          "label": "The previously tested two commits have an identical tree",
+          "url": "https://github.com/tamird/gvisor/compare/f51a205a8...a848809a5"
+        },
         {
           "label": "Standalone Linux and corrected gVisor packet outcomes",
           "url": "https://github.com/tamird/gvisor/actions/runs/42274444739/artifacts/13533507976"
@@ -55586,6 +55639,54 @@
         {
           "label": "Earlier boundary change still retried too soon",
           "url": "https://github.com/tamird/gvisor/actions/runs/42267413085/artifacts/13530857318"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "de11f9e09290b75ab5aa7291fb0d308244b72067",
+        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+        "url": "https://github.com/tamird/gvisor/commit/de11f9e09",
+        "title": "Keep TCP_USER_TIMEOUT tied to the oldest outstanding data",
+        "body": "During loss recovery, a partial ACK can let the sender transmit new\ndata before the peer acknowledges all the old bytes. gVisor kept the\nold deadline even after those bytes were acknowledged, so it could\nclose the connection while the new data still had time left. It also\nshortened the stored retransmission timeout to fit the old deadline.\n\nTrack the last byte covered by the deadline. Once the peer acknowledges\nit, use the transmit time of the oldest remaining segment to measure\nthe next timeout. Cap the pending timer at the deadline and preserve\nthe backed-off retransmission interval for the next send.\n\nExercise an ACK that covers the old data both before and after another\nretransmission timeout.",
+        "requestedAt": "2026-11-06T20:16:18.017Z",
+        "summary": "Open the single, squashed TCP_USER_TIMEOUT commit on master. Its tree matches the tested source, and the compatibility check with the withdrawn #17113 is separate."
+      }
+    },
+    {
+      "id": "pr:17123",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17123,
+      "ref": "proposal/stateify-generic-receivers",
+      "head": "1de5b54a98a37c10fc0e71f7340df386ffaea4c3",
+      "title": "Recognize instantiated method receivers in stateify",
+      "url": "https://github.com/google/gvisor/pull/17123",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-06T20:16:18.017Z",
+      "summary": "Stateify panics while scanning a generic method receiver, even if the type has no stateify annotation. The same one-file correction on the shutdown-flags integration recognized receivers with one or two type parameters. Its standalone patch applies directly to master.",
+      "evidence": [
+        {
+          "label": "Original stateify panic and generated code for one and two type parameters",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42267896109/artifacts/13533188526"
+        },
+        {
+          "label": "Same one-file change on the TCP integration",
+          "url": "https://github.com/tamird/gvisor/commit/bc4805e31"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "1de5b54a98a37c10fc0e71f7340df386ffaea4c3",
+          "url": "https://github.com/tamird/gvisor/commit/1de5b54a9",
+          "title": "Recognize instantiated method receivers in stateify",
+          "body": "Stateify scans every method in a package to find save and restore hooks.\nA method on *Int[T] therefore makes generation panic even when Int has\nno stateify annotation. The receiver scanner expects an identifier\nwhere the Go parser supplies an index expression.\n\nTake the declaration name through an instantiation, including receivers\nwith several type parameters. Both callers use only that name. Drop the\nunused qualified spelling.",
+          "outcome": "approved",
+          "at": "2026-11-06T20:16:18.017Z",
+          "note": "Contributor approved this standalone source for submission. Published as #17123 at the exact approved head.",
+          "postedURL": "https://github.com/google/gvisor/pull/17123"
         }
       ]
     }
@@ -59334,7 +59435,7 @@
       ]
     },
     {
-      "from": "branch:stateify-generic-receivers",
+      "from": "pr:17123",
       "to": "branch:tcp-report-read-hangups",
       "type": "depends_on",
       "reason": "Generating the typed shutdown-flag package requires stateify to recognize instantiated method receivers.",
