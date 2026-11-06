@@ -1,27 +1,28 @@
-name: Check the ARM64 source presubmit and its native uname test
+name: Verify the seccomp generator and run the missing ARM64 uname case
 on:
   push:
-    branches: [qualification/llvm-arm64-source-uname]
+    branches: [qualification/llvm-arm64-seccomp-route]
 permissions:
   contents: read
 jobs:
   measure:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 91
+    timeout-minutes: 83
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 2}
+        with: {persist-credentials: false, fetch-depth: 3}
       - name: Prepare the existing Linux source profile for ARM64
         run: |
           set -eu
           area="$RUNNER_TEMP/arm64-namespace-presubmit"
           mkdir -p "$area/results"
-          test "$(git rev-parse HEAD^)" = 127967d3179491381f2a85e4804ae8236fc89e35
-          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/arm64_presubmit/probe.py' ':!.github/qualification/arm64_presubmit/image_execution.py'
+          test "$(git rev-parse HEAD^)" = 9861cb1395affcd6506cdec846ffb63c125cf74a
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/arm64_presubmit/route.py' ':!.github/qualification/arm64_presubmit/exec_cas.py'
           test "$(git hash-object .github/qualification/arm64_presubmit/image_execution.py)" = 1ec34b0f063d36f563005c93cd47b5bb16b3872a
-          cp .github/qualification/arm64_presubmit/{probe,image_execution}.py "$area/"
-          git checkout -q --detach HEAD^
+          cp .github/qualification/arm64_presubmit/{probe,image_execution,route,exec_cas}.py "$area/"
+          test "$(git rev-parse HEAD^^)" = 127967d3179491381f2a85e4804ae8236fc89e35
+          git checkout -q --detach HEAD^^
           test "$(cat .bazelversion)" = 9.3.1
           test "$(stat -fc %T /sys/fs/cgroup)" = cgroup2fs
           test "$(uname -m)" = x86_64
@@ -30,7 +31,32 @@ jobs:
           chmod 755 "$area/bazelisk"
           echo "$area" >> "$GITHUB_PATH"
           python3 -EsB "$area/probe.py" profile
-      - name: Execute only the unchanged uname test using the ARM64 Firecracker selector
+      - name: Identify the failed command and its ELF in the original invocation
+        continue-on-error: true
+        timeout-minutes: 4
+        env:
+          ACCESS: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -EsB "$RUNNER_TEMP/arm64-namespace-presubmit/route.py" original
+      - name: Compare original, ARM host and registered execution platforms without executing actions
+        id: route
+        timeout-minutes: 30
+        run: |
+          set -eu
+          area="$RUNNER_TEMP/arm64-namespace-presubmit"
+          for case in original host-arm64 per-platform; do
+            if [ "$case" = original ]; then
+              python3 -EsB -c 'import sys; sys.path.insert(0,sys.argv[1]);from route import graph,save;save("original-graph",graph("original"))' "$area"
+            else
+              python3 -EsB "$area/route.py" "$case"
+            fi
+          done
+          git diff --exit-code
+          python3 -EsB "$area/route.py" choose
+          choice=$(python3 -IB -c 'import sys,json; print(json.load(open(sys.argv[1]))["selected"] or "none")' "$area/results/route.json")
+          if [ "$choice" != none ]; then python3 -EsB "$area/route.py" activate; fi
+          printf 'choice=%s\n' "$choice" >> "$GITHUB_OUTPUT"
+      - name: Execute only uname on the ARM64 Firecracker selector with the verified generator route
+        if: steps.route.outputs.choice == 'host-arm64' || steps.route.outputs.choice == 'per-platform'
         timeout-minutes: 37
         continue-on-error: true
         env:
@@ -58,24 +84,18 @@ jobs:
           area="$RUNNER_TEMP/arm64-namespace-presubmit"
           test ! -e "$area/remote.bazelrc"
           python3 -EsB "$area/probe.py" collect
-      - name: Inventory the ARM64 roots and TestRunner actions without executing them
-        if: always() && !cancelled()
-        continue-on-error: true
-        timeout-minutes: 38
-        run: |
-          area="$RUNNER_TEMP/arm64-namespace-presubmit"
-          test ! -e "$area/remote.bazelrc"
-          python3 -EsB "$area/probe.py" inventory
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && !cancelled()
         with:
-          name: arm64-source-presubmit-and-uname
+          name: arm64-seccomp-route-and-uname
           path: |
             ${{ runner.temp }}/arm64-namespace-presubmit/results/native_status.json
             ${{ runner.temp }}/arm64-namespace-presubmit/results/native.json
-            ${{ runner.temp }}/arm64-namespace-presubmit/results/inventory.json
-            ${{ runner.temp }}/arm64-namespace-presubmit/results/owners.tsv
-            ${{ runner.temp }}/arm64-namespace-presubmit/results/test_actions.tsv
+            ${{ runner.temp }}/arm64-namespace-presubmit/results/original.json
+            ${{ runner.temp }}/arm64-namespace-presubmit/results/original-graph.json
+            ${{ runner.temp }}/arm64-namespace-presubmit/results/host-arm64.json
+            ${{ runner.temp }}/arm64-namespace-presubmit/results/per-platform.json
+            ${{ runner.temp }}/arm64-namespace-presubmit/results/route.json
           if-no-files-found: warn
           retention-days: 14
       - name: Require both original results
@@ -85,5 +105,5 @@ jobs:
           import json, os
           from pathlib import Path
           root=Path(os.environ["RUNNER_TEMP"])/"arm64-namespace-presubmit/results"
-          assert all(json.loads((root/(name+".json")).read_text())["verified"] is True for name in ("native","inventory"))
+          assert json.loads((root/"native.json").read_text())["verified"] is True
           PY
