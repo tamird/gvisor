@@ -5,6 +5,8 @@ import subprocess
 import time
 import xml.etree.ElementTree as ET
 
+from dind_probe import daemon_argv, peer_receipt
+
 out = Path(os.environ["RUNNER_TEMP"]) / "dind-stream"
 out.mkdir(exist_ok=True)
 cli_dir = out / "docker27"
@@ -30,11 +32,7 @@ bazel = os.environ["BAZEL"]
 opts = ["--config=x86_64", "-c", "opt", "--jobs=3", "--noshow_progress", "--color=no", "--curses=no"]
 runtime_target = "//:release"
 test_target = "//test/e2e:integration_test"
-image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/moby_x86_64@sha256:156dc7667cfa52d6e05bc0171ff71a4e220a3843eecfd53f0b96519dc6a7f73e"
 image_id = "sha256:fcae5dc4a1e60d712605f3dcdd99292c9e6ba2a4d17c4b4e8a0e62b7993b66f4"
-old_id = "sha256:d2dc198f7d839eae26b5a9cb0e7cdc4e2c97d9cb4ea66dbeb0a4c0c7f0b165f8"
-old_manifest = "sha256:f649ef046008ca7f926a2571c32b0ac22e5c59eb61b959617f9acc2a4c638cf5"
-
 phase("source build")
 command(bazel, "build", *opts, runtime_target, test_target)
 execroot = Path(output(bazel, "info", "execution_root"))
@@ -44,27 +42,7 @@ runtime = (execroot / runtime_file).resolve(strict=True)
 sidecars = [execroot / f for f in release_files if "/release/gvisor-bin/" in f]
 assert sidecars and all(f.is_file() and f.resolve(strict=True).parent == runtime.parent / "gvisor-bin" for f in sidecars)
 report["runsc_version"] = output(runtime, "--version")
-phase("published test image")
-command("docker", "pull", "--platform", "linux/amd64", image)
-assert output("docker", "image", "inspect", "-f", "{{.Id}}", image) == image_id
-command("docker", "tag", image_id, "gvisor.dev/images/moby:latest")
-command("docker", "save", "-o", out / "moby.tar", "gvisor.dev/images/moby:latest")
 report["moby_image_id"] = image_id
-
-phase("isolated Docker 27 server")
-for registry in ("mirror.gcr.io", "docker.io"):
-    ref = f"{registry}/library/docker@{old_manifest}"
-    if subprocess.run(["docker", "pull", "--platform", "linux/amd64", ref]).returncode == 0:
-        assert output("docker", "image", "inspect", "-f", "{{.Id}}", ref) == old_id
-        break
-else:
-    raise RuntimeError("could not stage Docker 27.5.1")
-cid = output("docker", "create", "--network", "none", old_id)
-cli_dir.mkdir()
-try:
-    command("docker", "cp", cid + ":/usr/local/bin/.", cli_dir)
-finally:
-    command("docker", "rm", "-v", cid)
 
 config = out / "daemon.json"
 config.write_text(json.dumps({"experimental": True, "storage-driver": "overlay2",
@@ -75,11 +53,7 @@ env = dict(os.environ, DOCKER_HOST="unix://" + str(sock))
 def docker(*args, **kwargs):
     return output(dock, *args, env=env, **kwargs)
 with (out / "daemon.log").open("w") as log:
-    daemon = subprocess.Popen(["sudo", "-n", "unshare", "--mount", "--net", "--propagation", "private",
-        "/bin/sh", "-ec", 'ip link set lo up; exec "$@"', "run-daemon",
-        "env", "PATH=" + str(cli_dir) + ":" + os.environ["PATH"], str(cli_dir / "dockerd"),
-        "--config-file", str(config), "--host", env["DOCKER_HOST"], "--pidfile", str(pidfile),
-        "--data-root", str(out / "data"), "--exec-root", str(out / "exec")], stdout=log, stderr=log)
+    daemon = subprocess.Popen(daemon_argv(cli_dir, out, config, True, "dind-acceptance"), stdout=log, stderr=log)
 try:
     for _ in range(90):
         if daemon.poll() is not None:
@@ -93,6 +67,10 @@ try:
     assert docker("version", "--format", "{{.Server.Experimental}}") == "true"
     docker("load", "-i", out / "moby.tar")
     assert docker("image", "inspect", "-f", "{{.Id}}", "gvisor.dev/images/moby:latest") == image_id
+    try:
+        report["containerd"] = peer_receipt(pidfile, out / "exec/containerd/containerd.sock")
+    except (OSError, subprocess.CalledProcessError, ValueError) as error:
+        report["containerd_probe_error"] = str(error)[:300]
     phase("original nested TCP test")
     p = subprocess.run([bazel, "test", *opts, "--strategy=TestRunner=local", "--nocache_test_results",
         "--flaky_test_attempts=1", "--test_output=errors", "--test_timeout=1500",

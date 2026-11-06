@@ -1,7 +1,7 @@
-name: Check both DinD TCP restore modes
+name: Compare containerd mount namespaces before DinD restore
 on:
   push:
-    branches: [qualification/dind-stream-valid-names]
+    branches: [qualification/dind-managed-containerd]
 permissions: {contents: read}
 jobs:
   checkpoint:
@@ -10,19 +10,33 @@ jobs:
     timeout-minutes: 80
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 4, persist-credentials: false}
+        with: {fetch-depth: 5, persist-credentials: false}
       - name: Verify the corrected test and TCP restore patch
         run: |
           set -euo pipefail
           d="$RUNNER_TEMP/dind-stream"
           mkdir -p "$d"
           cp .github/qualification/dind_stream.py "$d/driver.py"
-          test "$(git rev-parse HEAD^)" = 651146baa27da7e0a5539c6cfb254c6170953032
-          test "$(git rev-parse HEAD^^)" = 053b485eaf96468303e31df18d2ca66e1922c5de
-          test "$(git rev-parse HEAD^^^)" = a772fedd6521ac693b8e25a41c01e00f2e023461
-          git switch --detach HEAD^
+          cp .github/qualification/dind_probe.py .github/qualification/dind_public_inputs.py "$d/"
+          test "$(git rev-parse HEAD^)" = 057dfbe598862e80044b630351410b6addf1d2da
+          test "$(git rev-parse HEAD^^)" = 651146baa27da7e0a5539c6cfb254c6170953032
+          test "$(git rev-parse HEAD^^^)" = 053b485eaf96468303e31df18d2ca66e1922c5de
+          test "$(git rev-parse HEAD^^^^)" = a772fedd6521ac693b8e25a41c01e00f2e023461
+          git switch --detach 651146baa27da7e0a5539c6cfb254c6170953032
           test "$(git rev-parse 'HEAD^{tree}')" = dc85e31172dc96588743f8a3c76be3cee3fe757b
+      - name: Stage the original Docker and Moby images
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" \
+            python3 -B "$RUNNER_TEMP/dind-stream/dind_public_inputs.py"
+      - name: Compare the same native shell with external and managed containerd
+        id: control
+        run: |
+          set -euo pipefail
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" \
+            python3 -B "$RUNNER_TEMP/dind-stream/dind_probe.py" control
+          jq -er '"distinguished=\(.distinguished)"' "$RUNNER_TEMP/dind-stream/control.json" >> "$GITHUB_OUTPUT"
       - name: Install the signed Ubuntu cross compiler
+        if: steps.control.outputs.distinguished == 'true'
         run: |
           set -euo pipefail
           if ! command -v aarch64-linux-gnu-g++ >/dev/null; then
@@ -35,6 +49,7 @@ jobs:
           fi
           /usr/bin/aarch64-linux-gnu-gcc --version
       - name: Run and retain both original restore cases
+        if: steps.control.outputs.distinguished == 'true'
         run: |
           env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" BAZEL="$(command -v bazel)" \
             python3 -B "$RUNNER_TEMP/dind-stream/driver.py"
@@ -42,6 +57,8 @@ jobs:
         if: always()
         with:
           name: dind-stream-results
-          path: ${{ runner.temp }}/dind-stream/result.json
+          path: |
+            ${{ runner.temp }}/dind-stream/control.json
+            ${{ runner.temp }}/dind-stream/result.json
           retention-days: 14
           if-no-files-found: warn
