@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T05:07:30.821799Z",
+    "updatedAt": "2026-11-06T05:50:44.014972Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4845,8 +4845,8 @@
       "url": "https://github.com/tamird/gvisor/commit/9310f06f9",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Replace the archived Coral GCC toolchain with hermetic-llvm so one builder can produce both AMD64 and ARM64 gVisor releases. The GNU sysroot needs libresolv.a for cgo DNS and the LLVM unwinder for static C links. Both fixes are available on the hermetic-llvm #768 draft base.\n\nWith those fixes, both public AMD64 Go race binaries linked on 333d010a9 and runsc-race reported its version. Separately, the installed static GNU TLDK Sentry on b317c6e36 exchanged TCP and UDP over docker0 on native AMD64.\n\nWith the five Go build tools compiled without cgo, the AMD64 scratch worker linked both public ARM64 race binaries on 713a29100. The same release started a systrap guest on native ARM64. The standalone tool change is e667d39b8.",
-      "updatedAt": "2026-11-06T05:06:53.841060Z",
+      "summary": "Replace Coral GCC with hermetic-llvm for AMD64 and ARM64 releases. gVisor d5fe3c2ee uses the static C runtime on supplier be935b828 and removes the local unwinder and Linux-header patches. The shell-free AMD64 worker ran Nogo and linked both public ARM64 race binaries. All five installed files matched on native ARM64, where the Sentry ran a systrap guest.\n\nOn supplier main d01e636de, the first four #768 commits supply the C runtime. Three updated source lookups, libresolv.a for cgo DNS, and the LLVM unwinder for pthread cancellation passed their native ARM64 checks. The earlier 0.8.24-based release used the C runtime with a failing libstdc++.a placeholder.\n\nBoth public AMD64 race binaries also linked on 333d010a9. The installed static GNU TLDK Sentry exchanged TCP and UDP on native AMD64 on b317c6e36.",
+      "updatedAt": "2026-11-06T05:50:44.014972Z",
       "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
       "evidence": [
         {
@@ -5252,6 +5252,34 @@
         {
           "label": "Native ARM64 guest using that race installation",
           "url": "https://github.com/tamird/gvisor/actions/runs/42164915209/artifacts/13477949675"
+        },
+        {
+          "label": "Static C runtime through the fourth upstream commit",
+          "url": "https://github.com/hermeticbuild/hermetic-llvm/commit/f9d284160"
+        },
+        {
+          "label": "Select the per-version glibc source on supplier main",
+          "url": "https://github.com/tamird/hermetic-llvm/commit/be935b828"
+        },
+        {
+          "label": "Original source selection failed before linking",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42167120790/artifacts/13479311572"
+        },
+        {
+          "label": "Native ARM64 static resolver and pthread cancellation",
+          "url": "https://github.com/tamird/hermetic-llvm/actions/runs/42167414456/artifacts/13480260561"
+        },
+        {
+          "label": "gVisor consumes the current supplier and removes both local patches",
+          "url": "https://github.com/tamird/gvisor/commit/d5fe3c2ee"
+        },
+        {
+          "label": "Nogo and both ARM64 race links ran uncached on the AMD64 scratch worker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42168301478/artifacts/13480633265"
+        },
+        {
+          "label": "Five matching installed files and native ARM64 systrap guest",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42168301478/artifacts/13480568715"
         }
       ],
       "refinement": {
@@ -5284,9 +5312,9 @@
       "followup": {
         "owner": "Compiler integration",
         "sourceHead": "9310f06f95b100725450a71fbb896fc8403ec0eb",
-        "disposition": "Both public race links are qualified for AMD64 and ARM64. The cross-built ARM64 release started a native systrap guest. The static GNU TLDK traffic check ran on native AMD64.",
-        "observedAt": "2026-11-06T05:06:53.841060Z",
-        "nextAction": "Follow the static GNU supplier changes on hermetic-llvm #768. The gVisor compiler switch waits for the sidecar rule (#16522), its systrap stub consumer (#17067), systrap offsets (#16516), and the vDSO rule (#16586).",
+        "disposition": "The cross-built ARM64 race installation passed on native ARM64 using the current C-only supplier. gVisor removed both local backports in the tested consumer.",
+        "observedAt": "2026-11-06T05:50:44.014972Z",
+        "nextAction": "Follow the C runtime portion of hermetic-llvm #768. The gVisor compiler switch waits for the sidecar rule (#16522), its systrap stub consumer (#17067), systrap offsets (#16516), and the vDSO rule (#16586).",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
@@ -5389,7 +5417,14 @@
           {
             "label": "Native ARM64 guest using that race installation",
             "url": "https://github.com/tamird/gvisor/actions/runs/42164915209/artifacts/13477949675"
-          }
+          },
+          "https://github.com/hermeticbuild/hermetic-llvm/commit/f9d284160",
+          "https://github.com/tamird/hermetic-llvm/commit/be935b828",
+          "https://github.com/tamird/hermetic-llvm/actions/runs/42167120790/artifacts/13479311572",
+          "https://github.com/tamird/hermetic-llvm/actions/runs/42167414456/artifacts/13480260561",
+          "https://github.com/tamird/gvisor/commit/d5fe3c2ee",
+          "https://github.com/tamird/gvisor/actions/runs/42168301478/artifacts/13480633265",
+          "https://github.com/tamird/gvisor/actions/runs/42168301478/artifacts/13480568715"
         ]
       }
     },
@@ -75288,5 +75323,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-06T05:07:30.821799Z"
+  "updatedAt": "2026-11-06T05:50:44.014972Z"
 }
