@@ -11,6 +11,7 @@ go_binary(
         "imports.go",
         "main.go",
     ],
+    pure = True,
     visibility = ["//:sandbox"],
     deps = ["//tools/constraintutil"],
 )
