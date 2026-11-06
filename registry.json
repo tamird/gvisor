@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T20:48:54.951Z",
+    "updatedAt": "2026-11-06T20:55:07.008Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -6537,14 +6537,14 @@
       "group": "bazel",
       "status": "open",
       "head": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-      "updatedAt": "2026-11-06T20:40:05.864Z",
-      "summary": "On the published rebase, Bazel 9 sent the ARM64 atomicbitops binary to AMD64 because the CPU constraint was attached to the default execution group. Attaching it to the test execution group selects the matching native worker. The corrected ARM64 atomicbitops test passed all 10,933 XML records on aarch64. The GNU configuration rejected absolute header paths in Abseil and GoogleTest compilation before either C++ test ran.",
+      "updatedAt": "2026-11-06T20:55:07.008Z",
+      "summary": "Bazel 9 sent the published ARM64 atomicbitops binary to AMD64. Constraining the test execution group let all 10,933 atomicbitops records pass on native ARM64. With declared LLVM, all three PosixError cases also passed on native AMD64. The ARM64 C++ test did not start. Its wrapper still targets AMD64 even though the test execution group selects ARM64, and Bazel rejects that target/worker combination.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-        "observedAt": "2026-11-06T20:40:05.864Z",
+        "observedAt": "2026-11-06T20:55:07.008Z",
         "disposition": "The two action graphs establish the placement change. The physical native ARM64 Go test passed on the fork.",
-        "nextAction": "Verify the two remaining C++ test owners on their native workers with the supported declared LLVM compiler.",
+        "nextAction": "Repair the cross-configured C++ test wrapper, then run the three PosixError cases on a native ARM64 worker within an AMD64-targeted invocation.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42290157453",
           "https://github.com/tamird/gvisor/actions/runs/42288153554/artifacts/13537709088",
@@ -6556,6 +6556,14 @@
       "number": 15370,
       "reviewDecision": null,
       "evidence": [
+        {
+          "label": "Bazel’s ARM64 C++ test toolchain diagnostic",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42291654204/artifacts/13540271598"
+        },
+        {
+          "label": "Native AMD64 PosixError with declared LLVM",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42290157453/artifacts/13539336963"
+        },
         {
           "label": "Native C++ test-only integration with declared LLVM",
           "url": "https://github.com/tamird/gvisor/actions/runs/42290157453"
@@ -22683,8 +22691,8 @@
       "url": "https://github.com/tamird/gvisor/commit/e7fc3626fce8184c2dd35debe8d413dd989b05ee",
       "group": "bazel",
       "status": "Contributor approved; resource layout complete; awaiting prerequisites",
-      "updatedAt": "2026-11-06T20:45:16.012Z",
-      "summary": "The signed Ubuntu Jammy tcpdump has a separate compatibility result: under gVisor it captured on loopback (lo), but failed on any on both AMD64 and ARM64. On AMD64, tcpdump reported that any did not support LINUX_SLL2. The trace recorded PACKET_HDRLEN returning EINVAL on both any and lo, so that error alone does not explain the difference. On native Linux the same AMD64 archive selected LINUX_SLL2 on any and captured packets. These distro results do not change the source-built tcpdump approval below.\n\nCurrent foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nRequested resource relocation and equivalent base refresh are complete at e7fc3626fc. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nContributor approved exact1393 for opening after basic-image #16097 and manual-artifact #16051 actually land.\n\nPreserved qualification record:\n\nThe final source and complete shipped notices are independently accepted. Both architecture archives and static binaries, Make rebuild/reload, both owning analyzers and TestTcpdump lo/any pass with five positive records and no skips. Earlier authenticated compiler evidence is reused through unchanged executable identities; the final run makes no fresh compilation claim. Canonical Fetch and the subsequent exact-catalog Verify now pass. Earlier launch visibility and timeout failures remain preserved without a claimed cause. Exact1393 contributor approval remains conditional on the basic-image and manual-artifact prerequisites. This graph does not require the shared gawk/native Go prerequisite. The distro alternative is in qualification. The packet-socket PACKET_RESERVE readback correction is being compared on stock gVisor, corrected gVisor and Linux, separately from native distro captures on both architectures.",
+      "updatedAt": "2026-11-06T20:55:07.008Z",
+      "summary": "The signed Ubuntu Jammy tcpdump captured both UDP payloads on any (SLL2) and lo (Ethernet) with runc and corrected systrap on native AMD64 and ARM64. All eight captures verified the dropped UID and GID. The stock gVisor failure on any is retained in the original run. The AMD64 trace confirmed that PACKET_RESERVE readback succeeded. The bounded ARM64 trace did not contain that call.\n\nCurrent foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nRequested resource relocation and equivalent base refresh are complete at e7fc3626fc. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nContributor approved exact1393 for opening after basic-image #16097 and manual-artifact #16051 actually land.\n\nPreserved qualification record:\n\nThe final source and complete shipped notices are independently accepted. Both architecture archives and static binaries, Make rebuild/reload, both owning analyzers and TestTcpdump lo/any pass with five positive records and no skips. Earlier authenticated compiler evidence is reused through unchanged executable identities; the final run makes no fresh compilation claim. Canonical Fetch and the subsequent exact-catalog Verify now pass. Earlier launch visibility and timeout failures remain preserved without a claimed cause. Exact1393 contributor approval remains conditional on the basic-image and manual-artifact prerequisites. This graph does not require the shared gawk/native Go prerequisite.",
       "links": [
         {
           "label": "Final image source and notices",
@@ -22735,6 +22743,14 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Distro tcpdump on native ARM64 under runc and corrected systrap",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42290164647/artifacts/13539991997"
+        },
+        {
+          "label": "Distro tcpdump on native AMD64 under runc and corrected systrap",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42290164647/artifacts/13539577968"
+        },
         {
           "label": "Proposed packet-socket reserve readback",
           "url": "https://github.com/tamird/gvisor/commit/5de0b08c4"
@@ -53831,8 +53847,8 @@
       "title": "Start FD packet processors when a receiver attaches",
       "url": "https://github.com/tamird/gvisor/commit/66eb55f0e",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T18:24:42.424Z",
+      "status": "Published as #17131",
+      "updatedAt": "2026-11-06T20:55:07.008Z",
       "summary": "Closing an FD endpoint before its first attachment leaves receive workers asleep. Create the reader managers in one array when the receiver attaches and start each reader with e.wg.Go. With four FDs and two processors per FD, the median fell from 176 to 165 allocations per lifecycle. With a single FD, the median allocation count held steady and allocated bytes fell.",
       "evidence": [
         {
@@ -53958,6 +53974,17 @@
           "outcome": "changes-requested",
           "at": "2026-11-06T17:44:22.830Z",
           "note": "Use e.wg.Go and reconsider the extra processor-manager slice allocated for each attachment."
+        },
+        {
+          "kind": "proposal",
+          "head": "66eb55f0e3c5a734303e99b6b28baccadba1fb31",
+          "url": "https://github.com/tamird/gvisor/commit/66eb55f0e",
+          "title": "fdbased: start packet processors when a receiver attaches",
+          "body": "Closing an FD endpoint before attaching it to a NIC leaves its receive\nworkers asleep. The constructor starts the workers, but only the read\nloop signals them to stop. An unattached endpoint never runs that loop.\n\nCreate the queues and their workers when a dispatcher attaches. Each\nreceive loop delivers to that dispatcher and stops its own workers on\nexit. A single processor still delivers inline.\n\nOn detach, close each queue before waking its reader. A reader already\nreturning from a receive syscall can then neither deliver the pending\nbatch nor enqueue the rest of it. Workers can finish delivering packets\nalready removed from their queues without blocking NIC removal on a\nnetwork stack callback.\n\nFor injectable endpoints, report attachment from the dispatcher used by\nInjectInbound.\n\nEach iteration creates an endpoint, attaches a receiver, detaches it and\ncloses the endpoint. The benchmark uses four FDs and two processors per\nFD.\n\n```text\n                                   │ master.bench  │             wg-go.bench              │\n                                   │     B/op      │     B/op      vs base                │\nFDAttachCycle/fds=4/processors=2-4   112.04Ki ± 4%   77.54Ki ± 6%  -30.80% (p=0.000 n=12)\n\n                                   │ master.bench │            wg-go.bench            │\n                                   │  allocs/op   │ allocs/op   vs base               │\nFDAttachCycle/fds=4/processors=2-4     176.0 ± 1%   165.0 ± 2%  -6.25% (p=0.000 n=12)\n```",
+          "outcome": "approved",
+          "at": "2026-11-06T20:55:07.008Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17131",
+          "note": "Published as #17131 at the exact approved head."
         }
       ],
       "refinement": {
@@ -53968,16 +53995,16 @@
           "head": "66eb55f0e3c5a734303e99b6b28baccadba1fb31"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "66eb55f0e3c5a734303e99b6b28baccadba1fb31",
-        "baseHead": "d4e65b135f3f4e6dbb811a59c38917bdb382d6c3",
-        "url": "https://github.com/tamird/gvisor/commit/66eb55f0e",
-        "title": "fdbased: start packet processors when a receiver attaches",
-        "body": "Closing an FD endpoint before attaching it to a NIC leaves its receive\nworkers asleep. The constructor starts the workers, but only the read\nloop signals them to stop. An unattached endpoint never runs that loop.\n\nCreate the queues and their workers when a dispatcher attaches. Each\nreceive loop delivers to that dispatcher and stops its own workers on\nexit. A single processor still delivers inline.\n\nOn detach, close each queue before waking its reader. A reader already\nreturning from a receive syscall can then neither deliver the pending\nbatch nor enqueue the rest of it. Workers can finish delivering packets\nalready removed from their queues without blocking NIC removal on a\nnetwork stack callback.\n\nFor injectable endpoints, report attachment from the dispatcher used by\nInjectInbound.\n\nEach iteration creates an endpoint, attaches a receiver, detaches it and\ncloses the endpoint. The benchmark uses four FDs and two processors per\nFD.\n\n```text\n                                   │ master.bench  │             wg-go.bench              │\n                                   │     B/op      │     B/op      vs base                │\nFDAttachCycle/fds=4/processors=2-4   112.04Ki ± 4%   77.54Ki ± 6%  -30.80% (p=0.000 n=12)\n\n                                   │ master.bench │            wg-go.bench            │\n                                   │  allocs/op   │ allocs/op   vs base               │\nFDAttachCycle/fds=4/processors=2-4     176.0 ± 1%   165.0 ± 2%  -6.25% (p=0.000 n=12)\n```",
-        "requestedAt": "2026-11-06T18:22:25.827Z",
-        "summary": "Open the revised FD worker-lifetime PR? The only source change since d4e65b135 uses e.wg.Go. The allocation comparison and the full normal and race suites cover this revision."
+      "followup": {
+        "owner": "Maintainer",
+        "sourceHead": "66eb55f0e3c5a734303e99b6b28baccadba1fb31",
+        "observedAt": "2026-11-06T20:55:07.008Z",
+        "disposition": "The approved source is public on #17131.",
+        "nextAction": "Follow upstream review and checks on #17131.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17131",
+          "https://github.com/tamird/gvisor/commit/66eb55f0e"
+        ]
       }
     },
     {
@@ -55941,6 +55968,157 @@
           "at": "2026-11-06T20:48:54.951Z",
           "postedURL": "https://github.com/google/gvisor/pull/17128",
           "note": "Published as #17128 at the exact approved head."
+        }
+      ]
+    },
+    {
+      "id": "pr:17131",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17131,
+      "ref": "research/fdbased-attached-workers-wg-go",
+      "head": "66eb55f0e3c5a734303e99b6b28baccadba1fb31",
+      "title": "fdbased: start packet processors when a receiver attaches",
+      "url": "https://github.com/google/gvisor/pull/17131",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-06T20:55:07.008Z",
+      "summary": "Closing an FD endpoint before its first attachment leaves receive workers asleep. Create the reader managers in one array when the receiver attaches and start each reader with e.wg.Go. With four FDs and two processors per FD, the median fell from 176 to 165 allocations per lifecycle. With a single FD, the median allocation count held steady and allocated bytes fell.",
+      "evidence": [
+        {
+          "label": "Only change from the previously reviewed source",
+          "url": "https://github.com/tamird/gvisor/compare/d4e65b135...66eb55f0e"
+        },
+        {
+          "label": "Final lifecycle benchmark and original benchstat (12 samples per configuration)",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42267118908/artifacts/13528226718"
+        },
+        {
+          "label": "Full normal suite and all 33 named race records on the final source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42269172479/artifacts/13527584131"
+        },
+        {
+          "label": "On 95ca4e731 the old receive batch delivered all three packets. With #17060 and the fix, both detach tests and 100 constructor iterations completed.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42258461813/artifacts/13523827603"
+        },
+        {
+          "label": "Exact native receive, live-save, muxed and Nogo results; earlier stale delivery",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42255611643/artifacts/13523126699"
+        },
+        {
+          "label": "Changes since the previously reviewed dispatcher source",
+          "url": "https://github.com/tamird/gvisor/compare/95ca4e731...d4e65b135"
+        },
+        {
+          "label": "Revised per-reader ownership, including explicit detach and peer EOF",
+          "url": "https://github.com/tamird/gvisor/commit/d4e65b135"
+        },
+        {
+          "label": "Changes since the contributor requested one dispatcher and a behavioral test",
+          "url": "https://github.com/tamird/gvisor/compare/c0e6b2876...95ca4e731"
+        },
+        {
+          "label": "Two failing controls, both corrected regressions, live saves, FD and muxed suites and Nogo",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42235591426/artifacts/13512476043"
+        },
+        {
+          "label": "Changes since the contributor requested removal of startOnce",
+          "url": "https://github.com/tamird/gvisor/compare/4e0324239...c0e6b2876"
+        },
+        {
+          "label": "Native receive, live checkpoint, and namespace move results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42230964441/artifacts/13510400372"
+        },
+        {
+          "label": "Changes since the contributor review",
+          "url": "https://github.com/tamird/gvisor/compare/8311cfcae...4e0324239"
+        },
+        {
+          "label": "Checks on the revised source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42225343366/artifacts/13505901175"
+        },
+        {
+          "label": "Standalone endpoint lifecycle fix",
+          "url": "https://github.com/tamird/gvisor/commit/8311cfcae"
+        },
+        {
+          "label": "Stock worker leaks, corrected normal and race suites",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42156228425/artifacts/13475625402"
+        },
+        {
+          "label": "Native observation of two workers per unused endpoint",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42154474405/job/127685212376"
+        },
+        {
+          "label": "Native AMD64 and ARM64 packet rings: UDP delivery and close before attachment",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42159641713/artifacts/13476880632"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "8311cfcaedcaf8dfbd221e0a09ef4ff4fd36af37",
+          "url": "https://github.com/tamird/gvisor/commit/8311cfcae",
+          "title": "Open the FD endpoint worker-lifetime PR",
+          "body": "Closing an endpoint before attaching it to a NIC leaves its receive\nprocessors asleep. New starts the goroutines, but only the receive\nloop wakes them on exit. An unattached endpoint never runs that loop.\nWith two processors, both are still running after Close and Wait.\n\nStart the processors when the receive loop starts. Each manager starts\nits workers once so reattaching cannot put two goroutines on the same\nsleeper. A single processor still delivers packets inline.",
+          "outcome": "changes-requested",
+          "at": "2026-11-06T13:13:00.663Z",
+          "note": "Review the early return when there are fewer than two receive processors."
+        },
+        {
+          "kind": "proposal",
+          "head": "4e0324239c7e64cb4d1cb12e804603aa85a963f3",
+          "baseHead": "1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d",
+          "url": "https://github.com/tamird/gvisor/commit/4e0324239",
+          "title": "fdbased: start packet processors when the endpoint is attached",
+          "body": "Closing an endpoint before attaching it to a NIC leaves its receive\nprocessors asleep. New starts the goroutines, but only the receive\nloop wakes them on exit. An unattached endpoint never runs that loop.\nWith two processors, both are still running after Close and Wait.\n\nStart the workers when the receive loop starts. Register their wakers\nonce so reattaching cannot put two goroutines on the same sleeper.\nWhen there is one processor, the receive loop drains its queue itself\nafter each batch. That queue needs neither a goroutine nor any wakers.",
+          "outcome": "changes-requested",
+          "at": "2026-11-06T13:53:01.710Z",
+          "note": "The contributor asked to remove startOnce by making one owner responsible for the receive workers’ lifetime."
+        },
+        {
+          "kind": "proposal",
+          "head": "c0e6b2876b97d87503e115d87c905c45926245b9",
+          "baseHead": "1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d",
+          "url": "https://github.com/tamird/gvisor/commit/c0e6b2876",
+          "title": "fdbased: give each receive loop its own packet processors",
+          "body": "Closing an endpoint before attaching it to a NIC leaves its receive\nprocessors asleep. New starts the goroutines, but only the receive\nloop wakes them on exit. An unattached endpoint never runs that loop.\n\nCreate the queues in the receive loop and signal its workers to stop\nwhen it returns. Saving a live endpoint leaves that loop running.\nEach loop uses its own sleepers and the dispatcher passed to Attach.\nA channel with one processor still delivers its packets inline.",
+          "outcome": "changes-requested",
+          "at": "2026-11-06T14:32:32.751Z",
+          "note": "The contributor requested one authoritative dispatcher for the endpoint and its receive loop, and a lifecycle regression that exercises behavior without scanning pprof profiles."
+        },
+        {
+          "kind": "proposal",
+          "head": "95ca4e7317b6418d4ba8674a4f8d96b4c950ae78",
+          "url": "https://github.com/tamird/gvisor/commit/95ca4e731",
+          "title": "fdbased: give each receive loop its own packet processors",
+          "body": "Closing an endpoint before attaching it to a NIC leaves its receive\nprocessors asleep. New starts the goroutines, but only the receive\nloop wakes them on exit. An unattached endpoint never runs that loop.\n\nCreate the queues in the receive loop and signal its workers to stop\nwhen it returns. Each loop delivers through the dispatcher passed to\nAttach. Before draining a batch, a worker checks whether its own\nattachment ended. A subsequent attach cannot make an old batch\neligible for delivery again. A channel with one processor still\ndelivers its packets inline.\n\nAn injectable endpoint receives packets from its caller instead of an\nFD. Have IsAttached consult the dispatcher that InjectInbound uses.",
+          "outcome": "changes-requested",
+          "at": "2026-11-06T16:32:56.778Z",
+          "note": "Tamir requested removal of the per-attachment channel and the duplicated dispatcher access."
+        },
+        {
+          "kind": "proposal",
+          "head": "d4e65b135f3f4e6dbb811a59c38917bdb382d6c3",
+          "baseHead": "1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d",
+          "url": "https://github.com/tamird/gvisor/commit/d4e65b135",
+          "title": "fdbased: start packet processors when a receiver attaches",
+          "summary": "Open this receive-worker fix? Native AMD64 passed 18 receive cases, three live-save cases, four muxed cases and Nogo.",
+          "body": "Closing an FD endpoint before attaching it to a NIC leaves its receive\nworkers asleep. The constructor starts the workers, but only the read\nloop signals them to stop. An unattached endpoint never runs that loop.\n\nCreate the queues and their workers when a dispatcher attaches. Each\nreceive loop delivers to that dispatcher and stops its own workers on\nexit. A single processor still delivers inline.\n\nOn detach, close each queue before waking its reader. A reader already\nreturning from a receive syscall can then neither deliver the pending\nbatch nor enqueue the rest of it. Workers can finish delivering packets\nalready removed from their queues without blocking NIC removal on a\nnetwork stack callback.\n\nFor injectable endpoints, report attachment from the dispatcher used by\nInjectInbound.",
+          "outcome": "changes-requested",
+          "at": "2026-11-06T17:44:22.830Z",
+          "note": "Use e.wg.Go and reconsider the extra processor-manager slice allocated for each attachment."
+        },
+        {
+          "kind": "proposal",
+          "head": "66eb55f0e3c5a734303e99b6b28baccadba1fb31",
+          "url": "https://github.com/tamird/gvisor/commit/66eb55f0e",
+          "title": "fdbased: start packet processors when a receiver attaches",
+          "body": "Closing an FD endpoint before attaching it to a NIC leaves its receive\nworkers asleep. The constructor starts the workers, but only the read\nloop signals them to stop. An unattached endpoint never runs that loop.\n\nCreate the queues and their workers when a dispatcher attaches. Each\nreceive loop delivers to that dispatcher and stops its own workers on\nexit. A single processor still delivers inline.\n\nOn detach, close each queue before waking its reader. A reader already\nreturning from a receive syscall can then neither deliver the pending\nbatch nor enqueue the rest of it. Workers can finish delivering packets\nalready removed from their queues without blocking NIC removal on a\nnetwork stack callback.\n\nFor injectable endpoints, report attachment from the dispatcher used by\nInjectInbound.\n\nEach iteration creates an endpoint, attaches a receiver, detaches it and\ncloses the endpoint. The benchmark uses four FDs and two processors per\nFD.\n\n```text\n                                   │ master.bench  │             wg-go.bench              │\n                                   │     B/op      │     B/op      vs base                │\nFDAttachCycle/fds=4/processors=2-4   112.04Ki ± 4%   77.54Ki ± 6%  -30.80% (p=0.000 n=12)\n\n                                   │ master.bench │            wg-go.bench            │\n                                   │  allocs/op   │ allocs/op   vs base               │\nFDAttachCycle/fds=4/processors=2-4     176.0 ± 1%   165.0 ± 2%  -6.25% (p=0.000 n=12)\n```",
+          "outcome": "approved",
+          "at": "2026-11-06T20:55:07.008Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17131",
+          "note": "Published as #17131 at the exact approved head."
         }
       ]
     }
