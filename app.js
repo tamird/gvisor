@@ -1795,6 +1795,7 @@ function stateRecords(snapshot, node) {
 }
 function attachReviewRequests(requests, nodes, ids) {
   for (const request of requests) {
+    if (request.repo !== registry.meta.repo) continue;
     const id = prIdentity(request);
     let node = ids.get(id);
     if (!node) {
