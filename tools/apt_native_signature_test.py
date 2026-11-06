@@ -21,6 +21,29 @@ def run(*args, env=None):
     return subprocess.run(args, check=True, stdout=subprocess.PIPE, env=env).stdout
 
 
+def use_new_member_spelling(path):
+    # rules_pkg ec4ee852f changes only the ar name field from "name/" to
+    # "name", followed by space padding. Preserve every other byte so that
+    # the package contents and the signing key are identical in this control.
+    names = []
+    with path.open("r+b") as archive:
+        if archive.read(8) != b"!<arch>\n":
+            raise ValueError("expected an ar archive")
+        while header := archive.read(60):
+            if len(header) != 60 or header[-2:] != b"`\n":
+                raise ValueError(f"invalid ar header at {archive.tell()}")
+            name = header[:16].rstrip(b" ")
+            if not name.endswith(b"/"):
+                raise ValueError(f"original package member lacks slash: {name!r}")
+            names.append(name[:-1].decode())
+            archive.seek(-60, 1)
+            archive.write(name[:-1].ljust(16, b" "))
+            size = int(header[48:58])
+            archive.seek(44 + size + (size % 2), 1)
+    if names != ["debian-binary", "control.tar.gz", "data.tar.gz"]:
+        raise ValueError(names)
+
+
 def main():
     publisher, signer, oracle, oracle_config, amd64, arm64 = map(lambda arg: Path(arg).resolve(), sys.argv[1:])
     output = Path(os.environ["TEST_UNDECLARED_OUTPUTS_DIR"]) / "receipt.json"
@@ -74,9 +97,27 @@ def main():
             if names != ["debian-binary", "control.tar.gz", "data.tar.gz"]:
                 raise ValueError(f"unexpected unsigned members: {names}")
             signed = src.with_name("runsc.deb")
+            bad = src.with_name("legacy-headers.deb")
+            run(signer, "--config", config, "sign", "--key", "release",
+                "--file", src, "--output", bad, "--role", "builder", env=env)
+            old_result = subprocess.run([old_signer, "--verbose", "--verify", bad],
+                                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=oracle_env)
+            old_lines = old_result.stdout.decode().splitlines()
+            signature = run("ar", "p", bad, "_gpgbuilder")
+            manifest = subprocess.run(["gpg", "--batch", "--decrypt"], input=signature,
+                                      stdout=subprocess.PIPE, check=True, env=env).stdout.decode()
+            signed_names = [line.split()[-1] for line in manifest.splitlines() if line.startswith("\t")]
+            if (old_result.returncode != 2 or "BADSIG _gpgbuilder" not in old_lines
+                or signed_names != [name + "/" for name in names]):
+                raise ValueError((old_result.returncode, old_lines, signed_names))
+            receipt.setdefault("legacy_headers", {})[arch] = {"signed_member_names": signed_names,
+                "gpg_valid": True, "dpkg_sig_exit": old_result.returncode,
+                "diagnostics": [line for line in old_lines if "signed" in line or "BADSIG" in line]}
+            phase(f"{arch}: native OpenPGP signature valid, old verifier rejected member names")
+            use_new_member_spelling(src)
             run(signer, "--config", config, "sign", "--key", "release",
                 "--file", src, "--output", signed, "--role", "builder", env=env)
-            oracle_result = subprocess.run([old_signer, "--verify", signed], stdout=subprocess.PIPE, env=oracle_env)
+            oracle_result = subprocess.run([old_signer, "--verbose", "--verify", signed], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=oracle_env)
             actual = oracle_result.stdout.decode()
             if oracle_result.returncode:
                 raise ValueError(f"dpkg-sig --verify exited {oracle_result.returncode}: {actual}")
