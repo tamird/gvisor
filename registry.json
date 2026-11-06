@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T11:04:06.381Z",
+    "updatedAt": "2026-11-06T11:23:32.377Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4845,10 +4845,14 @@
       "url": "https://github.com/tamird/gvisor/commit/9310f06f9",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Replace Coral GCC with hermetic-llvm for AMD64 and ARM64 releases. gVisor d5fe3c2ee uses the static C runtime on supplier be935b828 and removes its local unwinder and Linux-header patches.\n\nA Linux Bazel client drove each cross-build. The shell-free AMD64 worker ran Nogo and linked the two public ARM64 race binaries. The shell-free ARM64 worker ran Nogo and linked the two AMD64 binaries. Both pairs of links ran uncached. Each native target runner verified all five installed files and ran a systrap guest with its matching Sentry.\n\nThe supplier uses the first four static C commits from #768, the per-version glibc sources, libresolv.a for cgo DNS, and the LLVM unwinder for pthread cancellation. The earlier 0.8.24 release passed with an unavailable static C++ runtime. On b317c6e36 the static GNU TLDK Sentry exchanged TCP and UDP on native AMD64.\n\nWith the native Python bootstrap and an explicit source stamp, an AMD64 Bazel client with empty PATH directories built the public release on a shell-free AMD64 worker. Both pack actions ran uncached. All nine archive members matched their installed executables. The archived Sentry saved its source identity and restored the guest.\n\nThe reverse cross-build also packaged the public release. A static AArch64 Python writer executed both tar actions uncached on an ARM64 worker. The nine AMD64 archive members matched their inputs and the unpacked Sentry booted a rootless guest on native AMD64.\nOn bb983b988, Bazel selected static Python for each worker without a Python --extra_toolchains override. The public //shim:config tar and a fork-only bzip2 variant each ran uncached on AMD64 and ARM64. Each format was byte-identical across workers and contained the expected runsc.toml with mode 0644. The forked rules_python launcher and --@rules_python//python/config_settings:bootstrap_impl=native are still required.\n",
-      "updatedAt": "2026-11-06T09:10:31.861Z",
+      "summary": "Replace Coral GCC with hermetic-llvm for AMD64 and ARM64 releases. gVisor d5fe3c2ee uses the static C runtime on supplier be935b828 and removes its local unwinder and Linux-header patches.\n\nA Linux Bazel client drove each cross-build. The shell-free AMD64 worker ran Nogo and linked the two public ARM64 race binaries. The shell-free ARM64 worker ran Nogo and linked the two AMD64 binaries. Both pairs of links ran uncached. Each native target runner verified all five installed files and ran a systrap guest with its matching Sentry.\n\nThe supplier uses the first four static C commits from #768, the per-version glibc sources, libresolv.a for cgo DNS, and the LLVM unwinder for pthread cancellation. The earlier 0.8.24 release passed with an unavailable static C++ runtime. On b317c6e36 the static GNU TLDK Sentry exchanged TCP and UDP on native AMD64.\n\nWith the native Python bootstrap and an explicit source stamp, an AMD64 Bazel client with empty PATH directories built the public release on a shell-free AMD64 worker. Both pack actions ran uncached. All nine archive members matched their installed executables. The archived Sentry saved its source identity and restored the guest.\n\nThe reverse cross-build also packaged the public release. A static AArch64 Python writer executed both tar actions uncached on an ARM64 worker. The nine AMD64 archive members matched their inputs and the unpacked Sentry booted a rootless guest on native AMD64.\n\nOn bb983b988, Bazel selected static Python for each worker without a Python --extra_toolchains override. The public //shim:config tar and a fork-only bzip2 variant each ran uncached on AMD64 and ARM64. Each format was byte-identical across workers and contained the expected runsc.toml with mode 0644. The forked rules_python launcher and --@rules_python//python/config_settings:bootstrap_impl=native are still required. The ARM64 worker also linked ARM64 runsc and Sentry and executed both actions that package the public bzip2 release, all uncached. All nine installed executables matched their inputs, and the unpacked Sentry ran a rootless systrap guest on native ARM64.",
+      "updatedAt": "2026-11-06T11:23:32.377Z",
       "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
       "evidence": [
+        {
+          "label": "Native ARM64 public release. Two uncached Go links, two uncached tar actions and the nine installed executables verified by hash and mode.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42209002950/artifacts/13497608629"
+        },
         {
           "label": "Native ARM64 package writer, nine AMD64 archive members, and the unpacked AMD64 Sentry booting a guest",
           "url": "https://github.com/tamird/gvisor/actions/runs/42187692330/artifacts/13488448734"
@@ -5360,6 +5364,7 @@
         "observedAt": "2026-11-06T06:43:56.321915Z",
         "nextAction": "Follow the C runtime portion of hermetic-llvm #768. The gVisor compiler switch waits for the sidecar rule (#16522), its systrap stub consumer (#17067), systrap offsets (#16516), and the vDSO rule (#16586).",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42209002950/artifacts/13497608629",
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
           "https://github.com/tamird/gvisor/actions/runs/41251844658/artifacts/13061732767",
@@ -53533,6 +53538,44 @@
         "title": "Post the nested network namespace finding on #17026",
         "summary": "Post one inline comment on root.registerChild(n) at pkg/sentry/inet/namespace.go:109, on the right side of the diff.",
         "body": "pkg/sentry/inet/namespace.go:109\n\n@hky1999, the existing `NetlinkRouteTest.ChangeNetnsAndOtherAttrsTogether` unshares its network namespace twice. It passes on Linux. On this head the second unshare panics here with `registerChild called on a non-root namespace`. Could `Task.Clone` and `Task.Unshare` pass `t.k.RootNetworkNamespace()` to `NewNamespace`? Both currently pass the task’s current namespace. With that [two-call change](https://github.com/tamird/gvisor/commit/edee8e74f), the same test passed in the guest. [Native Linux](https://github.com/tamird/gvisor/actions/runs/42202594185/artifacts/13495073469) · [Guest runs](https://github.com/tamird/gvisor/actions/runs/42204481246/artifacts/13495984170)\n\nReview body:\nSubmitted by Codex on behalf of @tamird."
+      }
+    },
+    {
+      "id": "branch:state-fresh-decode-benchmark",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/state-fresh-decode-benchmark",
+      "head": "93305f85d83ce534321bb231e0d09af6dd4bf8b5",
+      "title": "Decode benchmark fixtures into empty roots",
+      "url": "https://github.com/tamird/gvisor/commit/93305f85d",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T11:23:32.377Z",
+      "summary": "BenchmarkDecoding supplied the object it had just encoded as the destination. Gob reused the original slice and its 1,024 pointers. Clearing the destination made Gob allocate new storage, raising its measured slice decode time from 34.95 to 75.66 µs. The graph decoder allocated fresh storage in both cases. The change is confined to the benchmark fixture.",
+      "evidence": [
+        {
+          "label": "Full benchstat output for all six benchmark cases",
+          "url": "https://tamird.github.io/gvisor/state-decode-destination-benchstat.txt"
+        },
+        {
+          "label": "Ten paired measurements on Linux AMD64, original samples and pointer identity checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42208846434/artifacts/13498656355"
+        },
+        {
+          "label": "Five benchmark-only additions relative to master",
+          "url": "https://github.com/tamird/gvisor/compare/f51a205a8...93305f85d"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "93305f85d83ce534321bb231e0d09af6dd4bf8b5",
+        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+        "url": "https://github.com/tamird/gvisor/commit/93305f85d",
+        "requestedAt": "2026-11-06T11:23:32.377Z",
+        "title": "Open the decoder benchmark fixture PR",
+        "summary": "May I open this benchmark-only change? Starting each decode with an empty destination measures the allocations a fresh restore needs. The updated Gob timings reflect that extra work in the fixture.",
+        "body": "Since 364ac92ba, BenchmarkDecoding has passed the object it just\nencoded back to the decoder. That lets gob reuse objects from the\nsource. A new Sentry cannot reuse the objects in the old one.\n\nClear the root before each decode. With the populated slice fixture,\ngob reused the backing array and all 1,024 pointers to a single\nobject. From an empty root it decoded 1,024 distinct objects. The\ngraph decoder allocated a new backing array and one shared pointee\nin both cases.\n\nTen interleaved pairs on linux/amd64 measured the cost of decoding\ninto the two destinations [1].\n\n```text\n                       │  populated   │                 empty                  │\n                       │    sec/op    │    sec/op      vs base                 │\nDecoding/ptr/gob-2       69.90µ ±  3%   107.23µ ±  6%   +53.41% (p=0.000 n=10)\nDecoding/map/gob-2       142.3µ ±  6%    149.8µ ±  3%    +5.33% (p=0.011 n=10)\nDecoding/slice/gob-2     34.95µ ±  5%    75.66µ ± 11%  +116.48% (p=0.000 n=10)\n\n                       │  populated  │                 empty                  │\n                       │  allocs/op  │  allocs/op   vs base                   │\nDecoding/slice/gob-2      166.0 ± 1%   1192.0 ± 0%  +618.07% (p=0.000 n=10)\n```\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42208846434/artifacts/13498656355"
       }
     }
   ],

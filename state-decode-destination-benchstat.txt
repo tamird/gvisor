@@ -1,0 +1,31 @@
+                       │  populated   │                 empty                  │
+                       │    sec/op    │    sec/op      vs base                 │
+Decoding/ptr/state-2     114.1µ ±  2%    116.6µ ±  7%         ~ (p=0.280 n=10)
+Decoding/ptr/gob-2       69.90µ ±  3%   107.23µ ±  6%   +53.41% (p=0.000 n=10)
+Decoding/map/state-2     99.19µ ±  7%   102.04µ ±  6%         ~ (p=0.436 n=10)
+Decoding/map/gob-2       142.3µ ±  6%    149.8µ ±  3%    +5.33% (p=0.011 n=10)
+Decoding/slice/state-2   29.58µ ± 20%    30.14µ ± 10%         ~ (p=0.971 n=10)
+Decoding/slice/gob-2     34.95µ ±  5%    75.66µ ± 11%  +116.48% (p=0.000 n=10)
+geomean                  69.87µ          87.08µ         +24.63%
+
+                       │  populated   │                  empty                   │
+                       │     B/op     │     B/op       vs base                   │
+Decoding/ptr/state-2     23.32Ki ± 0%    23.32Ki ± 0%         ~ (p=1.000 n=10) ¹
+Decoding/ptr/gob-2       41.12Ki ± 0%    49.12Ki ± 0%   +19.46% (p=0.000 n=10)
+Decoding/map/state-2     44.84Ki ± 0%    44.84Ki ± 0%         ~ (p=0.439 n=10)
+Decoding/map/gob-2       19.46Ki ± 0%    55.59Ki ± 0%  +185.63% (p=0.000 n=10)
+Decoding/slice/state-2   16.10Ki ± 0%    16.10Ki ± 0%         ~ (p=0.861 n=10)
+Decoding/slice/gob-2     8.375Ki ± 0%   25.648Ki ± 0%  +206.25% (p=0.000 n=10)
+geomean                  21.98Ki         32.50Ki        +47.86%
+¹ all samples are equal
+
+                       │  populated  │                 empty                  │
+                       │  allocs/op  │  allocs/op   vs base                   │
+Decoding/ptr/state-2     1.026k ± 0%   1.026k ± 0%         ~ (p=1.000 n=10) ¹
+Decoding/ptr/gob-2       1.180k ± 0%   2.204k ± 0%   +86.78% (p=0.000 n=10)
+Decoding/map/state-2      11.00 ± 0%    11.00 ± 0%         ~ (p=1.000 n=10) ¹
+Decoding/map/gob-2       1.196k ± 0%   1.202k ± 0%    +0.50% (p=0.000 n=10)
+Decoding/slice/state-2    5.000 ± 0%    5.000 ± 0%         ~ (p=1.000 n=10) ¹
+Decoding/slice/gob-2      166.0 ± 1%   1192.0 ± 0%  +618.07% (p=0.000 n=10)
+geomean                   153.8         237.2        +54.27%
+¹ all samples are equal
