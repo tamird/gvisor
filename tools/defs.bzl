@@ -82,13 +82,14 @@ save_restore_platforms = _save_restore_platforms
 # Tags.
 local_test_tags = _local_test_tags
 
-def freestanding_cc_binary(name, out, features = [], visibility = None, **kwargs):
+def freestanding_cc_binary(name, out, features = [], libc_headers = False, visibility = None, **kwargs):
     """Links a C binary without the caller's allocator or sanitizer runtime.
 
     Args:
       name: Public target for the linked binary.
       out: Filename required by the consumer.
       features: Additional compiler or linker feature settings.
+      libc_headers: Whether the source includes target libc headers.
       visibility: Visibility of the public target.
       **kwargs: Other cc_binary arguments, including sources and link options.
     """
@@ -108,6 +109,7 @@ def freestanding_cc_binary(name, out, features = [], visibility = None, **kwargs
             "-use_header_modules",
             "-use_pthread",
         ] + features,
+        libc_headers = libc_headers,
         linkstatic = True,
         stamp = 0,
         visibility = visibility,

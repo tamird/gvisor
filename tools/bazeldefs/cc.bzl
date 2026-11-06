@@ -2,7 +2,7 @@
 
 load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", _cc_grpc_library = "cc_grpc_library")
 load("@com_google_protobuf//bazel:cc_proto_library.bzl", _cc_proto_library = "cc_proto_library")
-load("@llvm//toolchain/runtimes:cc_runtime_binary.bzl", _cc_runtime_stage1_hosted_binary = "cc_runtime_stage1_hosted_binary")
+load("@llvm//toolchain/runtimes:cc_runtime_binary.bzl", "cc_runtime_stage0_binary", "cc_runtime_stage1_hosted_binary")
 load("@rules_cc//cc:defs.bzl", _cc_binary = "cc_binary", _cc_library = "cc_library", _cc_test = "cc_test")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load(":defs.bzl", "transition_allowlist")
@@ -144,18 +144,18 @@ _freestanding_executable = rule(
     },
 )
 
-def freestanding_executable(name, out, visibility = None, **kwargs):
+def freestanding_executable(name, out, libc_headers = False, visibility = None, **kwargs):
     """Builds and exposes an executable without hosted runtime dependencies.
 
     Args:
       name: Public target name.
       out: Executable filename.
+      libc_headers: Whether the source includes target libc headers.
       visibility: Visibility of the public executable.
       **kwargs: Arguments for the private C binary, including explicit headers.
     """
-    # The systrap stub uses libc signal types but provides its own entry
-    # point and never calls the system C library.
-    _cc_runtime_stage1_hosted_binary(
+    binary = cc_runtime_stage1_hosted_binary if libc_headers else cc_runtime_stage0_binary
+    binary(
         name = "_linked/" + out,
         tags = ["manual"],
         visibility = ["//visibility:private"],
