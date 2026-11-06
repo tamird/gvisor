@@ -42,6 +42,70 @@ const (
 	mtu          = header.TCPMinimumSize + header.IPv4MinimumSize + e2e.MaxTCPOptionSize + maxPayload
 )
 
+func TestDelayedACKAfterQuickACKs(t *testing.T) {
+	const warmup = 16
+	for _, tc := range []struct {
+		name string
+		gap  bool
+	}{
+		{"InOrder", false},
+		{"FilledGap", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			c := context.NewWithOpts(t, context.Options{EnableV4: true, EnableV6: true, MTU: e2e.DefaultMTU, Clock: clock})
+			defer c.Cleanup()
+			e2e.SetStackSACKPermitted(t, c, true)
+			peer := c.CreateConnectedWithOptionsNoDelay(header.TCPSynOptions{SACKPermitted: true})
+
+			for i := 0; i < warmup; i++ {
+				peer.SendPacket([]byte("w"), nil)
+				peer.VerifyACKHasSACK(nil)
+			}
+			first := peer.NextSeqNum
+			readable := warmup + 1
+			if tc.gap {
+				peer.NextSeqNum = first + 1
+				peer.SendPacket([]byte("b"), nil)
+				peer.NextSeqNum = first
+				peer.VerifyACKHasSACK([]header.SACKBlock{{Start: first + 1, End: first + 2}})
+				readable++
+			}
+			peer.SendPacket([]byte("a"), nil)
+
+			// Wait for the receiver to process the packet before advancing
+			// the clock. The socket query takes the same endpoint lock.
+			if err := testutil.Poll(func() error {
+				n, err := c.EP.GetSockOptInt(tcpip.ReceiveQueueSizeOption)
+				if err != nil || n != readable {
+					return fmt.Errorf("receive queue = (%d, %v), want %d", n, err, readable)
+				}
+				return nil
+			}, time.Second); err != nil {
+				t.Fatal(err)
+			}
+			var delay time.Duration
+			b := c.GetPacketNonBlocking()
+			if b == nil {
+				clock.Advance(39 * time.Millisecond)
+				c.CheckNoPacketTimeout("early delayed ACK", time.Millisecond)
+				clock.Advance(time.Millisecond)
+				b = c.GetPacket()
+				delay = 40 * time.Millisecond
+			}
+			defer b.Release()
+			ack := first.Add(seqnum.Size(readable - warmup))
+			checker.IPv4(t, b, checker.TCP(
+				checker.DstPort(peer.SrcPort), checker.TCPFlags(header.TCPFlagAck),
+				checker.TCPSeqNum(uint32(peer.AckNum)), checker.TCPAckNum(uint32(ack))))
+			t.Logf("WARM_ACK warmup=%d first=%d cumulative=%d delay_ms=%d", warmup, first, ack, delay.Milliseconds())
+			if (delay == 0) != tc.gap {
+				t.Errorf("ACK delay for %s = %v", tc.name, delay)
+			}
+		})
+	}
+}
+
 func TestReceiverDSACK(t *testing.T) {
 	for _, sackPermitted := range []bool{true, false} {
 		t.Run(fmt.Sprintf("SACK=%t", sackPermitted), func(t *testing.T) {
