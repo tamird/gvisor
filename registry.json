@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T03:03:58.221538Z",
+    "updatedAt": "2026-11-06T03:28:51.612533Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4845,8 +4845,8 @@
       "url": "https://github.com/tamird/gvisor/commit/9310f06f9",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "The compiler proposal at 9310f06f9 requires a source amendment for its two race builds. Its original AMD64 links could not find -lc, -ldl, -lm, -lpthread or -lresolv, and produced neither executable. The narrower experimental adapter at 3dab3494e now has the scoped positive results below; it has not become a new contributor proposal. The request to approve 9310f06f9 remains withdrawn.\n\nReplace Coral’s host-installed GCC and target headers with the LLVM toolchains already declared by gVisor. The fork commit has 37 insertions and 1,937 deletions, including four obsolete patches. It changes the compiler and the three freestanding sidecars together so the release links at every step.\n\nThe identical source tree was built as fffadb2bb on one AMD64 Linux worker. Plain bazel build -c opt //:release built nine static AMD64 executables; --config=aarch64 built nine ARM64 executables. Make installed the same bytes for each target. On a separate native ARM64 worker the cross-built runsc, Sentry and prewarmer started a rootless systrap guest. The build uses released LLVM 0.8.24 and master’s existing kernel-header backport.\n\nAn ordinary, dynamically linked C++ syscall test also cross-built on AMD64 and passed all four TCP_NODELAY cases on native ARM64. The earlier full scratch-worker build was on 5388293bd. The stock project catalog check passed on upstream 61a70083c and the compiler integration fffadb2bb: both verified all 220 dependencies against the identical catalog and policy. Removing abseil-cpp from a disposable catalog produced exactly one missing-entry error. This check does not audit every transitive toolchain binary.\n\nThe optional TLDK archive built on 3f0bd3a70 with #15153 added (148 Clang objects). Both plugin executable links then failed: lld could not find static pthread or dl for runsc-plugin-stack and gvisor_sentry_plugin_stack. Neither executable started. The normal release and native guest results above are separate.\n\nThe broad musl transition linked both race executables for AMD64 and ARM64, and the native AMD64 pair booted a guest. The narrower design keeps the public Go target declarations and selects the C library in the Bazel adapter. On 3dab3494e, both default AMD64 public race binaries linked as static ELF62 files, retained their public paths and staging CopyFile identities, and runsc --version matched the source. The two public Nogo targets and two dependency tests actually ran fresh: four passes, no skips or failures. The first policy and GNU readers remained incomplete after the commands. A separate recovery joined all four public filter outputs to the original AMD64/ARM64 findings and verified an explicit native GNU selection: cc-compiler-k8 and x86_64-linux-gnu-gcc-11 supplied the actual runsc-race GoLink. That static GNU ELF was 26,004,208 bytes (SHA256 8b4e961462acdc9ba5b5806015e1f33ebbff8459f5e02edf00f41f7c4ec2064a) and its stamped --version exited 0. This is a specific explicit-toolchain path, not general compiler detection. GNU Sentry, ARM race execution and actual installation were not tested on 3dab3494e.\n\nThe fork integration at 87fd1b411 built and installed //:release for AMD64 and ARM64 on a shell-free AMD64 remote worker. Make, its Bazel build and its cquery exited 0 for each target. All 18 installed regular files were static ELFs of the requested architecture, with the exact hashes and sizes from the original build. The installation recorded 614 fresh remote actions and 4,155 cache hits for AMD64, and 582 fresh remote actions and 2,241 cache hits for ARM64; all six sidecar links ran remotely and their output digests matched the installed files. No TestRunner ran.\n\nA separate native ARM64 worker received the same installed CLI, Sentry and prewarmer without rebuilding. The rootless systrap guest printed the expected echo and exited 0, with matching Sentry and prewarmer startup witnesses. The minimal guest omitted optional fdparking; its installed binary was verified separately.\n\nThe first build succeeded before a stale three-owner link check prevented Make. The recovery above completes installation and native guest evidence. Its separate historical-action reader found all six original completed, uncached CppLinks and exit 0, but selected a GetInvocation projection that omits successful action events. That historical BEP/configuration/CAS lookup remains incomplete and caused the outer job to be red; it does not invalidate the independent Make or guest results. This is the composed 87fd1b411 source, including the declared bootstrap, stateify and ELF-extractor changes, not the unamended 9310f06f9 compiler proposal.\n\nWith the draft glibc 2.44 sysroot and LLVM unwinder, the DPDK archive built. Both optional plugin executables then failed to link because the sysroot lacks libresolv.a. The devices opened; there was no executable for the traffic test. The supplier correction now has separate AMD64 and ARM64 archive receipts: each matches GNU glibc 2.44’s 19 ordered ET_REL members and all 61 typed external symbols; 17 of 19 member bytes match exactly. Existing archives, CRT and headers are unchanged. The tested input was a60470fd4, with the AMD64 manifest patch applied before Bazel; the clean d779c2896 differs only by that exact generated patch. The compatibility source 29f9d4664 on released LLVM 0.8.24 retains those same static-libc sources and patch but is not itself the measured supplier run. This remains a fork correction on open supplier #768, not a released toolchain. On b317c6e36, both optional plugin GoLinks now succeeded on native AMD64 using the explicit static GNU platform. Make installed the same static CLI and Sentry bytes (24,060,744 and 60,501,792 bytes), the plugin symbols were present, both --version starts passed, and the tun/vhost devices opened. An extra Sentry command omitted the required help subcommand and exited 128 before any guest or traffic test; the overall receipt remains incomplete. There is no native ARM plugin consumer result.\n\nThe separate unchanged public runsc-race and gvisor_sentry-race links on the same static GNU platform both failed. The original reports eight unresolved _Unwind_* symbols, with no missing-library diagnostic; neither race ELF was produced and no test ran. These are actual consumer results on the fork supplier, distinct from the successful archive check and the separate 3dab3494e adapter experiment.\n\nThe static GNU seccheck server delivered an event in the unchanged TestExample on both AMD64 and ARM64 distroless workers. The two ELF files required no runtime libraries. This used the static glibc sysroot from supplier fork 29f9d4664; adoption of that platform depends on upstream hermetic-llvm #768.",
-      "updatedAt": "2026-11-06T03:03:58.221538Z",
+      "summary": "The compiler proposal at 9310f06f9 requires a source amendment for its two race builds. Its original AMD64 links could not find -lc, -ldl, -lm, -lpthread or -lresolv, and produced neither executable. The narrower experimental adapter at 3dab3494e now has the scoped positive results below; it has not become a new contributor proposal. The request to approve 9310f06f9 remains withdrawn.\n\nReplace Coral’s host-installed GCC and target headers with the LLVM toolchains already declared by gVisor. The fork commit has 37 insertions and 1,937 deletions, including four obsolete patches. It changes the compiler and the three freestanding sidecars together so the release links at every step.\n\nThe identical source tree was built as fffadb2bb on one AMD64 Linux worker. Plain bazel build -c opt //:release built nine static AMD64 executables; --config=aarch64 built nine ARM64 executables. Make installed the same bytes for each target. On a separate native ARM64 worker the cross-built runsc, Sentry and prewarmer started a rootless systrap guest. The build uses released LLVM 0.8.24 and master’s existing kernel-header backport.\n\nAn ordinary, dynamically linked C++ syscall test also cross-built on AMD64 and passed all four TCP_NODELAY cases on native ARM64. The earlier full scratch-worker build was on 5388293bd. The stock project catalog check passed on upstream 61a70083c and the compiler integration fffadb2bb: both verified all 220 dependencies against the identical catalog and policy. Removing abseil-cpp from a disposable catalog produced exactly one missing-entry error. This check does not audit every transitive toolchain binary.\n\nThe optional TLDK archive built on 3f0bd3a70 with #15153 added (148 Clang objects). Both plugin executable links then failed: lld could not find static pthread or dl for runsc-plugin-stack and gvisor_sentry_plugin_stack. Neither executable started. The normal release and native guest results above are separate.\n\nThe broad musl transition linked both race executables for AMD64 and ARM64, and the native AMD64 pair booted a guest. The narrower design keeps the public Go target declarations and selects the C library in the Bazel adapter. On 3dab3494e, both default AMD64 public race binaries linked as static ELF62 files, retained their public paths and staging CopyFile identities, and runsc --version matched the source. The two public Nogo targets and two dependency tests actually ran fresh: four passes, no skips or failures. The first policy and GNU readers remained incomplete after the commands. A separate recovery joined all four public filter outputs to the original AMD64/ARM64 findings and verified an explicit native GNU selection: cc-compiler-k8 and x86_64-linux-gnu-gcc-11 supplied the actual runsc-race GoLink. That static GNU ELF was 26,004,208 bytes (SHA256 8b4e961462acdc9ba5b5806015e1f33ebbff8459f5e02edf00f41f7c4ec2064a) and its stamped --version exited 0. This is a specific explicit-toolchain path, not general compiler detection. GNU Sentry, ARM race execution and actual installation were not tested on 3dab3494e.\n\nThe fork integration at 87fd1b411 built and installed //:release for AMD64 and ARM64 on a shell-free AMD64 remote worker. Make, its Bazel build and its cquery exited 0 for each target. All 18 installed regular files were static ELFs of the requested architecture, with the exact hashes and sizes from the original build. The installation recorded 614 fresh remote actions and 4,155 cache hits for AMD64, and 582 fresh remote actions and 2,241 cache hits for ARM64; all six sidecar links ran remotely and their output digests matched the installed files. No TestRunner ran.\n\nA separate native ARM64 worker received the same installed CLI, Sentry and prewarmer without rebuilding. The rootless systrap guest printed the expected echo and exited 0, with matching Sentry and prewarmer startup witnesses. The minimal guest omitted optional fdparking; its installed binary was verified separately.\n\nThe first build succeeded before a stale three-owner link check prevented Make. The recovery above completes installation and native guest evidence. Its separate historical-action reader found all six original completed, uncached CppLinks and exit 0, but selected a GetInvocation projection that omits successful action events. That historical BEP/configuration/CAS lookup remains incomplete and caused the outer job to be red; it does not invalidate the independent Make or guest results. This is the composed 87fd1b411 source, including the declared bootstrap, stateify and ELF-extractor changes, not the unamended 9310f06f9 compiler proposal.\n\nWith the draft glibc 2.44 sysroot and LLVM unwinder, the DPDK archive built. Both optional plugin executables then failed to link because the sysroot lacks libresolv.a. The devices opened; there was no executable for the traffic test. The supplier correction now has separate AMD64 and ARM64 archive receipts: each matches GNU glibc 2.44’s 19 ordered ET_REL members and all 61 typed external symbols; 17 of 19 member bytes match exactly. Existing archives, CRT and headers are unchanged. The tested input was a60470fd4, with the AMD64 manifest patch applied before Bazel; the clean d779c2896 differs only by that exact generated patch. The compatibility source 29f9d4664 on released LLVM 0.8.24 retains those same static-libc sources and patch but is not itself the measured supplier run. This remains a fork correction on open supplier #768, not a released toolchain. On b317c6e36, both optional plugin GoLinks now succeeded on native AMD64 using the explicit static GNU platform. Make installed the same static CLI and Sentry bytes (24,060,744 and 60,501,792 bytes), the plugin symbols were present, both --version starts passed, and the tun/vhost devices opened. An extra Sentry command omitted the required help subcommand and exited 128 before any guest or traffic test; the overall receipt remains incomplete. There is no native ARM plugin consumer result.\n\nThe separate unchanged public runsc-race and gvisor_sentry-race links on the same static GNU platform both failed. The original reports eight unresolved _Unwind_* symbols, with no missing-library diagnostic; neither race ELF was produced and no test ran. These are actual consumer results on the fork supplier, distinct from the successful archive check and the separate 3dab3494e adapter experiment.\n\nThe static GNU seccheck server delivered an event in the unchanged TestExample on both AMD64 and ARM64 distroless workers. The two ELF files required no runtime libraries. This used the static glibc sysroot from supplier fork 29f9d4664; adoption of that platform depends on upstream hermetic-llvm #768.\n\nOn native AMD64, Make installed the static GNU plugin and its release bundle on b317c6e36. The same guest sent and received TCP and UDP through docker0 under runc and the registered plugin Sentry. Each 257-byte request received the expected 383-byte response. The installed bundle contained ten static AMD64 ELFs. The separate static GNU race links and musl plugin qualification use different changes.",
+      "updatedAt": "2026-11-06T03:23:01.474331Z",
       "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
       "evidence": [
         {
@@ -5200,6 +5200,14 @@
         {
           "label": "Upstream static glibc support",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/768"
+        },
+        {
+          "label": "Static GNU plugin installation and matched guest TCP/UDP exchanges",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42151090138/artifacts/13474526238"
+        },
+        {
+          "label": "Ten installed static GNU plugin and release executables",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42151090138/artifacts/13474197714"
         }
       ],
       "refinement": {
@@ -28526,22 +28534,26 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/plugin-musl-current",
-      "head": "603b1231738582ca6559d2a5e098598669842c3c",
+      "head": "dd63198c66946d7a38279478369bf269243a6ef4",
       "title": "Build the TLDK plugin against musl",
-      "url": "https://github.com/tamird/gvisor/commit/603b12317",
+      "url": "https://github.com/tamird/gvisor/commit/dd63198c6",
       "group": "bazel",
-      "status": "Agent work",
-      "updatedAt": "2026-11-06T02:30:02.489261Z",
-      "summary": "#15153 has landed. Root is updating the already-approved 603b12317 source to current master; the two plugin BUILD files conflict, so the follow-up is not yet delivered.\n\nOn native AMD64 the musl plugin linked with all three VFIO functions and passed TestDumpStack on the revised kernel headers. The public revision adds the purpose and source of the TLDK patch. GNU coverage used the same compatibility changes. A separate AMD64 integration binary exchanged TCP and UDP over the virtio-user backend, which uses /dev/vhost-net. The check at this exact revision covered linking and stack unwinding.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T03:28:51.612533Z",
+      "summary": "The approved musl port keeps the DPDK stack trace available across the Go-to-C boundary. #15153 moved the optional plugin build into its external repository. The revision defines the same TestDumpStack there, supplies the two Go sources to its build sandbox, and runs it from make plugin-network-tests. The source files and both vendor patches match the approved revision byte for byte. TestDumpStack passed through Bazel on native AMD64 with GNU and musl. The default build excludes the plugin.\n\nIn a separate musl link comparison at f28370914, the plugin runsc binary linked. The plugin Sentry stopped at the systrap stub link rule tracked by #17067. The successful TCP and UDP guest tests at b317c6e36 used static GNU libc.",
       "followup": {
         "owner": "root",
-        "sourceHead": "603b1231738582ca6559d2a5e098598669842c3c",
-        "observedAt": "2026-11-06T02:30:02.489261Z",
-        "disposition": "Approved source update in progress after #15153 merged",
-        "nextAction": "Resolve the current-master conflicts in external/tools/plugin-stack/BUILD and plugin-stack.BUILD, compare the resulting change with approved 603b12317, and complete the necessary compatibility check before publication. Preserve the existing approval and review any substantive delta; no new decision is requested by this status update.",
+        "sourceHead": "dd63198c66946d7a38279478369bf269243a6ef4",
+        "observedAt": "2026-11-06T03:28:51.612533Z",
+        "disposition": "GNU and musl stack-trace tests passed; the contributor decision covers the revised test registration.",
+        "nextAction": "After review, open the tested change. Follow the separate musl Sentry link failure on #17067.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41384852262",
-          "https://github.com/google/gvisor/pull/15153"
+          "https://github.com/google/gvisor/pull/15153",
+          "https://github.com/tamird/gvisor/actions/runs/42152793818/artifacts/13473926707",
+          "https://github.com/tamird/gvisor/actions/runs/42155923250/artifacts/13474517191",
+          "https://github.com/tamird/gvisor/actions/runs/42151189673/artifacts/13473036461",
+          "https://github.com/tamird/gvisor/commit/dd63198c6"
         ]
       },
       "evidence": [
@@ -28620,15 +28632,40 @@
         {
           "label": "Preserved standalone analysis failure: OBJCOPY unavailable",
           "url": "https://app.buildbuddy.io/invocation/c1830b69-d718-44f3-b202-305771b893ae"
+        },
+        {
+          "label": "Static GNU plugin installation and matched guest TCP/UDP exchanges",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42151090138/artifacts/13474526238"
+        },
+        {
+          "label": "Ten installed static GNU plugin and release executables",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42151090138/artifacts/13474197714"
+        },
+        {
+          "label": "GNU TestDumpStack and default versus opt-in target selection",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42152793818/artifacts/13473926707"
+        },
+        {
+          "label": "Musl TestDumpStack with the registered Bazel test platform",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42155923250/artifacts/13474517191"
+        },
+        {
+          "label": "Earlier musl runsc link and separate Sentry failure in the systrap stub",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42151189673/artifacts/13473036461"
+        },
+        {
+          "label": "Review the external test registration",
+          "url": "https://github.com/tamird/gvisor/commit/dd63198c6"
         }
       ],
       "refinement": {
         "before": {
-          "head": "92c5bed67c8cac88959b0a4cb64e0b52f92b2ec9",
-          "base": "85c742f25194e6198c292e099754f09549f09cdf"
+          "head": "603b1231738582ca6559d2a5e098598669842c3c",
+          "base": "675d49b1c7a1b43ac0d2a5cbe4ab5d897ff44afa"
         },
         "after": {
-          "head": "603b1231738582ca6559d2a5e098598669842c3c"
+          "head": "dd63198c66946d7a38279478369bf269243a6ef4",
+          "base": "1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d"
         }
       },
       "settledReviews": [
@@ -28638,7 +28675,17 @@
           "outcome": "approved",
           "at": "2026-11-02T16:20:02.085486+00:00"
         }
-      ]
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "dd63198c66946d7a38279478369bf269243a6ef4",
+        "url": "https://github.com/tamird/gvisor/commit/dd63198c6",
+        "title": "Register the approved stack-trace test with the external plugin",
+        "requestedAt": "2026-11-06T03:28:51.612533Z",
+        "summary": "May I open this revision? The change since 603b12317 is how the optional plugin owns its two test sources and how make plugin-network-tests runs the test. The same test passed with GNU and musl on AMD64.",
+        "body": "#15153 moved the optional plugin into its own Bazel repository. Register the existing TestDumpStack with the plugin, make the Go test sources available in its sandbox, and run it through make plugin-network-tests. The test code and both vendor patches match the revision you approved.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 603b12317^! dd63198c6^!"
+      }
     },
     {
       "id": "pr:16453",
@@ -52577,6 +52624,44 @@
         "summary": "Post the reply explaining the distinct cases for *args and **kwargs?",
         "body": "I’d omit the comma after `**kwargs` in both calls and declarations. It has to come last. In gVisor alone, that would avoid changing 37 calls across 12 Starlark files. I’d keep the comma after `*args`: a call can still gain `**kwargs`, and a declaration can gain a keyword-only parameter.\n\nPosted by Codex on behalf of @tamird."
       }
+    },
+    {
+      "id": "pr:17060",
+      "type": "pr",
+      "number": 17060,
+      "repo": "google/gvisor",
+      "ref": "botir/receive-dispatcher-cleanup",
+      "head": "06137917f324997963633cbefe75194177c5f7a7",
+      "title": "Review the receive dispatcher constructor benchmark",
+      "url": "https://github.com/google/gvisor/pull/17060",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-06T03:23:01.474331Z",
+      "summary": "The benchmark disconnects the sleeper on every iteration, although it discards the dispatcher. Removing that call preserved the measured 9,992 B/op and 31 allocs/op.",
+      "evidence": [
+        {
+          "label": "Timed cleanup in the proposed benchmark",
+          "url": "https://github.com/google/gvisor/blob/06137917f/pkg/tcpip/link/fdbased/endpoint_test.go#L810"
+        },
+        {
+          "label": "Reason production stopped disconnecting the sleeper",
+          "url": "https://github.com/google/gvisor/commit/88b974cd4"
+        },
+        {
+          "label": "Native constructor benchmark",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42154474405/job/127685212376"
+        }
+      ],
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "06137917f324997963633cbefe75194177c5f7a7",
+        "url": "https://github.com/google/gvisor/pull/17060",
+        "requestedAt": "2026-11-06T03:23:01.474331Z",
+        "title": "Post one inline benchmark comment",
+        "summary": "Post the comment below on the sleeper.Done call at endpoint_test.go:810. The accompanying review body carries attribution.",
+        "body": "Could you drop this call from the timed loop? `Sleeper.Done` disconnects wakers for reuse, and each iteration discards the whole dispatcher. [Production removed this call](https://github.com/google/gvisor/commit/88b974cd4) for that reason. With just `release` and `close`, [the benchmark](https://github.com/tamird/gvisor/actions/runs/42154474405/job/127685212376) still measured 9,992 B/op and 31 allocs/op.\n\nReview body:\nPosted by Codex on behalf of @tamird."
+      }
     }
   ],
   "edges": [
@@ -74853,5 +74938,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-06T03:03:58.221538Z"
+  "updatedAt": "2026-11-06T03:28:51.612533Z"
 }
