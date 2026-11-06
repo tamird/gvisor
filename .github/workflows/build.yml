@@ -1,35 +1,31 @@
-name: CI
-
-"on":
+name: Check field ownership of a SysV semaphore
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/semaphore-member-identity]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  control:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Bind the source and released Bazel client
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 43fddadc7eb86b4056201b4f64cacc7ad4beaabf
+          test "$(git rev-parse HEAD^^)" = b68f40e4e358798ba034116cdb4c8194bb1c7c07
+          d="$RUNNER_TEMP/sem-member"; mkdir -p "$d"
+          curl -fsSL --max-time 120 https://releases.bazel.build/8.8.1/release/bazel-8.8.1-linux-x86_64 -o "$d/bazel"
+          echo "5b5bab2095065817d3416ca9a0678bd39c10c9ede432dbe8187bfe74de285160  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+      - name: Check working pointer identity, guarded writes and unguarded uses
+        run: python3 .github/qualification/sem_bound.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: sem-member
+          path: ${{ runner.temp }}/sem-member/member.json
+          if-no-files-found: warn
+          retention-days: 14
