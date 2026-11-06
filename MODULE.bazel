@@ -26,7 +26,14 @@ bazel_dep(name = "abseil-cpp", version = "20260817.0", repo_name = "com_google_a
 bazel_dep(name = "googletest", version = "1.18.0", repo_name = "com_google_googletest")
 bazel_dep(name = "google_benchmark", version = "1.10.0", repo_name = "com_google_benchmark")
 bazel_dep(name = "nlohmann_json", version = "3.12.0.bcr.2")
-bazel_dep(name = "rules_python", version = "2.4.5")
+bazel_dep(name = "rules_python", version = "2.4.6")
+
+archive_override(
+    module_name = "rules_python",
+    sha256 = "9e2ff158825d927aca68a089dfed0d30e3dd3381efcd0bc788d2134feb6f6441",
+    strip_prefix = "rules_python-804470ef813ec3a25df2432d374f84bac6ec2d76",
+    urls = ["https://github.com/tamird/rules_python/archive/804470ef813ec3a25df2432d374f84bac6ec2d76.tar.gz"],
+)
 bazel_dep(name = "zstd", version = "1.5.7.bcr.1", repo_name = "llvm_zstd")
 bazel_dep(name = "protoc-gen-validate", version = "1.3.0")
 bazel_dep(name = "xds", version = "0.0.0-20251210-ee656c7")
@@ -90,6 +97,14 @@ http_archive(
 )
 
 ### Python
+
+http_archive(
+    name = "release_static_cpython",
+    build_file = "//test/rbe/release_python:python.BUILD",
+    sha256 = "2fc493f8f14ff8bf743eb34934bf1edbac518b023e8aa72bc7c0006ee13495e4",
+    strip_prefix = "python/install",
+    urls = ["https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.11.18%2B20261026-x86_64-unknown-linux-musl-lto%2Bstatic-full.tar.zst"],
+)
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = "3.11")
 python.toolchain(python_version = "3.11")
