@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T15:35:29.727Z",
+    "updatedAt": "2026-11-06T15:53:23.363Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -40564,9 +40564,17 @@
       "url": "https://github.com/google/gvisor/pull/16735",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T13:18:48.077Z",
-      "summary": "On c31b2adc2, saving 100,000 empty tmpfs files took 3.98% longer than on its parent 706b124a2. Time through Sentry exit increased 3.64% and peak sampled Sentry RSS increased 1.33%. Each revision ran one warmup and 12 measured saves on native AMD64 with systrap, four CPUs, a 2 GiB limit, and uncompressed graph checkpoints. All 26 checkpoints restored the full tree with zero OOM kills. The earlier 30.12% RSS increase was measured on a48b7a12c against its own parent.",
+      "updatedAt": "2026-11-06T15:53:23.363Z",
+      "summary": "The 36 measured one-CPU restores on each build reached the first verified read in 670.0 ms on the parent, 554.0 ms with #16134 alone and 547.9 ms on this PR. Benchstat found no difference between the PR and #16134 on this workload (p=0.750).\n\nOn c31b2adc2, saving 100,000 empty tmpfs files took 3.98% longer than on its parent 706b124a2. Time through Sentry exit increased 3.64% and peak sampled Sentry RSS increased 1.33%. Each revision ran one warmup and 12 measured saves on native AMD64 with systrap, four CPUs, a 2 GiB limit, and uncompressed graph checkpoints. All 26 checkpoints restored the full tree with zero OOM kills. The earlier 30.12% RSS increase was measured on a48b7a12c against its own parent.",
       "evidence": [
+        {
+          "label": "Original one-CPU restore samples and 100,000-file readback on all 111 runs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42228461079/artifacts/13517728283"
+        },
+        {
+          "label": "Benchstat comparison of the parent, Etienne’s reference and the PR",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42246215285/artifacts/13519255748"
+        },
         {
           "label": "Benchstat for c31b2adc2 versus its parent 706b124a2 (12 measured saves per revision)",
           "url": "https://tamird.github.io/gvisor/checkpoint-gc-benchstat.txt"
@@ -40769,9 +40777,9 @@
       ],
       "followup": {
         "owner": "Agent",
-        "observedAt": "2026-11-06T13:18:48.077Z",
+        "observedAt": "2026-11-06T15:53:23.363Z",
         "disposition": "Updated the checkpoint save measurements on the original comment.",
-        "nextAction": "Follow the author’s response. Restore timings have a separate study.",
+        "nextAction": "Await permission to post the restore comparison. The prior save comment is already published.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16735#issuecomment-6629323131"
         ],
@@ -40795,6 +40803,16 @@
             "evidence": "https://github.com/google/gvisor/pull/16735#discussion_r4456530300"
           }
         ]
+      },
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "c31b2adc27b1d19b1e647b3239cd2b3b536a5adf",
+        "requestedAt": "2026-11-06T15:53:23.363Z",
+        "url": "https://github.com/google/gvisor/pull/16735",
+        "title": "Post the one-CPU restore comparison on #16735",
+        "summary": "Compare the PR with its parent and Etienne’s #16134 reference using 36 fresh restores per variant. The earlier comment measured checkpoint saves.",
+        "body": "@parth-opensrc, on a one-CPU restore of 100,000 empty tmpfs files, both your PR and Etienne’s #16134 reference got the guest running sooner. From the start of restore to the first verified guest read, the median was 670.0 ms on parent 706b124a2, 554.0 ms with the reference patch 4a7ccbd2c applied to that parent, and 547.9 ms on c31b2adc2. Benchstat found no timing difference between the reference and the PR on this workload.\n\n```text\n                              │  reference  │             candidate              │\n                              │   sec/op    │   sec/op     vs base               │\nRestore/restore_first_read_ns   554.0m ± 2%   547.9m ± 2%       ~ (p=0.750 n=36)\n```\n\nSentry RSS at the first read was 308.0 MiB on the parent, 315.7 MiB on the reference and 315.9 MiB on the PR. Each run restored a fresh Sentry under a 2 GiB limit; all 111 runs, including warmups, read back the 100,000-file tree. [Original measurements](https://github.com/tamird/gvisor/actions/runs/42228461079/artifacts/13517728283) · [Benchstat](https://github.com/tamird/gvisor/actions/runs/42246215285/artifacts/13519255748).\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -53130,14 +53148,18 @@
       "number": 17060,
       "repo": "google/gvisor",
       "ref": "botir/receive-dispatcher-cleanup",
-      "head": "3631e8a6142278999f583d83df8b9e5fb88b8ae8",
+      "head": "4779d2d0a8535b5b4a42148e705cce16f7dcd671",
       "title": "Review the receive dispatcher constructor benchmark",
       "url": "https://github.com/google/gvisor/pull/17060",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T14:27:40.507Z",
+      "updatedAt": "2026-11-06T15:39:08.585Z",
       "summary": "The author removed the extra Sleeper.Done call from the timed loop. He reports that the revised benchmark used 6,416 fewer bytes per operation and took 12.2% less time for construction and teardown across 16 samples per variant. The reviewed correction is in the public head.",
       "evidence": [
+        {
+          "label": "Author’s 16-pair benchmark after removing Sleeper.Done",
+          "url": "https://github.com/google/gvisor/pull/17060#discussion_r4493356267"
+        },
         {
           "label": "Author’s reply and revised measurements",
           "url": "https://github.com/google/gvisor/pull/17060#discussion_r4493356267"
@@ -53175,7 +53197,25 @@
           "note": "Posted and verified against the approved head.",
           "postedURL": "https://github.com/google/gvisor/pull/17060#pullrequestreview-5800533622"
         }
-      ]
+      ],
+      "reviewWatch": {
+        "inspected": [
+          {
+            "id": "PRRC_kwDOB9IlXs8AAAABC9Ms6w",
+            "url": "https://github.com/google/gvisor/pull/17060#discussion_r4493356267",
+            "head": "3631e8a6142278999f583d83df8b9e5fb88b8ae8",
+            "updatedAt": "2026-11-06T14:16:55Z",
+            "evidence": "https://github.com/google/gvisor/commit/4779d2d0a"
+          },
+          {
+            "id": "IC_kwDOB9IlXs8AAAABjpOCAQ",
+            "url": "https://github.com/google/gvisor/pull/17060#issuecomment-6686999041",
+            "head": "3631e8a6142278999f583d83df8b9e5fb88b8ae8",
+            "updatedAt": "2026-11-06T14:19:38Z",
+            "evidence": "https://github.com/google/gvisor/commit/4779d2d0a"
+          }
+        ]
+      }
     },
     {
       "id": "branch:fdbased-start-on-attach",
@@ -53414,14 +53454,22 @@
       "number": 17082,
       "repo": "google/gvisor",
       "ref": "netstack-delayed-ack",
-      "head": "f2447eb8a6a1ef5f8bf7447b11605e56ec02a83c",
+      "head": "10555b8fe8ee142f6a956ab3f7fbc717d38b0639",
       "title": "Review delayed ACKs after gap recovery and rejected replies",
       "url": "https://github.com/google/gvisor/pull/17082",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T13:13:00.663Z",
-      "summary": "After the 16 quick ACKs, a segment filling the receive gap waited 40 ms for a cumulative ACK. In a separate trace, the link rejected the reply that would have carried the ACK and the timer expired in silence. Accepted replies still carried the ACK.",
+      "updatedAt": "2026-11-06T15:53:23.363Z",
+      "summary": "Ayush updated the delayed-ACK draft after both review comments. The original packet tests now pass on 10555b8fe, including the immediate cumulative ACK when a gap closes and the outstanding ACK after a rejected data send. All nine test records passed.",
       "evidence": [
+        {
+          "label": "Both original packet controls on the author’s new head, nine cases and zero skips",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42245055323/artifacts/13518805282"
+        },
+        {
+          "label": "Revised delayed-ACK implementation",
+          "url": "https://github.com/google/gvisor/commit/10555b8fe"
+        },
         {
           "label": "Cumulative ACK after the receive queue drains",
           "url": "https://github.com/tamird/gvisor/actions/runs/42165403428/artifacts/13478877935"
@@ -53454,10 +53502,10 @@
       ],
       "followup": {
         "owner": "Agent",
-        "sourceHead": "f2447eb8a6a1ef5f8bf7447b11605e56ec02a83c",
-        "observedAt": "2026-11-06T13:13:00.663Z",
-        "disposition": "Posted the approved inline review.",
-        "nextAction": "Follow the author’s response and any revision.",
+        "sourceHead": "10555b8fe8ee142f6a956ab3f7fbc717d38b0639",
+        "observedAt": "2026-11-06T15:53:23.363Z",
+        "disposition": "Both review changes passed their original packet tests",
+        "nextAction": "Follow future changes to the delayed-ACK draft. Both reported cases are addressed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17082#pullrequestreview-5800533890",
           "https://github.com/google/gvisor/pull/17082#discussion_r4492765687",
@@ -54416,9 +54464,17 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T15:16:55.872Z",
-      "summary": "On current master, one Bazel command selects the same 360 runnable tests and 2,881 build-only targets as the AMD64 cgroup-v2 unit presubmit, plus a native uname control. Bazel assigns 366 test shards to OCI workers and five to Firecracker workers with root and IPv6. The two worker probes both measured cgroup2fs with CGROUPV2=true and false. Each setting ran remotely the first time, and both repeat runs reused the cached true result. Running all selected targets is the next check.\n\nA single Bazel invocation executed six tests remotely. AMD64 and ARM64 workers ran the Go atomicbitops and C++ posix_error tests. AMD64 workers also ran uname on native Linux and under gVisor systrap. All six TestRunner actions passed uncached. Four of the six tests exercise parts of three presubmit jobs. Two serve as architecture controls. Each of those three jobs still has additional coverage to verify. The fork’s Buildkite file contains one submission command. GitHub Actions submitted it for this trial.\n\nThe previous proposals kept separate unit, Nogo, package, container, smoke, Gazelle, plugin, source-lint and syscall jobs. Their target lists, test fixtures and earlier results are linked. Staged release checks still have distinct artifact inputs.",
+      "updatedAt": "2026-11-06T15:53:23.363Z",
+      "summary": "On current master, one Bazel command selects the same 360 runnable tests and 2,881 build-only targets as the AMD64 cgroup-v2 unit presubmit, plus a native uname control. Bazel assigns 366 test shards to OCI workers and five to Firecracker workers with root and IPv6. The two worker probes both measured cgroup2fs with CGROUPV2=true and false. Each setting ran remotely the first time, and both repeat runs reused the cached true result. The full invocation reported all 3,242 target outcomes. It built 2,650 of 2,881 build-only targets and ran 295 of 361 test owners. Of the executed shards, 303 passed, one sandbox test failed, and one netgofer test timed out. Sixty-six test owners, including the native uname control, never built. The GNU compiler was absent on part of the build graph.\n\nA single Bazel invocation executed six tests remotely. AMD64 and ARM64 workers ran the Go atomicbitops and C++ posix_error tests. AMD64 workers also ran uname on native Linux and under gVisor systrap. All six TestRunner actions passed uncached. Four of the six tests exercise parts of three presubmit jobs. Two serve as architecture controls. Each of those three jobs still has additional coverage to verify. The fork’s Buildkite file contains one submission command. GitHub Actions submitted it for this trial.\n\nThe previous proposals kept separate unit, Nogo, package, container, smoke, Gazelle, plugin, source-lint and syscall jobs. Their target lists, test fixtures and earlier results are linked. Staged release checks still have distinct artifact inputs.",
       "evidence": [
+        {
+          "label": "Full remote invocation, including the failure, timeout and unbuilt targets",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42241955125/artifacts/13517404379"
+        },
+        {
+          "label": "Original CppCompile diagnostic for the missing GNU compiler",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42245953833/artifacts/13515909941"
+        },
         {
           "label": "Single Bazel selection on current master",
           "url": "https://github.com/tamird/gvisor/commit/949d48715"
@@ -54496,9 +54552,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "e46a101fc0aebb325ec25977697a012a2e11a11b",
-        "observedAt": "2026-11-06T15:16:55.872Z",
+        "observedAt": "2026-11-06T15:53:23.363Z",
         "disposition": "The contributor requested one remote Bazel graph for CI targets across areas and configurations.",
-        "nextAction": "Execute the complete AMD64 cgroup-v2 selection in one remote Bazel invocation. Compare its actual target and shard results with the public presubmit."
+        "nextAction": "Use the declared compiler for targets that invoked the missing GNU compiler, and investigate the executed sandbox failure and netgofer timeout before counting the full presubmit row."
       }
     },
     {
@@ -76330,6 +76386,27 @@
             "head": "bba4c63b27424f09bbde372858ad47674714d252",
             "updatedAt": "2026-11-05T07:40:02Z",
             "evidence": "https://github.com/google/gvisor/issues/16670"
+          },
+          {
+            "id": "PRRC_kwDOB9IlXs8AAAABC9y94g",
+            "url": "https://github.com/google/gvisor/pull/16887#discussion_r4493983202",
+            "head": "5d5f416752eba26aa322f80352dd61fbe3f4565b",
+            "updatedAt": "2026-11-06T15:14:55Z",
+            "evidence": "https://github.com/google/gvisor/commit/5d5f41675"
+          },
+          {
+            "id": "PRRC_kwDOB9IlXs8AAAABC9164g",
+            "url": "https://github.com/google/gvisor/pull/17082#discussion_r4494031586",
+            "head": "10555b8fe8ee142f6a956ab3f7fbc717d38b0639",
+            "updatedAt": "2026-11-06T15:18:57Z",
+            "evidence": "https://github.com/google/gvisor/commit/10555b8fe"
+          },
+          {
+            "id": "PRRC_kwDOB9IlXs8AAAABC91-6Q",
+            "url": "https://github.com/google/gvisor/pull/17082#discussion_r4494032617",
+            "head": "10555b8fe8ee142f6a956ab3f7fbc717d38b0639",
+            "updatedAt": "2026-11-06T15:19:01Z",
+            "evidence": "https://github.com/google/gvisor/commit/10555b8fe"
           }
         ]
       }
