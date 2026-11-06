@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T19:36:10.962Z",
+    "updatedAt": "2026-11-06T19:48:46.660Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28331,7 +28331,7 @@
       "url": "https://github.com/google/gvisor/pull/17114",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-06T19:15:56.025Z",
+      "updatedAt": "2026-11-06T19:48:46.660Z",
       "summary": "#17114 replaces the NVIDIA parser’s pinned LLVM source with the dependency supplied by hermetic-llvm. All four previously failing build targets built with this change on the compiler integration. Both AMD64 binaries were verified and TestParser passed in a fresh remote execution. The parity tests then failed to start git or to verify the installer server's TLS certificate. The prerequisite license-catalog change, #16249, has merged.",
       "followup": {
         "owner": "Maintainer",
@@ -28363,6 +28363,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "All 34 installer checks failed certificate verification; offline updater passed 15 tests",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42279392380/artifacts/13534569286"
+        },
         {
           "label": "All four parser targets built and TestParser passed remotely",
           "url": "https://github.com/tamird/gvisor/actions/runs/42274588613/artifacts/13532788389"
@@ -54980,9 +54984,17 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T19:36:10.962Z",
-      "summary": "One remote Bazel invocation on the released LLVM integration recorded all 3,235 presubmit targets. Of 2,874 build-only targets, 2,811 built. Of 361 runnable targets, 344 ran and 342 passed. There were 352 passing shards in 354 fresh remote executions. The sandbox test failed its default-route assertions and the vDSO checker could not start readelf. Three C++ compile actions failed in the NVIDIA driver's Clang parser on the pinned RegisterRef comparator. The two failed test targets passed in separate runs with the declared vDSO reader and #15866’s route expectations. #17114 built all four previously failing NVIDIA targets and the parser test passed remotely. All 34 structure parity cases then failed to start git, and all 34 installer checksum cases failed TLS verification.\n\nOn master before the compiler change, the graph selected all 360 runnable and 2,881 build-only targets from the AMD64 cgroup-v2 presubmit, plus a native uname control. Of the resulting 3,242 roots, 2,650 build-only targets built and 295 tests ran. The OCI and Firecracker workers reported cgroup2fs and observed the expected cache separation for CGROUPV2 true and false. The earlier six-target pilot and full per-owner data are linked. The five previously unexecuted owners failed together during analysis in an isolated run. Bazel reported 730 action conflicts before execution. Two representative LLVM runtime objects had identical compiler commands in two tool configurations. The only reported difference was the target-platform label: //tools/bazeldefs:linux_amd64 versus //test/rbe:linux_amd64. The remaining unknown owners still need their own evidence.",
+      "updatedAt": "2026-11-06T19:48:46.660Z",
+      "summary": "One remote Bazel invocation on the released LLVM integration recorded all 3,235 presubmit targets. Of 2,874 build-only targets, 2,811 built. Of 361 runnable targets, 344 ran and 342 passed. There were 352 passing shards in 354 fresh remote executions. The sandbox test failed its default-route assertions and the vDSO checker could not start readelf. Three C++ compile actions failed in the NVIDIA driver's Clang parser on the pinned RegisterRef comparator. The two failed test targets passed in separate runs with the declared vDSO reader and #15866’s route expectations. #17114 built all four previously failing NVIDIA targets and the parser test passed remotely. All 34 structure parity cases then failed to start git, and all 34 installer checksum cases failed TLS verification.\n\nOn master before the compiler change, the graph selected all 360 runnable and 2,881 build-only targets from the AMD64 cgroup-v2 presubmit, plus a native uname control. Of the resulting 3,242 roots, 2,650 build-only targets built and 295 tests ran. The OCI and Firecracker workers reported cgroup2fs and observed the expected cache separation for CGROUPV2 true and false. The earlier six-target pilot and full per-owner data are linked. The five previously unexecuted owners failed together during analysis in an isolated run. Bazel reported 730 action conflicts before execution. Two representative LLVM runtime objects had identical compiler commands in two tool configurations. The only reported difference was the target-platform label: //tools/bazeldefs:linux_amd64 versus //test/rbe:linux_amd64. The remaining unknown owners still need their own evidence. The canonical AMD64 execution platform eliminated the conflicts in that six-target comparison. Three fresh remote test owners passed. Uname recorded four executed cases and version one. The netgofer XML listed no cases. All three fastbuild filter outputs were identical 1,474-byte stubs.",
       "evidence": [
+        {
+          "label": "All six canonical-worker targets built, with three fresh remote test owners",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42280834294/artifacts/13534254869"
+        },
+        {
+          "label": "NVIDIA tag pins and offline update tests passed; checksums failed TLS",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42279392380/artifacts/13534569286"
+        },
         {
           "label": "Canonical AMD64 target and execution platform under test",
           "url": "https://github.com/tamird/gvisor/actions/runs/42280834294"
@@ -55148,10 +55160,12 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "e46a101fc0aebb325ec25977697a012a2e11a11b",
-        "observedAt": "2026-11-06T19:36:10.962Z",
+        "observedAt": "2026-11-06T19:48:46.660Z",
         "disposition": "The contributor requested one remote Bazel graph for CI targets across areas and configurations.",
-        "nextAction": "Check the six-root run with the canonical AMD64 platform and the same OCI and Firecracker routing. Continue tracing the other unknown owners separately.",
+        "nextAction": "Qualify the optimized filters and rerun the full selection with the canonical platform. The netgofer result is at the test-owner level until the original log is recovered. Continue diagnosing the other unknown owners separately.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42280834294/artifacts/13534254869",
+          "https://github.com/tamird/gvisor/actions/runs/42279392380/artifacts/13534569286",
           "https://github.com/tamird/gvisor/actions/runs/42280834294",
           "https://github.com/tamird/gvisor/actions/runs/42279220474/artifacts/13534682362",
           "https://github.com/tamird/gvisor/actions/runs/42278631677/artifacts/13534051869",
