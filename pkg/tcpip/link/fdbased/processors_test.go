@@ -195,16 +195,18 @@ func TestDispatchMalformedIPv4(t *testing.T) {
 			if len(test.ethHdr) > 0 {
 				addr = tcpip.LinkAddress(test.ethHdr[:header.EthernetAddressSize])
 			}
-			d, err := newReadVDispatcher(fds[0], &endpoint{
-				addr:       addr,
-				hdrSize:    len(test.ethHdr),
-				dispatcher: sink,
-			}, &Options{ProcessorsPerChannel: 1})
+			ep := &endpoint{
+				addr:    addr,
+				hdrSize: len(test.ethHdr),
+			}
+			d, err := newReadVDispatcher(fds[0], ep)
 			if err != nil {
 				t.Fatal(err)
 			}
 			defer d.release()
-			if ok, err := d.dispatch(); !ok || err != nil {
+			var m processorManager
+			m.start(1, false, sink)
+			if ok, err := d.dispatch(&m); !ok || err != nil {
 				t.Fatalf("d.dispatch() = %v, %v", ok, err)
 			}
 
@@ -258,8 +260,8 @@ func BenchmarkReceiveProcessor(b *testing.B) {
 				})
 			}
 			sink := &fakeNetworkDispatcher{pkts: make([]*stack.PacketBuffer, 0, batch)}
-			m := newProcessorManager(&Options{ProcessorsPerChannel: 1}, &endpoint{dispatcher: sink})
-			defer m.processors[0].sleeper.Done()
+			var m processorManager
+			m.start(1, false, sink)
 			var packets [batch]*stack.PacketBuffer
 			for i := range packets {
 				packets[i] = stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: buffer.MakeWithData(data)})
