@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T23:11:36.682Z",
+    "updatedAt": "2026-11-06T23:18:43.944Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -33335,10 +33335,14 @@
         {
           "label": "Both target architecture analyzers",
           "url": "https://app.buildbuddy.io/invocation/af1381b9-4fc2-4c9f-8194-3e6d449c6f3e"
+        },
+        {
+          "label": "Merged into master",
+          "url": "https://github.com/google/gvisor/commit/597f36270"
         }
       ],
-      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
-      "status": "open",
+      "updatedAt": "2026-11-06T23:18:43.944Z",
+      "status": "merged",
       "summary": "With no bytes in flight, stock gVisor entered loss recovery and reduced the congestion window to one packet when it sent a zero-window probe. Linux and the fixed stack stayed open and delivered the queued byte after the window reopened. Actual retransmission timeout, persist backoff and user timeout also passed. The fork head contains the same three changed files as the tested commit.",
       "refinement": {
         "before": {
@@ -49877,12 +49881,12 @@
       "repo": "google/gvisor",
       "number": 16821,
       "ref": "review/tun-setiff-shared-name",
-      "head": "3278152c32b9202d21e10cb4949d88b04da03ce7",
+      "head": "9f3a1efe5acf05722e7910b465d96c8a2c26a637",
       "title": "Return the assigned interface name from TUNSETIFF",
       "url": "https://github.com/google/gvisor/pull/16821",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T18:34:02.855318+00:00",
+      "updatedAt": "2026-11-06T23:18:43.944Z",
       "summary": "Use the shared IFReq.SetName for TUNSETIFF, TUNGETIFF and host queries. Linux and corrected gVisor passed the same nine ioctl cases; stock zeroed a caller-owned byte after the name. The ABI, hostinet and TUN analyzers passed.",
       "evidence": [
         {
@@ -49920,6 +49924,10 @@
         {
           "label": "Earlier TUN proposal: Original reproducer and maintainer diagnosis in 2021",
           "url": "https://github.com/google/gvisor/pull/6035#issuecomment-888710039"
+        },
+        {
+          "label": "Upstream make lint passed after the rules_m4 download recovered",
+          "url": "https://github.com/google/gvisor/actions/runs/42310219567/job/128209510431"
         }
       ],
       "settledReviews": [
@@ -49973,12 +49981,12 @@
       "repo": "google/gvisor",
       "number": 16818,
       "ref": "review/fuse-poll-before-mount",
-      "head": "26a76f4a197a1a0629407b72bc746122feeedcf0",
+      "head": "e561842c9a84cda7f6ac0e19d51263caab2d5ea2",
       "title": "Report poll errors on unattached FUSE devices",
       "url": "https://github.com/google/gvisor/pull/16818",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T18:34:02.855318+00:00",
+      "updatedAt": "2026-11-06T23:18:43.944Z",
       "summary": "Opening /dev/fuse leaves the device unattached. Linux reports POLLERR and allows epoll to watch it. gVisor returned EPERM in the matching poll and epoll cases.",
       "evidence": [
         {
@@ -49988,6 +49996,10 @@
         {
           "label": "Native Linux, stock and corrected gVisor, including mounted controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/41167813105/artifacts/13030461234"
+        },
+        {
+          "label": "Upstream generate retry after the rules_m4 download recovered",
+          "url": "https://github.com/google/gvisor/actions/runs/42310219947/job/128209510760"
         }
       ],
       "settledReviews": [
@@ -50449,12 +50461,12 @@
       "repo": "google/gvisor",
       "number": 16829,
       "ref": "research/oci-tcp-buffer-settings",
-      "head": "e290b349e0d5d5e92ed816f30599112870f5c811",
+      "head": "022322e790d2d6789549699760edfb482befcf19",
       "title": "Honor OCI TCP buffer settings for private network stacks",
       "url": "https://github.com/google/gvisor/pull/16829",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T18:30:15.670469+00:00",
+      "updatedAt": "2026-11-06T23:18:43.944Z",
       "summary": "A private sandbox configured with a 256 MiB TCP buffer ceiling still reported the 4 MiB netstack default. Apply tcp_rmem and tcp_wmem before the first process starts and keep the guest’s current values across restore. All 76 named runtime checks passed with zero skips, including preservation of a guest update.",
       "evidence": [
         {
@@ -50472,6 +50484,10 @@
         {
           "label": "Linux and stock controls in the TCP review guide",
           "url": "https://github.com/google/gvisor/issues/16670"
+        },
+        {
+          "label": "Upstream make lint passed after the apple_support download recovered",
+          "url": "https://github.com/google/gvisor/actions/runs/42310222956/job/128209522140"
         }
       ],
       "settledReviews": [
