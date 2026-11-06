@@ -1,35 +1,47 @@
-name: CI
-
-"on":
+name: Check both DinD TCP restore modes
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/dind-stream-valid-names]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  checkpoint:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 4, persist-credentials: false}
+      - name: Verify the corrected test and TCP restore patch
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/dind-stream"
+          mkdir -p "$d"
+          cp .github/qualification/dind_stream.py "$d/driver.py"
+          test "$(git rev-parse HEAD^)" = 651146baa27da7e0a5539c6cfb254c6170953032
+          test "$(git rev-parse HEAD^^)" = 053b485eaf96468303e31df18d2ca66e1922c5de
+          test "$(git rev-parse HEAD^^^)" = a772fedd6521ac693b8e25a41c01e00f2e023461
+          git switch --detach HEAD^
+          test "$(git rev-parse 'HEAD^{tree}')" = dc85e31172dc96588743f8a3c76be3cee3fe757b
+      - name: Install the signed Ubuntu cross compiler
+        run: |
+          set -euo pipefail
+          if ! command -v aarch64-linux-gnu-g++ >/dev/null; then
+            src="$RUNNER_TEMP/dind-stream/ubuntu.list"
+            echo 'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble main universe' > "$src"
+            echo 'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble-updates main universe' >> "$src"
+            repositories=(-o "Dir::Etc::sourcelist=$src" -o 'Dir::Etc::sourceparts=-')
+            sudo apt-get "${repositories[@]}" -qq update
+            sudo apt-get "${repositories[@]}" -y --no-install-recommends install g++-aarch64-linux-gnu
+          fi
+          /usr/bin/aarch64-linux-gnu-gcc --version
+      - name: Run and retain both original restore cases
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" BAZEL="$(command -v bazel)" \
+            python3 -B "$RUNNER_TEMP/dind-stream/driver.py"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: dind-stream-results
+          path: ${{ runner.temp }}/dind-stream/result.json
+          retention-days: 14
+          if-no-files-found: warn
