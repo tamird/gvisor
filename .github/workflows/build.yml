@@ -1,35 +1,51 @@
-name: CI
-
-"on":
+name: Check the installed musl network plugin with the native systrap stub
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tldk-musl-cross-stubs]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  runtime:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && !github.event.deleted
+    runs-on: ubuntu-22.04
+    timeout-minutes: 110
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Select the reviewed plugin and systrap sources
+        timeout-minutes: 8
+        run: |
+          set -eu
+          d="$RUNNER_TEMP/tldk-llvm"
+          mkdir -p "$d"
+          test "$(git rev-parse HEAD^)" = 90525cec101484487cfc050ca8006c3756a004c7
+          cp .github/qualification/tldk_installed.py "$d/"
+          mkdir -p "$RUNNER_TEMP/plugin-evidence"
+          echo '{"status":"INCOMPLETE","phase":"bootstrap"}' > "$d/receipt.json"
+          donor=442ed51f7e10ba007f686cddc12824c47867dabe
+          git fetch --quiet --no-tags --depth=1 origin "$donor"
+          test "$(git rev-parse HEAD:test/rbe/plugin_programs/external_traffic.py)" = "$(git rev-parse "$donor:test/rbe/plugin_programs/external_traffic.py")"
+          test "$(git rev-parse HEAD:test/rbe/plugin_programs/BUILD)" = "$(git rev-parse "$donor:test/rbe/plugin_programs/BUILD")"
+          for helper in consumer qualify; do git show "$donor:test/rbe/plugin_programs/$helper.py" > "$d/$helper.py"; done
+          ref=fb60e127516defd6aab633f80be09a03022f0737
+          git fetch --quiet --no-tags --depth=1 origin "$ref"
+          for helper in unit_matrix qualification_report; do git show "$ref:test/rbe/$helper.py" > "$d/$helper.py"; done
+          git checkout --detach HEAD^
+          test "$(git rev-parse HEAD^{tree})" = 34521a4d12585467bdb305cc300e657013a6a4df
+          test "$(cat .bazelversion)" = 9.3.1
+          test "$(uname -m)" = x86_64
+          curl -fsSL --retry 3 --max-time 120 https://raw.githubusercontent.com/tamird/gvisor/5d2fe309d11bb2af1e5ffdb02326f4b1d5f6bfaf/test/rbe/native_cross_inputs.py -o "$d/native_cross_inputs.py"
+          echo "b0626fb5ecb5bb9c41d644ced5af036019cbefbeef7975c71878021f6e146653  $d/native_cross_inputs.py" | sha256sum -c -
+          curl -fsSL --retry 3 --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod +x "$d/bazel"
+      - name: Build, install and exercise the plugin runtime
+        timeout-minutes: 98
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$RUNNER_TEMP/tldk-llvm:$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" CARRIER="$GITHUB_SHA" python3 -B "$RUNNER_TEMP/tldk-llvm/tldk_installed.py"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: musl-tldk-runtime
+          path: ${{ runner.temp }}/tldk-llvm/receipt.json
+          if-no-files-found: error
