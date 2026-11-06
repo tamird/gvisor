@@ -1,0 +1,46 @@
+Expose the standard-library notice already present in the pinned Rust
+compiler archive through the public toolchain repository. The notice is
+independent of the target, so one Linux x86-64 distribution supplies this
+documentation without selecting an execution toolchain. Remove this patch
+when rules_rs exposes that public notice target.
+
+Upstream request: https://github.com/hermeticbuild/rules_rs/issues/312
+
+https://github.com/hermeticbuild/rules_rs/blob/7065a7273/rs/private/rustc_repository.bzl
+https://github.com/hermeticbuild/rules_rs/blob/7065a7273/rs/private/toolchains_repository.bzl
+
+diff --git a/rs/private/rustc_repository.bzl b/rs/private/rustc_repository.bzl
+--- a/rs/private/rustc_repository.bzl
++++ b/rs/private/rustc_repository.bzl
+@@ -3,6 +3,8 @@
+ load(":rust_repository_utils.bzl", "RUST_REPOSITORY_COMMON_ATTR", "download_and_extract", "includes_rust_analyzer_proc_macro_srv", "rustc_lib_build_file")
+ 
+ _build_file_tmpl = """\
++exports_files(["share/doc/rust/COPYRIGHT-library.html"])
++
+ filegroup(
+     name = "rustc",
+     srcs = ["bin/rustc{binary_ext}"],
+diff --git a/rs/private/toolchains_repository.bzl b/rs/private/toolchains_repository.bzl
+--- a/rs/private/toolchains_repository.bzl
++++ b/rs/private/toolchains_repository.bzl
+@@ -1,4 +1,19 @@
++load("//rs/toolchains:toolchain_utils.bzl", "sanitize_version")
++
+ def _toolchains_repository_impl(rctx):
++    # The library notice describes the release source, independently of the
++    # target. Use one compiler distribution for this documentation only.
++    rctx.file(
++        "BUILD.bazel",
++        """\
++alias(
++    name = "library_notice",
++    actual = "@rustc_linux_x86_64_{version}//:share/doc/rust/COPYRIGHT-library.html",
++    visibility = ["//visibility:public"],
++)
++""".format(version = sanitize_version(rctx.attr.version)),
++    )
++
+     rctx.file(
+         "rustc/BUILD.bazel",
+         """\
