@@ -1,35 +1,96 @@
-name: CI
-
-"on":
+name: Verify receive processor startup at attachment
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/fdbased-attach-workers]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  endpoint:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Check stock and corrected socket lifetimes on Linux
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          product=8311cfcaedcaf8dfbd221e0a09ef4ff4fd36af37
+          stock=1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d
+          test "$(git rev-parse HEAD^)" = "$product"
+          test "$(git rev-parse HEAD^^)" = "$stock"
+          platform="$RUNNER_TEMP/dispatcher-platform"
+          mkdir "$platform"
+          printf '%s\n' 'module(name="dispatcher_worker")' > "$platform/MODULE.bazel"
+          cat > "$platform/BUILD" <<'BUILD'
+          platform(
+              name = "gnu",
+              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              exec_properties = {
+                  "Arch": "amd64",
+                  "OSFamily": "linux",
+                  "workload-isolation-type": "firecracker",
+                  "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+              },
+              visibility = ["//visibility:public"],
+          )
+          BUILD
+          rc="$RUNNER_TEMP/dispatcher.bazelrc"
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" > "$rc"
+          unset BUILDBUDDY_API_KEY
+          options=(
+            --config=x86_64 --inject_repository="dispatcher_worker=$platform"
+            --extra_execution_platforms=@dispatcher_worker//:gnu --host_platform=@dispatcher_worker//:gnu
+            --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
+            --spawn_strategy=remote --noremote_local_fallback --jobs=100 --nocache_test_results
+            --test_output=all --test_arg=-test.v
+          )
+          owner=//pkg/tcpip/link/fdbased:fdbased_test
+          testfile=pkg/tcpip/link/fdbased/endpoint_test.go
+          git checkout --detach "$stock"
+          git restore --source="$product" -- "$testfile"
+          test "$(git diff --name-only)" = "$testfile"
+          stock_exit=0
+          bazelisk --bazelrc="$rc" test "${options[@]}" --test_filter='^TestCloseBeforeAttach$' "$owner" > "$RUNNER_TEMP/stock.log" 2>&1 || stock_exit=$?
+          git restore -- "$testfile"
+          git checkout --detach "$product"
+          test -z "$(git status --short)"
+          fixed_exit=0
+          bazelisk --bazelrc="$rc" test "${options[@]}" "$owner" > "$RUNNER_TEMP/fixed.log" 2>&1 || fixed_exit=$?
+          race_exit=0
+          bazelisk --bazelrc="$rc" test "${options[@]}" --config=race "$owner" > "$RUNNER_TEMP/race.log" 2>&1 || race_exit=$?
+          python3 - "$RUNNER_TEMP" "$stock_exit" "$fixed_exit" "$race_exit" <<'PYTHON'
+          from pathlib import Path
+          import json, sys
+          root = Path(sys.argv[1])
+          exits = list(map(int, sys.argv[2:]))
+          logs = [(root / (name + ".log")).read_text(errors="replace") for name in ("stock","fixed","race")]
+          cases = ["TestCloseBeforeAttach/Readv", "TestCloseBeforeAttach/RecvMMsg"]
+          result = {
+              "exits": exits,
+              "resource_exhausted": ["Resource Exhausted:" in log for log in logs],
+              "stock_failed_cases": [c for c in cases if "--- FAIL: " + c in logs[0]],
+              "live_worker_diagnostics": logs[0].count("an unattached endpoint left a worker running"),
+              "normal_passed_cases": [c for c in cases if "--- PASS: " + c in logs[1]],
+              "race_passed_cases": [c for c in cases if "--- PASS: " + c in logs[2]],
+              "normal_package_records": sum(x.lstrip().startswith("--- PASS: ") for x in logs[1].splitlines()),
+              "race_package_records": sum(x.lstrip().startswith("--- PASS: ") for x in logs[2].splitlines()),
+          }
+          print(json.dumps(result, indent=2))
+          (root / "endpoint-results.json").write_text(json.dumps(result, indent=2))
+          assert exits == [3, 0, 0] and result["live_worker_diagnostics"] == 2
+          assert all(result[k] == cases for k in ("stock_failed_cases", "normal_passed_cases", "race_passed_cases"))
+          PYTHON
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: fdbased-worker-lifetime
+          path: ${{ runner.temp }}/endpoint-results.json
+          if-no-files-found: warn
+          retention-days: 7
