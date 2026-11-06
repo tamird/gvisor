@@ -75,6 +75,11 @@ TEST(NetworkNamespaceTest, Setns) {
   netns2 = st.st_ino;
   EXPECT_NE(netns1, netns2);
 
+  ASSERT_THAT(unshare(CLONE_NEWNET), SyscallSucceedsWithValue(0));
+  ASSERT_THAT(stat("/proc/thread-self/ns/net", &st), SyscallSucceeds());
+  EXPECT_NE(st.st_ino, netns1);
+  EXPECT_NE(st.st_ino, netns2);
+
   ASSERT_THAT(setns(nsfd.get(), CLONE_NEWNET), SyscallSucceedsWithValue(0));
   ASSERT_THAT(stat("/proc/thread-self/ns/net", &st), SyscallSucceeds());
   netns3 = st.st_ino;
