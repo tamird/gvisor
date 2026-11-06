@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T18:50:20.369Z",
+    "updatedAt": "2026-11-06T19:02:20.279Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -54950,9 +54950,21 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T18:50:14.461Z",
+      "updatedAt": "2026-11-06T19:02:20.279Z",
       "summary": "One remote Bazel invocation on the released LLVM integration recorded all 3,235 presubmit targets. Of 2,874 build-only targets, 2,811 built. Of 361 runnable targets, 344 ran and 342 passed. There were 352 passing shards in 354 fresh remote executions. The sandbox test failed its default-route assertions and the vDSO checker could not start readelf. Three C++ compile actions failed in the NVIDIA driver's Clang parser on the pinned RegisterRef comparator.\n\nOn master before the compiler change, the graph selected all 360 runnable and 2,881 build-only targets from the AMD64 cgroup-v2 presubmit, plus a native uname control. Of the resulting 3,242 roots, 2,650 build-only targets built and 295 tests ran. The OCI and Firecracker workers reported cgroup2fs and observed the expected cache separation for CGROUPV2 true and false. The earlier six-target pilot and full per-owner data are linked.",
       "evidence": [
+        {
+          "label": "Verified vDSO checker with declared llvm-readelf on the original worker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42275316477/artifacts/13533022741"
+        },
+        {
+          "label": "Published supplier migration for the NVIDIA LLVM compiler diagnostics",
+          "url": "https://github.com/google/gvisor/pull/17114"
+        },
+        {
+          "label": "Sandbox route-test fixture from #15866 under validation on the unchanged runtime",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42275765374"
+        },
         {
           "label": "Full released LLVM source run: all 3,235 roots, 352 of 354 fresh remote shards passed, original failures identified",
           "url": "https://github.com/tamird/gvisor/blob/247f6deb6/test/rbe/source-unit-cgroup-v2.md#released-llvm-compiler"
@@ -55074,9 +55086,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "e46a101fc0aebb325ec25977697a012a2e11a11b",
-        "observedAt": "2026-11-06T18:50:14.461Z",
+        "observedAt": "2026-11-06T19:02:20.279Z",
         "disposition": "The contributor requested one remote Bazel graph for CI targets across areas and configurations.",
-        "nextAction": "Qualify the existing LLVM dependency update for the Clang parser and supply readelf to the vDSO checker. Track the sandbox route assertions with #15866. Native uname still lacks a result in the full graph."
+        "nextAction": "Follow the tested vDSO reader fix and #17114 for the NVIDIA driver parser. Check the unchanged sandbox runtime with #15866’s route expectations. Native uname still lacks a result in the full graph."
       }
     },
     {
@@ -55259,6 +55271,43 @@
           "url": "https://github.com/tamird/gvisor/commit/4867d503b"
         }
       ]
+    },
+    {
+      "id": "branch:vdso-declared-readelf",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/vdso-declared-readelf",
+      "head": "466dbf7a9a4ff6d12693d0fa94ba37c2bc353d48",
+      "title": "Declare readelf for the vDSO layout test",
+      "url": "https://github.com/tamird/gvisor/commit/466dbf7a9",
+      "group": "bazel",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T19:02:20.279Z",
+      "summary": "The vDSO layout test invokes readelf from PATH. A remote worker without binutils failed before inspecting the ELF. The standalone fix and the LLVM integration both passed the AMD64 test. The AMD64 checker also passed on the generated ARM64 ELF and rejected a deliberately nonempty .data section.",
+      "evidence": [
+        {
+          "label": "Original failure on the full remote presubmit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42273255642/artifacts/13532960461"
+        },
+        {
+          "label": "Standalone and integration tests, ARM64 ELF and one-byte .data rejection",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42275316477/artifacts/13533022741"
+        },
+        {
+          "label": "Standalone uncached TestRunner",
+          "url": "https://app.buildbuddy.io/invocation/40102cd3-4f97-43f1-aec7-2ca79e7a9d0f"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "466dbf7a9a4ff6d12693d0fa94ba37c2bc353d48",
+        "url": "https://github.com/tamird/gvisor/commit/466dbf7a9",
+        "title": "Declare readelf for the vDSO layout test",
+        "body": "The vDSO test invokes readelf from PATH to inspect the load segments,\nsections and relocations. On a remote worker without binutils the test\nexits before reading the ELF.\n\nPass the toolchain’s llvm-readelf to the checker as a test input. Keep\nthe readelf default for callers that run the exported script directly.",
+        "requestedAt": "2026-11-06T19:02:20.279Z",
+        "summary": "Open the vDSO test input fix? On the original remote worker the checker could not start readelf. With the declared input the test read both AMD64 and ARM64 ELF layouts, and a one-byte .data section failed the intended assertion."
+      }
     }
   ],
   "edges": [
