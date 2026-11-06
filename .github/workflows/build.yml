@@ -1,35 +1,64 @@
-name: CI
-
-"on":
+name: Measure the cgroup filesystem on remote Linux workers
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/rbe-cgroup-worker-mode]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  measure:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Confirm source and coordinator
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = f51a205a8f4afbc5ab41aded070df74951b081ea
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/rbe_cgroup_mode.py' ':!test/rbe_cgroup_mode'
+          command -v bazelisk
+          test "$(cat .bazelversion)" = 9.3.1
+      - name: Run both remote tests and the cache controls
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
+          umask 077
+          export QUALIFY_BAZELRC="$RUNNER_TEMP/cgroup-worker.bazelrc"
+          trap 'rm -f "$QUALIFY_BAZELRC" "$RUNNER_TEMP"/cgroup-worker-mode/*.log "$RUNNER_TEMP"/cgroup-worker-mode/*.bep' EXIT
+          cat > "$QUALIFY_BAZELRC" <<'RC'
+          build:remote-cgroup-worker --remote_executor=grpcs://remote.buildbuddy.io
+          build:remote-cgroup-worker --remote_cache=grpcs://remote.buildbuddy.io
+          build:remote-cgroup-worker --bes_backend=grpcs://remote.buildbuddy.io
+          build:remote-cgroup-worker --bes_results_url=https://app.buildbuddy.io/invocation/
+          build:remote-cgroup-worker --spawn_strategy=remote
+          build:remote-cgroup-worker --noremote_local_fallback
+          build:remote-cgroup-worker --remote_download_outputs=toplevel
+          build:remote-cgroup-worker --extra_execution_platforms=//test/rbe_cgroup_mode:linux_amd64_worker
+          build:remote-cgroup-worker --host_platform=//test/rbe_cgroup_mode:linux_amd64_worker
+          test:remote-cgroup-worker --strategy=TestRunner=remote
+          RC
+          printf 'build:remote-cgroup-worker --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$QUALIFY_BAZELRC"
+          unset BUILDBUDDY_API_KEY
+          python3 .github/qualification/rbe_cgroup_mode.py
+      - name: Validate the sanitized receipt
+        id: safe
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          b=(Path(os.environ["RUNNER_TEMP"])/"cgroup-worker-mode/receipt.json").read_bytes()
+          assert b and len(b)<90000 and not re.search(rb"(?i)x-buildbuddy-api-key|authorization\s*[:=]|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}",b)
+          assert json.loads(b)["source"]=="f51a205a8f4afbc5ab41aded070df74951b081ea"
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.safe.outcome == 'success'
+        with:
+          name: remote-worker-cgroup-mode
+          path: ${{ runner.temp }}/cgroup-worker-mode/receipt.json
+          retention-days: 14
