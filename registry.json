@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T16:05:25.166Z",
+    "updatedAt": "2026-11-06T16:14:27.582Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -53986,12 +53986,12 @@
       "type": "issue",
       "repo": "bazel-contrib/rules_python",
       "number": 2500,
-      "title": "Runfiles for a separately installed Python child",
+      "title": "Let a packaged child select its own runfiles",
       "url": "https://github.com/bazel-contrib/rules_python/issues/2500",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-06T11:35:55.690Z",
-      "summary": "On Linux, a native stage1 prototype exited before starting a separately installed plugin when the parent exported its own runfiles tree. The Bash bootstrap found the plugin in its installation. When the parent declared the child as a dependency, both bootstraps used the parent’s tree. The rules_python change is held while launcher discovery is discussed.",
+      "updatedAt": "2026-11-06T16:14:27.582Z",
+      "summary": "Let a rule name a required runfile so a separately installed child uses its own runfiles when the parent’s tree lacks that file.",
       "evidence": [
         {
           "label": "Two unmodified Linux packages, direct invocation and parent dependency controls",
@@ -54011,9 +54011,9 @@
         "status": "pending",
         "url": "https://github.com/hermeticbuild/hermetic-launcher/issues/new",
         "requestedAt": "2026-11-06T11:35:55.690Z",
-        "title": "How should a packaged Python child find its runfiles?",
-        "summary": "File this question with hermetic-launcher about runfiles selection for the shell-free rules_python bootstrap?",
-        "body": "A Bazel-built Python program can take a separately installed plugin as an argument, like `outer /opt/plugin`. The rules_python Bash bootstrap checks that the inherited runfiles tree contains the child’s stage2 script before using it [1].\n\nWe tested this on Linux while working on bazel-contrib/rules_python#2500. The child ran directly. When a separately packaged parent invoked it, the Bash bootstrap ran the child, but the native prototype using hermetic-launcher 0.0.17 exited 1 before the child’s main. The parent’s tree contained neither the child’s interpreter nor its stage2 script. When the parent declared the child as a dependency, both bootstraps ran it using the parent’s tree [2].\n\nShould hermetic-launcher let a caller specify a file to check before inheriting the runfiles tree, or should rules_python decide which tree to use?\n\n[1]: https://github.com/bazel-contrib/rules_python/blob/26b0a238d/python/private/stage1_bootstrap_template.sh#L99-L104\n[2]: https://github.com/tamird/rules_python/actions/runs/42210914546/artifacts/13498603725\n\nPosted by Codex on behalf of @tamird."
+        "title": "Let a packaged child select its own runfiles",
+        "summary": "Let a rule name a required runfile so a separately installed child uses its own runfiles when the parent’s tree lacks that file.",
+        "body": "Running an independently installed Python plugin from a Bazel-built parent fails before Python starts: the launcher inherits the parent’s `RUNFILES_DIR`, which lacks the plugin’s bootstrap script. The same plugin runs directly. [Reproducer](https://github.com/tamird/rules_python/actions/runs/42210914546/artifacts/13498603725).\n\nI propose letting a rule name one required runfile. `rules_python` would name the child’s stage-two bootstrap. Use the inherited source if it contains that file. Otherwise use the child’s adjacent runfiles for both path resolution and the environment passed to the child.\n\nPosted by Codex on behalf of @tamird."
       }
     },
     {
@@ -54482,7 +54482,7 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T15:58:09.697Z",
+      "updatedAt": "2026-11-06T16:14:27.582Z",
       "summary": "On current master, one Bazel command selects the same 360 runnable tests and 2,881 build-only targets as the AMD64 cgroup-v2 unit presubmit, plus a native uname control. Bazel assigns 366 test shards to OCI workers and five to Firecracker workers with root and IPv6. The two worker probes both measured cgroup2fs with CGROUPV2=true and false. Each setting ran remotely the first time, and both repeat runs reused the cached true result. The full invocation reported all 3,242 target outcomes. It built 2,650 of 2,881 build-only targets and ran 295 of 361 test owners. Of the executed shards, 303 passed, one sandbox test failed, and one netgofer test timed out. Sixty-six test owners, including the native uname control, never built. The GNU compiler was absent on part of the build graph. Replaying the two test owners on #15866 ran both remotely without cache hits and both passed. The cause of the original netgofer timeout remains open.\n\nA single Bazel invocation executed six tests remotely. AMD64 and ARM64 workers ran the Go atomicbitops and C++ posix_error tests. AMD64 workers also ran uname on native Linux and under gVisor systrap. All six TestRunner actions passed uncached. Four of the six tests exercise parts of three presubmit jobs. Two serve as architecture controls. Each of those three jobs still has additional coverage to verify. The fork’s Buildkite file contains one submission command. GitHub Actions submitted it for this trial.\n\nThe previous proposals kept separate unit, Nogo, package, container, smoke, Gazelle, plugin, source-lint and syscall jobs. Their target lists, test fixtures and earlier results are linked. Staged release checks still have distinct artifact inputs.",
       "evidence": [
         {
@@ -54514,8 +54514,8 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42232937931/artifacts/13510273674"
         },
         {
-          "label": "AMD64 cgroup-v2 unit selection: 360 runnable and 2,881 build-only targets; the mixed remote run executed one matching unit test",
-          "url": "https://github.com/tamird/gvisor/blob/5a20420be/test/rbe/source-unit-cgroup-v2.md"
+          "label": "Full remote run of the 3,242 targets, with compiler and sidecar comparisons",
+          "url": "https://github.com/tamird/gvisor/blob/6f6dbc439/test/rbe/source-unit-cgroup-v2.md"
         },
         {
           "label": "One Bazel invocation for both architectures, native Linux and systrap",
