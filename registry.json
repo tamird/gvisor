@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T03:28:51.612533Z",
+    "updatedAt": "2026-11-06T03:37:05.476314Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -52662,6 +52662,43 @@
         "summary": "Post the comment below on the sleeper.Done call at endpoint_test.go:810. The accompanying review body carries attribution.",
         "body": "Could you drop this call from the timed loop? `Sleeper.Done` disconnects wakers for reuse, and each iteration discards the whole dispatcher. [Production removed this call](https://github.com/google/gvisor/commit/88b974cd4) for that reason. With just `release` and `close`, [the benchmark](https://github.com/tamird/gvisor/actions/runs/42154474405/job/127685212376) still measured 9,992 B/op and 31 allocs/op.\n\nReview body:\nPosted by Codex on behalf of @tamird."
       }
+    },
+    {
+      "id": "branch:fdbased-start-on-attach",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/fdbased-start-on-attach",
+      "head": "8311cfcaedcaf8dfbd221e0a09ef4ff4fd36af37",
+      "title": "Start packet processors when the endpoint is attached",
+      "url": "https://github.com/tamird/gvisor/commit/8311cfcae",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T03:37:05.476314Z",
+      "summary": "Closing a newly constructed FD endpoint before it is attached to a NIC leaves its two receive workers running. The change starts them once, on first attachment. Both Readv and RecvMMsg reproduced the leak on stock; all 83 package records passed normally and under the race detector with the fix.",
+      "evidence": [
+        {
+          "label": "Standalone endpoint lifecycle fix",
+          "url": "https://github.com/tamird/gvisor/commit/8311cfcae"
+        },
+        {
+          "label": "Stock worker leaks, corrected normal and race suites",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42156228425/artifacts/13475625402"
+        },
+        {
+          "label": "Native observation of two workers per unused endpoint",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42154474405/job/127685212376"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "8311cfcaedcaf8dfbd221e0a09ef4ff4fd36af37",
+        "url": "https://github.com/tamird/gvisor/commit/8311cfcae",
+        "requestedAt": "2026-11-06T03:37:05.476314Z",
+        "title": "Open the FD endpoint worker-lifetime PR",
+        "summary": "Closing a newly constructed FD endpoint before it is attached to a NIC leaves its two receive workers running. The change starts them once, on first attachment. Both Readv and RecvMMsg reproduced the leak on stock; all 83 package records passed normally and under the race detector with the fix.",
+        "body": "Closing an endpoint before attaching it to a NIC leaves its receive\nprocessors asleep. New starts the goroutines, but only the receive\nloop wakes them on exit. An unattached endpoint never runs that loop.\nWith two processors, both are still running after Close and Wait.\n\nStart the processors when the receive loop starts. Each manager starts\nits workers once so reattaching cannot put two goroutines on the same\nsleeper. A single processor still delivers packets inline."
+      }
     }
   ],
   "edges": [
@@ -74938,5 +74975,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-06T03:28:51.612533Z"
+  "updatedAt": "2026-11-06T03:37:05.476314Z"
 }
