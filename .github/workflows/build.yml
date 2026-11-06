@@ -1,35 +1,90 @@
-name: CI
-
-"on":
+name: Native coverage binaries with with_cfg 1.0.2
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    branches: [qualification/with-cfg-102-native-kcov]
+permissions:
+  contents: read
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  collect:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {cpu: amd64, os: ubuntu-22.04}
+          - {cpu: arm64, os: ubuntu-22.04-arm}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 240
+    continue-on-error: true
+    env:
+      CPU: ${{ matrix.cpu }}
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Select the exact product and the native GNU toolchain
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/with-cfg-native-kcov"
+          mkdir -p "$d"
+          printf '{"cpu":"%s","verified":false,"phase":"preflight"}\n' "$CPU" > "$d/result.json"
+          test "$(git rev-parse HEAD^)" = c2a9426436643ee79e60d34a4e3b6bf4a88decce
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/with_cfg_native.py' ':!.github/qualification/with_cfg_elf.py'
+          cp .github/qualification/with_cfg_{native,elf}.py "$d/"
+          git checkout -q --detach HEAD^
+          test "$(cat .bazelversion)" = 9.3.1
+          if [ "$CPU" = amd64 ]; then
+            test "$(uname -m)" = x86_64
+            checksum=e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76
+            mirror=https://archive.ubuntu.com/ubuntu
+            other_arch=arm64
+            other_cxx=aarch64-linux-gnu-g++
+          else
+            test "$(uname -m)" = aarch64
+            checksum=bb608519a440d45d10304eb684a73a2b6bb7699c5b0e5434361661b25f113a5d
+            mirror=https://ports.ubuntu.com/ubuntu-ports
+            other_arch=amd64
+            other_cxx=x86_64-linux-gnu-g++
+          fi
+          if ! command -v "$other_cxx" >/dev/null || ! dpkg -s libnuma-dev >/dev/null 2>&1; then
+            for suite in jammy jammy-updates; do
+              echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] $mirror $suite main universe"
+            done > "$d/ubuntu.list"
+            opts=(-o "Dir::Etc::sourcelist=$d/ubuntu.list" -o Dir::Etc::sourceparts=- -o Acquire::Retries=3)
+            sudo -n apt-get "${opts[@]}" update -qq
+            sudo -n apt-get "${opts[@]}" install -qq -y --no-install-recommends "crossbuild-essential-$other_arch" libnuma-dev
+          fi
+          curl -fsSL --max-time 120 "https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-$CPU" -o "$d/bazel"
+          echo "$checksum  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+      - name: Build each public flavor and run the existing KCOV syscall case
+        run: python3 -EsB "$RUNNER_TEMP/with-cfg-native-kcov/with_cfg_native.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: with-cfg-102-${{ matrix.cpu }}
+          path: ${{ runner.temp }}/with-cfg-native-kcov/result.json
+          if-no-files-found: warn
+          retention-days: 14
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+  result:
+    needs: collect
+    if: always() && github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 4
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: with-cfg-102-*
+          path: ${{ runner.temp }}/with-cfg-native-kcov/archives
+      - name: Check the two original native results
+        run: |
+          python3 -IB - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          out = Path(os.environ["RUNNER_TEMP"]) / "with-cfg-native-kcov/archives"
+          for arch in ("amd64", "arm64"):
+              data = json.loads((out / ("with-cfg-102-" + arch) / "result.json").read_text())
+              assert data["cpu"] == arch and data["verified"] is True, arch
+          PY
