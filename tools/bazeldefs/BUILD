@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "bzl_library", "string_flag")
+load(":cc.bzl", "using_llvm")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -55,6 +56,8 @@ platform(
     visibility = ["//visibility:public"],
 )
 
+using_llvm(name = "using_llvm")
+
 # Use LLVM's musl sysroot for static race links on the project platforms and
 # on an unmodified Linux host. Do not replace a custom target or toolchain.
 [
@@ -64,10 +67,8 @@ platform(
             "@platforms//cpu:" + cpu,
             "@platforms//os:linux",
         ],
-        values = dict(
-            options,
-            extra_toolchains = "",
-        ),
+        flag_values = {":using_llvm": "True"},
+        values = options,
     )
     for name, cpu, options in [
         (
