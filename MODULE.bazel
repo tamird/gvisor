@@ -969,3 +969,19 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+# Fork qualification of the reporter's pinned in-process TCP workload.
+http_archive(
+    name = "tcp_replay_fixture",
+    build_file_content = """filegroup(name = "sources", srcs = glob(["*.go"]), visibility = ["//visibility:public"])""",
+    dev_dependency = True,
+    patch_args = ["-p1"],
+    patches = [
+        "//test/tcp_recovery_replay:main-observations.patch",
+        "//test/tcp_recovery_replay:wire-observations.patch",
+    ],
+    sha256 = "5e2d5f8d2fc1ccefcb9d7897fcd0d064ad05cbb7bf61735ca9d7b2a0d9155431",
+    strip_prefix = "netstack-rack-repro-f72f18f2f7fe0e5ea4151b51ce3f67d68b3b05e2",
+    type = "tar.gz",
+    urls = ["https://codeload.github.com/adios-404/netstack-rack-repro/tar.gz/f72f18f2f7fe0e5ea4151b51ce3f67d68b3b05e2"],
+)
