@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T22:26:02.069Z",
+    "updatedAt": "2026-11-06T22:29:56.883Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -55654,9 +55654,9 @@
       "title": "Allow TCP timeout repair after fast retransmissions",
       "url": "https://github.com/tamird/gvisor/commit/4867d503b",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-06T19:36:10.962Z",
-      "summary": "Upstream #17113 addresses the same premature timeout as this fork patch. Compare the two on the existing heavy-loss and TCP_USER_TIMEOUT cases before deciding whether any separate change is useful.\n\nUnder the loss burst reported on #16081, master closed a TCP connection on its second retransmission timeout. Sixteen sends of the first missing segment exhausted the configured limit of 15, including fast retransmits. This change measures how long data remains unacknowledged across timer expirations. All six heavy-loss transfers finished with the fix. The comparison covers the timeout decision independently of #16081’s recovery-performance changes.\n\nA second packet test sets TCP_USER_TIMEOUT. Before the fix, the socket closed with ETIMEDOUT when newly outstanding data was only 497 ms old on an 800 ms timeout. Linux and the fix both transmitted the fourth segment. The submitted source drops six telemetry-only lines from the tested fixture.",
+      "status": "Approved; waiting for #16419",
+      "updatedAt": "2026-11-06T22:29:56.883Z",
+      "summary": "Under the loss burst reported on #16081, master closed a TCP connection on its second retransmission timeout. Sixteen sends of the first missing segment exhausted the configured limit of 15, including fast retransmits. This change measures how long data remains unacknowledged across timer expirations. All six heavy-loss transfers finished with the fix. The comparison covers the timeout decision independently of #16081’s recovery-performance changes.\n\nA second packet test sets TCP_USER_TIMEOUT. Before the fix, the socket closed with ETIMEDOUT when newly outstanding data was only 497 ms old on an 800 ms timeout. Linux and the fix both transmitted the fourth segment. The submitted source drops six telemetry-only lines from the tested fixture.",
       "evidence": [
         {
           "label": "Competing upstream fix counts timeouts after an advancing ACK",
@@ -55704,9 +55704,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "4867d503b71f6c13f0346778ca61373df04ed0ae",
-        "observedAt": "2026-11-06T19:36:10.962Z",
+        "observedAt": "2026-11-06T22:29:56.883Z",
         "disposition": "Contributor approved this source for submission after #16419. The author closed upstream #17113 unmerged.",
-        "nextAction": "Wait for #16419. Compare the separate timeout changes with the closed #17113 implementation; that comparison does not impose an upstream merge prerequisite.",
+        "nextAction": "Open the approved change after #16419 lands. #17113 closed without merging.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17113",
           "https://github.com/tamird/gvisor/commit/4867d503b"
@@ -55927,9 +55927,9 @@
       "head": "de11f9e09290b75ab5aa7291fb0d308244b72067",
       "ref": "proposal/tcp-user-timeout-outstanding-flight",
       "status": "Published as #17128",
-      "updatedAt": "2026-11-06T20:48:54.951Z",
+      "updatedAt": "2026-11-06T22:29:56.883Z",
       "title": "Keep TCP_USER_TIMEOUT tied to the oldest outstanding data",
-      "summary": "The sender can time out new data at the old flight’s deadline and give its next retransmission the shortened timer. The two commits track which flight is still outstanding and retain the backed-off RTO. Linux and gVisor agreed on all four socket outcomes, with backed-off RTOs of 1.64 s and 1.60 s. Their exact retransmitted byte ranges differed in the partial-ACK case.",
+      "summary": "The sender can time out new data at the old flight’s deadline and give its next retransmission the shortened timer. The sender now tracks the last byte of the old flight and keeps the backed-off retransmission interval for the next send. Linux and gVisor agreed on all four socket outcomes, with backed-off RTOs of 1.64 s and 1.60 s. Their exact retransmitted byte ranges differed in the partial-ACK case.",
       "url": "https://github.com/tamird/gvisor/commit/de11f9e09",
       "evidence": [
         {
@@ -56130,8 +56130,8 @@
       "url": "https://github.com/google/gvisor/pull/17128",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T20:48:54.951Z",
-      "summary": "The sender can time out new data at the old flight’s deadline and give its next retransmission the shortened timer. The two commits track which flight is still outstanding and retain the backed-off RTO. Linux and gVisor agreed on all four socket outcomes, with backed-off RTOs of 1.64 s and 1.60 s. Their exact retransmitted byte ranges differed in the partial-ACK case.",
+      "updatedAt": "2026-11-06T22:29:56.883Z",
+      "summary": "The sender can time out new data at the old flight’s deadline and give its next retransmission the shortened timer. The sender now tracks the last byte of the old flight and keeps the backed-off retransmission interval for the next send. Linux and gVisor agreed on all four socket outcomes, with backed-off RTOs of 1.64 s and 1.60 s. Their exact retransmitted byte ranges differed in the partial-ACK case.",
       "evidence": [
         {
           "label": "The previously tested two commits have an identical tree",
