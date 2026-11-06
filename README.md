@@ -358,6 +358,10 @@ reviewer's concern has been resolved.
 During each steering sweep, link proposed new PRs to the single commit a
 contributor is being asked to send. Keep range-diffs in the evidence. If a
 series is necessary, explain why and link its constituent commits separately.
+For an amendment to a published PR, include the runnable range-diff command
+in the decision summary and in the outgoing question to the contributor. Put it
+on its own line as plain text, without quoting or fencing it. Compare the
+published commit or series with the exact proposed replacement.
 
 The active gVisor supervisor runs
 `python3 update-status.py --incoming-review-handoff` from this checkout at

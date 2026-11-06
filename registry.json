@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T21:55:33.037Z",
+    "updatedAt": "2026-11-06T21:59:06.193Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -6545,22 +6545,27 @@
       "group": "bazel",
       "status": "open",
       "head": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-      "updatedAt": "2026-11-06T21:38:31.977Z",
-      "summary": "The published ARM64 Go test was assigned an AMD64 worker. The proposed revision constrains each test’s execution group and extends rules_cc’s supported C++ test rule so its runner takes the target transition. From an AMD64-targeted Bazel 9.3.1 invocation, all three PosixError cases ran uncached on a native ARM64 worker using the pinned rules_cc 0.2.25. The test executable was AArch64. Its configured dependencies included link_extra_lib, and both public .dwp and .stripped output labels resolved. Separate native AMD64 ordinary and configured macro-caller controls passed under Bazel 7.7.2, 8.8.2 and 9.3.1, including the injected link symbol.",
+      "updatedAt": "2026-11-06T21:59:06.193Z",
+      "summary": "The published source assigned an ARM64 Go test to an AMD64 worker. The fork correction uses the supported rules_cc test rule and selects the native test worker. With declared LLVM on integration 8608d36e5, one invocation ran 10,933 atomicbitops cases and three PosixError cases on each native architecture. Tamir requested updating with_cfg to 1.0.2 before reviewing a replacement commit.",
       "followup": {
-        "owner": "Contributor",
+        "owner": "Agent",
         "sourceHead": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-        "observedAt": "2026-11-06T21:38:31.977Z",
-        "disposition": "The gVisor-only source uses the existing public rules_cc extension API.",
-        "nextAction": "Review the single replacement commit for #15370.",
+        "observedAt": "2026-11-06T21:59:06.193Z",
+        "disposition": "Contributor requested a with_cfg 1.0.2 revision.",
+        "nextAction": "Check with_cfg 1.0.2 on the revised source. Include the plain range-diff command from the published head in both its amendment card and the outgoing review question.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/5f651fdc0",
+          "https://github.com/tamird/gvisor/actions/runs/42299934575/artifacts/13543547403",
           "https://github.com/tamird/gvisor/actions/runs/42297038959/artifacts/13542766701"
         ]
       },
       "number": 15370,
       "reviewDecision": null,
       "evidence": [
+        {
+          "label": "Integrated declared LLVM run on 8608d36e5: four uncached native tests in one invocation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42299934575/artifacts/13543547403"
+        },
         {
           "label": "Unpatched rules_cc, three real ARM64 C++ cases, and separate native AMD64 caller compatibility tests",
           "url": "https://github.com/tamird/gvisor/actions/runs/42297038959/artifacts/13542766701"
@@ -6606,7 +6611,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42272993483/artifacts/13537866543"
         },
         {
-          "label": "Qualification in progress on this published head",
+          "label": "Original qualification on the published head",
           "url": "https://github.com/tamird/gvisor/actions/runs/42272993483"
         },
         {
@@ -6636,17 +6641,18 @@
           "base": "f51a205a8f4afbc5ab41aded070df74951b081ea"
         }
       },
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "baseHead": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-        "head": "5f651fdc090433d2f5f8d370793e57e90745c40f",
-        "url": "https://github.com/tamird/gvisor/commit/5f651fdc0",
-        "requestedAt": "2026-11-06T21:38:31.977Z",
-        "title": "Run Go and C++ tests on native architectures",
-        "body": "The test runner for a C++ test can still target AMD64 when its binary\nhas been cross-compiled for ARM64. Select the target platform on the\ntest rule itself and constrain its test execution group to a native\nworker. Use the real C++ test rule exported by rules_cc for inheritance\nso its test transition also applies to the runner.\n\nAdd optional architecture variants to Go and C++ test declarations.\nProvide suites for atomicbitops and posix_error so one invocation can\nexercise both architectures. Ordinary test targets remain available.",
-        "summary": "May I replace the single commit on #15370 with the gVisor-only correction? From an AMD64-targeted Bazel 9.3.1 invocation, all three PosixError cases ran uncached on a native ARM64 worker using the pinned rules_cc 0.2.25. The test executable was AArch64. Its configured dependencies included link_extra_lib, and both public .dwp and .stripped output labels resolved. Separate native AMD64 ordinary and configured macro-caller controls passed under Bazel 7.7.2, 8.8.2 and 9.3.1, including the injected link symbol."
-      }
+      "settledReviews": [
+        {
+          "kind": "amendment",
+          "head": "5f651fdc090433d2f5f8d370793e57e90745c40f",
+          "url": "https://github.com/tamird/gvisor/commit/5f651fdc0",
+          "title": "Run Go and C++ tests on native architectures",
+          "body": "The test runner for a C++ test can still target AMD64 when its binary\nhas been cross-compiled for ARM64. Select the target platform on the\ntest rule itself and constrain its test execution group to a native\nworker. Use the real C++ test rule exported by rules_cc for inheritance\nso its test transition also applies to the runner.\n\nAdd optional architecture variants to Go and C++ test declarations.\nProvide suites for atomicbitops and posix_error so one invocation can\nexercise both architectures. Ordinary test targets remain available.",
+          "outcome": "changes-requested",
+          "at": "2026-11-06T21:59:06.193Z",
+          "note": "Tamir asked to use with_cfg 1.0.2 and to include the range-diff in the amendment question."
+        }
+      ]
     },
     {
       "id": "pr:15371",
@@ -37041,7 +37047,7 @@
         }
       ],
       "status": "open",
-      "updatedAt": "2026-11-04T05:00:25.863097+00:00",
+      "updatedAt": "2026-11-06T21:59:06.193Z",
       "followup": {
         "owner": "Contributor",
         "sourceHead": "1dac5af96591bcb90e7d210b6edf3eaa365aa299",
@@ -37084,7 +37090,7 @@
         "url": "https://github.com/tamird/gvisor/commit/e216e3075",
         "title": "Run Buildifier and cpplint on declared inputs",
         "requestedAt": "2026-11-01T17:58:13.420713+00:00",
-        "summary": "Publish the lint-only amendment after #16736 imports?",
+        "summary": "Publish the lint-only amendment after #16736 imports?\n\ngit -C ~/code/gvisor range-diff ac7b4e0fd..1dac5af96 0b1ad2d6d..e216e3075",
         "body": "Run both tools through //tools/lint:check with declared tools and inputs. The inventory also handles removal and recreation of a source directory on Bazel 9. The prerequisite supplies bazel_lib 3.4.0. The amendment adds no dependency version change. The qualified tree checked 624 Buildifier files and 485 C/C++ files. Malformed inputs produced Buildifier exit 4 and cpplint exit 1, and Bazel reported failure. The existing public PR is still at 1dac5af96."
       }
     },
