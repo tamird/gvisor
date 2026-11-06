@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T20:55:07.008Z",
+    "updatedAt": "2026-11-06T21:02:48.594Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -6537,14 +6537,14 @@
       "group": "bazel",
       "status": "open",
       "head": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-      "updatedAt": "2026-11-06T20:55:07.008Z",
+      "updatedAt": "2026-11-06T21:02:48.594Z",
       "summary": "Bazel 9 sent the published ARM64 atomicbitops binary to AMD64. Constraining the test execution group let all 10,933 atomicbitops records pass on native ARM64. With declared LLVM, all three PosixError cases also passed on native AMD64. The ARM64 C++ test did not start. Its wrapper still targets AMD64 even though the test execution group selects ARM64, and Bazel rejects that target/worker combination.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-        "observedAt": "2026-11-06T20:55:07.008Z",
+        "observedAt": "2026-11-06T21:02:48.594Z",
         "disposition": "The two action graphs establish the placement change. The physical native ARM64 Go test passed on the fork.",
-        "nextAction": "Repair the cross-configured C++ test wrapper, then run the three PosixError cases on a native ARM64 worker within an AMD64-targeted invocation.",
+        "nextAction": "Check the fork’s public rules_cc initializer on ARM64, including the three PosixError cases, direct link dependency and public output labels.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42290157453",
           "https://github.com/tamird/gvisor/actions/runs/42288153554/artifacts/13537709088",
@@ -6556,6 +6556,10 @@
       "number": 15370,
       "reviewDecision": null,
       "evidence": [
+        {
+          "label": "One ARM64 C++ test with the public rules_cc initializer (in progress)",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42293336254"
+        },
         {
           "label": "Bazel’s ARM64 C++ test toolchain diagnostic",
           "url": "https://github.com/tamird/gvisor/actions/runs/42291654204/artifacts/13540271598"
@@ -11881,8 +11885,8 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/efa9acfb4",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T20:45:16.012Z",
-      "summary": "The ABI test used git to fetch each supported NVIDIA driver. The proposed change feeds the parser declared archives, using the Clang headers from #17112 and the parser dependency from #17114. With network access denied, all 25 versions with a source release passed parity and TestParser passed. The nine versions with no public tag were recorded as skips. A separate test still checks the live installer checksums. Its previous run failed TLS verification on all 34 versions.",
+      "updatedAt": "2026-11-06T21:02:48.594Z",
+      "summary": "The ABI test used git to fetch each supported NVIDIA driver. The proposed change feeds the parser declared archives, using the Clang headers from #17112 and the parser dependency from #17114. With network access denied, all 25 versions with a source release passed parity and TestParser passed. The nine versions with no public tag were recorded as skips. A separate test still checks the live installer checksums. The full compiler presubmit passed all 34 live installer checks with declared trust roots.",
       "followup": {
         "sourceHead": "efa9acfb4e2d91c5944c166a9f2269e0b3ba4322",
         "observedAt": "2026-11-06T20:45:16.012Z",
@@ -50943,9 +50947,13 @@
       "url": "https://github.com/google/gvisor/issues/16908",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T19:19:07.294Z",
-      "summary": "Lorenzo captured both ends of 14 failed exchanges. In every pair the client reset a copy of the SYN-ACK from the bridge MAC with a changed source port. The server received the reset on port 9000 before accepting the connection. The first public runsc release containing bridge fix d4be3ed28 is 20261012.0. Its inclusion in the affected GKE version is still open.\n\nA matched comparison of source-built July runsc 9f3e9a3fb and July plus only the landed bridge change d4be3ed28 (9ffcd1079) recorded two ECONNRESETs in 4,000 stock exchanges and none in 4,000 patched exchanges. Each arm ran 2,000 exchanges per close order in a separate offline Linux VM. Both stock errors were server-first: one on sendall and one on recv_echo.",
+      "updatedAt": "2026-11-06T21:02:48.594Z",
+      "summary": "Lorenzo captured both ends of 14 failed exchanges. In every pair the client reset a copy of the SYN-ACK from the bridge MAC with a changed source port. The server received the reset on port 9000 before accepting the connection. The first public runsc release containing bridge fix d4be3ed28 is 20261012.0. We asked Lucas whether GKE Sandbox v1.36.4-gke.2377000 includes the fix.\n\nA matched comparison of source-built July runsc 9f3e9a3fb and July plus only the landed bridge change d4be3ed28 (9ffcd1079) recorded two ECONNRESETs in 4,000 stock exchanges and none in 4,000 patched exchanges. Each arm ran 2,000 exchanges per close order in a separate offline Linux VM. Both stock errors were server-first: one on sendall and one on recv_echo.",
       "evidence": [
+        {
+          "label": "Reply to Lorenzo and question to Lucas about the GKE release",
+          "url": "https://github.com/google/gvisor/issues/16908#issuecomment-6695459302"
+        },
         {
           "label": "Lorenzo’s captures from both endpoints",
           "url": "https://github.com/google/gvisor/issues/16908#issuecomment-6688383442"
@@ -50998,17 +51006,15 @@
           "at": "2026-11-03T19:39:33Z",
           "outcome": "approved",
           "url": "https://github.com/google/gvisor/issues/16908#issuecomment-6613679645"
+        },
+        {
+          "kind": "reply",
+          "body": "Thank you for capturing both ends. In all 14 failed exchanges, the client saw a copy of the server’s SYN-ACK from the bridge MAC with its source port changed. The client reset that port, and the server saw the same reset translated back to 9000 before it accepted the connection. That puts the failure in the handshake, before either side chooses who closes first.\n\n[d4be3ed28](https://github.com/google/gvisor/commit/d4be3ed28) stops delivering transit unicast to the bridge’s local IP stack, which removes the routed copy in this path. With just that change our July Docker fixture went from 2 resets in 4,000 exchanges to 0 in 4,000. [Matched runs](https://github.com/tamird/gvisor/actions/runs/41910309875/artifacts/13364018365)\n\nThe first public runsc release containing the fix is [20261012.0](https://github.com/google/gvisor/releases/tag/release-20261012.0). @manninglucas, can you confirm whether GKE Sandbox v1.36.4-gke.2377000 includes that fix, or point us to the person who can?\n\nPosted by Codex on behalf of @tamird.",
+          "at": "2026-11-06T21:01:37Z",
+          "outcome": "posted",
+          "url": "https://github.com/google/gvisor/issues/16908#issuecomment-6695459302"
         }
-      ],
-      "contributorReview": {
-        "kind": "reply",
-        "status": "pending",
-        "requestedAt": "2026-11-06T19:19:07.294Z",
-        "url": "https://github.com/google/gvisor/issues/16908#issuecomment-6688383442",
-        "title": "Reply to Lorenzo about the reset during the TCP handshake",
-        "summary": "Confirm the common handshake failure in the 14 paired captures and ask whether the affected GKE version contains the bridge fix.",
-        "body": "Thank you for capturing both ends. In all 14 failed exchanges, the client saw a copy of the server’s SYN-ACK from the bridge MAC with its source port changed. The client reset that port, and the server saw the same reset translated back to 9000 before it accepted the connection. That puts the failure in the handshake, before either side chooses who closes first.\n\n[d4be3ed28](https://github.com/google/gvisor/commit/d4be3ed28) stops delivering transit unicast to the bridge’s local IP stack, which removes the routed copy in this path. With just that change our July Docker fixture went from 2 resets in 4,000 exchanges to 0 in 4,000. [Matched runs](https://github.com/tamird/gvisor/actions/runs/41910309875/artifacts/13364018365)\n\nThe first public runsc release containing the fix is [20261012.0](https://github.com/google/gvisor/releases/tag/release-20261012.0). Can someone on the GKE side confirm whether v1.36.4-gke.2377000 includes it?\n\nPosted by Codex on behalf of @tamird."
-      }
+      ]
     },
     {
       "id": "branch:tcp-info-cookie-send-error",
@@ -55179,9 +55185,13 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T20:48:54.951Z",
-      "summary": "The full source presubmit on the canonical AMD64 worker ran 373 fresh remote test shards. Of those, 371 passed. The docprocessor and Python sandbox tests failed. Of 2,880 build-only targets, 2,876 succeeded and four legacy coverage genrules failed. All 34 live NVIDIA installer checks passed. ABI parity passed on the 25 versions with published source; the nine absent versions were skipped. All six netgofer cases passed. Earlier full-run, worker-placement and cache comparisons remain in the evidence. The four coverage genrules stopped at a missing curl in tools/build_cover.sh. Docprocessor could not create its container on the read-only OCI filesystem. Sandbox Python reported six EBUSYs during temporary-directory cleanup and an undeleted runtime directory.",
+      "updatedAt": "2026-11-06T21:02:48.594Z",
+      "summary": "The full source presubmit on the canonical AMD64 worker ran 373 fresh remote test shards. Of those, 371 passed. The docprocessor and Python sandbox tests failed. Of 2,880 build-only targets, 2,876 succeeded and four legacy coverage genrules failed. All 34 live NVIDIA installer checks passed. ABI parity passed on the 25 versions with published source; the nine absent versions were skipped. All six netgofer cases passed. Earlier full-run, worker-placement and cache comparisons remain in the evidence. The four coverage genrules stopped at a missing curl in tools/build_cover.sh. Docprocessor could not create its container on the read-only OCI filesystem. Sandbox Python reported six EBUSYs during temporary-directory cleanup and an undeleted runtime directory. Both failing test owners passed in a focused remote run. Docprocessor ran on the namespace worker. With the existing namespace cleanup, Python ran 39 tests on the root worker, including one expected skip.",
       "evidence": [
+        {
+          "label": "Fresh remote docprocessor and Python sandbox results with corrected placement and cleanup",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42292079622/artifacts/13539248755"
+        },
         {
           "label": "Original diagnostics for docprocessor, six Python cleanup errors and four coverage Genrules",
           "url": "https://github.com/tamird/gvisor/actions/runs/42290920335/artifacts/13539767012"
@@ -55371,9 +55381,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "e46a101fc0aebb325ec25977697a012a2e11a11b",
-        "observedAt": "2026-11-06T20:48:54.951Z",
+        "observedAt": "2026-11-06T21:02:48.594Z",
         "disposition": "Two tests and four legacy coverage build owners failed on the complete graph.",
-        "nextAction": "Compare #16507’s declared Go coverage builds against the four missing-curl failures. Give docprocessor the execution environment its container needs and compare the existing Python cleanup fix against the six EBUSY results.",
+        "nextAction": "Compare #16507’s declared Go coverage builds against the four missing-curl failures. Apply the two qualified test changes to the next full presubmit.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42283984978/artifacts/13537369674",
           "https://github.com/tamird/gvisor/actions/runs/42283984978",
