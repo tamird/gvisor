@@ -22,19 +22,26 @@ def inspect(result, scenario):
     }
     # A stock sender may exhaust the reporter's 35-second read deadline. Keep
     # the byte count and packet trace for this outcome as well as for success.
-    if (os.getenv("M003_OBSERVE_DEADLINE") == "1" and scenario == "burst24"
-        and result.get("complete") is False and 34 <= result["duration_seconds"] <= 42
-        and 0 < result["received_bytes"] < expected["expected_bytes"]):
+    at_deadline = (os.getenv("M003_OBSERVE_DEADLINE") == "1" and scenario == "burst24"
+                   and result.get("complete") is False and 34 <= result["duration_seconds"] <= 42
+                   and 0 < result["received_bytes"] < expected["expected_bytes"])
+    if at_deadline:
         expected.update(complete=False, integrity_ok=False, read_error=True,
                         received_bytes=result["received_bytes"])
-    errors = [f"{k}: got {result.get(k)!r}, want {v!r}" for k, v in expected.items() if result.get(k) != v]
     positions, dropped = {}, []
     for event in result["events"]:
         if event["direction"] == "service_to_client" and event["length"] > 0:
             position = positions.setdefault(event["seq"], len(positions) + 1)
             if event["dropped"]:
                 dropped.append([position, event["copy"]])
-    if dropped != [[number, 1] for number in (range(101, 125) if scenario == "burst24" else ())]:
+    # The reporter can drop a first transmission only if the sender makes it.
+    end = min(124, len(positions)) if at_deadline else 124
+    loss_positions = range(101, end + 1) if scenario == "burst24" else ()
+    expected["injected_drops"] = len(loss_positions)
+    errors = [f"{k}: got {result.get(k)!r}, want {v!r}" for k, v in expected.items() if result.get(k) != v]
+    if at_deadline and not loss_positions:
+        errors.append("sender stopped before the configured loss burst")
+    if dropped != [[number, 1] for number in loss_positions]:
         errors.append(f"unexpected loss schedule: {dropped}")
     return errors, dropped
 
