@@ -1,35 +1,89 @@
-name: CI
-
-"on":
+name: Check the ARM64 source presubmit and its native uname test
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-arm64-source-uname]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  measure:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 91
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Prepare the existing Linux source profile for ARM64
+        run: |
+          set -eu
+          area="$RUNNER_TEMP/arm64-namespace-presubmit"
+          mkdir -p "$area/results"
+          test "$(git rev-parse HEAD^)" = 127967d3179491381f2a85e4804ae8236fc89e35
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/arm64_presubmit/probe.py' ':!.github/qualification/arm64_presubmit/image_execution.py'
+          test "$(git hash-object .github/qualification/arm64_presubmit/image_execution.py)" = 1ec34b0f063d36f563005c93cd47b5bb16b3872a
+          cp .github/qualification/arm64_presubmit/{probe,image_execution}.py "$area/"
+          git checkout -q --detach HEAD^
+          test "$(cat .bazelversion)" = 9.3.1
+          test "$(stat -fc %T /sys/fs/cgroup)" = cgroup2fs
+          test "$(uname -m)" = x86_64
+          curl -fsSL --max-time 90 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$area/bazelisk"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $area/bazelisk" | sha256sum -c -
+          chmod 755 "$area/bazelisk"
+          echo "$area" >> "$GITHUB_PATH"
+          python3 -EsB "$area/probe.py" profile
+      - name: Execute only the unchanged uname test using the ARM64 Firecracker selector
+        timeout-minutes: 37
+        continue-on-error: true
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?missing fork key}"
+          area="$RUNNER_TEMP/arm64-namespace-presubmit"
+          rc="$area/remote.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          cat > "$rc" <<'RC'
+          build:arm-source --remote_executor=grpcs://remote.buildbuddy.io
+          build:arm-source --remote_cache=grpcs://remote.buildbuddy.io
+          build:arm-source --bes_backend=grpcs://remote.buildbuddy.io
+          build:arm-source --bes_results_url=https://app.buildbuddy.io/invocation/
+          RC
+          printf 'build:arm-source --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          python3 -EsB "$area/probe.py" remote
+      - name: Extract the scheduler, CPU and individual syscall case evidence
+        if: always() && !cancelled()
+        continue-on-error: true
+        run: |
+          area="$RUNNER_TEMP/arm64-namespace-presubmit"
+          test ! -e "$area/remote.bazelrc"
+          python3 -EsB "$area/probe.py" collect
+      - name: Inventory the ARM64 roots and TestRunner actions without executing them
+        if: always() && !cancelled()
+        continue-on-error: true
+        timeout-minutes: 38
+        run: |
+          area="$RUNNER_TEMP/arm64-namespace-presubmit"
+          test ! -e "$area/remote.bazelrc"
+          python3 -EsB "$area/probe.py" inventory
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: arm64-source-presubmit-and-uname
+          path: |
+            ${{ runner.temp }}/arm64-namespace-presubmit/results/native_status.json
+            ${{ runner.temp }}/arm64-namespace-presubmit/results/native.json
+            ${{ runner.temp }}/arm64-namespace-presubmit/results/inventory.json
+            ${{ runner.temp }}/arm64-namespace-presubmit/results/owners.tsv
+            ${{ runner.temp }}/arm64-namespace-presubmit/results/test_actions.tsv
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Require both original results
+        if: always() && !cancelled()
+        run: |
+          python3 -IB - <<'PY'
+          import json, os
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])/"arm64-namespace-presubmit/results"
+          assert all(json.loads((root/(name+".json")).read_text())["verified"] is True for name in ("native","inventory"))
+          PY
