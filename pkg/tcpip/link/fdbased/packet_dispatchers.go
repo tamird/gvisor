@@ -177,8 +177,11 @@ func newReadVDispatcher(fd int, e *endpoint, opts *Options) (linkDispatcher, err
 	skipsVnetHdr := d.e.gsoKind == stack.HostGSOSupported
 	d.buf = newIovecBuffer(BufConfig, skipsVnetHdr)
 	d.mgr = newProcessorManager(opts, e)
-	d.mgr.start()
 	return d, nil
+}
+
+func (d *readVDispatcher) start() {
+	d.mgr.start()
 }
 
 func (d *readVDispatcher) release() {
@@ -268,9 +271,12 @@ func newRecvMMsgDispatcher(fd int, e *endpoint, opts *Options) (linkDispatcher, 
 	}
 	d.gro.Init(opts.GRO)
 	d.mgr = newProcessorManager(opts, e)
-	d.mgr.start()
 
 	return d, nil
+}
+
+func (d *recvMMsgDispatcher) start() {
+	d.mgr.start()
 }
 
 func (d *recvMMsgDispatcher) release() {

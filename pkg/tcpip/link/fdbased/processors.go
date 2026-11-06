@@ -44,8 +44,7 @@ type processor struct {
 	closeWaker  sleep.Waker
 }
 
-func (p *processor) start(wg *sync.WaitGroup) {
-	defer wg.Done()
+func (p *processor) start() {
 	for {
 		switch w := p.sleeper.Fetch(true); {
 		case w == &p.packetWaker:
@@ -89,9 +88,11 @@ func (p *processor) deliverPackets() {
 type processorManager struct {
 	processors []processor
 	seed       uint32
-	wg         sync.WaitGroup `state:"nosave"`
 	e          *endpoint
 	ready      []bool
+
+	// Reattaching the endpoint must not start a second goroutine on a sleeper.
+	startOnce sync.Once `state:"nosave"`
 }
 
 // newProcessorManager creates a new processor manager.
@@ -101,7 +102,6 @@ func newProcessorManager(opts *Options, e *endpoint) *processorManager {
 	m.ready = make([]bool, opts.ProcessorsPerChannel)
 	m.processors = make([]processor, opts.ProcessorsPerChannel)
 	m.e = e
-	m.wg.Add(opts.ProcessorsPerChannel)
 
 	for i := range m.processors {
 		p := &m.processors[i]
@@ -117,13 +117,14 @@ func newProcessorManager(opts *Options, e *endpoint) *processorManager {
 // start starts the processor goroutines if the processor manager is configured
 // with more than one processor.
 func (m *processorManager) start() {
-	for i := range m.processors {
-		p := &m.processors[i]
-		// Only start processor in a separate goroutine if we have multiple of them.
-		if len(m.processors) > 1 {
-			go p.start(&m.wg)
-		}
+	if len(m.processors) < 2 {
+		return
 	}
+	m.startOnce.Do(func() {
+		for i := range m.processors {
+			go m.processors[i].start()
+		}
+	})
 }
 
 // afterLoad is invoked by stateify.

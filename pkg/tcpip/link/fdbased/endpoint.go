@@ -58,6 +58,7 @@ import (
 // NetworkDispatcher.
 type linkDispatcher interface {
 	Stop()
+	start()
 	dispatch() (bool, tcpip.Error)
 	release()
 	close()
@@ -890,6 +891,7 @@ func (e *endpoint) InjectOutbound(dest tcpip.Address, packet *buffer.View) tcpip
 // dispatchLoop reads packets from the file descriptor in a loop and dispatches
 // them to the network stack.
 func (e *endpoint) dispatchLoop(inboundDispatcher linkDispatcher) tcpip.Error {
+	inboundDispatcher.start()
 	for {
 		cont, err := inboundDispatcher.dispatch()
 		if err != nil || !cont {
