@@ -213,6 +213,10 @@ type Options struct {
 	// used for this endpoint.
 	PacketDispatchMode PacketDispatchMode
 
+	// DetectSeqpacketEOF marks real AF_UNIX records with receive timestamps so
+	// that batched reads can distinguish an empty record from peer shutdown.
+	DetectSeqpacketEOF bool
+
 	// TXChecksumOffload if true, indicates that this endpoints capability
 	// set should include CapabilityTXChecksumOffload.
 	TXChecksumOffload bool

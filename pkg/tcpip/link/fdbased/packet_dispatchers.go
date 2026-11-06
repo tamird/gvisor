@@ -218,6 +218,8 @@ func (d *readVDispatcher) dispatch() (bool, tcpip.Error) {
 //
 // +stateify savable
 type recvMMsgDispatcher struct {
+	detectEOF bool
+
 	stopfd.StopFD
 	// fd is the file descriptor used to send and receive packets.
 	fd int
@@ -251,16 +253,22 @@ const (
 )
 
 func newRecvMMsgDispatcher(fd int, e *endpoint, opts *Options) (linkDispatcher, error) {
+	if opts.DetectSeqpacketEOF {
+		if err := unix.SetsockoptInt(fd, unix.SOL_SOCKET, unix.SO_TIMESTAMPNS, 1); err != nil {
+			return nil, err
+		}
+	}
 	stopFD, err := stopfd.New()
 	if err != nil {
 		return nil, err
 	}
 	d := &recvMMsgDispatcher{
-		StopFD:  stopFD,
-		fd:      fd,
-		e:       e,
-		bufs:    make([]*iovecBuffer, MaxMsgsPerRecv),
-		msgHdrs: make([]rawfile.MMsgHdr, MaxMsgsPerRecv),
+		detectEOF: opts.DetectSeqpacketEOF,
+		StopFD:    stopFD,
+		fd:        fd,
+		e:         e,
+		bufs:      make([]*iovecBuffer, MaxMsgsPerRecv),
+		msgHdrs:   make([]rawfile.MMsgHdr, MaxMsgsPerRecv),
 	}
 	skipsVnetHdr := d.e.gsoKind == stack.HostGSOSupported
 	for i := range d.bufs {
@@ -299,7 +307,11 @@ func (d *recvMMsgDispatcher) dispatch() (bool, tcpip.Error) {
 		d.msgHdrs[k].Msg.SetIovlen(iovLen)
 	}
 
-	nMsgs, errno := rawfile.BlockingRecvMMsgUntilStopped(d.EFD, d.fd, d.msgHdrs)
+	receive := rawfile.BlockingRecvMMsgUntilStopped
+	if d.detectEOF {
+		receive = rawfile.DrainRecvMMsgUntilStopped
+	}
+	nMsgs, errno := receive(d.EFD, d.fd, d.msgHdrs)
 	if errno != 0 {
 		return false, tcpip.TranslateErrno(errno)
 	}
@@ -317,8 +329,18 @@ func (d *recvMMsgDispatcher) dispatch() (bool, tcpip.Error) {
 	d.gro.Dispatcher = dsp
 	defer d.pkts.Reset()
 
+	more := true
 	for k := 0; k < nMsgs; k++ {
 		n := int(d.msgHdrs[k].Len)
+		if d.detectEOF && n == 0 {
+			// No ancillary buffer is supplied, so a real record's timestamp
+			// sets MSG_CTRUNC. Linux supplies no control data for EOF.
+			if d.msgHdrs[k].Msg.Flags&unix.MSG_CTRUNC == 0 {
+				more = false
+			}
+			d.msgHdrs[k].Msg.Iovlen = 0
+			continue
+		}
 		pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 			Payload: d.bufs[k].pullBuffer(n),
 		})
@@ -334,5 +356,5 @@ func (d *recvMMsgDispatcher) dispatch() (bool, tcpip.Error) {
 	}
 	d.mgr.wakeReady()
 
-	return true, nil
+	return more, nil
 }
