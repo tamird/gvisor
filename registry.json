@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T21:31:49.331Z",
+    "updatedAt": "2026-11-06T21:34:46.570Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -46191,9 +46191,13 @@
       "url": "https://github.com/google/gvisor/pull/16840",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
+      "updatedAt": "2026-11-06T21:34:46.570Z",
       "summary": "A single type pointer describes map, array and value payloads. Each 64-bit object descriptor shrinks from 56 to 40 bytes. The commit includes benchstat for the paired 50,000-file checkpoint decodes.",
       "evidence": [
+        {
+          "label": "Standalone restore comparison, original benchstat and per-restore Sentry RSS",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42282670588/artifacts/13541049555"
+        },
         {
           "label": "16 paired decodes of the same checkpoint, both live restore checks and state suites",
           "url": "https://github.com/tamird/gvisor/actions/runs/41310990566/artifacts/13086186114"
@@ -46219,7 +46223,17 @@
           "at": "2026-11-02T20:29:20Z"
         }
       ],
-      "number": 16840
+      "number": 16840,
+      "contributorReview": {
+        "status": "pending",
+        "kind": "reply",
+        "head": "14abba8a46275b24c69c53fc0ff79f61c9665e31",
+        "url": "https://github.com/google/gvisor/pull/16840",
+        "title": "Edit #16840’s existing PR description only",
+        "summary": "Approve replacing the description on the current PR with the exact text below. Preserve the existing 50,000-file decoder results and add only the standalone Sentry RSS result from 36 measured restores per arm. This permission applies only to the PR body.",
+        "requestedAt": "2026-11-06T21:34:46.570Z",
+        "body": "The graph decoder keeps a descriptor for every object in a checkpoint.\nMaps get their type from a reference. A value or array whose header\ndescribes only its layout also needs a reference to supply its type.\nThe two cases can share a single type pointer. Once it is set, the\ndecoder and the checkpoint printer both know how to read the payload.\n\nOn 64-bit systems each descriptor shrinks from 56 to 40 bytes.\nBenchstat from 16 paired AMD64 decodes of the same 50,000-file tmpfs\ncheckpoint [1]. DecodeGC runs with garbage collection enabled.\nDecodeStatefile disables it during decoding.\n\n```text\n                               │ /home/runner/work/_temp/pair/records/stock.bench │ /home/runner/work/_temp/pair/records/fixed.bench │\n                               │                      sec/op                      │          sec/op            vs base               │\nCheckpointFile/DecodeGC                                               185.4m ± 3%                 179.5m ± 1%  -3.18% (p=0.003 n=16)\n\n                               │ /home/runner/work/_temp/pair/records/stock.bench │ /home/runner/work/_temp/pair/records/fixed.bench │\n                               │                     cpu-sec                      │          cpu-sec           vs base               │\nCheckpointFile/DecodeGC                                               185.3m ± 3%                 179.5m ± 1%  -3.14% (p=0.003 n=16)\n\n                        │ /home/runner/work/_temp/pair/records/stock.bench │ /home/runner/work/_temp/pair/records/fixed.bench │\n                        │                   heap-live-B                    │        heap-live-B         vs base               │\nCheckpointFile/DecodeGC                                       67.04Mi ± 0%                65.49Mi ± 0%  -2.31% (p=0.000 n=16)\n\n                               │ /home/runner/work/_temp/pair/records/stock.bench │ /home/runner/work/_temp/pair/records/fixed.bench │\n                               │                       B/op                       │          B/op            vs base                 │\nCheckpointFile/DecodeGC                                              137.5Mi ± 0%              136.0Mi ± 0%  -1.13% (p=0.000 n=16)\nCheckpointFile/DecodeStatefile                                       137.5Mi ± 0%              136.0Mi ± 0%  -1.12% (p=0.000 n=16)\n```\n\nOn native AMD64 systrap, we restored a checkpoint of 100,000 empty tmpfs files under a one-CPU quota and a 2 GiB limit. We measured Sentry RSS at the first verified guest read. The `parent` column is master at f51a205a8 and `reference` adds this change. Time to the first read showed no significant difference [2].\n\n```text\n                       │    parent    │              reference              │\n                       │     B/op     │     B/op      vs base               │\nRestore/first_read_rss   308.5Mi ± 0%   304.6Mi ± 1%  -1.27% (p=0.000 n=36)\n```\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41310990566/artifacts/13086186114\n[2]: https://github.com/tamird/gvisor/actions/runs/42282670588/artifacts/13541049555\n"
+      }
     },
     {
       "id": "branch:state-graph-object-frame-bounds",
@@ -63140,7 +63154,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-02T11:37:32.591065+00:00",
+      "updatedAt": "2026-11-06T21:34:46.570Z",
       "summary": "Restoring 50,000 tmpfs files allocated a temporary pointer cell almost every time the decoder queued a parent pointer. The queue already held a copy of the pointer. Reusing that cell reduced total allocations per decode from 155,164 to 105,078.",
       "findings": [
         {
@@ -66374,6 +66388,10 @@
       "nextStep": "Review the small completion-queue change and the independent callback/waiter change. The standalone generated reservation API remains on hold.",
       "evidence": [
         {
+          "label": "Standalone and combined graph decoder changes on native systrap",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42282670588/artifacts/13541049555"
+        },
+        {
           "label": "Restore timings, heap profiles, callback counts and suite results",
           "url": "https://github.com/tamird/gvisor/actions/runs/41383319719/artifacts/13115730116"
         },
@@ -67463,6 +67481,37 @@
         }
       ],
       "comparisons": [
+        {
+          "title": "Graph decoder changes on a 100,000-file tmpfs restore",
+          "description": "Native AMD64 systrap, a one-CPU quota and a 2 GiB limit. All 111 restores verified the 100,000-file tree. Each arm contributed 36 measured restores plus one warmup. Percent ranges are benchstat’s intervals.",
+          "columns": [
+            "Measurement",
+            "Master f51a205a8",
+            "#16840 alone",
+            "#16840 + #16867 + #16822"
+          ],
+          "rows": [
+            [
+              "First verified guest read",
+              "510.6 ms ± 2%",
+              "507.7 ms ± 2%",
+              "504.2 ms ± 2%"
+            ],
+            [
+              "Sentry RSS at first read",
+              "308.5 MiB ± 0%",
+              "304.6 MiB ± 1%",
+              "302.4 MiB ± 8%"
+            ]
+          ],
+          "note": "First-read times showed no significant difference for either arm versus master (p=0.572 and 0.088), or for the stack versus #16840 alone (p=0.241). RSS fell 1.27% with #16840 and 1.99% with the stack versus master. The stack’s additional 0.73% RSS reduction (p=0.025) measures #16867 and #16822 together; each individual contribution is unmeasured.",
+          "evidence": [
+            {
+              "label": "All three sources, 111 restore records and both benchstat comparisons",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42282670588/artifacts/13541049555"
+            }
+          ]
+        },
         {
           "title": "Callback storage: from decoding to the first response",
           "description": "Four-worker Nginx. Fresh-process replay used 64 paired trials; live service restore used 24 paired trials. Times are medians.",
