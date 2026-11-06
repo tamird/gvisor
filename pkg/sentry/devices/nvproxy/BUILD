@@ -1,6 +1,7 @@
 load("//pkg/sync/locking:locking.bzl", "declare_mutex")
 load("//tools:defs.bzl", "go_library", "go_test")
 load("//tools/go_generics:defs.bzl", "go_template_instance")
+load("//tools/nvidia_driver_differ:driver_sources.bzl", "DRIVER_SOURCE_DATA", "DRIVER_SOURCE_ENV")
 
 package(default_applicable_licenses = ["//:license"])
 
@@ -117,7 +118,9 @@ go_test(
     name = "nvproxy_driver_abi_test",
     size = "large",
     srcs = ["nvproxy_driver_parity_test.go"],
-    data = ["//tools/nvidia_driver_differ:driver_ast_parser"],
+    data = ["//tools/nvidia_driver_differ:driver_ast_parser"] + DRIVER_SOURCE_DATA,
+    env = DRIVER_SOURCE_ENV,
+    rundir = ".",
     deps = [
         ":nvproxy",
         "//pkg/abi/nvgpu",
