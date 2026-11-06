@@ -1,35 +1,91 @@
-name: CI
-
-"on":
+name: Run the complete FD race suite on the GNU RBE worker
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/fdbased-wg-go-race]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  endpoint:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Run the exact FD race build on the GNU worker
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          product=66eb55f0e3c5a734303e99b6b28baccadba1fb31
+          stock=f51a205a8f4afbc5ab41aded070df74951b081ea
+          test "$(git rev-parse HEAD^)" = "$product"
+          test "$(git rev-parse HEAD^^)" = "$stock"
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml'
+          platform="$RUNNER_TEMP/dispatcher-platform"
+          mkdir "$platform"
+          printf '%s\n' 'module(name="dispatcher_worker")' > "$platform/MODULE.bazel"
+          cat > "$platform/BUILD" <<'BUILD'
+          platform(
+              name = "gnu",
+              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              exec_properties = {
+                  "Arch": "amd64",
+                  "OSFamily": "linux",
+                  "workload-isolation-type": "firecracker",
+                  "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+              },
+              visibility = ["//visibility:public"],
+          )
+          BUILD
+          rc="$RUNNER_TEMP/dispatcher.bazelrc"
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" > "$rc"
+          unset BUILDBUDDY_API_KEY
+          options=(
+            --config=x86_64 --inject_repository="dispatcher_worker=$platform"
+            --extra_execution_platforms=@dispatcher_worker//:gnu --host_platform=@dispatcher_worker//:gnu
+            --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
+            --spawn_strategy=remote --noremote_local_fallback --jobs=100 --nocache_test_results
+            --test_output=all --test_arg=-test.v
+          )
+          owner=//pkg/tcpip/link/fdbased:fdbased_test
+          rc_test=0
+          timeout -k 15 2400 bazelisk --bazelrc="$rc" test "${options[@]}" --config=race "$owner" > "$RUNNER_TEMP/race.log" 2>&1 || rc_test=$?
+          printf '%s\n' "$rc_test" > "$RUNNER_TEMP/race-exit"
+      - name: Record original race results
+        if: always()
+        run: |
+          python3 - <<'PYTHON'
+          from pathlib import Path
+          import json, os, re
+          root = Path(os.environ["RUNNER_TEMP"])
+          log = root / "race.log"
+          lines = log.read_text(errors="replace").splitlines() if log.exists() else []
+          tests = {}
+          for line in lines:
+              if result := re.match(r"\s*--- (PASS|FAIL|SKIP): (Test[\w/]+) \(", line):
+                  tests[result[2]] = result[1]
+          exit_path = root / "race-exit"
+          required = ("TestDetachedReceiveBatch", "TestInjectableAttachment", "TestCloseReleasesStopFDs")
+          rc = int(exit_path.read_text()) if exit_path.exists() else None
+          passed = rc == 0 and all(tests.get(name) == "PASS" for name in required)
+          receipt = {"source":"66eb55f0e3c5a734303e99b6b28baccadba1fb31", "bazel_exit":rc, "cases":tests, "passed":passed}
+          if not passed:
+              receipt["failed_actions"] = [m[1] for line in lines if (m := re.search(r"\b(GoStdlib|GoStandardLibraryAnalysis|GoCompilePkg|GoLink)\b", line))][:8]
+          (root / "fdbased-race.json").write_text(json.dumps(receipt,indent=2))
+          print(rc, len(tests), "named cases")
+          PYTHON
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: fdbased-wg-go-race
+          path: ${{ runner.temp }}/fdbased-race.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Require actual race execution
+        run: |
+          python3 -c 'import json, os; from pathlib import Path; raise SystemExit(not json.loads((Path(os.environ["RUNNER_TEMP"])/"fdbased-race.json").read_text())["passed"])'
