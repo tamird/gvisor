@@ -1,0 +1,99 @@
+name: Verify the compiler and lock evidence
+on:
+  push:
+    branches: [qualification/work-map-compiler-and-lock-evidence]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 4
+          persist-credentials: false
+      - name: Run the canonical collector on the proposed Pages source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(git rev-parse HEAD^)" = 3b941ff84a69e399cfc616bad8456ef8605df32f
+          git checkout --detach 3b941ff84a69e399cfc616bad8456ef8605df32f
+          python3 -B update-status.py
+      - name: Validate the collected pair and run its existing tests
+        run: |
+          python3 -B - <<'PYTHON'
+          import datetime, hashlib, json, re, subprocess
+          from pathlib import Path
+
+          source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          assert source == '3b941ff84a69e399cfc616bad8456ef8605df32f'
+          commands = [['node', 'metadata-preflight.mjs', '.'],
+                      ['python3', '-B', '-m', 'unittest', 'work_states_test', 'update_status_test'],
+                      ['node', '--test', '--test-reporter=tap', 'app_test.mjs']]
+          expected = [' '.join(command) for command in commands]
+          record = dict(source=source, expected=expected, executed=[], failed=[], skipped=[], missing=expected.copy())
+          for command, label in zip(commands, expected, strict=True):
+              result = subprocess.run(command, capture_output=True, text=True)
+              if result.returncode:
+                  print(result.stdout[-5000:], result.stderr[-5000:])
+              record['executed'].append(label)
+              record['missing'].remove(label)
+              if result.returncode:
+                  record['failed'].append(label)
+              elif command == commands[0]:
+                  record['preflight'] = json.loads(result.stdout)
+              if command == commands[1]:
+                  record['pythonTests'] = [int(n) for n in re.findall(r'^Ran (\d+) tests?', result.stderr, re.M)]
+              elif command == commands[2]:
+                  record['jsCounts'] = {k:int(n) for k,n in re.findall(r'^# (tests|pass|fail|skipped) (\d+)$', result.stdout, re.M)}
+          snapshot = json.loads(Path('github-status.json').read_text())
+          before = json.loads(subprocess.check_output(['git', 'show', 'HEAD:github-status.json']))
+          current = {p['number']:p for p in snapshot['prs'] if p.get('repo', 'google/gvisor') == 'google/gvisor'}
+          handoffs = [p['number'] for p in current.values() if p.get('terminalImportHandoff')]
+          checks = dict(fresh=snapshot['checkedAt'] > before['checkedAt'],
+                        requestBudget=1 <= snapshot['limits']['requests'] <= 64,
+                        registryUnchanged=not subprocess.run(['git','diff','--quiet','HEAD','--','registry.json']).returncode)
+          registry = json.loads(Path('registry.json').read_text())
+          previous = json.loads(subprocess.check_output(['git','show',source+'^:registry.json']))
+          nodes = {n['id']:n for n in registry['nodes']}
+          old = {n['id']:n for n in previous['nodes']}
+          changed={k for k in old if old[k]!=nodes[k]}
+          compiler='branch:hermetic-compiler-review'
+          worker='branch:fdbased-start-on-attach'
+          supplier='pr:hermeticbuild/hermetic-llvm:768'
+          gazelle='branch:native-gazelle-check'
+          checks['scope']=set(nodes)==set(old) and changed=={compiler,worker,supplier,gazelle} and registry['edges']==previous['edges'] and registry['groups']==previous['groups']
+          sections=[(a,b) for a,b in zip(registry['investigations'],previous['investigations'],strict=True) if a!=b]
+          locks,prevlocks=sections[0]
+          checks['pipe']=len(sections)==1 and locks['id']=='investigation:checklocks-contracts' and locks['findings'][1:]==prevlocks['findings'] and '0bae5ce4b' in locks['findings'][0]['text']
+          checks['decisions']=all(all(n.get(f)==old[k].get(f) for f in ('head','status','additionalReviews','settledReviews')) and (k==gazelle or n.get('contributorReview')==old[k].get('contributorReview')) for k,n in nodes.items())
+          g=nodes[gazelle]
+          checks['wordingOnly']=g['title']=='Review the revised Gazelle commit message' and (g['contributorReview']|{'summary':old[gazelle]['contributorReview']['summary']})==old[gazelle]['contributorReview']
+          checks['history']=all(all(e in nodes[k]['evidence'] for e in old[k]['evidence']) for k in changed)
+          c=nodes[compiler]
+          checks['gates']=len(c['summary'])<1000 and all(x in c['followup']['nextAction'] for x in ('#16522','#17067','#16516','#16586')) and 'before either GoLink' in c['summary']
+          def receipts(n, ids):
+              return all(any(str(i) in e['url'] for e in n['evidence']) for i in ids)
+          checks['links']=receipts(c,[13475120488,13474526238,13475689298,13476656432]) and receipts(nodes[worker],[13476880632]) and receipts(nodes[supplier],[13476900865]) and receipts(locks,[127678450230,127700365272])
+          record.update(requests=snapshot['limits']['requests'], requestLimit=64,
+                        checkedAt=snapshot['checkedAt'], previousCheckedAt=before['checkedAt'], reminderPosting=False,
+                        liveChecks=checks, terminalImportHandoffs=handoffs,
+                        cases={n:{'head':p['head'], 'status':p['status'], 'handoff':n in handoffs}
+                               for n,p in current.items() if n in (15153,16516,16522,16668,16713,16904,16981,17067)},
+                        finished=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                        exitCode=int(bool(record['failed']) or not all(checks.values())),
+                        hashes={p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in
+                                ('github-status.json','registry.json','app.js','update-status.py','work_states.py','update_status_test.py','README.md')})
+          Path('verdict.json').write_text(json.dumps(record, indent=2))
+          raise SystemExit(record['exitCode'])
+          PYTHON
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: work-map-verdict
+          path: |
+            verdict.json
+            github-status.json
+          if-no-files-found: error
