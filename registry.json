@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T16:22:54.525Z",
+    "updatedAt": "2026-11-06T16:25:12.771Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -44917,9 +44917,9 @@
       "title": "Preserve RACK loss detection across TCP restore",
       "url": "https://github.com/tamird/gvisor/commit/a2ded528a",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T05:45:25.342700+00:00",
-      "summary": "A peer that acknowledged B and C still needs A. Restore the original RACK deadline and the SACK ranges so the sender repairs only A without another ACK.",
+      "status": "Approved; waiting for TCP send timers",
+      "updatedAt": "2026-11-06T16:25:12.771Z",
+      "summary": "Approved for submission after the ordinary TCP send timers. Their PR follows #16666. A peer that acknowledged B and C still needs A. Restore the original RACK deadline and the SACK ranges so the sender repairs only A without another ACK.",
       "evidence": [
         {
           "label": "Stock stayed silent for two seconds",
@@ -44938,14 +44938,29 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41277203889/artifacts/13072231481"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "a2ded528ade0f76a5c9754ed12555cab08bd2973",
-        "url": "https://github.com/tamird/gvisor/commit/a2ded528a",
-        "title": "Preserve RACK loss detection across TCP restore",
-        "body": "Open after the ordinary TCP send-timer prerequisite lands. The final packet test checks that A is retransmitted at 25 ms and that the peer can acknowledge the transfer through close.",
-        "requestedAt": "2026-11-01T05:45:25.342700+00:00"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "a2ded528ade0f76a5c9754ed12555cab08bd2973",
+          "url": "https://github.com/tamird/gvisor/commit/a2ded528a",
+          "title": "Preserve RACK loss detection across TCP restore",
+          "body": "Open after the ordinary TCP send-timer prerequisite lands. The final packet test checks that A is retransmitted at 25 ms and that the peer can acknowledge the transfer through close.",
+          "outcome": "approved",
+          "at": "2026-11-06T16:25:12.771Z",
+          "note": "Tamir approved submission after the ordinary send timers land."
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "a2ded528ade0f76a5c9754ed12555cab08bd2973",
+        "observedAt": "2026-11-06T16:25:12.771Z",
+        "disposition": "Tamir approved submission after the ordinary send timers land.",
+        "nextAction": "Open the approved RACK PR after the ordinary TCP send timers land.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/a2ded528a",
+          "https://github.com/tamird/gvisor/commit/12bdd02c2",
+          "https://github.com/google/gvisor/pull/16666"
+        ]
       }
     },
     {
