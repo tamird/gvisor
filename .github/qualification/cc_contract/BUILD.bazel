@@ -1,0 +1,22 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load(":contract.bzl", "configured_test")
+
+cc_library(
+    name = "link_hook",
+    srcs = ["link_hook.cc"],
+    visibility = ["//visibility:public"],
+)
+
+cc_test(
+    name = "ordinary_test",
+    srcs = ["test.cc"],
+    args = ["0"],
+    deps = select({"//conditions:default": []}),
+)
+
+configured_test(
+    name = "configured_test",
+    srcs = ["test.cc"],
+    args = ["1"],
+    deps = select({"//conditions:default": []}),
+)

@@ -1,35 +1,143 @@
-name: CI
-
-"on":
+name: Check native test variants on with_cfg 1.0.2
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/native-variants-with-cfg-102]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  qualify:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 145
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 4, persist-credentials: false}
+      - name: Verify sources and run ordinary native C++ callers
+        id: prepare
+        run: |
+          set -euo pipefail
+          positive=da88f239eb2f37f2a58db6c3a70296c562ed006a
+          macro=3154c069697c7606af448e2d98c870187dd8bbea
+          test "$(git rev-parse HEAD^)" = "$macro"
+          test "$(git rev-parse HEAD^^)" = "$positive"
+          test "$(git rev-parse HEAD~3)" = f51a205a8f4afbc5ab41aded070df74951b081ea
+          git diff --exit-code "$macro" HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/rebased_owners/**' ':!.github/qualification/cc_contract/**'
+          test "$(git diff --name-only "$positive" "$macro")" = tools/bazeldefs/cc.bzl
+          grep -Fq 'with_cfg.bzl", version = "1.0.2"' .github/qualification/cc_contract/MODULE.bazel
+          work="$RUNNER_TEMP/owners"
+          mkdir -m 700 "$work" "$work/worker" "$work/positive" "$work/macro"
+          cp .github/qualification/rebased_owners/{check,image_execution,with_cfg_license}.py "$work/"
+          python3 -IB .github/qualification/cc_contract/record.py || echo "See per-version compatibility results"
+          git checkout --detach "$positive"
+          grep -Fq 'with_cfg.bzl", version = "1.0.2"' MODULE.bazel
+          grep -Fq 'cc_rules_extension_support.bzl' tools/bazeldefs/cc.bzl
+          test "$(cat .bazelversion)" = 9.3.1
+          # Preserve every other public Bazel setting. This GCC-only diagnostic
+          # was also removed when the released LLVM compiler was qualified.
+          test "$(grep -c -- '-Wno-error=maybe-uninitialized' .bazelrc)" = 2
+          sed -e 's/ --cxxopt=-Wno-error=maybe-uninitialized//' -e 's/ --host_cxxopt=-Wno-error=maybe-uninitialized//' .bazelrc > "$work/llvm.rc"
+          grep -Fq 'bazel_dep(name = "llvm", version = "0.8.24")' MODULE.bazel
+          test "$(bazelisk --version)" = 'bazel 9.3.1'
+          printf '%s\n' 'module(name="rebased_workers")' >"$work/worker/MODULE.bazel"
+          cat > "$work/worker/BUILD" <<'BUILD'
+          package(default_visibility = ["//visibility:public"])
+          platform(
+              name = "gnu_amd64",
+              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              exec_properties = {
+                  "Arch": "amd64",
+                  "OSFamily": "linux",
+                  "workload-isolation-type": "firecracker",
+                  "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+              },
+          )
+          platform(
+              name = "native_arm64",
+              constraint_values = ["@platforms//cpu:aarch64", "@platforms//os:linux"],
+              exec_properties = {
+                  "Arch": "arm64",
+                  "OSFamily": "linux",
+                  "workload-isolation-type": "oci",
+                  "container-image": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+              },
+          )
+          BUILD
+      - name: Check both implicit outputs and direct C++ dependency on the real ARM64 target
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/owners"
+          owner=//test/util:posix_error_test_arm64
+          bazelisk --nosystem_rc --nohome_rc --noworkspace_rc --bazelrc="$work/llvm.rc" cquery \
+            --config=x86_64 -c opt --color=no --curses=no \
+            --inject_repository="rebased_workers=$work/worker" \
+            --host_platform=@rebased_workers//:gnu_amd64 \
+            --extra_execution_platforms=@rebased_workers//:gnu_amd64,@rebased_workers//:native_arm64 \
+            --extra_toolchains=@llvm//toolchain:all --output=label \
+            "set($owner.dwp $owner.stripped) union (labels(deps, $owner) intersect @rules_cc//:link_extra_lib)" >"$work/cc-contract.log"
+          jq -n --argjson dwp "$(grep -Fwc "$owner.dwp" "$work/cc-contract.log" || :)" \
+            --argjson stripped "$(grep -Fwc "$owner.stripped" "$work/cc-contract.log" || :)" \
+            --argjson extra "$(grep -Fc '//:link_extra_lib' "$work/cc-contract.log" || :)" \
+            '{dwp:$dwp,stripped:$stripped,link_extra_lib:$extra}' >"$work/contract.json"
+      - name: Regenerate and verify the with_cfg catalog entry
+        env:
+          MAKEFLAGS: DOCKER_BUILD=false
+          DOCKER_HOST: unix:///nonexistent-with-cfg-qualification.sock
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 -IB "$RUNNER_TEMP/owners/with_cfg_license.py"
+      - name: Compare the extension rule and high-level macro on native workers
+        timeout-minutes: 95
+        if: always() && !cancelled() && steps.prepare.outcome == 'success'
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          work="$RUNNER_TEMP/owners"
+          rc="$work/client.rc"
+          trap 'rm -f "$rc"' EXIT
+          test "$(git rev-parse HEAD)" = da88f239eb2f37f2a58db6c3a70296c562ed006a
+          cat >"$rc" <<'RC'
+          build --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
+          build --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/
+          build --spawn_strategy=remote --noremote_local_fallback --jobs=64 --remote_timeout=10m
+          build --host_platform=@rebased_workers//:gnu_amd64
+          build --extra_execution_platforms=@rebased_workers//:gnu_amd64,@rebased_workers//:native_arm64
+          RC
+          printf 'build --inject_repository=rebased_workers=%s/worker\n' "$work" >> "$rc"
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "${BUILDBUDDY_API_KEY:?}" "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          python3 -B "$work/check.py" positive || echo "See positive result"
+          git checkout --detach 3154c069697c7606af448e2d98c870187dd8bbea
+          python3 -B "$work/check.py" macro || echo "See high-level macro result"
+      - name: Collect bounded receipts without service credentials
+        id: report
+        if: always() && !cancelled()
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/owners"
+          test ! -e "$work/client.rc"
+          mkdir -p "$work/publish"
+          for f in positive/variants macro/variants compatibility contract license; do
+            path="$work/$f.json"
+            if [[ -f "$path" && ! -L "$path" ]] && (( $(wc -c < "$path") < 65536 )) && \
+                jq -e 'type=="object"' "$path" >/dev/null && ! grep -Eiq 'authorization[[:space:]]*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}' "$path"; then
+              cp "$path" "$work/publish/${f/\//-}.json"
+            fi
+          done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.report.outcome == 'success'
+        with:
+          name: native-variants-with-cfg-102
+          path: ${{ runner.temp }}/owners/publish/*.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Check physical architectures, ordinary caller contracts, source license, and the independent failure control
+        if: always() && steps.report.outcome == 'success'
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/owners/publish"
+          jq -e '.source=="da88f239eb2f37f2a58db6c3a70296c562ed006a" and .verified' positive-variants.json
+          jq -e '.source=="3154c069697c7606af448e2d98c870187dd8bbea" and (.originalFailureReproduced or .verified)' macro-variants.json
+          jq -e 'length==3 and all(.[];.verified)' compatibility.json
+          jq -e '.dwp>0 and .stripped>0 and .link_extra_lib>0' contract.json
+          jq -e '.source=="da88f239eb2f37f2a58db6c3a70296c562ed006a" and .verified' license.json
