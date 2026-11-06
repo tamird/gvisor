@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-11-06T18:19:00.222303+00:00",
-  "registryDate": "2026-11-06T21:22:50.061Z",
+  "registryDate": "2026-11-06T21:27:18.472Z",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -332517,6 +332517,70 @@
           }
         ]
       }
+    },
+    {
+      "repo": "google/gvisor",
+      "number": 17118,
+      "url": "https://github.com/google/gvisor/pull/17118",
+      "head": "e99e0b9307259f006be7036a047272b3880910a2",
+      "status": "open",
+      "authorLogin": "xinzhong",
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABWh-PPw",
+            "url": "https://github.com/google/gvisor/pull/17118#pullrequestreview-5806985023",
+            "body": "[🤖] 2 issues found:\n\n- **[major · security]** Re-enqueuing dequeued segments leaks rcvMemUsed on the prior endpoint, wedging listening sockets (`pkg/tcpip/transport/tcp/segment_queue.go:56`, inline)\n- **[major · bug]** Unread receive data now causes all incoming ACKs/FINs to be dropped (`pkg/tcpip/transport/tcp/segment_queue.go:57`, inline)\n\n---\n<sub>Automated review agent. Please address valid findings before human review, or close them with a reason.</sub>\n",
+            "state": "COMMENTED",
+            "submittedAt": "2026-11-06T21:06:49Z",
+            "updatedAt": "2026-11-06T21:06:50Z",
+            "authorAssociation": "NONE",
+            "author": {
+              "login": "aaltinaydev",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "e99e0b9307259f006be7036a047272b3880910a2"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs60sVIj",
+            "isResolved": false,
+            "isOutdated": false,
+            "path": "pkg/tcpip/transport/tcp/segment_queue.go",
+            "line": 56,
+            "id": "PRRC_kwDOB9IlXs8AAAABDBPDVQ",
+            "url": "https://github.com/google/gvisor/pull/17118#discussion_r4497589077",
+            "body": "[🤖] **[major · security] Re-enqueuing dequeued segments leaks rcvMemUsed on the prior endpoint, wedging listening sockets**\n\n`segmentQueue.enqueue` now bounds zero-payload segments (`SYN`, `ACK`, `FIN`, `RST`) by `used <= limit`, where `used` is `q.ep.receiveMemUsed()`. However, when a segment dequeued from one `segmentQueue` is forwarded or re-enqueued (`accept.go:475,737`, `connect.go:511,1188,1531`), `s.setOwner(q.ep, recvQ)` adds `s.segMemSize()` to the new owner's `rcvMemUsed` and overwrites `s.ep` without subtracting `s.segMemSize()` from the previous owner. When `s.DecRef()` eventually reaches zero, it only subtracts `s.segMemSize()` once from the final `s.ep`.\n\nWith this PR's bound on zero-payload segments, once a listening endpoint's leaked `rcvMemUsed` exceeds `rcvBuf + sndBuf + 64KB`, `listenEP.segmentQueue.enqueue` permanently drops all incoming `SYN` packets, wedging the listener even after all child connections close. Re-enqueuing onto the same endpoint (`connect.go:511`) also double-counts `s.segMemSize()` in `used` and leaks `rcvMemUsed`.\n\n**Suggested fix:** Release the previous owner's `recvQ` memory in `segment.setOwner` (`pkg/tcpip/transport/tcp/segment.go`) before assigning the new owner, and discount `s.segMemSize()` from `used` in `segmentQueue.enqueue` when `s.ep == q.ep && s.qFlags == recvQ`:\n\n```go\nfunc (s *segment) setOwner(ep *Endpoint, qFlags queueFlags) {\n\tif s.ep != nil && s.qFlags == recvQ {\n\t\ts.ep.updateReceiveMemUsed(-s.segMemSize())\n\t}\n\tswitch qFlags {\n\tcase recvQ:\n\t\tep.updateReceiveMemUsed(s.segMemSize())\n\tcase sendQ:\n\tdefault:\n\t\tpanic(fmt.Sprintf(\"unexpected queue flag %b\", qFlags))\n\t}\n\ts.ep = ep\n\ts.qFlags = qFlags\n}\n```\n\n<details><summary>Details (evidence, reproduction and test code)</summary>\n\n**Evidence:** Segments dequeued from a `segmentQueue` (`dequeue()` leaves `s.ep` set until `s.DecRef()` reaches zero) are re-enqueued in:\n- `Endpoint.handleListenSegment` (`pkg/tcpip/transport/tcp/accept.go:475`): forwards segments queued on a listening endpoint `e` to an existing child endpoint via `tcpEP.enqueueSegment(s)`.\n- `Endpoint.handleListenSegment` (`pkg/tcpip/transport/tcp/accept.go:737`): when SYN cookies are used and the handshake-completing `ACK` also carries `FIN` or payload, forwards `s` to the new child endpoint via `n.enqueueSegment(s)`.\n- `handshake.synRcvdState` (`pkg/tcpip/transport/tcp/connect.go:511`): re-enqueues a handshake-completing `ACK` carrying `FIN` or payload onto `h.ep` via `h.ep.enqueueSegment(s)`.\n- `Endpoint.tryDeliverSegmentFromClosedEndpoint` (`connect.go:1188`) and `Endpoint.handleTimeWaitSegments` (`connect.go:1531`).\n\nIn `pkg/tcpip/transport/tcp/segment.go:188-212`, `s.setOwner(ep, recvQ)` calls `ep.updateReceiveMemUsed(s.segMemSize())` and overwrites `s.ep = ep` without crediting `s.segMemSize()` back to the prior `s.ep`. Prior to this PR, `segmentQueue.enqueue` allowed `s.payloadSize() == 0` unconditionally, so a listening endpoint continued accepting `SYN`s despite leaked `rcvMemUsed`. With `allow := used <= limit && !q.frozen` (`pkg/tcpip/transport/tcp/segment_queue.go:69`), once leaked `rcvMemUsed` on the listener exceeds `limit`, all subsequent `SYN` segments are dropped.\n\nReproduced in unit test `TestSegmentQueueReenqueueReleasesPreviousOwnerMem` (`pkg/tcpip/transport/tcp/segment_queue_test.go`) and e2e test `TestListenForwardedSegmentsDoNotWedgeListener` (`pkg/tcpip/transport/tcp/test/e2e/tcp_test.go`), where a listener with `rcvBuf = sndBuf = 4KB` (`limit = 77824` bytes) drops all incoming `SYN`s after 136 short-lived connections (`136 * 576 = 78336 > 77824`) whose third handshake packet is `ACK|FIN`.\n\n**Reproduced with a test** (`pkg/tcpip/transport/tcp/segment_queue_test.go`, `pkg/tcpip/transport/tcp/test/e2e/tcp_test.go`): `bazel test //pkg/tcpip/transport/tcp:tcp_test --test_filter=TestSegmentQueue --test_output=errors && bazel test //pkg/tcpip/transport/tcp/test/e2e:tcp_test --test_filter=TestListenForwardedSegmentsDoNotWedgeListener --test_output=errors` → Both TestSegmentQueueReenqueueReleasesPreviousOwnerMem and TestListenForwardedSegmentsDoNotWedgeListener fail at the PR head; TestListenForwardedSegmentsDoNotWedgeListener passes at the merge-base, and both pass with the suggested fix.\n\n**Test code:**\n\n```diff\ndiff --git a/pkg/tcpip/transport/tcp/segment_queue_test.go b/pkg/tcpip/transport/tcp/segment_queue_test.go\nindex 122d79468..10ac31cf4 100644\n--- a/pkg/tcpip/transport/tcp/segment_queue_test.go\n+++ b/pkg/tcpip/transport/tcp/segment_queue_test.go\n@@ -123,3 +123,42 @@ func TestSegmentQueueFrozen(t *testing.T) {\n \t\tt.Errorf(\"segment refused after thaw, want it queued\")\n \t}\n }\n+\n+func TestSegmentQueueReenqueueReleasesPreviousOwnerMem(t *testing.T) {\n+\tlistenEP := newTestQueueEndpoint()\n+\tdefer drainQueue(listenEP)\n+\tchildEP := newTestQueueEndpoint()\n+\tdefer drainQueue(childEP)\n+\n+\tsegMem := newTestSegment(0)\n+\tsegMemSize := segMem.segMemSize()\n+\tsegMem.DecRef()\n+\n+\tlimit := testRcvBufSize + testSndBufSize + zeroPayloadHeadroom\n+\titerations := limit/segMemSize + 2\n+\n+\t// Simulate handleListenSegment forwarding a dequeued segment from a\n+\t// listening endpoint to a child endpoint (or synRcvdState re-enqueuing a\n+\t// handshake-completing ACK+FIN/data segment), after which the child drains\n+\t// and releases the segment.\n+\tfor i := 0; i < iterations; i++ {\n+\t\ts := newTestSegment(0)\n+\t\tif !listenEP.segmentQueue.enqueue(s) {\n+\t\t\ts.DecRef()\n+\t\t\tt.Fatalf(\"iteration %d: listenEP.segmentQueue.enqueue(zero-payload) refused on empty queue (receiveMemUsed=%d, limit=%d)\", i, listenEP.receiveMemUsed(), limit)\n+\t\t}\n+\t\ts.DecRef()\n+\n+\t\tdq := listenEP.segmentQueue.dequeue()\n+\t\tif !childEP.segmentQueue.enqueue(dq) {\n+\t\t\tdq.DecRef()\n+\t\t\tt.Fatalf(\"iteration %d: childEP.segmentQueue.enqueue refused on empty queue\", i)\n+\t\t}\n+\t\tdq.DecRef()\n+\t\tdrainQueue(childEP)\n+\t}\n+\n+\tif used := listenEP.receiveMemUsed(); used != 0 {\n+\t\tt.Errorf(\"listenEP.receiveMemUsed() = %d after all forwarded segments were freed, want 0\", used)\n+\t}\n+}\ndiff --git a/pkg/tcpip/transport/tcp/test/e2e/tcp_test.go b/pkg/tcpip/transport/tcp/test/e2e/tcp_test.go\nindex 8ca4aa548..1e03ad74e 100644\n--- a/pkg/tcpip/transport/tcp/test/e2e/tcp_test.go\n+++ b/pkg/tcpip/transport/tcp/test/e2e/tcp_test.go\n@@ -10637,6 +10637,73 @@ func TestCloseWithPendingDataCwndFull(t *testing.T) {\n \t)\n }\n \n+func TestListenForwardedSegmentsDoNotWedgeListener(t *testing.T) {\n+\tc := context.New(t, e2e.DefaultMTU)\n+\tdefer c.Cleanup()\n+\n+\tc.Create(-1)\n+\tc.EP.SocketOptions().SetReceiveBufferSize(tcp.MinBufferSize, true /* notify */)\n+\tc.EP.SocketOptions().SetSendBufferSize(tcp.MinBufferSize, true /* notify */)\n+\tif err := c.EP.Bind(tcpip.FullAddress{Port: context.StackPort}); err != nil {\n+\t\tt.Fatalf(\"Bind failed: %s\", err)\n+\t}\n+\tif err := c.EP.Listen(1); err != nil {\n+\t\tt.Fatalf(\"Listen failed: %s\", err)\n+\t}\n+\n+\twe, ch := waiter.NewChannelEntry(waiter.ReadableEvents)\n+\tc.WQ.EventRegister(&we)\n+\tdefer c.WQ.EventUnregister(&we)\n+\n+\tconst handshakes = 150\n+\tfor i := 0; i < handshakes; i++ {\n+\t\tsrcPort := uint16(context.TestPort + i)\n+\t\tirs := seqnum.Value(context.TestInitialSequenceNumber)\n+\t\tc.SendPacket(nil, &context.Headers{\n+\t\t\tSrcPort: srcPort,\n+\t\t\tDstPort: context.StackPort,\n+\t\t\tFlags:   header.TCPFlagSyn,\n+\t\t\tSeqNum:  irs,\n+\t\t\tRcvWnd:  30000,\n+\t\t})\n+\t\tb := c.GetPacket()\n+\t\ttcpHdr := header.TCP(header.IPv4(b.AsSlice()).Payload())\n+\t\tiss := seqnum.Value(tcpHdr.SequenceNumber())\n+\t\tb.Release()\n+\n+\t\tc.SendPacket(nil, &context.Headers{\n+\t\t\tSrcPort: srcPort,\n+\t\t\tDstPort: context.StackPort,\n+\t\t\tFlags:   header.TCPFlagAck | header.TCPFlagFin,\n+\t\t\tSeqNum:  irs + 1,\n+\t\t\tAckNum:  iss + 1,\n+\t\t\tRcvWnd:  30000,\n+\t\t})\n+\t\tfinAck := c.GetPacket()\n+\t\tfinAck.Release()\n+\n+\t\tep, _, err := c.EP.Accept(nil)\n+\t\tif _, ok := err.(*tcpip.ErrWouldBlock); ok {\n+\t\t\t<-ch\n+\t\t\tep, _, err = c.EP.Accept(nil)\n+\t\t}\n+\t\tif err != nil {\n+\t\t\tt.Fatalf(\"iteration %d: Accept failed: %s\", i, err)\n+\t\t}\n+\t\tep.Close()\n+\t\tfin := c.GetPacket()\n+\t\tfin.Release()\n+\t\tc.SendPacket(nil, &context.Headers{\n+\t\t\tSrcPort: srcPort,\n+\t\t\tDstPort: context.StackPort,\n+\t\t\tFlags:   header.TCPFlagAck,\n+\t\t\tSeqNum:  irs + 2,\n+\t\t\tAckNum:  iss + 2,\n+\t\t\tRcvWnd:  30000,\n+\t\t})\n+\t}\n... (5 more lines in the full patch)\n```\n\n</details>\n\n<sub>Automated review agent. Please address valid findings before human review, or close them with a reason.</sub>\n",
+            "createdAt": "2026-11-06T21:06:49Z",
+            "updatedAt": "2026-11-06T21:06:50Z",
+            "author": {
+              "login": "aaltinaydev",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs60sVIt",
+            "isResolved": false,
+            "isOutdated": false,
+            "path": "pkg/tcpip/transport/tcp/segment_queue.go",
+            "line": 69,
+            "id": "PRRC_kwDOB9IlXs8AAAABDBPDaQ",
+            "url": "https://github.com/google/gvisor/pull/17118#discussion_r4497589097",
+            "body": "[🤖] **[major · bug] Unread receive data now causes all incoming ACKs/FINs to be dropped**\n\nThe zero-payload limit is checked against `receiveMemUsed()`. That value includes data already moved to the receive queue and waiting for the application to read it, not only segments waiting for the processor. When unread data is larger than rcvbuf + sndbuf + 64KB, every ACK, FIN and RST is refused, so the send side cannot advance until the application reads. One way to get there is to shrink SO_RCVBUF/SO_SNDBUF after data was received. On Linux, ACKs are still processed in this state, and before this PR gVisor also processed them.\n\n**Suggested fix:** Limit only the memory of segments still waiting in `segmentQueue`, not all receive memory. Keep a counter under `q.mu`: add `s.segMemSize()` in `enqueue` and subtract it in `dequeue`. For zero-payload segments, check that counter against rcvbuf + sndbuf + 64KB:\n\n```go\nif s.payloadSize() == 0 {\n\tused = q.memUsed // backlog only\n}\n```\nVerified: with this change the new syscall test passes, and the PR's `TestSegmentQueue*` tests still pass.\n\n<details><summary>Details (evidence, reproduction and test code)</summary>\n\n**Evidence:** `rcvMemUsed` is increased in `segment.setOwner(ep, recvQ)` and decreased only when the segment's last reference is dropped. Segments in `rcvQueue` (unread data) and `pendingRcvdSegments` therefore stay counted. `OnSetReceiveBufferSize` lets the buffer shrink below current usage (see the comment in `receiveBufferAvailableLocked`: \"We may use more bytes than the buffer size when the receive buffer shrinks\"), so `used` can stay above `limit` for as long as the application leaves the data unread.\n\nIn Linux, `tcp_v4_rcv()` applies the `tcp_add_backlog()` limit only when `sock_owned_by_user(sk)`. Otherwise `tcp_v4_do_rcv()` processes the ACK no matter how large `sk_rmem_alloc` is. In gVisor, every segment goes through this queue, so the check applies all the time.\n\nNew test `TcpSocketTest.SendProgressesAfterRcvBufShrinkWithUnreadData`: the test fills the accepted socket's receive buffer (FIONREAD > 128KB), sets SO_RCVBUF and SO_SNDBUF to the minimum, and then sends 256KB to the peer, which reads it:\n- native Linux: OK (both families)\n- runsc at merge-base: OK (~415 ms)\n- runsc at PR head: FAILED after 10s with `receiver: no data after 4096 bytes` and `sender: poll returned 0 after 4096 bytes`. The first send window arrives, and every ACK after it is dropped.\n\n**Reproduced with a test** (`test/syscalls/linux/tcp_socket.cc`): `bazel test //test/syscalls:tcp_socket_test_native //test/syscalls:tcp_socket_test_runsc_systrap_directfs --nocache_test_results ; bazel test //test/syscalls:tcp_socket_test_runsc_systrap_directfs --nocache_test_results` → Fails on the PR head under runsc: the transfer stalls after 4096 bytes because ACKs are dropped. Passes on native Linux and on runsc at the merge-base.\n\n**Test code:**\n\n```diff\ndiff --git a/test/syscalls/linux/tcp_socket.cc b/test/syscalls/linux/tcp_socket.cc\nindex 665f18fbe..a12a54953 100644\n--- a/test/syscalls/linux/tcp_socket.cc\n+++ b/test/syscalls/linux/tcp_socket.cc\n@@ -1055,6 +1055,65 @@ TEST_P(TcpSocketTest, SendUnblocksOnSendBufferIncrease) {\n   send_thread.Join();\n }\n \n+// Tests that a socket that holds a lot of unread data still processes the\n+// ACKs for the data it sends after SO_RCVBUF and SO_SNDBUF are made small.\n+TEST_P(TcpSocketTest, SendProgressesAfterRcvBufShrinkWithUnreadData) {\n+  // Queue unread data on the accepted socket.\n+  FillSocketBuffers(connected_.get(), accepted_.get());\n+  int unread = 0;\n+  ASSERT_THAT(ioctl(accepted_.get(), FIONREAD, &unread), SyscallSucceeds());\n+  ASSERT_GT(unread, 128 << 10);\n+\n+  // Shrink the buffers of the accepted socket to their minimum values.\n+  int small = 1;\n+  ASSERT_THAT(setsockopt(accepted_.get(), SOL_SOCKET, SO_RCVBUF, &small,\n+                         sizeof(small)),\n+              SyscallSucceeds());\n+  ASSERT_THAT(setsockopt(accepted_.get(), SOL_SOCKET, SO_SNDBUF, &small,\n+                         sizeof(small)),\n+              SyscallSucceeds());\n+\n+  // The accepted socket sends data to the connected socket, which reads it.\n+  // This requires the accepted socket to process the ACKs it receives.\n+  constexpr int kSendSize = 256 << 10;\n+  ScopedThread sender([this]() {\n+    std::vector<char> buf(kSendSize);\n+    int sent = 0;\n+    while (sent < kSendSize) {\n+      struct pollfd pfd = {.fd = accepted_.get(), .events = POLLOUT};\n+      int ret = RetryEINTR(poll)(&pfd, 1, kTimeoutMillis);\n+      if (ret <= 0) {\n+        ADD_FAILURE() << \"sender: poll returned \" << ret << \" after \" << sent\n+                      << \" bytes\";\n+        return;\n+      }\n+      int n = RetryEINTR(send)(accepted_.get(), buf.data() + sent,\n+                               kSendSize - sent, MSG_DONTWAIT);\n+      if (n < 0 && errno == EWOULDBLOCK) {\n+        continue;\n+      }\n+      ASSERT_GT(n, 0);\n+      sent += n;\n+    }\n+  });\n+\n+  std::vector<char> rbuf(kSendSize);\n+  int received = 0;\n+  while (received < kSendSize) {\n+    struct pollfd pfd = {.fd = connected_.get(), .events = POLLIN};\n+    int ret = RetryEINTR(poll)(&pfd, 1, kTimeoutMillis);\n+    ASSERT_GT(ret, 0) << \"receiver: no data after \" << received << \" bytes\";\n+    int n = RetryEINTR(recv)(connected_.get(), rbuf.data(),\n+                             kSendSize - received, MSG_DONTWAIT);\n+    if (n < 0 && errno == EWOULDBLOCK) {\n+      continue;\n+    }\n+    ASSERT_GT(n, 0);\n+    received += n;\n+  }\n+  sender.Join();\n+}\n+\n INSTANTIATE_TEST_SUITE_P(AllInetTests, TcpSocketTest,\n                          ::testing::Values(AF_INET, AF_INET6));\n \n```\n\n</details>\n\n<sub>Automated review agent. Please address valid findings before human review, or close them with a reason.</sub>\n",
+            "createdAt": "2026-11-06T21:06:50Z",
+            "updatedAt": "2026-11-06T21:06:50Z",
+            "author": {
+              "login": "aaltinaydev",
+              "__typename": "User"
+            }
+          }
+        ]
+      }
     }
   ],
   "reviewerHandoff": [
@@ -339073,7 +339137,7 @@
         "since": "2026-11-04T05:00:25.863097+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "pr:16664": {
@@ -340980,13 +341044,6 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-11-06T19:08:31.207469+00:00"
-      },
-      "contributor-review": {
-        "scope": "14f43c8fc0e83728c1d8cc1fb92662fd1e098ab7",
-        "since": "2026-11-06T21:22:50.061Z",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
       }
     },
     "pr:17123": {
@@ -341059,7 +341116,7 @@
         "since": "2026-10-31T16:57:06.135+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:bazel-python-release": {
@@ -341068,7 +341125,7 @@
         "since": "2026-10-30T16:55:14.197497+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -341077,7 +341134,7 @@
         "since": "2026-11-03T07:06:47.467598+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:nvproxy-declared-sources": {
@@ -341086,7 +341143,7 @@
         "since": "2026-11-06T21:20:00.639Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:rules-img-hackbench-image": {
@@ -341095,7 +341152,7 @@
         "since": "2026-11-03T04:16:24.163353+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:rules-img-wrk2-image": {
@@ -341104,7 +341161,7 @@
         "since": "2026-10-31T07:18:55.041730+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:state-destination-kind": {
@@ -341113,7 +341170,7 @@
         "since": "2026-11-05T15:27:44.402237Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:state-encoder-zero-dispatch": {
@@ -341122,7 +341179,7 @@
         "since": "2026-11-05T14:55:40.136006Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:state-decoder-dependencies": {
@@ -341131,7 +341188,7 @@
         "since": "2026-11-05T15:27:44.402237Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:plugin-toolchain-unwind": {
@@ -341140,7 +341197,7 @@
         "since": "2026-11-06T13:14:58.461Z",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:package-clang-format": {
@@ -341149,7 +341206,7 @@
         "since": "2026-11-02T08:21:11+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:declared-codespell": {
@@ -341158,7 +341215,7 @@
         "since": "2026-11-02T08:21:11+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:release-archives-versioned": {
@@ -341167,7 +341224,7 @@
         "since": "2026-10-31T10:28:33.920382+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:mutable-overlay-poll-waiter": {
@@ -341176,7 +341233,7 @@
         "since": "2026-11-05T19:38:10.552336Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:staged-release-tag": {
@@ -341185,7 +341242,7 @@
         "since": "2026-10-31T09:29:02.218795+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:native-gazelle-check": {
@@ -341194,7 +341251,7 @@
         "since": "2026-11-02T16:20:02.085486+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:checkpoint-memory-file-registration": {
@@ -341203,7 +341260,7 @@
         "since": "2026-10-31T18:05:07.150+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:hostinet-exit-linger": {
@@ -341212,7 +341269,7 @@
         "since": "2026-11-01T05:08:12.703055+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:state-graph-object-frame-bounds": {
@@ -341221,7 +341278,7 @@
         "since": "2026-11-01T13:49:13.599008+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:state-graph-print-errors": {
@@ -341230,7 +341287,7 @@
         "since": "2026-11-02T22:54:43.336654+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:native-install-archive": {
@@ -341239,7 +341296,7 @@
         "since": "2026-11-06T16:20:27.112Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     },
     "branch:buildkite-source-syscalls": {
@@ -341248,7 +341305,16 @@
         "since": "2026-11-06T14:13:12.896Z",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-06T21:22:50.061Z"
+        "observedAt": "2026-11-06T21:27:18.472Z"
+      }
+    },
+    "pr:17118": {
+      "contributor-review": {
+        "scope": "e99e0b9307259f006be7036a047272b3880910a2",
+        "since": "2026-11-06T21:27:18.472Z",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-06T21:27:18.472Z"
       }
     }
   },

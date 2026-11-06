@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T21:22:50.061Z",
+    "updatedAt": "2026-11-06T21:27:18.472Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -6537,14 +6537,14 @@
       "group": "bazel",
       "status": "open",
       "head": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-      "updatedAt": "2026-11-06T21:11:20.345Z",
+      "updatedAt": "2026-11-06T21:27:18.472Z",
       "summary": "On the published rebase, Bazel 9 sent the ARM64 Go test to AMD64. Constraining the test execution group let all 10,933 atomicbitops cases run on native ARM64. All three C++ PosixError cases passed on native AMD64 with declared LLVM. The C++ macro’s forwarding test still targeted AMD64. With the fork’s rule-valued public cc_test, an AMD64-targeted Bazel invocation ran all three cases on native ARM64 with an AArch64 ELF. The configured target retained link_extra_lib and its .dwp and .stripped output labels.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-        "observedAt": "2026-11-06T21:11:20.345Z",
+        "observedAt": "2026-11-06T21:27:18.472Z",
         "disposition": "The two action graphs establish the placement change. The physical native ARM64 Go test passed on the fork.",
-        "nextAction": "Reconcile the rules_cc public API before updating #15370. The result covers Bazel 9.3.1. Older Bazel uses a macro whose public name matters to with_cfg when it discovers implicit outputs.",
+        "nextAction": "Qualify the gVisor-only version using rules_cc 0.2.25’s documented extension-support cc_test rule. Verify the variant’s link_extra_lib input and implicit outputs while ordinary C++ targets keep using the original macro.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42290157453",
           "https://github.com/tamird/gvisor/actions/runs/42288153554/artifacts/13537709088",
@@ -6556,6 +6556,10 @@
       "number": 15370,
       "reviewDecision": null,
       "evidence": [
+        {
+          "label": "Public rule for inheritance in the already pinned rules_cc release",
+          "url": "https://github.com/bazelbuild/rules_cc/blob/0.2.25/cc/cc_rules_extension_support.bzl"
+        },
         {
           "label": "ARM64 PosixError, native processor, ELF and public C++ outputs",
           "url": "https://github.com/tamird/gvisor/actions/runs/42294103626/artifacts/13540903270"
@@ -55675,8 +55679,8 @@
       "url": "https://github.com/google/gvisor/pull/17122",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-06T21:22:50.061Z",
-      "summary": "The open PR declares LLVM readelf for the existing Python test. This revision reads the ELF directly in Go under Bazel. The classifiers agreed on all 20 fixtures per architecture. Debian’s unchanged Make rule accepted its valid x86 vDSO and rejected an injected data section with networking disabled. External callers of the Python entry point now need host Go and the checker source. Copying the Python file alone fails. Debian’s *.py prerequisite also misses subsequent Go-only edits in incremental builds.",
+      "updatedAt": "2026-11-06T21:27:18.472Z",
+      "summary": "The published change declares LLVM readelf for the existing vDSO test. The Go experiment agreed on 20 fixtures per architecture and passed Debian’s unchanged clean recipe. Its Python entry point requires host Go and the Go source, and Debian’s existing incremental prerequisite misses Go-only edits.",
       "evidence": [
         {
           "label": "Unchanged downstream Make rule and Python entry point with host Go; source-only copy control",
@@ -55705,6 +55709,10 @@
         {
           "label": "Standalone uncached TestRunner",
           "url": "https://app.buildbuddy.io/invocation/40102cd3-4f97-43f1-aec7-2ca79e7a9d0f"
+        },
+        {
+          "label": "Optional Go classifier with a downstream Python entry point",
+          "url": "https://github.com/tamird/gvisor/commit/14f43c8fc"
         }
       ],
       "settledReviews": [
@@ -55721,36 +55729,16 @@
         }
       ],
       "followup": {
-        "owner": "Contributor",
+        "owner": "Maintainer",
         "sourceHead": "466dbf7a9a4ff6d12693d0fa94ba37c2bc353d48",
-        "observedAt": "2026-11-06T21:22:50.061Z",
-        "disposition": "The approved readelf declaration is still the public PR. The new Go checker preserves Debian’s clean full-source command.",
-        "nextAction": "Review the single proposed replacement of #17122, including the host Go and incremental dependency changes for external callers.",
+        "observedAt": "2026-11-06T21:27:18.472Z",
+        "disposition": "Keep the published readelf fix. The Go replacement remains an optional experiment.",
+        "nextAction": "Follow upstream review on #17122.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/17122",
           "https://github.com/tamird/gvisor/commit/14f43c8fc",
           "https://github.com/tamird/gvisor/actions/runs/42295738426/artifacts/13541257890"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "baseHead": "466dbf7a9a4ff6d12693d0fa94ba37c2bc353d48",
-        "head": "14f43c8fc0e83728c1d8cc1fb92662fd1e098ab7",
-        "url": "https://github.com/tamird/gvisor/commit/14f43c8fc",
-        "title": "Check the vDSO layout without readelf",
-        "body": "The vDSO layout test starts readelf three times to inspect an ELF that\nthe Sentry maps directly. On a worker without binutils it fails before\nchecking a single segment.\n\nRead the segment, section and relocation tables with Go’s debug/elf\npackage. Debian invokes vdso/check_vdso.py after linking its own vDSO.\nKeep that entry point and its flags for source packages, using the Go\ntoolchain already required by the distribution build.",
-        "summary": "May I update #17122 to this Go checker? The open PR declares LLVM readelf for the existing Python test. This revision reads the ELF directly in Go under Bazel. The classifiers agreed on all 20 fixtures per architecture. Debian’s unchanged Make rule accepted its valid x86 vDSO and rejected an injected data section with networking disabled. External callers of the Python entry point now need host Go and the checker source. Copying the Python file alone fails. Debian’s *.py prerequisite also misses subsequent Go-only edits in incremental builds.",
-        "requestedAt": "2026-11-06T21:22:50.061Z"
-      },
-      "refinement": {
-        "before": {
-          "head": "466dbf7a9a4ff6d12693d0fa94ba37c2bc353d48",
-          "base": "f51a205a8f4afbc5ab41aded070df74951b081ea"
-        },
-        "after": {
-          "head": "14f43c8fc0e83728c1d8cc1fb92662fd1e098ab7",
-          "base": "f51a205a8f4afbc5ab41aded070df74951b081ea"
-        }
       }
     },
     {
@@ -56203,6 +56191,48 @@
           "note": "Published as #17131 at the exact approved head."
         }
       ]
+    },
+    {
+      "id": "pr:17118",
+      "type": "pr",
+      "number": 17118,
+      "repo": "google/gvisor",
+      "ref": "tcp-bound-zero-payload-segments",
+      "head": "e99e0b9307259f006be7036a047272b3880910a2",
+      "title": "Review concurrent admission to the TCP segment queue",
+      "url": "https://github.com/google/gvisor/pull/17118",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-06T21:27:18.472Z",
+      "summary": "On the submitted source, both callers can read the same value before either holds the queue mutex. The PR’s three original tests passed on its head and on the correction. Only the corrected source ran the two-producer test. It started at 77,824 bytes, admitted one 576-byte segment and returned to 77,824 after draining.",
+      "evidence": [
+        {
+          "label": "Proposed inline location on the current PR head",
+          "url": "https://github.com/google/gvisor/pull/17118/files#diff-6bc2b1c96ad6e944939046a38cd9a07a6d3edb1118a338ff0d9aab67a02cfc4cR69"
+        },
+        {
+          "label": "Native Linux queue tests on the original and corrected sources",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42295590649/artifacts/13542172199"
+        },
+        {
+          "label": "Read the charge while holding the queue mutex",
+          "url": "https://github.com/tamird/gvisor/commit/b1e619c13"
+        },
+        {
+          "label": "Queue admission precedes processor selection",
+          "url": "https://github.com/google/gvisor/blob/e99e0b930/pkg/tcpip/transport/tcp/dispatcher.go#L500-L508"
+        }
+      ],
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "e99e0b9307259f006be7036a047272b3880910a2",
+        "url": "https://github.com/google/gvisor/pull/17118",
+        "requestedAt": "2026-11-06T21:27:18.472Z",
+        "title": "Post one inline comment about TCP queue admission",
+        "summary": "Post the comment on the added admission check at pkg/tcpip/transport/tcp/segment_queue.go:69 (RIGHT). The concurrent-read interleaving follows from the code. The runtime pair was tested on the corrected source only.",
+        "body": "Could we read `receiveMemUsed()` here under `q.mu`? The dispatcher enqueues before it selects a processor, so two callers can check the same charge. `setOwner` already adds the new charge under this lock. With the [one-line change](https://github.com/tamird/gvisor/commit/b1e619c13), two in-memory enqueues at the limit admitted exactly one 576-byte segment. [Queue tests](https://github.com/tamird/gvisor/actions/runs/42295590649/artifacts/13542172199).\n\nReview body:\nSubmitted by Codex on behalf of @tamird."
+      }
     }
   ],
   "edges": [
@@ -77954,7 +77984,8 @@
           16660,
           16793,
           16887,
-          17082
+          17082,
+          17118
         ],
         "owner": "Netstack",
         "reviewers": [
