@@ -1,35 +1,71 @@
-name: CI
-
-"on":
+name: Check the FD receiver with the GRO constructor benchmark
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/fdbased-gro-benchmark]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  integration:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Check the two sources and select native Linux
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = dcf0571127e29bf3083a39be44411f8dd2a5419b
+          test "$(git rev-parse HEAD^^)" = 4779d2d0a8535b5b4a42148e705cce16f7dcd671
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml'
+          git fetch --quiet --no-tags --depth=1 https://github.com/tamird/gvisor.git 95ca4e7317b6418d4ba8674a4f8d96b4c950ae78
+          test "$(uname -m)" = x86_64
+          test "$(cat .bazelversion)" = 9.3.1
+          curl -fsSL --max-time 90 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$RUNNER_TEMP/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $RUNNER_TEMP/bazel" | sha256sum -c -
+          chmod 755 "$RUNNER_TEMP/bazel"
+          /usr/bin/unshare --user --map-root-user --net -- /usr/bin/test -e /sys/class/net/lo
+      - name: Run the benchmark and the in-flight detach test
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/benchmark-compat"; mkdir -p "$d"
+          p=pkg/tcpip/link/fdbased/endpoint_test.go
+          git show "dcf0571127:$p" | sed -n '/^\/\/ pausedBatchReader /,/^func TestInjectableAttachment(/{ /^func TestInjectableAttachment(/!p; }' > "$d/inflight.go"
+          test -s "$d/inflight.go"
+          test_target=//pkg/tcpip/link/fdbased:fdbased_test
+          flags=(--config=x86_64 --jobs=3 --strategy=TestRunner=local --nocache_test_results --test_timeout=120 --color=no --test_output=all --test_arg=-test.v '--run_under=/usr/bin/unshare --user --map-root-user --net --')
+          for arm in upstream integrated original; do
+            case "$arm" in
+              upstream) git checkout --quiet --detach 4779d2d0a; args=('-test.run=^$' '-test.bench=^BenchmarkRecvMMsgDispatcher$' -test.benchtime=100x); want=0 ;;
+              integrated) git checkout --quiet --detach dcf0571127; args=('-test.run=^(TestDetachedReceiveBatch|TestInjectableAttachment)$' '-test.bench=^BenchmarkRecvMMsgDispatcher$' -test.benchtime=100x); want=0 ;;
+              original)
+                git checkout --quiet --detach 95ca4e731
+                python3 - "$d/inflight.go" "$p" <<'PYTHON'
+          from pathlib import Path
+          import sys
+          replacement, source = map(Path, sys.argv[1:])
+          text = source.read_text()
+          start = text.index("func TestDetachedReceiveBatch(")
+          end = text.index("func TestInjectableAttachment(", start)
+          source.write_text(text[:start] + replacement.read_text() + text[end:])
+          PYTHON
+                args=('-test.run=^TestDetachedReceiveBatch$'); want=3 ;;
+            esac
+            rc=0; "$RUNNER_TEMP/bazel" --nosystem_rc --nohome_rc --host_jvm_args=-Xmx3g test "${flags[@]}" "${args[@]/#/--test_arg=}" "$test_target" >"$d/$arm.log" 2>&1 || rc=$?
+            test "$rc" -eq "$want" || { tail -45 "$d/$arm.log"; exit 1; }
+            if test "$arm" = original; then
+              grep -F 'delivered 3 packets across detach, want only the first' "$d/$arm.log"
+            else
+              grep -E '^BenchmarkRecvMMsgDispatcher(-[0-9]+)?[[:space:]]+100[[:space:]]' "$d/$arm.log"
+            fi
+            if test "$arm" = integrated; then
+              grep -F -- '--- PASS: TestDetachedReceiveBatch' "$d/$arm.log"
+              grep -F -- '--- PASS: TestInjectableAttachment' "$d/$arm.log"
+            fi
+            grep -E '(^BenchmarkRecvMMsgDispatcher|--- (PASS|FAIL): Test(DetachedReceiveBatch|InjectableAttachment)|delivered [0-9]+ packets across detach)' "$d/$arm.log" > "$d/$arm.txt"
+          done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: fdbased-gro-benchmark
+          path: ${{ runner.temp }}/benchmark-compat/*.txt
+          retention-days: 7
