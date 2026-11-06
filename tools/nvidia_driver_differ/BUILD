@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "cc_binary", "go_binary", "go_test")
+load(":driver_sources.bzl", "DRIVER_SOURCE_DATA", "DRIVER_SOURCE_ENV")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -45,9 +46,11 @@ go_test(
 go_binary(
     name = "run_differ",
     srcs = ["run_differ.go"],
+    data = DRIVER_SOURCE_DATA,
     embedsrcs = [
         ":driver_ast_parser",  # keep
     ],
+    env = DRIVER_SOURCE_ENV,
     # Disable nogo tests because this has C++ dependencies.
     nogo = False,
     deps = [

@@ -85,7 +85,9 @@ between the parent and the new version. The tool analyzes the NVIDIA kernel
 driver source code and outputs the impacted structs.
 
 ```bash
-bazel run tools/nvidia_driver_differ:run_differ -- --base <PARENT_VERSION> --next <NEW_VERSION>
+bazel run //tools/nvidia_driver_differ/sources:update -- <NEW_VERSION>
+bazel mod tidy
+bazel run //tools/nvidia_driver_differ:run_differ -- --base <PARENT_VERSION> --next <NEW_VERSION>
 ```
 
 -   `<PARENT_VERSION>` is the version of the parent node in nvproxy's version

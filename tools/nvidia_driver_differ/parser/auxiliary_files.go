@@ -15,47 +15,11 @@
 package parser
 
 import (
-	"errors"
 	"fmt"
 	"os"
-	"os/exec"
-	"path"
-	"strings"
 
 	"gvisor.dev/gvisor/pkg/sentry/devices/nvproxy"
-	"gvisor.dev/gvisor/pkg/sentry/devices/nvproxy/nvconf"
 )
-
-// ErrDriverSourceNotFound is returned when the driver source code cannot be found.
-var ErrDriverSourceNotFound = errors.New("driver source not found")
-
-// GitRepoURL is the URL for the NVIDIA open-gpu-kernel-modules repo.
-const GitRepoURL = "https://github.com/NVIDIA/open-gpu-kernel-modules.git"
-
-// CloneDriverSource clones the given driver version into the given directory.
-func CloneDriverSource(dir string, version nvconf.DriverVersion) (*DriverSourceDir, error) {
-	// git clone -b $VERSION --depth 1 https://github.com/NVIDIA/open-gpu-kernel-modules.git $PATH
-	args := []string{
-		"clone",
-		"-b",
-		version.String(),
-		"--depth",
-		"1",
-		GitRepoURL,
-		path.Join(dir, version.String()),
-	}
-	cmd := exec.Command("git", args...)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		if strings.Contains(string(out), "not found in upstream origin") {
-			return nil, fmt.Errorf("%w: %s", ErrDriverSourceNotFound, string(out))
-		}
-		return nil, fmt.Errorf("failed to clone %s: %w\n%s", version, err, string(out))
-	}
-	return &DriverSourceDir{
-		ParentDirectory: dir,
-		Version:         version,
-	}, nil
-}
 
 // CreateIncludeFiles creates the necessary include files for the given driver version, and returns
 // the config options for the files.
