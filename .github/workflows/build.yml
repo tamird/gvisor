@@ -1,35 +1,61 @@
-name: CI
-
-"on":
+name: Check NVIDIA driver source ownership from a downstream Bazel module
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/nvproxy-dev-driver-verified]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  closure:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 165
+    env:
+      MAKEFLAGS: DOCKER_BUILD=false
+      DOCKER_HOST: unix:///nonexistent-nvproxy-qualification.sock
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Select the fixed sources and pinned native tools
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = b39f1d18259f0ddb2cfa37516870e6d2b2babbd5
+          test "$(git rev-parse HEAD^^)" = acedf056bb9dce1d8ff9e5fe169241b743683848
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/nvproxy_dev_closure.py'
+          git fetch --quiet --depth=1 origin efa9acfb4e2d91c5944c166a9f2269e0b3ba4322
+          d="$RUNNER_TEMP/nvproxy-dev"
+          mkdir -p "$d"
+          cp .github/qualification/nvproxy_dev_closure.py "$d/check.py"
+          curl -fsSL https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$d/bazel"
+          curl -fsSL https://github.com/bazel-contrib/buildtools/releases/download/v8.5.1/buildifier-linux-amd64 -o "$d/buildifier"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $d/bazel" | sha256sum -c -
+          echo "887377fc64d23a850f4d18a077b5db05b19913f4b99b270d193f3c7334b5a9a7  $d/buildifier" | sha256sum -c -
+          chmod +x "$d/bazel" "$d/buildifier"
+          echo "$d" >> "$GITHUB_PATH"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Measure sources in the previous root and consuming module
+        run: python3 -IB "$RUNNER_TEMP/nvproxy-dev/check.py" parent
+      - name: Measure the dev-only source extension, license audit and canonical regeneration
+        if: always() && !cancelled()
+        run: python3 -IB "$RUNNER_TEMP/nvproxy-dev/check.py" revision
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: nvproxy-module-and-license
+          path: ${{ runner.temp }}/nvproxy-dev/result.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Run the actual ABI test with the revised archive names
+        if: always() && !cancelled()
+        run: python3 -IB "$RUNNER_TEMP/nvproxy-dev/check.py" abi
+      - name: Account for each observed boundary
+        if: always() && !cancelled()
+        run: python3 -IB "$RUNNER_TEMP/nvproxy-dev/check.py" done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: nvproxy-module-all-results
+          path: ${{ runner.temp }}/nvproxy-dev/result.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Require all measured boundaries
+        if: always() && !cancelled()
+        run: python3 -c 'import os,json,pathlib; r=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"nvproxy-dev"/"result.json").read_text()); print(r.get("verdict")); assert r["verified"]'
