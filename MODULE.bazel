@@ -98,23 +98,28 @@ http_archive(
 
 ### Python
 
-http_archive(
-    name = "release_static_cpython",
-    build_file = "//test/rbe/release_python:python.BUILD",
-    sha256 = "2fc493f8f14ff8bf743eb34934bf1edbac518b023e8aa72bc7c0006ee13495e4",
-    strip_prefix = "python/install",
-    urls = ["https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.11.18%2B20261026-x86_64-unknown-linux-musl-lto%2Bstatic-full.tar.zst"],
-)
-
-http_archive(
-    name = "release_static_cpython_arm64",
-    build_file = "//test/rbe/release_python:python.BUILD",
-    sha256 = "976cfd9b50e2fd37c21b74816f4372abc4db21ebaef4bdf3e1690dcb9d1c66c1",
-    strip_prefix = "python/install",
-    urls = ["https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.11.18%2B20261026-aarch64-unknown-linux-musl-lto%2Bstatic-full.tar.zst"],
-)
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = "3.11")
+
+# A static interpreter can run on a musl worker without a dynamic loader.
+python.single_version_platform_override(
+    platform = "gvisor-x86_64-linux-musl-static",
+    python_version = "3.11.18",
+    sha256 = "2fc493f8f14ff8bf743eb34934bf1edbac518b023e8aa72bc7c0006ee13495e4",
+    strip_prefix = "python/install",
+    target_compatible_with = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+    target_settings = ["@@//tools/bazeldefs:musl"],
+    urls = ["https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.11.18%2B20261026-x86_64-unknown-linux-musl-lto%2Bstatic-full.tar.zst"],
+)
+python.single_version_platform_override(
+    platform = "gvisor-aarch64-linux-musl-static",
+    python_version = "3.11.18",
+    sha256 = "976cfd9b50e2fd37c21b74816f4372abc4db21ebaef4bdf3e1690dcb9d1c66c1",
+    strip_prefix = "python/install",
+    target_compatible_with = ["@platforms//cpu:aarch64", "@platforms//os:linux"],
+    target_settings = ["@@//tools/bazeldefs:musl"],
+    urls = ["https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.11.18%2B20261026-aarch64-unknown-linux-musl-lto%2Bstatic-full.tar.zst"],
+)
 python.toolchain(python_version = "3.11")
 
 ### Linux headers

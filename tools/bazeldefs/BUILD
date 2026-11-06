@@ -56,6 +56,12 @@ platform(
 )
 
 config_setting(
+    name = "musl",
+    constraint_values = ["@llvm//constraints/libc:musl"],
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
     name = "amd64",
     constraint_values = [
         "@platforms//cpu:x86_64",
