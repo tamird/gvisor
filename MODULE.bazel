@@ -943,3 +943,37 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+driver_sources = use_extension(
+    "//tools/nvidia_driver_differ:driver_sources.bzl",
+    "driver_sources",
+    dev_dependency = True,
+)
+use_repo(
+    driver_sources,
+    "nvidia_driver_535_129_03",
+    "nvidia_driver_535_183_06",
+    "nvidia_driver_535_247_01",
+    "nvidia_driver_535_261_03",
+    "nvidia_driver_535_274_02",
+    "nvidia_driver_535_288_01",
+    "nvidia_driver_535_309_01",
+    "nvidia_driver_550_90_12",
+    "nvidia_driver_570_124_06",
+    "nvidia_driver_570_133_20",
+    "nvidia_driver_570_172_08",
+    "nvidia_driver_570_195_03",
+    "nvidia_driver_580_105_08",
+    "nvidia_driver_580_126_09",
+    "nvidia_driver_580_126_20",
+    "nvidia_driver_580_159_03",
+    "nvidia_driver_580_159_04",
+    "nvidia_driver_580_167_08",
+    "nvidia_driver_580_173_02",
+    "nvidia_driver_580_178_04",
+    "nvidia_driver_580_65_06",
+    "nvidia_driver_580_95_05",
+    "nvidia_driver_590_48_01",
+    "nvidia_driver_610_57_04",
+    "nvidia_driver_615_71_09",
+)

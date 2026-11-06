@@ -20,8 +20,10 @@
 package nvproxy_driver_parity_test
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -57,7 +59,7 @@ func createParserRunner(t *testing.T) *parser.Runner {
 	return runner
 }
 
-func getDriverDefs(t *testing.T, runner *parser.Runner, version nvconf.DriverVersion) (*nvproxy.DriverABIInfo, *parser.OutputJSON) {
+func getDriverDefs(t *testing.T, runner *parser.Runner, version nvconf.DriverVersion, sourceDir string) (*nvproxy.DriverABIInfo, *parser.OutputJSON) {
 	t.Helper()
 
 	info, ok := nvproxy.SupportedIoctls(version)
@@ -71,11 +73,8 @@ func getDriverDefs(t *testing.T, runner *parser.Runner, version nvconf.DriverVer
 	}
 
 	// Run parser
-	defs, err := runner.ParseDriver(version)
+	defs, err := runner.ParseSourceDirectory(sourceDir)
 	if err != nil {
-		if errors.Is(err, parser.ErrDriverSourceNotFound) {
-			t.Skipf("Skipping parity test for %s because driver source is not available: %v", version, err)
-		}
 		t.Fatalf("failed to run driver_ast_parser: %v", err)
 	}
 
@@ -87,12 +86,30 @@ func getDriverDefs(t *testing.T, runner *parser.Runner, version nvconf.DriverVer
 func TestStructDefinitionParity(t *testing.T) {
 	nvproxy.Init()
 
-	nvproxy.ForEachSupportDriver(func(version nvconf.DriverVersion, _ nvproxy.Checksums) {
+	var sources map[string]*string
+	if err := json.Unmarshal([]byte(os.Getenv("NVIDIA_DRIVER_SOURCES")), &sources); err != nil {
+		t.Fatalf("reading NVIDIA_DRIVER_SOURCES: %v", err)
+	}
+	versions := nvproxy.SupportedDrivers()
+	if len(sources) != len(versions) {
+		t.Fatalf("driver source index has %d versions, want %d; regenerate //tools/nvidia_driver_differ/sources:update", len(sources), len(versions))
+	}
+	for _, version := range versions {
 		t.Run(version.String(), func(t *testing.T) {
 			t.Parallel()
+			anchor, ok := sources[version.String()]
+			if !ok {
+				t.Fatalf("driver %s is missing from the source index; regenerate //tools/nvidia_driver_differ/sources:update", version)
+			}
+			if anchor == nil {
+				t.Skipf("driver %s has no public source tag in the generated source index", version)
+			}
+			path, err := testutil.FindFile(*anchor)
+			if err != nil {
+				t.Fatalf("finding driver %s sources: %v", version, err)
+			}
 			runner := createParserRunner(t)
-
-			nvproxyIoctls, defs := getDriverDefs(t, runner, version)
+			nvproxyIoctls, defs := getDriverDefs(t, runner, version, filepath.Dir(path))
 
 			checkIoctl := func(ioctlNum uint32, nvproxyIoctl nvproxy.IoctlInfo) {
 				if nvproxyIoctl.Name == "" {
@@ -162,7 +179,7 @@ func TestStructDefinitionParity(t *testing.T) {
 				}
 			}
 		})
-	})
+	}
 }
 
 // checkSimpleRecord checks that a record is still a simple ioctl.

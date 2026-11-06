@@ -551,6 +551,8 @@ func (graph *modGraph) repoRefs() ([]repoRef, error) {
 			// http_archive/http_file declared directly in MODULE.bazel.
 		case u.Key == "@@llvm+//extensions:llvm.bzl%llvm":
 			// The public LLVM source extension supplies linked Clang libraries.
+		case u.Key == "@@//tools/nvidia_driver_differ:driver_sources.bzl%driver_sources":
+			// The ABI test parses a separate archive for each public driver version.
 		case strings.HasSuffix(u.Key, "%go_deps"):
 			// Go repos imported from the gazelle go_deps extension.
 		case strings.HasSuffix(u.Key, "//qemu/extension:qemu.bzl%qemu"):
