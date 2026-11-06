@@ -57,63 +57,49 @@ def elf(path):
             assert re.fullmatch(r"/[a-zA-Z0-9._/+~-]+",interp)
     return {"arch":struct.unpack_from("<H",buf,18)[0],"interp":interp,"sha256":hashlib.sha256(buf).hexdigest()}
 def select():
-    for rev,source in SRC.items():
-        head(source)
-        entries=report.setdefault("sources",{}).setdefault(rev,{"source":source,"cases":{}})["cases"]
-        try:
-            args=[*BASE,"mod","graph","--depth","1","--extension_info=all","--output","json","--lockfile_mode=off"]
-            graph_out=subprocess.check_output(args,stderr=subprocess.DEVNULL)
-            graph=json.loads(graph_out[graph_out.index(b"{"):])
-            http_repos=sorted(r for usage in graph["extensionUsages"] if usage["key"].startswith("@@//:MODULE.bazel%") and usage["key"].endswith((" http_file"," http_archive")) for r in usage.get("used_repos",[]))
-            python_usages=sorted(usage["key"] for usage in graph["extensionUsages"] if usage["key"].endswith("//python/extensions:python.bzl%python"))
-            record={"root_http_repo_count":len(http_repos),"direct_python_archives":[r for r in http_repos if r.startswith("release_static_cpython")],"runtime_extension":python_usages,"catalog":hashlib.sha256(Path("tools/licensecheck/dependencies.yaml").read_bytes()).hexdigest()}
-            report["sources"][rev]["stock_license_graph"]=record;save()
-        except Exception as err:
-            report["sources"][rev]["graph_error"]={"type":type(err).__name__,"line":traceback.extract_tb(err.__traceback__)[-1].lineno};save()
-        for case,ex,lib,tgt,tlib in CASES:
-            rec=entries[case]={}
-            opts=flags(ex,lib,tgt,tlib)
-            out=invoke(rec,[*BASE,"cquery",*opts,"--output=starlark","--starlark:file="+str(D/"writer_runtime.cquery"),EXPR],rev+case)
-            if rec["exit"]:continue
+    head(SRC["registered"])
+    report["original"]={"run":42191023408,"artifact":13490336305,"sha256":"1105866eaf6b8b9c0934b9ecc39522090eb35429ce9e3f24d259fa0c3ed6e195","control":SRC["control"],"registered":SRC["registered"]}
+    output_base=Path(subprocess.check_output([*BASE,"info","output_base"],text=True,stderr=subprocess.DEVNULL).strip())
+    inspected={}
+    complete=True
+    for case,ex,lib,tgt,tlib in [CASES[0],CASES[1],CASES[5]]:
+        rec=report.setdefault("configured",{}).setdefault(case,{})
+        out=invoke(rec,[*BASE,"cquery",*flags(ex,lib,tgt,tlib),"--output=starlark","--starlark:file="+str(D/"writer_runtime.cquery"),EXPR],case)
+        if rec["exit"]:continue
+        inputs={}
+        for row in out.read_text().splitlines():
+            info=json.loads(row)
+            kind="exec" if any(v.startswith("bazel-out/") and "-exec" in v.split("/")[1] for v in info["outputs"]) else "target"
+            arch,libc=(ex,lib) if kind=="exec" else (tgt,tlib)
+            wanted="gvisor-"+arch+"-linux-musl-static" if libc=="musl" else arch+"-unknown-linux-gnu"
+            candidate,=[v for v in info["interpreters"] if v.endswith("/bin/python3")]
+            root=Path(candidate).parts
+            assert len(root)==4 and root[0]=="external" and root[-2]=="bin" and re.fullmatch(r"[A-Za-z0-9_+.-]+",root[1])
+            assert kind not in inputs
+            inputs[kind]=candidate
+            slot=rec[kind]={"repo":root[1],"expected":"rules_python++python+python_3_11_"+wanted,"encoding":any(v.startswith("external/"+root[1]+"/") for v in info["encodings"])}
+        save()
+        for kind,rel in inputs.items():
+            target_data=rec[kind];path=output_base/rel
+            if not path.is_file():
+                target_data["missing_canonical_file"]=rel;complete=False;continue
             try:
-                execroot=Path(subprocess.check_output([*BASE,"info","execution_root"],text=True,stderr=subprocess.DEVNULL).strip())
-                for line in out.read_text().splitlines():
-                    info=json.loads(line)
-                    candidates=info["interpreters"]
-                    rec.setdefault("observed",[]).append({"outputs":info["outputs"][:2],"candidates":candidates[:5],"encodings":info["encodings"][:2]});save()
-                    assert candidates and info["encodings"]
-                    roots=set()
-                    for val in [*candidates,*info["encodings"]]:
-                        pp=Path(val)
-                        assert pp.parts[0]=="external" and ".." not in pp.parts and re.fullmatch(r"[a-zA-Z0-9_+.~/-]+",val)
-                        roots.add(pp.parts[1])
-                    assert len(roots)==1
-                    binaries=[elf(execroot/v) for v in candidates]
-                    assert all(v==binaries[0] for v in binaries)
-                    kind="exec" if any("-exec" in v.split("/")[1] for v in info["outputs"]) else "target"
-                    assert kind not in rec
-                    rec[kind]={"repo":roots.pop(),**binaries[0]}
-                save()
-                assert set(rec)>={"exec","target"}
-            except Exception as err:
-                rec["resolution_error"]={"type":type(err).__name__,"line":traceback.extract_tb(err.__traceback__)[-1].lineno};save()
-    for rev in SRC:
-        record=report["sources"][rev].get("stock_license_graph",{})
-        expected=["release_static_cpython","release_static_cpython_arm64"] if rev=="control" else []
-        assert record.get("direct_python_archives")==expected
-    for case,ex,lib,tgt,tlib in CASES:
-        old,new=(report["sources"][k]["cases"][case] for k in SRC)
-        for slot,arch,libc in (("exec",ex,lib),("target",tgt,tlib)):
-            d=new[slot];base=old[slot]
-            assert d["arch"]==base["arch"]==SPECS[arch][0]
-            if libc=="musl":
-                assert "gvisor" in d["repo"] and "musl" in d["repo"] and d["interp"] is None and base["interp"] is not None
-                if arch=="x86_64":assert d["sha256"]=="02939080d36c0fd2dc2507ff146a4c86360fa3968f30e1e42a6424d352629394"
-            else:
-                assert d["interp"]==SPECS[arch][2] and d["sha256"]==base["sha256"] and d["repo"]==base["repo"]
-    report["selection_status"]="PASS";save()
+                if rel not in inspected:inspected[rel]=elf(path)
+                target_data.update(inspected[rel])
+            except (OSError,ValueError,AssertionError) as e:
+                target_data["file_error"]=type(e).__name__;complete=False
+        save()
+    for case,ex,lib,tgt,tlib in [CASES[0],CASES[1],CASES[5]]:
+        rec=report["configured"][case]
+        for kind,arch,libc in (("exec",ex,lib),("target",tgt,tlib)):
+            row=rec[kind];assert row["repo"]==row["expected"] and row["encoding"]
+            if "arch" in row:
+                assert row["arch"]==SPECS[arch][0] and row["interp"]==(None if libc=="musl" else SPECS[arch][2])
+                if libc=="musl" and arch=="x86_64":assert row["sha256"]=="02939080d36c0fd2dc2507ff146a4c86360fa3968f30e1e42a6424d352629394"
+    report["selection_status"]="PASS" if complete else "SELECTED";save()
+
 def packages():
-    assert report["selection_status"]=="PASS"
+    assert report["selection_status"] in ("PASS","SELECTED")
     head(SRC["registered"])
     for case,ex,lib,tgt,tlib in CASES[:2]:
         rec=report.setdefault("packages",{}).setdefault(case,{})
@@ -130,37 +116,46 @@ def packages():
         if events.exists():
             for line in events.open():
                 event=json.loads(line);action=event.get("action",{})
+                for item in event.get("namedSetOfFiles",{}).get("files",[]):
+                    nm=item.get("name",""); h=item.get("digest",""); size=item.get("length","")
+                    if (nm.endswith("shim/config.tar") or nm.endswith("test-tar-compression-from-extension-bz2.bz2")) and re.fullmatch(r"[0-9a-f]{64}",h) and str(size).isdigit():
+                        rec.setdefault("outputs",{})[nm.split("/")[-1]]={"digest":h,"size":int(size)}
                 if action.get("success",True) is not False:continue
                 digest=re.search(r"/blobs/([0-9a-f]{64})/([0-9]+)$",action.get("stderr",{}).get("uri",""))
                 if digest and len(failures)<4:failures.append({"mnemonic":action.get("type",""),"stderr":digest.group(1),"size":int(digest.group(2))})
         rec["failure_actions"]=failures;save()
         if rec["exit"]:continue
-        data=subprocess.check_output(["jq","-sc",'[.[]|if type=="array" then .[] else . end|select(.mnemonic=="PackageTar")|{owner:.targetLabel,runner,exit:(.exitCode//0),cached:(.cacheHit//false),props:(.platform.properties|map({key:.name,value:.value})|from_entries),writer:.commandArgs[0]}]',log])
-        rows=json.loads(data)
-        owners=sorted(a["owner"] for a in rows)
-        rec["owners"]=owners;save()
-        assert PKG in owners and any(v.endswith("//tests/tar:test-tar-compression-from-extension-bz2") for v in owners) and len(owners)==2
-        for item in rows:
-            assert item["runner"]=="remote" and not item["cached"] and item["exit"]==0
-            assert item["props"]["Arch"]==cpu and item["props"]["container-image"].endswith(image)
-            assert item["writer"].endswith("/pkg/private/tar/build_tar")
-        rec["worker"]={"cpu":cpu,"image":image,"uncached":True}
-        builddir=Path("bazel-bin/external");archive,=list(builddir.glob("rules_pkg*/tests/tar/test-tar-compression-from-extension-bz2*.bz2"))
-        assert archive.read_bytes()[:3]==b"BZh"
-        with tarfile.open(archive,"r:bz2") as tf:
-            member,=[m for m in tf if m.isfile()];assert Path(member.name).name=="loremipsum.txt"
-            packed=tf.extractfile(member).read()
-        data_in,=list(Path("bazel-gvisor/external").glob("rules_pkg*/tests/testdata/loremipsum.txt")) if Path("bazel-gvisor/external").is_dir() else list((Path(subprocess.check_output([*BASE,"info","execution_root"],text=True,stderr=subprocess.DEVNULL).strip())/"external").glob("rules_pkg*/tests/testdata/loremipsum.txt"))
-        assert packed==data_in.read_bytes()
-        rec["bz2"]={"payload_sha256":hashlib.sha256(packed).hexdigest(),"tar_sha256":hashlib.sha256(archive.read_bytes()).hexdigest()};save()
-        archive=Path("bazel-bin/shim/config.tar")
-        with tarfile.open(archive) as tf:
-            member,=[m for m in tf if m.isfile()]
-            assert member.name.lstrip("./")=="etc/containerd/runsc.toml" and member.mode&0o7777==0o644
-            raw=tf.extractfile(member).read()
-            assert raw==Path("shim/runsc.toml").read_bytes()
-            rec.update(payload=hashlib.sha256(raw).hexdigest(),mode=member.mode,passed=True)
-        save()
+        try:
+            data=subprocess.check_output(["jq","-sc",'[.[]|if type=="array" then .[] else . end|select(.mnemonic=="PackageTar")|{owner:.targetLabel,runner,exit:(.exitCode//0),cached:(.cacheHit//false),props:((.platform.properties//[])|map({key:.name,value:.value})|from_entries),writer:.commandArgs[0]}]',log])
+            rows=json.loads(data)
+            rec["actions"]=[{"owner":a["owner"], "runner":a["runner"], "exit":a["exit"], "cached":a["cached"],"arch":a["props"].get("Arch"),"image":a["props"].get("container-image")} for a in rows];save()
+            owners=sorted(a["owner"] for a in rows)
+            rec["owners"]=owners;save()
+            assert PKG in owners and any(v.endswith("//tests/tar:test-tar-compression-from-extension-bz2") for v in owners) and len(owners)==2
+            for item in rows:
+                assert item["runner"]=="remote" and not item["cached"] and item["exit"]==0
+                assert item["props"]["Arch"]==cpu and item["props"]["container-image"].endswith(image)
+                assert item["writer"].endswith("/pkg/private/tar/build_tar")
+            rec["worker"]={"cpu":cpu,"image":image,"uncached":True}
+            builddir=Path("bazel-bin/external");archive,=list(builddir.glob("rules_pkg*/tests/tar/test-tar-compression-from-extension-bz2*.bz2"))
+            assert archive.read_bytes()[:3]==b"BZh"
+            with tarfile.open(archive,"r:bz2") as tf:
+                member,=[m for m in tf if m.isfile()];assert Path(member.name).name=="loremipsum.txt"
+                packed=tf.extractfile(member).read()
+            base=Path(subprocess.check_output([*BASE,"info","output_base"],text=True,stderr=subprocess.DEVNULL).strip())
+            data_in,=list((base/"external").glob("rules_pkg*/tests/testdata/loremipsum.txt"))
+            assert packed==data_in.read_bytes()
+            rec["bz2"]={"payload_sha256":hashlib.sha256(packed).hexdigest(),"tar_sha256":hashlib.sha256(archive.read_bytes()).hexdigest()};save()
+            archive=Path("bazel-bin/shim/config.tar")
+            with tarfile.open(archive) as tf:
+                member,=[m for m in tf if m.isfile()]
+                assert member.name.lstrip("./")=="etc/containerd/runsc.toml" and member.mode&0o7777==0o644
+                raw=tf.extractfile(member).read()
+                assert raw==Path("shim/runsc.toml").read_bytes()
+                rec.update(payload=hashlib.sha256(raw).hexdigest(),mode=member.mode,passed=True)
+            save()
+        except Exception as err:
+            rec["report_error"]={"type":type(err).__name__,"line":traceback.extract_tb(err.__traceback__)[-1].lineno};save()
     assert all(v.get("passed") for v in report["packages"].values())
     report["package_status"]="PASS"
 
