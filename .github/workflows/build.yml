@@ -1,35 +1,85 @@
-name: CI
-
-"on":
+name: Measure checkpoint encoder setup from one kernel image
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/checkpoint-encoder-size-hints]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  nginx:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Stage the published AMD64 Nginx image and native measurement harness
+        run: |
+          source=c01fe358350db49b6a64903cec52c96dcd027ce5
+          test "$(git rev-parse HEAD^)" = "$source"
+          test "$(git rev-parse "$source^")" = 1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d
+          d="$RUNNER_TEMP/size-hints"
+          mkdir -p "$d/platform" "$d/public" "$d/bin"
+          cp .github/qualification/size_hints.py "$d/reader.py"
+          printf '%s\n' "$source" > "$d/source"
+          tool=2b51abee8530385431b7225198fdd5cd65e78696
+          git fetch --quiet --depth=1 --no-tags origin "$tool"
+          git switch --detach "$source"
+          image=us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/nginx_x86_64@sha256:31c649d512cced4f7dd414fd05cfa9bb7416ee37575caeba46cc1e9b56aef163
+          docker pull --platform=linux/amd64 "$image"
+          test "$(docker image inspect --format '{{.Id}}' "$image")" = sha256:5f9e05caa37420ad50b7ccf873ea117fcbd8cff24b3fcb689cb904bcab624cf5
+          docker tag "$image" gvisor.dev/images/benchmarks/nginx:latest
+          docker save -o test/rbe/encoder_hints/nginx.tar gvisor.dev/images/benchmarks/nginx:latest
+          curl -fsSL --retry 3 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bin/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bin/bazel" | sha256sum -c -
+          chmod 755 "$d/bin/bazel"
+          printf '%s\n' 'module(name="hint_worker")' > "$d/platform/MODULE.bazel"
+          cat > "$d/platform/BUILD" <<'BUILD'
+          platform(
+              name = "gnu",
+              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              exec_properties = {
+                  "Arch": "amd64",
+                  "OSFamily": "linux",
+                  "workload-isolation-type": "firecracker",
+                  "EstimatedMemory": "6GB",
+                  "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+              },
+              visibility = ["//visibility:public"],
+          )
+          BUILD
+      - name: Run the isolated Nginx checkpoint and paired encoder measurements
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          d="$RUNNER_TEMP/size-hints"
+          source=$(cat "$d/source")
+          test "$(git rev-parse HEAD)" = "$source"
+          umask 077
+          rc="$d/private.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          test -n "$BUILDBUDDY_API_KEY"
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          common=(--config=x86_64 -c opt --jobs=48 --inject_repository="hint_worker=$d/platform" --extra_execution_platforms=@hint_worker//:gnu --host_platform=@hint_worker//:gnu)
+          ctl=(env -i HOME="$HOME" USER=runner PATH="$d/bin:$PATH" LANG=C.UTF-8)
+          code=0
+          "${ctl[@]}" "$d/bin/bazel" --nosystem_rc --nohome_rc --bazelrc="$rc" test "${common[@]}" --test_timeout=900 \
+            --nocache_test_results --flaky_test_attempts=1 --strategy=TestRunner=remote '--modify_execution_info=^TestRunner$=+no-remote-cache' \
+            --remote_download_outputs=toplevel '--remote_download_regex=.*[/]test[.](log|xml)$' --build_event_json_file="$d/events" \
+            //test/rbe/encoder_hints:nginx > "$d/console" 2>&1 || code=$?
+          python3 -I -B "$d/reader.py" "$d" "$source"
+          test "$code" = 0
+          git switch --quiet --detach 2b51abee8530385431b7225198fdd5cd65e78696
+          "${ctl[@]}" "$d/bin/bazel" --nosystem_rc --nohome_rc --bazelrc="$rc" run "${common[@]}" @org_golang_x_perf//cmd/benchstat \
+            -- "$d/public/loaded.bench" "$d/public/clear.bench" > "$d/public/benchstat.txt" 2>"$d/stats.console"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: nginx-kernel-encoder-sizing
+          path: ${{ runner.temp }}/size-hints/public/
+          if-no-files-found: error
+          retention-days: 7
