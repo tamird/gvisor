@@ -30,6 +30,7 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp/test/e2e"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp/testing/context"
@@ -41,6 +42,104 @@ const (
 	tsOptionSize = 12
 	mtu          = header.TCPMinimumSize + header.IPv4MinimumSize + e2e.MaxTCPOptionSize + maxPayload
 )
+
+func TestPiggybackACKAfterLinkWrite(t *testing.T) {
+	for _, rejected := range []bool{false, true} {
+		t.Run(fmt.Sprintf("Rejected=%t", rejected), func(t *testing.T) {
+			const warmup = 16
+			clock := faketime.NewManualClock()
+			attempted := make(chan struct{}, 1)
+			c := context.NewWithOpts(t, context.Options{
+				EnableV4: true, MTU: e2e.DefaultMTU, Clock: clock,
+				LinkWriteError: func(pkts stack.PacketBufferList) tcpip.Error {
+					for _, pkt := range pkts.AsSlice() {
+						if pkt.Data().Size() != 0 {
+							select {
+							case attempted <- struct{}{}:
+							default:
+							}
+							if rejected {
+								return &tcpip.ErrNoBufferSpace{}
+							}
+						}
+					}
+					return nil
+				},
+			})
+			defer c.Cleanup()
+			e2e.SetStackSACKPermitted(t, c, true)
+			peer := c.CreateConnectedWithOptionsNoDelay(header.TCPSynOptions{SACKPermitted: true})
+			for i := 0; i < warmup; i++ {
+				peer.SendPacket([]byte("w"), nil)
+				peer.VerifyACKHasSACK(nil)
+			}
+			peer.SendPacket([]byte("q"), nil)
+			if err := testutil.Poll(func() error {
+				if n, err := c.EP.GetSockOptInt(tcpip.ReceiveQueueSizeOption); err != nil || n != warmup+1 {
+					return fmt.Errorf("receive queue = (%d, %v), want %d", n, err, warmup+1)
+				}
+				return nil
+			}, time.Second); err != nil {
+				t.Fatal(err)
+			}
+			check := func(b *buffer.View, payload string) {
+				t.Helper()
+				defer b.Release()
+				checker.IPv4(t, b, checker.TCP(checker.DstPort(peer.SrcPort),
+					checker.TCPFlagsMatch(header.TCPFlagAck, header.TCPFlagAck), checker.TCPAckNum(uint32(peer.NextSeqNum))))
+				if got := header.TCP(header.IPv4(b.AsSlice()).Payload()).Payload(); string(got) != payload {
+					t.Fatalf("TCP payload = %q, want %q", got, payload)
+				}
+			}
+			early := false
+			if b := c.GetPacketNonBlocking(); b != nil {
+				check(b, "")
+				early = true
+			}
+			failures := &c.EP.Stats().(*tcp.Stats).SendErrors.SegmentSendToNetworkFailed
+			before := failures.Value()
+			if n, err := c.EP.Write(bytes.NewReader([]byte("r")), tcpip.WriteOptions{}); err != nil || n != 1 {
+				t.Fatalf("write = %d, %v; want 1, nil", n, err)
+			}
+			select {
+			case <-attempted:
+			case <-time.After(time.Second):
+				t.Fatal("no payload offered to the link")
+			}
+			// Synchronize with the sender before inspecting the link result.
+			if _, err := c.EP.GetSockOptInt(tcpip.ReceiveQueueSizeOption); err != nil {
+				t.Fatal(err)
+			}
+			failed := failures.Value() - before
+			if (rejected && failed != 1) || (!rejected && failed != 0) {
+				t.Fatalf("rejected=%t send errors=%d", rejected, failed)
+			}
+			if !rejected {
+				check(c.GetPacket(), "r")
+			}
+			c.CheckNoPacketTimeout("extra output at write", time.Millisecond)
+			clock.Advance(39 * time.Millisecond)
+			c.CheckNoPacketTimeout("extra output before deadline", time.Millisecond)
+			clock.Advance(time.Millisecond)
+			late := false
+			if b := c.GetPacketNonBlocking(); b != nil {
+				check(b, "")
+				late = true
+			}
+			if got := tcp.EndpointState(c.EP.State()); got != tcp.StateEstablished {
+				t.Fatalf("socket state = %v, want established", got)
+			}
+			t.Logf("PIGGYBACK_ACK rejected=%t pure_before_write=%t response_on_wire=%t send_errors=%d pure_at_40ms=%t established=true",
+				rejected, early, !rejected, failed, late)
+			if rejected && !early && !late {
+				t.Error("a rejected response left the request unacknowledged at its deadline")
+			}
+			if !rejected && late {
+				t.Error("the response carried the ACK but the timer sent another")
+			}
+		})
+	}
+}
 
 func TestReceiverDSACK(t *testing.T) {
 	for _, sackPermitted := range []bool{true, false} {
