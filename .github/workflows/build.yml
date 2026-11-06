@@ -1,35 +1,106 @@
-name: CI
-
-"on":
+name: Compare all supported NVIDIA ABI versions without network access
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/nvproxy-offline-abi-34]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  submit:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 160
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 4
+          persist-credentials: false
+      - name: Verify the original source and the Buildkite command
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = fa5e09a762a2bb2ba22e22713e553bd3a0c2f5f3
+          test "$(git rev-parse HEAD^^)" = ed92709ded197270c492cc0917f220c96e6df718
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/nvproxy_offline.py' ':!.github/qualification/nvproxy_original_tls.py' ':!.github/qualification/source_presubmit_memory.py'
+          cp .github/qualification/{nvproxy_original_tls.py,nvproxy_offline.py,source_presubmit_memory.py} "$RUNNER_TEMP/"
+          echo "db1754052d64b76661c950bfefaf2897eaa1bd5fc5b25e898dade914c5194503  $RUNNER_TEMP/source_presubmit_memory.py" | sha256sum -c -
+          echo "62b05da8c7cc4e459df4b99d225589ad77bee53792f2ef424430c8b313cc59c6  $RUNNER_TEMP/nvproxy_offline.py" | sha256sum -c -
+          echo "493b2b8c5b932a8c64cf9c226c050632396f4a9aa7a1ee97306c734e95ddd275  $RUNNER_TEMP/nvproxy_original_tls.py" | sha256sum -c -
+          git checkout --quiet --detach fa5e09a762a2bb2ba22e22713e553bd3a0c2f5f3
+          test "$(bazelisk --version)" = "bazel 9.3.1"
+      - name: Size and check the Bazel server heap on this coordinator
+        run: python3 -IB "$RUNNER_TEMP/source_presubmit_memory.py"
+      - name: Check the original checksum failure independently of the current worker
+        continue-on-error: true
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -IB "$RUNNER_TEMP/nvproxy_original_tls.py"
+      - name: Extract and compare the 25 declared NVIDIA driver ABIs
+        timeout-minutes: 115
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
+          rc="$RUNNER_TEMP/source-presubmit.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          cat > "$rc" <<'RC'
+          build:nvidia-source --remote_executor=grpcs://remote.buildbuddy.io
+          build:nvidia-source --remote_cache=grpcs://remote.buildbuddy.io
+          build:nvidia-source --bes_backend=grpcs://remote.buildbuddy.io
+          build:nvidia-source --bes_results_url=https://app.buildbuddy.io/invocation/
+          build:nvidia-source --remote_download_outputs=toplevel
+          build:nvidia-source --define=source_presubmit=true --extra_execution_platforms=//test/rbe:linux_amd64
+          build:nvidia-source --spawn_strategy=remote --noremote_local_fallback --strip=never
+          test:nvidia-source --strategy=TestRunner=remote --test_env=CGROUPV2=true --test_env=GO_TEST_WRAP_TESTV=1
+          build:nvidia-source --jobs=48 --keep_going
+          test:nvidia-source --nocache_test_results --flaky_test_attempts=1
+          RC
+          printf 'build:nvidia-source --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          printf 'build:nvidia-source --build_event_json_file=%s/source-presubmit.bep\n' "$RUNNER_TEMP" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          code=0
+          timeout -k 90s 95m bazelisk --bazelrc="$rc" test --config=nvidia-source \
+            --run_under=//test/rbe:offline_exec \
+            //tools/nvidia_driver_differ:driver_abi \
+            //tools/nvidia_driver_differ/sources:update //tools/nvidia_driver_differ/sources:update_test \
+            //pkg/sentry/devices/nvproxy:nvproxy_driver_abi_test > "$RUNNER_TEMP/source-presubmit.log" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$RUNNER_TEMP/source-presubmit-exit"
+          # Bazel writes the canonical runfiles launcher. Run the source-pin
+          # updater after the private rc is removed, even if ABI parsing failed.
+          code=0
+          timeout -k 30s 12m bazelisk --bazelrc="$rc" run --config=nvidia-source \
+            --build_event_json_file="$RUNNER_TEMP/updater.bep" --script_path="$RUNNER_TEMP/update-pins" \
+            //tools/nvidia_driver_differ/sources:update > "$RUNNER_TEMP/updater-build.log" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$RUNNER_TEMP/updater-build-exit"
+      - name: Regenerate all source pins from the public NVIDIA tag advertisement
+        if: always() && !cancelled()
+        run: |
+          set -eu
+          test ! -e "$RUNNER_TEMP/source-presubmit.bazelrc"
+          test -x "$RUNNER_TEMP/update-pins"
+          code=0
+          timeout -k 5s 25m "$RUNNER_TEMP/update-pins" --workspace="$GITHUB_WORKSPACE" > "$RUNNER_TEMP/updater.log" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$RUNNER_TEMP/updater-exit"
+          diffcode=0
+          git diff --exit-code -- MODULE.bazel tools/nvidia_driver_differ/driver_sources.bzl > /dev/null || diffcode=$?
+          printf '%s\n' "$diffcode" > "$RUNNER_TEMP/updater-diff-exit"
+      - name: Record each actual ABI check, source absence and isolated worker result
+        id: collect
+        if: always() && !cancelled()
+        run: |
+          set -eu
+          test ! -e "$RUNNER_TEMP/source-presubmit.bazelrc"
+          trap 'rm -f "$RUNNER_TEMP/source-presubmit.log" "$RUNNER_TEMP/source-presubmit.bep"' EXIT
+          python3 -IB "$RUNNER_TEMP/source_presubmit_memory.py" diagnose
+          python3 -IB "$RUNNER_TEMP/nvproxy_offline.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: nvproxy-offline
+          path: ${{ runner.temp }}/nvproxy-offline.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Require 25 passes, nine source absences, the updater and a worker without an external route
+        if: always() && !cancelled()
+        run: |
+          python3 -c 'import os,json,pathlib; r=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"nvproxy-offline.json").read_text()); assert r["verified"]'
