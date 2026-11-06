@@ -119,6 +119,10 @@ try:
         raise RuntimeError("the two checkpoint/restore modes did not both complete")
     phase("both modes completed two TCP restores")
 finally:
+    daemon_log = out / "daemon.log"
+    if daemon_log.exists():
+        report["daemon_errors"] = [l.strip()[:500] for l in daemon_log.read_text(errors="replace").splitlines()
+            if "failed to start daemon" in l or "level=error" in l][-8:]
     if pidfile.is_file():
         pid = int(pidfile.read_text())
         subprocess.run(["sudo", "-n", "kill", "-TERM", str(pid)])

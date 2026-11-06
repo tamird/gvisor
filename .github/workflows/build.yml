@@ -1,41 +1,56 @@
-name: Run the nested TCP checkpoint cases on the proposed stack
+name: Check nested namespaces and TCP checkpoint restore
 on:
   push:
-    branches: [qualification/dind-active-stream-17028]
+    branches: [qualification/dind-stream-and-namespace]
 permissions: {contents: read}
 jobs:
   checkpoint:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 85
+    timeout-minutes: 105
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 2, persist-credentials: false}
-      - name: Select the submitted TCP restore and DinD sources
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Pin all sources and provision the historical cross compiler
+        id: setup
         run: |
           set -euo pipefail
           d="$RUNNER_TEMP/dind-stream"
           mkdir -p "$d"
           cp .github/qualification/dind_stream.py "$d/driver.py"
-          test "$(git rev-parse HEAD^)" = 90d4e2253f004cdc73a35dbc4050eab3e9a8495d
+          cp .github/qualification/dind_namespace.py "$d/namespace.py"
+          test "$(git rev-parse HEAD^)" = 9c08f4ea91892fc4c4cc38716bfe15ec275c3302
           git fetch --depth=5 --no-tags https://github.com/google/gvisor.git refs/pull/17028/head
-          series="$(git rev-parse FETCH_HEAD)"
-          test "$series" = a772fedd6521ac693b8e25a41c01e00f2e023461
+          test "$(git rev-parse FETCH_HEAD)" = a772fedd6521ac693b8e25a41c01e00f2e023461
           git fetch --depth=2 --no-tags https://github.com/google/gvisor.git refs/pull/16666/head
-          tcp="$(git rev-parse FETCH_HEAD)"
-          test "$tcp" = 5edf5d13c7a6749df466add29d8811260edb4cda
-          git switch --detach "$series"
-          git -c user.name=Qualification -c user.email=nobody@localhost cherry-pick --no-commit "$tcp"
-          test "$(git write-tree)" = 7c513a10040f59a51577e487ef76d52b3cd46b69
-      - name: Exercise the original test with the supported Docker daemon
+          test "$(git rev-parse FETCH_HEAD)" = 5edf5d13c7a6749df466add29d8811260edb4cda
+          git fetch --depth=2 --no-tags https://github.com/tamird/gvisor.git refs/heads/research/dind-root-namespace-registry
+          test "$(git rev-parse FETCH_HEAD)" = 428e3d67c87363bc16be64c80e8fe58a6a46c467
+          test "$(git rev-parse FETCH_HEAD^)" = fdd009fd9c0752b3f9fc3bf1a8c3deeff105a8c3
+          if ! command -v aarch64-linux-gnu-g++ >/dev/null; then
+            sudo apt-get -qq update
+            sudo apt-get -y --no-install-recommends install g++-aarch64-linux-gnu
+          fi
+          /usr/bin/aarch64-linux-gnu-gcc --version
+      - name: Exercise nested creation on Linux and both Sentry revisions
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" BAZEL="$(command -v bazel)" \
+            python3 -B "$RUNNER_TEMP/dind-stream/namespace.py"
+      - name: Run the original two-mode acceptance test
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
         run: |
           set -euo pipefail
+          git switch --detach a772fedd6521ac693b8e25a41c01e00f2e023461
+          git -c user.name=Qualification -c user.email=nobody@localhost cherry-pick --no-commit 5edf5d13c7a6749df466add29d8811260edb4cda
+          test "$(git write-tree)" = 7c513a10040f59a51577e487ef76d52b3cd46b69
           env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" BAZEL="$(command -v bazel)" \
             python3 -B "$RUNNER_TEMP/dind-stream/driver.py"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: nested-tcp-checkpoint-cases
-          path: ${{ runner.temp }}/dind-stream/result.json
+          name: namespace-and-stream-results
+          path: |
+            ${{ runner.temp }}/dind-stream/namespace.json
+            ${{ runner.temp }}/dind-stream/result.json
           retention-days: 14
           if-no-files-found: warn
