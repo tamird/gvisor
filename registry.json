@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T15:04:52.756Z",
+    "updatedAt": "2026-11-06T15:17:14.247Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -23847,24 +23847,17 @@
       ]
     },
     {
-      "id": "branch:nvidia-parser-resources",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:17112",
+      "type": "pr",
+      "repo": "google/gvisor",
       "group": "bazel",
       "head": "5967bbde193112cce575c5443c6b241d99589f59",
       "ref": "proposal/nvidia-parser-resources-master",
-      "title": "Package the NVIDIA parser builtin headers",
-      "url": "https://github.com/tamird/gvisor/commit/5967bbde1",
-      "status": "Agent work",
-      "summary": "The approved parser patch uses public @llvm-project//clang:builtin_headers_gen. Current gVisor master already configures that repository and its LLVM source exports the target under clang/staging/include. Its clang/LICENSE.TXT matches the packaged notice byte for byte. The patch reapplied to master with identical added and removed lines. One native AMD64 GNU check is qualifying the current supplier, the parser owner and the header archive embedded in run_differ.",
-      "updatedAt": "2026-11-06T14:55:55.836Z",
-      "followup": {
-        "owner": "Agent",
-        "sourceHead": "5967bbde193112cce575c5443c6b241d99589f59",
-        "observedAt": "2026-11-06T14:55:55.836Z",
-        "disposition": "The declared header input and matching license already exist on master. The separate LLVM source migration can proceed independently.",
-        "nextAction": "Read the actual TestParser result and verify the complete archive in run_differ on the current LLVM configuration, then deliver under the existing approval."
-      },
+      "title": "Package Clang headers with the NVIDIA parser",
+      "url": "https://github.com/google/gvisor/pull/17112",
+      "status": "open",
+      "summary": "The NVIDIA ABI differ can use the Clang builtin headers from the LLVM source that gVisor master already declares. On native AMD64, its original TestParser passed uncached. The run_differ executable contains the complete 291-member archive, including the headers and their matching LLVM license. The existing contributor approval covers the rebase onto current master.",
+      "updatedAt": "2026-11-06T15:17:14.247Z",
       "evidence": [
         {
           "label": "Master configures the existing LLVM source",
@@ -23879,12 +23872,16 @@
           "url": "https://github.com/tamird/gvisor/commit/52feb7b78"
         },
         {
-          "label": "Native GNU qualification on current master",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42238182812"
+          "label": "Original TestParser passed, and the complete header archive is embedded in the AMD64 run_differ executable",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42238182812/artifacts/13516115337"
         },
         {
           "label": "Standalone public LLVM source supplier",
-          "url": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb"
+          "url": "https://github.com/tamird/gvisor/commit/17d37fc9a"
+        },
+        {
+          "label": "Remote Bazel invocation with the existing master LLVM supplier",
+          "url": "https://app.buildbuddy.io/invocation/404d7d2a-60b4-4ce8-baa7-b3c71e285f49"
         }
       ],
       "settledReviews": [
@@ -23895,6 +23892,14 @@
           "outcome": "approved",
           "at": "2026-11-06T14:55:55.836Z",
           "note": "Retained the contributor’s previously recorded approval. The current-master rebase preserves all seven files’ added and removed lines."
+        },
+        {
+          "kind": "proposal",
+          "head": "5967bbde193112cce575c5443c6b241d99589f59",
+          "url": "https://github.com/tamird/gvisor/commit/5967bbde1",
+          "outcome": "approved",
+          "at": "2026-11-06T15:17:14.247Z",
+          "note": "Published on #17112. The rebase preserves every added and removed line from approved 52feb7b78."
         }
       ],
       "refinement": {
@@ -23904,7 +23909,8 @@
         "after": {
           "head": "5967bbde193112cce575c5443c6b241d99589f59"
         }
-      }
+      },
+      "number": 17112
     },
     {
       "id": "branch:source-image-utilities",
@@ -54406,9 +54412,21 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T15:01:36.918Z",
-      "summary": "A single Bazel invocation executed six tests remotely. AMD64 and ARM64 workers ran the Go atomicbitops and C++ posix_error tests. AMD64 workers also ran uname on native Linux and under gVisor systrap. All six TestRunner actions passed uncached. Four of the six tests exercise parts of three presubmit jobs. Two serve as architecture controls. Each of those three jobs still has additional coverage to verify. The fork’s Buildkite file contains one submission command. GitHub Actions submitted it for this trial.\n\nThe previous proposals kept separate unit, Nogo, package, container, smoke, Gazelle, plugin, source-lint and syscall jobs. Their target lists, test fixtures and earlier results are linked. Staged release checks still have distinct artifact inputs.",
+      "updatedAt": "2026-11-06T15:16:55.872Z",
+      "summary": "On current master, one Bazel command selects the same 360 runnable tests and 2,881 build-only targets as the AMD64 cgroup-v2 unit presubmit, plus a native uname control. Bazel assigns 366 test shards to OCI workers and five to Firecracker workers with root and IPv6. The two worker probes both measured cgroup2fs with CGROUPV2=true and false. Each setting ran remotely the first time, and both repeat runs reused the cached true result. Running all selected targets is the next check.\n\nA single Bazel invocation executed six tests remotely. AMD64 and ARM64 workers ran the Go atomicbitops and C++ posix_error tests. AMD64 workers also ran uname on native Linux and under gVisor systrap. All six TestRunner actions passed uncached. Four of the six tests exercise parts of three presubmit jobs. Two serve as architecture controls. Each of those three jobs still has additional coverage to verify. The fork’s Buildkite file contains one submission command. GitHub Actions submitted it for this trial.\n\nThe previous proposals kept separate unit, Nogo, package, container, smoke, Gazelle, plugin, source-lint and syscall jobs. Their target lists, test fixtures and earlier results are linked. Staged release checks still have distinct artifact inputs.",
       "evidence": [
+        {
+          "label": "Single Bazel selection on current master",
+          "url": "https://github.com/tamird/gvisor/commit/949d48715"
+        },
+        {
+          "label": "All presubmit owners and configuration groups matched; 371 shard actions configured",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42240826638/artifacts/13517195079"
+        },
+        {
+          "label": "The OCI and Firecracker worker probes measured cgroup2fs and distinct true/false cache entries",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42240363852/artifacts/13516160486"
+        },
         {
           "label": "Six uncached remote TestRunner results",
           "url": "https://github.com/tamird/gvisor/actions/runs/42232937931/artifacts/13510273674"
@@ -54474,9 +54492,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "e46a101fc0aebb325ec25977697a012a2e11a11b",
-        "observedAt": "2026-11-06T14:29:43.022Z",
+        "observedAt": "2026-11-06T15:16:55.872Z",
         "disposition": "The contributor requested one remote Bazel graph for CI targets across areas and configurations.",
-        "nextAction": "Extend the single invocation to the remaining CI targets. Identify which tests need architecture-specific, KVM, cgroup or other execution requirements and represent those requirements in Bazel."
+        "nextAction": "Execute the complete AMD64 cgroup-v2 selection in one remote Bazel invocation. Compare its actual target and shard results with the public presubmit."
       }
     },
     {
