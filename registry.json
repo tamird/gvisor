@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T21:27:18.472Z",
+    "updatedAt": "2026-11-06T21:31:49.331Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -11892,15 +11892,15 @@
       "title": "Give the NVIDIA ABI test its driver headers",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/be4b12bea",
-      "status": "Awaiting contributor review",
-      "updatedAt": "2026-11-06T21:20:00.639Z",
-      "summary": "The ABI test compared all 25 available NVIDIA source releases with outbound networking denied. It skipped the nine recorded versions without published source. The development-only extension gave gVisor all 25 archive repositories and a downstream module zero, down from 25. Both downstream build attempts stopped at the existing Gazelle restriction before compilation. The separate online test checked all 34 installer hashes with declared trust roots.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-06T21:31:49.331Z",
+      "summary": "The development-only source passed all 25 available offline ABI comparisons and removed the driver repositories from a downstream module. The standalone differ still clones driver sources. Tamir requested that the revision address that machinery.",
       "followup": {
         "sourceHead": "be4b12bea9fae089b93d87b9f09246eeec6aa702",
-        "observedAt": "2026-11-06T21:20:00.639Z",
-        "owner": "Contributor",
-        "disposition": "The final development-only source is ready for review.",
-        "nextAction": "Review the single fork commit. If approved, submit after #17112 and #17114 merge.",
+        "observedAt": "2026-11-06T21:31:49.331Z",
+        "owner": "Agent",
+        "disposition": "Tamir requested another revision because the git-clone machinery remains in this source.",
+        "nextAction": "Remove the retained driver-source cloning machinery and qualify the revised source before proposing it.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/be4b12bea",
           "https://github.com/tamird/gvisor/actions/runs/42294413136/artifacts/13541966193",
@@ -11937,16 +11937,9 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42283984978"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
+      "contributorChangesRequested": {
         "head": "be4b12bea9fae089b93d87b9f09246eeec6aa702",
-        "baseHead": "acedf056bb9dce1d8ff9e5fe169241b743683848",
-        "url": "https://github.com/tamird/gvisor/commit/be4b12bea",
-        "title": "Give the NVIDIA ABI test its driver headers",
-        "body": "The ABI test checks out every supported driver at test time. On a\nworker without Git or outbound network access, it fails before the\nparser can compare a driver definition with its Go type.\n\nRecord the public source commit and archive digest for each driver,\nincluding which versions have no public tag. A development-only\nmodule extension makes those sources available to the ABI test and\nthe license audit when gVisor is the root module.\n\nPass the declared headers to the existing parser. The standalone\ndiffer can still check out the version selected on its command line.",
-        "summary": "May I open this change after #17112 and #17114 merge? The ABI test compared all 25 available NVIDIA source releases with outbound networking denied. It skipped the nine recorded versions without published source. The development-only extension gave gVisor all 25 archive repositories and a downstream module zero, down from 25. Both downstream build attempts stopped at the existing Gazelle restriction before compilation. The separate online test checked all 34 installer hashes with declared trust roots.",
-        "requestedAt": "2026-11-06T21:20:00.639Z"
+        "url": "https://github.com/tamird/gvisor/commit/be4b12bea"
       }
     },
     {
@@ -56203,9 +56196,13 @@
       "url": "https://github.com/google/gvisor/pull/17118",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T21:27:18.472Z",
+      "updatedAt": "2026-11-06T21:31:49.331Z",
       "summary": "On the submitted source, both callers can read the same value before either holds the queue mutex. The PR’s three original tests passed on its head and on the correction. Only the corrected source ran the two-producer test. It started at 77,824 bytes, admitted one 576-byte segment and returned to 77,824 after draining.",
       "evidence": [
+        {
+          "label": "Posted inline review on TCP queue admission",
+          "url": "https://github.com/google/gvisor/pull/17118#discussion_r4497821040"
+        },
         {
           "label": "Proposed inline location on the current PR head",
           "url": "https://github.com/google/gvisor/pull/17118/files#diff-6bc2b1c96ad6e944939046a38cd9a07a6d3edb1118a338ff0d9aab67a02cfc4cR69"
@@ -56223,15 +56220,29 @@
           "url": "https://github.com/google/gvisor/blob/e99e0b930/pkg/tcpip/transport/tcp/dispatcher.go#L500-L508"
         }
       ],
-      "contributorReview": {
-        "kind": "review",
-        "status": "pending",
-        "head": "e99e0b9307259f006be7036a047272b3880910a2",
-        "url": "https://github.com/google/gvisor/pull/17118",
-        "requestedAt": "2026-11-06T21:27:18.472Z",
-        "title": "Post one inline comment about TCP queue admission",
-        "summary": "Post the comment on the added admission check at pkg/tcpip/transport/tcp/segment_queue.go:69 (RIGHT). The concurrent-read interleaving follows from the code. The runtime pair was tested on the corrected source only.",
-        "body": "Could we read `receiveMemUsed()` here under `q.mu`? The dispatcher enqueues before it selects a processor, so two callers can check the same charge. `setOwner` already adds the new charge under this lock. With the [one-line change](https://github.com/tamird/gvisor/commit/b1e619c13), two in-memory enqueues at the limit admitted exactly one 576-byte segment. [Queue tests](https://github.com/tamird/gvisor/actions/runs/42295590649/artifacts/13542172199).\n\nReview body:\nSubmitted by Codex on behalf of @tamird."
+      "settledReviews": [
+        {
+          "kind": "review",
+          "head": "e99e0b9307259f006be7036a047272b3880910a2",
+          "url": "https://github.com/google/gvisor/pull/17118",
+          "title": "Post one inline comment about TCP queue admission",
+          "body": "Could we read `receiveMemUsed()` here under `q.mu`? The dispatcher enqueues before it selects a processor, so two callers can check the same charge. `setOwner` already adds the new charge under this lock. With the [one-line change](https://github.com/tamird/gvisor/commit/b1e619c13), two in-memory enqueues at the limit admitted exactly one 576-byte segment. [Queue tests](https://github.com/tamird/gvisor/actions/runs/42295590649/artifacts/13542172199).\n\nReview body:\nSubmitted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-06T21:30:21Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17118#pullrequestreview-5807281816",
+          "note": "Posted once and verified on the current head at segment_queue.go:69."
+        }
+      ],
+      "followup": {
+        "owner": "Maintainer",
+        "sourceHead": "e99e0b9307259f006be7036a047272b3880910a2",
+        "observedAt": "2026-11-06T21:31:49.331Z",
+        "disposition": "The inline suggestion was posted on the reviewed source.",
+        "nextAction": "Follow the author’s response and any revision of the admission check.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17118#discussion_r4497821040",
+          "https://github.com/google/gvisor/pull/17118#pullrequestreview-5807281816"
+        ]
       }
     }
   ],
