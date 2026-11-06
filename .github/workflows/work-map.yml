@@ -1,0 +1,97 @@
+name: Verify the ARM64 race and delayed ACK records
+on:
+  push:
+    branches: [qualification/work-map-arm64-race-tools]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 4
+          persist-credentials: false
+      - name: Run the canonical collector on the proposed Pages source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(git rev-parse HEAD^)" = 12fae2fccb2400164d300e0df68c6fd74d4d0e3b
+          git checkout --detach 12fae2fccb2400164d300e0df68c6fd74d4d0e3b
+          python3 -B update-status.py
+      - name: Validate the collected pair and run its existing tests
+        run: |
+          python3 -B - <<'PYTHON'
+          import datetime, hashlib, json, re, subprocess
+          from pathlib import Path
+
+          source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          assert source == '12fae2fccb2400164d300e0df68c6fd74d4d0e3b'
+          commands = [['node', 'metadata-preflight.mjs', '.'],
+                      ['python3', '-B', '-m', 'unittest', 'work_states_test', 'update_status_test'],
+                      ['node', '--test', '--test-reporter=tap', 'app_test.mjs']]
+          expected = [' '.join(command) for command in commands]
+          record = dict(source=source, expected=expected, executed=[], failed=[], skipped=[], missing=expected.copy())
+          for command, label in zip(commands, expected, strict=True):
+              result = subprocess.run(command, capture_output=True, text=True)
+              if result.returncode:
+                  print(result.stdout[-5000:], result.stderr[-5000:])
+              record['executed'].append(label)
+              record['missing'].remove(label)
+              if result.returncode:
+                  record['failed'].append(label)
+              elif command == commands[0]:
+                  record['preflight'] = json.loads(result.stdout)
+              if command == commands[1]:
+                  record['pythonTests'] = [int(n) for n in re.findall(r'^Ran (\d+) tests?', result.stderr, re.M)]
+              elif command == commands[2]:
+                  record['jsCounts'] = {k:int(n) for k,n in re.findall(r'^# (tests|pass|fail|skipped) (\d+)$', result.stdout, re.M)}
+          snapshot = json.loads(Path('github-status.json').read_text())
+          before = json.loads(subprocess.check_output(['git', 'show', 'HEAD:github-status.json']))
+          current = {p['number']:p for p in snapshot['prs'] if p.get('repo', 'google/gvisor') == 'google/gvisor'}
+          handoffs = [p['number'] for p in current.values() if p.get('terminalImportHandoff')]
+          checks = dict(fresh=snapshot['checkedAt'] > before['checkedAt'],
+                        requestBudget=1 <= snapshot['limits']['requests'] <= 64,
+                        registryUnchanged=not subprocess.run(['git','diff','--quiet','HEAD','--','registry.json']).returncode)
+          registry = json.loads(Path('registry.json').read_text())
+          previous = json.loads(subprocess.check_output(['git','show',source+'^:registry.json']))
+          nodes = {n['id']:n for n in registry['nodes']}
+          old = {n['id']:n for n in previous['nodes']}
+          compiler='branch:hermetic-compiler-review'
+          tools='branch:pure-go-source-generators'
+          ack='pr:17082'
+          checks['scope']=set(nodes)-set(old)=={tools,ack} and set(old)<=set(nodes) and [k for k in old if nodes[k]!=old[k]]==[compiler] and registry['edges']==previous['edges'] and registry['groups']==previous['groups']
+          checks['priorDecisions']=all(all(nodes[k].get(f)==v.get(f) for f in ('head','status','contributorReview','additionalReviews','settledReviews')) for k,v in old.items())
+          def receipts(n, ids):
+              return all(any(str(i) in e['url'] for e in n['evidence']) for i in ids)
+          c=nodes[compiler]
+          checks['compiler']=all(e in c['evidence'] for e in old[compiler]['evidence']) and receipts(c,[13479570031,13477949675,13478402785]) and all(p in c['followup']['nextAction'] for p in ('#16522','#17067','#16516','#16586')) and 'native ARM64' in c['summary']
+          g=nodes[tools]
+          checks['source']=g['head']==g['contributorReview']['head']=='e667d39b868cac9946369777b6c4ef0fbad946a1' and g['contributorReview']['kind']=='proposal' and g['contributorReview']['status']=='pending' and receipts(g,[13477121576,13478527159,13478402785,13479570031,13477949675])
+          q=nodes[ack];r=q['contributorReview']
+          checks['outgoing']=q['head']==r['head']=='f2447eb8a6a1ef5f8bf7447b11605e56ec02a83c' and r['kind']=='review' and r['status']=='pending' and receipts(q,[13478877935,13478329386]) and r['body'].count('on behalf of @tamird')==1 and all(t in r['body'] for t in ('rcv.go:84','snd.go:1909','ACK 808 waited 40 ms','ErrNoBufferSpace'))
+          sections=[(n,o) for n,o in zip(registry['investigations'],previous['investigations'],strict=True) if n!=o]
+          tcp,prior=sections[0]
+          checks['watch']=len(sections)==1 and tcp['id']=='investigation:tcp-issues-and-reviews' and 17082 in tcp['reviewWatch']['numbers'] and tcp['reviewWatch']==prior['reviewWatch'] and tcp['findings'][1:]==prior['findings'][1:]
+          record.update(requests=snapshot['limits']['requests'], requestLimit=64,
+                        checkedAt=snapshot['checkedAt'], previousCheckedAt=before['checkedAt'], reminderPosting=False,
+                        liveChecks=checks, terminalImportHandoffs=handoffs,
+                        cases={n:{'head':p['head'], 'status':p['status'], 'handoff':n in handoffs}
+                               for n,p in current.items() if n in (15153,16516,16522,16668,16713,16904,16981,17067)},
+                        finished=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                        exitCode=int(bool(record['failed']) or not all(checks.values())),
+                        hashes={p:hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in
+                                ('github-status.json','registry.json','app.js','update-status.py','work_states.py','update_status_test.py','README.md')})
+          Path('verdict.json').write_text(json.dumps(record, indent=2))
+          raise SystemExit(record['exitCode'])
+          PYTHON
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: work-map-verdict
+          path: |
+            verdict.json
+            github-status.json
+          if-no-files-found: error
