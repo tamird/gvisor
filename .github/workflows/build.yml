@@ -1,35 +1,96 @@
-name: CI
-
-"on":
+name: Link two source presubmit targets with declared LLVM
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/source-presubmit-declared-cc]
+permissions: {contents: read}
 jobs:
   build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Verify the one-flag candidate and comparison source
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 66243bc605cf17bcb190c4762031001b3ae95c3d
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/qualification/source_cc_receipt.py' ':!.github/workflows/build.yml'
+          cp .github/qualification/source_cc_receipt.py "$RUNNER_TEMP/"
+          git fetch --quiet --depth=1 origin c17c75a75a8ac1bac84d5369d8050f84ce8b5bff
+          git show 'c17c75a75:.github/qualification/source_presubmit_results.py' > "$RUNNER_TEMP/source_presubmit_results.py"
+          echo "5a9cdffc19e25eb31add9b3bac369cadc73db50931b251eee6fc6adf5eff5e0e  $RUNNER_TEMP/source_presubmit_results.py" | sha256sum -c
+          git checkout --quiet --detach 66243bc605cf17bcb190c4762031001b3ae95c3d
+          test "$(bazelisk --version)" = "bazel 9.3.1"
+      - name: Compile the C probe and freestanding sidecar on the original worker platform
+        timeout-minutes: 61
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
+          rc="$RUNNER_TEMP/source-cc.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          cat > "$rc" <<'RC'
+          build:source-presubmit --remote_executor=grpcs://remote.buildbuddy.io
+          build:source-presubmit --remote_cache=grpcs://remote.buildbuddy.io
+          build:source-presubmit --bes_backend=grpcs://remote.buildbuddy.io
+          build:source-presubmit --bes_results_url=https://app.buildbuddy.io/invocation/
+          build:source-presubmit --remote_download_outputs=toplevel
+          build:source-presubmit --jobs=48 --keep_going --build_event_publish_all_actions
+          RC
+          printf 'build:source-presubmit --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          printf 'build:source-presubmit --build_event_json_file=%s/source-cc.bep\n' "$RUNNER_TEMP" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          code=0
+          timeout --signal=INT --kill-after=60s 55m bazelisk --bazelrc="$rc" build --config=source-presubmit //tools/cstate_wake_probe:cstate_wake_probe //runsc/fdparking:fdparking_binary > "$RUNNER_TEMP/source-cc.log" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$RUNNER_TEMP/source-cc-exit"
+      - name: Inspect producer output and execution platform
+        if: always() && !cancelled()
+        run: |
+          set -eu
+          python3 "$RUNNER_TEMP/source_cc_receipt.py" result
+          python3 "$RUNNER_TEMP/source_cc_receipt.py" plan
+      - name: Validate bounded receipt
+        if: always() && !cancelled()
+        id: receipt
+        run: |
+          python3 -IB - <<'PY'
+          import json,os,re
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"source-cc-results"
+          for basename in ("build.json","plan.json"):
+              f=p/basename
+              assert f.is_file() and not f.is_symlink() and f.stat().st_size<64000
+              d=f.read_bytes()
+              assert not re.search(rb"(?i)x-buildbuddy-api-key|authorization\s*[:=]|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}",d)
+              j=json.loads(d)
+              if basename=="build.json": assert j["source"]=="66243bc605cf17bcb190c4762031001b3ae95c3d"
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.receipt.outcome == 'success'
+        with:
+          name: declared-source-cc-results
+          path: ${{ runner.temp }}/source-cc-results/*.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Check the original build boundaries
+        if: always() && steps.receipt.outcome == 'success'
+        run: |
+          python3 -IB - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"source-cc-results"
+          result=json.loads((p/"build.json").read_text())
+          assert result["built_both"]
+          binary=result["outputs"]["//runsc/fdparking:fdparking_binary"]
+          assert not binary["interp"] and not binary["dynamic"]
+          plan=json.loads((p/"plan.json").read_text())
+          assert plan["analysis_exit"]==0 and {r["mnemonic"] for r in plan["actions"]}=={"CppCompile","CppLink","Genrule"}
+          assert any(r["mnemonic"]=="CppCompile" and r["llvm_path"] and r["clang"] for r in plan["actions"])
+          assert all(r["platform_ok"] and r["image_ok"] and r["oci"] and r["amd64"] and not r["undeclared_gcc"] for r in plan["actions"])
+          PY
+      - name: Remove unprojected build data
+        if: always()
+        run: rm -f "$RUNNER_TEMP"/source-cc.{log,bep,bazelrc} "$RUNNER_TEMP"/source-cc-plan.{log,json}
