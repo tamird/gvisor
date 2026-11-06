@@ -1,35 +1,87 @@
-name: CI
-
-"on":
+name: Compare the batched receiver before and after peer shutdown
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/source-netgofer-shutdown-paired]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 4, persist-credentials: false}
+      - name: Verify the two sources and the private kernel observation
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 3abd433515437ea263321eeead064993e3b842b9
+          test "$(git rev-parse HEAD^^)" = a1f66b4e411ee96b682fc80fbe177257bde82a63
+          test "$(git rev-parse HEAD^^^)" = 949d4871550821371649ae873beab69ead0b36c1
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/netgofer_paired.py' ':!.github/qualification/recv-kernel.txt'
+          test "$(git diff --name-only HEAD^^ HEAD^)" = "$(printf '%s\n' pkg/tcpip/link/fdbased/packet_dispatchers.go runsc/gofer/net/netgofer.go)"
+          test "$(git diff --name-only HEAD^^^ HEAD^^)" = pkg/tcpip/link/fdbased/endpoint_test.go
+          d="$RUNNER_TEMP/netgofer-paired"
+          mkdir -m 700 "$d"
+          cp .github/qualification/netgofer_paired.py .github/qualification/recv-kernel.txt "$d/"
+          git checkout --quiet --detach HEAD^^
+      - name: Run the original and corrected receiver on the same remote profile
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
+          umask 077
+          d="$RUNNER_TEMP/netgofer-paired"
+          rc="$d/private.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          awk '/^(build|test):source-presubmit / && !/--target_pattern_file=/ {sub(/:source-presubmit /, ":readback "); print}' .bazelrc > "$rc"
+          test "$(wc -l < "$rc")" -eq 6
+          cat >> "$rc" <<'RC'
+          build:readback --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
+          build:readback --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/
+          build:readback --remote_download_outputs=toplevel --jobs=20 --keep_going
+          test:readback --nocache_test_results --flaky_test_attempts=1
+          RC
+          printf 'build:readback --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          run() {
+            arm="$1"; shift
+            code=0
+            bazelisk --nosystem_rc --nohome_rc --bazelrc="$rc" test --config=readback \
+              --build_event_json_file="$d/$arm.jsonl" --test_timeout=100 --test_arg=-test.timeout=45s \
+              --test_arg=-test.v --test_env=GO_TEST_WRAP_TESTV=1 "$@" > "$d/$arm.console" 2>&1 || code=$?
+            printf '%s\n' "$code" > "$d/$arm.exit"
+            python3 -IB "$d/netgofer_paired.py" "$arm"
+          }
+          cat "$d/recv-kernel.txt" >> pkg/tcpip/link/fdbased/endpoint_test.go
+          run stock '--test_arg=-test.run=^TestRecvMMsg(KernelShutdown|PeerShutdown)$' //pkg/tcpip/link/fdbased:fdbased_test
+          git restore -- pkg/tcpip/link/fdbased/endpoint_test.go
+          git checkout --quiet --detach 3abd433515437ea263321eeead064993e3b842b9
+          run fixed --test_arg=-test.count=25 \
+            '--test_arg=-test.run=^(TestRecvMMsgPeerShutdown|TestDispatchPacketFormat|TestSpliceAndCloseWrite|TestRunProxyModeEndToEnd|TestRunProxyModeWithSeccomp|TestProxyLimitsConnections|TestProxyRejectsDisallowedDestinations|TestNetgoferEarlyValidationClosesUDSFD)$' \
+            //pkg/tcpip/link/fdbased:fdbased_test //runsc/gofer/net:netgofer_test
+      - name: Validate the two closed result files
+        id: boundary
+        if: always() && !cancelled()
+        run: |
+          set -eu
+          d="$RUNNER_TEMP/netgofer-paired"
+          trap 'rm -f "$d/"*.jsonl "$d/"*.console "$d/private.bazelrc"' EXIT
+          for f in "$d/stock.json" "$d/fixed.json"; do
+            test -s "$f" && test ! -L "$f" && test "$(wc -c < "$f")" -lt 36000
+            if grep -Eiq 'authorization[[:space:]]*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}' "$f"; then exit 1; fi
+          done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.boundary.outcome == 'success'
+        with:
+          name: netgofer-batched-peer-shutdown
+          path: |
+            ${{ runner.temp }}/netgofer-paired/stock.json
+            ${{ runner.temp }}/netgofer-paired/fixed.json
+          retention-days: 14
+      - name: Require real shutdown and successful transfers in every corrected trial
+        if: always() && steps.boundary.outcome == 'success'
+        run: |
+          d="$RUNNER_TEMP/netgofer-paired"
+          jq -e '.exit!=0 and (.tests|length)==1 and all(.tests[]; .remote and (.cached|not) and .nonterminal_after_shutdown and .empty_records==[8] and .cases.TestRecvMMsgPeerShutdown.failed==1 and .cases.TestRecvMMsgKernelShutdown.passed==1)' "$d/stock.json" >/dev/null
+          jq -e '.exit==0 and (.tests|length)==2 and all(.tests[]; .remote and (.cached|not) and .passed and all(.cases[]; .started==25 and .passed==25 and .failed==0 and .skipped==0)) and .tests["//pkg/tcpip/link/fdbased:fdbased_test"].cases.TestRecvMMsgPeerShutdown.passed==25 and .tests["//runsc/gofer/net:netgofer_test"].cases.TestRunProxyModeWithSeccomp.passed==25' "$d/fixed.json" >/dev/null
