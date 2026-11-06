@@ -33,7 +33,7 @@ def write_report():
 
 
 def setup():
-    assert subprocess.check_output(["git", "rev-parse", "HEAD^"], text=True).strip() == SOURCE
+    assert subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() == SOURCE
     assert Path(".bazelversion").read_text().strip() == "9.3.1"
     STAGE.mkdir()
     image = STAGE / "image"
@@ -45,7 +45,7 @@ def setup():
     probe.chmod(0o755)
     # Same native launcher/JVM libraries and CA certificates as the original
     # Gazelle minimum-client qualification. No host /usr or /bin mounts.
-    for directory in ("etc", "bin", "usr/bin", "home/runner", "work", "out", "cache", "data", "tmp"):
+    for directory in ("etc", "bin", "usr/bin", "home/runner/.cache", "data", "tmp"):
         (image / directory).mkdir(parents=True, exist_ok=True)
     def add(src, dest=None):
         out = image / str(dest or src).lstrip("/")
@@ -61,7 +61,11 @@ def setup():
     add("/lib64/ld-linux-x86-64.so.2")
     add("/usr/bin/env")
     add("/etc/ssl/certs/ca-certificates.crt")
-    add("/etc/ssl/certs/java/cacerts", "/trust/cacerts")
+    for java_trust in (Path("/etc/ssl/certs/java/cacerts"),
+                       Path(os.environ.get("JAVA_HOME", "/usr/lib/jvm/default-java")) / "lib/security/cacerts"):
+        if java_trust.is_file():
+            add(java_trust, "/trust/cacerts")
+            break
     (image / "etc/passwd").write_text(f"runner:x:{os.getuid()}:{os.getgid()}:runner:/home/runner:/nonexistent\n")
     (image / "etc/group").write_text(f"runner:x:{os.getgid()}:\n")
     (image / "etc/nsswitch.conf").write_text("passwd: files\ngroup: files\nhosts: files dns\n")
@@ -70,11 +74,7 @@ def setup():
     with tarfile.open(STAGE / "image.tar", "w") as tar:
         tar.add(image, arcname=".")
     run("docker", "import", STAGE / "image.tar", "lean-client:probe", stdout=subprocess.DEVNULL)
-    for name in ("work", "out", "cache", "data", "home"):
-        (STAGE / name).mkdir()
-    with subprocess.Popen(["git", "archive", SOURCE], stdout=subprocess.PIPE) as proc:
-        run("tar", "-xf", "-", "-C", STAGE / "work", stdin=proc.stdout)
-        assert proc.wait() == 0
+    (STAGE / "data").mkdir()
 
 
 def varint(reader):
@@ -126,19 +126,25 @@ def workspace_operations(path):
 
 
 def phase(index, command, target, tool=None):
+    work = Path.cwd()
+    # The clean git checkout has no tracked module lock. Discard only a lock
+    # created by a previous probe so both cases start on the identical source.
+    if (work / "MODULE.bazel.lock").exists():
+        assert not subprocess.check_output(["git", "ls-files", "MODULE.bazel.lock"])
+        (work / "MODULE.bazel.lock").unlink()
+    run("git", "diff", "--quiet", "HEAD", "--")
     args = ["docker", "run", "--rm", "--cap-drop=ALL", "--security-opt=no-new-privileges",
             "--read-only", "--tmpfs", "/tmp:rw,exec,mode=1777", "--user", f"{os.getuid()}:{os.getgid()}",
-            "--workdir", "/work", "-e", "HOME=/home/runner", "-e", "PATH=/usr/bin:/bin"]
-    for directory, dest in (("work", "/work"), ("out", "/out"), ("cache", "/cache"), ("data", "/data"), ("home", "/home/runner")):
-        args += ["-v", f"{STAGE/directory}:{dest}"]
+            "--workdir", str(work), "-e", "HOME=/home/runner", "-e", "PATH=/usr/bin:/bin",
+            "--mount", "type=volume,dst=/home/runner", "-v", f"{work}:{work}", "-v", f"{STAGE/'data'}:/data"]
     if tool:
         path = Path("/usr/bin") / tool
         assert tool in POSSIBLE and path.is_file()
         args += ["-v", f"{path.resolve()}:/usr/bin/{tool}:ro", "-v", f"{path.resolve()}:/bin/{tool}:ro"]
-    args += ["lean-client:probe", "/probe/bazel", "--batch", "--nosystem_rc", "--nohome_rc",
-             "--output_user_root=/out", f"--output_base=/out/{'control' if tool else 'minimal'}",
-             "--host_jvm_args=-Djavax.net.ssl.trustStore=/trust/cacerts", command,
-             "--repository_cache=/cache", "--color=no", "--curses=no", "--output=label",
+    args += ["lean-client:probe", "/probe/bazel", "--batch", "--nosystem_rc", "--nohome_rc"]
+    if (STAGE / "image/trust/cacerts").is_file():
+        args += ["--host_jvm_args=-Djavax.net.ssl.trustStore=/trust/cacerts"]
+    args += [command, "--color=no", "--curses=no", "--output=label",
              f"--experimental_workspace_rules_log_file=/data/{index}.pb"]
     if command == "cquery":
         args += ["--config=x86_64", "-c", "opt", "--symlink_prefix=/"]

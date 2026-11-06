@@ -1,7 +1,7 @@
 name: Configure the public release on a minimal Bazel client
 on:
   push:
-    branches: [qualification/lean-release-client-probe]
+    branches: [qualification/lean-release-client-canonical]
 permissions: {contents: read}
 jobs:
   linux:
@@ -10,9 +10,14 @@ jobs:
     timeout-minutes: 55
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 2}
+        with: {persist-credentials: false, fetch-depth: 3}
       - name: Query release dependencies without building actions
-        run: python3 -I -B .github/qualification/lean_release_client.py
+        run: |
+          test "$(git rev-parse HEAD^)" = 4f12a8e53d55d0e70308481f09c4bcfea41d7cd3
+          test "$(git rev-parse HEAD^^)" = d5fe3c2eef21434cbe13e3604f0f070ace4d7edb
+          cp .github/qualification/lean_release_client.py "$RUNNER_TEMP/lean-client.py"
+          git switch --detach d5fe3c2eef21434cbe13e3604f0f070ace4d7edb
+          python3 -I -B "$RUNNER_TEMP/lean-client.py"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
