@@ -1,35 +1,107 @@
-name: CI
-
-"on":
+name: Verify the named native semaphore cases
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/semaphore-guard-go-cases]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  verify:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Prepare the original native Linux Go test
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/semaphore-slice-guard"
+          mkdir -p "$d"
+          test "$(git rev-parse HEAD^)" = 8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml'
+          test "$(cat .bazelversion)" = 8.8.1
+          if ! command -v aarch64-linux-gnu-g++ >/dev/null; then
+            for suite in jammy jammy-updates; do
+              echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu/ $suite main universe"
+            done > "$d/ubuntu.list"
+            opts=(-o "Dir::Etc::sourcelist=$d/ubuntu.list" -o Dir::Etc::sourceparts=-)
+            sudo apt-get "${opts[@]}" update -qq
+            sudo apt-get "${opts[@]}" install -qq -y --no-install-recommends g++-aarch64-linux-gnu
+          fi
+          curl -fsSL --max-time 90 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+      - name: Run the standalone semaphore package test on native Linux
+        shell: bash
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/semaphore-slice-guard"
+          git checkout -q --detach 8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557
+          test "$(uname -m)" = x86_64
+          rc=0
+          env -i HOME="$HOME" PATH="$PATH" USER=runner LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" \
+            "$d/bazel" --nosystem_rc --nohome_rc --host_jvm_args=-Xmx2600m test \
+            --config=x86_64 --jobs=2 --local_resources=memory=9900 \
+            --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox \
+            '--modify_execution_info=^(GoStandardLibraryAnalysis|GoStaticAnalysis)$=-no-sandbox' \
+            --spawn_strategy=linux-sandbox --strategy=TestRunner=local \
+            --remote_executor= --remote_cache= --bes_backend= --nocache_test_results --flaky_test_attempts=1 \
+            --test_timeout=300 --test_sharding_strategy=disabled --build_tag_filters= --test_tag_filters= \
+            --color=no --curses=no --noshow_progress --test_output=all --test_arg=-test.v \
+            --test_env=GO_TEST_WRAP=1 --test_env=GO_TEST_WRAP_TESTV=1 \
+            --build_event_json_file="$d/test.bep" //pkg/sentry/kernel/semaphore:semaphore_test || rc=$?
+          export rc
+          python3 -IB - "$d" <<'PYREPORT'
+          import hashlib, json, os, re, sys
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          from urllib.parse import unquote, urlsplit
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+          work = Path(sys.argv[1])
+          target = "//pkg/sentry/kernel/semaphore:semaphore_test"
+          expected = {"TestBasic", "TestWaitForZero", "TestNoWait", "TestUnregister"}
+          report = {"source":"8d8a461be1c6d2cfa6a7594a39f0f1d1715c0557", "target":target,
+                    "bazelExit":int(os.environ["rc"]), "attempts":[], "verified":False}
+          source = work / "test.bep"
+          for line in source.open() if source.is_file() else ():
+              event = json.loads(line)
+              result = event.get("testResult")
+              if not result or event["id"].get("testResult", {}).get("label") != target:
+                  continue
+              execution = result.get("executionInfo", {})
+              attempt = {"status":result["status"], "strategy":execution.get("strategy"),
+                         "cached":bool(result.get("cachedLocally") or execution.get("cachedRemotely"))}
+              report["attempts"].append(attempt)
+              for output in result.get("testActionOutput", []):
+                  name = output.get("name")
+                  path = urlsplit(output.get("uri", ""))
+                  if name not in ("test.log", "test.xml") or path.scheme != "file":
+                      continue
+                  data = Path(unquote(path.path)).read_bytes()
+                  (work / name).write_bytes(data)
+                  attempt[name] = {"sha256":hashlib.sha256(data).hexdigest(), "bytes":len(data)}
+                  if name == "test.xml":
+                      cases = list(ET.fromstring(data).iter("testcase"))
+                      attempt["xml"] = [c.get("name") for c in cases]
+                      attempt["nonpassing"] = sum(c.get("status") == "notrun" or any(
+                          c.find(tag) is not None for tag in ("error", "failure", "skipped")) for c in cases)
+                  else:
+                      attempt["goPasses"] = re.findall(r"(?m)^\s*--- PASS: (Test\w+) ", data.decode(errors="replace"))
+          if len(report["attempts"]) == 1:
+              a = report["attempts"][0]
+              report["verified"] = (report["bazelExit"] == 0 and a["status"] == "PASSED" and not a["cached"]
+                                    and a.get("nonpassing") == 0 and set(a.get("xml", [])) == expected
+                                    and len(a["xml"]) == len(expected) and set(a.get("goPasses", [])) == expected)
+          (work / "receipt.json").write_text(json.dumps(report, indent=2) + "\n")
+          PYREPORT
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: native-semaphore-runtime
+          path: |
+            ${{ runner.temp }}/semaphore-slice-guard/receipt.json
+            ${{ runner.temp }}/semaphore-slice-guard/test.xml
+            ${{ runner.temp }}/semaphore-slice-guard/test.log
+          if-no-files-found: warn
+          retention-days: 14
+      - if: always()
+        run: jq -e .verified "$RUNNER_TEMP/semaphore-slice-guard/receipt.json"
