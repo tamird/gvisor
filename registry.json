@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T21:02:48.594Z",
+    "updatedAt": "2026-11-06T21:11:20.345Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -6537,14 +6537,14 @@
       "group": "bazel",
       "status": "open",
       "head": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-      "updatedAt": "2026-11-06T21:02:48.594Z",
-      "summary": "Bazel 9 sent the published ARM64 atomicbitops binary to AMD64. Constraining the test execution group let all 10,933 atomicbitops records pass on native ARM64. With declared LLVM, all three PosixError cases also passed on native AMD64. The ARM64 C++ test did not start. Its wrapper still targets AMD64 even though the test execution group selects ARM64, and Bazel rejects that target/worker combination.",
+      "updatedAt": "2026-11-06T21:11:20.345Z",
+      "summary": "On the published rebase, Bazel 9 sent the ARM64 Go test to AMD64. Constraining the test execution group let all 10,933 atomicbitops cases run on native ARM64. All three C++ PosixError cases passed on native AMD64 with declared LLVM. The C++ macro’s forwarding test still targeted AMD64. With the fork’s rule-valued public cc_test, an AMD64-targeted Bazel invocation ran all three cases on native ARM64 with an AArch64 ELF. The configured target retained link_extra_lib and its .dwp and .stripped output labels.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-        "observedAt": "2026-11-06T21:02:48.594Z",
+        "observedAt": "2026-11-06T21:11:20.345Z",
         "disposition": "The two action graphs establish the placement change. The physical native ARM64 Go test passed on the fork.",
-        "nextAction": "Check the fork’s public rules_cc initializer on ARM64, including the three PosixError cases, direct link dependency and public output labels.",
+        "nextAction": "Reconcile the rules_cc public API before updating #15370. The result covers Bazel 9.3.1. Older Bazel uses a macro whose public name matters to with_cfg when it discovers implicit outputs.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42290157453",
           "https://github.com/tamird/gvisor/actions/runs/42288153554/artifacts/13537709088",
@@ -6557,11 +6557,15 @@
       "reviewDecision": null,
       "evidence": [
         {
-          "label": "One ARM64 C++ test with the public rules_cc initializer (in progress)",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42293336254"
+          "label": "ARM64 PosixError, native processor, ELF and public C++ outputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42294103626/artifacts/13540903270"
         },
         {
-          "label": "Bazel’s ARM64 C++ test toolchain diagnostic",
+          "label": "Fork-only public C++ test rule and link initializer",
+          "url": "https://github.com/tamird/gvisor/commit/6c8dd809d"
+        },
+        {
+          "label": "Original wrong-target Bazel 9 diagnostic",
           "url": "https://github.com/tamird/gvisor/actions/runs/42291654204/artifacts/13540271598"
         },
         {
@@ -55647,9 +55651,21 @@
       "url": "https://github.com/google/gvisor/pull/17122",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-06T19:08:28.692Z",
+      "updatedAt": "2026-11-06T21:11:20.345Z",
       "summary": "The vDSO layout test invokes readelf from PATH. A remote worker without binutils failed before inspecting the ELF. The standalone fix and the LLVM integration both passed the AMD64 test. The AMD64 checker also passed on the generated ARM64 ELF and rejected a deliberately nonempty .data section.",
       "evidence": [
+        {
+          "label": "Go and readelf agree on all 20 vDSO fixtures per architecture",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42288051802/artifacts/13541545373"
+        },
+        {
+          "label": "Original Bazel vDSO layout test using the Go checker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42287343145/artifacts/13538850799"
+        },
+        {
+          "label": "Fork-only Go checker under compatibility review",
+          "url": "https://github.com/tamird/gvisor/commit/330ddbeb2"
+        },
         {
           "label": "Open upstream PR",
           "url": "https://github.com/google/gvisor/pull/17122"
@@ -55679,7 +55695,19 @@
           "postedURL": "https://github.com/google/gvisor/pull/17122",
           "note": "Opened the approved single-commit change on master."
         }
-      ]
+      ],
+      "followup": {
+        "owner": "Agent",
+        "observedAt": "2026-11-06T21:11:20.345Z",
+        "sourceHead": "466dbf7a9a4ff6d12693d0fa94ba37c2bc353d48",
+        "disposition": "The open PR declares readelf. A fork-only Go checker matched Python and GNU readelf on 20 AMD64 and 20 ARM64 fixtures.",
+        "nextAction": "Check compatibility for Debian’s existing invocation of the Python checker before proposing an update to #17122.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42288051802/artifacts/13541545373",
+          "https://github.com/tamird/gvisor/actions/runs/42287343145/artifacts/13538850799",
+          "https://github.com/tamird/gvisor/commit/330ddbeb2"
+        ]
+      }
     },
     {
       "id": "branch:stateify-generic-receivers",
