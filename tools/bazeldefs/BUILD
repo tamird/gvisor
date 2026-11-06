@@ -63,6 +63,12 @@ platform(
         "@platforms//cpu:x86_64",
         "@platforms//os:linux",
     ],
+    exec_properties = {
+        "Arch": "amd64",
+        "OSFamily": "linux",
+        "container-image": "docker://cgr.dev/chainguard/static@sha256:fc42af33e643f20d08baf03cddcc1c02ba57052dfb02edb0d79f3fc47bcea8d9",
+        "workload-isolation-type": "oci",
+    },
     visibility = ["//visibility:public"],
 )
 
@@ -72,6 +78,12 @@ platform(
         "@platforms//cpu:aarch64",
         "@platforms//os:linux",
     ],
+    exec_properties = {
+        "Arch": "arm64",
+        "OSFamily": "linux",
+        "container-image": "docker://cgr.dev/chainguard/static@sha256:fc42af33e643f20d08baf03cddcc1c02ba57052dfb02edb0d79f3fc47bcea8d9",
+        "workload-isolation-type": "oci",
+    },
     visibility = ["//visibility:public"],
 )
 
