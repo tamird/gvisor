@@ -15,6 +15,10 @@ _templates:
     if: build.env("STAGED_BINARIES") == null && build.branch != "master"
   source_test_continuous: &source_test_continuous
     if: build.env("STAGED_BINARIES") == null && build.branch == "master"
+  source_syscalls: &source_syscalls >-
+    bazel test --config=buildkite-syscalls "$$SYSCALL_TEST_OPTION"
+    --test_env=HOST_KERNEL="$${HOST_KERNEL:-$(uname -r)}"
+    -- $${TARGETS:-//test/syscalls/... //test/rtnetlink/...}
   gpu_test: &gpu_test
     if: build.env("STAGED_BINARIES") == null && ( build.env("SKIP_GPU_TESTS") == null || build.message =~ /nvidia|nvproxy|gpu/i )
   gpu_test_continuous: &gpu_test_continuous
@@ -436,7 +440,10 @@ steps:
   - <<: *common
     <<: *source_test
     label: ":muscle: System call tests (ARM64)"
-    command: make OPTIONS=--config=syscalls-arm64 syscall-tests
+    command: *source_syscalls
+    env: &arm64_syscall_env
+      DOCKER_BUILD: "false"
+      SYSCALL_TEST_OPTION: "--config=syscalls-arm64"
     parallelism: 10
     agents:
       arch: "arm64"
@@ -444,7 +451,10 @@ steps:
   - <<: *common
     <<: *source_test_continuous
     label: ":muscle: System call tests (ARM64 64K)"
-    command: make BAZEL_OPTIONS=--config=syscalls-arm64-64k syscall-tests
+    command: *source_syscalls
+    env:
+      DOCKER_BUILD: "false"
+      SYSCALL_TEST_OPTION: "--config=syscalls-arm64-64k"
     parallelism: 10
     agents:
       arch: "arm64"
@@ -453,7 +463,10 @@ steps:
   - <<: *common
     <<: *source_test_continuous
     label: ":linux: System call tests on release-candidate Linux (AMD64)"
-    command: make OPTIONS=--config=syscalls-amd64 syscall-tests
+    command: *source_syscalls
+    env:
+      DOCKER_BUILD: "false"
+      SYSCALL_TEST_OPTION: "--config=syscalls-amd64"
     parallelism: 20
     agents:
       arch: "amd64"
@@ -463,7 +476,8 @@ steps:
   - <<: *common
     <<: *source_test_continuous
     label: ":linux: System call tests on release-candidate Linux (ARM64)"
-    command: make OPTIONS=--config=syscalls-arm64 syscall-tests
+    command: *source_syscalls
+    env: *arm64_syscall_env
     parallelism: 10
     agents:
       arch: "arm64"
@@ -472,7 +486,10 @@ steps:
   - <<: *common
     <<: *source_test_continuous
     label: ":muscle: System call save restore tests (AMD64)"
-    command: make BAZEL_OPTIONS=--test_tag_filters=save_restore syscall-tests
+    command: *source_syscalls
+    env:
+      DOCKER_BUILD: "false"
+      SYSCALL_TEST_OPTION: "--test_tag_filters=save_restore"
     parallelism: 20
     agents:
       arch: "amd64"
@@ -481,7 +498,10 @@ steps:
   - <<: *common
     <<: *source_test_continuous
     label: ":muscle: System call save resume tests (ARM64)"
-    command: make BAZEL_OPTIONS=--test_tag_filters=save_resume syscall-tests
+    command: *source_syscalls
+    env:
+      DOCKER_BUILD: "false"
+      SYSCALL_TEST_OPTION: "--test_tag_filters=save_resume"
     parallelism: 10
     agents:
       arch: "arm64"

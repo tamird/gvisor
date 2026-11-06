@@ -49,6 +49,12 @@ build:plugin-tldk --@io_bazel_rules_go//go/config:pure=false --define=plugin_tld
 # by default for all tests.
 build --build_tag_filters=-nogo
 
+# Buildkite sets the partition variables in its pre-command hook. Its
+# post-command hook reads the build events to upload failed test logs.
+test:buildkite-syscalls --test_env=PARTITION --test_env=TOTAL_PARTITIONS
+test:buildkite-syscalls --build_event_json_file=.build_events.json --test_output=errors --keep_going
+test:buildkite-syscalls --strip=never --cxxopt=-Werror --verbose_failures
+
 # Select the ordinary syscall tests used by public CI.
 test:syscalls-amd64 --test_tag_filters=-allsave,-runsc_slimvm
 test:syscalls-arm64 --test_tag_filters=-allsave,runsc_ptrace,runsc_systrap
