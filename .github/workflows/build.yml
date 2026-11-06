@@ -1,69 +1,34 @@
-name: Build four coverage binaries with the source presubmit compiler
+name: Verify the two existing LLVM race coverage outputs
 on:
   push:
-    branches: [qualification/llvm-presubmit-four-coverage]
+    branches: [qualification/llvm-race-coverage-original]
 permissions:
   contents: read
 jobs:
-  build:
+  recover:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 130
-    env:
-      SOURCE: c0511e1cd383b0f2870c15a104222f0d285aac6f
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 2
           persist-credentials: false
-      - name: Select the exact reviewed product
+      - name: Bind the reader and unchanged ELF inspector to the original build
         run: |
-          set -eu
-          test "$(git rev-parse HEAD^)" = "$SOURCE"
-          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/llvm_coverage_four.py' ':!.github/qualification/source_presubmit_memory.py'
-          mkdir "$RUNNER_TEMP/llvm-coverage-four"
-          cp .github/qualification/{llvm_coverage_four.py,source_presubmit_memory.py} "$RUNNER_TEMP/llvm-coverage-four/"
-          git switch --detach "$SOURCE"
-          test "$(git rev-parse HEAD)" = "$SOURCE"
-          test "$(bazelisk --version)" = "bazel 9.3.1"
-      - name: Size the Bazel server heap
-        run: python3 -IB "$RUNNER_TEMP/llvm-coverage-four/source_presubmit_memory.py"
-      - name: Build the four default outputs on the presubmit worker
+          test "$(git rev-parse HEAD^)" = a33d233c2208aee1ef58147492f23724cf31b287
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/llvm_race_original.py'
+      - name: Read only the two target and GoLink outputs from the original invocation
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: |
-          set -eu
-          umask 077
-          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
-          work="$RUNNER_TEMP/llvm-coverage-four"
-          rc="$work/client.rc"
-          trap 'rm -f "$rc"' EXIT
-          cat > "$rc" <<'RC'
-          build:source-presubmit --remote_executor=grpcs://remote.buildbuddy.io
-          build:source-presubmit --remote_cache=grpcs://remote.buildbuddy.io
-          build:source-presubmit --bes_backend=grpcs://remote.buildbuddy.io
-          build:source-presubmit --bes_results_url=https://app.buildbuddy.io/invocation/
-          build:source-presubmit --jobs=64 --keep_going --remote_download_outputs=toplevel
-          RC
-          printf 'build:source-presubmit --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
-          unset BUILDBUDDY_API_KEY
-          code=0
-          timeout --signal=INT --kill-after=60s 100m bazelisk --bazelrc="$rc" build --config=source-presubmit \
-            --build_event_json_file="$work/build.bep" --build_event_json_file_path_conversion=false \
-            //runsc:runsc_coverage //runsc:runsc_race_coverage \
-            //runsc/cmd/sentry:gvisor_sentry_coverage //runsc/cmd/sentry:gvisor_sentry_race_coverage \
-            > "$work/build.log" 2>&1 || code=$?
-          printf '%s\n' "$code" > "$work/build.exit"
-      - name: Check actual outputs, retaining each completed target
-        if: always()
-        run: |
-          test ! -e "$RUNNER_TEMP/llvm-coverage-four/client.rc"
-          python3 -IB "$RUNNER_TEMP/llvm-coverage-four/llvm_coverage_four.py"
+        run: python3 -EsB .github/qualification/llvm_race_original.py recover
+      - name: Inspect the digest-checked native ELFs and run the original CLI
+        run: python3 -EsB .github/qualification/llvm_race_original.py inspect
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
-          name: llvm-presubmit-four-coverage
-          path: ${{ runner.temp }}/llvm-coverage-four/result.json
+          name: llvm-race-coverage-original
+          path: ${{ runner.temp }}/llvm-race-original/result.json
           if-no-files-found: error
-      - name: Require all four ELF outputs
-        run: python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"llvm-coverage-four/result.json"; raise SystemExit(0 if json.loads(p.read_text())["verified"] else 1)'
+      - name: Require both original race-and-coverage binaries
+        run: python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"llvm-race-original/result.json"; raise SystemExit(0 if json.loads(p.read_text()).get("verified") else 1)'
