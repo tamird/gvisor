@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T09:10:31.861Z",
+    "updatedAt": "2026-11-06T09:31:33.637Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -51766,13 +51766,13 @@
       "repo": "google/gvisor",
       "number": 17022,
       "ref": "carry-14458-spurious-recovery",
-      "head": "d0439e8b83fafeff675910fc544a393fb5d9f85c",
+      "head": "c02d0940fd57e7c31432c81164f3e58f41795286",
       "title": "Review the slow-start threshold after a spurious timeout",
       "url": "https://github.com/google/gvisor/pull/17022",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-05T16:22:15Z",
-      "summary": "The two-packet test now preserves the finite threshold. We asked Aditya to update the five-packet test so a spurious timeout also preserves the initial unlimited threshold.",
+      "updatedAt": "2026-11-06T09:31:33.637Z",
+      "summary": "On the revised sender, a spurious five-packet timeout preserves the initial slow-start threshold and sets the congestion window to four packets. The two-packet case restores its prior threshold of 2. The same five-packet test on the previous revision restored a threshold of 5.",
       "evidence": [
         {
           "label": "Pre-loss capture in the proposed sender",
@@ -51797,6 +51797,14 @@
         {
           "label": "Reply to Aditya",
           "url": "https://github.com/google/gvisor/pull/17022#discussion_r4483000252"
+        },
+        {
+          "label": "Aditya’s reply on the revised sender",
+          "url": "https://github.com/google/gvisor/pull/17022#discussion_r4490860289"
+        },
+        {
+          "label": "Identical five-packet test on both revisions and all ten named records on the new head",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42194565719/artifacts/13491802727"
         }
       ],
       "settledReviews": [
@@ -51820,7 +51828,29 @@
           "at": "2026-11-05T16:22:15Z",
           "postedURL": "https://github.com/google/gvisor/pull/17022#discussion_r4483000252"
         }
-      ]
+      ],
+      "followup": {
+        "owner": "TCP review",
+        "sourceHead": "c02d0940fd57e7c31432c81164f3e58f41795286",
+        "providerHead": "c02d0940fd57e7c31432c81164f3e58f41795286",
+        "observedAt": "2026-11-06T09:31:33.637Z",
+        "disposition": "The revised sender addresses the threshold review. All ten focused packet-test records passed on the author’s head.",
+        "nextAction": "Post the proposed acknowledgment on the original thread after contributor approval. GitHub reports that @tamird cannot resolve the thread.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17022#discussion_r4490860289",
+          "https://github.com/tamird/gvisor/actions/runs/42194565719/artifacts/13491802727"
+        ]
+      },
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "c02d0940fd57e7c31432c81164f3e58f41795286",
+        "url": "https://github.com/google/gvisor/pull/17022#discussion_r4490860289",
+        "title": "Confirm the revised timeout result on #17022",
+        "summary": "Post once on our original thread to confirm the five-packet and two-packet results. GitHub reports that @tamird cannot mark this thread resolved.",
+        "body": "Thanks, Aditya. This addresses my concern. I ran the same five-packet test on both revisions. The earlier sender restored a threshold of 5. On c02d0940f the initial threshold survived and cwnd was 4. The two-packet case still restored 2. [Packet tests](https://github.com/tamird/gvisor/actions/runs/42194565719/artifacts/13491802727)\n\nPosted by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-06T09:31:33.637Z"
+      }
     },
     {
       "id": "branch:tcp-yield-after-queue-pass",
