@@ -610,10 +610,16 @@ func (*fakeNetworkDispatcher) DeliverLinkPacket(tcpip.NetworkProtocolNumber, *st
 	panic("not implemented")
 }
 
+func (d *fakeNetworkDispatcher) releasePackets() {
+	for _, pkt := range d.pkts {
+		pkt.DecRef()
+	}
+}
+
 func TestDispatchPacketFormat(t *testing.T) {
 	for _, test := range []struct {
 		name          string
-		newDispatcher func(fd int, e *endpoint, opts *Options) (linkDispatcher, error)
+		newDispatcher func(fd int, e *endpoint) (linkDispatcher, error)
 		ethHdr        []byte
 		netHdr        []byte
 	}{
@@ -700,16 +706,17 @@ func TestDispatchPacketFormat(t *testing.T) {
 			if len(test.ethHdr) > 0 {
 				addr = tcpip.LinkAddress(test.ethHdr[:header.EthernetAddressSize])
 			}
-			d, err := test.newDispatcher(fds[0], &endpoint{
-				addr:       addr,
-				hdrSize:    len(test.ethHdr),
-				dispatcher: sink,
-			}, &Options{ProcessorsPerChannel: 1})
+			ep := &endpoint{
+				processorsPerChannel: 1,
+				addr:                 addr,
+				hdrSize:              len(test.ethHdr),
+			}
+			d, err := test.newDispatcher(fds[0], ep)
 			if err != nil {
 				t.Fatal(err)
 			}
 			defer d.release()
-			if ok, err := d.dispatch(); !ok || err != nil {
+			if ok, err := d.dispatch(ep.startProcessors(sink, nil)); !ok || err != nil {
 				t.Fatalf("d.dispatch() = %v, %v", ok, err)
 			}
 
@@ -778,6 +785,76 @@ func TestCloseReleasesStopFDs(t *testing.T) {
 		if after := countEventFDs(t); after != before {
 			t.Errorf("mode %d: eventfds before=%d after=%d, want equal", mode, before, after)
 		}
+	}
+}
+
+func TestDetachedReceiveBatch(t *testing.T) {
+	ep := &endpoint{processorsPerChannel: 1}
+	attach := func(sink *fakeNetworkDispatcher) *processorManager {
+		ep.Attach(sink)
+		ep.mu.RLock()
+		defer ep.mu.RUnlock()
+		return ep.startProcessors(sink, ep.detached)
+	}
+	old, next := &fakeNetworkDispatcher{}, &fakeNetworkDispatcher{}
+	defer old.releasePackets()
+	defer next.releasePackets()
+	pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{})
+	defer pkt.DecRef()
+	pkt.NetworkProtocolNumber = header.ARPProtocolNumber
+
+	previous := attach(old)
+	previous.queuePacket(pkt, true)
+	ep.Attach(nil)
+	current := attach(next)
+	defer ep.Attach(nil)
+
+	// Drain the old batch only after the new receiver is attached.
+	previous.wakeReady()
+	if len(old.pkts) != 0 || len(next.pkts) != 0 {
+		t.Fatalf("detached batch delivered %d packets to old receiver and %d to new receiver", len(old.pkts), len(next.pkts))
+	}
+	current.queuePacket(pkt, true)
+	current.wakeReady()
+	if got := len(next.pkts); got != 1 {
+		t.Errorf("new receiver got %d packets, want 1", got)
+	}
+}
+
+func TestInjectableAttachment(t *testing.T) {
+	fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_DGRAM, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unix.Close(fds[0])
+	defer unix.Close(fds[1])
+	ep, err := NewInjectable(fds[0], mtu, stack.CapabilityNone)
+	if err != nil {
+		t.Fatal(err)
+	}
+	inject := func(data string) {
+		pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: buffer.MakeWithData([]byte(data))})
+		defer pkt.DecRef()
+		ep.InjectInbound(header.IPv4ProtocolNumber, pkt)
+	}
+	sink := &fakeNetworkDispatcher{}
+	defer sink.releasePackets()
+
+	ep.Attach(sink)
+	if !ep.IsAttached() {
+		t.Error("IsAttached returned false after attaching the dispatcher")
+	}
+	inject("attached")
+	ep.Attach(nil)
+	if ep.IsAttached() {
+		t.Error("IsAttached returned true after detaching the dispatcher")
+	}
+	inject("detached")
+	if len(sink.pkts) != 1 {
+		t.Fatalf("received %d packets, want 1", len(sink.pkts))
+	}
+	if got := string(sink.pkts[0].Data().AsRange().ToSlice()); got != "attached" {
+		t.Errorf("received %q, want attached", got)
 	}
 }
 
