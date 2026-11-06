@@ -1,35 +1,33 @@
-name: CI
-
-"on":
+name: Verify mapped systrap images and vDSOs on both targets
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/released-llvm-stub-and-vdso]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  images:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Check the source and pinned Bazelisk
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 1f9c6adcce6f1b04d8b2cb6434d2268d21568588
+          test "$(git rev-parse HEAD^^)" = f6df263f8e2ce2cbe6a497356613f6785c4800a4
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!test/rbe/qualified_stub_images.py'
+          d="$RUNNER_TEMP/linked-stub"
+          mkdir -m 700 "$d"
+          curl -fsSL --retry 4 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Build and inspect the real stub, generated Go, raw image and vDSO
+        run: python3 -B test/rbe/qualified_stub_images.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: linked-stub-images
+          path: ${{ runner.temp }}/linked-stub/receipt.json
+          retention-days: 14
