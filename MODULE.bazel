@@ -730,3 +730,13 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+# The exact external workload is consumed as data, without vendoring it.
+http_archive(
+    name = "rack_reporter",
+    build_file_content = "exports_files(glob(['*.go']))",
+    sha256 = "4193937eef5f19f289392464d3c19055c3602596bc5c6354549537f2af6a063c",
+    strip_prefix = "netstack-rack-repro-94a018b41c986790ed76bd04b280ba85cd41f7bb",
+    type = "tar.gz",
+    urls = ["https://codeload.github.com/adios-404/netstack-rack-repro/tar.gz/94a018b41c986790ed76bd04b280ba85cd41f7bb"],
+)
