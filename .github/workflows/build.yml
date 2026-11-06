@@ -1,35 +1,66 @@
-name: CI
-
-"on":
+name: Qualify the registered Python package writer
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/module-selected-scratch-python]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  writer:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 64
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Pin the product sources and Bazel client
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/writer-runtime"
+          mkdir -p "$d"
+          cp .github/qualification/writer_runtime.{py,cquery} "$d/"
+          test "$(git rev-parse HEAD^)" = bb983b988802b854bd03dd7a0a5220e7e7b4440e
+          test "$(git rev-parse HEAD^^)" = bbbed5b2b84fe21597c740789d841e618f912def
+          curl --fail --location --silent --show-error --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Resolve the writer and target runtimes
+        id: selection
+        run: python3 -B "$RUNNER_TEMP/writer-runtime/writer_runtime.py" select
+      - name: Execute the shim and bzip2 package writers
+        if: steps.selection.outcome == 'success'
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          d="$RUNNER_TEMP/writer-runtime"
+          rc="$d/private.rc"
+          trap 'rm -f "$rc"' EXIT
+          test -n "$BUILDBUDDY_API_KEY"
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$d/writer_runtime.py" packages
+      - name: Verify the bounded evidence
+        if: always()
+        id: receipt
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/writer-runtime"
+          test ! -e "$d/private.rc"
+          python3 - "$d/selection.json" <<'PY'
+          import json,pathlib,re,sys
+          p=pathlib.Path(sys.argv[1]);assert not p.is_symlink() and p.is_file() and p.stat().st_size<60000
+          b=p.read_bytes();assert not re.search(rb"(?i)x-buildbuddy-api-key|authorization\s*[:=]|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}",b)
+          assert "selection_status" in json.loads(b)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.receipt.outcome == 'success'
+        with:
+          name: configured-python-and-real-packages
+          path: ${{ runner.temp }}/writer-runtime/selection.json
+          retention-days: 7

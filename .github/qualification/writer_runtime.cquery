@@ -1,0 +1,5 @@
+def format(target):
+    files = providers(target)["DefaultInfo"].default_runfiles.files.to_list()
+    binaries = sorted([f.path for f in files if f.basename in ["python", "python3", "python3.11"] and f.dirname.endswith("/bin") and f.path.startswith("external/")])
+    encodings = sorted([f.path for f in files if f.path.endswith("/python3.11/encodings/__init__.py") and f.path.startswith("external/")])
+    return json.encode({"outputs": [f.path for f in target.files.to_list()], "interpreters": binaries, "encodings": encodings})
