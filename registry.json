@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T22:48:49.450Z",
+    "updatedAt": "2026-11-06T22:51:21.450Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4857,8 +4857,8 @@
       "url": "https://github.com/tamird/gvisor/commit/f6df263f8",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 for its offsets and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn c0511e1cd, a single AMD64 source presubmit built all 2,880 build-only targets. Across 363 test owners, all 373 fresh remote shards passed. Independent analysis matched all 373 configurations to their OCI and Firecracker assignments.\n\nOn f6df263f8, one invocation linked the static race runsc and Sentry for AMD64 and ARM64 on an AMD64 Ubuntu worker. Native Linux also checked both vDSO ABIs and all 21 raw stub offsets. On 3dab3494e, the released toolchain booted rootless systrap guests natively on both architectures. On 2c90e983d, all nine executable hashes and modes matched across Debian, bzip2 and zstd releases per CPU. The AMD64 package booted a systrap guest and the ARM64 CLI ran under QEMU user emulation.",
-      "updatedAt": "2026-11-06T21:48:30.832Z",
+      "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 for its offsets and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn c0511e1cd, a single AMD64 source presubmit built all 2,880 build-only targets. Across 363 test owners, all 373 fresh remote shards passed. Independent analysis matched all 373 configurations to their OCI and Firecracker assignments. On 127967d31, ARM64 analysis selected 2,880 build-only targets and 373 test shards (367 OCI and six Firecracker). The attempted uname test did not start: its PrecompileSeccomp prerequisite failed with an executable format error.\n\nOn f6df263f8, one invocation linked the static race runsc and Sentry for AMD64 and ARM64 on an AMD64 Ubuntu worker. Native Linux also checked both vDSO ABIs and all 21 raw stub offsets. On 3dab3494e, the released toolchain booted rootless systrap guests natively on both architectures. On 2c90e983d, all nine executable hashes and modes matched across Debian, bzip2 and zstd releases per CPU. The AMD64 package booted a systrap guest and the ARM64 CLI ran under QEMU user emulation.",
+      "updatedAt": "2026-11-06T22:51:21.450Z",
       "head": "f6df263f8e2ce2cbe6a497356613f6785c4800a4",
       "evidence": [
         {
@@ -5400,6 +5400,10 @@
         {
           "label": "Four uncached PackageTar actions, matching shim archives and file modes on AMD64 and ARM64",
           "url": "https://github.com/tamird/gvisor/actions/runs/42192648577/artifacts/13490223656"
+        },
+        {
+          "label": "ARM64 owner and shard inventory, plus first failed producer before uname",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42305861156/artifacts/13547330619"
         }
       ],
       "refinement": {
@@ -6545,17 +6549,18 @@
       "group": "bazel",
       "status": "open",
       "head": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-      "updatedAt": "2026-11-06T22:12:34.788Z",
+      "updatedAt": "2026-11-06T22:51:21.450Z",
       "summary": "The revision uses with_cfg 1.0.2 and the public rules_cc test-extension API. All four test owners ran uncached on the requested native CPUs: 10,933 atomicbitops cases and three PosixError cases passed on each of AMD64 and ARM64. With the same pin, wrapping only the public macro still selects the AMD64 test toolchain for the ARM64 binary and fails before execution. The catalog regenerated its exact new row and verified all 224 entries.",
       "followup": {
         "owner": "Contributor",
         "sourceHead": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
         "observedAt": "2026-11-06T22:12:34.788Z",
         "disposition": "The requested with_cfg 1.0.2 revision passed native AMD64 and ARM64 tests.",
-        "nextAction": "Review the proposed source amendment to the existing PR.",
+        "nextAction": "Review the proposed source amendment to the existing PR. If #16507 lands first, rebase the go_bzl dependency list against it. The combined list is recorded on the coverage and native-test integration.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/da88f239e",
-          "https://github.com/tamird/gvisor/actions/runs/42301517765/artifacts/13543619587"
+          "https://github.com/tamird/gvisor/actions/runs/42301517765/artifacts/13543619587",
+          "https://github.com/tamird/gvisor/blob/127967d31/tools/bazeldefs/BUILD"
         ]
       },
       "number": 15370,
@@ -31150,17 +31155,18 @@
       "group": "bazel",
       "status": "open",
       "summary": "Upgrade with_cfg to 1.0.2 and refresh its license catalog entry. On AMD64 and ARM64, the coverage CLI and Sentry built both with and without the race detector. All four pairs ran the KCOV syscall test under systrap. The optional host-kernel control skipped on both workers.",
-      "updatedAt": "2026-11-06T22:48:16.956Z",
+      "updatedAt": "2026-11-06T22:51:21.450Z",
       "followup": {
         "owner": "Contributor",
         "sourceHead": "7f56b080d9f7485957f3514133ffa5f5490a6185",
         "observedAt": "2026-11-06T22:48:16.956Z",
         "disposition": "The proposed with_cfg 1.0.2 amendment passed native coverage and race+coverage KCOV on both architectures.",
-        "nextAction": "Review the two-file dependency update for publication on #16507.",
+        "nextAction": "Review the two-file dependency update for publication on #16507. If #15370 lands first, rebase the go_bzl dependency list against it. The combined list is recorded on the coverage and native-test integration.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/c2a942643",
           "https://github.com/tamird/gvisor/actions/runs/42303507853/artifacts/13547220519",
-          "https://github.com/tamird/gvisor/actions/runs/42303507853/artifacts/13546536906"
+          "https://github.com/tamird/gvisor/actions/runs/42303507853/artifacts/13546536906",
+          "https://github.com/tamird/gvisor/blob/127967d31/tools/bazeldefs/BUILD"
         ]
       },
       "evidence": [
