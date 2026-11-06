@@ -1,35 +1,92 @@
-name: CI
-
-"on":
+name: Run the semaphore wait cases on the Linux syscall ABI
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/semaphore-linux-wait-cases]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  host:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Bind the unmodified C++ syscall executable to the reviewed source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 5411129f096b976b511b37d7bc58234a0e16cce1
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml'
+          git checkout -q --detach HEAD^
+          test "$(cat .bazelversion)" = 8.8.1
+          test "$(uname -sm)" = 'Linux x86_64'
+          d="$RUNNER_TEMP/semaphore-linux"
+          mkdir -m 700 "$d"
+          curl -fsSL --max-time 90 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+      - name: Run the exact seven waiter assertions on the host
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/semaphore-linux"
+          args=(SemOpRemoveWithWaiter SemopGetzcnt SemopGetzcntOnSetRemoval SemopGetzcntOnSignal SemopGetncnt SemopGetncntOnSetRemoval SemopGetncntOnSignal)
+          names=("${args[@]/#/SemaphoreTest.}")
+          printf '%s\n' "${names[@]}" > "$d/expected"
+          filter=$(IFS=:; echo "${names[*]}")
+          rc=0
+          timeout -k 20s 45m "$d/bazel" --nosystem_rc --nohome_rc run --config=x86_64 \
+            --jobs=3 --remote_cache= --remote_executor= --bes_backend= --spawn_strategy=linux-sandbox \
+            --build_event_json_file="$d/build.bep" //test/syscalls/linux:semaphore_test -- \
+            --gtest_filter="$filter" --gtest_output="xml:$d/test.xml" > "$d/output" 2>&1 || rc=$?
+          echo "$rc" > "$d/exit"
+      - name: Check the freshly written Linux XML and each GoogleTest result
+        if: always() && !cancelled()
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          import platform
+          import re
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+          work = Path(os.environ["RUNNER_TEMP"]) / "semaphore-linux"
+          report = {"source": "5411129f096b976b511b37d7bc58234a0e16cce1", "label": "//test/syscalls/linux:semaphore_test",
+                    "kernel": platform.release(), "architecture": platform.machine(), "xml": {}, "googletest": {}}
+          expected = set((work / "expected").read_text().splitlines()) if (work / "expected").exists() else set()
+          if (work / "exit").exists():
+              report["exit"] = int((work / "exit").read_text())
+          if (work / "build.bep").exists():
+              with (work / "build.bep").open() as events:
+                  for line in events:
+                      try:
+                          event = json.loads(line)
+                      except ValueError:
+                          continue
+                      if "started" in event:
+                          report["invocation"] = event["started"].get("uuid")
+                      if event["id"].get("targetCompleted", {}).get("label") == report["label"] and "completed" in event:
+                          report["built"] = event["completed"].get("success")
+          if (work / "test.xml").exists():
+              raw = (work / "test.xml").read_bytes()
+              report["xml_sha256"] = hashlib.sha256(raw).hexdigest()
+              for case in ET.fromstring(raw).iter("testcase"):
+                  name = case.get("classname", "")+"."+case.get("name", "")
+                  report["xml"][name] = not any(case.find(tag) is not None for tag in ("skipped","error","failure")) and case.get("status") != "notrun" and case.get("result") != "suppressed"
+          if (work / "output").exists():
+              log = (work / "output").read_text(errors="replace")
+              report["googletest"] = {name: status for status, name in re.findall(r"\[\s*(OK|FAILED|SKIPPED)\s*\]\s+(SemaphoreTest\.\w+)\s+\(", log)}
+              if report.get("exit") != 0:
+                  report["diagnostics"] = [line.strip()[:350] for line in log.splitlines() if re.search(r"^ERROR:|fatal error:|cannot find|not permitted|permission denied|undefined reference", line, re.I) and not re.search(r"https?://|credential|token|api[_-]?key", line, re.I)][:8]
+          report["verified"] = len(expected) == 7 and report.get("exit") == 0 and report["xml"] == dict.fromkeys(expected, True) and report["googletest"] == dict.fromkeys(expected, "OK")
+          (work / "result.json").write_text(json.dumps(report, indent=2)+"\n")
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: semaphore-linux-wait-cases
+          path: ${{ runner.temp }}/semaphore-linux/result.json
+          retention-days: 14
+          if-no-files-found: error
+      - if: always() && !cancelled()
+        run: jq -e .verified "$RUNNER_TEMP/semaphore-linux/result.json"
