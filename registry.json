@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T18:22:25.827Z",
+    "updatedAt": "2026-11-06T18:24:42.424Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4858,9 +4858,17 @@
       "group": "bazel",
       "status": "Agent work",
       "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 to read its offsets, and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn f6df263f8, one Bazel invocation linked the public race runsc and Sentry for both AMD64 and ARM64. All four links ran uncached on a pinned AMD64 Ubuntu worker. Each ELF was static, matched its target architecture, and contained the race runtime. An unrelated QEMU toolchain, an explicit GCC override, and a custom GNU target all selected the intended compiler and libc.\n\nA separate native AMD64 Linux build checked both vDSOs and the approved raw stub extraction. All 10 AMD64 and 11 ARM64 offsets matched the embedded bytes; both vDSOs had the expected versioned ABI and passed the repository’s ELF mapping check.\n\nNative AMD64 and ARM64 ran a rootless systrap guest with the released LLVM toolchain on 3dab3494e. Next, package and run the installed binaries from the current integration.",
-      "updatedAt": "2026-11-06T17:28:15.846Z",
+      "updatedAt": "2026-11-06T18:24:42.424Z",
       "head": "f6df263f8e2ce2cbe6a497356613f6785c4800a4",
       "evidence": [
+        {
+          "label": "All nine installed executable hashes, modes and ELF architectures match across .deb, bzip2 and zstd on AMD64 and ARM64 (2c90e983d)",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42267606060/artifacts/13527578331"
+        },
+        {
+          "label": "Declared LLVM: six public release packages, native AMD64 systrap guest and cross-built ARM64 CLI version under QEMU user mode",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42263217060/artifacts/13527310655"
+        },
         {
           "label": "Native AMD64 Linux build of both stubs and vDSOs. Embedded bytes, symbol offsets, loader relocations, ELF mapping and versioned ABI.",
           "url": "https://github.com/tamird/gvisor/actions/runs/42261353662/artifacts/13525466589"
@@ -30301,9 +30309,17 @@
       "url": "https://github.com/google/gvisor/pull/16490",
       "group": "rbe",
       "status": "open",
-      "updatedAt": "2026-11-04T20:45:45.283369+00:00",
+      "updatedAt": "2026-11-06T18:24:42.424Z",
       "summary": "Published the patch-preserving rebase 30df99de8b on 92d3cc68c. It retains the reviewed single-invocation build of six release packages and the upstream declared release-copy implementation. The earlier package and runtime results remain bound to their original sources; checks on the rebased head are tracked separately.",
       "evidence": [
+        {
+          "label": "All nine installed executable hashes, modes and ELF architectures match across .deb, bzip2 and zstd on AMD64 and ARM64 (2c90e983d)",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42267606060/artifacts/13527578331"
+        },
+        {
+          "label": "Declared LLVM: six public release packages, native AMD64 systrap guest and cross-built ARM64 CLI version under QEMU user mode",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42263217060/artifacts/13527310655"
+        },
         {
           "label": "Contributor-reviewed commit",
           "url": "https://github.com/tamird/gvisor/commit/eb2460d8185ff3b3bfd2a25a48a027e61458d3b9"
@@ -53521,7 +53537,7 @@
       "url": "https://github.com/tamird/gvisor/commit/66eb55f0e",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T18:22:25.827Z",
+      "updatedAt": "2026-11-06T18:24:42.424Z",
       "summary": "Closing an FD endpoint before its first attachment leaves receive workers asleep. Create the reader managers in one array when the receiver attaches and start each reader with e.wg.Go. With four FDs and two processors per FD, the median fell from 176 to 165 allocations per lifecycle. With a single FD, the median allocation count held steady and allocated bytes fell.",
       "evidence": [
         {
@@ -53664,7 +53680,7 @@
         "baseHead": "d4e65b135f3f4e6dbb811a59c38917bdb382d6c3",
         "url": "https://github.com/tamird/gvisor/commit/66eb55f0e",
         "title": "fdbased: start packet processors when a receiver attaches",
-        "body": "Closing an FD endpoint before attaching it to a NIC leaves its receive\nworkers asleep. The constructor starts the workers, but only the read\nloop signals them to stop. An unattached endpoint never runs that loop.\n\nCreate the queues and their workers when a dispatcher attaches. Each\nreceive loop delivers to that dispatcher and stops its own workers on\nexit. A single processor still delivers inline.\n\nOn detach, close each queue before waking its reader. A reader already\nreturning from a receive syscall can then neither deliver the pending\nbatch nor enqueue the rest of it. Workers can finish delivering packets\nalready removed from their queues without blocking NIC removal on a\nnetwork stack callback.\n\nFor injectable endpoints, report attachment from the dispatcher used by\nInjectInbound.\n\nEach iteration creates an endpoint, attaches a receiver, detaches it and\ncloses the endpoint. The benchmark uses four FDs and two processors per\nFD. The middle column uses the earlier explicit goroutine launch.\nThe last column uses WaitGroup.Go.\n\n```text\n                                   │ master.bench  │            parallel.bench            │             wg-go.bench              │\n                                   │     B/op      │     B/op      vs base                │     B/op      vs base                │\nFDAttachCycle/fds=4/processors=2-4   112.04Ki ± 4%   78.81Ki ± 4%  -29.65% (p=0.000 n=12)   77.54Ki ± 6%  -30.80% (p=0.000 n=12)\n\n                                   │ master.bench │          parallel.bench           │            wg-go.bench            │\n                                   │  allocs/op   │ allocs/op   vs base               │ allocs/op   vs base               │\nFDAttachCycle/fds=4/processors=2-4     176.0 ± 1%   162.0 ± 1%  -7.95% (p=0.000 n=12)   165.0 ± 2%  -6.25% (p=0.000 n=12)\n```",
+        "body": "Closing an FD endpoint before attaching it to a NIC leaves its receive\nworkers asleep. The constructor starts the workers, but only the read\nloop signals them to stop. An unattached endpoint never runs that loop.\n\nCreate the queues and their workers when a dispatcher attaches. Each\nreceive loop delivers to that dispatcher and stops its own workers on\nexit. A single processor still delivers inline.\n\nOn detach, close each queue before waking its reader. A reader already\nreturning from a receive syscall can then neither deliver the pending\nbatch nor enqueue the rest of it. Workers can finish delivering packets\nalready removed from their queues without blocking NIC removal on a\nnetwork stack callback.\n\nFor injectable endpoints, report attachment from the dispatcher used by\nInjectInbound.\n\nEach iteration creates an endpoint, attaches a receiver, detaches it and\ncloses the endpoint. The benchmark uses four FDs and two processors per\nFD.\n\n```text\n                                   │ master.bench  │             wg-go.bench              │\n                                   │     B/op      │     B/op      vs base                │\nFDAttachCycle/fds=4/processors=2-4   112.04Ki ± 4%   77.54Ki ± 6%  -30.80% (p=0.000 n=12)\n\n                                   │ master.bench │            wg-go.bench            │\n                                   │  allocs/op   │ allocs/op   vs base               │\nFDAttachCycle/fds=4/processors=2-4     176.0 ± 1%   165.0 ± 2%  -6.25% (p=0.000 n=12)\n```",
         "requestedAt": "2026-11-06T18:22:25.827Z",
         "summary": "Open the revised FD worker-lifetime PR? The only source change since d4e65b135 uses e.wg.Go. The allocation comparison and the full normal and race suites cover this revision."
       }
@@ -54831,9 +54847,25 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T16:55:55.698Z",
+      "updatedAt": "2026-11-06T18:24:42.424Z",
       "summary": "On current master, one Bazel command selects the same 360 runnable tests and 2,881 build-only targets as the AMD64 cgroup-v2 unit presubmit, plus a native uname control. Bazel assigns 366 test shards to OCI workers and five to Firecracker workers with root and IPv6. The two worker probes both measured cgroup2fs with CGROUPV2=true and false. Each setting ran remotely the first time, and both repeat runs reused the cached true result. The full invocation reported all 3,242 target outcomes. It built 2,650 of 2,881 build-only targets and ran 295 of 361 test owners. Of the executed shards, 303 passed, one sandbox test failed, and one netgofer test timed out. Sixty-six test owners, including the native uname control, never built. The GNU compiler was absent on part of the build graph. Replaying the two test owners on #15866 ran both remotely without cache hits and both passed. On the original source, six repetitions of TestRunProxyModeWithSeccomp finished. The seventh timed out waiting in cmd.Wait. The child continued processing receive batches after the peer shut down. A first repair lost a queued frame in a native control and remains under investigation.\n\nA single Bazel invocation executed six tests remotely. AMD64 and ARM64 workers ran the Go atomicbitops and C++ posix_error tests. AMD64 workers also ran uname on native Linux and under gVisor systrap. All six TestRunner actions passed uncached. Four of the six tests exercise parts of three presubmit jobs. Two serve as architecture controls. Each of those three jobs still has additional coverage to verify. The fork’s Buildkite file contains one submission command. GitHub Actions submitted it for this trial.\n\nThe previous proposals kept separate unit, Nogo, package, container, smoke, Gazelle, plugin, source-lint and syscall jobs. Their target lists, test fixtures and earlier results are linked. Staged release checks still have distinct artifact inputs.",
       "evidence": [
+        {
+          "label": "Released LLVM run and complete source selection: the Bazel client ran out of memory after seven formerly failing build-only targets built, the vDSO test binary built, and two fresh tests passed",
+          "url": "https://github.com/tamird/gvisor/blob/06b6f058e/test/rbe/source-unit-cgroup-v2.md#released-llvm-compiler"
+        },
+        {
+          "label": "Full LLVM source-presubmit result and Make selection",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42263289691/artifacts/13526618022"
+        },
+        {
+          "label": "All six unchanged netgofer tests passed in each of 25 runs under linux-sandbox on 37d0d0fed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42265595845/artifacts/13526758853"
+        },
+        {
+          "label": "Single-processor netgofer delivery: empty records, a final frame and ECONNRESET, with both disallowed ioctls raising SIGSYS. Worker callbacks during multiprocessor teardown remain unverified.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42263752006/artifacts/13526666673"
+        },
         {
           "label": "Original-source netgofer repetition: six completions, then cmd.Wait blocked",
           "url": "https://github.com/tamird/gvisor/actions/runs/42248693170/artifacts/13519562956"
