@@ -1,35 +1,89 @@
-name: CI
-
-"on":
+name: Verify the Rust rule with gVisor's stock license checker
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/rules-rs-stock-license]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  verify:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 4, persist-credentials: false}
+      - name: Select the stock source and the single Rust dependency
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 7d90dd78694554f17d6a8c57337c32646d7c5c5e
+          test "$(git rev-parse HEAD^^)" = ac878dc8a5a4862555b532a055800eea832e524e
+          test "$(git rev-parse HEAD^^^)" = f51a205a8f4afbc5ab41aded070df74951b081ea
+          test "$(git diff -U0 HEAD^^ HEAD^ | git patch-id --stable | cut -d' ' -f1)" = 2a238147b7e783c16b1a39040c4e6b7633d7db46
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/qualification/rust_catalog.py' ':!.github/workflows/build.yml'
+          test "$(git diff --name-only HEAD^^^ HEAD^^)" = "$(printf '%s\n' MODULE.bazel tools/licensecheck/dependencies.yaml)"
+          d="$RUNNER_TEMP/rules-rs-stock-license"
+          mkdir -m 700 "$d"
+          cp .github/qualification/rust_catalog.py "$d/"
+          ln -s "$(command -v bazelisk)" "$d/bazel"
+          git checkout --quiet --detach HEAD^^
+          test "$(git rev-parse HEAD:tools/licensecheck/licensecheck.go)" = bcb2e25017c6764788480bb4ae0a05b2d0d4ac3d
+          test "$(git rev-parse HEAD:governance/licensing.yaml)" = 071919debf7ab969ac9e2b9749e367c4c59a0621
+          test "$("$d/bazel" --version)" = "bazel 9.3.1"
+      - name: Compare module resolution on master and on the released Protobuf prerequisite
+        id: source
+        run: |
+          set -eu
+          d="$RUNNER_TEMP/rules-rs-stock-license"
+          python3 -IB "$d/rust_catalog.py" master prepare
+          git checkout --quiet --detach 7d90dd78694554f17d6a8c57337c32646d7c5c5e
+          python3 -IB "$d/rust_catalog.py" protobuf37 prepare
+          arm=none
+          for candidate in master protobuf37; do
+            if jq -e '.commands.stock_verify.exit==0 and .commands.registry_repo.exit==0 and .registry_pin_and_url and .commands.negative.missing_rust' "$d/$candidate/receipt.json" >/dev/null; then
+              arm="$candidate"
+              break
+            fi
+          done
+          if test "$arm" = master; then git checkout --quiet --detach ac878dc8a5a4862555b532a055800eea832e524e; fi
+          printf 'arm=%s\n' "$arm" >> "$GITHUB_OUTPUT"
+      - name: Fetch the missing Rust record on the first resolving source
+        if: steps.source.outputs.arm != 'none'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SOURCE_ARM: ${{ steps.source.outputs.arm }}
+        run: python3 -IB "$RUNNER_TEMP/rules-rs-stock-license/rust_catalog.py" "$SOURCE_ARM" fetch
+      - name: Check bounded evidence
+        id: boundary
+        if: always() && !cancelled()
+        run: |
+          set -eu
+          d="$RUNNER_TEMP/rules-rs-stock-license"
+          for arm in master protobuf37; do
+            p="$d/$arm/receipt.json"
+            test -s "$p" && test ! -L "$p" && test "$(wc -c < "$p")" -lt 48000
+            if grep -Eiq 'authorization[[:space:]]*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}' "$p"; then exit 1; fi
+          done
+          jq -e '.source=="ac878dc8a5a4862555b532a055800eea832e524e"' "$d/master/receipt.json" >/dev/null
+          jq -e '.source=="7d90dd78694554f17d6a8c57337c32646d7c5c5e"' "$d/protobuf37/receipt.json" >/dev/null
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.boundary.outcome == 'success'
+        with:
+          name: rust-stock-catalog
+          path: |
+            ${{ runner.temp }}/rules-rs-stock-license/master/receipt.json
+            ${{ runner.temp }}/rules-rs-stock-license/protobuf37/receipt.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Require a fresh classification from the BCR module and successful full verification
+        if: always() && steps.boundary.outcome == 'success'
+        env:
+          SOURCE_ARM: ${{ steps.source.outputs.arm }}
+        run: |
+          test "$SOURCE_ARM" = master || test "$SOURCE_ARM" = protobuf37
+          jq -e '
+            .commands.stock_verify.exit==0 and .commands.stock_verify.verified_entries==.expected_entries and
+            .commands.registry_repo.exit==0 and .registry_pin_and_url and
+            (.preexisting_rust_row_in_fetch_input|not) and .commands.negative.exit != 0 and .commands.negative.missing_rust and
+            .commands.fetch.exit==0 and .rust_fetch_stdout and (.recovered|length)==4 and all(.recovered[]; .) and
+            .commands.fetched_verify.exit==0 and .commands.fetched_verify.verified_entries==.expected_entries and
+            .tracked_catalog_preserved
+          ' "$RUNNER_TEMP/rules-rs-stock-license/$SOURCE_ARM/receipt.json" >/dev/null
