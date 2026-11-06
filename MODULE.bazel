@@ -128,7 +128,7 @@ register_toolchains("//:cc_toolchain_aarch64")
 ### Go
 go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")
 go_sdk.from_file(
-    go_mod = "//:go.mod",
+    go_mod = "//test/tcp_recovery_replay:sdk.mod",
     patch_strip = 1,
     patches = ["//tools:go_types_memoize.patch"],
 )
@@ -729,4 +729,14 @@ go_deps.gazelle_override(
         "gazelle:proto disable_global",
     ],
     path = "k8s.io/apimachinery",
+)
+
+# Compile the reporter's actual nine-file benchmark against this checkout.
+http_archive(
+    name = "tcp_replay_fixture",
+    build_file_content = """filegroup(name = "sources", srcs = glob(["*.go"]), visibility = ["//visibility:public"])""",
+    dev_dependency = True,
+    sha256 = "4193937eef5f19f289392464d3c19055c3602596bc5c6354549537f2af6a063c",
+    strip_prefix = "netstack-rack-repro-94a018b41c986790ed76bd04b280ba85cd41f7bb",
+    urls = ["https://codeload.github.com/adios-404/netstack-rack-repro/tar.gz/94a018b41c986790ed76bd04b280ba85cd41f7bb"],
 )
