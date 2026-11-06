@@ -1048,6 +1048,32 @@ func TestEifelRetransmissionTimestamps(t *testing.T) {
 			if got := c.Stack().Stats().TCP.SpuriousRTORecovery.Value(); got != want {
 				t.Errorf("original %d, repair %d, echo %d: spurious RTOs = %d, want %d", original, repair, echo, got, want)
 			}
+			if tc.timeouts == 2 {
+				// Both timeouts preceded the first ACK. Finish recovery
+				// and check whether TCP applied the response it detected.
+				peer.AckNum = peer.AckNum.Add(maxPayload)
+				peer.SendPacket(nil, timestampOption(peer.TSVal+2, echo))
+				wantThreshold := 2
+				if tc.ackOriginal {
+					wantThreshold = tcp.InitialSsthresh
+				}
+				var info tcpip.TCPInfoOption
+				if err := testutil.Poll(func() error {
+					if err := c.EP.GetSockOpt(&info); err != nil {
+						return fmt.Errorf("TCP_INFO: %s", err)
+					}
+					if info.CcState != tcpip.Open {
+						return fmt.Errorf("TCP_INFO recovery state: %v", info.CcState)
+					}
+					return nil
+				}, time.Second); err != nil {
+					t.Fatal(err)
+				}
+				t.Logf("two RTOs before detection, original=%t: ssthresh=%d", tc.ackOriginal, info.SndSsthresh)
+				if info.SndSsthresh != uint32(wantThreshold) {
+					t.Errorf("ssthresh = %d, want %d", info.SndSsthresh, uint32(wantThreshold))
+				}
+			}
 		})
 	}
 }
