@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T22:12:34.788Z",
+    "updatedAt": "2026-11-06T22:19:05.943Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -11927,31 +11927,45 @@
       "id": "branch:nvproxy-declared-sources",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/nvproxy-dev-source-index",
-      "head": "be4b12bea9fae089b93d87b9f09246eeec6aa702",
-      "title": "Give the NVIDIA ABI test its driver headers",
+      "ref": "research/nvproxy-shared-driver-headers",
+      "head": "2627f0daa9a8127598d9405151660567a1f26c0c",
+      "title": "Compare NVIDIA driver ABIs using declared source archives",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/be4b12bea",
-      "status": "Agent work",
-      "updatedAt": "2026-11-06T21:48:30.832Z",
-      "summary": "The development-only source passed all 25 available offline ABI comparisons and removed the driver repositories from a downstream module. The standalone differ still clones driver sources. Tamir requested that the revision address that machinery.",
+      "url": "https://github.com/tamird/gvisor/commit/2627f0daa",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-11-06T22:18:20.596Z",
+      "summary": "The ABI test and driver differ now use the same ParseDriver(version) calls with Bazel-supplied headers. This removes both Git operations and gives both programs all 25 public header trees. The offline test passed for all 25 available versions and skipped nine absent source tags. The offline CLI found a new reserved2 field when comparing 615.71.09 to the unadopted 620.70.06. The final commit differs from that tested tree only in the README.",
       "followup": {
-        "sourceHead": "be4b12bea9fae089b93d87b9f09246eeec6aa702",
-        "observedAt": "2026-11-06T21:48:30.832Z",
-        "owner": "Agent",
-        "disposition": "Tamir requested another revision because the git-clone machinery remains in this source.",
-        "nextAction": "Qualify the new integrated NVIDIA revision at 04238eea0 and inspect the updated source-cloning behavior before offering a new proposal.",
+        "sourceHead": "2627f0daa9a8127598d9405151660567a1f26c0c",
+        "observedAt": "2026-11-06T22:18:20.596Z",
+        "owner": "Contributor",
+        "disposition": "The revised parser reads declared sources for both callers.",
+        "nextAction": "Review the single NVIDIA commit for submission after #17112, #17114 and the direct x/text dependency change.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/be4b12bea",
-          "https://github.com/tamird/gvisor/actions/runs/42294413136/artifacts/13541966193",
-          "https://github.com/tamird/gvisor/actions/runs/42287343098/artifacts/13539170567",
-          "https://github.com/tamird/gvisor/commit/63f10e43e",
-          "https://github.com/tamird/gvisor/actions/runs/42282261080/artifacts/13536367145",
-          "https://github.com/tamird/gvisor/actions/runs/42279392380/artifacts/13534569286",
-          "https://github.com/tamird/gvisor/actions/runs/42283984978"
+          "https://github.com/tamird/gvisor/commit/2627f0daa",
+          "https://github.com/tamird/gvisor/actions/runs/42298941700/artifacts/13543213033",
+          "https://github.com/tamird/gvisor/actions/runs/42300917747/artifacts/13543888178",
+          "https://github.com/tamird/gvisor/actions/runs/42302502175/artifacts/13544592857",
+          "https://github.com/tamird/gvisor/commit/bcf1effec"
         ]
       },
       "evidence": [
+        {
+          "label": "25 available ABI comparisons, nine absent tags and the supported-pair CLI",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42298941700/artifacts/13543213033"
+        },
+        {
+          "label": "Pin and index generation for an unadopted driver",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42300917747/artifacts/13543888178"
+        },
+        {
+          "label": "Actual offline driver differ found reserved2 after a clean module tidy",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42302502175/artifacts/13544592857"
+        },
+        {
+          "label": "Only the README differs from the final tested integration",
+          "url": "https://github.com/tamird/gvisor/compare/844226d94...2627f0daa"
+        },
         {
           "label": "Separate NVIDIA integration under fork validation",
           "url": "https://github.com/tamird/gvisor/commit/04238eea0"
@@ -11981,9 +11995,35 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42283984978"
         }
       ],
-      "contributorChangesRequested": {
-        "head": "be4b12bea9fae089b93d87b9f09246eeec6aa702",
-        "url": "https://github.com/tamird/gvisor/commit/be4b12bea"
+      "refinement": {
+        "before": {
+          "head": "be4b12bea9fae089b93d87b9f09246eeec6aa702"
+        },
+        "after": {
+          "head": "2627f0daa9a8127598d9405151660567a1f26c0c"
+        }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "be4b12bea9fae089b93d87b9f09246eeec6aa702",
+          "title": "Give the NVIDIA ABI test its driver headers",
+          "url": "https://github.com/tamird/gvisor/commit/be4b12bea",
+          "outcome": "changes-requested",
+          "note": "Tamir requested removal of the remaining driver clone machinery.",
+          "at": "2026-11-06T22:18:20.596Z"
+        }
+      ],
+      "contributorReview": {
+        "head": "2627f0daa9a8127598d9405151660567a1f26c0c",
+        "baseHead": "7c42f97e66d1b62df825d8e423071b1dd52443de",
+        "title": "Compare NVIDIA driver ABIs using declared source archives",
+        "body": "The NVIDIA ABI test clones a driver repository during each comparison.\nWithout Git or network access, the test fails before Clang can compare\nthe driver's ioctl definitions with the corresponding nvproxy types.\n\nGive the test and the driver differ the same pinned header archives as\nBazel runfiles. Both use the same parser to resolve a version to its\nheaders. Record versions without a public source tag so the test can\ndistinguish them from missing build inputs.\n\nDevelopers use the differ to evaluate a new driver before adding it to\nnvproxy. The pin updater accepts a candidate version for that purpose.\nThe ABI test continues to check every supported driver. The archives\nare development dependencies of the gVisor module.",
+        "url": "https://github.com/tamird/gvisor/commit/2627f0daa",
+        "kind": "proposal",
+        "status": "pending",
+        "summary": "May I open this after #17112, #17114 and the direct x/text fix land? The ABI test and driver differ now use the same ParseDriver(version) calls with Bazel-supplied headers. This removes both Git operations and gives both programs all 25 public header trees. The offline test passed for all 25 available versions and skipped nine absent source tags. The offline CLI found a new reserved2 field when comparing 615.71.09 to the unadopted 620.70.06. The final commit differs from that tested tree only in the README.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 be4b12bea^! 2627f0daa^!",
+        "requestedAt": "2026-11-06T22:18:20.596Z"
       }
     },
     {
@@ -56333,6 +56373,51 @@
           "https://github.com/google/gvisor/pull/17118#pullrequestreview-5807281816"
         ]
       }
+    },
+    {
+      "id": "branch:declare-x-text-direct",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/declare-x-text-direct",
+      "head": "bcf1effec72eea3108446dd635bf75266ec9b2af",
+      "title": "Declare golang.org/x/text as a direct dependency",
+      "group": "bazel",
+      "status": "Awaiting contributor review",
+      "url": "https://github.com/tamird/gvisor/commit/bcf1effec",
+      "updatedAt": "2026-11-06T22:18:20.596Z",
+      "summary": "On current master, bazel mod tidy removed org_golang_x_text and the go_marshal build then failed to resolve its language package. Moving the existing v0.42.0 requirement to the direct block let tidy preserve all tracked files and the generator build produced a 2,695,328-byte executable.",
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "bcf1effec72eea3108446dd635bf75266ec9b2af",
+        "observedAt": "2026-11-06T22:18:20.596Z",
+        "disposition": "Independent current-master fix.",
+        "nextAction": "Review the single change for submission.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/bcf1effec",
+          "https://github.com/tamird/gvisor/actions/runs/42303238900/artifacts/13545171695"
+        ]
+      },
+      "contributorReview": {
+        "head": "bcf1effec72eea3108446dd635bf75266ec9b2af",
+        "baseHead": "7c325dda4e52be8728f54116b41544c8fa130633",
+        "title": "Declare golang.org/x/text as a direct dependency",
+        "body": "The go_marshal generator, HTTP benchmarks and syscall documentation\ntool import packages from golang.org/x/text directly. Marking the\nmodule indirect lets bazel mod tidy drop its repository from the\nroot module, even though those targets still refer to it.\n\nMove the existing version to the direct requirements so Gazelle keeps\nthe repository available after a tidy.\n\nFixes: 53203cabe (\"Enable deprecation diagnostics for repository code\")",
+        "url": "https://github.com/tamird/gvisor/commit/bcf1effec",
+        "kind": "proposal",
+        "status": "pending",
+        "summary": "May I open this standalone fix? On current master, bazel mod tidy removed org_golang_x_text and the go_marshal build then failed to resolve its language package. Moving the existing v0.42.0 requirement to the direct block let tidy preserve all tracked files and the generator build produced a 2,695,328-byte executable.",
+        "requestedAt": "2026-11-06T22:18:20.596Z"
+      },
+      "evidence": [
+        {
+          "label": "Matched parent and corrected tidy and go_marshal build",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42303238900/artifacts/13545171695"
+        },
+        {
+          "label": "First direct x/text imports",
+          "url": "https://github.com/google/gvisor/commit/53203cabe"
+        }
+      ]
     }
   ],
   "edges": [
@@ -60086,6 +60171,16 @@
       "evidence": [
         "https://github.com/tamird/gvisor/actions/runs/42267896109/artifacts/13533188526",
         "https://github.com/tamird/gvisor/commit/1de5b54a9"
+      ]
+    },
+    {
+      "from": "branch:declare-x-text-direct",
+      "to": "branch:nvproxy-declared-sources",
+      "type": "depends_on",
+      "reason": "The updater runs module tidy before building go_marshal. Its direct x/text dependency must remain available.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/actions/runs/42303238900/artifacts/13545171695",
+        "https://github.com/tamird/gvisor/actions/runs/42302502175/artifacts/13544592857"
       ]
     }
   ],
