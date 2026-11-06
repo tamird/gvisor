@@ -1,0 +1,3 @@
+steps:
+  - label: "Remote source presubmit"
+    command: bazel test --config=source-presubmit
