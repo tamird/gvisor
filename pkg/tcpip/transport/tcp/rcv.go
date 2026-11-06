@@ -49,6 +49,16 @@ type receiver struct {
 
 	// Time when the last ack was received.
 	lastRcvdAckTime tcpip.MonotonicTime
+
+	// quickAcks is the number of remaining ACKs to send without delay.
+	quickAcks int
+
+	// rcvMSS estimates the payload size of full-sized segments from the peer.
+	rcvMSS int
+
+	// ackNow is set when the next ACK must not be delayed. It is cleared when
+	// an ACK is sent.
+	ackNow bool
 }
 
 func newReceiver(ep *Endpoint, irs seqnum.Value, rcvWnd seqnum.Size, rcvWndScale uint8) *receiver {
@@ -62,7 +72,25 @@ func newReceiver(ep *Endpoint, irs seqnum.Value, rcvWnd seqnum.Size, rcvWndScale
 		rcvWnd:          rcvWnd,
 		rcvWUP:          irs + 1,
 		lastRcvdAckTime: ep.stack.Clock().NowMonotonic(),
+		quickAcks:       maxQuickAcks,
+		rcvMSS:          min(int(ep.amss), header.TCPDefaultMSS),
 	}
+}
+
+// shouldDelayAck returns whether the ACK for in-order data received since the
+// last ACK can be delayed so that a response may carry it, like Linux does.
+//
+// +checklocks:r.ep.mu
+func (r *receiver) shouldDelayAck() bool {
+	// TCP_QUICKACK=0 disables quick ACKs, like Linux's pingpong mode.
+	if r.quickAcks > 0 && r.ep.ops.GetQuickAck() {
+		r.quickAcks--
+		return false
+	}
+	// Acknowledge more than one full-sized segment (RFC 5681 section 4.2)
+	// and out-of-order data immediately.
+	unacked := int(r.ep.snd.MaxSentAck.Size(r.RcvNxt))
+	return unacked <= r.rcvMSS && len(r.pendingRcvdSegments) == 0 && !r.ackNow
 }
 
 // acceptable checks if the segment sequence number range is acceptable
@@ -476,6 +504,12 @@ func (r *receiver) handleRcvdSegment(s *segment) (drop bool, err tcpip.Error) {
 	// records when it actually arrived (consumed by the user-timeout check).
 	r.lastRcvdAckTime = s.rcvdTime
 
+	// Like Linux's tcp_measure_rcv_mss(), the largest segment received so
+	// far is taken to be full-sized.
+	if int(segLen) > r.rcvMSS {
+		r.rcvMSS = min(int(segLen), int(r.ep.amss))
+	}
+
 	// Defer segment processing if it can't be consumed now.
 	if !r.consumeSegment(s, segSeq, segLen, duplicate) {
 		if segLen > 0 || s.flags.Contains(header.TCPFlagFin) {
@@ -523,6 +557,7 @@ func (r *receiver) handleRcvdSegment(s *segment) (drop bool, err tcpip.Error) {
 	// By consuming the current segment, we may have filled a gap in the
 	// sequence number domain that allows pending segments to be consumed
 	// now. So try to do it.
+	hadGap := r.pendingRcvdSegments.Len() > 0
 	for !r.closed && r.pendingRcvdSegments.Len() > 0 {
 		s := r.pendingRcvdSegments[0]
 		segLen := seqnum.Size(s.payloadSize())
@@ -539,6 +574,11 @@ func (r *receiver) handleRcvdSegment(s *segment) (drop bool, err tcpip.Error) {
 		r.PendingBufUsed -= s.segMemSize()
 		r.ep.rcvQueueMu.Unlock()
 		s.DecRef()
+	}
+	if hadGap && r.pendingRcvdSegments.Len() == 0 && !r.closed {
+		// Acknowledge filling the last gap immediately (RFC 5681
+		// section 4.2; Linux tcp_data_queue()).
+		r.ackNow = true
 	}
 	if duplicate.Start != duplicate.End && !r.closed {
 		// Send after draining so the ACK covers any gap the new suffix
