@@ -730,3 +730,34 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+# The exact external workload is consumed as data, without vendoring it.
+http_archive(
+    name = "rack_reporter",
+    build_file_content = "exports_files(glob(['*.go']))",
+    sha256 = "4193937eef5f19f289392464d3c19055c3602596bc5c6354549537f2af6a063c",
+    strip_prefix = "netstack-rack-repro-94a018b41c986790ed76bd04b280ba85cd41f7bb",
+    type = "tar.gz",
+    urls = ["https://codeload.github.com/adios-404/netstack-rack-repro/tar.gz/94a018b41c986790ed76bd04b280ba85cd41f7bb"],
+)
+
+# Diagnostic-only reporting tool; keep its module graph separate from gVisor.
+go_repository = use_repo_rule("@bazel_gazelle//:deps.bzl", "go_repository")
+
+go_repository(
+    name = "com_github_aclements_go_moremath",
+    importpath = "github.com/aclements/go-moremath",
+    sum = "h1:xlwdaKcTNVW4PtpQb8aKA4Pjy0CdJHEqvFbAnvR5m2g=",
+    version = "v0.0.0-20210112150236-f10218a38794",
+)
+
+go_repository(
+    name = "org_golang_x_perf",
+    build_directives = [
+        "gazelle:resolve go github.com/aclements/go-moremath/mathx @com_github_aclements_go_moremath//mathx:go_default_library",
+        "gazelle:resolve go github.com/aclements/go-moremath/stats @com_github_aclements_go_moremath//stats:go_default_library",
+    ],
+    importpath = "golang.org/x/perf",
+    sum = "h1:nyQ/b4GTH65GoH7T/JFxssBadcBB57DTy6JNyQEfZBA=",
+    version = "v0.0.0-20260929162123-406019bb8b68",
+)
