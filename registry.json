@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T19:02:20.279Z",
+    "updatedAt": "2026-11-06T19:08:31.724Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -54950,9 +54950,25 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T19:02:20.279Z",
-      "summary": "One remote Bazel invocation on the released LLVM integration recorded all 3,235 presubmit targets. Of 2,874 build-only targets, 2,811 built. Of 361 runnable targets, 344 ran and 342 passed. There were 352 passing shards in 354 fresh remote executions. The sandbox test failed its default-route assertions and the vDSO checker could not start readelf. Three C++ compile actions failed in the NVIDIA driver's Clang parser on the pinned RegisterRef comparator.\n\nOn master before the compiler change, the graph selected all 360 runnable and 2,881 build-only targets from the AMD64 cgroup-v2 presubmit, plus a native uname control. Of the resulting 3,242 roots, 2,650 build-only targets built and 295 tests ran. The OCI and Firecracker workers reported cgroup2fs and observed the expected cache separation for CGROUPV2 true and false. The earlier six-target pilot and full per-owner data are linked.",
+      "updatedAt": "2026-11-06T19:08:28.692Z",
+      "summary": "One remote Bazel invocation on the released LLVM integration recorded all 3,235 presubmit targets. Of 2,874 build-only targets, 2,811 built. Of 361 runnable targets, 344 ran and 342 passed. There were 352 passing shards in 354 fresh remote executions. The sandbox test failed its default-route assertions and the vDSO checker could not start readelf. Three C++ compile actions failed in the NVIDIA driver's Clang parser on the pinned RegisterRef comparator. The two failed test targets passed in separate runs with the declared vDSO reader and #15866’s route expectations. #17114 built all four previously failing NVIDIA targets and the parser test passed remotely. All 34 structure parity cases then failed to start git, and all 34 installer checksum cases failed TLS verification.\n\nOn master before the compiler change, the graph selected all 360 runnable and 2,881 build-only targets from the AMD64 cgroup-v2 presubmit, plus a native uname control. Of the resulting 3,242 roots, 2,650 build-only targets built and 295 tests ran. The OCI and Firecracker workers reported cgroup2fs and observed the expected cache separation for CGROUPV2 true and false. The earlier six-target pilot and full per-owner data are linked.",
       "evidence": [
+        {
+          "label": "Fresh full sandbox test with only five route expectations from #15866. All three formerly failing cases passed in Go and XML.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42275765374/artifacts/13532748468"
+        },
+        {
+          "label": "#17114 built all four NVIDIA targets and the native parser test passed on the LLVM worker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42274588613/artifacts/13532788389"
+        },
+        {
+          "label": "Original NVIDIA parity failures and five source owners with no recorded test result",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42276297996/artifacts/13531918912"
+        },
+        {
+          "label": "Published declared vDSO reader",
+          "url": "https://github.com/google/gvisor/pull/17122"
+        },
         {
           "label": "Verified vDSO checker with declared llvm-readelf on the original worker",
           "url": "https://github.com/tamird/gvisor/actions/runs/42275316477/artifacts/13533022741"
@@ -55086,9 +55102,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "e46a101fc0aebb325ec25977697a012a2e11a11b",
-        "observedAt": "2026-11-06T19:02:20.279Z",
+        "observedAt": "2026-11-06T19:08:28.692Z",
         "disposition": "The contributor requested one remote Bazel graph for CI targets across areas and configurations.",
-        "nextAction": "Follow the tested vDSO reader fix and #17114 for the NVIDIA driver parser. Check the unchanged sandbox runtime with #15866’s route expectations. Native uname still lacks a result in the full graph."
+        "nextAction": "Use the declared package sources for the structure parity tests and investigate the installer TLS failures separately. Follow #17122, #15866 and #17114. Native uname and the other four inspected build-only or unexecuted outcomes still have no underlying cause recorded."
       }
     },
     {
@@ -55281,10 +55297,14 @@
       "title": "Declare readelf for the vDSO layout test",
       "url": "https://github.com/tamird/gvisor/commit/466dbf7a9",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T19:02:20.279Z",
+      "status": "Published as #17122",
+      "updatedAt": "2026-11-06T19:08:28.692Z",
       "summary": "The vDSO layout test invokes readelf from PATH. A remote worker without binutils failed before inspecting the ELF. The standalone fix and the LLVM integration both passed the AMD64 test. The AMD64 checker also passed on the generated ARM64 ELF and rejected a deliberately nonempty .data section.",
       "evidence": [
+        {
+          "label": "Open upstream PR",
+          "url": "https://github.com/google/gvisor/pull/17122"
+        },
         {
           "label": "Original failure on the full remote presubmit",
           "url": "https://github.com/tamird/gvisor/actions/runs/42273255642/artifacts/13532960461"
@@ -55298,16 +55318,74 @@
           "url": "https://app.buildbuddy.io/invocation/40102cd3-4f97-43f1-aec7-2ca79e7a9d0f"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "466dbf7a9a4ff6d12693d0fa94ba37c2bc353d48",
-        "url": "https://github.com/tamird/gvisor/commit/466dbf7a9",
-        "title": "Declare readelf for the vDSO layout test",
-        "body": "The vDSO test invokes readelf from PATH to inspect the load segments,\nsections and relocations. On a remote worker without binutils the test\nexits before reading the ELF.\n\nPass the toolchain’s llvm-readelf to the checker as a test input. Keep\nthe readelf default for callers that run the exported script directly.",
-        "requestedAt": "2026-11-06T19:02:20.279Z",
-        "summary": "Open the vDSO test input fix? On the original remote worker the checker could not start readelf. With the declared input the test read both AMD64 and ARM64 ELF layouts, and a one-byte .data section failed the intended assertion."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "466dbf7a9a4ff6d12693d0fa94ba37c2bc353d48",
+          "url": "https://github.com/tamird/gvisor/commit/466dbf7a9",
+          "title": "Declare readelf for the vDSO layout test",
+          "body": "The vDSO test invokes readelf from PATH to inspect the load segments,\nsections and relocations. On a remote worker without binutils the test\nexits before reading the ELF.\n\nPass the toolchain’s llvm-readelf to the checker as a test input. Keep\nthe readelf default for callers that run the exported script directly.",
+          "outcome": "approved",
+          "at": "2026-11-06T19:08:28.692Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17122",
+          "note": "Opened the approved single-commit change on master."
+        }
+      ],
+      "followup": {
+        "owner": "Maintainer",
+        "sourceHead": "466dbf7a9a4ff6d12693d0fa94ba37c2bc353d48",
+        "observedAt": "2026-11-06T19:08:28.692Z",
+        "disposition": "Published as #17122.",
+        "nextAction": "Follow maintainer review and checks on the open PR.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17122"
+        ]
       }
+    },
+    {
+      "id": "pr:17122",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17122,
+      "ref": "proposal/vdso-declared-readelf",
+      "head": "466dbf7a9a4ff6d12693d0fa94ba37c2bc353d48",
+      "title": "Declare readelf for the vDSO layout test",
+      "url": "https://github.com/google/gvisor/pull/17122",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-06T19:08:28.692Z",
+      "summary": "The vDSO layout test invokes readelf from PATH. A remote worker without binutils failed before inspecting the ELF. The standalone fix and the LLVM integration both passed the AMD64 test. The AMD64 checker also passed on the generated ARM64 ELF and rejected a deliberately nonempty .data section.",
+      "evidence": [
+        {
+          "label": "Open upstream PR",
+          "url": "https://github.com/google/gvisor/pull/17122"
+        },
+        {
+          "label": "Original failure on the full remote presubmit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42273255642/artifacts/13532960461"
+        },
+        {
+          "label": "Standalone and integration tests, ARM64 ELF and one-byte .data rejection",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42275316477/artifacts/13533022741"
+        },
+        {
+          "label": "Standalone uncached TestRunner",
+          "url": "https://app.buildbuddy.io/invocation/40102cd3-4f97-43f1-aec7-2ca79e7a9d0f"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "466dbf7a9a4ff6d12693d0fa94ba37c2bc353d48",
+          "url": "https://github.com/tamird/gvisor/commit/466dbf7a9",
+          "title": "Declare readelf for the vDSO layout test",
+          "body": "The vDSO test invokes readelf from PATH to inspect the load segments,\nsections and relocations. On a remote worker without binutils the test\nexits before reading the ELF.\n\nPass the toolchain’s llvm-readelf to the checker as a test input. Keep\nthe readelf default for callers that run the exported script directly.",
+          "outcome": "approved",
+          "at": "2026-11-06T19:08:28.692Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17122",
+          "note": "Opened the approved single-commit change on master."
+        }
+      ]
     }
   ],
   "edges": [
