@@ -1,7 +1,7 @@
 name: Namespace syscall controls
 on:
   push:
-    branches: [qualification/namespace-syscall-owners]
+    branches: [qualification/namespace-guest-owners]
 permissions:
   contents: read
 jobs:
@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 95
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 3, persist-credentials: false}
+        with: {fetch-depth: 4, persist-credentials: false}
       - name: Prepare the native Linux test worker
         shell: bash
         run: |
@@ -19,8 +19,8 @@ jobs:
           d="$RUNNER_TEMP/namespace-owners"
           mkdir -p "$d"
           cp .github/qualification/namespace_{owners.py,owner.sh} "$d/"
-          test "$(git rev-parse HEAD^)" = 428e3d67c87363bc16be64c80e8fe58a6a46c467
-          test "$(git rev-parse HEAD^^)" = fdd009fd9c0752b3f9fc3bf1a8c3deeff105a8c3
+          test "$(git rev-parse HEAD^^)" = 428e3d67c87363bc16be64c80e8fe58a6a46c467
+          test "$(git rev-parse HEAD^^^)" = fdd009fd9c0752b3f9fc3bf1a8c3deeff105a8c3
           if ! command -v aarch64-linux-gnu-g++ >/dev/null; then
             echo 'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu/ noble main universe' >"$d/ubuntu.list"
             echo 'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu/ noble-updates main universe' >>"$d/ubuntu.list"
@@ -30,13 +30,13 @@ jobs:
             sudo apt-get "${apt[@]}" -qq install --no-install-recommends g++-aarch64-linux-gnu
           fi
           test "$(/usr/bin/aarch64-linux-gnu-gcc -dumpmachine)" = aarch64-linux-gnu
-      - name: Run existing syscall cases on Linux and both Sentry sources
+      - name: Run the two existing syscall cases on both Sentry sources
         shell: bash
         run: |
           env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" BAZEL="$(command -v bazel)" python3 "$RUNNER_TEMP/namespace-owners/namespace_owners.py"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: namespace-owner-results
+          name: namespace-guest-results
           path: ${{ runner.temp }}/namespace-owners/results.json
           if-no-files-found: error

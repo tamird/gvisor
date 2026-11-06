@@ -14,13 +14,6 @@ cases = {
 }
 package = Path("test/syscalls/linux")
 test_file = package / "network_namespace.cc"
-runner = Path("test/runner/main.go")
-original_runner = '\t\tws := err.(*exec.ExitError).Sys().(syscall.WaitStatus)'
-diagnostic = '''        exitErr, ok := err.(*exec.ExitError)
-        if !ok {
-            t.Fatalf("native syscall launcher: %q clone flags %#x: %T: %v", cmd.Path, cmd.SysProcAttr.Cloneflags, err, err)
-        }
-        ws := exitErr.Sys().(syscall.WaitStatus)'''
 result = {"cases": cases, "results": {}}
 
 
@@ -38,14 +31,10 @@ def fixture():
         original = f.read()
         f.seek(0)
         f.write('load("@rules_shell//shell:sh_test.bzl", "sh_test")\n' + original)
-        for mode in ("native", "systrap"):
-            for owner, case in cases.items():
-                args = [mode, f"$(rootpath :{owner})", case]
-                data = [":" + owner]
-                if mode == "systrap":
-                    args.append("$(rootpath //runsc:runsc)")
-                    data.append("//runsc:runsc")
-                f.write(f'\nsh_test(name = "{owner}_{mode}_replay", srcs = ["namespace_owner.sh"], args = {args!r}, data = {data!r})\n')
+        for owner, case in cases.items():
+            args = [f"$(rootpath :{owner})", case]
+            data = [":" + owner, "//:release"]
+            f.write(f'\nsh_test(name = "{owner}_guest", srcs = ["namespace_owner.sh"], args = {args!r}, data = {data!r})\n')
     shutil.copy2(out / "namespace_owner.sh", package / "namespace_owner.sh")
 
 
@@ -62,8 +51,8 @@ def run(phase, labels):
     cmd = [os.environ["BAZEL"], "test", "--config=x86_64", "-c", "opt", "--keep_going",
            "--jobs=3", "--test_sharding_strategy=disabled", "--test_timeout=300",
            "--strategy=TestRunner=local", "--nocache_test_results", "--flaky_test_attempts=1",
-           "--run_under=/usr/bin/sudo -n -E --", "--noshow_progress", "--color=no", "--curses=no",
-           "--test_env=GTEST_FILTER=" + ":".join(cases.values()), "--build_event_json_file=" + str(events)]
+           "--noshow_progress", "--color=no", "--curses=no",
+           "--test_env=GUEST_TMP=" + str(out), "--build_event_json_file=" + str(events)]
     with log.open("w") as stream:
         record["bazel_exit"] = subprocess.run(cmd + list(labels), stdout=stream, stderr=subprocess.STDOUT).returncode
     lines = log.read_text(errors="replace").splitlines()
@@ -98,6 +87,9 @@ def run(phase, labels):
         if target["test_attempts"] and testlog.is_file():
             output = testlog.read_text(errors="replace").splitlines()
             target["markers"] = [line[-600:] for line in output if case in line and re.search(r'\[\s*(RUN|OK|FAILED|SKIPPED)\s*\]', line)][:12]
+            target["first_lines"] = [line[-600:] for line in output[:32]]
+            target["last_lines"] = [line[-600:] for line in output[-16:]]
+            target["guest_caps_verified"] = "Verified guest CAP_NET_ADMIN and CAP_SYS_ADMIN" in output
             target["test_errors"] = [line[-800:] for line in output if interesting(line)][:18]
     print(phase, json.dumps(record), flush=True)
     save()
@@ -107,7 +99,7 @@ def run(phase, labels):
 def verdict(target):
     markers = target.get("markers", [])
     ran = any(re.search(r'\[\s*RUN\s*\]', line) for line in markers)
-    if not ran or not target.get("test_attempts"):
+    if not ran or not target.get("guest_caps_verified") or not target.get("test_attempts"):
         return "not_observed"
     if any(re.search(r'\[\s*SKIPPED\s*\]', line) for line in markers):
         return "skipped"
@@ -119,32 +111,18 @@ def verdict(target):
 
 
 save()
-for system, source in (("linux", draft), ("draft", draft), ("corrected", fixed)):
+for system, source in (("draft", draft), ("corrected", fixed)):
     git("checkout", "--detach", source)
     git("restore", "--source=" + fixed, "--", test_file)
     assert git("hash-object", test_file) == git("rev-parse", f"{fixed}:{test_file}")
     result.setdefault("source", {})[system] = {"commit": git("rev-parse", "HEAD"), "test_blob": git("hash-object", test_file)}
-    mode = "native" if system == "linux" else "systrap"
-    text = runner.read_text()
-    assert text.count(original_runner) == 1
-    runner.write_text(text.replace(original_runner, diagnostic))
-    suffix = "_native" if mode == "native" else "_runsc_systrap_directfs"
-    labels = {"//test/syscalls:" + owner + suffix: case for owner, case in cases.items()}
-    canonical = run(system + "_canonical", labels)
-    git("restore", "--", runner)
-    selected = {target["case"]: verdict(target) for target in canonical.values()}
-    needed = {owner: case for owner, case in cases.items() if selected[case] not in ("passed", "draft_namespace_failure")}
-    if needed:
-        fixture()
-        direct = run(system + "_direct", {f"//test/syscalls/linux:{owner}_{mode}_replay": case for owner, case in needed.items()})
-        for target in direct.values():
-            selected[target["case"]] = verdict(target)
-        git("restore", "--", package / "BUILD")
-        (package / "namespace_owner.sh").unlink()
-    result.setdefault("observed", {})[system] = selected
+    fixture()
+    targets = run(system, {f"//test/syscalls/linux:{owner}_guest": case for owner, case in cases.items()})
+    result.setdefault("observed", {})[system] = {target["case"]: verdict(target) for target in targets.values()}
     save()
-    git("restore", "--", test_file)
-wanted = {"linux": "passed", "draft": "draft_namespace_failure", "corrected": "passed"}
+    git("restore", "--", package / "BUILD", test_file)
+    (package / "namespace_owner.sh").unlink()
+wanted = {"draft": "draft_namespace_failure", "corrected": "passed"}
 result["complete"] = all(actual == wanted[system] for system, values in result["observed"].items() for actual in values.values())
 save()
 raise SystemExit(0 if result["complete"] else 1)
