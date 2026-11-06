@@ -1,27 +1,27 @@
-name: Identify the original Go SDK extraction failure
+name: Configure the release with an installed JVM locale
 on:
   push:
-    branches: [qualification/lean-sdk-client-original]
+    branches: [qualification/lean-release-client-locale]
 permissions: {contents: read}
 jobs:
   linux:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 4}
+        with: {persist-credentials: false, fetch-depth: 5}
       - name: Query release dependencies without building actions
         run: |
-          test "$(git rev-parse HEAD^)" = e04d908ebbe10fa123cf3a01ae2e70968f99bc5a
-          test "$(git rev-parse HEAD~3)" = d5fe3c2eef21434cbe13e3604f0f070ace4d7edb
+          test "$(git rev-parse HEAD^)" = d7144ce0addadbdf2ccffc069b47c4bf5518a48c
+          test "$(git rev-parse HEAD~4)" = d5fe3c2eef21434cbe13e3604f0f070ace4d7edb
           cp .github/qualification/lean_release_client.py "$RUNNER_TEMP/lean-client.py"
           git switch --detach d5fe3c2eef21434cbe13e3604f0f070ace4d7edb
           python3 -I -B "$RUNNER_TEMP/lean-client.py"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: original-go-sdk-client-extraction
+          name: release-repository-configuration
           path: ${{ runner.temp }}/lean-client.json
           if-no-files-found: error
           retention-days: 7

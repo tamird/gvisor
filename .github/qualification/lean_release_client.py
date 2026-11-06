@@ -16,10 +16,11 @@ BAZEL = "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c"
 STAGE = Path(os.environ["RUNNER_TEMP"]) / "lean-client"
 RECEIPT = STAGE.parent / "lean-client.json"
 TARGETS = [
-    ("query", "@@rules_go++go_sdk+main___download_0_linux_amd64//:ROOT"),
+    ("cquery", "set(//:release @org_golang_x_sys//unix:go_default_library)"),
 ]
 POSSIBLE = {"bash", "sh", "sed", "test", "cp", "chmod", "uname", "python3",
-            "mkdir", "cat", "readlink", "tar", "git", "rm", "mv", "ln"}
+            "mkdir", "cat", "readlink", "tar", "git", "rm", "mv", "ln",
+            "find", "file", "which", "ar", "ld", "cc", "gcc", "clang", "gzip", "xz"}
 report = {"source": SOURCE, "bazel": BAZEL, "known_client_tool": "/usr/bin/env", "phases": []}
 
 
@@ -129,7 +130,7 @@ def workspace_operations(path):
     return [list(key) + [count] for key, count in counter.most_common(180)]
 
 
-def phase(index, command, target, tool=None, *, locale=None):
+def phase(index, command, target, tool=None, *, hide_locale=False):
     work = Path.cwd()
     # The clean git checkout has no tracked module lock. Discard only a lock
     # created by a previous probe so both cases start on the identical source.
@@ -145,9 +146,9 @@ def phase(index, command, target, tool=None, *, locale=None):
         path = Path("/usr/bin") / tool
         assert tool in POSSIBLE and path.is_file()
         args += ["-v", f"{path.resolve()}:/usr/bin/{tool}:ro", "-v", f"{path.resolve()}:/bin/{tool}:ro"]
-    if locale:
-        assert locale == "C.UTF-8" and (STAGE / "image/usr/lib/locale/C.utf8/LC_CTYPE").is_file()
-        args += ["-e", f"LC_ALL={locale}"]
+    assert (STAGE / "image/usr/lib/locale/C.utf8/LC_CTYPE").is_file()
+    if hide_locale:
+        args += ["--tmpfs", "/usr/lib/locale/C.utf8:ro,size=65536"]
     args += ["lean-client:probe", "/probe/bazel", "--batch", "--nosystem_rc", "--nohome_rc"]
     if (STAGE / "image/trust/cacerts").is_file():
         args += ["--host_jvm_args=-Djavax.net.ssl.trustStore=/trust/cacerts"]
@@ -162,14 +163,14 @@ def phase(index, command, target, tool=None, *, locale=None):
     for line in text.splitlines():
         if re.search(r"(?i)token|secret|api.key|authorization|cookie|password|BEARER|-----BEGIN", line):
             continue
-        if re.search(r"(?i)error|failed|cannot|missing|traceback|\.bzl.+line [0-9]|no such|not found|permission denied|execvp|execve|return code|no matching|not a directory|disk space", line):
+        if re.search(r"(?i)error|failed|cannot|missing|traceback|\.bzl.+line [0-9]|no such|not found|permission denied|execvp|execve|return code|no matching|not a directory|disk space|unsupported encoding|UTF-8 locale", line):
             safe = re.sub(r"https?://\S+", "[public URL]", line)
             safe = re.sub(r"/home/runner/\.cache/bazel/_bazel_runner/[0-9a-f]{32}/external/", "@@", safe)
             lines.append(safe if len(safe) <= 1150 else safe[:350] + " ... " + safe[-750:])
-    row = {"command": command, "target": target, "only_added_tool": tool, "locale": locale, "exit": result.returncode,
+    row = {"command": command, "target": target, "only_added_tool": tool, "locale_data_hidden": hide_locale, "exit": result.returncode,
            "stdout_labels": [s for s in result.stdout.decode(errors="replace").splitlines()
                              if re.fullmatch(r"[@a-zA-Z0-9._+: /()-]{1,200}", s)][:4],
-           "diagnostics": list(dict.fromkeys(lines))[-32:]}
+           "diagnostics": list(dict.fromkeys(lines[:8] + lines[-28:]))}
     report["phases"].append(row)
     write_report()
     path = STAGE / "data" / f"{index}.pb"
@@ -181,17 +182,17 @@ def phase(index, command, target, tool=None, *, locale=None):
 
 try:
     setup()
+    phase(0, "query", "@@rules_go++go_sdk+main___download_0_linux_amd64//:ROOT", hide_locale=True)
     for command, target in TARGETS:
         row = phase(len(report["phases"]), command, target)
         if row["exit"]:
             diagnostic = "\n".join(row["diagnostics"])
-            if "issue27836.dir/" in diagnostic and "No such file" in diagnostic:
-                phase(len(report["phases"]), command, target, locale="C.UTF-8")
-                break
             missing = {word for word in POSSIBLE if re.search(r"(?i)(?:execvp\(|cannot run program [\"']|/usr/bin/|/bin/|(?:executable|command|program)[ :\x60'\"(]+)" + word +
                         r"(?:[\"'):\x60]|\s+(?:not found|failed))", diagnostic)}
             if len(missing) == 1:
-                phase(len(report["phases"]), command, target, missing.pop())
+                tool = missing.pop()
+                if (Path("/usr/bin") / tool).is_file():
+                    phase(len(report["phases"]), command, target, tool)
             break
 except (AssertionError, OSError, ValueError, EOFError, subprocess.SubprocessError) as exc:
     report["harness_error"] = type(exc).__name__
