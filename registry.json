@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T16:30:19.068Z",
+    "updatedAt": "2026-11-06T16:32:56.778Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -43607,8 +43607,8 @@
       "head": "3d868e9c6466e4fdca0c5ee3ef151b34baed485a",
       "title": "Retry promptly when a TCP ACK contradicts an earlier SACK",
       "url": "https://github.com/tamird/gvisor/commit/3d868e9c6",
-      "updatedAt": "2026-10-31T15:23:16.789097+00:00",
-      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T16:32:56.778Z",
+      "status": "Approved; waiting for #15634",
       "summary": "If a cumulative ACK stops inside a packet that the peer reported receiving in full, Linux retries sooner. A SACK for only the packet’s suffix leaves the usual timeout in place. The same distinction applies when gVisor retransmits a shorter fragment. Submit after #15634.",
       "evidence": [
         {
@@ -43632,16 +43632,28 @@
           "url": "https://github.com/google/gvisor/issues/16670"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "3d868e9c6466e4fdca0c5ee3ef151b34baed485a",
-        "baseHead": "f96afe45777d10e02b6565b76dd255f0062503ec",
-        "url": "https://github.com/tamird/gvisor/commit/3d868e9c6",
-        "title": "Retry promptly when a TCP ACK contradicts an earlier SACK",
-        "requestedAt": "2026-10-31T15:23:16.789097+00:00",
-        "summary": "If a cumulative ACK stops inside a packet that the peer reported receiving in full, Linux retries sooner. A SACK for only the packet’s suffix leaves the usual timeout in place. The same distinction applies when gVisor retransmits a shorter fragment. Submit after #15634.",
-        "body": "A receiver under memory pressure can discard data it previously\nreported receiving. If its cumulative ACK stops inside a packet that\nit selectively acknowledged in full, waiting for the retransmission\ntimeout can delay recovery. A SACK for only the tail of that packet\ndoes not establish the same contradiction.\n\nGive the receiver half a round trip (at least 10 ms) to advance its\nACK before retransmitting, as Linux does [1]. Keep enough of the\nreported range to distinguish a whole transmission from a suffix as\nACKs advance. Check the original packet and any shorter retransmission\nduring the existing walk that updates SACK credit.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp_input.c#L2247-L2256"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "3d868e9c6466e4fdca0c5ee3ef151b34baed485a",
+          "url": "https://github.com/tamird/gvisor/commit/3d868e9c6",
+          "title": "Retry promptly when a TCP ACK contradicts an earlier SACK",
+          "body": "A receiver under memory pressure can discard data it previously\nreported receiving. If its cumulative ACK stops inside a packet that\nit selectively acknowledged in full, waiting for the retransmission\ntimeout can delay recovery. A SACK for only the tail of that packet\ndoes not establish the same contradiction.\n\nGive the receiver half a round trip (at least 10 ms) to advance its\nACK before retransmitting, as Linux does [1]. Keep enough of the\nreported range to distinguish a whole transmission from a suffix as\nACKs advance. Check the original packet and any shorter retransmission\nduring the existing walk that updates SACK credit.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp_input.c#L2247-L2256",
+          "outcome": "approved",
+          "at": "2026-11-06T16:32:56.778Z",
+          "note": "Tamir approved submission after #15634."
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "3d868e9c6466e4fdca0c5ee3ef151b34baed485a",
+        "observedAt": "2026-11-06T16:32:56.778Z",
+        "disposition": "Tamir approved submission after #15634.",
+        "nextAction": "Open the approved PR after #15634.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/3d868e9c6",
+          "https://github.com/google/gvisor/pull/15634"
+        ]
       }
     },
     {
@@ -46981,8 +46993,8 @@
       "title": "Count distinct waiters moved by futex requeue",
       "url": "https://github.com/tamird/gvisor/commit/dabaf5e45",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T02:26:35+00:00",
+      "status": "Approved; waiting for #16810",
+      "updatedAt": "2026-11-06T16:32:56.778Z",
       "summary": "With two waiters, asking to requeue up to seven on the same word returned 2 on Linux, 0 on stock gVisor, and 7 with a count-only change. Leave same-bucket waiters in place and return the total woken and requeued.",
       "evidence": [
         {
@@ -46994,15 +47006,28 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41377109901/artifacts/13111867362"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "dabaf5e4552b6f310f2ca05c1c0b9e0b8555df85",
-        "baseHead": "2d24ec26b4438967c2dac5dc95445868912604ae",
-        "url": "https://github.com/tamird/gvisor/commit/dabaf5e45",
-        "title": "Count distinct waiters moved by futex requeue",
-        "body": "Open after the PI waiter fix. The shared syscall fixture ran with and without FUTEX_PRIVATE_FLAG. A mixed requeue that had already moved an ordinary waiter before encountering a PI waiter was reviewed against Linux source only.\n\ngit range-diff 2d24ec26b^! dabaf5e45^!",
-        "requestedAt": "2026-11-02T02:26:35+00:00"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "dabaf5e4552b6f310f2ca05c1c0b9e0b8555df85",
+          "url": "https://github.com/tamird/gvisor/commit/dabaf5e45",
+          "title": "Count distinct waiters moved by futex requeue",
+          "body": "Open after the PI waiter fix. The shared syscall fixture ran with and without FUTEX_PRIVATE_FLAG. A mixed requeue that had already moved an ordinary waiter before encountering a PI waiter was reviewed against Linux source only.\n\ngit range-diff 2d24ec26b^! dabaf5e45^!",
+          "outcome": "approved",
+          "at": "2026-11-06T16:32:56.778Z",
+          "note": "Tamir approved submission after #16810."
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "dabaf5e4552b6f310f2ca05c1c0b9e0b8555df85",
+        "observedAt": "2026-11-06T16:32:56.778Z",
+        "disposition": "Tamir approved submission after #16810.",
+        "nextAction": "Open the approved PR after #16810.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/dabaf5e45",
+          "https://github.com/google/gvisor/pull/16810"
+        ]
       }
     },
     {
@@ -50207,8 +50232,8 @@
       "title": "Guard SysV IPC permissions with the object mutex",
       "url": "https://github.com/tamird/gvisor/compare/60ee09629...47ed5b668",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-03T06:24:21.015903+00:00",
+      "status": "Approved; waiting for #16864 and the semaphore waiter locking change",
+      "updatedAt": "2026-11-06T16:32:56.778Z",
       "summary": "Put the mutex on ipc.Object so Nogo can check permission reads through an object pointer. Registration initializes and indexes the key before publishing it. This removes six lock wrappers and introduces no additional lock acquisitions.",
       "evidence": [
         {
@@ -50232,16 +50257,29 @@
           "head": "47ed5b66822181255ce2520bae93da3315053040"
         }
       },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "47ed5b66822181255ce2520bae93da3315053040",
-        "baseHead": "60ee09629a52bd9404f8be7627e597fab0d34970",
-        "url": "https://github.com/tamird/gvisor/compare/60ee09629...47ed5b668",
-        "title": "Guard SysV IPC permissions with the object mutex",
-        "requestedAt": "2026-11-03T06:24:21.015903+00:00",
-        "summary": "Open after the shared-memory and semaphore prerequisites land?",
-        "body": "Removing the lookup lock now fails analysis on AMD64 and ARM64. The integrated change passed the four owning analyzers, 97 unit and syscall cases, and 18 restores covering message queues, semaphores and shared memory."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "47ed5b66822181255ce2520bae93da3315053040",
+          "url": "https://github.com/tamird/gvisor/compare/60ee09629...47ed5b668",
+          "title": "Guard SysV IPC permissions with the object mutex",
+          "body": "Removing the lookup lock now fails analysis on AMD64 and ARM64. The integrated change passed the four owning analyzers, 97 unit and syscall cases, and 18 restores covering message queues, semaphores and shared memory.",
+          "outcome": "approved",
+          "at": "2026-11-06T16:32:56.778Z",
+          "note": "Tamir approved submission after #16864 and the semaphore waiter locking change."
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "47ed5b66822181255ce2520bae93da3315053040",
+        "observedAt": "2026-11-06T16:32:56.778Z",
+        "disposition": "Tamir approved submission after #16864 and the semaphore waiter locking change.",
+        "nextAction": "Open the approved PR after #16864 and the semaphore waiter locking change.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/compare/60ee09629...47ed5b668",
+          "https://github.com/google/gvisor/pull/16864",
+          "https://github.com/tamird/gvisor/commit/b68f40e4e"
+        ]
       }
     },
     {
@@ -53345,9 +53383,9 @@
       "title": "Give each receive loop its own packet processors",
       "url": "https://github.com/tamird/gvisor/commit/95ca4e731",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T14:44:47.570Z",
-      "summary": "The receive loop owns its workers and the dispatcher used to deliver packets. A batch queued on an old attachment was delivered after reattach on the previous revision. The new test drops that batch and delivers a fresh one. A second test verifies that an injectable endpoint reports its real attachment and delivers only the packet injected while attached. Both tests failed before and passed on this source. The FD and muxed suites, two live-save cases and Nogo passed. An earlier real namespace move exposed a separate buffer-release panic on both versions tested there.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-06T16:32:56.778Z",
+      "summary": "The requested revision removes the per-attachment channel and the separate dispatcher argument. The receive loop owns its workers and the dispatcher used to deliver packets. A batch queued on an old attachment was delivered after reattach on the previous revision. The new test drops that batch and delivers a fresh one. A second test verifies that an injectable endpoint reports its real attachment and delivers only the packet injected while attached. Both tests failed before and passed on this source. The FD and muxed suites, two live-save cases and Nogo passed. An earlier real namespace move exposed a separate buffer-release panic on both versions tested there.",
       "evidence": [
         {
           "label": "Changes since the contributor requested one dispatcher and a behavioral test",
@@ -53422,6 +53460,16 @@
           "outcome": "changes-requested",
           "at": "2026-11-06T14:32:32.751Z",
           "note": "The contributor requested one authoritative dispatcher for the endpoint and its receive loop, and a lifecycle regression that exercises behavior without scanning pprof profiles."
+        },
+        {
+          "kind": "proposal",
+          "head": "95ca4e7317b6418d4ba8674a4f8d96b4c950ae78",
+          "url": "https://github.com/tamird/gvisor/commit/95ca4e731",
+          "title": "fdbased: give each receive loop its own packet processors",
+          "body": "Closing an endpoint before attaching it to a NIC leaves its receive\nprocessors asleep. New starts the goroutines, but only the receive\nloop wakes them on exit. An unattached endpoint never runs that loop.\n\nCreate the queues in the receive loop and signal its workers to stop\nwhen it returns. Each loop delivers through the dispatcher passed to\nAttach. Before draining a batch, a worker checks whether its own\nattachment ended. A subsequent attach cannot make an old batch\neligible for delivery again. A channel with one processor still\ndelivers its packets inline.\n\nAn injectable endpoint receives packets from its caller instead of an\nFD. Have IsAttached consult the dispatcher that InjectInbound uses.",
+          "outcome": "changes-requested",
+          "at": "2026-11-06T16:32:56.778Z",
+          "note": "Tamir requested removal of the per-attachment channel and the duplicated dispatcher access."
         }
       ],
       "refinement": {
@@ -53432,16 +53480,15 @@
           "head": "95ca4e7317b6418d4ba8674a4f8d96b4c950ae78"
         }
       },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "95ca4e7317b6418d4ba8674a4f8d96b4c950ae78",
-        "baseHead": "1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d",
-        "url": "https://github.com/tamird/gvisor/commit/95ca4e731",
-        "requestedAt": "2026-11-06T14:44:47.570Z",
-        "title": "fdbased: give each receive loop its own packet processors",
-        "body": "Closing an endpoint before attaching it to a NIC leaves its receive\nprocessors asleep. New starts the goroutines, but only the receive\nloop wakes them on exit. An unattached endpoint never runs that loop.\n\nCreate the queues in the receive loop and signal its workers to stop\nwhen it returns. Each loop delivers through the dispatcher passed to\nAttach. Before draining a batch, a worker checks whether its own\nattachment ended. A subsequent attach cannot make an old batch\neligible for delivery again. A channel with one processor still\ndelivers its packets inline.\n\nAn injectable endpoint receives packets from its caller instead of an\nFD. Have IsAttached consult the dispatcher that InjectInbound uses.",
-        "summary": "May I open the revised packet-worker PR? The receive loop owns its dispatcher. The tests check stale versus fresh delivery after reattach and the public injectable endpoint’s reported state and payload. Both failed on the version you last reviewed and passed here.\n\ngit -C ~/code/gvisor range-diff c0e6b2876^! 95ca4e731^!"
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "95ca4e7317b6418d4ba8674a4f8d96b4c950ae78",
+        "observedAt": "2026-11-06T16:32:56.778Z",
+        "disposition": "Tamir requested removal of the per-attachment channel and the duplicated dispatcher access.",
+        "nextAction": "Revise dispatcher ownership and verify the lifecycle behavior before requesting review.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/95ca4e731"
+        ]
       }
     },
     {
