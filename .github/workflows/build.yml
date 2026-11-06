@@ -1,7 +1,7 @@
-name: Check the remaining pipe mutex with lockdep
+name: Check the two pipe analyzer owners
 on:
   push:
-    branches: [qualification/pipe-obsolete-locks]
+    branches: [qualification/pipe-nogo-memory]
 permissions:
   contents: read
 jobs:
@@ -14,7 +14,7 @@ jobs:
         with:
           ref: 0bae5ce4b8bfd5c89f8363666b53db2c866fc45c
           persist-credentials: false
-      - name: Test pipe operations and check both Nogo owners
+      - name: Run the two remaining Nogo tests
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
@@ -29,6 +29,7 @@ jobs:
               constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
               exec_properties = {
                   "Arch": "amd64",
+                  "EstimatedMemory": "16GB",
                   "OSFamily": "linux",
                   "workload-isolation-type": "firecracker",
                   "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
@@ -45,6 +46,6 @@ jobs:
             --inject_repository="pipe_worker=$platform" \
             --extra_execution_platforms=@pipe_worker//:gnu --host_platform=@pipe_worker//:gnu \
             --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io \
-            --spawn_strategy=remote --noremote_local_fallback --jobs=100 \
+            --spawn_strategy=remote --noremote_local_fallback --jobs=24 \
             --build_tag_filters= --test_output=errors --nocache_test_results \
-            //pkg/sentry/kernel/pipe:pipe_test //pkg/sentry/kernel/pipe:pipe_nogo //pkg/sentry/kernel/pipe:pipe_test_nogo
+            //pkg/sentry/kernel/pipe:pipe_nogo //pkg/sentry/kernel/pipe:pipe_test_nogo
