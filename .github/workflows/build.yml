@@ -1,35 +1,60 @@
-name: CI
-
-"on":
+name: Restore the original public release checkpoint
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/lean-release-runtime-receipt]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  checkpoint:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Verify the release source and prepare its public guest fixture
+        run: |
+          set -euo pipefail
+          umask 077
+          test "$(git rev-parse HEAD^)" = bea45d149b9a8e4a4bc4015c48cb6d6b6ee822fc
+          cp .github/qualification/{original_release_archive,installed_release_guest}.py "$RUNNER_TEMP/"
+          echo "97440b5bc26dcd5b2e49383996adb031a936ddfbe15e2c744c95d708a432a1c8  $RUNNER_TEMP/original_release_archive.py" | sha256sum -c -
+          echo "5bb4b40ecbd07b0d4f97872e7a29710532e62975990105d5dc78c1fd881a86bd  $RUNNER_TEMP/installed_release_guest.py" | sha256sum -c -
+          git switch --quiet --detach bea45d149b9a8e4a4bc4015c48cb6d6b6ee822fc
+          work="$RUNNER_TEMP/release-witness"
+          mkdir "$work"
+          cd "$work"
+          package=pool/main/b/busybox/busybox-static_1.36.1-6ubuntu3.1_amd64.deb
+          curl --retry 2 --proto '=https' --proto-redir '=https' --max-time 45 -fsSL "https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/$package" -o busybox.deb || curl --retry 2 --proto '=https' --proto-redir '=https' --max-time 45 -fsSL "https://archive.ubuntu.com/ubuntu/$package" -o busybox.deb
+          echo "944b2728f53ceb3916cec2c962873c9951e612408099601751db2a0a5d81e0ed  busybox.deb" | sha256sum -c -
+          dpkg-deb --fsys-tarfile busybox.deb | tar -xOf - ./usr/bin/busybox > guest-busybox
+          chmod 755 guest-busybox
+      - name: Recover one digest-verified archive from its original build
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -I -B "$RUNNER_TEMP/original_release_archive.py"
+      - name: Restore a guest using the packaged release without credentials
+        run: |
+          sudo -n env -i HOME=/root PATH=/usr/sbin:/usr/bin:/sbin:/bin RUNNER_TEMP="$RUNNER_TEMP" python3 -I -B "$RUNNER_TEMP/installed_release_guest.py"
+      - name: Verify the original identity and bounded guest record
+        id: receipt
+        if: always()
+        run: |
+          python3 -I -B - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          p = Path(os.environ["RUNNER_TEMP"])/"release-witness/runtime.json"
+          assert p.is_file() and not p.is_symlink() and p.stat().st_size < 10000
+          payload = p.read_bytes()
+          assert not re.search(rb'(?i)x-buildbuddy-api-key|authorization\s*[:=]|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY', payload)
+          d = json.loads(payload)
+          assert d["source"] == "bea45d149b9a8e4a4bc4015c48cb6d6b6ee822fc"
+          assert d["archive_sha256"] == "790e542f54eac80ab8d816a5740b5fbf6e9d81f6b58e102600d9e52c4ad99e42"
+          assert d["verified_members"] == 9
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.receipt.outcome == 'success'
+        with:
+          name: native-release-checkpoint
+          path: ${{ runner.temp }}/release-witness/runtime.json
+          if-no-files-found: error
+          retention-days: 7
