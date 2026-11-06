@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T22:29:56.883Z",
+    "updatedAt": "2026-11-06T22:32:39.883Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -73596,8 +73596,8 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-06T11:45:43.117Z",
-      "summary": "The declared Python toolchain packaged releases on shell-free AMD64 and ARM64 workers. The native ARM64 worker linked runsc and the Sentry, produced the nine-file release archive and passed a rootless systrap guest test with the extracted binaries. These builds use a forked rules_python launcher and a declared static CPython. Race-enabled cross-builds passed in both directions.",
+      "updatedAt": "2026-11-06T22:32:39.883Z",
+      "summary": "The release sidecar runsc-fd-parking builds with declared LLVM tools on native AMD64 and ARM64 workers whose image contains no executables. Both ELF hashes match the independently unpacked releases. Full nine-file archives have passed on shell-free workers with a different image.",
       "findings": [
         {
           "text": "With current rules_python main, both native launchers ran their extracted programs on Linux with an empty PATH. The ARM64 Python distribution needed libgcc_s.so.1 from a pinned distroless/cc image. Both architectures passed 26 bootstrap tests. Invoking the program through a symlink or passing another program’s runfiles directory still failed only with the native launcher. The supplier change remains on the fork.",
@@ -76047,9 +76047,26 @@
               "url": "https://github.com/buildbuddy-io/buildbuddy/commit/1002071ca"
             }
           ]
+        },
+        {
+          "text": "The pinned Chainguard static index (sha256:fc42af33e643f20d08baf03cddcc1c02ba57052dfb02edb0d79f3fc47bcea8d9) has 723 regular files on each architecture. Neither layer contains an executable regular file, ELF, or shebang. The kernel identity check and the production C compile and link all ran uncached on each platform. The report reader missed the Bazel namedSet event ID; Bazel succeeded and both link-output hashes match the packaged 65,928-byte ELF files.",
+          "evidence": [
+            {
+              "label": "Ten uncached native AMD64 and ARM64 compile, link and identity actions",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42304764494/artifacts/13546665708"
+            },
+            {
+              "label": "Independent fdparking hashes and ELF headers from both release archive formats",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42263217060/artifacts/13527310655"
+            },
+            {
+              "label": "Native observer checks the kernel CPU, root contents and production ELF",
+              "url": "https://github.com/tamird/gvisor/blob/aac447b23/test/rbe/chainguard_native/worker_identity.c#L38-L56"
+            }
+          ]
         }
       ],
-      "nextStep": "Wait for a maintainer response on hermeticbuild/hermetic-launcher#95 about runfiles for separately installed Python children before advancing the native rules_python launcher. The separate zero-layer worker experiment awaits authorization to publish ghcr.io/tamird/gvisor-scratch-directory:v1 as a public package. Verify that deployment and the actual BuildBuddy worker version before repeating that probe.",
+      "nextStep": "Run the full release archive on the same public image and check both archives’ contents. Keep the literal zero-layer worker failure separate. Track hermeticbuild/hermetic-launcher#95 for packaging independently installed Python children.",
       "evidence": [
         {
           "label": "Verified OCI layout with a single empty directory",
@@ -76486,6 +76503,14 @@
         {
           "label": "Native ARM64 release archive and rootless systrap guest",
           "url": "https://github.com/tamird/gvisor/actions/runs/42209002950/artifacts/13497608629"
+        },
+        {
+          "label": "Ten uncached native AMD64 and ARM64 compile, link and identity actions",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42304764494/artifacts/13546665708"
+        },
+        {
+          "label": "Independent fdparking hashes and ELF headers from both release archive formats",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42263217060/artifacts/13527310655"
         }
       ],
       "group": "rbe"
