@@ -88,3 +88,24 @@ py_test(
         "//:.clang-format",
     ],
 )
+
+py_test(
+    name = "apt_native_signature_test",
+    srcs = ["apt_native_signature_test.py"],
+    args = [
+        "$(rootpath :make_apt.sh)",
+        "$(rootpath @relic_apt_probe//file)",
+        "$(rootpath @dpkg_sig_oracle//file)",
+        "$(rootpath @released_runsc_amd64//file)",
+        "$(rootpath @released_runsc_arm64//file)",
+    ],
+    data = [
+        ":make_apt.sh",
+        "@dpkg_sig_oracle//file",
+        "@released_runsc_amd64//file",
+        "@released_runsc_arm64//file",
+        "@relic_apt_probe//file",
+    ],
+    tags = ["local"],
+    timeout = "long",
+)

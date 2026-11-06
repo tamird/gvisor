@@ -969,3 +969,26 @@ go_deps.gazelle_override(
     ],
     path = "k8s.io/apimachinery",
 )
+
+# Inputs to the fork-only Debian signature compatibility test.
+http_file(
+    name = "relic_apt_probe",
+    executable = True,
+    sha256 = "1159039d24e204964538431696915bfd123bca7b9bda1c8b97642fcc6f40e2a1",
+    urls = ["https://github.com/sassoftware/relic/releases/download/v8.2.0/relic-linux-amd64"],
+)
+http_file(
+    name = "dpkg_sig_oracle",
+    sha256 = "c6eb0f053b7e67695b342720ddbe1126e6b0939e1520ace1fa7e0097426c73d1",
+    urls = ["https://archive.ubuntu.com/ubuntu/pool/universe/d/dpkg-sig/dpkg-sig_0.13.1+nmu4_all.deb"],
+)
+http_file(
+    name = "released_runsc_amd64",
+    sha256 = "81e3ecc4bb0d3eb321f5cf357e97a26daea91c6dc70ec30c9240cd481e6cf2da",
+    urls = ["https://storage.googleapis.com/gvisor/releases/pool/20261102.0/binary-amd64/runsc.deb"],
+)
+http_file(
+    name = "released_runsc_arm64",
+    sha256 = "96f680452ec1bd94e693b3aade78d9c09f90ecfe8ee05dbe29782a6e725cad7a",
+    urls = ["https://storage.googleapis.com/gvisor/releases/pool/20261102.0/binary-arm64/runsc.deb"],
+)

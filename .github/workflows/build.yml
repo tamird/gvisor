@@ -1,35 +1,48 @@
-name: CI
-
-"on":
+name: Check dpkg-sig interoperability on Ubuntu 24.04
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/apt-native-signer-proof]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  signatures:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && !github.event.deleted
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false}
+      - name: Install only Ubuntu's supported APT reader and test utilities
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/apt-signer-proof"
+          if ! command -v apt-ftparchive; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends apt-utils
+          fi
+          test -z "$(command -v dpkg-sig || true)"
+          for tool in ar dpkg-deb gpg apt-ftparchive xz; do command -v "$tool"; done
+      - name: Test actual package signatures, hashes and both suite formats
+        run: |
+          set -euo pipefail
+          env -i HOME="$HOME" PATH="$PATH" USER="$USER" \
+            bazel --nosystem_rc --nohome_rc test --nocache_test_results --test_output=errors \
+            //tools:apt_native_signature_test
+      - name: Retain original public-key verification receipts
+        if: always()
+        run: |
+          set -eu
+          out="$RUNNER_TEMP/apt-signer-proof"
+          testlog=bazel-testlogs/tools/apt_native_signature_test
+          if test -f "$testlog/test.log"; then cp "$testlog/test.log" "$out/"; fi
+          if test -f "$testlog/test.outputs/outputs.zip"; then
+            unzip -p "$testlog/test.outputs/outputs.zip" receipt.json > "$out/receipt.json"
+          elif test -f "$testlog/test.outputs/receipt.json"; then
+            cp "$testlog/test.outputs/receipt.json" "$out/"
+          fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: apt-native-signature-results
+          path: ${{ runner.temp }}/apt-signer-proof/
+          retention-days: 14
+          if-no-files-found: warn
