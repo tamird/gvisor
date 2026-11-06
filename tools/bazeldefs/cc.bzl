@@ -34,25 +34,26 @@ gbenchmark_internal = "@com_google_benchmark//:benchmark"
 grpcpp = "@com_github_grpc_grpc//:grpc++"
 
 _CC_TOOLCHAIN_TYPE = Label("@bazel_tools//tools/cpp:toolchain_type")
+_LLVM_REPO = Label("@llvm//toolchain:all").repo_name
 
-def _cc_toolchain_repo_impl(_target, ctx):
+def _using_llvm_aspect_impl(_target, ctx):
     if ctx.rule.toolchains and _CC_TOOLCHAIN_TYPE in ctx.rule.toolchains:
         selected = ctx.rule.toolchains[_CC_TOOLCHAIN_TYPE].label
-        return [config_common.FeatureFlagInfo(value = selected.repo_name)]
+        return [config_common.FeatureFlagInfo(value = str(selected.repo_name == _LLVM_REPO))]
     return []
 
-_cc_toolchain_repo = aspect(
-    implementation = _cc_toolchain_repo_impl,
+_using_llvm_aspect = aspect(
+    implementation = _using_llvm_aspect_impl,
     toolchains_aspects = [_CC_TOOLCHAIN_TYPE],
 )
 
-def _cc_toolchain_repo_flag_impl(ctx):
+def _using_llvm_impl(ctx):
     return [ctx.attr._cc_toolchain[config_common.FeatureFlagInfo]]
 
-cc_toolchain_repo = rule(
-    implementation = _cc_toolchain_repo_flag_impl,
-    doc = "Exposes the repository of the selected C toolchain to config_setting.",
-    attrs = {"_cc_toolchain": attr.label(default = cc_toolchain, aspects = [_cc_toolchain_repo])},
+using_llvm = rule(
+    implementation = _using_llvm_impl,
+    doc = "Whether the selected C toolchain is provided by hermetic-llvm.",
+    attrs = {"_cc_toolchain": attr.label(default = cc_toolchain, aspects = [_using_llvm_aspect])},
 )
 
 def _cc_flags_supplier_impl(_ctx):

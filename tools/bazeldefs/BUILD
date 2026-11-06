@@ -1,5 +1,5 @@
 load("//tools:defs.bzl", "bzl_library", "string_flag")
-load(":cc.bzl", "cc_toolchain_repo")
+load(":cc.bzl", "using_llvm")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -56,7 +56,7 @@ platform(
     visibility = ["//visibility:public"],
 )
 
-cc_toolchain_repo(name = "cc_toolchain_repo")
+using_llvm(name = "using_llvm")
 
 # Use LLVM's musl sysroot for static race links on the project platforms and
 # on an unmodified Linux host. Do not replace a custom target or toolchain.
@@ -67,7 +67,7 @@ cc_toolchain_repo(name = "cc_toolchain_repo")
             "@platforms//cpu:" + cpu,
             "@platforms//os:linux",
         ],
-        flag_values = {":cc_toolchain_repo": Label("@llvm//toolchain:all").repo_name},
+        flag_values = {":using_llvm": "True"},
         values = options,
     )
     for name, cpu, options in [
