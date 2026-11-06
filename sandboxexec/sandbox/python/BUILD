@@ -1,5 +1,6 @@
 load("@rules_python//python:py_library.bzl", "py_library")
 load("@rules_python//python:py_test.bzl", "py_test")
+load("//tools:defs.bzl", "namespace_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -26,6 +27,7 @@ py_test(
     srcs = ["tests/sandbox_test.py"],
     data = ["//:release"],
     main = "tests/sandbox_test.py",
+    exec_properties = namespace_test_exec_properties,
     tags = ["nogotsan"],
     deps = [
         ":sandbox_py",

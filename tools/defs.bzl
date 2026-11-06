@@ -77,6 +77,17 @@ platforms = _platforms
 platform_capabilities = _platform_capabilities
 save_restore_platforms = _save_restore_platforms
 
+# Only the test action needs to create nested namespaces. Compile and link
+# its executable on the ordinary worker.
+namespace_test_exec_properties = select({
+    "//test/rbe:source_presubmit": {
+        "test.dockerUser": "root",
+        "test.network-enable-ipv6": "true",
+        "test.workload-isolation-type": "firecracker",
+    },
+    "//conditions:default": {},
+})
+
 # Tags.
 local_test_tags = _local_test_tags
 
