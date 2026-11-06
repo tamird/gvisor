@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T10:02:53.722Z",
+    "updatedAt": "2026-11-06T10:22:05.384Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -53435,6 +53435,44 @@
         "url": "https://github.com/tamird/gvisor/commit/39d28d4ef",
         "requestedAt": "2026-11-06T08:41:38.294Z",
         "summary": "Stack.Wait held the stack mutex while waiting for a receive worker. That worker needed the mutex to find the input interface. Unlink the interface under the mutex, then drain its workers after unlocking. Wait for all links before closing any because closing one end of a veth can close its peer."
+      }
+    },
+    {
+      "id": "pr:17028",
+      "type": "pr",
+      "number": 17028,
+      "repo": "google/gvisor",
+      "ref": "upstream/dind-integration-20261105",
+      "head": "a772fedd6521ac693b8e25a41c01e00f2e023461",
+      "title": "Docker rejects both checkpoint subtest names",
+      "url": "https://github.com/google/gvisor/pull/17028",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-06T10:22:05.384Z",
+      "summary": "Docker 27.5.1 rejected the outer container name in both checkpoint modes on a772fedd6 with #16666 applied. The subtest names contain an equals sign.",
+      "evidence": [
+        {
+          "label": "Both subtests failed at container creation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42196365253/artifacts/13494781551"
+        },
+        {
+          "label": "Subtest name on the reviewed head",
+          "url": "https://github.com/google/gvisor/blob/a772fedd6/test/e2e/dind_checkpoint_test.go#L82"
+        },
+        {
+          "label": "Replace the equals sign with a hyphen on the author’s head",
+          "url": "https://github.com/tamird/gvisor/commit/053b485ea"
+        }
+      ],
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "a772fedd6521ac693b8e25a41c01e00f2e023461",
+        "url": "https://github.com/google/gvisor/pull/17028",
+        "requestedAt": "2026-11-06T10:22:05.384Z",
+        "title": "Post the Docker container-name finding on #17028",
+        "summary": "Post one inline comment on the subtest name at test/e2e/dind_checkpoint_test.go:82, on the right side of the diff.",
+        "body": "test/e2e/dind_checkpoint_test.go:82\n\n@hky1999, could you use `leave-running-%t` here? `dockerutil.MakeContainer` derives the outer container name from `t.Name()`, including the `=`. With #16666 applied, Docker 27.5.1 rejected both names at `outer.Spawn`. Neither subtest reached its first checkpoint. [One-character fix](https://github.com/tamird/gvisor/commit/053b485ea) · [Test results](https://github.com/tamird/gvisor/actions/runs/42196365253/artifacts/13494781551)\n\nReview body:\nSubmitted by Codex on behalf of @tamird."
       }
     }
   ],
