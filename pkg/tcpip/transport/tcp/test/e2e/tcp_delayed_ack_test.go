@@ -186,6 +186,34 @@ func TestDelayedACKSmallerFullSegments(t *testing.T) {
 	c.checkACK()
 }
 
+func TestDelayedACKShortWrites(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		push bool
+	}{
+		{"uninterrupted", false},
+		{"endOfWrite", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c := newDelayedAckContext(t, nil, nil)
+			c.warmUp()
+			c.send(peerMSS)
+			c.checkDelayedACK()
+			if tc.push {
+				c.peer.Flags |= header.TCPFlagPsh
+			}
+			c.send(511)
+			c.checkNoPacket("ACK sent for first short segment")
+			c.send(511)
+			if tc.push {
+				c.checkDelayedACK()
+			} else {
+				c.checkACK()
+			}
+		})
+	}
+}
+
 func TestDelayedACKFilledGap(t *testing.T) {
 	c := newDelayedAckContext(t, nil, nil)
 	c.warmUp()
