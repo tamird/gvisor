@@ -61,7 +61,10 @@ archive_override(
     sha256 = "bf95c202b354da28a6114282e7a78006dc612c58afb2eb1de407ac7082803050",
     strip_prefix = "hermetic-llvm-29f9d466421fa99fb1ed6cb477a90a71d7755ee6",
     patch_strip = 1,
-    patches = ["//tools:llvm-linux-header-default.patch"],
+    patches = [
+        "//tools:llvm-linux-header-default.patch",
+        "//tools:llvm-static-glibc-unwind.patch",
+    ],
 )
 
 ### LLVM
