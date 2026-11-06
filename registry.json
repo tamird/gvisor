@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T12:01:47.262Z",
+    "updatedAt": "2026-11-06T12:18:32.411Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -50121,8 +50121,8 @@
       "url": "https://github.com/google/gvisor/issues/16878",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-05T12:57:21.696487Z",
-      "summary": "On a single Go processor, a busy packet worker can keep an endpoint timer from releasing its lock. Giving already-queued peers one turn before yielding serviced 100 packets on AMD64. Yielding immediately serviced zero. Martijn asked for the proposed change to be submitted. Its behavior on TamaGo still needs verification.",
+      "updatedAt": "2026-11-06T12:18:32.411Z",
+      "summary": "On a single Go processor, a busy packet worker can keep an endpoint timer from releasing its lock. Giving already-queued peers one turn before yielding serviced 100 packets on AMD64. Yielding immediately serviced zero. Martijn asked for the proposed change to be submitted. In three one-CPU AMD64 TamaGo boots at the reporter’s revision, the ready listener ran but the lock holder went five seconds without running. Both queues drained on all three boots with #17045.",
       "evidence": [
         {
           "label": "Martijn asked for the tested change to be sent as a PR",
@@ -50163,6 +50163,10 @@
         {
           "label": "Permanent two-listener regression and first-miss comparison",
           "url": "https://github.com/tamird/gvisor/actions/runs/42000041108/artifacts/13403275708"
+        },
+        {
+          "label": "Six one-CPU AMD64 TamaGo boots and their serial logs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42216271126/artifacts/13502026079"
         }
       ],
       "settledReviews": [
@@ -51945,8 +51949,8 @@
       "url": "https://github.com/tamird/gvisor/commit/2ec7b59ad",
       "group": "runtime",
       "status": "Delivered",
-      "updatedAt": "2026-11-05T16:41:13.307421Z",
-      "summary": "Published as #17045.",
+      "updatedAt": "2026-11-06T12:18:32.411Z",
+      "summary": "Published as #17045. The published dispatcher resumed the lock holder and drained both listener queues in all three one-CPU TamaGo trials.",
       "evidence": [
         {
           "label": "Martijn asked for the tested change to be sent as a PR",
@@ -51975,6 +51979,10 @@
         {
           "label": "Published on #17045",
           "url": "https://github.com/google/gvisor/pull/17045"
+        },
+        {
+          "label": "Six one-CPU AMD64 TamaGo boots and their serial logs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42216271126/artifacts/13502026079"
         }
       ],
       "followup": {
@@ -52341,8 +52349,8 @@
       "url": "https://github.com/google/gvisor/pull/17045",
       "title": "tcp: retry a contended endpoint after serving its queued peers",
       "status": "open",
-      "updatedAt": "2026-11-05T21:29:54.301949Z",
-      "summary": "PR #17045 now publishes the qualified dispatcher amendment at 5d6ca5025, with the two existing blank lines restored in dispatcher.go as requested. The approved description is live and the reply was posted in the reviewer’s thread.\n\nThe dispatcher gives queued peers a turn, retries a contended endpoint immediately if its lock has become available, and queues new arrivals behind the retry. On the previous head 2ec7b59ad with the regression test, it yielded after the listener unlocked and processed no packets. Candidate ba2c7a721 processed the packet without yielding. All 47 TCP case records (33 top-level tests) and both AMD64 and ARM64 Nogo sections passed on an AMD64 Linux runner. The only changes between that tested candidate and the public head are the two blank lines.",
+      "updatedAt": "2026-11-06T12:18:32.411Z",
+      "summary": "PR #17045 now publishes the qualified dispatcher amendment at 5d6ca5025, with the two existing blank lines restored in dispatcher.go as requested. The approved description is live and the reply was posted in the reviewer’s thread.\n\nThe dispatcher gives queued peers a turn, retries a contended endpoint immediately if its lock has become available, and queues new arrivals behind the retry. On the previous head 2ec7b59ad with the regression test, it yielded after the listener unlocked and processed no packets. Candidate ba2c7a721 processed the packet without yielding. All 47 TCP case records (33 top-level tests) and both AMD64 and ARM64 Nogo sections passed on an AMD64 Linux runner. The only changes between that tested candidate and the public head are the two blank lines.\n\nOn one virtual AMD64 CPU running TamaGo Go 1.27.3, the reporter’s revision 1cea747ef serviced the ready listener in all three trials. The goroutine holding the other listener’s lock then went five seconds without running. With this PR, the lock holder resumed and both queues drained in all three trials. All six unlocked controls completed.",
       "evidence": [
         {
           "label": "Martijn asked for the tested change to be sent as a PR",
@@ -52383,6 +52391,14 @@
         {
           "label": "Posted response in the original reviewer thread",
           "url": "https://github.com/google/gvisor/pull/17045#discussion_r4486289034"
+        },
+        {
+          "label": "Listener contention fixture booted in the TamaGo guest",
+          "url": "https://github.com/tamird/gvisor/blob/6683e6c90/test/tamago_dispatch/guest/main.go"
+        },
+        {
+          "label": "Six one-CPU AMD64 TamaGo boots and their serial logs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42216271126/artifacts/13502026079"
         }
       ],
       "settledReviews": [
@@ -74455,7 +74471,7 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-06T05:07:30.821799Z",
+      "updatedAt": "2026-11-06T12:18:32.411Z",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the duplicate reconnect reply on #15019.",
       "findings": [
@@ -74503,7 +74519,7 @@
           ]
         },
         {
-          "text": "On Linux with one Go scheduler P, stock gVisor drained 201 ready packets but made a contended endpoint’s lock owner wait 20 ms. Yielding on the first miss left all 201 queued. For a replenishing peer, the revised dispatcher snapshots the actual queue tail and yields after one 100-packet batch. When a second processor claimed a listener, it yielded after two misses. All 20 cases drained across normal and disabled asynchronous preemption. End-to-end throughput and TamaGo remain unmeasured.",
+          "text": "On Linux with one Go scheduler P, stock gVisor drained 201 ready packets but made a contended endpoint’s lock owner wait 20 ms. Yielding on the first miss left all 201 queued. For a replenishing peer, the revised dispatcher snapshots the actual queue tail and yields after one 100-packet batch. When a second processor claimed a listener, it yielded after two misses. All 20 cases drained across normal and disabled asynchronous preemption. In one-CPU AMD64 TamaGo guests, the reporter’s revision serviced the ready listener but failed to resume the lock holder within five seconds in three of three trials. The published PR resumed the lock holder and drained both listener queues in three of three trials. End-to-end throughput remains unmeasured.",
           "evidence": [
             {
               "label": "Continuous backlog, cross-processor handoff and late arrivals",
@@ -74520,6 +74536,10 @@
             {
               "label": "TCP reviewer guide",
               "url": "https://github.com/google/gvisor/issues/16670"
+            },
+            {
+              "label": "Six one-CPU AMD64 TamaGo boots and their serial logs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42216271126/artifacts/13502026079"
             }
           ]
         },
