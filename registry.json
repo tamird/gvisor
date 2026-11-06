@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T13:18:48.077Z",
+    "updatedAt": "2026-11-06T13:31:05.085Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -28791,8 +28791,8 @@
       "url": "https://github.com/tamird/gvisor/commit/dd63198c6",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T13:18:48.077Z",
-      "summary": "The proposed musl port is on hold for a DPDK and toolchain investigation. The plugin patch applied to DPDK 18.11. It failed on 18.11.11, 19.11.14 and 25.11.4 even when applied alone. The TLDK fork calls rte_pktmbuf_dynamic_pool_create, which the current LTS lacks. An upgrade needs a TLDK port. The separate question of who supplies queue.h remains open.\n\nThe approved musl port keeps the DPDK stack trace available across the Go-to-C boundary. #15153 moved the optional plugin build into its external repository. The revision defines the same TestDumpStack there, supplies the two Go sources to its build sandbox, and runs it from make plugin-network-tests. The source files and both vendor patches match the approved revision byte for byte. TestDumpStack passed through Bazel on native AMD64 with GNU and musl. The default build excludes the plugin.\n\nIn a separate musl link comparison at f28370914, the plugin runsc binary linked. The plugin Sentry stopped at the systrap stub link rule tracked by #17067. The successful TCP and UDP guest tests at b317c6e36 used static GNU libc.",
+      "updatedAt": "2026-11-06T13:31:05.085Z",
+      "summary": "The proposed musl port is on hold for a DPDK and toolchain investigation. The plugin patch applied to DPDK 18.11. It failed on 18.11.11, 19.11.14 and 25.11.4 even when applied alone. The TLDK fork calls rte_pktmbuf_dynamic_pool_create, which the current LTS lacks. An upgrade needs a TLDK port. The separate question of who supplies queue.h remains open.\n\nThe approved musl port keeps the DPDK stack trace available across the Go-to-C boundary. #15153 moved the optional plugin build into its external repository. The revision defines the same TestDumpStack there, supplies the two Go sources to its build sandbox, and runs it from make plugin-network-tests. The source files and both vendor patches match the approved revision byte for byte. TestDumpStack passed through Bazel on native AMD64 with GNU and musl. The default build excludes the plugin.\n\nIn a separate musl link comparison at f28370914, the plugin runsc binary linked. The plugin Sentry stopped at the systrap stub link rule tracked by #17067. The successful TCP and UDP guest tests at b317c6e36 used static GNU libc.\n\nOn the reviewed stub changes, all 10 AMD64 and 11 ARM64 offsets matched their ELF symbols and the musl CLI linked. The Sentry then stopped in the old //vdso:vdso rule when /bin/ld could not emit AArch64. This optional plugin port remains under investigation.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "dd63198c66946d7a38279478369bf269243a6ef4",
@@ -28810,6 +28810,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "10 AMD64 and 11 ARM64 ELF offsets, CLI link and first Sentry link failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42222704007/artifacts/13504744022"
+        },
         {
           "label": "External traffic on the static musl integration binary at acf4a7122",
           "url": "https://github.com/tamird/gvisor/actions/runs/41436977329/artifacts/13136054697"
@@ -31229,14 +31233,18 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "qualification/native-sidecar-cc",
-      "head": "244010f9c48c93edcf25cfb4acdf91f7bed251c7",
+      "head": "11fc65fd99396932faecf9b8ed2c298fe7288f70",
       "title": "Build the runsc sidecars with the C toolchain",
       "url": "https://github.com/google/gvisor/pull/16522",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-11-05T20:03:32.322267Z",
-      "summary": "Lucas said the earlier review points were addressed and requested a rebase over the vDSO tools change, which landed on master as 8f985c75c while #16491 remains open. The four commits are rebased at 244010f9c and GitHub reports the PR mergeable. His review is COMMENTED; formal approval is still outstanding.\n\nOn the separate 1e80b8182 integration, released LLVM 0.8.24 built the 1,672-byte ARM64 prewarmer on AMD64 using the declared musl target and no #909 link patch. With the original runsc and Sentry, it booted the native ARM64 systrap guest. The earlier GNU-target link on this integration failed to find pthread and dl until the supplier correction was applied. Neither guest run was CI on the rebased PR.\n\nThe inner C++ binary remains manual, so wildcard builds reach it through the public freestanding wrapper. On the prior source, the corrected wildcard built all three static AMD64 sidecars while the original direct link failed with a forced hosted allocator; a separate cquery confirmed that each inner target clears --custom_malloc. The private build adapter still needs upstream verification.",
+      "updatedAt": "2026-11-06T13:31:05.085Z",
+      "summary": "The four commits were squashed to 11fc65fd9 with the same source tree as 244010f9c. The PR awaits maintainer review.\n\nLucas said the earlier review points were addressed and requested a rebase over the vDSO tools change, which landed on master as 8f985c75c while #16491 remains open. The four commits are rebased at 244010f9c and GitHub reports the PR mergeable. His review is COMMENTED; formal approval is still outstanding.\n\nOn the separate 1e80b8182 integration, released LLVM 0.8.24 built the 1,672-byte ARM64 prewarmer on AMD64 using the declared musl target and no #909 link patch. With the original runsc and Sentry, it booted the native ARM64 systrap guest. The earlier GNU-target link on this integration failed to find pthread and dl until the supplier correction was applied. Neither guest run was CI on the rebased PR.\n\nThe inner C++ binary remains manual, so wildcard builds reach it through the public freestanding wrapper. On the prior source, the corrected wildcard built all three static AMD64 sidecars while the original direct link failed with a forced hosted allocator; a separate cquery confirmed that each inner target clears --custom_malloc. The private build adapter still needs upstream verification.",
       "evidence": [
+        {
+          "label": "Single reviewed commit with the same source tree",
+          "url": "https://github.com/google/gvisor/commit/11fc65fd9"
+        },
         {
           "label": "Rebased three-commit change",
           "url": "https://github.com/tamird/gvisor/compare/e9961d5d8...59bc02b23"
@@ -53181,14 +53189,22 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/fdbased-start-on-attach",
-      "head": "8311cfcaedcaf8dfbd221e0a09ef4ff4fd36af37",
+      "head": "4e0324239c7e64cb4d1cb12e804603aa85a963f3",
       "title": "Start packet processors when the endpoint is attached",
-      "url": "https://github.com/tamird/gvisor/commit/8311cfcae",
+      "url": "https://github.com/tamird/gvisor/commit/4e0324239",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-06T13:13:00.663Z",
-      "summary": "Review the early return when there are fewer than two receive processors. Trace the single-processor path and revise the startup guard before resubmission.\n\nClosing a newly constructed FD endpoint before it is attached to a NIC leaves its two receive workers running. The change starts them once, on first attachment. Both Readv and RecvMMsg reproduced the leak on stock; all 83 package records passed normally and under the race detector with the fix. Real packet-ring sockets delivered a private UDP marker on both AMD64 and ARM64 Linux kernels with 4 KiB pages. Closing before attachment retained workers on stock in both cases; the correction passed both lifecycle checks.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T13:31:05.085Z",
+      "summary": "The receive loop drains a single queue itself after each batch. Only managers with multiple queues need worker goroutines and wakers. Ten Linux cases passed on this source, including the one-processor packet-ring case. The earlier stock failure and race run apply to the preceding revision.",
       "evidence": [
+        {
+          "label": "Changes since the contributor review",
+          "url": "https://github.com/tamird/gvisor/compare/8311cfcae...4e0324239"
+        },
+        {
+          "label": "Checks on the revised source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42225343366/artifacts/13505901175"
+        },
         {
           "label": "Standalone endpoint lifecycle fix",
           "url": "https://github.com/tamird/gvisor/commit/8311cfcae"
@@ -53218,16 +53234,24 @@
           "note": "Review the early return when there are fewer than two receive processors."
         }
       ],
-      "contributorChangesRequested": {
-        "head": "8311cfcaedcaf8dfbd221e0a09ef4ff4fd36af37",
-        "url": "https://github.com/tamird/gvisor/commit/8311cfcae"
+      "refinement": {
+        "before": {
+          "head": "8311cfcaedcaf8dfbd221e0a09ef4ff4fd36af37"
+        },
+        "after": {
+          "head": "4e0324239c7e64cb4d1cb12e804603aa85a963f3"
+        }
       },
-      "followup": {
-        "owner": "Agent",
-        "sourceHead": "8311cfcaedcaf8dfbd221e0a09ef4ff4fd36af37",
-        "observedAt": "2026-11-06T13:13:00.663Z",
-        "disposition": "Review the early return when there are fewer than two receive processors.",
-        "nextAction": "Trace the single-processor path and revise the startup guard before resubmission."
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "4e0324239c7e64cb4d1cb12e804603aa85a963f3",
+        "baseHead": "1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d",
+        "url": "https://github.com/tamird/gvisor/commit/4e0324239",
+        "requestedAt": "2026-11-06T13:31:05.085Z",
+        "title": "fdbased: start packet processors when the endpoint is attached",
+        "summary": "May I open the revision that separates the inline, single-processor queue from the workers started for multiple processors?",
+        "body": "Closing an endpoint before attaching it to a NIC leaves its receive\nprocessors asleep. New starts the goroutines, but only the receive\nloop wakes them on exit. An unattached endpoint never runs that loop.\nWith two processors, both are still running after Close and Wait.\n\nStart the workers when the receive loop starts. Register their wakers\nonce so reattaching cannot put two goroutines on the same sleeper.\nWhen there is one processor, the receive loop drains its queue itself\nafter each batch. That queue needs neither a goroutine nor any wakers."
       }
     },
     {
@@ -53453,14 +53477,22 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/tcp-listener-handshake-locks",
-      "head": "dcad6d56792cbd5c65195ad64f3a57628e605f70",
+      "head": "abc461928f2488ac0aaf1a3ec046a3ee0b200c79",
       "title": "Check both locks when a listener accepts a SYN",
-      "url": "https://github.com/tamird/gvisor/commit/dcad6d567",
+      "url": "https://github.com/tamird/gvisor/commit/abc461928",
       "group": "analysis",
-      "status": "Agent work",
-      "updatedAt": "2026-11-06T13:13:00.663Z",
-      "summary": "The listener refactor is approved subject to explaining the moved checklocks suppressions. Document why each retained checklocksignore is necessary or remove the suppression where the analyzer can check the lock.\n\nA listening socket must hold both endpoint mutexes when it copies socket options to a new child. Only the listener copies those options. Both listeners and forwarders still register the child before sending its SYN-ACK.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T13:31:05.085Z",
+      "summary": "The callers now find the route before constructing the child endpoint. The constructor always returns it locked, so all three checklocksignore annotations could be removed. Nogo passed for AMD64 and ARM64, and unlocking the child before returning it failed on both. All four forwarder and five listener cases passed.",
       "evidence": [
+        {
+          "label": "Changes since the contributor review",
+          "url": "https://github.com/tamird/gvisor/compare/dcad6d567...abc461928"
+        },
+        {
+          "label": "Checks on the revised source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42223748997/artifacts/13505133163"
+        },
         {
           "label": "Final Nogo on both architectures and eight native Linux socket cases",
           "url": "https://github.com/tamird/gvisor/actions/runs/42178272456/artifacts/13484308117"
@@ -53486,20 +53518,24 @@
           "note": "The listener refactor is approved subject to explaining the moved checklocks suppressions."
         }
       ],
-      "contributorChangesRequested": {
-        "head": "dcad6d56792cbd5c65195ad64f3a57628e605f70",
-        "url": "https://github.com/tamird/gvisor/commit/dcad6d567"
+      "refinement": {
+        "before": {
+          "head": "dcad6d56792cbd5c65195ad64f3a57628e605f70"
+        },
+        "after": {
+          "head": "abc461928f2488ac0aaf1a3ec046a3ee0b200c79"
+        }
       },
-      "followup": {
-        "owner": "Agent",
-        "sourceHead": "dcad6d56792cbd5c65195ad64f3a57628e605f70",
-        "observedAt": "2026-11-06T13:13:00.663Z",
-        "disposition": "The listener refactor is approved subject to explaining the moved checklocks suppressions.",
-        "nextAction": "Qualify the revision that replaces the three suppressions with a constructor that always returns a locked child. The three callers find the route first.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/compare/dcad6d567...abc461928",
-          "https://github.com/tamird/gvisor/actions/runs/42223748997"
-        ]
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "abc461928f2488ac0aaf1a3ec046a3ee0b200c79",
+        "baseHead": "1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d",
+        "url": "https://github.com/tamird/gvisor/commit/abc461928",
+        "requestedAt": "2026-11-06T13:31:05.085Z",
+        "title": "Check both locks when a listener accepts a SYN",
+        "summary": "May I open the revision that removes all three lock-check suppressions from the listener and forwarder?",
+        "body": "A TCP listener copies its socket options into a new child while both\nendpoint mutexes are held. A forwarder starts the same handshake\nwithout a listening endpoint. Sharing an optional listener pointer hid\nthe listener lock from checklocks and required suppressing the check at\nthe option copy.\n\nCopy the options and reserve the tuple on the locked listener. Let the\nforwarder create its child directly, and share registration and the\nSYN-ACK on the locked child. Only the forwarder waits for the handshake\nto finish.\n\nLook up the route before creating the child. If the lookup fails there\nis no child to lock. The constructor can now transfer the child lock to\neach caller without suppressing checks on the error paths."
       }
     },
     {
@@ -76612,5 +76648,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-06T13:18:48.077Z"
+  "updatedAt": "2026-11-06T13:31:05.085Z"
 }
