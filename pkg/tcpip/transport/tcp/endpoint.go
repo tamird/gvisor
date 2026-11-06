@@ -1215,6 +1215,7 @@ func (e *Endpoint) cleanupLocked() {
 		e.snd.probeTimer.cleanup()
 		e.snd.reorderTimer.cleanup()
 		e.snd.corkTimer.cleanup()
+		e.snd.ackTimer.cleanup()
 	}
 
 	if e.finWait2Timer != nil {

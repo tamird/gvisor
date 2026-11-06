@@ -49,6 +49,9 @@ type receiver struct {
 
 	// Time when the last ack was received.
 	lastRcvdAckTime tcpip.MonotonicTime
+
+	// quickAcks is the number of remaining ACKs to send without delay.
+	quickAcks int
 }
 
 func newReceiver(ep *Endpoint, irs seqnum.Value, rcvWnd seqnum.Size, rcvWndScale uint8) *receiver {
@@ -62,7 +65,23 @@ func newReceiver(ep *Endpoint, irs seqnum.Value, rcvWnd seqnum.Size, rcvWndScale
 		rcvWnd:          rcvWnd,
 		rcvWUP:          irs + 1,
 		lastRcvdAckTime: ep.stack.Clock().NowMonotonic(),
+		quickAcks:       maxQuickAcks,
 	}
+}
+
+// shouldDelayAck returns whether the ACK for in-order data received since the
+// last ACK can be delayed so that a response may carry it, like Linux does.
+//
+// +checklocks:r.ep.mu
+func (r *receiver) shouldDelayAck() bool {
+	if r.quickAcks > 0 {
+		r.quickAcks--
+		return false
+	}
+	// Acknowledge at least every second full-sized segment (RFC 5681
+	// section 4.2) and out-of-order data immediately.
+	unacked := int(r.ep.snd.MaxSentAck.Size(r.RcvNxt))
+	return unacked < 2*r.ep.snd.MaxPayloadSize && len(r.pendingRcvdSegments) == 0
 }
 
 // acceptable checks if the segment sequence number range is acceptable
