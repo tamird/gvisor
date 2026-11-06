@@ -56,6 +56,14 @@ bzl_library(
 )
 
 # Keep Go's pure/cgo mode in its build settings, not the target platform:
+# This fork fixture runs both public test architectures in one remote command.
+# Bazel ignores remote_default_exec_properties once a platform supplies Arch.
+_SOURCE_WORKER = {
+    "OSFamily": "linux",
+    "container-image": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+    "workload-isolation-type": "oci",
+}
+
 # Bazel 9 also uses target constraints to select a test execution platform.
 platform(
     name = "linux_amd64",
@@ -63,6 +71,7 @@ platform(
         "@platforms//cpu:x86_64",
         "@platforms//os:linux",
     ],
+    exec_properties = dict(_SOURCE_WORKER, Arch = "amd64"),
     visibility = ["//visibility:public"],
 )
 
@@ -72,6 +81,7 @@ platform(
         "@platforms//cpu:aarch64",
         "@platforms//os:linux",
     ],
+    exec_properties = dict(_SOURCE_WORKER, Arch = "arm64"),
     visibility = ["//visibility:public"],
 )
 

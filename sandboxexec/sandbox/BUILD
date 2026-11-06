@@ -33,6 +33,10 @@ go_test(
         "sandbox_test.go",
         "storage_test.go",
     ],
+    architectures = [
+        "amd64",
+        "arm64",
+    ],
     data = ["//:release"],
     exec_properties = namespace_test_exec_properties,
     tags = ["nogotsan"],
