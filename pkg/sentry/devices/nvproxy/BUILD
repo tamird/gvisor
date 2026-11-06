@@ -143,6 +143,10 @@ go_test(
     name = "nvproxy_driver_checksums_test",
     size = "large",
     srcs = ["nvproxy_driver_checksums_test.go"],
+    data = ["@com_github_grpc_grpc//:root_certificates"],
+    # The download uses HTTPS even on workers without a system CA store.
+    env = {"SSL_CERT_FILE": "$(rootpath @com_github_grpc_grpc//:root_certificates)"},
+    rundir = ".",
     # Verify the current upstream installers on every invocation.
     tags = [
         "external",
