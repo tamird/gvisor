@@ -2827,7 +2827,11 @@ http_archive(
 # END generated NVIDIA driver sources
 
 # The publisher executes its distro tools locally without a Docker daemon.
-bazel_dep(name = "bubblewrap", version = "0.13.0.bcr.1", dev_dependency = True)
+http_file(
+    name = "apt_probe_bubblewrap",
+    sha256 = "2461f1beee9cb04c8942739fe1a2b37e7b7c2a3d518f0779dc75f9245baa3094",
+    urls = ["https://archive.ubuntu.com/ubuntu/pool/main/b/bubblewrap/bubblewrap_0.9.0-1ubuntu0.3_amd64.deb"],
+)
 http_file(
     name = "apt_gvisor_amd64_input",
     sha256 = "81e3ecc4bb0d3eb321f5cf357e97a26daea91c6dc70ec30c9240cd481e6cf2da",

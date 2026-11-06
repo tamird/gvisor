@@ -125,8 +125,8 @@ repository_test(
 py_test(
     name = "publisher_namespace_test",
     srcs = ["publisher_namespace_test.py"],
-    args = ["$(rootpath @bubblewrap//:bwrap)"],
-    data = ["@bubblewrap//:bwrap"],
+    args = ["$(rootpath @apt_probe_bubblewrap//file)"],
+    data = ["@apt_probe_bubblewrap//file"],
     tags = ["local"],
 )
 
@@ -134,7 +134,7 @@ py_test(
     name = "publisher_local_test",
     srcs = ["publisher_local_test.py"],
     args = [
-        "$(rootpath @bubblewrap//:bwrap)",
+        "$(rootpath @apt_probe_bubblewrap//file)",
         "$(rootpath @release_tools//:flat)",
         "$(rootpath //tools:make_apt.sh)",
         "$(rootpath //tools:make_test_key.sh)",
@@ -142,7 +142,7 @@ py_test(
         "$(rootpath @apt_gvisor_arm64_input//file)",
     ],
     data = [
-        "@bubblewrap//:bwrap",
+        "@apt_probe_bubblewrap//file",
         "@release_tools//:flat",
         "//tools:make_apt.sh",
         "//tools:make_test_key.sh",

@@ -56,7 +56,7 @@ def tool_member(member, destination):
 
 
 def main():
-    bwrap, flat, publisher, keygen, *packages = [Path(p).resolve() for p in sys.argv[1:]]
+    bwrap_package, flat, publisher, keygen, *packages = [Path(p).resolve() for p in sys.argv[1:]]
     out = Path(os.environ["TEST_UNDECLARED_OUTPUTS_DIR"])
     result = {"verified": [], "packages": {}, "suites": {}}
 
@@ -69,6 +69,10 @@ def main():
         raise ValueError("a root host process cannot qualify a rootless publisher")
     with tempfile.TemporaryDirectory(dir=os.environ["TEST_TMPDIR"]) as d:
         d = Path(d)
+        launcher = d / "launcher"
+        subprocess.run(["/usr/bin/dpkg-deb", "-x", bwrap_package, launcher], check=True)
+        bwrap = launcher / "usr/bin/bwrap"
+        bwrap.chmod(0o755)
         root = d / "rootfs"
         root.mkdir()
         with tarfile.open(flat) as t:
