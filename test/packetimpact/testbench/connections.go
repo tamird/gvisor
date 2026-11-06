@@ -1261,3 +1261,9 @@ func (conn *TCPIPv6) ExpectData(t *testing.T, tcp *TCP, payload *Payload, timeou
 	}
 	return conn.ExpectFrame(t, expected, timeout)
 }
+
+// NextObservedFrame returns one parsed frame without assuming its sequence
+// number. This qualification-only observer also sees repairs of an old flight.
+func (conn *TCPIPv4) NextObservedFrame(t *testing.T, within time.Duration) Layers {
+	return conn.recvFrame(t, within)
+}
