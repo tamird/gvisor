@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T17:28:54.545Z",
+    "updatedAt": "2026-11-06T17:29:25.329Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -48523,9 +48523,21 @@
       "url": "https://github.com/google/gvisor/pull/16809",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-03T22:22:19.360070+00:00",
-      "summary": "Expose the socket’s lifetime retransmission count to applications diagnosing packet loss.",
+      "updatedAt": "2026-11-06T17:29:25.329Z",
+      "summary": "Master now reports negotiated timestamp and SACK options in the same TCP_INFO initializer that this PR changes. The source PR and its approved import #16982 both conflict. The fork revision combines those two option fields with the lifetime retransmission count under the existing endpoint lock. It keeps the SYN-cookie send error visible to the caller. Native Linux and gVisor packet checks are running.",
       "evidence": [
+        {
+          "label": "Rebased TCP_INFO implementation",
+          "url": "https://github.com/tamird/gvisor/commit/0c8fe8397"
+        },
+        {
+          "label": "Compare with the approved proposal before the master change",
+          "url": "https://github.com/tamird/gvisor/compare/f1dbaa4d1...0c8fe8397"
+        },
+        {
+          "label": "TCP_INFO packet tests on native Linux and gVisor",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42261812749"
+        },
         {
           "label": "Approved reviewer reply published",
           "url": "https://github.com/google/gvisor/pull/16809#issuecomment-6615907851"
@@ -48612,10 +48624,12 @@
       ],
       "refinement": {
         "before": {
-          "head": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689"
+          "head": "f1dbaa4d1e2cfb522fa03197ed36f21df9a74a3b",
+          "base": "aa767e4c43d011121271551fe24da501a56f729d"
         },
         "after": {
-          "head": "bbdb2f8a254b4f51e5bf1fa96eaf4872be190d63"
+          "head": "0c8fe8397654defd60ac60ff9eb59e3ba1a6deea",
+          "base": "f51a205a8f4afbc5ab41aded070df74951b081ea"
         }
       },
       "reapproval": {
@@ -48626,6 +48640,17 @@
         "diffSha256": "348233ce13cdf1abaa4a22b8bf35b61b3314b0621861436777a5d6af2fc5f197",
         "summary": "The listener now reports a failed SYN-cookie send while still counting the cookie that was generated.",
         "evidence": "https://github.com/tamird/gvisor/compare/bc9ffcc0d...bbdb2f8a2"
+      },
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "0c8fe8397654defd60ac60ff9eb59e3ba1a6deea",
+        "baseHead": "f1dbaa4d1e2cfb522fa03197ed36f21df9a74a3b",
+        "url": "https://github.com/tamird/gvisor/commit/0c8fe8397",
+        "title": "Report retransmitted segments in TCP_INFO",
+        "body": "A program reading tcpi_total_retrans always saw zero, even after its\npeer withheld an acknowledgment and the socket retransmitted the same\ndata five times. Return the endpoint's cumulative retransmission count.\n\nCharge a retransmitted GSO batch by its number of TCP segments. Count\nan active SYN retry when TCP attempts it [1]. An accepted socket\ninherits successful SYN-ACK retries [2][3]. The listener keeps its own\ncount.\n\nExercise the three lifetimes through getsockopt. Observe the active\nsocket in SYN-SENT, the passive socket after accept, and the data\nsocket after the retransmissions are acknowledged.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp_output.c#L3393-L3399\n[2]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/inet_connection_sock.c#L905-L912\n[3]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp_minisocks.c#L549-L556",
+        "requestedAt": "2026-11-06T17:29:25.329Z",
+        "summary": "Publish the conflict resolution on the existing PR after the native Linux and gVisor packet checks pass? Its current approved import #16982 also conflicts."
       }
     },
     {
