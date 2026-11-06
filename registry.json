@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T20:24:36.012Z",
+    "updatedAt": "2026-11-06T20:40:25.617Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -6537,22 +6537,41 @@
       "group": "bazel",
       "status": "open",
       "head": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-      "updatedAt": "2026-11-06T20:16:18.017Z",
-      "summary": "The rebased source is mergeable. The same maintained Go and C++ test variants run on the matching native CPU while Nogo checks both architectures.",
+      "updatedAt": "2026-11-06T20:40:05.864Z",
+      "summary": "On the published rebase, Bazel 9 sent the ARM64 atomicbitops binary to AMD64 because the CPU constraint was attached to the default execution group. Attaching it to the test execution group selects the matching native worker. The corrected ARM64 atomicbitops test passed all 10,933 XML records on aarch64. The GNU configuration rejected absolute header paths in Abseil and GoogleTest compilation before either C++ test ran.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-        "observedAt": "2026-11-06T20:16:18.017Z",
-        "disposition": "On the rebased PR, native AMD64 atomicbitops passed 10,933 XML records and its Nogo owner passed both architectures. The ARM64 test runner landed on AMD64 and exited 126. Neither C++ owner reported a test.",
-        "nextAction": "Trace the with_cfg frontend’s test execution group under Bazel 9 and qualify native ARM64 plus both C++ test owners.",
+        "observedAt": "2026-11-06T20:40:05.864Z",
+        "disposition": "The two action graphs establish the placement change. The physical native ARM64 Go test passed on the fork.",
+        "nextAction": "Verify the two remaining C++ test owners on their native workers with the supported declared LLVM compiler.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15370",
-          "https://github.com/tamird/gvisor/compare/47be1e2b5...fafff7eba"
+          "https://github.com/tamird/gvisor/actions/runs/42290157453",
+          "https://github.com/tamird/gvisor/actions/runs/42288153554/artifacts/13537709088",
+          "https://github.com/tamird/gvisor/actions/runs/42288613378/artifacts/13538188546",
+          "https://github.com/tamird/gvisor/actions/runs/42289518844/artifacts/13539170934",
+          "https://github.com/tamird/gvisor/actions/runs/42272993483/artifacts/13537866543"
         ]
       },
       "number": 15370,
       "reviewDecision": null,
       "evidence": [
+        {
+          "label": "Native C++ test-only integration with declared LLVM",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42290157453"
+        },
+        {
+          "label": "TestRunner placement before and after using the test execution group",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42288153554/artifacts/13537709088"
+        },
+        {
+          "label": "Native ARM64 atomicbitops passed all 10,933 cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42288613378/artifacts/13538188546"
+        },
+        {
+          "label": "Original GNU absolute-path check failed in Abseil and GoogleTest",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42289518844/artifacts/13539170934"
+        },
         {
           "label": "AMD64 atomicbitops and both Nogo sections passed; ARM64 TestRunner ran on AMD64",
           "url": "https://github.com/tamird/gvisor/actions/runs/42272993483/artifacts/13537866543"
@@ -54061,14 +54080,22 @@
       "number": 17082,
       "repo": "google/gvisor",
       "ref": "netstack-delayed-ack",
-      "head": "10555b8fe8ee142f6a956ab3f7fbc717d38b0639",
+      "head": "981034f8b53c9f741b26d1c640e5ac8d4fcdc1d8",
       "title": "Review delayed ACKs after gap recovery and rejected replies",
       "url": "https://github.com/google/gvisor/pull/17082",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T15:53:23.363Z",
-      "summary": "Ayush updated the delayed-ACK draft after both review comments. The original packet tests now pass on 10555b8fe, including the immediate cumulative ACK when a gap closes and the outstanding ACK after a rejected data send. All nine test records passed.",
+      "updatedAt": "2026-11-06T20:40:05.864Z",
+      "summary": "The delayed-ACK estimate can now shrink after repeated smaller segments. Two cases failed on the previous head, 10555b8fe. All 11 tests passed on native AMD64 at 981034f8b, including the 511-byte stream with and without PSH and the earlier gap and rejected-send cases. Ayush’s November 6 reply explains the changes.",
       "evidence": [
+        {
+          "label": "Both smaller-segment cases failed previously; all 11 passed on the current revision",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42288031163/artifacts/13538692103"
+        },
+        {
+          "label": "Ayush explains the revision",
+          "url": "https://github.com/google/gvisor/pull/17082#issuecomment-6694613110"
+        },
         {
           "label": "Both original packet controls on the author’s new head, nine cases and zero skips",
           "url": "https://github.com/tamird/gvisor/actions/runs/42245055323/artifacts/13518805282"
@@ -54108,12 +54135,14 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
-        "sourceHead": "10555b8fe8ee142f6a956ab3f7fbc717d38b0639",
-        "observedAt": "2026-11-06T15:53:23.363Z",
-        "disposition": "Both review changes passed their original packet tests",
-        "nextAction": "Follow future changes to the delayed-ACK draft. Both reported cases are addressed.",
+        "owner": "Maintainer",
+        "sourceHead": "981034f8b53c9f741b26d1c640e5ac8d4fcdc1d8",
+        "observedAt": "2026-11-06T20:40:05.864Z",
+        "disposition": "The current source passed its earlier and new packet tests. The author’s update contains no new question.",
+        "nextAction": "Follow upstream review and any new substantive request.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42288031163/artifacts/13538692103",
+          "https://github.com/google/gvisor/pull/17082#issuecomment-6694613110",
           "https://github.com/google/gvisor/pull/17082#pullrequestreview-5800533890",
           "https://github.com/google/gvisor/pull/17082#discussion_r4492765687",
           "https://github.com/google/gvisor/pull/17082#discussion_r4492765694"
