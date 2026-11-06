@@ -635,11 +635,6 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 		s.RTO = s.maxRTO
 	}
 
-	// Cap RTO to remaining time.
-	if s.RTO > remaining {
-		s.RTO = remaining
-	}
-
 	// See: https://tools.ietf.org/html/rfc6582#section-3.2 Step 4.
 	//
 	// Retransmit timeouts:
@@ -692,23 +687,38 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	if s.zeroWindowProbing {
 		s.sendZeroWindowProbe()
 		// RFC 1122 4.2.2.17: A TCP MAY keep its offered receive window closed
-		// indefinitely.  As long as the receiving TCP continues to send
+		// indefinitely. As long as the receiving TCP continues to send
 		// acknowledgments in response to the probe segments, the sending TCP
 		// MUST allow the connection to stay open.
-		return nil
+	} else {
+		seg := s.writeNext
+		// RFC 1122 4.2.3.5: Close the connection when the number of
+		// retransmissions for this segment is beyond a limit.
+		if seg != nil && seg.xmitCount > s.maxRetries {
+			s.ep.stack.Stats().TCP.EstablishedTimedout.Increment()
+			return &tcpip.ErrTimeout{}
+		}
+		s.sendData()
 	}
-
-	seg := s.writeNext
-	// RFC 1122 4.2.3.5: Close the connection when the number of
-	// retransmissions for this segment is beyond a limit.
-	if seg != nil && seg.xmitCount > s.maxRetries {
-		s.ep.stack.Stats().TCP.EstablishedTimedout.Increment()
-		return &tcpip.ErrTimeout{}
-	}
-
-	s.sendData()
+	// Wake in time to enforce the user timeout. An advancing ACK must
+	// still be able to restart the full backed-off RTO for the next flight.
+	s.limitResendTimerToUserTimeout()
 
 	return nil
+}
+
+// limitResendTimerToUserTimeout shortens a pending retransmission or probe
+// without changing the RTO that a later ACK will restart.
+//
+// +checklocks:s.ep.mu
+func (s *sender) limitResendTimerToUserTimeout() {
+	if !s.resendTimer.enabled() || s.ep.userTimeout == 0 {
+		return
+	}
+	deadline := s.firstRetransmittedSegXmitTime.Add(s.ep.userTimeout)
+	if deadline.Before(s.resendTimer.target) {
+		s.resendTimer.enable(max(0, deadline.Sub(s.ep.stack.Clock().NowMonotonic())))
+	}
 }
 
 // pCount returns the number of packets in the segment. Due to GSO, a segment
@@ -1800,11 +1810,17 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			s.resendTimer.disable()
 			s.probeTimer.disable()
 			s.firstRetransmittedSegXmitTime = tcpip.MonotonicTime{}
-		} else if !s.zeroWindowProbing && s.firstRetransmittedSegXmitTime != (tcpip.MonotonicTime{}) && s.userTimeoutEnd.LessThanEq(ack) {
-			// The old flight is acknowledged. A retransmission below can
-			// overwrite the new oldest segment's original transmit time.
-			s.firstRetransmittedSegXmitTime = s.writeList.Front().xmitTime
-			s.userTimeoutEnd = s.SndNxt
+		} else if !s.zeroWindowProbing && s.firstRetransmittedSegXmitTime != (tcpip.MonotonicTime{}) {
+			if s.userTimeoutEnd.LessThanEq(ack) {
+				// The old flight is acknowledged. A retransmission below can
+				// overwrite the new oldest segment's original transmit time.
+				s.firstRetransmittedSegXmitTime = s.writeList.Front().xmitTime
+				s.userTimeoutEnd = s.SndNxt
+			} else {
+				// The advancing ACK restarted the timer above, but the old
+				// flight still has unacknowledged bytes.
+				s.limitResendTimerToUserTimeout()
+			}
 		}
 	}
 
