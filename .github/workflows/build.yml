@@ -1,35 +1,114 @@
-name: CI
-
-"on":
+name: Check vDSO layout on workers without a system readelf
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/vdso-readelf-rbe]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  vdso:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the checker to both reviewed sources
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = f1d38511abda94cb9ff0a2627feef27a47d20382
+          test "$(git rev-parse HEAD^^)" = 53c458937842fb431ef351c39781850f5a817234
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/vdso_readelf_results.py'
+          git fetch --no-tags --depth=2 https://github.com/tamird/gvisor.git 466dbf7a9a4ff6d12693d0fa94ba37c2bc353d48
+          git diff --exit-code HEAD^ 466dbf7a9a4ff6d12693d0fa94ba37c2bc353d48 -- vdso/check_vdso.py
+          work="$RUNNER_TEMP/vdso-results"
+          mkdir -m 700 "$work"
+          cp .github/qualification/vdso_readelf_results.py "$work/collect.py"
+          git checkout -q --detach HEAD^
+          test "$(bazelisk --version)" = 'bazel 9.3.1'
+      - name: Run the vDSO test through Bazel on the original worker
+        timeout-minutes: 80
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          platform="$RUNNER_TEMP/vdso-gnu-worker"
+          mkdir "$platform"
+          printf '%s\n' 'module(name="vdso_gnu")' > "$platform/MODULE.bazel"
+          cat > "$platform/BUILD" <<'BUILD'
+          platform(
+              name = "gnu",
+              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              exec_properties = {
+                  "Arch": "amd64",
+                  "OSFamily": "linux",
+                  "workload-isolation-type": "firecracker",
+                  "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+              },
+              visibility = ["//visibility:public"],
+          )
+          BUILD
+          rc="$RUNNER_TEMP/vdso.bazelrc"
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" > "$rc"
+          unset BUILDBUDDY_API_KEY
+          work="$RUNNER_TEMP/vdso-results"
+          awk '/^(build|test):source-presubmit / && !/--target_pattern_file=/ {sub(/:source-presubmit /, ":vdso_check "); print}' .bazelrc >> "$rc"
+          test "$(grep -c ':vdso_check ' "$rc")" -eq 6
+          common=(--remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io --spawn_strategy=remote --noremote_local_fallback --jobs=80 --remote_download_outputs=toplevel)
+          test_opts=(--nocache_test_results --test_output=all '--modify_execution_info=^TestRunner$=+no-remote-cache' --strategy=TestRunner=remote --flaky_test_attempts=1)
+          invoke() {
+            local phase=$1 command=$2 code=0
+            shift 2
+            timeout -k 20s 15m bazelisk --bazelrc="$rc" "$command" "${common[@]}" --build_event_json_file="$work/$phase.bep" "$@" > "$work/$phase.log" 2>&1 || code=$?
+            printf '%s\n' "$code" > "$work/$phase.exit"
+          }
+          invoke llvm test --config=x86_64 --config=vdso_check "${test_opts[@]}" //vdso:vdso_test
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+          # Give the vDSO a nonempty .data section that the real checker must reject.
+          python3 - <<'MUTATE'
+          from pathlib import Path
+          p = Path("vdso/vdso_amd64.lds")
+          data = p.read_text()
+          anchor = "  .rodata        : { *(.rodata*) }          :text"
+          assert data.count(anchor) == 1
+          p.write_text(data.replace(anchor, anchor + "\n  .data : { BYTE(42) } :text"))
+          MUTATE
+          invoke negative test --config=x86_64 --config=vdso_check "${test_opts[@]}" //vdso:vdso_test
+          git restore -- vdso/vdso_amd64.lds
 
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+          # Run the same checker natively on AMD64 against the ARM64 ELF.
+          invoke arm-build build --config=aarch64 --config=vdso_check //vdso:vdso
+          if [[ "$(cat "$work/arm-build.exit")" == 0 && -f bazel-bin/vdso/vdso.so ]]; then
+            cp -L bazel-bin/vdso/vdso.so "$work/arm-vdso.so"
+            cp "$work/arm-vdso.so" vdso/arm-readelf-fixture.so
+            python3 - <<'FIXTURE'
+          from pathlib import Path
+          p = Path("vdso/BUILD")
+          s = p.read_text()
+          target, test = s.split('py_test(', 1)
+          assert test.count(':vdso') == 2
+          p.write_text(target + 'py_test(' + test.replace(':vdso', ':arm-readelf-fixture.so'))
+          FIXTURE
+            invoke arm-check test --config=x86_64 --config=vdso_check "${test_opts[@]}" //vdso:vdso_test
+            git restore -- vdso/BUILD
+            rm -- vdso/arm-readelf-fixture.so
+          fi
+          git checkout -q --detach 466dbf7a9a4ff6d12693d0fa94ba37c2bc353d48
+          invoke standalone test --config=x86_64 --inject_repository="vdso_gnu=$platform" --extra_execution_platforms=@vdso_gnu//:gnu --host_platform=@vdso_gnu//:gnu "${test_opts[@]}" //vdso:vdso_test
+      - name: Record the bounded Bazel target receipts
+        if: always() && !cancelled()
+        run: |
+          python3 -IB "$RUNNER_TEMP/vdso-results/collect.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: vdso-readelf-results
+          path: ${{ runner.temp }}/vdso-results/receipt.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Require both ELF architectures and the nonempty data control
+        if: always() && !cancelled()
+        run: jq -e '.verified' "$RUNNER_TEMP/vdso-results/receipt.json"
