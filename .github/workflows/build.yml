@@ -1,35 +1,64 @@
-name: CI
-
-"on":
+name: Compare TCP ACKs after a link declines the response
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/delayed-ack-rejected-payload]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  packets:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 75
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 6}
+      - name: Run the same rejected and accepted writes on the parent and draft
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/ack-write"
+          mkdir "$d"
+          cp .github/qualification/ack_write.py "$d/"
+          donor=611a6ff017c528dddbd0d2e643aaf23c6ddac488
+          git fetch --quiet --depth=1 origin "$donor"
+          for h in qualification_report unit_matrix; do git show "$donor:test/rbe/$h.py" > "$d/$h.py"; done
+          test "$(git hash-object "$d/qualification_report.py")" = d2e3eedabc2ad911d958aa448fd916aa6835aa86
+          test "$(git hash-object "$d/unit_matrix.py")" = d01d9e319084e18ea2928671e417e1b4e86c4954
+          curl -fsSL --retry 3 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod +x "$d/bazel"
+          files=(pkg/tcpip/transport/tcp/test/e2e/{BUILD,tcp_sack_test.go} pkg/tcpip/transport/tcp/testing/context/context.go)
+          pr=f2447eb8a6a1ef5f8bf7447b11605e56ec02a83c
+          base=1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d
+          fixture=ef3c057c15bcb536c43c6740061bb06b8d2dcb4e
+          test "$(git rev-parse HEAD^)" = "$fixture"
+          test "$(git rev-parse "$fixture^")" = "$pr"
+          test "$(git rev-parse "$pr^")" = "$base"
+          test "$(git diff --name-only "$pr" "$fixture")" = "$(printf '%s\n' "${files[@]}" | LC_ALL=C sort)"
+          ctl=(env -i HOME="$HOME" USER=runner PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP")
+          failed=0
+          for phase in base draft; do
+            case "$phase" in base) source=$base ;; draft) source=$pr ;; esac
+            git switch --quiet --detach "$source"
+            git restore --source="$fixture" --worktree -- "${files[@]}"
+            for file in "${files[@]}"; do test "$(git hash-object "$file")" = "$(git rev-parse "$fixture:$file")"; done
+            code=0
+            "${ctl[@]}" "$d/bazel" --nosystem_rc --nohome_rc --bazelrc=/dev/null --host_jvm_args=-Xmx3g test \
+              --config=x86_64 --lockfile_mode=off -c opt --jobs=4 --local_resources=memory=8192 \
+              --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox \
+              '--modify_execution_info=^(GoStandardLibraryAnalysis|GoStaticAnalysis)$=-no-sandbox' --build_event_publish_all_actions \
+              --spawn_strategy=linux-sandbox --strategy=TestRunner=linux-sandbox --sandbox_default_allow_network=false \
+              --remote_cache= --remote_executor= --bes_backend= --flaky_test_attempts=1 --nocache_test_results \
+              '--test_filter=^TestPiggybackACKAfterLinkWrite$' --test_arg=-test.v --test_env=GO_TEST_WRAP_TESTV=1 --test_timeout=120 \
+              --test_output=errors --build_event_json_file="$d/$phase.bep" \
+              //pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test >"$d/$phase.console" 2>&1 || code=$?
+            "${ctl[@]}" python3 -B "$d/ack_write.py" "$phase" "$source" "$code" || failed=1
+            git restore --worktree -- "${files[@]}"
+          done
+          exit "$failed"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: declined-write-ack-packets
+          path: ${{ runner.temp }}/ack-write/*.json
+          if-no-files-found: warn
+          retention-days: 7
