@@ -16,8 +16,7 @@ BAZEL = "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c"
 STAGE = Path(os.environ["RUNNER_TEMP"]) / "lean-client"
 RECEIPT = STAGE.parent / "lean-client.json"
 TARGETS = [
-    ("query", "@org_golang_x_sys//unix:go_default_library"),
-    ("cquery", "//:release"),
+    ("query", "@@rules_go++go_sdk+main___download_0_linux_amd64//:ROOT"),
 ]
 POSSIBLE = {"bash", "sh", "sed", "test", "cp", "chmod", "uname", "python3",
             "mkdir", "cat", "readlink", "tar", "git", "rm", "mv", "ln"}
@@ -61,6 +60,11 @@ def setup():
     add("/lib64/ld-linux-x86-64.so.2")
     add("/usr/bin/env")
     add("/etc/ssl/certs/ca-certificates.crt")
+    # The JVM's filename encoding follows the active glibc locale. Both arms
+    # receive the same locale data; only the locale selection can differ.
+    for data in Path("/usr/lib/locale/C.utf8").glob("**/*"):
+        if data.is_file():
+            add(data)
     for java_trust in (Path("/etc/ssl/certs/java/cacerts"),
                        Path(os.environ.get("JAVA_HOME", "/usr/lib/jvm/default-java")) / "lib/security/cacerts"):
         if java_trust.is_file():
@@ -125,7 +129,7 @@ def workspace_operations(path):
     return [list(key) + [count] for key, count in counter.most_common(180)]
 
 
-def phase(index, command, target, tool=None):
+def phase(index, command, target, tool=None, *, locale=None):
     work = Path.cwd()
     # The clean git checkout has no tracked module lock. Discard only a lock
     # created by a previous probe so both cases start on the identical source.
@@ -141,6 +145,9 @@ def phase(index, command, target, tool=None):
         path = Path("/usr/bin") / tool
         assert tool in POSSIBLE and path.is_file()
         args += ["-v", f"{path.resolve()}:/usr/bin/{tool}:ro", "-v", f"{path.resolve()}:/bin/{tool}:ro"]
+    if locale:
+        assert locale == "C.UTF-8" and (STAGE / "image/usr/lib/locale/C.utf8/LC_CTYPE").is_file()
+        args += ["-e", f"LC_ALL={locale}"]
     args += ["lean-client:probe", "/probe/bazel", "--batch", "--nosystem_rc", "--nohome_rc"]
     if (STAGE / "image/trust/cacerts").is_file():
         args += ["--host_jvm_args=-Djavax.net.ssl.trustStore=/trust/cacerts"]
@@ -157,8 +164,9 @@ def phase(index, command, target, tool=None):
             continue
         if re.search(r"(?i)error|failed|cannot|missing|traceback|\.bzl.+line [0-9]|no such|not found|permission denied|execvp|execve|return code|no matching|not a directory|disk space", line):
             safe = re.sub(r"https?://\S+", "[public URL]", line)
-            lines.append(safe[:550])
-    row = {"command": command, "target": target, "only_added_tool": tool, "exit": result.returncode,
+            safe = re.sub(r"/home/runner/\.cache/bazel/_bazel_runner/[0-9a-f]{32}/external/", "@@", safe)
+            lines.append(safe if len(safe) <= 1150 else safe[:350] + " ... " + safe[-750:])
+    row = {"command": command, "target": target, "only_added_tool": tool, "locale": locale, "exit": result.returncode,
            "stdout_labels": [s for s in result.stdout.decode(errors="replace").splitlines()
                              if re.fullmatch(r"[@a-zA-Z0-9._+: /()-]{1,200}", s)][:4],
            "diagnostics": list(dict.fromkeys(lines))[-32:]}
@@ -177,6 +185,9 @@ try:
         row = phase(len(report["phases"]), command, target)
         if row["exit"]:
             diagnostic = "\n".join(row["diagnostics"])
+            if "issue27836.dir/" in diagnostic and "No such file" in diagnostic:
+                phase(len(report["phases"]), command, target, locale="C.UTF-8")
+                break
             missing = {word for word in POSSIBLE if re.search(r"(?i)(?:execvp\(|cannot run program [\"']|/usr/bin/|/bin/|(?:executable|command|program)[ :\x60'\"(]+)" + word +
                         r"(?:[\"'):\x60]|\s+(?:not found|failed))", diagnostic)}
             if len(missing) == 1:
