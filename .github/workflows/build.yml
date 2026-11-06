@@ -1,35 +1,129 @@
-name: CI
-
-"on":
+name: Check ACK timing after the peer's segment size changes
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/delayed-ack-receive-mss]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  packet:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 72
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Bind the two reviewed sources to the same packet fixture
+        run: |
+          set -euo pipefail
+          previous=10555b8fe8ee142f6a956ab3f7fbc717d38b0639
+          current=981034f8b53c9f741b26d1c640e5ac8d4fcdc1d8
+          fixture=0e7b5eeca0c9e4ea2ad29360ead44492c68d0088
+          src=pkg/tcpip/transport/tcp/rcv.go
+          testfile=pkg/tcpip/transport/tcp/test/e2e/tcp_delayed_ack_test.go
+          test "$(git rev-parse HEAD^)" = "$fixture"
+          test "$(git rev-parse HEAD^^)" = "$current"
+          test "$(git diff --name-only "$current" "$fixture")" = "$testfile"
+          test "$(git diff --name-only HEAD^ HEAD)" = .github/workflows/build.yml
+          git fetch --quiet --depth=1 origin "$previous"
+          test "$(git diff --name-only "$previous" "$current" -- . ":!$testfile")" = "$src"
+          git checkout --quiet --detach "$fixture"
+          test "$(git hash-object "$testfile")" = 80fa892ad597c1db9d28e557bc2ab6d9ade82371
+          test "$(uname -m)" = x86_64
+          test "$(bazelisk --version)" = "bazel 9.3.1"
+      - name: Run identical delayed-ACK packet cases on the previous and current receiver
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/delayed-ack-mss"
+          mkdir -m 700 "$root"
+          src=pkg/tcpip/transport/tcp/rcv.go
+          for rev in 10555b8fe8ee142f6a956ab3f7fbc717d38b0639 981034f8b53c9f741b26d1c640e5ac8d4fcdc1d8; do
+            git restore --source="$rev" --worktree -- "$src"
+            test "$(git hash-object "$src")" = "$(git rev-parse "$rev:$src")"
+            d="$root/$rev"
+            mkdir "$d"
+            rc=0
+            env -i HOME="$HOME" USER=runner PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" bazelisk --nosystem_rc --nohome_rc --bazelrc=/dev/null --host_jvm_args=-Xmx3g test \
+              --config=x86_64 --lockfile_mode=off -c opt --jobs=4 --local_resources=memory=8192 \
+              --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox \
+              '--modify_execution_info=^(GoStandardLibraryAnalysis|GoStaticAnalysis)$=-no-sandbox' \
+              --spawn_strategy=linux-sandbox --strategy=TestRunner=linux-sandbox --sandbox_default_allow_network=false \
+              --remote_cache= --remote_executor= --bes_backend= --flaky_test_attempts=1 --nocache_test_results \
+              --test_arg=-test.v --test_env=GO_TEST_WRAP_TESTV=1 --test_timeout=150 \
+              '--test_filter=^TestDelayedACK' \
+              --test_output=all --build_event_json_file="$d/run.bep" //pkg/tcpip/transport/tcp/test/e2e:tcp_delayed_ack_test >"$d/run.log" 2>&1 || rc=$?
+            printf '%s\n' "$rc" >"$d/exit"
+            python3 -IB - "$d" <<'PYSAVE'
+          import json, shutil, sys
+          from pathlib import Path
+          from urllib.parse import unquote, urlsplit
+          work = Path(sys.argv[1])
+          if (work/"run.bep").is_file():
+              for line in (work/"run.bep").open():
+                  event = json.loads(line)
+                  if event["id"].get("testResult", {}).get("label") != "//pkg/tcpip/transport/tcp/test/e2e:tcp_delayed_ack_test":
+                      continue
+                  for out in event["testResult"].get("testActionOutput", []):
+                      uri = urlsplit(out.get("uri", ""))
+                      if out.get("name") == "test.log" and uri.scheme == "file":
+                          shutil.copyfile(unquote(uri.path), work/"test.log")
+          PYSAVE
+          done
+      - name: Read named cases from the original Bazel test logs
+        id: record
+        if: always() && !cancelled()
+        run: |
+          python3 -IB - <<'PYREPORT'
+          import hashlib, json, os, re
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"]) / "delayed-ack-mss"
+          root.mkdir(exist_ok=True)
+          owner = "//pkg/tcpip/transport/tcp/test/e2e:tcp_delayed_ack_test"
+          cases = {"TestDelayedACK", "TestDelayedACKSmallerFullSegments", "TestDelayedACKTwoFullSegments",
+                   "TestDelayedACKShortWrites/endOfWrite", "TestDelayedACKShortWrites/uninterrupted",
+                   "TestDelayedACKFilledGap", "TestDelayedACKLinkWriteError", "TestDelayedACKRestore",
+                   "TestDelayedACKPiggyback", "TestDelayedACKQuickAck/Set", "TestDelayedACKQuickAck/Clear"}
+          report = {}
+          for rev in ["10555b8fe8ee142f6a956ab3f7fbc717d38b0639", "981034f8b53c9f741b26d1c640e5ac8d4fcdc1d8"]:
+              d = root / rev
+              row = report[rev] = {"cases": {}, "results": []}
+              if not (d/"run.bep").is_file() or not (d/"exit").is_file():
+                  continue
+              row["exit"] = int((d/"exit").read_text())
+              for line in (d/"run.bep").open():
+                  event = json.loads(line)
+                  if event["id"].get("testResult", {}).get("label") != owner:
+                      continue
+                  item = event["testResult"]
+                  execution = item.get("executionInfo", {})
+                  row["results"].append({"status": item.get("status"), "strategy": execution.get("strategy"),
+                                         "cached": bool(item.get("cachedLocally") or execution.get("cachedRemotely"))})
+                  for out in item.get("testActionOutput", []):
+                      if out.get("name") != "test.log":
+                          continue
+                      if not (d/"test.log").is_file():
+                          continue
+                      raw = (d/"test.log").read_bytes()
+                      row["log_sha256"] = hashlib.sha256(raw).hexdigest()
+                      row["missing_packets"] = raw.count(b"Packet wasn't written out")
+                      for status, name in re.findall(r"--- (PASS|FAIL|SKIP): (TestDelayedACK[^\s]*) ", raw.decode(errors="replace")):
+                          if name in cases:
+                              row["cases"][name] = status
+              expected = dict.fromkeys(cases, "PASS")
+              control = rev.startswith("10555")
+              if control:
+                  expected["TestDelayedACKSmallerFullSegments"] = expected["TestDelayedACKShortWrites/uninterrupted"] = "FAIL"
+              row["verified"] = (len(row["results"]) == 1 and not row["results"][0]["cached"] and
+                                 row["results"][0]["status"] == ("FAILED" if control else "PASSED") and
+                                 (row["exit"] != 0 if control else row["exit"] == 0) and row["cases"] == expected and
+                                 (row.get("missing_packets", 0) >= 2 if control else row.get("missing_packets") == 0))
+          report["verified"] = all(r.get("verified") for r in report.values())
+          (root/"result.json").write_text(json.dumps(report, indent=2))
+          PYREPORT
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.record.outcome == 'success'
+        with:
+          name: delayed-ack-receive-mss
+          path: ${{ runner.temp }}/delayed-ack-mss/result.json
+          retention-days: 14
+          if-no-files-found: error
+      - if: always() && steps.record.outcome == 'success'
+        run: jq -e .verified "$RUNNER_TEMP/delayed-ack-mss/result.json"
