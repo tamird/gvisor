@@ -18,7 +18,6 @@
 package nvproxy_driver_parity_test
 
 import (
-	"context"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/sentry/devices/nvproxy"
@@ -39,5 +38,4 @@ func TestDriverChecksums(t *testing.T) {
 			}
 		})
 	})
-
 }
