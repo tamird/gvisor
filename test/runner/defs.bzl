@@ -127,6 +127,14 @@ def _syscall_test(
     if nftables:
         name += "_nftables"
 
+    if native.package_name() == "test/syscalls" and name == "eventfd_test_runsc_systrap_shared":
+        kwargs["exec_properties"] = {
+            "test.container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+            "test.dockerUser": "root",
+            "test.network-enable-ipv6": "true",
+            "test.workload-isolation-type": "firecracker",
+        }
+
     # Apply all tags.
     if tags == None:
         tags = []
