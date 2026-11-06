@@ -9,11 +9,18 @@ root = Path(sys.argv[1])
 report = {"source": sys.argv[2], "status": "INCOMPLETE"}
 target = "//test/rbe/encoder_hints:nginx"
 rows = []
+log_output = {}
 try:
     for line in (root / "events").open():
         event = json.loads(line)
         if "started" in event:
             report["invocation"] = event["started"]["uuid"]
+        if "action" in event and not event["action"].get("success"):
+            action = event["action"]
+            owner = event.get("id", {}).get("actionCompleted", {}).get("label", "")
+            if re.fullmatch(r"[@A-Za-z0-9+_.:/-]{1,250}", owner) and len(report.get("failed_actions", [])) < 8:
+                if re.fullmatch(r"[A-Za-z0-9_]{1,70}", action.get("type", "")):
+                    report.setdefault("failed_actions", []).append([owner, action["type"], int(action.get("exitCode", -1))])
         if event.get("id", {}).get("testResult", {}).get("label") == target:
             result = event["testResult"]
             assert "result" not in report
@@ -21,6 +28,7 @@ try:
             report["result"] = {"status": result["status"], "strategy": info.get("strategy"),
                                 "cached": result.get("cachedLocally", False) or info.get("cachedRemotely", False)}
             report["exit"] = info.get("exitCode", 0)
+            log_output, = [a for a in result.get("testActionOutput", []) if a.get("name") == "test.log"]
     p = Path("bazel-testlogs/test/rbe/encoder_hints/nginx/test.log")
     if not p.exists():
         console = (root / "console").read_text(errors="replace")
@@ -31,6 +39,11 @@ try:
     raw = p.read_bytes()
     log = raw.decode(errors="replace")
     report["log_sha256"] = hashlib.sha256(raw).hexdigest()
+    bytestream = re.fullmatch(r"bytestream://remote\.buildbuddy\.io/(?:[A-Za-z0-9_./-]+/)?blobs/([0-9a-f]{64})/(\d+)", log_output.get("uri", ""))
+    if bytestream:
+        assert (report["log_sha256"], len(raw)) == (bytestream[1], int(bytestream[2]))
+    else:
+        assert log_output.get("digest") == report["log_sha256"] and int(log_output["length"]) == len(raw)
     captures = re.findall(r"phase-capture digest=([a-f0-9]{64}) state=(\d+) pages=(\d+) pagemeta=(\d+)", log)
     assert len(captures) == 1
     digest, size, pages, meta = captures[0]

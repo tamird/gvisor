@@ -1,7 +1,7 @@
 name: Measure checkpoint encoder setup from one kernel image
 on:
   push:
-    branches: [qualification/checkpoint-encoder-size-hints]
+    branches: [qualification/checkpoint-sizing-matched-client]
 permissions:
   contents: read
 jobs:
@@ -11,11 +11,12 @@ jobs:
     timeout-minutes: 65
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 3}
+        with: {persist-credentials: false, fetch-depth: 4}
       - name: Stage the published AMD64 Nginx image and native measurement harness
         run: |
           source=c01fe358350db49b6a64903cec52c96dcd027ce5
-          test "$(git rev-parse HEAD^)" = "$source"
+          test "$(git rev-parse HEAD^)" = 47984e47f5db61a23cb3f019d5478c0a605cca18
+          test "$(git rev-parse HEAD^^)" = "$source"
           test "$(git rev-parse "$source^")" = 1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d
           d="$RUNNER_TEMP/size-hints"
           mkdir -p "$d/platform" "$d/public" "$d/bin"
@@ -29,6 +30,7 @@ jobs:
           test "$(docker image inspect --format '{{.Id}}' "$image")" = sha256:5f9e05caa37420ad50b7ccf873ea117fcbd8cff24b3fcb689cb904bcab624cf5
           docker tag "$image" gvisor.dev/images/benchmarks/nginx:latest
           docker save -o test/rbe/encoder_hints/nginx.tar gvisor.dev/images/benchmarks/nginx:latest
+          docker pull --platform=linux/amd64 gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
           curl -fsSL --retry 3 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bin/bazel"
           echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bin/bazel" | sha256sum -c -
           chmod 755 "$d/bin/bazel"
@@ -64,8 +66,21 @@ jobs:
             printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
           } > "$rc"
           unset BUILDBUDDY_API_KEY
+          # Configure the host C++ toolchain against the GCC headers its remote
+          # actions will see. The GitHub runner and the GNU worker differ here.
+          docker run --rm -i --entrypoint /bin/bash --user root \
+            -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -v "$d:$d" -w "$GITHUB_WORKSPACE" \
+            gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a \
+            -s -- "$d" "$source" <<'RUN'
+          set -euo pipefail
+          d=$1
+          source=$2
+          rc="$d/private.bazelrc"
+          trap 'chmod -R a+rX "$d/public"' EXIT
+          export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$PWD"
           common=(--config=x86_64 -c opt --jobs=48 --inject_repository="hint_worker=$d/platform" --extra_execution_platforms=@hint_worker//:gnu --host_platform=@hint_worker//:gnu)
-          ctl=(env -i HOME="$HOME" USER=runner PATH="$d/bin:$PATH" LANG=C.UTF-8)
+          ctl=(env -i HOME=/root USER=root PATH="$d/bin:$PATH" LANG=C.UTF-8
+            GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$PWD")
           code=0
           "${ctl[@]}" "$d/bin/bazel" --nosystem_rc --nohome_rc --bazelrc="$rc" test "${common[@]}" --test_timeout=900 \
             --nocache_test_results --flaky_test_attempts=1 --strategy=TestRunner=remote '--modify_execution_info=^TestRunner$=+no-remote-cache' \
@@ -76,6 +91,7 @@ jobs:
           git switch --quiet --detach 2b51abee8530385431b7225198fdd5cd65e78696
           "${ctl[@]}" "$d/bin/bazel" --nosystem_rc --nohome_rc --bazelrc="$rc" run "${common[@]}" @org_golang_x_perf//cmd/benchstat \
             -- "$d/public/loaded.bench" "$d/public/clear.bench" > "$d/public/benchstat.txt" 2>"$d/stats.console"
+          RUN
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
