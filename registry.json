@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T20:45:16.012Z",
+    "updatedAt": "2026-11-06T20:48:54.951Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -45893,8 +45893,8 @@
       "title": "Check the set lock when accessing SysV semaphores",
       "url": "https://github.com/tamird/gvisor/commit/9385a07c9",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T20:24:36.012Z",
+      "status": "Agent work",
+      "updatedAt": "2026-11-06T20:48:54.951Z",
       "summary": "Guard the existing Set.sems storage with Set.mu and keep each sem lookup inside the caller’s critical section. Nogo passed on both CPUs. Removing the lock before directly indexing a queue or value generated diagnostics on both CPUs; a pointer retained past unlock escaped the analyzer. The existing field layout and checkpoint format are preserved. The qualified stack also contained the independent removal fix. The guard applies identically to #16806 alone.",
       "evidence": [
         {
@@ -45928,19 +45928,18 @@
           "outcome": "changes-requested",
           "at": "2026-11-06T16:22:54.525Z",
           "note": "Tamir asked to annotate sem.waiters and suggested giving sem a pointer to its owner’s mutex to keep the change small."
+        },
+        {
+          "kind": "proposal",
+          "head": "9385a07c9a80422e092a786b68303b1686102095",
+          "url": "https://github.com/tamird/gvisor/commit/9385a07c9",
+          "title": "Check the set lock when accessing SysV semaphores",
+          "body": "Waking a waiter reads the semaphore value and removes the waiter from\nits queue. Direct access to those elements previously went unchecked\nbecause checklocks could not associate each sem with its owning set.\n\nGuard the existing slice with the set mutex and require the lock to\nlook up a member or wake its waiters. Size can read the length without\nthe lock because a semaphore set cannot be resized.",
+          "outcome": "changes-requested",
+          "at": "2026-11-06T20:48:54.951Z",
+          "note": "Retain sem.wakeWaiters() without a second lookup; give the semaphore a link to its protecting lock."
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "9385a07c9a80422e092a786b68303b1686102095",
-        "baseHead": "b68f40e4e358798ba034116cdb4c8194bb1c7c07",
-        "url": "https://github.com/tamird/gvisor/commit/9385a07c9",
-        "title": "Check the set lock when accessing SysV semaphores",
-        "body": "Waking a waiter reads the semaphore value and removes the waiter from\nits queue. Direct access to those elements previously went unchecked\nbecause checklocks could not associate each sem with its owning set.\n\nGuard the existing slice with the set mutex and require the lock to\nlook up a member or wake its waiters. Size can read the length without\nthe lock because a semaphore set cannot be resized.",
-        "requestedAt": "2026-11-06T20:22:14.946Z",
-        "summary": "Open the lock-contract change after #16806 lands. The separate waiter-removal change is independently applicable."
-      },
       "refinement": {
         "before": {
           "head": "b68f40e4e358798ba034116cdb4c8194bb1c7c07"
@@ -45948,6 +45947,17 @@
         "after": {
           "head": "9385a07c9a80422e092a786b68303b1686102095"
         }
+      },
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "9385a07c9a80422e092a786b68303b1686102095",
+        "observedAt": "2026-11-06T20:48:54.951Z",
+        "disposition": "Contributor requested that each sem keep its lock link and wake its waiters without a second lookup.",
+        "nextAction": "Revise sem.wakeWaiters and validate the member’s lock link and queue access. The independent removal fix is already in #17127.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/9385a07c9",
+          "https://github.com/google/gvisor/pull/17127"
+        ]
       }
     },
     {
@@ -55142,9 +55152,13 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T20:45:16.012Z",
-      "summary": "The full source presubmit on the canonical AMD64 worker ran 373 fresh remote test shards. Of those, 371 passed. The docprocessor and Python sandbox tests failed. Of 2,880 build-only targets, 2,876 succeeded and four legacy coverage genrules failed. All 34 live NVIDIA installer checks passed. ABI parity passed on the 25 versions with published source; the nine absent versions were skipped. All six netgofer cases passed. Earlier full-run, worker-placement and cache comparisons remain in the evidence.",
+      "updatedAt": "2026-11-06T20:48:54.951Z",
+      "summary": "The full source presubmit on the canonical AMD64 worker ran 373 fresh remote test shards. Of those, 371 passed. The docprocessor and Python sandbox tests failed. Of 2,880 build-only targets, 2,876 succeeded and four legacy coverage genrules failed. All 34 live NVIDIA installer checks passed. ABI parity passed on the 25 versions with published source; the nine absent versions were skipped. All six netgofer cases passed. Earlier full-run, worker-placement and cache comparisons remain in the evidence. The four coverage genrules stopped at a missing curl in tools/build_cover.sh. Docprocessor could not create its container on the read-only OCI filesystem. Sandbox Python reported six EBUSYs during temporary-directory cleanup and an undeleted runtime directory.",
       "evidence": [
+        {
+          "label": "Original diagnostics for docprocessor, six Python cleanup errors and four coverage Genrules",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42290920335/artifacts/13539767012"
+        },
         {
           "label": "Complete outcomes on the canonical worker",
           "url": "https://github.com/tamird/gvisor/actions/runs/42283984978/artifacts/13537369674"
@@ -55330,9 +55344,9 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "e46a101fc0aebb325ec25977697a012a2e11a11b",
-        "observedAt": "2026-11-06T20:45:16.012Z",
+        "observedAt": "2026-11-06T20:48:54.951Z",
         "disposition": "Two tests and four legacy coverage build owners failed on the complete graph.",
-        "nextAction": "Recover the two original TestRunner diagnostics and the four legacy coverage failures. Compare those coverage targets with #16507’s declared Go builds.",
+        "nextAction": "Compare #16507’s declared Go coverage builds against the four missing-curl failures. Give docprocessor the execution environment its container needs and compare the existing Python cleanup fix against the six EBUSY results.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42283984978/artifacts/13537369674",
           "https://github.com/tamird/gvisor/actions/runs/42283984978",
@@ -55684,8 +55698,8 @@
       "type": "branch",
       "head": "de11f9e09290b75ab5aa7291fb0d308244b72067",
       "ref": "proposal/tcp-user-timeout-outstanding-flight",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T20:16:18.017Z",
+      "status": "Published as #17128",
+      "updatedAt": "2026-11-06T20:48:54.951Z",
       "title": "Keep TCP_USER_TIMEOUT tied to the oldest outstanding data",
       "summary": "The sender can time out new data at the old flight’s deadline and give its next retransmission the shortened timer. The two commits track which flight is still outstanding and retain the backed-off RTO. Linux and gVisor agreed on all four socket outcomes, with backed-off RTOs of 1.64 s and 1.60 s. Their exact retransmitted byte ranges differed in the partial-ACK case.",
       "url": "https://github.com/tamird/gvisor/commit/de11f9e09",
@@ -55719,16 +55733,29 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42267413085/artifacts/13530857318"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "de11f9e09290b75ab5aa7291fb0d308244b72067",
-        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
-        "url": "https://github.com/tamird/gvisor/commit/de11f9e09",
-        "title": "Keep TCP_USER_TIMEOUT tied to the oldest outstanding data",
-        "body": "During loss recovery, a partial ACK can let the sender transmit new\ndata before the peer acknowledges all the old bytes. gVisor kept the\nold deadline even after those bytes were acknowledged, so it could\nclose the connection while the new data still had time left. It also\nshortened the stored retransmission timeout to fit the old deadline.\n\nTrack the last byte covered by the deadline. Once the peer acknowledges\nit, use the transmit time of the oldest remaining segment to measure\nthe next timeout. Cap the pending timer at the deadline and preserve\nthe backed-off retransmission interval for the next send.\n\nExercise an ACK that covers the old data both before and after another\nretransmission timeout.",
-        "requestedAt": "2026-11-06T20:16:18.017Z",
-        "summary": "Open the single, squashed TCP_USER_TIMEOUT commit on master. Its tree matches the tested source, and the compatibility check with the withdrawn #17113 is separate."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "de11f9e09290b75ab5aa7291fb0d308244b72067",
+          "url": "https://github.com/tamird/gvisor/commit/de11f9e09",
+          "title": "Keep TCP_USER_TIMEOUT tied to the oldest outstanding data",
+          "body": "During loss recovery, a partial ACK can let the sender transmit new\ndata before the peer acknowledges all the old bytes. gVisor kept the\nold deadline even after those bytes were acknowledged, so it could\nclose the connection while the new data still had time left. It also\nshortened the stored retransmission timeout to fit the old deadline.\n\nTrack the last byte covered by the deadline. Once the peer acknowledges\nit, use the transmit time of the oldest remaining segment to measure\nthe next timeout. Cap the pending timer at the deadline and preserve\nthe backed-off retransmission interval for the next send.\n\nExercise an ACK that covers the old data both before and after another\nretransmission timeout.",
+          "outcome": "approved",
+          "at": "2026-11-06T20:48:54.951Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17128",
+          "note": "Published as #17128 at the exact approved head."
+        }
+      ],
+      "followup": {
+        "owner": "Maintainer",
+        "sourceHead": "de11f9e09290b75ab5aa7291fb0d308244b72067",
+        "observedAt": "2026-11-06T20:48:54.951Z",
+        "disposition": "The approved source is public on #17128.",
+        "nextAction": "Follow upstream review and checks on #17128.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17128",
+          "https://github.com/tamird/gvisor/commit/de11f9e09"
+        ]
       }
     },
     {
@@ -55857,6 +55884,63 @@
           "at": "2026-11-06T20:45:16.012Z",
           "postedURL": "https://github.com/google/gvisor/pull/17127",
           "note": "Published as #17127 at the exact approved head."
+        }
+      ]
+    },
+    {
+      "id": "pr:17128",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17128,
+      "ref": "proposal/tcp-user-timeout-outstanding-flight",
+      "head": "de11f9e09290b75ab5aa7291fb0d308244b72067",
+      "title": "Keep TCP_USER_TIMEOUT tied to the oldest outstanding data",
+      "url": "https://github.com/google/gvisor/pull/17128",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-06T20:48:54.951Z",
+      "summary": "The sender can time out new data at the old flight’s deadline and give its next retransmission the shortened timer. The two commits track which flight is still outstanding and retain the backed-off RTO. Linux and gVisor agreed on all four socket outcomes, with backed-off RTOs of 1.64 s and 1.60 s. Their exact retransmitted byte ranges differed in the partial-ACK case.",
+      "evidence": [
+        {
+          "label": "The previously tested two commits have an identical tree",
+          "url": "https://github.com/tamird/gvisor/compare/f51a205a8...a848809a5"
+        },
+        {
+          "label": "Standalone Linux and corrected gVisor packet outcomes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42274444739/artifacts/13533507976"
+        },
+        {
+          "label": "Tested compatibility with the withdrawn #17113",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42279720135/artifacts/13537295031"
+        },
+        {
+          "label": "Preserve the retransmitted flight’s boundary",
+          "url": "https://github.com/tamird/gvisor/commit/deaa0ddc5"
+        },
+        {
+          "label": "Keep the backed-off RTO while shortening the active timer",
+          "url": "https://github.com/tamird/gvisor/commit/a848809a5"
+        },
+        {
+          "label": "Earlier change expired a fresh flight at the old deadline",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42261484858/artifacts/13526394419"
+        },
+        {
+          "label": "Earlier boundary change still retried too soon",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42267413085/artifacts/13530857318"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "de11f9e09290b75ab5aa7291fb0d308244b72067",
+          "url": "https://github.com/tamird/gvisor/commit/de11f9e09",
+          "title": "Keep TCP_USER_TIMEOUT tied to the oldest outstanding data",
+          "body": "During loss recovery, a partial ACK can let the sender transmit new\ndata before the peer acknowledges all the old bytes. gVisor kept the\nold deadline even after those bytes were acknowledged, so it could\nclose the connection while the new data still had time left. It also\nshortened the stored retransmission timeout to fit the old deadline.\n\nTrack the last byte covered by the deadline. Once the peer acknowledges\nit, use the transmit time of the oldest remaining segment to measure\nthe next timeout. Cap the pending timer at the deadline and preserve\nthe backed-off retransmission interval for the next send.\n\nExercise an ACK that covers the old data both before and after another\nretransmission timeout.",
+          "outcome": "approved",
+          "at": "2026-11-06T20:48:54.951Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17128",
+          "note": "Published as #17128 at the exact approved head."
         }
       ]
     }
