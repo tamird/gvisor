@@ -1787,12 +1787,16 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 
 		s.SetPipe()
 
-		// If all outstanding data was acknowledged the disable the timer.
+		// A cumulative ACK can cover all the data that was outstanding
+		// when recovery began while leaving newer data in flight. The
+		// newer data must not inherit the old TCP_USER_TIMEOUT deadline.
+		if s.SndUna == s.SndNxt || (!s.zeroWindowProbing && s.FastRecovery.Last.LessThan(ack)) {
+			s.firstRetransmittedSegXmitTime = tcpip.MonotonicTime{}
+		}
+		// If all outstanding data was acknowledged, disable the timer.
 		// RFC 6298 Rule 5.3
 		if s.SndUna == s.SndNxt {
 			s.Outstanding = 0
-			// Reset firstRetransmittedSegXmitTime to the zero value.
-			s.firstRetransmittedSegXmitTime = tcpip.MonotonicTime{}
 			s.resendTimer.disable()
 			s.probeTimer.disable()
 		}
