@@ -1,103 +1,29 @@
-name: Check the rebased native-test and coverage owners
+name: Read the original native variant compiler diagnostics
 on:
   push:
-    branches: [qualification/native-test-group-runners]
+    branches: [qualification/native-posix-original]
 permissions:
   contents: read
 jobs:
-  qualify:
+  diagnose:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    timeout-minutes: 8
     runs-on: ubuntu-24.04
-    timeout-minutes: 110
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {fetch-depth: 3, persist-credentials: false}
-      - name: Verify the original and corrected native-test sources
+      - name: Verify the original runner source
         run: |
-          set -euo pipefail
-          fixed=f3fa3075e29e3dba659ccc64d16378a2ad2b49fb
-          test "$(git rev-parse HEAD^)" = c9a3658e40fa4839e07414a43d44bf2a68c41602
-          test "$(git rev-parse HEAD^^)" = "$fixed"
-          git diff --exit-code "$fixed" HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/rebased_owners/check.py' ':!.github/qualification/rebased_owners/image_execution.py'
-          work="$RUNNER_TEMP/owners"
-          mkdir -m 700 "$work" "$work/worker"
-          cp .github/qualification/rebased_owners/{check,image_execution}.py "$work/"
-          git checkout --detach "$fixed"
-          test "$(cat .bazelversion)" = 9.3.1
-          test "$(bazelisk --version)" = 'bazel 9.3.1'
-          printf '%s\n' 'module(name="rebased_workers")' >"$work/worker/MODULE.bazel"
-          cat > "$work/worker/BUILD" <<'BUILD'
-          package(default_visibility = ["//visibility:public"])
-          platform(
-              name = "gnu_amd64",
-              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
-              exec_properties = {
-                  "Arch": "amd64",
-                  "OSFamily": "linux",
-                  "workload-isolation-type": "firecracker",
-                  "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
-              },
-          )
-          platform(
-              name = "native_arm64",
-              constraint_values = ["@platforms//cpu:aarch64", "@platforms//os:linux"],
-              exec_properties = {
-                  "Arch": "arm64",
-                  "OSFamily": "linux",
-                  "workload-isolation-type": "oci",
-                  "container-image": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
-              },
-          )
-          BUILD
-      - name: Run the three unresolved tests on their verified native platforms
-        timeout-minutes: 90
+          test "$(git rev-parse HEAD^)" = 886933bb05243c15216a2f0e01f1d516ac4c80e5
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/rebased_owners/original_cpp.py'
+      - name: Read the original console using the fixed API
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: |
-          set -euo pipefail
-          umask 077
-          work="$RUNNER_TEMP/owners"
-          rc="$work/client.rc"
-          trap 'rm -f "$rc"' EXIT
-          cat >"$rc" <<'RC'
-          build --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
-          build --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/
-          build --spawn_strategy=remote --noremote_local_fallback --jobs=80 --remote_timeout=10m
-          build --host_platform=@rebased_workers//:gnu_amd64
-          build --extra_execution_platforms=@rebased_workers//:gnu_amd64,@rebased_workers//:native_arm64
-          RC
-          printf 'build --inject_repository=rebased_workers=%s/worker\n' "$work" >> "$rc"
-          printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "${BUILDBUDDY_API_KEY:?}" "$BUILDBUDDY_API_KEY" >> "$rc"
-          unset BUILDBUDDY_API_KEY
-          test "$(git rev-parse HEAD)" = f3fa3075e29e3dba659ccc64d16378a2ad2b49fb
-          python3 -B "$work/check.py" variants || printf 'Native variant qualification incomplete.\n'
-      - name: Check the bounded result files without credentials
-        id: report
-        if: always() && !cancelled()
-        run: |
-          set -euo pipefail
-          work="$RUNNER_TEMP/owners"
-          rm -f "$work/client.rc"
-          mkdir -p "$work/publish"
-          for name in variants; do
-            f="$work/$name.json"
-            sha=f3fa3075e29e3dba659ccc64d16378a2ad2b49fb
-            if [[ -f "$f" && ! -L "$f" ]] && (( $(wc -c < "$f") < 65536 )) &&
-                jq -e --arg sha "$sha" '.source==$sha' "$f" >/dev/null &&
-                ! grep -Eiq 'authorization[[:space:]]*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}' "$f"; then
-              cp "$f" "$work/publish/$name.json"
-            else
-              jq -n --arg sha "$sha" '{source:$sha,verified:false,reason:"No complete bounded receipt"}' > "$work/publish/$name.json"
-            fi
-          done
+        run: python3 -IB .github/qualification/rebased_owners/original_cpp.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: always() && steps.report.outcome == 'success'
+        if: always() && !cancelled()
         with:
-          name: native-test-group-results
-          path: |
-            ${{ runner.temp }}/owners/publish/variants.json
+          name: original-native-variant-compiler
+          path: ${{ runner.temp }}/original-variant-compiler.json
           retention-days: 14
           if-no-files-found: error
-      - name: Require three fresh native test results
-        if: always() && steps.report.outcome == 'success'
-        run: jq -e '.verified == true' "$RUNNER_TEMP/owners/publish/variants.json" >/dev/null
