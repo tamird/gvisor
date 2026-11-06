@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T16:36:37.169Z",
+    "updatedAt": "2026-11-06T16:48:35.207Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -45647,8 +45647,8 @@
       "url": "https://github.com/tamird/gvisor/commit/b68f40e4e",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T16:22:54.525Z",
-      "summary": "The revision must cover the semaphore’s waiters and value at their field declarations. The wakeup helper reads a semaphore value and removes waiters from its queue. Giving the helper its owning set lets checklocks verify the existing mutex at every call.",
+      "updatedAt": "2026-11-06T16:48:35.207Z",
+      "summary": "Tamir asked to annotate sem.waiters and suggested giving sem a pointer to its owner’s mutex to keep the change small. The wakeup helper reads a semaphore value and removes waiters from its queue. Giving the helper its owning set lets checklocks verify the existing mutex at every call.",
       "evidence": [
         {
           "label": "Checklocks results on AMD64 and ARM64 with the mutex held and deliberately released",
@@ -45664,15 +45664,15 @@
           "body": "All three callers already hold the set mutex. Both architecture analyzers passed. Releasing the mutex around the SETVAL call made checklocks diagnose the missing lock on each architecture.",
           "outcome": "changes-requested",
           "at": "2026-11-06T16:22:54.525Z",
-          "note": "Tamir requested field-level locking contracts for both sem.waiters and sem.value."
+          "note": "Tamir asked to annotate sem.waiters and suggested giving sem a pointer to its owner’s mutex to keep the change small."
         }
       ],
       "followup": {
         "owner": "Agent",
         "sourceHead": "b68f40e4e358798ba034116cdb4c8194bb1c7c07",
-        "observedAt": "2026-11-06T16:22:54.525Z",
-        "disposition": "Tamir requested field-level locking contracts for both sem.waiters and sem.value.",
-        "nextAction": "Revise both field annotations and check the actual accesses with Nogo.",
+        "observedAt": "2026-11-06T16:48:35.207Z",
+        "disposition": "Tamir asked to annotate sem.waiters and suggested giving sem a pointer to its owner’s mutex to keep the change small.",
+        "nextAction": "Compare a field-level waiter guard using the owning mutex with the alternative representation. Check which accesses Nogo can prove.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b68f40e4e"
         ]
@@ -53424,9 +53424,17 @@
       "url": "https://github.com/tamird/gvisor/commit/95ca4e731",
       "group": "runtime",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T16:32:56.778Z",
+      "updatedAt": "2026-11-06T16:48:35.207Z",
       "summary": "The requested revision removes the per-attachment channel and the separate dispatcher argument. The receive loop owns its workers and the dispatcher used to deliver packets. A batch queued on an old attachment was delivered after reattach on the previous revision. The new test drops that batch and delivers a fresh one. A second test verifies that an injectable endpoint reports its real attachment and delivers only the packet injected while attached. Both tests failed before and passed on this source. The FD and muxed suites, two live-save cases and Nogo passed. An earlier real namespace move exposed a separate buffer-release panic on both versions tested there.",
       "evidence": [
+        {
+          "label": "Revised per-reader ownership, including explicit detach and peer EOF",
+          "url": "https://github.com/tamird/gvisor/commit/d4e65b135"
+        },
+        {
+          "label": "Native in-flight receive and attachment qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42255611643"
+        },
         {
           "label": "Changes since the contributor requested one dispatcher and a behavioral test",
           "url": "https://github.com/tamird/gvisor/compare/c0e6b2876...95ca4e731"
@@ -53522,10 +53530,10 @@
       },
       "followup": {
         "owner": "Agent",
-        "sourceHead": "95ca4e7317b6418d4ba8674a4f8d96b4c950ae78",
-        "observedAt": "2026-11-06T16:32:56.778Z",
+        "sourceHead": "d4e65b135f3f4e6dbb811a59c38917bdb382d6c3",
+        "observedAt": "2026-11-06T16:48:35.207Z",
         "disposition": "Tamir requested removal of the per-attachment channel and the duplicated dispatcher access.",
-        "nextAction": "Revise dispatcher ownership and verify the lifecycle behavior before requesting review.",
+        "nextAction": "Verify the native in-flight receive test and peer-EOF behavior before asking for review.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/95ca4e731"
         ]
@@ -76637,6 +76645,13 @@
             "head": "10555b8fe8ee142f6a956ab3f7fbc717d38b0639",
             "updatedAt": "2026-11-06T15:19:01Z",
             "evidence": "https://github.com/google/gvisor/commit/10555b8fe"
+          },
+          {
+            "id": "IC_kwDOB9IlXs8AAAABjrINMQ",
+            "url": "https://github.com/google/gvisor/pull/17082#issuecomment-6689000753",
+            "head": "10555b8fe8ee142f6a956ab3f7fbc717d38b0639",
+            "updatedAt": "2026-11-06T15:50:13Z",
+            "evidence": "https://github.com/tamird/gvisor/actions/runs/42245055323/artifacts/13518805282"
           }
         ]
       }
