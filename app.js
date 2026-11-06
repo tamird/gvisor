@@ -246,6 +246,7 @@ const DECISION_REASONS = [
   { id: "post-reply", owner: "user", title: "Approve replies, comments, and issues" },
 ];
 const ATTENTION_REASONS = [
+  { id: "agent-requested-review", owner: "agent", title: "Incoming PR review requests" },
   { id: "author-conflicts", owner: "agent", title: "Merge conflicts" },
   { id: "author-ci-remedy", owner: "agent", title: "Merged CI fix needs action" },
   { id: "author-public-checks", owner: "agent", title: "Public source checks failing" },
@@ -511,6 +512,10 @@ function attentionReasons(node, owner) {
       else reasons.push({ ...ATTENTION_REASONS.find(item => item.id === dispositionId), detail: triage });
     } else if (!reasons.some(item => item.id === id)) reasons.push({ ...ATTENTION_REASONS.find(item => item.id === id), ...(title ? { title } : {}), detail });
   };
+  if (node.incomingReviewRequests?.length) {
+    const people = [...new Set(node.incomingReviewRequests.map(item => item.author && `@${item.author}`).filter(Boolean))];
+    add("agent-requested-review", people.length ? `${people.join(", ")} requested a review.` : "GitHub lists an open review request.");
+  }
   for (const decision of pendingDecisions(node)) {
     if (contributorDecisionNeedsRefresh(node, decision)) {
       const base = decision.baseHead || decision.head;
@@ -1547,6 +1552,17 @@ function drawDetails() {
   const top = element("div", `detail-top ${node.type}`), close = button("×", () => select(null));
   close.setAttribute("aria-label", "Close details"); top.append(link(label(node) + " ↗", node.url), close);
   details.append(top, element("h2", "item-title", node.title), element("span", `status-pill ${node.status}`, status(node)));
+  if (node.incomingReviewRequests?.length) {
+    const section = element("section", "detail-section");
+    section.append(element("h3", "", "Incoming review requests"));
+    for (const request of node.incomingReviewRequests) {
+      const who = request.author ? `@${request.author}` : "GitHub review request";
+      const row = element("p", "detail-meta");
+      row.append(link(`${who} · ${date(request.updatedAt)} ↗`, request.url));
+      section.append(row);
+    }
+    details.append(section);
+  }
   for (const decision of visibleDecisions(node)) {
     const changed = contributorDecisionNeedsRefresh(node, decision);
     if (!states(node)["contributor-review"] && !changed) continue;
@@ -1777,6 +1793,20 @@ function stateRecords(snapshot, node) {
   }
   return records;
 }
+function attachReviewRequests(requests, nodes, ids) {
+  for (const request of requests) {
+    const id = prIdentity(request);
+    let node = ids.get(id);
+    if (!node) {
+      node = { id, type: "pr", number: request.number, repo: request.repo, title: request.title,
+        url: request.prURL, head: request.head, status: "open", updatedAt: request.updatedAt, group: "new" };
+      nodes.push(node);
+      ids.set(id, node);
+    }
+    (node.incomingReviewRequests ||= []).push(request);
+  }
+}
+
 function applyLive(snapshot, nextRegistry = registry) {
   const focusedInvestigation = view === "investigations" ? document.activeElement?.closest(".investigation-card")?.id : null;
   liveSnapshot = snapshot;
@@ -1800,6 +1830,7 @@ function applyLive(snapshot, nextRegistry = registry) {
     }
     if (existing) Object.assign(existing, node); else { nodes.push(node); ids.set(id, node); }
   }
+  attachReviewRequests(snapshot.incomingReviewRequests || [], nodes, ids);
   for (const node of nodes) if (snapshot.issues?.[node.id]) Object.assign(node, snapshot.issues[node.id]);
   const edges = registry.edges.map((edge) => ({ ...edge, from: aliases.get(edge.from) || edge.from, to: aliases.get(edge.to) || edge.to }))
     .filter((edge, index, all) => edge.from !== edge.to && all.findIndex((other) => other.from === edge.from && other.to === edge.to && other.type === edge.type) === index);
@@ -2013,6 +2044,17 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
   if (snapshot?.schema !== 1 || snapshot.repo !== nextRegistry.meta.repo || snapshot.owner !== nextRegistry.meta.owner ||
       !Number.isFinite(Date.parse(snapshot.checkedAt)) || !Array.isArray(snapshot.prs) || !snapshot.issues) throw new Error("Invalid GitHub snapshot");
   if (snapshot.registryDate !== nextRegistry.meta.updatedAt) throw new Error("Published registry and GitHub snapshot revisions differ");
+  if (snapshot.incomingReviewRequests !== undefined) {
+    if (!Array.isArray(snapshot.incomingReviewRequests) || snapshot.incomingReviewRequests.some(item => {
+      if (!item || !/^[\w.-]+\/[\w.-]+$/.test(item.repo) || !Number.isSafeInteger(item.number) || item.number < 1) return true;
+      const prURL = `https://github.com/${item.repo}/pull/${item.number}`;
+      return item.prURL !== prURL || typeof item.url !== "string" || item.url.split("#")[0] !== prURL
+        || !["formal", "description", "comment", "review", "inline"].includes(item.kind)
+        || typeof item.id !== "string" || !item.id || typeof item.title !== "string" || !item.title
+        || !/^[a-f0-9]{40}$/.test(item.head) || (item.author != null && typeof item.author !== "string")
+        || !Number.isFinite(Date.parse(item.updatedAt));
+    })) throw new Error("Invalid incoming PR review request");
+  }
   const issueNodes = (nextRegistry.nodes || []).filter(node => node.type === "issue" && node.repo && node.number);
   if (issueNodes.length !== Object.keys(snapshot.issues).length || issueNodes.some(node => !Object.hasOwn(snapshot.issues, node.id)))
     throw new Error("Incomplete issue inventory");

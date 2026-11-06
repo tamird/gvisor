@@ -545,6 +545,28 @@ test('contributor decisions bind the registered branch repository and exact prop
   }
 });
 
+test('incoming requests on a PR share one agent card and link to the original messages', () => {
+  const context = client();
+  const prURL = 'https://github.com/google/gvisor/pull/17082';
+  const request = { repo: 'google/gvisor', number: 17082, title: 'Delay ACKs', head: 'a'.repeat(40),
+    prURL, author: 'ayushr2', kind: 'comment', id: 'IC_1', url: prURL + '#issuecomment-123',
+    updatedAt: '2026-11-06T15:50:13Z' };
+  context.snapshotInput.incomingReviewRequests = [request, { ...request, id: 'RR_2', kind: 'formal', author: null, url: prURL }];
+  const run = source => vm.runInContext(source, context);
+  run('validateSnapshot(snapshotInput); const cards = [], byID = new Map(); attachReviewRequests(snapshotInput.incomingReviewRequests, cards, byID)');
+  assert.equal(run('cards.length'), 1);
+  assert.equal(run('byID.get("pr:17082")'), run('cards[0]'));
+  assert.deepEqual([...run('cards[0].incomingReviewRequests.map(r => r.url)')], [request.url, prURL]);
+  assert.deepEqual([...run('attentionReasons(cards[0], "tamird").map(r => r.id)')], ['agent-requested-review']);
+  assert.equal(run('attentionReasons(cards[0], "tamird")[0].owner'), 'agent');
+  assert.equal(run('contributorDecision(cards[0])'), null);
+  run('const existing = [{id: "pr:17082", summary: "Earlier review"}]; attachReviewRequests(snapshotInput.incomingReviewRequests, existing, new Map([[existing[0].id, existing[0]]]))');
+  assert.equal(run('existing.length'), 1);
+  assert.equal(run('existing[0].summary'), 'Earlier review');
+  context.snapshotInput.incomingReviewRequests = [{ ...request, url: 'https://github.com/google/gvisor/pull/1#discussion_r1' }];
+  assert.throws(() => run('validateSnapshot(snapshotInput)'), /Invalid incoming PR review request/);
+});
+
 test('outgoing reviews return to the agent when the public head changes', () => {
   const context = client(), node = attentionNode();
   node.github.headOwner = 'EtiennePerot';
