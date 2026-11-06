@@ -1,6 +1,16 @@
 # AMD64 cgroup-v2 unit presubmit
 
-Upstream selects **360 runnable tests and 2,881 build-only targets** for this row. The mixed RBE smoke ran one of its logical tests, AMD64 atomicbitops. The fork's broader unit profile selects 319 of the 360 by their upstream labels. [Public Make target](https://github.com/google/gvisor/blob/f51a205a8/Makefile#L264-L269) · [Original six remote results](https://github.com/tamird/gvisor/actions/runs/42232937931/artifacts/13510273674)
+The Bazel 9 graph on upstream `f51a205a8` selects **all 360 runnable tests and 2,881 build-only targets** from the AMD64 cgroup-v2 unit row. The same submission also selects the native `uname` syscall test. Its Buildkite command is `bazel test --config=source-presubmit`. [Fork proposal](https://github.com/tamird/gvisor/commit/949d48715) · [Public Make target](https://github.com/google/gvisor/blob/f51a205a8/Makefile#L264-L269)
+
+| What was verified | Result |
+|---|---|
+| Selection | Every public label, rule kind, test size and set of tags matches. The 3,241 unit roots split into seven configuration groups and the 360 runnable tests into two. Each group maps one-to-one between the two revisions, including the original membership. [Complete analysis](https://github.com/tamird/gvisor/actions/runs/42240826638/artifacts/13517195079) |
+| Action placement | Bazel assigned 366 test shard actions to OCI and five to Firecracker. The five are `cmd_test`, the runsc sandbox test, both sandboxexec binding tests and the native syscall. Ten Go compile actions and one C++ compile action sampled from the graph selected the ordinary OCI worker. [Action records](https://github.com/tamird/gvisor/actions/runs/42240826638/artifacts/13517195079) |
+| Worker cgroup and cache | Both worker types returned cgroup2fs magic `0x63677270`, only hierarchy 0 and `IsOnlyV2() == true`. The OCI worker reported kernel `6.12.113+`; the VM reported `6.18.57`. Each test ran remotely with both values of `CGROUPV2`. Repeating `true` hit both remote cache entries. A v1 row still requires a real v1 fixture. [Measured workers](https://github.com/tamird/gvisor/actions/runs/42240363852/artifacts/13516160486) |
+
+### Comparison with the older integration
+
+The original mixed smoke ran one logical test from the AMD64 unit row, atomicbitops. The broader unit profile on that older source selects 319 of the 360 by their upstream labels. [Original six remote results](https://github.com/tamird/gvisor/actions/runs/42232937931/artifacts/13510273674)
 
 | Selection on Linux AMD64 | Runnable tests | Same runnable label upstream | Build-only targets |
 |---|---:|---:|---:|
@@ -17,7 +27,6 @@ The broader fork profile has one additional build-only failure. Selecting `test/
 
 **Keep the cgroup cache key and qualify placement.** Public Make observes the host cgroup filesystem and passes `--test_env=CGROUPV2=true` on this row. The fork's broad unit profile omits the setting. The runtime detects the real filesystem with `statfs`. A configuration carrying `CGROUPV2=true` still needs a test worker with an actual cgroup-v2 mount. The fork's v1 transition already replaces that environment entry with `false` for its own tests. The earlier native cgroup-v2 run on a GitHub runner executed 471 named cases in two packages. The six-target RBE receipt does not record the remote workers' cgroup filesystems. [Host detection](https://github.com/google/gvisor/blob/f51a205a8/runsc/cgroup/cgroup.go#L127-L135) · [V1 transition](https://github.com/tamird/gvisor/blob/9fd10bc0c/tools/bazeldefs/cgroup_test.bzl#L14-L23) · [Earlier native cases](https://github.com/tamird/gvisor/actions/runs/41495497730/artifacts/13166333421)
 
-For the next shared graph, derive the unit selection from the current public roots and flags on the current source. Preserve every runnable owner and build-only root, and give v2 unit results the correct cache key. Then verify the actual worker filesystem on a cgroup-sensitive owner before counting this row as migrated.
 
 ## Reading the comparison
 

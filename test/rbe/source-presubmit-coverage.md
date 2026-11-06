@@ -12,7 +12,7 @@ The source is [upstream `f51a205a8`](https://github.com/google/gvisor/blob/f51a2
 
 The primary pipeline has 62 eligible rows before optional gates, four conditional GPU rows and four conditional image rows. Together they expand to 242 Buildkite partitions when enabled. Ten rows have no branch or staged-input predicate. They cover AMD64 syscalls, overlay, host networking, software GSO, fsstress and the five language runtime suites. The 38 master-only rows and one staged-only consistency check are listed separately in the [machine-readable inventory](source-presubmit-rows.jsonl). That inventory also records all 12 command rows of the separate first-pass pipeline. Each line contains the original command or command list, predicate, agent selectors, parallelism and row environment. Pipeline-wide settings and hook behavior remain in the linked upstream source.
 
-The [AMD64 cgroup-v2 unit comparison](source-unit-cgroup-v2.md) reconciles the first row against actual Bazel selections. Of 360 upstream runnable tests, the fork unit profile contains 319 with matching labels.
+The [AMD64 cgroup-v2 unit comparison](source-unit-cgroup-v2.md) reconciles the first row against actual Bazel selections. On current source, the fork's single Bazel 9 submission retains all 360 runnable and 2,881 build-only unit owners alongside a native syscall test.
 
 ### Where to expand the graph
 
