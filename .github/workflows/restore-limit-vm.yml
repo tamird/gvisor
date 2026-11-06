@@ -1,7 +1,7 @@
-name: Compare graph restore GC policies under a one-CPU quota
+name: Measure three graph decoder changes on a real one-CPU restore
 on:
   push:
-    branches: [qualification/gc-restore-sentry-identity]
+    branches: [qualification/state-decoder-stack-live-restore]
 permissions:
   contents: read
 jobs:
@@ -11,12 +11,11 @@ jobs:
     timeout-minutes: 275
     env:
       IMAGE: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
-      PRODUCT: c31b2adc27b1d19b1e647b3239cd2b3b536a5adf
-      BASE: 706b124a2e5a587123d9844a83db5e55d318d3ea
+      PRODUCT: 250a2325e821e2b640fe8095146000578cd6e55a
+      BASE: f51a205a8f4afbc5ab41aded070df74951b081ea
       REPORTER: 2b51abee8530385431b7225198fdd5cd65e78696
-      REFERENCE: 4a7ccbd2c90fe8d87fab290803d4887d2d7ac983
-      REFERENCE_BASE: 2511bc60218a81ff6f5ef0d964050aaec5f05ffc
-      REFERENCE_TREE: f0c083455739574b1a9d4e8383c36e89d11ae1eb
+      REFERENCE: 6236f5a7e9599430ef99f93a5c4633474cdb46f9
+      REFERENCE_TREE: 779e4b7e86b11c06d9345f00b594957e34a80d3c
       TEST_BLOB: d891861cda60a712ae19ebee42e246539b0e794d
       PKG: .github/qualification/restore-limit-vm
     steps:
@@ -28,7 +27,7 @@ jobs:
         test "$(id -u)" != 0
         awk '$1 == "MemAvailable:" && $2 >= 7*1024*1024 { found=1 } END { exit !found }' /proc/meminfo
         test "$(df -PB1 . | awk 'END {print $4}')" -gt 10000000000
-        test "$(git rev-parse HEAD^)" = 9bcf6c64ca21f538972279bfb65815a786a21b17
+        test "$(git rev-parse HEAD^)" = 2c5134a6c2d229d459b0f64f5faa0e76855281f4
         test "$(git hash-object "$PKG/gc_reference_test.go")" = d891861cda60a712ae19ebee42e246539b0e794d
         test "$(git hash-object "$PKG/paired.py")" = 358371e5d1267e0dee6c30ea7a06c59ac0765966
         test "$(git hash-object "$PKG/native.sh")" = 5213a75216b76a343796c33e557730c18aa060e3
@@ -60,32 +59,26 @@ jobs:
         (tmp/"restore-vm-verdict.json").write_text(json.dumps({"status":"INCOMPLETE","host":stages,"reference_tree":os.environ["REFERENCE_TREE"],"source_reference":os.environ["REFERENCE"],"parent":os.environ["BASE"],"product":os.environ["PRODUCT"],"stages":{}},indent=2)+"\n")
         assert ok, stages
         PYTHON
-    - name: Build the parent, Parth’s head and the #16134 policy on the same parent
+    - name: Build master, compact descriptors, and the three published decoder changes
       timeout-minutes: 105
       run: |
         set -euo pipefail
         for arm in parent reference candidate; do
           d=$RUNNER_TEMP/restore-build-$arm
           rev=$BASE
+          if [[ "$arm" == reference ]]; then rev=$REFERENCE; fi
           if [[ "$arm" == candidate ]]; then rev=$PRODUCT; fi
           rc=0
           mkdir -p "$d/src" "$d/output"
           chmod a+w "$d/src" "$d/output"
           git -C "$d/src" init -q
-          git -C "$d/src" fetch -q --depth=2 https://github.com/google/gvisor.git "$rev"
-          git -C "$d/src" checkout -q --detach FETCH_HEAD
+          git -C "$d/src" fetch -q --depth=4 https://github.com/tamird/gvisor.git "$PRODUCT"
+          test "$(git -C "$d/src" rev-parse FETCH_HEAD~3)" = "$BASE"
+          test "$(git -C "$d/src" rev-parse FETCH_HEAD~2)" = "$REFERENCE"
+          test "$(git -C "$d/src" rev-parse "$REFERENCE^{tree}")" = "$REFERENCE_TREE"
+          git -C "$d/src" checkout -q --detach "$rev"
           test "$(git -C "$d/src" rev-parse HEAD)" = "$rev"
-          if [[ "$arm" == reference ]]; then
-            git -C "$d/src" fetch -q --depth=5 https://github.com/EtiennePerot/gvisor.git refs/heads/autoresearch/defer-gc
-            test "$(git -C "$d/src" rev-parse FETCH_HEAD)" = "$REFERENCE"
-            tree=$(git -C "$d/src" merge-tree --write-tree --merge-base="$REFERENCE_BASE" "$BASE" "$REFERENCE")
-            test "$tree" = "$REFERENCE_TREE"
-            rev=$(GIT_AUTHOR_DATE='2026-11-06T00:00:00Z' GIT_COMMITTER_DATE='2026-11-06T00:00:00Z' git -C "$d/src" -c user.name='Qualification' -c user.email='qualification@localhost' commit-tree "$tree" -p "$BASE" -m 'Apply the four-commit restore GC reference to the PR parent')
-            git -C "$d/src" checkout -q --detach "$rev"
-            test "$(git -C "$d/src" rev-parse 'HEAD^{tree}')" = "$REFERENCE_TREE"
-          fi
           printf '%s\n' "$rev" > "$d/product.sha"
-          if [[ "$arm" == candidate ]]; then test "$(git -C "$d/src" rev-parse HEAD^)" = "$BASE"; fi
           test "$(git -C "$d/src" rev-parse HEAD:runsc/container/BUILD)" = 64be27011edc6d0c29efe6b1b15b3ebe599cacad
           python3 -B "$PKG/paired.py" "$d/src/runsc/container/BUILD"
           cp "$PKG/gc_reference_test.go" "$d/src/runsc/container/"
@@ -154,7 +147,7 @@ jobs:
         /bin/bash "$PWD/$PKG/native.sh" service "$root" > "$RUNNER_TEMP/native-service.log" 2>&1 || rc=$?
         RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$PKG/paired.py" receive "$rc"
     - name: Compare 36 balanced restore samples per arm with the qualified benchstat
-      timeout-minutes: 16
+      timeout-minutes: 25
       run: |
         set -euo pipefail
         git fetch -q --depth=1 https://github.com/tamird/gvisor.git "$REPORTER"
@@ -167,10 +160,13 @@ jobs:
         cp "$RUNNER_TEMP/reference.bench" "$RUNNER_TEMP/bench-out/reference"
         cp "$RUNNER_TEMP/candidate.bench" "$RUNNER_TEMP/bench-out/candidate"
         chmod a+w "$RUNNER_TEMP/bench-out"
-        docker run --rm --cap-drop=ALL --security-opt no-new-privileges \
+        docker run --rm --user "$(id -u):$(id -g)" --cap-drop=ALL --security-opt no-new-privileges \
           -v "$PWD:/src" -v "$RUNNER_TEMP/bench-out:/transfer" -v "$RUNNER_TEMP/restore-tools:/tools:ro" -w /src \
+          -e HOME=/tmp/graph-build -e USER=runner \
+          -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/src \
           --entrypoint /bin/bash "$IMAGE" -c '
           set -euo pipefail
+          mkdir -p "$HOME"
           test "$(/tools/bazel --version)" = "bazel 8.5.0"
           flags=(--config=x86_64 -c opt --jobs=4 --spawn_strategy=local --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox --remote_cache= --remote_executor= --bes_backend= --stamp --workspace_status_command=)
           /tools/bazel build "${flags[@]}" @org_golang_x_perf//cmd/benchstat >/dev/null 2>&1
@@ -205,9 +201,7 @@ jobs:
                 digest = (d / "elf.sha256").read_text().strip()
                 if re.fullmatch("[0-9a-f]{64}", digest): phase["elf_sha256"] = digest
         data["product_cases"] = sum("native_exit" in row for row in data["stages"].get("restore", {}).get("samples", []))
-        data["earlier_save_workload"] = {"run":41802364888, "artifact":13309574814, "source":"1d5db90e0"}
-        data["prior_200MiB_correctness"] = {"carrier":"3da1a3fcd","source":"71b5044a6","engine":"graph","compression":"flate-best-speed","measured_performance":False}
-        data["host_preflight"] = {"run":42020023134, "artifact":13411067235, "previous_kvm_no_cases":13405209658}
+        data["arms"] = {"parent": "master", "reference": "#16840", "candidate": "#16840 + #16867 + #16822"}
         data["guest_machine"] = "native AMD64 host, 4 allowed CPUs, one-CPU Sentry cgroup, ordinary test user, offline namespaces; systrap Sentry"
         data["planned_workload"] = "100000 empty tmpfs files; 2GiB; native systrap; restore from New until first verified file read; graph+none; full 100000-file tree verified afterwards"
         stats = tmp / "bench-out/benchstat.txt"
@@ -219,7 +213,7 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: native-one-cpu-graph-restore-comparison
+        name: native-decoder-stack-restore
         path: |
           ${{ runner.temp }}/restore-vm-verdict.json
           ${{ runner.temp }}/restore-warmup.json
