@@ -598,9 +598,6 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 	// https://tools.ietf.org/html/draft-ietf-tcpm-rack-08#section-7.6.1.
 	s.rc.tlpRxtOut = false
 
-	// Give up if we've waited more than a minute since the last resend or
-	// if a user time out is set and we have exceeded the user specified
-	// timeout since the first retransmission.
 	uto := s.ep.userTimeout
 
 	if s.firstRetransmittedSegXmitTime == (tcpip.MonotonicTime{}) {
@@ -619,10 +616,17 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 		remaining = uto - elapsed
 	}
 
-	// Always honor the user-timeout irrespective of whether the zero
-	// window probes were acknowledged.
-	// net/ipv4/tcp_timer.c::tcp_probe_timer()
-	if remaining <= 0 || s.unackZeroWindowProbes >= s.maxRetries {
+	var exhausted bool
+	switch {
+	case s.zeroWindowProbing:
+		exhausted = s.unackZeroWindowProbes >= s.maxRetries
+	case uto == 0:
+		// A TLP or fast retransmit can send a segment many times before
+		// the first data timeout. Start enforcing the retry budget only
+		// after a timeout with no intervening cumulative ACK.
+		exhausted = s.maxRetries == 0 || (s.rtoRepeat && retriesTimedOut(elapsed, s.minRTO, s.maxRTO, s.maxRetries))
+	}
+	if remaining <= 0 || exhausted {
 		s.ep.stack.Stats().TCP.EstablishedTimedout.Increment()
 		return &tcpip.ErrTimeout{}
 	}
@@ -709,18 +713,29 @@ func (s *sender) retransmitTimerExpired() tcpip.Error {
 		return nil
 	}
 
-	seg := s.writeNext
-	// RFC 1122 4.2.3.5: Close the connection when the number of
-	// retransmissions for this segment is beyond a limit.
-	if seg != nil && seg.xmitCount > s.maxRetries {
-		s.ep.stack.Stats().TCP.EstablishedTimedout.Increment()
-		return &tcpip.ErrTimeout{}
-	}
-
 	s.rtoRepeat = true
 	s.sendData()
 
 	return nil
+}
+
+// retriesTimedOut reports whether elapsed covers the initial timeout and all
+// the retries, doubling the interval until maxRTO. Compare elapsed directly
+// so even the largest configured retry count cannot overflow a duration.
+// Linux models this timeout starting at TCP_RTO_MIN. Honor a larger minimum
+// configured by the stack, and cap each interval at its configured maximum.
+// See https://github.com/torvalds/linux/blob/f66469d99/net/ipv4/tcp_timer.c#L188-L239.
+func retriesTimedOut(elapsed, minRTO, maxRTO time.Duration, retries uint32) bool {
+	interval := min(maxRTO, max(MinRTO, minRTO))
+	for retries > 0 && interval > 0 && interval < maxRTO {
+		if elapsed < interval {
+			return false
+		}
+		elapsed -= interval
+		interval += min(interval, maxRTO-interval)
+		retries--
+	}
+	return interval == 0 || elapsed/interval > time.Duration(retries)
 }
 
 // pCount returns the number of packets in the segment. Due to GSO, a segment
@@ -1806,12 +1821,16 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 
 		s.SetPipe()
 
-		// If all outstanding data was acknowledged the disable the timer.
+		// The peer can acknowledge the entire timeout-recovery flight while
+		// newer data is still in flight. Start a fresh timeout budget for
+		// that data even if the write queue never becomes empty.
+		if s.SndUna == s.SndNxt || (!s.zeroWindowProbing && s.FastRecovery.Last.LessThan(ack)) {
+			s.firstRetransmittedSegXmitTime = tcpip.MonotonicTime{}
+		}
+		// If all outstanding data was acknowledged, disable the timer.
 		// RFC 6298 Rule 5.3
 		if s.SndUna == s.SndNxt {
 			s.Outstanding = 0
-			// Reset firstRetransmittedSegXmitTime to the zero value.
-			s.firstRetransmittedSegXmitTime = tcpip.MonotonicTime{}
 			s.resendTimer.disable()
 			s.probeTimer.disable()
 		}

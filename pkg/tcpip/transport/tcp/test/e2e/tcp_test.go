@@ -4846,6 +4846,70 @@ func TestSendOnResetConnection(t *testing.T) {
 	}
 }
 
+func TestTailProbeDoesNotConsumeTimeoutRetry(t *testing.T) {
+	clock := faketime.NewManualClock()
+	acks := make(chan seqnum.Value, 4)
+	c := context.NewWithOpts(t, context.Options{
+		EnableV4: true,
+		MTU:      e2e.DefaultMTU,
+		Clock:    clock,
+		Probe: func(st *tcp.TCPEndpointState) {
+			select {
+			case acks <- st.Sender.SndUna:
+			default:
+			}
+		},
+	})
+	defer c.Cleanup()
+	const interval = time.Second
+	minRTO, maxRTO := tcpip.TCPMinRTOOption(interval), tcpip.TCPMaxRTOOption(interval)
+	retries := tcpip.TCPMaxRetriesOption(1)
+	for _, opt := range []tcpip.SettableTransportProtocolOption{&minRTO, &maxRTO, &retries} {
+		if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, opt); err != nil {
+			t.Fatalf("SetTransportProtocolOption(%T): %v", opt, err)
+		}
+	}
+	e2e.SetStackSACKPermitted(t, c, true)
+	c.CreateConnectedWithOptionsNoDelay(header.TCPSynOptions{SACKPermitted: true})
+	data := []byte("ab")
+	if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
+		t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, len(data))
+	}
+	c.ReceiveAndCheckPacketWithOptions(data, 0, 2, 0)
+	clock.Advance(interval)
+	c.ReceiveAndCheckPacketWithOptions(data, 0, 2, 0)
+	if got := c.Stack().Stats().TCP.Timeouts.Value(); got != 0 {
+		t.Fatalf("tail probe counted as %d timeouts", got)
+	}
+	clock.Advance(interval)
+	if got := c.Stack().Stats().TCP.EstablishedTimedout.Value(); got != 0 {
+		t.Fatalf("first data timeout closed the connection after a tail probe: EstablishedTimedout=%d", got)
+	}
+	c.ReceiveAndCheckPacketWithOptions(data, 0, 2, 0)
+
+	// Acknowledge only the first byte. The second byte has already been sent
+	// three times, but the advancing ACK permits its next timeout repair.
+	c.SendAck(seqnum.Value(context.TestInitialSequenceNumber).Add(1), 1)
+	deadline := time.After(3 * time.Second)
+	for waiting := true; waiting; {
+		select {
+		case ack := <-acks:
+			waiting = ack != c.IRS.Add(2)
+		case <-deadline:
+			t.Fatal("partial ACK was not processed")
+		}
+	}
+	clock.Advance(interval)
+	c.ReceiveAndCheckPacketWithOptions(data, 1, 1, 0)
+	if got := c.Stack().Stats().TCP.Timeouts.Value(); got != 2 {
+		t.Fatalf("after partial ACK: %d data timeouts, want 2", got)
+	}
+	clock.Advance(interval)
+	if got := c.Stack().Stats().TCP.EstablishedTimedout.Value(); got != 1 {
+		t.Fatalf("timeout without further progress: EstablishedTimedout=%d, want 1", got)
+	}
+}
+
 // TestMaxRetransmitsTimeout tests if the connection is timed out after
 // a segment has been retransmitted MaxRetries times.
 func TestMaxRetransmitsTimeout(t *testing.T) {
