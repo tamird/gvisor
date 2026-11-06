@@ -1,0 +1,3 @@
+steps:
+  - label: "Remote source tests"
+    command: bazel test --config=rbe-matrix //test/rbe:mixed_execution_smoke

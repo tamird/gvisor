@@ -120,6 +120,18 @@ test_suite(
     ],
 )
 
+# Exercise ordinary workers on both CPUs and namespace-isolated syscall tests
+# from a single remote submission.
+test_suite(
+    name = "mixed_execution_smoke",
+    tags = ["manual"],
+    tests = [
+        ":platform_matrix",
+        "//test/syscalls:uname_test_native_amd64",
+        "//test/syscalls:uname_test_runsc_systrap_shared_amd64",
+    ],
+)
+
 docker_daemon_config(
     name = "systemd_fixture_docker_config",
     testonly = True,
