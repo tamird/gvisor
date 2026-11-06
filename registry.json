@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T08:32:16.199Z",
+    "updatedAt": "2026-11-06T08:41:38.294Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4845,10 +4845,14 @@
       "url": "https://github.com/tamird/gvisor/commit/9310f06f9",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Replace Coral GCC with hermetic-llvm for AMD64 and ARM64 releases. gVisor d5fe3c2ee uses the static C runtime on supplier be935b828 and removes its local unwinder and Linux-header patches.\n\nA Linux Bazel client drove each cross-build. The shell-free AMD64 worker ran Nogo and linked the two public ARM64 race binaries. The shell-free ARM64 worker ran Nogo and linked the two AMD64 binaries. Both pairs of links ran uncached. Each native target runner verified all five installed files and ran a systrap guest with its matching Sentry.\n\nThe supplier uses the first four static C commits from #768, the per-version glibc sources, libresolv.a for cgo DNS, and the LLVM unwinder for pthread cancellation. The earlier 0.8.24 release passed with an unavailable static C++ runtime. On b317c6e36 the static GNU TLDK Sentry exchanged TCP and UDP on native AMD64.\n\nWith the native Python bootstrap and an explicit source stamp, an AMD64 Bazel client with empty PATH directories built the public release on a shell-free AMD64 worker. Both pack actions ran uncached. All nine archive members matched their installed executables. The archived Sentry saved its source identity and restored the guest.",
-      "updatedAt": "2026-11-06T08:32:16.199Z",
+      "summary": "Replace Coral GCC with hermetic-llvm for AMD64 and ARM64 releases. gVisor d5fe3c2ee uses the static C runtime on supplier be935b828 and removes its local unwinder and Linux-header patches.\n\nA Linux Bazel client drove each cross-build. The shell-free AMD64 worker ran Nogo and linked the two public ARM64 race binaries. The shell-free ARM64 worker ran Nogo and linked the two AMD64 binaries. Both pairs of links ran uncached. Each native target runner verified all five installed files and ran a systrap guest with its matching Sentry.\n\nThe supplier uses the first four static C commits from #768, the per-version glibc sources, libresolv.a for cgo DNS, and the LLVM unwinder for pthread cancellation. The earlier 0.8.24 release passed with an unavailable static C++ runtime. On b317c6e36 the static GNU TLDK Sentry exchanged TCP and UDP on native AMD64.\n\nWith the native Python bootstrap and an explicit source stamp, an AMD64 Bazel client with empty PATH directories built the public release on a shell-free AMD64 worker. Both pack actions ran uncached. All nine archive members matched their installed executables. The archived Sentry saved its source identity and restored the guest.\n\nThe reverse cross-build also packaged the public release. A static AArch64 Python writer executed both tar actions uncached on an ARM64 worker. The nine AMD64 archive members matched their inputs and the unpacked Sentry booted a rootless guest on native AMD64.",
+      "updatedAt": "2026-11-06T08:41:38.294Z",
       "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
       "evidence": [
+        {
+          "label": "Native ARM64 package writer, nine AMD64 archive members, and the unpacked AMD64 Sentry booting a guest",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42187692330/artifacts/13488448734"
+        },
         {
           "label": "Empty-PATH Bazel client, original workspace-status failure, two uncached remote tar actions and all nine installed files",
           "url": "https://github.com/tamird/gvisor/actions/runs/42186258349/artifacts/13488320650"
@@ -53310,6 +53314,51 @@
         }
       ],
       "number": 17092
+    },
+    {
+      "id": "branch:nic-detach-after-unlock",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/nic-detach-after-unlock",
+      "head": "39d28d4ef5d4a11aa5f8756d62bf99e1cd02816d",
+      "url": "https://github.com/tamird/gvisor/commit/39d28d4ef",
+      "title": "Release the stack mutex before draining a removed NIC",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T08:41:38.294Z",
+      "summary": "Stack.Wait held the stack mutex while waiting for a receive worker. That worker needed the mutex to find the input interface. Unlink the interface under the mutex, then drain its workers after unlocking. Wait for all links before closing any because closing one end of a veth can close its peer. Six lifecycle cases passed under the race detector and 16 real socket transfers completed teardown. The final source removes one obsolete comment from the tested revision.",
+      "evidence": [
+        {
+          "label": "Original TCP transfer and blocked goroutines",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42182737590/artifacts/13486607377"
+        },
+        {
+          "label": "Stock deadlocks during detach and wait",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42184816858/artifacts/13487049924"
+        },
+        {
+          "label": "Two-link close ordering, checkpoint, both architecture analyzers and 16 completed socket transfers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42186032271/artifacts/13488745937"
+        },
+        {
+          "label": "All six lifecycle cases executed under the race detector",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42188134979/artifacts/13488836429"
+        },
+        {
+          "label": "Only change after qualification: remove an obsolete comment",
+          "url": "https://github.com/tamird/gvisor/compare/890afa390...39d28d4ef"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "39d28d4ef5d4a11aa5f8756d62bf99e1cd02816d",
+        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+        "title": "Open the NIC teardown fix",
+        "url": "https://github.com/tamird/gvisor/commit/39d28d4ef",
+        "requestedAt": "2026-11-06T08:41:38.294Z",
+        "summary": "Stack.Wait held the stack mutex while waiting for a receive worker. That worker needed the mutex to find the input interface. Unlink the interface under the mutex, then drain its workers after unlocking. Wait for all links before closing any because closing one end of a veth can close its peer."
+      }
     }
   ],
   "edges": [
@@ -70359,9 +70408,31 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-06T08:32:16.199Z",
+      "updatedAt": "2026-11-06T08:41:38.294Z",
       "summary": "A shell-free AMD64 RBE worker packaged the nine-file public release for AMD64 and ARM64. The ARM64 tarball booted a rootless systrap guest on a native runner. This integration uses a forked rules_python launcher and a declared static CPython. Earlier cross-builds also linked race-enabled releases in both directions. Publication of the verified directory-only worker image awaits permission.",
       "findings": [
+        {
+          "text": "With current rules_python main, both native launchers ran their extracted programs on Linux with an empty PATH. The ARM64 Python distribution needed libgcc_s.so.1 from a pinned distroless/cc image. Both architectures passed 26 bootstrap tests. Invoking the program through a symlink or passing another program’s runfiles directory still failed only with the native launcher. The supplier change remains on the fork.",
+          "evidence": [
+            {
+              "label": "AMD64 package, nested runfiles and symlink invocations",
+              "url": "https://github.com/tamird/rules_python/actions/runs/42188215930/artifacts/13489060458"
+            },
+            {
+              "label": "ARM64: same archive before and after adding libgcc_s.so.1",
+              "url": "https://github.com/tamird/rules_python/actions/runs/42188215930/artifacts/13488408241"
+            }
+          ]
+        },
+        {
+          "text": "The pinned ARM64 static interpreter executed both remote tar actions on an ARM64 worker and produced an 84,390,074-byte AMD64 release. A native AMD64 host verified all nine executables and ran the Sentry from the extracted archive.",
+          "evidence": [
+            {
+              "label": "Native ARM64 package writer, nine AMD64 archive members, and the unpacked AMD64 Sentry booting a guest",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42187692330/artifacts/13488448734"
+            }
+          ]
+        },
         {
           "text": "An archived rules_python program started on native AMD64 in distroless/base with an empty PATH. On ARM64 the native launcher reached the packaged interpreter, which required libgcc_s.so.1. Both upstream package tests passed on the ordinary Linux hosts. The independent supplier proposal is being checked against current main, including nested runfiles and symlink invocation.",
           "evidence": [
@@ -72790,7 +72861,7 @@
           ]
         }
       ],
-      "nextStep": "Await Tamir’s permission to publish the verified layout as ghcr.io/tamird/gvisor-scratch-directory:v1 and make the new personal package public so both workers can pull it anonymously. If approved, verify the published digests and run the declared action on each worker. For further graph or runtime coverage, select an exact still-uncovered owner from the existing ledger and identify its declared execution inputs first; do not repeat the completed release installations, native ARM guest, test_app/race-fixture checks, seccheck example or lifecycle/boot/corpus cases. Keep builds, TestRunner cases and guests separate. Follow the remaining compiler and supplier changes in the compiler record. The BuildBuddy production revision is still unknown: establish changed zero-layer behavior before repeating that probe.",
+      "nextStep": "Use normal Bazel toolchain selection for the package writer on both execution architectures. Repair the native launcher’s nested-runfiles and symlink behavior before offering it upstream. The separate zero-layer worker experiment awaits authorization to publish ghcr.io/tamird/gvisor-scratch-directory:v1 as a public package. Verify that deployment and the actual BuildBuddy worker version before repeating that probe.",
       "evidence": [
         {
           "label": "Verified OCI layout with a single empty directory",
@@ -75693,5 +75764,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-06T08:32:16.199Z"
+  "updatedAt": "2026-11-06T08:41:38.294Z"
 }

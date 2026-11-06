@@ -1,0 +1,30 @@
+Connected TCP reads through two netstack endpoints on AMD64
+
+author  https://github.com/tamird/gvisor/commit/7f850daee
+prefix  https://github.com/tamird/gvisor/commit/e1b1c8606
+inputs  https://github.com/tamird/gvisor/actions/runs/42188679721/artifacts/13489086463
+tool    golang.org/x/perf/cmd/benchstat@v0.0.0-20261009192801-be2c69fb417e
+
+The prefix implementation avoids cloning unread packet views on a partial
+read. Both versions use the same NIC teardown. Each sample transferred
+and verified 4 MiB at MTU 1500, with GRO and GSO disabled. Time per
+operation is normalized to 1 MiB. All 16 pairs ran on two CPUs of an
+AMD EPYC 7763. The first implementation alternated between pairs.
+
+                              │    author    │                prefix                │
+                              │    sec/op    │    sec/op     vs base                │
+ConnectedTCPRead/read=64-2      18.81m ±  1%   16.24m ± 11%  -13.68% (p=0.000 n=16)
+ConnectedTCPRead/read=65536-2   11.00m ± 19%   10.70m ± 14%        ~ (p=0.515 n=16)
+geomean                         14.39m         13.18m         -8.37%
+
+                              │    author    │                prefix                 │
+                              │     B/s      │      B/s       vs base                │
+ConnectedTCPRead/read=64-2      53.15Mi ± 1%   61.58Mi ± 11%  +15.85% (p=0.000 n=16)
+ConnectedTCPRead/read=65536-2   90.92Mi ± 5%   93.46Mi ± 14%        ~ (p=0.508 n=16)
+geomean                         69.52Mi        75.86Mi         +9.13%
+
+                              │    author    │               prefix                │
+                              │    B/read    │    B/read     vs base               │
+ConnectedTCPRead/read=64-2        63.98 ± 0%     63.98 ± 0%       ~ (p=0.761 n=16)
+ConnectedTCPRead/read=65536-2   49.36Ki ± 9%   50.88Ki ± 7%       ~ (p=0.744 n=16)
+geomean                         1.756Ki        1.783Ki       +1.54%
