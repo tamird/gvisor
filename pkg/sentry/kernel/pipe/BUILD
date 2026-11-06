@@ -7,13 +7,6 @@ package(
 )
 
 declare_mutex(
-    name = "vfs_mutex",
-    out = "vfs_mutex.go",
-    package = "pipe",
-    prefix = "vfs",
-)
-
-declare_mutex(
     name = "pipe_mutex",
     out = "pipe_mutex.go",
     nested_lock_names = ["pipe"],
@@ -21,17 +14,9 @@ declare_mutex(
     prefix = "pipe",
 )
 
-declare_mutex(
-    name = "inode_mutex",
-    out = "inode_mutex.go",
-    package = "pipe",
-    prefix = "inode",
-)
-
 go_library(
     name = "pipe",
     srcs = [
-        "inode_mutex.go",
         "pipe.go",
         "pipe_mutex.go",
         "pipe_unsafe.go",
