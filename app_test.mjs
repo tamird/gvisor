@@ -86,11 +86,80 @@ test('the deployed dashboard reads new decisions even if Pages still serves the 
   };
   const read = () => vm.runInContext('publishedSnapshot()', context);
   assert.equal((await read())[0].nodes[0].contributorReview.head, head);
-  // A branch update can reach the two URLs at different times.
+  // A branch update can reach the two URLs at different times. Its new
+  // decisions take precedence over the older, matching deployed pair.
   branchSnapshot = context.snapshotInput;
-  assert.equal((await read())[0], older);
+  assert.equal((await read())[0], newer);
   vm.runInContext('model.checkedAt = snapshotInput.checkedAt', context);
-  await assert.rejects(read(), /registry/i);
+  assert.equal((await read())[0], newer);
+});
+
+test('a registry update keeps known merges and current decisions across visits', async () => {
+  for (const alreadyOpen of [false, true]) {
+    const context = client(), run = source => vm.runInContext(source, context);
+    const repo = 'google/gvisor', head = 'a'.repeat(40), checkedAt = context.snapshotInput.checkedAt;
+    const pr = (number, repoName = repo) => ({ id: repoName === repo ? `pr:${number}` : `pr:${repoName}:${number}`,
+      type: 'pr', number, repo: repoName, status: 'open', title: 'Test PR', url: `https://github.com/${repoName}/pull/${number}` });
+    const old = { ...context.registryInput, nodes: [pr(1), pr(2), pr(3), pr(1, 'other/repo')], groups: [], edges: [] };
+    const next = structuredClone(old);
+    next.meta.updatedAt = '2026-10-13T01:00:00Z';
+    next.nodes[2].contributorReview = { kind: 'reply', status: 'pending', title: 'Post reply', summary: 'Reply about the follow-up.',
+      body: 'The follow-up landed.', url: next.nodes[2].url, head };
+    const snapshot = { ...context.snapshotInput, prs: old.nodes.slice(0, 3).map(node => ({
+      ...node, status: node.number === 2 ? 'closed' : 'merged', mergedAt: node.number === 2 ? null : checkedAt,
+      checkedAt, updatedAt: checkedAt, head, imports: [], labels: [], threads: {} })) };
+    let served = alreadyOpen ? old : next, published;
+    const olderRaw = { ...snapshot, prs: snapshot.prs.slice(0, 2) };
+    const olderPages = { ...snapshot, prs: snapshot.prs.slice(1) };
+    context.location = { hostname: 'tamird.github.io' };
+    context.fetch = async path => ({ ok: true, json: async () => {
+      if (path.endsWith('registry.json')) return served;
+      if (served === old) return snapshot;
+      return path.startsWith('https:') ? olderRaw : (published || olderPages);
+    } });
+    context.AbortSignal = AbortSignal;
+    const storage = new Map(), elements = new Map();
+    context.localStorage = { getItem: k => storage.get(k) || null, setItem: (k, v) => storage.set(k, v) };
+    context.document = { getElementById(id) {
+      if (!elements.has(id)) elements.set(id, { value: '', checked: false, querySelectorAll: () => [], scrollTo() {} });
+      return elements.get(id);
+    } };
+    run('initialize = updateRegistryControls = scheduleRefresh = render = () => {}; restoreView = () => false; view = "table"; selected = "pr:1";');
+    await run('start()');
+    if (alreadyOpen) {
+      assert.equal(run('nodeMap().get("pr:2").status'), 'closed');
+      served = next;
+      await run('lastAttempt = 0; refresh(true)');
+    }
+    assert.equal(run('registry.meta.updatedAt'), next.meta.updatedAt);
+    assert.equal(run('selected'), 'pr:1');
+    assert.equal(run('nodeMap().get("pr:1").status'), 'merged');
+    assert.equal(run('historical(nodeMap().get("pr:1")) && visibleHistory(nodeMap().get("pr:1"))'), true);
+    assert.equal(run('nodeMap().get("pr:other/repo:1").status'), 'open');
+    assert.equal(run('nodeMap().get("pr:2").status'), 'open');
+    assert.equal(run('nodeMap().get("pr:3").status'), 'merged');
+    assert.equal(run('contributorDecision(nodeMap().get("pr:3")).body'), next.nodes[2].contributorReview.body);
+    assert.equal(run('historical(nodeMap().get("pr:3"))'), false);
+    assert.equal(run('nodeMap().get("pr:3").github'), undefined);
+    assert.match(elements.get('freshness-text').textContent, /predates this registry/);
+    for (const list of ['tableNodes()', 'graphNodes()']) {
+      assert.ok(run(`${list}.some(n => n.id === "pr:1")`)); // Explicit selection.
+      run('selected = null');
+      assert.deepEqual([...run(`${list}.map(n => n.id)`)], ['pr:2', 'pr:3', 'pr:other/repo:1']);
+      run('$("show-resolved").checked = true');
+      assert.ok(run(`${list}.some(n => n.id === "pr:1")`));
+      run('$("show-resolved").checked = false; selected = "pr:1"');
+    }
+    published = { ...snapshot, registryDate: next.meta.updatedAt };
+    await run('lastAttempt = 0; refresh(true)');
+    assert.equal(run('nodeMap().get("pr:1").github.head'), head);
+    assert.match(elements.get('freshness-text').textContent, /GitHub snapshot ·/);
+    // Both hosts lag again, while the tab and its cache already have a full match.
+    published = null;
+    await run('lastAttempt = 0; refresh(true)');
+    assert.equal(run('nodeMap().get("pr:1").github.head'), head);
+    assert.equal(JSON.parse(storage.values().next().value).registryDate, next.meta.updatedAt);
+  }
 });
 
 test('every open snapshot PR shares its import decision with the periodic planner', () => {
