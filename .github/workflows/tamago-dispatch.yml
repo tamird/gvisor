@@ -22,6 +22,14 @@ jobs:
             sudo apt-get update -qq
             sudo apt-get install -y --no-install-recommends qemu-system-x86
           fi
+          # QEMU opens /dev/kvm separately for each boot. Keep this runner's
+          # ACL when udev applies the device permissions from the KVM package.
+          sudo install -d /run/udev/rules.d
+          printf 'KERNEL=="kvm", RUN+="/usr/bin/setfacl -m u:%s:rw /dev/kvm"\n' "$(id -u)" |
+            sudo tee /run/udev/rules.d/99-tamago-dispatch-kvm.rules >/dev/null
+          sudo udevadm control --reload-rules
+          sudo udevadm settle
+          sudo setfacl -m "u:$USER:rw" /dev/kvm
           qemu-system-x86_64 --version
           curl --fail --location --retry 3 -o "$d/bazel" https://github.com/bazelbuild/bazel/releases/download/9.3.1/bazel-9.3.1-linux-x86_64
           echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $d/bazel" | sha256sum --check
@@ -33,9 +41,7 @@ jobs:
           set -euo pipefail
           d="$RUNNER_TEMP/tamago-dispatch"
           stat -c '%U:%G %a %t:%T' /dev/kvm
-          # Each QEMU process opens the current device node. Use its normal
-          # group permissions for all six boots, including after udev runs.
-          sudo -u "$USER" -g kvm -- env -i PATH="$PATH" HOME="$HOME" USER="$USER" "$d/bazel" --batch test \
+          env -i PATH="$PATH" HOME="$HOME" USER="$USER" "$d/bazel" --batch test \
             --override_repository="tamago_sdk=$d/sdk" --nocache_test_results --test_output=errors \
             --build_event_json_file="$d/results/bep.json" \
             //:stock_guest //:fixed_guest //:scheduler_guest_test
