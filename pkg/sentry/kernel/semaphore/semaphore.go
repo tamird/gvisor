@@ -16,6 +16,7 @@
 package semaphore
 
 import (
+	gocontext "context"
 	"fmt"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
@@ -99,7 +100,10 @@ type Set struct {
 //
 // +stateify savable
 type sem struct {
-	value   int16
+	mu *sync.Mutex `state:"nosave"`
+	// +checklocks:mu
+	value int16
+	// +checklocks:mu
 	waiters waiterList `state:"zerovalue"`
 	pid     int32
 }
@@ -264,6 +268,7 @@ func (r *Registry) newSetLocked(ctx context.Context, key ipc.Key, creator *auth.
 		sems:       make([]sem, nsems),
 	}
 
+	set.bindSemaphoreLocks()
 	err := r.reg.Register(set)
 	if err != nil {
 		return nil, err
@@ -771,3 +776,11 @@ func newWaiter(val int16) *waiter {
 		ch:    make(chan struct{}, 1),
 	}
 }
+
+// bindSemaphoreLocks restores the member aliases after allocation or load.
+func (s *Set) bindSemaphoreLocks() {
+	for i := range s.sems {
+		s.sems[i].mu = &s.mu
+	}
+}
+func (s *Set) afterLoad(gocontext.Context) { s.bindSemaphoreLocks() }
