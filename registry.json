@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T06:48:31.766413Z",
+    "updatedAt": "2026-11-06T07:16:57.053556Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4846,7 +4846,7 @@
       "group": "bazel",
       "status": "Agent work",
       "summary": "Replace Coral GCC with hermetic-llvm for AMD64 and ARM64 releases. gVisor d5fe3c2ee uses the static C runtime on supplier be935b828 and removes its local unwinder and Linux-header patches.\n\nA Linux Bazel client drove each cross-build. The shell-free AMD64 worker ran Nogo and linked the two public ARM64 race binaries. The shell-free ARM64 worker ran Nogo and linked the two AMD64 binaries. Both pairs of links ran uncached. Each native target runner verified all five installed files and ran a systrap guest with its matching Sentry.\n\nThe supplier uses the first four static C commits from #768, the per-version glibc sources, libresolv.a for cgo DNS, and the LLVM unwinder for pthread cancellation. The earlier 0.8.24 release passed with an unavailable static C++ runtime. On b317c6e36 the static GNU TLDK Sentry exchanged TCP and UDP on native AMD64.",
-      "updatedAt": "2026-11-06T06:43:56.321915Z",
+      "updatedAt": "2026-11-06T07:16:57.053556Z",
       "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
       "evidence": [
         {
@@ -5292,6 +5292,10 @@
         {
           "label": "ARM64 worker’s original Bazel invocation for the AMD64 release",
           "url": "https://app.buildbuddy.io/invocation/31a729dd-af14-48c7-8e2a-a753b09ba34c"
+        },
+        {
+          "label": "Public release archive stops at the Python writer after the binary cross-builds",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42178536750/artifacts/13484526514"
         }
       ],
       "refinement": {
@@ -5439,7 +5443,8 @@
           "https://github.com/tamird/gvisor/actions/runs/42168301478/artifacts/13480568715",
           "https://github.com/tamird/gvisor/actions/runs/42172691284/artifacts/13483092284",
           "https://github.com/tamird/gvisor/actions/runs/42172691284/artifacts/13483037329",
-          "https://app.buildbuddy.io/invocation/31a729dd-af14-48c7-8e2a-a753b09ba34c"
+          "https://app.buildbuddy.io/invocation/31a729dd-af14-48c7-8e2a-a753b09ba34c",
+          "https://github.com/tamird/gvisor/actions/runs/42178536750/artifacts/13484526514"
         ]
       }
     },
@@ -37691,8 +37696,8 @@
       "url": "https://github.com/tamird/rules_pkg/commit/1702e63c4",
       "group": "bazel",
       "status": "Withdrawn",
-      "summary": "The archive-specific workaround was not submitted. With rules_python 2.4.5, a plain Python action and the unchanged ZIP writer have identical host bootstrap requirements. The existing rules_pkg CI already runs the ZIP tests; its examples need no new Python dependency. The scratch tar, Debian and relocation prototypes used a native first-stage launcher on top of rules_python #4183. That draft alone did not provide the launcher used in those builds. rules_python 2.5.0-rc0 still offers the script and system-Python bootstrap choices. The native tool in #4216 creates executable ZIPs.",
-      "updatedAt": "2026-11-06T06:48:31.766413Z",
+      "summary": "The public release archive stops at //debian:gvisor-bin-tar on a shell-free AMD64 worker. The 12,119-byte build_tar executable starts with #!/usr/bin/env bash. The uncached action failed to start, before the outer bzip2 archive ran.\n\nBoth the stock ZIP writer and a plain Python action have the same bootstrap requirement. The scratch tar, Debian and relocation prototypes added a native first-stage launcher to rules_python #4183. rules_python 2.5.0-rc0 offers the script and system-Python choices. #4216 creates executable ZIPs. rules_pkg CI already runs the ZIP tests. Its examples can keep their existing dependencies.",
+      "updatedAt": "2026-11-06T07:16:57.053556Z",
       "evidence": [
         {
           "label": "Stock Linux ZIP archives",
@@ -37741,15 +37746,27 @@
         {
           "label": "Executable Python ZIP creation",
           "url": "https://github.com/bazel-contrib/rules_python/pull/4216"
+        },
+        {
+          "label": "Unchanged rules_pkg writer on the AMD64 shell-free worker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42178536750/artifacts/13484526514"
+        },
+        {
+          "label": "Original failed PackageTar action for the public release",
+          "url": "https://app.buildbuddy.io/invocation/b168a1d9-0827-47cb-8146-6289b052a699"
+        },
+        {
+          "label": "General native stage-one Python launcher",
+          "url": "https://github.com/bazel-contrib/rules_python/issues/2500"
         }
       ],
       "inactive": true,
       "followup": {
         "owner": "root",
         "sourceHead": "1702e63c4673bf8c00df82a1613c2359895fbe20",
-        "observedAt": "2026-11-06T06:48:31.766413Z",
+        "observedAt": "2026-11-06T07:16:57.053556Z",
         "disposition": "Withdrawn",
-        "nextAction": "The scratch packaging investigation owns ordinary Python tool startup. This archive-specific proposal is withdrawn.",
+        "nextAction": "Track rules_python #2500 for a native launcher for ordinary Python executables. The rules_pkg workaround is withdrawn.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/40950484790",
           "https://github.com/bazelbuild/rules_pkg/blob/01446201f/.bazelci/tests.yml#L22-L40",
@@ -37758,7 +37775,10 @@
           "https://app.buildbuddy.io/invocation/813b647f-0118-4b22-9e90-4fadd8dae6c3",
           "https://github.com/tamird/gvisor/blob/2c71fe0cd/MODULE.bazel#L40-L48",
           "https://github.com/bazel-contrib/rules_python/blob/6fee02b2b/python/private/flags.bzl#L174-L178",
-          "https://github.com/bazel-contrib/rules_python/pull/4216"
+          "https://github.com/bazel-contrib/rules_python/pull/4216",
+          "https://github.com/tamird/gvisor/actions/runs/42178536750/artifacts/13484526514",
+          "https://app.buildbuddy.io/invocation/b168a1d9-0827-47cb-8146-6289b052a699",
+          "https://github.com/bazel-contrib/rules_python/issues/2500"
         ]
       }
     },
@@ -53072,6 +53092,43 @@
         "title": "Open the Linux installation guide PR after #16753",
         "summary": "On native AMD64 and ARM64, the documented command built nine executables with only the host GNU tools and Docker stopped. Each installed Sentry ran a guest under systrap. Stock ARM64 failed looking for an x86 cross-compiler. Both runs used a1b8ee4af; the final text names Bazelisk and clarifies the Linux 5.6+ build-host requirement.",
         "body": "Installing runsc needs one archive with its Sentry, containerd shim and\nsidecars. The Docker Make target also builds the zstd archive and copies\nboth outputs. Show Linux developers how to build and extract the bzip2\narchive directly with Bazel, and keep the Docker workflow as an option.\n\nThe systrap and vDSO generators select the requested architecture, so a\nnative build can use the host’s GNU tools."
+      }
+    },
+    {
+      "id": "branch:tcp-listener-handshake-locks",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/tcp-listener-handshake-locks",
+      "head": "dcad6d56792cbd5c65195ad64f3a57628e605f70",
+      "title": "Check both locks when a listener accepts a SYN",
+      "url": "https://github.com/tamird/gvisor/commit/dcad6d567",
+      "group": "analysis",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T07:16:57.053556Z",
+      "summary": "A listening socket must hold both endpoint mutexes when it copies socket options to a new child. Only the listener copies those options. Both listeners and forwarders still register the child before sending its SYN-ACK.",
+      "evidence": [
+        {
+          "label": "Final Nogo on both architectures and eight native Linux socket cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42178272456/artifacts/13484308117"
+        },
+        {
+          "label": "Releasing both locks at the copy produces two diagnostics per architecture",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42174510664/artifacts/13482484540"
+        },
+        {
+          "label": "Master’s clean Nogo output and the receiver spelling caught during qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42176263021/artifacts/13484286201"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "dcad6d56792cbd5c65195ad64f3a57628e605f70",
+        "url": "https://github.com/tamird/gvisor/commit/dcad6d567",
+        "requestedAt": "2026-11-06T07:16:57.053556Z",
+        "title": "Open the TCP listener handshake lock PR",
+        "summary": "The socket-option copy used a forced check because a forwarder had no listening endpoint. Moving the copy onto the listener lets Nogo check both locks. An intentional unlock produced one diagnostic per mutex on AMD64 and ARM64. The final analyzer and eight existing forwarder, inheritance, backlog and deferred-accept cases passed.",
+        "body": "A TCP listener copies its socket options into a new child while both\nendpoint mutexes are held. A forwarder starts the same handshake\nwithout a listening endpoint. Sharing an optional listener pointer hid\nthe listener lock from checklocks and required suppressing the check at\nthe option copy.\n\nCopy the options and reserve the tuple on the locked listener. Let the\nforwarder create its child directly, and share registration and the\nSYN-ACK on the locked child. Only the forwarder waits for the handshake\nto finish."
       }
     }
   ],
@@ -75419,5 +75476,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-06T06:48:31.766413Z"
+  "updatedAt": "2026-11-06T07:16:57.053556Z"
 }
