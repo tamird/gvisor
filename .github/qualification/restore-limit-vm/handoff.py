@@ -48,6 +48,7 @@ def copy(directory, destination):
     with regular(transfer / "capsule.tar", 1 << 30) as stream:
         names = set()
         total = 0
+        sentry = None
         with tarfile.open(fileobj=stream, mode="r:") as archive:
             for entry in archive:
                 path = PurePosixPath(entry.name)
@@ -59,21 +60,24 @@ def copy(directory, destination):
                 total += entry.size
                 if total > 1 << 30 or len(names) > 32768:
                     raise ValueError("oversized runfiles")
-                if entry.name == "container_test":
+                if entry.name in ("container_test", "container_test.runfiles/_main/release/gvisor-bin/gvisor_sentry"):
                     if not entry.isfile() or not entry.mode & 0o111:
                         raise ValueError("invalid executable")
                     with archive.extractfile(entry) as binary:
                         digest = hashlib.sha256()
                         for chunk in iter(lambda: binary.read(1024 * 1024), b""):
                             digest.update(chunk)
-                    if digest.hexdigest().encode() != elf.strip():
+                    if entry.name != "container_test":
+                        sentry = digest.hexdigest()
+                    elif digest.hexdigest().encode() != elf.strip():
                         raise ValueError("mismatched test executable")
-        if not {"container_test", "container_test.runfiles/_main"} <= names:
+        if sentry is None or not {"container_test", "container_test.runfiles/_main"} <= names:
             raise ValueError("missing executable or runfiles")
         stream.seek(0)
         with destination.open("wb") as out:
             shutil.copyfileobj(stream, out)
     (directory / "elf.sha256").write_bytes(elf)
+    (directory / "sentry.sha256").write_text(sentry + "\n")
 
 
 def diagnostics(directory):

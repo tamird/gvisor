@@ -49,6 +49,7 @@ test_one() {
     local tree=/work/$arm/container_test.runfiles
     (
         export TEST_SRCDIR="$tree" RUNFILES_DIR="$tree" TEST_WORKSPACE=_main TEST_TARGET=//runsc/container:container_test
+        export GVISOR_SIDECAR_BINARIES_DIR="$tree/_main/release/gvisor-bin"
         export XML_OUTPUT_FILE="$out/$prefix.xml"
         unset TEST_UNDECLARED_OUTPUTS_DIR
         cd "$tree/_main"
@@ -63,7 +64,9 @@ test_one() {
 turn=0
 orders=('parent reference candidate' 'reference candidate parent' 'candidate parent reference'
         'parent candidate reference' 'candidate reference parent' 'reference parent candidate')
-for ((i=-1; i<36; i++)); do
+end=36
+if [[ -f /inputs/warmup-only ]]; then end=0; fi
+for ((i=-1; i<end; i++)); do
     index=0
     if ((i >= 0)); then index=$((i % 6)); fi
     for arm in ${orders[index]}; do test_one "$i" "$arm"; done

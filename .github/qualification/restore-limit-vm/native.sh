@@ -19,7 +19,10 @@ case "$1" in
     cp "$pkg/payload.sh" "$root/inputs/"
     case "$3" in
         guard) touch "$root/inputs/guard-only";;
-        measure) cp --reflink=auto "$pkg"/{parent,reference,candidate}.tar "$root/inputs/";;
+        smoke|measure)
+            cp --reflink=auto "$pkg"/{parent,reference,candidate}.tar "$root/inputs/"
+            if [[ "$3" == smoke ]]; then touch "$root/inputs/warmup-only"; fi
+            ;;
         *) exit 2;;
     esac
     ;;

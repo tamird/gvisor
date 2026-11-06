@@ -1,7 +1,7 @@
 name: Compare graph restore GC policies under a one-CPU quota
 on:
   push:
-    branches: [qualification/gc-one-cpu-reference-restore]
+    branches: [qualification/gc-restore-sentry-identity]
 permissions:
   contents: read
 jobs:
@@ -17,7 +17,7 @@ jobs:
       REFERENCE: 4a7ccbd2c90fe8d87fab290803d4887d2d7ac983
       REFERENCE_BASE: 2511bc60218a81ff6f5ef0d964050aaec5f05ffc
       REFERENCE_TREE: f0c083455739574b1a9d4e8383c36e89d11ae1eb
-      TEST_BLOB: ff80ae014e19eed96ac74804bb47cb975e14fe80
+      TEST_BLOB: d891861cda60a712ae19ebee42e246539b0e794d
       PKG: .github/qualification/restore-limit-vm
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -28,12 +28,12 @@ jobs:
         test "$(id -u)" != 0
         awk '$1 == "MemAvailable:" && $2 >= 7*1024*1024 { found=1 } END { exit !found }' /proc/meminfo
         test "$(df -PB1 . | awk 'END {print $4}')" -gt 10000000000
-        test "$(git rev-parse HEAD^)" = a11f51de8a6f00721df155c457ff777be9369ce4
-        test "$(git hash-object "$PKG/gc_reference_test.go")" = ff80ae014e19eed96ac74804bb47cb975e14fe80
-        test "$(git hash-object "$PKG/paired.py")" = bad94729b8b557de9bd157b72b948d5d6d3cf2e4
-        test "$(git hash-object "$PKG/native.sh")" = 8387f26727c13c24bd4720f43aa008d0adfe09ab
-        test "$(git hash-object "$PKG/payload.sh")" = 553eb6e992326189825d3933443b424d78fa0b84
-        test "$(git hash-object "$PKG/handoff.py")" = a2c92929659a93d8f80041d4a3b9072a0f181826
+        test "$(git rev-parse HEAD^)" = 9bcf6c64ca21f538972279bfb65815a786a21b17
+        test "$(git hash-object "$PKG/gc_reference_test.go")" = d891861cda60a712ae19ebee42e246539b0e794d
+        test "$(git hash-object "$PKG/paired.py")" = 358371e5d1267e0dee6c30ea7a06c59ac0765966
+        test "$(git hash-object "$PKG/native.sh")" = 5213a75216b76a343796c33e557730c18aa060e3
+        test "$(git hash-object "$PKG/payload.sh")" = 02bbfaed0fb419d1c6ef7d1a39a9bd5db22d80c5
+        test "$(git hash-object "$PKG/handoff.py")" = c6b5fc309d4a6e425ccde74cd8c4c80c7e718653
         mkdir "$RUNNER_TEMP/restore-tools"
         curl -fsSL --max-time 90 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$RUNNER_TEMP/restore-tools/bazel"
         echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $RUNNER_TEMP/restore-tools/bazel" | sha256sum -c -
@@ -132,6 +132,18 @@ jobs:
           if test "${rc:-0}" = 0; then rc=$handoff_rc; fi
           test "${rc:-0}" = 0 || exit "$rc"
         done
+    - name: Check three real restores and reject a swapped Sentry before collecting 36 blocks
+      timeout-minutes: 9
+      run: |
+        set -euo pipefail
+        root="$RUNNER_TEMP/native-smoke"
+        /bin/bash "$PKG/native.sh" prepare "$root" smoke
+        rc=0
+        /bin/bash "$PWD/$PKG/native.sh" service "$root" > "$RUNNER_TEMP/native-smoke.log" 2>&1 || rc=$?
+        RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$PKG/paired.py" smoke "$rc"
+        # Reclaim the three duplicate archives. The hosted runner will dispose
+        # of the private root, including extracted read-only runfiles.
+        rm -f -- "$root"/inputs/{parent,reference,candidate}.tar
     - name: Measure one-CPU restore through the first verified guest read in all three arms
       timeout-minutes: 132
       run: |
@@ -210,6 +222,7 @@ jobs:
         name: native-one-cpu-graph-restore-comparison
         path: |
           ${{ runner.temp }}/restore-vm-verdict.json
+          ${{ runner.temp }}/restore-warmup.json
           ${{ runner.temp }}/parent.bench
           ${{ runner.temp }}/reference.bench
           ${{ runner.temp }}/candidate.bench

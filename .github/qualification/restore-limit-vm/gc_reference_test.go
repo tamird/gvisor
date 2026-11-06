@@ -344,6 +344,39 @@ func TestGCReferenceRestore(t *testing.T) {
 	row["oom_kills"] = 0
 	row["files_verified"] = 100000
 	row["archive"] = files
+	// Inspect the runtime only after the timed read and full tree verification.
+	// The boot code opens this exact sidecar and gives its FD to the prewarmer.
+	// A non-dumpable Sentry can deny even its parent access to /proc/PID/exe.
+	sidecar := filepath.Join(os.Getenv("GVISOR_SIDECAR_BINARIES_DIR"), "gvisor_sentry")
+	runtimeID := map[string]any{"proc_exe": "unavailable", "boot": false}
+	if f, err := os.Open(sidecar); err == nil {
+		digest := sha256.New()
+		if _, err := io.Copy(digest, f); err == nil {
+			runtimeID["selected_sha256"] = fmt.Sprintf("%x", digest.Sum(nil))
+		}
+		want, statErr := f.Stat()
+		exe, err := os.Stat(fmt.Sprintf("/proc/%d/exe", restored.SandboxPid()))
+		if err == nil && statErr == nil {
+			if os.SameFile(want, exe) {
+				runtimeID["proc_exe"] = "same-inode"
+			} else {
+				runtimeID["proc_exe"] = "different-inode"
+			}
+		} else if os.IsPermission(err) {
+			runtimeID["proc_exe"] = "permission-denied"
+		}
+		f.Close()
+	}
+	if command, err := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", restored.SandboxPid())); err == nil {
+		args := strings.Split(string(command), "\x00")
+		for _, arg := range args[1:] {
+			if arg == "boot" && args[0] == "runsc-sandbox" {
+				runtimeID["boot"] = true
+				break
+			}
+		}
+	}
+	row["runtime"] = runtimeID
 	data, err := json.Marshal(row)
 	if err != nil {
 		t.Fatal(err)
