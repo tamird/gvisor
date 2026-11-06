@@ -355,10 +355,12 @@ reported. Review/comment lists retain the latest 100 entries per connection;
 the existing 100-thread bound still applies. These records do not imply that a
 reviewer's concern has been resolved.
 
-At supervisor startup or on resuming work, run
-`python3 update-status.py --incoming-review-handoff` from this checkout
-before starting qualifications. On a scheduled refresh, read
-`github-status.json`'s `incomingReviewRequests` first. The command also
+The active gVisor supervisor runs
+`python3 update-status.py --incoming-review-handoff` from this checkout at
+startup, on resumption and before selecting the next batch of engineering
+work. This read-only check is independent of the GitHub Actions timer and
+does not post or reschedule approval reminders. On a scheduled refresh,
+read `github-status.json`'s `incomingReviewRequests` first. The command also
 checks GitHub directly, so a new request can be handled before the next
 scheduled publication. For each request, read the linked conversation and
 the current PR head, then conduct the requested review.
