@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T02:30:02.489261Z",
+    "updatedAt": "2026-11-06T02:45:41.617288Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -30662,14 +30662,14 @@
       "url": "https://github.com/google/gvisor/pull/16516",
       "group": "bazel",
       "status": "open",
-      "summary": "The open PR generates Go offsets from the systrap ELF. The proposed combined revision also extracts the embedded stub in that action. GNU builds on the submission base and candidate produced identical AMD64 and ARM64 bytes and all 10 and 11 exported offsets, respectively.",
-      "updatedAt": "2026-11-05T22:33:00.052693Z",
+      "summary": "The PR generates Go offsets from the linked systrap ELF. It is awaiting maintainer review. The approved follow-up 6a54750c6 extracts the raw stub after #16516 lands.",
+      "updatedAt": "2026-11-06T02:45:41.617288Z",
       "followup": {
         "owner": "pinring_source_scope",
         "sourceHead": "353fb5556844a9b683887f432cb19c123b3e4168",
-        "observedAt": "2026-10-27T18:06:12+00:00",
-        "disposition": "Contributor-approved generator published as #16516",
-        "nextAction": "Follow maintainer review, public checks and import on #16516; no contributor decision remains.",
+        "observedAt": "2026-11-06T02:45:41.617288Z",
+        "disposition": "The contributor approved the offset generator and raw stub extraction separately.",
+        "nextAction": "Await maintainer review of the offset generator. Submit the approved raw stub extraction after #16516 lands.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16516",
           "https://github.com/tamird/gvisor/commit/353fb5556844a9b683887f432cb19c123b3e4168",
@@ -30690,40 +30690,23 @@
           "url": "https://app.buildbuddy.io/invocation/738bc9d8-2092-4096-8085-e199799246d0"
         },
         {
-          "label": "Combined extractor on the current GNU build",
-          "url": "https://github.com/tamird/gvisor/commit/b540bc616"
-        },
-        {
           "label": "Both GNU stubs and their exported offsets match master",
           "url": "https://github.com/tamird/gvisor/actions/runs/42120482501/artifacts/13458670646"
         },
         {
           "label": "Both release targets succeeded on the shell-free worker; nine static executables per architecture",
           "url": "https://github.com/tamird/gvisor/actions/runs/42119709559/artifacts/13457819044"
+        },
+        {
+          "label": "Approved follow-up extracts the raw stub",
+          "url": "https://github.com/tamird/gvisor/commit/6a54750c6"
+        },
+        {
+          "label": "Equivalent combined patch, retained for comparison",
+          "url": "https://github.com/tamird/gvisor/commit/b540bc616"
         }
       ],
-      "number": 16516,
-      "refinement": {
-        "before": {
-          "head": "353fb5556844a9b683887f432cb19c123b3e4168",
-          "base": "4777ee7811e235e66d5825f6c6ae5ccd3ccccfb3"
-        },
-        "after": {
-          "head": "b540bc61643afb589a8d465ed5c7b083cd6d3fa0",
-          "base": "add07b5fa1fdf48d20ed9b39277e1ebcc75b0aaf"
-        }
-      },
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "baseHead": "353fb5556844a9b683887f432cb19c123b3e4168",
-        "head": "b540bc61643afb589a8d465ed5c7b083cd6d3fa0",
-        "url": "https://github.com/tamird/gvisor/commit/b540bc616",
-        "title": "Extract the systrap stub and offsets from its ELF",
-        "requestedAt": "2026-11-05T22:23:08.487188Z",
-        "summary": "Combine the approved offsets and raw stub changes on #16516? A single tool reads the ELF once and produces both inputs used by the Sentry.",
-        "body": "The Sentry embeds the signal handler as raw bytes and uses Go offsets to find entry points within those bytes. Producing the two outputs requires objcopy for the bytes and a shell pipeline around nm for the offsets. An execution worker without Bash cannot embed even a fully linked stub.\n\nGenerate both outputs in one Bazel action. Read the bytes from .crblob and the offsets from the same ELF symbol table. The linker script places .crblob at address zero, so each exported symbol's address is its offset within the embedded bytes. Reject any other nonempty allocated section so the Sentry cannot silently omit part of the linked program."
-      }
+      "number": 16516
     },
     {
       "id": "branch:hermetic-arch-copy",
@@ -52432,7 +52415,7 @@
       "url": "https://github.com/google/gvisor/pull/17067",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-05T22:56:39.455356Z",
+      "updatedAt": "2026-11-06T02:45:41.617288Z",
       "summary": "Published as #17067 at 005743727, the approved dfd4d4774 patch rebased without changes onto da95e9bce. On an AMD64 worker, GNU compiled and linked both target stubs. The two raw blobs matched their ELF sections, and the existing nm-based generator produced all 10 AMD64 and 11 ARM64 offsets with their exact ELF values. The job built both consumers; it ran no tests or guest. #16516 is not a prerequisite for this PR.\n\nThe review on the published head reports an implicit allocator and internal toolchain features that do not suit a freestanding stub. Fork amendment 7f6ecfff6 reuses #16522’s freestanding adapter at 244010f9c and disables the x86 medium code model. It has not been applied to the public PR and must wait for #16522 to land. #16516 remains independent.\n\nIn the GNU control, a forced allocator made the published stub fail to link; enabling the named x86 medium-model feature produced a 60-byte .lbss outside .crblob. The amendment built all three sidecars and both stub architectures with those settings. Both raw blobs and all 10 AMD64 / 11 ARM64 offsets matched the published baseline. The configured-option reporter failed after those builds; the initial raw option values were not retained, so its exact comparison failure is unknown. A separate readback ran three successful cqueries and no builds: both the direct wrapper edge and prior filter selected the private producer with allocator None, while an ordinary target retained the forced allocator. The private toolchain has not been tested.",
       "evidence": [
         {
@@ -52498,6 +52481,10 @@
         {
           "label": "Option-only recovery: private allocator None, ordinary override retained; no builds",
           "url": "https://github.com/tamird/gvisor/actions/runs/42125221095/artifacts/13460736149"
+        },
+        {
+          "label": "Reply to Lucas about the approved amendment",
+          "url": "https://github.com/google/gvisor/pull/17067#discussion_r4488483371"
         }
       ],
       "settledReviews": [
@@ -52506,30 +52493,38 @@
           "head": "dfd4d477424bd6172344728a125ae8737fb68992",
           "outcome": "approved",
           "at": "2026-10-28T14:25:13.716904+00:00"
+        },
+        {
+          "kind": "amendment",
+          "head": "7f6ecfff61b465c2ae00d20ee4ebaad09d430519",
+          "url": "https://github.com/tamird/gvisor/commit/7f6ecfff6",
+          "title": "Use the freestanding rule for the systrap stub",
+          "outcome": "approved",
+          "at": "2026-11-06T02:45:41.617288Z"
+        },
+        {
+          "kind": "reply",
+          "head": "005743727b3d80d373085133b5da9cd906cc9d7c",
+          "url": "https://github.com/google/gvisor/pull/17067#discussion_r4486895273",
+          "title": "Reply about the allocator and x86 code model",
+          "body": "I reproduced both problems. The forced allocator broke the link, and the x86 medium code model put 60 bytes of globals outside `.crblob`. [7f6ecfff6](https://github.com/tamird/gvisor/commit/7f6ecfff6) uses #16522’s freestanding link rule and disables `mcmodel_medium` for the stub. With those settings, the stub bytes and every exported offset matched on AMD64 and ARM64. [GNU builds](https://github.com/tamird/gvisor/actions/runs/42124536514/artifacts/13459304305) · [Allocator selection](https://github.com/tamird/gvisor/actions/runs/42125221095/artifacts/13460736149).\n\nI’ll update this PR once #16522 lands so the import can check the internal toolchain.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-06T02:45:41.617288Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17067#discussion_r4488483371"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "amendment",
-        "baseHead": "005743727b3d80d373085133b5da9cd906cc9d7c",
-        "head": "7f6ecfff61b465c2ae00d20ee4ebaad09d430519",
-        "url": "https://github.com/tamird/gvisor/commit/7f6ecfff6",
-        "title": "Approve the freestanding amendment and reply",
-        "requestedAt": "2026-11-05T22:56:39.455356Z",
-        "summary": "Approve the tested fork amendment and post the thread reply below now? Publish the amended PR head only after #16522 lands, rebasing then and seeking fresh review for any substantive delta. The reply links the ready fork and states the remaining private-toolchain gap. The PR description remains the commit message; the text below is only the delegated thread reply.",
-        "body": "I reproduced both problems. The forced allocator broke the link, and the x86 medium code model put 60 bytes of globals outside `.crblob`. [7f6ecfff6](https://github.com/tamird/gvisor/commit/7f6ecfff6) uses #16522’s freestanding link rule and disables `mcmodel_medium` for the stub. With those settings, the stub bytes and every exported offset matched on AMD64 and ARM64. [GNU builds](https://github.com/tamird/gvisor/actions/runs/42124536514/artifacts/13459304305) · [Allocator selection](https://github.com/tamird/gvisor/actions/runs/42125221095/artifacts/13460736149).\n\nI’ll update this PR once #16522 lands so the import can check the internal toolchain.\n\nPosted by Codex on behalf of @tamird."
-      },
       "followup": {
         "owner": "Systrap native stub",
         "sourceHead": "005743727b3d80d373085133b5da9cd906cc9d7c",
-        "observedAt": "2026-11-05T22:56:39.455356Z",
-        "disposition": "Tested fork amendment and thread reply await contributor approval; live PR head is unchanged.",
-        "nextAction": "After approval, post the exact reply in the existing review thread. Keep 7f6ecfff6 on the fork until #16522 lands; then rebase, review any real source changes and publish the dependent amendment. Do not claim private-toolchain validation.",
+        "observedAt": "2026-11-06T02:45:41.617288Z",
+        "disposition": "Tamir approved 7f6ecfff6. The reviewer received the explanation.",
+        "nextAction": "Wait for #16522 to land, then rebase and publish the approved amendment. Check the link with the internal toolchain during import.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17067#discussion_r4486895273",
           "https://github.com/tamird/gvisor/commit/7f6ecfff61b465c2ae00d20ee4ebaad09d430519",
           "https://github.com/google/gvisor/pull/16522",
-          "https://github.com/tamird/gvisor/actions/runs/42125221095/artifacts/13460736149"
+          "https://github.com/tamird/gvisor/actions/runs/42125221095/artifacts/13460736149",
+          "https://github.com/google/gvisor/pull/17067#discussion_r4488483371"
         ]
       }
     },
@@ -56259,7 +56254,7 @@
       "from": "pr:16522",
       "to": "pr:17067",
       "type": "depends_on",
-      "reason": "The proposed 7f6ecfff6 amendment uses #16522’s shared freestanding rule and can be published only after that prerequisite lands. The unchanged public 005743727 head does not need it; approving the fork amendment and sending its reply is actionable now.",
+      "reason": "The approved amendment 7f6ecfff6 uses the freestanding link rule from #16522. Publish it after #16522 lands.",
       "evidence": "https://github.com/tamird/gvisor/commit/7f6ecfff6"
     }
   ],
@@ -74805,5 +74800,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-06T02:30:02.489261Z"
+  "updatedAt": "2026-11-06T02:45:41.617288Z"
 }
