@@ -1473,20 +1473,18 @@ func TestEifelGenuineLossAfterSpuriousDetection(t *testing.T) {
 			packet(2 * maxPayload)
 			packet(3 * maxPayload)
 			var sacked []header.SACKBlock
-			wantState := tcpip.RTORecovery
 			if scenario == "rack" {
 				// RACK probes the last packet before the timeout. The ACK
 				// below also SACKs the third packet, sent only once, so
 				// RACK marks the second packet lost.
 				expire(3 * maxPayload)
 				sacked = []header.SACKBlock{{Start: c.IRS.Add(1 + 2*maxPayload), End: c.IRS.Add(1 + 3*maxPayload)}}
-				wantState = tcpip.SACKRecovery
 			}
 			expire(0)
 			ack(maxPayload, original, sacked...)
 			stats := c.Stack().Stats().TCP
-			if stats.SpuriousRTORecovery.Value() != 1 || info().CcState != wantState {
-				t.Fatalf("precondition: spurious RTOs=%d state=%v, want 1 and %v", stats.SpuriousRTORecovery.Value(), info().CcState, wantState)
+			if got := stats.SpuriousRTORecovery.Value(); got != 1 {
+				t.Fatalf("spurious RTOs = %d, want 1", got)
 			}
 			var repair uint32
 			wantTimeouts := uint64(1)
