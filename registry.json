@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T11:45:43.117Z",
+    "updatedAt": "2026-11-06T12:01:47.262Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41569,8 +41569,8 @@
       "url": "https://github.com/tamird/gvisor/commit/bfc0d1dfb",
       "head": "bfc0d1dfb6edad51ac12b4d9bbdb55a1a59ec00d",
       "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-11-02T16:20:02.085486+00:00",
-      "summary": "The approved #15106 launches its ZIP assembler through Bash. A declared Bazel action calls the assembler directly and produces the identical 2,526-entry archive.",
+      "updatedAt": "2026-11-06T11:59:38.947Z",
+      "summary": "The Go branch exporter in #15106 starts Bash to invoke its ZIP assembler. The approved action runs the assembler directly. The original and direct actions produced identical 2,526-entry ZIPs. With the current compiler integration, the direct action ran uncached on the shell-free AMD64 worker. All 2,546 exported files matched their inputs, including generated Go sources and C sidecars. The existing assembler linked without an ELF interpreter.",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -41585,7 +41585,25 @@
         "observedAt": "2026-11-02T16:20:02.085486+00:00",
         "disposition": "Contributor approved; waiting for prerequisites",
         "nextAction": "After #15106 lands, verify the merged launcher and publish the approved direct Bazel export."
-      }
+      },
+      "evidence": [
+        {
+          "label": "Original and direct Go export archives match byte for byte",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41150603904/artifacts/13022154932"
+        },
+        {
+          "label": "Current compiler and the approved public export action",
+          "url": "https://github.com/tamird/gvisor/commit/5dfd4dd0b"
+        },
+        {
+          "label": "All 2,546 exported files on the shell-free worker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42213578588/artifacts/13499403527"
+        },
+        {
+          "label": "Uncached public GoExport action on AMD64",
+          "url": "https://app.buildbuddy.io/invocation/fecc9107-ccf7-4175-87e7-b17017195cd5"
+        }
+      ]
     },
     {
       "id": "pr:15019",
@@ -53626,6 +53644,40 @@
         "title": "How should a packaged Python child find its runfiles?",
         "summary": "File this question with hermetic-launcher about runfiles selection for the shell-free rules_python bootstrap?",
         "body": "A Bazel-built Python program can take a separately installed plugin as an argument, like `outer /opt/plugin`. The rules_python Bash bootstrap checks that the inherited runfiles tree contains the child’s stage2 script before using it [1].\n\nWe tested this on Linux while working on bazel-contrib/rules_python#2500. The child ran directly. When a separately packaged parent invoked it, the Bash bootstrap ran the child, but the native prototype using hermetic-launcher 0.0.17 exited 1 before the child’s main. The parent’s tree contained neither the child’s interpreter nor its stage2 script. When the parent declared the child as a dependency, both bootstraps ran it using the parent’s tree [2].\n\nShould hermetic-launcher let a caller specify a file to check before inheriting the runfiles tree, or should rules_python decide which tree to use?\n\n[1]: https://github.com/bazel-contrib/rules_python/blob/26b0a238d/python/private/stage1_bootstrap_template.sh#L99-L104\n[2]: https://github.com/tamird/rules_python/actions/runs/42210914546/artifacts/13498603725\n\nPosted by Codex on behalf of @tamird."
+      }
+    },
+    {
+      "id": "branch:tcp-keepalive-locks",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/tcp-keepalive-locks",
+      "head": "902bee9176a0a78a435db3df2ebffe1d2a9794e5",
+      "title": "Check the mutex protecting TCP keepalive options and probe counts",
+      "url": "https://github.com/tamird/gvisor/commit/902bee917",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T12:01:47.262Z",
+      "summary": "The TCP endpoint uses its keepalive mutex for the idle duration, probe interval, probe count and unacknowledged probes. After removing three getter locks and moving the unacknowledged-probe increment past unlock, Nogo accepted all four accesses on the parent. With the annotations, Nogo diagnosed each access on AMD64 and ARM64, including the increment that still held the endpoint lock. Both analyzers and the two existing Linux AMD64 packet tests passed on the proposed source.",
+      "evidence": [
+        {
+          "label": "Keepalive field annotations",
+          "url": "https://github.com/tamird/gvisor/commit/902bee917"
+        },
+        {
+          "label": "TestKeepalive and TestKeepaliveWithUserTimeout on Linux AMD64, plus both Nogo controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42212852632/artifacts/13500307492"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "902bee9176a0a78a435db3df2ebffe1d2a9794e5",
+        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+        "url": "https://github.com/tamird/gvisor/commit/902bee917",
+        "requestedAt": "2026-11-06T12:01:47.262Z",
+        "title": "Check the mutex protecting TCP keepalive options and probe counts",
+        "summary": "May I open this standalone PR? With the guards removed, Nogo now diagnoses accesses to idle, interval, count and unacked on both architectures. Both existing packet tests passed with the guards in place.",
+        "body": "TCP_KEEPIDLE, TCP_KEEPINTVL and TCP_KEEPCNT can be read without\nlocking the endpoint. Their getters take the keepalive mutex, which\nalso protects updates to the probe count when an ACK arrives or the\nkeepalive timer expires. Annotate these fields so checklocks can\ndetect accesses that hold only the endpoint mutex."
       }
     }
   ],
