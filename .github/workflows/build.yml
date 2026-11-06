@@ -1,70 +1,80 @@
-name: Check PacketMMap on 4 KiB and 64 KiB Linux
+name: Verify packet rings across host page sizes
 on:
   push:
-    branches: [qualification/packet-mmap-host-pages]
+    branches: [qualification/packet-mmap-page-fixture-repair]
 permissions:
   contents: read
+  actions: read
 jobs:
-  ring:
+  compare:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 160
+    timeout-minutes: 105
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 3}
-      - name: Build the ARM64 probes and run the rootless native control if available
+        with: {persist-credentials: false, fetch-depth: 4}
+      - name: Recover the verified scratch Bazel and the original ELF identities
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          test "$(git rev-parse HEAD^)" = 078a2b7d8f11b1ac9fb98383886e3f0f13d07f09
+          test "$(git rev-parse HEAD^^)" = dec1b82660c2974f5b98b2c5ab88d0857b34adb8
           d="$RUNNER_TEMP/packet-pages"
-          mkdir -p "$d/bin" "$d/netns_runner" "$d/worker"
-          cp .github/qualification/packet_pages/{packet_ring_linux_test.go,qualify.py,guest.BUILD,guest.sh} "$d/"
-          git fetch --quiet --no-tags --depth=1 origin 2939db70f24946607cdcc18af08815dc5493742e
-          donor=fbf829ede9a6de4947c476dd5e5be605e5ac8460
-          git fetch --quiet --no-tags --depth=1 origin "$donor"
-          for name in BUILD main_linux.go; do git show "$donor:test/rbe/netns_runner/$name" > "$d/netns_runner/$name"; done
+          mkdir -p "$d/bin" "$d/netns_runner"
+          cp .github/qualification/packet_pages/{guest.BUILD,guest.sh,packet_ring_linux_test.go,qualify.py,reuse.py} "$d/"
+          gh api repos/tamird/gvisor/actions/artifacts/13478091448/zip > "$d/original.zip"
+          gh api repos/tamird/gvisor/actions/artifacts/13078732581/zip > "$d/supplier.zip"
+          unset GH_TOKEN
+          echo "d1cdaba6f1acc9e30226d4d8f1be093e3cf0809e01fa16210ca4a7bd724f30e0  $d/original.zip" | sha256sum -c -
+          echo "993e832b8f926876f2b935e97af3cc50493a507e79ed80d1da32309f00e94619  $d/supplier.zip" | sha256sum -c -
+          unzip -p "$d/original.zip" receipt.json > "$d/original-receipt.json"
+          unzip -p "$d/supplier.zip" bazel-candidate > "$d/scratch-bazel"
+          echo "556164c2874fc66cdac3a32b53f862e705e9b9643c0ad3dea12880c97687d250  $d/scratch-bazel" | sha256sum -c -
           curl -fsSL --retry 3 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bin/bazel"
           echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bin/bazel" | sha256sum -c -
-          chmod +x "$d/bin/bazel"
+          chmod 755 "$d/bin/bazel" "$d/scratch-bazel"
+          git fetch --quiet --no-tags --depth=1 origin 2939db70f24946607cdcc18af08815dc5493742e 9fbe0ff5121eb3b1c34c72a9b41b5f35ec3eb788
+          donor=9fbe0ff5121eb3b1c34c72a9b41b5f35ec3eb788
+          for name in BUILD main_linux.go; do git show "$donor:test/rbe/netns_runner/$name" > "$d/netns_runner/$name"; done
+          test "$(git hash-object "$d/netns_runner/main_linux.go")" = d3bfb59032d70121b51a01ecf7545b767db0f566
+      - name: Read the exact ARM executables from the original input cache
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -I -B "$RUNNER_TEMP/packet-pages/reuse.py"
+      - name: Rebuild only original payloads the cache could not provide
+        run: |
+          d="$RUNNER_TEMP/packet-pages"
           env -i HOME="$HOME" USER="$USER" PATH="$d/bin:$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$d/qualify.py" build
-          if python3 -B -c 'import ctypes,sys; libc = ctypes.CDLL(None, use_errno=True); rc = libc.unshare(0x10000000 | 0x40000000); print("Host rootless namespace probe errno =", ctypes.get_errno()); sys.exit(rc != 0)'; then
-            env -i HOME="$HOME" USER="$USER" PATH="$d/bin:$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$d/qualify.py" controls local
-          else
-            touch "$d/remote-4k"
-          fi
-      - name: Run the remaining Bazel tests on the qualified Linux workers
+      - name: Configure the trusted Bazel clients
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           d="$RUNNER_TEMP/packet-pages"
-          test "$(git rev-parse HEAD)" = dec1b82660c2974f5b98b2c5ab88d0857b34adb8
-          printf '%s\n' 'module(name = "packet_worker")' > "$d/worker/MODULE.bazel"
-          cat > "$d/worker/BUILD" <<'BUILD'
-          platform(
-              name = "gnu",
-              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
-              exec_properties = {
-                  "Arch": "amd64",
-                  "OSFamily": "linux",
-                  "workload-isolation-type": "firecracker",
-                  "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
-              },
-              visibility = ["//visibility:public"],
-          )
-          BUILD
-          [[ -n "$BUILDBUDDY_API_KEY" ]]
           umask 077
-          rc="$d/private.bazelrc"
-          trap 'rm -f "$rc"' EXIT
-          printf '%s\n' 'build:buildbuddy_remote_executor --remote_executor=grpcs://remote.buildbuddy.io' 'build:buildbuddy_remote_executor --remote_cache=grpcs://remote.buildbuddy.io' > "$rc"
-          printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
-          unset BUILDBUDDY_API_KEY
-          if test -f "$d/remote-4k"; then
-            env -i HOME="$HOME" USER="$USER" PATH="$d/bin:$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$d/qualify.py" controls remote
-          fi
+          test -n "$BUILDBUDDY_API_KEY"
+          {
+            printf '%s\n' 'build:buildbuddy_remote_executor --remote_executor=grpcs://remote.buildbuddy.io' 'build:buildbuddy_remote_executor --remote_cache=grpcs://remote.buildbuddy.io' 'build:buildbuddy_remote_executor --bes_backend=grpcs://remote.buildbuddy.io' 'build:buildbuddy_remote_executor --bes_results_url=https://app.buildbuddy.io/invocation/'
+            printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$d/private.bazelrc"
+      - name: Send 40 private loopback packets in the booted 64 KiB guest
+        id: guest
+        run: |
+          d="$RUNNER_TEMP/packet-pages"
           env -i HOME="$HOME" USER="$USER" PATH="$d/bin:$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$d/qualify.py" guest
+      - name: Run both exact 4 KiB receive paths on the qualified rootless scratch worker
+        if: always() && !cancelled() && steps.guest.outcome != 'skipped'
+        run: |
+          d="$RUNNER_TEMP/packet-pages"
+          env -i HOME="$HOME" USER="$USER" PATH="$d/bin:$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$d/qualify.py" controls
+          python3 -I -B "$d/qualify.py" finish
+      - name: Remove client configuration
+        if: always()
+        run: rm -f "$RUNNER_TEMP/packet-pages/private.bazelrc"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: packet-ring-host-page-verdict
+          name: packet-ring-host-page-results
           path: ${{ runner.temp }}/packet-pages/receipt.json
           if-no-files-found: error
           retention-days: 3
