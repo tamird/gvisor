@@ -1,35 +1,82 @@
-name: CI
-
-"on":
+name: Execute the Bazel 9 source presubmit with the declared LLVM compiler
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-source-presubmit]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  submit:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 140
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Verify the original source and the Buildkite command
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 53c458937842fb431ef351c39781850f5a817234
+          test "$(git rev-parse HEAD^^)" = f6df263f8e2ce2cbe6a497356613f6785c4800a4
+          test "$(git show --format= HEAD^ | git patch-id --stable | cut -d' ' -f1)" = 45427510b0de03af40ad106c402e2eee88f3e112
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/source_presubmit_results.py' ':!.github/qualification/source_presubmit_selection.py' ':!.github/qualification/prior-unit-build-failures.tsv'
+          test "$(git hash-object .github/qualification/prior-unit-build-failures.tsv)" = 0c6f8f43ccee9aff8f2e93a4ee395f02b4ce648a
+          cp .github/qualification/{source_presubmit_results.py,source_presubmit_selection.py,prior-unit-build-failures.tsv} "$RUNNER_TEMP/"
+          git fetch --quiet --depth=1 origin 5a20420be7638149db4afe7c2ac559e696f5f3fd
+          git show '5a20420be:test/rbe/unit-cgroup-v2-owners.tsv' > "$RUNNER_TEMP/source-unit-oracle.tsv"
+          test "$(git hash-object "$RUNNER_TEMP/source-unit-oracle.tsv")" = 5042de1f9d481e27c47eccd0e94f7cdfcb037fbf
+          git checkout --quiet --detach 53c458937842fb431ef351c39781850f5a817234
+          test "$(bazelisk --version)" = "bazel 9.3.1"
+          ruby -ryaml -e 'a=YAML.load_file(".buildkite/rbe-source.yaml").fetch("steps"); abort unless a.size==1 && a.first.fetch("command")=="bazel test --config=source-presubmit"'
+      - name: Submit the complete graph to the remote executor
+        timeout-minutes: 95
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
+          rc="$RUNNER_TEMP/source-presubmit.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          cat > "$rc" <<'RC'
+          build:source-presubmit --remote_executor=grpcs://remote.buildbuddy.io
+          build:source-presubmit --remote_cache=grpcs://remote.buildbuddy.io
+          build:source-presubmit --bes_backend=grpcs://remote.buildbuddy.io
+          build:source-presubmit --bes_results_url=https://app.buildbuddy.io/invocation/
+          build:source-presubmit --remote_download_outputs=minimal
+          build:source-presubmit --jobs=64 --keep_going
+          test:source-presubmit --nocache_test_results --flaky_test_attempts=1
+          RC
+          printf 'build:source-presubmit --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          printf 'build:source-presubmit --build_event_json_file=%s/source-presubmit.bep\n' "$RUNNER_TEMP" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          code=0
+          timeout --signal=INT --kill-after=60s 90m bazelisk --bazelrc="$rc" test --config=source-presubmit > "$RUNNER_TEMP/source-presubmit.log" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$RUNNER_TEMP/source-presubmit-exit"
+      - name: Derive the complete owner and shard oracle from the current Make recipe
+        if: always() && !cancelled()
+        continue-on-error: true
+        timeout-minutes: 32
+        run: |
+          set -eu
+          test ! -e "$RUNNER_TEMP/source-presubmit.bazelrc"
+          python3 -IB "$RUNNER_TEMP/source_presubmit_selection.py"
+      - name: Collect typed target, shard and failure receipts
+        id: collect
+        if: always() && !cancelled()
+        run: |
+          set -eu
+          trap 'rm -f "$RUNNER_TEMP/source-presubmit.log" "$RUNNER_TEMP/source-presubmit.bep" "$RUNNER_TEMP/source-presubmit.bazelrc"' EXIT
+          python3 "$RUNNER_TEMP/source_presubmit_results.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.collect.outcome == 'success' && !cancelled()
+        with:
+          name: llvm-bazel9-source-presubmit-results
+          path: ${{ runner.temp }}/source-presubmit-results/receipt.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Check the full presubmit result
+        if: always() && steps.collect.outcome == 'success' && !cancelled()
+        run: |
+          python3 -c 'import json, os, pathlib; row=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"source-presubmit-results/receipt.json").read_text()); raise SystemExit(0 if row["complete_pass"] else 1)'
