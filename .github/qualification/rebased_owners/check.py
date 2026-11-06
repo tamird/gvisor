@@ -18,11 +18,10 @@ TESTS_HEAD = "f3fa3075e29e3dba659ccc64d16378a2ad2b49fb"
 GNU = "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a"
 UBUNTU = "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
 TESTS = {
-    "//pkg/atomicbitops:atomicbitops_test_arm64": "arm64",
     "//test/util:posix_error_test_amd64": "amd64",
     "//test/util:posix_error_test_arm64": "arm64",
 }
-BAZEL = ["bazelisk", "--nosystem_rc", "--nohome_rc", "--bazelrc=" + str(WORK / "client.rc")]
+BAZEL = ["bazelisk", "--nosystem_rc", "--nohome_rc", "--noworkspace_rc", "--bazelrc=" + str(WORK / "llvm.rc"), "--bazelrc=" + str(WORK / "client.rc")]
 
 
 def call(name: str, args: list[str], minutes: int) -> int:
@@ -68,6 +67,14 @@ def diagnostics(name: str) -> list[str]:
                 "aarch64-linux-gnu-gcc",
                 "x86_64-linux-gnu-gcc",
                 "Killed",
+                "absolute path inclusion",
+                "unknown warning option",
+                "-Werror",
+                "file not found",
+                "no such file",
+                "static assertion",
+                "is required",
+                "target is incompatible",
                 "Unrecognized option",
                 "no such target",
                 "unknown exec group",
@@ -123,6 +130,8 @@ def test_report(result: dict, item: dict) -> None:
         elif name == "test.log":
             match = re.search(rb"(?m)^NATIVE_TEST_WORKER=(x86_64|aarch64)\r?$", raw)
             item["uname"] = match[1].decode() if match else None
+            machine = re.search(rb"(?m)^NATIVE_TEST_MACHINE= *(62|183)\r?$", raw)
+            item["machine"] = int(machine[1]) if machine else None
 
 
 def tests() -> bool:
@@ -139,7 +148,8 @@ def tests() -> bool:
                 "-c",
                 "opt",
                 "--keep_going",
-                """--run_under=/bin/sh -c 'echo NATIVE_TEST_WORKER=$(/bin/uname -m); exec "$@"' native-test""",
+                "--extra_toolchains=@llvm//toolchain:all",
+                """--run_under=/bin/sh -c 'echo NATIVE_TEST_WORKER=$(/bin/uname -m); echo NATIVE_TEST_MACHINE=$(/usr/bin/od -An -j18 -N2 -tu2 "$1"); exec "$@"' native-test""",
                 "--remote_download_outputs=toplevel",
                 "--nocache_test_results",
                 "--flaky_test_attempts=1",
@@ -192,6 +202,11 @@ def tests() -> bool:
         if path.is_file():
             with path.open(encoding="utf-8", newline="") as stream:
                 for _, action in execution_records(stream):
+                    if action.get("mnemonic") == "CppCompile":
+                        argv = action.get("commandArgs", [])
+                        if argv and Path(argv[0]).name in {"clang", "clang++"}:
+                            receipt["declaredClang"] = receipt.get("declaredClang", False) or (
+                                ("external" in Path(argv[0]).parts) and any("llvm" in dep for dep in Path(argv[0]).parts[:-1]))
                     if (
                         not action
                         or action.get("mnemonic") != "TestRunner"
@@ -243,7 +258,7 @@ def tests() -> bool:
                 and attempt.get("uname") == {"arm64": "aarch64", "amd64": "x86_64"}[arch]
             ):
                 return False
-        receipt["verified"] = receipt["exit"] == 0
+        receipt["verified"] = receipt["exit"] == 0 and receipt.get("declaredClang", False)
         return receipt["verified"]
     finally:
         write(name, receipt)

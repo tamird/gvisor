@@ -1,7 +1,7 @@
 name: Check the rebased native-test and coverage owners
 on:
   push:
-    branches: [qualification/native-test-group-runners]
+    branches: [qualification/native-posix-llvm]
 permissions:
   contents: read
 jobs:
@@ -11,19 +11,24 @@ jobs:
     timeout-minutes: 110
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {fetch-depth: 3, persist-credentials: false}
+        with: {fetch-depth: 4, persist-credentials: false}
       - name: Verify the original and corrected native-test sources
         run: |
           set -euo pipefail
           fixed=f3fa3075e29e3dba659ccc64d16378a2ad2b49fb
-          test "$(git rev-parse HEAD^)" = c9a3658e40fa4839e07414a43d44bf2a68c41602
-          test "$(git rev-parse HEAD^^)" = "$fixed"
+          test "$(git rev-parse HEAD^)" = 886933bb05243c15216a2f0e01f1d516ac4c80e5
+          test "$(git rev-parse HEAD~3)" = "$fixed"
           git diff --exit-code "$fixed" HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/rebased_owners/check.py' ':!.github/qualification/rebased_owners/image_execution.py'
           work="$RUNNER_TEMP/owners"
           mkdir -m 700 "$work" "$work/worker"
           cp .github/qualification/rebased_owners/{check,image_execution}.py "$work/"
           git checkout --detach "$fixed"
           test "$(cat .bazelversion)" = 9.3.1
+          # Preserve every other public Bazel setting. This GCC-only diagnostic
+          # was also removed when the released LLVM compiler was qualified.
+          test "$(grep -c -- '-Wno-error=maybe-uninitialized' .bazelrc)" = 2
+          sed -e 's/ --cxxopt=-Wno-error=maybe-uninitialized//' -e 's/ --host_cxxopt=-Wno-error=maybe-uninitialized//' .bazelrc > "$work/llvm.rc"
+          grep -Fq 'bazel_dep(name = "llvm", version = "0.8.24")' MODULE.bazel
           test "$(bazelisk --version)" = 'bazel 9.3.1'
           printf '%s\n' 'module(name="rebased_workers")' >"$work/worker/MODULE.bazel"
           cat > "$work/worker/BUILD" <<'BUILD'
@@ -49,7 +54,7 @@ jobs:
               },
           )
           BUILD
-      - name: Run the three unresolved tests on their verified native platforms
+      - name: Run both C++ test variants on their native workers with the declared LLVM compiler
         timeout-minutes: 90
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -93,11 +98,11 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.report.outcome == 'success'
         with:
-          name: native-test-group-results
+          name: native-posix-llvm-results
           path: |
             ${{ runner.temp }}/owners/publish/variants.json
           retention-days: 14
           if-no-files-found: error
-      - name: Require three fresh native test results
+      - name: Require both fresh native C++ results and the declared compiler
         if: always() && steps.report.outcome == 'success'
         run: jq -e '.verified == true' "$RUNNER_TEMP/owners/publish/variants.json" >/dev/null
