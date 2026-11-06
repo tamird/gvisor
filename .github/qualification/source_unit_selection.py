@@ -44,15 +44,18 @@ def make_arguments():
     return args
 
 
-def profile(name, source, args):
+def selection(name, source, args, *, tests_only):
     bep = TEMP / (name + ".bep")
     log = TEMP / (name + ".log")
     args = [a for a in args if not a.startswith("--build_event_json_file=")]
     position = args.index("--") if "--" in args else 1
-    cmd = ["bazel", f"--bazelrc={RC}", *args[:position], "--nobuild", f"--build_event_json_file={bep}", *args[position:]]
+    options = ["--nobuild", f"--build_event_json_file={bep}"]
+    if tests_only:
+        options.append("--build_tests_only")
+    cmd = ["bazel", f"--bazelrc={RC}", *args[:position], *options, *args[position:]]
     with log.open("w") as stream:
         code = subprocess.run(cmd, stdout=stream, stderr=subprocess.STDOUT).returncode
-    details = {"source": source, "arguments": args, "bazel_exit": code}
+    details = {"source": source, "arguments": args, "tests_only": tests_only, "bazel_exit": code}
     if bep.is_file():
         details["bep_sha256"] = hashlib.sha256(bep.read_bytes()).hexdigest()
         with bep.open() as events, gzip.open(OUT / (name + "-selection.jsonl.gz"), "wt") as capture:
@@ -80,12 +83,25 @@ def profile(name, source, args):
         write(OUT / (name + "-status.json"), details)
         print(name, details["error"], errors[:4], flush=True)
         return False
-    result = {label: {"configuration": target.configuration, "type": "test" if label in tests else "build",
+    result = {label: {"configuration": target.configuration, "type": "test rule" if label in tests else "other rule",
                       "tags": target.tags, "aspects": target.aspects}
               for label, target in all_roots.items()}
+    if tests_only:
+        assert all_roots.keys() == tests.keys(), "Bazel included a non-test in its test-only selection"
+        if name != "mixed-tests":
+            for label, target in tests.items():
+                assert not {"nogo", "requires-kvm"}.intersection(target.tags), label
     write(OUT / (name + "-roots.json"), result)
     print(name, "configured", len(tests), "test and", len(all_roots) - len(tests), "build-only owners", flush=True)
     return True
+
+
+def profile(name, source, args):
+    # NO_BUILD alone lists build-only Nogo targets as test rules. Ask Bazel for
+    # its tests-to-run separately instead of classifying from testSize or tags.
+    complete = selection(name, source, args, tests_only=False)
+    runnable = selection(name + "-tests", source, args, tests_only=True)
+    return complete and runnable
 
 
 def main():
