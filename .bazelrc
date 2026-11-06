@@ -69,7 +69,15 @@ common --incompatible_enable_proto_toolchain_resolution=true
 # The worker scheduler uses each action's selected execution platform. The
 # service endpoint and credentials come from the coordinator's Bazel rc.
 build:source-presubmit --define=source_presubmit=true
-build:source-presubmit --extra_execution_platforms=//test/rbe:linux_amd64
+build:source-presubmit --config=x86_64
+# The architecture split builds tools for this same platform. Giving the
+# worker a second platform label makes Bazel configure LLVM's runtime twice
+# for one set of object paths.
+build:source-presubmit --extra_execution_platforms=//tools/bazeldefs:linux_amd64
+build:source-presubmit --remote_default_exec_properties=Arch=amd64
+build:source-presubmit --remote_default_exec_properties=OSFamily=linux
+build:source-presubmit --remote_default_exec_properties=container-image=docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02
+build:source-presubmit --remote_default_exec_properties=workload-isolation-type=oci
 build:source-presubmit --spawn_strategy=remote --noremote_local_fallback
 build:source-presubmit --strip=never --test_env=CGROUPV2=true
 test:source-presubmit --strategy=TestRunner=remote
