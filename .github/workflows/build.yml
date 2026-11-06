@@ -1,78 +1,52 @@
-name: Run the seccomp generators and their original three test owners
+name: Read the original two conflicting LLVM actions
 on:
   push:
-    branches: [qualification/llvm-source-filter-consumers]
-permissions:
-  contents: read
+    branches: [qualification/llvm-filter-conflicting-actions]
+permissions: {contents: read}
 jobs:
-  submit:
+  retrieve:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 140
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 3
-          persist-credentials: false
-      - name: Verify the original source and the Buildkite command
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Verify parser, original invocation, and source code
         run: |
           set -eu
-          test "$(git rev-parse HEAD^)" = 53c458937842fb431ef351c39781850f5a817234
-          test "$(git rev-parse HEAD^^)" = f6df263f8e2ce2cbe6a497356613f6785c4800a4
-          test "$(git show --format= HEAD^ | git patch-id --stable | cut -d' ' -f1)" = 45427510b0de03af40ad106c402e2eee88f3e112
-          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/source_filter_consumers.py' ':!.github/qualification/source_presubmit_memory.py'
-          cp .github/qualification/{source_filter_consumers.py,source_presubmit_memory.py} "$RUNNER_TEMP/"
-          git checkout --quiet --detach 53c458937842fb431ef351c39781850f5a817234
-          test "$(bazelisk --version)" = "bazel 9.3.1"
-      - name: Size and check the Bazel server heap on this coordinator
-        run: python3 -IB "$RUNNER_TEMP/source_presubmit_memory.py"
-      - name: Submit just the five original uncompleted source targets
-        timeout-minutes: 95
+          test "$(git rev-parse HEAD^)" = de7d8d5fd58280a7a60c5bcf3e560c9b137b8484
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/source_filter_error.py'
+          cp .github/qualification/source_filter_error.py "$RUNNER_TEMP/"
+          echo "9fa5ed5ee75b8ff3b04b346ef53408429c298e79937369c57e9c82a3c6f75672  $RUNNER_TEMP/source_filter_error.py" | sha256sum -c
+      - name: Retrieve the original action owners and compiler argument differences
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
           set -eu
           umask 077
-          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
-          rc="$RUNNER_TEMP/source-presubmit.bazelrc"
-          trap 'rm -f "$rc"' EXIT
-          cat > "$rc" <<'RC'
-          build:original-filter-consumers --remote_executor=grpcs://remote.buildbuddy.io
-          build:original-filter-consumers --remote_cache=grpcs://remote.buildbuddy.io
-          build:original-filter-consumers --bes_backend=grpcs://remote.buildbuddy.io
-          build:original-filter-consumers --bes_results_url=https://app.buildbuddy.io/invocation/
-          build:original-filter-consumers --remote_download_outputs=toplevel --build_event_publish_all_actions
-          build:original-filter-consumers --define=source_presubmit=true --extra_execution_platforms=//test/rbe:linux_amd64
-          build:original-filter-consumers --spawn_strategy=remote --noremote_local_fallback --strip=never
-          test:original-filter-consumers --strategy=TestRunner=remote --test_env=CGROUPV2=true
-          build:original-filter-consumers --jobs=64 --keep_going
-          test:original-filter-consumers --nocache_test_results --flaky_test_attempts=1
-          RC
-          printf 'build:original-filter-consumers --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
-          printf 'build:original-filter-consumers --build_event_json_file=%s/source-presubmit.bep\n' "$RUNNER_TEMP" >> "$rc"
-          unset BUILDBUDDY_API_KEY
-          code=0
-          timeout --signal=INT --kill-after=60s 90m bazelisk --bazelrc="$rc" test --config=original-filter-consumers \
-            //runsc/boot/filter:filter_precompiled //runsc/gofer/net/filter:filter_precompiled \
-            //runsc:version_test //runsc/gofer/net:netgofer_test //test/syscalls:uname_test_native > "$RUNNER_TEMP/source-presubmit.log" 2>&1 || code=$?
-          printf '%s\n' "$code" > "$RUNNER_TEMP/source-presubmit-exit"
-      - name: Verify both produced Go files and all original test attempts
-        id: collect
-        if: always() && !cancelled()
+          python3 -IB "$RUNNER_TEMP/source_filter_error.py"
+      - name: Validate the closed receipt
+        id: validate
+        if: always()
         run: |
-          set -eu
-          test ! -e "$RUNNER_TEMP/source-presubmit.bazelrc"
-          trap 'rm -f "$RUNNER_TEMP/source-presubmit.log" "$RUNNER_TEMP/source-presubmit.bep"' EXIT
-          python3 -IB "$RUNNER_TEMP/source_presubmit_memory.py" diagnose
-          python3 -IB "$RUNNER_TEMP/source_filter_consumers.py"
+          python3 -IB - <<'PY'
+          import json,os,re
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"original-filter-error.json"
+          assert p.is_file() and not p.is_symlink() and p.stat().st_size<190000
+          b=p.read_bytes()
+          assert not re.search(rb"(?i)x-buildbuddy-api-key|authorization\s*[:=]|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}",b)
+          r=json.loads(b); assert r["invocation"]=="d55f7927-f0e7-46f3-93ea-be5a5c9d24b9"
+          assert set(r) <= {"invocation","build","console","errors"}
+          PY
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        if: always() && !cancelled()
+        if: steps.validate.outcome == 'success'
         with:
-          name: llvm-source-filter-consumers
-          path: ${{ runner.temp }}/source-filter-consumers.json
+          name: original-conflicting-llvm-actions
+          path: ${{ runner.temp }}/original-filter-error.json
           if-no-files-found: error
           retention-days: 14
-      - name: Require the generated source and all three uncached remote test results
-        if: always() && !cancelled()
+      - name: Require an original diagnostic
+        if: steps.validate.outcome == 'success'
         run: |
-          python3 -c 'import os,json,pathlib; r=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"source-filter-consumers.json").read_text()); assert r["verified"]'
+          python3 -c 'import json,os,pathlib; r=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"original-filter-error.json").read_text()); assert len(r["console"]["collisions"])==2'
