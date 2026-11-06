@@ -1,0 +1,66 @@
+--- a/cc/cc_test.bzl
++++ b/cc/cc_test.bzl
+@@ -13,7 +13,7 @@
+ # limitations under the License.
+ """cc_test rule"""
+ 
+-load("@cc_compatibility_proxy//:proxy.bzl", _cc_test = "cc_test")
++load("@cc_compatibility_proxy//:proxy.bzl", "CC_TEST_IS_STARLARK", _cc_test = "cc_test")
+ 
+ # TODO(bazel-team): To avoid breaking changes, if the below are no longer
+ # forwarding to native rules, flag @bazel_tools//tools/cpp:link_extra_libs
+@@ -23,15 +23,7 @@
+ # to @rules_cc//:link_extra_lib, or removed entirely (if possible).
+ _LINK_EXTRA_LIB = Label("//:link_extra_lib")
+ 
+-def cc_test(**attrs):
+-    """Bazel cc_test rule.
+-
+-    https://docs.bazel.build/versions/main/be/c-cpp.html#cc_test
+-
+-    Args:
+-      **attrs: Rule attributes
+-    """
+-
++def _cc_test_initializer(**attrs):
+     is_library = "linkshared" in attrs and attrs["linkshared"]
+ 
+     # Executable builds also include the "link_extra_lib" library.
+@@ -41,4 +33,18 @@
+         else:
+             attrs["deps"] = [_LINK_EXTRA_LIB]
+ 
+-    _cc_test(**attrs)
++    return attrs
++
++def _legacy_cc_test(**attrs):
++    _cc_test(**_cc_test_initializer(**attrs))
++
++def _public_cc_test():
++    if CC_TEST_IS_STARLARK:
++        return rule(
++            parent = _cc_test,
++            implementation = lambda ctx: ctx.super(),
++            initializer = _cc_test_initializer,
++        )
++    return _legacy_cc_test
++
++cc_test = _public_cc_test()
+--- a/cc/extensions.bzl
++++ b/cc/extensions.bzl
+@@ -81,6 +81,7 @@
+ cc_shared_library = _cc_shared_library
+ cc_static_library = _cc_static_library
+ cc_test = _cc_test
++CC_TEST_IS_STARLARK = True
+ objc_import = _objc_import
+ objc_library = _objc_library
+ fdo_prefetch_hints = _fdo_prefetch_hints
+@@ -141,6 +142,7 @@
+ cc_shared_library = native.cc_shared_library
+ cc_static_library = getattr(native, "cc_static_library", None) # only in Bazel 8+
+ cc_test = native.cc_test
++CC_TEST_IS_STARLARK = False
+ objc_import = native.objc_import
+ objc_library = native.objc_library
+ fdo_prefetch_hints = native.fdo_prefetch_hints
