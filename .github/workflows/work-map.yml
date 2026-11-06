@@ -1,0 +1,27 @@
+name: Verify gVisor incoming review receipts
+on:
+  push:
+    branches: [qualification/work-map-gvisor-incoming-receipts]
+permissions:
+  contents: read
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Run the canonical site tests on the exact source
+        run: |
+          test "$(git rev-parse HEAD^)" = 8f92f9222c4b1fb63c1ace749a3294538c972bd1
+          git checkout --detach 8f92f9222c4b1fb63c1ace749a3294538c972bd1
+          node --test app_test.mjs
+          python3 -B -m unittest discover -p '*_test.py'
+          node metadata-preflight.mjs .
+      - name: Recheck the public supervisor queue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -B update-status.py --incoming-review-handoff
