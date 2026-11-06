@@ -2,7 +2,7 @@ load("@rules_python//python:py_test.bzl", "py_test")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 load("//test/docker:defs.bzl", "docker_daemon_config")
 load("//tools:defs.bzl", "pkg_tar")
-load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
+load("//tools/bazeldefs:platforms.bzl", "RBE_NETWORK_TOOLS_IMAGE", "docker_test_exec_properties")
 load(":defs.bzl", "python_release_artifacts", "release_artifacts", "repository_test")
 
 package(
@@ -122,12 +122,26 @@ repository_test(
     ],
 )
 
+# The pinned launcher requires glibc 2.38. This Ubuntu Noble image already
+# owns other network tests; its process runs without root or a Docker daemon.
+_APT_VM = {
+    "test.EstimatedCPU": "2",
+    "test.EstimatedFreeDiskBytes": "4GB",
+    "test.EstimatedMemory": "3GB",
+    "test.container-image": RBE_NETWORK_TOOLS_IMAGE,
+    "test.dockerUser": "nobody",
+    "test.nonroot-workspace": "true",
+    "test.recycle-runner": "false",
+    "test.workload-isolation-type": "firecracker",
+}
+
 py_test(
     name = "publisher_namespace_test",
     srcs = ["publisher_namespace_test.py"],
     args = ["$(rootpath @apt_probe_bubblewrap//file)"],
     data = ["@apt_probe_bubblewrap//file"],
-    tags = ["local"],
+    exec_properties = _APT_VM,
+    tags = ["no-local"],
 )
 
 py_test(
@@ -149,6 +163,7 @@ py_test(
         "@apt_gvisor_amd64_input//file",
         "@apt_gvisor_arm64_input//file",
     ],
-    tags = ["local"],
+    exec_properties = _APT_VM,
+    tags = ["no-local"],
     timeout = "long",
 )
