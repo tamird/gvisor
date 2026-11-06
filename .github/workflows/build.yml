@@ -1,35 +1,59 @@
-name: CI
-
-"on":
+name: Compare ordinary GNU source generation
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/pure-go-source-generators]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  generate:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Build the four generator actions on master and the proposal
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixed=e9f9404b6d3f6fecf1e15c171eea0ffe47655d07
+          stock=1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d
+          test "$(git rev-parse HEAD^)" = "$fixed"
+          test "$(git rev-parse HEAD^^)" = "$stock"
+          bazel="$RUNNER_TEMP/bazelisk"
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' --max-time 100 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $bazel" | sha256sum -c
+          chmod 755 "$bazel"
+          options=(--config=x86_64 --lockfile_mode=off --color=no --curses=no)
+          targets=(//pkg/ring0/pagetables:generic_walker_arm64 //pkg/ring0/pagetables:walker_lookup_arm64
+            //pkg/marshal/primitive:primitive_abi_autogen //pkg/marshal/primitive:primitive_state_autogen_with_imports)
+          outputs=(pkg/ring0/pagetables/generic_walker_arm64_template.go pkg/ring0/pagetables/walker_lookup_arm64.go
+            pkg/marshal/primitive/primitive_abi_autogen_unsafe.go pkg/marshal/primitive/primitive_abi_autogen_test.go
+            pkg/marshal/primitive/primitive_abi_autogen_unconditional_test.go pkg/marshal/primitive/primitive_state_autogen_with_imports.go)
+          for source in "$stock" "$fixed"; do
+            git checkout -q --detach "$source"
+            test "$(cat .bazelversion)" = 9.3.1
+            "$bazel" --nosystem_rc --nohome_rc build "${options[@]}" "${targets[@]}"
+            (cd bazel-bin && for f in "${outputs[@]}"; do test -s "$f"; done && sha256sum "${outputs[@]}") | tee "$RUNNER_TEMP/generators-$source.sha256"
+          done
+          diff -u "$RUNNER_TEMP/generators-$stock.sha256" "$RUNNER_TEMP/generators-$fixed.sha256"
+          "$bazel" --nosystem_rc --nohome_rc test "${options[@]}" --nocache_test_results --test_output=errors //tools/go_generics/go_merge:go_merge_test
+          cp bazel-testlogs/tools/go_generics/go_merge/go_merge_test/test.xml "$RUNNER_TEMP/go_merge_test.xml"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          from xml.etree import ElementTree
+          xml = ElementTree.parse(Path(os.environ['RUNNER_TEMP']) / 'go_merge_test.xml')
+          cases = xml.findall('.//testcase')
+          assert cases and not any(c.find(x) is not None for c in cases for x in ('failure', 'error', 'skipped'))
+          print('Passing test records:', len(cases))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: gnu-source-generator-comparison
+          path: |
+            ${{ runner.temp }}/generators-1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d.sha256
+            ${{ runner.temp }}/generators-e9f9404b6d3f6fecf1e15c171eea0ffe47655d07.sha256
+            ${{ runner.temp }}/go_merge_test.xml
+          if-no-files-found: error
+          retention-days: 5
