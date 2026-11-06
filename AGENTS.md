@@ -197,3 +197,38 @@ Before sending PRs, check the following:
 -   Website changes should come with before/after screenshots (use `make
     website-server` to start an HTTP server serving the site locally).
 -   Test-only changes that improve stability/flakiness are very much welcome.
+
+### Buildkite CI results
+
+CI runs on Buildkite. The main pipeline is
+`https://buildkite.com/gvisor/pipeline`; other pipelines, such as `release`,
+are in the same `gvisor` organization. The public pipelines need no Buildkite
+token. Use `tools/buildkite/buildkite.py` to read build results; do not scrape
+the Buildkite web pages.
+
+`tools/buildkite/buildkite.py failed BUILD [REGEX]` prints the failed jobs of a
+build as JSON. `BUILD` is one of:
+
+-   a build URL (any build or job link);
+-   a GitHub PR URL: the newest build on the PR branch. Compare its `commit`
+    with the PR head commit. PRs from forks have no build in the main
+    pipeline. A PR URL uses 1 of the 60 GitHub API requests per hour;
+-   a build number;
+-   a branch name: the newest build on that branch.
+
+`--pipeline NAME` (or `ORG/NAME`) selects the pipeline for all builds except
+build URLs. The default is the main pipeline.
+
+-   Each job has an entry for each failed attempt. `retried: true` marks an
+    attempt that Buildkite retried. If the job has no entry without
+    `retried`, the retry passed, and the failure is a possible flake.
+-   `failed_targets` are the Bazel targets that failed in the job, with the
+    URL of their `test.log`. `unattributed_targets` failed in a job that the
+    tool cannot identify.
+-   `REGEX` is case-insensitive and matches the job name or a failed target.
+    `--soft-failed` adds the soft-failed jobs, which do not fail the build.
+
+Some failures come from the CI infrastructure, not from the change. For
+example, the job has exit status `-1` because Buildkite lost the agent. A job
+with `state: timed_out` (also exit status `-1`) ran longer than its time
+limit, which a hang caused by the change can also cause.
