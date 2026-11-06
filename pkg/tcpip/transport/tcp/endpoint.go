@@ -3502,3 +3502,55 @@ func (e *Endpoint) getExperimentOptionValue(route *stack.Route) uint16 {
 	}
 	return 0
 }
+
+// ReplayState takes a fork-only snapshot before issuing a request and after
+// the client's read returns, while both ends of the connection remain open.
+func (e *Endpoint) ReplayState() map[string]int64 {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if e.snd == nil || e.rcv == nil {
+		return nil
+	}
+	var snapshot TCPEndpointState
+	e.completeStateLocked(&snapshot)
+	s, r := e.snd, e.rcv
+	fields := map[string]int64{
+		"state": int64(e.EndpointState()), "local_port": int64(e.TransportEndpointInfo.ID.LocalPort),
+		"remote_port": int64(e.TransportEndpointInfo.ID.RemotePort),
+		"una":         int64(s.SndUna), "nxt": int64(s.SndNxt), "wnd": int64(s.SndWnd),
+		"cwnd": int64(s.SndCwnd), "outstanding": int64(s.Outstanding), "sacked": int64(s.SackedOut),
+		"rto_ms": s.RTO.Milliseconds(), "recovery": int64(s.state),
+		"send_buffer_used": int64(snapshot.SndBufState.SndBufUsed), "send_buffer_size": int64(snapshot.SndBufState.SndBufSize),
+		"recv_buffer_used": int64(snapshot.RcvBufState.RcvBufUsed), "recv_memory_used": int64(e.rcvMemUsed.Load()),
+		"recv_nxt": int64(r.RcvNxt), "recv_accept_edge": int64(r.RcvAcc), "recv_window": int64(r.rcvWnd),
+		"pending_segments": int64(r.pendingRcvdSegments.Len()), "pending_bytes": int64(r.PendingBufUsed),
+		"write_front": -1, "write_next": -1, "write_last": -1, "first_pending": -1,
+	}
+	fields["unanswered_zero_window_probes"] = int64(s.unackZeroWindowProbes)
+	fields["zero_window_probing"] = 0
+	if s.zeroWindowProbing {
+		fields["zero_window_probing"] = 1
+	}
+	if v := s.writeList.Front(); v != nil {
+		fields["write_front"] = int64(v.sequenceNumber)
+		fields["write_front_bytes"] = int64(v.logicalLen())
+	}
+	if v := s.writeList.Back(); v != nil {
+		fields["write_last"] = int64(v.sequenceNumber)
+		fields["write_last_bytes"] = int64(v.logicalLen())
+	}
+	if v := s.writeNext; v != nil {
+		fields["write_next"] = int64(v.sequenceNumber)
+	}
+	if r.pendingRcvdSegments.Len() != 0 {
+		fields["first_pending"] = int64(r.pendingRcvdSegments[0].sequenceNumber)
+	}
+	for name, t := range map[string]*timer{"resend": &s.resendTimer, "reorder": &s.reorderTimer, "probe": &s.probeTimer} {
+		fields[name+"_armed"] = 0
+		if t.enabled() {
+			fields[name+"_armed"] = 1
+			fields[name+"_in_ms"] = t.target.Sub(snapshot.SegTime).Milliseconds()
+		}
+	}
+	return fields
+}

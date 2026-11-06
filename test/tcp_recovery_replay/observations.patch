@@ -1,0 +1,78 @@
+--- a/main.go
++++ b/main.go
+@@ -262,6 +262,7 @@
+ 			queueBefore, _ := s2c.drops()
+ 			t0 := time.Now()
+ 			trace.reset(t0)
++			if measured { observeStart(t0, serverHost, client) }
+ 			var tw *timeoutWatcher
+ 			var kw *kernelRTOWatcher
+ 			var before statCounters
+@@ -275,10 +276,13 @@
+ 
+ 			var req [8]byte
+ 			binary.BigEndian.PutUint64(req[:], uint64(*sizeFlag))
++			readBytes, operation := 0, "request_write"
+ 			conn.SetDeadline(t0.Add(*timeoutFlag))
+ 			if _, err := conn.Write(req[:]); err != nil {
+ 				r.err = err
+-			} else if _, err := io.ReadFull(conn, buf); err != nil {
++			} else {
++				operation = "response_read"; count, err := io.ReadFull(conn, buf)
++				readBytes = count
+ 				r.err = err
+ 			}
+ 			r.elapsed = time.Since(t0)
+@@ -296,6 +300,7 @@
+ 			queueAfter, _ := s2c.drops()
+ 			r.queueDrop = queueAfter - queueBefore
+ 			r.retxTimes = trace.retransmitTimes()
++			if measured { observeFinish(serverHost,client,readBytes,operation,r) }
+ 			printFetch(r)
+ 			if rec != nil && trial == 1 && n == 1 {
+ 				if on, ok := rec.timestamps(); ok {
+@@ -334,9 +339,19 @@
+ 			return
+ 		}
+ 		left := int(binary.BigEndian.Uint64(req[:]))
++		writerRequests := int64(left)
++		writerCalls.Add(1)
++		writerRequested.Store(writerRequests)
++		writerBytes.Store(0)
++		writerAttempted.Store(0)
++		writerErrors.Store(0)
+ 		for left > 0 {
+ 			n := min(left, 32<<10)
+-			if _, err := c.Write(payload[:n]); err != nil {
++			writerAttempted.Add(int64(n))
++			count, err := c.Write(payload[:n])
++			writerBytes.Add(int64(count))
++			if err != nil {
++				writerErrors.Add(1)
+ 				return
+ 			}
+ 			left -= n
+--- a/wire-trace.go
++++ b/wire-trace.go
+@@ -71,6 +71,7 @@
+ func seqLess(a, b uint32) bool { return int32(a-b) < 0 }
+ 
+ func (w *wireTrace) recordSent(now time.Time, p *packetInfo) {
++	recordObservation("sent",now,p)
+ 	if !p.isTCP || p.src != w.server {
+ 		return
+ 	}
+@@ -119,11 +120,13 @@
+ }
+ 
+ func (w *wireTrace) recordScriptDrop(now time.Time, p *packetInfo) {
++	recordObservation("drop",now,p)
+ 	w.recordQueueDrop(now, p)
+ }
+ 
+ func (w *wireTrace) recordDelivered(now time.Time, raw []byte) {
+ 	p := parsePacket(raw)
++	recordObservation("delivered",now,&p)
+ 	if !p.isTCP || p.dst != w.server || p.payloadLen != 0 {
+ 		return
+ 	}
