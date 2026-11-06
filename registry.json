@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T19:08:31.724Z",
+    "updatedAt": "2026-11-06T19:15:56.025Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4857,8 +4857,8 @@
       "url": "https://github.com/tamird/gvisor/commit/f6df263f8",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 to read its offsets, and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn f6df263f8, one Bazel invocation linked the public race runsc and Sentry for both AMD64 and ARM64. All four links ran uncached on a pinned AMD64 Ubuntu worker. Each ELF was static, matched its target architecture, and contained the race runtime. An unrelated QEMU toolchain, an explicit GCC override, and a custom GNU target all selected the intended compiler and libc.\n\nA separate native AMD64 Linux build checked both vDSOs and the approved raw stub extraction. All 10 AMD64 and 11 ARM64 offsets matched the embedded bytes; both vDSOs had the expected versioned ABI and passed the repository’s ELF mapping check.\n\nNative AMD64 and ARM64 ran a rootless systrap guest with the released LLVM toolchain on 3dab3494e. Next, package and run the installed binaries from the current integration.",
-      "updatedAt": "2026-11-06T18:24:42.424Z",
+      "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 to read its offsets, and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn f6df263f8, one Bazel invocation linked the public race runsc and Sentry for both AMD64 and ARM64. All four links ran uncached on a pinned AMD64 Ubuntu worker. Each ELF was static, matched its target architecture, and contained the race runtime. An unrelated QEMU toolchain, an explicit GCC override, and a custom GNU target all selected the intended compiler and libc.\n\nA separate native AMD64 Linux build checked both vDSOs and the approved raw stub extraction. All 10 AMD64 and 11 ARM64 offsets matched the embedded bytes; both vDSOs had the expected versioned ABI and passed the repository’s ELF mapping check.\n\nNative AMD64 and ARM64 ran a rootless systrap guest with the released LLVM toolchain on 3dab3494e. On the current compiler plus the approved raw extractor and release rule (2c90e983d), the public release target built Debian, bzip2 and zstd packages for both architectures. All nine executable hashes and modes matched across formats on each CPU. The unpacked AMD64 release ran a systrap guest. The ARM64 CLI reported its version under QEMU user emulation.",
+      "updatedAt": "2026-11-06T19:15:56.025Z",
       "head": "f6df263f8e2ce2cbe6a497356613f6785c4800a4",
       "evidence": [
         {
@@ -5424,10 +5424,12 @@
       "followup": {
         "owner": "Compiler integration",
         "sourceHead": "f6df263f8e2ce2cbe6a497356613f6785c4800a4",
-        "disposition": "Four public race links passed for both target CPUs in one Bazel graph using the released supplier.",
-        "observedAt": "2026-11-06T17:16:58.443Z",
-        "nextAction": "Check the current release archive and run its installed CLI and matching Sentry. Upstream submission waits for #16522, #17067, #16516, and #16586.",
+        "disposition": "The public cross-build, native ELF checks and six release packages are qualified on their recorded sources.",
+        "observedAt": "2026-11-06T19:15:56.025Z",
+        "nextAction": "Follow #16522, its dependent #17067, #16516 and #16586 through upstream review. Update the compiler branch against the landed versions before submitting it.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42263217060/artifacts/13527310655",
+          "https://github.com/tamird/gvisor/actions/runs/42267606060/artifacts/13527578331",
           "https://github.com/tamird/gvisor/actions/runs/42255872935/artifacts/13525085703",
           "https://github.com/tamird/gvisor/commit/f6df263f8",
           "https://github.com/tamird/gvisor/actions/runs/42209485090/artifacts/13498582036",
@@ -28329,15 +28331,18 @@
       "url": "https://github.com/google/gvisor/pull/17114",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-06T16:36:37.169Z",
-      "summary": "Build the NVIDIA driver parser from the LLVM archive supplied by the pinned module. This removes the local Bazel 9 patch and zlib rule. The released module enables nine LLVM backends where gVisor’s archive enabled twenty. The parser configures 141 fewer C++ compilations on each architecture.\n\nThe standalone change teaches the existing license verifier two SPDX identifiers. It verified all 223 records. Two Fetch runs preserved the five terms recorded for the parser libraries; the verifier rejected a changed archive checksum and a record with only the root notice’s terms.\n\nTestParser executed uncached on native AMD64 and ARM64 with the released LLVM source. Those runs used 5c019e9e6. The standalone commit has identical parser and LLVM declarations and its own 223-entry catalog check.",
+      "updatedAt": "2026-11-06T19:15:56.025Z",
+      "summary": "#17114 replaces the NVIDIA parser’s pinned LLVM source with the dependency supplied by hermetic-llvm. All four previously failing build targets built with this change on the compiler integration. Both AMD64 binaries were verified and TestParser passed in a fresh remote execution. The parity tests then failed to start git or to verify the installer server's TLS certificate. The prerequisite license-catalog change, #16249, has merged.",
       "followup": {
-        "owner": "root",
+        "owner": "Maintainer",
         "sourceHead": "7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
-        "observedAt": "2026-11-06T08:32:16.199Z",
-        "disposition": "Both native parser executions and standalone catalog verified",
-        "nextAction": "Open the standalone PR after contributor review.",
+        "observedAt": "2026-11-06T19:15:56.025Z",
+        "disposition": "Published #17114 at the contributor-approved source. All four parser targets built and the remote parser test passed.",
+        "nextAction": "Follow the existing review requests and upstream checks on #17114. The source-input workstream owns the separate parity failures.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/17114",
+          "https://github.com/tamird/gvisor/actions/runs/42274588613/artifacts/13532788389",
+          "https://github.com/tamird/gvisor/actions/runs/42276297996/artifacts/13531918912",
           "https://github.com/tamird/gvisor/actions/runs/42183941511/artifacts/13487853263",
           "https://github.com/tamird/gvisor/commit/7fca7c54f",
           "https://github.com/tamird/gvisor/actions/runs/42183956039/artifacts/13486364802",
@@ -28358,6 +28363,14 @@
         ]
       },
       "evidence": [
+        {
+          "label": "All four parser targets built and TestParser passed remotely",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42274588613/artifacts/13532788389"
+        },
+        {
+          "label": "Original failures in the git and installer test inputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42276297996/artifacts/13531918912"
+        },
         {
           "label": "Native AMD64 and ARM64 TestParser executions and the architecture of each tested ELF",
           "url": "https://github.com/tamird/gvisor/actions/runs/42183941511/artifacts/13487853263"
