@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T16:20:27.112Z",
+    "updatedAt": "2026-11-06T16:22:54.525Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -38302,19 +38302,9 @@
       "title": "Restore TCP retransmission and probe deadlines",
       "url": "https://github.com/tamird/gvisor/commit/12bdd02c2",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-29T22:42:22.871924+00:00",
-      "summary": "After checkpoint restore, a sender could wait indefinitely for another peer packet. Restart an active send timer on its original deadline once the new route is ready.",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "12bdd02c2061dea8d6a252db59bd5d4b11e99e5f",
-        "url": "https://github.com/tamird/gvisor/commit/12bdd02c2",
-        "title": "Restore TCP retransmission and probe deadlines",
-        "body": "Review for submission after #16666. Three of four packet cases failed on stock: retransmit the oldest byte, probe the tail, and probe a closed window. All four passed on this commit; the idle sender kept its timer disabled.",
-        "requestedAt": "2026-10-29T22:10:16.342263+00:00",
-        "baseHead": "f8209127c69afca04a531e0feb46ca17183c9df2"
-      },
+      "status": "Approved; waiting for #16666",
+      "updatedAt": "2026-11-06T16:22:54.525Z",
+      "summary": "Approved for submission after #16666. After checkpoint restore, a sender could wait indefinitely for another peer packet. Restart an active send timer on its original deadline once the new route is ready.",
       "evidence": [
         {
           "label": "Four packet cases on the review head: all passed",
@@ -38352,6 +38342,29 @@
         "after": {
           "head": "12bdd02c2061dea8d6a252db59bd5d4b11e99e5f"
         }
+      },
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "12bdd02c2061dea8d6a252db59bd5d4b11e99e5f",
+          "url": "https://github.com/tamird/gvisor/commit/12bdd02c2",
+          "title": "Restore TCP retransmission and probe deadlines",
+          "body": "Review for submission after #16666. Three of four packet cases failed on stock: retransmit the oldest byte, probe the tail, and probe a closed window. All four passed on this commit; the idle sender kept its timer disabled.",
+          "outcome": "approved",
+          "at": "2026-11-06T16:22:54.525Z",
+          "note": "Tamir approved submission after #16666 lands."
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "12bdd02c2061dea8d6a252db59bd5d4b11e99e5f",
+        "observedAt": "2026-11-06T16:22:54.525Z",
+        "disposition": "Tamir approved submission after #16666 lands.",
+        "nextAction": "Open the approved PR when #16666 lands.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/12bdd02c2",
+          "https://github.com/google/gvisor/pull/16666"
+        ]
       }
     },
     {
@@ -45553,25 +45566,36 @@
       "title": "Check the mutex protecting semaphore waiters",
       "url": "https://github.com/tamird/gvisor/commit/b68f40e4e",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-01T11:45:39.922159+00:00",
-      "summary": "The wakeup helper reads a semaphore value and removes waiters from its queue. Giving the helper its owning set lets checklocks verify the existing mutex at every call.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-06T16:22:54.525Z",
+      "summary": "The revision must cover the semaphore’s waiters and value at their field declarations. The wakeup helper reads a semaphore value and removes waiters from its queue. Giving the helper its owning set lets checklocks verify the existing mutex at every call.",
       "evidence": [
         {
           "label": "Checklocks results on AMD64 and ARM64 with the mutex held and deliberately released",
           "url": "https://github.com/tamird/gvisor/actions/runs/41302709182/artifacts/13082132841"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "b68f40e4e358798ba034116cdb4c8194bb1c7c07",
-        "baseHead": "c4231067d198ea1b38bd629b7c87a5426f44b2c8",
-        "url": "https://github.com/tamird/gvisor/commit/b68f40e4e",
-        "title": "Check the mutex protecting semaphore waiters",
-        "requestedAt": "2026-11-01T11:45:39.922159+00:00",
-        "summary": "Open after the semaphore last-operator fix lands?",
-        "body": "All three callers already hold the set mutex. Both architecture analyzers passed. Releasing the mutex around the SETVAL call made checklocks diagnose the missing lock on each architecture."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "b68f40e4e358798ba034116cdb4c8194bb1c7c07",
+          "url": "https://github.com/tamird/gvisor/commit/b68f40e4e",
+          "title": "Check the mutex protecting semaphore waiters",
+          "body": "All three callers already hold the set mutex. Both architecture analyzers passed. Releasing the mutex around the SETVAL call made checklocks diagnose the missing lock on each architecture.",
+          "outcome": "changes-requested",
+          "at": "2026-11-06T16:22:54.525Z",
+          "note": "Tamir requested field-level locking contracts for both sem.waiters and sem.value."
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "b68f40e4e358798ba034116cdb4c8194bb1c7c07",
+        "observedAt": "2026-11-06T16:22:54.525Z",
+        "disposition": "Tamir requested field-level locking contracts for both sem.waiters and sem.value.",
+        "nextAction": "Revise both field annotations and check the actual accesses with Nogo.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/b68f40e4e"
+        ]
       }
     },
     {
