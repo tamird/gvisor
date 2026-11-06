@@ -1,7 +1,7 @@
-name: Check installed default routes on two native workers
+name: Check packet-ring lifetime and UDP delivery on native scratch workers
 on:
   push:
-    branches: [qualification/rbe-route-pr15866]
+    branches: [qualification/packet-ring-native-pair]
 permissions:
   contents: read
   actions: read
@@ -45,8 +45,6 @@ jobs:
           set -eu
           task="$RUNNER_TEMP/release-rbe"
           gh api repos/tamird/gvisor/actions/artifacts/13078732581/zip > "$task/supplier.zip"
-          gh api repos/tamird/gvisor/actions/artifacts/13462233733/zip > "$task/prior-route.zip"
-          echo "05d4ad33ef4bd89d453b0596c8dee81f8a762a00bd3fa219e277bb7dfc0a37e2  $task/prior-route.zip" | sha256sum -c -
           gh api repos/tamird/gvisor/actions/artifacts/13413349620/zip > "$task/wrapper-ledger.zip"
           unset GH_TOKEN
           echo "993e832b8f926876f2b935e97af3cc50493a507e79ed80d1da32309f00e94619  $task/supplier.zip" | sha256sum -c -
@@ -63,16 +61,15 @@ jobs:
           client.write_bytes(binary)
           client.chmod(0o755)
           PYTHON
-      - name: Bind the authored Go sources, test dependencies and namespace launcher
+      - name: Bind the five receiver files to the actual stock and reviewed sources
         run: |
           set -eu
-          test "$(git rev-parse HEAD^)" = 9d0caabe320ab95fa3c7e5e84c5dd648287e901c
-          test "$(git rev-parse HEAD^^)" = f35d725669ae45e7617cf66e7ceee2f0f6307490
-          test "$(git rev-parse HEAD:runsc/sandbox/network_test.go)" = 745c0af3e82091a61f4c6b1e4b513449a8a2910f
-          test "$(git rev-parse HEAD:runsc/sandbox/network.go)" = e5e03d8f04df5fb6b0e6c6fa7988eeab9524e0c0
-          test "$(git rev-parse HEAD:runsc/sandbox/BUILD)" = 20c8d4954c98e6de53d0baf836bb497e62aa8142
+          fixed=8311cfcaedcaf8dfbd221e0a09ef4ff4fd36af37
+          git fetch --quiet --no-tags --depth=2 origin "$fixed"
+          test "$(git rev-parse "$fixed^")" = 1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d
+          test "$(git rev-parse HEAD^:pkg/tcpip/link/fdbased)" = "$(git rev-parse "$fixed^:pkg/tcpip/link/fdbased")"
+          git diff --exit-code "$fixed" HEAD -- pkg/tcpip/link/fdbased ':!pkg/tcpip/link/fdbased/BUILD' ':!pkg/tcpip/link/fdbased/packet_ring_linux_test.go'
           test "$(git rev-parse HEAD:test/rbe/netns_runner/main_linux.go)" = d3bfb59032d70121b51a01ecf7545b767db0f566
-          test "$(git rev-parse HEAD:runsc)" = "$(git rev-parse HEAD^:runsc)"
           test "$(git rev-parse HEAD:test/rbe/release_prewarmer/BUILD)" = 0942c3a1b2856d6b31866ec8bb60e280ba38a011
           test "$(id -u)" -ne 0
           test "$(cat .bazelversion)" = 9.3.1
@@ -92,14 +89,36 @@ jobs:
           } > "$RUNNER_TEMP/release-rbe/private.bazelrc"
           test "$(stat -c %a "$RUNNER_TEMP/release-rbe/private.bazelrc")" = 600
           unset BUILDBUDDY_API_KEY
-      - name: Run the authored route cases on the amd64 worker
+      - name: Select the stock receive implementation
+        id: stock
         if: always() && !cancelled() && steps.remote.outcome == 'success'
+        run: |
+          set -eu
+          cd pkg/tcpip/link/fdbased
+          git restore --source='HEAD^' --worktree -- endpoint.go mmap.go mmap_unsafe.go packet_dispatchers.go processors.go
+      - name: Run stock ring tests on amd64
+        if: always() && !cancelled() && steps.stock.outcome == 'success'
         timeout-minutes: 16
-        run: python3 "$RUNNER_TEMP/release-rbe/harness/check.py" amd64
-      - name: Run the authored route cases on the arm64 worker
+        run: python3 "$RUNNER_TEMP/release-rbe/harness/check.py" amd64 stock
+      - name: Run stock ring tests on arm64
+        if: always() && !cancelled() && steps.stock.outcome == 'success'
+        timeout-minutes: 16
+        run: python3 "$RUNNER_TEMP/release-rbe/harness/check.py" arm64 stock
+      - name: Select the fixed receive implementation
+        id: fixed
         if: always() && !cancelled() && steps.remote.outcome == 'success'
+        run: |
+          set -eu
+          cd pkg/tcpip/link/fdbased
+          git restore --source='HEAD' --worktree -- endpoint.go mmap.go mmap_unsafe.go packet_dispatchers.go processors.go
+      - name: Run fixed ring tests on amd64
+        if: always() && !cancelled() && steps.fixed.outcome == 'success'
         timeout-minutes: 16
-        run: python3 "$RUNNER_TEMP/release-rbe/harness/check.py" arm64
+        run: python3 "$RUNNER_TEMP/release-rbe/harness/check.py" amd64 fixed
+      - name: Run fixed ring tests on arm64
+        if: always() && !cancelled() && steps.fixed.outcome == 'success'
+        timeout-minutes: 16
+        run: python3 "$RUNNER_TEMP/release-rbe/harness/check.py" arm64 fixed
       - name: Stop the client and remove its private configuration
         if: always()
         run: |
@@ -117,7 +136,7 @@ jobs:
           import json, os
           from pathlib import Path
           root = Path(os.environ["RUNNER_TEMP"]) / "release-rbe" / "public"
-          allowed = {"amd64-worker.json", "arm64-worker.json"}
+          allowed = {f"{a}-{v}.json" for a in ("amd64", "arm64") for v in ("stock", "fixed")}
           files = list(root.iterdir())
           key = os.environ["ACCESS"].encode()
           assert key and files
@@ -132,7 +151,7 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && steps.privacy.outcome == 'success'
         with:
-          name: route-pr15866
+          name: native-packet-ring
           path: ${{ runner.temp }}/release-rbe/public/*.json
           if-no-files-found: error
           retention-days: 14

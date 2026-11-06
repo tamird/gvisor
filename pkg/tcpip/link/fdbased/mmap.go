@@ -135,6 +135,10 @@ type packetMMapDispatcher struct {
 	mgr *processorManager
 }
 
+func (d *packetMMapDispatcher) start() {
+	d.mgr.start()
+}
+
 func (d *packetMMapDispatcher) release() {
 	d.mgr.close()
 }
