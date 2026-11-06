@@ -542,6 +542,7 @@ func (r *receiver) handleRcvdSegment(s *segment) (drop bool, err tcpip.Error) {
 	// By consuming the current segment, we may have filled a gap in the
 	// sequence number domain that allows pending segments to be consumed
 	// now. So try to do it.
+	hadGap := len(r.pendingRcvdSegments) != 0
 	for !r.closed && r.pendingRcvdSegments.Len() > 0 {
 		s := r.pendingRcvdSegments[0]
 		segLen := seqnum.Size(s.payloadSize())
@@ -564,6 +565,9 @@ func (r *receiver) handleRcvdSegment(s *segment) (drop bool, err tcpip.Error) {
 		// filled (RFC 2883 section 4.2; Linux tcp_data_queue()). A FIN
 		// consumed above already sent the duplicate block with its ACK.
 		r.ep.snd.sendDSACK(duplicate)
+	} else if hadGap && len(r.pendingRcvdSegments) == 0 && r.ep.snd.MaxSentAck != r.RcvNxt {
+		// The cumulative ACK tells the peer it repaired the gap (RFC 5681 §4.2).
+		r.ep.snd.sendAck()
 	}
 	return false, nil
 }
