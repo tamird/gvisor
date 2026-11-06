@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T10:58:13.320Z",
+    "updatedAt": "2026-11-06T11:04:06.381Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -53458,8 +53458,8 @@
       "url": "https://github.com/google/gvisor/pull/17028",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T10:22:05.384Z",
-      "summary": "Docker 27.5.1 rejected the outer container name in both checkpoint modes on a772fedd6 with #16666 applied. The subtest names contain an equals sign.",
+      "updatedAt": "2026-11-06T11:04:06.381Z",
+      "summary": "Docker 27.5.1 rejected the outer container name in both checkpoint modes on a772fedd6 with #16666 applied. The subtest names contain an equals sign.\n\nWith hyphenated names and the Docker/containerd test setup corrected, both modes started the inner Moby 29.8.1 daemon. Each daemon exited while creating its default bridge because /proc/sys/net/ipv4/conf/docker0/route_localnet was missing. This gVisor revision exposes route_localnet under all and default. Both tests stopped before checkpoint.",
       "evidence": [
         {
           "label": "Both subtests failed at container creation",
@@ -53472,6 +53472,18 @@
         {
           "label": "Replace the equals sign with a hyphen on the author’s head",
           "url": "https://github.com/tamird/gvisor/commit/053b485ea"
+        },
+        {
+          "label": "Both daemon logs report the missing docker0/route_localnet during bridge creation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42204674294/job/127848215695"
+        },
+        {
+          "label": "Corrected test setup, two failed subtests and no completed checkpoint modes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42204674294/artifacts/13497196496"
+        },
+        {
+          "label": "IPv4 route_localnet entries under all and default on the tested revision",
+          "url": "https://github.com/google/gvisor/blob/a772fedd6/pkg/sentry/fsimpl/proc/tasks_sys.go#L307-L313"
         }
       ],
       "contributorReview": {
