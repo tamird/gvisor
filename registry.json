@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T23:30:58.981Z",
+    "updatedAt": "2026-11-06T23:37:40.578Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -662,9 +662,9 @@
       "title": "Propagate failures from source lint tools",
       "url": "https://github.com/google/gvisor/pull/15111",
       "group": "release",
-      "status": "open",
+      "status": "merged",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-23T18:50:53.058692+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "EtiennePerot approved the exact published b01f3baf4f head at 18:42:38Z on October 23. Delivery and the fresh-review request are complete; the existing watcher follows checks, imports and any new substantive feedback.\n\nEarlier delivery record:\n\nThe contributor-approved goimports adaptation is delivered at b01f3baf4f on current upstream. It replaces the obsolete mock SDK with the Bazel formatter boundary while preserving central failure propagation. Four remote regression methods and all five public Make lint checks pass. Independent retained reconciliation corrects a trailing-space Docker event assertion; the original wrapper FAIL remains recorded, with no workload rerun. The native EtiennePerot re-request returned HTTP 404; the explicitly authorized substantive alert was posted with the existing hourly dedupe marker. Earlier approvals remain tied to 12d1e8b46.\n\nEarlier source-specific record:\n\nThe patch approved by EtiennePerot on 2026-10-09T19:49:58Z at 095d18339a is independently verified unchanged at 12d1e8b462. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at 12d1e8b4626d on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe patch-preserving rebase includes the landed shared-workflow correction. After the new-head notification, Etienne submitted a new approval of this exact head. This is a new review, distinct from the older reassociated approval. Its matching import #15396 closed without merging on October 15 at 23:22 UTC; the source PR remains open.",
       "followup": {
         "disposition": "Delivered and approved on the current head",
@@ -1568,9 +1568,9 @@
       "title": "Check existing task and signal locking contracts",
       "url": "https://github.com/google/gvisor/pull/14345",
       "group": "analysis",
-      "status": "open",
+      "status": "merged",
       "reviewDecision": "",
-      "updatedAt": "2026-10-24T11:22:37.878012+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The approved annotation-only amendment is published at 2a057f2bba. The original split-request reply links three independent public fixes: parent-death #16338, exit-status #16339 and signal-delivery #16340. No contributor decision remains and none of the four changes requires another to land.\n\nCorrected standalone and combined analyzer checks passed on both CPUs; executable Go in the annotation-only amendment is unchanged. The original iterator annotation failure and five-source collection error remain recorded. The three behavioral fixes passed their original standalone analyzers and the combined kernel normal/race checks each passed 116 XML records. The signal fix was published after removing the requested new test and its BUILD dependencies, with production bytes unchanged.",
       "followup": {
         "disposition": "Split request answered; four changes delivered",
@@ -2029,10 +2029,10 @@
       "title": "Select newer Linux headers",
       "url": "https://github.com/google/gvisor/pull/16236",
       "group": "bazel",
-      "status": "open",
+      "status": "merged",
       "summary": "hermetic-llvm merged kernel_headers.configure after the llvm 0.8.26 release. The PR cites the merged change and still carries the backport.",
       "head": "b8420d7dcbd3e30af337bc8b544fd62fc6e24dae",
-      "updatedAt": "2026-10-27T16:52:09+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "root",
         "sourceHead": "b8420d7dcbd3e30af337bc8b544fd62fc6e24dae",
@@ -3892,9 +3892,9 @@
       "title": "Handle OOM score updates for exited processes",
       "url": "https://github.com/google/gvisor/pull/15499",
       "group": "runtime",
-      "status": "open",
+      "status": "merged",
       "summary": "The bounded UIDMap diagnostic now passes both systrap and KVM under the shared privileged guest route, and the route-only integration150ecd is complete. The historical import15910 startup EOF was not reproduced; its producer cause remains unresolved. The diagnostic startup edits were excluded from integration. No further identical replay or new source-fix commitment is justified; retain the original public failure and follow import progression.\n\nThe focused UIDMap diagnostic stopped at the host launcher before the guest or any UIDMap body executed. Retained runner identity lacks access to root:kvm0660 /dev/kvm; the generic test route executed with namespace requirements. All three required UIDMap records are absent. The original empty-mounts failure remains unresolved.\n\nA focused fork-only UIDMap diagnostic is running at92e939499e under Actions39345335118. It preserves the failed startup environment and ID mapping code, inherits producer stderr, and records non-consuming pre-kill child state plus the existing reap status. The original empty-mounts failure remains unresolved.\n\nThe complete audit of current import15910 at445d/build51366 finds three cgroupv1 attempts that actually fail TestUIDMap on systrap and KVM. The current boot artifact shows empty mounts JSON; available public artifacts do not establish the gofer writer error or exit status. Root owns that concrete startup diagnosis. Remaining failures are separately classified as checkout authorization, cancellation or one Docker cleanup failure; they do not explain away the executed test failures. Internal33076 failure details remain unavailable.",
-      "updatedAt": "2026-10-20T00:48:06.083755+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "728f546aff7d3005c2a8d373f68c5d7e963d629f",
@@ -6275,8 +6275,8 @@
       "title": "Preserve moved TUN devices across restore",
       "url": "https://github.com/google/gvisor/pull/15315",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-23T23:16:03.213711+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The current head fdca42b6803f is published and mergeable, with green public checks. Etienne explicitly invalidated prior approvals after the rebase and requested nybidari re-review on October23. The reviewed diff now preserves landed MTU bounds and adds Kind to the existing NICOptions block; the syscall test body remains byte-identical. This changed patch text requires a fresh review despite equivalent intent.\n\nEarlier internal feedback failure belongs to source ae6e695110f8 and does not describe the current head.",
       "number": 15315,
       "followup": {
@@ -6552,21 +6552,9 @@
       "url": "https://github.com/google/gvisor/pull/15370",
       "group": "bazel",
       "status": "open",
-      "head": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-      "updatedAt": "2026-11-06T22:51:21.450Z",
+      "head": "da88f239eb2f37f2a58db6c3a70296c562ed006a",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The revision uses with_cfg 1.0.2 and the public rules_cc test-extension API. All four test owners ran uncached on the requested native CPUs: 10,933 atomicbitops cases and three PosixError cases passed on each of AMD64 and ARM64. With the same pin, wrapping only the public macro still selects the AMD64 test toolchain for the ARM64 binary and fails before execution. The catalog regenerated its exact new row and verified all 224 entries.",
-      "followup": {
-        "owner": "Contributor",
-        "sourceHead": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-        "observedAt": "2026-11-06T22:12:34.788Z",
-        "disposition": "The requested with_cfg 1.0.2 revision passed native AMD64 and ARM64 tests.",
-        "nextAction": "Review the proposed source amendment to the existing PR. If #16507 lands first, rebase the go_bzl dependency list against it. The combined list is recorded on the coverage and native-test integration.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/da88f239e",
-          "https://github.com/tamird/gvisor/actions/runs/42301517765/artifacts/13543619587",
-          "https://github.com/tamird/gvisor/blob/127967d31/tools/bazeldefs/BUILD"
-        ]
-      },
       "number": 15370,
       "reviewDecision": null,
       "evidence": [
@@ -6641,6 +6629,10 @@
         {
           "label": "Actual native architecture validation",
           "url": "https://app.buildbuddy.io/invocation/651c5783-a7e1-4e69-bed9-7ea3323d2ce2"
+        },
+        {
+          "label": "Published with with_cfg 1.0.2",
+          "url": "https://github.com/google/gvisor/commit/da88f239e"
         }
       ],
       "refinement": {
@@ -6661,19 +6653,19 @@
           "outcome": "changes-requested",
           "at": "2026-11-06T21:59:06.193Z",
           "note": "Tamir asked to use with_cfg 1.0.2 and to include the range-diff in the amendment question."
+        },
+        {
+          "kind": "amendment",
+          "head": "da88f239eb2f37f2a58db6c3a70296c562ed006a",
+          "url": "https://github.com/tamird/gvisor/commit/da88f239e",
+          "title": "Run Go and C++ tests on native architectures",
+          "body": "The test runner for a C++ test can still target AMD64 when its binary\nhas been cross-compiled for ARM64. Select the target platform on the\ntest rule itself and constrain its test execution group to a native\nworker. Use the real C++ test rule exported by rules_cc for inheritance\nso its test transition also applies to the runner.\n\nAdd optional architecture variants to Go and C++ test declarations.\nProvide suites for atomicbitops and posix_error so one invocation can\nexercise both architectures. Ordinary test targets remain available.",
+          "outcome": "approved",
+          "at": "2026-11-06T23:37:40.578Z",
+          "postedURL": "https://github.com/google/gvisor/pull/15370",
+          "note": "Published at the exact approved commit."
         }
-      ],
-      "contributorReview": {
-        "kind": "amendment",
-        "status": "pending",
-        "head": "da88f239eb2f37f2a58db6c3a70296c562ed006a",
-        "baseHead": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
-        "url": "https://github.com/tamird/gvisor/commit/da88f239e",
-        "title": "Run Go and C++ tests on native architectures",
-        "body": "The test runner for a C++ test can still target AMD64 when its binary\nhas been cross-compiled for ARM64. Select the target platform on the\ntest rule itself and constrain its test execution group to a native\nworker. Use the real C++ test rule exported by rules_cc for inheritance\nso its test transition also applies to the runner.\n\nAdd optional architecture variants to Go and C++ test declarations.\nProvide suites for atomicbitops and posix_error so one invocation can\nexercise both architectures. Ordinary test targets remain available.",
-        "requestedAt": "2026-11-06T22:12:34.788Z",
-        "summary": "May I update #15370 to this single commit using with_cfg 1.0.2? The revision uses with_cfg 1.0.2 and the public rules_cc test-extension API. All four test owners ran uncached on the requested native CPUs: 10,933 atomicbitops cases and three PosixError cases passed on each of AMD64 and ARM64. With the same pin, wrapping only the public macro still selects the AMD64 test toolchain for the ARM64 binary and fails before execution. The catalog regenerated its exact new row and verified all 224 entries.\n\nFrom the public PR head\ngit -C ~/code/gvisor range-diff --creation-factor=999 fafff7eba^! da88f239e^!\n\nFrom the previously reviewed proposal\ngit -C ~/code/gvisor range-diff --creation-factor=999 5f651fdc0^! da88f239e^!"
-      }
+      ]
     },
     {
       "id": "pr:15371",
@@ -7481,8 +7473,8 @@
       "title": "Validate netfilter query sizes and permissions",
       "url": "https://github.com/google/gvisor/pull/15503",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-19T21:36:45.846198+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The patch approved by nybidari on 2026-10-16T21:06:19Z at 89f9caa31f is independently verified unchanged at 9661cdec77. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at 9661cdec7780 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThe formatting-only amendment is published at 89f9caa31: exactly four clang-format line wraps correct the initial lint failure without changing behavior or the PR description. The delivery owner verified source, body, tracking and mergeability; new-head lint is SUCCESS and generation was queued at that readback. The original f702 failure remains historical evidence.\n\nEarlier observations:\n\nThe approved residual size and permission checks are published as PR #15503 at f70232108e on review/netfilter-query-validation, after preserving the upstream overlap. The current source is mergeable. Its lint job 113208375677 failed; the delivery owner is investigating the exact retained log. No cause, source correction or rerun is claimed yet, and no contributor hold remains.\n\nEarlier observations:\n\nThe approved candidate is partially superseded by upstream commit 67fc. Root authorized the owner to preserve only the remaining size and permission checks while preparing the delivery; that residual revision is not yet published. No duplicate PR or new contributor hold is claimed.\n\nEarlier observations:\n\nContributor approved after correcting citation formatting from [2, 3] to separate references; root owns correction and publication. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nStandalone source on upstream acbaf278f corrects the existing IPv4/IPv6 GET_INFO and GET_ENTRIES absent-table errno exposed by the public Syzkaller smoke failure. The final amendment preserves Linux GET_INFO capability-before-size ordering; independent source and ABI review is closed. Final validation parent 23b87864 passes in 163.346 seconds at composition 6ea8acbf9: four actual uncached root/IPv6 Firecracker owners report 34 named leaves, with 33 passes and the sole existing native InitialState skip. All MissingTable and sixteen INFO permission cases execute. Two actual uncached OCI Nogo owners pass analysis for both CPUs. All six actions retain 300-second limits. Outcome 156427beac3e and independent saved peer 05b4361f1e49 bind the source, actual actions and results.\n\nInitial parent 8e7 remains failed: both baseline families reproduce EINVAL instead of ENOENT, nine systrap cases pass after correction, and all nine native Linux cases skip for missing capabilities. The corrected method uses canonical --config=rbe, activating the existing namespace-root/IPv6 Firecracker selector; no source or worker-declaration change was required. That original failure remains separate. The contributor review question for exact source 2c9f0056d has now been issued and awaits an answer; no upstream PR is open. No broader syscall-profile pass is claimed. The exact validated correction is now included in public canonical qualification head 6ea8acbf9; its automatic release smoke also passes.",
       "followup": {
         "disposition": "Unchanged approved patch; current CI and import progression",
@@ -8073,8 +8065,8 @@
       "title": "Enable deprecation diagnostics for repository code",
       "url": "https://github.com/google/gvisor/pull/16085",
       "group": "analysis",
-      "status": "open",
-      "updatedAt": "2026-10-24T00:29:32.595874+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "Etienne confirmed at 00:22:42Z that exact53203 is being handled internally and is waiting for review. No author action or reapproval reminder is requested for this amendment; the exact-head patch-equivalence record remains valid.\n\nThe current approved patch was quietly rebased to 53203cabe4 after the previous Copybara migration error. Its complete binary diff is byte-identical to approved 3b04224733, and the existing approval is retained through verified patch equivalence rather than treated as a new review. Copybara reports another migration ERROR on exact53203 at15:45:13Z, without a public target URL or matching import. This is current-base maintainer attention; no further identical-patch rebase or fresh human approval alert is warranted.\n\nEarlier source-specific record:\n\nEtienne approved current head3b0422473368fc82486da3d4915a7e9c315f1586 at2026-10-23T07:26:38Z (review5625191672). The fresh snapshot separately reports import/copybara ERROR: migration failed without an exposed public diagnostic. Follow import progress; no reapproval reminder or speculative source amendment is warranted.\n\nPreserved delivery and earlier-source history:\n\nThe post-#16092 update is delivered at 3b0422473368fc82486da3d4915a7e9c315f1586 on dd81: the obsolete two-line AST deprecation exemption is removed. Root verified the public head and description. Current-head CI and maintainer reapproval remain pending; the authorized reapproval comment was posted. A separate native reviewer-request POST returned 404 and is retained as a failed request.\n\nCurrent source f933b98d789a has import/copybara ERROR at 00:32:47 UTC, with no public import or error details. Public source checks otherwise pass and GitHub reports it mergeable. This current-head migration failure was missing from the earlier pending-CI disposition; no rebase remedy is established.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at f933b98d789a on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe exact Gazelle-emitted two-label correction is published on #16085 at9be200e2e42, preserving the samec45 parent, one commit,24 files and approved body. Root independently reviewed the two :go_default_library label substitutions. The original7df6 Gazelle failure remains evidence; current-head public CI is a separate observation and no fresh workload or public comment was issued.\n\nThe02:35:21 scheduled snapshot reports Gazelle failure on the exact delivered7df6cf2ced head (job119003416906). Node owns the bounded current log/source diagnosis; this head already containsc45/a9, so the older shared Gazelle remedy does not justify a blind rebase. Lint, header and scan checks pass; Go generation was still running at the observation. Delivery remains complete; no new contributor decision is pending. Root subsequently authorized Node to correct the two generated dependency labels identified by the failed job; that source amendment remains in preparation.\n\nThe02:35:21 scheduled snapshot reports Gazelle failure on the exact delivered7df6cf2ced head (job119003416906). Node owns the bounded current log/source diagnosis; this head already containsc45/a9, so the older shared Gazelle remedy does not justify a blind rebase. Lint, header and scan checks pass; Go generation was still running at the observation. Delivery remains complete; no new contributor decision is pending.\n\nThe approved SA1019 policy is delivered as #16085 at7df6cf2ced on merged prerequisitec45f4e075. The refreshed one-commit patch preserves all24 surviving approved file changes and the exact qualified NewReader archive exception; upstream deletion of the obsolete umount caller is retained. Independent staged and committed-source reviews passed, and published head, body and patch were verified. Prior qualification remains bound to its recorded compositions; no fresh current-public-binary execution is claimed. The delivery approval is fulfilled; current public CI and maintainer review are now followed in the existing sweep. Earlier prerequisite holds below are historical.\n\nRoot assigned the newly released SA1019 delivery to Node in gvisor-15049. WorkMap supplied the exact approved858a branch/parent, merged final prerequisite15473, and qualified3e66 archive compatibility amendment. Source refresh and delivery are agent work; the prior approval remains in force.\n\nThe final prerequisite #15473 has merged through import #16082 as c45f4e075076a02b444b69cdb783a0958c2c1c7f at 2026-10-21T02:08:09Z. Prerequisites #15474 and #15475 were already merged. The approved nogo-sa1019 proposal858a74520 is now released for root-owned source refresh and delivery, including the existing precise archive compatibility exception if required by the current toolchain. Prior prerequisite-wait descriptions below are historical; this is not a new contributor question.\n\nThe approved standalone 858a74520 uses Go 1.26.3 and x/tools 0.45. Its remaining prerequisite is open #15473; #15474 and #15475 are merged. Qualified Go 1.27.1/x/tools 0.51 compositions retain the precise gcexportdata.NewReader deprecation exception for archive inputs. Carry that existing four-line exception when rebasing the policy after #15473 lands. This is a held compatibility action, not a newly established defect in the older approved head.\n\nThe current combined netip/policy validation at 3e66fd6a8 passed all 836 selected Nogo owners, with AMD64 and ARM64 findings checked for each owner. This modern x/tools 0.51 composition requires the exact documented gcexportdata.NewReader compatibility exception because the declared compiler inputs remain archives; direct Read is not a replacement for those inputs. Root will carry that exception into the policy’s eventual review head after the closed validation. The public proposal remains 858a74520 and its remaining landing prerequisite is open PR #15473; #15474 and #15475 are merged.\n\nEarlier source-specific record:\n\nThe user-approved policy revision remains public at 858a7452014a44161734069c66b73f66782bad41. Prerequisites #15474 and #15475 have now merged; opening the policy PR waits only for #15473. All three dependency edges retain their actual source relationship.\n\nEarlier source-specific observations:\n\nThe final user-requested defensive panic restoration is published at 858a7452014a44161734069c66b73f66782bad41. The focused 11-owner revision validation passes and its independent saved peer is closed. User approval is complete; opening the policy PR waits only for #15473, #15474 and #15475 to land.\n\nThe user approved opening this proposal after its three prerequisites land, subject to targeted revisions. Those revisions are published at e56219a8cdf12e239fe4ccd77dd42eced4462282: shared title casing and declared dependencies, corrected IPv6 fixture commentary, and wrapped calls. Two independent source reviews are closed. Focused validation of six normal and five both-CPU Nogo owners is active in https://app.buildbuddy.io/invocation/ae9e8de2-9328-45f6-835e-d6ad6a954545 at composition d065b89b6. The user subsequently requested retaining the original defensive panic branches; that exact restoration has passed source review and is awaiting publication. There is no unanswered contributor question or upstream policy PR; the prior full-inventory proof remains bound to its older source.\n\nThe user requested the removal of blanket SA1019 suppression. This independent proposal enables checks for handwritten/generated repository code, updates actual deprecated callers and retains only narrow documented compatibility exceptions. The checker and generator/state reflection mechanisms are independent prerequisites in #15473, #15474 and #15475.\n\nCorrected validation a5aa730d at4b2fa4ed4 passes the complete834-owner Nogo inventory for both CPUs plus12 selected native unit owners/400 XML entries. Independent saved peer d98696c4f37b verifies54 Git records,846 actual compact TestRunners,24 raw Actions, all12 exact native binary producer joins and all retained archive bytes. The first unused-import compile failure remains preserved. This is full analyzer coverage and selected runtime coverage, not a full repository runtime claim.\n\nRoot has now issued the concrete contributor-review question for this exact public commit. Any upstream PR must wait for the three prerequisites to land; no answer or PR is claimed.",
       "followup": {
         "owner": "root",
@@ -11258,8 +11250,8 @@
       "title": "Initialize CUBIC congestion-avoidance epochs",
       "url": "https://github.com/google/gvisor/pull/15604",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-26T22:04:39.373321+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The contributor-approved amendment is published on #15604 at 0ef892cc5. All existing review threads are resolved; no contributor decision remains. Current maintainer and CI signals are shown from the provider snapshot.\n\nDocument the Linux/RFC analogues, keep initial congestion-history setup at the first HyStart exit, and check that idle restart preserves the prior-history sentinel.\n\nThe reviewed revision passed focused remote qualification. This is not a new throughput measurement. If #16419 lands first, the two new CUBIC test calls need its HandleRTOExpired(true) signature; the reverse landing order requires the same synchronization in #16419. Neither PR is an intrinsic prerequisite of the other; joined validation is separate.\n\nEarlier source-specific record:\n\nThe requested post-#16046 rebase is published at 683479533513 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe user-authorized cubic-polynomial amendment is delivered at 98d5af4a3. Existing full TCP unit checks passed on AMD64 and ARM64, together with the owning analyzers. The reply was posted and the review thread is resolved. Current-head GitHub checks now pass; fresh maintainer review is pending.\n\nEtienne reported microbenchmark results of 13.670 to 1.912 ns and 12.625 to 1.934 ns (20 samples); the comment did not include benchmark source or environment. The amendment replaces math.Pow(t, 3) with t*t*t while keeping multiplication by C outside the cube.\n\nThe epoch change initializes curves from the recovered window, preserves the remembered maximum for fast convergence, and uses the RFC 9438 ACK-driven Reno-friendly estimate. Its selected before/after unit and analyzer evidence is closed. The earlier ACK-credit prerequisite #15579 has merged.",
       "followup": {
         "owner": "root",
@@ -12210,8 +12202,8 @@
       "title": "Match Nogo sources to compiler order",
       "url": "https://github.com/google/gvisor/pull/15648",
       "group": "analysis",
-      "status": "open",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The requested post-#16046 rebase is published at a995e732ebaf on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe user-approved independent source-order correction is delivered as PR #15648 at 149488d2b. Nogo previously appended embedded sources while rules_go prepended them, so named-method object paths could attach imported facts to the wrong method; the observed failure gave Float64.Add the escape facts for StateLoad. The proposal uses the public GoInfo source order and preserves compiler ordering in binary/test fallback paths, retaining proto/C-wrapper scope and dependency facts. Original failed and corrected analyzer evidence remains source-bound. Exact-head CI and maintainer review are followed by the existing sweep; no merge is authorized.",
       "followup": {
         "disposition": "Approved proposal delivered; maintainer review pending",
@@ -12561,8 +12553,8 @@
       "title": "Consolidate GPU driver preparation",
       "group": "runtime",
       "url": "https://github.com/google/gvisor/pull/15669",
-      "status": "open",
-      "updatedAt": "2026-10-23T23:16:03.213711+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "Konstantin’s October 23 request for fewer automatic reminders is implemented and verified in b651a99acf. The minimum interval is now three hours, including across source-head changes; status and conflict discovery still use the ten-minute cadence. All 50 JavaScript and 72 Python checks passed, covering the three-hour boundary, business hours and conflict eligibility. No acknowledgement or test reminder was posted. Maintainer review of the already-published GPU source remains a separate action.\n\nThe requested post-#16046 rebase is published at aa13d6a12af5 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nEtienne dismissed the old 60834ef0 approval on 2026-10-21T20:32:24Z and requested re-review of current c8b2b489. The source really changed: the already-delivered amendment distinguishes absent public installers while retaining hashes and ABI support, and runs listing as the temporary-file owner. The author explained those import-driven corrections and requested re-review on October 14. The closed import #15674 belongs to the old source. Maintainer re-review remains the next action; no additional author fix, duplicate reply or automatic rebase is indicated.\n\nPreserved earlier observations:\n\nThe contributor-approved installer-availability and listing corrections are delivered in PR #15669 at c8b2b4896. The source preserves newly upstream driver ABI handlers, and the exact current head has eight applicable public checks passing with four conditional skips. The earlier import belongs to the old source head; it is not current-head validation. The existing reviewer follow-up remains posted; no additional review request succeeded.\n\nEarlier source and qualification record:\n\nThe contributor-approved driver refactor is now PR #15669 at exact head 60834ef0c. It includes the requested pointer receivers, comment cleanup and NVIDIA .run installer terminology. One downloader owns HTTP response lifetime and the shared copy/checksum operation. Missing installers use typed HTTP status and validation continues to the other architecture. Installation resolves the host checksum once, rejects an unknown installed-driver state, performs PCI preflight and prepares, verifies and closes the replacement before uninstalling. Listing shares the same host eligibility selection and replaces the complete output file.\n\nBoth complete native unit owners and all six CLI/caller links passed on the preceding integrated source. Two analyzer owners passed initially; the third rejected a redundant test variable type, then passed after its one-line correction. Those results are independently closed. The requested amendment has separate verified build-only evidence: four AMD64 unit/CLI/caller links, including the exact standalone caller through a private build witness. This checks the amended method sets and consumers without repeating the previous runtime or analyzer suites.\n\nThe original EOF failure and analyzer-only failed parent remain retained. No NVIDIA download, installation or GPU workload ran; HTTP and command cancellation remain source-reviewed. The independent PR is open and mergeable, and the existing watcher follows current-head CI and review feedback.",
       "followup": {
         "disposition": "Requested reminder-frequency change delivered; source maintainer review remains pending",
@@ -12803,8 +12795,8 @@
       "title": "Declare image contexts and CUDA helper builds",
       "group": "rbe",
       "url": "https://github.com/google/gvisor/pull/15670",
-      "status": "open",
-      "updatedAt": "2026-10-21T17:44:40.987622+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The 17:34 UTC snapshot records a new internal Copybara failure for a run created at 17:12:43 UTC, with no public diagnostic URL. Current 923b3b3e29 remains approved, the sole unresolved inline requests no amendment, and no new public source failure is established. Await accessible internal evidence or substantive maintainer feedback; supported-GPU execution remains unverified.\n\nThe rebased current head received Etienne’s approval. His unresolved inline observation says “Well this is... a thing”, followed13 seconds later by approval; it contains no requested source change. The previously disclosed lack of supported-GPU execution remains a limitation.\n\nThe published mechanical rebase is at 923b3b3e2940 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.\n\nEarlier source-specific record:\n\nThis independent proposal on current upstream extracts the declared CUDA helper builds, shared source-context archive and Make staging already used by the qualification integration. The repository Go SDK builds static helpers for both architectures. Both CUDA Make entrypoints stage those helpers before computing image tags. It supplies the missing upstream staging prerequisite for the later Ollama cleanup.\n\nInitial validation 13fac passed both architecture context/static-ELF checks, both actual Make entrypoints and canonical tag comparison. Its two new analyzer owners failed on existing CUDA helper issues, including ExitCode holding a mutex while calling Done. Amended source e0b99d0c6 applies the two previously qualified helper corrections. Corrected continuation aa027674 passes both architecture context/static-ELF checks, both actual Make entrypoints and canonical tags, and both analyzer owners with four source-bound architecture findings. Original source/native/archive joins and saved-result review are closed. No Docker image construction or GPU execution is claimed.\n\nThe older 52f47d076 shared-containerd proposal remains preserved. The contributor approved the proposal with the requested ExitCode refinement: copy c.started under its mutex, unlock, then branch on the local value. The prior branch already read the field under lock. Public amendment eba5e3c83 contains only that two-file clarification. Its source and run 9826d598 are independently verified: both fresh analyzer owners pass with four source-bound architecture findings. Earlier context and Make results remain pinned to e0b99d0c6. The authorized independent proposal is now PR #15670 at exact eba5e3c83: one commit and eight files, with the reviewed description and attribution verified. GitHub reports it mergeable. At the 15:01 UTC observation, all fourteen visible checks are complete: ten successful and four skipped. No maintainer feedback or landing is recorded. The existing watcher owns subsequent checks and review events.",
       "followup": {
         "owner": "work_map_current",
@@ -13116,8 +13108,8 @@
       "title": "Report state dependency cycles without recursion",
       "group": "runtime",
       "url": "https://github.com/google/gvisor/pull/15738",
-      "status": "open",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The requested post-#16046 rebase is published at 362335a9589a on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved dependency-cycle correction is delivered as PR #15738 at d4ff1a6238, a one-commit source-equivalent rebase of qualified ccad70dad. Original controls reproduce two nil dereferences and a stack overflow; corrected AMD64/ARM64 state suites and three owning analyzers pass. A masked before failure does not establish separate sensitivity for every graph case. Current public CI and maintainer review remain distinct from this retained validation. The unchanged patch is already adopted in the fork.",
       "followup": {
         "owner": "restore_integration_review",
@@ -13591,8 +13583,8 @@
       "title": "Exercise example network modes with a listener",
       "group": "tests",
       "url": "https://github.com/google/gvisor/pull/15769",
-      "status": "open",
-      "updatedAt": "2026-10-24T07:24:49.949626+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "Etienne approved exact head 30e04099 on 2026-10-24 without requesting changes or a reply. Public export #16330 is now open on head 961d0d40 with checks pending. Continue its ordinary import checks; the approval does not itself establish that those checks passed.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 30e04099a439 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe reviewed example-test correction connects to a listener in the test process: host networking must reach it and isolated networking must not. Deliberately forcing either wrong mode fails the corresponding case, while the original two tests incorrectly accepted forced host networking. The final AMD64 suite and both-CPU analyzers pass. The approved patch and commit message are preserved in independent PR #15769 at b6f522fdd. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
       "followup": {
         "owner": "work_map_current",
@@ -13852,9 +13844,9 @@
       "title": "Fix RACK packet-test assumptions",
       "group": "tests",
       "url": "https://github.com/google/gvisor/pull/16256",
-      "status": "open",
+      "status": "merged",
       "summary": "The contributor approved exact e7a0da69 and Node delivered it as PR #16256. The fixture now uses eight first-flight segments, preserves the four-segment/three-SACK second flight, observes the retransmission before DSACK, and restores the cumulative receive position. All twelve existing Linux/Netstack cases pass in two uncached local attempts; final proposal and qualified source have identical complete trees. The common-Reno control established a window-limited Netstack fixture failure, not missing congestion undo. No production congestion-control change is claimed. Compare git range-diff --creation-factor=100 4a3722f493^! e7a0da69e0^!.\n\nEarlier source-specific record:\n\nThe contributor challenged the warmup-only fixture correction, and 4a372 remains held as agent work. The authentic retransmission/DSACK diagnostic was followed by a common-Reno control with the receive sequence restored: Linux passed, while Netstack stalled on the third second-flight packet. Both reported post-DSACK cwnd equal to ssthresh (Linux 5, Netstack 2); this does not establish missing undo. Node is qualifying a separate default-congestion-control fixture with eight first-flight segments and four second-flight segments at 15d556abef, retaining the three-SACK assertions and authentic DSACK. The full twelve-case run is active; no success or upstream publication grant is inferred.\n\nSuperseded contributor-review record (historical evidence):\n\nRoot requested contributor review of final 4a3722f493. After DSACK, acknowledged warmup restores capacity for the four-segment RACK flight; the fixture checks cwnd before preserving the original packet/timer assertions. All twelve inner Linux/Netstack cases and five qualification phases pass on tested f17eb; final source removes only a diagnostic log. The native parent remains FAIL because the bootstrap diagnostic stream exceeded its eight MiB cap after the authenticated complete PASS bundle was published. That reporting defect is separately fixed and qualified; no RACK rerun is claimed. Prerequisites #15635/#15926 are merged. Compare git range-diff fbf0f19b1^! 4a3722f493^!.\n\nEarlier source-specific record:\n\nThe Nagle/GSO prerequisite #15926 and packet-cleanup prerequisite #15635 have landed. The fixture is refreshed on current master with an unchanged source patch and independent review. Root owns the current Linux and Netstack qualification; all six inner cases per owner must pass. Contributor review remains required before opening an upstream PR.\n\nRetained source-specific evidence:\n\nThe packet test uses the negotiated MSS, verifies complete retransmitted payloads and registers cleanup as resources are acquired. It removes the expected-failure marker and corrects the RACK comments. The retained combined run passed all six Linux and six Netstack cases; those results do not validate a new extraction.",
-      "updatedAt": "2026-10-23T14:58:57.577934+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "node_tls_sni",
         "disposition": "Contributor-approved source delivered; public CI and review pending",
@@ -14464,8 +14456,8 @@
       "title": "Update actionlint to 1.7.12",
       "url": "https://github.com/google/gvisor/pull/15891",
       "group": "analysis",
-      "status": "open",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The requested post-#16046 rebase is published at b40e6d53e216 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved actionlint update is delivered as PR #15891 at a3d034009. It updates the existing eleven archive pins and their eleven canonically generated license-catalog entries. Version 1.7.12 recognizes the current GitHub workflow input limit. The qualification composition passed canonical dependency fetching and the three existing workflow-check owners; the separate canonical license Verify confirmed all 1,954 dependencies conform. The standalone has one commit and two changed files, with no unrelated catalog changes. Maintainer review and exact-head public CI are now observed separately.",
       "followup": {
         "owner": "external_sweeps",
@@ -14951,9 +14943,9 @@
       "title": "Separate trace metadata from stderr diagnostics",
       "group": "tests",
       "url": "https://github.com/google/gvisor/pull/15916",
-      "status": "open",
+      "status": "merged",
       "summary": "LoadAllPoints parsed combined stdout and stderr from runsc trace metadata. An instrumented runtime emitted a GOCOVERDIR warning before the POINTS header, so valid metadata was rejected before the ARM64 ptrace KCOV cases ran. This standalone change parses stdout and forwards stderr to the runner, retaining rejection of malformed metadata and unsuccessful commands. Subprocess protocol tests cover valid output, warnings, invalid or missing stdout, and nonzero exits. The same source correction passed the protocol and formatting checks plus all four ARM64 ptrace KCOV cases; eight prior systrap passes remain retained without repetition. The contributor approved this exact head, and it is now delivered as PR #15916. Maintainer review and current-head public CI are pending.",
-      "updatedAt": "2026-10-17T05:47:46.454645+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "external_sweeps",
         "disposition": "Contributor approval delivered; maintainer review pending",
@@ -14992,7 +14984,7 @@
       "title": "Honor bound devices for IPv6 multicast selection",
       "url": "https://github.com/google/gvisor/pull/15918",
       "group": "runtime",
-      "status": "open",
+      "status": "merged",
       "summary": "The requested post-#16046 rebase is published at fd2999b44060 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nWhen IPV6_MULTICAST_IF selects an interface that conflicts with SO_BINDTODEVICE, reject it instead of silently accepting incompatible settings. The correction preserves the existing syscall regression. The focused native and KVM IPv6 suites each pass eight cases, and the remaining formatting check passes. The contributor approved exact df6de9b13; it is delivered as PR #15918. Private network-fixture changes remain separate.",
       "evidence": [
         {
@@ -15027,7 +15019,7 @@
           "https://github.com/tamird/gvisor/commit/fd2999b440601691d26f86ad5b8c2af2e5fe1fe9"
         ]
       },
-      "updatedAt": "2026-10-31T11:35:39.860367+00:00"
+      "updatedAt": "2026-11-06T23:37:40.578Z"
     },
     {
       "id": "pr:15919",
@@ -15367,9 +15359,9 @@
       "title": "Upload gofer logs for failed Buildkite tests",
       "url": "https://github.com/google/gvisor/pull/15927",
       "group": "tests",
-      "status": "open",
+      "status": "merged",
       "summary": "The requested post-#16046 rebase is published at 8f47745351e6 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThis one-file proposal retains *.gofer.txt alongside *.boot.txt in the existing failed-test artifact upload loop. It preserves the failed-test selection, upload bounds and command status handling. Source reviews and shell syntax checks pass; no workload was run. Public 51218 excludes gofer logs under its current selector, so the additional artifact can supply the missing producer diagnostic on a future authorized run. The proposal does not claim a TestUIDMap runtime fix. The contributor approved exact 3be9e8ee88, and it is delivered as PR #15927 with the reviewed title and description. Maintainer review and current-head checks remain pending.",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "external_sweeps",
         "disposition": "Approved capture change delivered as #15927",
@@ -15400,9 +15392,9 @@
       "title": "Use rules_qemu for cross-architecture generators",
       "url": "https://github.com/google/gvisor/pull/15929",
       "group": "bazel",
-      "status": "open",
+      "status": "merged",
       "summary": "The current source 61088c907a needs Etienne to reapprove it so Copybara regenerates its import. His approval was submitted before the current source push. The old export #16511 still names adc403f944 and has merge conflicts despite 17 passing public checks. Its actual PR delta differs from the current source in five paths; the current source rebase itself preserves the reviewed patch. No manual export edit is requested.\n\nSuperseded earlier interpretation and retained source history:\n\nThe source conflict is repaired at 61088c907a. Complete path, mode and added/removed lines match the previously approved or reviewed patch; range-diff changes only adjacent upstream LTP context. Existing source review requirements remain; this equivalent rebase does not request another approval. Etienne’s approval remains on adc403f944. Open export #16511 contains that approved patch and now needs its own conflict refresh; no new source review is required for this equivalent rebase.\n\nEarlier source-specific record:\n\nThe independently reviewed equivalent rebase is published to the exact fork branch at aa691effa6f5, while GitHub's PR and upstream pull ref still identify 4e7230767cb9 and report a conflict. Direct Git and fork API agree on the new head; no destination mismatch was found. The source repair is published, but provider synchronization and fresh current-head checks remain pending. Do not repeat the push or request reapproval for this equivalent rebase.\n\nPreserved earlier record:\n\nThe fresh16:21 UTC sweep reports this exact source CONFLICTING. Hostinet owns the bounded integration diagnosis and any authorized equivalent repair. Existing approval and qualification provenance remains separate; reminders defer until a fresh provider read reports MERGEABLE.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 4e7230767cb9 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe newly observed conflict is resolved and #15929 is published at signed fb113dfa51 on a9e9. Independent full generator review confirms that the merged ARM -cpu neoverse-n1 option precedes the guest executable only when QEMU is selected; native and fastbuild remain direct. The remaining differences are inherited x/net v0.60 catalog and pkg/zip changes. Exact-lease publication and tracking/API readback are verified; no comment or review request was sent. Old source qualification and the preserved 5f964 ref remain historical evidence, with no new runtime or performance claim.\n\nThe revised proposal at 284970814f uses Bazel Central Registry rules_qemu 0.3.0 and its public user-toolchain API. Canonical Fetch and Verify audit all twenty user-mode archives with pinned GPL-2.0-only notices; the rules module is Apache-2.0. The complete license checker passes. The AMD64 and ARM64 usage tests each report three cached passes, while separate fresh opposite-host generator actions execute x86_64 QEMU on ARM64 and aarch64 QEMU on AMD64 and produce byte-identical previously qualified outputs. Other audited architectures, including RISC-V, have no runtime claim. Buildifier and gofmt pass. The final proposal adds only the required blank line and a reviewed current-master rebase to the qualified source; upstream's existing license metadata preservation remains intact. The contributor approved 284970814f. Its unchanged patch is now delivered as #15929 at 5f964e3829 on current master. Original #15187 is closed; its source/review evidence and the earlier custom-archive proposal remain preserved. No contributor decision is pending.",
-      "updatedAt": "2026-10-27T21:20:41.759940+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "61088c907a7a2e7ae8027b201618cc8f000f1ecd",
@@ -15623,9 +15615,9 @@
       "title": "Restore metric tests to routine CI",
       "url": "https://github.com/google/gvisor/pull/15930",
       "group": "tests",
-      "status": "open",
+      "status": "merged",
       "summary": "The approved profiling restart correction is delivered at a52b53673b after six remote phases passed: 51 normal test records, eight focused race runs with nine records each, and one native Nogo wrapper covering both architecture dependencies. All 124 records passed, with no failures, skips or missing owners. The exact approved explanation was posted in the original reviewer thread at 19:35:22Z; the thread remains open for review. Public and fork heads and the wrapped PR body were verified.\n\nEarlier evidence:\n\nThe contributor approved the profiling restart correction at a52b53673b, conditional on normal, race and Nogo checks. The fork preview is published; the upstream PR remains a5fb610dcc until those checks pass. The writer no longer closes the shared completion channel, and Stop clears the restart gate after receiving the final statistics. This answers the new restart-race finding without adding a stress-test implementation.\n\nEarlier evidence:\n\nMetric selector and ARM tag correction rebased, preserving the landed trace-test inclusion. Exact head a5fb610dcc is published on master a5bd7807d6 and was verified mergeable. Existing qualification and contributor grants retain their original source identities; no new runtime execution or maintainer approval is claimed. Attribution-only commit/PR footers were removed.\n\nEarlier evidence:\n\nUpstream a30d5fc67 already fixed the NaN bucketer panic reported in #10045. This change removes the remaining Make exclusion and not_run:arm tag. One mixed-platform invocation at 2785e7bfce passes all 102 AMD64/ARM64 cases, including the reported regression, with no failures, skips or missing results. The production and test sources match upstream; the selection-only diff was source-reviewed, not executed. The contributor-approved change is delivered as #15930. The reviewed context rebase 2677c164 preserves the complete intended two-exclusion change and the intervening tracereplay landing. It is published and currently mergeable; no additional test execution or review request is claimed.",
-      "updatedAt": "2026-10-23T19:46:46.966078+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "work_map_current",
         "disposition": "Approved restart correction delivered and reviewer answered",
@@ -15929,8 +15921,8 @@
       "title": "Report the host's ephemeral port range in hostinet",
       "url": "https://github.com/google/gvisor/pull/15931",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-23T03:09:52.429213+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The user-approved feedback correction is published at 29eff9a55b6a. The approved description and grouped replies are verified in review5622345637, and all three addressed threads are resolved. Current-head CI is pending. The native nybidari review-request POST returned404; no alternate write path was attempted. The earlier maintainer approval covered 5c36118; it does not approve the substantive correction. Exact reviewed amendment evidence is recorded for the existing hourly reapproval workflow.",
       "followup": {
         "owner": "hostinet_delivery",
@@ -17312,8 +17304,8 @@
       "title": "Use regular files in execveat nofollow tests",
       "url": "https://github.com/google/gvisor/pull/15958",
       "group": "tests",
-      "status": "open",
-      "updatedAt": "2026-10-25T19:04:28.020696+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The other matching import #16369 at 134a61b1b17f has public Buildkite 52333 failing after three completed native AMD64 shard-11 attempts hit AddCompatRule/Inet with ENOENT on the identical public-master fixture. Its separate internal 34040 failure remains undiagnosed here; no private cause or original worker module state is inferred.\n\nThe matching import #16383 at 0c596564c0f5 for source 77360cb73e3f has two distinct public failures. Its generate job stopped before Go-test execution when proxy.golang.org timed out during TLS while fetching mountinfo v0.7.2 metadata; the downstream go tests status is propagated from that setup failure. Separately, Buildkite 52329 failed three completed AMD64 syscall attempts at AddCompatRule/Inet with ENOENT, using the exact nftables fixture blob on public master 7bffefa. One of the four attempts was cancelled before a case result. This source and import change only exec.cc; the unrelated Docker case passed on retry. The logs do not establish an exec regression or the original workers’ module state. The independently validated INET setup proposal is already pending contributor review.\n\nEarlier source and import record:\n\nThe `AT_SYMLINK_NOFOLLOW` success tests assumed `/bin/echo` was a\nregular executable. It is a symlink on Ubuntu 26.04 systems using Rust\ncoreutils, so following that test setup correctly fails with `ELOOP`.\n\nCopy the existing declared basic workload into regular temporary files.\nOne case still exercises a symlink ancestor; the other still exercises a\nregular final component relative to a directory descriptor. Both verify\nthe workload's argument output.\n\nThe exact standalone commit was approved by the contributor and published. Review and CI remain upstream obligations.",
       "evidence": [
         {
@@ -17370,8 +17362,8 @@
       "title": "Wait for fork setup before freezing children",
       "url": "https://github.com/google/gvisor/pull/15959",
       "group": "tests",
-      "status": "open",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The requested post-#16046 rebase is published at 3c82fee9c80d on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe freezer tests could freeze a child before libc returned from\n`fork()` and restored its temporary blocked signal mask. A subsequent\n`SIGTERM` then stayed blocked, making the test report that the frozen\nchild failed to terminate. The `SIGQUIT` phase could also freeze before\nthe child installed its default disposition.\n\nWait for a readiness token after child setup and before freezing in both\nfatal-signal tests. Keep the existing signal assertions, thaw behavior,\nand deadlines.\n\nThe exact standalone commit was approved by the contributor and published. Review and CI remain upstream obligations.",
       "evidence": [
         {
@@ -17788,8 +17780,8 @@
       "title": "Support comment matches in nftables compatibility",
       "url": "https://github.com/google/gvisor/pull/15955",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-23T19:37:25.097503+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The user-approved fixture and optional-value amendment is delivered at a6df5d5df1 and is MERGEABLE. This current-base revision preserves the tested 75ea53522a patch. All fourteen focused Linux/gVisor cases passed. Both reviewer threads received the submitted inline response in review5632923591 at 18:38:34Z; the preview decision is complete.\n\nEarlier source-specific record:\n\nThe requested post-#16046 rebase is published at 3f860783171d on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor-approved direct-header amendment is published at db16a02a3d. Exact public head, fork/local refs and tracking were verified; the PR title/body and executable behavior remain unchanged. Existing qualified include/dependency evidence applies; no new runtime execution is claimed.\n\nCurrent source-identical qualification at 01354f8a84 now establishes native Linux and gVisor comment parity: Actions 39144545744 passes eight selected cases on each backend, sixteen total without skips. Full package, Nogo and client qualification f2403420 passes eight owners with 877 cases, 88 existing skips and no gaps. The clean standalone proposal is published at 9d31765c323, one commit above verified current upstream/master 9e9495997e29. Independent range-diff confirms the executable patch is unchanged; the message only pins its Linux citation to 830b3c68c. The user approved this exact commit, which is now published as upstream PR #15955. The intended google/gvisor destination, exact head, complete description and OPEN state were verified by readback. The current public check rollup is SUCCESS, with existing skipped workflow checks retained. Reviewers manninglucas and zkoopmans are assigned; maintainer review remains pending.\n\nHistorical evidence: The existing source-reviewed candidate supports nftables compatibility comment matches and is now included unchanged in canonical 01354f8a84. Historical paired qualification used test-only source 8dbcf433a and fixed source 83aef0865: each gVisor owner changed from seven comment failures to all 259 cases passing; the client reported 178 passes and 84 unchanged skips; two unit owners reported 607 XML passes and three Nogo owners passed. The native result remained 226 passes, 26 failures and seven skips, including the seven comment failures, so Linux comment parity was not established. Separate capability observations used a different worker environment and do not erase those failures.",
       "followup": {
         "owner": "root",
@@ -18381,9 +18373,9 @@
       "title": "Reject out-of-range exec user and group IDs",
       "url": "https://github.com/google/gvisor/pull/15977",
       "group": "runtime",
-      "status": "Upstream PR open; qualified refinement delivered",
+      "status": "merged",
       "summary": "The requested post-#16046 rebase is published at c6df8e6ac3e1 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe approved precise-error refinement is delivered as PR #15977 at e49c983b9e. Validation at its source-equivalent integration fdd7804827 passes 134 cases across three owners, with one existing KVM skip and no missing evidence. The affected user and CLI cases verify syntax and range errors. Automatic verification followed test completion by 7.555567 seconds; the final owner seal took 36.873932 seconds. The earlier failing-before evidence remains separate. Public CI and maintainer review are pending.",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "hostinet_delivery",
         "disposition": "Approved refinement delivered; maintainer review pending",
@@ -18457,8 +18449,8 @@
       "title": "Reject out-of-range cgroup task IDs",
       "url": "https://github.com/google/gvisor/pull/15980",
       "group": "tests",
-      "status": "open",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The requested post-#16046 rebase is published at 53565c5c3817 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe recovery head 75e94f5dace2 passes all current source checks, including Gazelle and Go export, in the October 21 03:24 UTC snapshot. Existing maintainer review and policy requirements remain separate.\n\nRoot published the independently reviewed patch-equivalent recovery at 75e94f5dace2 on c45 containing merged a9e9. Original patch, author and message are preserved; no comment or review waiver. Fresh-head checks remain separately observed.\n\nExisting #15598 is a candidate mitigation awaiting upstream progress: the observed failing source lacks its5a35 patch, while the patch source and matching import have successful export jobs. It is integrated locally atf18. The cleanup writer remains unknown, and no new source amendment or identical replay is justified. This does not establish the failure cause or a required topic dependency.\n\nCurrent source at 3d5d9f0011 completed Go export and its local branch push, then failed disposable-clone cleanup with Directory not empty. Existing #15598 addresses this workflow boundary. The surviving writer remains unproved; no topic source failure or blind rerun is inferred.\n\nCurrent-head public Go generation failed after export, commit and local push succeeded: final cleanup could not remove the temporary repository because it was not empty. This matches the existing #15598 shared-CI cleanup symptom; writer identity remains unknown. The focused cgroup fixture proof and delivered amendment remain valid at their recorded source.\n\nThe approved upstream fixture correction is delivered at 3d5d9f0011, with the existing range and membership assertions retained. Both affected directfs/shared cases passed at the source-equivalent validation head. The PR body and attributed reply are verified; native review re-request to manninglucas returned HTTP 404, and the existing rexren-gif request remains. Current public CI is newly running. There is no remaining contributor or agent amendment hold.\n\nThe upstream fixture correction passed both actual Cgroup.MigrateInvalidPID cases in directfs and shared-gofer modes with no skips or gaps. Validation f53fe8589f exactly matches the corrected fixture, helpers and three production files of refreshed standalone 3d5d9f0011. Historical native proof remains at its original source; this run makes no new Linux-native claim. Node is preparing the reviewed amendment workflow, while public 9307d422cc remains unchanged.\n\nA current-head review asks to remove the qualification-only native cgroup fixture from the standalone test. Node owns the correction restoring upstream CgroupsAvailable() and the cpuacct root, while preserving all invalid-ID and membership assertions. The one-file source correction passed independent review; only the directfs/shared affected cases need current fixture validation. Public 9307d422cc remains unchanged pending the amendment workflow.\n\nThe contributor approved exact 9307d422cc, now delivered as PR #15980. Both cgroup migration paths reject negative and oversized task IDs before narrowing, matching native Linux EINVAL behavior and preserving membership. Native and sentry before/after checks reproduce and correct live-PID aliases. The final native/directfs/shared fixture check passes all three actual cases and complete actions, with all five files identical to the standalone proposal. Earlier fixture and wrapper failures remain preserved; this does not change the shared 64-bit controller parser. Public review and CI are newly pending.",
       "followup": {
         "owner": "work_map_current",
@@ -18647,8 +18639,8 @@
       "title": "Reject invalid sudo IDs before setting up the sandbox",
       "url": "https://github.com/google/gvisor/pull/15983",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-29T19:14:51.921424+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The published amendment validates the invoking UID and GID before --dir creates anything. Both native suites and the analyzer passed; the reviewer has the revised commit.",
       "followup": {
         "owner": "root",
@@ -18705,11 +18697,11 @@
       "ref": "fixes/tcp-retransmission-rtt",
       "title": "tcp: reject ambiguous loss-probe RTT samples",
       "url": "https://github.com/google/gvisor/pull/15819",
-      "status": "open",
+      "status": "merged",
       "group": "runtime",
       "summary": "The patch approved by nybidari on 2026-10-16T18:20:07Z at a4eadcd7ef is independently verified unchanged at 4d0adbc37e. This records the original approval and mechanical equivalence, not a new review submission. No fresh approval or reviewer notice is required solely for this rebase. Current checks, exact-source imports and substantive feedback remain separate.\n\nHistorical source, review and validation record:\n\nThe published mechanical rebase is at 4d0adbc37ea9 on master 3f35bca89c44. Independent review confirms the topic additions and removals, author and commit message are unchanged. Current-head public checks and maintainer review are reported in the live snapshot; older approvals remain historical. The prior-approver notice is delivered. The native review re-request returned HTTP 404; the comment is not a saved native request.",
       "head": "4d0adbc37ea91a904c84392d669a49509db5ad7c",
-      "updatedAt": "2026-10-19T21:36:45.846198+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "sourceHead": "4d0adbc37ea91a904c84392d669a49509db5ad7c",
         "observedAt": "2026-10-19T21:34:57.526725+00:00",
@@ -18880,9 +18872,9 @@
       "title": "Save and restore KCOV state",
       "url": "https://github.com/google/gvisor/pull/15956",
       "group": "tests",
-      "status": "open",
+      "status": "merged",
       "summary": "The requested post-#16046 rebase is published at 04556f955ae8 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at 84b7b1f7c4. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at 84b7b1f7c438a2e18f3af16de6f5763983dea3b9 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to hostinet_delivery. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nExact current-head Gazelle job 118632841440 fails solely because tools/nogo/check/BUILD retains the inherited unused //pkg/zip dependency. The retained complete log has one generated file diff deleting that line. Existing shared import16031 carries the correction; no topic patch, retry or duplicate reviewer notice is needed.\n\nThe user-approved change is delivered as google/gvisor#15956 at f37311d62406effad89079540bdd351d91cf613e. Independent review verified the mechanical refresh against the approved source, and the delivery owner verified the public head, body and base. Contributor approval and publication are complete. Current CI and maintainer review are separate from retained qualification.\n\nHistorical proposal and qualification evidence:\n\nThe direct save/restore regression proposal0b449 is separate from the already delivered public alias amendmentacc355 on #15956. Exact standalone source was validated with TestKcovSaveRestore and its two owning Nogo targets on AMD64 and ARM64; deleting only the afterLoad memory-file assignment produced the expected failure. Contributor review for the new test remains pending. The refinement compares the original5f903 proposal with0b449; it does not present the public alias as unpublished.",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "04556f955ae8672c86d643c97974be48e007fff7",
@@ -19658,7 +19650,7 @@
       "title": "Interrupt RSEQ abort tests with a timer",
       "url": "https://github.com/google/gvisor/pull/16052",
       "group": "runtime",
-      "status": "open",
+      "status": "merged",
       "summary": "The contributor-approved header-order amendment is published on #16052 at 3a7fe444c2169cf136de4305d4670ea45f4e869b. It uses <stddef.h> to declare size_t before asm/signal.h and returns the project types header to its normal group, correcting the three cpplint include-order errors on prior head 8c172c349666. Only the includes and explanatory comment change; the periodic-signal behavior is unchanged.\n\nRemote validation df56642b passes C++ lint and uncached GNU compilation for AMD64 and ARM64. Native completion was 16:28:28.850 UTC and verification 16:28:35.128 UTC. This is compile/lint evidence, not a new RSEQ runtime qualification. Both prior approvers were explicitly asked to reapprove the published amendment in the linked comment. GitHub’s native review-request API returned HTTP 404; the existing fvoznika request was preserved, and no additional formally saved request is claimed. Contributor approval and publication are complete. Earlier approvals, source-check failures and import results retain their original source scope.\n\nPreserved earlier delivery and failure history:\n\nThe earlier contributor-approved header-order correction was published at f91284fb89, patch-identical to proposal 0e079c726. The public reply asks both prior approvers to review the changed head. Native review-request API calls returned HTTP 404, so no formally saved re-request is claimed and no duplicate comment is needed.\n\nThe old import failed rseq_binary compilation on both CPUs because asm/signal.h saw size_t before its declaring header. The approved correction passed both-CPU GNU compilation and canonical formatting with four uncached compile actions. Existing periodic-signal runtime evidence is unchanged; these compile checks do not claim a new runtime test.",
       "followup": {
         "owner": "work_map_current",
@@ -19672,7 +19664,7 @@
           "https://app.buildbuddy.io/invocation/df56642b-3c98-4505-aea6-d72156cdf831"
         ]
       },
-      "updatedAt": "2026-10-25T17:10:34.116013+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "evidence": [
         {
           "label": "Verified authorized delivery",
@@ -19909,7 +19901,7 @@
       "title": "Restore the RACK reordering test",
       "url": "https://github.com/google/gvisor/pull/16055",
       "group": "tests",
-      "status": "open",
+      "status": "merged",
       "summary": "The approved comment-only amendment is published at 792659c37. The review thread is answered and resolved; no contributor decision remains. Current maintainer review and checks follow the live provider snapshot.\n\nEarlier source-specific history:\n\nThe requested post-#16046 rebase is published at bd37d23bc935 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at a7ad53e89f. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at a7ad53e89f4045cc8bbfbdb7ad490b13fc3cdf7d on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to hostinet_delivery. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nExact current-head Gazelle job 118633275867 fails solely because tools/nogo/check/BUILD retains the inherited unused //pkg/zip dependency. The retained complete log has one generated file diff deleting that line. Existing shared import16031 carries the correction; no topic patch, retry or duplicate reviewer notice is needed.\n\nThe user-approved change is delivered as google/gvisor#16055 at 3782966d5f1f5a14baa6d14ba296998088be0fdb. Independent review verified the mechanical refresh against the approved source, and the delivery owner verified the public head, body and base. Contributor approval and publication are complete. Current CI and maintainer review are separate from retained qualification.\n\nHistorical proposal and qualification evidence:\n\nThe proposed fixture replaces an unconditional skip with a manual-clock SACK/cumulative-ACK sequence and unchanged production RACK code. Qualified integration6c8c passed all18 RACK methods per architecture plus owning Nogo/buildifier; the negative mutation failed the exact final reordering assertion on both architectures. Root requested contributor review once; no upstream PR. The prior529906 revision differs only in its message.",
       "followup": {
         "owner": "root",
@@ -19927,7 +19919,7 @@
           "https://github.com/google/gvisor/pull/16055#discussion_r4382064934"
         ]
       },
-      "updatedAt": "2026-10-26T20:31:06.337471+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "evidence": [
         {
           "label": "Verified authorized delivery",
@@ -20345,8 +20337,8 @@
       "title": "Update the nginx test image to 1.31.7",
       "url": "https://github.com/google/gvisor/pull/16058",
       "group": "release",
-      "status": "open",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The requested post-#16046 rebase is published at 8f0a165f212d on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at 8f01b6cd01. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at 8f01b6cd01364101b96e2d4b467c53f1fa7419b4 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to hostinet_delivery. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nThe approved nginx proposal is delivered as PR #16058 at 1689a3bd41. Authoritative readback verifies the approved body, ready state and mergeability. Contributor review is complete; public checks and maintainer review remain separate from the source-bound qualification. Its current Gazelle log requests only removal of the unused production //pkg/zip dependency from tools/nogo/check/BUILD, already corrected by pending #16031.\n\nUser approved the exact proposal, and root delivered public PR16058 at 1689a3bd41. Authoritative PR-number readback verifies the approved body, ready state and mergeability. Contributor review is complete; public checks and maintainer review remain separate from source-bound qualification. No repeated question or merge is authorized.\n\nRoot requested contributor review once on October20 after independent qualification acceptance. AMD source construction and all four existing runtime consumers passed at e515. The original ARM CPU image failure is retained; corrected ARM construction is still running. The image retains net-tools for netstat consumers. No public PR has been opened.",
       "followup": {
         "owner": "work_map_current",
@@ -20569,7 +20561,7 @@
       "title": "Build the GCS FUSE test image on Debian 13",
       "url": "https://github.com/google/gvisor/pull/16065",
       "group": "rbe",
-      "status": "open",
+      "status": "merged",
       "summary": "The requested post-#16046 rebase is published at 652a770689eb on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe authorized Gazelle rebase is complete at 4c88cdb9ad. The 2026-10-20T22:28:29 UTC snapshot verifies the exact current-head Gazelle check SUCCESS. Original failed-check and patch-equivalence evidence remain historical; current maintainer holds and review requests are unchanged.\n\nThe authorized Gazelle rebase is delivered at 4c88cdb9ad3cc84007e130fea5a08827cd095d03 on 3fb4ef446b, which includes merged fix a9e9db418. The original topic patch, author and message are preserved; signing, exact-lease publication and local/fork/API tracking were verified. Existing failure records below belong to the prior head. Fresh current-head checks and matching imports are being collected; no passing CI or new maintainer approval is inferred.\n\nEarlier evidence:\n\nThe shared Gazelle fix landed through #16048 as a9e9db418. Current source/import failure identities and full-history comparison show this exact source lacks the fix. The user authorized its quiet single-commit rebase onto 3fb4ef446b, assigned to node_tls_sni. Earlier #16031 wait instructions below are historical; review holds and unrelated failures remain separate.\n\nEarlier evidence:\n\nCurrent #16065 at 449d72cb2 has two diagnosed shared CI failures. Gazelle job 118790806922 requests only the existing #16031 unused ZIP dependency deletion. Generate job 118790808236 successfully exports, commits and pushes the local go branch, then fails removing its temporary repository with Directory not empty. The writer remains unknown; existing #15598 is the cleanup mitigation. Neither log establishes a GCS image defect.\n\nThe contributor-approved GCS FUSE change is delivered as #16065 at exact 449d72cb2. Approved body, author, one-commit/one-file scope and origin tracking were verified; the provider reports mergeable. Focused AMD64 and native ARM64 source/archive/load/version evidence remains source-bound. Public checks and maintainer review are now pending; no further contributor question is required.\n\nThe user approved opening the exact GCS FUSE proposal 449d72cb2 (call_WxnbWYM63GvkRgfF6QMDONkt, item 0); Hostinet owns delivery. The two base-image replacements resolve the observed Debian Bullseye package-download failure. Focused AMD64 and native ARM64 source builds, archive load and GCSFUSEVersion bodies passed with source-to-archive-to-TestRunner bindings. Both build logs resolve gcsfuse v2.12.2; the CLI reports version unknown (Go 1.27.3). Mutable apt and go install inputs remain. No bucket, cloud credentials or GCS application runtime was exercised.",
       "followup": {
         "owner": "work_map_current",
@@ -20618,7 +20610,7 @@
           "url": "https://github.com/tamird/gvisor/commit/652a770689eb14bb070a9e16ac06328d03a7d88f"
         }
       ],
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "number": 16065,
       "ciRecovery": {
         "kind": "shared-source-fix",
@@ -21367,8 +21359,8 @@
       "title": "netstack: fix forwarded IPv6 checksums",
       "url": "https://github.com/google/gvisor/pull/16095",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The requested post-#16046 rebase is published at f0d94d832c79 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nContributor approval is delivered as PR #16095 at the exact qualified source. The published head, title, description and file readback match; no new source change or execution is claimed. Software forwarding now uses the matched TCP or UDP protocol in the checksum pseudoheader instead of the IPv6 base NextHeader value. The direct and forwarding/SNAT regressions reproduce eight new failing leaves before the fix while four original controls pass. Independent review accepted seven corrected owners, 1,504 positive XML records including parents, all 14 selected regression records, four analyzer owners reporting both architectures, and formatting checks. The verified receipt arrived 6.145 seconds after execution with no manual collection. The fallback, ICMP and GSO paths are unchanged; this is independent of the quoted-error proposal.",
       "followup": {
         "owner": "work_map_current",
@@ -21518,8 +21510,8 @@
       "title": "Build the syscall benchmark image from source",
       "url": "https://github.com/google/gvisor/pull/16376",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-10-26T22:43:37.425124+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The patch-identical rebase is published at 67adaaa43 and GitHub confirms it is mergeable. Existing approval and source-specific qualification retain their original identities; current source and import checks come from the provider snapshot. The earlier private feedback failure does not identify a public source defect. No contributor decision is pending.\n\nEarlier source-specific history:\n\nThe contributor-approved original-directory amendment is delivered in #16376 at exact 8a346ca8790e383b3a083658c59f7c7362ed0a2a. It retains the original syscallbench directory and adds BUILD there, addressing Etienne’s exact review request. The complete BUILD and current C bytes are unchanged; only the parent sources edge and Make context label change. Independent source review passed. Focused qualification f3125896 passes on the unchanged 8a346 amendment with the public default GNU toolchain: dependency preparation, canonical formatting and all four configured image/source-context build owners pass. Actual uncached remote GNU compilation and linking connect the exact source to the binary, layer, archive and context outputs. Twelve remote spawns and seven cache hits remain distinct. Automatic verification completed 3.973918 seconds after native execution. This is build qualification only; no runtime or ELF-content test was repeated. The earlier LLVM static-link failure, pre-run guest initialization failure and duplicate-property setup failure remain separate historical failures. The public head and description are verified, and GitHub reports MERGEABLE with new checks running. No contributor decision remains pending.\n\nAfter Tamir’s 19:22 reply, Etienne clarified at 19:26:51 UTC that benchmarks should retain one image/package per directory. The qualified 8a346 amendment already follows that request. The reply in the original review thread links the GNU qualification. The native Etienne review re-request returned HTTP 404 and was not saved; the existing fvoznika request remains. No new review submission or maintainer acceptance is inferred.\n\nEarlier delivery and source-specific validation:\n\nThe approved source-built syscall benchmark image is delivered on public 7bffefa. The original packaging and AMD64 mapping are preserved, with explicit source exports across the new benchmarks package boundary. Current upstream C is moved byte-for-byte, including its newly landed fork/exit/wait mode. Earlier runtime receipts cover their historical modes, not this newly landed mode. No new image pull or shared-registry prerequisite is added. Published as #16376, open and ready for review, with exact provider head readback. No contributor decision remains pending.\n\nHistorical source-specific validation:\n\nThe contributor conditionally approved this child after the basic-image parent and requested the same directory consolidation. That refinement and its validation are complete at 5ac1aa8e95: images/benchmarks/BUILD and unchanged syscallbench.c share one package, helper targets remain distinct, and the explicit Make mapping remains AMD64-only. The final combined gate verifies the static ELF, actual Make rebuild/deleted-tag cached restoration and all four existing native-runc benchmark modes at 100 iterations each. Its verified receipt arrived 4.873 seconds after execution, with no manual collection or workload retry. The two image proposals share only the basic adapter prerequisite; no separate child contributor question is pending. Earlier 16ac results and the exact refinement range-diff remain available. These measurements establish execution, not comparative performance.",
       "followup": {
         "owner": "root",
@@ -21976,8 +21968,8 @@
       "title": "Include the terminator in the rewinddir path",
       "url": "https://github.com/google/gvisor/pull/16101",
       "group": "tests",
-      "status": "open",
-      "updatedAt": "2026-10-22T00:33:19.689675+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The requested post-#16046 rebase is published at c2d61fcd6e8d on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nThe contributor approved the exact one-line correction, now delivered ready as PR #16101 at signed 4f256cdafc. The provider readback verifies the reviewed title/body, one commit and one-file patch; it is mergeable and initial public CI is running. Identical qualification-only ASan harnesses reproduce the original strcpy heap-buffer-overflow and pass with the corrected helper. Both actual hosted Linux AMD64 executions are completely collected. No image, gVisor or ARM execution is inferred; the original baseline remains FAIL. No contributor decision remains.",
       "followup": {
         "owner": "work_map_current",
@@ -22021,8 +22013,8 @@
       "title": "`pkg/state`: Defer type verification from init until actual use.",
       "url": "https://github.com/google/gvisor/pull/15814",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-24T11:35:59.115042+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "Tamir’s authorized approval of exact f47224383 is published. The review confirms the two prior source findings are addressed and asks for the command and before/after measurements behind the stated 0.3 ms startup saving. No contributor decision remains. Ordinary metadata validation stays lazy, binary registration stays eager, and the corrected test no longer depends on a cross-test counter. This remains an unmerged prerequisite for dependent state work.",
       "followup": {
         "owner": "root",
@@ -24423,8 +24415,8 @@
       "title": "Stop port-forward readiness polling on timeout",
       "url": "https://github.com/google/gvisor/pull/16250",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-10-28T01:47:57.552546+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The rebase preserved the approved patch, as verified by stable patch ID.",
       "followup": {
         "owner": "node_tls_sni",
@@ -24580,8 +24572,8 @@
       "url": "https://github.com/google/gvisor/pull/16253",
       "title": "Clean up HTTP probes after cancellation",
       "group": "tests",
-      "status": "open",
-      "updatedAt": "2026-10-28T01:47:57.552546+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The rebase preserved the approved patch, as verified by stable patch ID.",
       "refinement": {
         "before": {
@@ -24708,9 +24700,9 @@
       "title": "Reject noncanonical procfs task IDs",
       "url": "https://github.com/google/gvisor/pull/16266",
       "group": "runtime",
-      "status": "open",
+      "status": "merged",
       "summary": "The contributor explicitly approved 4674542b6d227e33df83826e466678187e1315ae. The reviewed patch is delivered as PR #16266 at 5dceaf054ade4dc098eb9f90d37b732897fe916d. The task-ID change was mechanically refreshed onto current dd6f with exact changed-line streams; only the attribution footer was removed from the record. Separate FD/fdinfo work is excluded. Provider head and body are verified; the PR is open, non-draft and mergeable, with public CI starting. No merge or auto-merge was requested.\n\nPreserved source and review record:\n\nLinux and gVisor before/after checks verify the new InvalidTaskNames regression: native Linux passes while both original gVisor modes fail; native and both corrected gVisor modes pass. The before/after source delta contains only the two parser fixes. Three owning checks add 59 passing cases with no gaps or skips; automatic verification followed execution by 4.994385 seconds. Independent compact review ties the tested implementation to standalone proposal 4674542b6d. Initial target-loading failures and collector reattachments remain recorded. Root sent the contributor-review question for exact 4674542b6d; opening the upstream PR now awaits that decision.",
-      "updatedAt": "2026-10-23T17:18:23.883889+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "work_map_current",
         "disposition": "Contributor-approved patch delivered; current public CI and maintainer review pending",
@@ -24749,9 +24741,9 @@
       "title": "Reject noncanonical procfs file descriptor names",
       "url": "https://github.com/google/gvisor/pull/16303",
       "group": "runtime",
-      "status": "open",
+      "status": "merged",
       "summary": "Etienne approved exact d8c746bbfe and advised deprioritizing further integer-spelling sweeps without an affected application. Root verified and accepted that scope guidance; no source change or reply is requested. Ordinary import tracking continues. Overflow, privilege and data-corruption findings remain distinct.\n\nDelivered as PR #16303 at the contributor-approved d8c746bbfe after #16266 merged. The public PR and fork branch match, and the latest provider observation reports it mergeable. The owning package and both analyzer labels passed all three attempts and 59 records without skips or missing results; six FD/task-ID syscall controls passed on Linux, directfs and shared. Delivery and contributor approval are complete; current public checks and new maintainer feedback remain on the existing watcher.\n\nEarlier evidence:\n\nThe contributor approved exact d8c746bbfe. The owning package and both analyzer labels passed all three attempts and 59 records without skips or missing results (1f9f0203, source84090ba); six FD/task-ID syscall controls passed on Linux, directfs and shared (7a21144b). Only PR #16266 remains a delivery prerequisite: its exact parent5dceaf054a is approved and has open Copybara PR #16274. Deliver after that parent lands, without another contributor question.\n\nEarlier evidence:\n\nSeparate FD/fdinfo follow-up to the approved task-ID change in PR #16266. Linux rejects descriptor spellings such as 03 and +3; gVisor accepted both. The shared decimal parser preserves canonical task and descriptor names. Actual before recording reproduced all four aliases on both gVisor modes while Linux passed. Corrected run 7a21144b passed the FD regression and task-ID control on Linux, directfs and shared: six exact cases, no skips. Independent source peer verifies the full five-file change and qualification correspondence. Contributor review has been requested for d8c746bbfe; upstream publication also waits for #16266 and the owning package/analyzer qualification.",
-      "updatedAt": "2026-10-24T00:50:28.564076+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "root",
         "sourceHead": "d8c746bbfea4cc4076e6903a48d2091c5cd760a9",
@@ -25328,8 +25320,8 @@
       "title": "Declare the Benchmark umbrella header exports",
       "url": "https://github.com/google/gvisor/pull/16313",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-10-25T17:24:38.907255+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The contributor-approved amendment is delivered to gVisor #16313 at b5a38f67b45c91aece9c51c14c4c43c2fdc9dd48 on public base 7bffefa. It backports the Benchmark umbrella export annotations and removes the blanket Benchmark-header ignore introduced by #16335. The citation-only update from ac3c504072 changes the patch header and commit message to cite the landed upstream commit; the upstream patch hunk is identical. The functional four-file change remains the approved 4992bf8e5a proposal. No contributor decision remains pending.\n\nUpstream Benchmark PR #2351 merged on October 25 at 17:14:05 UTC as squash commit 0a78b5d203283b54f65590ecef23e0b835b4787c. The merged commit is the current upstream source citation; #2351 remains the historical upstream PR identity. Its original head 224d4dc2fd was a message-only revision of the qualified fdc176fc72 source. The upstream merge and still-open downstream gVisor backport are distinct states. Prior focused qualification d353d7ac remains source-specific evidence; the citation update adds no new runtime result.\n\nThe retained direct clang-tidy 22.1.8 contrast on the hosted AMD64 Linux worker reproduced the Benchmark umbrella-header issue on then-current main 1fa8ea1c. With those exact headers, the small consumer reports missing direct providers for benchmark::State and BENCHMARK; the unchanged candidate source adds the two export comments and removes those errors. Both unrelated std::vector negative controls still fail. Invocation5ffa retains the expected native aggregate FAIL, while the independently checked contrast and projection pass. This validates the narrow include-cleaner behavior, not Benchmark library compilation, linking, runtime, ARM execution or the downstream blanket-ignore amendment. Earlier99010 remains an inapplicable contrast because its before action consumed the annotated header.",
       "followup": {
         "owner": "root",
@@ -25446,8 +25438,8 @@
       "title": "Build the Ollama image client with Bazel",
       "url": "https://github.com/google/gvisor/pull/16333",
       "group": "rbe",
-      "status": "open",
-      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The October 25 rebase request is delivered at 1f8ed82325a9 on public master 7bffefa9185a. Provider readback is mergeable. The Ollama Make conflict is resolved by adding its helper to the existing source-context staging path. The new native-image mapping, selected architecture and race=false remain intact; the three product postimages and helper behavior are preserved. Earlier runtime evidence and approvals retain their source identities; this is not fresh current-head CI or approval.\n\nHistorical source and validation record:\n\nEtienne approved exact published head 462d71ab at 08:17:24 UTC on October 24, with no source or reply request. Current public checks and import remain separate.\n\nThe approved Ollama client extraction is published after #15670 merged. Earlier source-built two-architecture archive, Make entrypoint and analyzer evidence remains tied to its original sources; current public CI and maintainer review are separate. This PR and #16097 touch the image context-staging recipe, so the second landing required source reconciliation, completed by the October 25 rebase. No model or GPU execution is claimed.",
       "followup": {
         "owner": "work_map_current",
@@ -25765,8 +25757,8 @@
       "title": "Preserve SACK on connections accepted with SYN cookies",
       "url": "https://github.com/google/gvisor/pull/16336",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-11-03T02:48:42.204681+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The reviewed amendment is published as #16336 at 0b06fce45. It documents the Linux timestamp-cookie analogue and the peer-controlled SACK bit, makes the protocol-lock contract explicit, and extends negotiation checks for missing peer SACK and timestamps. The verified remote result includes both TestSynCookieSACK executions. All six review threads are answered and resolved; no contributor decision remains. Current checks and maintainer review come from the provider snapshot.\n\nEarlier source-specific record:\n\nThe approved SACK timestamp-negotiation change is published at exact 8757001b. Initial readback is open/non-draft and mergeable, with public checks starting. The retained Linux/netstack controls and full e2e timestamp-owner validation remain tied to their source identities; no current-head maintainer approval or import is inferred. The window-scaling child still awaits its distinct contributor decision.",
       "followup": {
         "owner": "TCP PacketImpact",
@@ -26212,8 +26204,8 @@
       "title": "Allocate advisory file lock trees on first use",
       "url": "https://github.com/google/gvisor/pull/16337",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-26T21:48:57.353917+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The approved amendment is published at 710b3f2e9. The review threads are answered and resolved; no contributor decision remains. Current maintainer review and checks follow the live provider snapshot.\n\nDelivered amendment:\n\nDocument lock-tree ownership and the unlock range precondition, and extend the existing zero-value test through first acquisition, conflict query and unlock.\n\nThe amendment adds the missing checklocks field annotation and Linux allocation reference. The existing test now proves that an unused query/unlock allocates nothing, the first write lock is visible to another owner, and unlocking clears it. The focused remote lock tests and analyzer checks passed.\n\nEarlier source-specific history:\n\nCurrent public #16337 remains at 97cd922bd. The fork amendment at 710b3f2e9 is qualified and ready for contributor review. No upstream source update has been made.\n\nDocument lock-tree ownership and the unlock range precondition, and extend the existing zero-value test through first acquisition, conflict query and unlock.\n\nEarlier source-specific record:\n\nPublished after the requested nil-check correction and current-source native qualification. Lazy allocation is independent of the typed-checkpoint prototype. Prior census and behavior evidence retain their exact source identities.",
       "followup": {
         "owner": "root",
@@ -26290,8 +26282,8 @@
       "title": "Clear the parent-death signal under the task mutex",
       "url": "https://github.com/google/gvisor/pull/16338",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-25T13:33:50.027303+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The independently approved fix is refreshed on current source as #16338 at ef26d82645e82c03a9360f9f239489629787633c. The resolution routes the parent-death-signal writes through the task-mutex setter while preserving the identity-transition conditions and ordering, including the newly landed commitIDChange path. Independent source review accepted the composition. The 13:28 UTC provider snapshot confirms MERGEABLE with fresh current-head CI pending. No prerequisite on the annotation-only amendment or the other behavioral fixes, and no new contributor decision.\n\nThe declared-toolchain qualifier at 1889643b7b6d7a3eb711b1d30f8f752b10175cbe passed the genuinely remote follow-up: 117 positive XML records, all three attempts remote, no skips, missing cases or failures, and both analyzer logs explicitly pass AMD64 and ARM64 targets. The earlier hosted-local invocation remains FAIL because its separate ARM-configured analyzer executables could not run on the AMD64 coordinator; its 115 unit records and normal analyzer checks passed. This does not claim ARM64 unit runtime.",
       "followup": {
         "owner": "root",
@@ -26325,8 +26317,8 @@
       "title": "Read the group exit status under the signal mutex",
       "url": "https://github.com/google/gvisor/pull/16339",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-26T21:48:57.353917+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The approved amendment is published at 7a75a6400. The review threads are answered and resolved; no contributor decision remains. Current maintainer review and checks follow the live provider snapshot.\n\nDelivered amendment:\n\nMake the existing TaskSet locking invariant mechanically checked and name tg.exiting in the explanatory comment.\n\nThe owning kernel tests passed 117 records with zero skips. The library and test Nogo owners passed for AMD64 and ARM64. The amendment addresses the lock-contract feedback without changing the existing group-exit behavior.\n\nEarlier source-specific history:\n\nCurrent public #16339 remains at 21eea4551. The reviewed fork amendment at 7a75a6400 is qualified and ready for contributor review. No upstream source update has been made.\n\nMake the existing TaskSet locking invariant mechanically checked and name tg.exiting in the explanatory comment.\n\nThe owning kernel tests passed 117 records with zero skips. The library and test Nogo owners passed for AMD64 and ARM64. The amendment addresses the lock-contract feedback without changing the existing group-exit behavior.\n\nEarlier source-specific record:\n\nThe independently approved fix is published as #16339 at 9e9228f6f8ba. It has no prerequisite on the annotation-only amendment or the other two behavioral fixes.",
       "followup": {
         "owner": "root",
@@ -26372,8 +26364,8 @@
       "title": "Avoid relocking the signal mutex on a platform error",
       "url": "https://github.com/google/gvisor/pull/16340",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-26T21:48:57.353917+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The approved amendment is published at 94cbcd44b. The review threads are answered and resolved; no contributor decision remains. Current maintainer review and checks follow the live provider snapshot.\n\nDelivered amendment:\n\nMake prepareGroupExitLocked’s existing signal-lock precondition mechanically checked.\n\nThe owning kernel tests passed 117 records with zero skips. The library and test Nogo owners passed for AMD64 and ARM64. The amendment preserves the existing platform-error lock behavior.\n\nEarlier source-specific history:\n\nCurrent public #16340 remains at b7a43f35e. The reviewed fork amendment at 94cbcd44b is qualified and ready for contributor review. No upstream source update has been made.\n\nMake prepareGroupExitLocked’s existing signal-lock precondition mechanically checked.\n\nThe owning kernel tests passed 117 records with zero skips. The library and test Nogo owners passed for AMD64 and ARM64. The amendment preserves the existing platform-error lock behavior.\n\nEarlier source-specific record:\n\nThe requested rebase is delivered at b7a43f35edcf directly on public 7bffefa, with provider readback mergeable. The approved changed-line stream and stable patch identity are preserved, including independently landed lock annotations and current container.State API where applicable. No runtime replay or new exact-head approval is claimed.\n\nHistorical source record:\n\nThe independently approved fix is published as #16340 at adfa76000e8c. It has no prerequisite on the annotation-only amendment or the other two behavioral fixes. The approved production bytes are unchanged; the 76 newly added test lines and their BUILD dependencies were removed as requested before publication.",
       "followup": {
         "owner": "root",
@@ -26419,9 +26411,9 @@
       "title": "Reject overflowing metric timestamp offsets",
       "url": "https://github.com/google/gvisor/pull/16341",
       "group": "analysis",
-      "status": "open",
+      "status": "merged",
       "summary": "The requested rebase is delivered at dc9eb0f9a925 directly on public 7bffefa, with provider readback mergeable. The approved changed-line stream and stable patch identity are preserved, including independently landed lock annotations and current container.State API where applicable. No runtime replay or new exact-head approval is claimed.\n\nHistorical source record:\n\nThe approved bounds patch is published as #16341 at f47ebb419c on current master d15d. The standalone run retains its aggregate failure on the unchanged generated-protobuf Nogo dependency, alongside eight passing parser cases and canonical formatting. The separate analyzer-only recovery with the exact #16098 export fix passes both architectures. No old metrics PASS or passing standalone aggregate is inferred.",
-      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "dc9eb0f9a92563e66f2bb86d3cf890aa4e8695a5",
@@ -26497,9 +26489,9 @@
       "title": "Reject out-of-range ports in TCP samples",
       "url": "https://github.com/google/gvisor/pull/16343",
       "group": "analysis",
-      "status": "open",
+      "status": "merged",
       "summary": "The revised sample programs call ParseUint with bit size 16 directly. Port zero remains valid and signed input is rejected. The redundant helper and parser-only tests are removed. The contributor approved this exact revised head, now published as #16343. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nExact composed qualification passes eight phases, three binary builds for both CPUs, 36 existing AMD64 TPU request/pipe case records and five both-CPU analyzer wrappers. Independent retained peer 3b706f87 confirms all 41 records and 6.108170 seconds to the authenticated consumer. No TPU hardware, ARM runtime, race test or CodeQL rerun is claimed.",
-      "updatedAt": "2026-10-27T18:39:29+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "root",
         "sourceHead": "ee83f5be2d2817436bb5df4b986d32ee38ef8bb4",
@@ -27040,9 +27032,9 @@
       "title": "Reject unrepresentable TPU operation timeouts",
       "url": "https://github.com/google/gvisor/pull/16344",
       "group": "analysis",
-      "status": "open",
+      "status": "merged",
       "summary": "The contributor-approved diagnostic refinement is published as #16344 at 72b4500d3. Invalid inputs name the accepted range and retain the actual ParseUint error; zero has its own range diagnostic. The real CLI and existing request/pipe/analyzer checks pass eight fresh owners and 54 positive XML records without failures, skips or missing cases. Lucas’s thread is answered and resolved; no contributor decision remains. The existing maintainer request is preserved.\n\nEarlier source-specific history:\n\nCurrent public #16344 remains at 86ab5ae25. The reviewed fork amendment at 62c7fdd34 is qualified and ready for contributor review. No upstream source update has been made.\n\nUse one diagnostic for malformed, zero and overflowing timeouts, naming the accepted integer range [1, 2147483647]. ParseUint and the signed wire conversion are unchanged.\n\nThe real CLI passed eleven cases, including the minimum valid timeout and malformed, zero and overflow inputs. The existing TPU request/pipe tests, four analyzer owners, formatting and imports also passed: eight fresh owners and 54 positive XML records, with no skipped, failed or missing cases. This does not claim TPU hardware or ARM runtime execution.\n\nEarlier source-specific record:\n\nThe revised CLI uses ParseUint with bit size 31 and rejects zero before the signed int32 wire conversion. Library Checkpoint/Restore retain nonpositive default substitution and GetState retains nonpositive forwarding. Three existing success tests assert these distinct wire behaviors; redundant parsing tests are removed. The contributor approved this exact revised head, now published as #16344. The provider verifies the exact head on an open, non-draft PR. No contributor decision remains pending.\n\nExact composed qualification passes eight phases, three binary builds for both CPUs, 36 existing AMD64 TPU request/pipe case records and five both-CPU analyzer wrappers. Independent retained peer 3b706f87 confirms all 41 records and 6.108170 seconds to the authenticated consumer. No TPU hardware, ARM runtime, race test or CodeQL rerun is claimed.",
-      "updatedAt": "2026-10-26T22:13:52.843363+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "72b4500d37af524b19dfd6acd11655ffb83da529",
@@ -27330,8 +27322,8 @@
       "title": "Read EOF before probing closing TCP states",
       "url": "https://github.com/google/gvisor/pull/16377",
       "group": "tests",
-      "status": "open",
-      "updatedAt": "2026-10-25T12:46:43.341670+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The approved EOF fixture is delivered independently on public 7bffefa. Its patch identity and changed-line stream match approved 279e; the only additional helper-file context is the independently landed gRPC NewClient adaptation. The separate unread-FIN investigation remains agent work. Published as #16377, open and ready for review, with exact provider head readback. No contributor decision remains pending.\n\nHistorical source-specific validation:\n\nRead EOF before the three closing-state packet probes and verify the connection remains in CLOSE_WAIT or CLOSING. This makes their empty-queue setup explicit while preserving the existing packet and negative-response assertions. The exact public-base proposal is 279e11e71e4161a5c63a2d3137f380579d0ffc5e; that historical source preceded the delivered PR. Its changed hunks and both test-file postimages match qualified fork d8acb109. Seven remote uncached owners pass 63 XML records, including six parent records. This does not resolve unread-FIN behavior; that remains a separate investigation. No prerequisite PR.",
       "followup": {
         "owner": "work_map_current",
@@ -27424,9 +27416,9 @@
       "url": "https://github.com/google/gvisor/pull/16374",
       "title": "Restore basic image sources in the shared context archive",
       "group": "bazel",
-      "status": "open",
+      "status": "merged",
       "head": "8d851dcbcd6dbf64b0379c85b5aa5d18e86227fd",
-      "updatedAt": "2026-10-27T00:06:30.348539+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "Restores the basic:sources filegroup and its images:sources edge omitted from merged import #16307. Adding images/basic/BUILD made a Bazel package boundary, so the parent glob stopped including the remaining basic Docker contexts. The two complete BUILD postimages exactly match approved #16097 source 781d; only seven lines are added on public 7bffefa. Delivered ready for review with independent source/prose equivalence checked. Earlier image qualification remains source-specific; no new runtime or current-head CI result is claimed. This source export repair is not a blanket prerequisite for every image proposal.\n\nSupplemental combined-source qualification 63f7b7ba passed on both architectures: the control omitted exactly 35 tracked basic members, including BUILD; the corrected combined archives matched all 178 tracked source files and modes, plus two generated CUDA helpers. All 34 archive/context owners and 16 image config/layer comparisons passed. The duplicate eeb55ea24 proposal has the same complete BUILD postimages as this existing repair and is withdrawn. This measured the combined image source, not the bare #16374 head, and makes no CUDA runtime claim.",
       "followup": {
         "owner": "work_map_current",
@@ -27527,8 +27519,8 @@
       "title": "Centralize state wire payload loading",
       "url": "https://github.com/google/gvisor/pull/16380",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-26T22:23:56.114433+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The approved split is published: #16380 now contains only wire payload loading at 3c6804639. Independent benchmark fixtures are open as #16453 at d8c5f75da. All eleven Lucas discussions received substantive replies in one submitted review and are resolved. The primitive-array stage is approved for opening after this wire loader lands; reference arrays are approved for opening after primitives. The benchmark PR is independent, not a production prerequisite. No contributor decision remains for this split.\n\nThe exact wire-stage pkg/state tree passed nine selected remote owners, 10,719 positive XML records and no skips, failures or missing records. This is the loader stage; the separate final-series allocation, race and checkpoint results below retain their own source scope.\n\nEarlier source-specific record:\n\nThe approved array-storage change is delivered as open, non-draft #16380 at f7204694d85924f979109ff60ea28f34abf14714 on current public 7bffefa. The landed #15648 and #15814 changes are preserved, including current cycle, zero-sized traversal and lazy-registration behavior. No contributor decision remains pending.\n\nThe exact public pkg/state tree passes the three AMD64 suites normally and under race in the canonical remote harness. Nine normal owners produce 10,931 positive XML records; three race owners produce 10,969 positives and exactly the two declared lazy-registration skips. All four owning Nogo wrappers pass both architecture checks; goimports and buildifier pass. The authenticated receipts arrive 2.682608 and 5.738812 seconds after native completion. This is AMD64 runtime validation, not ARM64 runtime or a new performance comparison.\n\nHistorical source-specific performance: the approved 4b896 proposal retained the earlier 16-pair comparison, with graph Save/Load 3.26%/6.01% faster and UDP 11.59%/15.14% faster; graph operations use 1,024 fewer allocations, UDP counts are unchanged, and binaries grow 52/56 KiB. Those measurements precede the current type-registration integration and do not establish performance of this rebased source. The unified-engine investigation remains separate.",
       "links": [
         {
@@ -27853,8 +27845,8 @@
       "title": "tcp: report duplicate data below the cumulative ACK",
       "url": "https://github.com/google/gvisor/pull/16403",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-28T21:10:30Z",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The contributor-approved amendment is published on #16403 at c451fa7d6. All existing review threads are resolved; no contributor decision remains. Current maintainer and CI signals are shown from the provider snapshot.\n\nInclude a duplicate FIN sequence number and retain the duplicate report when filling a gap drains a queued FIN; simplify the SACK helper interface and comments.\n\nThe extended receiver fixture covers the queued-FIN ACK and retransmitted data/FIN in CLOSE-WAIT, with focused remote qualification passing. Duplicates wholly above the cumulative ACK remain outside this change. No production throughput or customer-outage claim follows.\n\nEarlier source-specific record:\n\nWith SACK negotiated, the receiver reports already acknowledged non-FIN data in its first SACK block. A wholly duplicate segment leaves the cumulative ACK and queued SACK ranges intact; a segment crossing the old ACK reports only the duplicate prefix. Both AMD64 and ARM64 controls failed as expected; the corrected SACK suites and analyzers passed on both CPUs.",
       "followup": {
         "owner": "root",
@@ -28334,8 +28326,8 @@
       "title": "Build the filesystem stress test on the official BusyBox image",
       "url": "https://github.com/google/gvisor/pull/16401",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-10-26T15:10:17.359539+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The approved fsstress source is published as upstream PR #16401 at exact 97c071a745 on master fb7341a1ad. It builds pinned LTP fsstress and layers its executable, notice and launch script onto the existing official @test_busybox image, preserving the shell parent. There is no contributor hold or pending agent source-review decision on this delivered proposal. Current public checks, matching imports and maintainer review are shown from the live GitHub snapshot.\n\nNative Linux ARM64 validation now passed all three existing fsstress cases on exact 97c071a745: gofer, shared gofer and tmpfs, using systrap and the same previously qualified image. A separate deterministic witness confirmed two workers each created four empty files. The GitHub-hosted runner used real ARM64 hardware, with no emulation. Bazel exited 0; the XML/digest verdict was emitted 23.281 milliseconds after execution. Two setup repairs preceded the successful run; no manual intervention was needed to produce its verdict. This closes the native ARM64 gap for this consumer, without qualifying other images or native ARM64 BuildBuddy capacity.\n\nExact-source validation of published 97c071a745 passed in 7a5ba05a. Both architectures' LTP links were fresh remote GNU actions; each fsstress archive contained the official BusyBox base layers unchanged plus one fsstress layer, and the Make contexts matched. On AMD64/runc, two workers each produced four files. Automatic verification completed 7.817 seconds after the last execution. That earlier run did not execute ARM64 runtime tests; the older 6b2 filesystem results retain their original source scope.\n\nThe source-specific official-image validation d5246ab2 and two-worker entrypoint proof fe7b2570 remain historical evidence. The foundation imported as c3e0783a through #16307 is already in master. Neither the withdrawn local BusyBox/PIDFD stack nor the independent #16374 generic archive is a delivery gate.",
       "followup": {
         "owner": "work_map_current",
@@ -29350,7 +29342,7 @@
       "title": "Benchmark late state-array parent discovery",
       "url": "https://github.com/google/gvisor/pull/16453",
       "group": "runtime",
-      "status": "Closed; cleanup published in #16893",
+      "status": "merged",
       "summary": "The approved independent benchmark fixture is published at d8c5f75da directly on the common public baseline. It checks late parent discovery, one save per child and restored parent/child aliasing, alongside existing pointer, map and slice workloads. Its exact patch matches the reviewed fixture and its complete pkg/state tree matches the qualified benchmark baseline. It does not depend on the wire loader or typed-array production changes. No contributor decision remains.",
       "evidence": [
         {
@@ -29374,7 +29366,7 @@
           "url": "https://github.com/google/gvisor/pull/16893"
         }
       ],
-      "updatedAt": "2026-11-03T02:30:53.096288+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "Source PR owner",
         "sourceHead": "d8c5f75da340974a15607c762f9dd2053e3a0f2b",
@@ -30058,9 +30050,9 @@
       "title": "Remove the unused basic Ruby image",
       "url": "https://github.com/google/gvisor/pull/16498",
       "group": "tests",
-      "status": "open",
+      "status": "merged",
       "summary": "TestRuby uses the Sinatra fixture in image-test/ruby. No tracked caller uses basic/ruby; Make discovers it solely because its one-line Dockerfile still exists. Removing that file drops only basic_ruby from the tracked Make recipes on AMD64 (94 to 93) and ARM64 (70 to 69). The HTTP fixture and both Ruby benchmark images are unchanged.",
-      "updatedAt": "2026-10-27T09:36:13+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "root",
         "sourceHead": "c7cd9df3d78a1f7615a0bc72241370ed59fb6ff5",
@@ -30221,9 +30213,9 @@
       "title": "Wait for HTTP readiness after restoring Nginx",
       "url": "https://github.com/google/gvisor/pull/16499",
       "group": "tests",
-      "status": "open",
+      "status": "merged",
       "summary": "A stopped Nginx worker still has an open listener: the old port check passed while the GET timed out. After resuming that worker, the same GET returned HTTP 200. Both existing AMD64 checkpoint and restore benchmarks completed with the new probe. The benchmark measures readiness to serve a request, including Docker exec time.",
-      "updatedAt": "2026-10-27T09:36:13+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "root",
         "sourceHead": "5fc68d2b9e7f63884283293113f4d13933475667",
@@ -30262,9 +30254,9 @@
       "title": "Pin Alpine for the empty-container benchmarks",
       "url": "https://github.com/google/gvisor/pull/16497",
       "group": "bazel",
-      "status": "open",
+      "status": "merged",
       "summary": "The cached benchmark images ran Alpine 3.19.1 on AMD64 and 3.20.3 on ARM64. Pinning Alpine 3.24.3 keeps the official layers and configuration. The shared //images target produced byte-identical Make contexts and Docker archives on both architectures. Original AMD64 logs confirm the startup and memory benchmarks ran; the original aggregate report remains incomplete.",
-      "updatedAt": "2026-10-27T09:36:13+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "root",
         "sourceHead": "0a730fd58273aac0d337929b69e2fbf884ffa78c",
@@ -30416,8 +30408,8 @@
       "title": "Compare UDP checksums as transmitted on the wire",
       "url": "https://github.com/google/gvisor/pull/16493",
       "group": "runtime",
-      "status": "Closed; cleanup published in #16893",
-      "updatedAt": "2026-11-03T02:30:53.096288+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The full header suite passed all 14,765 cases on each native CPU within its original deadline. The AMD64 Firecracker timeouts are retained as a separate worker failure.",
       "followup": {
         "owner": "Source PR owner",
@@ -30862,9 +30854,9 @@
       "title": "Check locking of file epoll registrations",
       "url": "https://github.com/google/gvisor/pull/16505",
       "group": "analysis",
-      "status": "Closed; cleanup published in #16893",
+      "status": "merged",
       "summary": "Check the reverse epoll registration index with its existing mutex. No runtime lock is added. Both architecture analyzers and the existing systrap CloseFile and DoubleLayerEpoll cases passed. The annotation covers ordinary VFS accesses; generated save/load routines are excluded by the existing analyzer.",
-      "updatedAt": "2026-11-03T02:30:53.096288+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "Source PR owner",
         "observedAt": "2026-11-03T02:30:53.096288+00:00",
@@ -31092,9 +31084,9 @@
       "title": "Stage release binaries with a declared copy tool",
       "url": "https://github.com/google/gvisor/pull/16506",
       "group": "release",
-      "status": "Open; reviewer feedback applied",
+      "status": "merged",
       "summary": "Before runsc-netgofer landed, all 16 staging copies ran remotely. Both Make installs preserved the eight producer digests and executable modes. The declared copy ran in an empty Linux root, and installed AMD64 runsc reported its version and started its sidecars. The PR uses the re-export requested in review. With runsc-netgofer added, integration 96057fa92 ran six Go links and nine declared copies per architecture on native AMD64 and ARM64 workers. Make installed both nine-file layouts with matching bytes and executable modes on the hosted AMD64 runner. The netgofer check covered linking and installation.",
-      "updatedAt": "2026-11-04T03:27:58.890694+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "Source PR owner",
         "observedAt": "2026-11-03T02:30:53.096288+00:00",
@@ -31420,9 +31412,9 @@
       "title": "Roll back failed epoll registrations",
       "url": "https://github.com/google/gvisor/pull/16513",
       "group": "runtime",
-      "status": "open",
+      "status": "merged",
       "summary": "Published the contributor-approved failed-registration fix as #16513. If waiter registration returns an error after signaling readability, remove both the epoll interest and the queued event. The published head has the exact tested tree: all 40 named AMD64 VFS cases passed; the control exposed both a phantom event and EEXIST on retry. The separate product-identical VFS Nogo checked AMD64 and ARM64. This is a synthetic registration-error fixture, not host exhaustion or ARM runtime coverage.",
-      "updatedAt": "2026-10-28T21:25:12Z",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "9f6054c77876e2e36acce5c3fed7d81ad3c9e5c9",
@@ -31568,9 +31560,9 @@
       "title": "Declare the copy tool for architecture outputs",
       "url": "https://github.com/google/gvisor/pull/16518",
       "group": "bazel",
-      "status": "open",
+      "status": "merged",
       "summary": "Contributor-approved change published as #16518 at the exact qualified 42a8333d1e head. The contributor decision is complete. Replace arch_genrule’s worker shell and PATH lookup of cp with the declared bazel_lib copy toolchain. All 16 fresh CopyFile outputs (eight output paths from four split-rule owners in each outer target configuration) matched their input bytes and modes; the AMD64 goid test passed. The parent run remains failed because an optional ARM aquery launcher executed on the AMD64 coordinator. Its retained action and output records independently establish the required results; this is not ARM runtime coverage.",
-      "updatedAt": "2026-10-27T19:04:01+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "root",
         "sourceHead": "42a8333d1e1e92d33e1b6bd244db296f347b7274",
@@ -31678,8 +31670,8 @@
       "title": "Check inotify locking contracts",
       "url": "https://github.com/google/gvisor/pull/16521",
       "group": "analysis",
-      "status": "Open",
-      "updatedAt": "2026-10-27T20:03:08.106083+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "Make the inotify event buffer, watch map, and locked helper preconditions enforceable by checklocks. The change adds no locks, exemptions, or runtime behavior. The candidate passes the existing VFS analyzer for AMD64 and ARM64. Removing six lock/defer lines in an analyzer-only control produces all four intended diagnostic classes on each target architecture. The control remains a native failure and keeps the aggregate red; the independent mechanism check passes. Neither inotify runtime behavior nor native ARM execution was tested. The first attempt failed during shallow-checkout preparation before any analyzer ran.",
       "evidence": [
         {
@@ -34587,8 +34579,8 @@
       "title": "Compare RACK timestamps across a clock wrap",
       "url": "https://github.com/google/gvisor/pull/16600",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-28T15:48:09.605364+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "RACK compares a peer’s echoed TCP timestamp with the time a segment was retransmitted. When the 32-bit counter wraps, stock RACK records a 5 ms RTT from an older echo and ignores a later echo that should produce a 5 ms sample. Use the existing serial-number comparison. All 45 TCP tests passed on each native architecture, and both owning Nogo checks passed for AMD64 and ARM64. This changes RTT attribution; the test does not measure throughput.",
       "evidence": [
         {
@@ -34657,8 +34649,8 @@
       "title": "Require a TCP timestamp echo for Eifel detection",
       "url": "https://github.com/google/gvisor/pull/16601",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-29T18:56:07.113045+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "Published the TCP amendment: Eifel detection now requires a nonzero echoed timestamp.",
       "evidence": [
         {
@@ -34815,8 +34807,8 @@
       "title": "Check locking of the pipe splice cursor",
       "url": "https://github.com/google/gvisor/pull/16606",
       "group": "analysis",
-      "status": "open",
-      "updatedAt": "2026-10-28T17:17:22.041+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "A pipe splice uses the same cursor across I/O callbacks. Both splice directions hold the pipe mutex from the cursor reset through the callbacks. The annotations let Nogo check those field accesses. AMD64 and ARM64 analyzers and four native systrap splice cases passed.",
       "evidence": [
         {
@@ -35426,9 +35418,9 @@
       "title": "Give the oldest SACK retransmission a full timeout",
       "url": "https://github.com/google/gvisor/pull/16624",
       "group": "runtime",
-      "status": "open",
+      "status": "merged",
       "summary": "Stock retransmitted the same 500 bytes after only 1.5 seconds with a three-second RTO. The fix restarts the timer for a successful repair of the oldest outstanding segment. All 92 TCP, SACK and RACK cases passed, and both analyzer owners report success for AMD64 and ARM64.",
-      "updatedAt": "2026-10-28T21:25:12Z",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "evidence": [
         {
           "label": "Published upstream as #16624",
@@ -37460,8 +37452,8 @@
           "url": "https://github.com/google/gvisor/pull/16667"
         }
       ],
-      "status": "open",
-      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "followup": {
         "owner": "root",
         "observedAt": "2026-10-29T13:07:09.135795+00:00",
@@ -37579,8 +37571,8 @@
       "number": 16669,
       "title": "Link host-run benchmarks and the container test app statically",
       "url": "https://github.com/google/gvisor/pull/16669",
-      "updatedAt": "2026-10-29T13:22:09.757150+00:00",
-      "status": "open",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
+      "status": "merged",
       "followup": {
         "owner": "root",
         "sourceHead": "b9193eed0d34d1ad1aa0a5da5603c82871052e2e",
@@ -38621,8 +38613,8 @@
       "url": "https://github.com/google/gvisor/pull/16697",
       "group": "runtime",
       "head": "1e5a147a41322c801145578ee6333c12a5cbaea8",
-      "status": "open",
-      "updatedAt": "2026-10-29T20:38:34.195870+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "After an attached FUSE connection aborts, Linux delivers EPOLLERR on fresh or updated watches. gVisor rejected the new registration, and deleting an old watch left it on the aborted queue.",
       "evidence": [
         {
@@ -38717,9 +38709,9 @@
       "head": "51b6df1b578a14e5305eda1fac372ca80e400972",
       "title": "Keep the first TCP zero-window probe on its deadline",
       "url": "https://github.com/google/gvisor/pull/16706",
-      "status": "open",
+      "status": "merged",
       "summary": "Writing more data while the peer advertises a zero window postpones the first probe. Keep the pending probe’s deadline when the application writes again.",
-      "updatedAt": "2026-11-05T09:18:41.504053+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "evidence": [
         {
           "label": "Stock: no probe at the original deadline",
@@ -39811,8 +39803,8 @@
       "ref": "review/bazel-lib-native-arch",
       "head": "6e1caeba747c9dcaa533bd9fe1a4232895ac04c2",
       "url": "https://github.com/google/gvisor/pull/16736",
-      "status": "open",
-      "updatedAt": "2026-10-30T10:22:03.833397+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "evidence": [
         {
           "label": "Stock and fixed governance query; exact areas.yaml bytes",
@@ -40446,8 +40438,8 @@
       "head": "48e209b56058f40e422daa3d5308d5c18a29a1ae",
       "title": "tcp: release the port of a wildcard-bound endpoint when it is closed",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-31T14:07:19.589286+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "url": "https://github.com/google/gvisor/pull/16180",
       "summary": "Approved and imported. The dual-stack port regression passed across 43 restores on the approved head. That test establishes reuse after a connected close; it does not cover closing a socket that never connected or two sockets sharing a reservation.",
       "evidence": [
@@ -40918,9 +40910,9 @@
       "head": "96a1736286d070d1d0c711086ed309f66fd10b57",
       "title": "Test that proc mounts share TCP SACK and the local port range",
       "url": "https://github.com/google/gvisor/pull/16745",
-      "status": "Open; reviewer feedback applied",
+      "status": "merged",
       "summary": "Write ip_local_port_range through a fresh proc mount and read it through the original one. Linux and current gVisor saw 40000–50001; with the historical per-inode cache gVisor still read 16000–65535. Reusing the SACK syscall fixture removes a 37-line Go test and fake stack. All 56 proc package cases passed without skips. The original PR now adds the logging header and its BUILD dependency. Its native qualification passed.",
-      "updatedAt": "2026-11-03T02:48:42.204681+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "settledReviews": [
         {
           "kind": "proposal",
@@ -41003,8 +40995,8 @@
       "head": "be530bf047ac756a076cc68874c2bac8337bdf8f",
       "title": "Test FIB register and flag checks over netlink",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-30T16:10:34.939505+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "reviewDecision": null,
       "url": "https://github.com/google/gvisor/pull/16746",
       "summary": "Test FIB register and flag validation through netlink on native Linux and gVisor. Remove 37 lines of duplicated Go initializer checks.",
@@ -42448,8 +42440,8 @@
       "title": "Run statefile output permission tests as the invoking user",
       "url": "https://github.com/google/gvisor/pull/16850",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The command test suite enters a root user namespace, so it skipped its two output-permission cases even on an unprivileged worker. The two cases now run as the invoking user; all eight other output cases remain in cmd_test. Workers actually running as root still skip the permission cases.",
       "evidence": [
         {
@@ -46953,9 +46945,9 @@
       "title": "Guard SysV IPC registry operations with the registry mutex",
       "url": "https://github.com/google/gvisor/pull/16795",
       "group": "analysis",
-      "status": "open",
+      "status": "merged",
       "summary": "Keeping a pointer to an IPC registry after unlocking allowed an unchecked call to ObjectCount. With the caller’s existing mutex moved to the common registry, both the AMD64 and ARM64 analyzers caught that call. The fixed code passed all four owning analyzers and all three AMD64 SysV syscall suites, with 101 records total and no skips.",
-      "updatedAt": "2026-11-01T16:33:36.019669+00:00",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "evidence": [
         {
           "label": "Standalone commit",
@@ -47586,8 +47578,8 @@
       "title": "Use the collection time to age PGO profiles",
       "url": "https://github.com/google/gvisor/pull/16855",
       "group": "rbe",
-      "status": "open",
-      "updatedAt": "2026-11-02T20:50:09.856350+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "A clean checkout gives old profiles fresh file timestamps. Read the collection date stored in each pprof file so the scheduled refresh selects profiles older than 28 days when pkg has changed.",
       "evidence": [
         {
@@ -48488,8 +48480,8 @@
       "repo": "google/gvisor",
       "title": "proc: share the boot ID across a kernel's proc mounts",
       "url": "https://github.com/google/gvisor/pull/16800",
-      "status": "open",
-      "updatedAt": "2026-11-02T14:32:55.873851+00:00"
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z"
     },
     {
       "id": "pr:16801",
@@ -48500,8 +48492,8 @@
       "head": "514a1ce4f7dfeca8077048be5d1f321f72a7e2bd",
       "title": "Build gVisor with Bazel 9.3.1",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-11-03T19:07:32.229433+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "url": "https://github.com/google/gvisor/pull/16801",
       "summary": "Bazel 9.3.1 includes the directory-watching fix. The plugin BUILD file loads cc_library explicitly, and the Coral toolchain treats dependency includes as system headers. Copybara export #16913 names approved 514a1ce4f and includes the same eight file paths.",
       "evidence": [
@@ -48600,24 +48592,12 @@
         {
           "label": "Second public fallback download failure",
           "url": "https://buildkite.com/gvisor/pipeline/builds/53379#01a1a2b1-309d-4188-99a3-8067024cc8b4"
+        },
+        {
+          "label": "Bazel 9.3.1 merged on November 3",
+          "url": "https://github.com/google/gvisor/commit/3fa0ccd24"
         }
       ],
-      "followup": {
-        "owner": "root",
-        "sourceHead": "514a1ce4f7dfeca8077048be5d1f321f72a7e2bd",
-        "observedAt": "2026-11-03T19:07:32.229433+00:00",
-        "disposition": "Current approved head matches the open Copybara export",
-        "nextAction": "Follow public export #16913. Two public fallback builder downloads failed in curl before cgroupv1/PHP tests ran, and race smoke was canceled during package installation. Buildkite retried all three. First Pass 513 is advisory while maintainers finish setting up that pipeline.",
-        "evidence": [
-          "https://github.com/google/gvisor/pull/16801#pullrequestreview-5757342721",
-          "https://buildkite.com/gvisor/first-pass/builds/513",
-          "https://github.com/google/gvisor/pull/16801",
-          "https://github.com/google/gvisor/pull/16913",
-          "https://buildkite.com/gvisor/pipeline/builds/53379",
-          "https://buildkite.com/gvisor/pipeline/builds/53379#01a1a2b1-3085-4e26-9745-044ceb9bee76",
-          "https://buildkite.com/gvisor/pipeline/builds/53379#01a1a2b1-309d-4188-99a3-8067024cc8b4"
-        ]
-      },
       "settledReviews": [
         {
           "kind": "amendment",
@@ -49356,8 +49336,8 @@
       "title": "Check PIDFD task-set lock requirements",
       "url": "https://github.com/google/gvisor/pull/16811",
       "group": "analysis",
-      "status": "open",
-      "updatedAt": "2026-11-02T16:31:46.423209+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "PID lookup and PIDFD notifications share the TaskSet lock. Annotate the three entry points and fold the allocation helper into the guarded lookup so bypassing the lock is caught during analysis. Runtime locking is unchanged.",
       "evidence": [
         {
@@ -49473,8 +49453,8 @@
       "title": "Read Bazel test logs without starting the Docker builder",
       "url": "https://github.com/google/gvisor/pull/16813",
       "group": "release",
-      "status": "open",
-      "updatedAt": "2026-11-02T16:31:46.423209+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "Buildkite reads Bazel’s failed and flaky test logs after every job. Treat make testlogs as a host-only goal so reporting a result can proceed without a builder. The existing hook still reads the same event file and runs its separate Docker cleanup.",
       "evidence": [
         {
@@ -49601,8 +49581,8 @@
       "title": "[bazel] Expand the instrumentor runtime template without a shell",
       "url": "https://github.com/llvm/llvm-project/pull/238034",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-11-02T18:30:15.670469+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "LLVM compiles the instrumentor runtime as C++ and embeds its source text. Bazel now uses the CMake and GN template for that text. The editable checkout and pinned archive produced identical output, and editing the header regenerated the bytes.",
       "evidence": [
         {
@@ -49694,8 +49674,8 @@
       "title": "Generate the LLVM instrumentor header without a shell",
       "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/907",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-11-03T03:00:43.613804+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "LLVM 23 needs the overlay change to consume the shared Instrumentor template. Newer LLVM already carries the Bazel fix. The original supplier PR now limits the adjustment to LLVM 23; four source/release comparisons verified the boundary.",
       "evidence": [
         {
@@ -49949,8 +49929,8 @@
       "title": "c-ares@1.34.9.bcr.1: select the configuration header without a shell",
       "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11519",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-11-02T18:27:13.788641+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "Without cp on the Bazel client, both headers on gVisor’s selected c-ares and one on BCR 1.34.9 fail. The registry revision replaces the remaining copy with a symlink. Both Linux architectures produced the same header bytes and built the library on scratch workers.",
       "evidence": [
         {
@@ -50021,8 +50001,8 @@
       "title": "Run the governance generator directly",
       "url": "https://github.com/google/gvisor/pull/16823",
       "group": "rbe",
-      "status": "open",
-      "updatedAt": "2026-11-02T18:27:13.788641+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "Bazel starts a shell just to invoke the Go program that generates CODEOWNERS and MAINTAINERS.md. With the Go program as the action executable, both files build without Bash and match the checked-in files on AMD64 and ARM64.",
       "evidence": [
         {
@@ -50113,8 +50093,8 @@
       "title": "Report a refused TCP connection only once",
       "url": "https://github.com/google/gvisor/pull/16817",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-11-02T18:27:13.788641+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "After a blocking connect returned ECONNREFUSED, stock netstack returned the same error again through SO_ERROR; a nonblocking socket could consume it twice through SO_ERROR. Linux and the corrected stack reported the refusal once in both cases. Socket reuse after refusal is a separate investigation.",
       "evidence": [
         {
@@ -50333,8 +50313,8 @@
       "title": "Start the host FD notifier on the first registration",
       "url": "https://github.com/google/gvisor/pull/16826",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-11-02T18:30:15.670469+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "With the sentry at its file descriptor limit, pausing unused host notifications panicked. A failed first registration also poisoned later attempts after the limit was restored. Independent Linux processes reproduced both failures; both fixed cases and the existing eventfd consumers pass.",
       "evidence": [
         {
@@ -53755,8 +53735,8 @@
       "head": "b41ed9e0e61afdb555438a918d8d3d3e39927a98",
       "url": "https://github.com/google/gvisor/pull/17053",
       "title": "Run the runsc lifecycle tests without host utilities",
-      "status": "open",
-      "updatedAt": "2026-11-05T17:23:39.125240Z",
+      "status": "merged",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "The cmd and specutils fixtures now wait for a signal and check that unix.Pause returns EINTR. On the integration source 90c2cbcaa, four fresh native TestRunners passed all six selected cmd and all six selected specutils cases on each architecture (AMD64 and ARM64), with no failures or skips.",
       "evidence": [
         {
@@ -56618,32 +56598,10 @@
       "head": "bcf1effec72eea3108446dd635bf75266ec9b2af",
       "title": "Declare golang.org/x/text as a direct dependency",
       "group": "bazel",
-      "status": "Awaiting contributor review",
+      "status": "Published as #17151",
       "url": "https://github.com/tamird/gvisor/commit/bcf1effec",
-      "updatedAt": "2026-11-06T22:18:20.596Z",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
       "summary": "On current master, bazel mod tidy removed org_golang_x_text and the go_marshal build then failed to resolve its language package. Moving the existing v0.42.0 requirement to the direct block let tidy preserve all tracked files and the generator build produced a 2,695,328-byte executable.",
-      "followup": {
-        "owner": "Contributor",
-        "sourceHead": "bcf1effec72eea3108446dd635bf75266ec9b2af",
-        "observedAt": "2026-11-06T22:18:20.596Z",
-        "disposition": "Independent current-master fix.",
-        "nextAction": "Review the single change for submission.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/bcf1effec",
-          "https://github.com/tamird/gvisor/actions/runs/42303238900/artifacts/13545171695"
-        ]
-      },
-      "contributorReview": {
-        "head": "bcf1effec72eea3108446dd635bf75266ec9b2af",
-        "baseHead": "7c325dda4e52be8728f54116b41544c8fa130633",
-        "title": "Declare golang.org/x/text as a direct dependency",
-        "body": "The go_marshal generator, HTTP benchmarks and syscall documentation\ntool import packages from golang.org/x/text directly. Marking the\nmodule indirect lets bazel mod tidy drop its repository from the\nroot module, even though those targets still refer to it.\n\nMove the existing version to the direct requirements so Gazelle keeps\nthe repository available after a tidy.\n\nFixes: 53203cabe (\"Enable deprecation diagnostics for repository code\")",
-        "url": "https://github.com/tamird/gvisor/commit/bcf1effec",
-        "kind": "proposal",
-        "status": "pending",
-        "summary": "May I open this standalone fix? On current master, bazel mod tidy removed org_golang_x_text and the go_marshal build then failed to resolve its language package. Moving the existing v0.42.0 requirement to the direct block let tidy preserve all tracked files and the generator build produced a 2,695,328-byte executable.",
-        "requestedAt": "2026-11-06T22:18:20.596Z"
-      },
       "evidence": [
         {
           "label": "Matched parent and corrected tidy and go_marshal build",
@@ -56652,8 +56610,26 @@
         {
           "label": "First direct x/text imports",
           "url": "https://github.com/google/gvisor/commit/53203cabe"
+        },
+        {
+          "label": "Published upstream",
+          "url": "https://github.com/google/gvisor/pull/17151"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "bcf1effec72eea3108446dd635bf75266ec9b2af",
+          "url": "https://github.com/tamird/gvisor/commit/bcf1effec",
+          "title": "Declare golang.org/x/text as a direct dependency",
+          "body": "The go_marshal generator, HTTP benchmarks and syscall documentation\ntool import packages from golang.org/x/text directly. Marking the\nmodule indirect lets bazel mod tidy drop its repository from the\nroot module, even though those targets still refer to it.\n\nMove the existing version to the direct requirements so Gazelle keeps\nthe repository available after a tidy.\n\nFixes: 53203cabe (\"Enable deprecation diagnostics for repository code\")",
+          "outcome": "approved",
+          "at": "2026-11-06T23:37:40.578Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17151",
+          "note": "Published at the exact approved commit."
+        }
+      ],
+      "inactive": true
     },
     {
       "id": "branch:packet-socket-reserve-readback",
@@ -56810,6 +56786,47 @@
         ]
       },
       "updatedAt": "2026-11-06T23:30:58.981Z"
+    },
+    {
+      "ref": "proposal/declare-x-text-direct",
+      "head": "bcf1effec72eea3108446dd635bf75266ec9b2af",
+      "title": "Declare golang.org/x/text as a direct dependency",
+      "group": "bazel",
+      "summary": "On current master, bazel mod tidy removed org_golang_x_text and the go_marshal build then failed to resolve its language package. Moving the existing v0.42.0 requirement to the direct block let tidy preserve all tracked files and the generator build produced a 2,695,328-byte executable.",
+      "id": "pr:17151",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17151,
+      "url": "https://github.com/google/gvisor/pull/17151",
+      "status": "open",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
+      "evidence": [
+        {
+          "label": "Matched parent and corrected tidy and go_marshal build",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42303238900/artifacts/13545171695"
+        },
+        {
+          "label": "First direct x/text imports",
+          "url": "https://github.com/google/gvisor/commit/53203cabe"
+        },
+        {
+          "label": "Published upstream",
+          "url": "https://github.com/google/gvisor/pull/17151"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "bcf1effec72eea3108446dd635bf75266ec9b2af",
+          "url": "https://github.com/tamird/gvisor/commit/bcf1effec",
+          "title": "Declare golang.org/x/text as a direct dependency",
+          "body": "The go_marshal generator, HTTP benchmarks and syscall documentation\ntool import packages from golang.org/x/text directly. Marking the\nmodule indirect lets bazel mod tidy drop its repository from the\nroot module, even though those targets still refer to it.\n\nMove the existing version to the direct requirements so Gazelle keeps\nthe repository available after a tidy.\n\nFixes: 53203cabe (\"Enable deprecation diagnostics for repository code\")",
+          "outcome": "approved",
+          "at": "2026-11-06T23:37:40.578Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17151",
+          "note": "Published at the exact approved commit."
+        }
+      ]
     }
   ],
   "edges": [
@@ -60566,7 +60583,7 @@
       ]
     },
     {
-      "from": "branch:declare-x-text-direct",
+      "from": "pr:17151",
       "to": "branch:nvproxy-declared-sources",
       "type": "depends_on",
       "reason": "The updater runs module tidy before building go_marshal. Its direct x/text dependency must remain available.",
@@ -79321,11 +79338,11 @@
     {
       "id": "investigation:bazel-9-upgrade",
       "title": "Upgrade gVisor to Bazel 9",
-      "status": "active",
+      "status": "concluded",
       "owner": "Build tools",
-      "updatedAt": "2026-11-02T14:59:52.193384+00:00",
-      "summary": "Move the shared Docker and Bazelisk pin from 8.8.1 to 9.3.1. Fix compatibility in the current compiler setup so the upgrade can land independently of hermetic-llvm.",
-      "nextStep": "Follow #16801 through review and import. The repo-wide lint check can use the directory-watch fix once the upgrade lands.",
+      "updatedAt": "2026-11-06T23:37:40.578Z",
+      "summary": "gVisor moved the shared Docker and Bazelisk pin from 8.8.1 to 9.3.1 in #16801.",
+      "nextStep": "The upgrade landed on November 3. Buildifier migration continues separately in #16663.",
       "findings": [
         {
           "text": "Bazel 9.3 includes the fix for the directory-deletion regression. Two previous compatibility commits are candidates for the Coral toolchain and the pinned LLVM source. The earlier gRPC and C++ dependency work was already handled.",
@@ -79368,6 +79385,10 @@
         }
       ],
       "evidence": [
+        {
+          "label": "Bazel 9.3.1 on master",
+          "url": "https://github.com/google/gvisor/commit/3fa0ccd24"
+        },
         {
           "label": "Published Bazel 9.3.1 upgrade",
           "url": "https://github.com/google/gvisor/pull/16801"
