@@ -1,7 +1,7 @@
 name: Read the original native variant compiler diagnostics
 on:
   push:
-    branches: [qualification/native-posix-original]
+    branches: [qualification/native-posix-arm-original]
 permissions:
   contents: read
 jobs:
@@ -14,7 +14,7 @@ jobs:
         with: {fetch-depth: 3, persist-credentials: false}
       - name: Verify the original runner source
         run: |
-          test "$(git rev-parse HEAD^)" = 886933bb05243c15216a2f0e01f1d516ac4c80e5
+          test "$(git rev-parse HEAD^)" = 4b5d1946488d7fb7baecd657e8e76d429a224b82
           git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/rebased_owners/original_cpp.py'
       - name: Read the original console using the fixed API
         env:

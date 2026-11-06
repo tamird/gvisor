@@ -7,13 +7,13 @@ from pathlib import Path
 import re
 import subprocess
 
-INVOCATION = "7127a127-67f2-4653-b9ad-0cdf7b9aae5e"
+INVOCATION = "35e5b4d4-25f3-4541-84ca-5995c6a8386f"
 DEST = Path(os.environ["RUNNER_TEMP"]) / "original-variant-compiler.json"
 KEY = os.environ.pop("BUILDBUDDY_API_KEY")
 FILES = {p.decode() for p in subprocess.check_output(["git", "ls-files", "-z"]).split(b"\0") if p}
 LIBS = ("abseil", "googletest", "gtest", "re2", "protobuf", "rules_cc", "llvm",
         "bazel_tools", "gcc", "sysroot", "bits/", "libstdc++", "crosstool")
-TYPES = ("no such file", "not found", "not executable", "unrecognized", "unexpected",
+TYPES = ("no matching toolchain found for type", "which is required to run tests for target platform", "target platform", "requires execution platform", "is not compatible", "no such file", "not found", "not executable", "unrecognized", "unexpected",
          "wrong architecture", "exec format", "not supported", "required from", "requires",
          "missing", "outside", "undeclared", "not declared", "invalid", "cannot find",
          "not a member", "no matching", "undeclared inclusion", "absolute path", "built-in",
@@ -23,7 +23,7 @@ TYPES = ("no such file", "not found", "not executable", "unrecognized", "unexpec
          "template argument", "does not support", "not allowed", "cannot convert",
          "const qualifier", "all warnings being treated as errors", "did you mean",
          "ambiguous", "not defined", "fatal error", "internal compiler error")
-TOOLS = ("x86_64-linux-gnu-gcc", "aarch64-linux-gnu-gcc", "gcc-11", "gcc-12", "gcc-13",
+TOOLS = ("@bazel_tools//tools/test", "//tools/bazeldefs:linux_amd64", "//tools/bazeldefs:linux_arm64", "gnu_amd64", "native_arm64", "exec_compatible_with", "go_toolchain", "test_toolchain", "test_runner", "posix_error_test_arm64", "x86_64-linux-gnu-gcc", "aarch64-linux-gnu-gcc", "gcc-11", "gcc-12", "gcc-13",
          "gcc-14", "aarch64-linux-gnu-g++", "x86_64-linux-gnu-g++", "cc1plus", "clang",
          "CppCompile", "cc_wrapper", "libc-header-start.h", "bits/c++config.h", "cstdlib",
          "stddef.h", "stdint.h", "features.h", "type_traits", "thread", "string_view",
