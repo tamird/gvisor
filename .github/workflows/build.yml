@@ -1,35 +1,78 @@
-name: CI
-
-"on":
+name: Build and test the NVIDIA parser with the LLVM module sources
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-nvidia-supplier-owners]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  submit:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 140
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Verify the original source and the Buildkite command
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = a66f27a435cb5a14fcfbfcfbe7c3b0fa390a40d7
+          test "$(git rev-parse HEAD^^)" = 7a246d406ef1a71027158fa85e4489b290852f55
+          test "$(git show --format= HEAD^ | git patch-id --stable | cut -d' ' -f1)" = 45427510b0de03af40ad106c402e2eee88f3e112
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/nvidia_llvm_source.py' ':!.github/qualification/source_presubmit_memory.py'
+          cp .github/qualification/{nvidia_llvm_source.py,source_presubmit_memory.py} "$RUNNER_TEMP/"
+          git checkout --quiet --detach a66f27a435cb5a14fcfbfcfbe7c3b0fa390a40d7
+          test "$(bazelisk --version)" = "bazel 9.3.1"
+      - name: Size and check the Bazel server heap on this coordinator
+        run: python3 -IB "$RUNNER_TEMP/source_presubmit_memory.py"
+      - name: Submit just the four previously failed NVIDIA owners
+        timeout-minutes: 95
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
+          rc="$RUNNER_TEMP/source-presubmit.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          cat > "$rc" <<'RC'
+          build:nvidia-source --remote_executor=grpcs://remote.buildbuddy.io
+          build:nvidia-source --remote_cache=grpcs://remote.buildbuddy.io
+          build:nvidia-source --bes_backend=grpcs://remote.buildbuddy.io
+          build:nvidia-source --bes_results_url=https://app.buildbuddy.io/invocation/
+          build:nvidia-source --remote_download_outputs=toplevel
+          build:nvidia-source --define=source_presubmit=true --extra_execution_platforms=//test/rbe:linux_amd64
+          build:nvidia-source --spawn_strategy=remote --noremote_local_fallback --strip=never
+          test:nvidia-source --strategy=TestRunner=remote --test_env=CGROUPV2=true --test_env=GO_TEST_WRAP_TESTV=1
+          build:nvidia-source --jobs=64 --keep_going
+          test:nvidia-source --nocache_test_results --flaky_test_attempts=1
+          RC
+          printf 'build:nvidia-source --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          printf 'build:nvidia-source --build_event_json_file=%s/source-presubmit.bep\n' "$RUNNER_TEMP" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          code=0
+          timeout --signal=INT --kill-after=60s 90m bazelisk --bazelrc="$rc" test --config=nvidia-source \
+            //tools/nvidia_driver_differ:driver_ast_parser //tools/nvidia_driver_differ:run_differ \
+            //tools/nvidia_driver_differ:driver_ast_parser_test //pkg/sentry/devices/nvproxy:nvproxy_driver_parity_test > "$RUNNER_TEMP/source-presubmit.log" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$RUNNER_TEMP/source-presubmit-exit"
+      - name: Verify both binaries and preserve each actual test or skip
+        id: collect
+        if: always() && !cancelled()
+        run: |
+          set -eu
+          test ! -e "$RUNNER_TEMP/source-presubmit.bazelrc"
+          trap 'rm -f "$RUNNER_TEMP/source-presubmit.log" "$RUNNER_TEMP/source-presubmit.bep"' EXIT
+          python3 -IB "$RUNNER_TEMP/source_presubmit_memory.py" diagnose
+          python3 -IB "$RUNNER_TEMP/nvidia_llvm_source.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: llvm-nvidia-supplier-owners
+          path: ${{ runner.temp }}/nvidia-llvm-owners.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Require the four actual owners and native parser cases
+        if: always() && !cancelled()
+        run: |
+          python3 -c 'import os,json,pathlib; r=json.loads((pathlib.Path(os.environ["RUNNER_TEMP"])/"nvidia-llvm-owners.json").read_text()); assert r["verified"]'
