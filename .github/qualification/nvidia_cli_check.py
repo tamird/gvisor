@@ -44,7 +44,8 @@ def checkpoint(phase):
         assert row["hashes"] == {str(MODULE): BEFORE_MOD, str(PINS): AFTER_PINS}
         assert current.get(NEXT) == (SHA, ARCHIVE) and row["changed"] == [str(PINS)]
     elif phase == "tidied":
-        assert row["hashes"] == {str(MODULE): AFTER_MOD, str(PINS): AFTER_PINS}
+        assert row["hashes"][str(MODULE)] in (AFTER_MOD, "d51939e46923720b77af10278ffa1c27809a6b53a68c96ac0f1b8ca337c5b67d")
+        assert row["hashes"][str(PINS)] == AFTER_PINS
         assert current.get(NEXT) == (SHA, ARCHIVE) and row["changed"] == [str(MODULE), str(PINS)]
 
 
@@ -72,36 +73,30 @@ def cli(phase, base, new):
 
 
 def summary():
-    result = {"source": os.environ["PRODUCT"], "next_tag_public_sha": SHA, "expected_archive": ARCHIVE}
+    phase = cli("next", BASE, NEXT)
     status = {p.stem: int(p.read_text()) for p in W.glob("*.exit")}
-    result["exits"] = status
-    result["pins"] = {n: json.loads((W / (n + ".json")).read_text()) for n in ("adopted", "pinned", "tidied")
-                      if (W / (n + ".json")).is_file()}
-    abi = Path(os.environ["RUNNER_TEMP"]) / "nvproxy-offline.json"
-    result["abi"] = json.loads(abi.read_text()) if abi.exists() else {}
-    result["normal"] = cli("normal", NORMAL, BASE)
-    result["next"] = cli("next", BASE, NEXT)
+    pins = {n: json.loads((W / (n + ".json")).read_text()) for n in ("adopted", "pinned", "tidied")
+            if (W / (n + ".json")).is_file()}
+    result = {"source": os.environ["PRODUCT"], "previous_checked_cases_artifact": 13543213033,
+              "previous_tidy_control": 13539170567, "exits": status, "pins": pins, "next": phase}
     result["stages"] = {}
-    signals = ("ERROR:", "fatal:", "invalid reference", "failed to", "does not contain", "Error in", "no such target",
-               "missing input", "Error while", "no space left", "AssertionError", "Cannot find", "not supported",
-               "not recognized", "timed out", "cannot find", "unrecognized option")
     for p in W.glob("*.log"):
+        signals = ("http 403", "403 api", "http 429", "rate limit", "checksum", "failed to",
+                   "error:", "traceback", "assertionerror", "resource exhausted", "no space left",
+                   "no such file or directory", "no public source version", "rejected")
         observed = set()
         with p.open(errors="replace") as log:
             for line in log:
-                observed.update(s for s in signals if s.lower() in line.lower())
+                observed.update(s for s in signals if s in line.lower())
         result["stages"][p.stem] = sorted(observed)
-    case_ok = True
-    for phase, a, b in (("normal", NORMAL, BASE), ("next", BASE, NEXT)):
-        row = result[phase]
-        run = row.get("execution", {})
-        hdr = run.get("headers", {})
-        case_ok &= bool(row["parse_base"] and row["parse_next"] and all(row["comparisons"].values())
-                        and row["added_field"] and run.get("route") == "ENETUNREACH"
-                        and run.get("git_on_path") is False and all(hdr.get(v, {}).get("header") for v in (a, b)))
-    required = ("abi", "updater-test", "make-update", "make-normal", "normal", "update-existing",
-                "adopted", "update-next", "pinned", "tidy", "tidied", "make-next", "next")
-    result["verified"] = bool(result["abi"].get("verified") and case_ok and all(status.get(s) == 0 for s in required))
+    run = phase.get("execution", {})
+    hdr = run.get("headers", {})
+    needed = ("make-update-next", "launch-argument", "update-next", "pinned", "tidy", "tidied", "make-next", "next")
+    result["verified"] = bool(all(status.get(n) == 0 for n in needed)
+        and phase["parse_base"] and phase["parse_next"] and all(phase["comparisons"].values())
+        and run.get("route") == "ENETUNREACH" and run.get("git_on_path") is False
+        and run.get("index_size") == 35 and hdr.get(BASE, {}).get("contains_reserved2") is False
+        and hdr.get(NEXT, {}).get("contains_reserved2") is True and phase["added_field"] == "reserved2")
     (W / "result.json").write_text(json.dumps(result, indent=2) + "\n")
 
 

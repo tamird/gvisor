@@ -47,7 +47,7 @@ def main():
     assert subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip() == "f2a65e06ac211813a61ec1efadb8eeb6e6270e13"
     key = os.environ.pop("BUILDBUDDY_API_KEY")
     assert key and "\n" not in key
-    if phase == "initial":
+    if phase == "new-updater":
         subprocess.run(["git", "diff", "--exit-code", "HEAD"], check=True)
     elif phase == "next":
         # Check both exact generated workspace files before giving Bazel its
@@ -59,16 +59,14 @@ def main():
     RC.write_text(CONFIG + "build:nvidia-source --remote_header=x-buildbuddy-api-key=" + key + "\n")
     launchers = []
     try:
-        if phase == "initial":
-            command("abi", 75, "test", ["--run_under=//test/rbe:offline_exec",
-                    "--build_event_json_file=" + str(TMP / "source-presubmit.bep")],
-                    "//pkg/sentry/devices/nvproxy:nvproxy_driver_abi_test")
-            command("updater-test", 12, "test", [], "//tools/nvidia_driver_differ/sources:update_test")
-            update = W / "update.sh"
-            command("make-update", 12, "run", ["--script_path=" + str(update), "--run_under=/usr/bin/env PATH=/path-without-git"],
-                    "//tools/nvidia_driver_differ/sources:update")
+        if phase == "new-updater":
+            update = W / "update-next.sh"
+            # Bind the argument inside Bazel's command. A --run_under script
+            # receives extra shell arguments outside its nested shell command.
+            command("make-update-next", 15, "run",
+                    ["--script_path=" + str(update), "--run_under=/usr/bin/env PATH=/path-without-git"],
+                    "//tools/nvidia_driver_differ/sources:update", ["--", "620.70.06"])
             launchers.append(update)
-            launchers.append(launch_cli("normal", "580.95.05", "615.71.09"))
         else:
             launchers.append(launch_cli("next", "615.71.09", "620.70.06"))
     finally:

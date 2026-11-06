@@ -1,49 +1,44 @@
 name: Check the offline NVIDIA ABI owner and driver adoption command
 on:
   push:
-    branches: [qualification/nvidia-supported-and-next-cli]
+    branches: [qualification/nvidia-unadopted-cli]
 permissions:
   contents: read
 jobs:
   verify:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 175
+    timeout-minutes: 95
     env:
       PRODUCT: b4929480061e95c901f3f21ed3ced64a8ea3f447
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          fetch-depth: 3
+          fetch-depth: 4
           persist-credentials: false
       - name: Bind the product, prior route assertion and default driver pins
         run: |
           set -eu
-          test "$(git rev-parse HEAD^)" = f2a65e06ac211813a61ec1efadb8eeb6e6270e13
-          test "$(git rev-parse HEAD^^)" = "$PRODUCT"
-          git diff --exit-code HEAD^^ HEAD^ -- . ':!test/rbe/BUILD' ':!test/rbe/offline_exec.go'
-          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification'
+          test "$(git rev-parse HEAD^)" = b358f7f248cf4131f9ee75cc86e9dd934875a2f2
+          test "$(git rev-parse HEAD^^)" = f2a65e06ac211813a61ec1efadb8eeb6e6270e13
+          test "$(git rev-parse HEAD^^^)" = "$PRODUCT"
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/nvidia_cli_build.py' ':!.github/qualification/nvidia_cli_check.py'
           d="$RUNNER_TEMP/nvidia-abi-cli"
           mkdir -p "$d"
           cp .github/qualification/nvidia_cli_build.py "$d/build.py"
           cp .github/qualification/nvidia_cli_check.py "$d/check.py"
           cp .github/qualification/nvidia_cli_offline.py "$d/isolate.py"
-          cp .github/qualification/{nvproxy_native_abi.py,source_presubmit_memory.py} "$RUNNER_TEMP/"
+          cp .github/qualification/source_presubmit_memory.py "$RUNNER_TEMP/"
           chmod +x "$d/isolate.py"
           git checkout --quiet --detach f2a65e06ac211813a61ec1efadb8eeb6e6270e13
           test "$(bazelisk --version)" = 'bazel 9.3.1'
           python3 -IB "$d/check.py" adopted
           python3 -IB "$RUNNER_TEMP/source_presubmit_memory.py"
-      - name: Run the real ABI and updater tests and prepare standard Bazel launchers
+      - name: Prepare the updater command with 620.70.06 as its argument
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        run: python3 -IB "$RUNNER_TEMP/nvidia-abi-cli/build.py" initial
-      - name: Save per-driver ABI results before updating the source index
-        if: always() && !cancelled()
-        run: |
-          test ! -e "$RUNNER_TEMP/nvidia-abi-cli/rbe.rc"
-          python3 -IB "$RUNNER_TEMP/nvproxy_native_abi.py"
-      - name: Run the normal offline CLI and qualify one not-yet-adopted driver
+        run: python3 -IB "$RUNNER_TEMP/nvidia-abi-cli/build.py" new-updater
+      - name: Run the exact updater, then check its new pin and tidy result
         if: always() && !cancelled()
         run: |
           set -eu
@@ -57,10 +52,8 @@ jobs:
             timeout --signal=INT --kill-after=30s "$limit" "$@" > "$d/$name.log" 2>&1 || rc=$?
             echo "$rc" > "$d/$name.exit"
           }
-          measure normal 8m /bin/bash "$d/normal.sh"
-          measure update-existing 12m /bin/bash "$d/update.sh"
-          measure adopted 1m python3 -IB "$d/check.py" adopted
-          measure update-next 12m /bin/bash "$d/update.sh" 620.70.06
+          measure launch-argument 1m grep -q -- 620.70.06 "$d/update-next.sh"
+          measure update-next 12m /bin/bash "$d/update-next.sh"
           measure pinned 1m python3 -IB "$d/check.py" pinned
           if test "$(cat "$d/pinned.exit")" = 0; then
             measure tidy 15m bazelisk mod tidy
@@ -90,5 +83,5 @@ jobs:
           name: nvidia-offline-abi-and-cli
           path: ${{ runner.temp }}/nvidia-abi-cli/result.json
           if-no-files-found: error
-      - name: Require all named ABI outcomes and both actual record changes
+      - name: Require the newly published driver ABI change on the offline CLI
         run: python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"nvidia-abi-cli/result.json"; raise SystemExit(0 if json.loads(p.read_text()).get("verified") else 1)'
