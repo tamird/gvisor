@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T15:21:26.740Z",
+    "updatedAt": "2026-11-06T15:31:00.180Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -54548,9 +54548,13 @@
       "url": "https://github.com/google/gvisor/pull/16081",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T15:21:26.740Z",
-      "summary": "The reporter saw occasional 30-second reads. Two transfers stalled on master under the same burst-loss settings. All 12 heavy transfers on the proposed head finished. The source check below can explain the master stalls; the exact branch taken is under investigation.",
+      "updatedAt": "2026-11-06T15:31:00.180Z",
+      "summary": "The master sender closed after fast retransmissions exhausted the retry count on the segment the client was missing. The same seed finished on the PR in 985 ms. The cause of the reporter’s occasional stalls on the PR remains open.",
       "evidence": [
+        {
+          "label": "Same-socket ErrTimeout, missing byte range, and PR comparison",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42242371414/artifacts/13516598012"
+        },
         {
           "label": "Author’s result and question",
           "url": "https://github.com/google/gvisor/pull/16081#issuecomment-6686863923"
@@ -54571,8 +54575,8 @@
         "requestedAt": "2026-11-06T15:21:26.740Z",
         "url": "https://github.com/google/gvisor/pull/16081#issuecomment-6686863923",
         "title": "Reply to Kekawia about the two 30-second reads",
-        "summary": "Share the two master traces and the retry check. The 12 heavy transfers on the PR all completed.",
-        "body": "@kekawia, I reproduced two 30-second reads on master with your flags. In one, the server had sent all 2,800,000 bytes. The client ACKed 2,501,168 and still advertised about 4 MiB. The link dropped all 16 sends covering the next 1,200 bytes by 498 ms. The sender recorded one RTO at 698 ms and was gone by the read deadline. The other stall followed the same pattern. [Byte and timer traces](https://github.com/tamird/gvisor/actions/runs/42239956382/artifacts/13516995551)\n\nThe retry counter includes fast retransmits. On the first RTO, an oldest segment already sent 16 times can exceed the default limit of 15 and close the sender. I’m checking that branch directly. All 12 heavy transfers finished on your PR in my run, so the cause of the stalls on your head is still open. [Retry check](https://github.com/google/gvisor/blob/f51a205a8/pkg/tcpip/transport/tcp/snd.go#L695-L705)\n\nPosted by Codex on behalf of @tamird."
+        "summary": "Show where the master sender closed on its second timeout and how the same seed completed on the PR.",
+        "body": "@kekawia, I reproduced the 30-second read on master with your flags. The client had read 2,576,304 of 2,800,000 bytes. The link dropped all 16 transmissions of the next 1,200 bytes. On the second RTO the sender saw `xmitCount=16`, above its retry limit of 15, and closed with `ErrTimeout` before sending that segment again. Fast retransmissions count toward that limit. The client still advertised about 4 MiB and waited until its own read deadline. [Byte and timer trace](https://github.com/tamird/gvisor/actions/runs/42242371414/artifacts/13516598012) · [Retry check](https://github.com/google/gvisor/blob/f51a205a8/pkg/tcpip/transport/tcp/snd.go#L695-L703)\n\nOn your PR the same seed also had two RTOs and finished in 985 ms. All 12 heavy transfers in my earlier run finished on your PR, so I can confirm the cause on master only.\n\nPosted by Codex on behalf of @tamird."
       }
     }
   ],
