@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T11:23:32.377Z",
+    "updatedAt": "2026-11-06T11:28:05.597Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4845,10 +4845,14 @@
       "url": "https://github.com/tamird/gvisor/commit/9310f06f9",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Replace Coral GCC with hermetic-llvm for AMD64 and ARM64 releases. gVisor d5fe3c2ee uses the static C runtime on supplier be935b828 and removes its local unwinder and Linux-header patches.\n\nA Linux Bazel client drove each cross-build. The shell-free AMD64 worker ran Nogo and linked the two public ARM64 race binaries. The shell-free ARM64 worker ran Nogo and linked the two AMD64 binaries. Both pairs of links ran uncached. Each native target runner verified all five installed files and ran a systrap guest with its matching Sentry.\n\nThe supplier uses the first four static C commits from #768, the per-version glibc sources, libresolv.a for cgo DNS, and the LLVM unwinder for pthread cancellation. The earlier 0.8.24 release passed with an unavailable static C++ runtime. On b317c6e36 the static GNU TLDK Sentry exchanged TCP and UDP on native AMD64.\n\nWith the native Python bootstrap and an explicit source stamp, an AMD64 Bazel client with empty PATH directories built the public release on a shell-free AMD64 worker. Both pack actions ran uncached. All nine archive members matched their installed executables. The archived Sentry saved its source identity and restored the guest.\n\nThe reverse cross-build also packaged the public release. A static AArch64 Python writer executed both tar actions uncached on an ARM64 worker. The nine AMD64 archive members matched their inputs and the unpacked Sentry booted a rootless guest on native AMD64.\n\nOn bb983b988, Bazel selected static Python for each worker without a Python --extra_toolchains override. The public //shim:config tar and a fork-only bzip2 variant each ran uncached on AMD64 and ARM64. Each format was byte-identical across workers and contained the expected runsc.toml with mode 0644. The forked rules_python launcher and --@rules_python//python/config_settings:bootstrap_impl=native are still required. The ARM64 worker also linked ARM64 runsc and Sentry and executed both actions that package the public bzip2 release, all uncached. All nine installed executables matched their inputs, and the unpacked Sentry ran a rootless systrap guest on native ARM64.",
-      "updatedAt": "2026-11-06T11:23:32.377Z",
+      "summary": "Replace Coral GCC with hermetic-llvm for AMD64 and ARM64 releases. gVisor d5fe3c2ee uses the static C runtime on supplier be935b828 and removes its local unwinder and Linux-header patches.\n\nA Linux Bazel client drove each cross-build. The shell-free AMD64 worker ran Nogo and linked the two public ARM64 race binaries. The shell-free ARM64 worker ran Nogo and linked the two AMD64 binaries. Both pairs of links ran uncached. Each native target runner verified all five installed files and ran a systrap guest with its matching Sentry.\n\nThe supplier uses the first four static C commits from #768, the per-version glibc sources, libresolv.a for cgo DNS, and the LLVM unwinder for pthread cancellation. The earlier 0.8.24 release passed with an unavailable static C++ runtime. On b317c6e36 the static GNU TLDK Sentry exchanged TCP and UDP on native AMD64.\n\nWith the native Python bootstrap and an explicit source stamp, an AMD64 Bazel client with empty PATH directories built the public release on a shell-free AMD64 worker. Both pack actions ran uncached. All nine archive members matched their installed executables. The archived Sentry saved its source identity and restored the guest.\n\nThe reverse cross-build also packaged the public release. A static AArch64 Python writer executed both tar actions uncached on an ARM64 worker. The nine AMD64 archive members matched their inputs and the unpacked Sentry booted a rootless guest on native AMD64.\n\nOn bb983b988, Bazel selected static Python for each worker without a Python --extra_toolchains override. The public //shim:config tar and a fork-only bzip2 variant each ran uncached on AMD64 and ARM64. Each format was byte-identical across workers and contained the expected runsc.toml with mode 0644. The forked rules_python launcher and --@rules_python//python/config_settings:bootstrap_impl=native are still required. The ARM64 worker also linked ARM64 runsc and Sentry and executed both actions that package the public bzip2 release, all uncached. All nine installed executables matched their inputs, and the unpacked Sentry ran a rootless systrap guest on native ARM64.\n\nAt 224fdf968, a stripped AMD64 Bazel client built the public Debian package for both architectures. The distroless AMD64 worker ran the version writer, changelog writer, four tar actions and final Debian writer uncached for each package. Both packages had the expected version, date, configuration and maintainer script. All nine installed executables matched their release inputs and modes. The packaged AMD64 runsc reported the release tag; the ARM64 package was inspected. The builds used the forked native Python bootstrap.",
+      "updatedAt": "2026-11-06T11:28:05.597Z",
       "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
       "evidence": [
+        {
+          "label": "Both public Debian packages, all seven uncached packaging actions per architecture, package metadata and nine installed executables verified",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42209485090/artifacts/13498582036"
+        },
         {
           "label": "Native ARM64 public release. Two uncached Go links, two uncached tar actions and the nine installed executables verified by hash and mode.",
           "url": "https://github.com/tamird/gvisor/actions/runs/42209002950/artifacts/13497608629"
@@ -5364,6 +5368,7 @@
         "observedAt": "2026-11-06T06:43:56.321915Z",
         "nextAction": "Follow the C runtime portion of hermetic-llvm #768. The gVisor compiler switch waits for the sidecar rule (#16522), its systrap stub consumer (#17067), systrap offsets (#16516), and the vDSO rule (#16586).",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42209485090/artifacts/13498582036",
           "https://github.com/tamird/gvisor/actions/runs/42209002950/artifacts/13497608629",
           "https://github.com/tamird/gvisor/actions/runs/41211996909",
           "https://github.com/tamird/gvisor/actions/runs/41210994586/artifacts/13046610446",
@@ -32668,6 +32673,10 @@
       "url": "https://github.com/google/gvisor/pull/16587",
       "evidence": [
         {
+          "label": "The same changelog writer ran uncached in both complete Debian builds. Each package contained the tagged version and its UTC release date.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42209485090/artifacts/13498582036"
+        },
+        {
           "label": "Upstream pull request",
           "url": "https://github.com/google/gvisor/pull/16587"
         },
@@ -32708,7 +32717,7 @@
           "url": "https://app.buildbuddy.io/invocation/ac5fd1f2-80bf-4421-846e-05d5f7d4cfe7"
         }
       ],
-      "updatedAt": "2026-10-28T14:12:46.344996+00:00",
+      "updatedAt": "2026-11-06T11:28:05.597Z",
       "status": "open",
       "summary": "The changelog used the worker’s local clock. A release entry now uses UTC midnight on the date in the package version; an untagged build uses the Unix epoch. UTC and Hawaii produced identical 76,605,470-byte packages (SHA-256 b7b1d1d957b7c148458619211da93ecd8786ecb30d47f5bbba2429b81d5d4d18). No release or CI plumbing changes.",
       "refinement": {
@@ -32727,6 +32736,7 @@
         "disposition": "Contributor-approved change published",
         "nextAction": "Follow checks, maintainer review and import on #16587.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42209485090/artifacts/13498582036",
           "https://github.com/google/gvisor/pull/16587",
           "https://github.com/tamird/gvisor/commit/8311c4cdbffedf751449bfc1bb8560889dfda1fb",
           "https://github.com/tamird/gvisor/commit/dbb2424c475adc4c2b2915f4f26f07f251f13eb6"
@@ -42218,8 +42228,12 @@
       "group": "rbe",
       "status": "Contributor review requested",
       "summary": "Two stock Sentries built from different sources both displayed 0.0.0; the second restored and ran the first guest. Without an explicit release label the revised reader checks the linked Sentry’s Go build ID. An old unnamed checkpoint has only 0.0.0: even a rebuild of matching source cannot establish its identity from that checkpoint. A checkpoint written by the old code with a named release did restore under the new reader carrying that release label. A matching label permits an attempted restore; it does not make incompatible kernel state readable. Ordinary builds display (devel) and produce Debian version 0~devel.",
-      "updatedAt": "2026-11-06T08:32:16.199Z",
+      "updatedAt": "2026-11-06T11:28:05.597Z",
       "evidence": [
+        {
+          "label": "The same version writer produced 20261106.42209485090 for both public Debian packages. The installed AMD64 runsc reported the release tag.",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42209485090/artifacts/13498582036"
+        },
         {
           "label": "Empty-PATH Bazel client, original workspace-status failure, two uncached remote tar actions and all nine installed files",
           "url": "https://github.com/tamird/gvisor/actions/runs/42186258349/artifacts/13488320650"
@@ -42302,6 +42316,7 @@
         "disposition": "Contributor review of the explicit release-label and linked-ID policy",
         "nextAction": "Review this change for submission after #16593. Archive staging is independent.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42209485090/artifacts/13498582036",
           "https://github.com/tamird/gvisor/commit/a303ec933",
           "https://github.com/tamird/gvisor/actions/runs/41177018262/artifacts/13034556253",
           "https://github.com/tamird/gvisor/actions/runs/41174679549/artifacts/13033187323",
