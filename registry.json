@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T20:00:54.961Z",
+    "updatedAt": "2026-11-06T20:07:31.468Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -11849,15 +11849,15 @@
       "title": "Declare NVIDIA driver headers for the offline ABI comparison",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/efa9acfb4",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T20:00:54.961Z",
+      "status": "Agent work",
+      "updatedAt": "2026-11-06T20:07:31.468Z",
       "summary": "The ABI test used git to fetch each supported NVIDIA driver. The proposed change feeds the parser declared archives, using the Clang headers from #17112 and the parser dependency from #17114. With network access denied, all 25 versions with a source release passed parity and TestParser passed. The nine versions with no public tag were recorded as skips. A separate test still checks the live installer checksums. Its previous run failed TLS verification on all 34 versions.",
       "followup": {
         "sourceHead": "efa9acfb4e2d91c5944c166a9f2269e0b3ba4322",
-        "observedAt": "2026-11-06T20:00:54.961Z",
-        "owner": "Contributor",
-        "disposition": "Ready for source review of the measured offline ABI change.",
-        "nextAction": "After contributor review, wait for #17112, #17114 and a successful build and run of the separated live installer test before submission.",
+        "observedAt": "2026-11-06T20:07:31.468Z",
+        "owner": "Agent",
+        "disposition": "The 25 new test-source archive declarations need their Bazel dependency scope corrected before contributor review.",
+        "nextAction": "Set dev_dependency on the test-only declarations, verify an actual downstream module, and qualify the separate live installer owner. Preserve the 25 offline passes and nine documented skips.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/acedf056b...efa9acfb4",
           "https://github.com/tamird/gvisor/commit/63f10e43e",
@@ -11865,17 +11865,6 @@
           "https://github.com/tamird/gvisor/actions/runs/42279392380/artifacts/13534569286",
           "https://github.com/tamird/gvisor/actions/runs/42283984978"
         ]
-      },
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "efa9acfb4e2d91c5944c166a9f2269e0b3ba4322",
-        "baseHead": "acedf056bb9dce1d8ff9e5fe169241b743683848",
-        "url": "https://github.com/tamird/gvisor/compare/acedf056b...efa9acfb4",
-        "title": "Give the NVIDIA ABI test its driver headers",
-        "body": "The ABI test starts a Git checkout for each supported driver. On a\nworker without Git, every version fails before the parser compares\na driver definition with its Go type.\n\nPin NVIDIA’s public driver archives and pass their header directories\nto the existing parser as test data. The parser already carries its\nClang builtin headers. The command-line differ can still check out\nthe version selected by its caller.\n\nRecord supported versions that have no public source tag separately.\nRun the source updater when the supported driver list changes.",
-        "requestedAt": "2026-11-06T20:00:54.961Z",
-        "summary": "Review the offline driver-header change and its separate test split. Open after #17112 and #17114 land and the live installer test has run on the split source."
       },
       "evidence": [
         {
@@ -46129,22 +46118,38 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/tcp-report-read-hangups",
-      "head": "1b4eaf08e996c4741c8114a33b683b6312fe59ed",
-      "title": "Report TCP read hangups when a stream closes",
-      "url": "https://github.com/tamird/gvisor/commit/1b4eaf08e",
+      "head": "6e1f1e7005d85fa0e2f04d75c530abf1ba384490",
+      "title": "tcp: report hangups when a stream closes",
+      "url": "https://github.com/tamird/gvisor/commit/6e1f1e700",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-06T16:20:27.112Z",
-      "summary": "The replacement uses atomicbitops.Int[tcpip.ShutdownFlags], declares its mutex and atomic access, and preserves the scalar checkpoint representation. Linux qualification is in progress.\n\nAn application watching only for EPOLLRDHUP could miss a peer FIN. Local read shutdown could appear open until another poll refreshed a cached flag. The fix uses the receive queue’s closed state and reports POLLHUP once both directions have closed, even when the interest mask is zero.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T20:07:31.468Z",
+      "summary": "TCP shutdown flags now use atomicbitops.Int[tcpip.ShutdownFlags], with their mutex and atomic access checked at the declaration. The checkpoint retains the original wire scalar. All six IPv4/IPv6 readiness cases ran in the Sentry. Each of the 15 analyzer owners passed on both architectures across two runs. Removing the restore annotation produced the expected store diagnostic on both CPUs.",
       "refinement": {
         "before": {
-          "head": "c1432a1ad4e21d58cb50b456e9605417ae0d3ff4"
+          "head": "1b4eaf08e996c4741c8114a33b683b6312fe59ed"
         },
         "after": {
-          "head": "1b4eaf08e996c4741c8114a33b683b6312fe59ed"
+          "head": "6e1f1e7005d85fa0e2f04d75c530abf1ba384490"
         }
       },
       "evidence": [
+        {
+          "label": "TCP-only change from the conditional approval; identical to the integrated TCP files",
+          "url": "https://github.com/tamird/gvisor/compare/1b4eaf08e...bf20197d4"
+        },
+        {
+          "label": "Six native Sentry readiness cases and remaining four Nogo owners",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42276890846/artifacts/13535394950"
+        },
+        {
+          "label": "First 11 Nogo owners, 12 runtime owners, checkpoint and unforced restore negative",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42267896109/artifacts/13533188526"
+        },
+        {
+          "label": "Standalone generic method receiver prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/1de5b54a9"
+        },
         {
           "label": "Revised source under qualification",
           "url": "https://github.com/tamird/gvisor/commit/bf20197d4"
@@ -46182,16 +46187,16 @@
           "note": "Use a typed atomic for the shutdown flags and express its lock contract."
         }
       ],
-      "followup": {
-        "owner": "Agent",
-        "sourceHead": "bf20197d4c2ba3b36cbd9bb034f407a9c5cce5e6",
-        "observedAt": "2026-11-06T16:20:27.112Z",
-        "disposition": "Use a typed atomic for the shutdown flags and express its lock contract.",
-        "nextAction": "Verify the original test and analyzer results before requesting review of the revised source.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/bf20197d4",
-          "https://github.com/tamird/gvisor/actions/runs/42251283898"
-        ]
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "6e1f1e7005d85fa0e2f04d75c530abf1ba384490",
+        "baseHead": "1b4eaf08e996c4741c8114a33b683b6312fe59ed",
+        "url": "https://github.com/tamird/gvisor/commit/6e1f1e700",
+        "requestedAt": "2026-11-06T20:07:31.468Z",
+        "title": "tcp: report hangups when a stream closes",
+        "summary": "Review the typed flags and lock contract. Open the TCP correction after #16808 and the independent stateify generic-receiver fix have landed.",
+        "body": "An application can wait for EPOLLRDHUP without requesting EPOLLIN. If\nthe peer sent FIN, that wait timed out on gVisor. A socket shut down\nlocally for reading likewise appeared open until a poll for readable\ndata updated the cached receive state. Closing both directions then\nhid the read hangup and did not report POLLHUP.\n\nRead the receive queue's closed flag directly. Once the local endpoint\nhas queued FIN, a closed receive queue also means both directions have\nshut down. Linux reports POLLRDHUP for the first condition and POLLHUP\nfor the second [1].\n\nProcessing a peer FIN takes a socket out of ESTABLISHED before closing\nthe receive queue. Skip the queue lock for EPOLLRDHUP on an established\nsocket without a local read shutdown request. Check the queue if there\nwas a request since it may have failed before connect.\n\nWake read-hangup waiters on a peer FIN or local read shutdown, and wake\nhangup waiters when the second direction closes. Exercise both paths on\nIPv4 and IPv6, including the EPOLLRDHUP-only watch from #6015 and a\nwatch that requests no events when SHUT_RDWR leaves data unread.\n\n[1]: https://github.com/torvalds/linux/blob/adc218676/net/ipv4/tcp.c#L558-L562"
       }
     },
     {
@@ -55499,6 +55504,90 @@
           "note": "Opened the approved single-commit change on master."
         }
       ]
+    },
+    {
+      "id": "branch:stateify-generic-receivers",
+      "group": "bazel",
+      "repo": "tamird/gvisor",
+      "type": "branch",
+      "head": "1de5b54a98a37c10fc0e71f7340df386ffaea4c3",
+      "ref": "proposal/stateify-generic-receivers",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T20:07:31.468Z",
+      "title": "Recognize instantiated method receivers in stateify",
+      "summary": "Stateify panics while scanning a generic method receiver, even if the type has no stateify annotation. The same one-file correction on the shutdown-flags integration recognized receivers with one or two type parameters. Its standalone patch applies directly to master.",
+      "url": "https://github.com/tamird/gvisor/commit/1de5b54a9",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "1de5b54a98a37c10fc0e71f7340df386ffaea4c3",
+        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+        "url": "https://github.com/tamird/gvisor/commit/1de5b54a9",
+        "requestedAt": "2026-11-06T20:07:31.468Z",
+        "title": "Recognize instantiated method receivers in stateify",
+        "summary": "Open the standalone generator correction on master. It supplies the receiver support used by the typed TCP shutdown proposal.",
+        "body": "Stateify scans every method in a package to find save and restore hooks.\nA method on *Int[T] therefore makes generation panic even when Int has\nno stateify annotation. The receiver scanner expects an identifier\nwhere the Go parser supplies an index expression.\n\nTake the declaration name through an instantiation, including receivers\nwith several type parameters. Both callers use only that name. Drop the\nunused qualified spelling."
+      },
+      "evidence": [
+        {
+          "label": "Original stateify panic and generated code for one and two type parameters",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42267896109/artifacts/13533188526"
+        },
+        {
+          "label": "Same one-file change on the TCP integration",
+          "url": "https://github.com/tamird/gvisor/commit/bc4805e31"
+        }
+      ]
+    },
+    {
+      "id": "branch:tcp-user-timeout-outstanding-flight",
+      "group": "runtime",
+      "repo": "tamird/gvisor",
+      "type": "branch",
+      "head": "a848809a530e40d0556b02c8f028189c343f1350",
+      "ref": "research/tcp-user-timeout-preserve-rto",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T20:07:31.468Z",
+      "title": "Apply TCP_USER_TIMEOUT to the oldest remaining data",
+      "summary": "The sender can time out new data at the old flight’s deadline and give its next retransmission the shortened timer. The two commits track which flight is still outstanding and retain the backed-off RTO. Linux and gVisor agreed on all four socket outcomes, with backed-off RTOs of 1.64 s and 1.60 s. Their exact retransmitted byte ranges differed in the partial-ACK case.",
+      "url": "https://github.com/tamird/gvisor/compare/f51a205a8...a848809a5",
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "a848809a530e40d0556b02c8f028189c343f1350",
+        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+        "url": "https://github.com/tamird/gvisor/compare/f51a205a8...a848809a5",
+        "requestedAt": "2026-11-06T20:07:31.468Z",
+        "title": "Apply TCP_USER_TIMEOUT to the oldest remaining data",
+        "summary": "Open these two commits together on master. A separate comparison with the withdrawn #17113 also passed. The already-approved retry-limit change remains separate.",
+        "body": "TCP_USER_TIMEOUT can expire new data at the deadline for an earlier flight. A partial ACK lets the sender transmit new bytes before a later ACK covers all the old bytes. Another RTO can move the congestion recovery boundary without retransmitting the new bytes.\n\nTrack the end of the retransmitted flight independently of congestion recovery. Once the peer acknowledges that flight, use the original transmit time of the oldest remaining data. If time is running out for the current flight, shorten its pending timer while preserving the backed-off RTO for the next flight. Retain the deadline for probes when the receive window is closed.\n\nIn the packet test, Linux and corrected gVisor kept the new flight alive after a full ACK of the old data. After a partial ACK, both eventually returned ETIMEDOUT for the outstanding data."
+      },
+      "evidence": [
+        {
+          "label": "Standalone Linux and corrected gVisor packet outcomes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42274444739/artifacts/13533507976"
+        },
+        {
+          "label": "Tested compatibility with the withdrawn #17113",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42279720135/artifacts/13537295031"
+        },
+        {
+          "label": "Preserve the retransmitted flight’s boundary",
+          "url": "https://github.com/tamird/gvisor/commit/deaa0ddc5"
+        },
+        {
+          "label": "Keep the backed-off RTO while shortening the active timer",
+          "url": "https://github.com/tamird/gvisor/commit/a848809a5"
+        },
+        {
+          "label": "Earlier change expired a fresh flight at the old deadline",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42261484858/artifacts/13526394419"
+        },
+        {
+          "label": "Earlier boundary change still retried too soon",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42267413085/artifacts/13530857318"
+        }
+      ]
     }
   ],
   "edges": [
@@ -59242,6 +59331,16 @@
       "evidence": [
         "https://github.com/tamird/gvisor/compare/acedf056b...efa9acfb4",
         "https://github.com/tamird/gvisor/actions/runs/42282261080/artifacts/13536367145"
+      ]
+    },
+    {
+      "from": "branch:stateify-generic-receivers",
+      "to": "branch:tcp-report-read-hangups",
+      "type": "depends_on",
+      "reason": "Generating the typed shutdown-flag package requires stateify to recognize instantiated method receivers.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/actions/runs/42267896109/artifacts/13533188526",
+        "https://github.com/tamird/gvisor/commit/1de5b54a9"
       ]
     }
   ],
