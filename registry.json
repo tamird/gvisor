@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T17:03:22.665Z",
+    "updatedAt": "2026-11-06T17:12:30.114Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -54922,10 +54922,14 @@
       "title": "Allow TCP timeout repair after fast retransmissions",
       "url": "https://github.com/tamird/gvisor/commit/4867d503b",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T17:03:22.665Z",
-      "summary": "Under the loss burst reported on #16081, master closed a TCP connection on its second retransmission timeout. Sixteen sends of the first missing segment exhausted the configured limit of 15, including fast retransmits. This change measures how long data remains unacknowledged across timer expirations. All six heavy-loss transfers finished with the fix. The comparison covers the timeout decision independently of #16081’s recovery-performance changes.\n\nA second packet test sets TCP_USER_TIMEOUT. Before the fix, the socket closed with ETIMEDOUT when newly outstanding data was only 497 ms old on an 800 ms timeout. Linux and the fix both transmitted the fourth segment. The submitted source drops six telemetry-only lines from the tested fixture. Submit after #16419 lands.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-06T17:11:56.663Z",
+      "summary": "Upstream #17113 addresses the same premature timeout as this fork patch. Compare the two on the existing heavy-loss and TCP_USER_TIMEOUT cases before deciding whether any separate change is useful.\n\nUnder the loss burst reported on #16081, master closed a TCP connection on its second retransmission timeout. Sixteen sends of the first missing segment exhausted the configured limit of 15, including fast retransmits. This change measures how long data remains unacknowledged across timer expirations. All six heavy-loss transfers finished with the fix. The comparison covers the timeout decision independently of #16081’s recovery-performance changes.\n\nA second packet test sets TCP_USER_TIMEOUT. Before the fix, the socket closed with ETIMEDOUT when newly outstanding data was only 497 ms old on an 800 ms timeout. Linux and the fix both transmitted the fourth segment. The submitted source drops six telemetry-only lines from the tested fixture.",
       "evidence": [
+        {
+          "label": "Competing upstream fix counts timeouts after an advancing ACK",
+          "url": "https://github.com/google/gvisor/pull/17113"
+        },
         {
           "label": "Master closed on the second timeout with 16 sends of the first missing segment",
           "url": "https://github.com/tamird/gvisor/actions/runs/42242371414/artifacts/13516598012"
@@ -54943,17 +54947,55 @@
           "url": "https://github.com/tamird/gvisor/compare/928962c92...4867d503b"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "4867d503b71f6c13f0346778ca61373df04ed0ae",
-        "baseHead": "f47e3a56425482ba7090735302d6454757086d51",
-        "url": "https://github.com/tamird/gvisor/commit/4867d503b",
-        "title": "Allow TCP timeout repair after fast retransmissions",
-        "body": "Under the loss burst in #16081, the sender closed a connection after\ntwo retransmission timeouts. It had sent the first missing segment 16\ntimes. RACK repairs and tail probes consumed the same per-segment limit\nas the retransmission timer.\n\nApply the configured retry budget to unacknowledged data on a repeated\ntimeout. Model the elapsed time with exponential backoff as Linux does\nin tcp_model_timeout. A cumulative ACK permits the next timeout repair.\nPersist probes keep their separate unanswered-probe limit.\n\nTCP_USER_TIMEOUT selects an explicit deadline. When an ACK covers the\nold recovery window, start a fresh deadline for later data still in\nflight. The socket test checks that the sender can transmit again\nafter the old deadline has passed.",
-        "requestedAt": "2026-11-06T17:03:22.665Z",
-        "summary": "Open the TCP timeout repair after #16419 lands? The packet tests cover the exhausted segment counter and a new flight’s user timeout."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "4867d503b71f6c13f0346778ca61373df04ed0ae",
+          "baseHead": "f47e3a56425482ba7090735302d6454757086d51",
+          "url": "https://github.com/tamird/gvisor/commit/4867d503b",
+          "title": "Allow TCP timeout repair after fast retransmissions",
+          "body": "Under the loss burst in #16081, the sender closed a connection after\ntwo retransmission timeouts. It had sent the first missing segment 16\ntimes. RACK repairs and tail probes consumed the same per-segment limit\nas the retransmission timer.\n\nApply the configured retry budget to unacknowledged data on a repeated\ntimeout. Model the elapsed time with exponential backoff as Linux does\nin tcp_model_timeout. A cumulative ACK permits the next timeout repair.\nPersist probes keep their separate unanswered-probe limit.\n\nTCP_USER_TIMEOUT selects an explicit deadline. When an ACK covers the\nold recovery window, start a fresh deadline for later data still in\nflight. The socket test checks that the sender can transmit again\nafter the old deadline has passed.",
+          "summary": "Open the TCP timeout repair after #16419 lands? The packet tests cover the exhausted segment counter and a new flight’s user timeout.",
+          "outcome": "superseded",
+          "at": "2026-11-06T17:11:56.663Z",
+          "note": "A competing upstream PR, #17113, fixes the same retry-limit failure. Compare its behavior before considering a separate submission."
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "4867d503b71f6c13f0346778ca61373df04ed0ae",
+        "observedAt": "2026-11-06T17:11:56.663Z",
+        "disposition": "Contributor request withdrawn for comparison with #17113.",
+        "nextAction": "Compare retry-limit and next-flight TCP_USER_TIMEOUT behavior at the two actual heads.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17113",
+          "https://github.com/tamird/gvisor/commit/4867d503b"
+        ]
       }
+    },
+    {
+      "id": "pr:17113",
+      "type": "pr",
+      "number": 17113,
+      "repo": "google/gvisor",
+      "ref": "tcp-retry-limit",
+      "head": "e1e5a93215f507fe735b868493a14868180f3bec",
+      "title": "Count only timeouts against the TCP retry limit",
+      "url": "https://github.com/google/gvisor/pull/17113",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-06T17:11:56.663Z",
+      "summary": "This PR counts retransmission timeouts since the last advancing ACK. Its author reports that fast retransmits no longer exhaust the timeout budget on the loss workload in #16081. Compare it with the existing tests for the elapsed timeout budget and TCP_USER_TIMEOUT on the next flight.",
+      "evidence": [
+        {
+          "label": "Author’s change and measurements",
+          "url": "https://github.com/google/gvisor/pull/17113"
+        },
+        {
+          "label": "Compared fork implementation",
+          "url": "https://github.com/tamird/gvisor/commit/4867d503b"
+        }
+      ]
     }
   ],
   "edges": [

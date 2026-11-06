@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-11-06T16:43:26.538052+00:00",
-  "registryDate": "2026-11-06T17:03:22.665Z",
+  "registryDate": "2026-11-06T17:12:30.114Z",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -311785,6 +311785,231 @@
       }
     },
     {
+      "number": 17113,
+      "repo": "google/gvisor",
+      "title": "tcp: count only timeouts against the retry limit",
+      "url": "https://github.com/google/gvisor/pull/17113",
+      "status": "open",
+      "ref": "tcp-retry-limit",
+      "head": "e1e5a93215f507fe735b868493a14868180f3bec",
+      "base": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+      "branchHead": "e1e5a93215f507fe735b868493a14868180f3bec",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
+      "mergeabilityCheckedAt": "2026-11-06T17:11:58.254221+00:00",
+      "headCommittedAt": "2026-11-06T16:24:15Z",
+      "headHistoryComplete": true,
+      "headIntroducedAt": "2026-11-06T16:26:03Z",
+      "headOwner": "kekawia",
+      "headRepo": "kekawia/gvisor",
+      "authorLogin": "kekawia",
+      "updatedAt": "2026-11-06T16:26:03Z",
+      "createdAt": "2026-11-06T15:54:01Z",
+      "mergedAt": null,
+      "closedAt": null,
+      "mergeCommit": null,
+      "githubReviewDecision": null,
+      "reviewsComplete": true,
+      "commentsComplete": true,
+      "reviewDismissals": {
+        "complete": true,
+        "items": []
+      },
+      "reviewRequests": [
+        {
+          "__typename": "User",
+          "login": "kerumeto"
+        },
+        {
+          "__typename": "User",
+          "login": "manninglucas"
+        }
+      ],
+      "reviewRequestsComplete": true,
+      "labels": [],
+      "labelsComplete": true,
+      "labelHistory": {
+        "complete": true,
+        "items": []
+      },
+      "threads": {
+        "unresolved": 0,
+        "total": 0,
+        "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
+      },
+      "checks": {
+        "state": "PENDING",
+        "total": 7,
+        "reportedTotal": 7,
+        "supersededContexts": [],
+        "complete": true,
+        "contexts": [
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdzgQfdA",
+            "name": "check-changes",
+            "state": "SUCCESS",
+            "url": "https://github.com/google/gvisor/actions/runs/42252339323/job/128010428276",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "GitHub Actions Scan",
+            "workflowId": "W_kwDOB9IlXs4QtptT",
+            "runNumber": 13503,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdzg0byw",
+            "name": "zizmor-config",
+            "state": "SKIPPED",
+            "url": "https://github.com/google/gvisor/actions/runs/42252339323/job/128011017163",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "GitHub Actions Scan",
+            "workflowId": "W_kwDOB9IlXs4QtptT",
+            "runNumber": 13503,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdzg0ixg",
+            "name": "zizmor-scan",
+            "state": "SKIPPED",
+            "url": "https://github.com/google/gvisor/actions/runs/42252339323/job/128011018950",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "GitHub Actions Scan",
+            "workflowId": "W_kwDOB9IlXs4QtptT",
+            "runNumber": 13503,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdzg0lDQ",
+            "name": "zizmor-upload",
+            "state": "SKIPPED",
+            "url": "https://github.com/google/gvisor/actions/runs/42252339323/job/128011019533",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "GitHub Actions Scan",
+            "workflowId": "W_kwDOB9IlXs4QtptT",
+            "runNumber": 13503,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdzg0nLw",
+            "name": "zizmor-output",
+            "state": "SKIPPED",
+            "url": "https://github.com/google/gvisor/actions/runs/42252339323/job/128011020079",
+            "kind": "check-run",
+            "app": "GitHub Actions",
+            "appSlug": "github-actions",
+            "appId": "MDM6QXBwMTUzNjg=",
+            "workflow": "GitHub Actions Scan",
+            "workflowId": "W_kwDOB9IlXs4QtptT",
+            "runNumber": 13503,
+            "runAttempt": 1,
+            "purpose": "validation"
+          },
+          {
+            "id": "SC_kwDOB9IlXs8AAAANkRK4Dw",
+            "name": "buildkite/first-pass",
+            "state": "PENDING",
+            "url": "https://buildkite.com/gvisor/first-pass/builds/752",
+            "description": "Build #752 started",
+            "app": null,
+            "kind": "status",
+            "purpose": "validation"
+          },
+          {
+            "id": "CR_kwDOB9IlXs8AAAAdzgPvVw",
+            "name": "cla/google",
+            "state": "SUCCESS",
+            "url": "https://cla.developers.google.com/about",
+            "kind": "check-run",
+            "app": "Google CLA",
+            "appSlug": "google-cla",
+            "appId": "MDM6QXBwNDIyMDI=",
+            "workflow": null,
+            "workflowId": null,
+            "runNumber": null,
+            "runAttempt": null,
+            "purpose": "validation"
+          }
+        ]
+      },
+      "crossReferences": {
+        "complete": true,
+        "items": [
+          {
+            "id": "CRE_kwDOB9IlXs8AAAAEuujGwA",
+            "createdAt": "2026-11-06T15:54:18Z",
+            "source": {
+              "__typename": "PullRequest",
+              "number": 16081,
+              "url": "https://github.com/google/gvisor/pull/16081",
+              "title": "tcp: preserve timeout recovery until the outstanding flight is acknowledged",
+              "body": "After an RTO, RACK can enter fast recovery before the pre-timeout flight has\nbeen acknowledged. A new SACK can also replace `RTORecovery` with `Disorder`.\nRe-entering fast recovery counts the old flight against the reduced congestion\nwindow again, stalling transmission until the next, doubled RTO.\n\nReproduce by dropping the initial congestion window and its tail loss probe,\nthen acknowledging the RTO retransmissions. The regression also delivers the\nthird retransmission before the second and exercises a real reordering-timer\nexpiry. Recovery should finish through ACKs, without another RTO.\n\nPreserve `RTORecovery` in duplicate-ACK handling and guard both RACK recovery\nentry paths, following [RFC 6582 §3.2](https://www.rfc-editor.org/rfc/rfc6582.html#section-3.2), [RFC 8985 §9.3](https://www.rfc-editor.org/rfc/rfc8985.html#section-9.3), and, for an RTO during loss recovery, [RFC 6675 §5.1](https://www.rfc-editor.org/rfc/rfc6675.html#section-5.1).\nThe guards act only after an RTO, while that recovery state remains active.\nRACK loss marking and SACK bookkeeping continue; the existing ACK boundary\nends timeout recovery. A retransmission lost in this state waits for the next\nRTO.\n\nThis change was written with help from OpenAI Codex and Claude Code, and I\nreviewed it before sending.\n\nTesting: On master `f51a205`, all three RACK cases fail on recovery state\nwithout the fix, while SACK passes. With the fix, all four pass, including\n25 runs each. Removing each guard fails its intended case while SACK passes.\nThe TCP and tcpip Bazel suites also pass: 25 and 198 test targets respectively\n([GitHub Actions](https://github.com/kekawia/net-switch/actions/runs/42214208490),\nUbuntu x64).\n",
+              "updatedAt": "2026-11-06T15:57:14Z",
+              "headRefOid": "1b9768b199524246fe8e4fa66a0b623069778780",
+              "author": {
+                "login": "kekawia"
+              },
+              "repository": {
+                "nameWithOwner": "google/gvisor",
+                "isPrivate": false
+              }
+            }
+          },
+          {
+            "id": "CRE_kwDOVJQHt88AAAAEuxJEtg",
+            "createdAt": "2026-11-06T16:08:48Z",
+            "source": {
+              "__typename": "PullRequest",
+              "number": 130,
+              "url": "https://github.com/kekawia/net-switch/pull/130",
+              "title": "Count only timeouts against the gVisor retry limit",
+              "body": "Fixes a gVisor bug that can silently kill a TCP connection during heavy packet loss. Upstream fix: [google/gvisor#17113](https://github.com/google/gvisor/pull/17113), not merged yet.\n\n**The bug.** gVisor closes a connection when a retransmission timeout fires and the oldest segment has been sent more than 15 times. That count also includes SACK recovery, RACK and tail-probe resends, which can resend a segment many times within a few round trips. So a connection can end at its first or second timeout, and no reset is sent, so the other side keeps waiting.\n\n**The fix.** Count timeouts since `SND.UNA` last advanced, which is how Linux counts them. A dead peer still closes after the same number of timeouts.\n\n**What changes**\n- `third_party/gvisor-tcp-retry-limit.patch` is the new patch. It sorts last, so the existing patches stay byte for byte the same, and it can be dropped when the bundled gVisor includes the fix.\n- `third_party/gvisor` and `vendor` are regenerated by the tools. Only `snd.go` changes in each.\n- `internal/engine/stack/tcp_retry_limit_test.go` adds two tests through the engine's stack: a segment RACK resends past the limit survives its next timeout and the limit still applies after that, and a cumulative ACK restarts the count. Both fail on `main`, where the connection dies early.\n- `scripts/gvisor-diff.test.mjs` and `THIRD_PARTY_NOTICES.md` list the new patch. The count of modified gVisor files stays at eleven, since `snd.go` was already modified.\n\n**Evidence.** On gVisor master, using [netstack-rack-repro](https://github.com/adios-404/netstack-rack-repro/tree/f72f18f2f) with a 600 ms burst that delivers one packet in three, 5 of 24 downloads got stuck with the timeout recovery fix alone and 0 of 24 with this fix added ([run](https://github.com/kekawia/net-switch/actions/runs/42240339599), harness job). That is on an emulated 3 ms path. No download got stuck on a 30 ms path or with lighter loss, and I have not seen this reported from a real network. Net Switch's own traffic to local apps should rarely see loss like this, and this PR does not measure Net Switch itself.\n\n**Checked locally:** the generator and `go mod vendor` leave no other changes, all 11 patch and repeat-evidence checks pass, and the new tests and `TestTCPRecoveryAfterLostWindow` pass on Windows x64. The full suite is left to CI.\n",
+              "updatedAt": "2026-11-06T16:36:51Z",
+              "headRefOid": "cb56142bac3f58b34b0ae31f8b258bf4eb1285e0",
+              "author": {
+                "login": "kekawia"
+              },
+              "repository": {
+                "nameWithOwner": "kekawia/net-switch",
+                "isPrivate": false
+              }
+            }
+          }
+        ]
+      },
+      "reviewDecision": null,
+      "approvedHead": null,
+      "approvedAt": null,
+      "checkedAt": "2026-11-06T17:12:30.114Z",
+      "importPolicy": "copybara",
+      "importsComplete": false,
+      "imports": [],
+      "mergeabilityObservation": {
+        "state": "MERGEABLE",
+        "head": "e1e5a93215f507fe735b868493a14868180f3bec",
+        "base": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+        "checkedAt": "2026-11-06T17:11:58.254221+00:00"
+      }
+    },
+    {
       "number": 17114,
       "repo": "google/gvisor",
       "title": "Use hermetic-llvm's source archive for the NVIDIA driver parser",
@@ -337644,7 +337869,7 @@
         "since": "2026-11-04T05:00:25.863097+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "pr:16664": {
@@ -339176,6 +339401,15 @@
         "observedAt": "2026-11-06T16:43:03.881563+00:00"
       }
     },
+    "pr:17113": {
+      "maintainer-review": {
+        "scope": "e1e5a93215f507fe735b868493a14868180f3bec",
+        "since": "2026-11-06T17:11:56.663Z",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-06T17:12:30.114Z"
+      }
+    },
     "pr:17114": {
       "checks-pending": {
         "scope": "17114:7fca7c54f60ab9a9c3718ba77e6a11d8d2d06d63",
@@ -339555,7 +339789,7 @@
         "since": "2026-10-31T16:57:06.135+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:bazel-python-release": {
@@ -339564,7 +339798,7 @@
         "since": "2026-10-30T16:55:14.197497+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -339573,7 +339807,7 @@
         "since": "2026-11-03T07:06:47.467598+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:rules-img-hackbench-image": {
@@ -339582,7 +339816,7 @@
         "since": "2026-11-03T04:16:24.163353+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:rules-img-wrk2-image": {
@@ -339591,7 +339825,7 @@
         "since": "2026-10-31T07:18:55.041730+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:state-destination-kind": {
@@ -339600,7 +339834,7 @@
         "since": "2026-11-05T15:27:44.402237Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:state-encoder-zero-dispatch": {
@@ -339609,7 +339843,7 @@
         "since": "2026-11-05T14:55:40.136006Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:state-decoder-dependencies": {
@@ -339618,7 +339852,7 @@
         "since": "2026-11-05T15:27:44.402237Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:plugin-toolchain-unwind": {
@@ -339627,7 +339861,7 @@
         "since": "2026-11-06T13:14:58.461Z",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:package-clang-format": {
@@ -339636,7 +339870,7 @@
         "since": "2026-11-02T08:21:11+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:declared-codespell": {
@@ -339645,7 +339879,7 @@
         "since": "2026-11-02T08:21:11+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:release-archives-versioned": {
@@ -339654,7 +339888,7 @@
         "since": "2026-10-31T10:28:33.920382+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:mutable-overlay-poll-waiter": {
@@ -339663,7 +339897,7 @@
         "since": "2026-11-05T19:38:10.552336Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:staged-release-tag": {
@@ -339672,7 +339906,7 @@
         "since": "2026-10-31T09:29:02.218795+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:native-gazelle-check": {
@@ -339681,7 +339915,7 @@
         "since": "2026-11-02T16:20:02.085486+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:checkpoint-memory-file-registration": {
@@ -339690,7 +339924,7 @@
         "since": "2026-10-31T18:05:07.150+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:hostinet-exit-linger": {
@@ -339699,7 +339933,7 @@
         "since": "2026-11-01T05:08:12.703055+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:state-graph-object-frame-bounds": {
@@ -339708,7 +339942,7 @@
         "since": "2026-11-01T13:49:13.599008+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:tcp-passive-syn-retry": {
@@ -339717,7 +339951,7 @@
         "since": "2026-11-06T17:01:23.113Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:state-graph-print-errors": {
@@ -339726,7 +339960,7 @@
         "since": "2026-11-02T22:54:43.336654+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:fdbased-start-on-attach": {
@@ -339735,7 +339969,7 @@
         "since": "2026-11-06T16:55:55.698Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:native-install-archive": {
@@ -339744,7 +339978,7 @@
         "since": "2026-11-06T16:20:27.112Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "issue:bazel-contrib/rules_python:2500": {
@@ -339753,7 +339987,7 @@
         "since": "2026-11-06T11:35:55.690Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     },
     "branch:buildkite-source-syscalls": {
@@ -339762,16 +339996,7 @@
         "since": "2026-11-06T14:13:12.896Z",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-06T17:03:22.665Z"
-      }
-    },
-    "branch:tcp-rto-retry-budget": {
-      "contributor-review": {
-        "scope": "4867d503b71f6c13f0346778ca61373df04ed0ae",
-        "since": "2026-11-06T17:03:22.665Z",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-11-06T17:03:22.665Z"
+        "observedAt": "2026-11-06T17:12:30.114Z"
       }
     }
   },
@@ -341521,7 +341746,11 @@
       },
       "https://github.com/tamird/gvisor/commit/4867d503b": {
         "head": "4867d503b71f6c13f0346778ca61373df04ed0ae",
-        "status": "Contributor review requested"
+        "status": "Agent work"
+      },
+      "https://github.com/google/gvisor/pull/17113": {
+        "head": "e1e5a93215f507fe735b868493a14868180f3bec",
+        "status": "open"
       }
     }
   }
