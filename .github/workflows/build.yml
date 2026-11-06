@@ -1,35 +1,84 @@
-name: CI
-
-"on":
+name: Check the NVIDIA differ after keeping the direct x/text import
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/nvidia-direct-x-text]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  verify:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 105
+    env:
+      PRODUCT: 844226d94ccce9bcf87268affefa17d58872cda5
+      PREVIOUS: b4929480061e95c901f3f21ed3ced64a8ea3f447
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Bind the two-line change and original receipts
+        run: |
+          set -eu
+          d="$RUNNER_TEMP/nvidia-abi-cli"
+          mkdir "$d"
+          test "$(git rev-parse HEAD^)" = "$PRODUCT" && test "$(git rev-parse HEAD^^)" = "$PREVIOUS"
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification'
+          git diff --exit-code "$PREVIOUS" "$PRODUCT" -- . ':!go.mod'
+          test "$(git rev-parse "$PREVIOUS:go.sum")" = "$(git rev-parse "$PRODUCT:go.sum")"
+          cp .github/qualification/nvidia_cli_{build,check}.py "$d/"
+          cp .github/qualification/nvidia_cli_check.py "$d/check.py"
+          cp .github/qualification/nvidia_cli_offline.py "$d/isolate.py"
+          cp .github/qualification/nvidia_original_tidy.py "$d/original.py"
+          cp .github/qualification/source_presubmit_memory.py "$RUNNER_TEMP/"
+          chmod +x "$d/isolate.py"
+          git checkout --quiet --detach "$PREVIOUS"
+          test "$(bazelisk --version)" = 'bazel 9.3.1'
+          python3 -IB "$RUNNER_TEMP/source_presubmit_memory.py"
+      - name: Recover only the earlier CLI build error
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -IB "$RUNNER_TEMP/nvidia-abi-cli/original.py"
+      - name: Analyze the old tidied workspace, then tidy and analyze with the same x/text version declared directly
+        run: |
+          set -eu
+          d="$RUNNER_TEMP/nvidia-abi-cli"
+          measure() {
+            name=$1; limit=$2; shift 2; rc=0
+            timeout --signal=INT --kill-after=30s "$limit" "$@" > "$d/$name.log" 2>&1 || rc=$?
+            echo "$rc" > "$d/$name.exit"
+          }
+          python3 -IB "$d/check.py" old-input
+          measure old-cquery 15m bazelisk cquery --config=x86_64 //tools/nvidia_driver_differ:run_differ
+          git restore --source "$PREVIOUS" -- MODULE.bazel tools/nvidia_driver_differ/driver_pins.bzl
+          git checkout --quiet --detach "$PRODUCT"
+          python3 -IB "$d/check.py" fixed-input
+          measure tidy 15m bazelisk mod tidy
+          measure tidied 1m python3 -IB "$d/check.py" tidied
+          measure fixed-cquery 15m bazelisk cquery --config=x86_64 //tools/nvidia_driver_differ:run_differ
+      - name: Build only the documented differ on the verified workspace bytes
+        if: always() && !cancelled()
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          d="$RUNNER_TEMP/nvidia-abi-cli"
+          if test -f "$d/tidied.exit" && test "$(cat "$d/tidied.exit")" = 0; then
+            python3 -IB "$d/nvidia_cli_build.py" next
+          fi
+      - name: Check actual 615.71.09 and 620.70.06 headers and the differ result without Git or a route
+        if: always() && !cancelled()
+        run: |
+          d="$RUNNER_TEMP/nvidia-abi-cli"
+          test ! -e "$d/rbe.rc"
+          rc=0
+          timeout --signal=INT --kill-after=30s 8m /bin/bash "$d/next.sh" > "$d/next.log" 2>&1 || rc=$?
+          echo "$rc" > "$d/next.exit"
+          python3 -IB "$d/check.py" summary
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: nvidia-direct-x-text
+          path: ${{ runner.temp }}/nvidia-abi-cli/result.json
+          if-no-files-found: error
+      - name: Require the direct dependency and its actual offline consumer
+        run: python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"nvidia-abi-cli/result.json"; raise SystemExit(0 if json.loads(p.read_text()).get("verified") else 1)'
