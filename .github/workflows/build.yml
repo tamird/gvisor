@@ -1,35 +1,53 @@
-name: CI
-
-"on":
+name: Read the seccheck compiler and test execution platforms
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/seccheck-configured-action-platforms]
+permissions:
+  contents: read
+  actions: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  release:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 24
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 4}
+      - name: Bind the two native runs and their original Bazel client
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          root="$RUNNER_TEMP/seccheck-query"
+          mkdir -p "$root/public"
+          cp test/rbe/release_prewarmer/{BUILD,query.py} "$root/"
+          test "$(git hash-object "$root/BUILD")" = 97dc5802e4064aa9fe1b8846a3535083f4d49509
+          gh api repos/tamird/gvisor/actions/artifacts/13078732581/zip > "$root/client.zip"
+          gh api repos/tamird/gvisor/actions/artifacts/13463757999/zip > "$root/compile.zip"
+          gh api repos/tamird/gvisor/actions/artifacts/13473985103/zip > "$root/run.zip"
+          cd "$root"
+          echo '993e832b8f926876f2b935e97af3cc50493a507e79ed80d1da32309f00e94619  client.zip' | sha256sum --check
+          unzip -p client.zip bazel-candidate > bazel
+          echo '556164c2874fc66cdac3a32b53f862e705e9b9643c0ad3dea12880c97687d250  bazel' | sha256sum --check
+          chmod +x bazel
+      - name: Select the product tree and its exact private test platforms
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = c6b932f3d47aee23d984d75cd3b696991f772eb5
+          git checkout --detach HEAD^
+          mkdir -p test/rbe/release_prewarmer
+          cp "$RUNNER_TEMP/seccheck-query/BUILD" test/rbe/release_prewarmer/BUILD
+          test -z "$(git diff --name-only HEAD)"
+      - name: Read configured AMD64 actions
+        run: python3 "$RUNNER_TEMP/seccheck-query/query.py" amd64 x86_64 k8
+      - name: Read configured ARM64 actions
+        if: always() && !cancelled()
+        run: python3 "$RUNNER_TEMP/seccheck-query/query.py" arm64 aarch64 aarch64
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: configured-seccheck-platforms
+          path: |
+            ${{ runner.temp }}/seccheck-query/public/amd64.json
+            ${{ runner.temp }}/seccheck-query/public/arm64.json
+          if-no-files-found: error
