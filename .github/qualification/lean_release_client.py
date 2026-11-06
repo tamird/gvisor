@@ -130,7 +130,7 @@ def workspace_operations(path):
     return [list(key) + [count] for key, count in counter.most_common(180)]
 
 
-def phase(index, command, target, tool=None, *, hide_locale=False):
+def phase(index, command, target, tool=None):
     work = Path.cwd()
     # The clean git checkout has no tracked module lock. Discard only a lock
     # created by a previous probe so both cases start on the identical source.
@@ -147,27 +147,30 @@ def phase(index, command, target, tool=None, *, hide_locale=False):
         assert tool in POSSIBLE and path.is_file()
         args += ["-v", f"{path.resolve()}:/usr/bin/{tool}:ro", "-v", f"{path.resolve()}:/bin/{tool}:ro"]
     assert (STAGE / "image/usr/lib/locale/C.utf8/LC_CTYPE").is_file()
-    if hide_locale:
-        args += ["--tmpfs", "/usr/lib/locale/C.utf8:ro,size=65536"]
     args += ["lean-client:probe", "/probe/bazel", "--batch", "--nosystem_rc", "--nohome_rc"]
     if (STAGE / "image/trust/cacerts").is_file():
         args += ["--host_jvm_args=-Djavax.net.ssl.trustStore=/trust/cacerts"]
     args += [command, "--color=no", "--curses=no", "--output=label",
              f"--experimental_workspace_rules_log_file=/data/{index}.pb"]
     if command == "cquery":
-        args += ["--config=x86_64", "-c", "opt", "--symlink_prefix=/"]
+        args += ["--config=x86_64", "-c", "opt", "--symlink_prefix=/",
+                 "--extra_toolchains=//test/rbe/go_bootstrap:linux_amd64_ash"]
     args.append(target)
     result = subprocess.run(args, capture_output=True, timeout=1100)
     text = result.stderr.decode(errors="replace")
     lines = []
+    context = 0
     for line in text.splitlines():
         if re.search(r"(?i)token|secret|api.key|authorization|cookie|password|BEARER|-----BEGIN", line):
             continue
-        if re.search(r"(?i)error|failed|cannot|missing|traceback|\.bzl.+line [0-9]|no such|not found|permission denied|execvp|execve|return code|no matching|not a directory|disk space|unsupported encoding|UTF-8 locale", line):
+        if "matching toolchains" in line or "toolchain resolution" in line:
+            context = 5
+        if context or re.search(r"(?i)error|failed|cannot|missing|traceback|\.bzl.+line [0-9]|no such|not found|permission denied|execvp|execve|return code|no matching|not a directory|disk space|unsupported encoding|UTF-8 locale", line):
             safe = re.sub(r"https?://\S+", "[public URL]", line)
             safe = re.sub(r"/home/runner/\.cache/bazel/_bazel_runner/[0-9a-f]{32}/external/", "@@", safe)
             lines.append(safe if len(safe) <= 1150 else safe[:350] + " ... " + safe[-750:])
-    row = {"command": command, "target": target, "only_added_tool": tool, "locale_data_hidden": hide_locale, "exit": result.returncode,
+            context = max(0, context-1)
+    row = {"command": command, "target": target, "only_added_tool": tool, "declared_shell": "//test/rbe/go_bootstrap:linux_amd64_ash", "exit": result.returncode,
            "stdout_labels": [s for s in result.stdout.decode(errors="replace").splitlines()
                              if re.fullmatch(r"[@a-zA-Z0-9._+: /()-]{1,200}", s)][:4],
            "diagnostics": list(dict.fromkeys(lines[:8] + lines[-28:]))}
@@ -182,7 +185,6 @@ def phase(index, command, target, tool=None, *, hide_locale=False):
 
 try:
     setup()
-    phase(0, "query", "@@rules_go++go_sdk+main___download_0_linux_amd64//:ROOT", hide_locale=True)
     for command, target in TARGETS:
         row = phase(len(report["phases"]), command, target)
         if row["exit"]:

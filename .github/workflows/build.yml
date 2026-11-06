@@ -1,7 +1,7 @@
-name: Configure the release with an installed JVM locale
+name: Resolve the declared shell on the release client
 on:
   push:
-    branches: [qualification/lean-release-client-locale]
+    branches: [qualification/lean-release-client-declared-sh]
 permissions: {contents: read}
 jobs:
   linux:
@@ -10,18 +10,18 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 5}
+        with: {persist-credentials: false, fetch-depth: 6}
       - name: Query release dependencies without building actions
         run: |
-          test "$(git rev-parse HEAD^)" = d7144ce0addadbdf2ccffc069b47c4bf5518a48c
-          test "$(git rev-parse HEAD~4)" = d5fe3c2eef21434cbe13e3604f0f070ace4d7edb
+          test "$(git rev-parse HEAD^)" = 2349669d997e30c90f0973faa39715ca2f3a389c
+          test "$(git rev-parse HEAD~5)" = d5fe3c2eef21434cbe13e3604f0f070ace4d7edb
           cp .github/qualification/lean_release_client.py "$RUNNER_TEMP/lean-client.py"
           git switch --detach d5fe3c2eef21434cbe13e3604f0f070ace4d7edb
           python3 -I -B "$RUNNER_TEMP/lean-client.py"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: release-repository-configuration
+          name: release-registered-shell
           path: ${{ runner.temp }}/lean-client.json
           if-no-files-found: error
           retention-days: 7
