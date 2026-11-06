@@ -1,7 +1,7 @@
 name: Run the current SDK and docprocessor owners on native ARM64
 on:
   push:
-    branches: [qualification/current-arm64-sdk-stdlib-owner]
+    branches: [qualification/current-arm64-sdk-sandboxed-compile]
 permissions:
   contents: read
 jobs:
@@ -11,15 +11,15 @@ jobs:
     timeout-minutes: 80
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 3}
+        with: {persist-credentials: false, fetch-depth: 4}
       - name: Check out the exact integration and run the Bazel suites on the agent
         run: |
           set -euo pipefail
           d="$RUNNER_TEMP/native-sdk"
           mkdir -p "$d"
-          test "$(git rev-parse HEAD^^)" = 38745c527784376e0b5d915fe5ebd85e1d1385fd
+          test "$(git rev-parse HEAD^^^)" = 38745c527784376e0b5d915fe5ebd85e1d1385fd
           cp .github/qualification/direct_arm64_sdk.py "$d/"
-          git checkout --quiet --detach HEAD^^
+          git checkout --quiet --detach HEAD^^^
           test "$(cat .bazelversion)" = 8.8.1
           curl -fsSL --retry 3 --max-time 90 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-arm64 -o "$d/bazel"
           echo "bb608519a440d45d10304eb684a73a2b6bb7699c5b0e5434361661b25f113a5d  $d/bazel" | sha256sum -c -

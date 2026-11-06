@@ -27,12 +27,12 @@ def sha(path):
         return hashlib.file_digest(f,"sha256").hexdigest() if hasattr(hashlib,"file_digest") else hashlib.sha256(f.read()).hexdigest()
 
 def stdlib_probe():
-    console = work/"stdlib.log"; events=work/"stdlib.events"
+    console = work/"stdlib.log"; events=work/"stdlib.events"; exec_log=work/"stdlib.exec"
     inv=str(uuid.uuid4());row=receipt["stdlib"]={"invocation":inv};save()
     with console.open("wb") as out:
         p=subprocess.run(["timeout","-k","15","1050",str(work/"bazel"),"--nosystem_rc","--nohome_rc","build",
-            "--invocation_id="+inv,"--config=aarch64","--jobs=4","--spawn_strategy=local","--lockfile_mode=off",
-            "--build_event_publish_all_actions","--build_event_json_file="+str(events),"--noshow_progress","--color=no","--curses=no",
+            "--invocation_id="+inv,"--config=aarch64","--jobs=4","--spawn_strategy=sandboxed,local","--lockfile_mode=off",
+            "--execution_log_json_file="+str(exec_log),"--build_event_publish_all_actions","--build_event_json_file="+str(events),"--noshow_progress","--color=no","--curses=no",
             "//tools/nogo:stdlib"],stdout=out,stderr=subprocess.STDOUT)
     row["exit"]=p.returncode;row["log_sha256"]=sha(console)
     lines=console.read_text(errors="replace").splitlines()
@@ -56,10 +56,26 @@ def stdlib_probe():
                     action["stderr_sha256"]=sha(f);action["stderr"]=f.read_text(errors="replace").splitlines()[:12]
                     action["stderr"]=[l[:900] for l in action["stderr"]]
             if len(row["actions"])<8:row["actions"].append(action)
+    if exec_log.is_file():
+        query='if type=="array" then .[] else . end | select(.mnemonic=="GoStdlib" or .mnemonic=="GoStandardLibraryAnalysis") | {mnemonic,owner:.targetLabel,runner,exit:(.exitCode//0),cached:(.cacheHit//false),outputs:(.listedOutputs//[])}'
+        projected=subprocess.run(["jq","-c",query,exec_log],capture_output=True,text=True)
+        row["projection_exit"]=projected.returncode
+        row["producers"]=[]
+        for line in projected.stdout.splitlines()[:12]:
+            item=json.loads(line);roots=item.pop("outputs",[])
+            for raw in roots[:10]:
+                pp=Path(raw)
+                if not pp.parts or pp.parts[0]!="bazel-out" or ".." in pp.parts or not pp.is_dir():continue
+                archives=list(pp.rglob("*.a"))
+                if archives:
+                    item["archive_count"]=len(archives)
+                    item["fmt_archive"]=any(v.name=="fmt.a" for v in archives)
+                    item["excluded_benchmark_archives"]=sum(str(v).endswith("/log/slog/internal/benchmarks.a") for v in archives)
+            row["producers"].append(item)
     binpath=Path("bazel-bin/tools/nogo/stdlib.facts")
     if binpath.is_file():row["facts"]={"bytes":binpath.stat().st_size,"sha256":sha(binpath)}
     save()
-    return p.returncode==0 and binpath.is_file()
+    return p.returncode==0 and binpath.is_file() and binpath.stat().st_size>0
 
 def summarize(name, labels, extra, limit):
     bep = work / (name+".events")
@@ -67,7 +83,7 @@ def summarize(name, labels, extra, limit):
     entry = receipt["runs"][name] = {"labels":labels,"attempts":{},"invocation":str(uuid.uuid4()),"initial_free_bytes":shutil.disk_usage(work).free}
     save()
     command = [str(work/"bazel"),"--nosystem_rc","--nohome_rc","test","--invocation_id="+entry["invocation"],
-               "--config=aarch64","--jobs=4","--local_test_jobs=1","--spawn_strategy=local","--strategy=TestRunner=local",
+               "--config=aarch64","--jobs=4","--local_test_jobs=1","--spawn_strategy=sandboxed,local","--strategy=TestRunner=local",
                "--nocache_test_results","--flaky_test_attempts=1","--runs_per_test=1","--keep_going","--test_output=errors",
                "--test_env=GO_TEST_WRAP_TESTV=1","--test_env=GO_TEST_RUN_FROM_BAZEL=1","--test_env=DOCKER_HOST=unix:///nonexistent-sdk-docker.sock",
                "--lockfile_mode=off","--noshow_progress","--color=no","--curses=no","--build_event_json_file="+str(bep),*extra,*labels]
