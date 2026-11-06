@@ -1,7 +1,7 @@
 name: Check the rebased native-test and coverage owners
 on:
   push:
-    branches: [qualification/native-test-group-routing]
+    branches: [qualification/native-test-group-runners]
 permissions:
   contents: read
 jobs:
@@ -16,17 +16,13 @@ jobs:
         run: |
           set -euo pipefail
           fixed=f3fa3075e29e3dba659ccc64d16378a2ad2b49fb
-          stock=fafff7eba5044b4585ea89fde2db7cbfb7861310
-          base=f51a205a8f4afbc5ab41aded070df74951b081ea
-          test "$(git rev-parse HEAD^)" = "$fixed"
-          test "$(git rev-parse HEAD^^)" = "$base"
-          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/rebased_owners/check.py' ':!.github/qualification/rebased_owners/image_execution.py'
-          git fetch --no-tags --depth=2 https://github.com/tamird/gvisor.git "$stock"
-          test "$(git rev-parse "$stock^")" = "$base"
+          test "$(git rev-parse HEAD^)" = c9a3658e40fa4839e07414a43d44bf2a68c41602
+          test "$(git rev-parse HEAD^^)" = "$fixed"
+          git diff --exit-code "$fixed" HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/rebased_owners/check.py' ':!.github/qualification/rebased_owners/image_execution.py'
           work="$RUNNER_TEMP/owners"
           mkdir -m 700 "$work" "$work/worker"
           cp .github/qualification/rebased_owners/{check,image_execution}.py "$work/"
-          git checkout --detach "$stock"
+          git checkout --detach "$fixed"
           test "$(cat .bazelversion)" = 9.3.1
           test "$(bazelisk --version)" = 'bazel 9.3.1'
           printf '%s\n' 'module(name="rebased_workers")' >"$work/worker/MODULE.bazel"
@@ -53,7 +49,7 @@ jobs:
               },
           )
           BUILD
-      - name: Compare TestRunner placement and run the three unresolved native variants
+      - name: Run the three unresolved tests on their verified native platforms
         timeout-minutes: 90
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -73,10 +69,7 @@ jobs:
           printf 'build --inject_repository=rebased_workers=%s/worker\n' "$work" >> "$rc"
           printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "${BUILDBUDDY_API_KEY:?}" "$BUILDBUDDY_API_KEY" >> "$rc"
           unset BUILDBUDDY_API_KEY
-          test "$(git rev-parse HEAD)" = fafff7eba5044b4585ea89fde2db7cbfb7861310
-          python3 -B "$work/check.py" platforms stock || printf 'Stock action graph incomplete.\n'
-          git checkout --detach f3fa3075e29e3dba659ccc64d16378a2ad2b49fb
-          python3 -B "$work/check.py" platforms fixed || printf 'Fixed action graph incomplete.\n'
+          test "$(git rev-parse HEAD)" = f3fa3075e29e3dba659ccc64d16378a2ad2b49fb
           python3 -B "$work/check.py" variants || printf 'Native variant qualification incomplete.\n'
       - name: Check the bounded result files without credentials
         id: report
@@ -86,10 +79,9 @@ jobs:
           work="$RUNNER_TEMP/owners"
           rm -f "$work/client.rc"
           mkdir -p "$work/publish"
-          for name in platforms-stock platforms-fixed variants; do
+          for name in variants; do
             f="$work/$name.json"
             sha=f3fa3075e29e3dba659ccc64d16378a2ad2b49fb
-            if [[ "$name" == platforms-stock ]]; then sha=fafff7eba5044b4585ea89fde2db7cbfb7861310; fi
             if [[ -f "$f" && ! -L "$f" ]] && (( $(wc -c < "$f") < 65536 )) &&
                 jq -e --arg sha "$sha" '.source==$sha' "$f" >/dev/null &&
                 ! grep -Eiq 'authorization[[:space:]]*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}' "$f"; then
@@ -104,8 +96,6 @@ jobs:
           name: native-test-group-results
           path: |
             ${{ runner.temp }}/owners/publish/variants.json
-            ${{ runner.temp }}/owners/publish/platforms-stock.json
-            ${{ runner.temp }}/owners/publish/platforms-fixed.json
           retention-days: 14
           if-no-files-found: error
       - name: Require three fresh native test results
