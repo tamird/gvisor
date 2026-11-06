@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T22:32:39.883Z",
+    "updatedAt": "2026-11-06T22:38:16.247Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -22792,7 +22792,7 @@
       "url": "https://github.com/tamird/gvisor/commit/e7fc3626fce8184c2dd35debe8d413dd989b05ee",
       "group": "bazel",
       "status": "Contributor approved; resource layout complete; awaiting prerequisites",
-      "updatedAt": "2026-11-06T20:55:07.008Z",
+      "updatedAt": "2026-11-06T22:38:16.247Z",
       "summary": "The signed Ubuntu Jammy tcpdump captured both UDP payloads on any (SLL2) and lo (Ethernet) with runc and corrected systrap on native AMD64 and ARM64. All eight captures verified the dropped UID and GID. The stock gVisor failure on any is retained in the original run. The AMD64 trace confirmed that PACKET_RESERVE readback succeeded. The bounded ARM64 trace did not contain that call.\n\nCurrent foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nRequested resource relocation and equivalent base refresh are complete at e7fc3626fc. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nContributor approved exact1393 for opening after basic-image #16097 and manual-artifact #16051 actually land.\n\nPreserved qualification record:\n\nThe final source and complete shipped notices are independently accepted. Both architecture archives and static binaries, Make rebuild/reload, both owning analyzers and TestTcpdump lo/any pass with five positive records and no skips. Earlier authenticated compiler evidence is reused through unchanged executable identities; the final run makes no fresh compilation claim. Canonical Fetch and the subsequent exact-catalog Verify now pass. Earlier launch visibility and timeout failures remain preserved without a claimed cause. Exact1393 contributor approval remains conditional on the basic-image and manual-artifact prerequisites. This graph does not require the shared gawk/native Go prerequisite.",
       "links": [
         {
@@ -22857,12 +22857,16 @@
           "url": "https://github.com/tamird/gvisor/commit/5de0b08c4"
         },
         {
-          "label": "Stock, corrected and native Linux packet-socket syscall",
+          "label": "Earlier remote GNU attempt stopped before the syscall ran",
           "url": "https://github.com/tamird/gvisor/actions/runs/42290492668"
         },
         {
           "label": "Native AMD64 and ARM64 distro capture qualification",
           "url": "https://github.com/tamird/gvisor/actions/runs/42290164647"
+        },
+        {
+          "label": "The three original syscall XML files, test binary and Sentry hashes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42302837517/artifacts/13546671407"
         }
       ]
     },
@@ -56429,6 +56433,63 @@
         {
           "label": "First direct x/text imports",
           "url": "https://github.com/google/gvisor/commit/53203cabe"
+        }
+      ]
+    },
+    {
+      "id": "branch:packet-socket-reserve-readback",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/packet-socket-reserve-readback",
+      "head": "5de0b08c436460cd3f68cf9a3dfc0bef8f891407",
+      "title": "Support reading PACKET_RESERVE on packet sockets",
+      "group": "runtime",
+      "status": "Awaiting contributor review",
+      "url": "https://github.com/tamird/gvisor/commit/5de0b08c4",
+      "updatedAt": "2026-11-06T22:38:16.247Z",
+      "summary": "Ubuntu tcpdump on gVisor could capture on loopback, but its default capture on all interfaces failed because libpcap could not read PACKET_RESERVE. The existing syscall test read 0 and then 20 on Linux and corrected gVisor. Stock returned ENOPROTOOPT twice with the same test binary.",
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "5de0b08c436460cd3f68cf9a3dfc0bef8f891407",
+        "observedAt": "2026-11-06T22:38:16.247Z",
+        "disposition": "Standalone socket-option correction with an existing Linux syscall test.",
+        "nextAction": "Review the commit for an independent upstream PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/5de0b08c4",
+          "https://github.com/tamird/gvisor/actions/runs/42302837517/artifacts/13546671407"
+        ]
+      },
+      "contributorReview": {
+        "head": "5de0b08c436460cd3f68cf9a3dfc0bef8f891407",
+        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+        "title": "Support reading PACKET_RESERVE on packet sockets",
+        "body": "tcpdump cannot capture on \"any\" when libpcap checks whether a packet\nsocket supports the Linux cooked v2 capture format. libpcap queries\nPACKET_RESERVE before offering that format [1]. gVisor accepts writes\nto the option but returns ENOPROTOOPT on reads.\n\nReturn the reserve that the socket uses to place the packet payload in\nthe mmap ring. Extend the existing ring test to read the default and\nthe configured value before checking the payload offset.\n\n[1] https://github.com/the-tcpdump-group/libpcap/blob/c7642e2cc/pcap-linux.c#L2238-L2260",
+        "url": "https://github.com/tamird/gvisor/commit/5de0b08c4",
+        "kind": "proposal",
+        "status": "pending",
+        "summary": "Ubuntu tcpdump on gVisor could capture on loopback, but its default capture on all interfaces failed because libpcap could not read PACKET_RESERVE. The existing syscall test read 0 and then 20 on Linux and corrected gVisor. Stock returned ENOPROTOOPT twice with the same test binary. The result collector expected the symbolic option name, but GTest printed its numeric value (12). The retained XML includes both expected stock failures.",
+        "requestedAt": "2026-11-06T22:38:16.247Z"
+      },
+      "evidence": [
+        {
+          "label": "The three original syscall XML files, test binary and Sentry hashes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42302837517/artifacts/13546671407"
+        },
+        {
+          "label": "Stock tcpdump reported the missing cooked v2 capture format",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42080245869/job/127431087419"
+        },
+        {
+          "label": "tcpdump 4.99.1 selects SLL2 by default on any",
+          "url": "https://github.com/the-tcpdump-group/tcpdump/blob/5f552b5e6/tcpdump.c#L1954-L1960"
+        },
+        {
+          "label": "Native AMD64 packet captures on both interfaces and runtimes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42290164647/artifacts/13539577968"
+        },
+        {
+          "label": "Native ARM64 packet captures on both interfaces and runtimes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42290164647/artifacts/13539991997"
         }
       ]
     }
