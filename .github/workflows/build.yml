@@ -1,35 +1,55 @@
-name: CI
-
-"on":
+name: Verify the two reviewed delayed ACK paths
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/readback-delayed-ack-17082-linux]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  packet:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 70
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Run the published TCP delayed ACK suite
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 10555b8fe8ee142f6a956ab3f7fbc717d38b0639
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/delayed_ack_readback.py'
+          d="$RUNNER_TEMP/delayed-ack-review"
+          mkdir -m 700 "$d"
+          cp .github/qualification/delayed_ack_readback.py "$d/"
+          donor=611a6ff017c528dddbd0d2e643aaf23c6ddac488
+          git fetch --quiet --depth=1 origin "$donor"
+          for h in qualification_report unit_matrix; do git show "$donor:test/rbe/$h.py" > "$d/$h.py"; done
+          test "$(git hash-object "$d/qualification_report.py")" = d2e3eedabc2ad911d958aa448fd916aa6835aa86
+          test "$(git hash-object "$d/unit_matrix.py")" = d01d9e319084e18ea2928671e417e1b4e86c4954
+          git checkout --quiet --detach 10555b8fe8ee142f6a956ab3f7fbc717d38b0639
+          ctl=(env -i HOME="$HOME" USER=runner PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP")
+          code=0
+          "${ctl[@]}" bazelisk --nosystem_rc --nohome_rc --bazelrc=/dev/null --host_jvm_args=-Xmx3g test \
+            --config=x86_64 --lockfile_mode=off -c opt --jobs=4 --local_resources=memory=8192 \
+            --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox \
+            '--modify_execution_info=^(GoStandardLibraryAnalysis|GoStaticAnalysis)$=-no-sandbox' \
+            --spawn_strategy=linux-sandbox --strategy=TestRunner=linux-sandbox --sandbox_default_allow_network=false \
+            --remote_cache= --remote_executor= --bes_backend= --flaky_test_attempts=1 --nocache_test_results \
+            --test_arg=-test.v --test_env=GO_TEST_WRAP_TESTV=1 --test_timeout=150 \
+            --test_output=errors --build_event_json_file="$d/run.bep" \
+            //pkg/tcpip/transport/tcp/test/e2e:tcp_delayed_ack_test >"$d/run.console" 2>&1 || code=$?
+          "${ctl[@]}" python3 -B "$d/delayed_ack_readback.py" "$code"
+      - name: Validate the bounded receipt
+        id: receipt
+        if: always()
+        run: |
+          d="$RUNNER_TEMP/delayed-ack-review/receipt.json"
+          test -s "$d" && test "$(wc -c < "$d")" -lt 50000
+          if grep -Eiq 'authorization[[:space:]]*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}' "$d"; then exit 1; fi
+          jq -e '.source == "10555b8fe8ee142f6a956ab3f7fbc717d38b0639"' "$d" > /dev/null
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.receipt.outcome == 'success'
+        with:
+          name: delayed-ack-readback
+          path: ${{ runner.temp }}/delayed-ack-review/receipt.json
+          if-no-files-found: error
+          retention-days: 14
