@@ -1,35 +1,39 @@
-name: CI
-
-"on":
+name: Read both public zstd archives as compressed streams
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-current-release-zstd-input]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  release:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 4}
+      - name: Select the exact original release source and tag
+        run: |
+          set -eu
+          d="$RUNNER_TEMP/current-release"
+          mkdir -m 700 "$d"
+          test "$(git rev-parse HEAD^)" = 2c90e983df7d4baa575ad8c6ac5a7165a7803029
+          test "$(git rev-parse HEAD^^)" = 1f9c6adcce6f1b04d8b2cb6434d2268d21568588
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/current_release_zstd.py' ':!.github/qualification/previous_release_members.json'
+          cp .github/qualification/{current_release_zstd.py,previous_release_members.json} "$d/"
+          git checkout --quiet --detach 2c90e983df7d4baa575ad8c6ac5a7165a7803029
+          git tag release-20261106.42263217060
+          curl -fsSL --retry 3 --max-time 90 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Read both staged zstd archives and compare the executable payloads
+        run: |
+          command -v zstd
+          python3 -IB "$RUNNER_TEMP/current-release/current_release_zstd.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: native-release-zstd-comparison
+          path: ${{ runner.temp }}/current-release/receipt.json
+          if-no-files-found: warn
+          retention-days: 14

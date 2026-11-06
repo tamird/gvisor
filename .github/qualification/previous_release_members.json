@@ -1,0 +1,122 @@
+{
+  "amd64": {
+    "compressed_bytes": 64690446,
+    "files": {
+      "containerd-shim-runsc-v1": {
+        "bytes": 24401317,
+        "e_machine": 62,
+        "mode": "0755",
+        "sha256": "ec3a1026ae93cdbca29fdcd02d6d3da998882aa4a49510d4fba121c22a71674b"
+      },
+      "gvisor-bin/checkpointgofer": {
+        "bytes": 48794638,
+        "e_machine": 62,
+        "mode": "0755",
+        "sha256": "b6cc9c47780de058c9b4faf3523e8fc4203fc6296f397f530e50d15a90397221"
+      },
+      "gvisor-bin/gvisor-proc-umounter": {
+        "bytes": 1072,
+        "e_machine": 62,
+        "mode": "0755",
+        "sha256": "62e0e37cdcebba6e991218e262fa08c0681ac71e4b479c45796769305c52f8aa"
+      },
+      "gvisor-bin/gvisor-sentry-prewarmer": {
+        "bytes": 1560,
+        "e_machine": 62,
+        "mode": "0755",
+        "sha256": "6a1f4a9f47fd067be7d0703c4449024934548f9d9a8a68de8a237b364bb4b588"
+      },
+      "gvisor-bin/gvisor_sentry": {
+        "bytes": 55063471,
+        "e_machine": 62,
+        "mode": "0755",
+        "sha256": "b7d05dcf38743dab11da8b124b1742042715a3803e6489a09906cf6edbb08414"
+      },
+      "gvisor-bin/runsc-fd-parking": {
+        "bytes": 65928,
+        "e_machine": 62,
+        "mode": "0755",
+        "sha256": "14927600c8430229d50d895e395f51f79c721ed825d9b13880e9bb0cbfc86d68"
+      },
+      "gvisor-bin/runsc-metric-server": {
+        "bytes": 21583746,
+        "e_machine": 62,
+        "mode": "0755",
+        "sha256": "262600b6854ed02928e4a02fe23d2dd5f55dca0db0e10ea7cbe3a72eca51060d"
+      },
+      "gvisor-bin/runsc-netgofer": {
+        "bytes": 18508304,
+        "e_machine": 62,
+        "mode": "0755",
+        "sha256": "c6ac5f038d3067bb8cf0466781765e3f43e3439ab3ee1c42972096f49ddf1744"
+      },
+      "runsc": {
+        "bytes": 19435375,
+        "e_machine": 62,
+        "mode": "0755",
+        "sha256": "d10199c6ba7674d1054a4561b8eca4ff93fbd9b900e3f825ab3590c1c7cd4ffe"
+      }
+    },
+    "zstd": "564da3fe2cf663d5fd5e15db23af7407cae6330b1ad21882f691a1ec5c032e6e"
+  },
+  "arm64": {
+    "compressed_bytes": 60227386,
+    "files": {
+      "containerd-shim-runsc-v1": {
+        "bytes": 23116508,
+        "e_machine": 183,
+        "mode": "0755",
+        "sha256": "d4409e161bb286115e65aefbb1ab3fc70339f667cf4a943be0ddbe13d357fb03"
+      },
+      "gvisor-bin/checkpointgofer": {
+        "bytes": 46501113,
+        "e_machine": 183,
+        "mode": "0755",
+        "sha256": "dd9c98fe839dcf98446a96da0f68a8809ced34bde093c907c3b7e00dc38b3ab2"
+      },
+      "gvisor-bin/gvisor-proc-umounter": {
+        "bytes": 1128,
+        "e_machine": 183,
+        "mode": "0755",
+        "sha256": "c58adb3e05f2d8116a28b4588a17bdb07975b00bdc5a617d14ce08037ab5da36"
+      },
+      "gvisor-bin/gvisor-sentry-prewarmer": {
+        "bytes": 1672,
+        "e_machine": 183,
+        "mode": "0755",
+        "sha256": "5108438e45f485b9843daa27537921cf65ef71d1cc0878fec62cda5507ada09c"
+      },
+      "gvisor-bin/gvisor_sentry": {
+        "bytes": 51551698,
+        "e_machine": 183,
+        "mode": "0755",
+        "sha256": "7de9d850effd3721f9166b9b56541e6f4942263f497f2373381fbfeb4b5466ce"
+      },
+      "gvisor-bin/runsc-fd-parking": {
+        "bytes": 65928,
+        "e_machine": 183,
+        "mode": "0755",
+        "sha256": "28f5206c05ce4cffb2a7e55090c3ba7e1fbb285aa59b1f6f152939b964e32600"
+      },
+      "gvisor-bin/runsc-metric-server": {
+        "bytes": 20247951,
+        "e_machine": 183,
+        "mode": "0755",
+        "sha256": "baf8deb8d195485ab2e38482a1db25eafb16675483b69c5af71401528681f7da"
+      },
+      "gvisor-bin/runsc-netgofer": {
+        "bytes": 17439029,
+        "e_machine": 183,
+        "mode": "0755",
+        "sha256": "2fca643c297993fdbf9b982a1008f3452dbd5d1ed7cf513301135c8b4538fd5f"
+      },
+      "runsc": {
+        "bytes": 18182995,
+        "e_machine": 183,
+        "mode": "0755",
+        "sha256": "0e4a8c0b375113f1e973b555bed37c61d85868d3acc7bf25c1f0fe04b7e455e7"
+      }
+    },
+    "zstd": "894fbf8cd90918bba10dd9233d60bd84e4509089fb45b8516244167b972627af"
+  }
+}
