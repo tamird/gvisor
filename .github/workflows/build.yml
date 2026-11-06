@@ -1,35 +1,63 @@
-name: CI
-
-"on":
+name: Check sandbox route collection on the LLVM worker
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-explicit-route-owner]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  sandbox:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 42
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 3
+          persist-credentials: false
+      - name: Verify the fixture port and original worker selection
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = ccc5942a19839ea09ca5939b1279859b2f81c5e7
+          test "$(git rev-parse HEAD^^)" = 53c458937842fb431ef351c39781850f5a817234
+          git diff --exit-code HEAD^^ HEAD^ -- . ':!runsc/sandbox/network_test.go'
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/collect_routes.py'
+          work="$RUNNER_TEMP/route-sandbox"
+          mkdir -m 700 "$work"
+          cp .github/qualification/collect_routes.py "$work/"
+          git checkout -q --detach HEAD^
+          test "$(bazelisk --version)" = 'bazel 9.3.1'
+      - name: Run the full sandbox test on the original AMD64 RBE platform
+        timeout-minutes: 37
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/route-sandbox"
+          rc="$work/bazelrc"
+          umask 077
+          trap 'rm -f "$rc"' EXIT
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" > "$rc"
+          unset BUILDBUDDY_API_KEY
+          awk '/^(build|test):source-presubmit / && !/--target_pattern_file=/ {sub(/:source-presubmit /, ":route_check "); print}' .bazelrc >> "$rc"
+          test "$(grep -c ':route_check ' "$rc")" -eq 6
+          code=0
+          timeout -k 20s 33m bazelisk --bazelrc="$rc" test --config=x86_64 --config=route_check \
+            --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io \
+            --jobs=80 --remote_download_outputs=toplevel '--remote_download_regex=.*/test\.(xml|log)$' \
+            --flaky_test_attempts=1 --nocache_test_results '--modify_execution_info=^TestRunner$=+no-remote-cache' \
+            --test_arg=-test.v --test_output=all --build_event_json_file="$work/events" \
+            //runsc/sandbox:sandbox_test > "$work/output" 2>&1 || code=$?
+          printf '%d\n' "$code" > "$work/exit"
+      - name: Record the actual TestRunner and fixture outcomes
+        if: always() && !cancelled()
+        run: python3 -IB "$RUNNER_TEMP/route-sandbox/collect_routes.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: llvm-sandbox-route-owner
+          path: ${{ runner.temp }}/route-sandbox/result.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Require the original remote owner and all three named passes
+        if: always() && !cancelled()
+        run: jq -e .verified "$RUNNER_TEMP/route-sandbox/result.json"
