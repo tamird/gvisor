@@ -1,35 +1,46 @@
-name: CI
-
-"on":
+name: Analyze the original Tailscale queue measurements
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-104-queue-statistics]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  stats:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@v5
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=runsc DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@v4
-      with:
-          name: runsc
-          path: bin/runsc
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Verify original inputs and run the declared benchstat target
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 2b51abee8530385431b7225198fdd5cd65e78696
+          d="$RUNNER_TEMP/retained-queue"
+          mkdir "$d"
+          python3 - "$d" <<'PY'
+          import csv,hashlib,pathlib,sys
+          d=pathlib.Path(sys.argv[1]); rows=list(csv.DictReader(open(".github/qualification/tcp104/observations.csv")))
+          assert len(rows)==30 and all(r["status"]=="complete" and r["bytes_confirmed"]=="2800000" for r in rows)
+          checksums={"stock":"d031aa506e24a5ffec5dd71221417b22727621c6bdcbd69f70ca2203cb82dc7d","fixed":"d8ee159c6262f929942ceeed32d3603d2a53d79c0147d758ee01bfd35077f1a6","calibration":"3fd80ffeb9c8bcaaf84d30cb4f78c460cc2914accf8305231a3d2a9010f68618"}
+          for arm,expected in checksums.items():
+              group=[r for r in rows if r["variant"]==arm]
+              assert [int(r["seed"]) for r in group]==list(range(1,11))
+              data="".join(f"BenchmarkFetch 1 {round(float(r['seconds'])*1e9)} ns/op\n" for r in group).encode()
+              assert hashlib.sha256(data).hexdigest()==expected
+              (d/(arm+".bench")).write_bytes(data)
+          PY
+          curl -fsSL --retry 3 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod +x "$d/bazel"
+          env -i HOME="$HOME" USER=runner PATH="$PATH" LANG=C.UTF-8 "$d/bazel" --nosystem_rc --nohome_rc --bazelrc=/dev/null --host_jvm_args=-Xmx3g run --config=x86_64 --lockfile_mode=off -c opt --jobs=4 --local_resources=memory=8192 --remote_cache= --remote_executor= --bes_backend= @org_golang_x_perf//cmd/benchstat -- "stock=$d/stock.bench" "PR16495=$d/fixed.bench" "PR16081=$d/calibration.bench" > "$d/benchstat.txt"
+          cat "$d/benchstat.txt"
+          grep -q Fetch "$d/benchstat.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: benchstat-from-original-queue-inputs
+          path: |
+            ${{ runner.temp }}/retained-queue/*.bench
+            ${{ runner.temp }}/retained-queue/benchstat.txt
+          if-no-files-found: error
+          retention-days: 14
