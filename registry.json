@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T10:53:11.488Z",
+    "updatedAt": "2026-11-06T10:58:13.320Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -41359,14 +41359,22 @@
       "repo": "google/gvisor",
       "number": 15972,
       "ref": "rack-pto-rto-cap",
-      "head": "32045814e05bcfcf3a6ea55a65e7329ab423b3fd",
-      "title": "Review the tail probe deadline after an ACK",
+      "head": "a6a26052fcf59e25cb748093fb5017932c088c80",
+      "title": "Tail probe deadline after a recovery ACK",
       "url": "https://github.com/google/gvisor/pull/15972",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-04T17:48:56.110142+00:00",
-      "summary": "The author applied the ACK-accounting fix. On a separate recovery-exit ACK, the PR sent the one remaining segment at the old 20 ms deadline. Using the advancing ACK’s 50 ms RTO matched the Linux timer calculation and preserved the four existing cases.",
+      "updatedAt": "2026-11-06T10:58:13.320Z",
+      "summary": "Flozano incorporated the timer change and its regression in a6a26052f. The ACK that ends SACK recovery now starts a full RTO for the remaining segment. The five probe tests match the previously tested cases. Flozano reports all five passed in 30 consecutive runs.",
       "evidence": [
+        {
+          "label": "Author incorporated both changes and reports 30 runs of the five probe tests",
+          "url": "https://github.com/google/gvisor/pull/15972#discussion_r4491468229"
+        },
+        {
+          "label": "Rebased source with the timer correction and permanent regression",
+          "url": "https://github.com/google/gvisor/commit/a6a26052f"
+        },
         {
           "label": "Three sources, packet bytes and timing",
           "url": "https://github.com/tamird/gvisor/actions/runs/41140493959/artifacts/13018229764"
@@ -41449,12 +41457,14 @@
         }
       ],
       "followup": {
-        "owner": "TCP review owner",
-        "sourceHead": "32045814e05bcfcf3a6ea55a65e7329ab423b3fd",
-        "observedAt": "2026-11-04T17:48:56.110142+00:00",
-        "disposition": "Published the qualified timer fix and regression in a reply to Lucas.",
-        "nextAction": "Flozano owns the PR description. Watch for a new reviewer question or an author update. The First Pass result is advisory under the maintainer guidance in #16791; no log request or retry is needed.",
+        "owner": "gVisor maintainer",
+        "sourceHead": "a6a26052fcf59e25cb748093fb5017932c088c80",
+        "observedAt": "2026-11-06T10:31:14Z",
+        "disposition": "Both timer findings and their regression tests are in the rebased PR. The updated description covers both send paths and the recovery ACK.",
+        "nextAction": "Maintainer review. Flozano asked Lucas about the advisory First Pass build.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15972#discussion_r4491468229",
+          "https://github.com/google/gvisor/commit/a6a26052f",
           "https://github.com/google/gvisor/pull/15972#pullrequestreview-5758454721",
           "https://github.com/google/gvisor/pull/15972#discussion_r4471155616"
         ]
