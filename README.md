@@ -367,9 +367,9 @@ The collector checks open PRs from other authors in `google/gvisor`,
 including PRs absent from the registry. It looks for formal reviewer
 assignments and explicit requests addressed to the contributor in PR
 descriptions, comments, reviews and inline threads. Each refresh resumes a
-bounded backfill across open PRs and long discussions. GitHub review and
-thread replies clear the requests they answer. Exact inspection receipts
-in `reviewWatch.inspected` apply to the recorded revision of a message.
+bounded backfill across open PRs and long discussions. A submitted
+review or a response in the same thread clears the request it answers.
+An internal inspection leaves it open until the reviewer responds.
 The workflow publishes the queue. The active supervisor owns the review.
 
 Each refresh puts a compact `reviewerHandoff` before routine check output and

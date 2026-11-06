@@ -551,12 +551,23 @@ class CollectorHistoryTest(unittest.TestCase):
         message = {"body": "@tamird PTAL", "createdAt": OLD, "updatedAt": OLD,
                    "author": {"login": "other", "__typename": "User"},
                    "id": "request", "url": pr["url"] + "#issuecomment-123"}
+        self.registry["nodes"].append({"id": "pr:2", "type": "pr", "repo": "google/gvisor", "number": 2,
+                                      "reviewWatch": {"inspected": [{"id": message["id"], "url": message["url"],
+                                         "head": pr["headRefOid"], "updatedAt": OLD,
+                                         "evidence": "https://github.com/tamird/gvisor/actions/runs/42245055323"}]}})
         pr["comments"]["nodes"].append(message)
         with mock.patch("builtins.print") as log:
             snapshot = self.collect()
         request, = snapshot["incomingReviewRequests"]
         self.assertEqual((request["repo"], request["id"], request["url"]), ("google/gvisor", "request", message["url"]))
         self.assertIn(mock.call(json.dumps({"incomingReviewRequest": request})), log.call_args_list)
+
+        pr["reviews"]["nodes"].append({"id": "submitted", "url": pr["url"] + "#pullrequestreview-5804754005",
+                                      "body": "I checked the updated implementation.", "submittedAt": LATER,
+                                      "updatedAt": LATER, "state": "COMMENTED", "authorAssociation": "CONTRIBUTOR",
+                                      "author": {"login": "tamird", "__typename": "User"},
+                                      "commit": {"oid": pr["headRefOid"]}})
+        self.assertEqual(self.collect()["incomingReviewRequests"], [])
 
     def test_main_publishes_fresh_release_observation_and_survives_unavailability(self) -> None:
         self.registry["nodes"].append({"id": "pr:3", "type": "pr", "repo": "google/gvisor", "number": 3,

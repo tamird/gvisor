@@ -23,7 +23,7 @@ def message(kind, name, body, time=ASK, author="ayushr2", **fields):
     )
 
 
-def observe(messages, previous=None, inspected=(), complete=True):
+def observe(messages, previous=None, complete=True):
     pr = dict(
         repo=REPO,
         number=17082,
@@ -34,7 +34,7 @@ def observe(messages, previous=None, inspected=(), complete=True):
         status="open",
         feedback={"items": messages, "complete": complete},
     )
-    requests, scan = discover(previous or {}, [pr], OWNER, None, LATER, 0, inspected)
+    requests, scan = discover(previous or {}, [pr], OWNER, None, LATER, 0)
     return {"incomingReviewRequests": requests, "incomingReviewScan": scan}
 
 
@@ -82,7 +82,7 @@ class IncomingReviewsTest(unittest.TestCase):
             observe([message("comment", "done", "done @tamird"), approval])["incomingReviewRequests"], []
         )
 
-    def test_inline_thread_and_exact_inspection(self):
+    def test_inline_reply_and_resolution(self):
         ask = message("inline", "discussion-1", "@tamird PTAL", threadId="thread", isResolved=False)
         response = message("inline", "answer", "Handled", LATER, OWNER, threadId="different", isResolved=False)
         pending = observe([ask, response])
@@ -90,8 +90,6 @@ class IncomingReviewsTest(unittest.TestCase):
         response["threadId"] = "thread"
         self.assertFalse(observe([response], pending, complete=False)["incomingReviewRequests"])
         self.assertFalse(observe([dict(ask, isResolved=True)])["incomingReviewRequests"])
-        self.assertFalse(observe([ask], inspected=[ask])["incomingReviewRequests"])
-        self.assertTrue(observe([dict(ask, updatedAt=LATER)], inspected=[ask])["incomingReviewRequests"])
 
     def test_other_repositories_never_enter_pending_or_cursors(self):
         row = dict(repo="llvm/llvm-project", number=233715, kind="formal", id="supplier")

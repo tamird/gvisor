@@ -1257,12 +1257,7 @@ def main() -> None:
 
 
 def incoming_review_intake(previous: dict, rows: list[dict], now: str) -> tuple[list[dict], dict]:
-    inspected = [
-        record for item in [*REGISTRY["nodes"], *REGISTRY.get("investigations", [])]
-        if item.get("reviewWatch", {}).get("repo", item.get("repo")) == REPO
-        for record in item.get("reviewWatch", {}).get("inspected", [])
-    ]
-    return incoming_reviews(previous, rows, OWNER, graphql, now, min(6, REQUEST_LIMIT - requests), inspected)
+    return incoming_reviews(previous, rows, OWNER, graphql, now, min(6, REQUEST_LIMIT - requests))
 
 
 def incoming_review_handoff() -> None:

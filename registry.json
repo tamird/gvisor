@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T18:24:42.424Z",
+    "updatedAt": "2026-11-06T18:29:14.522Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -52223,9 +52223,17 @@
       "url": "https://github.com/google/gvisor/pull/17022",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T12:58:13.738Z",
-      "summary": "The author revised #17022 to preserve Reno’s response when it detects a real loss after Eifel has identified a spurious recovery. With #16851, both timeout and RACK loss now leave the slow-start threshold at 2 packets. The previous revision restored the unlimited threshold. Two timeouts before detection still distinguish an ACK of the original transmission from an ACK of its repair. On #17022 alone, a tail probe that repairs real loss now leaves the threshold at 2 packets instead of 13.",
+      "updatedAt": "2026-11-06T18:29:14.522Z",
+      "summary": "Aditya asked whether to fold the RACK loss case into this PR or apply it after #16081. With both patches, the threshold returned to unlimited at the end of recovery. Clearing the pending Eifel response when RACK finds a loss kept the threshold at 2 on this PR alone and with #16081. Tamir asked the author to include that change and check the final threshold.",
       "evidence": [
+        {
+          "label": "Review asking the author to fold the RACK loss case into this PR",
+          "url": "https://github.com/google/gvisor/pull/17022#pullrequestreview-5804986696"
+        },
+        {
+          "label": "Standalone and combined #16081 loss tests with original and retransmission timestamp controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42269372740/artifacts/13528043589"
+        },
         {
           "label": "Pre-loss capture in the proposed sender",
           "url": "https://github.com/google/gvisor/blob/963e83a95/pkg/tcpip/transport/tcp/snd.go#L1253"
@@ -52299,16 +52307,15 @@
         }
       ],
       "followup": {
-        "owner": "TCP review",
+        "owner": "PR author",
         "sourceHead": "7e3d55e35d58bfc8c63bdf5582b36e50bc5824dc",
         "providerHead": "7e3d55e35d58bfc8c63bdf5582b36e50bc5824dc",
-        "observedAt": "2026-11-06T12:58:13.738Z",
-        "disposition": "The author addressed the finding. The earlier acknowledgement on the previous head is superseded.",
-        "nextAction": "Follow maintainer review and import. The living TCP issue records the packet results.",
+        "observedAt": "2026-11-06T18:29:14.522Z",
+        "disposition": "Answered the author's ordering question in a review of the current head.",
+        "nextAction": "The author can fold in the tested loss handling and update the RACK case.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/17022#issuecomment-6684884560",
-          "https://github.com/tamird/gvisor/actions/runs/42220388804/artifacts/13504305289",
-          "https://github.com/google/gvisor/issues/16670"
+          "https://github.com/google/gvisor/pull/17022#pullrequestreview-5804986696",
+          "https://github.com/tamird/gvisor/actions/runs/42269372740/artifacts/13528043589"
         ]
       }
     },

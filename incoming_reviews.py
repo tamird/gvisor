@@ -57,7 +57,6 @@ def discover(
     query: Callable[[str], dict],
     now: str,
     requests_left: int,
-    inspected: Iterable[dict] = (),
 ) -> tuple[list[dict], dict]:
     """Read outstanding gVisor requests and resume bounded conversation scans."""
     old = previous.get("incomingReviewScan", {})
@@ -71,7 +70,6 @@ def discover(
             "activeIds",
             "reviewedThrough",
             "threadReplies",
-            "formalFirstSeen",
             "requestThreads",
         )
     }
@@ -83,11 +81,6 @@ def discover(
         for r in previous.get("incomingReviewRequests", [])
         if r["repo"] == REPOSITORY
     }
-    acknowledgments = {
-        (x["id"], x["url"], x["updatedAt"])
-        for x in inspected
-        if x["url"].startswith("https://github.com/google/gvisor/pull/")
-    }
     owner_lower = owner.lower()
 
     def persist():
@@ -96,7 +89,11 @@ def discover(
 
     def intake(meta, items, timestamp, complete=(), formal=None):
         repo, num = meta.get("repo", REPOSITORY), meta["number"]
-        if repo != REPOSITORY:
+        if (
+            repo != REPOSITORY
+            or meta.get("url") != f"https://github.com/{REPOSITORY}/pull/{num}"
+            or not meta.get("authorLogin")
+        ):
             return
         prkey = str(num)
         outstanding = {k for k in pending if k[:2] == (repo, num)}
@@ -123,9 +120,7 @@ def discover(
                 if reviewer.get("__typename") != "User" or reviewer.get("login", "").lower() != owner_lower:
                     continue
                 k = (repo, num, "formal", req["id"])
-                stamp = state["formalFirstSeen"].setdefault(req["id"], timestamp)
-                if (req["id"], meta["url"], stamp) in acknowledgments:
-                    continue
+                stamp = pending.get(k, {}).get("updatedAt", timestamp)
                 active.add(k)
                 pending[k] = {
                     "repo": repo,
@@ -156,7 +151,6 @@ def discover(
                 or item.get("state") in ("DISMISSED", "PENDING")
                 or state["threadReplies"].get(item.get("threadId"), "") >= stamp
                 or not addressed(item.get("body"), owner)
-                or (item["id"], item["url"], stamp) in acknowledgments
             ):
                 continue
             k = (repo, num, kind, item["id"])
