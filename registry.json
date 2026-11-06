@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T21:38:31.977Z",
+    "updatedAt": "2026-11-06T21:48:30.832Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4857,10 +4857,18 @@
       "url": "https://github.com/tamird/gvisor/commit/f6df263f8",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 to read its offsets, and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn f6df263f8, one Bazel invocation linked the public race runsc and Sentry for both AMD64 and ARM64. All four links ran uncached on a pinned AMD64 Ubuntu worker. Each ELF was static, matched its target architecture, and contained the race runtime. An unrelated QEMU toolchain, an explicit GCC override, and a custom GNU target all selected the intended compiler and libc.\n\nA separate native AMD64 Linux build checked both vDSOs and the approved raw stub extraction. All 10 AMD64 and 11 ARM64 offsets matched the embedded bytes; both vDSOs had the expected versioned ABI and passed the repository’s ELF mapping check.\n\nNative AMD64 and ARM64 ran a rootless systrap guest with the released LLVM toolchain on 3dab3494e. On the current compiler plus the approved raw extractor and release rule (2c90e983d), the public release target built Debian, bzip2 and zstd packages for both architectures. All nine executable hashes and modes matched across formats on each CPU. The unpacked AMD64 release ran a systrap guest. The ARM64 CLI reported its version under QEMU user emulation.",
-      "updatedAt": "2026-11-06T19:15:56.025Z",
+      "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 for its offsets and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn c0511e1cd, a single AMD64 source presubmit built all 2,880 build-only targets. Across 363 test owners, all 373 fresh remote shards passed. Independent analysis matched all 373 configurations to their OCI and Firecracker assignments.\n\nOn f6df263f8, one invocation linked the static race runsc and Sentry for AMD64 and ARM64 on an AMD64 Ubuntu worker. Native Linux also checked both vDSO ABIs and all 21 raw stub offsets. On 3dab3494e, the released toolchain booted rootless systrap guests natively on both architectures. On 2c90e983d, all nine executable hashes and modes matched across Debian, bzip2 and zstd releases per CPU. The AMD64 package booted a systrap guest and the ARM64 CLI ran under QEMU user emulation.",
+      "updatedAt": "2026-11-06T21:48:30.832Z",
       "head": "f6df263f8e2ce2cbe6a497356613f6785c4800a4",
       "evidence": [
+        {
+          "label": "Full Bazel invocation: all 2,880 build-only targets and all 373 fresh remote test shards passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42295193272/artifacts/13541852854"
+        },
+        {
+          "label": "Independent aquery matched every owner, run, shard and configuration; 367 OCI and 6 Firecracker assignments",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42298852746/artifacts/13543915343"
+        },
         {
           "label": "All nine installed executable hashes, modes and ELF architectures match across .deb, bzip2 and zstd on AMD64 and ARM64 (2c90e983d)",
           "url": "https://github.com/tamird/gvisor/actions/runs/42267606060/artifacts/13527578331"
@@ -11907,14 +11915,14 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/be4b12bea",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T21:31:49.331Z",
+      "updatedAt": "2026-11-06T21:48:30.832Z",
       "summary": "The development-only source passed all 25 available offline ABI comparisons and removed the driver repositories from a downstream module. The standalone differ still clones driver sources. Tamir requested that the revision address that machinery.",
       "followup": {
         "sourceHead": "be4b12bea9fae089b93d87b9f09246eeec6aa702",
-        "observedAt": "2026-11-06T21:31:49.331Z",
+        "observedAt": "2026-11-06T21:48:30.832Z",
         "owner": "Agent",
         "disposition": "Tamir requested another revision because the git-clone machinery remains in this source.",
-        "nextAction": "Remove the retained driver-source cloning machinery and qualify the revised source before proposing it.",
+        "nextAction": "Qualify the new integrated NVIDIA revision at 04238eea0 and inspect the updated source-cloning behavior before offering a new proposal.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/be4b12bea",
           "https://github.com/tamird/gvisor/actions/runs/42294413136/artifacts/13541966193",
@@ -11926,6 +11934,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Separate NVIDIA integration under fork validation",
+          "url": "https://github.com/tamird/gvisor/commit/04238eea0"
+        },
         {
           "label": "Final native ABI comparison with test-only development repositories",
           "url": "https://github.com/tamird/gvisor/actions/runs/42294413136/artifacts/13541966193"
@@ -55234,9 +55246,17 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T21:22:50.061Z",
-      "summary": "The full source presubmit on the canonical AMD64 worker ran 373 fresh remote test shards. Of those, 371 passed. The docprocessor and Python sandbox tests failed. Of 2,880 build-only targets, 2,876 succeeded and four legacy coverage genrules failed. All 34 live NVIDIA installer checks passed. ABI parity passed on the 25 versions with published source; the nine absent versions were skipped. All six netgofer cases passed. Earlier full-run, worker-placement and cache comparisons remain in the evidence. The four coverage genrules stopped at a missing curl in tools/build_cover.sh. Docprocessor could not create its container on the read-only OCI filesystem. Sandbox Python reported six EBUSYs during temporary-directory cleanup and an undeleted runtime directory. Both failing test owners passed in a focused remote run. Docprocessor ran on the namespace worker. With the existing namespace cleanup, Python ran 39 tests on the root worker, including one expected skip. On the combined LLVM source, all four replacement coverage targets built and all four AMD64 coverage ELFs verified, including the race CLI and Sentry.",
+      "updatedAt": "2026-11-06T21:48:30.832Z",
+      "summary": "On c0511e1cd, one AMD64 source-presubmit invocation built all 2,880 build-only targets and passed all 373 test shards across 363 test owners. Every shard ran freshly on a remote worker. An independent aquery matched the owner, run, shard and configuration for all 373, including 367 OCI and 6 Firecracker assignments. Bazel exited 0. The first workflow failed afterward because its reporter still expected five Firecracker owners. The four coverage CLI and Sentry ELFs were checked separately.",
       "evidence": [
+        {
+          "label": "Full Bazel invocation: all 2,880 build-only targets and all 373 fresh remote test shards passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42295193272/artifacts/13541852854"
+        },
+        {
+          "label": "Independent aquery matched every owner, run, shard and configuration; 367 OCI and 6 Firecracker assignments",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42298852746/artifacts/13543915343"
+        },
         {
           "label": "Four declared coverage targets on the combined LLVM source",
           "url": "https://github.com/tamird/gvisor/actions/runs/42292881614/artifacts/13540783719"
@@ -55438,19 +55458,14 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "e46a101fc0aebb325ec25977697a012a2e11a11b",
-        "observedAt": "2026-11-06T21:22:50.061Z",
-        "disposition": "Two tests and four legacy coverage build owners failed on the complete graph.",
-        "nextAction": "Run the full source presubmit with the qualified sandbox placement and cleanup plus the four declared coverage outputs. The original full run still has its six recorded failures.",
+        "observedAt": "2026-11-06T21:48:30.832Z",
+        "disposition": "The complete AMD64 source-presubmit graph and its worker assignments are verified on c0511e1cd.",
+        "nextAction": "Use the source-presubmit inventory to address remaining Buildkite workloads in the unified Bazel graph. Track mixed native architectures in #15370 and qualify the separate NVIDIA revision on its own source.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42283984978/artifacts/13537369674",
-          "https://github.com/tamird/gvisor/actions/runs/42283984978",
-          "https://github.com/tamird/gvisor/actions/runs/42282261080/artifacts/13536367145",
-          "https://github.com/tamird/gvisor/actions/runs/42280834294/artifacts/13534254869",
-          "https://github.com/tamird/gvisor/actions/runs/42279392380/artifacts/13534569286",
-          "https://github.com/tamird/gvisor/actions/runs/42280834294",
-          "https://github.com/tamird/gvisor/actions/runs/42279220474/artifacts/13534682362",
-          "https://github.com/tamird/gvisor/actions/runs/42278631677/artifacts/13534051869",
-          "https://github.com/tamird/gvisor/actions/runs/42278158964/artifacts/13533667943"
+          "https://github.com/tamird/gvisor/actions/runs/42295193272/artifacts/13541852854",
+          "https://github.com/tamird/gvisor/actions/runs/42298852746/artifacts/13543915343",
+          "https://github.com/tamird/gvisor/actions/runs/42292881614/artifacts/13540783719",
+          "https://github.com/tamird/gvisor/actions/runs/42295919283/artifacts/13541312295"
         ]
       }
     },
