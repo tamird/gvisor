@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-11-06T18:19:00.222303+00:00",
-  "registryDate": "2026-11-06T17:57:27.739Z",
+  "registryDate": "2026-11-06T18:22:25.827Z",
   "repositories": {
     "google/gvisor": "copybara",
     "buildbuddy-io/buildbuddy": "none",
@@ -268780,17 +268780,43 @@
               }
             ]
           },
-          "imports": [],
-          "eligible": false
+          "imports": [
+            {
+              "number": 16915,
+              "head": "8d6c3f2b71f4cd3d773c6069b18c9a834234f4fd",
+              "sourceHead": "f1dbaa4d1e2cfb522fa03197ed36f21df9a74a3b",
+              "status": "closed",
+              "mergeable": "UNKNOWN",
+              "conflicting": false
+            },
+            {
+              "number": 16982,
+              "head": "428b0ad5f5196213147e4d4bcc06410000e1d2b2",
+              "sourceHead": "f1dbaa4d1e2cfb522fa03197ed36f21df9a74a3b",
+              "status": "open",
+              "mergeable": "CONFLICTING",
+              "conflicting": true
+            }
+          ],
+          "amendment": {
+            "kind": "content-amendment",
+            "method": "reviewed-source-diff",
+            "head": "0c8fe8397654defd60ac60ff9eb59e3ba1a6deea",
+            "approvedHead": "f1dbaa4d1e2cfb522fa03197ed36f21df9a74a3b",
+            "diffSha256": "c345a92aed92e28ed49c9bbfbba27b6f7b84ab652e9f1fa97fc637e5fd3fa2c3",
+            "summary": "The rebased getTCPInfo initializes the cumulative retransmission count alongside negotiated timestamps and SACK under the endpoint lock.",
+            "evidence": "https://github.com/tamird/gvisor/compare/f1dbaa4d1...0c8fe8397"
+          },
+          "eligible": true
         },
-        "scope": "none",
-        "state": "absent",
-        "action": null,
+        "scope": "amended",
+        "state": "conflicting",
+        "action": "maintainer-reapproval",
         "trigger": {
           "label": "ready to pull",
           "state": "present"
         },
-        "description": "No matching public export was found in the complete lookup."
+        "description": "The approval covers the earlier source revision. Copybara's recorded export does not contain this amendment. Ask the approving maintainer to reapprove the current source PR so Copybara regenerates it."
       }
     },
     {
@@ -337925,7 +337951,7 @@
         "since": "2026-11-04T05:00:25.863097+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "pr:16664": {
@@ -339831,7 +339857,7 @@
         "since": "2026-10-31T16:57:06.135+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "branch:bazel-python-release": {
@@ -339840,7 +339866,7 @@
         "since": "2026-10-30T16:55:14.197497+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "branch:bazel-clang-tidy-llvm": {
@@ -339849,7 +339875,7 @@
         "since": "2026-11-03T07:06:47.467598+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "branch:rules-img-hackbench-image": {
@@ -339858,7 +339884,7 @@
         "since": "2026-11-03T04:16:24.163353+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "branch:rules-img-wrk2-image": {
@@ -339867,7 +339893,7 @@
         "since": "2026-10-31T07:18:55.041730+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "branch:state-destination-kind": {
@@ -339876,7 +339902,7 @@
         "since": "2026-11-05T15:27:44.402237Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "branch:state-encoder-zero-dispatch": {
@@ -339885,7 +339911,7 @@
         "since": "2026-11-05T14:55:40.136006Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "branch:state-decoder-dependencies": {
@@ -339894,7 +339920,7 @@
         "since": "2026-11-05T15:27:44.402237Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "branch:plugin-toolchain-unwind": {
@@ -339903,7 +339929,7 @@
         "since": "2026-11-06T13:14:58.461Z",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "branch:package-clang-format": {
@@ -339912,7 +339938,7 @@
         "since": "2026-11-02T08:21:11+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "branch:declared-codespell": {
@@ -339921,7 +339947,7 @@
         "since": "2026-11-02T08:21:11+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "branch:release-archives-versioned": {
@@ -339930,7 +339956,7 @@
         "since": "2026-10-31T10:28:33.920382+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "branch:mutable-overlay-poll-waiter": {
@@ -339939,7 +339965,7 @@
         "since": "2026-11-05T19:38:10.552336Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "branch:staged-release-tag": {
@@ -339948,7 +339974,7 @@
         "since": "2026-10-31T09:29:02.218795+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "branch:native-gazelle-check": {
@@ -339957,7 +339983,7 @@
         "since": "2026-11-02T16:20:02.085486+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "branch:checkpoint-memory-file-registration": {
@@ -339966,7 +339992,7 @@
         "since": "2026-10-31T18:05:07.150+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "branch:hostinet-exit-linger": {
@@ -339975,7 +340001,7 @@
         "since": "2026-11-01T05:08:12.703055+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "branch:state-graph-object-frame-bounds": {
@@ -339984,7 +340010,7 @@
         "since": "2026-11-01T13:49:13.599008+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "branch:state-graph-print-errors": {
@@ -339993,7 +340019,16 @@
         "since": "2026-11-02T22:54:43.336654+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
+      }
+    },
+    "branch:fdbased-start-on-attach": {
+      "contributor-review": {
+        "scope": "66eb55f0e3c5a734303e99b6b28baccadba1fb31",
+        "since": "2026-11-06T18:22:25.827Z",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "branch:native-install-archive": {
@@ -340002,7 +340037,7 @@
         "since": "2026-11-06T16:20:27.112Z",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     },
     "branch:buildkite-source-syscalls": {
@@ -340011,7 +340046,7 @@
         "since": "2026-11-06T14:13:12.896Z",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-11-06T17:57:27.739Z"
+        "observedAt": "2026-11-06T18:22:25.827Z"
       }
     }
   },
@@ -341775,6 +341810,10 @@
       "https://github.com/tamird/gvisor/commit/f6df263f8": {
         "head": "f6df263f8e2ce2cbe6a497356613f6785c4800a4",
         "status": "Agent work"
+      },
+      "https://github.com/tamird/gvisor/commit/66eb55f0e": {
+        "head": "66eb55f0e3c5a734303e99b6b28baccadba1fb31",
+        "status": "Contributor review requested"
       }
     }
   }

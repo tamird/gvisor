@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T17:57:27.739Z",
+    "updatedAt": "2026-11-06T18:22:25.827Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -48534,7 +48534,7 @@
       "url": "https://github.com/google/gvisor/pull/16809",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T17:57:27.739Z",
+      "updatedAt": "2026-11-06T18:22:25.827Z",
       "summary": "Published the conflict resolution on the existing PR. All 16 named packet checks passed: active, passive and data retransmissions, TCP_INFO readback, and all four timestamp/SACK combinations on native Linux and gVisor.",
       "evidence": [
         {
@@ -48661,11 +48661,11 @@
       "reapproval": {
         "kind": "content-amendment",
         "method": "reviewed-source-diff",
-        "head": "bbdb2f8a254b4f51e5bf1fa96eaf4872be190d63",
-        "approvedHead": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689",
-        "diffSha256": "348233ce13cdf1abaa4a22b8bf35b61b3314b0621861436777a5d6af2fc5f197",
-        "summary": "The listener now reports a failed SYN-cookie send while still counting the cookie that was generated.",
-        "evidence": "https://github.com/tamird/gvisor/compare/bc9ffcc0d...bbdb2f8a2"
+        "head": "0c8fe8397654defd60ac60ff9eb59e3ba1a6deea",
+        "approvedHead": "f1dbaa4d1e2cfb522fa03197ed36f21df9a74a3b",
+        "diffSha256": "c345a92aed92e28ed49c9bbfbba27b6f7b84ab652e9f1fa97fc637e5fd3fa2c3",
+        "summary": "The rebased getTCPInfo initializes the cumulative retransmission count alongside negotiated timestamps and SACK under the endpoint lock.",
+        "evidence": "https://github.com/tamird/gvisor/compare/f1dbaa4d1...0c8fe8397"
       },
       "followup": {
         "owner": "Maintainer",
@@ -53515,26 +53515,26 @@
       "id": "branch:fdbased-start-on-attach",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/fdbased-reader-queues",
-      "head": "d4e65b135f3f4e6dbb811a59c38917bdb382d6c3",
+      "ref": "research/fdbased-attached-workers-wg-go",
+      "head": "66eb55f0e3c5a734303e99b6b28baccadba1fb31",
       "title": "Start FD packet processors when a receiver attaches",
-      "url": "https://github.com/tamird/gvisor/commit/d4e65b135",
+      "url": "https://github.com/tamird/gvisor/commit/66eb55f0e",
       "group": "runtime",
-      "status": "Agent work",
-      "updatedAt": "2026-11-06T17:44:22.830Z",
-      "summary": "The revised source launches the reader through e.wg.Go. Each existing reader registration holds its own active queue handle. That removes the additional per-attachment processor-manager slice. Native normal and race tests and a three-way constructor allocation comparison are running.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T18:22:25.827Z",
+      "summary": "Closing an FD endpoint before its first attachment leaves receive workers asleep. Create the reader managers in one array when the receiver attaches and start each reader with e.wg.Go. With four FDs and two processors per FD, the median fell from 176 to 165 allocations per lifecycle. With a single FD, the median allocation count held steady and allocated bytes fell.",
       "evidence": [
         {
-          "label": "Revision using the existing reader registration and WaitGroup.Go",
-          "url": "https://github.com/tamird/gvisor/commit/073784f4f"
+          "label": "Only change from the previously reviewed source",
+          "url": "https://github.com/tamird/gvisor/compare/d4e65b135...66eb55f0e"
         },
         {
-          "label": "Native worker tests, race and allocation comparison",
-          "url": "https://github.com/tamird/gvisor/actions/runs/42264237918"
+          "label": "Final lifecycle benchmark and original benchstat (12 samples per configuration)",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42267118908/artifacts/13528226718"
         },
         {
-          "label": "Compatibility with the constructor benchmark on #17060",
-          "url": "https://github.com/tamird/gvisor/commit/af2ba6ac2"
+          "label": "Full normal suite and all 33 named race records on the final source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42269172479/artifacts/13527584131"
         },
         {
           "label": "On 95ca4e731 the old receive batch delivered all three packets. With #17060 and the fix, both detach tests and 100 constructor iterations completed.",
@@ -53651,22 +53651,22 @@
       ],
       "refinement": {
         "before": {
-          "head": "95ca4e7317b6418d4ba8674a4f8d96b4c950ae78"
+          "head": "d4e65b135f3f4e6dbb811a59c38917bdb382d6c3"
         },
         "after": {
-          "head": "d4e65b135f3f4e6dbb811a59c38917bdb382d6c3"
+          "head": "66eb55f0e3c5a734303e99b6b28baccadba1fb31"
         }
       },
-      "followup": {
-        "owner": "Agent",
-        "sourceHead": "073784f4fc8576908e841abdfca013e26af5eba8",
-        "observedAt": "2026-11-06T17:44:22.830Z",
-        "disposition": "Contributor requested a simpler attachment and worker lifetime.",
-        "nextAction": "Verify native behavior and compare allocations with master and the previously reviewed change.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/073784f4f",
-          "https://github.com/tamird/gvisor/actions/runs/42264237918"
-        ]
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "66eb55f0e3c5a734303e99b6b28baccadba1fb31",
+        "baseHead": "d4e65b135f3f4e6dbb811a59c38917bdb382d6c3",
+        "url": "https://github.com/tamird/gvisor/commit/66eb55f0e",
+        "title": "fdbased: start packet processors when a receiver attaches",
+        "body": "Closing an FD endpoint before attaching it to a NIC leaves its receive\nworkers asleep. The constructor starts the workers, but only the read\nloop signals them to stop. An unattached endpoint never runs that loop.\n\nCreate the queues and their workers when a dispatcher attaches. Each\nreceive loop delivers to that dispatcher and stops its own workers on\nexit. A single processor still delivers inline.\n\nOn detach, close each queue before waking its reader. A reader already\nreturning from a receive syscall can then neither deliver the pending\nbatch nor enqueue the rest of it. Workers can finish delivering packets\nalready removed from their queues without blocking NIC removal on a\nnetwork stack callback.\n\nFor injectable endpoints, report attachment from the dispatcher used by\nInjectInbound.\n\nEach iteration creates an endpoint, attaches a receiver, detaches it and\ncloses the endpoint. The benchmark uses four FDs and two processors per\nFD. The middle column uses the earlier explicit goroutine launch.\nThe last column uses WaitGroup.Go.\n\n```text\n                                   │ master.bench  │            parallel.bench            │             wg-go.bench              │\n                                   │     B/op      │     B/op      vs base                │     B/op      vs base                │\nFDAttachCycle/fds=4/processors=2-4   112.04Ki ± 4%   78.81Ki ± 4%  -29.65% (p=0.000 n=12)   77.54Ki ± 6%  -30.80% (p=0.000 n=12)\n\n                                   │ master.bench │          parallel.bench           │            wg-go.bench            │\n                                   │  allocs/op   │ allocs/op   vs base               │ allocs/op   vs base               │\nFDAttachCycle/fds=4/processors=2-4     176.0 ± 1%   162.0 ± 1%  -7.95% (p=0.000 n=12)   165.0 ± 2%  -6.25% (p=0.000 n=12)\n```",
+        "requestedAt": "2026-11-06T18:22:25.827Z",
+        "summary": "Open the revised FD worker-lifetime PR? The only source change since d4e65b135 uses e.wg.Go. The allocation comparison and the full normal and race suites cover this revision."
       }
     },
     {
