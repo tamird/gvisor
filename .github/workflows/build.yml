@@ -1,35 +1,73 @@
-name: CI
-
-"on":
+name: Check detached NVIDIA parser resources on current master
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/nvidia-parser-master-headers]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  parser:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      GNU: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Pin the exact master-based product, client and GNU worker
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/parser-cost"
+          mkdir -p "$d/platform"
+          test "$(git rev-parse HEAD^)" = 5967bbde193112cce575c5443c6b241d99589f59
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/parser_headers.py'
+          cp .github/qualification/parser_headers.py "$d/"
+          git checkout --quiet --detach 5967bbde193112cce575c5443c6b241d99589f59
+          test "$(git rev-parse HEAD)" = 5967bbde193112cce575c5443c6b241d99589f59
+          curl --fail --location --silent --show-error --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+          echo 'module(name="tcp_gnu")' > "$d/platform/MODULE.bazel"
+          cat > "$d/platform/BUILD" <<PLAT
+          package(default_visibility=["//visibility:public"])
+          platform(name="gnu",constraint_values=["@platforms//cpu:x86_64","@platforms//os:linux"],exec_properties={"Arch":"amd64","EstimatedMemory":"8GB","OSFamily":"linux","workload-isolation-type":"firecracker","container-image":"docker://$GNU"})
+          PLAT
+          docker pull --platform=linux/amd64 "$GNU"
+          docker run --init -d --name gnu --entrypoint /bin/bash --user root -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e "GIT_CONFIG_VALUE_0=$GITHUB_WORKSPACE" -v "$d:$d" -v "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" -w "$GITHUB_WORKSPACE" "$GNU" -c 'sleep infinity'
+          test "$(docker exec gnu uname -m)" = x86_64
+          test "$(docker exec gnu "$d/bazel" --version)" = 'bazel 9.3.1'
+      - name: Build the packaged Go tool and run the original NVIDIA parser test on AMD64
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          d="$RUNNER_TEMP/parser-cost"
+          rc="$d/private.rc"
+          trap 'rm -f "$rc"' EXIT
+          test -n "$BUILDBUDDY_API_KEY"
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$d/parser_headers.py"
+      - name: Verify the bounded public record
+        if: always()
+        id: receipt
+        run: |
+          d="$RUNNER_TEMP/parser-cost"
+          test ! -e "$d/private.rc"
+          python3 - "$d/report.json" <<'PY'
+          import json,pathlib,re,sys
+          path=pathlib.Path(sys.argv[1]);assert path.is_file() and not path.is_symlink() and 0<path.stat().st_size<45000
+          data=path.read_bytes();assert not re.search(rb"(?i)x-buildbuddy-api-key|authorization\s*[:=]|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}",data)
+          assert json.loads(data)["source"]=="5967bbde193112cce575c5443c6b241d99589f59"
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.receipt.outcome == 'success'
+        with:
+          name: master-nvidia-parser-headers
+          path: ${{ runner.temp }}/parser-cost/report.json
+          retention-days: 7
