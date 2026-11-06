@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T16:17:23.939Z",
+    "updatedAt": "2026-11-06T16:20:27.112Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -45845,9 +45845,9 @@
       "title": "Report TCP read hangups when a stream closes",
       "url": "https://github.com/tamird/gvisor/commit/1b4eaf08e",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T21:18:09.988070+00:00",
-      "summary": "An application watching only for EPOLLRDHUP could miss a peer FIN. Local read shutdown could appear open until another poll refreshed a cached flag. The fix uses the receive queue’s closed state and reports POLLHUP once both directions have closed, even when the interest mask is zero.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-06T16:20:27.112Z",
+      "summary": "The replacement uses atomicbitops.Int[tcpip.ShutdownFlags], declares its mutex and atomic access, and preserves the scalar checkpoint representation. Linux qualification is in progress.\n\nAn application watching only for EPOLLRDHUP could miss a peer FIN. Local read shutdown could appear open until another poll refreshed a cached flag. The fix uses the receive queue’s closed state and reports POLLHUP once both directions have closed, even when the interest mask is zero.",
       "refinement": {
         "before": {
           "head": "c1432a1ad4e21d58cb50b456e9605417ae0d3ff4"
@@ -45857,6 +45857,14 @@
         }
       },
       "evidence": [
+        {
+          "label": "Revised source under qualification",
+          "url": "https://github.com/tamird/gvisor/commit/bf20197d4"
+        },
+        {
+          "label": "Source-specific Linux qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42251283898"
+        },
         {
           "label": "Linux and stock gVisor on the same syscall cases",
           "url": "https://github.com/tamird/gvisor/actions/runs/41288718074/artifacts/13076651174"
@@ -45874,16 +45882,28 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41313774639/artifacts/13085808246"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "1b4eaf08e996c4741c8114a33b683b6312fe59ed",
-        "baseHead": "254c8ddfcc97180f83ba6454db22afb6235b5df3",
-        "url": "https://github.com/tamird/gvisor/commit/1b4eaf08e",
-        "title": "Report TCP read hangups when a stream closes",
-        "requestedAt": "2026-11-01T13:56:22.287550+00:00",
-        "summary": "Open this TCP readiness fix after its unread-data prerequisite lands?",
-        "body": "The six IPv4 and IPv6 shutdown cases pass. [1] Removing the cached receive-closed flag changes the TCP checkpoint schema. [2]\n\nTwelve paired samples measured one Readiness call on an established TCP socket for each event mask. [3]\n\n```\n                                     │ stock.bench │             fixed.bench             │\n                                     │   sec/op    │   sec/op     vs base                │\nEstablishedReadiness/Read              8.511n ± 7%   9.127n ± 1%   +7.24% (p=0.005 n=12)\nEstablishedReadiness/Write             8.744n ± 0%   9.075n ± 1%   +3.79% (p=0.000 n=12)\nEstablishedReadiness/ReadWrite         13.75n ± 0%   13.46n ± 0%   -2.18% (p=0.000 n=12)\nEstablishedReadiness/ReadHangup        4.068n ± 0%   5.005n ± 0%  +23.03% (p=0.000 n=12)\nEstablishedReadiness/WriteReadHangup   8.771n ± 3%   9.386n ± 0%   +7.01% (p=0.000 n=12)\n```\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41304005091/artifacts/13083155959\n[2]: https://github.com/tamird/gvisor/actions/runs/41305019589/artifacts/13085858051\n[3]: https://github.com/tamird/gvisor/actions/runs/41313774639/artifacts/13085808246\n"
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "1b4eaf08e996c4741c8114a33b683b6312fe59ed",
+          "url": "https://github.com/tamird/gvisor/commit/1b4eaf08e",
+          "title": "Report TCP read hangups when a stream closes",
+          "body": "The six IPv4 and IPv6 shutdown cases pass. [1] Removing the cached receive-closed flag changes the TCP checkpoint schema. [2]\n\nTwelve paired samples measured one Readiness call on an established TCP socket for each event mask. [3]\n\n```\n                                     │ stock.bench │             fixed.bench             │\n                                     │   sec/op    │   sec/op     vs base                │\nEstablishedReadiness/Read              8.511n ± 7%   9.127n ± 1%   +7.24% (p=0.005 n=12)\nEstablishedReadiness/Write             8.744n ± 0%   9.075n ± 1%   +3.79% (p=0.000 n=12)\nEstablishedReadiness/ReadWrite         13.75n ± 0%   13.46n ± 0%   -2.18% (p=0.000 n=12)\nEstablishedReadiness/ReadHangup        4.068n ± 0%   5.005n ± 0%  +23.03% (p=0.000 n=12)\nEstablishedReadiness/WriteReadHangup   8.771n ± 3%   9.386n ± 0%   +7.01% (p=0.000 n=12)\n```\n\n[1]: https://github.com/tamird/gvisor/actions/runs/41304005091/artifacts/13083155959\n[2]: https://github.com/tamird/gvisor/actions/runs/41305019589/artifacts/13085858051\n[3]: https://github.com/tamird/gvisor/actions/runs/41313774639/artifacts/13085808246\n",
+          "outcome": "changes-requested",
+          "at": "2026-11-06T16:20:27.112Z",
+          "note": "Use a typed atomic for the shutdown flags and express its lock contract."
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "bf20197d4c2ba3b36cbd9bb034f407a9c5cce5e6",
+        "observedAt": "2026-11-06T16:20:27.112Z",
+        "disposition": "Use a typed atomic for the shutdown flags and express its lock contract.",
+        "nextAction": "Verify the original test and analyzer results before requesting review of the revised source.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/bf20197d4",
+          "https://github.com/tamird/gvisor/actions/runs/42251283898"
+        ]
       }
     },
     {
@@ -46776,10 +46796,18 @@
       "title": "Retransmit the SYN-ACK when a peer repeats its SYN",
       "url": "https://github.com/tamird/gvisor/commit/22d8cfc02",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-02T00:04:15+00:00",
-      "summary": "When the client repeats its SYN before the retransmission timer fires, stock gVisor answers with a bare ACK. Linux and the fix reply immediately with the missing SYN-ACK, suppress a third immediate request, and report 1 ms RTT on the accepted socket. A prototype that reused the first local timestamp reported 1,553 ms. The final revision also matches Linux at the signed timestamp boundary.",
+      "status": "Agent work",
+      "updatedAt": "2026-11-06T16:20:27.112Z",
+      "summary": "The replacement makes sendSyn parameterless. Only the passive reply updates a packet-local timestamp, and only retransmitSyn counts a retry. Linux qualification is in progress.\n\nWhen the client repeats its SYN before the retransmission timer fires, stock gVisor answers with a bare ACK. Linux and the fix reply immediately with the missing SYN-ACK, suppress a third immediate request, and report 1 ms RTT on the accepted socket. A prototype that reused the first local timestamp reported 1,553 ms. The final revision also matches Linux at the signed timestamp boundary.",
       "evidence": [
+        {
+          "label": "Revised source under qualification",
+          "url": "https://github.com/tamird/gvisor/commit/3c8aa1d51"
+        },
+        {
+          "label": "Source-specific Linux qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42251069517"
+        },
         {
           "label": "Stock and Linux before the handshake timer fires",
           "url": "https://github.com/tamird/gvisor/actions/runs/41362026193/artifacts/13106345311"
@@ -46793,16 +46821,28 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41364729375/artifacts/13107085903"
         }
       ],
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "22d8cfc02a0c99c00fc9e9a97160d3dae8208b48",
-        "baseHead": "bc9ffcc0dab81dacb713ea60879fa5bde6e31689",
-        "url": "https://github.com/tamird/gvisor/commit/22d8cfc02",
-        "title": "Retransmit the SYN-ACK when a peer repeats its SYN",
-        "requestedAt": "2026-11-02T00:04:15+00:00",
-        "summary": "Open this PR after per-socket TCP retransmission accounting lands?",
-        "body": "When the client repeats its SYN before the retransmission timer fires, stock gVisor answers with a bare ACK. Linux and the fix reply immediately with the missing SYN-ACK, suppress a third immediate request, and report 1 ms RTT on the accepted socket. A prototype that reused the first local timestamp reported 1,553 ms. The final revision also matches Linux at the signed timestamp boundary."
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "22d8cfc02a0c99c00fc9e9a97160d3dae8208b48",
+          "url": "https://github.com/tamird/gvisor/commit/22d8cfc02",
+          "title": "Retransmit the SYN-ACK when a peer repeats its SYN",
+          "body": "When the client repeats its SYN before the retransmission timer fires, stock gVisor answers with a bare ACK. Linux and the fix reply immediately with the missing SYN-ACK, suppress a third immediate request, and report 1 ms RTT on the accepted socket. A prototype that reused the first local timestamp reported 1,553 ms. The final revision also matches Linux at the signed timestamp boundary.",
+          "outcome": "changes-requested",
+          "at": "2026-11-06T16:20:27.112Z",
+          "note": "Separate SYN retransmission accounting from sending the SYN."
+        }
+      ],
+      "followup": {
+        "owner": "Agent",
+        "sourceHead": "3c8aa1d51dcfb99a39d967c45046483cd42c561d",
+        "observedAt": "2026-11-06T16:20:27.112Z",
+        "disposition": "Separate SYN retransmission accounting from sending the SYN.",
+        "nextAction": "Verify the original test and analyzer results before requesting review of the revised source.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/3c8aa1d51",
+          "https://github.com/tamird/gvisor/actions/runs/42251069517"
+        ]
       }
     },
     {
@@ -53545,14 +53585,22 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "proposal/native-install-archive",
-      "head": "e77cb0cd69301da42cd45d8651d94cd6d700e12f",
+      "head": "75fdf2ab90f427c78af3c71cdc0ee2250ce5a5d1",
       "title": "Lead the Linux installation guide with the Bazel archive",
-      "url": "https://github.com/tamird/gvisor/commit/e77cb0cd6",
+      "url": "https://github.com/tamird/gvisor/commit/75fdf2ab9",
       "group": "bazel",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T06:48:31.766413Z",
-      "summary": "Build the bzip2 runtime archive directly with Bazelisk on Linux. The installation includes runsc, its Sentry, shim and sidecars. Docker remains an option. The documentation can land after #16753 selects only the host architecture’s generators.",
+      "updatedAt": "2026-11-06T16:20:27.112Z",
+      "summary": "Build and install the Linux runtime from the Bazel archive. The revised introduction explains that running containers with runsc requires Linux 5.6 or later. All seven command blocks match the ones tested on native AMD64 and ARM64.",
       "evidence": [
+        {
+          "label": "Two-line clarification of the kernel requirement",
+          "url": "https://github.com/tamird/gvisor/compare/e77cb0cd6...75fdf2ab9"
+        },
+        {
+          "label": "runsc began requiring openat2 for secure path resolution",
+          "url": "https://github.com/google/gvisor/commit/a7402ea5d"
+        },
         {
           "label": "Native AMD64 build, nine executables and systrap guest",
           "url": "https://github.com/tamird/gvisor/actions/runs/42175442583/artifacts/13482599775"
@@ -53573,12 +53621,20 @@
       "contributorReview": {
         "status": "pending",
         "kind": "proposal",
-        "head": "e77cb0cd69301da42cd45d8651d94cd6d700e12f",
-        "url": "https://github.com/tamird/gvisor/commit/e77cb0cd6",
-        "requestedAt": "2026-11-06T06:48:31.766413Z",
+        "head": "75fdf2ab90f427c78af3c71cdc0ee2250ce5a5d1",
+        "url": "https://github.com/tamird/gvisor/commit/75fdf2ab9",
+        "requestedAt": "2026-11-06T16:20:27.112Z",
         "title": "Open the Linux installation guide PR after #16753",
-        "summary": "On native AMD64 and ARM64, the documented command built nine executables with only the host GNU tools and Docker stopped. Each installed Sentry ran a guest under systrap. Stock ARM64 failed looking for an x86 cross-compiler. Both runs used a1b8ee4af; the final text names Bazelisk and clarifies the Linux 5.6+ build-host requirement.",
+        "summary": "Review the two-line clarification of the Linux 5.6 requirement. The source installation commands and #16753 prerequisite are the same.",
         "body": "Installing runsc needs one archive with its Sentry, containerd shim and\nsidecars. The Docker Make target also builds the zstd archive and copies\nboth outputs. Show Linux developers how to build and extract the bzip2\narchive directly with Bazel, and keep the Docker workflow as an option.\n\nThe systrap and vDSO generators select the requested architecture, so a\nnative build can use the host’s GNU tools."
+      },
+      "refinement": {
+        "before": {
+          "head": "e77cb0cd69301da42cd45d8651d94cd6d700e12f"
+        },
+        "after": {
+          "head": "75fdf2ab90f427c78af3c71cdc0ee2250ce5a5d1"
+        }
       }
     },
     {
@@ -54491,9 +54547,13 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T16:14:27.582Z",
-      "summary": "On current master, one Bazel command selects the same 360 runnable tests and 2,881 build-only targets as the AMD64 cgroup-v2 unit presubmit, plus a native uname control. Bazel assigns 366 test shards to OCI workers and five to Firecracker workers with root and IPv6. The two worker probes both measured cgroup2fs with CGROUPV2=true and false. Each setting ran remotely the first time, and both repeat runs reused the cached true result. The full invocation reported all 3,242 target outcomes. It built 2,650 of 2,881 build-only targets and ran 295 of 361 test owners. Of the executed shards, 303 passed, one sandbox test failed, and one netgofer test timed out. Sixty-six test owners, including the native uname control, never built. The GNU compiler was absent on part of the build graph. Replaying the two test owners on #15866 ran both remotely without cache hits and both passed. The cause of the original netgofer timeout remains open.\n\nA single Bazel invocation executed six tests remotely. AMD64 and ARM64 workers ran the Go atomicbitops and C++ posix_error tests. AMD64 workers also ran uname on native Linux and under gVisor systrap. All six TestRunner actions passed uncached. Four of the six tests exercise parts of three presubmit jobs. Two serve as architecture controls. Each of those three jobs still has additional coverage to verify. The fork’s Buildkite file contains one submission command. GitHub Actions submitted it for this trial.\n\nThe previous proposals kept separate unit, Nogo, package, container, smoke, Gazelle, plugin, source-lint and syscall jobs. Their target lists, test fixtures and earlier results are linked. Staged release checks still have distinct artifact inputs.",
+      "updatedAt": "2026-11-06T16:20:27.112Z",
+      "summary": "On current master, one Bazel command selects the same 360 runnable tests and 2,881 build-only targets as the AMD64 cgroup-v2 unit presubmit, plus a native uname control. Bazel assigns 366 test shards to OCI workers and five to Firecracker workers with root and IPv6. The two worker probes both measured cgroup2fs with CGROUPV2=true and false. Each setting ran remotely the first time, and both repeat runs reused the cached true result. The full invocation reported all 3,242 target outcomes. It built 2,650 of 2,881 build-only targets and ran 295 of 361 test owners. Of the executed shards, 303 passed, one sandbox test failed, and one netgofer test timed out. Sixty-six test owners, including the native uname control, never built. The GNU compiler was absent on part of the build graph. Replaying the two test owners on #15866 ran both remotely without cache hits and both passed. On the original source, six repetitions of TestRunProxyModeWithSeccomp finished. The seventh timed out waiting in cmd.Wait. Why the child remained alive is still unverified.\n\nA single Bazel invocation executed six tests remotely. AMD64 and ARM64 workers ran the Go atomicbitops and C++ posix_error tests. AMD64 workers also ran uname on native Linux and under gVisor systrap. All six TestRunner actions passed uncached. Four of the six tests exercise parts of three presubmit jobs. Two serve as architecture controls. Each of those three jobs still has additional coverage to verify. The fork’s Buildkite file contains one submission command. GitHub Actions submitted it for this trial.\n\nThe previous proposals kept separate unit, Nogo, package, container, smoke, Gazelle, plugin, source-lint and syscall jobs. Their target lists, test fixtures and earlier results are linked. Staged release checks still have distinct artifact inputs.",
       "evidence": [
+        {
+          "label": "Original-source netgofer repetition: six completions, then cmd.Wait blocked",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42248693170/artifacts/13519562956"
+        },
         {
           "label": "Remote replay of the sandbox and netgofer owners on #15866",
           "url": "https://github.com/tamird/gvisor/actions/runs/42247320345/artifacts/13518777315"
