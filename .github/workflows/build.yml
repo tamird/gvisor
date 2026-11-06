@@ -1,35 +1,97 @@
-name: CI
-
-"on":
+name: Exercise the syscall Make target through a remote systrap guest
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/make-syscall-allocator-log]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  syscalls:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 92
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 5
+          persist-credentials: false
+      - name: Select both Makefile sources and verify the client tools
+        run: |
+          set -euo pipefail
+          umask 077
+          d="$RUNNER_TEMP/make-syscalls"
+          mkdir "$d"
+          cp .github/qualification/{make_syscalls,original_allocator_log}.py "$d/"
+          test "$(git rev-parse HEAD^)" = e16513163e04dd01cb644982efe54fa94afe9bc3
+          test "$(git rev-parse HEAD^^)" = fd1afb5eeb6ea52f830fe0e4d0d1c3d4be85d873
+          test "$(git rev-parse HEAD^^^)" = 9be3ad12e8a5acc4aeb3b2cbf59108de2387a45e
+          test "$(git rev-parse HEAD^^^^)" = 224fdf968222fd45d5af77f671b7b52c2e278ebe
+          test "$(git diff --name-only HEAD^^ HEAD^)" = Makefile
+          git switch --quiet --detach HEAD^
+          test "$(git rev-parse HEAD:MODULE.bazel)" = 574594e294edde57f90c93958ee7d089c73758d7
+          test "$(git rev-parse HEAD:test/runner/defs.bzl)" = a24d7ea7b8c8e530c1ef05b8f4f4557c6e0adbe4
+          test -z "$(git status --porcelain)"
+          echo 'ae1f23a11f3cb747fbec49a34c510c5ab9dcb75d06d94bfd4d9a49d50c629271  test/rbe/release_prewarmer/BUILD' | sha256sum --check
+          test "$(cat .bazelversion)" = 9.3.1
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$d/bazel"
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-x86_64 -o "$d/bb"
+          (cd "$d" && sha256sum --check <<'SUMS'
+          7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  bazel
+          205fb4074012858c858ec357cb0cf1ed0b1fbf8707c5f385efd4abd52bb2cead  bb
+          SUMS
+          )
+          chmod 755 "$d/bazel" "$d/bb"
+      - name: Verify the original allocator compiler diagnostics
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -I -B "$RUNNER_TEMP/make-syscalls/original_allocator_log.py"
+      - name: Run the stock, two corrected partitions and an explicit runtime override
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          d="$RUNNER_TEMP/make-syscalls"
+          rc="$d/private.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          test -n "$BUILDBUDDY_API_KEY"
+          {
+            printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' 'build --bes_backend=grpcs://remote.buildbuddy.io' 'build --bes_results_url=https://app.buildbuddy.io/invocation/' 'build --spawn_strategy=remote' 'build --noremote_local_fallback'
+            printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+            printf 'build --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          } > "$rc"
+          unset BUILDBUDDY_API_KEY
+          env -i HOME="$HOME" USER="$USER" PATH="$d:$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" GITHUB_RUN_ID="$GITHUB_RUN_ID" python3 -I -B "$d/make_syscalls.py"
+      - name: Check the bounded source receipt before uploading
+        id: check
+        if: always()
+        run: |
+          set -euo pipefail
+          python3 -I -B - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          d = Path(os.environ["RUNNER_TEMP"])/"make-syscalls"
+          assert not (d/"private.bazelrc").exists()
+          original = d/"original.json"
+          assert original.is_file() and not original.is_symlink() and original.stat().st_size < 16000
+          p = d/"result.json"
+          for f in (original, p):
+              if not f.exists():
+                  continue
+              assert f.is_file() and not f.is_symlink() and f.stat().st_size < 32000
+              assert not re.search(rb'(?i)x-buildbuddy-api-key|remote_header|bes_header|authorization\s*[:=]|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY',f.read_bytes())
+          if p.exists():
+              row = json.loads(p.read_bytes())
+              assert row["fixed"] == "e16513163e04dd01cb644982efe54fa94afe9bc3"
+              assert row["stock"] == "fd1afb5eeb6ea52f830fe0e4d0d1c3d4be85d873"
+              assert row["product"] == "7e2c0ff44c64f2c4261c876abb687cbbf5f80ed2"
+              assert row["owner"] == "//test/syscalls:eventfd_test_runsc_systrap_shared"
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.check.outcome == 'success'
+        with:
+          name: make-syscall-runfiles
+          path: |
+            ${{ runner.temp }}/make-syscalls/original.json
+            ${{ runner.temp }}/make-syscalls/result.json
+          if-no-files-found: error
+          retention-days: 7
