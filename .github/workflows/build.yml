@@ -1,35 +1,36 @@
-name: CI
-
-"on":
+name: Run the unmodified netgofer test owner on the integrated receiver
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/netgofer-unfiltered]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  native:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Run the entire original owner in the supported native sandbox
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 37d0d0fedafcaa8dcd4901d47d9bde87cbca85d2
+          test "$(git rev-parse HEAD^^)" = f51a205a8f4afbc5ab41aded070df74951b081ea
+          test "$(git show --format= HEAD^ | git patch-id --stable | cut -d' ' -f1)" = 4018906c378bfcf9daf97832e6e6fa738f5966e9
+          git diff --exit-code HEAD^^ HEAD^ -- runsc/gofer/net/netgofer_test.go runsc/gofer/net/BUILD
+          d="$RUNNER_TEMP/netgofer-original"
+          mkdir -m 700 "$d"
+          cp .github/qualification/netgofer_original.py "$d/"
+          curl -fsSL --retry 3 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod +x "$d/bazel"
+          test "$("$d/bazel" --version)" = 'bazel 9.3.1'
+          git switch --quiet --detach 37d0d0fedafcaa8dcd4901d47d9bde87cbca85d2
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -IB "$d/netgofer_original.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: netgofer-original
+          path: |
+            ${{ runner.temp }}/netgofer-original/result.json
+          retention-days: 14
