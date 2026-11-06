@@ -11,6 +11,7 @@ bazel_dep(name = "bazel_lib", version = "3.4.0")
 bazel_dep(name = "yq.bzl", version = "0.4.0")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_img", version = "0.3.23")
+bazel_dep(name = "rules_distroless", version = "0.11.1", dev_dependency = True)
 bazel_dep(name = "rules_cc", version = "0.2.25")
 bazel_dep(name = "llvm", version = "0.8.24")
 bazel_dep(name = "libbpf", version = "1.7.0.bcr.1")
@@ -264,6 +265,40 @@ http_file(
 )
 
 ### Docker integration test images
+http_file(
+    name = "image_ubuntu_archive_keys",
+    dev_dependency = True,
+    downloaded_file_path = "ubuntu-archive-keyring.gpg",
+    sha256 = "80a36b0a6de2f69f49d2df75ef473ccde121e9e190b9ea01d20a4f63778d5c31",
+    urls = ["https://archive.ubuntu.com/ubuntu/project/ubuntu-archive-keyring.gpg"],
+)
+
+image_apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt", dev_dependency = True)
+image_apt.sources_list(
+    gpg_keys = ["@image_ubuntu_archive_keys//file:ubuntu-archive-keyring.gpg"],
+    architectures = [
+        "amd64",
+        "arm64",
+    ],
+    components = ["main"],
+    suites = [
+        "jammy",
+        "jammy-updates",
+        "jammy-security",
+    ],
+    types = ["deb"],
+    uris = ["https://snapshot.ubuntu.com/ubuntu/20260928T000000Z"],
+)
+image_apt.install(
+    dependency_set = "tcpdump_packages",
+    packages = [
+        # Package copyright files refer to the common licenses in base-files.
+        "base-files (= 12ubuntu4.7)",
+        "tcpdump (= 4.99.1-3ubuntu0.2)",
+    ],
+)
+use_repo(image_apt, "tcpdump_packages")
+
 # LTP provides the standalone fsstress filesystem workload.
 http_archive(
     name = "ltp",
