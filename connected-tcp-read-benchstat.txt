@@ -1,0 +1,30 @@
+Connected TCP reads through two netstack endpoints on AMD64
+
+author  https://github.com/google/gvisor/commit/46571d17e
+prefix  https://github.com/tamird/gvisor/commit/b35c34fa4
+inputs  https://github.com/tamird/gvisor/actions/runs/42182737590/artifacts/13486607377
+tool    golang.org/x/perf/cmd/benchstat@v0.0.0-20261009192801-be2c69fb417e
+
+Each sample transferred and verified 4 MiB over connected sockets with
+GRO and GSO off. Time per operation is normalized to 1 MiB. Twelve of
+sixteen planned pairs completed. Pair 13
+timed out during teardown after its first transfer had verified. Only
+the twelve complete pairs from this worker enter the comparison.
+
+                              │    author    │               prefix                │
+                              │    sec/op    │    sec/op     vs base               │
+ConnectedTCPRead/read=64-2      12.78m ± 14%   11.44m ± 20%       ~ (p=0.143 n=12)
+ConnectedTCPRead/read=65536-2   9.092m ± 23%   9.289m ± 43%       ~ (p=0.713 n=12)
+geomean                         10.78m         10.31m        -4.37%
+
+                              │    author     │                prefix                │
+                              │      B/s      │     B/s       vs base               │
+ConnectedTCPRead/read=64-2      78.27Mi ± 12%   87.46Mi ± 17%       ~ (p=0.143 n=12)
+ConnectedTCPRead/read=65536-2   110.0Mi ± 29%   107.7Mi ± 76%       ~ (p=0.713 n=12)
+geomean                         92.79Mi         97.04Mi        +4.59%
+
+                              │    author     │               prefix                │
+                              │    B/read     │    B/read     vs base               │
+ConnectedTCPRead/read=64-2        63.99 ±  0%     63.99 ±  0%       ~ (p=0.240 n=12)
+ConnectedTCPRead/read=65536-2   51.52Ki ± 14%   53.19Ki ± 15%       ~ (p=0.766 n=12)
+geomean                         1.794Ki         1.823Ki        +1.61%

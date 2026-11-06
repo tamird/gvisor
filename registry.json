@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T07:16:57.053556Z",
+    "updatedAt": "2026-11-06T07:46:49.356Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4846,7 +4846,7 @@
       "group": "bazel",
       "status": "Agent work",
       "summary": "Replace Coral GCC with hermetic-llvm for AMD64 and ARM64 releases. gVisor d5fe3c2ee uses the static C runtime on supplier be935b828 and removes its local unwinder and Linux-header patches.\n\nA Linux Bazel client drove each cross-build. The shell-free AMD64 worker ran Nogo and linked the two public ARM64 race binaries. The shell-free ARM64 worker ran Nogo and linked the two AMD64 binaries. Both pairs of links ran uncached. Each native target runner verified all five installed files and ran a systrap guest with its matching Sentry.\n\nThe supplier uses the first four static C commits from #768, the per-version glibc sources, libresolv.a for cgo DNS, and the LLVM unwinder for pthread cancellation. The earlier 0.8.24 release passed with an unavailable static C++ runtime. On b317c6e36 the static GNU TLDK Sentry exchanged TCP and UDP on native AMD64.",
-      "updatedAt": "2026-11-06T07:16:57.053556Z",
+      "updatedAt": "2026-11-06T07:40:46.780Z",
       "head": "9310f06f95b100725450a71fbb896fc8403ec0eb",
       "evidence": [
         {
@@ -5296,6 +5296,14 @@
         {
           "label": "Public release archive stops at the Python writer after the binary cross-builds",
           "url": "https://github.com/tamird/gvisor/actions/runs/42178536750/artifacts/13484526514"
+        },
+        {
+          "label": "Both public tar actions on the empty AMD64 worker with the native Python prototype",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42180846486/artifacts/13484914596"
+        },
+        {
+          "label": "Cross-built ARM64 public tar installed and booted on native ARM64",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42181753808/artifacts/13486415780"
         }
       ],
       "refinement": {
@@ -26818,17 +26826,17 @@
       "ref": "rules-img-mariadb-upstream",
       "head": "35eb15359d6d6ca384c3a68ac07be1adc8daad6d",
       "title": "Pin the existing MariaDB fixture image",
-      "url": "https://github.com/tamird/gvisor/commit/35eb15359d6d6ca384c3a68ac07be1adc8daad6d",
+      "url": "https://github.com/google/gvisor/pull/17092",
       "group": "bazel",
-      "status": "Contributor approved; sequence after #16460",
-      "updatedAt": "2026-10-26T22:59:16.323648+00:00",
-      "summary": "The approved MariaDB source is staged at 35eb15359 on PostgreSQL #16460. After #16460 merges, rebase only the MariaDB commit onto master and open its PR. Both image pulls, the selected manifest/outputs and the SQL test match approved aafc17748; the parent supplies the compatibility package and its source forwarding. No upstream MariaDB PR or new contributor decision exists.\n\nThe independently reviewed mirror amendment preserves image digests, repositories, tags, platforms and runtime inputs. Existing qualification applies to its recorded source; this prerequisite update does not claim a new runtime execution.\n\nSource-specific qualification and prior approval:\n\nPins the official MariaDB 12.3.2 AMD64 and ARM64 images and exports their archives and Docker contexts through rules_img, replacing the FROM-only Dockerfile. Both archives preserve the complete upstream configs and all eight compressed layers without added layers. The unchanged TestMariaDB SQL roundtrip passed on AMD64 runc and runsc. ARM64 coverage is archive/config/layer inspection only. The first four-owner qualification retains native FAIL: both SQL consumers passed, while the private inspector import and BUILD formatting failed and the required-case manifest used incorrect class names. A two-owner recovery passes the inspector and buildifier; exact image, runtime and source joins carry the original SQL evidence without replay. That original product composition qualified before the mirror amendment and the current contributor approval.\n\nCompare the approved mirror amendment with the staged image delta:\ngit -C ~/code/gvisor range-diff --creation-factor=999 aafc177480^! 35eb15359d^!",
+      "status": "Published as #17092",
+      "updatedAt": "2026-11-06T07:46:49.356Z",
+      "summary": "The approved MariaDB image was published as #17092 after PostgreSQL merged.",
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "35eb15359d6d6ca384c3a68ac07be1adc8daad6d",
-        "observedAt": "2026-10-26T22:59:16.323648+00:00",
-        "disposition": "Contributor approved; shared compatibility-package edits sequence after #16460",
-        "nextAction": "After #16460 lands, rebase the approved MariaDB image delta and open its PR. No new contributor decision is required for an equivalent adaptation.",
+        "observedAt": "2026-11-06T07:46:49.356Z",
+        "disposition": "Delivered as #17092",
+        "nextAction": "Follow the upstream PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6840a53eaae2a153d23843c2e28023143a03bf00",
           "https://github.com/tamird/gvisor/compare/781d64d84443b4bfffaa5cbdcf75e748d4d826d7...6840a53eaae2a153d23843c2e28023143a03bf00",
@@ -26879,8 +26887,13 @@
         {
           "label": "Only remaining delivery prerequisite",
           "url": "https://github.com/google/gvisor/pull/16379"
+        },
+        {
+          "label": "MariaDB PR",
+          "url": "https://github.com/google/gvisor/pull/17092"
         }
-      ]
+      ],
+      "inactive": true
     },
     {
       "id": "pr:16377",
@@ -28136,19 +28149,19 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "research/nvidia-parser-catalog-source",
-      "head": "74353add6098993e7cb22f2a5c443ef8fd3242f6",
+      "head": "5c019e9e6d5116841ee1dcbdee426437e9739027",
       "title": "Build the NVIDIA parser against hermetic-llvm’s LLVM source",
-      "url": "https://github.com/tamird/gvisor/commit/74353add6098993e7cb22f2a5c443ef8fd3242f6",
+      "url": "https://github.com/tamird/gvisor/commit/5c019e9e6",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-05T21:24:09.459393Z",
-      "summary": "The standalone parser migration imports hermetic-llvm’s source for the existing Clang and LLVM libraries. Draft 74353add6 on da95e9bce removes the llvm-raw Bazel 9 patch and private zlib rule. It keeps the zstd dependency used by tools/zstd. Source enumeration landed in #16249; switching the default compiler is independent.\n\nOn this draft, stock make license-check found 220 dependencies and rejected the LLVM record: NCSA and Spencer-94 were unknown. The five audited terms for the parser’s libraries are Apache-2.0 WITH LLVM-exception, BSD-3-Clause, CC0-1.0, NCSA and Spencer-94. A separate stock Fetch of just this source exited successfully but regenerated only Apache-2.0 WITH LLVM-exception and MIT from the pinned root notice. MIT is a misclassification of the NCSA text. The root notice cannot reproduce the regex and BLAKE3 terms. The prior archive audit compared five notices from the actual repack with upstream; its two Fetch passes kept an existing entry because the redistributor had no root license.\n\nThe stock 0.8.24 declaration selected nine backends. Released 0.8.26 still requests the same nine; a downstream request for just two cannot remove the others. With merged supplier #892, the earlier Bazel 9 integration executed the actual parser test on native AMD64 and ARM64 with only AArch64 and X86. The catalog job did not rebuild the parser.",
+      "updatedAt": "2026-11-06T07:46:49.356Z",
+      "summary": "The NVIDIA parser uses the LLVM module’s source in place of its private archive, zlib rule and Bazel 9 patch. On 5c019e9e6, the classifier from #15146 accepts the five terms recorded for the parser’s libraries. Two focused Fetch runs preserved the reviewed entry byte for byte because the release distributor has no root notice. The public license check verified all 224 dependencies. Changing the archive checksum or removing the regex and BLAKE3 terms failed verification. Starting with an empty catalog required a manual entry.\n\nThe registry’s latest LLVM release (0.8.26) still enables nine backends. Merged hermetic-llvm #892 makes just AArch64 and X86 the production defaults. The earlier two-backend parser ran on native AMD64 and ARM64. The current catalog qualification used nine configured backends.",
       "followup": {
         "owner": "root",
-        "sourceHead": "74353add6098993e7cb22f2a5c443ef8fd3242f6",
-        "observedAt": "2026-11-05T21:24:09.459393Z",
-        "disposition": "Source discovery landed; stock Verify rejects two terms and root-only Fetch loses the component record.",
-        "nextAction": "Use a release containing #892, or explicitly backport its two-backend default. Verify must recognize NCSA and Spencer-94 (#15146 addresses recognition). Fetch must preserve the reviewed, archive-bound root, regex and BLAKE3 terms, including the selected BLAKE3 license alternative. Qualify the five-term record before proposing the source migration.",
+        "sourceHead": "5c019e9e6d5116841ee1dcbdee426437e9739027",
+        "observedAt": "2026-11-06T07:46:49.356Z",
+        "disposition": "Five-term component audit qualified with the proposed classifier",
+        "nextAction": "Wait for #15146 before submitting. Check the native parser on released LLVM independently of the two-backend optimization. The existing catalog format represents the component audit.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb",
           "https://app.buildbuddy.io/invocation/a0ed5b1c-6618-4291-9931-ec00d9183a9f",
@@ -28252,6 +28265,18 @@
         {
           "label": "Merged source enumeration in #16249",
           "url": "https://github.com/google/gvisor/commit/0245c1dfa"
+        },
+        {
+          "label": "Exact classifier from #15146 on the root, regex and BLAKE3 notices",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42181292873/artifacts/13485775774"
+        },
+        {
+          "label": "224-entry verification, two focused Fetch runs and three negative controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42182345142/artifacts/13485284841"
+        },
+        {
+          "label": "Parser change on the classifier prerequisite",
+          "url": "https://github.com/tamird/gvisor/commit/5c019e9e6"
         }
       ],
       "refinement": {
@@ -28996,15 +29021,15 @@
       "title": "Pin the PostgreSQL compatibility image",
       "url": "https://github.com/google/gvisor/pull/16460",
       "group": "bazel",
-      "status": "open",
-      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
+      "status": "merged",
+      "updatedAt": "2026-11-06T07:46:49.356Z",
       "summary": "The contributor-approved image change is published as #16460 at 50a6f3c30 on current master. The basic image and shared mirror prerequisites have landed. No contributor decision remains. Current checks, matching imports and maintainer review are shown from the GitHub snapshot.\n\nSource-specific qualification:\n\nThis proposal pins the existing official PostgreSQL 18.4 manifests for both architectures, preserves both complete upstream configs and all 13 inherited layers without adding layers, exposes the Make contexts and removes the FROM-only Dockerfile. Eleven native phases and four archive/context outputs pass, including two uncached AMD64 TestPostgreSQL cases: native runc and the separately authenticated retained systrap runtime. Runtime identity and cleanup passed independent review. The authenticated consumer followed the last inner native phase by 3.623012 seconds; owner verification took a further 5.559069 seconds, with no manual collection. ARM64 coverage is image/config inspection only; no server rebuild, database upgrade or comparative performance is claimed. The contributor subsequently approved this exact proposal.",
       "followup": {
         "owner": "native_runtime",
         "sourceHead": "a7a46825e08dd82f9e2487564614c84afe5f0095",
-        "observedAt": "2026-10-31T00:17:49.384556+00:00",
-        "disposition": "Approved image migration published as #16460",
-        "nextAction": "Follow current-head CI, matching imports and maintainer review through the existing intake. Preserve the earlier qualification source and scope; no repeated contributor question or courtesy reply.",
+        "observedAt": "2026-11-06T07:46:49.356Z",
+        "disposition": "Merged into master",
+        "nextAction": "The MariaDB follow-up is open as #17092.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/e485bb2b079ca2d94c55955e66c5c86a388eb9be",
           "https://github.com/google/gvisor/pull/16097",
@@ -29037,6 +29062,10 @@
         {
           "label": "Both image configurations and native/runsc AMD64 SQL consumers",
           "url": "https://app.buildbuddy.io/invocation/f6dd376e-191a-4511-b0f2-b8d33b1287ad"
+        },
+        {
+          "label": "Merge on master",
+          "url": "https://github.com/google/gvisor/commit/f51a205a8"
         }
       ],
       "number": 16460
@@ -37696,8 +37725,8 @@
       "url": "https://github.com/tamird/rules_pkg/commit/1702e63c4",
       "group": "bazel",
       "status": "Withdrawn",
-      "summary": "The public release archive stops at //debian:gvisor-bin-tar on a shell-free AMD64 worker. The 12,119-byte build_tar executable starts with #!/usr/bin/env bash. The uncached action failed to start, before the outer bzip2 archive ran.\n\nBoth the stock ZIP writer and a plain Python action have the same bootstrap requirement. The scratch tar, Debian and relocation prototypes added a native first-stage launcher to rules_python #4183. rules_python 2.5.0-rc0 offers the script and system-Python choices. #4216 creates executable ZIPs. rules_pkg CI already runs the ZIP tests. Its examples can keep their existing dependencies.",
-      "updatedAt": "2026-11-06T07:16:57.053556Z",
+      "summary": "The stock tar writer starts with #!/usr/bin/env bash. Its first release action failed on the shell-free AMD64 worker. With a native rules_python launcher and static CPython, the existing rules_pkg tar actions produced both architecture archives and all nine executable inputs matched on each. A native ARM64 runner booted its installed Sentry.\n\nThe supplier prototype also started py_binary and py_test with relocated runfiles and a manifest. Bazel 7 WORKSPACE users need the launcher repository registered through py_repositories. The prototype starts CPython twice to prepare interpreter options. On the conventional AMD64 host, a trivial program took 36.55 ms with the prototype and 33.25 ms with the stock launcher (20 paired samples).",
+      "updatedAt": "2026-11-06T07:40:46.780Z",
       "evidence": [
         {
           "label": "Stock Linux ZIP archives",
@@ -37758,15 +37787,35 @@
         {
           "label": "General native stage-one Python launcher",
           "url": "https://github.com/bazel-contrib/rules_python/issues/2500"
+        },
+        {
+          "label": "AMD64 release archive",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42180846486/artifacts/13484914596"
+        },
+        {
+          "label": "ARM64 release archive and native guest",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42181753808/artifacts/13486415780"
+        },
+        {
+          "label": "Ordinary executable and test using declared Python",
+          "url": "https://github.com/tamird/rules_python/actions/runs/42180105304/artifacts/13485510005"
+        },
+        {
+          "label": "Bazel 7 WORKSPACE compatibility with the launcher repository declared",
+          "url": "https://github.com/tamird/rules_python/actions/runs/42181852131/artifacts/13485731520"
+        },
+        {
+          "label": "Bash-option compatibility and paired startup benchstat",
+          "url": "https://github.com/tamird/rules_python/actions/runs/42182527668/artifacts/13486286946"
         }
       ],
       "inactive": true,
       "followup": {
         "owner": "root",
         "sourceHead": "1702e63c4673bf8c00df82a1613c2359895fbe20",
-        "observedAt": "2026-11-06T07:16:57.053556Z",
+        "observedAt": "2026-11-06T07:40:46.780Z",
         "disposition": "Withdrawn",
-        "nextAction": "Track rules_python #2500 for a native launcher for ordinary Python executables. The rules_pkg workaround is withdrawn.",
+        "nextAction": "Continue the supplier work under rules_python #2500. Preserve the ten verified interpreter-option cases when addressing the measured startup overhead.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/40950484790",
           "https://github.com/bazelbuild/rules_pkg/blob/01446201f/.bazelci/tests.yml#L22-L40",
@@ -53130,6 +53179,86 @@
         "summary": "The socket-option copy used a forced check because a forwarder had no listening endpoint. Moving the copy onto the listener lets Nogo check both locks. An intentional unlock produced one diagnostic per mutex on AMD64 and ARM64. The final analyzer and eight existing forwarder, inheritance, backlog and deferred-accept cases passed.",
         "body": "A TCP listener copies its socket options into a new child while both\nendpoint mutexes are held. A forwarder starts the same handshake\nwithout a listening endpoint. Sharing an optional listener pointer hid\nthe listener lock from checklocks and required suppressing the check at\nthe option copy.\n\nCopy the options and reserve the tuple on the locked listener. Let the\nforwarder create its child directly, and share registration and the\nSYN-ACK on the locked child. Only the forwarder waits for the handshake\nto finish."
       }
+    },
+    {
+      "id": "pr:17092",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "rules-img-mariadb-upstream",
+      "head": "9352e7ae4170894cdcc38a8a85c31fe082f604d7",
+      "title": "Pin the existing MariaDB fixture image",
+      "url": "https://github.com/google/gvisor/pull/17092",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-06T07:46:49.356Z",
+      "summary": "The compatibility fixture uses the official MariaDB 12.3.2 image with pinned manifests for AMD64 and ARM64. The five-file patch on #17092 has the same added and removed lines as the approved source. The earlier AMD64 SQL round trip passed under runc and runsc. ARM64 qualification covered the archive, configuration and layers.",
+      "followup": {
+        "owner": "Image delivery",
+        "sourceHead": "9352e7ae4170894cdcc38a8a85c31fe082f604d7",
+        "observedAt": "2026-11-06T07:46:49.356Z",
+        "disposition": "Approved MariaDB image published after PostgreSQL merged",
+        "nextAction": "Follow CI and maintainer review on #17092.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/6840a53eaae2a153d23843c2e28023143a03bf00",
+          "https://github.com/tamird/gvisor/compare/781d64d84443b4bfffaa5cbdcf75e748d4d826d7...6840a53eaae2a153d23843c2e28023143a03bf00",
+          "https://app.buildbuddy.io/invocation/e4e379f6-be83-46b2-a519-a234a3b86c79",
+          "https://app.buildbuddy.io/invocation/96245ba8-af7a-4a49-aa66-fe46d99a9b6a",
+          "https://github.com/google/gvisor/pull/16097",
+          "https://github.com/tamird/gvisor/commit/aafc177480a2742cb5a3a7f38077805c2c397919",
+          "https://github.com/tamird/gvisor/compare/6840a53eaae2a153d23843c2e28023143a03bf00...aafc177480a2742cb5a3a7f38077805c2c397919",
+          "https://github.com/google/gvisor/pull/16379",
+          "https://github.com/google/gvisor/pull/16430",
+          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9",
+          "https://github.com/tamird/gvisor/compare/50a6f3c30a99c0320937dc4d09525f830c927602...35eb15359d6d6ca384c3a68ac07be1adc8daad6d"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Current standalone MariaDB delta after PostgreSQL",
+          "url": "https://github.com/tamird/gvisor/compare/50a6f3c30a99c0320937dc4d09525f830c927602...35eb15359d6d6ca384c3a68ac07be1adc8daad6d"
+        },
+        {
+          "label": "Last prerequisite landed: shared Docker Hub mirror policy",
+          "url": "https://github.com/google/gvisor/pull/16430"
+        },
+        {
+          "label": "Reviewed mirror amendment and prior source comparison",
+          "url": "https://github.com/tamird/gvisor/compare/6840a53eaae2a153d23843c2e28023143a03bf00...aafc177480a2742cb5a3a7f38077805c2c397919"
+        },
+        {
+          "label": "Historically qualified MariaDB product",
+          "url": "https://github.com/tamird/gvisor/commit/6840a53eaae2a153d23843c2e28023143a03bf00"
+        },
+        {
+          "label": "Complete change on the image foundation",
+          "url": "https://github.com/tamird/gvisor/compare/781d64d84443b4bfffaa5cbdcf75e748d4d826d7...6840a53eaae2a153d23843c2e28023143a03bf00"
+        },
+        {
+          "label": "AMD64 runc/runsc SQL pass; original aggregate failure retained",
+          "url": "https://app.buildbuddy.io/invocation/e4e379f6-be83-46b2-a519-a234a3b86c79"
+        },
+        {
+          "label": "Both archive identities and formatter recovery pass",
+          "url": "https://app.buildbuddy.io/invocation/96245ba8-af7a-4a49-aa66-fe46d99a9b6a"
+        },
+        {
+          "label": "Landed image foundation; required interfaces source-checked",
+          "url": "https://github.com/google/gvisor/pull/16307"
+        },
+        {
+          "label": "Only remaining delivery prerequisite",
+          "url": "https://github.com/google/gvisor/pull/16379"
+        },
+        {
+          "label": "MariaDB revision on the merged PostgreSQL base",
+          "url": "https://github.com/tamird/gvisor/commit/9352e7ae4"
+        },
+        {
+          "label": "Published MariaDB PR",
+          "url": "https://github.com/google/gvisor/pull/17092"
+        }
+      ],
+      "number": 17092
     }
   ],
   "edges": [
@@ -55635,7 +55764,7 @@
     },
     {
       "from": "pr:16097",
-      "to": "branch:rules-img-mariadb-upstream",
+      "to": "pr:17092",
       "type": "depends_on",
       "reason": "Satisfied foundation: #16097 closed in favor of merged Copybara import #16307 (c3e0783a). This historical source edge is not a remaining delivery gate. Any separate context exports, license, compiler or registry prerequisites remain independent.",
       "evidence": [
@@ -55739,7 +55868,7 @@
     },
     {
       "from": "pr:16379",
-      "to": "branch:rules-img-mariadb-upstream",
+      "to": "pr:17092",
       "type": "depends_on",
       "reason": "Satisfied by Copybara #16430 / 248c3a910: the shared Docker Hub registry policy is on master. Retained as a historical source dependency, not an active blocker.",
       "evidence": [
@@ -55870,11 +55999,10 @@
       "from": "pr:15146",
       "to": "branch:hermetic-llvm-project",
       "type": "depends_on",
-      "reason": "The stock verifier rejects NCSA and Spencer-94. #15146 recognizes complete license texts; a single root notice still cannot regenerate the parser’s component record.",
+      "reason": "The stock verifier rejects NCSA and Spencer-94. The proposed classifier accepted all five audited terms; the standard manual-entry fallback preserved the component record.",
       "evidence": [
-        "https://github.com/google/gvisor/pull/15146",
-        "https://github.com/tamird/gvisor/actions/runs/42111586199/artifacts/13455172267",
-        "https://github.com/tamird/gvisor/actions/runs/40964802913/artifacts/12937627037"
+        "https://github.com/tamird/gvisor/actions/runs/42181292873/artifacts/13485775774",
+        "https://github.com/tamird/gvisor/actions/runs/42182345142/artifacts/13485284841"
       ]
     },
     {
@@ -55936,12 +56064,12 @@
     },
     {
       "from": "pr:16460",
-      "to": "branch:rules-img-mariadb-upstream",
+      "to": "pr:17092",
       "type": "depends_on",
-      "reason": "Both migrations introduce images/compatibility. Sequence MariaDB after PostgreSQL lands to keep one shared-package editing surface; this is delivery coordination, not a database or base-image dependency.",
+      "reason": "Satisfied by the PostgreSQL merge. MariaDB adds its targets to the shared compatibility package.",
       "evidence": [
-        "https://github.com/google/gvisor/pull/16460",
-        "https://github.com/tamird/gvisor/commit/aafc177480a2742cb5a3a7f38077805c2c397919"
+        "https://github.com/google/gvisor/commit/f51a205a8",
+        "https://github.com/google/gvisor/pull/17092"
       ]
     },
     {
@@ -70202,9 +70330,26 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-06T03:03:58.221538Z",
-      "summary": "A shell-free AMD64 remote worker built and installed nine static release ELFs per target architecture on 87fd1b411. All 18 files match the original build bytes. The cross-built ARM64 CLI, Sentry and prewarmer then started a native rootless systrap guest. A separate historical API projection remains incomplete. The verified directory-only image still awaits permission for public registry publication.",
+      "updatedAt": "2026-11-06T07:40:46.780Z",
+      "summary": "A shell-free AMD64 RBE worker packaged the nine-file public release for AMD64 and ARM64. The ARM64 tarball booted a rootless systrap guest on a native runner. This integration uses a forked rules_python launcher and a declared static CPython. Earlier cross-builds also linked race-enabled releases in both directions. Publication of the verified directory-only worker image awaits permission.",
       "findings": [
+        {
+          "text": "Both original PackageTar actions ran uncached for each architecture on 102ffa219. All 18 members matched their declared input bytes and had mode 0755. On native ARM64, the installed Sentry from that tarball ran the guest to completion. On the baseline, the first tar action failed to execute its Bash launcher.",
+          "evidence": [
+            {
+              "label": "AMD64 archive and original inputs",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42180846486/artifacts/13484914596"
+            },
+            {
+              "label": "ARM64 archive and native guest",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42181753808/artifacts/13486415780"
+            },
+            {
+              "label": "Stock launcher failure",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42178536750/artifacts/13484526514"
+            }
+          ]
+        },
         {
           "text": "The unchanged C++ seccheck server runs on both pinned distroless workers without a GNU loader or shared libraries. The static GNU build produced a 15,735,928-byte AMD64 ELF and a 16,615,472-byte ARM64 ELF. Each uncached TestExample delivered an exit status of 123 to the matching server over a Unix socket. Both tests passed; the report then failed while reading an empty argument list from a separate Bazel action. A query-only run matched each original test configuration and compiler command: compile and link used the existing tool platforms, while TestRunner used a platform advertising the static GNU target ABI on the same worker. The tested supplier fork 29f9d4664 carries the static glibc work from open hermetic-llvm #768.",
           "evidence": [
@@ -73002,6 +73147,18 @@
         {
           "label": "Upstream static glibc support",
           "url": "https://github.com/hermeticbuild/hermetic-llvm/pull/768"
+        },
+        {
+          "label": "AMD64 release archive with nine verified inputs",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42180846486/artifacts/13484914596"
+        },
+        {
+          "label": "Cross-built ARM64 archive and native Sentry boot",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42181753808/artifacts/13486415780"
+        },
+        {
+          "label": "Python startup inside the shell-free worker image",
+          "url": "https://github.com/tamird/rules_python/actions/runs/42180105304/artifacts/13485510005"
         }
       ],
       "group": "rbe"
@@ -75476,5 +75633,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-06T07:16:57.053556Z"
+  "updatedAt": "2026-11-06T07:46:49.356Z"
 }
