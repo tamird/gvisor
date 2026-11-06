@@ -48,3 +48,26 @@ func TestCleanup(t *testing.T) {
 		}
 	}
 }
+
+func TestRetryTimeoutBudget(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		minRTO, maxRTO time.Duration
+		retries        uint32
+		budget         time.Duration
+	}{
+		{"Default", MinRTO, MaxRTO, 15, 924600 * time.Millisecond},
+		{"NoLowerClamp", 0, MaxRTO, 15, 924600 * time.Millisecond},
+		{"ShortUpperClamp", 0, 50 * time.Millisecond, 2, 150 * time.Millisecond},
+		{"HigherLowerClamp", time.Second, MaxRTO, 2, 7 * time.Second},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if retriesTimedOut(tc.budget-1, tc.minRTO, tc.maxRTO, tc.retries) || !retriesTimedOut(tc.budget, tc.minRTO, tc.maxRTO, tc.retries) {
+				t.Errorf("retry budget differs from %s", tc.budget)
+			}
+		})
+	}
+	if retriesTimedOut(time.Duration(1<<63-1), MinRTO, MaxRTO, ^uint32(0)) {
+		t.Error("retry budget overflowed")
+	}
+}
