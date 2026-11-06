@@ -24,6 +24,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -77,6 +78,35 @@ const (
 	quiesceMaxCPU   = 0.005
 	quiesceTimeout  = 60 * time.Second
 )
+
+// BenchmarkCaptureRestorePhases captures once in a process separate from every
+// measured child. Only the raw Sentry state and the host-resource descriptions
+// needed to load it are handed to the children.
+func BenchmarkCaptureRestorePhases(b *testing.B) {
+	if b.N != 1 || !testutil.IsCheckpointSupported() || dockerutil.Runtime() != "runsc" {
+		b.Fatal("requires a single checkpoint-enabled runsc capture")
+	}
+	dir, ok := os.LookupEnv("RESTORE_PHASE_DIR")
+	if !ok {
+		b.Fatal("missing private checkpoint directory")
+	}
+	machine, err := harness.GetMachine()
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer machine.CleanUp()
+	data, sizes, names, mounts := checkpointNginx(context.Background(), b, machine)
+	meta, err := json.Marshal(checkpointSpec{Names: names, Mounts: mounts})
+	if err != nil {
+		b.Fatal(err)
+	}
+	for name, contents := range map[string][]byte{checkpointfiles.StateFileName: data, checkpointSpecName: meta} {
+		if err := os.WriteFile(filepath.Join(dir, name), contents, 0600); err != nil {
+			b.Fatal(err)
+		}
+	}
+	fmt.Printf("phase-capture digest=%x state=%d pages=%d pagemeta=%d\n", sha256.Sum256(data), len(data), sizes[checkpointfiles.PagesFileName], sizes[checkpointfiles.PagesMetadataFileName])
+}
 
 // BenchmarkCheckpointFile reports various benchmark metrics about a
 // checkpointed kernel.
@@ -222,6 +252,10 @@ func BenchmarkCheckpointFile(b *testing.B) {
 					if err != nil {
 						b.Fatal(err)
 					}
+					var probe *state.KernelSizingProbe
+					if *probeKernelSizing {
+						ctx, probe = state.ProbeKernelSizing(ctx, k, *clearKernelHints)
+					}
 					w := &countingWriter{}
 					cpu += cpuTime(b, func() error {
 						if !mode.statefile {
@@ -231,6 +265,13 @@ func BenchmarkCheckpointFile(b *testing.B) {
 						return saveKernel(ctx, w, k)
 					})
 					encodedBytes = w.n
+					if probe != nil {
+						if probe.Calls != 1 || probe.HintBytes <= 0 || probe.HintTargets <= 0 {
+							b.Fatalf("incomplete kernel sizing observation: calls=%d, input hints=%d/%d", probe.Calls, probe.HintBytes, probe.HintTargets)
+						}
+						b.Logf("KERNEL_SIZING bytes=%d targets=%d pooled=%d cleared=%t",
+							probe.HintBytes, probe.HintTargets, probe.Pooled, *clearKernelHints)
+					}
 				}()
 			}
 			b.ReportMetric(float64(cpu.Nanoseconds())/float64(b.N), "cpu-ns")
@@ -241,6 +282,9 @@ func BenchmarkCheckpointFile(b *testing.B) {
 
 // checkpointDir is a directory containing a checkpoint, as an alternative to
 // checkpointing nginx with docker.
+var probeKernelSizing = flag.Bool("probe-kernel-sizing", false, "observe the source of kernel encoder capacity")
+var clearKernelHints = flag.Bool("clear-kernel-hints", false, "clear just the root size hints written by setup")
+
 var checkpointDir = flag.String("checkpoint-dir", "", "directory containing a checkpoint taken by a runsc built from the same tree, and a "+checkpointSpecName+" file listing the names and mounts of its containers; if set, docker is not used")
 
 // checkpointSpecName is the name of the file in checkpointDir describing the

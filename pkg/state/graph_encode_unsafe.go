@@ -325,8 +325,34 @@ var graphEncodeStatePool sync.Pool
 // maxPooledBytes limits the buffer capacity of pooled states.
 const maxPooledBytes = 16 << 20
 
+// KernelSizingProbe is used only by the private checkpoint measurement. Prepare
+// it after loading the fixture and before starting the benchmark timer.
+type KernelSizingProbe struct {
+	root                   *typeInfo
+	HintBytes, HintTargets int32
+	Pooled, Calls          int
+}
+
+type sizingProbeKey struct{}
+
+func ProbeKernelSizing(ctx context.Context, rootPointer any, clear bool) (context.Context, *KernelSizingProbe) {
+	ti := typeInfoForRtype(efaceOf(&rootPointer).typ).elem
+	p := &KernelSizingProbe{root: ti, HintBytes: ti.hintBytes.Load(), HintTargets: ti.hintTargets.Load()}
+	if clear {
+		setHints(ti, 0, 0)
+	}
+	return context.WithValue(ctx, sizingProbeKey{}, p), p
+}
+
 func newGraphEncodeState(ctx context.Context, root *typeInfo) *graphEncodeState {
+	p, _ := ctx.Value(sizingProbeKey{}).(*KernelSizingProbe)
+	if p != nil && p.root == root {
+		p.Calls++
+	}
 	if es, ok := graphEncodeStatePool.Get().(*graphEncodeState); ok {
+		if p != nil && p.root == root {
+			p.Pooled++
+		}
 		es.ctx = ctx
 		return es
 	}
