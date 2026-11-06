@@ -1,35 +1,49 @@
-name: CI
-
-"on":
+name: Install the documented release archive without Docker
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/native-install-arch-selection-amd64]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  install:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 96
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 4}
+      - name: Select the documented source and pin the client
+        id: setup
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/release-rbe"
+          mkdir -m 700 "$d" "$d/tools" "$d/harness"
+          cp test/rbe/{native_install_archive.py,native_cross_inputs.py,runtime_cross.py,runtime_guest.py} "$d/harness/"
+          (cd "$d/harness" && sha256sum --check <<'SUMS'
+          b0626fb5ecb5bb9c41d644ced5af036019cbefbeef7975c71878021f6e146653  native_cross_inputs.py
+          32cc74e3f3e8189d9678b609a4058e60ea3a1e955566f229b34dc04b81f973c8  runtime_cross.py
+          bce1d88d73ba07ca283697e2b9215eb06f1e2f2baacfb43130762ff914d27524  runtime_guest.py
+          SUMS
+          )
+          test "$(git rev-parse HEAD^)" = a1b8ee4af431cf3a10ceb7090f6b47b6b081b95c
+          test "$(git rev-parse HEAD^^)" = de39c8ad0bd7ee61905e438ea0b97586971979f1
+          test "$(git rev-parse HEAD^^^)" = 1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d
+          curl -fsSL --proto '=https' --proto-redir '=https' --retry 3 --max-time 90 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/tools/bazelisk"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/tools/bazelisk" | sha256sum --check -
+          chmod 755 "$d/tools/bazelisk"
+          sudo systemctl stop docker.socket docker.service
+          if docker info >/dev/null 2>&1; then exit 1; fi
+      - name: Build and run the documented AMD64 installation
+        if: always() && steps.setup.outcome == 'success'
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/release-rbe"
+          git checkout --detach a1b8ee4af431cf3a10ceb7090f6b47b6b081b95c
+          env -i HOME="$HOME" USER="$USER" RUNNER_TEMP="$RUNNER_TEMP" PATH="$d/tools:$PATH" LANG=C.UTF-8 python3 -B "$d/harness/native_install_archive.py"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: documented-native-amd64-install
+          path: ${{ runner.temp }}/release-rbe/proposal/install.json
+          if-no-files-found: warn
+          retention-days: 7
