@@ -1,35 +1,56 @@
-name: CI
-
-"on":
+name: Check PACKET_RESERVE on Linux and gVisor
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/packet-reserve-abi]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  packet:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Bind the product and its syscall test
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 5de0b08c436460cd3f68cf9a3dfc0bef8f891407
+          test "$(git rev-parse HEAD^^)" = f51a205a8f4afbc5ab41aded070df74951b081ea
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/packet_reserve.py'
+          cp .github/packet_reserve.py "$RUNNER_TEMP/"
+          git checkout --quiet --detach HEAD^
+          test "$(bazelisk --version)" = 'bazel 9.3.1'
+          mkdir -m 700 "$RUNNER_TEMP/packet-worker"
+          echo 'module(name = "packet_worker")' > "$RUNNER_TEMP/packet-worker/MODULE.bazel"
+          cat > "$RUNNER_TEMP/packet-worker/BUILD" <<'BUILD'
+          platform(
+              name = "gnu",
+              constraint_values = ["@platforms//cpu:x86_64", "@platforms//os:linux"],
+              exec_properties = {
+                  "Arch": "amd64", "OSFamily": "linux", "workload-isolation-type": "firecracker",
+                  "container-image": "docker://gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a",
+              },
+              visibility = ["//visibility:public"],
+          )
+          BUILD
+      - name: Configure the existing remote executor
+        env:
+          ACCESS: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          test -n "$ACCESS"
+          printf '%s\n' 'build --remote_executor=grpcs://remote.buildbuddy.io' 'build --remote_cache=grpcs://remote.buildbuddy.io' > "$RUNNER_TEMP/packet.rc"
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\n' "$ACCESS" >> "$RUNNER_TEMP/packet.rc"
+      - name: Run the existing packet ring test on all three kernels
+        run: python3 -IB "$RUNNER_TEMP/packet_reserve.py"
+      - name: Remove client configuration
+        if: always()
+        run: rm -f "$RUNNER_TEMP/packet.rc"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: packet-reserve-abi
+          path: ${{ runner.temp }}/packet-reserve.json
+          if-no-files-found: error
+          retention-days: 14
