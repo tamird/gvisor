@@ -1,24 +1,25 @@
-name: Inspect static Python notices and the public gVisor license graph
+name: Compare the stock gVisor license checker on both Python declarations
 on:
   push:
-    branches: [qualification/python-runtime-license]
+    branches: [qualification/python-runtime-catalog-difference]
 permissions:
   contents: read
 jobs:
   license:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 2}
-      - name: Pin source, inspect both released archives and run the stock checker
+        with: {persist-credentials: false, fetch-depth: 4}
+      - name: Compare all original checker diagnostics
         run: |
           set -euo pipefail
           d="$RUNNER_TEMP/python-license"
           mkdir -p "$d"
-          test "$(git rev-parse HEAD^)" = bb983b988802b854bd03dd7a0a5220e7e7b4440e
-          cp .github/qualification/python_notices.py "$d/check.py"
+          test "$(git rev-parse HEAD^^)" = bb983b988802b854bd03dd7a0a5220e7e7b4440e
+          test "$(git rev-parse HEAD^^^)" = bbbed5b2b84fe21597c740789d841e618f912def
+          cp .github/qualification/python_catalog_diff.py "$d/check.py"
           git checkout --detach bb983b988802b854bd03dd7a0a5220e7e7b4440e
           curl -fsSL --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
           echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
@@ -32,11 +33,11 @@ jobs:
           python3 - "$RUNNER_TEMP/python-license/results.json" <<'PY'
           import json,pathlib,sys
           p=pathlib.Path(sys.argv[1]); assert p.is_file() and not p.is_symlink() and p.stat().st_size < 60000
-          doc=json.loads(p.read_bytes());assert "archives" in doc
+          doc=json.loads(p.read_bytes());assert "sources" in doc
           PY
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always() && steps.receipt.outcome == 'success'
         with:
-          name: public-cpython-provenance-and-catalog
+          name: stock-catalog-problem-comparison
           path: ${{ runner.temp }}/python-license/results.json
           retention-days: 7
