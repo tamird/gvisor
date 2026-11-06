@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T08:41:38.294Z",
+    "updatedAt": "2026-11-06T08:56:42.948Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -53325,8 +53325,8 @@
       "title": "Release the stack mutex before draining a removed NIC",
       "group": "runtime",
       "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T08:41:38.294Z",
-      "summary": "Stack.Wait held the stack mutex while waiting for a receive worker. That worker needed the mutex to find the input interface. Unlink the interface under the mutex, then drain its workers after unlocking. Wait for all links before closing any because closing one end of a veth can close its peer. Six lifecycle cases passed under the race detector and 16 real socket transfers completed teardown. The final source removes one obsolete comment from the tested revision.",
+      "updatedAt": "2026-11-06T08:56:42.948Z",
+      "summary": "Stack.Wait held the stack mutex while waiting for a receive worker. That worker needed the mutex to find the input interface. Unlink the interface under the mutex, then drain its workers after unlocking. Wait for all links before closing any because closing one end of a veth can close its peer. Six lifecycle cases passed under the race detector and 16 real socket transfers completed teardown. After those runtime checks, the only source change removed an obsolete comment. Nogo passed the final revision on AMD64 and ARM64. On both, it rejected moving the unlock below the call to closeRemovedNICs.",
       "evidence": [
         {
           "label": "Original TCP transfer and blocked goroutines",
@@ -53345,7 +53345,11 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42188134979/artifacts/13488836429"
         },
         {
-          "label": "Only change after qualification: remove an obsolete comment",
+          "label": "AMD64 and ARM64 Nogo pass the final revision and reject draining with the mutex held",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42189378873/artifacts/13489174154"
+        },
+        {
+          "label": "Only change after runtime qualification",
           "url": "https://github.com/tamird/gvisor/compare/890afa390...39d28d4ef"
         }
       ],
