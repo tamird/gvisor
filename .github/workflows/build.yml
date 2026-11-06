@@ -1,35 +1,193 @@
-name: CI
-
-"on":
+name: Capture tcpdump's UDP payloads on the original Ubuntu image
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcpdump-packet-reserve-runtime]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  capture:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {cpu: amd64, arch: x86_64, runner: ubuntu-22.04, cross: arm64, bazelisk: e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76}
+          - {cpu: arm64, arch: aarch64, runner: ubuntu-22.04-arm, cross: amd64, bazelisk: bb608519a440d45d10304eb684a73a2b6bb7699c5b0e5434361661b25f113a5d}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 140
+    env:
+      CPU: ${{ matrix.cpu }}
+      ARCH: ${{ matrix.arch }}
+      CROSS: ${{ matrix.cross }}
+      TAG: gvisor.dev/images/basic/tcpdump:latest
+      PRODUCT: 77fbd4df0b319727914eec2f6112d724f06fed29
+      FIX: 5de0b08c436460cd3f68cf9a3dfc0bef8f891407
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Verify the two native sources and prepare the original receipt
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$FIX"
+          test "$(uname -m)" = "$ARCH"
+          git diff --exit-code "$FIX" HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/tcpdump_reserve/'
+          w="$RUNNER_TEMP/tcpdump-reserve"
+          mkdir -m 700 "$w" "$w/transfer"
+          cp .github/qualification/tcpdump_reserve/*.py "$w/"
+          git fetch -q --no-tags --depth=1 https://github.com/tamird/gvisor.git "$PRODUCT" c3c27965cc177c5caf654341ebdca4312bc0e948
+          git show c3c27965cc177c5caf654341ebdca4312bc0e948:test/rbe/tcpdump-image-receipt.py > "$w/receipt.py"
+          git checkout -q --detach "$FIX"
+          curl -fsSL --max-time 90 --proto '=https' --proto-redir '=https' "https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-$CPU" -o "$w/bazel"
+          echo "${{ matrix.bazelisk }}  $w/bazel" | sha256sum -c -
+          chmod 0755 "$w/bazel"
+          echo "$w" >> "$GITHUB_PATH"
+          test "$(cat .bazelversion)" = 9.3.1
+      - name: Read only the original signed image's build output
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -IB "$RUNNER_TEMP/tcpdump-reserve/original_image.py"
+      - name: Install native runtime build dependencies from the signed Ubuntu archive
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/tcpdump-reserve"
+          if [[ "$CPU" = amd64 ]]; then mirror=https://archive.ubuntu.com/ubuntu; else mirror=https://ports.ubuntu.com/ubuntu-ports; fi
+          for suite in jammy jammy-updates; do
+            echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] $mirror $suite main universe"
+          done > "$w/ubuntu.list"
+          opts=(-o "Dir::Etc::sourcelist=$w/ubuntu.list" -o Dir::Etc::sourceparts=-)
+          sudo apt-get "${opts[@]}" update -qq
+          sudo apt-get "${opts[@]}" install -qy --no-install-recommends busybox-static "crossbuild-essential-$CROSS" libnuma-dev
+          /usr/bin/unshare --user --map-root-user --net -- /usr/bin/test -e /sys/class/net/lo
+      - name: Verify or reassemble the image from its pinned signing inputs
+        timeout-minutes: 47
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/tcpdump-reserve"
+          git checkout -q --detach "$PRODUCT"
+          if [[ ! -s "$w/transfer/image.tar" ]]; then
+            cat > "$w/images.bazelrc" <<'RC'
+          build --jobs=3 --remote_cache= --remote_executor= --bes_backend=
+          build --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox
+          RC
+            bazel --bazelrc="$w/images.bazelrc" build --config="$ARCH" \
+              //images/basic:tcpdump_context @tcpdump_packages//:lock.json @tcpdump_packages//:flat @image_ubuntu_archive_keys//file:ubuntu-archive-keyring.gpg
+            RUNNER_TEMP="$w" python3 "$w/receipt.py" inventory
+            context=$(bazel --bazelrc="$w/images.bazelrc" cquery --config="$ARCH" --output=files //images/basic:tcpdump_context)
+            sha256sum "$context" | cut -d' ' -f1 > "$w/rebuilt-context.sha256"
+          fi
+          python3 - <<'PY'
+          import hashlib,json,os,tarfile
+          from pathlib import Path
+          w=Path(os.environ["RUNNER_TEMP"])/"tcpdump-reserve"
+          original=json.loads((w/"original.json").read_text())
+          p=w/"transfer/image.tar"
+          actual=hashlib.sha256(p.read_bytes()).hexdigest()
+          with tarfile.open(p) as tar:
+              manifest,=json.load(tar.extractfile("manifest.json"))
+              assert manifest["RepoTags"]==[os.environ["TAG"]]
+              cfg=tar.extractfile(manifest["Config"]).read()
+              arch=json.loads(cfg)["architecture"]
+              identity="sha256:"+hashlib.sha256(cfg).hexdigest()
+          assert arch==os.environ["CPU"]
+          audit={"arch":arch,"archive_sha256":actual,"image_id":identity,"original_context":original}
+          inv=w/"transfer/inventory.json"
+          if inv.exists():
+              i=json.loads(inv.read_text())
+              audit["signed_rebuild"]={k:i.get(k) for k in ("source","cpu","archive_key_sha256","tcpdump_sha256","tcpdump_copyright_sha256","archive_sha256","docker_image_id")}
+              assert i["source"]==os.environ["PRODUCT"] and i["cpu"]==arch and i["archive_sha256"]==actual and i["docker_image_id"]==identity
+          rebuilt=w/"rebuilt-context.sha256"
+          same_context=bool(rebuilt.is_file() and rebuilt.read_text().strip()==original.get("context_sha256"))
+          if rebuilt.is_file():
+              audit["rebuilt_context_sha256"]=rebuilt.read_text().strip()
+          audit["same_image"]=original["recovered"] or same_context or (arch=="amd64" and actual=="13726da574d970311d0dac89990243b91c4d0b5c51ab9a50efe5b4ef0fd055d7")
+          (w/"image.json").write_text(json.dumps(audit,indent=2))
+          if arch=="amd64":
+              assert actual=="13726da574d970311d0dac89990243b91c4d0b5c51ab9a50efe5b4ef0fd055d7" and identity=="sha256:9cccc46e0e54df004d3cc07da2b415c0bcf6c9c69590d0a50e3750afe7d6c268"
+          PY
+          docker load --input "$w/transfer/image.tar"
+          test "$(docker inspect --type image --format '{{.Id}}' "$TAG")" = "$(jq -r .image_id "$w/image.json")"
+          docker run --rm --runtime=runc "$TAG" tcpdump --version > "$w/versions"
+          grep -E '^tcpdump version 4\.99\.1\b' "$w/versions"
+          grep -E '^libpcap version 1\.10\.1\b' "$w/versions"
+      - name: Build the corrected runtime and its native startup sidecars
+        timeout-minutes: 78
+        run: |
+          set -euo pipefail
+          git checkout -q --detach "$FIX"
+          git diff --exit-code HEAD
+          w="$RUNNER_TEMP/tcpdump-reserve"
+          targets=(//runsc:runsc //runsc/cmd/sentry:gvisor_sentry //runsc/prewarmer:prewarmer_binary //runsc/procumounter:procumounter_binary //runsc/fdparking:fdparking_binary)
+          options=(--config="$ARCH" -c opt --jobs=3 --remote_cache= --remote_executor= --bes_backend= --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox)
+          bazel --host_jvm_args=-Xmx3500m build "${options[@]}" --build_event_json_file="$w/runtime.bep" "${targets[@]}"
+          mkdir -p "$w/install/gvisor-bin"
+          mapfile -t files < <(bazel --host_jvm_args=-Xmx3500m cquery "${options[@]}" --output=files "set(${targets[*]})")
+          test "${#files[@]}" -eq 5
+          for path in "${files[@]}"; do
+            name=${path##*/}
+            case "$name" in
+              runsc) cp -L "$path" "$w/install/runsc" ;;
+              gvisor_sentry|gvisor-sentry-prewarmer|gvisor-proc-umounter|runsc-fd-parking) cp -L "$path" "$w/install/gvisor-bin/$name" ;;
+              *) exit 1 ;;
+            esac
+          done
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          w=Path(os.environ["RUNNER_TEMP"])/"tcpdump-reserve"
+          records={}
+          for f in [w/"install/runsc",*(w/"install/gvisor-bin").iterdir()]:
+              data=f.read_bytes()
+              machine=int.from_bytes(data[18:20],"little")
+              assert data[:6]==b"\x7fELF\x02\x01" and machine=={"amd64":62,"arm64":183}[os.environ["CPU"]]
+              records[f.name]={"sha256":hashlib.sha256(data).hexdigest(),"size":len(data),"machine":machine}
+          assert len(records)==5
+          (w/"runtime.json").write_text(json.dumps({"source":os.environ["FIX"],"files":records},indent=2))
+          PY
+      - name: Run the original sender and decode both link types on runc and systrap
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/tcpdump-reserve"
+          mkdir "$w/trace"
+          sudo "$w/install/runsc" install --runtime=packet-reserve --download-sidecars=NEVER --require-sidecars=NEVER -- \
+            --platform=systrap --net-raw --strace --strace-syscalls=getsockopt --debug-log="$w/trace/"
+          sudo systemctl reload docker
+          for n in {1..30}; do
+            if docker info --format '{{json .Runtimes}}' | jq -e 'has("packet-reserve")' >/dev/null; then break; fi
+            sleep 1
+          done
+          python3 -IB "$w/capture.py"
+          sudo python3 - "$w" <<'PY'
+          import json,re,sys
+          from pathlib import Path
+          w=Path(sys.argv[1]); successes=0; errors=[]
+          for f in (w/"trace").glob("*"):
+              if not f.is_file():
+                  continue
+              for line in f.open(errors="replace"):
+                  if re.search(r"tcpdump X getsockopt\(.*?, SOL_PACKET, 0xc,",line):
+                      if hit:=re.search(r"= -1 errno=(\d+)",line):
+                          errors.append(int(hit[1]))
+                      elif re.search(r"= 0(?:x0)?\b",line):
+                          successes+=1
+          (w/"trace.json").write_text(json.dumps({"successful_reserve_reads":successes,"errno":errors})+"\n")
+          PY
+      - name: Collect typed runtime results only
+        if: always() && !cancelled()
+        run: |
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          w=Path(os.environ["RUNNER_TEMP"])/"tcpdump-reserve"
+          w.mkdir(exist_ok=True)
+          d={key:(json.loads((w/(key+".json")).read_text()) if (w/(key+".json")).is_file() else {"missing":True}) for key in ("original","image","runtime","capture","trace")}
+          d["verified"]=bool(d["capture"].get("verified") and d["image"].get("same_image") and d["runtime"].get("source")==os.environ["FIX"])
+          (w/"result.json").write_text(json.dumps(d,indent=2)+"\n")
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: tcpdump-packet-reserve-${{ matrix.cpu }}
+          path: ${{ runner.temp }}/tcpdump-reserve/result.json
+          retention-days: 14
+          if-no-files-found: error
+      - if: always() && !cancelled()
+        run: jq -e .verified "$RUNNER_TEMP/tcpdump-reserve/result.json"
