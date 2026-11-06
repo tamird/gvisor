@@ -1,4 +1,4 @@
-"""Build the two public ARM64 race binaries on the released AMD64 worker."""
+"""Build the two public AMD64 race binaries on the ARM64 OCI worker."""
 from collections import Counter
 import hashlib
 import json
@@ -18,9 +18,9 @@ from arm64_race_elf import elf
 SOURCE = "d5fe3c2eef21434cbe13e3604f0f070ace4d7edb"
 BASE = "713a29100403e27077bf668ee7c56d26953b3f70"
 SUPPLIER = "be935b8288c180ea99f86b5c7f6aa191a854c563"
-IMAGE = "docker://gcr.io/distroless/static-debian13@sha256:d03c145fad326bff275ec4106475ed8310426caf709decd9f8cbc494af59bc18"
-PLATFORM = "@llvm//platforms:linux_aarch64_glibc_static"
-EXEC = "//test/rbe/release_prewarmer:amd64"
+IMAGE = "docker://gcr.io/distroless/static-debian13@sha256:b0aca6ddfad947e66782a29534647936d4d645a1b96d9c8a97e4f53b1607d428"
+PLATFORM = "@llvm//platforms:linux_x86_64_glibc_static"
+EXEC = "//test/rbe/release_prewarmer:arm64"
 TMP = Path(os.environ["RUNNER_TEMP"]) / "release-rbe"
 PAYLOAD = TMP / "handoff"
 OUTPUTS = {
@@ -87,7 +87,7 @@ def events(path, report):
 
 
 def spawns(report):
-    platform_properties = {"Arch":"amd64", "OSFamily":"linux", "workload-isolation-type":"oci",
+    platform_properties = {"Arch":"arm64", "OSFamily":"linux", "workload-isolation-type":"oci",
                            "recycle-runner":"false", "container-image":IMAGE}
     query = """
       select(.spawn) | .spawn | . as $s |
@@ -138,7 +138,7 @@ def configured_outputs(bazel, flags, report):
     for row in c.stdout.decode().splitlines():
         owner,platforms,path=row.split("\t")
         owner=owner.removeprefix("@@")
-        assert owner in OUTPUTS and "linux_aarch64_glibc_static" in platforms
+        assert owner in OUTPUTS and "linux_x86_64_glibc_static" in platforms
         paths[owner]=path
     assert set(paths)==set(OUTPUTS)
     a=query("aquery",["--noinclude_artifacts","--include_param_files","--output=jsonproto"],
@@ -192,7 +192,7 @@ def check_analyzer(bazel,flags,report):
       [.args[0],.runner,(.cacheHit//false),(.exitCode//0),
        ([.platform.properties[]?|{key:.name,value:.value}]|from_entries|contains($props))]
     """
-    props={"Arch":"amd64","OSFamily":"linux","container-image":IMAGE,"recycle-runner":"false","workload-isolation-type":"oci"}
+    props={"Arch":"arm64","OSFamily":"linux","container-image":IMAGE,"recycle-runner":"false","workload-isolation-type":"oci"}
     with subprocess.Popen([TMP/"bb","print","--raw","--compact_execution_log="+str(compact)],
                           stdout=subprocess.PIPE,stderr=subprocess.DEVNULL) as reader:
         q=subprocess.run(["jq","-c","--argjson","props",json.dumps(props),query],stdin=reader.stdout,capture_output=True)
@@ -208,7 +208,7 @@ def check_analyzer(bazel,flags,report):
     row["executable"]={k:meta[k] for k in ("machine","bytes","sha256","static")}
     record("producer",report)
     assert row["exit"]==code==0 and row["completed"] and runner=="remote" and not cached and matched
-    assert meta["machine"]==62 and meta["static"]
+    assert meta["machine"]==183 and meta["static"]
     q=subprocess.run([*bazel,"cquery",*flags,"--output=files",target],capture_output=True,timeout=240)
     assert q.returncode==0
     files=row["files"]={}
@@ -225,11 +225,11 @@ def check_analyzer(bazel,flags,report):
 
 
 def producer(report):
-    assert platform.machine() == "x86_64"
+    assert platform.machine() == "aarch64"
     product()
-    flags = ["--config=aarch64", "-c", "opt", "--config=race", "--platforms="+PLATFORM,
+    flags = ["--config=x86_64", "-c", "opt", "--config=race", "--platforms="+PLATFORM,
              "--extra_execution_platforms="+EXEC, "--host_platform="+EXEC,
-             "--extra_toolchains=//test/rbe/go_bootstrap:linux_amd64_ash",
+             "--extra_toolchains=//test/rbe/go_bootstrap:linux_arm64_ash",
              "--@io_bazel_rules_go//go/config:experimental_use_sh_toolchain",
              "--lockfile_mode=off", "--jobs=40", "--remote_download_outputs=toplevel",
              "--color=no", "--curses=no", "--noshow_progress",
@@ -269,7 +269,7 @@ def producer(report):
         assert path.resolve(strict=True).is_relative_to(Path("bazel-out").resolve(strict=True))
         assert 0 < path.stat().st_size < 250 * 1024**2
         info = files[destination] = elf(path)
-        assert info["machine"]==183 and info["static"]
+        assert info["machine"]==62 and info["static"]
         if owner in RACE:
             assert info["race_functions"] == ["runtime.racefini","runtime.raceinit"]
             cfg,output,ok=links[owner]
@@ -291,7 +291,7 @@ def producer(report):
 
 def consumer(report):
     import runtime_guest as g
-    assert platform.machine()=="aarch64" and os.getuid() != 0
+    assert platform.machine()=="x86_64" and os.getuid() != 0
     original=json.loads((PAYLOAD/"producer.json").read_bytes())
     for k in ("source","base","supplier","run","carrier"):
         assert original[k] == report[k]
@@ -314,7 +314,7 @@ def consumer(report):
     assert report["version"]=={"exit":0,"stamp":True}
     g.r.SOURCE=SOURCE
     g.MEMBERS=set(OUTPUTS.values())
-    busy=g.fixture(report.setdefault("fixture",{}),"arm64")
+    busy=g.fixture(report.setdefault("fixture",{}),"amd64")
     control,_=g.capsule("namespace-control",busy)
     section=report["namespace_control"]={}
     g.launch(control,section,control=True)

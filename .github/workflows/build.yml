@@ -1,17 +1,17 @@
-name: Cross-build the public race binaries and boot them on ARM64
+name: Cross-build the public race binaries and boot them on AMD64
 on:
   push:
-    branches: [qualification/scratch-current-c-glibc-race]
+    branches: [qualification/scratch-arm64-to-amd64-race]
 permissions:
   contents: read
 jobs:
   build:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04-arm
     timeout-minutes: 65
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 3}
+        with: {persist-credentials: false, fetch-depth: 4}
       - name: Select the scratch release and the current C-only supplier
         run: |
           set -euo pipefail
@@ -20,22 +20,23 @@ jobs:
           mkdir -p "$d"/{harness,handoff}
           cp .github/qualification/{arm64_race_release.py,arm64_race_elf.py} "$d/harness/"
           cp test/rbe/release_prewarmer/BUILD "$d/harness/"
-          test "$(git rev-parse HEAD^)" = d5fe3c2eef21434cbe13e3604f0f070ace4d7edb
-          test "$(git rev-parse HEAD^^)" = 713a29100403e27077bf668ee7c56d26953b3f70
-          git checkout -q --detach HEAD^
+          test "$(git rev-parse HEAD^)" = 43930f94092bf5ebbc0699047e3362ce8b5d0c5b
+          test "$(git rev-parse HEAD^^)" = d5fe3c2eef21434cbe13e3604f0f070ace4d7edb
+          test "$(git rev-parse HEAD^^^)" = 713a29100403e27077bf668ee7c56d26953b3f70
+          git checkout -q --detach HEAD^^
           mkdir -p test/rbe/release_prewarmer
           cp "$d/harness/BUILD" test/rbe/release_prewarmer/BUILD
           test "$(cat .bazelversion)" = 9.3.1
-          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' --max-time 100 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
-          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' --max-time 100 https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-x86_64 -o "$d/bb"
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' --max-time 100 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-arm64 -o "$d/bazel"
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' --max-time 100 https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-arm64 -o "$d/bb"
           (cd "$d" && sha256sum --check <<'SUMS'
-          e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  bazel
-          205fb4074012858c858ec357cb0cf1ed0b1fbf8707c5f385efd4abd52bb2cead  bb
+          bb608519a440d45d10304eb684a73a2b6bb7699c5b0e5434361661b25f113a5d  bazel
+          32e7c227dcd54baaa98a2d77487860c59507461fdbde52f90307577bf22528fc  bb
           SUMS
           )
           chmod 755 "$d/bazel" "$d/bb"
           test "$("$d/bazel" --version)" = 'bazel 9.3.1'
-      - name: Execute the ARM64 Go links on shell-free AMD64
+      - name: Execute the AMD64 Go links on shell-free ARM64
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         run: |
@@ -70,26 +71,26 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always() && steps.boundary.outcome == 'success'
         with:
-          name: arm64-static-gnu-race-producer
+          name: amd64-static-gnu-race-producer
           path: ${{ runner.temp }}/release-rbe/producer.json
           if-no-files-found: warn
           retention-days: 5
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: arm64-static-gnu-race-installation
+          name: amd64-static-gnu-race-installation
           path: ${{ runner.temp }}/release-rbe/handoff/
           if-no-files-found: error
           retention-days: 1
   boot:
     needs: build
-    runs-on: ubuntu-22.04-arm
+    runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with: {persist-credentials: false, fetch-depth: 1}
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
-          name: arm64-static-gnu-race-installation
+          name: amd64-static-gnu-race-installation
           path: ${{ runner.temp }}/release-rbe/handoff
       - name: Run the installed race Sentry in the native release capsule
         run: |
@@ -108,7 +109,7 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: arm64-static-gnu-race-guest
+          name: amd64-static-gnu-race-guest
           path: ${{ runner.temp }}/release-rbe/consumer.json
           if-no-files-found: warn
           retention-days: 5

@@ -1,4 +1,4 @@
-"""Read ELF64 and the ARM64 Go function table, including stripped binaries."""
+"""Read ELF64 and the Go function table, including stripped binaries."""
 import hashlib
 import struct
 
@@ -25,7 +25,9 @@ def elf(p):
         if s[1]==6:  # SHT_DYNAMIC; static PIE itself may have PT_DYNAMIC.
             needed |= any(struct.unpack_from("<q",b,n)[0]==1 for n in range(0,len(b),16))
         if name not in (b".gopclntab",b".data.rel.ro.gopclntab",b".rodata",b".data.rel.ro"):continue
-        marker=b"\xf1\xff\xff\xff\0\0\x04\x08"
+        # Go records the minimum instruction size in the pclntab header.
+        quantum = {62: 1, 183: 4}[machine]
+        marker = b"\xf1\xff\xff\xff\0\0" + bytes((quantum, 8))
         pos=b.find(marker)
         while pos>=0:
             if pos+72<=len(b):
