@@ -1,35 +1,50 @@
-name: CI
-
-"on":
+name: Check the C++ test macro with upstream's Buildifier
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/cc-test-args-lint]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  lint:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Check the original diagnostic and corrected macro
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = baa9e8af1e4fd8539f7dcee007e845f3a606c54b
+          git diff --exit-code HEAD^ HEAD -- tools/bazeldefs/cc.bzl tools/lint.sh
+          mkdir -p "$RUNNER_TEMP/evidence"
+          python3 - <<'PY'
+          import ast, hashlib, pathlib
+          old=pathlib.Path("test/rbe/cc_test_lint/before.bzl")
+          new=pathlib.Path("tools/bazeldefs/cc.bzl")
+          parsed=[]
+          for p in (old,new):
+              tree=ast.parse(p.read_text())
+              macro=next(f for f in tree.body if isinstance(f,ast.FunctionDef) and f.name=="cc_test")
+              assert ast.get_docstring(macro)
+              del macro.body[0]
+              parsed.append(ast.dump(tree))
+          assert parsed[0]==parsed[1]
+          assert hashlib.sha256(old.read_bytes()).hexdigest()=="d4c2ce8532d0881096f7d6f749ba4fa315d45d231f76a1a2196549b6afabddca"
+          PY
+          warnings="$(sed -n 's/.*local -r warnings="\([^"]*\)".*/\1/p' tools/lint.sh)"
+          test -n "$warnings"
+          result="$RUNNER_TEMP/evidence"
+          tool=(bazelisk run @buildifier_prebuilt//:buildifier --)
+          status=0
+          "${tool[@]}" --mode=check --lint=warn --warnings="$warnings" "$PWD/test/rbe/cc_test_lint/before.bzl" >"$result/before.log" 2>&1 || status=$?
+          test "$status" -ne 0
+          grep -F function-docstring-args "$result/before.log"
+          "${tool[@]}" --mode=check --lint=warn --warnings="$warnings" "$PWD/tools/bazeldefs/cc.bzl" >"$result/after.log" 2>&1
+          sha256sum test/rbe/cc_test_lint/before.bzl tools/bazeldefs/cc.bzl > "$result/sources.sha256"
+          printf 'Source baa9e8af1. Executable syntax matched. Stock exit %s, corrected exit 0.\n' "$status" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: cc-test-macro-buildifier
+          path: ${{ runner.temp }}/evidence/

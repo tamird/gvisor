@@ -1,0 +1,95 @@
+"""C++ rules."""
+
+load("@com_github_grpc_grpc//bazel:cc_grpc_library.bzl", _cc_grpc_library = "cc_grpc_library")
+load("@com_google_protobuf//bazel:cc_proto_library.bzl", _cc_proto_library = "cc_proto_library")
+load("@rules_cc//cc:cc_rules_extension_support.bzl", _cc_test_rule = "cc_test")
+load("@rules_cc//cc:defs.bzl", _cc_binary = "cc_binary", _cc_library = "cc_library", _cc_test = "cc_test")
+load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_variants", "with_test_architecture")
+
+cc_amd64_test, _cc_amd64_transition = with_test_architecture(_cc_test_rule, "amd64").build()
+cc_arm64_test, _cc_arm64_transition = with_test_architecture(_cc_test_rule, "arm64").build()
+
+def cc_test(name, architectures = [], **kwargs):
+    """Declares a C++ test and optional native architecture variants."""
+    _cc_test(name = name, **kwargs)
+    # The public cc_test macro adds the extra link library. The architecture
+    # variants inherit the underlying rule, so supply that dependency here.
+    if architectures and not kwargs.get("linkshared"):
+        kwargs["deps"] = (kwargs.get("deps") or []) + [Label("@rules_cc//:link_extra_lib")]
+    test_architecture_variants(
+        name,
+        architectures,
+        {"amd64": cc_amd64_test, "arm64": cc_arm64_test},
+        kwargs,
+    )
+
+def cc_library(**kwargs):
+    """Wraps _cc_library and deduplicates deps.
+
+    Args:
+      **kwargs: arguments passed to _cc_library.
+    """
+    if "deps" in kwargs and type(kwargs["deps"]) == "list":
+        # Dedupe dep entries. Needed due to uninteresting quirks.
+        # Don't remove.
+        deps = []
+        for d in kwargs["deps"]:
+            if d not in deps:
+                deps.append(d)
+        kwargs["deps"] = deps
+    _cc_library(**kwargs)
+
+cc_proto_library = _cc_proto_library
+cc_toolchain = "@bazel_tools//tools/cpp:current_cc_toolchain"
+cc_objcopy = "@llvm//tools:llvm-objcopy"
+cc_objdump = "@llvm//tools:llvm-objdump"
+gtest = "@com_google_googletest//:gtest"
+gbenchmark = "@com_google_benchmark//:benchmark"
+gbenchmark_internal = "@com_google_benchmark//:benchmark"
+grpcpp = "@com_github_grpc_grpc//:grpc++"
+
+def _cc_flags_supplier_impl(_ctx):
+    variables = platform_common.TemplateVariableInfo({
+        "CC_FLAGS": "",
+    })
+    return [variables]
+
+cc_flags_supplier = rule(
+    implementation = _cc_flags_supplier_impl,
+)
+
+def cc_grpc_library(name, **kwargs):
+    _cc_grpc_library(name = name, grpc_only = True, **kwargs)
+
+def cc_binary(name, static = False, tcmalloc = False, **kwargs):
+    """Run cc_binary.
+
+    Args:
+        name: name of the target.
+        static: make a static binary if True
+        tcmalloc: use TCMalloc if True (not implemented)
+        **kwargs: the rest of the args.
+    """
+    if static:
+        # How to statically link a c++ program that uses threads, like for gRPC:
+        # https://gcc.gnu.org/legacy-ml/gcc-help/2010-05/msg00029.html
+        if "linkopts" not in kwargs:
+            kwargs["linkopts"] = []
+        kwargs["linkopts"] += [
+            "-static",
+            "-lstdc++",
+            "-Wl,--whole-archive",
+            "-lpthread",
+            "-Wl,--no-whole-archive",
+        ]
+    if tcmalloc:
+        # buildifier: disable=print
+        print("Warning: tcmalloc can't be enabled")
+
+    _cc_binary(
+        name = name,
+        **kwargs
+    )
+
+def select_gtest():
+    return [gtest]  # No select is needed.
