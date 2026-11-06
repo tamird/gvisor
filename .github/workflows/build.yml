@@ -1,35 +1,43 @@
-name: CI
-
-"on":
+name: Compare checkpoint decoding into populated and empty roots
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/state-fresh-decode-benchmark]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  benchmark:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Run the original and corrected benchmark on the same Linux worker
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = f6fbb1d2c62d486f3e311d2cd481d87a61acf7cb
+          test "$(git rev-parse HEAD^^)" = f51a205a8f4afbc5ab41aded070df74951b081ea
+          d="$RUNNER_TEMP/decode-roots"
+          mkdir -p "$d"
+          cp .github/qualification/state_decode_root.py "$d/measure.py"
+          curl -fsSL --retry 3 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod +x "$d/bazel"
+          if ! command -v aarch64-linux-gnu-g++ >/dev/null; then
+            src="$d/ubuntu.list"
+            echo 'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble main universe' > "$src"
+            echo 'deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu noble-updates main universe' >> "$src"
+            repositories=(-o "Dir::Etc::sourcelist=$src" -o 'Dir::Etc::sourceparts=-')
+            sudo apt-get "${repositories[@]}" -qq update
+            sudo apt-get "${repositories[@]}" -y --no-install-recommends install g++-aarch64-linux-gnu
+          fi
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$d/measure.py"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: native-decode-destinations
+          path: |
+            ${{ runner.temp }}/decode-roots/results.json
+            ${{ runner.temp }}/decode-roots/*.bench
+            ${{ runner.temp }}/decode-roots/benchstat.txt
+          retention-days: 14
+          if-no-files-found: warn

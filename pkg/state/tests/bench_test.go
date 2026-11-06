@@ -249,3 +249,41 @@ func (w *countingWriter) Write(p []byte) (int, error) {
 	w.n += len(p)
 	return len(p), nil
 }
+
+// TestDecodeFixtureOwnership compares the populated destination used by the
+// original benchmark with a new destination for the same encoded slice.
+func TestDecodeFixtureOwnership(t *testing.T) {
+	for _, name := range []string{"gob", "state"} {
+		codec := allAlgos[name]
+		src := buildSliceObject(1024).(*[]*benchStruct)
+		var buf bytes.Buffer
+		if _, err := codec.Save(t.Context(), &buf, src); err != nil {
+			t.Fatal(err)
+		}
+		for _, populated := range []bool{true, false} {
+			var dst []*benchStruct
+			if populated {
+				dst = *src
+			}
+			if _, err := codec.Load(t.Context(), bytes.NewReader(buf.Bytes()), &dst); err != nil {
+				t.Fatal(err)
+			}
+			if got, want := len(dst), len(*src); got != want {
+				t.Fatalf("%s decoded %d elements, want %d", name, got, want)
+			}
+			unique := make(map[*benchStruct]struct{})
+			reused := 0
+			for _, v := range dst {
+				if v == nil {
+					t.Fatalf("%s decoded a nil element", name)
+				}
+				unique[v] = struct{}{}
+				if v == (*src)[0] {
+					reused++
+				}
+			}
+			t.Logf("Ownership codec=%s populated=%t reused_backing=%t reused_elements=%d distinct_objects=%d size=%d",
+				name, populated, &dst[0] == &(*src)[0], reused, len(unique), len(dst))
+		}
+	}
+}
