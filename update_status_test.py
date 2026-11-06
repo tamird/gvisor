@@ -1120,6 +1120,21 @@ class CollectorHistoryTest(unittest.TestCase):
 
 
 class CheckReportTest(unittest.TestCase):
+    def test_delivered_head_keeps_raw_conflict_without_requesting_a_rebase(self) -> None:
+        current = retained(raw_pr(16467))
+        current["mergeable"] = "CONFLICTING"
+        proof = {"head": current["head"], "upstreamHead": "a" * 40, "upstreamTree": "b" * 40,
+                 "replayedTree": "b" * 40, "verifiedAt": LATER, "method": "merge-tree-identical",
+                 "evidence": ["https://github.com/google/gvisor/pull/16734"]}
+        node = {"type": "pr", "repo": "google/gvisor", "number": 16467, "landedPatch": proof}
+        with mock.patch.object(updater, "REGISTRY", {"nodes": [node]}):
+            report = updater.check_report([current], {})
+            self.assertEqual(report["mergeabilityIssues"][0]["mergeable"], "CONFLICTING")
+            self.assertEqual(updater.mergeability_handoff(report, {}), [])
+            current.update(head="c" * 40, branchHead="c" * 40)
+            handoff, = updater.mergeability_handoff(updater.check_report([current], {}), {})
+            self.assertEqual(handoff["sourceHead"], current["head"])
+
     def test_unchanged_conflict_and_branch_mismatch_remain_owned(self) -> None:
         current = retained(raw_pr(15376))
         current.update(mergeable="CONFLICTING", branchHead="b" * 40)

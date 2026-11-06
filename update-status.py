@@ -799,13 +799,15 @@ def check_report(prs: list[dict], previous: dict) -> dict:
     """Report service failures without conflating old imports with current source."""
     prior = {(pr.get("repo", REPO), pr["number"]): pr
              for source in previous.get("prs", []) for pr in (source, *source.get("imports", []))}
-    owners = {(node["repo"], node["number"]): node.get("followup", {})
+    nodes = {(node["repo"], node["number"]): node
               for node in REGISTRY["nodes"] if node["type"] == "pr"}
     failures, changes, imports, mergeability, mergeability_changes = [], [], [], [], []
     for source in prs:
         repo = source.get("repo", REPO)
         source_status_changed = source["status"] != prior.get((repo, source["number"]), {}).get("status")
-        followup = owners.get((repo, source["number"]), {})
+        node = nodes.get((repo, source["number"]), {})
+        followup = node.get("followup", {})
+        delivered = verified_landing(source, node.get("landedPatch"))
         assignment = {key: followup[key] for key in ("owner", "sourceHead", "disposition", "nextAction")
                       if key in followup}
         for pr in (source, *source.get("imports", [])):
@@ -831,6 +833,8 @@ def check_report(prs: list[dict], previous: dict) -> dict:
                 "checksState": checks.get("state"), "checksComplete": checks.get("complete", False),
                 "failedChecks": failed,
             }
+            if delivered:
+                observation["sourceAlreadyLanded"] = True
             if not is_source:
                 observation["importedSourceHead"] = pr["sourceHead"]
                 if active:
@@ -911,7 +915,7 @@ def mergeability_handoff(report: dict, previous: dict) -> list[dict]:
     """Keep current source blockers actionable even when no observation changed."""
     records = []
     for observation in report.get("mergeabilityIssues", []):
-        if observation["scope"] == "older-source-import":
+        if observation["scope"] == "older-source-import" or observation.get("sourceAlreadyLanded"):
             continue
         if observation["sourceBranchMismatch"]:
             action = ("Reconcile the PR and fork branch heads, and independently check both against the current base. "

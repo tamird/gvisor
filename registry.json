@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T18:29:14.522Z",
+    "updatedAt": "2026-11-06T18:43:53.566Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -6534,29 +6534,31 @@
       "url": "https://github.com/google/gvisor/pull/15370",
       "group": "bazel",
       "status": "open",
-      "head": "24a215d72d01102b08ceb27bccd656bd3b258a4a",
-      "updatedAt": "2026-10-24T08:12:31.195104+00:00",
-      "summary": "The equivalent source-order rebase is published at 24a215d72d and verified mergeable against current master d15d5319. It preserves landed #15648 canonical source membership/order and all three helpers, while native test forwarding is unchanged. Five uncached remote Go/C++ AMD64/ARM64 and both-CPU analyzer owners passed, totaling 21,873 positive XML records. Independent review verifies all four native OCI architecture joins and exact report identities.\n\nThe original outer run remains FAIL because the callback counted the separate analyzer XML generator as another test process and expected stdout logs among file outputs. Retained-only reconciliation and its independent peer confirm passing product validation without a workload replay. Native completion to automatic receipt took 20.109248 seconds; the later reconciliation is separate. The exact lease replaced 4df7e4d4, and existing title, body and reviewer requests are unchanged. No prior approval, reminder or new race/performance result is claimed.\n\nPreserved earlier record:\n\nThe requested post-#16046 rebase is published at 4df7e4d4c5e4 on master 077ee528716d, which contains 82aa7f55a. Independent review verified patch equivalence. Earlier validation, approvals and reviewer requests retain their original source identities; this rebase does not claim fresh approval or passing current-head CI.\n\nPreserved earlier source record:\n\nRoot refreshed this change onto current master. The exact published head is 40c98de22; current CI and mergeability are reported in the snapshot. Earlier validation remains tied to its recorded source; no new runtime pass is inferred from the rebase.",
+      "head": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
+      "updatedAt": "2026-11-06T18:43:53.566Z",
+      "summary": "The rebased source is mergeable. The same maintained Go and C++ test variants run on the matching native CPU while Nogo checks both architectures.",
       "followup": {
-        "disposition": "Equivalent rebase published; native product validation accepted",
-        "owner": "work_map_current",
-        "nextAction": "Observe current-head public CI, review and import through the existing refresh. Preserve the original outer reporting failure and prior native evidence; no duplicate review notice.",
-        "sourceHead": "24a215d72d01102b08ceb27bccd656bd3b258a4a",
-        "reviewedAt": "2026-10-10T14:31:51.129671+00:00",
-        "reviewDecision": null,
-        "mergeable": "MERGEABLE",
+        "owner": "Agent",
+        "sourceHead": "fafff7eba5044b4585ea89fde2db7cbfb7861310",
+        "observedAt": "2026-11-06T18:43:09.619Z",
+        "disposition": "Published the patch-equivalent rebase. GitHub reports the source is mergeable.",
+        "nextAction": "Read the native test and Nogo results for this head.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15370",
-          "https://github.com/tamird/gvisor/commit/6822132f065661a1b6dff1aabbc388c82233449c",
-          "https://github.com/tamird/gvisor/commit/4df7e4d4c5e4b8484ac5a0420aae2c501b80b09d",
-          "https://github.com/tamird/gvisor/commit/24a215d72d01102b08ceb27bccd656bd3b258a4a",
-          "https://app.buildbuddy.io/invocation/651c5783-a7e1-4e69-bed9-7ea3323d2ce2"
-        ],
-        "observedAt": "2026-10-24T08:12:31.195104+00:00"
+          "https://github.com/tamird/gvisor/compare/47be1e2b5...fafff7eba"
+        ]
       },
       "number": 15370,
       "reviewDecision": null,
       "evidence": [
+        {
+          "label": "Qualification in progress on this published head",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42272993483"
+        },
+        {
+          "label": "Published rebase; unchanged file operations and content edits",
+          "url": "https://github.com/tamird/gvisor/compare/47be1e2b5...fafff7eba"
+        },
         {
           "label": "Published post-16046 rebase",
           "url": "https://github.com/tamird/gvisor/commit/4df7e4d4c5e4b8484ac5a0420aae2c501b80b09d"
@@ -6572,10 +6574,10 @@
       ],
       "refinement": {
         "before": {
-          "head": "4df7e4d4c5e4b8484ac5a0420aae2c501b80b09d"
+          "head": "47be1e2b5e4aa429c39e6b9a681f9012a0405f6a"
         },
         "after": {
-          "head": "24a215d72d01102b08ceb27bccd656bd3b258a4a"
+          "head": "fafff7eba5044b4585ea89fde2db7cbfb7861310"
         }
       }
     },
@@ -29124,35 +29126,29 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-python-upstream-context",
-      "head": "022b009cfe9b6bd92da786a1339de707fbea1d9c",
+      "head": "00445531d15c3b662495b26eab9cf819bb278978",
       "title": "Build the Python HTTP image with rules_img",
       "url": "https://github.com/google/gvisor/pull/16459",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
-      "summary": "The contributor-approved image change is published as #16459 at 2e4cf26a2 on current master. The basic image and shared mirror prerequisites have landed. No contributor decision remains. Current checks, matching imports and maintainer review are shown from the GitHub snapshot.\n\nSource-specific qualification:\n\nThis proposal pins the observed official Python 3.15.1 image for both architectures, keeps all seven inherited layers with no added layer, preserves the HTTP entrypoint and explicitly clears the upstream command. Nine native phases and four archive/context outputs pass, with one uncached AMD64 owner running both pause/resume and checkpoint/restore without skips using the separately authenticated retained runtime. Image configuration, runtime cleanup and daemon restoration passed independent review; the authenticated verdict followed native completion by 8.765376 seconds. ARM64 coverage is image/config inspection, with no warmed-checkpoint or performance claim. The contributor subsequently approved this exact proposal.",
+      "updatedAt": "2026-11-06T18:43:53.566Z",
+      "summary": "The source is mergeable on current master. The patch matches the version approved by @manninglucas. Open import #16465 still names the earlier source.",
       "followup": {
-        "owner": "root",
-        "sourceHead": "022b009cfe9b6bd92da786a1339de707fbea1d9c",
-        "observedAt": "2026-10-31T00:17:49.384556+00:00",
-        "disposition": "Rebased; the approved Python image patch is unchanged",
-        "nextAction": "The source now includes fsstress and the Python image. Follow the export; Buildkite #37 on its previous revision was canceled by a user.",
+        "owner": "Maintainer",
+        "sourceHead": "00445531d15c3b662495b26eab9cf819bb278978",
+        "observedAt": "2026-11-06T18:43:09.619Z",
+        "disposition": "Published the patch-equivalent rebase. GitHub reports the source is mergeable.",
+        "nextAction": "Follow the normal reapproval and import process for the published head and #16465.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00",
-          "https://github.com/google/gvisor/pull/16097",
-          "https://app.buildbuddy.io/invocation/41f8eb52-7a73-44c4-b638-c2bb9679dd7d",
-          "https://github.com/tamird/gvisor/commit/05a50fb8f99369a1bbe3755bc881f3cf2607b903",
-          "https://github.com/tamird/gvisor/compare/fd67c097cb74bd48eeb68a9954a0c3ec4998ce00...05a50fb8f99369a1bbe3755bc881f3cf2607b903",
-          "https://github.com/google/gvisor/pull/16379",
-          "https://github.com/google/gvisor/pull/16430",
-          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9",
           "https://github.com/google/gvisor/pull/16459",
-          "https://github.com/tamird/gvisor/commit/037a5a3f80a82c25c515181bb41538dafed055d4",
-          "https://github.com/google/gvisor/pull/16465",
-          "https://buildkite.com/gvisor/first-pass/builds/37"
+          "https://github.com/tamird/gvisor/compare/022b009cf...00445531d"
         ]
       },
       "evidence": [
+        {
+          "label": "Published rebase; unchanged file operations and content edits",
+          "url": "https://github.com/tamird/gvisor/compare/022b009cf...00445531d"
+        },
         {
           "label": "Published approved image migration",
           "url": "https://github.com/google/gvisor/pull/16459"
@@ -29176,15 +29172,23 @@
       ],
       "number": 16459,
       "approvedPatch": {
-        "head": "037a5a3f80a82c25c515181bb41538dafed055d4",
-        "approvedHead": "2e4cf26a2919edfb1c38d2b1b026f9b16e1e8008",
-        "reviewId": "PRR_kwDOB9IlXs8AAAABUWPnbg",
+        "head": "00445531d15c3b662495b26eab9cf819bb278978",
+        "approvedHead": "022b009cfe9b6bd92da786a1339de707fbea1d9c",
+        "reviewId": "PRR_kwDOB9IlXs8AAAABVPY-Vw",
         "reviewer": "manninglucas",
-        "submittedAt": "2026-10-26T23:30:20Z",
-        "verifiedAt": "2026-10-27T18:39:29+00:00",
+        "submittedAt": "2026-10-31T01:37:18Z",
+        "verifiedAt": "2026-11-06T18:43:09.619Z",
         "method": "reviewed-context-only",
-        "oldPatchId": "4f5c08529ed3f78d5b4daf412b8868c942f1ab7f",
-        "newPatchId": "aaef0318fee515d2e75a4affc2029e7e6cf594b5"
+        "oldPatchId": "fea8a04b4230f62db67d012f14dee2e824a03a83",
+        "newPatchId": "66b4c1eeb8e29e315df8208bd2f995b32314a268"
+      },
+      "refinement": {
+        "before": {
+          "head": "022b009cfe9b6bd92da786a1339de707fbea1d9c"
+        },
+        "after": {
+          "head": "00445531d15c3b662495b26eab9cf819bb278978"
+        }
       }
     },
     {
@@ -29192,32 +29196,29 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-mysql-upstream",
-      "head": "7108c1aeff83b0f3bf5354d3c07bceabb39a45f4",
+      "head": "e0e48066480199426bbcfea4e509f375fbc82e8a",
       "title": "Pin the basic MySQL image",
       "url": "https://github.com/google/gvisor/pull/16458",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-31T00:17:49.384556+00:00",
-      "summary": "The contributor-approved image change is published as #16458 at 48f06c611 on current master. The basic image and shared mirror prerequisites have landed. No contributor decision remains. Current checks, matching imports and maintainer review are shown from the GitHub snapshot.\n\nSource-specific qualification:\n\nThis proposal pins the existing mysql/mysql-server:8.0.19 image by architecture, preserves both complete upstream configurations and their inherited layers, exposes the normal archive and Make contexts, and removes the FROM-only Dockerfile. Native qualification passed nine phases and four image outputs, plus one uncached AMD64 TestMysql using the separately authenticated retained runtime. The loaded Healthcheck configuration matches upstream; health status was not separately tested. Cleanup passed. ARM64 coverage is image/config inspection only, with no comparative performance claim. The original local projection-import failure is retained; the accepted result used the unchanged reviewed adapter without replaying the workload. The MySQL approval is separate from the Redis proposal.",
+      "updatedAt": "2026-11-06T18:43:53.566Z",
+      "summary": "Rebased the pinned MySQL image on current master. Its pinned image inputs and file edits match the previous PR. GitHub reports the current source is mergeable.",
       "followup": {
-        "owner": "native_runtime",
-        "sourceHead": "7108c1aeff83b0f3bf5354d3c07bceabb39a45f4",
-        "observedAt": "2026-10-31T00:17:49.384556+00:00",
-        "disposition": "Approved image migration published as #16458",
-        "nextAction": "Follow current-head CI, matching imports and maintainer review through the existing intake. Preserve the earlier qualification source and scope; no repeated contributor question or courtesy reply.",
+        "owner": "Maintainer",
+        "sourceHead": "e0e48066480199426bbcfea4e509f375fbc82e8a",
+        "observedAt": "2026-11-06T18:43:09.619Z",
+        "disposition": "Published the patch-equivalent rebase. GitHub reports the source is mergeable.",
+        "nextAction": "Follow the existing review request and source checks.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a",
-          "https://github.com/google/gvisor/pull/16097",
-          "https://app.buildbuddy.io/invocation/a42afab8-f43b-49ac-bff7-706bca3ca11f",
-          "https://github.com/tamird/gvisor/commit/85033b2dc96550a21eff4b3587e5536b5efa8f76",
-          "https://github.com/tamird/gvisor/compare/7cf4bb53140ed7b1f533da9c7b91efa1d15bcd0a...85033b2dc96550a21eff4b3587e5536b5efa8f76",
-          "https://github.com/google/gvisor/pull/16379",
-          "https://github.com/google/gvisor/pull/16430",
-          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9",
-          "https://github.com/google/gvisor/pull/16458"
+          "https://github.com/google/gvisor/pull/16458",
+          "https://github.com/tamird/gvisor/compare/7108c1aef...e0e480664"
         ]
       },
       "evidence": [
+        {
+          "label": "Published rebase; unchanged file operations and content edits",
+          "url": "https://github.com/tamird/gvisor/compare/7108c1aef...e0e480664"
+        },
         {
           "label": "Published approved image migration",
           "url": "https://github.com/google/gvisor/pull/16458"
@@ -29239,7 +29240,15 @@
           "url": "https://app.buildbuddy.io/invocation/a42afab8-f43b-49ac-bff7-706bca3ca11f"
         }
       ],
-      "number": 16458
+      "number": 16458,
+      "refinement": {
+        "before": {
+          "head": "7108c1aeff83b0f3bf5354d3c07bceabb39a45f4"
+        },
+        "after": {
+          "head": "e0e48066480199426bbcfea4e509f375fbc82e8a"
+        }
+      }
     },
     {
       "id": "pr:16460",
@@ -29468,30 +29477,22 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "rules-img-bun-spawn-current",
-      "head": "6b36e53079c13e3d3cbe3e01a71a08366fb8c224",
+      "head": "5169a5320b8d49cf0216dc59f0f4a17cd88f5cc6",
       "title": "Build the Bun spawn image with Bazel",
       "url": "https://github.com/google/gvisor/pull/16467",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-26T23:54:30.014199+00:00",
-      "summary": "The approved image migration is published as #16467 at 6b36e5307. No contributor decision remains. Current checks, imports and maintainer review come from the GitHub snapshot.\n\nThe combined image qualification 63f7b7ba passed all 34 archive/context owners and all 16 image config/layer comparisons on AMD64 and ARM64. Its corrected aggregate source archives contained all 178 tracked files with matching bytes and modes, plus two architecture-correct generated CUDA helpers. This includes Bun's unchanged spawn.js and the Apache source forwarding; it is archive evidence, not a new runtime execution.\n\nSource-specific earlier qualification:\n\nThe pinned upstream image preserves the existing spawn script as a declared 0644 layer. Actual qualification 355a5a1d verified AMD64/ARM64 base/config/layer identity, the Make image identity, and the uncached AMD64 BenchmarkBunSpawn for 100 iterations. This is functional coverage, with no native ARM runtime or comparative performance claim. That earlier qualified product had the same whole tree as 785f27447a; the current delivery adds the source forwarding and rebase described above. No shared BusyBox or compiler source dependency is required.",
+      "updatedAt": "2026-11-06T18:43:53.566Z",
+      "summary": "Copybara imported the Bun image change in #16734. The master commit names #16467 and its earlier source 52ed1a51f. Replaying the current patch onto that commit leaves the same tree. GitHub still shows the source PR open with a conflict.",
       "followup": {
-        "owner": "work_map_current",
-        "sourceHead": "6b36e53079c13e3d3cbe3e01a71a08366fb8c224",
-        "observedAt": "2026-10-26T23:54:30.014199+00:00",
-        "disposition": "Approved image migration published as #16467",
-        "nextAction": "Follow current-head checks, matching imports and maintainer review through the existing intake. No repeated contributor decision or runtime replay.",
+        "owner": "Agent",
+        "sourceHead": "5169a5320b8d49cf0216dc59f0f4a17cd88f5cc6",
+        "observedAt": "2026-11-06T18:43:09.619Z",
+        "disposition": "Delivered to master through #16734.",
+        "nextAction": "No source repair or maintainer review is due for this head.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/f3617c9bd90d886d5f1376845a102ea9a42b5066",
-          "https://github.com/google/gvisor/pull/16097",
-          "https://app.buildbuddy.io/invocation/355a5a1d-5863-4cba-9ab8-db85452faac5",
-          "https://github.com/tamird/gvisor/commit/f97de383f63c560aee4e38c68ba0e1005567ab73",
-          "https://github.com/tamird/gvisor/compare/f3617c9bd90d886d5f1376845a102ea9a42b5066...f97de383f63c560aee4e38c68ba0e1005567ab73",
-          "https://github.com/google/gvisor/pull/16379",
-          "https://github.com/google/gvisor/pull/16430",
-          "https://github.com/google/gvisor/commit/248c3a910589e1abad6992f6393842d6941eb3a9",
-          "https://github.com/google/gvisor/pull/16467",
-          "https://app.buildbuddy.io/invocation/63f7b7ba-d75b-43fb-bb39-d90886e01f1e"
+          "https://github.com/google/gvisor/commit/a693e236463c6f5102dd3e7930abea5cee0770a9",
+          "https://github.com/google/gvisor/pull/16734"
         ]
       },
       "evidence": [
@@ -29516,7 +29517,19 @@
           "url": "https://github.com/tamird/gvisor/compare/f3617c9bd90d886d5f1376845a102ea9a42b5066...f97de383f63c560aee4e38c68ba0e1005567ab73"
         }
       ],
-      "number": 16467
+      "number": 16467,
+      "landedPatch": {
+        "head": "5169a5320b8d49cf0216dc59f0f4a17cd88f5cc6",
+        "method": "merge-tree-identical",
+        "upstreamHead": "a693e236463c6f5102dd3e7930abea5cee0770a9",
+        "upstreamTree": "6d87b660cdbf6da618a8f8514ac88237c23d5cf1",
+        "replayedTree": "6d87b660cdbf6da618a8f8514ac88237c23d5cf1",
+        "verifiedAt": "2026-11-06T18:43:09.619Z",
+        "evidence": [
+          "https://github.com/google/gvisor/commit/a693e236463c6f5102dd3e7930abea5cee0770a9",
+          "https://github.com/google/gvisor/pull/16734"
+        ]
+      }
     },
     {
       "id": "branch:basic-image-source-contexts",
@@ -30854,24 +30867,33 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/declared-go-coverage",
-      "head": "5dbef4de9b117461804e0db26baee37769ef4ee7",
+      "head": "7f56b080d9f7485957f3514133ffa5f5490a6185",
       "title": "Build runsc and Sentry coverage binaries with rules_go",
       "url": "https://github.com/google/gvisor/pull/16507",
       "group": "bazel",
       "status": "open",
-      "summary": "Replace the networked SDK bootstrap and private-import patch with rules_go. All eight binaries per CPU built; AMD64 ordinary runsc produced no report while both instrumented releases reported Sentry locations and passed the real KCOV case.",
-      "updatedAt": "2026-10-29T13:07:09.135795+00:00",
+      "summary": "The rebased source is mergeable. Coverage CLI and Sentry binaries use rules_go and the declared SDK. The previous AMD64 KCOV and two-architecture checks are recorded on their measured versions.",
+      "updatedAt": "2026-11-06T18:43:53.566Z",
       "followup": {
-        "owner": "root",
-        "observedAt": "2026-10-29T13:07:09.135795+00:00",
-        "sourceHead": "5dbef4de9b117461804e0db26baee37769ef4ee7",
-        "disposition": "Contributor-approved amendment published",
-        "nextAction": "Follow maintainer review, checks and import of the published coverage amendment.",
+        "owner": "Agent",
+        "sourceHead": "7f56b080d9f7485957f3514133ffa5f5490a6185",
+        "observedAt": "2026-11-06T18:43:09.619Z",
+        "disposition": "Published the patch-equivalent rebase. GitHub reports the source is mergeable.",
+        "nextAction": "Read the coverage build and CLI version results on both architectures.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/16507"
+          "https://github.com/google/gvisor/pull/16507",
+          "https://github.com/tamird/gvisor/compare/5dbef4de9...7f56b080d"
         ]
       },
       "evidence": [
+        {
+          "label": "Qualification in progress on this published head",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42272993483"
+        },
+        {
+          "label": "Published rebase; unchanged file operations and content edits",
+          "url": "https://github.com/tamird/gvisor/compare/5dbef4de9...7f56b080d"
+        },
         {
           "label": "Comment explaining the coverage exclusions",
           "url": "https://github.com/tamird/gvisor/blob/b952c8943eaeab391ab3a5b23c49932faebca94a/tools/bazeldefs/go.bzl#L97-L110"
@@ -30893,7 +30915,15 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/40830394553/job/123303013828"
         }
       ],
-      "number": 16507
+      "number": 16507,
+      "refinement": {
+        "before": {
+          "head": "5dbef4de9b117461804e0db26baee37769ef4ee7"
+        },
+        "after": {
+          "head": "7f56b080d9f7485957f3514133ffa5f5490a6185"
+        }
+      }
     },
     {
       "id": "branch:reproducible-debian-changelog",
@@ -32251,9 +32281,9 @@
       "title": "Use the official server images in port-forward tests",
       "group": "bazel",
       "url": "https://github.com/google/gvisor/pull/16551",
-      "head": "fa7daa135f0ca5de5461ac4b27f046632707e5e2",
+      "head": "776402f49590cb3cc0b13b0b8e5613c7165da4bb",
       "status": "open",
-      "updatedAt": "2026-10-30T22:31:33.400371+00:00",
+      "updatedAt": "2026-11-06T18:43:53.566Z",
       "links": [
         {
           "label": "Historical Nginx proposal",
@@ -32297,6 +32327,10 @@
         }
       ],
       "evidence": [
+        {
+          "label": "Published rebase; unchanged file operations and content edits",
+          "url": "https://github.com/tamird/gvisor/compare/fa7daa135...776402f49"
+        },
         {
           "label": "Rebased image changes",
           "url": "https://github.com/tamird/gvisor/commit/fa7daa135"
@@ -32362,7 +32396,37 @@
           "url": "https://app.buildbuddy.io/invocation/cf709d8d-823c-40c0-8a50-427e2bcc0850"
         }
       ],
-      "summary": "The Nginx and Redis image changes were rebased over the Bun image. On the old import, three containerd 2.1.7 attempts timed out creating a sandbox in three different tests. The intentional unimplemented case passed. An unrelated NVIDIA import reproduced the timeout with grouping disabled. Current master passed the same target. The logs do not identify what exhausted the deadline."
+      "summary": "The source is mergeable on current master. The patch matches the version approved by @kerumeto. Open import #16637 still names the earlier source.",
+      "approvedPatch": {
+        "head": "776402f49590cb3cc0b13b0b8e5613c7165da4bb",
+        "approvedHead": "fa7daa135f0ca5de5461ac4b27f046632707e5e2",
+        "reviewId": "PRR_kwDOB9IlXs8AAAABVjp7dA",
+        "reviewer": "kerumeto",
+        "submittedAt": "2026-11-02T18:48:44Z",
+        "verifiedAt": "2026-11-06T18:43:09.619Z",
+        "method": "reviewed-context-only",
+        "oldPatchId": "2e6fcc1dffeb1c5d7a3eb0cad90aa38923ad25dc",
+        "newPatchId": "e69a75162bf1ef5b79d239babc42094982e85294"
+      },
+      "refinement": {
+        "before": {
+          "head": "fa7daa135f0ca5de5461ac4b27f046632707e5e2"
+        },
+        "after": {
+          "head": "776402f49590cb3cc0b13b0b8e5613c7165da4bb"
+        }
+      },
+      "followup": {
+        "owner": "Maintainer",
+        "sourceHead": "776402f49590cb3cc0b13b0b8e5613c7165da4bb",
+        "observedAt": "2026-11-06T18:43:09.619Z",
+        "disposition": "Published the patch-equivalent rebase. GitHub reports the source is mergeable.",
+        "nextAction": "Follow the normal reapproval and import process for the published head and #16637.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/16551",
+          "https://github.com/tamird/gvisor/compare/fa7daa135...776402f49"
+        ]
+      }
     },
     {
       "id": "branch:sniffer-embed-symlink",
