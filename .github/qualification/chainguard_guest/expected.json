@@ -1,0 +1,132 @@
+{
+  "arms": {
+    "amd64": {
+      "archive": {
+        "bytes": 84393339,
+        "sha256": "a9363f7ec1947a68d41dec93e8c9869be5577c9108f6a0c111e434cb5e9bac1a"
+      },
+      "files": {
+        "containerd-shim-runsc-v1": {
+          "bytes": 24401605,
+          "e_machine": 62,
+          "mode": 493,
+          "sha256": "bbb45eb4643ffaf8f1e79fc0699f88d1a4c87c85b348b9917df1ed5271749ae5"
+        },
+        "gvisor-bin/checkpointgofer": {
+          "bytes": 48794270,
+          "e_machine": 62,
+          "mode": 493,
+          "sha256": "7740ae6648b33c6a0aab119c8cd6dc8ef549086ad362fe616bdff1f4af60a520"
+        },
+        "gvisor-bin/gvisor-proc-umounter": {
+          "bytes": 1072,
+          "e_machine": 62,
+          "mode": 493,
+          "sha256": "62e0e37cdcebba6e991218e262fa08c0681ac71e4b479c45796769305c52f8aa"
+        },
+        "gvisor-bin/gvisor-sentry-prewarmer": {
+          "bytes": 1560,
+          "e_machine": 62,
+          "mode": 493,
+          "sha256": "6a1f4a9f47fd067be7d0703c4449024934548f9d9a8a68de8a237b364bb4b588"
+        },
+        "gvisor-bin/gvisor_sentry": {
+          "bytes": 55045655,
+          "e_machine": 62,
+          "mode": 493,
+          "sha256": "5feba05af7f3d3410aebfe7bda19b9863a82c56ca23d65ea43bac9c56f648075"
+        },
+        "gvisor-bin/runsc-fd-parking": {
+          "bytes": 65928,
+          "e_machine": 62,
+          "mode": 493,
+          "sha256": "14927600c8430229d50d895e395f51f79c721ed825d9b13880e9bb0cbfc86d68"
+        },
+        "gvisor-bin/runsc-metric-server": {
+          "bytes": 21583650,
+          "e_machine": 62,
+          "mode": 493,
+          "sha256": "39de59640fa96b4bad55dbeb52c6b1906b14ada2ac86807113ba3efb90fdb27e"
+        },
+        "gvisor-bin/runsc-netgofer": {
+          "bytes": 18508464,
+          "e_machine": 62,
+          "mode": 493,
+          "sha256": "0cf98b0c7b087a257ee3035025b6830ee98d7dfe3c9d8dd64f76b0b1f2007b07"
+        },
+        "runsc": {
+          "bytes": 19423037,
+          "e_machine": 62,
+          "mode": 493,
+          "sha256": "3277df98fd5864927ca58310f9c208d5c79e5e0af0dbea295be89d47acc8f928"
+        }
+      }
+    },
+    "arm64": {
+      "archive": {
+        "bytes": 77397545,
+        "sha256": "ef28f19c89e43c617012fe1118388a84c49a8762bdf5978015f2d2334b7a0ee7"
+      },
+      "files": {
+        "containerd-shim-runsc-v1": {
+          "bytes": 23116532,
+          "e_machine": 183,
+          "mode": 493,
+          "sha256": "1333769e203a98e304b89c662944217def4df5bcbf7c4030c1f61505f6d2f740"
+        },
+        "gvisor-bin/checkpointgofer": {
+          "bytes": 46501257,
+          "e_machine": 183,
+          "mode": 493,
+          "sha256": "11119142d22492aa67a8606cb932621825d9aab1ded2b91353f3678d74522b78"
+        },
+        "gvisor-bin/gvisor-proc-umounter": {
+          "bytes": 1128,
+          "e_machine": 183,
+          "mode": 493,
+          "sha256": "c58adb3e05f2d8116a28b4588a17bdb07975b00bdc5a617d14ce08037ab5da36"
+        },
+        "gvisor-bin/gvisor-sentry-prewarmer": {
+          "bytes": 1672,
+          "e_machine": 183,
+          "mode": 493,
+          "sha256": "5108438e45f485b9843daa27537921cf65ef71d1cc0878fec62cda5507ada09c"
+        },
+        "gvisor-bin/gvisor_sentry": {
+          "bytes": 51543034,
+          "e_machine": 183,
+          "mode": 493,
+          "sha256": "a58225a6df57cd724ab93be2f7337d96d80603a91b829ed1963d6028707a30a9"
+        },
+        "gvisor-bin/runsc-fd-parking": {
+          "bytes": 65928,
+          "e_machine": 183,
+          "mode": 493,
+          "sha256": "28f5206c05ce4cffb2a7e55090c3ba7e1fbb285aa59b1f6f152939b964e32600"
+        },
+        "gvisor-bin/runsc-metric-server": {
+          "bytes": 20247647,
+          "e_machine": 183,
+          "mode": 493,
+          "sha256": "d7568dc25098dfe835de7d8f568587786ee4c2c53fbe9ba8751565d95cc51796"
+        },
+        "gvisor-bin/runsc-netgofer": {
+          "bytes": 17439181,
+          "e_machine": 183,
+          "mode": 493,
+          "sha256": "bc131ee20ca1fb1ddd37b7ace8bf248757afc9da7f72a08730848af069ba9448"
+        },
+        "runsc": {
+          "bytes": 18178113,
+          "e_machine": 183,
+          "mode": 493,
+          "sha256": "110be0bec5113bc84911410ab256804294af0c7537266927a4b92278885b5783"
+        }
+      }
+    }
+  },
+  "artifactSHA256": "b7b4d0785aa9a6ae9ba7b0ed1777d018e5552375080d4a1682b06b142ba0b68e",
+  "invocation": "078dbb74-7b6d-44e9-a00f-276d3b82d5de",
+  "originalRun": "42306168961",
+  "source": "bb983b988802b854bd03dd7a0a5220e7e7b4440e"
+}
