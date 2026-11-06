@@ -1,35 +1,30 @@
-name: CI
-
-"on":
+name: Compare Tailscale's pinned TCP sender on queue overflow
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-104-queue-native]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  queue:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 75
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@v5
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=runsc DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@v4
-      with:
-          name: runsc
-          path: bin/runsc
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 5, persist-credentials: false}
+      - name: Build the three senders and run the thirty scheduled fetches
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/queue104"
+          mkdir "$d"
+          cp .github/qualification/tcp_104.py "$d/"
+          curl -fsSL --retry 3 --proto '=https' --proto-redir '=https' https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod +x "$d/bazel"
+          env -i HOME="$HOME" USER=runner PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -I -B "$d/tcp_104.py"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: original-tcp-queue-observations
+          path: ${{ runner.temp }}/queue104/original
+          retention-days: 7
+          if-no-files-found: error
