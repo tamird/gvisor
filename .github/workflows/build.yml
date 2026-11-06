@@ -1,35 +1,76 @@
-name: CI
-
-"on":
+name: Compare signed tcpdump images from rules_distroless 0.11.1
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcpdump-jammy-bcr]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  verify:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
+    env:
+      PRODUCT: d7bea3612d6ca707630804b3fd5e391de5789164
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Select the standalone image and original BCR candidate
+        run: |
+          set -eu
+          test "$(uname -m)" = x86_64
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/tcpdump_bcr.py'
+          w="$RUNNER_TEMP/tcpdump-bcr"
+          mkdir -p "$w"/{amd64,arm64,debs,results}
+          cp .github/qualification/tcpdump_bcr.py "$w/"
+          git switch --detach "$PRODUCT"
+          test "$(git rev-parse HEAD)" = "$PRODUCT"
+          test "$(bazelisk --version)" = 'bazel 9.3.1'
+          cat > "$w/images.bazelrc" <<'RC'
+          common --registry=https://raw.githubusercontent.com/bazel-contrib/bazel-central-registry/0fcf9560a28476c948c16a6b11fca730cb76f4ec
+          common --registry=https://bcr.bazel.build
+          common --lockfile_mode=update
+          build --jobs=3 --remote_cache= --remote_executor= --bes_backend=
+          build --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox
+          RC
+          python3 -IB "$w/tcpdump_bcr.py" registry
+      - name: Build through Make and compare signed packages for both architectures
+        run: |
+          set -eu
+          w="$RUNNER_TEMP/tcpdump-bcr"
+          for cpu in amd64 arm64; do
+            if test "$cpu" = amd64; then arch=x86_64; else arch=aarch64; fi
+            rc=0
+            timeout --kill-after=20s 40m make --no-print-directory copy DOCKER_BUILD=false STARTUP_OPTIONS="--bazelrc=$w/images.bazelrc" \
+              OPTIONS="--config=$arch" TARGETS=//images/basic:tcpdump_context DESTINATION="$w/$cpu/contexts.tar" > "$w/make-$cpu.log" 2>&1 || rc=$?
+            printf '%s\n' "$rc" > "$w/make-$cpu.exit"
+            labels=0
+            timeout --kill-after=20s 10m bazelisk --bazelrc="$w/images.bazelrc" build --config="$arch" \
+              @tcpdump_packages//:lock.json @image_ubuntu_archive_keys//file:ubuntu-archive-keyring.gpg > "$w/inputs-$cpu.log" 2>&1 || labels=$?
+            printf '%s\n' "$labels" > "$w/inputs-$cpu.exit"
+            if test "$rc" = 0 && test "$labels" = 0; then
+              audit=0
+              CPU="$cpu" timeout --kill-after=20s 12m python3 -IB "$w/tcpdump_bcr.py" image > "$w/image-$cpu.log" 2>&1 || audit=$?
+              printf '%s\n' "$audit" > "$w/image-$cpu.exit"
+            fi
+          done
+      - name: Run the repository license verifier on the same resolution
+        if: always()
+        run: |
+          w="$RUNNER_TEMP/tcpdump-bcr"
+          rc=0
+          timeout --kill-after=20s 22m make --no-print-directory license-check DOCKER_BUILD=false STARTUP_OPTIONS="--bazelrc=$w/images.bazelrc" > "$w/license.log" 2>&1 || rc=$?
+          printf '%s\n' "$rc" > "$w/license.exit"
+      - name: Preserve independent phase and registry lock results
+        if: always()
+        run: python3 -IB "$RUNNER_TEMP/tcpdump-bcr/tcpdump_bcr.py" collect
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: tcpdump-bcr-comparison
+          path: ${{ runner.temp }}/tcpdump-bcr/results/*.json
+          if-no-files-found: error
+      - name: Check that both images and the catalog disposition were measured
+        run: python3 -c 'import json, os, pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"tcpdump-bcr/results/comparison.json"; raise SystemExit(0 if json.loads(p.read_text())["complete"] else 1)'
