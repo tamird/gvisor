@@ -1,35 +1,69 @@
-name: CI
-
-"on":
+name: Build four coverage binaries with the source presubmit compiler
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-presubmit-four-coverage]
+permissions:
+  contents: read
 jobs:
   build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 130
+    env:
+      SOURCE: c0511e1cd383b0f2870c15a104222f0d285aac6f
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Select the exact reviewed product
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = "$SOURCE"
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/llvm_coverage_four.py' ':!.github/qualification/source_presubmit_memory.py'
+          mkdir "$RUNNER_TEMP/llvm-coverage-four"
+          cp .github/qualification/{llvm_coverage_four.py,source_presubmit_memory.py} "$RUNNER_TEMP/llvm-coverage-four/"
+          git switch --detach "$SOURCE"
+          test "$(git rev-parse HEAD)" = "$SOURCE"
+          test "$(bazelisk --version)" = "bazel 9.3.1"
+      - name: Size the Bazel server heap
+        run: python3 -IB "$RUNNER_TEMP/llvm-coverage-four/source_presubmit_memory.py"
+      - name: Build the four default outputs on the presubmit worker
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
+          work="$RUNNER_TEMP/llvm-coverage-four"
+          rc="$work/client.rc"
+          trap 'rm -f "$rc"' EXIT
+          cat > "$rc" <<'RC'
+          build:source-presubmit --remote_executor=grpcs://remote.buildbuddy.io
+          build:source-presubmit --remote_cache=grpcs://remote.buildbuddy.io
+          build:source-presubmit --bes_backend=grpcs://remote.buildbuddy.io
+          build:source-presubmit --bes_results_url=https://app.buildbuddy.io/invocation/
+          build:source-presubmit --jobs=64 --keep_going --remote_download_outputs=toplevel
+          RC
+          printf 'build:source-presubmit --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          code=0
+          timeout --signal=INT --kill-after=60s 100m bazelisk --bazelrc="$rc" build --config=source-presubmit \
+            --build_event_json_file="$work/build.bep" --build_event_json_file_path_conversion=false \
+            //runsc:runsc_coverage //runsc:runsc_race_coverage \
+            //runsc/cmd/sentry:gvisor_sentry_coverage //runsc/cmd/sentry:gvisor_sentry_race_coverage \
+            > "$work/build.log" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$work/build.exit"
+      - name: Check actual outputs, retaining each completed target
+        if: always()
+        run: |
+          test ! -e "$RUNNER_TEMP/llvm-coverage-four/client.rc"
+          python3 -IB "$RUNNER_TEMP/llvm-coverage-four/llvm_coverage_four.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: llvm-presubmit-four-coverage
+          path: ${{ runner.temp }}/llvm-coverage-four/result.json
+          if-no-files-found: error
+      - name: Require all four ELF outputs
+        run: python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"llvm-coverage-four/result.json"; raise SystemExit(0 if json.loads(p.read_text())["verified"] else 1)'
