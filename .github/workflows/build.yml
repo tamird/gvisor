@@ -1,35 +1,48 @@
-name: CI
-
-"on":
+name: Compare the completed presubmit with its configured shards
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-source-shard-receipt]
+permissions: {contents: read, actions: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  compare:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Bind the exact product and verifier
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = c0511e1cd383b0f2870c15a104222f0d285aac6f
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/shard_join.py' ':!.github/qualification/source_presubmit_memory.py'
+          d="$RUNNER_TEMP/source-shard-join"
+          mkdir -m 700 "$d"
+          cp .github/qualification/{shard_join,source_presubmit_memory}.py "$d/"
+          git checkout --quiet --detach HEAD^
+          test "$(bazelisk --version)" = 'bazel 9.3.1'
+      - name: Read the original fork workflow artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          d="$RUNNER_TEMP/source-shard-join"
+          gh api --hostname github.com repos/tamird/gvisor/actions/artifacts/13541852854/zip > "$d/full.zip"
+          echo "25f37838784e761155666fd0120af7ed551ec3adff61af482dbc85f5b0d31445  $d/full.zip" | sha256sum -c -
+      - name: Size the analysis coordinator
+        run: python3 -IB "$RUNNER_TEMP/source-shard-join/source_presubmit_memory.py"
+      - name: Inspect configured actions and match original shard identities
+        id: inspect
+        run: python3 -IB "$RUNNER_TEMP/source-shard-join/shard_join.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: llvm-original-presubmit-shard-join
+          path: |
+            ${{ runner.temp }}/source-shard-join/summary.json
+            ${{ runner.temp }}/source-shard-join/build-only.tsv
+            ${{ runner.temp }}/source-shard-join/shards.tsv
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Require the completed run to match the configured graph
+        run: jq -e .verified "$RUNNER_TEMP/source-shard-join/summary.json"
