@@ -1,35 +1,31 @@
-name: CI
-
-"on":
+name: Qualify the Bazel 9 source graph
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/source-presubmit-bazel9-unit-graph]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  analyze:
+    if: github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Compare the single source graph with the original Make row
+        run: |
+          set -eu
+          cp .github/qualification/current_source_graph.py "$RUNNER_TEMP/"
+          git fetch --quiet --depth=1 origin 5a20420be7638149db4afe7c2ac559e696f5f3fd
+          git show '5a20420be:test/rbe/unit-cgroup-v2-owners.tsv' > "$RUNNER_TEMP/source-unit-oracle.tsv"
+          test "$(git hash-object "$RUNNER_TEMP/source-unit-oracle.tsv")" = 5042de1f9d481e27c47eccd0e94f7cdfcb037fbf
+          git checkout --quiet --detach 949d4871550821371649ae873beab69ead0b36c1
+          python3 "$RUNNER_TEMP/current_source_graph.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: current-source-graph
+          path: ${{ runner.temp }}/source-graph-results/
+          if-no-files-found: error
