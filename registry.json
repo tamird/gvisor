@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T14:55:55.836Z",
+    "updatedAt": "2026-11-06T15:01:36.918Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -47264,16 +47264,28 @@
     {
       "id": "branch:goimports-in-process-diff",
       "type": "branch",
-      "repo": "tamird/tools",
-      "ref": "proposal/goimports-in-process-diff",
-      "head": "d140e4d63b51cb5053d57cde308379069b5a6436",
+      "repo": "golang/tools",
+      "ref": "refs/changes/82/858482/8",
+      "head": "7a065ec802ee7a1deb4e7c404b4ea3cd40d5eac9",
       "title": "Let goimports print a unified diff without a system diff program",
       "url": "https://go-review.googlesource.com/c/tools/+/858482",
       "group": "analysis",
       "status": "Published for upstream review",
-      "updatedAt": "2026-11-03T19:07:32.229433+00:00",
-      "summary": "Go Gerrit CL 858481 corrects the new-file line number for adjacent edits in x/tools/internal/diff, the source vendored by Go. Its child CL 858482 uses that implementation in goimports -d so it can print a patch without invoking an external diff program.",
+      "updatedAt": "2026-11-06T15:01:36.918Z",
+      "summary": "The parent Gerrit change corrects hunk line numbers in x/tools/internal/diff. Its child lets goimports -d print the patch without an external diff program. Patch set 8 simplifies the test and checks the stdin.go labels used when reading standard input. The native Linux checks also exercised writes to a full device and an unwritable file.",
       "evidence": [
+        {
+          "label": "Gerrit patch set 8 on parent ac8a34898",
+          "url": "https://go-review.googlesource.com/c/tools/+/858482/8"
+        },
+        {
+          "label": "Native Linux package tests, stdin diff headers, full device and unwritable file",
+          "url": "https://github.com/tamird/tools/actions/runs/42238726517"
+        },
+        {
+          "label": "Reply to Peter on the simplified diff tests",
+          "url": "https://go-review.googlesource.com/c/tools/+/858482/comment/429e1d44_9d2624f2/"
+        },
         {
           "label": "Original hunk headers, forward and reverse patch application, and syntax controls",
           "url": "https://github.com/tamird/gvisor/actions/runs/41403301559/artifacts/13122616373"
@@ -47321,13 +47333,15 @@
       ],
       "followup": {
         "owner": "root",
-        "sourceHead": "d140e4d63b51cb5053d57cde308379069b5a6436",
-        "observedAt": "2026-11-03T18:50:22.524457+00:00",
-        "disposition": "Two dependent changes published to Go Gerrit",
-        "nextAction": "Follow review of the x/tools hunk correction and its dependent goimports change on Gerrit.",
+        "sourceHead": "7a065ec802ee7a1deb4e7c404b4ea3cd40d5eac9",
+        "observedAt": "2026-11-06T15:01:36.918Z",
+        "disposition": "Patch set 8 and the requested reply are published",
+        "nextAction": "Follow Peter’s review on Gerrit.",
         "evidence": [
+          "https://go-review.googlesource.com/c/tools/+/858482/8",
+          "https://github.com/tamird/tools/actions/runs/42238726517",
           "https://go-review.googlesource.com/c/tools/+/858481",
-          "https://go-review.googlesource.com/c/tools/+/858482"
+          "https://go-review.googlesource.com/c/tools/+/858482/comment/429e1d44_9d2624f2/"
         ]
       }
     },
@@ -54392,12 +54406,16 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T14:35:28.137Z",
+      "updatedAt": "2026-11-06T15:01:36.918Z",
       "summary": "A single Bazel invocation executed six tests remotely. AMD64 and ARM64 workers ran the Go atomicbitops and C++ posix_error tests. AMD64 workers also ran uname on native Linux and under gVisor systrap. All six TestRunner actions passed uncached. Four of the six tests exercise parts of three presubmit jobs. Two serve as architecture controls. Each of those three jobs still has additional coverage to verify. The fork’s Buildkite file contains one submission command. GitHub Actions submitted it for this trial.\n\nThe previous proposals kept separate unit, Nogo, package, container, smoke, Gazelle, plugin, source-lint and syscall jobs. Their target lists, test fixtures and earlier results are linked. Staged release checks still have distinct artifact inputs.",
       "evidence": [
         {
           "label": "Six uncached remote TestRunner results",
           "url": "https://github.com/tamird/gvisor/actions/runs/42232937931/artifacts/13510273674"
+        },
+        {
+          "label": "AMD64 cgroup-v2 unit selection: 360 runnable and 2,881 build-only targets; the mixed remote run executed one matching unit test",
+          "url": "https://github.com/tamird/gvisor/blob/5a20420be/test/rbe/source-unit-cgroup-v2.md"
         },
         {
           "label": "One Bazel invocation for both architectures, native Linux and systrap",
