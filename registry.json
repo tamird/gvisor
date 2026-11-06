@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T22:58:19.265Z",
+    "updatedAt": "2026-11-06T23:08:10.479Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4857,8 +4857,8 @@
       "url": "https://github.com/tamird/gvisor/commit/f6df263f8",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 for its offsets and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn c0511e1cd, a single AMD64 source presubmit built all 2,880 build-only targets. Across 363 test owners, all 373 fresh remote shards passed. Independent analysis matched all 373 configurations to their OCI and Firecracker assignments. On 127967d31, ARM64 analysis selected 2,880 build-only targets and 373 test shards (367 OCI and six Firecracker). The attempted uname test did not start: its PrecompileSeccomp prerequisite failed with an executable format error.\n\nOn f6df263f8, one invocation linked the static race runsc and Sentry for AMD64 and ARM64 on an AMD64 Ubuntu worker. Native Linux also checked both vDSO ABIs and all 21 raw stub offsets. On 3dab3494e, the released toolchain booted rootless systrap guests natively on both architectures. On 2c90e983d, all nine executable hashes and modes matched across Debian, bzip2 and zstd releases per CPU. The AMD64 package booted a systrap guest and the ARM64 CLI ran under QEMU user emulation.",
-      "updatedAt": "2026-11-06T22:51:21.450Z",
+      "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 for its offsets and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn c0511e1cd, a single AMD64 source presubmit built all 2,880 build-only targets. Across 363 test owners, all 373 fresh remote shards passed. Independent analysis matched all 373 configurations to their OCI and Firecracker assignments. On 127967d31, ARM64 analysis selected 2,880 build-only targets and 373 test shards (367 OCI and six Firecracker). The first attempt ran an AMD64 seccomp generator on an ARM64 worker. Setting the ARM64 host platform selected the ARM64 generator. All four uname cases then passed in one fresh remote test, including UnshareUTS. The full suite remains to be run.\n\nOn f6df263f8, one invocation linked the static race runsc and Sentry for AMD64 and ARM64 on an AMD64 Ubuntu worker. Native Linux also checked both vDSO ABIs and all 21 raw stub offsets. On 3dab3494e, the released toolchain booted rootless systrap guests natively on both architectures. On 2c90e983d, all nine executable hashes and modes matched across Debian, bzip2 and zstd releases per CPU. The AMD64 package booted a systrap guest and the ARM64 CLI ran under QEMU user emulation.",
+      "updatedAt": "2026-11-06T23:08:10.479Z",
       "head": "f6df263f8e2ce2cbe6a497356613f6785c4800a4",
       "evidence": [
         {
@@ -5404,6 +5404,10 @@
         {
           "label": "ARM64 owner and shard inventory, plus first failed producer before uname",
           "url": "https://github.com/tamird/gvisor/actions/runs/42305861156/artifacts/13547330619"
+        },
+        {
+          "label": "Original generator ELF and native ARM64 namespace syscall results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42308103358/artifacts/13546859376"
         }
       ],
       "refinement": {
@@ -32224,17 +32228,18 @@
       "url": "https://github.com/google/gvisor/pull/16549",
       "head": "a869d645affee8384c7e6b063a0ebec9f1a64360",
       "status": "open",
-      "updatedAt": "2026-11-06T22:56:48.441Z",
+      "updatedAt": "2026-11-06T23:08:10.479Z",
       "summary": "Declare the relative /etc/resolv.conf symlink as a layer on the pinned BusyBox image. #16549 preserves the approved resolver edits and the merged fsstress target. Earlier qualification covered both architecture archives, Make loading and AMD64 containerd mount-over-symlink tests.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "a869d645affee8384c7e6b063a0ebec9f1a64360",
-        "observedAt": "2026-11-06T22:56:48.441Z",
-        "disposition": "Rebased after the approved head received an import/copybara migration error. The approved edits and commit message are preserved.",
-        "nextAction": "Watch for a public import of the new head; use the existing import-trigger reminder if its label is removed.",
+        "observedAt": "2026-11-06T23:08:10.479Z",
+        "disposition": "Copybara reports that the rebased change was imported into the internal review system.",
+        "nextAction": "Follow the resulting import through upstream integration.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/7c3249833...a869d645a",
-          "https://github.com/google/gvisor/pull/16549"
+          "https://github.com/google/gvisor/pull/16549",
+          "https://api.github.com/repos/google/gvisor/commits/a869d645a/status"
         ]
       },
       "evidence": [
@@ -32245,6 +32250,10 @@
         {
           "label": "Published patch-equivalent rebase after the failed import",
           "url": "https://github.com/tamird/gvisor/compare/7c3249833...a869d645a"
+        },
+        {
+          "label": "Current-head Copybara import status",
+          "url": "https://api.github.com/repos/google/gvisor/commits/a869d645a/status"
         }
       ],
       "reapproval": {
@@ -38888,7 +38897,7 @@
       "url": "https://github.com/google/gvisor/pull/16710",
       "status": "open",
       "summary": "Published the patch-preserving rebase 66fbf023e8 on 92d3cc68c. Lucas’s November 3 approval remains on prior head 4bbf4d718; the rebased head has no ready-to-pull label. Current-head review and import checks remain separate. Stateify selects the imports used by its generated methods and formats the result with go/format, without goimports or a host shell. Earlier qualification matched all 485 official generated files, including the five seccomp-dependent outputs, and passed the sibling-file alias fixture.",
-      "updatedAt": "2026-11-06T22:56:48.441Z",
+      "updatedAt": "2026-11-06T23:08:10.479Z",
       "evidence": [
         {
           "label": "Seven identical production outputs and scratch qualification",
@@ -38997,6 +39006,14 @@
         {
           "label": "Published patch-equivalent rebase after the failed import",
           "url": "https://github.com/tamird/gvisor/compare/66fbf023e...7ef8ae5df"
+        },
+        {
+          "label": "Before rebasing — Copybara migration error",
+          "url": "https://api.github.com/repos/google/gvisor/commits/66fbf023e/status"
+        },
+        {
+          "label": "After rebasing — Copybara migration error",
+          "url": "https://api.github.com/repos/google/gvisor/commits/7ef8ae5df/status"
         }
       ],
       "settledReviews": [
@@ -39036,11 +39053,11 @@
         }
       ],
       "followup": {
-        "owner": "Agent",
+        "owner": "Contributor",
         "sourceHead": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e",
-        "observedAt": "2026-11-06T22:56:48.441Z",
-        "disposition": "Rebased after the approved head received an import/copybara migration error. The approved edits and commit message are preserved.",
-        "nextAction": "Watch for a public import of the new head; use the existing import-trigger reminder if its label is removed.",
+        "observedAt": "2026-11-06T23:08:10.479Z",
+        "disposition": "The same Copybara migration error recurred on current master.",
+        "nextAction": "Approve the request for the first private importer error line.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/66fbf023e...7ef8ae5df",
           "https://github.com/google/gvisor/pull/16710"
@@ -39062,6 +39079,16 @@
         "after": {
           "head": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e"
         }
+      },
+      "contributorReview": {
+        "kind": "reply",
+        "status": "pending",
+        "head": "7ef8ae5dff4a7ecebe3962de7368858ecf19622e",
+        "url": "https://github.com/google/gvisor/pull/16710",
+        "title": "Ask Lucas for the Copybara error line",
+        "summary": "Both attempts failed on an equivalent patch. The public status identifies neither the failed file nor the transform.",
+        "body": "@manninglucas, Copybara reported a migration error on 66fbf023e and again after the rebase on 7ef8ae5df. Neither status links a log. Could you share the first error line and the file or transform it names?\n\nPosted by Codex on behalf of @tamird.",
+        "requestedAt": "2026-11-06T23:08:10.479Z"
       }
     },
     {
@@ -50496,7 +50523,7 @@
       "url": "https://github.com/google/gvisor/pull/16830",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-02T18:34:02.855318+00:00",
+      "updatedAt": "2026-11-06T23:08:10.479Z",
       "summary": "When an external Unix datagram receiver drained, stock gVisor left the writer asleep even though a separate poll confirmed it was writable. Linux and the tested correction delivered EPOLLOUT.",
       "evidence": [
         {
@@ -50506,6 +50533,10 @@
         {
           "label": "Three-line explanation added to the tested source",
           "url": "https://github.com/tamird/gvisor/compare/86114ad1b..9963cb1a8"
+        },
+        {
+          "label": "Pinned Linux formatter output and exact resulting file hashes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42309240103/artifacts/13546953613"
         }
       ],
       "settledReviews": [
@@ -50515,7 +50546,37 @@
           "outcome": "approved-with-changes",
           "at": "2026-11-02T18:30:15.670469+00:00"
         }
-      ]
+      ],
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "6b8479b9f8ce19e15e5aa804b12bf5d7e6799704",
+        "baseHead": "2a8882a8c441ccbb0b3a825e60cc08cc916b7721",
+        "title": "Watch writable host datagrams on the endpoint queue",
+        "body": "Connect to a gofer-backed Unix datagram socket using the connecting\nendpoint's queue for host notifications. The previous empty private\nqueue had no guest waiters. When a full peer drained, an existing\nEPOLLOUT watch could miss the wakeup although the socket was writable.\n\nInstall the queue before replacing the old peer. One-shot sends own\ntheir host descriptor only for the send and need no registration.",
+        "summary": "Clang-format was the only failed lint on this PR. The repository’s pinned formatter corrected the syscall tests, and the full formatting check passed on Linux. All C++ tokens, including comments and string literals, match the published tests.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 2a8882a8c^! 6b8479b9f^!\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 9963cb1a8^! 6b8479b9f^!",
+        "url": "https://github.com/tamird/gvisor/commit/6b8479b9f",
+        "requestedAt": "2026-11-06T23:08:10.479Z"
+      },
+      "refinement": {
+        "before": {
+          "head": "2a8882a8c441ccbb0b3a825e60cc08cc916b7721"
+        },
+        "after": {
+          "head": "6b8479b9f8ce19e15e5aa804b12bf5d7e6799704"
+        }
+      },
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "2a8882a8c441ccbb0b3a825e60cc08cc916b7721",
+        "observedAt": "2026-11-06T23:08:10.479Z",
+        "disposition": "Canonical formatting correction verified.",
+        "nextAction": "Review the amendment to the existing PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/6b8479b9f",
+          "https://github.com/tamird/gvisor/actions/runs/42309240103/artifacts/13546953613"
+        ]
+      }
     },
     {
       "id": "pr:hermeticbuild/hermetic-llvm:908",
@@ -53832,7 +53893,7 @@
       "url": "https://github.com/google/gvisor/pull/17064",
       "title": "Remove stale file descriptor lock requirements",
       "status": "open",
-      "updatedAt": "2026-11-06T22:56:48.441Z",
+      "updatedAt": "2026-11-06T23:08:10.479Z",
       "summary": "Remove the incorrect caller-lock comments on FDTable.GetFDs and VFSPipe.newFD. Published at the approved revision c74632e3c; four comment lines removed in two files.",
       "evidence": [
         {
@@ -53846,6 +53907,10 @@
         {
           "label": "Published patch-equivalent rebase after the failed import",
           "url": "https://github.com/tamird/gvisor/compare/c74632e3c...1ee6b64ae"
+        },
+        {
+          "label": "Current-head Copybara import status",
+          "url": "https://api.github.com/repos/google/gvisor/commits/1ee6b64ae/status"
         }
       ],
       "settledReviews": [
@@ -53880,12 +53945,13 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "1ee6b64aea00e1895fc67b71cc7a853a20319851",
-        "observedAt": "2026-11-06T22:56:48.441Z",
-        "disposition": "Rebased after the approved head received an import/copybara migration error. The approved edits and commit message are preserved.",
-        "nextAction": "Watch for a public import of the new head; use the existing import-trigger reminder if its label is removed.",
+        "observedAt": "2026-11-06T23:08:10.479Z",
+        "disposition": "Copybara reports that the rebased change was imported into the internal review system.",
+        "nextAction": "Follow the resulting import through upstream integration.",
         "evidence": [
           "https://github.com/tamird/gvisor/compare/c74632e3c...1ee6b64ae",
-          "https://github.com/google/gvisor/pull/17064"
+          "https://github.com/google/gvisor/pull/17064",
+          "https://api.github.com/repos/google/gvisor/commits/1ee6b64ae/status"
         ]
       }
     },
@@ -56622,6 +56688,97 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/42290164647/artifacts/13539991997"
         }
       ]
+    },
+    {
+      "id": "pr:16875",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 16875,
+      "ref": "research/ipv6-multicast-socket-options",
+      "head": "972a7152fa77dc23d98e4cdd3f03a330e615c222",
+      "title": "Implement IPv6 multicast hop and loopback options",
+      "url": "https://github.com/google/gvisor/pull/16875",
+      "group": "runtime",
+      "status": "open",
+      "summary": "OpenJDK reached eth0 with the interface flags from #16059, then failed to read IPV6_MULTICAST_HOPS. Five shared syscall cases on both gVisor network modes now agree with Linux, including which packet a connected dual-stack sender loops back.",
+      "evidence": [
+        {
+          "label": "Both commits for review",
+          "url": "https://github.com/tamird/gvisor/compare/89a7d2beb...972a7152f"
+        },
+        {
+          "label": "Changes since the earlier route implementation",
+          "url": "https://github.com/tamird/gvisor/compare/4724a5fcd...972a7152f"
+        },
+        {
+          "label": "Original Java importer failure",
+          "url": "https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/52852/jobs/01a18479-3be3-4571-8423-f723c54a33b6/log"
+        },
+        {
+          "label": "Linux and stock connected multicast delivery",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41139775803/artifacts/13017933283"
+        },
+        {
+          "label": "Five syscall cases on netstack and host networking",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41143755175/artifacts/13020224398"
+        },
+        {
+          "label": "Both OpenJDK modes and nine production analyzers",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41143755175/artifacts/13020616149"
+        },
+        {
+          "label": "Old and new writes retain their own route",
+          "url": "https://github.com/tamird/gvisor/actions/runs/41145500718/artifacts/13021260853"
+        },
+        {
+          "label": "Upstream pull request",
+          "url": "https://github.com/google/gvisor/pull/16875"
+        },
+        {
+          "label": "Pinned Linux formatter output and exact resulting file hashes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42309240103/artifacts/13546953613"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "972a7152fa77dc23d98e4cdd3f03a330e615c222",
+          "outcome": "approved",
+          "at": "2026-11-02T21:49:41.876026+00:00",
+          "postedURL": "https://github.com/google/gvisor/pull/16875"
+        }
+      ],
+      "contributorReview": {
+        "kind": "amendment",
+        "status": "pending",
+        "head": "0a70689c3640ab660307b0548f76087316803748",
+        "baseHead": "972a7152fa77dc23d98e4cdd3f03a330e615c222",
+        "title": "Implement IPv6 multicast hop and loopback options",
+        "body": "OpenJDK’s DatagramSocketMulticasting test failed when #16059 exposed a\nmulticast-capable interface. Its default DatagramSocket reads\nIPV6_MULTICAST_HOPS even when sending to an IPv4 group. Netstack\nreturned ENOPROTOOPT. In IPv4-only mode, the JDK reads IP_MULTICAST_TTL\nand IP_MULTICAST_LOOP into a one-byte buffer, which netstack also\nrejected [1] [2].\n\nKeep IPv4 and IPv6 multicast settings independent. On a dual-stack\nsocket sending to an IPv4-mapped group, Linux uses the IPv4 TTL and the\nIPv6 socket’s loopback setting [3]. Change the connected route’s\nloopback policy when the application sets the option. A send that\nalready acquired the route keeps its original policy. With host\nnetworking, forward IPV6_MULTICAST_LOOP to the host socket.\n\nFive shared syscall cases cover option lengths, independent values, and\ndelivery over a real multicast interface. Stock delivered a packet after\nthe sender disabled loopback. Linux, corrected netstack and corrected\nhostinet delivered the following packet with IPv4 TTL 11 [4] [5]. The\noriginal Java test also completed on eth0 in both its default and\nIPv4-only modes [6]. A focused writer test sends two packets after\nchanging the option. Mutating the old route incorrectly disables\nloopback for the first packet; retaining its acquired route passes, as\ndo the full network suite and its analyzer [7].\n\n[1]: https://buildkite.com/organizations/gvisor/pipelines/pipeline/builds/52852/jobs/01a18479-3be3-4571-8423-f723c54a33b6/log\n[2]: https://github.com/tamird/gvisor/actions/runs/41131750771/artifacts/13013753296\n[3]: https://github.com/torvalds/linux/blob/7d0a66e4b/net/core/sock.c#L774-L790\n[4]: https://github.com/tamird/gvisor/actions/runs/41139775803/artifacts/13017933283\n[5]: https://github.com/tamird/gvisor/actions/runs/41143755175/artifacts/13020224398\n[6]: https://github.com/tamird/gvisor/actions/runs/41143755175/artifacts/13020616149\n[7]: https://github.com/tamird/gvisor/actions/runs/41145500718/artifacts/13021260853",
+        "summary": "Clang-format was the only failed lint on this PR. The repository’s pinned formatter corrected the syscall tests, and the full formatting check passed on Linux. All C++ tokens, including comments and string literals, match the published tests. The proposed single commit retains both published changes and uses the existing PR description as its message.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 89a7d2beb..972a7152f 0a70689c3^!\n\ngit -C ~/code/gvisor diff 972a7152f 0a70689c3",
+        "url": "https://github.com/tamird/gvisor/commit/0a70689c3",
+        "requestedAt": "2026-11-06T23:08:10.479Z"
+      },
+      "refinement": {
+        "before": {
+          "head": "972a7152fa77dc23d98e4cdd3f03a330e615c222"
+        },
+        "after": {
+          "head": "0a70689c3640ab660307b0548f76087316803748"
+        }
+      },
+      "followup": {
+        "owner": "Contributor",
+        "sourceHead": "972a7152fa77dc23d98e4cdd3f03a330e615c222",
+        "observedAt": "2026-11-06T23:08:10.479Z",
+        "disposition": "Canonical formatting correction verified.",
+        "nextAction": "Review the amendment to the existing PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/0a70689c3",
+          "https://github.com/tamird/gvisor/actions/runs/42309240103/artifacts/13546953613"
+        ]
+      },
+      "updatedAt": "2026-11-06T23:08:10.479Z"
     }
   ],
   "edges": [
@@ -73787,8 +73944,8 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-06T22:58:19.265Z",
-      "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs.",
+      "updatedAt": "2026-11-06T23:08:10.479Z",
+      "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
           "text": "With current rules_python main, both native launchers ran their extracted programs on Linux with an empty PATH. The ARM64 Python distribution needed libgcc_s.so.1 from a pinned distroless/cc image. Both architectures passed 26 bootstrap tests. Invoking the program through a symlink or passing another program’s runfiles directory still failed only with the native launcher. The supplier change remains on the fork.",
@@ -76272,9 +76429,18 @@
               "url": "https://github.com/tamird/gvisor/commit/bb983b988"
             }
           ]
+        },
+        {
+          "text": "The ARM64 runsc from the paired build contains 59 generated Go filenames with a 16-character Bazel transition suffix. Normalizing those configuration names makes all 1,233 filenames match the direct build. Those suffixes account for the 944-byte increase in .gopclntab. Other sections, including .text, still differ.",
+          "evidence": [
+            {
+              "label": "Two original ARM64 runsc ELF files compared without rebuilding",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42309368479/artifacts/13548470245"
+            }
+          ]
         }
       ],
-      "nextStep": "Boot the exact two new archives under native Linux and compare the two ARM64 configurations to explain the changed Go binaries. Track hermeticbuild/hermetic-launcher#95 for the upstream Python launcher; a literal zero-layer OCI root is a separate worker issue.",
+      "nextStep": "Trace generated Go filenames into compilation and measure whether normalizing the Bazel output configuration removes the differences in runsc. Track hermeticbuild/hermetic-launcher#95 for the upstream Python launcher.",
       "evidence": [
         {
           "label": "Verified OCI layout with a single empty directory",
@@ -76723,6 +76889,14 @@
         {
           "label": "Both native release archives, original action counts and all 18 member hashes",
           "url": "https://github.com/tamird/gvisor/actions/runs/42306168961/artifacts/13547361872"
+        },
+        {
+          "label": "Boot original AMD64 release archive in native rootless systrap",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42308873497/artifacts/13547905834"
+        },
+        {
+          "label": "Boot original ARM64 release archive in native rootless systrap",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42308873497/artifacts/13547926473"
         }
       ],
       "group": "rbe"
