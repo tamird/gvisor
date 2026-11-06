@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T17:44:22.830Z",
+    "updatedAt": "2026-11-06T17:57:27.739Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -48528,15 +48528,19 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proposal/tcp-info-total-retrans",
-      "head": "f1dbaa4d1e2cfb522fa03197ed36f21df9a74a3b",
+      "head": "0c8fe8397654defd60ac60ff9eb59e3ba1a6deea",
       "number": 16809,
       "title": "Report retransmitted segments in TCP_INFO",
       "url": "https://github.com/google/gvisor/pull/16809",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T17:33:33.842Z",
-      "summary": "Master now reports negotiated timestamp and SACK options in the same TCP_INFO initializer that this PR changes. The source PR and its approved import #16982 both conflict. The fork revision combines those two option fields with the lifetime retransmission count under the existing endpoint lock. It keeps the SYN-cookie send error visible to the caller. Native Linux and gVisor packet checks are running.",
+      "updatedAt": "2026-11-06T17:57:27.739Z",
+      "summary": "Published the conflict resolution on the existing PR. All 16 named packet checks passed: active, passive and data retransmissions, TCP_INFO readback, and all four timestamp/SACK combinations on native Linux and gVisor.",
       "evidence": [
+        {
+          "label": "Exact rebased source: Linux and gVisor passed all 16 packet cases",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42261812749/artifacts/13525828699"
+        },
         {
           "label": "Rebased TCP_INFO implementation",
           "url": "https://github.com/tamird/gvisor/commit/0c8fe8397"
@@ -48664,13 +48668,14 @@
         "evidence": "https://github.com/tamird/gvisor/compare/bc9ffcc0d...bbdb2f8a2"
       },
       "followup": {
-        "owner": "Agent",
+        "owner": "Maintainer",
         "sourceHead": "0c8fe8397654defd60ac60ff9eb59e3ba1a6deea",
-        "observedAt": "2026-11-06T17:33:33.842Z",
-        "disposition": "Contributor approved publication after the packet checks pass.",
-        "nextAction": "When both Linux and gVisor suites pass, update the existing PR source and verify its head and tree.",
+        "observedAt": "2026-11-06T17:57:27.739Z",
+        "disposition": "Approved amendment published as one commit; its tree matched the qualified source.",
+        "nextAction": "Wait for fresh upstream approval and an import of the rebased source.",
         "evidence": [
-          "https://github.com/tamird/gvisor/actions/runs/42261812749"
+          "https://github.com/google/gvisor/pull/16809",
+          "https://github.com/tamird/gvisor/actions/runs/42261812749/artifacts/13525828699"
         ]
       }
     },
@@ -54327,9 +54332,13 @@
       "url": "https://github.com/bazel-contrib/rules_python/issues/2500",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-06T16:14:27.582Z",
-      "summary": "Let a rule name a required runfile so a separately installed child uses its own runfiles when the parent’s tree lacks that file.",
+      "updatedAt": "2026-11-06T17:57:27.739Z",
+      "summary": "The proposal to check for a child’s required runfile before inheriting the parent’s runfiles is now with the hermetic-launcher maintainers in #95.",
       "evidence": [
+        {
+          "label": "Approved issue filed with hermetic-launcher",
+          "url": "https://github.com/hermeticbuild/hermetic-launcher/issues/95"
+        },
         {
           "label": "Two unmodified Linux packages, direct invocation and parent dependency controls",
           "url": "https://github.com/tamird/rules_python/actions/runs/42210914546/artifacts/13498603725"
@@ -54343,15 +54352,18 @@
           "url": "https://github.com/tamird/rules_python/actions/runs/42194884935/artifacts/13490564991"
         }
       ],
-      "contributorReview": {
-        "kind": "issue",
-        "status": "pending",
-        "url": "https://github.com/hermeticbuild/hermetic-launcher/issues/new",
-        "requestedAt": "2026-11-06T11:35:55.690Z",
-        "title": "Let a packaged child select its own runfiles",
-        "summary": "Let a rule name a required runfile so a separately installed child uses its own runfiles when the parent’s tree lacks that file.",
-        "body": "Running an independently installed Python plugin from a Bazel-built parent fails before Python starts: the launcher inherits the parent’s `RUNFILES_DIR`, which lacks the plugin’s bootstrap script. The same plugin runs directly. [Reproducer](https://github.com/tamird/rules_python/actions/runs/42210914546/artifacts/13498603725).\n\nI propose letting a rule name one required runfile. `rules_python` would name the child’s stage-two bootstrap. Use the inherited source if it contains that file. Otherwise use the child’s adjacent runfiles for both path resolution and the environment passed to the child.\n\nPosted by Codex on behalf of @tamird."
-      }
+      "settledReviews": [
+        {
+          "kind": "issue",
+          "url": "https://github.com/hermeticbuild/hermetic-launcher/issues/new",
+          "title": "Let a packaged child select its own runfiles",
+          "summary": "Let a rule name a required runfile so a separately installed child uses its own runfiles when the parent’s tree lacks that file.",
+          "body": "Running an independently installed Python plugin from a Bazel-built parent fails before Python starts: the launcher inherits the parent’s `RUNFILES_DIR`, which lacks the plugin’s bootstrap script. The same plugin runs directly. [Reproducer](https://github.com/tamird/rules_python/actions/runs/42210914546/artifacts/13498603725).\n\nI propose letting a rule name one required runfile. `rules_python` would name the child’s stage-two bootstrap. Use the inherited source if it contains that file. Otherwise use the child’s adjacent runfiles for both path resolution and the environment passed to the child.\n\nPosted by Codex on behalf of @tamird.",
+          "outcome": "approved",
+          "at": "2026-11-06T17:57:27.739Z",
+          "postedURL": "https://github.com/hermeticbuild/hermetic-launcher/issues/95"
+        }
+      ]
     },
     {
       "id": "branch:tcp-keepalive-locks",
