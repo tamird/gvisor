@@ -807,6 +807,5 @@ func BenchmarkRecvMMsgDispatcher(b *testing.B) {
 		}
 		d.release()
 		d.close()
-		d.(*recvMMsgDispatcher).mgr.processors[0].sleeper.Done()
 	}
 }
