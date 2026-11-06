@@ -1,35 +1,51 @@
-name: CI
-
-"on":
+name: Check NIC teardown without the stack mutex
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/nic-detach-after-unlock]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 70
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Run the original deadlock control and corrected stack, race and wire cases
+        run: |
+          set -euo pipefail
+          dir="$RUNNER_TEMP/nic-drain"
+          mkdir -m 700 "$dir"
+          cp .github/qualification/{nic_drain.py,nic_stream.go} "$dir/"
+          test "$(git rev-parse HEAD^)" = 45af0a2533d2e46a6ebb7120c8649c37222ede84
+          test "$(git rev-parse HEAD^^)" = f51a205a8f4afbc5ab41aded070df74951b081ea
+          mkdir -p "$dir/results"
+          test "$(cat .bazelversion)" = 9.3.1
+          curl --retry 3 -fsSL --proto '=https' --proto-redir '=https' --max-time 100 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$dir/bazelisk"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $dir/bazelisk" | sha256sum -c
+          chmod 755 "$dir/bazelisk"
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" RUNNER_TEMP="$RUNNER_TEMP" LANG=C.UTF-8 python3 -B "$dir/nic_drain.py"
+      - name: Verify the evidence boundary
+        if: always()
+        id: boundary
+        run: |
+          python3 - <<'CHECK'
+          import os, re
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])/'nic-drain'/'results'
+          assert (root/'results.json').is_file()
+          for p in root.iterdir():
+              assert p.is_file() and not p.is_symlink()
+              assert re.fullmatch(r'results\.json|(?:stock|regular|nogo|race|wire)-[0-9]+\.log', p.name)
+              data=p.read_bytes()
+              assert len(data) < 90000
+              assert not re.search(rb'gh[pousr]_[A-Za-z0-9]{25,}|github_pat_[A-Za-z0-9]+|BEGIN (RSA |OPENSSH )?PRIVATE KEY|(?i:authorization|x-buildbuddy-api-key)\s*[:=]', data)
+          CHECK
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.boundary.outcome == 'success'
+        with:
+          name: nic-drain-standalone
+          path: ${{ runner.temp }}/nic-drain/results/
+          if-no-files-found: error
+          retention-days: 7
