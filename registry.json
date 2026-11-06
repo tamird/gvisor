@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T10:22:05.384Z",
+    "updatedAt": "2026-11-06T10:53:11.488Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -53473,6 +53473,44 @@
         "title": "Post the Docker container-name finding on #17028",
         "summary": "Post one inline comment on the subtest name at test/e2e/dind_checkpoint_test.go:82, on the right side of the diff.",
         "body": "test/e2e/dind_checkpoint_test.go:82\n\n@hky1999, could you use `leave-running-%t` here? `dockerutil.MakeContainer` derives the outer container name from `t.Name()`, including the `=`. With #16666 applied, Docker 27.5.1 rejected both names at `outer.Spawn`. Neither subtest reached its first checkpoint. [One-character fix](https://github.com/tamird/gvisor/commit/053b485ea) · [Test results](https://github.com/tamird/gvisor/actions/runs/42196365253/artifacts/13494781551)\n\nReview body:\nSubmitted by Codex on behalf of @tamird."
+      }
+    },
+    {
+      "id": "pr:17026",
+      "type": "pr",
+      "number": 17026,
+      "repo": "google/gvisor",
+      "ref": "upstream/dind-topology-20261105",
+      "head": "fdd009fd9c0752b3f9fc3bf1a8c3deeff105a8c3",
+      "title": "Use the root network namespace when registering a child",
+      "url": "https://github.com/google/gvisor/pull/17026",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-06T10:53:11.488Z",
+      "summary": "The existing netlink syscall test passed on Linux. On fdd009fd9 the guest entered the test and panicked on the second unshare. With the two production call sites corrected, GoogleTest recorded OK and the guest exited 0. The fork reporter subsequently marked the expected test-log output missing.",
+      "evidence": [
+        {
+          "label": "Existing netlink syscall case on native Linux",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42202594185/artifacts/13495073469"
+        },
+        {
+          "label": "Guest GoogleTest records and exits on the PR and with the correction",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42204481246/artifacts/13495984170"
+        },
+        {
+          "label": "Two production call sites on the author’s head",
+          "url": "https://github.com/tamird/gvisor/commit/edee8e74f"
+        }
+      ],
+      "contributorReview": {
+        "kind": "review",
+        "status": "pending",
+        "head": "fdd009fd9c0752b3f9fc3bf1a8c3deeff105a8c3",
+        "url": "https://github.com/google/gvisor/pull/17026",
+        "requestedAt": "2026-11-06T10:53:11.488Z",
+        "title": "Post the nested network namespace finding on #17026",
+        "summary": "Post one inline comment on root.registerChild(n) at pkg/sentry/inet/namespace.go:109, on the right side of the diff.",
+        "body": "pkg/sentry/inet/namespace.go:109\n\n@hky1999, the existing `NetlinkRouteTest.ChangeNetnsAndOtherAttrsTogether` unshares its network namespace twice. It passes on Linux. On this head the second unshare panics here with `registerChild called on a non-root namespace`. Could `Task.Clone` and `Task.Unshare` pass `t.k.RootNetworkNamespace()` to `NewNamespace`? Both currently pass the task’s current namespace. With that [two-call change](https://github.com/tamird/gvisor/commit/edee8e74f), the same test passed in the guest. [Native Linux](https://github.com/tamird/gvisor/actions/runs/42202594185/artifacts/13495073469) · [Guest runs](https://github.com/tamird/gvisor/actions/runs/42204481246/artifacts/13495984170)\n\nReview body:\nSubmitted by Codex on behalf of @tamird."
       }
     }
   ],
