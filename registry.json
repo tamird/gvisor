@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T11:28:05.597Z",
+    "updatedAt": "2026-11-06T11:35:55.690Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -53591,6 +53591,41 @@
         "title": "Open the decoder benchmark fixture PR",
         "summary": "May I open this benchmark-only change? Starting each decode with an empty destination measures the allocations a fresh restore needs. The updated Gob timings reflect that extra work in the fixture.",
         "body": "Since 364ac92ba, BenchmarkDecoding has passed the object it just\nencoded back to the decoder. That lets gob reuse objects from the\nsource. A new Sentry cannot reuse the objects in the old one.\n\nClear the root before each decode. With the populated slice fixture,\ngob reused the backing array and all 1,024 pointers to a single\nobject. From an empty root it decoded 1,024 distinct objects. The\ngraph decoder allocated a new backing array and one shared pointee\nin both cases.\n\nTen interleaved pairs on linux/amd64 measured the cost of decoding\ninto the two destinations [1].\n\n```text\n                       │  populated   │                 empty                  │\n                       │    sec/op    │    sec/op      vs base                 │\nDecoding/ptr/gob-2       69.90µ ±  3%   107.23µ ±  6%   +53.41% (p=0.000 n=10)\nDecoding/map/gob-2       142.3µ ±  6%    149.8µ ±  3%    +5.33% (p=0.011 n=10)\nDecoding/slice/gob-2     34.95µ ±  5%    75.66µ ± 11%  +116.48% (p=0.000 n=10)\n\n                       │  populated  │                 empty                  │\n                       │  allocs/op  │  allocs/op   vs base                   │\nDecoding/slice/gob-2      166.0 ± 1%   1192.0 ± 0%  +618.07% (p=0.000 n=10)\n```\n\n[1]: https://github.com/tamird/gvisor/actions/runs/42208846434/artifacts/13498656355"
+      }
+    },
+    {
+      "id": "issue:bazel-contrib/rules_python:2500",
+      "type": "issue",
+      "repo": "bazel-contrib/rules_python",
+      "number": 2500,
+      "title": "Runfiles for a separately installed Python child",
+      "url": "https://github.com/bazel-contrib/rules_python/issues/2500",
+      "group": "bazel",
+      "status": "open",
+      "updatedAt": "2026-11-06T11:35:55.690Z",
+      "summary": "On Linux, a native stage1 prototype exited before starting a separately installed plugin when the parent exported its own runfiles tree. The Bash bootstrap found the plugin in its installation. When the parent declared the child as a dependency, both bootstraps used the parent’s tree. The rules_python change is held while launcher discovery is discussed.",
+      "evidence": [
+        {
+          "label": "Two unmodified Linux packages, direct invocation and parent dependency controls",
+          "url": "https://github.com/tamird/rules_python/actions/runs/42210914546/artifacts/13498603725"
+        },
+        {
+          "label": "rules_python handles a caller whose runfiles tree omits the child",
+          "url": "https://github.com/bazel-contrib/rules_python/blob/26b0a238d/python/private/stage1_bootstrap_template.sh#L99-L104"
+        },
+        {
+          "label": "Additional partial-tree and executable-alias controls",
+          "url": "https://github.com/tamird/rules_python/actions/runs/42194884935/artifacts/13490564991"
+        }
+      ],
+      "contributorReview": {
+        "kind": "issue",
+        "status": "pending",
+        "url": "https://github.com/hermeticbuild/hermetic-launcher/issues/new",
+        "requestedAt": "2026-11-06T11:35:55.690Z",
+        "title": "How should a packaged Python child find its runfiles?",
+        "summary": "File this question with hermetic-launcher about runfiles selection for the shell-free rules_python bootstrap?",
+        "body": "A Bazel-built Python program can take a separately installed plugin as an argument, like `outer /opt/plugin`. The rules_python Bash bootstrap checks that the inherited runfiles tree contains the child’s stage2 script before using it [1].\n\nWe tested this on Linux while working on bazel-contrib/rules_python#2500. The child ran directly. When a separately packaged parent invoked it, the Bash bootstrap ran the child, but the native prototype using hermetic-launcher 0.0.17 exited 1 before the child’s main. The parent’s tree contained neither the child’s interpreter nor its stage2 script. When the parent declared the child as a dependency, both bootstraps ran it using the parent’s tree [2].\n\nShould hermetic-launcher let a caller specify a file to check before inheriting the runfiles tree, or should rules_python decide which tree to use?\n\n[1]: https://github.com/bazel-contrib/rules_python/blob/26b0a238d/python/private/stage1_bootstrap_template.sh#L99-L104\n[2]: https://github.com/tamird/rules_python/actions/runs/42210914546/artifacts/13498603725\n\nPosted by Codex on behalf of @tamird."
       }
     }
   ],
