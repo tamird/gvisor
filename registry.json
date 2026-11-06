@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T15:01:36.918Z",
+    "updatedAt": "2026-11-06T15:04:52.756Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -54480,17 +54480,17 @@
       }
     },
     {
-      "id": "branch:packet-ring-unmap",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:17111",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "proposal/packet-ring-unmap",
       "head": "2ab3d20352bb6bd468cbd6d4d1d9d7b7b955bdc9",
       "title": "Unmap the host packet ring when its endpoint closes",
-      "url": "https://github.com/tamird/gvisor/commit/2ab3d2035",
+      "url": "https://github.com/google/gvisor/pull/17111",
       "group": "runtime",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T14:55:55.836Z",
-      "summary": "Closing the PacketMMap endpoint left 2,101,248 bytes mapped on a native AMD64 host with 4 KiB pages, even after the caller closed the socket. On the tested fix the mapping remained accessible after detach and was gone after the first and second Close. An 88-byte UDP packet delivered before close still held its original payload. Restore copied zero ring bytes and closing the restored dispatcher left the live owner’s mapping intact.\n\nThe original Linux results cover 1a8b1b84c. The final change keeps the slice if Munmap fails so a later Close can retry. The page-size alignment and worker-lifetime changes are independent.",
+      "status": "open",
+      "updatedAt": "2026-11-06T15:04:52.756Z",
+      "summary": "PR #17111 releases the packet-ring mapping when its endpoint closes. Closing the PacketMMap endpoint left 2,101,248 bytes mapped on a native AMD64 host with 4 KiB pages, even after the caller closed the socket. On the tested fix the mapping remained accessible after detach and was gone after the first and second Close. An 88-byte UDP packet delivered before close still held its original payload. Restore copied zero ring bytes and closing the restored dispatcher left the live owner’s mapping intact.\n\nThe original Linux results cover 1a8b1b84c. The final change keeps the slice if Munmap fails so a later Close can retry. The page-size alignment and worker-lifetime changes are independent.",
       "evidence": [
         {
           "label": "Native AF_PACKET mapping, retained UDP packet and checkpoint control",
@@ -54501,17 +54501,23 @@
           "url": "https://github.com/tamird/gvisor/compare/1a8b1b84c...2ab3d2035"
         }
       ],
-      "contributorReview": {
-        "kind": "proposal",
-        "status": "pending",
-        "head": "2ab3d20352bb6bd468cbd6d4d1d9d7b7b955bdc9",
-        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
-        "url": "https://github.com/tamird/gvisor/commit/2ab3d2035",
-        "requestedAt": "2026-11-06T14:55:55.836Z",
-        "title": "Unmap the host packet ring when its endpoint closes",
-        "body": "Closing a PacketMMap endpoint leaves its roughly 2 MiB receive ring\nmapped in the process, even after the caller closes the packet socket.\nThe endpoint creates the mapping and the stack stops its receive loop\nbefore calling Close. Packets already delivered to the stack have their\nown copy of the frame data.\n\nUnmap the ring at that point. Leave the host mapping out of checkpoints\nso a restored dispatcher cannot mistake a Go byte slice for a mapping.",
-        "summary": "May I open the packet-ring teardown fix? Stock retained its 2,101,248-byte mapping after both the endpoint and socket closed. The tested fix released it while preserving an already delivered packet. The final error-path change retains the mapping for a later Close if unmap fails."
-      }
+      "number": 17111,
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "status": "pending",
+          "head": "2ab3d20352bb6bd468cbd6d4d1d9d7b7b955bdc9",
+          "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+          "url": "https://github.com/tamird/gvisor/commit/2ab3d2035",
+          "requestedAt": "2026-11-06T14:55:55.836Z",
+          "title": "Unmap the host packet ring when its endpoint closes",
+          "body": "Closing a PacketMMap endpoint leaves its roughly 2 MiB receive ring\nmapped in the process, even after the caller closes the packet socket.\nThe endpoint creates the mapping and the stack stops its receive loop\nbefore calling Close. Packets already delivered to the stack have their\nown copy of the frame data.\n\nUnmap the ring at that point. Leave the host mapping out of checkpoints\nso a restored dispatcher cannot mistake a Go byte slice for a mapping.",
+          "summary": "May I open the packet-ring teardown fix? Stock retained its 2,101,248-byte mapping after both the endpoint and socket closed. The tested fix released it while preserving an already delivered packet. The final error-path change retains the mapping for a later Close if unmap fails.",
+          "outcome": "approved",
+          "at": "2026-11-06T15:04:52.756Z",
+          "note": "Published as #17111 at the reviewed commit."
+        }
+      ]
     }
   ],
   "edges": [
