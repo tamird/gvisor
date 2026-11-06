@@ -1,168 +1,45 @@
-name: Compare graph save policy in a precreated native systrap cgroup
+name: Compare graph restore GC policies under a one-CPU quota
 on:
   push:
-    branches: [qualification/gc-save-native-guard-recovery]
+    branches: [qualification/gc-one-cpu-reference-restore]
 permissions:
   contents: read
 jobs:
   restore:
-    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && github.run_attempt == 1
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
     runs-on: ubuntu-22.04
-    timeout-minutes: 195
+    timeout-minutes: 275
     env:
       IMAGE: gcr.io/gvisor-presubmit/default_x86_64@sha256:cff9bcf01c7a23182b2bb44520cfeb3375b6b138ddca3ab2e121bc54015e754a
       PRODUCT: c31b2adc27b1d19b1e647b3239cd2b3b536a5adf
       BASE: 706b124a2e5a587123d9844a83db5e55d318d3ea
       REPORTER: 2b51abee8530385431b7225198fdd5cd65e78696
-      TEST_BLOB: b70a9171605324eef57901601fdd6163572041be
+      REFERENCE: 4a7ccbd2c90fe8d87fab290803d4887d2d7ac983
+      REFERENCE_BASE: 2511bc60218a81ff6f5ef0d964050aaec5f05ffc
+      REFERENCE_TREE: f0c083455739574b1a9d4e8383c36e89d11ae1eb
+      TEST_BLOB: ff80ae014e19eed96ac74804bb47cb975e14fe80
       PKG: .github/qualification/restore-limit-vm
     steps:
-    - name: Check the ordinary user's delegated cgroup
-      id: host
-      shell: bash
-      run: |
-        set -euo pipefail
-        export LC_ALL=C
-        unit=gvisor-precreated-leaf-probe.service
-        uid=$(id -u)
-        test "$uid" -ne 0
-        if [[ -S /run/user/$uid/bus && $(stat -c %u "/run/user/$uid") == "$uid" ]]; then
-          export XDG_RUNTIME_DIR="/run/user/$uid"
-          export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus"
-        fi
-        cat > "$RUNNER_TEMP/probe.sh" <<'PROBE'
-        set -eu
-        if [[ "${1:-}" != inner ]]; then
-          echo PHASE=service
-          membership=$(awk -F: '$1=="0" {print $3}' /proc/self/cgroup)
-          [[ "${membership##*/}" == gvisor-precreated-leaf-probe.service ]]
-          [[ $(id -u) != 0 ]]
-          # Read effective ancestor limits before changing cgroup namespace.
-          python3 - "$membership" <<'LIMITS'
-        import os, sys
-        from pathlib import Path
-        root = Path("/sys/fs/cgroup")
-        mount = [line.split() for line in Path("/proc/self/mountinfo").read_text().splitlines()
-                 if line.split()[4] == str(root)]
-        assert len(mount) == 1 and mount[0][3] == "/" and mount[0][mount[0].index("-") + 1] == "cgroup2"
-        service = (root / sys.argv[1].lstrip("/")).resolve(strict=True)
-        assert root in service.parents
-        print("AFFINITY=", len(os.sched_getaffinity(0)), sep="")
-        for path in (service, *service.parents):
-            for name in ("cpu.max", "memory.max"):
-                limit = path / name
-                if limit.exists():
-                    print(name, "=", limit.read_text().strip(), sep="")
-            if path == root:
-                break
-        LIMITS
-          echo PHASE=user_namespace
-          exec setpriv --no-new-privs unshare --user --map-root-user --mount --cgroup --propagation private \
-            /bin/bash "$0" inner "$2" "$(readlink /proc/self/ns/cgroup)"
-        fi
-        [[ $(id -u) == 0 && $(readlink /proc/self/ns/cgroup) != "$3" && $(cat /proc/self/cgroup) == '0::/' ]]
-        echo PHASE=private_mount
-        mount -t cgroup2 none "$2"
-        cd "$2"
-        [[ $(stat -f -c %T .) == cgroup2fs ]]
-        controllers=$(cat cgroup.controllers)
-        echo PHASE=controllers_read
-        for key in $controllers; do
-          [[ $key =~ ^[a-z_]+$ ]]
-          echo "CONTROLLER=$key"
-        done
-        [[ " $controllers " == *" memory "* ]]
-        echo PHASE=create_children
-        mkdir client probe
-        echo PHASE=move_client
-        echo $$ > client/cgroup.procs
-        [[ $(cat /proc/self/cgroup) == '0::/client' ]]
-        echo PHASE=enable_controllers
-        echo +memory > cgroup.subtree_control
-        echo PHASE=memory_write
-        echo 2147483648 > probe/memory.max
-        [[ $(cat probe/memory.max) == 2147483648 ]]
-        grep -Fxq 'oom_kill 0' probe/memory.events
-        echo PHASE=join_precreated
-        (
-          child=$BASHPID
-          echo "$child" > probe/cgroup.procs
-          [[ $(cat /proc/self/cgroup) == '0::/probe' ]]
-          grep -Fxq "$child" probe/cgroup.procs
-          [[ $(cat probe/memory.max) == 2147483648 ]]
-        )
-        echo PHASE=complete
-        PROBE
-        mkdir "$RUNNER_TEMP/native-cgroup"
-        set +e
-        timeout 45s systemd-run --user --quiet --collect --wait --pipe --unit="$unit" \
-          --property=Delegate=yes --property=RuntimeMaxSec=35s -- \
-          /bin/bash "$RUNNER_TEMP/probe.sh" outer "$RUNNER_TEMP/native-cgroup" > "$RUNNER_TEMP/probe.log" 2>&1
-        code=$?
-        set -e
-        python3 - "$code" <<'PY'
-        import json, os, platform, re, sys
-        from pathlib import Path
-        root = Path(os.environ["RUNNER_TEMP"])
-        lines = (root / "probe.log").read_text(errors="replace").splitlines()
-        steps = ("service", "user_namespace", "private_mount", "controllers_read", "create_children",
-                 "move_client", "enable_controllers", "memory_write", "join_precreated", "complete")
-        phases = [p for p in steps if f"PHASE={p}" in lines]
-        cpu = [line.split("=", 1)[1] for line in lines if re.fullmatch(r"cpu\.max=(max|[0-9]{1,18}) [1-9][0-9]{0,11}", line)]
-        memory = [line.split("=", 1)[1] for line in lines if re.fullmatch(r"memory\.max=(max|[0-9]{1,20})", line)]
-        affinity = [int(line.split("=")[1]) for line in lines if re.fullmatch(r"AFFINITY=[1-9][0-9]{0,3}", line)]
-        assert len(cpu) <= 32 and len(memory) <= 32 and len(affinity) <= 1
-        controllers = [c for c in ("cpu", "cpuset", "io", "memory", "pids") if f"CONTROLLER={c}" in lines]
-        errors = [s for s in ("No medium found", "No such file or directory", "Permission denied",
-                              "Operation not permitted", "Failed to connect to bus", "Access denied",
-                              "Read-only file system", "Device or resource busy", "Failed to start transient service")
-                  if any(s.lower() in line.lower() for line in lines)]
-        exit_code = int(sys.argv[1])
-        leaf = exit_code == 0 and phases == list(steps) and "memory" in controllers
-        comparable = (affinity == [4] and cpu and all(v.startswith("max ") for v in cpu)
-                      and memory and all(v == "max" or int(v) >= 2**31 for v in memory))
-        ready = leaf and bool(comparable)
-        result = {"carrier":os.environ["GITHUB_SHA"], "kernel":platform.release(), "machine":platform.machine(),
-                  "native_exit":exit_code, "phases":phases, "controllers":controllers, "diagnostics":errors,
-                  "ancestor_cpu_max":cpu, "ancestor_memory_max":memory, "affinity":affinity,
-                  "precreated_leaf":leaf, "eligible":ready, "product_cases":0,
-                  "product_revisions":["706b124a2","c31b2adc2"], "fixture":"acd90fc2c",
-                  "verified_memory_max":2**31 if leaf else None}
-        (root / "eligibility.json").write_text(json.dumps(result, indent=2) + "\n")
-        missing = (leaf and not ready) or (exit_code != 0 and
-                  (bool(errors) or ("controllers_read" in phases and "memory" not in controllers)))
-        r = {"status":"INCOMPLETE" if ready else "INELIGIBLE", "product_cases":0, "stages":{}, "host":result,
-             "parent":os.environ["BASE"], "product":os.environ["PRODUCT"], "test_blob":os.environ["TEST_BLOB"],
-             "carrier":os.environ["GITHUB_SHA"]}
-        (root / "restore-vm-verdict.json").write_text(json.dumps(r) + "\n")
-        with open(os.environ["GITHUB_OUTPUT"], "a") as output:
-            print("eligible=" + str(ready).lower(), file=output)
-        if not (ready or missing):
-            sys.exit("incomplete eligibility observation")
-        PY
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      if: steps.host.outputs.eligible == 'true'
       with: {fetch-depth: 2, persist-credentials: false}
     - name: Bind the native Bazel launcher and the matched fixture
-      if: steps.host.outputs.eligible == 'true'
       run: |
         set -euo pipefail
         test "$(id -u)" != 0
         awk '$1 == "MemAvailable:" && $2 >= 7*1024*1024 { found=1 } END { exit !found }' /proc/meminfo
         test "$(df -PB1 . | awk 'END {print $4}')" -gt 10000000000
-        test "$(git rev-parse HEAD^)" = b6cbf2b98cee47fe8f13fb165254047bf84c9c9e
-        test "$(git hash-object "$PKG/gc_reference_test.go")" = b70a9171605324eef57901601fdd6163572041be
-        test "$(git hash-object "$PKG/paired.py")" = 6c2214179d14ddf23ced647e6ab0322dc36d943a
-        test "$(git hash-object "$PKG/native.sh")" = 28c33fe97dacba26350053483e93099a960da7ce
-        test "$(git hash-object "$PKG/payload.sh")" = 800af2caa8968e338fbf470fbc295e2c41aac081
+        test "$(git rev-parse HEAD^)" = a11f51de8a6f00721df155c457ff777be9369ce4
+        test "$(git hash-object "$PKG/gc_reference_test.go")" = ff80ae014e19eed96ac74804bb47cb975e14fe80
+        test "$(git hash-object "$PKG/paired.py")" = bad94729b8b557de9bd157b72b948d5d6d3cf2e4
+        test "$(git hash-object "$PKG/native.sh")" = 8387f26727c13c24bd4720f43aa008d0adfe09ab
+        test "$(git hash-object "$PKG/payload.sh")" = 553eb6e992326189825d3933443b424d78fa0b84
         test "$(git hash-object "$PKG/handoff.py")" = a2c92929659a93d8f80041d4a3b9072a0f181826
         mkdir "$RUNNER_TEMP/restore-tools"
         curl -fsSL --max-time 90 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$RUNNER_TEMP/restore-tools/bazel"
         echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $RUNNER_TEMP/restore-tools/bazel" | sha256sum -c -
         chmod 755 "$RUNNER_TEMP/restore-tools/bazel"
         test "$(cat .bazelversion)" = 8.8.1
-    - name: Verify the detached private root and precreated cgroup before building either capsule
-      if: steps.host.outputs.eligible == 'true'
+    - name: Verify the disposable service can delegate a one-CPU benchmark leaf before compilation
       timeout-minutes: 2
       run: |
         set -euo pipefail
@@ -170,13 +47,24 @@ jobs:
         /bin/bash "$PKG/native.sh" prepare "$root" guard
         rc=0
         /bin/bash "$PWD/$PKG/native.sh" service "$root" > "$RUNNER_TEMP/private-guard.log" 2>&1 || rc=$?
-        python3 -B "$PKG/paired.py" guard "$rc"
-    - name: Build both exact sources with the identical reference fixture
-      if: steps.host.outputs.eligible == 'true'
-      timeout-minutes: 80
+        python3 - "$rc" <<'PYTHON'
+        import json, os, re, sys
+        from pathlib import Path
+        tmp = Path(os.environ["RUNNER_TEMP"])
+        text = (tmp/"private-guard.log").read_text(errors="replace")
+        cpu = re.findall(r"^CPU_MAX=(max [1-9][0-9]{0,11})$", text, re.M)
+        stages = {"service_exit":int(sys.argv[1]),"uid_map":"INNER_UID_MAP_VERIFIED" in text,"one_cpu_leaf":"PRIVATE_GUARD_PASSED" in text, "ancestor_cpu_max":cpu,
+                  "locations":re.findall(r"^(?:HOST_SETUP_LOCATION=(?:service|outer|namespace|pivot):|PAYLOAD_LOCATION=)[0-9]{1,3}$",text,re.M)[:8],
+                  "error_categories":[v for v in ("Permission denied","Operation not permitted","Invalid argument","Unknown assignment","Device or resource busy","No such file or directory") if v.lower() in text.lower()]}
+        ok = stages["service_exit"] == 0 and stages["uid_map"] and stages["one_cpu_leaf"] and bool(cpu)
+        (tmp/"restore-vm-verdict.json").write_text(json.dumps({"status":"INCOMPLETE","host":stages,"reference_tree":os.environ["REFERENCE_TREE"],"source_reference":os.environ["REFERENCE"],"parent":os.environ["BASE"],"product":os.environ["PRODUCT"],"stages":{}},indent=2)+"\n")
+        assert ok, stages
+        PYTHON
+    - name: Build the parent, Parth’s head and the #16134 policy on the same parent
+      timeout-minutes: 105
       run: |
         set -euo pipefail
-        for arm in parent candidate; do
+        for arm in parent reference candidate; do
           d=$RUNNER_TEMP/restore-build-$arm
           rev=$BASE
           if [[ "$arm" == candidate ]]; then rev=$PRODUCT; fi
@@ -187,6 +75,16 @@ jobs:
           git -C "$d/src" fetch -q --depth=2 https://github.com/google/gvisor.git "$rev"
           git -C "$d/src" checkout -q --detach FETCH_HEAD
           test "$(git -C "$d/src" rev-parse HEAD)" = "$rev"
+          if [[ "$arm" == reference ]]; then
+            git -C "$d/src" fetch -q --depth=5 https://github.com/EtiennePerot/gvisor.git refs/heads/autoresearch/defer-gc
+            test "$(git -C "$d/src" rev-parse FETCH_HEAD)" = "$REFERENCE"
+            tree=$(git -C "$d/src" merge-tree --write-tree --merge-base="$REFERENCE_BASE" "$BASE" "$REFERENCE")
+            test "$tree" = "$REFERENCE_TREE"
+            rev=$(GIT_AUTHOR_DATE='2026-11-06T00:00:00Z' GIT_COMMITTER_DATE='2026-11-06T00:00:00Z' git -C "$d/src" -c user.name='Qualification' -c user.email='qualification@localhost' commit-tree "$tree" -p "$BASE" -m 'Apply the four-commit restore GC reference to the PR parent')
+            git -C "$d/src" checkout -q --detach "$rev"
+            test "$(git -C "$d/src" rev-parse 'HEAD^{tree}')" = "$REFERENCE_TREE"
+          fi
+          printf '%s\n' "$rev" > "$d/product.sha"
           if [[ "$arm" == candidate ]]; then test "$(git -C "$d/src" rev-parse HEAD^)" = "$BASE"; fi
           test "$(git -C "$d/src" rev-parse HEAD:runsc/container/BUILD)" = 64be27011edc6d0c29efe6b1b15b3ebe599cacad
           python3 -B "$PKG/paired.py" "$d/src/runsc/container/BUILD"
@@ -234,33 +132,8 @@ jobs:
           if test "${rc:-0}" = 0; then rc=$handoff_rc; fi
           test "${rc:-0}" = 0 || exit "$rc"
         done
-    - name: Retain only the two validated public-source capsules for a bounded recovery
-      id: capsules
-      continue-on-error: true
-      if: steps.host.outputs.eligible == 'true'
-      run: |
-        set -eu
-        path="$RUNNER_TEMP/verified-capsules"
-        mkdir "$path"
-        for arm in parent candidate; do
-          ln "$PKG/$arm.tar" "$path/$arm.tar"
-          cp "$RUNNER_TEMP/restore-build-$arm/elf.sha256" "$path/$arm.elf.sha256"
-        done
-        cd "$path"
-        sha256sum parent.tar candidate.tar > capsules.sha256
-        printf '%s\n' "$GITHUB_SHA" "$BASE" "$PRODUCT" "$TEST_BLOB" > source.txt
-    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      if: steps.capsules.outcome == 'success'
-      continue-on-error: true
-      with:
-        name: verified-native-gc-capsules
-        path: ${{ runner.temp }}/verified-capsules/
-        retention-days: 1
-        compression-level: 1
-        if-no-files-found: error
-    - name: Run both source-bound capsules in isolated native systrap
-      if: steps.host.outputs.eligible == 'true'
-      timeout-minutes: 58
+    - name: Measure one-CPU restore through the first verified guest read in all three arms
+      timeout-minutes: 132
       run: |
         set -euo pipefail
         root="$RUNNER_TEMP/native-root"
@@ -268,8 +141,7 @@ jobs:
         rc=0
         /bin/bash "$PWD/$PKG/native.sh" service "$root" > "$RUNNER_TEMP/native-service.log" 2>&1 || rc=$?
         RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$PKG/paired.py" receive "$rc"
-    - name: Compare the twelve verified saves per arm with the qualified benchstat
-      if: steps.host.outputs.eligible == 'true'
+    - name: Compare 36 balanced restore samples per arm with the qualified benchstat
       timeout-minutes: 16
       run: |
         set -euo pipefail
@@ -280,6 +152,7 @@ jobs:
         test "$(cat .bazelversion)" = 8.5.0
         mkdir "$RUNNER_TEMP/bench-out"
         cp "$RUNNER_TEMP/parent.bench" "$RUNNER_TEMP/bench-out/parent"
+        cp "$RUNNER_TEMP/reference.bench" "$RUNNER_TEMP/bench-out/reference"
         cp "$RUNNER_TEMP/candidate.bench" "$RUNNER_TEMP/bench-out/candidate"
         chmod a+w "$RUNNER_TEMP/bench-out"
         docker run --rm --cap-drop=ALL --security-opt no-new-privileges \
@@ -290,10 +163,11 @@ jobs:
           flags=(--config=x86_64 -c opt --jobs=4 --spawn_strategy=local --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox --remote_cache= --remote_executor= --bes_backend= --stamp --workspace_status_command=)
           /tools/bazel build "${flags[@]}" @org_golang_x_perf//cmd/benchstat >/dev/null 2>&1
           file=$(/tools/bazel cquery "${flags[@]}" --output=files @org_golang_x_perf//cmd/benchstat)
-          base=$(/tools/bazel info execution_root)
-          tool=$base/$file
+          test -x "$file"
+          cp -L "$file" /transfer/benchstat
           cd /transfer
-          "$tool" parent candidate > benchstat.txt'
+          ./benchstat parent reference candidate > benchstat.txt
+          ./benchstat reference candidate > vs-reference.txt'
         test -s "$RUNNER_TEMP/bench-out/benchstat.txt"
     - name: Record individual phases and original measurement scope
       if: always()
@@ -305,10 +179,12 @@ jobs:
         tmp = Path(os.environ["RUNNER_TEMP"])
         out = tmp / "restore-vm-verdict.json"
         data = json.loads(out.read_text())
-        for arm in ("parent", "candidate"):
+        for arm in ("parent", "reference", "candidate"):
             d = tmp / ("restore-build-" + arm)
             if not d.is_dir(): continue
             phase = data.setdefault("compilers", {}).setdefault(arm, {})
+            src = d / "product.sha"
+            if src.is_file() and re.fullmatch("[0-9a-f]{40}", src.read_text().strip()): phase["source"] = src.read_text().strip()
             for key in ("analysis", "build", "compiler", "handoff"):
                 p = d / (key + ".exit")
                 phase[key] = int(v) if p.is_file() and (v := p.read_text().strip()).isdecimal() else None
@@ -317,11 +193,11 @@ jobs:
                 digest = (d / "elf.sha256").read_text().strip()
                 if re.fullmatch("[0-9a-f]{64}", digest): phase["elf_sha256"] = digest
         data["product_cases"] = sum("native_exit" in row for row in data["stages"].get("restore", {}).get("samples", []))
-        data["original_workload"] = {"run":41802364888, "artifact":13309574814, "source":"1d5db90e0"}
+        data["earlier_save_workload"] = {"run":41802364888, "artifact":13309574814, "source":"1d5db90e0"}
         data["prior_200MiB_correctness"] = {"carrier":"3da1a3fcd","source":"71b5044a6","engine":"graph","compression":"flate-best-speed","measured_performance":False}
         data["host_preflight"] = {"run":42020023134, "artifact":13411067235, "previous_kvm_no_cases":13405209658}
-        data["guest_machine"] = "native AMD64 host, 4 allowed CPUs, ordinary delegated service, offline namespaces; systrap Sentry"
-        data["planned_workload"] = "100000 empty tmpfs files; 2GiB; native systrap; non-resuming save; graph+none; sampled Sentry RSS through exit; full restore verified"
+        data["guest_machine"] = "native AMD64 host, 4 allowed CPUs, one-CPU Sentry cgroup, ordinary test user, offline namespaces; systrap Sentry"
+        data["planned_workload"] = "100000 empty tmpfs files; 2GiB; native systrap; restore from New until first verified file read; graph+none; full 100000-file tree verified afterwards"
         stats = tmp / "bench-out/benchstat.txt"
         data["benchstat"] = {"source":os.environ["REPORTER"], "available":stats.is_file() and 0 < stats.stat().st_size < 65536}
         if data["benchstat"]["available"]: data["benchstat"]["sha256"] = hashlib.sha256(stats.read_bytes()).hexdigest()
@@ -331,10 +207,12 @@ jobs:
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: always()
       with:
-        name: native-graph-save-comparison
+        name: native-one-cpu-graph-restore-comparison
         path: |
           ${{ runner.temp }}/restore-vm-verdict.json
           ${{ runner.temp }}/parent.bench
+          ${{ runner.temp }}/reference.bench
           ${{ runner.temp }}/candidate.bench
           ${{ runner.temp }}/bench-out/benchstat.txt
+          ${{ runner.temp }}/bench-out/vs-reference.txt
         if-no-files-found: error

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Use the ordinary user's delegated service only. No initial-namespace root.
+# systemd provisions one transient service; the runner user owns the delegated leaf.
 set -Eeuo pipefail
 phase=$1
 trap 'printf "HOST_SETUP_LOCATION=%s:%d\n" "$phase" "$LINENO" >&2' ERR
@@ -19,7 +19,7 @@ case "$1" in
     cp "$pkg/payload.sh" "$root/inputs/"
     case "$3" in
         guard) touch "$root/inputs/guard-only";;
-        measure) cp --reflink=auto "$pkg"/{parent,candidate}.tar "$root/inputs/";;
+        measure) cp --reflink=auto "$pkg"/{parent,reference,candidate}.tar "$root/inputs/";;
         *) exit 2;;
     esac
     ;;
@@ -27,17 +27,17 @@ case "$1" in
     root=$2
     uid=$(id -u)
     [[ $uid != 0 ]]
-    export XDG_RUNTIME_DIR="/run/user/$uid"
-    [[ $(stat -c %u "$XDG_RUNTIME_DIR") == "$uid" && -S "$XDG_RUNTIME_DIR/bus" ]]
-    export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
-    exec timeout --kill-after=20 3300 systemd-run --user --wait --pipe --collect --quiet \
-        --unit=gvisor-save-measure.service --property=Delegate=yes --property=RuntimeMaxSec=3200s \
+    # Only systemd provisions the named service. The controller is delegated
+    # to the existing ordinary runner user; the test starts before unshare as that user.
+    exec timeout --kill-after=20 7800 sudo -n systemd-run --wait --pipe --collect --quiet \
+        --uid="$uid" --gid="$(id -g)" --unit=gvisor-restore-one-cpu.service \
+        --property="Delegate=cpu memory" --property=RuntimeMaxSec=7700s \
         /usr/bin/env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin LC_ALL=C \
         /bin/bash "$0" outer "$root"
     ;;
   outer)
     membership=$(awk -F: '$1=="0" {print $3}' /proc/self/cgroup)
-    [[ ${membership##*/} == gvisor-save-measure.service && $(id -u) != 0 && $(nproc) == 4 ]]
+    [[ ${membership##*/} == gvisor-restore-one-cpu.service && $(id -u) != 0 && $(nproc) == 4 ]]
     [[ $(findmnt -nr -o FSROOT,FSTYPE /sys/fs/cgroup) == "/ cgroup2" ]]
     dir=/sys/fs/cgroup$membership
     while :; do
@@ -71,7 +71,9 @@ case "$1" in
     [[ $(stat -fc %T "$cg") == cgroup2fs ]]
     mkdir "$cg/client" "$cg/benchmark"
     echo $$ > "$cg/client/cgroup.procs"
-    echo +memory > "$cg/cgroup.subtree_control"
+    echo "+cpu +memory" > "$cg/cgroup.subtree_control"
+    echo "100000 100000" > "$cg/benchmark/cpu.max"
+    grep -Fxq "100000 100000" "$cg/benchmark/cpu.max"
     echo 2147483648 > "$cg/benchmark/memory.max"
     grep -Fxq 2147483648 "$cg/benchmark/memory.max"
     mount --bind "$root/inputs" "$root/inputs"

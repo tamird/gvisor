@@ -8,7 +8,7 @@ import stat
 import sys
 from xml.etree import ElementTree
 
-ARMS = ("parent", "candidate")
+ARMS = ("parent", "reference", "candidate")
 TMP = Path(os.environ["RUNNER_TEMP"])
 PKG = Path(".github/qualification/restore-limit-vm")
 
@@ -36,13 +36,18 @@ def collect(bundle, row, result, save):
         assert re.fullmatch(r"[0-9a-f]{64}", elf)
         assert bounded(bundle, arm + "-elf", 65).decode().strip() == elf
         row.setdefault("tested_capsules", {})[arm] = {"sha256": digest.hexdigest(), "elf_sha256": elf}
-    assert row["tested_capsules"]["parent"]["elf_sha256"] != row["tested_capsules"]["candidate"]["elf_sha256"]
+    assert len({v["elf_sha256"] for v in row["tested_capsules"].values()}) == 3
     samples = row["samples"] = []
     lines = {arm: [] for arm in ARMS}
-    for i in range(-1, 12):
-        for arm in (ARMS[::-1] if i >= 0 and i % 2 else ARMS):
+    orders = ("parent reference candidate", "reference candidate parent", "candidate parent reference",
+              "parent candidate reference", "candidate reference parent", "reference parent candidate")
+    for i in range(-1, 36):
+        for arm in ARMS:
             prefix = f"{i}-{arm}"
             item = {"round": i, "arm": arm}
+            sequence = int(bounded(bundle, prefix + ".sequence", 8))
+            assert sequence == (i+1)*3 + orders[max(i,0)%6].split().index(arm)
+            item["sequence"] = sequence
             samples.append(item)
             item["native_exit"] = int(bounded(bundle, prefix + ".exit", 5))
             log = bounded(bundle, prefix + ".loghash", 65).decode().strip()
@@ -53,12 +58,12 @@ def collect(bundle, row, result, save):
             xml = bounded(bundle, prefix + ".xml", 256 << 10)
             item["xml_sha256"] = hashlib.sha256(xml).hexdigest()
             case, = ElementTree.fromstring(xml).iter("testcase")
-            assert case.get("name") == "TestGCReferenceSave" and case.get("status") != "notrun" and case.get("result") != "suppressed"
+            assert case.get("name") == "TestGCReferenceRestore" and case.get("status") != "notrun" and case.get("result") != "suppressed"
             assert all(case.find(tag) is None for tag in ("skipped", "failure", "error"))
             data = json.loads(bounded(bundle, prefix + ".row", 8192))
             assert data["files_verified"] == 100000 and data["memory_limit"] == 2 << 30 and data["direct_child"] is True
             assert data["coordinator_cpus"] == 4 and data["boot"]["--total-memory"] == str(2 << 30)
-            assert 0 <= len(data["cpu_quotas"]) <= 20 and all(re.fullmatch(r"max [1-9][0-9]*", q) for q in data["cpu_quotas"])
+            assert 1 <= len(data["cpu_quotas"]) <= 20 and data["cpu_quotas"][0] == "100000 100000" and all(re.fullmatch(r"max [1-9][0-9]*", q) for q in data["cpu_quotas"][1:])
             assert re.fullmatch(r"[0-9,-]{1,40}", data["sentry_allowed_cpus"])
             assert set(data["boot"]).issubset({"--cpu-num", "--lifecycle-cpu-num", "--total-memory"})
             assert all(re.fullmatch(r"[0-9]{1,12}", value) for value in data["boot"].values())
@@ -73,18 +78,21 @@ def collect(bundle, row, result, save):
                 assert set(file) == {"bytes", "sha256"} and type(file["bytes"]) is int and 0 < file["bytes"] < (4 << 30)
                 assert re.fullmatch(r"[0-9a-f]{64}", file["sha256"])
             item["archive"] = data["archive"]
-            assert data["checkpoint_exit_ns"] >= data["checkpoint_ns"]
-            for field in ("checkpoint_ns", "checkpoint_exit_ns", "observed_save_exit_rss", "before_rss", "before_hwm", "lifetime_maxrss", "samples", "max_sample_gap_ns"):
-                assert type(data[field]) is int and 0 < data[field] < 300_000_000_000
+            assert data["restore_first_read_ns"] >= data["restore_reply_ns"] > 0
+            for field in ("sandbox_cpu_usec", "sandbox_throttled_usec"):
+                assert type(data[field]) is int and 0 <= data[field] < 12_000_000_000
                 item[field] = data[field]
-            if i >= 0:
-                for field, unit in (("checkpoint_ns", "ns/op"), ("checkpoint_exit_ns", "ns/op"), ("observed_save_exit_rss", "B/op"), ("before_rss", "B/op"), ("before_hwm", "B/op"), ("lifetime_maxrss", "B/op")):
-                    lines[arm].append(f"BenchmarkSave/{field} 1 {item[field]} {unit}")
+            for field, unit in (("restore_first_read_ns", "ns/op"), ("restore_reply_ns", "ns/op"), ("first_read_rss", "B/op"), ("first_read_hwm", "B/op")):
+                value = data[field]
+                assert type(value) is int and 0 < value < 300_000_000_000
+                item[field] = value
+                if i >= 0:
+                    lines[arm].append(f"BenchmarkRestore/{field} 1 {value} {unit}")
             item["verified"] = True
             save(result)
-    assert len({(v["sentry_allowed_cpus"], tuple(v["cpu_quotas"]), tuple(sorted(v["boot"].items()))) for v in samples}) == 1
+    assert len({(v["sentry_allowed_cpus"], tuple(v["cpu_quotas"]), v["boot"]["--total-memory"]) for v in samples}) == 1
     for arm in ARMS:
-        assert len(lines[arm]) == 72
+        assert len(lines[arm]) == 144
         (TMP / (arm + ".bench")).write_text("\n".join(lines[arm]) + "\n")
     row["verified_samples"] = len(samples)
 
@@ -124,7 +132,7 @@ def receive(code):
         directory = os.open("outputs", flags, dir_fd=root)
         try:
             collect(directory, stage, result, save)
-            assert code == 0 and stage["outer_cpu_max"] == result["host"]["ancestor_cpu_max"] and stage["verified_samples"] == 26
+            assert code == 0 and stage["outer_cpu_max"] == result["host"]["ancestor_cpu_max"] and stage["verified_samples"] == 111
             assert bounded(directory, "summary.xml", 512) == (
                 b'<testsuites><testsuite tests="1"><testcase classname="native" name="matchedSave"/></testsuite></testsuites>\n')
             stage["status"] = result["status"] = "PASS"

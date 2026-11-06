@@ -28,7 +28,6 @@ import (
 	"time"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/sentry/control/controlapi"
 	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/state/statefile"
@@ -104,9 +103,9 @@ func gcSaveMemory(pid int) (rss, hwm uint64, err error) {
 	return rss, hwm, nil
 }
 
-// TestGCReferenceSave reuses the native tmpfs lifecycle fixture. It measures a
-// non-resuming save, then independently restores and verifies its archive.
-func TestGCReferenceSave(t *testing.T) {
+// TestGCReferenceRestore measures creation and restore of a fresh Sentry through
+// the first successful guest read. The complete tree is verified after timing.
+func TestGCReferenceRestore(t *testing.T) {
 	const memoryLimit int64 = 2 << 30
 	spec, conf := sleepSpecConf(t)
 	conf.Overlay2.Set("none")
@@ -138,7 +137,7 @@ func TestGCReferenceSave(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	work := func(c *Container, command string) {
+	work := func(c *Container, command string, depth, files int) {
 		t.Helper()
 		f, err := os.Open(testApp)
 		if err != nil {
@@ -146,15 +145,15 @@ func TestGCReferenceSave(t *testing.T) {
 		}
 		defer f.Close()
 		status, err := c.executeSync(conf, &controlapi.ExecArgs{
-			Argv:        []string{"test_app", command, "--target-dir=/tmpfs", "--depth=100", "--file-per-level=1000", "--file-size=0"},
+			Argv:        []string{"test_app", command, "--target-dir=/tmpfs", fmt.Sprintf("--depth=%d", depth), fmt.Sprintf("--file-per-level=%d", files), "--file-size=0"},
 			FilePayload: controlapi.NewFilePayload(map[int]*os.File{0: os.Stdin, 1: os.Stdout, 2: os.Stderr}, f),
 		})
 		if err != nil || !status.Exited() || status.ExitStatus() != 0 {
 			t.Fatalf("%s: %v, %v", command, status, err)
 		}
 	}
-	work(cont, "fsTreeCreate")
-	work(cont, "fsTreeVerify")
+	work(cont, "fsTreeCreate", 100, 1000)
+	work(cont, "fsTreeVerify", 100, 1000)
 	if err := waitForProcessCount(cont, 1); err != nil {
 		t.Fatal(err)
 	}
@@ -194,7 +193,7 @@ func TestGCReferenceSave(t *testing.T) {
 	quotas := []string{}
 	for dir := cgDir; ; dir = filepath.Dir(dir) {
 		value, err := os.ReadFile(filepath.Join(dir, "cpu.max"))
-		// A precreated memory-only leaf inherits the outer CPU quota.
+		// The precreated leaf enforces one CPU; all visible ancestors are recorded.
 		// The coordinator records every visible ancestor before unshare.
 		if os.IsNotExist(err) {
 			if dir == "/sys/fs/cgroup" {
@@ -225,7 +224,7 @@ func TestGCReferenceSave(t *testing.T) {
 			break
 		}
 	}
-	if len(quotas) > 0 && !strings.HasPrefix(quotas[0], "max ") {
+	if len(quotas) == 0 || quotas[0] != "100000 100000" {
 		t.Fatalf("unexpected sandbox quota: %v", quotas)
 	}
 	command, err := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", pid))
@@ -243,82 +242,15 @@ func TestGCReferenceSave(t *testing.T) {
 	if boot["--total-memory"] != strconv.FormatInt(memoryLimit, 10) {
 		t.Fatalf("boot memory: %v", boot)
 	}
-	beforeRSS, beforeHWM, err := gcSaveMemory(pid)
-	if err != nil {
-		t.Fatal(err)
-	}
 	imageDir := t.TempDir()
-	stop := make(chan struct{})
-	done := make(chan struct{})
-	var peak, samples uint64
-	var maxGap time.Duration
-	start := time.Now()
-	go func() {
-		defer close(done)
-		ticker := time.NewTicker(time.Millisecond)
-		defer ticker.Stop()
-		previous := start
-		for {
-			select {
-			case <-stop:
-				maxGap = max(maxGap, time.Since(previous))
-				return
-			case <-ticker.C:
-				now := time.Now()
-				if rss, _, err := gcSaveMemory(pid); err == nil {
-					peak = max(peak, rss)
-					samples++
-					maxGap = max(maxGap, now.Sub(previous))
-					previous = now
-				}
-			}
-		}
-	}()
-	defer func() {
-		select {
-		case <-done:
-		default:
-			close(stop)
-			<-done
-		}
-	}()
 	engine := config.StateEngineGraph
 	if err := cont.Checkpoint(conf, imageDir, sandbox.CheckpointOpts{Compression: statefile.CompressionLevelNone, StateEngine: &engine}); err != nil {
 		t.Fatal(err)
 	}
-	returned := time.Now()
-	var info unix.Siginfo
-	var usage unix.Rusage
-	for {
-		err := unix.Waitid(unix.P_PID, pid, &info, unix.WEXITED|unix.WNOWAIT, &usage)
-		if err == unix.EINTR {
-			continue
-		}
-		if err != nil {
-			t.Fatal(err)
-		}
-		break
-	}
-	exited := time.Now()
-	close(stop)
-	<-done
-	if samples == 0 || usage.Maxrss <= 0 {
-		t.Fatalf("missing memory observations: %d, %d", samples, usage.Maxrss)
-	}
 	row := map[string]any{
-		"memory_limit":        memoryLimit,
-		"sentry_allowed_cpus": allowedCPUs, "direct_child": true,
+		"memory_limit": memoryLimit, "sentry_allowed_cpus": allowedCPUs, "direct_child": true,
 		"cpu_quotas": quotas, "coordinator_cpus": runtime.NumCPU(), "boot": boot,
-		"before_rss": beforeRSS, "before_hwm": beforeHWM,
-		"lifetime_maxrss": uint64(usage.Maxrss) * 1024, "observed_save_exit_rss": peak,
-		"samples": samples, "max_sample_gap_ns": maxGap.Nanoseconds(),
-		"checkpoint_ns": returned.Sub(start).Nanoseconds(), "checkpoint_exit_ns": exited.Sub(start).Nanoseconds(),
 	}
-	measured, err := json.Marshal(row)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf("GC-SAVE-MEASURED %s", measured)
 	status, err := cont.Wait()
 	if err != nil || !status.Exited() || status.ExitStatus() != 0 {
 		t.Fatalf("save exit: %v, %v", status, err)
@@ -342,6 +274,33 @@ func TestGCReferenceSave(t *testing.T) {
 		files[name] = map[string]any{"sha256": fmt.Sprintf("%x", h.Sum(nil)), "bytes": size}
 	}
 	row["graph_frames"] = gcGraphFrames(t, filepath.Join(imageDir, "checkpoint.img"))
+	cpuStat := func() (uint64, uint64) {
+		t.Helper()
+		data, err := os.ReadFile(filepath.Join(cgDir, "cpu.stat"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		stats := make(map[string]uint64)
+		for _, line := range strings.Split(strings.TrimSpace(string(data)), "\n") {
+			f := strings.Fields(line)
+			if len(f) != 2 {
+				t.Fatalf("invalid cpu.stat entry %q", line)
+			}
+			v, err := strconv.ParseUint(f[1], 10, 64)
+			if err != nil {
+				t.Fatal(err)
+			}
+			stats[f[0]] = v
+		}
+		use, haveUse := stats["usage_usec"]
+		throttled, haveThrottled := stats["throttled_usec"]
+		if !haveUse || !haveThrottled {
+			t.Fatalf("missing counters in %q", data)
+		}
+		return use, throttled
+	}
+	cpuBefore, throttleBefore := cpuStat()
+	start := time.Now()
 	restored, err := New(conf, args)
 	if err != nil {
 		t.Fatal(err)
@@ -350,7 +309,25 @@ func TestGCReferenceSave(t *testing.T) {
 	if err := restored.Restore(conf, imageDir, sandbox.DirectIOOff, false, nil); err != nil {
 		t.Fatal(err)
 	}
-	work(restored, "fsTreeVerify")
+	returned := time.Now()
+	work(restored, "fsTreeVerify", 1, 1)
+	firstRead := time.Now()
+	cpuAfter, throttleAfter := cpuStat()
+	row["sandbox_cpu_usec"] = cpuAfter - cpuBefore
+	row["sandbox_throttled_usec"] = throttleAfter - throttleBefore
+	rss, hwm, err := gcSaveMemory(restored.SandboxPid())
+	if err != nil {
+		t.Fatal(err)
+	}
+	restoredQuota, err := os.ReadFile(filepath.Join(cgDir, "cpu.max"))
+	if err != nil || strings.TrimSpace(string(restoredQuota)) != "100000 100000" {
+		t.Fatalf("restored CPU quota: %q, %v", restoredQuota, err)
+	}
+	row["restore_reply_ns"] = returned.Sub(start).Nanoseconds()
+	row["restore_first_read_ns"] = firstRead.Sub(start).Nanoseconds()
+	row["first_read_rss"] = rss
+	row["first_read_hwm"] = hwm
+	work(restored, "fsTreeVerify", 100, 1000)
 	restoredMembership, err := os.ReadFile(fmt.Sprintf("/proc/%d/cgroup", restored.SandboxPid()))
 	if err != nil || !strings.Contains("\n"+string(restoredMembership), "\n0::"+cgPath+"\n") {
 		t.Fatalf("restored Sentry cgroup: %q, %v", restoredMembership, err)
@@ -371,5 +348,5 @@ func TestGCReferenceSave(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("GC-SAVE-ROW %s", data)
+	t.Logf("GC-RESTORE-ROW %s", data)
 }
