@@ -57,3 +57,15 @@ struct MODIFIED_FIELD_EXAMPLE
 ```
 
 [A deeper dive into how this tool works can be found here.](https://github.com/google/gvisor/blob/master/g3doc/proposals/nvidia_driver_differ.md)
+
+## Updating sources for the ABI test
+
+After adding a supported driver version, run
+`bazel run //tools/nvidia_driver_differ/sources:update`. The updater records
+the public source tag's commit and archive checksum. If NVIDIA has not
+published a matching tag, the ABI test reports that version as skipped.
+
+Run `//pkg/sentry/devices/nvproxy:nvproxy_driver_abi_test` to compare the
+native driver definitions with the Go types. The separate
+`//pkg/sentry/devices/nvproxy:nvproxy_driver_checksums_test` downloads the
+installers to verify their published checksums.
