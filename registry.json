@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T14:44:47.570Z",
+    "updatedAt": "2026-11-06T14:55:55.836Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -23851,29 +23851,60 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "group": "bazel",
-      "head": "52feb7b78d512aeae72111b0b4de7d25a0fa6f6c",
-      "ref": "nvidia-parser-resources-review",
+      "head": "5967bbde193112cce575c5443c6b241d99589f59",
+      "ref": "proposal/nvidia-parser-resources-master",
       "title": "Package the NVIDIA parser builtin headers",
-      "url": "https://github.com/tamird/gvisor/commit/52feb7b78d512aeae72111b0b4de7d25a0fa6f6c",
-      "status": "Contributor approved; waiting for public LLVM supplier",
-      "summary": "The approved parser-resource proposal 52feb7b78 waits specifically for the public LLVM source supplier, now isolated in llvm-project-qualified@17d37fc9a. Its package consumes @llvm-project//clang:builtin_headers_gen, so it does not require switching the selected C/C++ compiler. Prior parser/resource validation remains source-specific; the source migration’s GNU parser and catalog checks have passed, while supplier backend delivery remains separate.\n\nPreserved earlier source-specific record:\n\nThe contributor explicitly approved 52feb7b78. Delivery waits on the reconciled compiler public @llvm-project repository/header target; prior completed parser/resource evidence remains accepted.\n\nEarlier source-specific record:\n\nThe detached parser receives its declared builtin headers and complete Clang notice through an explicit resource directory, with ambient standard-header lookup disabled. Original partial265 and the one-owner completion5c644 jointly pass five outputs, ten reached headers, 300 ZIP members, real 570.195.03 parser/parity cases and all three analyzer owners. The full final source tree equals the qualified product. Its actual API prerequisite is the public @llvm-project repository/header target supplied by compiler830; static and UAPI parents are review-stack ordering, not resource APIs. Root has requested contributor review of this new scope.",
-      "updatedAt": "2026-10-26T16:54:01.358925+00:00",
+      "url": "https://github.com/tamird/gvisor/commit/5967bbde1",
+      "status": "Agent work",
+      "summary": "The approved parser patch uses public @llvm-project//clang:builtin_headers_gen. Current gVisor master already configures that repository and its LLVM source exports the target under clang/staging/include. Its clang/LICENSE.TXT matches the packaged notice byte for byte. The patch reapplied to master with identical added and removed lines. One native AMD64 GNU check is qualifying the current supplier, the parser owner and the header archive embedded in run_differ.",
+      "updatedAt": "2026-11-06T14:55:55.836Z",
       "followup": {
-        "owner": "work_map_current",
-        "sourceHead": "52feb7b78d512aeae72111b0b4de7d25a0fa6f6c",
-        "observedAt": "2026-10-26T16:09:24.625274+00:00",
-        "disposition": "Contributor approved; waiting for public LLVM supplier",
-        "nextAction": "After the standalone LLVM source supplier lands, deliver the already-approved parser-resource proposal against its declared builtin-header target. Preserve the original qualification scope; do not ask for contributor approval again.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/52feb7b78d512aeae72111b0b4de7d25a0fa6f6c"
-        ]
+        "owner": "Agent",
+        "sourceHead": "5967bbde193112cce575c5443c6b241d99589f59",
+        "observedAt": "2026-11-06T14:55:55.836Z",
+        "disposition": "The declared header input and matching license already exist on master. The separate LLVM source migration can proceed independently.",
+        "nextAction": "Read the actual TestParser result and verify the complete archive in run_differ on the current LLVM configuration, then deliver under the existing approval."
       },
       "evidence": [
+        {
+          "label": "Master configures the existing LLVM source",
+          "url": "https://github.com/google/gvisor/blob/f51a205a8/MODULE.bazel#L63-L79"
+        },
+        {
+          "label": "Current LLVM exports the builtin headers under clang/staging/include",
+          "url": "https://github.com/llvm/llvm-project/blob/cb2f0d0a5/utils/bazel/llvm-project-overlay/clang/BUILD.bazel#L1652-L1665"
+        },
+        {
+          "label": "Previously reviewed source",
+          "url": "https://github.com/tamird/gvisor/commit/52feb7b78"
+        },
+        {
+          "label": "Native GNU qualification on current master",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42238182812"
+        },
         {
           "label": "Standalone public LLVM source supplier",
           "url": "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb"
         }
-      ]
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "52feb7b78d512aeae72111b0b4de7d25a0fa6f6c",
+          "url": "https://github.com/tamird/gvisor/commit/52feb7b78",
+          "outcome": "approved",
+          "at": "2026-11-06T14:55:55.836Z",
+          "note": "Retained the contributor’s previously recorded approval. The current-master rebase preserves all seven files’ added and removed lines."
+        }
+      ],
+      "refinement": {
+        "before": {
+          "head": "52feb7b78d512aeae72111b0b4de7d25a0fa6f6c"
+        },
+        "after": {
+          "head": "5967bbde193112cce575c5443c6b241d99589f59"
+        }
+      }
     },
     {
       "id": "branch:source-image-utilities",
@@ -54429,6 +54460,40 @@
         "disposition": "The contributor requested one remote Bazel graph for CI targets across areas and configurations.",
         "nextAction": "Extend the single invocation to the remaining CI targets. Identify which tests need architecture-specific, KVM, cgroup or other execution requirements and represent those requirements in Bazel."
       }
+    },
+    {
+      "id": "branch:packet-ring-unmap",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "proposal/packet-ring-unmap",
+      "head": "2ab3d20352bb6bd468cbd6d4d1d9d7b7b955bdc9",
+      "title": "Unmap the host packet ring when its endpoint closes",
+      "url": "https://github.com/tamird/gvisor/commit/2ab3d2035",
+      "group": "runtime",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-06T14:55:55.836Z",
+      "summary": "Closing the PacketMMap endpoint left 2,101,248 bytes mapped on a native AMD64 host with 4 KiB pages, even after the caller closed the socket. On the tested fix the mapping remained accessible after detach and was gone after the first and second Close. An 88-byte UDP packet delivered before close still held its original payload. Restore copied zero ring bytes and closing the restored dispatcher left the live owner’s mapping intact.\n\nThe original Linux results cover 1a8b1b84c. The final change keeps the slice if Munmap fails so a later Close can retry. The page-size alignment and worker-lifetime changes are independent.",
+      "evidence": [
+        {
+          "label": "Native AF_PACKET mapping, retained UDP packet and checkpoint control",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42231256861/artifacts/13510690724"
+        },
+        {
+          "label": "Only change after the native tests: keep the mapping on unmap failure",
+          "url": "https://github.com/tamird/gvisor/compare/1a8b1b84c...2ab3d2035"
+        }
+      ],
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "2ab3d20352bb6bd468cbd6d4d1d9d7b7b955bdc9",
+        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
+        "url": "https://github.com/tamird/gvisor/commit/2ab3d2035",
+        "requestedAt": "2026-11-06T14:55:55.836Z",
+        "title": "Unmap the host packet ring when its endpoint closes",
+        "body": "Closing a PacketMMap endpoint leaves its roughly 2 MiB receive ring\nmapped in the process, even after the caller closes the packet socket.\nThe endpoint creates the mapping and the stack stops its receive loop\nbefore calling Close. Packets already delivered to the stack have their\nown copy of the frame data.\n\nUnmap the ring at that point. Leave the host mapping out of checkpoints\nso a restored dispatcher cannot mistake a Go byte slice for a mapping.",
+        "summary": "May I open the packet-ring teardown fix? Stock retained its 2,101,248-byte mapping after both the endpoint and socket closed. The tested fix released it while preserving an already delivered packet. The final error-path change retains the mapping for a later Close if unmap fails."
+      }
     }
   ],
   "edges": [
@@ -56549,16 +56614,6 @@
       "evidence": [
         "https://github.com/tamird/gvisor/commit/f8b7988ba",
         "https://github.com/tamird/gvisor/commit/8306976db"
-      ]
-    },
-    {
-      "from": "branch:hermetic-llvm-project",
-      "to": "branch:nvidia-parser-resources",
-      "type": "depends_on",
-      "reason": "The builtin-header package consumes @llvm-project//clang:builtin_headers_gen from the standalone public source supplier. It does not require switching the selected C/C++ compiler.",
-      "evidence": [
-        "https://github.com/tamird/gvisor/commit/17d37fc9ad63e02bd1e53862ae49136179ec11eb",
-        "https://github.com/tamird/gvisor/blob/52feb7b78d512aeae72111b0b4de7d25a0fa6f6c/tools/nvidia_driver_differ/parser/BUILD"
       ]
     },
     {
@@ -76902,5 +76957,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-06T14:44:47.570Z"
+  "updatedAt": "2026-11-06T14:55:55.836Z"
 }
