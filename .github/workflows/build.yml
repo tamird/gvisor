@@ -1,35 +1,88 @@
-name: CI
-
-"on":
+name: Verify tcpdump image dependency notices and unchanged Make archives
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcpdump-bcr-exact-catalog]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  audit:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    env:
+      PRODUCT: 768579797b0d15dedee7b974dde31d09e529a152
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Check the source, published license and exact Ubuntu keyring
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = "$PRODUCT"
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/tcpdump_bcr_audit.py'
+          w="$RUNNER_TEMP/tcpdump-bcr-audit"
+          mkdir "$w"
+          cp .github/qualification/tcpdump_bcr_audit.py "$w/"
+          git fetch --quiet --depth=1 origin d7bea3612d6ca707630804b3fd5e391de5789164
+          git switch --detach "$PRODUCT"
+          git diff --exit-code d7bea3612d6ca707630804b3fd5e391de5789164 "$PRODUCT" -- . ':!governance/licensing.yaml' ':!tools/licensecheck/dependencies.yaml'
+          test "$(bazelisk --version)" = 'bazel 9.3.1'
+          cat > "$w/images.bazelrc" <<'RC'
+          common --registry=https://raw.githubusercontent.com/bazel-contrib/bazel-central-registry/0fcf9560a28476c948c16a6b11fca730cb76f4ec
+          common --registry=https://bcr.bazel.build
+          common --lockfile_mode=update
+          build --jobs=3 --remote_cache= --remote_executor= --bes_backend=
+          build --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox
+          RC
+          python3 -IB "$w/tcpdump_bcr_audit.py" seed
+      - name: Run the canonical Verify on the committed catalog and test its policy
+        run: |
+          set -eu
+          w="$RUNNER_TEMP/tcpdump-bcr-audit"
+          makeopts=(--no-print-directory DOCKER_BUILD=false STARTUP_OPTIONS="--bazelrc=$w/images.bazelrc")
+          rc=0
+          timeout --kill-after=20s 24m make "${makeopts[@]}" license-check > "$w/verify.log" 2>&1 || rc=$?
+          echo "$rc" > "$w/verify.exit"
+          rc=0
+          timeout --kill-after=20s 15m bazelisk --bazelrc="$w/images.bazelrc" test //tools/licensecheck:licensecheck_test > "$w/policy.log" 2>&1 || rc=$?
+          echo "$rc" > "$w/policy.exit"
+          make "${makeopts[@]}" copy TARGETS=//tools/licensecheck/main:licensecheck DESTINATION="$w/licensecheck" > "$w/client.log" 2>&1
+      - name: Fetch into a copy that omits the rules_distroless catalog record
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          w="$RUNNER_TEMP/tcpdump-bcr-audit"
+          export MAKEFLAGS="DOCKER_BUILD=false STARTUP_OPTIONS=--bazelrc=$w/images.bazelrc"
+          rc=0
+          timeout --kill-after=20s 23m "$w/licensecheck" --mode=fetch --yaml="$w/regenerated.yaml" > "$w/fetch.log" 2>&1 || rc=$?
+          echo "$rc" > "$w/fetch.exit"
+      - name: Verify the fetched catalog and compare the real Make contexts
+        if: always()
+        run: |
+          set -eu
+          w="$RUNNER_TEMP/tcpdump-bcr-audit"
+          export MAKEFLAGS="DOCKER_BUILD=false STARTUP_OPTIONS=--bazelrc=$w/images.bazelrc"
+          rc=0
+          timeout --kill-after=20s 8m "$w/licensecheck" --mode=verify --yaml="$w/regenerated.yaml" > "$w/refetched-verify.log" 2>&1 || rc=$?
+          echo "$rc" > "$w/refetched-verify.exit"
+          for cpu in amd64 arm64; do
+            if test "$cpu" = amd64; then arch=x86_64; else arch=aarch64; fi
+            rc=0
+            timeout --kill-after=20s 18m make --no-print-directory copy DOCKER_BUILD=false STARTUP_OPTIONS="--bazelrc=$w/images.bazelrc" \
+              OPTIONS="--config=$arch" TARGETS=//images/basic:tcpdump_context DESTINATION="$w/$cpu.tar" > "$w/$cpu.log" 2>&1 || rc=$?
+            echo "$rc" > "$w/$cpu.exit"
+          done
+          git diff --exit-code -- tools/licensecheck/dependencies.yaml governance/licensing.yaml
+      - name: Record the two rows and two archive digest comparisons
+        if: always()
+        run: python3 -IB "$RUNNER_TEMP/tcpdump-bcr-audit/tcpdump_bcr_audit.py" report
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: tcpdump-bcr-exact-catalog
+          path: ${{ runner.temp }}/tcpdump-bcr-audit/result.json
+          if-no-files-found: error
+      - name: Require the catalog and both image contexts
+        run: python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"tcpdump-bcr-audit/result.json"; raise SystemExit(0 if json.loads(p.read_text()).get("verified") else 1)'
