@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T23:18:43.944Z",
+    "updatedAt": "2026-11-06T23:30:58.981Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -12123,8 +12123,8 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/e1ec0fd6a",
       "status": "Contributor approved; waiting for prerequisites",
-      "updatedAt": "2026-11-05T14:49:32.851579Z",
-      "summary": "The reference-array implementation was approved at 7b4e8579e. The contributor also approved the test revision at e1ec0fd6a. On the rebased implementation, the wire comparison and snapshot test passed using graph frames. The late-parent test failed before Load because its assertion expects the wire encoder to clear the unused slice tail during Save. All three tests passed on native AMD64 after selecting wire. Separate runs read all four output buffers and confirmed that the original tests wrote graph frames and the revised tests wrote wire frames.\n\nThe earlier qualification covered the approved implementation. The exact final pkg/state tree passed nine normal owners (10,931 positive records) and three race owners (10,969 positives, two existing eager-validation skips that pass normally), with no failures or missing records. Selected AMD64 container checkpoint/resume, DirectFS pipe-save and Docker checkpoint/resume coverage passed. The fresh twenty-leaf comparison establishes 1,024 fewer allocations in state slice and both adoption cases; separate-worker timing variation does not establish a latency improvement.\n\nHistorical superseded implementation:\n\nThis abandoned parallel proposal is preserved as investigation history. Its source-specific findings feed the single current destination-driven redesign; there is no separate implementation or contributor decision.\n\nHistorical findings:\n\nThe unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.\n\nThe independent master-based proposal captures addressable pointer arrays in one owned reference slice while retaining the existing graph resolver and wire format. Fourteen-owner compatibility and the eight-owner final refinement are closed, with baseline/candidate byte and digest equality. The balanced twelve-block three-arm comparison reports Slice Save time -28.30%, allocated bytes -18.43%, and allocations 1,067 to 43 versus master. UDP timing is nonsignificant; Map Load is -2.05% without a decoder-cause claim. State/UDP executables grow 4,096/8,192 bytes; observed UDP initialization is unchanged. Three final-code kernel restores pass, with the baseline reused from a separate invocation; this is compatibility only. The earlier significant UDP regression remains a separate cohort. No upstream PR exists.",
+      "updatedAt": "2026-11-06T23:30:58.981Z",
+      "summary": "The reference-array implementation was approved at 7b4e8579e. The contributor also approved the test revision at e1ec0fd6a. On the rebased implementation, the wire comparison and snapshot test passed using graph frames. The late-parent test failed before Load because its assertion expects the wire encoder to clear the unused slice tail during Save. All three tests passed on native AMD64 after selecting wire. Separate runs read all four output buffers and confirmed that the original tests wrote graph frames and the revised tests wrote wire frames.\n\nThe earlier qualification covered the approved implementation. The exact final pkg/state tree passed nine normal owners (10,931 positive records) and three race owners (10,969 positives, two existing eager-validation skips that pass normally), with no failures or missing records. Selected AMD64 container checkpoint/resume, DirectFS pipe-save and Docker checkpoint/resume coverage passed. Saving the slice and both array-adoption fixtures with the legacy wire encoder used 1,024 fewer allocations per save. Timing varied across workers.\n\nHistorical superseded implementation:\n\nThis abandoned parallel proposal is preserved as investigation history. Its source-specific findings feed the single current destination-driven redesign; there is no separate implementation or contributor decision.\n\nHistorical findings:\n\nThe unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.\n\nThe independent master-based proposal captures addressable pointer arrays in one owned reference slice while retaining the existing graph resolver and wire format. Fourteen-owner compatibility and the eight-owner final refinement are closed, with baseline/candidate byte and digest equality. In the historical twelve-block comparison with the wire encoder, Slice Save time was -28.30%, allocated bytes -18.43%, and allocations 1,067 to 43 versus master. UDP timing is nonsignificant; Map Load is -2.05% without a decoder-cause claim. State/UDP executables grow 4,096/8,192 bytes; observed UDP initialization is unchanged. Three final-code kernel restores pass, with the baseline reused from a separate invocation; this is compatibility only. The earlier significant UDP regression remains a separate cohort. No upstream PR exists.",
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "e1ec0fd6a841da016483565d9f6548196c1c835b",
@@ -49986,7 +49986,7 @@
       "url": "https://github.com/google/gvisor/pull/16818",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T23:18:43.944Z",
+      "updatedAt": "2026-11-06T23:30:58.981Z",
       "summary": "Opening /dev/fuse leaves the device unattached. Linux reports POLLERR and allows epoll to watch it. gVisor returned EPERM in the matching poll and epoll cases.",
       "evidence": [
         {
@@ -49998,7 +49998,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/41167813105/artifacts/13030461234"
         },
         {
-          "label": "Upstream generate retry after the rules_m4 download recovered",
+          "label": "Upstream generate passed after the rules_m4 download recovered",
           "url": "https://github.com/google/gvisor/actions/runs/42310219947/job/128209510760"
         }
       ],
@@ -50538,7 +50538,7 @@
       "url": "https://github.com/google/gvisor/pull/16830",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-06T23:11:36.682Z",
+      "updatedAt": "2026-11-06T23:30:58.981Z",
       "summary": "When an external Unix datagram receiver drained, stock gVisor left the writer asleep even though a separate poll confirmed it was writable. Linux and the tested correction delivered EPOLLOUT.",
       "evidence": [
         {
@@ -50556,6 +50556,10 @@
         {
           "label": "Published source with canonical syscall formatting",
           "url": "https://github.com/tamird/gvisor/commit/6b8479b9f"
+        },
+        {
+          "label": "Upstream lint passed on the published formatting amendment",
+          "url": "https://github.com/google/gvisor/actions/runs/42310119111/job/128209178785"
         }
       ],
       "settledReviews": [
@@ -56760,6 +56764,10 @@
         {
           "label": "Published source with canonical syscall formatting",
           "url": "https://github.com/tamird/gvisor/commit/0a70689c3"
+        },
+        {
+          "label": "Upstream lint passed on the published formatting amendment",
+          "url": "https://github.com/google/gvisor/actions/runs/42310119467/job/128209179856"
         }
       ],
       "settledReviews": [
@@ -56801,7 +56809,7 @@
           "https://github.com/tamird/gvisor/actions/runs/42309240103/artifacts/13546953613"
         ]
       },
-      "updatedAt": "2026-11-06T23:11:36.682Z"
+      "updatedAt": "2026-11-06T23:30:58.981Z"
     }
   ],
   "edges": [
@@ -63708,7 +63716,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-06T21:34:46.570Z",
+      "updatedAt": "2026-11-06T23:30:58.981Z",
       "summary": "Restoring 50,000 tmpfs files allocated a temporary pointer cell almost every time the decoder queued a parent pointer. The queue already held a copy of the pointer. Reusing that cell reduced total allocations per decode from 155,164 to 105,078.",
       "findings": [
         {
@@ -64574,7 +64582,7 @@
           ]
         },
         {
-          "text": "The isolated homogeneous-array proposal preserves the original graph decoder and wire grammar. Normal and race checks pass. A fixed sixteen-pair, 136-child original-baseline comparison found graph Save/Load 3.26%/6.01% faster and UDP Save/Load 11.59%/15.14% faster. Graph operations use 1,024 fewer allocations each; UDP allocation counts are unchanged. The graph/UDP test binaries grow 52/56 KiB. These are AMD64 package measurements, not startup or whole-restore timing. Contributor review is pending for opening after #15648 and #15814. The rejected generated destination layer and deferred owned-slot design remain separate.",
+          "text": "The object-graph and UDP benchmarks both used the legacy wire codec. In 16 paired AMD64 package runs, object-graph Save and Load took 3.26% and 6.01% less time, respectively. UDP Save and Load took 11.59% and 15.14% less time. Each object-graph operation used 1,024 fewer allocations. The UDP allocation counts matched the baseline. The object-graph and UDP test binaries grew by 52 and 56 KiB, respectively. The contributor approved the separate primitive-array and reference-array proposals.",
           "evidence": [
             {
               "label": "Isolated array proposal",
@@ -64583,6 +64591,10 @@
             {
               "label": "Fixed original-baseline comparison",
               "url": "https://app.buildbuddy.io/invocation/47729edd-e1df-4c9b-a133-a4f8da64a2c8"
+            },
+            {
+              "label": "The measured Save and Load entry points select the legacy wire codec",
+              "url": "https://github.com/tamird/gvisor/blob/9ecf4b48a/pkg/state/state.go#L91-L117"
             }
           ]
         },
