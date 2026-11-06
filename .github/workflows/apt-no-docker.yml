@@ -1,0 +1,45 @@
+name: Check the native APT publishing tools
+on:
+  push:
+    branches: [qualification/apt-publisher-no-docker]
+permissions: {contents: read}
+jobs:
+  publisher:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && !github.event.deleted
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false}
+      - name: Check the native launcher as an ordinary user
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/native-apt-results"
+          test "$(id -u)" -ne 0
+          env -i PATH="$PATH" HOME="$HOME" USER="$USER" bazel --nosystem_rc --nohome_rc test \
+            --nocache_test_results --test_output=errors //test/release:publisher_namespace_test
+      - name: Run the existing publisher with its declared tools and an offline disposable key
+        run: |
+          set -euo pipefail
+          env -i PATH="$PATH" HOME="$HOME" USER="$USER" bazel --nosystem_rc --nohome_rc test \
+            --nocache_test_results --test_output=errors //test/release:publisher_local_test
+      - name: Retain original operation results
+        if: always()
+        run: |
+          set -eu
+          out="$RUNNER_TEMP/native-apt-results"
+          for spec in publisher_namespace_test:namespace.json publisher_local_test:publisher.json; do
+            target="${spec%%:*}"
+            name="${spec##*:}"
+            logs="bazel-testlogs/test/release/$target"
+            if test -f "$logs/test.log"; then cp "$logs/test.log" "$out/$target.log"; fi
+            if test -f "$logs/test.outputs/$name"; then cp "$logs/test.outputs/$name" "$out/"; fi
+            if test -f "$logs/test.outputs/outputs.zip"; then unzip -p "$logs/test.outputs/outputs.zip" "$name" > "$out/$name"; fi
+          done
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: native-apt-publisher-results
+          path: ${{ runner.temp }}/native-apt-results
+          retention-days: 14
+          if-no-files-found: warn

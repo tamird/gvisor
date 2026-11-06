@@ -2825,3 +2825,16 @@ http_archive(
     urls = ["https://github.com/NVIDIA/open-gpu-kernel-modules/archive/61dcc93722ecb418bb5f2e00923f05b4b8051dd1.tar.gz"],
 )
 # END generated NVIDIA driver sources
+
+# The publisher executes its distro tools locally without a Docker daemon.
+bazel_dep(name = "bubblewrap", version = "0.13.0.bcr.1", dev_dependency = True)
+http_file(
+    name = "apt_gvisor_amd64_input",
+    sha256 = "81e3ecc4bb0d3eb321f5cf357e97a26daea91c6dc70ec30c9240cd481e6cf2da",
+    urls = ["https://storage.googleapis.com/gvisor/releases/pool/20261102.0/binary-amd64/runsc.deb"],
+)
+http_file(
+    name = "apt_gvisor_arm64_input",
+    sha256 = "96f680452ec1bd94e693b3aade78d9c09f90ecfe8ee05dbe29782a6e725cad7a",
+    urls = ["https://storage.googleapis.com/gvisor/releases/pool/20261102.0/binary-arm64/runsc.deb"],
+)

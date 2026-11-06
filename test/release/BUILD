@@ -1,3 +1,4 @@
+load("@rules_python//python:py_test.bzl", "py_test")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 load("//test/docker:defs.bzl", "docker_daemon_config")
 load("//tools:defs.bzl", "pkg_tar")
@@ -119,4 +120,35 @@ repository_test(
         "@platforms//cpu:x86_64",
         "@platforms//os:linux",
     ],
+)
+
+py_test(
+    name = "publisher_namespace_test",
+    srcs = ["publisher_namespace_test.py"],
+    args = ["$(rootpath @bubblewrap//:bwrap)"],
+    data = ["@bubblewrap//:bwrap"],
+    tags = ["local"],
+)
+
+py_test(
+    name = "publisher_local_test",
+    srcs = ["publisher_local_test.py"],
+    args = [
+        "$(rootpath @bubblewrap//:bwrap)",
+        "$(rootpath @release_tools//:flat)",
+        "$(rootpath //tools:make_apt.sh)",
+        "$(rootpath //tools:make_test_key.sh)",
+        "$(rootpath @apt_gvisor_amd64_input//file)",
+        "$(rootpath @apt_gvisor_arm64_input//file)",
+    ],
+    data = [
+        "@bubblewrap//:bwrap",
+        "@release_tools//:flat",
+        "//tools:make_apt.sh",
+        "//tools:make_test_key.sh",
+        "@apt_gvisor_amd64_input//file",
+        "@apt_gvisor_arm64_input//file",
+    ],
+    tags = ["local"],
+    timeout = "long",
 )
