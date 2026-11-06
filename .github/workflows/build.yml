@@ -1,35 +1,56 @@
-name: CI
-
-"on":
+name: Check the approved systrap stub and sidecars with released LLVM
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/current-llvm-compiler-label]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  measure:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 155
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Select the exact reviewed source
+        id: prepare
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = f6df263f8e2ce2cbe6a497356613f6785c4800a4
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/current_stub.py' ':!.github/qualification/race_toolchain_control.py'
+          mkdir -m 700 "$RUNNER_TEMP/current-stub" "$RUNNER_TEMP/race-toolchain-control"
+          cp .github/qualification/current_stub.py "$RUNNER_TEMP/current-stub/"
+          cp .github/qualification/race_toolchain_control.py "$RUNNER_TEMP/race-toolchain-control/"
+          git checkout --quiet --detach HEAD^
+          test "$(bazelisk --version)" = 'bazel 9.3.1'
+      - name: Build the two architectures' stub and sidecars
+        if: steps.prepare.outcome == 'success'
+        timeout-minutes: 40
+        run: env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$RUNNER_TEMP/current-stub/current_stub.py"
+      - name: Resolve LLVM and the native GCC override and link both public binaries
+        if: always() && steps.prepare.outcome == 'success'
+        timeout-minutes: 106
+        run: env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$RUNNER_TEMP/race-toolchain-control/race_toolchain_control.py"
+      - name: Bound the two independent receipts
+        id: receipts
+        if: always() && steps.prepare.outcome == 'success'
+        run: |
+          python3 - <<'REPORT'
+          import json, os, re, shutil
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"])
+          out = root / "llvm-receipts"
+          out.mkdir()
+          for name in ("current-stub", "race-toolchain-control"):
+              raw = (root / name / "receipt.json").read_bytes()
+              assert 0 < len(raw) < 65536
+              assert json.loads(raw)["source"] == "f6df263f8e2ce2cbe6a497356613f6785c4800a4"
+              assert not re.search(rb"(?i)authorization\s*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}", raw)
+              (out / (name + ".json")).write_bytes(raw)
+          REPORT
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.receipts.outcome == 'success'
+        with:
+          name: llvm-selected-compiler-and-stub
+          path: ${{ runner.temp }}/llvm-receipts/
+          retention-days: 14
