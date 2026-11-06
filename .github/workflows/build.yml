@@ -1,35 +1,47 @@
-name: CI
-
-"on":
+name: Check the existing semaphore storage with its owning mutex
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/semaphore-slice-guard]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  verify:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 95
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 2}
+      - name: Prepare the original Linux Go and Nogo owners
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/semaphore-slice-guard"
+          mkdir -p "$d"
+          test "$(git rev-parse HEAD^)" = 874cce4a469d83645caecd06715c28966b1f99c1
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/sem_slice_guard.py'
+          test "$(cat .bazelversion)" = 8.8.1
+          /usr/bin/unshare --user --map-root-user --net -- /usr/bin/test -e /sys/class/net/lo
+          if ! command -v aarch64-linux-gnu-g++ >/dev/null; then
+            for suite in jammy jammy-updates; do
+              echo "deb [signed-by=/usr/share/keyrings/ubuntu-archive-keyring.gpg] https://archive.ubuntu.com/ubuntu/ $suite main universe"
+            done > "$d/ubuntu.list"
+            opts=(-o "Dir::Etc::sourcelist=$d/ubuntu.list" -o Dir::Etc::sourceparts=-)
+            sudo apt-get "${opts[@]}" update -qq
+            sudo apt-get "${opts[@]}" install -qq -y --no-install-recommends g++-aarch64-linux-gnu
+          fi
+          curl -fsSL --max-time 90 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $d/bazel" | sha256sum -c -
+          chmod 755 "$d/bazel"
+      - name: Check the real owners, immutable length read and indexed accesses
+        timeout-minutes: 84
+        run: |
+          d="$RUNNER_TEMP/semaphore-slice-guard"
+          cp .github/qualification/sem_slice_guard.py "$d/"
+          git checkout -q --detach 874cce4a469d83645caecd06715c28966b1f99c1
+          python3 -B "$d/sem_slice_guard.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: semaphore-slice-guard
+          path: ${{ runner.temp }}/semaphore-slice-guard/result.json
+          if-no-files-found: warn
+          retention-days: 14
