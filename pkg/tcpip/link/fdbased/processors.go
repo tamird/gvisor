@@ -128,7 +128,7 @@ func (m *processorManager) start() {
 			p := &workers[i]
 			p.sleeper.AddWaker(&p.packetWaker)
 			p.sleeper.AddWaker(&p.closeWaker)
-			go p.start()
+			m.e.processorWG.Go(p.start)
 		}
 	})
 }

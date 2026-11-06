@@ -147,8 +147,8 @@ type endpoint struct {
 	// disabled.
 	gsoMaxSize uint32
 
-	// wg keeps track of running goroutines.
-	wg sync.WaitGroup `state:"nosave"`
+	dispatchWG  sync.WaitGroup `state:"nosave"`
+	processorWG sync.WaitGroup `state:"nosave"`
 
 	// gsoKind is the supported kind of GSO.
 	gsoKind stack.SupportedGSO
@@ -500,9 +500,10 @@ func (e *endpoint) Attach(dispatcher stack.NetworkDispatcher) {
 			dispatcher.Stop()
 		}
 		e.dispatcher = nil
-		// NOTE(gvisor.dev/issue/11456): Unlock e.mu before e.Wait().
+		// NOTE(gvisor.dev/issue/11456): Unlock e.mu before waiting for
+		// the FD readers. A packet processor may itself be detaching the NIC.
 		e.mu.Unlock()
-		e.Wait()
+		e.dispatchWG.Wait()
 		return
 	}
 	defer e.mu.Unlock()
@@ -512,10 +513,10 @@ func (e *endpoint) Attach(dispatcher stack.NetworkDispatcher) {
 		// saved, they stop sending outgoing packets and all incoming packets
 		// are rejected.
 		for i := range e.inboundDispatchers {
-			e.wg.Add(1)
+			e.dispatchWG.Add(1)
 			go func(i int) { // S/R-SAFE: See above.
 				e.dispatchLoop(e.inboundDispatchers[i])
-				e.wg.Done()
+				e.dispatchWG.Done()
 			}(i)
 		}
 	}
@@ -566,10 +567,11 @@ func (e *endpoint) SetLinkAddress(addr tcpip.LinkAddress) {
 	e.addr = addr
 }
 
-// Wait implements stack.LinkEndpoint.Wait. It waits for the endpoint to stop
-// reading from its FD.
+// Wait implements stack.LinkEndpoint.Wait.
 func (e *endpoint) Wait() {
-	e.wg.Wait()
+	// A reader may still be starting its processors until it exits.
+	e.dispatchWG.Wait()
+	e.processorWG.Wait()
 }
 
 // virtioNetHdr is declared in linux/virtio_net.h.

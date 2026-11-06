@@ -26,6 +26,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 	"unsafe"
 
@@ -818,6 +819,67 @@ func TestCloseBeforeAttach(t *testing.T) {
 			}
 		})
 	}
+}
+
+type receiveCallback func()
+
+func (f receiveCallback) DeliverNetworkPacket(tcpip.NetworkProtocolNumber, *stack.PacketBuffer) {
+	f()
+}
+
+func (receiveCallback) DeliverLinkPacket(tcpip.NetworkProtocolNumber, *stack.PacketBuffer) {}
+
+func TestWaitForPacketDelivery(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_DGRAM, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer unix.Close(fds[0])
+		defer unix.Close(fds[1])
+		ep, err := New(&Options{FDs: fds[:1], MTU: mtu, ProcessorsPerChannel: 2})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		detached := make(chan struct{})
+		release := make(chan struct{})
+		ep.Attach(receiveCallback(func() {
+			ep.Attach(nil)
+			ep.Close()
+			close(detached)
+			<-release
+		}))
+		packet := make([]byte, header.IPv4MinimumSize+header.UDPMinimumSize)
+		ip := header.IPv4(packet)
+		ip.Encode(&header.IPv4Fields{
+			TotalLength: uint16(len(packet)),
+			TTL:         64,
+			Protocol:    uint8(header.UDPProtocolNumber),
+			SrcAddr:     header.IPv4Loopback,
+			DstAddr:     header.IPv4Loopback,
+		})
+		ip.SetChecksum(^ip.CalculateChecksum())
+		header.UDP(packet[header.IPv4MinimumSize:]).SetLength(header.UDPMinimumSize)
+		if _, err := unix.Write(fds[1], packet); err != nil {
+			t.Fatal(err)
+		}
+		<-detached
+
+		done := make(chan struct{})
+		go func() {
+			ep.Wait()
+			close(done)
+		}()
+		synctest.Wait()
+		select {
+		case <-done:
+			t.Error("Wait returned while DeliverNetworkPacket was still running")
+		default:
+		}
+		close(release)
+		<-done
+	})
 }
 
 func TestMain(m *testing.M) {
