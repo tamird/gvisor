@@ -1220,7 +1220,7 @@ func (s *Stack) CheckNIC(id tcpip.NICID) bool {
 // RemoveNIC removes NIC and all related routes from the network stack.
 func (s *Stack) RemoveNIC(id tcpip.NICID) tcpip.Error {
 	s.mu.Lock()
-	deferAct, err := s.removeNICLocked(id, true /* closeLinkEndpoint */)
+	deferAct, err := s.removeNICLocked(id, NetworkLinkEndpoint.Close)
 	s.mu.Unlock()
 	if deferAct != nil {
 		deferAct()
@@ -1231,7 +1231,7 @@ func (s *Stack) RemoveNIC(id tcpip.NICID) tcpip.Error {
 // removeNICLocked removes NIC and all related routes from the network stack.
 //
 // +checklocks:s.mu
-func (s *Stack) removeNICLocked(id tcpip.NICID, closeLinkEndpoint bool) (func(), tcpip.Error) {
+func (s *Stack) removeNICLocked(id tcpip.NICID, closeLinkEndpoint func(NetworkLinkEndpoint)) (func(), tcpip.Error) {
 	nic, ok := s.nics[id]
 	if !ok {
 		return nil, &tcpip.ErrUnknownNICID{}
@@ -1260,7 +1260,7 @@ func (s *Stack) removeNICLocked(id tcpip.NICID, closeLinkEndpoint bool) (func(),
 	if s.loopbackNIC == nic {
 		s.loopbackNIC = nil
 	}
-	return nic.remove(closeLinkEndpoint)
+	return nic.remove(closeLinkEndpoint), nil
 }
 
 // GetNICCoordinatorID returns the ID of the coordinator device of a NIC.
@@ -2239,11 +2239,14 @@ func (s *Stack) Wait() {
 	for id, n := range s.nics {
 		// Remove NIC to ensure that qDisc goroutines are correctly
 		// terminated on stack teardown.
-		act, _ := s.removeNICLocked(id, true /* closeLinkEndpoint */)
-		n.NetworkLinkEndpoint.Wait()
-		if act != nil {
-			deferActs = append(deferActs, act)
+		act, _ := s.removeNICLocked(id, func(ep NetworkLinkEndpoint) {
+			ep.Wait()
+			ep.Close()
+		})
+		if act == nil {
+			act = n.NetworkLinkEndpoint.Wait
 		}
+		deferActs = append(deferActs, act)
 	}
 	s.mu.Unlock()
 
@@ -2831,7 +2834,7 @@ func (s *Stack) SetNICStack(id tcpip.NICID, peer *Stack) (tcpip.NICID, tcpip.Err
 		MaxMTU: nic.maxMTU,
 	}
 
-	deferAct, err := s.removeNICLocked(id, false /* closeLinkEndpoint */)
+	deferAct, err := s.removeNICLocked(id, nil)
 	s.mu.Unlock()
 	if deferAct != nil {
 		deferAct()

@@ -67,7 +67,7 @@ func (s *Stack) beforeSave() {
 		if _, ok := s.preservedNICs[id]; ok {
 			continue
 		}
-		act, _ := s.removeNICLocked(id, true /* closeLinkEndpoint */)
+		act, _ := s.removeNICLocked(id, NetworkLinkEndpoint.Close)
 		if act != nil {
 			deferActs = append(deferActs, act)
 		}

@@ -375,13 +375,9 @@ func (n *nic) networkProtocolEnabled(protocol tcpip.NetworkProtocolNumber) (bool
 	return !n.isNetworkProtocolDisabledRLocked(protocol), nil
 }
 
-// remove detaches NIC from the link endpoint and releases network endpoint
-// resources. This guarantees no packets between this NIC and the network
-// stack.
-//
-// It returns an action that has to be executed after releasing the Stack lock
-// and any error encountered.
-func (n *nic) remove(closeLinkEndpoint bool) (func(), tcpip.Error) {
+// remove disables the NIC and releases its network endpoints. The returned
+// action drains its queues and detaches the link after Stack.mu is released.
+func (n *nic) remove(closeLinkEndpoint func(NetworkLinkEndpoint)) func() {
 	n.enableDisableMu.Lock()
 
 	n.disableLocked()
@@ -396,20 +392,20 @@ func (n *nic) remove(closeLinkEndpoint bool) (func(), tcpip.Error) {
 	// We must not hold n.enableDisableMu here.
 	n.linkResQueue.cancel()
 
-	var deferAct func()
-	// Prevent packets from going down to the link before shutting the link down.
-	n.qDisc.Close()
-	n.NetworkLinkEndpoint.Attach(nil)
-	if closeLinkEndpoint {
-		ep := n.NetworkLinkEndpoint
+	ep := n.NetworkLinkEndpoint
+	if closeLinkEndpoint != nil {
 		ep.SetOnCloseAction(nil)
-		// The link endpoint has to be closed without holding a
-		// netstack lock, because it can trigger other netstack
-		// operations.
-		deferAct = ep.Close
 	}
-
-	return deferAct, nil
+	return func() {
+		// A receive worker may need Stack.mu to finish an incoming packet, and
+		// closing a veth may reenter the stack to remove its peer. Drain outgoing
+		// packets before detaching the link.
+		n.qDisc.Close()
+		ep.Attach(nil)
+		if closeLinkEndpoint != nil {
+			closeLinkEndpoint(ep)
+		}
+	}
 }
 
 // setPromiscuousMode enables or disables promiscuous mode.
