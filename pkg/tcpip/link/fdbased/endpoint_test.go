@@ -19,8 +19,10 @@ package fdbased
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
+	"runtime/pprof"
 	"slices"
 	"strings"
 	"testing"
@@ -778,6 +780,43 @@ func TestCloseReleasesStopFDs(t *testing.T) {
 		if after := countEventFDs(t); after != before {
 			t.Errorf("mode %d: eventfds before=%d after=%d, want equal", mode, before, after)
 		}
+	}
+}
+
+func TestCloseBeforeAttach(t *testing.T) {
+	for _, mode := range []PacketDispatchMode{Readv, RecvMMsg} {
+		t.Run(mode.String(), func(t *testing.T) {
+			fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_DGRAM, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer unix.Close(fds[0])
+			defer unix.Close(fds[1])
+
+			// Workers inherit the creator's profile labels. After Do returns,
+			// only a surviving worker can still carry this endpoint's label.
+			const key = "unattached-fdbased-endpoint"
+			pprof.Do(t.Context(), pprof.Labels(key, t.Name()), func(context.Context) {
+				ep, err := New(&Options{
+					FDs:                  fds[:1],
+					MTU:                  mtu,
+					PacketDispatchMode:   mode,
+					ProcessorsPerChannel: 2,
+				})
+				if err != nil {
+					t.Fatal(err)
+				}
+				ep.Close()
+				ep.Wait()
+			})
+			var profile bytes.Buffer
+			if err := pprof.Lookup("goroutine").WriteTo(&profile, 1); err != nil {
+				t.Fatal(err)
+			}
+			if strings.Contains(profile.String(), fmt.Sprintf("%q:%q", key, t.Name())) {
+				t.Error("an unattached endpoint left a worker running after Close and Wait")
+			}
+		})
 	}
 }
 

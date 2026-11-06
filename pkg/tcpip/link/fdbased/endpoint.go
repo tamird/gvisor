@@ -58,6 +58,7 @@ import (
 // NetworkDispatcher.
 type linkDispatcher interface {
 	Stop()
+	start()
 	dispatch() (bool, tcpip.Error)
 	release()
 	close()
@@ -232,8 +233,10 @@ type Options struct {
 	// GRO enables generic receive offload.
 	GRO bool
 
-	// ProcessorsPerChannel is the number of goroutines used to handle packets
-	// from each FD.
+	// ProcessorsPerChannel is the number of receive processors for each FD.
+	// With one processor the receive loop delivers packets itself. With more
+	// than one it queues packets for separate goroutines. Zero chooses the
+	// count based on GOMAXPROCS and the number of FDs.
 	ProcessorsPerChannel int
 
 	// IsPacketSocket indicates whether each FD is a packet socket.
@@ -890,6 +893,7 @@ func (e *endpoint) InjectOutbound(dest tcpip.Address, packet *buffer.View) tcpip
 // dispatchLoop reads packets from the file descriptor in a loop and dispatches
 // them to the network stack.
 func (e *endpoint) dispatchLoop(inboundDispatcher linkDispatcher) tcpip.Error {
+	inboundDispatcher.start()
 	for {
 		cont, err := inboundDispatcher.dispatch()
 		if err != nil || !cont {
