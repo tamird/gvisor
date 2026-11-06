@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-06T20:40:25.617Z",
+    "updatedAt": "2026-11-06T20:45:16.012Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -11873,15 +11873,16 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/efa9acfb4",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T20:07:31.468Z",
+      "updatedAt": "2026-11-06T20:45:16.012Z",
       "summary": "The ABI test used git to fetch each supported NVIDIA driver. The proposed change feeds the parser declared archives, using the Clang headers from #17112 and the parser dependency from #17114. With network access denied, all 25 versions with a source release passed parity and TestParser passed. The nine versions with no public tag were recorded as skips. A separate test still checks the live installer checksums. Its previous run failed TLS verification on all 34 versions.",
       "followup": {
         "sourceHead": "efa9acfb4e2d91c5944c166a9f2269e0b3ba4322",
-        "observedAt": "2026-11-06T20:07:31.468Z",
+        "observedAt": "2026-11-06T20:45:16.012Z",
         "owner": "Agent",
-        "disposition": "The 25 new test-source archive declarations need their Bazel dependency scope corrected before contributor review.",
-        "nextAction": "Set dev_dependency on the test-only declarations, verify an actual downstream module, and qualify the separate live installer owner. Preserve the 25 offline passes and nine documented skips.",
+        "disposition": "The dev-only declarations expose all 25 driver archives to gVisor and zero to a downstream module. The existing Gazelle restriction stopped both downstream builds before compilation.",
+        "nextAction": "Verify root ABI parity on the changed aliases before returning the source for contributor review. The separate live installer test passed all 34 checks with declared trust roots.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42287343098/artifacts/13539170567",
           "https://github.com/tamird/gvisor/compare/acedf056b...efa9acfb4",
           "https://github.com/tamird/gvisor/commit/63f10e43e",
           "https://github.com/tamird/gvisor/actions/runs/42282261080/artifacts/13536367145",
@@ -11890,6 +11891,10 @@
         ]
       },
       "evidence": [
+        {
+          "label": "Dev-only root and downstream repo-mapping controls; 248 license checks passed",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42287343098/artifacts/13539170567"
+        },
         {
           "label": "Review the native ABI source change",
           "url": "https://github.com/tamird/gvisor/compare/acedf056b...efa9acfb4"
@@ -22678,8 +22683,8 @@
       "url": "https://github.com/tamird/gvisor/commit/e7fc3626fce8184c2dd35debe8d413dd989b05ee",
       "group": "bazel",
       "status": "Contributor approved; resource layout complete; awaiting prerequisites",
-      "updatedAt": "2026-11-05T18:31:46.488951Z",
-      "summary": "The signed Ubuntu Jammy tcpdump has a separate compatibility result: under gVisor it captured on loopback (lo), but failed on any on both AMD64 and ARM64. On AMD64, tcpdump reported that any did not support LINUX_SLL2. The trace recorded PACKET_HDRLEN returning EINVAL on both any and lo, so that error alone does not explain the difference. On native Linux the same AMD64 archive selected LINUX_SLL2 on any and captured packets. These distro results do not change the source-built tcpdump approval below.\n\nCurrent foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nRequested resource relocation and equivalent base refresh are complete at e7fc3626fc. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nContributor approved exact1393 for opening after basic-image #16097 and manual-artifact #16051 actually land.\n\nPreserved qualification record:\n\nThe final source and complete shipped notices are independently accepted. Both architecture archives and static binaries, Make rebuild/reload, both owning analyzers and TestTcpdump lo/any pass with five positive records and no skips. Earlier authenticated compiler evidence is reused through unchanged executable identities; the final run makes no fresh compilation claim. Canonical Fetch and the subsequent exact-catalog Verify now pass. Earlier launch visibility and timeout failures remain preserved without a claimed cause. Exact1393 contributor approval remains conditional on the basic-image and manual-artifact prerequisites. This graph does not require the shared gawk/native Go prerequisite.",
+      "updatedAt": "2026-11-06T20:45:16.012Z",
+      "summary": "The signed Ubuntu Jammy tcpdump has a separate compatibility result: under gVisor it captured on loopback (lo), but failed on any on both AMD64 and ARM64. On AMD64, tcpdump reported that any did not support LINUX_SLL2. The trace recorded PACKET_HDRLEN returning EINVAL on both any and lo, so that error alone does not explain the difference. On native Linux the same AMD64 archive selected LINUX_SLL2 on any and captured packets. These distro results do not change the source-built tcpdump approval below.\n\nCurrent foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nRequested resource relocation and equivalent base refresh are complete at e7fc3626fc. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nContributor approved exact1393 for opening after basic-image #16097 and manual-artifact #16051 actually land.\n\nPreserved qualification record:\n\nThe final source and complete shipped notices are independently accepted. Both architecture archives and static binaries, Make rebuild/reload, both owning analyzers and TestTcpdump lo/any pass with five positive records and no skips. Earlier authenticated compiler evidence is reused through unchanged executable identities; the final run makes no fresh compilation claim. Canonical Fetch and the subsequent exact-catalog Verify now pass. Earlier launch visibility and timeout failures remain preserved without a claimed cause. Exact1393 contributor approval remains conditional on the basic-image and manual-artifact prerequisites. This graph does not require the shared gawk/native Go prerequisite. The distro alternative is in qualification. The packet-socket PACKET_RESERVE readback correction is being compared on stock gVisor, corrected gVisor and Linux, separately from native distro captures on both architectures.",
       "links": [
         {
           "label": "Final image source and notices",
@@ -22728,7 +22733,21 @@
           "https://github.com/tamird/gvisor/commit/1393d4449850b660d77e4b1ebb2906e322d7c855",
           "https://github.com/tamird/gvisor/commit/e7fc3626fce8184c2dd35debe8d413dd989b05ee"
         ]
-      }
+      },
+      "evidence": [
+        {
+          "label": "Proposed packet-socket reserve readback",
+          "url": "https://github.com/tamird/gvisor/commit/5de0b08c4"
+        },
+        {
+          "label": "Stock, corrected and native Linux packet-socket syscall",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42290492668"
+        },
+        {
+          "label": "Native AMD64 and ARM64 distro capture qualification",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42290164647"
+        }
+      ]
     },
     {
       "id": "branch:state-wire-storage",
@@ -55123,9 +55142,13 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T20:00:54.961Z",
-      "summary": "One remote Bazel invocation on the released LLVM integration recorded all 3,235 presubmit targets. Of 2,874 build-only targets, 2,811 built. Of 361 runnable targets, 344 ran and 342 passed. There were 352 passing shards in 354 fresh remote executions. The sandbox test failed its default-route assertions and the vDSO checker could not start readelf. Three C++ compile actions failed in the NVIDIA driver's Clang parser on the pinned RegisterRef comparator. The two failed test targets passed in separate runs with the declared vDSO reader and #15866’s route expectations. #17114 built all four previously failing NVIDIA targets and the parser test passed remotely. All 34 structure parity cases then failed to start git, and all 34 installer checksum cases failed TLS verification.\n\nOn master before the compiler change, the graph selected all 360 runnable and 2,881 build-only targets from the AMD64 cgroup-v2 presubmit, plus a native uname control. Of the resulting 3,242 roots, 2,650 build-only targets built and 295 tests ran. The OCI and Firecracker workers reported cgroup2fs and observed the expected cache separation for CGROUPV2 true and false. The earlier six-target pilot and full per-owner data are linked. The five previously unexecuted owners failed together during analysis in an isolated run. Bazel reported 730 action conflicts before execution. Two representative LLVM runtime objects had identical compiler commands in two tool configurations. The only reported difference was the target-platform label: //tools/bazeldefs:linux_amd64 versus //test/rbe:linux_amd64. The remaining unknown owners still need their own evidence. The canonical AMD64 execution platform eliminated the conflicts in that six-target comparison. Three fresh remote test owners passed. Uname recorded four executed cases and version one. The netgofer XML listed no cases. All three fastbuild filter outputs were identical 1,474-byte stubs.",
+      "updatedAt": "2026-11-06T20:45:16.012Z",
+      "summary": "The full source presubmit on the canonical AMD64 worker ran 373 fresh remote test shards. Of those, 371 passed. The docprocessor and Python sandbox tests failed. Of 2,880 build-only targets, 2,876 succeeded and four legacy coverage genrules failed. All 34 live NVIDIA installer checks passed. ABI parity passed on the 25 versions with published source; the nine absent versions were skipped. All six netgofer cases passed. Earlier full-run, worker-placement and cache comparisons remain in the evidence.",
       "evidence": [
+        {
+          "label": "Complete outcomes on the canonical worker",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42283984978/artifacts/13537369674"
+        },
         {
           "label": "Full presubmit on the canonical AMD64 worker",
           "url": "https://github.com/tamird/gvisor/actions/runs/42283984978"
@@ -55307,10 +55330,11 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "e46a101fc0aebb325ec25977697a012a2e11a11b",
-        "observedAt": "2026-11-06T20:00:54.961Z",
-        "disposition": "The contributor requested one remote Bazel graph for CI targets across areas and configurations.",
-        "nextAction": "Check the in-progress full canonical-platform presubmit on the exact source selection, including native ABI parity, the live checksums and named netgofer cases. Keep the optimized filter-generation result separate from the previously qualified fastbuild stubs.",
+        "observedAt": "2026-11-06T20:45:16.012Z",
+        "disposition": "Two tests and four legacy coverage build owners failed on the complete graph.",
+        "nextAction": "Recover the two original TestRunner diagnostics and the four legacy coverage failures. Compare those coverage targets with #16507’s declared Go builds.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42283984978/artifacts/13537369674",
           "https://github.com/tamird/gvisor/actions/runs/42283984978",
           "https://github.com/tamird/gvisor/actions/runs/42282261080/artifacts/13536367145",
           "https://github.com/tamird/gvisor/actions/runs/42280834294/artifacts/13534254869",
@@ -55754,19 +55778,8 @@
       "url": "https://github.com/tamird/gvisor/commit/317c23232",
       "title": "Clear the semaphore waiter lists on removal",
       "summary": "Removing a SysV semaphore set notified all five waiters in the regression. Resetting a copied list left all five attached to the removed Set object. The correction reset its actual waiter queues and left zero entries. This retention is visible to code holding the removed Set; ordinary semctl queries cannot inspect it.",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-11-06T20:22:14.946Z",
-      "contributorReview": {
-        "status": "pending",
-        "kind": "proposal",
-        "head": "317c232321bfa6eddbc2e657d5dc4172fa4d959f",
-        "baseHead": "f51a205a8f4afbc5ab41aded070df74951b081ea",
-        "url": "https://github.com/tamird/gvisor/commit/317c23232",
-        "title": "Clear the semaphore waiter lists on removal",
-        "body": "Destroy wakes every blocked caller, but its range loop copies each\nsemaphore. Reset clears the copy. A reference to the removed set still\nsees every waiter after they were notified. Reset the list in the set\nitself.\n\nGive the TestUnregister fixture mode 0600 so its owner can read the\nwaiter count after removal. The old hexadecimal 0x600 sets no read or\nwrite permission bits.",
-        "requestedAt": "2026-11-06T20:22:14.946Z",
-        "summary": "Open this standalone correction on master. Its regression checks both the notifications and the removed set’s retained queues."
-      },
+      "status": "Published as #17127",
+      "updatedAt": "2026-11-06T20:45:16.012Z",
       "evidence": [
         {
           "label": "Original and corrected TestUnregister results",
@@ -55779,6 +55792,71 @@
         {
           "label": "Sentry semaphore wake, signal and removal controls on the composed changes",
           "url": "https://github.com/tamird/gvisor/actions/runs/42272487181/artifacts/13533338658"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "317c232321bfa6eddbc2e657d5dc4172fa4d959f",
+          "url": "https://github.com/tamird/gvisor/commit/317c23232",
+          "title": "Clear the semaphore waiter lists on removal",
+          "body": "Destroy wakes every blocked caller, but its range loop copies each\nsemaphore. Reset clears the copy. A reference to the removed set still\nsees every waiter after they were notified. Reset the list in the set\nitself.\n\nGive the TestUnregister fixture mode 0600 so its owner can read the\nwaiter count after removal. The old hexadecimal 0x600 sets no read or\nwrite permission bits.",
+          "outcome": "approved",
+          "at": "2026-11-06T20:45:16.012Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17127",
+          "note": "Published as #17127 at the exact approved head."
+        }
+      ],
+      "followup": {
+        "owner": "Maintainer",
+        "sourceHead": "317c232321bfa6eddbc2e657d5dc4172fa4d959f",
+        "observedAt": "2026-11-06T20:45:16.012Z",
+        "disposition": "The approved source is public on #17127.",
+        "nextAction": "Follow upstream review and checks on #17127.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/17127",
+          "https://github.com/tamird/gvisor/commit/317c23232"
+        ]
+      }
+    },
+    {
+      "id": "pr:17127",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 17127,
+      "ref": "proposal/semaphore-clear-removed-waiters",
+      "head": "317c232321bfa6eddbc2e657d5dc4172fa4d959f",
+      "title": "Clear the semaphore waiter lists on removal",
+      "url": "https://github.com/google/gvisor/pull/17127",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-11-06T20:45:16.012Z",
+      "summary": "Removing a SysV semaphore set notified all five waiters in the regression. Resetting a copied list left all five attached to the removed Set object. The correction reset its actual waiter queues and left zero entries. This retention is visible to code holding the removed Set; ordinary semctl queries cannot inspect it.",
+      "evidence": [
+        {
+          "label": "Original and corrected TestUnregister results",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42271680689/artifacts/13528724296"
+        },
+        {
+          "label": "Seven host Linux syscall controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42279386904/artifacts/13533439729"
+        },
+        {
+          "label": "Sentry semaphore wake, signal and removal controls on the composed changes",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42272487181/artifacts/13533338658"
+        }
+      ],
+      "settledReviews": [
+        {
+          "kind": "proposal",
+          "head": "317c232321bfa6eddbc2e657d5dc4172fa4d959f",
+          "url": "https://github.com/tamird/gvisor/commit/317c23232",
+          "title": "Clear the semaphore waiter lists on removal",
+          "body": "Destroy wakes every blocked caller, but its range loop copies each\nsemaphore. Reset clears the copy. A reference to the removed set still\nsees every waiter after they were notified. Reset the list in the set\nitself.\n\nGive the TestUnregister fixture mode 0600 so its owner can read the\nwaiter count after removal. The old hexadecimal 0x600 sets no read or\nwrite permission bits.",
+          "outcome": "approved",
+          "at": "2026-11-06T20:45:16.012Z",
+          "postedURL": "https://github.com/google/gvisor/pull/17127",
+          "note": "Published as #17127 at the exact approved head."
         }
       ]
     }
