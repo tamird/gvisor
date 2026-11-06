@@ -1,35 +1,43 @@
-name: CI
-
-"on":
+name: Check C toolchain selection for static Go race binaries
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/race-selected-compiler-validation]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  measure:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 115
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Compare toolchain resolution and link both race executables
+        timeout-minutes: 110
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 24b7f9c53def5a1c8f29ddffaa54a8d7bf0e8125
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/race_toolchain_control.py'
+          mkdir -m 700 "$RUNNER_TEMP/race-toolchain-control"
+          cp .github/qualification/race_toolchain_control.py "$RUNNER_TEMP/race-toolchain-control/"
+          git checkout --quiet --detach HEAD^
+          test "$(bazelisk --version)" = 'bazel 9.3.1'
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -B "$RUNNER_TEMP/race-toolchain-control/race_toolchain_control.py"
+      - name: Verify the diagnostic receipt
+        id: receipt
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"race-toolchain-control/receipt.json"
+          b=p.read_bytes()
+          assert 0<len(b)<32000 and not re.search(rb"(?i)authorization\s*[:=]|x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}",b)
+          assert json.loads(b)["source"]=="24b7f9c53def5a1c8f29ddffaa54a8d7bf0e8125"
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.receipt.outcome == 'success'
+        with:
+          name: resolved-static-race-compiler
+          path: ${{ runner.temp }}/race-toolchain-control/receipt.json
+          retention-days: 14
