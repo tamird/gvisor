@@ -1,7 +1,7 @@
 name: Compare TCP ACK timing after warm-up
 on:
   push:
-    branches: [qualification/tcp-quickack-drained-gap]
+    branches: [qualification/tcp-quickack-native-facts]
 permissions:
   contents: read
 jobs:
@@ -30,7 +30,8 @@ jobs:
           pr=f2447eb8a6a1ef5f8bf7447b11605e56ec02a83c
           base=1f49f256eae8d2dd2c69ea4cfe9ef2a5bb05516d
           fixture=79dc3a63d011e41451d886005071058b05338f15
-          fixed=$(git rev-parse HEAD^)
+          fixed=$(git rev-parse HEAD^^)
+          test "$(git rev-parse HEAD^)" = a15bf7bd6ca6da2d3d6656ad54949c3fa451cad9
           test "$(git rev-parse "$fixed^")" = "$fixture"
           test "$(git rev-parse "$fixture^")" = "$pr"
           test "$(git rev-parse "$pr^")" = "$base"
@@ -47,6 +48,7 @@ jobs:
             "${ctl[@]}" "$d/bazel" --nosystem_rc --nohome_rc --bazelrc=/dev/null --host_jvm_args=-Xmx3g test \
               --config=x86_64 --lockfile_mode=off -c opt --jobs=4 --local_resources=memory=8192 \
               --strategy=GoStdlib=processwrapper-sandbox --strategy=GoStdlibList=processwrapper-sandbox \
+              '--modify_execution_info=^(GoStandardLibraryAnalysis|GoStaticAnalysis)$=-no-sandbox' --build_event_publish_all_actions \
               --spawn_strategy=linux-sandbox --strategy=TestRunner=linux-sandbox --sandbox_default_allow_network=false \
               --remote_cache= --remote_executor= --bes_backend= --flaky_test_attempts=1 --nocache_test_results \
               '--test_filter=^TestDelayedACKAfterQuickACKs$' --test_arg=-test.v --test_env=GO_TEST_WRAP_TESTV=1 --test_timeout=120 \

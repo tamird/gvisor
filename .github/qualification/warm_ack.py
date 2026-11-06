@@ -17,10 +17,16 @@ owner = "//pkg/tcpip/transport/tcp/test/e2e:tcp_sack_test"
 out = {"phase": phase, "source": source, "exit": code, "status": "INCOMPLETE"}
 try:
     results = []
+    failures = []
     for line in (root / (phase + ".bep")).open():
         e = json.loads(line)
         if "testResult" in e and e["id"].get("testResult", {}).get("label") == owner:
             results.append(e["testResult"])
+        action = e.get("action", {})
+        if action and not action.get("success") and len(failures) < 8:
+            ident = e["id"].get("actionCompleted", {})
+            failures.append([ident.get("label"), action.get("type"), action.get("exitCode")])
+    out["failed_actions"] = failures
     out["results"] = len(results)
     result, = results
     info = result.get("executionInfo", {})
@@ -47,6 +53,15 @@ except (AssertionError, ValueError, KeyError, OSError) as exc:
     text = (root / (phase + ".console")).read_text(errors="replace")
     out["diagnostics"] = [s for s in ("undefined:", "missing strict dependencies", "killed", "No space left",
                                       "no such package", "timed out", "GoStandardLibraryAnalysis") if s in text]
+    # Include the packet test diagnostics when a packet assertion
+    # fires before the numeric trace is complete.
+    testlog = Path("bazel-testlogs/pkg/tcpip/transport/tcp/test/e2e/tcp_sack_test/test.log")
+    if out.get("results") == 1 and testlog.is_file():
+        out["packet_errors"] = [
+            line.strip()[:280] for line in testlog.read_text(errors="replace").splitlines()
+            if re.search(r"(?:tcp_sack_test|context|checker)\.go:\d+: ", line)
+            and not re.search(r"(?i)token|credential|https?://|authorization", line)
+        ][:8]
 finally:
     (root / (phase + ".json")).write_text(json.dumps(out, indent=2) + "\n")
 sys.exit(out["status"] != "OBSERVED")
