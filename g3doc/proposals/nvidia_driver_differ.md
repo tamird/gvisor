@@ -214,9 +214,9 @@ the list of all top-level structs.
 
 ### C++ Clang parser
 
-After gathering a list of struct names to verify, this tool can locally clone
-the code for both versions A and B. From here, Clang's C++ AST Matcher API can
-be used to generate an AST and find the struct definitions given the name.
+After gathering the list of struct names to verify, the differ reads the
+headers for versions A and B from its Bazel runfiles. Clang's C++ AST
+Matcher API generates an AST and finds the struct definitions by name.
 
 The Clang API includes the ability to quickly set up command line tools to run
 the AST matcher; this
@@ -359,12 +359,9 @@ Output:
 Beyond the nvproxy changes and C++ Clang parser, there are a few other details
 to work out.
 
-The first is actually getting the driver source code locally for Clang to parse
-through. This can be done by cloning from the NVIDIA driver's GitHub repo:
-
-```bash
-git clone -b $VERSION --depth 1 https://github.com/NVIDIA/open-gpu-kernel-modules.git $SAVE_PATH
-```
+Bazel fetches the pinned source archives for both driver versions. The
+[driver differ instructions](../../tools/nvidia_driver_differ/README.md)
+describe how to pin a version before adding nvproxy support for it.
 
 Next, the parser needs some source file to analyze and parse through. As
 mentioned above, the easiest way to make this would be to create a single C++
