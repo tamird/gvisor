@@ -44,6 +44,7 @@ import (
 	"gvisor.dev/gvisor/runsc/config"
 	"gvisor.dev/gvisor/runsc/flag"
 	egressfilter "gvisor.dev/gvisor/runsc/gofer/net/egressfilter"
+	netfilter "gvisor.dev/gvisor/runsc/gofer/net/filter"
 )
 
 var (
@@ -667,5 +668,69 @@ func TestNetgoferEarlyValidationClosesUDSFD(t *testing.T) {
 	if err := unix.Fstat(fds[0], &stat); err != unix.EBADF {
 		t.Errorf("Fstat on fds[0] = %v, want EBADF (fd should be closed)", err)
 		_ = unix.Close(fds[0])
+	}
+}
+
+func TestFIONREADOnOnlyNetgoferFD(t *testing.T) {
+	const key = "NETGOFER_IOCTL_CASE"
+	if mode := os.Getenv(key); mode != "" {
+		if err := netfilter.Install(netfilter.Options{UDSFD: 3}); err != nil {
+			t.Fatal(err)
+		}
+		fmt.Fprintln(os.Stdout, "NETGOFER_IOCTL_BEGIN "+mode)
+		fd, cmd := 3, uint(unix.TIOCINQ)
+		if mode == "wrong-fd" {
+			fd = 4
+		}
+		if mode == "wrong-command" {
+			cmd = unix.TIOCOUTQ
+		}
+		n, err := unix.IoctlGetInt(fd, cmd)
+		if mode != "allowed" || err != nil || n != 15 {
+			t.Fatalf("unexpected return: fd=%d command=%d n=%d err=%v", fd, cmd, n, err)
+		}
+		soErr, err := unix.GetsockoptInt(fd, unix.SOL_SOCKET, unix.SO_ERROR)
+		if err != nil || soErr != 0 {
+			t.Fatalf("SO_ERROR=%d %v", soErr, err)
+		}
+		fmt.Fprintln(os.Stdout, "NETGOFER_IOCTL_OK bytes=15 so_error=0")
+		return
+	}
+	for _, mode := range []string{"allowed", "wrong-fd", "wrong-command"} {
+		t.Run(mode, func(t *testing.T) {
+			var files []*os.File
+			for range 2 {
+				pair, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET|unix.SOCK_CLOEXEC, 0)
+				if err != nil {
+					t.Fatal(err)
+				}
+				f := os.NewFile(uintptr(pair[0]), "uds")
+				defer f.Close()
+				defer unix.Close(pair[1])
+				files = append(files, f)
+				if err := unix.Sendmsg(pair[1], []byte("15 byte payload"), nil, nil, 0); err != nil {
+					t.Fatal(err)
+				}
+			}
+			cmd := exec.Command(os.Args[0], "-test.run=^TestFIONREADOnOnlyNetgoferFD$")
+			cmd.Env = append(os.Environ(), key+"="+mode)
+			cmd.ExtraFiles = files
+			buf, err := cmd.CombinedOutput()
+			text := string(buf)
+			if !strings.Contains(text, "NETGOFER_IOCTL_BEGIN "+mode) {
+				t.Fatalf("filter did not reach test: %s", text)
+			}
+			if mode == "allowed" {
+				if err != nil || !strings.Contains(text, "NETGOFER_IOCTL_OK bytes=15 so_error=0") {
+					t.Fatalf("allowed: %s %v", text, err)
+				}
+			} else {
+				var exit *exec.ExitError
+				if !errors.As(err, &exit) || !(strings.Contains(strings.ToLower(exit.Error()), "bad system call") || strings.Contains(text, "SIGSYS")) {
+					t.Fatalf("missing kernel seccomp rejection: %v: %s", err, text)
+				}
+			}
+			t.Logf("CONFINED mode=%s allowed=%t", mode, mode == "allowed")
+		})
 	}
 }

@@ -787,3 +787,101 @@ func TestMain(m *testing.M) {
 	refs.DoLeakCheck()
 	os.Exit(code)
 }
+
+func TestSeqpacketQueueDrain(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		empty int
+		data  bool
+	}{{"empty", 32, false}, {"behind_32_empty", 32, true}, {"ordinary", 0, true}} {
+		t.Run(tc.name, func(t *testing.T) {
+			fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET|unix.SOCK_NONBLOCK, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer unix.Close(fds[0])
+			defer unix.Close(fds[1])
+			sink := &fakeNetworkDispatcher{}
+			link, err := newRecvMMsgDispatcher(fds[0], &endpoint{hdrSize: header.EthernetMinimumSize, dispatcher: sink}, &Options{ProcessorsPerChannel: 1, DetectSeqpacketEOF: true})
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer link.close()
+			defer link.release()
+			// Empty records from a live peer cannot terminate the link.
+			if err := unix.Sendmsg(fds[1], nil, nil, nil, 0); err != nil {
+				t.Fatal(err)
+			}
+			if more, e := link.dispatch(); !more || e != nil {
+				t.Fatalf("live empty record: %t %v", more, e)
+			}
+			for i := 0; i < tc.empty; i++ {
+				if err := unix.Sendmsg(fds[1], nil, nil, nil, 0); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if tc.data {
+				frame := make([]byte, header.EthernetMinimumSize+1)
+				header.Ethernet(frame).Encode(&header.EthernetFields{DstAddr: header.EthernetBroadcastAddress, Type: header.ARPProtocolNumber})
+				frame[len(frame)-1] = 0x5a
+				if err := unix.Sendmsg(fds[1], frame, nil, nil, 0); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := unix.Shutdown(fds[1], unix.SHUT_WR); err != nil {
+				t.Fatal(err)
+			}
+			ended := false
+			for i := 0; i < 10; i++ {
+				more, e := link.dispatch()
+				if e != nil {
+					t.Fatal(e)
+				}
+				if !more {
+					ended = true
+					break
+				}
+			}
+			if !ended || len(sink.pkts) != map[bool]int{false: 0, true: 1}[tc.data] {
+				t.Fatalf("ended=%t delivered=%d", ended, len(sink.pkts))
+			}
+			if tc.data {
+				defer sink.pkts[0].DecRef()
+				b, ok := sink.pkts[0].Data().PullUp(1)
+				if !ok || b[0] != 0x5a {
+					t.Fatalf("payload=%x", b)
+				}
+			}
+			t.Logf("QUEUE case=%s empty=%d delivered=%d ended=%t", tc.name, tc.empty, len(sink.pkts), ended)
+		})
+	}
+}
+
+func TestSeqpacketPendingSocketError(t *testing.T) {
+	fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET|unix.SOCK_NONBLOCK, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unix.Close(fds[0])
+	link, err := newRecvMMsgDispatcher(fds[0], &endpoint{dispatcher: &fakeNetworkDispatcher{}}, &Options{DetectSeqpacketEOF: true, ProcessorsPerChannel: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer link.close()
+	defer link.release()
+	if err := unix.Sendmsg(fds[0], []byte("left unread by peer"), nil, nil, 0); err != nil {
+		t.Fatal(err)
+	}
+	if err := unix.Close(fds[1]); err != nil {
+		t.Fatal(err)
+	}
+	p := []unix.PollFd{{Fd: int32(fds[0]), Events: unix.POLLIN | unix.POLLRDHUP}}
+	if _, err := unix.Poll(p, 0); err != nil || p[0].Revents&unix.POLLERR == 0 {
+		t.Fatalf("expected pending socket error: %d %v", p[0].Revents, err)
+	}
+	more, e := link.dispatch()
+	if _, ok := e.(*tcpip.ErrConnectionReset); more || !ok {
+		t.Fatalf("dispatch=%t %v, want ECONNRESET", more, e)
+	}
+	t.Logf("PENDING revents=%d errno=%d", p[0].Revents, unix.ECONNRESET)
+}
