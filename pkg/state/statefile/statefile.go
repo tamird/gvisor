@@ -145,10 +145,20 @@ func writeMetadataLen(w io.Writer, val uint64) error {
 	return err
 }
 
+// PayloadFormatKey records the payload format supplied by the writer.
+// User metadata cannot contain keys beginning with an underscore.
+const PayloadFormatKey = "_payload_format"
+
 // NewWriter returns a state data writer for a statefile.
 //
 // Note that the returned WriteCloser must be closed.
 func NewWriter(w io.Writer, key []byte, metadata map[string]string) (io.WriteCloser, error) {
+	return NewWriterWithFormat(w, key, metadata, "")
+}
+
+// NewWriterWithFormat is NewWriter with an explicit format for the data
+// following the envelope. An empty format preserves the original envelope.
+func NewWriterWithFormat(w io.Writer, key []byte, metadata map[string]string, format string) (io.WriteCloser, error) {
 	if metadata == nil {
 		metadata = make(map[string]string)
 	}
@@ -156,6 +166,10 @@ func NewWriter(w io.Writer, key []byte, metadata map[string]string) (io.WriteClo
 		if strings.HasPrefix(k, "_") {
 			return nil, ErrMetadataInvalid
 		}
+	}
+	if format != "" {
+		metadata[PayloadFormatKey] = format
+		defer delete(metadata, PayloadFormatKey)
 	}
 
 	// Create our HMAC function.

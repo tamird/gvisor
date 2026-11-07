@@ -321,8 +321,8 @@ func loadPrivateMemoryFiles(ctx context.Context, r io.Reader, mfmap map[checkpoi
 	return nil
 }
 
-func (k *Kernel) loadMemoryFiles(ctx context.Context, r io.Reader) error {
-	var opts pgalloc.LoadOpts
+func (k *Kernel) loadMemoryFiles(ctx context.Context, r io.Reader, framedMetadata bool) error {
+	opts := pgalloc.LoadOpts{FramedMetadata: framedMetadata}
 	if err := k.mf.LoadFrom(ctx, r, &opts); err != nil {
 		return fmt.Errorf("failed to load main MemoryFile %p: %w", k.mf, err)
 	}

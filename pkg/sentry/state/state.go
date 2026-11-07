@@ -34,6 +34,10 @@ import (
 var previousMetadata map[string]string
 
 const (
+	// InlineMemoryFileFormat identifies inline checkpoints in which
+	// MemoryFile metadata is prefixed by a non-object state frame.
+	InlineMemoryFileFormat = "framed-memoryfile-v1"
+
 	// GvisorCPUUsageKey is the metadata key to store and retrieve CPU time usage
 	// across save restore.
 	GvisorCPUUsageKey = "gvisor_cpu_usage"
@@ -171,7 +175,11 @@ func (opts *SaveOpts) Save(ctx context.Context, k *kernel.Kernel, w *watchdog.Wa
 	addSaveMetadata(opts.Metadata, k)
 
 	// Open the statefile.
-	wc, err := statefile.NewWriter(opts.Destination, opts.Key, opts.Metadata) // transfers ownership of opts.Destination to wc if err == nil
+	var format string
+	if opts.PagesMetadata == nil {
+		format = InlineMemoryFileFormat
+	}
+	wc, err := statefile.NewWriterWithFormat(opts.Destination, opts.Key, opts.Metadata, format) // transfers ownership of opts.Destination to wc if err == nil
 	if err != nil {
 		err = fmt.Errorf("statefile.NewWriter failed: %w", err)
 	} else {
