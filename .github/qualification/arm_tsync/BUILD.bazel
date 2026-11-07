@@ -1,0 +1,18 @@
+load("@rules_python//python:defs.bzl", "py_test")
+
+py_test(
+    name = "kernel_pair",
+    size = "medium",
+    srcs = ["kernel_pair.py"],
+    args = [
+        "$(rootpath @tsync_kernel_pair//:current.Image)",
+        "$(rootpath @tsync_kernel_pair//:draft.Image)",
+        "$(rootpath //test/syscalls/linux:seccomp_test)",
+    ],
+    data = [
+        "//test/syscalls/linux:seccomp_test",
+        "@tsync_kernel_pair//:current.Image",
+        "@tsync_kernel_pair//:draft.Image",
+    ],
+    tags = ["manual"],
+)

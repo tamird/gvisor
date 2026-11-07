@@ -1,63 +1,61 @@
-name: Observe native seccomp reporting on the mixed cmd workers
+name: Compare the published ARM64 Firecracker kernels in isolated guests
 on:
   push:
-    branches: [qualification/mixed-cmd-tsync-control]
+    branches: [qualification/arm64-draft-kernel-tsync]
 permissions: {contents: read}
 jobs:
-  observe:
+  compare:
     if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
-    runs-on: ubuntu-24.04
-    timeout-minutes: 65
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 2}
-      - name: Bind the original source and the two original cmd TestRunners
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Verify the previous GTest and both public image digests
         run: |
-          set -eu
-          test "$(git rev-parse HEAD^)" = f6d6788e84731673a155c9fff6f28b8624e34c50
-          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/mixed_tsync.py' ':!runsc/cmd/BUILD' ':!runsc/cmd/bootposture_test.go' ':!runsc/cmd/tsync_observer_test.go' ':!test/syscalls/linux/seccomp.cc'
-          w="$RUNNER_TEMP/mixed-tsync"
-          mkdir -m 700 "$w"
-          printf '{"source":"%s","carrier":"%s","verified":false}\n' "$(git rev-parse HEAD^)" "$(git rev-parse HEAD)" > "$w/receipt.json"
-          cp .github/qualification/mixed_tsync.py "$w/"
-          donor=eec8914ee486c04cc2e53e41d79ba32022e85ceb
-          GIT_TERMINAL_PROMPT=0 git fetch -q --depth=1 https://github.com/tamird/gvisor.git "$donor"
-          git show "$donor:.github/qualification/native_graph.py" > "$w/native_graph.py"
-          curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$w/bazel"
-          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $w/bazel" | sha256sum -c -
+          set -euo pipefail
+          test "$(uname -m)" = aarch64
+          test "$(git rev-parse HEAD^)" = 48a4f3d435dc5294a7e32d605b0be3484bb045c3
+          test "$(git rev-parse HEAD^^)" = f6d6788e84731673a155c9fff6f28b8624e34c50
+          test "$(git rev-parse HEAD:test/syscalls/linux/seccomp.cc)" = e4a2524f8f2f803146ffaec12d673caba3b4099a
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/arm_tsync/BUILD.bazel' ':!.github/qualification/arm_tsync/kernel_pair.py' ':!.github/qualification/arm_tsync/collect.py'
+          w="$RUNNER_TEMP/arm-kernel-pair"
+          mkdir -m 700 "$w" "$w/input"
+          printf '{"carrier":"%s","stage":"bootstrap"}\n' "$GITHUB_SHA" > "$w/receipt.json"
+          curl --proto '=https' --proto-redir '=https' -fsSL --retry 2 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-arm64 -o "$w/bazel"
+          echo "bb608519a440d45d10304eb684a73a2b6bb7699c5b0e5434361661b25f113a5d  $w/bazel" | sha256sum -c -
           chmod 700 "$w/bazel"
-          test "$(cat .bazelversion)" = 9.3.1
-          python3 -EsB "$w/mixed_tsync.py" graph
-      - name: Run both native workers once, including every TestBootPosture mode
-        timeout-minutes: 44
-        env:
-          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+          test "$("$w/bazel" --version)" = "bazel 9.3.1"
+          sudo -n apt-get -qq update
+          sudo -n apt-get -qq install -y --no-install-recommends qemu-system-arm busybox-static
+          printf 'module(name = "tsync_kernel_pair")\n' > "$w/input/MODULE.bazel"
+          printf 'exports_files(["current.Image", "draft.Image"])\n' > "$w/input/BUILD.bazel"
+          mirror=https://storage.googleapis.com/buildbuddy-tools/binaries/linux
+          while read -r name tag digest; do
+            curl --proto '=https' --proto-redir '=https' -fsSL --max-time 120 --retry 2 "$mirror/vmlinux-aarch64-$tag-$digest" -o "$w/input/$name.Image"
+            echo "$digest  $w/input/$name.Image" | sha256sum -c -
+          done <<'KERNELS'
+          current v5.10 957d6da5c7ee7869c8a285784a201ac3928393087e2542131d4d107fc9556b45
+          draft v6.1 15e7206a252b19807dcba81f42c61b42923ca706ce85a5882248162cf1317d70
+          KERNELS
+      - name: Boot both kernels with the same test and collect the original attempt
         run: |
           set -eu
-          umask 077
-          : "${BUILDBUDDY_API_KEY:?missing fork key}"
-          w="$RUNNER_TEMP/mixed-tsync"
-          rc="$w/remote.rc"
-          trap 'rm -f "$rc"' EXIT
-          cat > "$rc" <<'RC'
-          build:source-presubmit-mixed --remote_executor=grpcs://remote.buildbuddy.io
-          build:source-presubmit-mixed --remote_cache=grpcs://remote.buildbuddy.io
-          build:source-presubmit-mixed --bes_backend=grpcs://remote.buildbuddy.io
-          build:source-presubmit-mixed --bes_results_url=https://app.buildbuddy.io/invocation/
-          RC
-          printf 'build:source-presubmit-mixed --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
-          unset BUILDBUDDY_API_KEY
-          python3 -EsB "$w/mixed_tsync.py" execute
-      - name: Verify the original attempts and report bounded observations
-        if: always() && !cancelled()
-        run: |
-          w="$RUNNER_TEMP/mixed-tsync"
-          test ! -e "$w/remote.rc"
-          python3 -EsB "$w/mixed_tsync.py" collect
+          w="$RUNNER_TEMP/arm-kernel-pair"
+          target=//.github/qualification/arm_tsync:kernel_pair
+          rc=0
+          "$w/bazel" --nosystem_rc --nohome_rc --host_jvm_args=-Xmx4g test \
+            --config=aarch64 -c opt --jobs=4 --lockfile_mode=off --inject_repository="tsync_kernel_pair=$w/input" \
+            --remote_cache= --remote_executor= --bes_backend= --strategy=TestRunner=local \
+            --nocache_test_results --flaky_test_attempts=1 --runs_per_test=1 --test_sharding_strategy=disabled \
+            --test_timeout=360 --zip_undeclared_test_outputs --build_event_json_file="$w/run.bep" \
+            --build_event_json_file_path_conversion=false "$target" > "$w/build.log" 2>&1 || rc=$?
+          printf '%d\n' "$rc" > "$w/exit"
+          python3 -IB .github/qualification/arm_tsync/collect.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always() && !cancelled()
         with:
-          name: mixed-cmd-tsync-control
-          path: ${{ runner.temp }}/mixed-tsync/receipt.json
+          name: published-arm64-kernel-tsync
+          path: ${{ runner.temp }}/arm-kernel-pair/receipt.json
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 14
