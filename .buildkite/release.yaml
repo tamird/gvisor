@@ -61,21 +61,21 @@ steps:
           # Untagged master and nightly packages use the nearest release.
           label="$$(git describe --always --tags --exclude 'release-*-staging' --abbrev=12 --dirty)"
         fi
-        python_version="$$(tools/make_python_release.sh version "$${RELEASE_NAME:-}")"
+        python_version=
+        if [[ "$${RELEASE_NIGHTLY:-false}" != true ]] && git describe --exact-match --tags --match 'release-*' --exclude 'release-*-staging' HEAD >/dev/null 2>&1; then
+          python_version="$$(tools/make_python_release.sh version "$${RELEASE_NAME:-}")"
+        fi
         bazel build -c opt --config=release_version --embed_label="$$label" \
           --//sandboxexec/sandbox/python:dist_version="$$python_version" \
           --remote_download_outputs=toplevel //debian:release-inputs
-      - |
-        mapfile -d '' -t inputs < bazel-bin/debian/release-inputs.inputs0
-        (("$${#inputs[@]}")) || exit 1
-        NIGHTLY="$$RELEASE_NIGHTLY" tools/make_release.sh repo.key repo "$${inputs[@]}"
+      - NIGHTLY="$${RELEASE_NIGHTLY:-false}" tools/make_release.sh repo.key repo bazel-bin/debian/release-inputs
       - (cd repo && gcloud storage cp --recursive . gs://gvisor/releases/)
       # Pushes release-<name> to GitHub.
       - ./.buildkite/scripts/release/tag.sh publish
       # Pushes the wheel from Artifact Registry to PyPI. Only runs if the rest
       # of the release succeeded. This step does nothing if no wheel was built,
       # as is the case for nightly builds.
-      - ./tools/make_python_release.sh publish-manifest repo/release
+      - ./tools/make_python_release.sh publish-manifest bazel-bin/debian/release-inputs/python
     agents:
       queue: "release"
   - <<: *common

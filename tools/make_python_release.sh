@@ -26,7 +26,7 @@ usage() {
   echo "  build <dest-dir> [release-name]"
   echo "  version [release-name]" >&2
   echo "  upload-wheel <target-dir>" >&2
-  echo "  publish-manifest <release-root>" >&2
+  echo "  publish-manifest <python-dist-directory>" >&2
   echo "  all <dest-dir> <target-dir> [release-name]" >&2
   exit 1
 }
@@ -222,38 +222,28 @@ wheel_version() {
 #
 # Does nothing when the release tree contains no wheels.
 publish_manifest() {
-  local -r release_root="$1"
+  local -r dist_dir="$1"
 
   echo "=== [Manifest] Triggering OSS Exit Gate release ==="
-  if [[ ! -d "${release_root}" ]]; then
-    echo "No release tree at ${release_root}; nothing to publish."
+  if [[ ! -d "${dist_dir}" ]]; then
+    echo "No Python distributions at ${dist_dir}; nothing to publish."
     return 0
   fi
 
-  # A tagged release stages the same wheel under both release/<base> and
-  # release/<name>, so more than one path is expected here.
   local -a wheels=()
   shopt -s nullglob
-  wheels=("${release_root}"/*/python/*.whl)
+  wheels=("${dist_dir}"/*.whl)
   shopt -u nullglob
   if [[ "${#wheels[@]}" -eq 0 ]]; then
-    echo "No wheels under ${release_root}; nothing to publish."
+    echo "No wheel staged in ${dist_dir}; nothing to publish."
     return 0
   fi
-
-  local -a versions=()
-  local wheel
-  for wheel in "${wheels[@]}"; do
-    versions+=("$(wheel_version "${wheel}")")
-  done
-
-  local -a unique=()
-  mapfile -t unique < <(printf '%s\n' "${versions[@]}" | sort -u)
-  if [[ "${#unique[@]}" -ne 1 ]]; then
-    echo "ERROR: expected one wheel version under ${release_root}, found: ${unique[*]}" >&2
+  if [[ "${#wheels[@]}" -ne 1 ]]; then
+    echo "Expected one release wheel in ${dist_dir}." >&2
     return 1
   fi
-  local -r version="${unique[0]}"
+  local version
+  version="$(wheel_version "${wheels[0]}")"
 
   # Each upload must be a distinct object so that the notification email can be
   # traced back to the build that sent it.

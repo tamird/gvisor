@@ -288,7 +288,10 @@ steps:
     label: ":ship: Release tests"
     env:
       DOCKER_BUILD: "false"
-    command: make release
+    commands:
+      - bazel build -c opt --remote_download_outputs=toplevel //debian:release-inputs
+      - make DOCKER_BUILD=false repo.key
+      - tools/make_release.sh repo.key repo bazel-bin/debian/release-inputs
     agents:
       arch: "amd64"
       queue: "default"

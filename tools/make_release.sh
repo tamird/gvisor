@@ -15,91 +15,66 @@
 # limitations under the License.
 
 if [[ "$#" -lt 3 ]]; then
-  echo "usage: $0 <private-key> <root> <artifact files or directories...>" >&2
-  echo "Set NIGHTLY=true to produce nightly packages." >&2
+  echo "usage: $0 <private-key> <root> <stage> [python-dir [prebuilt-path ...]]" >&2
+  echo "Set NIGHTLY=true to publish the nightly packages." >&2
   exit 1
 fi
 
 set -xeo pipefail
-declare -r private_key="$1"
-declare -r root="$2"
-shift 2
+declare -r private_key="$1" root="$2" stage="$3"
+shift 3
 if [[ ! -f "${private_key}" ]]; then
   echo "Missing release key: ${private_key}" >&2
   exit 1
 fi
-inputs=()
-for input in "$@"; do
-  if [[ "${input}" != /* ]]; then
-    input="./${input}"
-  fi
-  # Follow an explicitly selected package file. Never traverse a linked tree.
-  if [[ ! -f "${input}" && ( ! -d "${input}" || -L "${input}" ) ]]; then
-    echo "Missing release input or unsupported directory link: ${input}" >&2
-    exit 1
-  fi
-  inputs+=("${input}")
-done
-
-# -H follows command-line file links only. Nested symlinks are not selected.
-# Keep mapfile in this shell and propagate find errors before signing anything.
-shopt -s lastpipe
-find -H "${inputs[@]}" -type f -print0 | mapfile -d '' -t files
-shopt -u lastpipe
-if [[ "${#files[@]}" -eq 0 ]]; then
-  echo "No release artifacts in the supplied inputs." >&2
-  exit 1
+python="${stage}/python"
+if (($#)); then
+  [[ ! -d "$1" ]] || python="$1"
+  shift
 fi
-mkdir -p -- "${root}"
+declare -a required pkgs binaries sums
+if (($#)); then
+  # Make's prebuilt inputs can be signed without starting Bazel.
+  required=("$@")
+else
+  mapfile -d '' -t required <"${stage}/inputs"
+fi
+for path in "${required[@]}"; do
+  src="${stage}/${path}"
+  if [[ ! -f "${src}" ]]; then echo "Missing release file: ${src}" >&2; exit 1; fi
+  if [[ "${path}" == *.deb ]]; then pkgs+=("${src}"); else binaries+=("${src}"); fi
+done
+(("${#pkgs[@]}" && "${#binaries[@]}"))
+shopt -s nullglob
+binaries+=("${python}"/*.whl "${python}"/*.tar.gz)
+shopt -u nullglob
 
-declare -a binaries
-declare -a pkgs
-for arg in "${files[@]}"; do
-  if [[ "${arg}" == *.deb ]] || [[ "${arg}" == *.changes ]]; then
-    pkgs+=("${arg}")
+# Prebuilt inputs may lack the checkfiles produced by the Bazel rule. Compute
+# those once and retain the literal GNU checkfile contents for each alias.
+for src in "${binaries[@]}"; do
+  if (($#)) || [[ "${src%/*}" == "${python}" && "${python}" != "${stage}/python" ]]; then
+    sums+=("$(cd -- "${src%/*}" && sha512sum -- "${src##*/}")")
   else
-    binaries+=("${arg}")
+    sums+=("$(<"${src}.sha512")")
   fi
 done
 
 export DEBIAN_FRONTEND=noninteractive
-# install_raw installs raw artifacts.
-#
-# Usage: install_raw <dest> [include-python]
-#
-# Wheels and sdists carry their version in their filename, so unlike the
-# architecture-specific tarballs they never overwrite the previous build's
-# files. Pass "false" for <include-python> to keep them out of directories that
-# are meant to be a fixed-size pointer to the most recent build; otherwise
-# those directories grow without bound.
+
+# Versioned directories include wheels. PyPI serves the latest Python package.
 install_raw() {
-  local -r dest="$1"
-  local -r include_python="${2:-true}"
-  for binary in "${binaries[@]}"; do
-    local arch file_info name
-    # Copy the raw file & generate a sha512sum, sorted by architecture.
-    # For tarballs, determine arch from the `runsc` within the tarball.
-    case "${binary}" in
-      *.tar.bz2)
-        arch=$(tar -xjOf "${binary}" runsc | file - | cut -d',' -f2 | awk '{print $NF}' | tr '-' '_')
-        ;;
-      *.tar.zstd)
-        arch=$(tar --zstd -xOf "${binary}" runsc | file - | cut -d',' -f2 | awk '{print $NF}' | tr '-' '_')
-        ;;
-      *.whl|*.tar.gz)
-        arch="python"
-        ;;
-      *)
-        arch=$(file --dereference --brief -- "${binary}" | cut -d',' -f2 | awk '{print $NF}' | tr '-' '_')
-        ;;
-    esac
-    if [[ "${arch}" == "python" ]] && [[ "${include_python}" != "true" ]]; then
-      continue
+  local i src dir arch dest
+  for i in "${!binaries[@]}"; do
+    src="${binaries[i]}"
+    dir="${src%/*}"; arch="${dir##*/}"
+    if [[ "${dir}" == "${python}" ]]; then
+      [[ "${2:-true}" == true ]] || continue
+      arch=python
     fi
-    name="${binary##*/}"
-    mkdir -p "${root}/${dest}/${arch}"
-    cp -f "${binary}" "${root}/${dest}/${arch}"
-    (cd "${root}/${dest}/${arch}" && sha512sum -- "${name}" >"${name}.sha512")
+    dest="${root}/$1/${arch}"
+    mkdir -p -- "${dest}"
+    cp --reflink=auto --remove-destination -L -- "${src}" "${dest}/"
+    printf '%s\n' "${sums[i]}" >"${dest}/${src##*/}.sha512"
   done
 }
 

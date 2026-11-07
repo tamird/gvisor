@@ -967,24 +967,12 @@ syzkaller-smoke-test: $(SYZKALLER_TARBALL)
 ##
 RELEASE_ROOT      := repo
 RELEASE_KEY       := repo.key
-release_native_files := $(foreach arch,x86_64 aarch64, \
-	$(addprefix $(arch)/,runsc.deb gvisor.tar.bz2 gvisor.tar.zstd))
 define build_release_artifacts
 $(BAZEL) build $(BASE_OPTIONS) $(BAZEL_OPTIONS) --remote_download_outputs=toplevel $(1) //debian:release-artifacts
 endef
-ifeq ($(origin RELEASE_ARTIFACTS),undefined)
-ifeq ($(origin RELEASE_VERSION),undefined)
-release: build-release-artifacts
-else
-release: release-artifacts
-endif
-build-release-artifacts:
-	$(call build_release_artifacts)
-.PHONY: build-release-artifacts
-RELEASE_ARTIFACTS := bazel-bin/debian/release-artifacts
-PYTHON_RELEASE_DEST ?= artifacts/python
-endif
-PYTHON_RELEASE_DEST ?= $(RELEASE_ARTIFACTS)/python
+PYTHON_RELEASE_DEST ?= $(if $(RELEASE_ARTIFACTS),$(RELEASE_ARTIFACTS)/python,artifacts/python)
+release_native_files := $(foreach arch,x86_64 aarch64, \
+	$(addprefix $(arch)/,runsc.deb gvisor.tar.bz2 gvisor.tar.zstd))
 RELEASE_NIGHTLY   := false
 RELEASE_COMMIT    :=
 RELEASE_NAME      :=
@@ -1005,12 +993,19 @@ $(RELEASE_KEY):
 	gpg --batch $(GPG_TEST_OPTIONS) --export-secret-keys --no-default-keyring --secret-keyring $$T > $@; \
 	rc=$$?; rm -f $$T $$C; exit $$rc
 
+build-release-artifacts:
+	@$(call build_release_artifacts)
+.PHONY: build-release-artifacts
+
 # Use one caller-supplied identity for both sets of release binaries and packages.
-release-artifacts: export GVISOR_RELEASE_LABEL := $(value RELEASE_VERSION)
-release-artifacts: ## Build the release archives for both architectures with RELEASE_VERSION.
+check-release-version: export GVISOR_RELEASE_LABEL := $(value RELEASE_VERSION)
+check-release-version:
 	@case "$$GVISOR_RELEASE_LABEL" in ''|0.0.0|VERSION_MISSING|*[!A-Za-z0-9._+-]*) echo "invalid RELEASE_VERSION" >&2; exit 1;; esac; \
-	case "$$GVISOR_RELEASE_LABEL" in *[0-9]*) ;; *) echo "RELEASE_VERSION must contain a digit" >&2; exit 1;; esac; \
-	$(call build_release_artifacts,--config=release_version --embed_label="$$GVISOR_RELEASE_LABEL")
+	case "$$GVISOR_RELEASE_LABEL" in *[0-9]*) ;; *) echo "RELEASE_VERSION must contain a digit" >&2; exit 1;; esac
+.PHONY: check-release-version
+release-artifacts: export GVISOR_RELEASE_LABEL := $(value RELEASE_VERSION)
+release-artifacts: check-release-version ## Build both architectures with RELEASE_VERSION.
+	@$(call build_release_artifacts,--config=release_version --embed_label="$$GVISOR_RELEASE_LABEL")
 .PHONY: release-artifacts
 
 artifacts-python: ensure-bazel-server ## Builds Python SandboxExec wheels.
@@ -1018,13 +1013,21 @@ artifacts-python: ensure-bazel-server ## Builds Python SandboxExec wheels.
 	@$(call wrapper,tools/make_python_release.sh build "$(PYTHON_RELEASE_DEST)" "$(RELEASE_NAME)")
 .PHONY: artifacts-python
 
-# Name the required files explicitly: a missing architecture or archive must
-# fail before signing or uploading any of the other artifacts.
-release_native_inputs = $(addprefix $(RELEASE_ARTIFACTS)/,$(release_native_files))
+ifneq ($(origin RELEASE_VERSION),undefined)
+release: check-release-version
+release: export GVISOR_RELEASE_LABEL := $(value RELEASE_VERSION)
+release_label := --config=release_version --embed_label="$$GVISOR_RELEASE_LABEL"
+endif
 release: $(RELEASE_KEY)
-	@mkdir -p $(RELEASE_ROOT)
-	@NIGHTLY=$(RELEASE_NIGHTLY) tools/make_release.sh "$(RELEASE_KEY)" "$(RELEASE_ROOT)" \
-		$(release_native_inputs) $(wildcard $(PYTHON_RELEASE_DEST)/*.whl $(PYTHON_RELEASE_DEST)/*.tar.gz)
+ifeq ($(origin RELEASE_ARTIFACTS),undefined)
+	@$(BAZEL) build $(BASE_OPTIONS) $(BAZEL_OPTIONS) -c opt --remote_download_outputs=toplevel \
+		$(release_label) //debian:release-inputs
+	@NIGHTLY="$(RELEASE_NIGHTLY)" tools/make_release.sh "$(RELEASE_KEY)" "$(RELEASE_ROOT)" \
+		bazel-bin/debian/release-inputs "$(PYTHON_RELEASE_DEST)"
+else
+	@NIGHTLY="$(RELEASE_NIGHTLY)" tools/make_release.sh "$(RELEASE_KEY)" "$(RELEASE_ROOT)" \
+		"$(RELEASE_ARTIFACTS)" "$(PYTHON_RELEASE_DEST)" $(release_native_files)
+endif
 .PHONY: release
 
 release-tarball: DESTINATION ?= .

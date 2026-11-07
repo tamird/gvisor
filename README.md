@@ -89,6 +89,13 @@ and package versions:
 bazel build --config=release_version --embed_label=release-20261029.0 //debian:release-artifacts
 ```
 
+For the unsigned publication layout, build `//debian:release-inputs` with
+the same release label. Its `bazel-bin/debian/release-inputs/{x86_64,aarch64}`
+directories contain each architecture's Debian package, archives and SHA512
+checkfiles. Passing `--//sandboxexec/sandbox/python:dist_version=<version>`
+also stages the wheel and source distribution under `python/`. Signing runs on
+the release host.
+
 The Debian and tar packages for both architectures are under
 `bazel-bin/debian/release-artifacts/{x86_64,aarch64}/`.
 

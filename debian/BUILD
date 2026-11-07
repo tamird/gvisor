@@ -97,20 +97,25 @@ release_tars(
     visibility = ["//visibility:public"],
 )
 
+_RELEASE_DOWNLOADS = [
+    ":gvisor-release-tar-bz2",
+    ":gvisor-release-tar-zstd",
+]
+
 release_artifacts(
     name = "release-artifacts",
-    srcs = [
-        ":debian",
-        ":gvisor-release-tar-bz2",
-        ":gvisor-release-tar-zstd",
-    ],
+    srcs = [":debian"] + _RELEASE_DOWNLOADS,
     visibility = ["//visibility:public"],
 )
 
 release_inputs(
     name = "release-inputs",
-    packages = ":release-artifacts",
-    python_dist = "//sandboxexec/sandbox/python:dist",
+    package = ":debian",
+    downloads = _RELEASE_DOWNLOADS,
+    python_dist = select({
+        "//sandboxexec/sandbox/python:no_dist_version": None,
+        "//conditions:default": "//sandboxexec/sandbox/python:dist",
+    }),
     visibility = ["//visibility:public"],
 )
 
