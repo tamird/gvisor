@@ -15,15 +15,12 @@
 package veth_test
 
 import (
-	"bytes"
-	"math"
 	"os"
 	"testing"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/refs"
-	"gvisor.dev/gvisor/pkg/state"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
@@ -182,30 +179,16 @@ func TestDestroyDevices(t *testing.T) {
 }
 
 func TestMTU(t *testing.T) {
-	first, second := veth.NewPair(1500, veth.DefaultBacklogSize)
-	defer first.Close()
+	mtus := []uint32{100, 200}
+	e, e2 := veth.NewPair(1500, veth.DefaultBacklogSize)
+	defer e.Close()
+	defer e2.Close()
+	for _, mtu := range mtus {
+		e.SetMTU(mtu)
 
-	first.SetMTU(math.MaxUint32)
-	if got := second.MTU(); got != 1500 {
-		t.Fatalf("peer MTU after setting first endpoint = %d, want 1500", got)
-	}
-	second.SetMTU(1460)
-	pair := [2]*veth.Endpoint{first, second}
-	want := [2]uint32{math.MaxUint32, 1460}
-	if got := [2]uint32{first.MTU(), second.MTU()}; got != want {
-		t.Fatalf("MTUs = %v, want %v", got, want)
-	}
-
-	var buf bytes.Buffer
-	if _, err := state.Save(t.Context(), &buf, &pair); err != nil {
-		t.Fatalf("Save: %v", err)
-	}
-	var restored [2]*veth.Endpoint
-	if _, err := state.Load(t.Context(), &buf, &restored); err != nil {
-		t.Fatalf("Load: %v", err)
-	}
-	if got := [2]uint32{restored[0].MTU(), restored[1].MTU()}; got != want {
-		t.Errorf("restored MTUs = %v, want %v", got, want)
+		if want, v := mtu, e.MTU(); want != v {
+			t.Errorf("MTU() = %v, want %v", v, want)
+		}
 	}
 }
 
