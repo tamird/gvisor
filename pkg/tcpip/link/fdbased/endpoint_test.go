@@ -885,6 +885,127 @@ func TestInjectableAttachment(t *testing.T) {
 	}
 }
 
+// pausedReceiver holds the first delivery while the reader queues a second frame.
+type pausedReceiver struct {
+	delivered chan byte
+	resume    chan struct{}
+}
+
+func (r *pausedReceiver) DeliverNetworkPacket(_ tcpip.NetworkProtocolNumber, pkt *stack.PacketBuffer) {
+	marker := pkt.Data().AsRange().ToSlice()[0]
+	r.delivered <- marker
+	if marker == 1 {
+		<-r.resume
+	}
+}
+
+func (*pausedReceiver) DeliverLinkPacket(tcpip.NetworkProtocolNumber, *stack.PacketBuffer) {
+	panic("unexpected link packet")
+}
+
+func TestSeqpacketWorkerShutdown(t *testing.T) {
+	for _, mode := range []string{"PeerEOF", "DetachAfterEOF", "AdministrativeStop"} {
+		t.Run(mode, func(t *testing.T) {
+			fds, err := unix.Socketpair(unix.AF_UNIX, unix.SOCK_SEQPACKET|unix.SOCK_CLOEXEC, 0)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer unix.Close(fds[0])
+			defer unix.Close(fds[1])
+			closed := make(chan tcpip.Error, 1)
+			link, err := New(&Options{
+				FDs:                  []int{fds[0]},
+				MTU:                  mtu,
+				EthernetHeader:       true,
+				PacketDispatchMode:   RecvMMsg,
+				ProcessorsPerChannel: 2,
+				DetectSeqpacketEOF:   true,
+				ClosedFunc:           func(err tcpip.Error) { closed <- err },
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			r := &pausedReceiver{delivered: make(chan byte, 2), resume: make(chan struct{}, 1)}
+			link.Attach(r)
+			defer func() {
+				close(r.resume)
+				link.Attach(nil)
+				link.Close()
+			}()
+
+			// Non-IP Ethernet frames all use worker zero.
+			ep := link.(*endpoint)
+			ep.mu.RLock()
+			p := &ep.receivers[0].processors[0]
+			ep.mu.RUnlock()
+			checkQueued := func(want int) {
+				t.Helper()
+				p.mu.Lock()
+				defer p.mu.Unlock()
+				if got := p.pkts.Len(); got != want {
+					t.Errorf("queued packets = %d, want %d", got, want)
+				}
+			}
+			send := func(marker byte) {
+				t.Helper()
+				frame := make([]byte, header.EthernetMinimumSize+1)
+				header.Ethernet(frame).Encode(&header.EthernetFields{
+					DstAddr: header.EthernetBroadcastAddress,
+					Type:    header.ARPProtocolNumber,
+				})
+				frame[header.EthernetMinimumSize] = marker
+				if err := unix.Sendmsg(fds[1], frame, nil, nil, 0); err != nil {
+					t.Fatal(err)
+				}
+			}
+			send(1)
+			got := []byte{<-r.delivered}
+			send(2)
+			detach := mode != "PeerEOF"
+			if mode == "AdministrativeStop" {
+				link.Attach(nil)
+				if len(closed) == 0 {
+					t.Error("administrative detach returned before ClosedFunc")
+				}
+			} else {
+				if err := unix.Shutdown(fds[1], unix.SHUT_WR); err != nil {
+					t.Fatal(err)
+				}
+				link.Wait()
+				checkQueued(1)
+				// The reader has exited and the worker is still blocked. An
+				// early peer-close notification lets the owner remove its NIC.
+				if len(closed) != 0 {
+					t.Error("ClosedFunc ran before the occupied worker returned")
+					detach = true
+				}
+				if detach {
+					link.Attach(nil)
+				}
+			}
+			if detach {
+				checkQueued(0)
+			}
+			r.resume <- struct{}{}
+			if err := <-closed; err != nil {
+				t.Errorf("ClosedFunc(%v), want nil", err)
+			}
+			select {
+			case marker := <-r.delivered:
+				got = append(got, marker)
+			default:
+			}
+			want := []byte{1}
+			if mode == "PeerEOF" {
+				want = append(want, 2)
+			}
+			if !bytes.Equal(got, want) {
+				t.Errorf("delivered packets = %v, want %v", got, want)
+			}
+		})
+	}
+}
+
 func TestMain(m *testing.M) {
 	refs.SetLeakMode(refs.LeaksPanic)
 	code := m.Run()

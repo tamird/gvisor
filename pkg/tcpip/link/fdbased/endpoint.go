@@ -221,8 +221,10 @@ type Options struct {
 	// used for this endpoint.
 	PacketDispatchMode PacketDispatchMode
 
-	// DetectSeqpacketEOF lets an AF_UNIX SOCK_SEQPACKET link stop after peer
-	// shutdown once all queued packet data has been received.
+	// DetectSeqpacketEOF lets a RecvMMsg reader drain its AF_UNIX SOCK_SEQPACKET
+	// socket after peer shutdown. It must be the socket's only reader.
+	// While attached, ClosedFunc is called after that reader's packet
+	// processors finish and may run after Wait returns.
 	DetectSeqpacketEOF bool
 
 	// TXChecksumOffload if true, indicates that this endpoints capability
@@ -916,12 +918,29 @@ func (m *processorManager) dispatchLoop(inboundDispatcher linkDispatcher, closed
 		cont, err := inboundDispatcher.dispatch(m)
 		if err != nil || !cont {
 			if closed != nil {
-				closed(err)
+				if d, ok := inboundDispatcher.(*recvMMsgDispatcher); ok && d.detectEOF && m.canDrain() {
+					m.afterDrain = func() { closed(err) }
+				} else {
+					closed(err)
+				}
 			}
 			inboundDispatcher.release()
 			return
 		}
 	}
+}
+
+// canDrain reports whether the reader has workers that can still deliver
+// queued packets. Administrative detach closes the first queue before it
+// signals Stop, and may hold the stack lock needed by a worker.
+func (m *processorManager) canDrain() bool {
+	if len(m.backgroundProcessors()) == 0 {
+		return false
+	}
+	p := &m.processors[0]
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return !p.queueClosed
 }
 
 // GSOMaxSize implements stack.GSOEndpoint.
