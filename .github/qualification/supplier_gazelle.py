@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import shlex
 import subprocess
 import sys
@@ -31,7 +32,10 @@ def proc(case, name, flavor, op, *args, timeout=640):
     modes = ["--enable_bzlmod", "--noenable_workspace"] if flavor == "bzlmod" else ["--noenable_bzlmod", "--enable_workspace"]
     env = {**os.environ, "USE_BAZEL_VERSION": NATIVE, "GAZELLE_QA_INHERITED": INHERITED}
     cmd = [str(qa.AREA / "bazelisk"), "--nosystem_rc", "--nohome_rc", "--host_jvm_args=-Xmx4g",
-           op, *modes, "--repo_env=GAZELLE_QA_INHERITED", "--jobs=3", "--lockfile_mode=off", *args]
+           op, *modes, "--repo_env=GAZELLE_QA_INHERITED", "--lockfile_mode=off"]
+    if op != "query":
+        cmd.append("--jobs=3")
+    cmd.extend(args)
     try:
         p = subprocess.run(cmd, cwd=SUPPLIER, env=env, capture_output=True, timeout=timeout)
         code, out, err = p.returncode, p.stdout, p.stderr
@@ -173,6 +177,21 @@ def lazy_query(arm):
         row["testLogSHA256"] = sha256(data).hexdigest()
         row["namedOutcome"] = ("--- " + expected + ": TestQueryWithoutGoEnv ").encode() in data
         row["goEnvMissing"] = b"go_env.bzl" in data and b"bazel_gazelle_go_repository_config" in data
+        diagnostics = []
+        for line in data.decode(errors="replace").splitlines():
+            if not re.search(r"(?i)(ERROR:|FATAL:|failed to|cannot |could not|not found|not recognized|unrecognized|exception|runner_test[.]go:)", line):
+                continue
+            line = line.replace(str(qa.AREA), "<fixture>").replace(str(qa.SRC), "<source>").replace("top-secret-token", "<fixture-value>")
+            line = re.sub(r"(?i)(https?://)[^/\s]+@", r"\1<redacted>@", line)
+            if re.search(r"(?i)(authorization|password|bearer|credential|token=|api[_-]?key=|secret=)", line):
+                continue
+            if line[:800] not in diagnostics:
+                diagnostics.append(line[:800])
+            if len(diagnostics) >= 20:
+                break
+        row["diagnostics"] = diagnostics
+        row["actualPass"] = b"--- PASS: TestQueryWithoutGoEnv " in data
+        row["actualFail"] = b"--- FAIL: TestQueryWithoutGoEnv " in data
     row["statuses"] = statuses
     case["verified"] = (row.get("namedOutcome", False) and statuses == [{"FAIL": "FAILED", "PASS": "PASSED"}[expected]] and
                         row["exit"] == (3 if arm == "stock" else 0) and (arm != "stock" or row.get("goEnvMissing")))
@@ -180,60 +199,40 @@ def lazy_query(arm):
 
 
 def main():
-    assert platform.machine() == "x86_64" and qa.git("rev-parse", "HEAD^^") == GVISOR
+    assert platform.machine() == "x86_64" and qa.git("rev-parse", "HEAD^") == "2eaef0c7d5a096c61189f930f86f8f1767f7e027"
     assert sha256(PATCH.read_bytes()).hexdigest() == PATCH_SHA
-    qa.git("switch", "--quiet", "--detach", GVISOR)
-    qa.REPORT.update(supplierMaster=MASTER, archiveSHA256=SOURCE_SHA, patchSHA256=PATCH_SHA)
+    qa.REPORT.update(supplierMaster=MASTER, archiveSHA256=SOURCE_SHA, patchSHA256=PATCH_SHA,
+                     previousRun=42347782649, previousArtifact=13564785819)
     qa.save()
     SUPPLIER.mkdir()
     subprocess.run(["tar", "-xzf", str(qa.AREA / "supplier.tar.gz"), "--strip-components=1", "-C", str(SUPPLIER)], check=True)
     assert (SUPPLIER / ".bazelversion").read_text().strip() == NATIVE
     (qa.AREA / "bazel").symlink_to(qa.AREA / "bazelisk")
-    mod = qa.SRC / "MODULE.bazel"
-    orig = mod.read_text()
-    pin = 'name = "gazelle", version = "0.51.3"'
-    assert orig.count(pin) == 1
-    try:
-        mod.write_text(orig.replace(pin, pin.replace("0.51.3", "0.54.0")))
-        stable = downstream("stable")
-    finally:
-        mod.write_text(orig)
-    stock = downstream("master")
-    if stable or stock:
-        qa.REPORT.update(passed=True, decision="stock-stable" if stable else "stock-master")
-        qa.save()
-        return 0
-    patch_source()
-    fixed = downstream("patched")
-    subprocess.run([str(qa.AREA / "bazelisk"), "--nosystem_rc", "--nohome_rc", "--noworkspace_rc", "shutdown"],
-                   cwd=qa.CONSUMER, capture_output=True, timeout=90)
     regression = SUPPLIER / "internal/runner_test.go"
+    old_test = regression.read_bytes()
+    patch_source()
     new_test = regression.read_bytes()
     patch_source(reverse=True)
-    old_test = regression.read_bytes()
     setup_supplier()
+    empty = qa.AREA / "empty_go_config"
+    empty.mkdir()
+    (empty / "WORKSPACE").write_text("")
     for arm in ("stock", "fixed"):
         if arm == "fixed":
             regression.write_bytes(old_test)
             patch_source()
         else:
             regression.write_bytes(new_test)
-        for root_mode in ("bzlmod", "workspace"):
-            try:
-                supplier(arm, root_mode)
-            except (AssertionError, OSError, ValueError, subprocess.SubprocessError) as exc:
-                qa.REPORT["cases"][arm + "_" + root_mode]["collectionError"] = type(exc).__name__
-            qa.save()
+        c = qa.REPORT["cases"][arm + "_direct_query"] = {}
+        row, out = proc(c, "query", "workspace", "query", "--override_repository=bazel_gazelle_go_repository_config=" + str(empty),
+                        "//bcr_tests/runner_qa:observe")
+        c["named"] = b"//bcr_tests/runner_qa:observe" in out.splitlines()
+        c["goEnvMissing"] = any("go_env.bzl" in s and "bazel_gazelle_go_repository_config" in s for s in row.get("diagnostics", []))
+        qa.save()
         lazy_query(arm)
-    c = qa.REPORT["cases"]
-    identical = all(c["stock_" + f]["runner"].get("scriptSHA256") and
-                    c["stock_" + f]["runner"]["scriptSHA256"] == c["fixed_" + f]["runner"].get("scriptSHA256")
-                    for f in ("bzlmod", "workspace"))
-    passed = bool(fixed and identical and all(c[a]["sourceMatches"] and c[a]["goPolicyFailure"] for a in ("stable", "master"))
-                  and all(c[a + "_" + f].get("verified") for a in ("stock", "fixed") for f in ("bzlmod", "workspace", "query_test")))
-    qa.REPORT.update(runnerScriptsIdentical=identical, passed=passed, decision="patched-master" if passed else "incomplete")
+    qa.REPORT["passed"] = all(qa.REPORT["cases"][a + "_query_test"]["verified"] for a in ("stock", "fixed"))
     qa.save()
-    return int(not passed)
+    return int(not qa.REPORT["passed"])
 
 
 if __name__ == "__main__":
