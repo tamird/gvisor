@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T03:08:22+00:00",
+    "updatedAt": "2026-11-07T03:10:46+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4883,14 +4883,14 @@
       "id": "branch:hermetic-compiler-review",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "research/released-llvm-current-prerequisites",
+      "ref": "proposal/default-llvm-toolchain",
       "title": "Build C and C++ with the declared LLVM toolchains",
-      "url": "https://github.com/tamird/gvisor/commit/f6df263f8",
+      "url": "https://github.com/tamird/gvisor/commit/4bee07965",
       "group": "bazel",
-      "status": "Agent work",
-      "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 for its offsets and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn AMD64, c0511e1cd built all 2,880 build-only targets and passed all 373 fresh remote test shards. On ARM64, 353c484b4 built all 3,243 selected targets and ran all 373 shards. 371 passed. The cmd_test Sentry posture checks failed and netgofer_test timed out. An independent analysis matched the 363 owners and shard counts, including all six ARM64 Firecracker assignments.\n\nA native two-worker comparison reproduced the ARM64 posture counter discrepancy without starting gVisor. The synchronized test operation took effect on both threads on both architectures. Only the ARM64 worker running Linux 5.10.0 reported inconsistent counts. On native hosted ARM64 Linux 6.8.0, all five previously failing Sentry checks and their five Gofer counterparts passed using the unchanged test executable. The outer Bazel command exited 1, so this run establishes the individual case outcomes only. A separate replay confirmed the whole cmd_test executable exits 1. Its XML reported 167 passes, four skips and two failures. The original receipt did not identify the two failing parent tests. Separately, the fork-only netgofer shutdown candidate passed 16 native ARM64 trials and preserved the final queued frame in all 16 delivery trials. These focused results leave the original full-run count at 371/373.\n\nOn f6df263f8, one invocation linked the static race runsc and Sentry for AMD64 and ARM64 on an AMD64 Ubuntu worker. Native Linux also checked both vDSO ABIs and all 21 raw stub offsets. On 3dab3494e, the released toolchain booted rootless systrap guests natively on both architectures. On 2c90e983d, all nine executable hashes and modes matched across Debian, bzip2 and zstd releases per CPU. The AMD64 package booted a systrap guest and the ARM64 CLI ran under QEMU user emulation.\n\nOne Bazel invocation on d41933c99 ran atomicbitops in OCI and sandboxexec on Firecracker on both native CPUs. All four owners passed; both sandboxexec variants had one skipped case. The worker CPU matched each test ELF and fastbuild seccomp stub generator. Using distinct RBE platform labels preserved the ordinary compiler platforms and removed the output path collision, but configured more LLVM compile actions for the two measured objects. Within the mixed profile, the two AMD64 platform names produced distinct Bazel actions for LLVM’s empty.pic.o. With the supplier’s C++ path-mapping settings, they used the same compiler inputs and command, and the second build reused the 576-byte object from a temporary disk cache. The result covers this one compile.\n\nThe vDSO clock tests ran in one Bazel invocation on matching native AMD64 and ARM64 workers. Both called the architecture’s versioned clock entry point. The ELFs matched the unmapped builds byte for byte. The final run reused the compile and link outputs.",
-      "updatedAt": "2026-11-07T00:59:13+00:00",
-      "head": "f6df263f8e2ce2cbe6a497356613f6785c4800a4",
+      "status": "Contributor review requested",
+      "summary": "An AMD64 worker built static runsc and Sentry for AMD64 and ARM64 with LLVM 0.8.24. The linked vDSOs, signal stubs and generated offsets matched what the Sentry embeds. Runsc printed its stamped version natively on AMD64 and under QEMU on ARM64. This run did not boot a Sentry.\n\nSince the earlier approval, only default-toolchain static Go race builds select musl. Explicit C toolchains and custom platforms retain their libc. Three release sidecars are freestanding; the signal stub needs target libc headers. #17114 replaces the LLVM source that fails to build the NVIDIA parser under the new libc++.",
+      "updatedAt": "2026-11-07T03:10:46+00:00",
+      "head": "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90",
       "evidence": [
         {
           "url": "https://github.com/tamird/gvisor/actions/runs/42321073617/artifacts/13553311441",
@@ -5483,14 +5483,18 @@
         {
           "label": "Original generator ELF and native ARM64 namespace syscall results",
           "url": "https://github.com/tamird/gvisor/actions/runs/42308103358/artifacts/13546859376"
+        },
+        {
+          "label": "Four static executables and all embedded code on the single compiler commit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42331076521/artifacts/13557604627"
         }
       ],
       "refinement": {
         "before": {
-          "head": "9310f06f95b100725450a71fbb896fc8403ec0eb"
+          "head": "bcb5de5b245b8264e4db387120dbc3ac31b4e603"
         },
         "after": {
-          "head": "f6df263f8e2ce2cbe6a497356613f6785c4800a4"
+          "head": "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90"
         }
       },
       "settledReviews": [
@@ -5514,10 +5518,10 @@
       ],
       "followup": {
         "owner": "Compiler integration",
-        "sourceHead": "f6df263f8e2ce2cbe6a497356613f6785c4800a4",
-        "disposition": "The public cross-build, native ELF checks and six release packages are qualified on their recorded sources.",
-        "observedAt": "2026-11-06T19:15:56.025Z",
-        "nextAction": "Follow #16522, its dependent #17067, #16516 and #16586 through upstream review. Update the compiler branch against the landed versions before submitting it.",
+        "sourceHead": "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90",
+        "disposition": "Single compiler commit verified on its four runtime parents.",
+        "observedAt": "2026-11-07T03:10:46+00:00",
+        "nextAction": "After contributor review, track the native runtime parents and the NVIDIA parser update before submission.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/42263217060/artifacts/13527310655",
           "https://github.com/tamird/gvisor/actions/runs/42267606060/artifacts/13527578331",
@@ -5639,6 +5643,17 @@
           "https://app.buildbuddy.io/invocation/31a729dd-af14-48c7-8e2a-a753b09ba34c",
           "https://github.com/tamird/gvisor/actions/runs/42178536750/artifacts/13484526514"
         ]
+      },
+      "contributorReview": {
+        "kind": "proposal",
+        "status": "pending",
+        "head": "4bee07965270dc7cb4ed89eb6a3b17968b3e0a90",
+        "baseHead": "8bfb2c6d457f38879bb9c4939ed2a2cec8394d98",
+        "url": "https://github.com/tamird/gvisor/commit/4bee07965",
+        "title": "Build C and C++ with the declared LLVM toolchains",
+        "body": "The Coral toolchain looks for GCC and target headers under /usr. An\nAMD64 worker therefore needs an installed cross-compiler to build the\nvDSO and signal handler for an ARM64 Sentry.\n\nRegister the toolchains from the LLVM 0.8.24 module already in\nMODULE.bazel. Bazel selects the compiler for the execution platform and\nthe sysroot for the target. Keep GNU17 and C++17 and remove the Coral\nrepositories, toolchain definitions and patches.\n\nThe three runsc sidecars provide their own entry points and use Linux\nUAPI headers. Only the signal stub needs target libc headers for its\nsignal and ucontext types.\n\nThe default GNU sysroot lacks static libc. Build static Go race\nexecutables against musl when the C toolchain and Linux target use the\nproject defaults. Keep an explicitly selected C toolchain or custom\ntarget platform on its own libc.",
+        "summary": "Open the PR after #16522, #16586, #16516, #17067’s freestanding amendment and #17114 land? Compare with the earlier approved compiler proposal.\n\ngit -C ~/code/gvisor range-diff --creation-factor=999 bcb5de5b2^! 4bee07965^!",
+        "requestedAt": "2026-11-07T03:10:46+00:00"
       }
     },
     {
@@ -61276,6 +61291,17 @@
       "evidence": [
         "https://github.com/bazel-contrib/rules_distroless/pull/294",
         "https://github.com/tamird/gvisor/commit/768579797"
+      ]
+    },
+    {
+      "from": "pr:17114",
+      "to": "branch:hermetic-compiler-review",
+      "type": "depends_on",
+      "reason": "The released libc++ rejects the old NVIDIA parser source’s RegisterRef comparator. The declared LLVM source builds the four affected targets and passes TestParser.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/actions/runs/42273255642/artifacts/13532960461",
+        "https://github.com/tamird/gvisor/actions/runs/42274588613/artifacts/13532788389",
+        "https://github.com/tamird/gvisor/actions/runs/41368654125/artifacts/13108397749"
       ]
     }
   ],
