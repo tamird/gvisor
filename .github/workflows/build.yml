@@ -1,35 +1,93 @@
-name: CI
-
-"on":
+name: Compare all stamped public release packages
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/stamped-release-formats]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  release:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 195
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Bind the release rule, version profile, native workers and tools
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/chainguard-release"
+          mkdir -m 700 "$d"
+          source=f462794c042c7325ac0452551b1f18e7083dede4
+          test "$(git rev-parse HEAD^)" = "$source"
+          test "$(git rev-parse HEAD^^)" = 224fdf968222fd45d5af77f671b7b52c2e278ebe
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/stamped_release/**' ':!test/rbe/stamped_release/**'
+          cp .github/qualification/stamped_release/{build.py,memory.py,receipt.py} "$d/"
+          cp test/rbe/stamped_release/{BUILD,platform_mappings} "$d/"
+          git checkout -q --detach "$source"
+          test "$(git rev-parse HEAD^{tree})" = abc4d72e28f23893ffd35f49ad5bfb8c57ce1390
+          test "$(git rev-parse HEAD:debian/artifacts.bzl)" = cc33458b17907d97af2fff8c7f870dabb4b90809
+          test "$(git rev-parse HEAD:debian/BUILD)" = 95d36c870eeaf522b16f78c0243578be74d8bfdd
+          test "$(git rev-parse HEAD:.bazelrc)" = a34c50b8cb158f370d0aeeecf9c5df41ebec6e4a
+          test "$(git rev-parse HEAD:MODULE.bazel)" = 574594e294edde57f90c93958ee7d089c73758d7
+          mkdir -p test/rbe/stamped_release
+          cp "$d"/{BUILD,platform_mappings} test/rbe/stamped_release/
+          git diff --exit-code HEAD
+          test "$(git ls-files --others --exclude-standard)" = "$(printf '%s\n' test/rbe/stamped_release/BUILD test/rbe/stamped_release/platform_mappings)"
+          test "$(bazelisk --version)" = 'bazel 9.3.1'
+          command -v jq zstd dpkg-deb
+          curl -fsSL --retry 2 --proto '=https' --proto-redir '=https' --max-time 120 \
+            https://github.com/buildbuddy-io/bazel/releases/download/5.0.498/bazel-5.0.498-linux-x86_64 -o "$d/bb"
+          echo "205fb4074012858c858ec357cb0cf1ed0b1fbf8707c5f385efd4abd52bb2cead  $d/bb" | sha256sum -c -
+          chmod 755 "$d/bb"
+          python3 -IB "$d/memory.py"
+      - name: Locate all real package writers and their selected workers
+        run: |
+          set -eu
+          for scope in stage amd64 arm64; do
+            python3 -IB "$RUNNER_TEMP/chainguard-release/build.py" plan "$scope"
+          done
+      - name: Build the normal stamped stage and the two direct controls
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          d="$RUNNER_TEMP/chainguard-release"
+          rc="$d/client.rc"
+          trap 'rm -f "$rc"' EXIT
+          test "$(git rev-parse HEAD)" = f462794c042c7325ac0452551b1f18e7083dede4
+          cat >"$rc" <<'RC'
+          build --remote_executor=grpcs://remote.buildbuddy.io --remote_cache=grpcs://remote.buildbuddy.io
+          build --bes_backend=grpcs://remote.buildbuddy.io --bes_results_url=https://app.buildbuddy.io/invocation/
+          build --spawn_strategy=remote --noremote_local_fallback --jobs=48 --remote_timeout=10m
+          build --remote_default_exec_properties=OSFamily=linux
+          build --remote_default_exec_properties=workload-isolation-type=oci
+          build --remote_default_exec_properties=container-image=docker://cgr.dev/chainguard/static@sha256:fc42af33e643f20d08baf03cddcc1c02ba57052dfb02edb0d79f3fc47bcea8d9
+          RC
+          printf 'build --remote_header=x-buildbuddy-api-key=%s\nbuild --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" "$BUILDBUDDY_API_KEY" >>"$rc"
+          unset BUILDBUDDY_API_KEY
+          code=0
+          for scope in stage amd64 arm64; do
+            python3 -IB "$d/build.py" build "$scope" || code=1
+          done
+          exit "$code"
+      - name: Compare source-bound archives, metadata and original native actions
+        if: always() && !cancelled()
+        id: result
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/chainguard-release"
+          test ! -e "$d/client.rc"
+          python3 -IB "$d/receipt.py"
+          test -f "$d/result.json" && test ! -L "$d/result.json" && test "$(wc -c <"$d/result.json")" -lt 65536
+          jq -e '.source=="f462794c042c7325ac0452551b1f18e7083dede4" and .product=="1824f3ee0a9e500491535331312ac08fe8da5004"' "$d/result.json" >/dev/null
+          ! grep -Eiq 'x-buildbuddy-api-key|github_pat_|gh[pousr]_[A-Za-z0-9]{20,}' "$d/result.json"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && steps.result.outcome == 'success'
+        with:
+          name: stamped-public-release-formats
+          path: ${{ runner.temp }}/chainguard-release/result.json
+          retention-days: 14
+          if-no-files-found: error
+      - name: Require native writers and all direct and staged packages to match
+        if: always() && steps.result.outcome == 'success'
+        run: jq -e '.verified' "$RUNNER_TEMP/chainguard-release/result.json"
