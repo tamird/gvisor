@@ -94,6 +94,46 @@ test('the deployed dashboard reads new decisions even if Pages still serves the 
   assert.equal((await read())[0], newer);
 });
 
+test('a mismatched branch recovers both files from one commit before accepting older Pages data', async () => {
+  const context = client();
+  context.location = { hostname: 'tamird.github.io' };
+  context.AbortSignal = AbortSignal;
+  const registry = { ...context.registryInput, nodes: [], groups: [], edges: [] };
+  const next = { ...registry, meta: { ...registry.meta, updatedAt: '2026-10-14T00:00:00Z' } };
+  const inBetween = { ...registry, meta: { ...registry.meta, updatedAt: '2026-10-13T00:00:00Z' } };
+  const current = { ...context.snapshotInput, registryDate: next.meta.updatedAt };
+  const sha = 'c'.repeat(40), raw = 'https://raw.githubusercontent.com/tamird/gvisor/';
+  const refURL = 'https://api.github.com/repos/tamird/gvisor/git/ref/heads/gh-pages';
+  const committed = raw + sha + '/', branch = raw + 'refs/heads/gh-pages/';
+  const calls = [];
+  let ref = { ref: 'refs/heads/gh-pages', object: { type: 'commit', sha } };
+  const files = new Map([
+    [committed + 'registry.json', next], [committed + 'github-status.json', current],
+    ['registry.json', registry], ['github-status.json', context.snapshotInput],
+  ]);
+  context.fetch = async url => {
+    calls.push(url);
+    if (url === refURL) return { ok: true, json: async () => ref };
+    return { ok: files.has(url), json: async () => files.get(url) };
+  };
+  const read = () => vm.runInContext('publishedSnapshot()', context);
+  for (const [branchRegistry, branchStatus] of [[next, context.snapshotInput], [inBetween, current]]) {
+    files.set(branch + 'registry.json', branchRegistry);
+    files.set(branch + 'github-status.json', branchStatus);
+    calls.length = 0;
+    const [r, s] = await read();
+    assert.equal(r, next);
+    assert.equal(s, current);
+    assert.deepEqual(calls, [branch + 'registry.json', branch + 'github-status.json', refURL, committed + 'registry.json', committed + 'github-status.json']);
+  }
+  ref = { ref: 'refs/heads/gh-pages', object: { type: 'commit', sha: 'refs/heads/gh-pages' } };
+  calls.length = 0;
+  const [r, s] = await read();
+  assert.equal(r, inBetween);
+  assert.equal(s.mergedOnly, true);
+  assert.deepEqual(calls, [branch + 'registry.json', branch + 'github-status.json', refURL, 'registry.json', 'github-status.json']);
+});
+
 test('a registry update keeps known merges and current decisions across visits', async () => {
   for (const alreadyOpen of [false, true]) {
     const context = client(), run = source => vm.runInContext(source, context);
@@ -141,7 +181,7 @@ test('a registry update keeps known merges and current decisions across visits',
     assert.equal(run('contributorDecision(nodeMap().get("pr:3")).body'), next.nodes[2].contributorReview.body);
     assert.equal(run('historical(nodeMap().get("pr:3"))'), false);
     assert.equal(run('nodeMap().get("pr:3").github'), undefined);
-    assert.match(elements.get('freshness-text').textContent, /predates this registry/);
+    assert.match(elements.get('freshness-text').textContent, /snapshot revisions differ/);
     for (const list of ['tableNodes()', 'graphNodes()']) {
       assert.ok(run(`${list}.some(n => n.id === "pr:1")`)); // Explicit selection.
       run('selected = null');
@@ -1261,7 +1301,7 @@ test('retained triaged reasons consistently move to external follow-up without r
   assert.match(text, /Needs maintainer attention: Awaiting maintainer follow-up/);
   assert.ok(!text.includes('Agent work'));
   assert.equal(text.split('https://').length - 1, 3);
-  const elements = Object.fromEntries(['show-resolved', 'state-filters', 'all-reasons', 'legacy-state-filter',
+  const elements = Object.fromEntries(['show-resolved', 'state-filters', 'all-reasons', 'legacy-state-filter', 'queue-counts-note',
     'attention-agent-summary', 'attention-user-summary', 'attention-maintainer-summary', 'attention-other-summary'].map(id => [id, {
       checked: false, querySelectorAll: () => [], setAttribute() {},
     }]));
@@ -1282,11 +1322,14 @@ test('every visible item has one queue and secondary reasons remain individually
   context.rows = [[maintainer, agent, user], [maintainer, agent], [maintainer], []].map((reasons, i) => ({
     id: 'branch:example' + i, type: 'branch', reasons,
   }));
-  const elements = Object.fromEntries(['all-reasons','legacy-state-filter','state-filters','attention-user-summary','attention-agent-summary','attention-maintainer-summary','attention-other-summary'].map(id => [id, {querySelectorAll: () => [], setAttribute() {}}]));
+  const elements = Object.fromEntries(['all-reasons','legacy-state-filter','queue-counts-note','state-filters','attention-user-summary','attention-agent-summary','attention-maintainer-summary','attention-other-summary'].map(id => [id, {querySelectorAll: () => [], setAttribute() {}}]));
   context.document = {getElementById: id => elements[id]};
   context.location = {href: 'https://example.test/'};
   run('initializing = false; model = {nodes: rows}; matchesBase = visibleHistory = () => true; attentionReasons = node => node.reasons; drawStateFilters()');
   assert.equal(elements['all-reasons'].textContent, 'All 4');
+  assert.equal(elements['queue-counts-note'].hidden, false);
+  run('model.statesAvailable = true; drawStateFilters()');
+  assert.equal(elements['queue-counts-note'].hidden, true);
   for (const [i, owner] of ['user', 'agent', 'maintainer', 'other'].entries()) {
     assert.match(elements['attention-' + owner + '-summary'].textContent, / · 1$/);
     context.owner = owner;

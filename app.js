@@ -1157,6 +1157,7 @@ function drawStateFilters() {
   for (const [owner, count] of Object.entries(totals)) {
     $(`attention-${owner}-summary`).textContent = `${ATTENTION_OWNERS[owner]} · ${count}`;
   }
+  $("queue-counts-note").hidden = Boolean(model.statesAvailable);
   $("legacy-state-filter").hidden = !stateFilters.size;
   $("legacy-state-filter").textContent = stateFilters.size ? `Shared legacy state filter: ${[...stateFilters].map(key => STATE_LABELS[key]).join(", ")}. Reset to clear.` : "";
 }
@@ -1762,7 +1763,7 @@ function render(reposition = false, navigation = "replace") {
   const historyNote = $("show-resolved").checked ? "Including history" : "Inactive history hidden; direct links remain available";
   const queue = Object.keys(ATTENTION_OWNERS).find(owner => reasonFilters.has("queue-" + owner));
   const scope = investigations ? "Research records" : queue ? ATTENTION_OWNERS[queue] : reasonFilters.size ? "Matching any selected attention reason" : dag && filtered() ? "Matches with dependency context" : "Active work";
-  $("filter-note").textContent = `${scope} · ${historyNote}` + (!investigations && !model.statesAvailable ? " · PR attention counts incomplete until GitHub data refreshes" : "");
+  $("filter-note").textContent = `${scope} · ${historyNote}`;
   $("empty").hidden = nodes.length !== 0; $("empty-title").textContent = investigations ? "No matching investigations" : "No matching work";
   drawDetails(); drawStateFilters();
   if (dag) { drawGraph(nodes); drawChainSelector(); } else if (view === "table") drawTable(nodes);
@@ -1935,7 +1936,7 @@ function applyLive(snapshot, nextRegistry = registry) {
   for (const { id, top, left } of scrollPositions) $(id).scrollTo(left, top);
   if (focusedInvestigation) document.getElementById(focusedInvestigation)?.focus({ preventScroll: true });
   if (snapshot.mergedOnly) {
-    setFreshness(`Work map · ${date(registry.meta.updatedAt)} | GitHub snapshot predates this registry`, true);
+    setFreshness(`Work map · ${date(registry.meta.updatedAt)} | Registry and GitHub snapshot revisions differ`, true);
     $("freshness-detail").textContent = "Showing the current registry and previously confirmed GitHub merges. Current reviews and checks are awaiting the next matching snapshot.";
     return;
   }
@@ -2244,12 +2245,13 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
   }
 }
 function snapshotForRegistry(snapshot, nextRegistry) {
-  if (!(Date.parse(snapshot?.registryDate) < Date.parse(nextRegistry.meta.updatedAt))) {
+  if (!snapshot?.mergedOnly && snapshot?.registryDate === nextRegistry.meta.updatedAt) {
     validateSnapshot(snapshot, nextRegistry);
     return snapshot;
   }
   validateSnapshotSource(snapshot, nextRegistry);
-  // A merged PR cannot reopen. All other provider data belongs to the old registry.
+  if (!Number.isFinite(Date.parse(snapshot.registryDate))) throw new Error("Invalid snapshot registry revision");
+  // A merged PR cannot reopen. Other provider data belongs to a different registry.
   const prs = [];
   for (const pr of snapshot.prs) {
     if (pr?.status === "merged" && Number.isSafeInteger(pr.number) && pr.number > 0 &&
@@ -2290,28 +2292,36 @@ async function readSnapshot(base) {
   return [nextRegistry, snapshotForRegistry(snapshot, nextRegistry)];
 }
 async function publishedSnapshot() {
-  // A failed Pages deployment can leave the site serving an old review queue.
-  // GitHub publishes the data files as soon as their commit reaches gh-pages.
-  if (globalThis.location?.hostname === "tamird.github.io") {
-    let latest;
+  if (globalThis.location?.hostname !== "tamird.github.io") return readSnapshot("");
+  const raw = "https://raw.githubusercontent.com/tamird/gvisor/";
+  const loadCommittedPair = async () => {
+    const response = await fetch("https://api.github.com/repos/tamird/gvisor/git/ref/heads/gh-pages", {
+      cache: "no-cache", credentials: "omit", signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`Published revision returned ${response.status}`);
+    const ref = await response.json();
+    if (ref.ref !== "refs/heads/gh-pages" || ref.object?.type !== "commit" || !/^[a-f0-9]{40}$/.test(ref.object.sha))
+      throw new Error("Invalid published revision");
+    return readSnapshot(raw + ref.object.sha + "/");
+  };
+  // The branch can advance before Pages deploys. When its cached files don't
+  // match, pin both requests to the published commit before consulting Pages.
+  let latest, lastError;
+  for (const load of [() => readSnapshot(raw + "refs/heads/gh-pages/"), loadCommittedPair, () => readSnapshot("")]) {
     try {
-      latest = await readSnapshot("https://raw.githubusercontent.com/tamird/gvisor/refs/heads/gh-pages/");
-    } catch (error) {
-      if (model.checkedAt) throw error;
-      // On the first visit the deployed pair can still provide an offline snapshot.
-    }
-    if (latest) {
+      let pair = await load();
+      if (!latest) latest = pair;
+      else {
+        if (Date.parse(pair[0].meta.updatedAt) > Date.parse(latest[0].meta.updatedAt)) [latest, pair] = [pair, latest];
+        latest[1] = preferSnapshot(latest[1], snapshotForRegistry(pair[1], latest[0]));
+      }
       if (!latest[1].mergedOnly) return latest;
-      // The two hosts can cache the same files at different revisions.
-      try {
-        let deployed = await readSnapshot("");
-        if (Date.parse(deployed[0].meta.updatedAt) > Date.parse(latest[0].meta.updatedAt)) [latest, deployed] = [deployed, latest];
-        latest[1] = preferSnapshot(latest[1], snapshotForRegistry(deployed[1], latest[0]));
-      } catch { /* The newer registry is still usable. */ }
-      return latest;
+    } catch (error) {
+      lastError = error;
     }
   }
-  return readSnapshot("");
+  if (latest) return latest;
+  throw lastError;
 }
 async function refresh(force = false) {
   if (refreshing || (force && Date.now() - lastAttempt < 10000)) return;
@@ -2380,6 +2390,9 @@ function initialize() {
     }
     chooser.append(options); $("state-filters").append(chooser);
   }
+  const countsNote = element("span", "notice", "Queue counts incomplete until a matching GitHub snapshot is available.");
+  countsNote.id = "queue-counts-note"; countsNote.setAttribute("role", "status");
+  $("state-filters").append(countsNote);
   $("search").addEventListener("input", () => { if (selected?.startsWith("attention-")) selected = null; render(true, searchEditing ? "replace" : "push"); searchEditing = true; });
   $("search").addEventListener("blur", () => { searchEditing = false; });
   $("investigation-search").addEventListener("input", () => { selected = null; render(false, searchEditing ? "replace" : "push"); searchEditing = true; });

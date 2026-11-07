@@ -17,6 +17,9 @@ qualification blocker changes, update `meta.updatedAt`, and push this branch.
 The dashboard reads the registry and its matching GitHub snapshot from this branch,
 so review decisions can reach an open tab while Pages is deploying. The copy
 bundled with the site is available when GitHub cannot serve the branch.
+If the branch serves mismatched revisions, the dashboard resolves the
+published commit and reads both files from that revision before consulting
+Pages. When it cannot recover a match, it labels the queue counts as incomplete.
 The registry is both the dependency source
 and an offline snapshot; keep source links and the distinction between observed
 facts and unresolved causes in every relationship.
