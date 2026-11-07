@@ -1,0 +1,60 @@
+name: Verify current-source Copybara export routing
+on:
+  push:
+    branches: [qualification/work-map-current-export-progress]
+permissions: {contents: read}
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: 'Check the original #15562 source and export records'
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 6eeed28d8bb7df7d56b7e6db53c6038f547ba753
+          git diff --exit-code HEAD^ HEAD -- app.js app_test.mjs work_states.py work_states_test.py reapproval.py update-status.py registry.json github-status.json
+          echo '4eb8f0abb73b5a811339548f45157a95486a9eb661a6c09549f7807de41208d2  github-status.json' | sha256sum -c -
+          python3 -B - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from work_states import pr_states, public_import_disposition, review_decision
+          from reapproval import reminder_plan
+          snapshot = json.loads(Path("github-status.json").read_text())
+          registry = json.loads(Path("registry.json").read_text())
+          p = next(x for x in snapshot["prs"] if x.get("repo") == "google/gvisor" and x["number"] == 15562)
+          n = next(x for x in registry["nodes"] if x["id"] == "pr:15562")
+          assert p["head"] == "1cbd8021a9c1dac5ed3d0cbb286477c29d06aca9"
+          assert p["githubReviewDecision"] == "APPROVED" and review_decision(p) == "REVIEW_REQUIRED"
+          assert not p["approvedAt"] and p["headIntroducedAt"] == "2026-11-04T16:03:59Z"
+          assert p["feedback"]["items"] and any(i["number"] == 15687 and i["mergeable"] == "CONFLICTING" for i in p["imports"])
+          p["publicImportDisposition"] = disposition = public_import_disposition(p, amendment=n.get("reapproval"))
+          assert disposition["scope"] == "exact" and disposition["state"] == "open" and disposition["action"] is None
+          assert disposition["reviewedExport"] == {"number":16971,"head":"50537ba27248bac852f96debdce0c30e734900cc","reviewId":"PRR_kwDOB9IlXs8AAAABV5M8dw"}
+          assert not disposition["binding"]["currentApproval"] and set(pr_states(p)) == {"importing"}
+          plan = reminder_plan(p, n, datetime(2026,11,9,18,tzinfo=timezone.utc), "tamird", frozenset(p["maintainerReviewers"]))
+          assert plan["status"] != "due" and plan["publicImportDisposition"] == disposition, plan["status"]
+          tmp = Path(__import__("os").environ["RUNNER_TEMP"]) / "current-export.json"
+          tmp.write_text(json.dumps({"pr":p,"node":n}))
+          print("Observed the original pre-push review and the open exact export; no fresh approval or reminder.")
+          PY
+          node <<'JS'
+          const fs = require('node:fs'), vm = require('node:vm'), path = require('node:path');
+          const {pr,node} = JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP,"current-export.json")));
+          const context = vm.createContext({URL});
+          const source = fs.readFileSync("app.js","utf8"); vm.runInContext(source.slice(0,-"start();\n".length),context);
+          context.n = {...node,github:pr}; context.r = JSON.parse(fs.readFileSync("registry.json"));
+          const reasons = vm.runInContext('registry = r; attentionReasons(n, "tamird").map(v=>v.id)',context);
+          if (!reasons.includes("maintainer-merge") || reasons.includes("agent-rebase-check") || reasons.includes("maintainer-review")) throw Error(reasons);
+          console.log("Actual #15562 attention reasons:", reasons);
+          JS
+      - name: Verify all backend and browser regressions
+        if: always() && !cancelled()
+        run: |
+          code=0
+          python3 -B -m unittest work_states_test update_status_test incoming_reviews_test || code=1
+          node --test app_test.mjs || code=1
+          exit "$code"
