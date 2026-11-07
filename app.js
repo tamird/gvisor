@@ -1859,7 +1859,12 @@ function applyLive(snapshot, nextRegistry = registry) {
       workStates: stateRecords(snapshot, { ...existing, id, type: "pr", github: pr }), github: pr.head ? pr : existing?.github };
     if (branch && ["open", "draft", "merged"].includes(pr.status)) {
       aliases.set(branch.id, id); node.promotedFrom = branch.ref; node.summary ||= branch.summary;
-      if (node.refinement?.after.head !== pr.head && branch.refinement?.after.head === pr.head) {
+      // A branch's last published revision can also be the starting point of
+      // a pending PR amendment. Keep that amendment's full comparison ranges.
+      const amendment = pendingDecisions(node).some(decision => decision.kind === "amendment"
+        && decision.baseHead === pr.head && node.refinement?.before.head === pr.head
+        && node.refinement.after.head === decision.head);
+      if (!amendment && node.refinement?.after.head !== pr.head && branch.refinement?.after.head === pr.head) {
         node.refinement = branch.refinement; node.head = pr.head;
       }
     }

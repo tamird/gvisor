@@ -457,24 +457,34 @@ test('branch refinements render and copy the reviewed commit ranges without a PR
 test('promotion uses an exact-head branch refinement when the PR comparison is stale', () => {
   const before = 'a'.repeat(40), after = 'b'.repeat(40), old = 'c'.repeat(40), earlier = 'd'.repeat(40);
   const branchRefinement = { before: { head: before }, after: { head: after } };
+  const series = { before: { base: old, head: after }, after: { base: before, head: earlier } };
   for (const [prRefinement, branchHead, expectedBefore] of [
     [undefined, after, before],
     [{ before: { head: earlier }, after: { head: old } }, after, before],
     [{ before: { head: earlier }, after: { head: after } }, after, earlier],
     [{ before: { head: earlier }, after: { head: old } }, old, null],
+    [series, after, after],
   ]) {
     const context = client();
     const branch = { id: 'branch:proposal', type: 'branch', repo: 'tamird/gvisor', ref: 'proposal', head: branchHead,
       refinement: { ...branchRefinement, after: { head: branchHead } } };
     const pr = { id: 'pr:1', type: 'pr', number: 1, repo: 'google/gvisor', url: 'https://github.com/google/gvisor/pull/1', head: prRefinement?.after.head,
       ...(prRefinement ? { refinement: prRefinement } : {}) };
+    if (prRefinement === series) {
+      pr.head = after;
+      pr.contributorReview = { kind: 'amendment', status: 'pending', baseHead: after, head: earlier };
+    }
     context.registryInput = { ...context.registryInput, nodes: [branch, pr], edges: [], groups: [] };
     context.snapshotInput.prs = [{ ...attentionNode().github, head: after, ref: 'proposal', headRepo: 'tamird/gvisor' }];
     context.document = { getElementById: () => ({ scrollTop: 0, scrollLeft: 0, querySelectorAll: () => [], scrollTo() {} }) };
     vm.runInContext('updateRegistryControls = () => {}; render = () => {}; setFreshness = () => {}; applyLive(snapshotInput, registryInput)', context);
     assert.equal(vm.runInContext('model.nodes.length', context), 1);
     const command = vm.runInContext('refinementComparison(model.nodes[0])?.command ?? null', context);
-    assert.equal(command, expectedBefore ? `git -C ~/code/gvisor range-diff --creation-factor=999 ${expectedBefore}^! ${after}^!` : null);
+    if (prRefinement === series) {
+      assert.equal(command, `git -C ~/code/gvisor range-diff ${old}..${after} ${before}..${earlier}`);
+    } else {
+      assert.equal(command, expectedBefore ? `git -C ~/code/gvisor range-diff --creation-factor=999 ${expectedBefore}^! ${after}^!` : null);
+    }
   }
 });
 
@@ -2126,8 +2136,8 @@ test('unpublished proposal decisions do not replace the published head review', 
   assert.ok(idsFor(node).includes('review-changes')); assert.ok(idsFor(node).includes('maintainer-review'));
   const context = client(); context.nodeInput = node;
   context.location = { href: 'https://tamird.github.io/gvisor/' };
-  assert.equal(vm.runInContext('attentionGroups([nodeInput], "tamird")[0].id', context), 'maintainer-review');
-  assert.equal(vm.runInContext('attentionGroups([nodeInput], "tamird", true, new Set(["review-changes"]))[0].id', context), 'review-changes');
+  assert.equal(vm.runInContext('attentionGroups([nodeInput], "tamird")[0].id', context), 'review-changes');
+  assert.equal(vm.runInContext('attentionGroups([nodeInput], "tamird", true, new Set(["maintainer-review"]))[0].id', context), 'maintainer-review');
 });
 
 test('imported-unmerged does not assert readiness and administrative failures are maintainer work', () => {

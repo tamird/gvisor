@@ -702,10 +702,11 @@ these classifications in `work_states.py`, and the UI consumes its snapshot:
   with `role: proposed_update`; older clients show them as inclusion links.
   The contributor table shows both commit IDs when a branch proposal is
   revised, including before it has a PR. First-time proposals show only
-  their title. Both detail views offer **Copy range-diff**, using the
-  published PR head from the GitHub snapshot and the exact proposed head.
-  You can also select and copy the command. It disappears when the heads match or
-  either head is unavailable; a snapshot refresh updates the published head.
+  their title. **Copy range-diff** appears beside the proposed revision.
+  It compares the published PR head with the amendment. When a GitHub
+  snapshot is unavailable, the tracker can use the recorded PR revision
+  and labels it accordingly. A conflicting observed head suppresses that
+  comparison. The command is also available as selectable text.
   Refinements without a PR use the same copy control in their detail view.
   Record `refinement.before` and `refinement.after` with exact `head` values;
   the comparison is shown only while `after.head` matches the node head.
