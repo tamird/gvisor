@@ -328,6 +328,8 @@ print(json.dumps(public_import_disposition(row["pr"], row["node"]["approvedPatch
   const original = classify().find(reason => reason.id === 'maintainer-reapproval');
   for (const value of ['f7b488717', '2595b7928', '#16879']) assert.ok(original.detail.includes(value));
   assert.equal(vm.runInContext('publicImportDisposition(nodeInput).binding.approvedHead', context), row.node.approvedPatch.approvedHead);
+  row.pr.imports[0].mergeable = 'MERGEABLE';
+  assert.ok(classify().some(reason => reason.id === 'maintainer-reapproval'));
   row.node.approvedPatch.earlierExport.comparedHead = 'a'.repeat(40);
   assert.ok(!classify().some(reason => reason.id === 'maintainer-reapproval'));
 });

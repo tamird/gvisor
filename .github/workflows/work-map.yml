@@ -1,0 +1,24 @@
+name: Verify earlier export identity and live review-card controls
+on:
+  push:
+    branches: [qualification/work-map-verified-earlier-export]
+permissions: {contents: read}
+jobs:
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && !github.event.deleted
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with: {fetch-depth: 3, persist-credentials: false}
+      - name: Verify current Pages data with the tracker suites
+        run: |
+          test "$(git rev-parse HEAD^)" = 69ab0542ef2ee3ce45497163f5b026fc966f93de
+          git diff --exit-code HEAD^ HEAD -- registry.json github-status.json
+          node metadata-preflight.mjs .
+          code=0
+          python3 -B -m unittest work_states_test update_status_test || code=1
+          node --test app_test.mjs || code=1
+          exit "$code"
+      - name: Click the four queues and copy a real revision in Chromium
+        run: python3 .github/qualification/queues-browser.py
