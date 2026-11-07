@@ -1,7 +1,7 @@
 name: Measure FD receive on the connected guest server
 "on":
   push:
-    branches: [qualification/fdbased-receive-download]
+    branches: [qualification/fdbased-receive-native-client]
 permissions: {}
 jobs:
   compare:
@@ -12,16 +12,17 @@ jobs:
       - name: Bind both production receive patches and the original connected benchmark
         run: |
           set -euo pipefail
-          umask 077
+          umask 022
           r="$RUNNER_TEMP/fdbased-receive"
           mkdir -p "$r"/{public,fixture,source}
           cd "$r/source"
           git init -q .
-          git -c gc.auto=0 fetch -q --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git -c gc.auto=0 fetch -q --depth=4 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
           git checkout -q --detach FETCH_HEAD
-          test "$(git rev-parse HEAD^)" = 99caa17bf576354c16a5ab027fa2efd151871ab0
-          test "$(git rev-parse HEAD^^)" = 57e19e31a16e4781e14a17e8d7c8b20366fccaa9
-          git diff --quiet HEAD^ HEAD -- . ':!.github/qualification/fdbased_rx/**' ':!.github/workflows/build.yml'
+          test "$(git rev-parse HEAD^)" = 6a8795de8b44d41ab555ef9cecd6e23205ccb41d
+          test "$(git rev-parse HEAD^^)" = 99caa17bf576354c16a5ab027fa2efd151871ab0
+          test "$(git rev-parse HEAD^^^)" = 57e19e31a16e4781e14a17e8d7c8b20366fccaa9
+          git diff --quiet HEAD^ HEAD -- . ':!.github/qualification/fdbased_rx/receive.py' ':!.github/workflows/build.yml'
           cp .github/qualification/fdbased_rx/receive.py "$r/"
           cp .github/qualification/fdbased_rx/iperf_test.go "$r/fixture/"
           git fetch -q --depth=2 https://github.com/google/gvisor.git refs/pull/17187/head
@@ -30,7 +31,7 @@ jobs:
           git fetch -q --depth=2 https://github.com/google/gvisor.git refs/pull/17188/head
           test "$(git rev-parse FETCH_HEAD^)" = 9ee2906f518e1d0f9fd109e9e1feb2812096418b
           test "$(git rev-parse FETCH_HEAD)" = e1be5f9ec42853e2c24f4a9d86b4fe7c16e36f98
-          test "$(git diff FETCH_HEAD^ FETCH_HEAD | git patch-id --stable | cut -d' ' -f1)" = "$(git diff HEAD^^ HEAD^ | git patch-id --stable | cut -d' ' -f1)"
+          test "$(git diff FETCH_HEAD^ FETCH_HEAD | git patch-id --stable | cut -d' ' -f1)" = "$(git diff HEAD^^^ HEAD^^ | git patch-id --stable | cut -d' ' -f1)"
           git fetch -q --depth=1 https://github.com/tamird/gvisor.git 50c1a9f4734be4c51e74c9df739c9ce015a53b73 e61da06dc253bd3a62c6583f3350520d305d07c5 2b51abee8530385431b7225198fdd5cd65e78696
           test "$(git rev-parse 50c1a9f47:test/rbe/image_runtime.py)" = c2e837657f9ab178606a6b7d2ac6d2cec568397a
           test "$(git rev-parse 50c1a9f47:test/rbe/image_archive.py)" = e2e3598777916d1cbb4e8e07f54c4dba0d650fbe
@@ -52,7 +53,7 @@ jobs:
           echo "18255229d933b8da10151bdef223a302744296b09af8af1988c93faa1ea3c71f  $r/bazel85" | sha256sum -c -
           chmod 0755 "$r"/bazel{8,9,85}
           cat > "$r/local.bazelrc" <<'RC'
-          startup --host_jvm_args=-Xmx3000m
+          startup --host_jvm_args=-Xmx4g
           build --remote_executor= --remote_cache= --bes_backend=
           build --jobs=4 --local_resources=cpu=4 --color=no --curses=no --noshow_progress
           RC
@@ -84,7 +85,7 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: '!cancelled() && steps.privacy.outcome == ''success'''
         with:
-          name: fdbased-guest-receive
+          name: fdbased-guest-receive-native-client
           path: ${{ runner.temp }}/fdbased-receive/public/
           if-no-files-found: error
           retention-days: 14

@@ -7,6 +7,8 @@ import ipaddress
 import json
 import math
 import os
+import pwd
+import stat
 from pathlib import Path
 import re
 import shutil
@@ -22,6 +24,8 @@ from image_runtime import prepared_runtime
 
 ROOT = Path(sys.argv[1])
 OUT = ROOT / "public"
+BUILDER = pwd.getpwuid((ROOT / "source").stat().st_uid)
+assert BUILDER.pw_uid != 0
 SOURCE = {"before": "9ee2906f518e1d0f9fd109e9e1feb2812096418b", "after": "99caa17bf576354c16a5ab027fa2efd151871ab0"}
 OWNER = "//test/benchmarks/network:iperf_test"
 CASE = "BenchmarkIperfManyConnections/operation.Download/parallel.4"
@@ -31,6 +35,9 @@ DEADLINE = time.monotonic() + 165 * 60
 EXEC = []
 BZ = [str(ROOT / "bazel9"), "--nosystem_rc", "--nohome_rc", "--bazelrc=" + str(ROOT / "local.bazelrc")]
 OPTIONS = ["--config=x86_64", "--compilation_mode=opt", "--noannounce_rc"]
+NATIVE = ["--lockfile_mode=off", "--spawn_strategy=linux-sandbox",
+          "--strategy=GoStdlib=processwrapper-sandbox", "--strategy=GoStdlibList=processwrapper-sandbox",
+          "--modify_execution_info=^(GoStandardLibraryAnalysis|GoStaticAnalysis)$=-no-sandbox"]
 R = {"status": "INCOMPLETE", "sources": SOURCE, "samples": [], "builds": {}, "witness": {}, "commands": [],
      "expected_measured": 2 * PAIRS, "expected_warmups": 2, "fixture": str(CASE), "deadline_seconds": 165 * 60}
 
@@ -47,10 +54,18 @@ def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def as_builder(argv):
+    if argv[0] != "git" and str(argv[0]) not in {str(ROOT / n) for n in ("bazel85", "bazel8", "bazel9")}:
+        return argv
+    return ["sudo", "-n", "-u", "#" + str(BUILDER.pw_uid), "-H", "/usr/bin/env", "-i",
+            "HOME=" + BUILDER.pw_dir, "USER=" + BUILDER.pw_name, "PATH=" + os.environ["PATH"],
+            "LANG=C.UTF-8", "BUILD_WORKSPACE_DIRECTORY=" + os.getcwd(), *argv]
+
+
 def run(label: str, argv: list[str], limit: int = 1200) -> bytes:
     R["phase"] = label
     persist()
-    cmd = subprocess.run(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    cmd = subprocess.run(as_builder(argv), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                          timeout=max(1, min(limit, DEADLINE - time.monotonic())))
     if cmd.returncode:
         private = cmd.stdout + cmd.stderr
@@ -78,12 +93,13 @@ def build(key: str, source: str, target: str) -> dict:
     binary = {"benchstat": "bazel85", "image": "bazel8"}.get(key, "bazel9")
     bazel = [str(ROOT / binary), *BZ[1:]]
     bep = ROOT / (key + ".build.bep")
-    argv = bazel + ["build", *OPTIONS, "--build_event_json_file=" + str(bep), target]
+    opts = OPTIONS + (NATIVE if binary == "bazel9" else [])
+    argv = bazel + ["build", *opts, "--build_event_json_file=" + str(bep), target]
     run("build-" + key, argv, 4200)
     events = [json.loads(line) for line in bep.read_text().splitlines()]
     owners = [e["id"]["targetCompleted"]["label"] for e in events if e.get("completed", {}).get("success") and "targetCompleted" in e["id"]]
     assert (target in owners if not target.startswith("@") else any(n.endswith("//cmd/benchstat:benchstat") for n in owners)), key
-    paths = run("configured-" + key, bazel + ["cquery", *OPTIONS, "--output=files", target]).decode().splitlines()
+    paths = run("configured-" + key, bazel + ["cquery", *opts, "--output=files", target]).decode().splitlines()
     destination = ROOT / key
     destination.mkdir()
     items = {}
@@ -162,7 +178,7 @@ def observe(side: str, pair: int, runtime: str, subnet: ipaddress.IPv4Network) -
     R["phase"] = name
     persist()
     bep = ROOT / (name + ".bep")
-    args = BZ + ["test", *OPTIONS, "--strategy=TestRunner=local", "--nocache_test_results",
+    args = BZ + ["test", *OPTIONS, *NATIVE, "--strategy=TestRunner=local", "--nocache_test_results",
                  "--runs_per_test=1", "--flaky_test_attempts=1", "--test_sharding_strategy=disabled",
                  "--nozip_undeclared_test_outputs", "--test_timeout=150", "--test_env=GO_TEST_WRAP=1",
                  "--test_env=GO_TEST_WRAP_TESTV=0", "--test_arg=-test.run=^$",
@@ -171,7 +187,7 @@ def observe(side: str, pair: int, runtime: str, subnet: ipaddress.IPv4Network) -
                  "--build_event_json_file=" + str(bep), "--build_event_json_file_path_conversion=false", OWNER]
     witness_error = None
     with (ROOT / (name + ".log")).open("wb") as output:
-        with subprocess.Popen(args, stdout=output, stderr=subprocess.STDOUT) as proc:
+        with subprocess.Popen(as_builder(args), stdout=output, stderr=subprocess.STDOUT) as proc:
             try:
                 if pair == -1:
                     witness(side, runtime, proc)
@@ -262,6 +278,33 @@ def observe(side: str, pair: int, runtime: str, subnet: ipaddress.IPv4Network) -
     persist()
 
 
+def descriptor_control():
+    checkout(SOURCE["before"])
+    path = Path("pkg/metric/metric.proto")
+    files = {str(p): {"mode": oct(stat.S_IMODE(p.stat().st_mode)), "uid": p.stat().st_uid}
+             for p in (ROOT, ROOT/"source", path.parent, path)}
+    assert all(x["uid"] == BUILDER.pw_uid for x in files.values())
+    source_hash = digest(path.read_bytes())
+    assert source_hash == "79b29350edf499994d5e67f8d690fdd0adc5093823f19c4c436b7ad97aacd9c7"
+    control = {"source":SOURCE["before"],"label":"//pkg/metric:metric_proto","uid":BUILDER.pw_uid,
+               "modes":files,"input_sha256":source_hash,"verified":False}
+    R["descriptor"] = control
+    persist()
+    log = ROOT / "descriptor-control.bep"
+    run("stock-metric-descriptor", BZ + ["build", *OPTIONS, *NATIVE, "--build_event_publish_all_actions",
+        "--build_event_json_file="+str(log), "--verbose_failures", control["label"]], 1400)
+    events = [json.loads(line) for line in log.read_text().splitlines()]
+    actions = [e["action"] for e in events if e.get("id", {}).get("actionCompleted", {}).get("label") == control["label"]
+               and e.get("action", {}).get("type") == "GenProtoDescriptorSet"]
+    output, = run("descriptor-output", BZ+["cquery", *OPTIONS,*NATIVE,"--output=files",control["label"]]).decode().splitlines()
+    raw = Path(output).read_bytes()
+    control.update(output_sha256=digest(raw), output_bytes=len(raw), bep_sha256=digest(log.read_bytes()),
+                   successful_actions=sum(bool(a.get("success")) for a in actions))
+    assert control["successful_actions"] == 1 and b"pkg/metric/metric.proto" in raw
+    control["verified"] = True
+    persist()
+
+
 def main() -> None:
     os.environ.update(GIT_CONFIG_COUNT="1", GIT_CONFIG_KEY_0="safe.directory", GIT_CONFIG_VALUE_0=os.getcwd(),
                       BUILD_WORKSPACE_DIRECTORY=os.getcwd(), APPLICABILITY_WORK_DEADLINE=str(DEADLINE))
@@ -272,6 +315,7 @@ def main() -> None:
     R["source_changed_files"] = run("compare", ["git", "diff", "--name-only", SOURCE["before"], SOURCE["after"]]).decode().splitlines()
     assert set(R["source_changed_files"]) == {"pkg/tcpip/link/fdbased/" + name for name in ("packet_dispatchers.go","endpoint_test.go","processors.go","processors_test.go")}
     R["fixture_sha256"] = {name: digest((ROOT / "fixture" / name).read_bytes()) for name in ("iperf_test.go","iperf.go")}
+    descriptor_control()
     stat, = build("benchstat","2b51abee8530385431b7225198fdd5cd65e78696","@org_golang_x_perf//cmd/benchstat")
     image, = build("image","e61da06dc253bd3a62c6583f3350520d305d07c5","//images/benchmarks/iperf:iperf_archive")
     names = {"runsc","containerd-shim-runsc-v1"} | {"gvisor-bin/" + n for n in
@@ -288,7 +332,7 @@ def main() -> None:
     checkout(SOURCE["before"])
     for name,destination in (("iperf_test.go","network"),("iperf.go","tools")):
         shutil.copyfile(ROOT/"fixture"/name, Path("test/benchmarks")/destination/name)
-    run("common-fixture-build", BZ+["build", *OPTIONS, OWNER], 900)
+    run("common-fixture-build", BZ+["build", *OPTIONS, *NATIVE, OWNER], 900)
     blob = ROOT / "image" / image
     image_record = {}
     config, _, _ = archive(blob, image_record)
