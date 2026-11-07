@@ -1,0 +1,11 @@
+                                                   │ before.bench │ buffers.bench │ flow.bench │ after.bench │
+                                                   │                             B/s                             │                    B/s                      vs base          │                   B/s                    vs base          │                   B/s                     vs base          │
+IperfManyConnections/operation.Download/parallel.4                                                  6.470Gi ± 9%                                 6.646Gi ± 8%  ~ (p=0.671 n=12)                              6.539Gi ± 9%  ~ (p=0.755 n=12)                              6.792Gi ± 10%  ~ (p=0.291 n=12)
+
+                                                   │ before.bench │ buffers.bench │ flow.bench │ after.bench │
+                                                   │                         mallocs/GiB                         │             mallocs/GiB               vs base                │               mallocs/GiB                vs base          │            mallocs/GiB              vs base                │
+IperfManyConnections/operation.Download/parallel.4                                                   55.36k ± 1%                            20.40k ± 1%  -63.16% (p=0.000 n=12)                               55.48k ± 0%  ~ (p=0.378 n=12)                          20.26k ± 2%  -63.40% (p=0.000 n=12)
+
+                                                   │ before.bench │ buffers.bench │ flow.bench │ after.bench │
+                                                   │                            B/GiB                            │                B/GiB                  vs base                │                  B/GiB                   vs base          │               B/GiB                 vs base                │
+IperfManyConnections/operation.Download/parallel.4                                                 2712.1Ki ± 1%                           932.7Ki ± 3%  -65.61% (p=0.000 n=12)                             2710.6Ki ± 1%  ~ (p=0.478 n=12)                         924.8Ki ± 5%  -65.90% (p=0.000 n=12)

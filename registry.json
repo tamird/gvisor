@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T19:22:05+00:00",
+    "updatedAt": "2026-11-07T19:29:25+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -82809,15 +82809,27 @@
       "status": "active",
       "owner": "Netstack",
       "group": "runtime",
-      "updatedAt": "2026-11-07T17:33:34+00:00",
+      "updatedAt": "2026-11-07T19:29:25+00:00",
       "summary": "Track TCP reports and proposed fixes across gVisor and the downstreams that supply packet traces. Separate recovery after loss, low-RTT timers, receive pressure, offload and application-visible latency.",
       "nextStep": "Use #16081 first for the Newt burst-loss case. Keep the lost-repair comparisons and the M003 Reno case separate. The Linux proxy replay explains the repeated timeouts; determining the cause of the initial loss or the relationship to #10343 still needs an onset trace. For #15253, compare captures or GSO metadata from the Kubernetes interfaces. Follow the duplicate reconnect reply on #15019.",
       "findings": [
         {
-          "text": "With four TCP download streams over Ethernet and one recvMMsg worker, #17187 and #17188 together reduced whole-Sentry allocations per GiB received from 55.25k to 20.34k (−63.18%) and allocated bytes per GiB from 2763.4 KiB to 1016.2 KiB (−63.23%). The 12 paired native AMD64 measurements compared master 9ee2906f5 with the combined changes at 99caa17bf. Throughput was 4.100 versus 4.142 GiB/s (p = .089), with no detectable change. The comparison measures both changes together.",
+          "text": "Reusing the receive buffers in #17187 reduced whole-Sentry allocations per GiB received by 63.16% on the single-worker TCP download (p < 0.001). Skipping flow parsing in #17188 alone yielded 55.48k allocations/GiB against 55.36k on stock (p = 0.378). The earlier two-build comparison had measured a 63.18% reduction with both changes applied.",
           "evidence": [
             {
-              "label": "Original benchstat, raw samples and receiver evidence",
+              "label": "Benchstat for all four builds",
+              "url": "https://tamird.github.io/gvisor/four-way-fdbased-receive-benchstat.txt"
+            },
+            {
+              "label": "Preserved original ZIP with raw samples and receive-path checks",
+              "url": "https://tamird.github.io/gvisor/four-way-fdbased-receive-results.zip"
+            },
+            {
+              "label": "Original four-build Linux run and receipt",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42403343123/artifacts/13587845075"
+            },
+            {
+              "label": "Earlier two-build benchstat and receiver evidence",
               "url": "https://github.com/tamird/gvisor/actions/runs/42393657602/artifacts/13583069933"
             },
             {
@@ -83854,7 +83866,65 @@
             "evidence": "https://github.com/tamird/gvisor/actions/runs/42245055323/artifacts/13518805282"
           }
         ]
-      }
+      },
+      "comparisons": [
+        {
+          "title": "Receive buffers and one-worker flow parsing on four TCP streams",
+          "description": "Each of 12 matched blocks ran all four builds on one AMD64 Linux worker. A native client sent four IPv4 TCP streams to the gVisor server over Ethernet. Each guest used a single receive worker, and a warm-up trace confirmed recvmmsg on every build. The allocation columns use whole-Sentry counters divided by GiB received on the guest interface.",
+          "columns": [
+            "Build",
+            "Source",
+            "Allocations/GiB",
+            "Allocated KiB/GiB",
+            "Receive goodput (GiB/s)"
+          ],
+          "rows": [
+            [
+              "Stock",
+              "9ee2906f5",
+              "55.36k",
+              "2,712.1",
+              "6.470"
+            ],
+            [
+              "#17187 alone",
+              "254933fda",
+              "20.40k",
+              "932.7",
+              "6.646"
+            ],
+            [
+              "#17188 alone",
+              "e1be5f9ec",
+              "55.48k",
+              "2,710.6",
+              "6.539"
+            ],
+            [
+              "Both changes",
+              "99caa17bf",
+              "20.26k",
+              "924.8",
+              "6.792"
+            ]
+          ],
+          "note": "Benchstat found no statistically significant change in receive goodput relative to stock for #17187 alone (p = 0.671), #17188 alone (p = 0.755) or both changes together (p = 0.291).",
+          "evidence": [
+            {
+              "label": "Benchstat for all four builds",
+              "url": "https://tamird.github.io/gvisor/four-way-fdbased-receive-benchstat.txt"
+            },
+            {
+              "label": "Preserved original ZIP with raw samples and receive-path checks",
+              "url": "https://tamird.github.io/gvisor/four-way-fdbased-receive-results.zip"
+            },
+            {
+              "label": "Original four-build Linux run and receipt",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42403343123/artifacts/13587845075"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "investigation:project-feedback",
@@ -84760,5 +84830,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T19:22:05+00:00"
+  "updatedAt": "2026-11-07T19:29:25+00:00"
 }
