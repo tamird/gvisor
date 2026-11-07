@@ -1,35 +1,78 @@
-name: CI
-
-"on":
+name: Hosted native ARM cmd owner
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/hosted-arm-cmd-exit-receipt]
+permissions:
+  contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  cmd:
+    if: github.event.created && github.repository == 'tamird/gvisor' && github.actor == 'tamird'
+    runs-on: ubuntu-22.04-arm
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - name: Bind the original ARM owner and native launcher
+        run: |
+          set -eu
+          test "$(uname -m)" = aarch64
+          test "$(git rev-parse HEAD^)" = 353c484b45fec1ba5ba19445ba03807a5f9638e0
+          test "$(git diff --name-only HEAD^ HEAD | sort)" = "$(printf '%s\n' .github/qualification/hosted_cmd.py .github/workflows/build.yml test/rbe/hosted_cmd/BUILD test/rbe/hosted_cmd/run.sh)"
+          install -m 0755 .github/qualification/hosted_cmd.py "$RUNNER_TEMP/hosted-cmd"
+          mkdir "$RUNNER_TEMP/hosted-fixture"
+          cp test/rbe/hosted_cmd/{BUILD,run.sh} "$RUNNER_TEMP/hosted-fixture/"
+          git checkout --quiet --detach HEAD^
+          curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-arm64 -o "$RUNNER_TEMP/bazelisk"
+          echo "bb608519a440d45d10304eb684a73a2b6bb7699c5b0e5434361661b25f113a5d  $RUNNER_TEMP/bazelisk" | sha256sum -c -
+          chmod 0755 "$RUNNER_TEMP/bazelisk"
+          test "$("$RUNNER_TEMP/bazelisk" --version)" = "bazel 9.3.1"
+      - name: Materialize the unchanged owner and matching release
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
+          rc="$RUNNER_TEMP/cmd.bazelrc"
+          trap 'rm -f "$rc"' EXIT
+          printf '%s\n' 'build:source-presubmit-arm64 --remote_executor=grpcs://remote.buildbuddy.io' 'build:source-presubmit-arm64 --remote_cache=grpcs://remote.buildbuddy.io' > "$rc"
+          printf 'build:source-presubmit-arm64 --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          code=0
+          "$RUNNER_TEMP/bazelisk" --bazelrc="$rc" build --config=source-presubmit-arm64 --remote_download_outputs=toplevel --jobs=24 --test_env=GO_TEST_WRAP_TESTV=1 //runsc/cmd:cmd_test //:release > "$RUNNER_TEMP/cmd-build.log" 2>&1 || code=$?
+          echo "$code" > "$RUNNER_TEMP/cmd-build.exit"
+          exit "$code"
+      - name: Transfer the exact materialized ELF and its complete runfiles
+        run: |
+          set -eu
+          test ! -e "$RUNNER_TEMP/cmd.bazelrc"
+          code=0
+          (ulimit -f 1048576; python3 -IB "$RUNNER_TEMP/hosted-cmd" make "$RUNNER_TEMP/hosted-fixture") > "$RUNNER_TEMP/cmd-capsule.log" 2>&1 || code=$?
+          echo "$code" > "$RUNNER_TEMP/cmd-capsule.exit"
+          test "$code" = 0
+          mkdir test/rbe/hosted_cmd
+          cp "$RUNNER_TEMP/hosted-fixture"/{BUILD,run.sh,identity.json} test/rbe/hosted_cmd/
+          mv "$RUNNER_TEMP/hosted-fixture/cmd.tar" test/rbe/hosted_cmd/cmd.tar
+          cp "$RUNNER_TEMP/hosted-cmd" test/rbe/hosted_cmd/hosted_cmd.py
+      - name: Run the complete owner in private namespaces on the hosted kernel
+        run: |
+          set -eu
+          test ! -e "$RUNNER_TEMP/cmd.bazelrc"
+          test -z "${BUILDBUDDY_API_KEY:-}"
+          install -d -m 0700 "$RUNNER_TEMP/hosted-fixture/records"
+          code=0
+          "$RUNNER_TEMP/bazelisk" test --spawn_strategy=sandboxed --strategy=TestRunner=standalone --remote_executor= --remote_cache= --bes_backend= --noremote_upload_local_results --nocache_test_results --flaky_test_attempts=1 --test_env=CGROUPV2=true --test_env=GO_TEST_WRAP_TESTV=1 --test_env=TEST_HOSTED_ID="$GITHUB_RUN_ID" --test_env=TEST_HOSTED_RECORD_ROOT="$RUNNER_TEMP/hosted-fixture/records" --jobs=3 --build_event_json_file="$RUNNER_TEMP/cmd-local.bep" //test/rbe/hosted_cmd:original > "$RUNNER_TEMP/cmd-local.log" 2>&1 || code=$?
+          echo "$code" > "$RUNNER_TEMP/cmd-local.exit"
+      - name: Retain categorical owner and subtest evidence
+        if: always() && !cancelled()
+        run: |
+          test ! -e "$RUNNER_TEMP/cmd.bazelrc"
+          python3 -IB "$RUNNER_TEMP/hosted-cmd" report
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: native-hosted-arm-cmd
+          path: ${{ runner.temp }}/cmd-result.json
+          if-no-files-found: error
