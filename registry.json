@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T01:23:17+00:00",
+    "updatedAt": "2026-11-07T01:29:13+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -56999,14 +56999,18 @@
       "repo": "google/gvisor",
       "number": 17155,
       "ref": "buildkite-cli-small",
-      "head": "98d7263c5cc3c7983a2a5533e5d1b8bf4505f5a6",
+      "head": "7dcbb6614568884fd0e7bbd68aefe7acde7db3ec",
       "title": "Add a tool for reading Buildkite CI results",
       "url": "https://github.com/google/gvisor/pull/17155",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-11-07T00:41:21.523Z",
-      "summary": "The revised Buildkite CLI passes all four original review cases. The patch also includes a generated Python bytecode file.",
+      "updatedAt": "2026-11-07T01:29:13+00:00",
+      "summary": "The author removed the generated Python bytecode. The CLI, its BUILD file and its tests are byte-identical to the revision on which all four reported cases passed.",
       "evidence": [
+        {
+          "label": "Author revision removing the generated file",
+          "url": "https://github.com/google/gvisor/commit/7dcbb6614"
+        },
         {
           "label": "Published follow-up on all four fixes and the generated cache file",
           "url": "https://github.com/google/gvisor/pull/17155#pullrequestreview-5808929060"
@@ -57057,11 +57061,11 @@
         }
       ],
       "followup": {
-        "owner": "Author",
-        "sourceHead": "98d7263c5cc3c7983a2a5533e5d1b8bf4505f5a6",
-        "observedAt": "2026-11-07T00:41:21.523Z",
-        "disposition": "All four original findings passed the Linux replay. The generated-file follow-up is posted.",
-        "nextAction": "Check whether the next revision removes the tracked Python bytecode.",
+        "owner": "Maintainers",
+        "sourceHead": "7dcbb6614568884fd0e7bbd68aefe7acde7db3ec",
+        "observedAt": "2026-11-07T01:29:13+00:00",
+        "disposition": "All four findings and the bytecode follow-up are addressed.",
+        "nextAction": "Await upstream review or an explicit re-review request.",
         "evidence": [
           "https://github.com/google/gvisor/pull/17155#pullrequestreview-5808929060"
         ]
