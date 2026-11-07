@@ -2,6 +2,7 @@ load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("//tools:arch.bzl", "select_arch")
 load("//tools:defs.bzl", "go_binary", "pkg_deb", "pkg_tar", "version")
 load("//tools:release.bzl", "SIDECARS", "instrumented_release_tars")
+load(":artifacts.bzl", "release_artifacts")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -127,6 +128,16 @@ pkg_tar(
     package_file_name = "gvisor.tar.zstd",
     visibility = ["//visibility:public"],
     deps = RELEASE_TAR_DEPS,
+)
+
+release_artifacts(
+    name = "release-artifacts",
+    srcs = [
+        ":debian",
+        ":gvisor-release-tar-bz2",
+        ":gvisor-release-tar-zstd",
+    ],
+    visibility = ["//visibility:public"],
 )
 
 # Release tarballs of instrumented gVisor builds, for fuzzing and testing.
