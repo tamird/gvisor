@@ -1372,3 +1372,58 @@ func TestPooledEncoderScratchReleasesPointers(t *testing.T) {
 	}
 	t.Fatal("pooled graphEncodeState retained user allocation across GC")
 }
+
+func BenchmarkSmallGraphAfterRestore(b *testing.B) {
+	registerCycleTestTypes()
+	ctx := b.Context()
+	var small bytes.Buffer
+	want := uint64(31)
+	if _, err := saveGraph(ctx, &small, &want); err != nil {
+		b.Fatal(err)
+	}
+	for _, prior := range []string{"Small", "Large"} {
+		b.Run(prior, func(b *testing.B) {
+			// Run each case on one P with GOGC=off. Drop earlier benchmark
+			// iterations' pools before priming this one with a real load.
+			runtime.GC()
+			runtime.GC()
+			if prior == "Large" {
+				nodes := make([]*cycleTestNode, 50000)
+				for i := range nodes {
+					nodes[i] = new(cycleTestNode)
+				}
+				var frame bytes.Buffer
+				if _, err := saveGraph(ctx, &frame, &nodes); err != nil {
+					b.Fatal(err)
+				}
+				var restored []*cycleTestNode
+				if _, err := Load(ctx, &frame, &restored); err != nil {
+					b.Fatal(err)
+				}
+				if len(restored) != len(nodes) || restored[len(nodes)-1] == nil {
+					b.Fatal("incomplete priming graph")
+				}
+			} else {
+				var restored uint64
+				if _, err := Load(ctx, bytes.NewReader(small.Bytes()), &restored); err != nil || restored != want {
+					b.Fatalf("priming load: value=%d, error=%v", restored, err)
+				}
+			}
+			ds := graphDecodeStatePool.Get().(*graphDecodeState)
+			callbacks := cap(ds.cbs)
+			graphDecodeStatePool.Put(ds)
+			if (callbacks >= 50000) != (prior == "Large") {
+				b.Fatalf("unexpected priming callback capacity %d", callbacks)
+			}
+			b.ReportAllocs()
+			b.ResetTimer()
+			for range b.N {
+				var restored uint64
+				if _, err := Load(ctx, bytes.NewReader(small.Bytes()), &restored); err != nil || restored != want {
+					b.Fatalf("small load: value=%d, error=%v", restored, err)
+				}
+			}
+			b.ReportMetric(float64(callbacks), "primed-callbacks")
+		})
+	}
+}

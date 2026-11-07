@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "default_platform", "go_library", "go_test", "most_shards", "platforms")
+load("//tools:defs.bzl", "default_platform", "go_library", "go_test", "most_shards", "namespace_test_exec_properties", "platforms")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -71,6 +71,7 @@ go_test(
         "//test/cmd/test_app",
     ],
     embed = [":container"],
+    exec_properties = namespace_test_exec_properties,
     shard_count = most_shards,
     tags = ["requires-kvm"],
     deps = [
@@ -93,6 +94,7 @@ go_test(
         "//pkg/sentry/state/checkpointfiles",
         "//pkg/state",
         "//pkg/state/statefile",
+        "//pkg/state/wire",
         "//pkg/sync",
         "//pkg/test/testutil",
         "//pkg/unet",
