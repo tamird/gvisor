@@ -142,7 +142,7 @@ func TestIsProcFDPath(t *testing.T) {
 func TestRootfsUpperExecute(t *testing.T) {
 	conf := testutil.TestConfig(t)
 	conf.Overlay2.Set("root:memory")
-	spec := testutil.NewSpecWithArgs("/bin/sleep", "10000")
+	spec := idleGuestSpec(t)
 	spec.Root.Readonly = false
 
 	_, bundleDir, cleanup, err := testutil.SetupContainer(spec, conf)

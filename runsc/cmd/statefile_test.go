@@ -75,7 +75,7 @@ func TestStatefile(t *testing.T) {
 			conf := testutil.TestConfig(t)
 			conf.Network = config.NetworkNone
 			conf.StateEngine = tc.engine
-			spec := testutil.NewSpecWithArgs("/bin/sleep", "10000")
+			spec := idleGuestSpec(t)
 			_, bundleDir, cleanup, err := testutil.SetupContainer(spec, conf)
 			if err != nil {
 				t.Fatalf("SetupContainer: %v", err)
@@ -146,7 +146,7 @@ func TestCheckpointStateEngineFlag(t *testing.T) {
 	t.Run("override_default_graph_with_wire", func(t *testing.T) {
 		conf := testutil.TestConfig(t)
 		conf.Network = config.NetworkNone
-		spec := testutil.NewSpecWithArgs("/bin/sleep", "10000")
+		spec := idleGuestSpec(t)
 		_, bundleDir, cleanup, err := testutil.SetupContainer(spec, conf)
 		if err != nil {
 			t.Fatalf("SetupContainer: %v", err)
@@ -194,7 +194,7 @@ func TestCheckpointStateEngineFlag(t *testing.T) {
 		conf := testutil.TestConfig(t)
 		conf.Network = config.NetworkNone
 		conf.StateEngine = config.StateEngineWire
-		spec := testutil.NewSpecWithArgs("/bin/sleep", "10000")
+		spec := idleGuestSpec(t)
 		_, bundleDir, cleanup, err := testutil.SetupContainer(spec, conf)
 		if err != nil {
 			t.Fatalf("SetupContainer: %v", err)
@@ -262,7 +262,7 @@ func TestCheckpointStateEngineAnnotationsAndSubcommand(t *testing.T) {
 		conf := testutil.TestConfig(t)
 		conf.Network = config.NetworkNone
 		conf.AllowFlagOverride = true
-		spec := testutil.NewSpecWithArgs("/bin/sleep", "10000")
+		spec := idleGuestSpec(t)
 		spec.Annotations = map[string]string{
 			"dev.gvisor.flag.state-engine": "graph",
 		}
@@ -332,7 +332,7 @@ func TestCheckpointStateEngineAnnotationsAndSubcommand(t *testing.T) {
 		conf := testutil.TestConfig(t)
 		conf.Network = config.NetworkNone
 		conf.AllowFlagOverride = true
-		spec := testutil.NewSpecWithArgs("/bin/sleep", "10000")
+		spec := idleGuestSpec(t)
 		spec.Annotations = map[string]string{
 			"dev.gvisor.flag.state-engine": "wire",
 		}

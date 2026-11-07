@@ -152,7 +152,7 @@ func testBootPosture(t *testing.T, tc postureCase) {
 	stop := testutil.StartReaper()
 	defer stop()
 
-	spec := testutil.NewSpecWithArgs("/bin/sleep", "10000")
+	spec := idleGuestSpec(t)
 	_, bundleDir, cleanup, err := testutil.SetupContainer(spec, conf)
 	if err != nil {
 		t.Fatalf("Error setting up container: %v", err)
