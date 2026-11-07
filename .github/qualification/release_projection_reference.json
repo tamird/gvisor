@@ -1,0 +1,33 @@
+{
+  "artifact": 13585765912,
+  "empty": {
+    "cquery_member_sha256": "ff79c38553ae5e5cbab0103d7ae3044c29f34d15a997ce8f78972a0041156d58",
+    "dist": [],
+    "native": {
+      "aarch64/gvisor.tar.bz2": "bazel-out/aarch64-opt-ST-153bdef7b16b/bin/debian/gvisor.tar.bz2",
+      "aarch64/gvisor.tar.zstd": "bazel-out/aarch64-opt-ST-153bdef7b16b/bin/debian/gvisor.tar.zstd",
+      "aarch64/runsc.deb": "bazel-out/aarch64-opt-ST-153bdef7b16b/bin/debian/runsc.deb",
+      "x86_64/gvisor.tar.bz2": "bazel-out/k8-opt-ST-17ef5880da81/bin/debian/gvisor.tar.bz2",
+      "x86_64/gvisor.tar.zstd": "bazel-out/k8-opt-ST-17ef5880da81/bin/debian/gvisor.tar.zstd",
+      "x86_64/runsc.deb": "bazel-out/k8-opt-ST-17ef5880da81/bin/debian/runsc.deb"
+    },
+    "root": "bazel-out/k8-opt/bin/debian/release-inputs/"
+  },
+  "sha256": "9143434b2d3bfad71cc60e72cd2edb3e896c214b042b01e00e4d99f8aa388aab",
+  "source": "1ddee9fb4a6e2ae7bf346cef19d87f5a4b2c5ac5",
+  "tagged": {
+    "cquery_member_sha256": "398e1af13e7d35905fd2dcf7420d0660b88cd18c4599b54d02a3d2003ba1a8d6",
+    "dist": [
+      "bazel-out/k8-opt/bin/sandboxexec/sandbox/python/dist"
+    ],
+    "native": {
+      "aarch64/gvisor.tar.bz2": "bazel-out/aarch64-opt-ST-153bdef7b16b/bin/debian/gvisor.tar.bz2",
+      "aarch64/gvisor.tar.zstd": "bazel-out/aarch64-opt-ST-153bdef7b16b/bin/debian/gvisor.tar.zstd",
+      "aarch64/runsc.deb": "bazel-out/aarch64-opt-ST-153bdef7b16b/bin/debian/runsc.deb",
+      "x86_64/gvisor.tar.bz2": "bazel-out/k8-opt-ST-17ef5880da81/bin/debian/gvisor.tar.bz2",
+      "x86_64/gvisor.tar.zstd": "bazel-out/k8-opt-ST-17ef5880da81/bin/debian/gvisor.tar.zstd",
+      "x86_64/runsc.deb": "bazel-out/k8-opt-ST-17ef5880da81/bin/debian/runsc.deb"
+    },
+    "root": "bazel-out/k8-opt/bin/debian/release-inputs/"
+  }
+}
