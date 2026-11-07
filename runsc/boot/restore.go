@@ -63,9 +63,9 @@ import (
 const (
 	// VersionKey is the key used to save runsc version in the save metadata and compare
 	// it across checkpoint restore.
-	VersionKey = "runsc_version"
+	VersionKey = sentryapi.VersionKey
 	// ContainerCountKey is the key used to save number of containers in the save metadata.
-	ContainerCountKey = "container_count"
+	ContainerCountKey = sentryapi.ContainerCountKey
 	// ContainerSpecsKey is the key used to add and pop the container specs to the
 	// metadata during save/restore.
 	ContainerSpecsKey = "container_specs"

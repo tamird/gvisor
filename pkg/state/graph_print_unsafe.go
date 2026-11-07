@@ -32,13 +32,22 @@ import (
 // by the binary that saved them. Objects are decoded without running their
 // load callbacks.
 func PrintGraph(w io.Writer, data []byte, graph uint64, asHTML bool) error {
-	return safely(func() {
-		printGraph(w, data, int(graph), asHTML)
+	_, err := PrintGraphRoot(w, data, graph, asHTML)
+	return err
+}
+
+// PrintGraphRoot prints the graph and returns the registered name of its root
+// type, or an empty string if the type has no registered name.
+func PrintGraphRoot(w io.Writer, data []byte, graph uint64, asHTML bool) (string, error) {
+	var name string
+	err := safely(func() {
+		name = printGraph(w, data, int(graph), asHTML)
 	})
+	return name, err
 }
 
 // printGraph prints a single object graph.
-func printGraph(w io.Writer, data []byte, graph int, asHTML bool) {
+func printGraph(w io.Writer, data []byte, graph int, asHTML bool) string {
 	ds := graphDecodeState{ctx: context.Background(), in: decBuf{b: data}, noCallbacks: true}
 	d := &ds.in
 	if magic := d.uint32(); magic != streamMagic {
@@ -96,6 +105,7 @@ func printGraph(w io.Writer, data []byte, graph int, asHTML bool) {
 		}
 		fmt.Fprint(w, "\n")
 	}
+	return rootType.name
 }
 
 // printer prints decoded objects.

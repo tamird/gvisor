@@ -24,6 +24,12 @@ import (
 )
 
 const (
+	// VersionKey identifies the saving runsc version in Sentry checkpoint metadata.
+	VersionKey = "runsc_version"
+
+	// ContainerCountKey records the number of containers in the saved sandbox.
+	ContainerCountKey = "container_count"
+
 	// CPUFeaturesKey is the key used to save the sandbox's CPU features in the
 	// save metadata. The value is a comma-separated list of feature names, in
 	// the same format as the output of `runsc cpu-features`.
