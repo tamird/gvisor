@@ -1,35 +1,45 @@
-name: CI
-
-"on":
+name: Compare build-only products in three native source-presubmit graphs
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/mixed-build-only-coverage]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  analyze:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 2, persist-credentials: false}
+      - name: Bind the original build-only roots, runnable controls and product
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 4b87bd4875ecde1ab6b994030d59871b59363ca1
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/mixed_build'
+          work="$RUNNER_TEMP/mixed-build"
+          mkdir -p "$work/results"
+          cp .github/qualification/mixed_build/{original.txt,runnable.json,coverage.py,action_graph.py} "$work/"
+          git checkout -q --detach HEAD^
+          test "$(cat .bazelversion)" = 9.3.1
+          curl -fsSL --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$work/bazel"
+          cd "$work"
+          sha256sum --check <<'SUMS'
+          e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  bazel
+          d6afff277a7066c6fcbc2da0c9f5014d7263d5f42290dcc17735930a25961d7f  original.txt
+          e882cee2dcfd58f4b955fbcbb93bdd4c057ca33592080a877ba4ceefb78fe803  runnable.json
+          SUMS
+          chmod 755 bazel
+      - name: Select, configure and compare the declared default artifacts
+        run: |
+          env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 RUNNER_TEMP="$RUNNER_TEMP" python3 -EsB "$RUNNER_TEMP/mixed-build/coverage.py"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: source-presubmit-build-coverage
+          path: |
+            ${{ runner.temp }}/mixed-build/results/summary.json
+            ${{ runner.temp }}/mixed-build/results/owners.jsonl
+            ${{ runner.temp }}/mixed-build/results/*-products.json
+            ${{ runner.temp }}/mixed-build/results/mixed-dependencies.json
+          if-no-files-found: error
+          retention-days: 14
