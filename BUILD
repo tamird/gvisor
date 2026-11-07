@@ -5,6 +5,7 @@ load("@rules_license//rules:license.bzl", "license")
 load("//tools:defs.bzl", "build_test", "gazelle", "go_path")
 load("//tools:gazelle.bzl", "GAZELLE_PACKAGES")
 load("//tools:release.bzl", "RELEASE_RUNSC", "RELEASE_SIDECARS", "release_files")
+load("//tools/bazeldefs:test_architectures.bzl", "arm64_test_files")
 load("//tools/nogo:defs.bzl", "nogo_config")
 load("//tools/yamltest:defs.bzl", "yaml_test")
 load("//website:defs.bzl", "doc")
@@ -181,28 +182,46 @@ package_group(
     packages = ["//..."],
 )
 
-# For targets that will not normally build internally, we ensure that they are
-# least build by a static BUILD test.
+# These tests also need to compile in internal builds, where they do not run.
+_BUILD_TEST_TARGETS = [
+    "//test/e2e:integration_test",
+    "//test/image:image_test",
+    "//test/root:crictl_test",
+    "//test/root:root_test",
+    "//test/benchmarks/base:startup_test",
+    "//test/benchmarks/base:size_test",
+    "//test/benchmarks/base:sysbench_test",
+    "//test/benchmarks/database:redis_test",
+    "//test/benchmarks/fs:bazel_test",
+    "//test/benchmarks/fs:fio_test",
+    "//test/benchmarks/media:ffmpeg_test",
+    "//test/benchmarks/ml:tensorflow_test",
+    "//test/benchmarks/network:httpd_test",
+    "//test/benchmarks/network:nginx_test",
+    "//test/benchmarks/network:node_test",
+    "//test/benchmarks/network:ruby_test",
+]
+
+arm64_test_files(
+    name = "build_test_arm64_files",
+    testonly = True,
+    srcs = _BUILD_TEST_TARGETS,
+    tags = ["manual"],
+)
+
+filegroup(
+    name = "build_test_files",
+    testonly = True,
+    srcs = _BUILD_TEST_TARGETS + select({
+        "//test/rbe:mixed_native_tests": [":build_test_arm64_files"],
+        "//conditions:default": [],
+    }),
+    tags = ["manual"],
+)
+
 build_test(
     name = "build_test",
-    targets = [
-        "//test/e2e:integration_test",
-        "//test/image:image_test",
-        "//test/root:crictl_test",
-        "//test/root:root_test",
-        "//test/benchmarks/base:startup_test",
-        "//test/benchmarks/base:size_test",
-        "//test/benchmarks/base:sysbench_test",
-        "//test/benchmarks/database:redis_test",
-        "//test/benchmarks/fs:bazel_test",
-        "//test/benchmarks/fs:fio_test",
-        "//test/benchmarks/media:ffmpeg_test",
-        "//test/benchmarks/ml:tensorflow_test",
-        "//test/benchmarks/network:httpd_test",
-        "//test/benchmarks/network:nginx_test",
-        "//test/benchmarks/network:node_test",
-        "//test/benchmarks/network:ruby_test",
-    ],
+    targets = [":build_test_files"],
 )
 
 # gopath defines a directory that is structured in a way that is compatible

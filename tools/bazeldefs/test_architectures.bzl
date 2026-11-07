@@ -23,6 +23,8 @@ def with_test_architecture(test_rule, architecture, extra_providers = [], implic
         [target.platform],
     )
 
+arm64_test_files, _arm64_test_files_transition = with_test_architecture(native.filegroup, "arm64").build()
+
 def _test_attributes(architecture, kwargs):
     attributes = dict(kwargs)
     # Only test execution requires the target CPU. Compilers and linkers may
