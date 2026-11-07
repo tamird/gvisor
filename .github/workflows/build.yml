@@ -1,35 +1,78 @@
-name: CI
-
-"on":
+name: Run the maintained Python sandbox and vDSO tests on both native CPUs
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/mixed-maintained-python-owners]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  check:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Bind the two maintained Python tests and the pinned client
+        run: |
+          set -eu
+          work="$RUNNER_TEMP/mixed-native"
+          mkdir -p "$work/output"
+          test "$(git rev-parse HEAD^)" = de2430fdaeb26f743667ee569e15bec5e369ce63
+          test "$(git rev-parse HEAD^^)" = a39f38e89dc7110a5bc35cd70821388d2d22f62a
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/mixed_python/check.py' ':!.github/qualification/mixed_python/exec_cas.py'
+          cp .github/qualification/mixed_python/{check,exec_cas}.py "$work/"
+          git checkout -q --detach HEAD^
+          test "$(uname -m)" = x86_64
+          test "$(cat .bazelversion)" = 9.3.1
+          curl -fsSL --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$work/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $work/bazel" | sha256sum -c -
+          chmod 755 "$work/bazel"
+      - name: Check the actual configured selection without executing actions
+        id: graph
+        timeout-minutes: 32
+        run: |
+          work="$RUNNER_TEMP/mixed-native"
+          python3 -EsB "$work/check.py" analyze
+          python3 -IB -c 'import json,sys; assert json.load(open(sys.argv[1]))["eligible"]' "$work/output/selection.json"
+      - name: Run the four original Python test owners on the two remote architectures
+        timeout-minutes: 45
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?missing fork key}"
+          work="$RUNNER_TEMP/mixed-native"
+          rc="$work/remote.rc"
+          trap 'rm -f "$rc"' EXIT
+          cat > "$rc" <<'RC'
+          build:source-presubmit-mixed --remote_executor=grpcs://remote.buildbuddy.io
+          build:source-presubmit-mixed --remote_cache=grpcs://remote.buildbuddy.io
+          build:source-presubmit-mixed --bes_backend=grpcs://remote.buildbuddy.io
+          build:source-presubmit-mixed --bes_results_url=https://app.buildbuddy.io/invocation/
+          RC
+          printf 'build:source-presubmit-mixed --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >> "$rc"
+          unset BUILDBUDDY_API_KEY
+          python3 -EsB "$work/check.py" execute
+      - name: Bind the original SDK cases and the vDSO passed to the checker
+        if: always() && !cancelled()
+        run: |
+          work="$RUNNER_TEMP/mixed-native"
+          test ! -e "$work/remote.rc"
+          python3 -EsB "$work/check.py" collect
+      - name: Read the four original TestRunner actions for this invocation
+        if: always() && !cancelled() && steps.graph.outcome == 'success'
+        timeout-minutes: 4
+        env:
+          ACCESS: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -EsB "$RUNNER_TEMP/mixed-native/check.py" service
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: paired-maintained-python-tests
+          path: ${{ runner.temp }}/mixed-native/output/*.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Check the original physical and case evidence
+        if: always() && !cancelled()
+        run: |
+          python3 -IB -c 'import json,sys; assert json.load(open(sys.argv[1]))["verified"]' "$RUNNER_TEMP/mixed-native/output/workers.json"
