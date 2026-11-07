@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T07:34:12+00:00",
+    "updatedAt": "2026-11-07T07:45:29+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -34258,10 +34258,14 @@
         {
           "label": "40 passing native VFS test records and stock waiter-channel control",
           "url": "https://github.com/tamird/gvisor/actions/runs/41877636880/artifacts/13348071442"
+        },
+        {
+          "label": "Lucas approved b2cbea854 on November 5",
+          "url": "https://github.com/google/gvisor/pull/16594#pullrequestreview-5790902474"
         }
       ],
-      "updatedAt": "2026-11-04T17:52:11.993257+00:00",
-      "status": "Open; reviewer feedback applied",
+      "updatedAt": "2026-11-07T07:45:29+00:00",
+      "status": "Approved; awaiting current-source import",
       "summary": "Stock VFS panicked when a mount resolved between waiter registration and notification. Under the same controlled schedule, the fixed lookup returned the newly mounted root and unregistered. The ordinary VFS suite passed all 39 cases, and Nogo passed for AMD64 and ARM64. This exercises the optional mount-promise API; no in-tree registration caller was found. The resolved-after-registration path now returns before the wait. The reviewed VFS source matches the tested 39-case suite. The previous controlled schedule remains a fork witness; a mount-block event arrives after both loads.",
       "refinement": {
         "before": {
@@ -34274,11 +34278,11 @@
         }
       },
       "followup": {
-        "owner": "Source PR owner",
+        "owner": "Upstream import",
         "sourceHead": "b2cbea854fc9094a9b295a6226a90bccc4dad2ca",
-        "observedAt": "2026-11-04T17:52:11.993257+00:00",
-        "disposition": "Published the qualified test and answered Lucas’s nonblocking request.",
-        "nextAction": "Wait for upstream review of the amended head. The earlier approval and label reminder covered the previous revision.",
+        "observedAt": "2026-11-07T07:45:29+00:00",
+        "disposition": "Lucas approved b2cbea854 on November 5. The ready-to-pull label is present. Open import #16647 cites the previous 6fe570155 and failed on that source.",
+        "nextAction": "Wait for Copybara to export b2cbea854.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16594",
           "https://github.com/tamird/gvisor/commit/8d9ce8738115e23dec693545967f2c21124df6df",
@@ -34288,7 +34292,9 @@
           "https://github.com/tamird/gvisor/actions/runs/40792990873/artifacts/12862527261",
           "https://github.com/google/gvisor/pull/16594#pullrequestreview-5691234490",
           "https://github.com/google/gvisor/pull/16594#pullrequestreview-5758483291",
-          "https://github.com/google/gvisor/pull/16594#issuecomment-6637870581"
+          "https://github.com/google/gvisor/pull/16594#issuecomment-6637870581",
+          "https://github.com/google/gvisor/pull/16594#pullrequestreview-5790902474",
+          "https://github.com/google/gvisor/pull/16647"
         ]
       },
       "reapproval": {
@@ -51669,13 +51675,13 @@
       "repo": "google/gvisor",
       "number": 16820,
       "ref": "proposal/tcp-idle-restart-data",
-      "head": "919f647f2d42495ee7e568b96eb1f9a2a06dbbb7",
+      "head": "0ae0847e45b90d952eed624131819e83e1b810d4",
       "title": "TCP: restart the congestion window after a pause in sending data",
       "url": "https://github.com/google/gvisor/pull/16820",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-11-05T19:38:10.552336Z",
-      "summary": "After a pause in forward data, ACKs sent for reverse traffic let stock gVisor burst 50 segments. Linux and the corrected sender sent 10. All three sent 10 when the peer was quiet.",
+      "updatedAt": "2026-11-07T07:45:29+00:00",
+      "summary": "After a pause in forward data, ACKs sent for reverse traffic let stock gVisor burst 50 segments. Linux and the corrected sender sent 10. All three sent 10 when the peer was quiet. Rebasing on 3847ed738 preserved the approved two-file change and master’s TestTCPInfoOptions. All nine cases passed on Linux and on the revised gVisor source with fresh TestRunners and no skips.",
       "evidence": [
         {
           "label": "Public CI stopped fetching rules_m4 with HTTP 500; the archive now matches BCR’s checksum",
@@ -51696,6 +51702,14 @@
         {
           "label": "Published checklocks comment spacing; code unchanged",
           "url": "https://github.com/tamird/gvisor/commit/919f647f2"
+        },
+        {
+          "label": "Current source after resolving the packetimpact test conflict",
+          "url": "https://github.com/tamird/gvisor/commit/0ae0847e4"
+        },
+        {
+          "label": "All nine idle-restart cases on Linux and gVisor, with the original stock failure",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42350727248/artifacts/13565388243"
         }
       ],
       "settledReviews": [
