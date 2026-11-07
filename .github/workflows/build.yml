@@ -1,35 +1,75 @@
-name: CI
-
+name: Run the TCP benchmark with two netstack endpoints
 "on":
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/tcp-proxy-dual-netstack]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  benchmark:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Read the reviewed benchmark source
+        run: |
+          set -eu
+          git init -q .
+          git fetch --depth=2 --no-tags https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          source=641a5c300750a72805d4cacbcd71c92f91f5d46f
+          test "$(git rev-parse FETCH_HEAD^)" = "$source"
+          git diff --exit-code "$source" FETCH_HEAD -- . ':!.github/workflows/build.yml'
+          git checkout -q --detach "$source"
+          test "$(cat .bazelversion)" = 8.8.1
+      - name: Build the two helpers and the original benchmark with Bazel
+        run: |
+          set -eu
+          work="$RUNNER_TEMP/tcp-proxy"
+          mkdir -p "$work/helpers"
+          sudo -n apt-get -qq update
+          sudo -n env DEBIAN_FRONTEND=noninteractive apt-get -qq install -y --no-install-recommends bc ethtool iperf3 iproute2 kmod build-essential
+          curl -fsSL --retry 3 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$work/bazelisk"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $work/bazelisk" | sha256sum -c -
+          chmod +x "$work/bazelisk"
+          test "$("$work/bazelisk" --version)" = 'bazel 8.8.1'
+          export GIT_TERMINAL_PROMPT=0
+          prefix=//test/benchmarks/tcp:
+          args=(--config=x86_64 --jobs=4 --lockfile_mode=off)
+          "$work/bazelisk" build "${args[@]}" "${prefix}tcp_benchmark"
+          for target in nsjoin tcp_proxy; do
+            rel=$("$work/bazelisk" cquery "${args[@]}" --output=files "$prefix$target")
+            binary=$(realpath "$rel")
+            test -x "$binary"
+            ln -s "$binary" "$work/helpers/$target"
+          done
+          "$work/bazelisk" run "${args[@]}" --script_path="$work/run" "${prefix}tcp_benchmark" -- --client --server --verbose --helpers "$work/helpers" --no-user-ns
+      - name: Verify an iperf transfer through both isolated netstack proxies
+        run: |
+          set -eu
+          work="$RUNNER_TEMP/tcp-proxy"
+          # The benchmark unshares the mount, network and PID namespaces. Running
+          # its generated launcher as root lets it create the veths in those namespaces.
+          sudo -n modprobe sch_netem || test -d /sys/module/sch_netem
+          sudo -n timeout -k 10 180 env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin LANG=C HOME=/root "$work/run" > "$work/benchmark.log" 2>&1 || { tail -80 "$work/benchmark.log"; exit 1; }
+          python3 - "$work" <<'PY'
+          import json, pathlib, re, sys
+          work = pathlib.Path(sys.argv[1])
+          log = (work / "benchmark.log").read_text(errors="replace")
+          for side in ("client", "server"):
+              assert re.search(r"(?m)^\++ .*nsjoin /tmp/" + side + r"\.netns .*tcp_proxy .*?-" + side + r"(?:\s|$)", log), side
+          pattern = r"(?m)^\[\s*\d+\]\s+0\.00-([\d.]+)\s+sec\s+([\d.]+)\s+[KMG]?Bytes\s+([\d.]+)\s+Mbits/sec[^\n]*?\s+(sender|receiver)\s*$"
+          samples = re.findall(pattern, log)
+          assert {s[3] for s in samples} == {"sender", "receiver"}, samples
+          assert all(float(sec) >= 29 and float(size) > 0 and float(rate) > 0 for sec, size, rate, side in samples), samples
+          assert re.search(r"(?m)^BenchmarkTCP/role=client/\S+ 1 [\d.]+ Mb/s", log)
+          result = dict(head="641a5c300", client="netstack", server="netstack", samples=samples)
+          print(json.dumps(result))
+          (work / "transfer.json").write_text(json.dumps(result, indent=2) + "\n")
+          PY
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: dual-netstack-benchmark
+          path: |
+            ${{ runner.temp }}/tcp-proxy/transfer.json
+            ${{ runner.temp }}/tcp-proxy/benchmark.log
+          if-no-files-found: warn
+          retention-days: 14
