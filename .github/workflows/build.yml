@@ -1,35 +1,51 @@
-name: CI
-
-"on":
+name: Compare canonical compiler platforms with separate RBE workers
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/llvm-distinct-worker-configurations]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  analyze:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 38
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {fetch-depth: 4, persist-credentials: false}
+      - name: Bind both exact sources and the analysis-only command
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 35aa6228edcf1eb2bc07d6aa877b4317da27d68a
+          test "$(git rev-parse HEAD^^)" = d41933c9999f4b63085b0cb5211d64dda74bcdc4
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/rbe_platform_analysis/check.py'
+          test "$(git rev-parse HEAD^:tools/bazeldefs/BUILD)" = "$(git rev-parse HEAD^^^:tools/bazeldefs/BUILD)"
+          w="$RUNNER_TEMP/rbe-platform-analysis"
+          mkdir -m 700 "$w"
+          cp .github/qualification/rbe_platform_analysis/check.py "$w/"
+          curl -fsSL --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$w/bazel"
+          echo "e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  $w/bazel" | sha256sum -c -
+          chmod 755 "$w/bazel"
+      - name: Analyze the same-label mixed-worker control
+        continue-on-error: true
+        run: |
+          git checkout -q --detach d41933c9999f4b63085b0cb5211d64dda74bcdc4
+          python3 -IB "$RUNNER_TEMP/rbe-platform-analysis/check.py" generic
+      - name: Analyze the distinct RBE labels on unchanged compiler platforms
+        continue-on-error: true
+        run: |
+          git checkout -q --detach 35aa6228edcf1eb2bc07d6aa877b4317da27d68a
+          python3 -IB "$RUNNER_TEMP/rbe-platform-analysis/check.py" separate
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled()
+        with:
+          name: analyzed-presubmit-worker-configurations
+          path: |
+            ${{ runner.temp }}/rbe-platform-analysis/generic.json
+            ${{ runner.temp }}/rbe-platform-analysis/separate.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Check both configuration reports
+        if: always() && !cancelled()
+        run: |
+          w="$RUNNER_TEMP/rbe-platform-analysis"
+          jq -e .verified "$w/generic.json" "$w/separate.json"
+          jq -s -e 'all(.[]; .verified)' "$w/generic.json" "$w/separate.json"
