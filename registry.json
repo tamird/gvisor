@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T08:32:53+00:00",
+    "updatedAt": "2026-11-07T08:40:01+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -57192,9 +57192,21 @@
       "url": "https://github.com/tamird/gvisor/commit/4eb27c408",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T08:09:43+00:00",
-      "summary": "The rendered Buildkite step executed 374 shards across 364 owners on each native architecture. Each had 373 passes. AMD64 timed out in netgofer after a successful echo. ARM64 failed five Sentry filter-count assertions on Linux 5.10.0. Both architectures ran both checkpoint file-permission assertions. The two build-only targets excluded on ARM64 require x86_64.\n\nWith #17131 and the socket drain, peer EOF still discarded the second queued packet. Having the last receive worker signal EOF after delivery preserved both packets. An explicit detach could still discard queued packets while a callback was blocked. On each native Ubuntu OCI worker, the corrected code passed all 86 fdbased and 13 netgofer test records, with zero skips. The first combined run exposed a constructor mismatch in the existing fdbased test table. Its correction left the netgofer production code byte-identical.\n\nThe ARM64 5.10 worker enforces the filter on both threads while reporting inconsistent counts. Linux fixed that accounting in 5.10.60. With a searchable Sentry temporary directory on hosted ARM64 Linux 6.8, the unchanged binary passed all ten posture checks. The full cmd suite recorded 171 passes and two skips (KVM and coretags).\n\nThe 748-shard run executed the rendered Buildkite command. A separate offline Linux check ran the real Buildkite agent 4.10.1 pre-command and post-command hooks. The original source called docker ps and retried sudo apt-get update 30 times in eight seconds before reaching Bazel. With the coordinator change, each profile ran the same local Bazel sentinel. A deliberate failure in either profile still allowed the other to run and returned exit 1. The hooks kept the test-branch stamp and completion and failure tracking. The specialized-job control kept its Make log discovery, artifact and annotation calls, and cleanup. Service writes were recorded offline.\n\nThe separate research step still invokes Bazel twice. The ordinary pipeline runs make unit-tests on the default AMD64 cgroupv2 queue and on the ARM64 queue, whose cgroup version is unspecified. The selected coordinator needs Bazel or Bazelisk and a site-configured remote executor with any required access. The repository declares worker constraints but no upstream executor address.",
+      "updatedAt": "2026-11-07T08:40:01+00:00",
+      "summary": "On source 2e72c3051, one invocation of the rendered Buildkite command ran the runsc version and statefile output-permission tests on native AMD64 and ARM64 Ubuntu workers. All four test actions executed uncached. Each version test ran its architecture’s runsc as UID/GID 0:0. Both statefile subtests passed as UID/GID 65534:65534 on each architecture, including rejection of a read-only file and successful writes through directories without read permission. The uname targets were checked during selection only.\n\nThe earlier two-invocation Buildkite step executed 374 shards across 364 owners on each native architecture. Each had 373 passes. AMD64 timed out in netgofer after a successful echo. ARM64 failed five Sentry filter-count assertions on Linux 5.10.0. Both architectures ran both checkpoint file-permission assertions. The two build-only targets excluded on ARM64 require x86_64.\n\nWith #17131 and the socket drain, peer EOF still discarded the second queued packet. Having the last receive worker signal EOF after delivery preserved both packets. An explicit detach could still discard queued packets while a callback was blocked. On each native Ubuntu OCI worker, the corrected code passed all 86 fdbased and 13 netgofer test records, with zero skips. The first combined run exposed a constructor mismatch in the existing fdbased test table. Its correction left the netgofer production code byte-identical.\n\nThe ARM64 5.10 worker enforces the filter on both threads while reporting inconsistent counts. Linux fixed that accounting in 5.10.60. With a searchable Sentry temporary directory on hosted ARM64 Linux 6.8, the unchanged binary passed all ten posture checks. The full cmd suite recorded 171 passes and two skips (KVM and coretags).\n\nThe 748-shard run executed the rendered Buildkite command. A separate offline Linux check ran the real Buildkite agent 4.10.1 pre-command and post-command hooks. The original source called docker ps and retried sudo apt-get update 30 times in eight seconds before reaching Bazel. With the coordinator change, each profile ran the same local Bazel sentinel. A deliberate failure in either profile still allowed the other to run and returned exit 1. The hooks kept the test-branch stamp and completion and failure tracking. The specialized-job control kept its Make log discovery, artifact and annotation calls, and cleanup. Service writes were recorded offline.\n\nThe ordinary pipeline runs make unit-tests on the default AMD64 cgroupv2 queue and on the ARM64 queue, whose cgroup version is unspecified. The selected coordinator needs Bazel or Bazelisk and a site-configured remote executor with any required access. The repository declares worker constraints but no upstream executor address.",
       "evidence": [
+        {
+          "label": "Four uncached native test actions and their runsc identities on qualification 4d4f398ae",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42355972011/artifacts/13568175565"
+        },
+        {
+          "label": "The single native AMD64 and ARM64 BuildBuddy invocation",
+          "url": "https://app.buildbuddy.io/invocation/09e2fb17-6101-4648-a60f-b6defe359ea6"
+        },
+        {
+          "label": "Canonical mixed source profile and Buildkite command under test",
+          "url": "https://github.com/tamird/gvisor/commit/2e72c3051"
+        },
         {
           "label": "Offline Buildkite agent command-phase hooks, two local Bazel profiles and deliberate failures",
           "url": "https://github.com/tamird/gvisor/actions/runs/42353594969/artifacts/13566263218"
@@ -57604,10 +57616,13 @@
       "followup": {
         "owner": "Agent",
         "sourceHead": "4eb27c4081e535d69c1257998a6c94256d9812e2",
-        "observedAt": "2026-11-07T08:09:43+00:00",
-        "disposition": "The two ordinary profiles include the full shard inventory and the split permission owner. The mixed profile has known coverage gaps.",
-        "nextAction": "Apply the tested hook split to the two source-only unit entries in .buildkite/pipeline.yaml. Replace the temporary two-command shell loop with one mixed Bazel invocation, verify the intended owner coverage, and confirm the chosen queue's trusted executor settings. Once #17131 and a packet-socket EOF mechanism land, rebase the receive-worker handoff. The scoped FIONREAD change has fork-test authorization only. The ARM64 cmd suite still needs a remote Firecracker guest with the filter-count correction.",
+        "observedAt": "2026-11-07T08:40:01+00:00",
+        "disposition": "The mixed command ran both test owners on each architecture. The full 748-shard inventory was exercised in two earlier invocations. Coverage of that inventory in one invocation remains open.",
+        "nextAction": "Inventory the remaining configured test owners and shards at 2e72c3051 on each architecture. Run the owners that still lack native execution evidence through the mixed command, and verify full 748-shard coverage in one invocation. Confirm the chosen queue’s trusted executor settings. Once #17131 and a packet-socket EOF mechanism land, rebase the receive-worker handoff. The scoped FIONREAD change has fork-test authorization only. The ARM64 cmd suite still needs a remote Firecracker guest with the filter-count correction.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/42355972011/artifacts/13568175565",
+          "https://app.buildbuddy.io/invocation/09e2fb17-6101-4648-a60f-b6defe359ea6",
+          "https://github.com/tamird/gvisor/commit/2e72c3051",
           "https://github.com/tamird/gvisor/actions/runs/42353594969/artifacts/13566263218",
           "https://github.com/tamird/gvisor/commit/3d33ffbfa",
           "https://github.com/tamird/gvisor/actions/runs/42295193272/artifacts/13541852854",
