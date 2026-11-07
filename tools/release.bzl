@@ -1,6 +1,8 @@
 """Rules assembling the gVisor release binaries in their installed layout."""
 
-load("//tools:defs.bzl", "COPY_FILE_TOOLCHAINS", "copy_file_action", "cov_available", "pkg_tar")
+load("//tools/bazeldefs:defs.bzl", "COPY_FILE_TOOLCHAINS", "copy_file_action")
+load("//tools/bazeldefs:go.bzl", "cov_available")
+load("//tools/bazeldefs:pkg.bzl", "pkg_tar")
 
 # FLAVORS are the instrumentation flavors of gVisor binaries.
 FLAVORS = [

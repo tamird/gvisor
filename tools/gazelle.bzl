@@ -4,6 +4,23 @@ See //:gazelle_check. Each entry is a single package; subpackages are not
 included.
 """
 
+load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
+
+def gazelle_entrypoint(name):
+    """Expose the generated Bash runner and its executable at the repository root."""
+    native_binary(
+        name = name + "-runner",
+        src = "//tools:" + name + "_script",
+        out = name + "-runner.bash",
+    )
+    sh_binary(
+        name = name,
+        srcs = [":" + name + "-runner"],
+        tags = ["manual"],
+        deps = ["@bazel_tools//tools/bash/runfiles"],
+    )
+
 GAZELLE_PACKAGES = [
     "pkg/abi",
     "pkg/abi/attestation",

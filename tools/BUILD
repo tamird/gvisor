@@ -1,5 +1,6 @@
 load("@rules_python//python:py_test.bzl", "py_test")
-load("//tools:defs.bzl", "bzl_library", "gotsan_flag_values", "gotsan_values")
+load("//tools:defs.bzl", "bzl_library", "gazelle", "gotsan_flag_values", "gotsan_values")
+load(":gazelle.bzl", "GAZELLE_PACKAGES")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -61,6 +62,10 @@ bzl_library(
     visibility = [
         "//:sandbox",
     ],
+    deps = [
+        "@bazel_skylib//rules:native_binary",
+        "@rules_shell//shell:rules_bzl",
+    ],
 )
 
 bzl_library(
@@ -69,7 +74,11 @@ bzl_library(
     visibility = [
         "//:sandbox",
     ],
-    deps = [":defs_bzl"],
+    deps = [
+        "//tools/bazeldefs:defs_bzl",
+        "//tools/bazeldefs:go_bzl",
+        "//tools/bazeldefs:pkg_bzl",
+    ],
 )
 
 exports_files([
@@ -88,3 +97,33 @@ py_test(
         "//:.clang-format",
     ],
 )
+
+gazelle(name = "gazelle")
+
+# Gazelle indexes go_library rules by importpath, which unmigrated BUILD files
+# omit, so resolve gvisor.dev/gvisor imports by path instead (-index=none).
+GAZELLE_ARGS = [
+    "-index=none",
+    "-r=false",
+] + GAZELLE_PACKAGES
+
+gazelle(
+    name = "gazelle_check",
+    args = GAZELLE_ARGS,
+    mode = "diff",
+)
+
+gazelle(
+    name = "gazelle_fix",
+    args = GAZELLE_ARGS,
+)
+
+# Expose only the generated scripts to the repository-root entry points.
+[
+    alias(
+        name = name + "_script",
+        actual = ":" + name + "-runner",
+        visibility = ["//:__pkg__"],
+    )
+    for name in ["gazelle", "gazelle_check", "gazelle_fix"]
+]

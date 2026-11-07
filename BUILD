@@ -2,9 +2,10 @@ load("@bazel_lib//lib:write_source_files.bzl", "write_source_files")
 load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_license//rules:license.bzl", "license")
-load("//tools:defs.bzl", "build_test", "gazelle", "go_path")
-load("//tools:gazelle.bzl", "GAZELLE_PACKAGES")
+load("//tools:gazelle.bzl", "gazelle_entrypoint")
 load("//tools:release.bzl", "RELEASE_RUNSC", "RELEASE_SIDECARS", "release_files")
+load("//tools/bazeldefs:defs.bzl", "build_test")
+load("//tools/bazeldefs:go.bzl", "go_path")
 load("//tools/nogo:defs.bzl", "nogo_config")
 load("//tools/yamltest:defs.bzl", "yaml_test")
 load("//website:defs.bzl", "doc")
@@ -277,25 +278,11 @@ go_path(
 # gazelle:exclude pkg/eventchannel
 # gazelle:exclude pkg/metric
 # gazelle:exclude pkg/sentry/strace
-gazelle(name = "gazelle")
+gazelle_entrypoint(name = "gazelle")
 
-# Gazelle indexes go_library rules by importpath, which unmigrated BUILD files
-# omit, so resolve gvisor.dev/gvisor imports by path instead (-index=none).
-GAZELLE_ARGS = [
-    "-index=none",
-    "-r=false",
-] + GAZELLE_PACKAGES
+gazelle_entrypoint(name = "gazelle_check")
 
-gazelle(
-    name = "gazelle_check",
-    args = GAZELLE_ARGS,
-    mode = "diff",
-)
-
-gazelle(
-    name = "gazelle_fix",
-    args = GAZELLE_ARGS,
-)
+gazelle_entrypoint(name = "gazelle_fix")
 
 exports_files([
     "go.sum",

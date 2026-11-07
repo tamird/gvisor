@@ -1,6 +1,6 @@
 """Wrappers for website documentation."""
 
-load("//tools:defs.bzl", "short_path")
+load("//tools/bazeldefs:defs.bzl", "short_path")
 
 # DocInfo is a provider which simple adds sufficient metadata to the source
 # files (and additional data files) so that a jeyll header can be constructed

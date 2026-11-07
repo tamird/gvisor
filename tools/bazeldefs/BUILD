@@ -22,7 +22,7 @@ bzl_library(
 bzl_library(
     name = "defs_bzl",
     srcs = ["defs.bzl"],
-    visibility = ["//visibility:private"],
+    visibility = ["//tools:__pkg__"],
     deps = [
         "@bazel_skylib//rules/directory:providers",
         "@rules_cc//cc/common",
@@ -32,8 +32,15 @@ bzl_library(
 bzl_library(
     name = "go_bzl",
     srcs = ["go.bzl"],
-    visibility = ["//visibility:private"],
+    visibility = ["//tools:__pkg__"],
     deps = [":defs_bzl"],
+)
+
+bzl_library(
+    name = "pkg_bzl",
+    srcs = ["pkg.bzl"],
+    visibility = ["//tools:__pkg__"],
+    deps = ["@rules_pkg//pkg:bzl_srcs"],
 )
 
 # Keep Go's pure/cgo mode in its build settings, not the target platform:
