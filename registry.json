@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T14:46:34+00:00",
+    "updatedAt": "2026-11-07T14:56:09+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -60414,6 +60414,40 @@
         "summary": "Open this single-commit PR to wait through the proc umounter’s Go handle? The native ARM64 control reproduced the retained pidfd on stock. The corrected uninstrumented runtime passed all ten posture comparisons. The separate Linux 5.10 per-thread Seccomp_filters discrepancy is still open.",
         "body": "Since f2f760bd4, the Sentry can apply capabilities without an exec.\nOn this path it starts the proc umounter with exec.Cmd and reaps it\nwith wait4. Go can keep the helper's pidfd open after the guest starts\nuntil garbage collection releases it. TestBootPosture then reports an\nunexpected pidfd.\n\nSignal the unmount through the pipe and wait on the Cmd that started\nthe helper. This checks the child's exit status and closes its pidfd.\nA Sentry that re-executes inherits only the pipe and uses wait4."
       }
+    },
+    {
+      "id": "branch:native-release-archives",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "research/native-release-archives",
+      "head": "657d01de1cf19183ea91976a7e19c7636cce0331",
+      "title": "Build release archives without a host shell",
+      "url": "https://github.com/tamird/gvisor/commit/657d01de1",
+      "group": "release",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-11-07T14:56:09+00:00",
+      "summary": "Use the registered BSD tar toolchain to write release archives without a host shell. On Ubuntu 22.04 with stock GCC 11.4.0, AMD64 built the ordinary bzip2 and zstd releases. Both target-named symlinks resolved, GNU tar extracted the publisher’s literal runsc member, and the nine staged ELFs and archive metadata matched. The canonical audit verified 224 dependencies and its test passed. The standalone ARM64 checks configured both archive writers. In a separate compiler integration, four fresh Tar actions on an empty AMD64 worker wrote both formats for AMD64 and ARM64. The eight flavor/format declarations were compared; archive builds covered the ordinary flavor. The commit applies directly to master 9ee2906f5.",
+      "evidence": [
+        {
+          "label": "Standalone Ubuntu/GCC build, two working aliases, both GNU tar publisher reads, nine ELF hashes and license audit",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42382741313/artifacts/13578876228"
+        },
+        {
+          "label": "Both target architectures on the empty AMD64 executor and the paired stock output/runfiles alias control",
+          "url": "https://tamird.github.io/gvisor/?view=investigations#investigation:scratch-build-actions"
+        }
+      ],
+      "contributorReview": {
+        "status": "pending",
+        "kind": "proposal",
+        "head": "657d01de1cf19183ea91976a7e19c7636cce0331",
+        "baseHead": "9ee2906f518e1d0f9fd109e9e1feb2812096418b",
+        "url": "https://github.com/tamird/gvisor/commit/657d01de1",
+        "title": "Build release archives without a host shell",
+        "requestedAt": "2026-11-07T14:56:09+00:00",
+        "summary": "Open this single-commit release-archive PR? The ordinary AMD64 bzip2 and zstd downloads passed the stock publisher checks. The separate integration built the same two formats for both target architectures on the empty AMD64 worker.",
+        "body": "The rules_pkg archive writer launches through /usr/bin/env bash. Build\nthe release archives with the registered BSD tar toolchain so their\nwriter can start on workers that have no host executables.\n\nUse the existing binary selections for each flavor. Preserve the\ninstalled names, executable modes, portable timestamp, compression\nsettings and target-named links. The release publisher selects the\nliteral runsc member when it identifies each archive architecture."
+      }
     }
   ],
   "edges": [
@@ -77634,7 +77668,7 @@
       "title": "Build on scratch workers with no undeclared tools",
       "status": "active",
       "owner": "root",
-      "updatedAt": "2026-11-07T14:46:34+00:00",
+      "updatedAt": "2026-11-07T14:56:09+00:00",
       "summary": "One Bazel invocation built the nine-executable gVisor release for AMD64 and ARM64 on native workers whose image contains no executable files. All 6,319 AMD64 and 6,690 ARM64 recorded spawns ran remotely without cache hits. The CLI and Sentry in each archive matched their direct build outputs. Both original archives then booted a rootless systrap guest on native Linux. Each guest ran the extracted Sentry, printed its CPU architecture, and exited successfully.",
       "findings": [
         {
@@ -80205,7 +80239,7 @@
           ]
         },
         {
-          "text": "Four uncached remote Tar actions on an empty AMD64 worker produced the downloadable bzip2 and zstd archives for AMD64 and ARM64 on integration source 0a0fa1efb. For each target, all nine ELF hashes, raw tar header metadata and the publisher’s extraction of the literal runsc member matched the legacy reference. Both Bazel invocations exited 0. The first workflow failed its check of absolute alias links outside the coordinator. A paired control resolved the stock and replacement output and runfiles links inside the coordinator and verified that they reached the same files. The standalone change on master is being checked separately at 657d01de1.",
+          "text": "Four uncached remote Tar actions on an empty AMD64 worker produced the downloadable bzip2 and zstd archives for AMD64 and ARM64 on integration source 0a0fa1efb. For each target, all nine ELF hashes, raw tar header metadata and the publisher’s extraction of the literal runsc member matched the legacy reference. Both Bazel invocations exited 0. The first workflow failed its check of absolute alias links outside the coordinator. A paired control resolved the stock and replacement output and runfiles links inside the coordinator and verified that they reached the same files. The standalone change on master, 657d01de1, also passed the stock AMD64 Ubuntu/GCC build, publisher and dependency checks. Its ARM64 writers were checked by configuration.",
           "evidence": [
             {
               "label": "Shipping archives for both targets, four original Tar actions and per-architecture legacy references",
@@ -80216,8 +80250,8 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/42381945915/artifacts/13577544737"
             },
             {
-              "label": "Standalone master-based archive qualification for 657d01de1",
-              "url": "https://github.com/tamird/gvisor/actions/runs/42382741313"
+              "label": "Standalone master-based proposal and stock compiler qualification",
+              "url": "https://tamird.github.io/gvisor/#branch:native-release-archives"
             }
           ]
         }
@@ -83646,5 +83680,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T14:46:34+00:00"
+  "updatedAt": "2026-11-07T14:56:09+00:00"
 }
