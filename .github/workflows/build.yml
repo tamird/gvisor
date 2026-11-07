@@ -1,35 +1,38 @@
-name: CI
-
-"on":
+name: Check the default YAML tests without Bash
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/yamltest-native-validator]
+permissions: {}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  yaml-tests:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Fetch the exact public comparison and pinned Bazel
+        run: |
+          set -euo pipefail
+          git init .
+          git fetch --no-tags --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          git checkout --detach FETCH_HEAD
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD^)" = dbd1c2e9f5dcae51de029ca00fcfd8bf4a52156c
+          test "$(git rev-parse HEAD^^)" = 7eda82e34c64918d1f1b2a3d73a244d6979dbe44
+          test "$(cat .bazelversion)" = 9.3.1
+          work="$RUNNER_TEMP/yaml-native"
+          mkdir "$work"
+          cp .github/qualification/yamltest_native/{qualify,probe}.py "$work"
+          chmod +x "$work/probe.py"
+          curl -fsSL --retry 2 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$work/bazel"
+          echo "7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c  $work/bazel" | sha256sum -c -
+          chmod +x "$work/bazel"
+      - name: Check the five actual YAML tests and configured controls
+        run: python3 -IB "$RUNNER_TEMP/yaml-native/qualify.py"
+      - name: Upload bounded original owner outcomes
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: native-yaml-tests
+          path: ${{ runner.temp }}/yaml-native/result.json
+          if-no-files-found: error
+          retention-days: 14
