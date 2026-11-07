@@ -21,6 +21,7 @@ ORIGINAL = "efd15323-097c-419d-9f85-03f3c937bb4c"
 BUILD = '''load("@rules_pkg//pkg:pkg.bzl", "pkg_tar")
 load("@rules_python//python:defs.bzl", "py_binary")
 load(":production_alias.bzl", "archive_alias")
+load(":paths.bzl", "paths")
 
 pkg_tar(
     name = "stock",
@@ -38,7 +39,10 @@ archive_alias(name = "candidate", archive = ":stock", out = "candidate-link.tar"
     deps = ["@rules_python//python/runfiles"],
     data = [":" + name],
 ) for name in ("stock", "candidate")]
+paths(name = "paths", stock = ":read_stock", candidate = ":read_candidate", original = ":stock", replacement = ":candidate", out = "paths.json")
 '''
+
+PATHS = 'def _package(t):\n    info = t[DefaultInfo]\n    return {\n        "files": [f.path for f in info.files.to_list()],\n        "default_runfiles": [f.path for f in info.default_runfiles.files.to_list()],\n        "data_runfiles": [f.path for f in info.data_runfiles.files.to_list()],\n    }\n\ndef _paths_impl(ctx):\n    ctx.actions.write(ctx.outputs.out, json.encode({\n        "stock": ctx.attr.stock[DefaultInfo].files_to_run.executable.path,\n        "candidate": ctx.attr.candidate[DefaultInfo].files_to_run.executable.path,\n        "original": _package(ctx.attr.original),\n        "replacement": _package(ctx.attr.replacement),\n    }))\n    return [DefaultInfo(files = depset([ctx.outputs.out]))]\n\npaths = rule(\n    implementation = _paths_impl,\n    attrs = {\n        "stock": attr.label(mandatory = True),\n        "candidate": attr.label(mandatory = True),\n        "original": attr.label(mandatory = True),\n        "replacement": attr.label(mandatory = True),\n        "out": attr.output(mandatory = True),\n    },\n)\n'
 
 CONSUMER = '''import hashlib, json, os, stat, sys
 from pathlib import Path
@@ -86,6 +90,11 @@ def setup():
     alias = production[production.index("def _archive_alias_impl("):production.index("def release_tars(")]
     (src/"production_alias.bzl").write_text(alias+"archive_alias = _archive_alias\n")
     (src/"BUILD").write_text(BUILD)
+    (src/"paths.bzl").write_text(PATHS)
+    direct = "import hashlib, json, os, stat, sys\nfrom pathlib import Path\n"
+    direct += CONSUMER[CONSUMER.index("def inspect("):CONSUMER.index("kind, direct")]
+    direct += "print(json.dumps(inspect(Path(sys.argv[1]),Path(sys.argv[2]))))\n"
+    (q.W/"data/direct_namespace.py").write_text(direct)
     (src/"consumer.py").write_text(CONSUMER)
     (src/"payload.txt").write_text("bounded archive alias control\n")
     (q.W/"data/negative.py").write_text(NEGATIVE)
@@ -173,7 +182,7 @@ def host_view(link, canonical):
 
 def aliases():
     names = ("stock","candidate")
-    rc = build("native",["//"+PKG+":"+x for x in ("stock-link.tar","candidate-link.tar","read_stock","read_candidate")])
+    rc = build("native",["//"+PKG+":"+x for x in ("stock-link.tar","candidate-link.tar","read_stock","read_candidate","paths")])
     doc = {"source":SOURCE,"stock_source":q.TRIAL,"fixture_exit":rc,"rows":{},"parity":False}
     q.save("aliases",doc)
     if rc:
@@ -181,13 +190,22 @@ def aliases():
     out = output_root()/"bazel-out/k8-opt/bin"/PKG
     canonical = out/"canonical.tar"
     sha = q.digest(canonical)
+    provider = json.loads((out/"paths.json").read_text())
+    doc["providers"] = provider
+    q.save("aliases",doc)
+    root = output_root()
+    runtime = container(root)/"external/+http_archive+release_static_cpython/bin/python3.11"
     for kind in names:
-        data = namespace([container(out/("read_"+kind)),kind,container(out)])
+        actual = Path(provider[kind])
+        assert not actual.is_absolute() and ".." not in actual.parts and actual.parts[0] == "bazel-out"
+        data = namespace([container(root/actual),kind,container(out)])
         row = {"coordinator":data, "host_direct":host_view(out/(kind+"-link.tar"),canonical)}
+        row["inside_direct"] = namespace([runtime,"-I","-S","/data/direct_namespace.py",
+                                          container(out/(kind+"-link.tar")),container(canonical)])
         doc["rows"][kind] = row
         if "runfiles_link_path" in data:
             row["host_runfiles"] = host_view(host(data["runfiles_link_path"]),host(data["runfiles_canonical_path"]))
-        row["verified"] = all(data.get(key,{}).get("samefile") and data[key]["sha256"]==sha for key in ("direct","runfiles")) and all(
+        row["verified"] = row["inside_direct"].get("samefile") and row["inside_direct"].get("sha256") == sha and all(data.get(key,{}).get("samefile") and data[key]["sha256"]==sha for key in ("direct","runfiles")) and all(
             row.get(key,{}).get("mapped_samefile") and row[key]["mapped_sha256"]==sha for key in ("host_direct","host_runfiles"))
         q.save("aliases",doc)
     doc["canonical_sha256"] = sha

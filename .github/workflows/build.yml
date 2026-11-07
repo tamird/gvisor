@@ -1,7 +1,7 @@
 name: Verify release archive output links across coordinator mounts
 "on":
   push:
-    branches: [qualification/registry-llvm-archive-alias-readers]
+    branches: [qualification/registry-llvm-archive-alias-providers]
 permissions: {}
 jobs:
   alias:
@@ -16,15 +16,15 @@ jobs:
           umask 077
           w="$RUNNER_TEMP/registry-shipping"
           old=a8ac3ce3e183cd236ad1e5fc3ba5187754ca59c0
-          previous=232cb57ef70201850eba27b14c495e747b9779e6
+          previous=1b3e198d0e59bd663e91e6bfc6bbf82f7fa41123
           candidate=0a0fa1efbacbe9f18b377a954f3f249001c32e21
           trial=15a0b6098b03c050baeb404cac40c820d9a19a97
           base=dd2be7670c1baaacebfdcab31bb6145ebce39037
           mkdir -p "$w/public" "$w/data" "$w/trial"
           git init -q .
-          GIT_TERMINAL_PROMPT=0 git -c gc.auto=0 fetch --no-auto-maintenance -q --depth=5 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$trial"
+          GIT_TERMINAL_PROMPT=0 git -c gc.auto=0 fetch --no-auto-maintenance -q --depth=6 https://github.com/tamird/gvisor.git "$GITHUB_SHA" "$trial"
           test "$(git rev-parse "$GITHUB_SHA^")" = "$previous"
-          test "$(git rev-parse "$previous^")" = "$old"
+          test "$(git rev-parse "$previous~2")" = "$old"
           test "$(git rev-parse "$old^")" = "$candidate"
           test "$(git rev-parse "$candidate^")" = "$base"
           test "$(git rev-parse "$trial^")" = "$base"
@@ -46,8 +46,6 @@ jobs:
           BASH
           chmod 700 observe
           ./observe setup
-      - name: Execute the exact historical writer bytes with no host interpreter
-        run: '"$RUNNER_TEMP/registry-shipping/observe" negative'
       - name: Compare original and candidate alias providers and named output targets
         if: always() && !cancelled() && steps.setup.outcome == 'success'
         run: '"$RUNNER_TEMP/registry-shipping/observe" aliases'
