@@ -95,3 +95,8 @@ build:source-presubmit-mixed --config=x86_64
 build:source-presubmit-mixed --host_platform=//tools/bazeldefs:linux_amd64
 build:source-presubmit-mixed --extra_execution_platforms=//test/rbe:ubuntu_amd64,//test/rbe:ubuntu_arm64
 test:source-presubmit-mixed --target_pattern_file=test/rbe/mixed-native.targets
+
+# Match hermetic-llvm's C++ path-mapping configuration on the mixed workers.
+build:source-presubmit-mixed-llvm-mapped --config=source-presubmit-mixed
+build:source-presubmit-mixed-llvm-mapped --experimental_output_paths=strip
+build:source-presubmit-mixed-llvm-mapped --modify_execution_info=CppModuleMap=+supports-path-mapping,CppArchive=+supports-path-mapping,CppCompile=+supports-path-mapping
