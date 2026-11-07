@@ -381,9 +381,9 @@ func (h *handshake) synSentState(s *segment) tcpip.Error {
 
 // synRcvdState handles a segment received when the TCP 3-way handshake is in
 // the SYN-RCVD state.
+//
 // +checklocks:h.ep.mu
 // +checklocksexclude:h.ep.segmentQueue.mu
-// +checklocksexclude:h.ep.pendingProcessingMu
 // +checklocksexclude:h.listenEP.listenCtx.hasherMu
 func (h *handshake) synRcvdState(s *segment) tcpip.Error {
 	if s.flags.Contains(header.TCPFlagRst) {
@@ -520,7 +520,6 @@ func (h *handshake) synRcvdState(s *segment) tcpip.Error {
 
 // +checklocks:h.ep.mu
 // +checklocksexclude:h.ep.segmentQueue.mu
-// +checklocksexclude:h.ep.pendingProcessingMu
 // +checklocksexclude:h.listenEP.listenCtx.hasherMu
 func (h *handshake) handleSegment(s *segment) tcpip.Error {
 	h.sndWnd = s.window
@@ -539,9 +538,9 @@ func (h *handshake) handleSegment(s *segment) tcpip.Error {
 
 // processSegments goes through the segment queue and processes up to
 // maxSegmentsPerWake (if they're available).
+//
 // +checklocks:h.ep.mu
 // +checklocksexclude:h.ep.segmentQueue.mu
-// +checklocksexclude:h.ep.pendingProcessingMu
 // +checklocksexclude:h.listenEP.listenCtx.hasherMu
 func (h *handshake) processSegments() tcpip.Error {
 	for i := 0; i < maxSegmentsPerWake; i++ {
@@ -1579,8 +1578,6 @@ func (e *Endpoint) timeWaitTimerExpired() {
 //
 // The caller must not hold the selected processor's queue mutex. checklocks
 // cannot name that mutex through the dispatcher's indexed processor selection.
-//
-// +checklocksexclude:e.pendingProcessingMu
 func (e *Endpoint) notifyProcessor() {
 	// We use TryLock here to avoid deadlocks in cases where a listening endpoint that is being
 	// closed tries to abort half completed connections which in turn try to queue any segments
