@@ -6,6 +6,7 @@
 load("@rules_python//python:py_test.bzl", "py_test")
 load("//tools:arch.bzl", "select_arch")
 load("//tools:defs.bzl", "cc_binary", "cc_readelf")
+load(":mixed_abi.bzl", "mixed_abi_tests")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -86,4 +87,16 @@ py_test(
         cc_readelf,
     ],
     main = "check_vdso.py",
+)
+
+mixed_abi_tests(
+    name = "mixed_abi_test",
+    srcs = ["mixed_abi.py"],
+    main = "mixed_abi.py",
+    args = [
+        "$(location :vdso.so)",
+        "$(location :check_vdso.py)",
+        "$(location {})".format(cc_readelf),
+    ],
+    data = [":vdso.so", ":check_vdso.py", cc_readelf],
 )
