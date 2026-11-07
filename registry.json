@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T00:50:21.118Z",
+    "updatedAt": "2026-11-07T01:00:19+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -4851,10 +4851,18 @@
       "url": "https://github.com/tamird/gvisor/commit/f6df263f8",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 for its offsets and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn AMD64, c0511e1cd built all 2,880 build-only targets and passed all 373 fresh remote test shards. On ARM64, 353c484b4 built all 3,243 selected targets and ran all 373 shards. 371 passed. The cmd_test Sentry posture checks failed and netgofer_test timed out. An independent analysis matched the 363 owners and shard counts, including all six ARM64 Firecracker assignments.\n\nA native two-worker comparison reproduced the ARM64 posture counter discrepancy without starting gVisor. The synchronized test operation took effect on both threads on both architectures. Only the ARM64 worker running Linux 5.10.0 reported inconsistent counts. On native hosted ARM64 Linux 6.8.0, all five previously failing Sentry checks and their five Gofer counterparts passed using the unchanged test executable. The outer Bazel command exited 1, so this run establishes the individual case outcomes only. Separately, the fork-only netgofer shutdown candidate passed 16 native ARM64 trials and preserved the final queued frame in all 16 delivery trials. These focused results leave the original full-run count at 371/373.\n\nOn f6df263f8, one invocation linked the static race runsc and Sentry for AMD64 and ARM64 on an AMD64 Ubuntu worker. Native Linux also checked both vDSO ABIs and all 21 raw stub offsets. On 3dab3494e, the released toolchain booted rootless systrap guests natively on both architectures. On 2c90e983d, all nine executable hashes and modes matched across Debian, bzip2 and zstd releases per CPU. The AMD64 package booted a systrap guest and the ARM64 CLI ran under QEMU user emulation.\n\nOne Bazel invocation on d41933c99 ran atomicbitops in OCI and sandboxexec on Firecracker on both native CPUs. All four owners passed; both sandboxexec variants had one skipped case. The worker CPU matched each test ELF and fastbuild seccomp stub generator. Using distinct RBE platform labels preserved the ordinary compiler platforms and removed the output path collision, but configured more LLVM compile actions for the two measured objects. Within the mixed profile, the two AMD64 platform names produced distinct Bazel actions for LLVM’s empty.pic.o. With the supplier’s C++ path-mapping settings, they used the same compiler inputs and command, and the second build reused the 576-byte object from a temporary disk cache. The result covers this one compile.",
-      "updatedAt": "2026-11-07T00:50:21.118Z",
+      "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 for its offsets and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn AMD64, c0511e1cd built all 2,880 build-only targets and passed all 373 fresh remote test shards. On ARM64, 353c484b4 built all 3,243 selected targets and ran all 373 shards. 371 passed. The cmd_test Sentry posture checks failed and netgofer_test timed out. An independent analysis matched the 363 owners and shard counts, including all six ARM64 Firecracker assignments.\n\nA native two-worker comparison reproduced the ARM64 posture counter discrepancy without starting gVisor. The synchronized test operation took effect on both threads on both architectures. Only the ARM64 worker running Linux 5.10.0 reported inconsistent counts. On native hosted ARM64 Linux 6.8.0, all five previously failing Sentry checks and their five Gofer counterparts passed using the unchanged test executable. The outer Bazel command exited 1, so this run establishes the individual case outcomes only. A separate replay confirmed the whole cmd_test executable exits 1. Its XML reported 167 passes, four skips and two failures. The original receipt did not identify the two failing parent tests. Separately, the fork-only netgofer shutdown candidate passed 16 native ARM64 trials and preserved the final queued frame in all 16 delivery trials. These focused results leave the original full-run count at 371/373.\n\nOn f6df263f8, one invocation linked the static race runsc and Sentry for AMD64 and ARM64 on an AMD64 Ubuntu worker. Native Linux also checked both vDSO ABIs and all 21 raw stub offsets. On 3dab3494e, the released toolchain booted rootless systrap guests natively on both architectures. On 2c90e983d, all nine executable hashes and modes matched across Debian, bzip2 and zstd releases per CPU. The AMD64 package booted a systrap guest and the ARM64 CLI ran under QEMU user emulation.\n\nOne Bazel invocation on d41933c99 ran atomicbitops in OCI and sandboxexec on Firecracker on both native CPUs. All four owners passed; both sandboxexec variants had one skipped case. The worker CPU matched each test ELF and fastbuild seccomp stub generator. Using distinct RBE platform labels preserved the ordinary compiler platforms and removed the output path collision, but configured more LLVM compile actions for the two measured objects. Within the mixed profile, the two AMD64 platform names produced distinct Bazel actions for LLVM’s empty.pic.o. With the supplier’s C++ path-mapping settings, they used the same compiler inputs and command, and the second build reused the 576-byte object from a temporary disk cache. The result covers this one compile.\n\nThe vDSO clock tests ran in one Bazel invocation on matching native AMD64 and ARM64 workers. Both called the architecture’s versioned clock entry point. The ELFs matched the unmapped builds byte for byte. The final run reused the compile and link outputs.",
+      "updatedAt": "2026-11-07T00:59:13+00:00",
       "head": "f6df263f8e2ce2cbe6a497356613f6785c4800a4",
       "evidence": [
+        {
+          "url": "https://github.com/tamird/gvisor/actions/runs/42321073617/artifacts/13553311441",
+          "label": "Native AMD64 and ARM64 vDSO clock calls and ELF hashes"
+        },
+        {
+          "label": "ARM64 cmd_test and Bazel exit statuses from the same invocation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42320560824/artifacts/13553055951"
+        },
         {
           "label": "Original posture case outcomes on hosted ARM64 and the outer Bazel exit",
           "url": "https://github.com/tamird/gvisor/actions/runs/42319546366/artifacts/13552427196"
@@ -22842,8 +22850,8 @@
       "url": "https://github.com/tamird/gvisor/commit/e7fc3626fce8184c2dd35debe8d413dd989b05ee",
       "group": "bazel",
       "status": "Contributor approved; resource layout complete; awaiting prerequisites",
-      "updatedAt": "2026-11-06T22:38:16.247Z",
-      "summary": "The signed Ubuntu Jammy tcpdump captured both UDP payloads on any (SLL2) and lo (Ethernet) with runc and corrected systrap on native AMD64 and ARM64. All eight captures verified the dropped UID and GID. The stock gVisor failure on any is retained in the original run. The AMD64 trace confirmed that PACKET_RESERVE readback succeeded. The bounded ARM64 trace did not contain that call.\n\nCurrent foundation status: the basic image/Make interfaces are already imported through merged #16307 (c3e0783a), replacing closed source #16097. The existing contributor approval stands; only the other recorded prerequisites remain.\n\nRequested resource relocation and equivalent base refresh are complete at e7fc3626fc. Both-architecture output equality and source equivalence preserve the original contributor approval.\n\nContributor approved exact1393 for opening after basic-image #16097 and manual-artifact #16051 actually land.\n\nPreserved qualification record:\n\nThe final source and complete shipped notices are independently accepted. Both architecture archives and static binaries, Make rebuild/reload, both owning analyzers and TestTcpdump lo/any pass with five positive records and no skips. Earlier authenticated compiler evidence is reused through unchanged executable identities; the final run makes no fresh compilation claim. Canonical Fetch and the subsequent exact-catalog Verify now pass. Earlier launch visibility and timeout failures remain preserved without a claimed cause. Exact1393 contributor approval remains conditional on the basic-image and manual-artifact prerequisites. This graph does not require the shared gawk/native Go prerequisite.",
+      "updatedAt": "2026-11-07T01:00:19+00:00",
+      "summary": "Ubuntu’s packaged tcpdump captured both payloads on the any and loopback interfaces under runc and corrected systrap on native AMD64 and ARM64. All eight captures verified the dropped UID and GID. The AMD64 trace also confirmed PACKET_RESERVE readback.\n\nThe rules_distroless 0.11.1 release proposed for BCR omits installed dependencies from the dpkg status file. The revised catalog passed Fetch and Verify with the keyring bytes matched to Ubuntu’s source archive. Both Make archives matched the earlier builds. The corresponding BCR release and supplier inventory fix are open. The separate source-built revision remains approved on its original conditions.",
       "links": [
         {
           "label": "Final image source and notices",
@@ -22885,15 +22893,31 @@
       "followup": {
         "owner": "work_map_current",
         "sourceHead": "e7fc3626fce8184c2dd35debe8d413dd989b05ee",
-        "observedAt": "2026-10-26T15:34:48.482883+00:00",
-        "disposition": "Contributor approved; resource layout complete; awaiting prerequisites",
-        "nextAction": "Deliver the approved source after its other recorded prerequisites actually land. The #16097 basic foundation is already satisfied by #16307; do not wait on the closed source or repeat the contributor decision. Preserve the recorded source-specific qualification limits.",
+        "observedAt": "2026-11-07T01:00:19+00:00",
+        "disposition": "The signed Ubuntu image passed capture and license checks. Its dpkg inventory still omits installed dependencies.",
+        "nextAction": "Follow the BCR release and rules_distroless package-inventory fix. Use the recorded catalog and capture results when evaluating the distro image.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/1393d4449850b660d77e4b1ebb2906e322d7c855",
           "https://github.com/tamird/gvisor/commit/e7fc3626fce8184c2dd35debe8d413dd989b05ee"
         ]
       },
       "evidence": [
+        {
+          "label": "Exact Ubuntu keyring and supplier notice bytes, canonical Fetch and Verify, and both image archives",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42296544946/artifacts/13542451552"
+        },
+        {
+          "label": "Proposed BCR release of rules_distroless 0.11.1",
+          "url": "https://github.com/bazelbuild/bazel-central-registry/pull/11526"
+        },
+        {
+          "label": "Supplier inventory fix",
+          "url": "https://github.com/bazel-contrib/rules_distroless/pull/294"
+        },
+        {
+          "label": "Signed package closure, dpkg inventory and two missing catalog entries",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42294712788/artifacts/13541222769"
+        },
         {
           "label": "Distro tcpdump on native ARM64 under runc and corrected systrap",
           "url": "https://github.com/tamird/gvisor/actions/runs/42290164647/artifacts/13539991997"
@@ -33074,6 +33098,10 @@
       "url": "https://github.com/google/gvisor/pull/16588",
       "evidence": [
         {
+          "label": "Rebased FIFO fix on the fork",
+          "url": "https://github.com/tamird/gvisor/commit/d6786915f"
+        },
+        {
           "label": "Upstream pull request",
           "url": "https://github.com/google/gvisor/pull/16588"
         },
@@ -33134,9 +33162,9 @@
           "url": "https://github.com/tamird/gvisor/commit/c16a4922a"
         }
       ],
-      "updatedAt": "2026-11-05T19:38:10.552336Z",
+      "updatedAt": "2026-11-07T00:57:49+00:00",
       "status": "open",
-      "summary": "Stock gVisor reported a hangup to both FIFO readers when Linux reported it only to the reader that had seen the writer. Linux and the corrected gVisor each passed all seven FIFO cases on tmpfs. The four anonymous-pipe unit cases and both-architecture pipe analyzers also passed. The approved head remains unchanged. The fork follow-up c16a4922a removes the redundant rReadinessLocked lock precondition and leaves a blank comment line above its checklocks directive. Fold this into the next requested revision or a post-merge cleanup.",
+      "summary": "The approved FIFO fix conflicts with the pipe ring lock change on master. The rebased commit initializes the writer generation in the shared pipe constructor and retains the ring lock annotations. It also incorporates the reviewed lock-comment cleanup. The published head is 1dbbcd676.",
       "refinement": {
         "before": {
           "base": "509ad5337346f8cbdba515cefadd542de28d6156",
@@ -33150,9 +33178,9 @@
       "followup": {
         "owner": "root",
         "sourceHead": "1dbbcd6767ab1362d3ec9a7739d3a34aceb8bb2d",
-        "observedAt": "2026-11-03T14:48:57.209577+00:00",
-        "disposition": "Published amendment; all approved inline replies posted",
-        "nextAction": "Follow the public review and import checks.",
+        "observedAt": "2026-11-07T00:57:49+00:00",
+        "disposition": "Approved public head conflicts with the merged pipe ring lock change.",
+        "nextAction": "Run the existing FIFO syscall cases, pipe unit tests and both architecture analyzers on the rebased commit, then request contributor review.",
         "evidence": [
           "https://github.com/google/gvisor/pull/16588",
           "https://github.com/tamird/gvisor/commit/1dbbcd676",
@@ -55593,9 +55621,13 @@
       "url": "https://github.com/tamird/gvisor/commit/e46a101fc",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-07T00:50:21.118Z",
-      "summary": "On c0511e1cd, one AMD64 source-presubmit invocation built all 2,880 build-only targets and passed all 373 test shards across 363 test owners. Every shard ran freshly on a remote worker. An independent aquery matched the owner, run, shard and configuration for all 373, including 367 OCI and 6 Firecracker assignments. Bazel exited 0. The first workflow failed afterward because its reporter still expected five Firecracker owners. The four coverage CLI and Sentry ELFs were checked separately.\n\nOf the 363 tests in the ARM64 run, two already had targets for both CPUs. Giving the shared test rules both architecture defaults exposed paired targets for all 340 Go tests. The other 23 owners use different rules. With only the shared Go default changed, one Bazel analysis selected all 700 expected TestRunner actions. Each architecture had 346 OCI shards and four Firecracker shards requiring root and IPv6. One Bazel invocation then ran the state, TCP and VFS suites on both native architectures. Each CPU passed the same 67 state, 45 TCP and 41 VFS cases, with zero skips. All six TestRunner actions executed uncached.",
+      "updatedAt": "2026-11-07T00:59:13+00:00",
+      "summary": "On c0511e1cd, one AMD64 source-presubmit invocation built all 2,880 build-only targets and passed all 373 test shards across 363 test owners. Every shard ran freshly on a remote worker. An independent aquery matched the owner, run, shard and configuration for all 373, including 367 OCI and 6 Firecracker assignments. Bazel exited 0. The first workflow failed afterward because its reporter still expected five Firecracker owners. The four coverage CLI and Sentry ELFs were checked separately.\n\nOf the 363 tests in the ARM64 run, two already had targets for both CPUs. Giving the shared test rules both architecture defaults exposed paired targets for all 340 Go tests. The other 23 owners use different rules. With only the shared Go default changed, one Bazel analysis selected all 700 expected TestRunner actions. Each architecture had 346 OCI shards and four Firecracker shards requiring root and IPv6. One Bazel invocation then ran the state, TCP and VFS suites on both native architectures. Each CPU passed the same 67 state, 45 TCP and 41 VFS cases, with zero skips. All six TestRunner actions executed uncached.\n\nThe same Bazel invocation ran all four existing uname cases on native AMD64 and ARM64 Firecracker workers. Both test executables and both namespace launchers matched their worker architectures. All eight cases executed and passed.",
       "evidence": [
+        {
+          "url": "https://github.com/tamird/gvisor/actions/runs/42320690721/artifacts/13552498741",
+          "label": "Original XML case outcomes, worker assignments and executable hashes"
+        },
         {
           "label": "All 700 configured Go test shards, worker assignments and original expected shard numbers",
           "url": "https://github.com/tamird/gvisor/actions/runs/42320043101/artifacts/13552632612"
