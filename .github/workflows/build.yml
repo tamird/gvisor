@@ -1,35 +1,100 @@
-name: CI
-
+name: Qualify stock release archives
 "on":
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    branches: [qualification/native-release-archives-stock]
+permissions: {}
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  stock:
+    if: github.repository == 'tamird/gvisor' && github.event.created && github.run_attempt == 1
+    runs-on: ubuntu-22.04
+    timeout-minutes: 145
+    env:
+      PRODUCT: 657d01de1cf19183ea91976a7e19c7636cce0331
+      BASE: 9ee2906f518e1d0f9fd109e9e1feb2812096418b
+      DEBIAN_FRONTEND: noninteractive
+      BAZEL_REMOTE_CACHE: ''
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
+      - name: Bind the standalone product and stock GNU host
+        id: setup
+        shell: bash
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/stock-shipping"
+          mkdir -p "$w"/{src,raw,public}
+          cd "$w/src"
+          git init -q
+          git -c gc.auto=0 fetch -q --depth=3 https://github.com/tamird/gvisor.git "$GITHUB_SHA"
+          test "$(git rev-parse "$GITHUB_SHA^")" = "$PRODUCT"
+          test "$(git rev-parse "$PRODUCT^")" = "$BASE"
+          test "$(git diff --name-only "$PRODUCT" "$GITHUB_SHA")" = "$(printf '%s\n' .github/qualification/{archive_alias,cold_repository,stock_archive}.py .github/workflows/build.yml)"
+          test "$(git rev-parse "$GITHUB_SHA:.github/qualification/archive_alias.py")" = ffe5e7d53269ec4e96a3f21af5e76bdd7927e63c
+          for script in archive_alias cold_repository stock_archive; do
+            git show "$GITHUB_SHA:.github/qualification/$script.py" > "$w/$script.py"
+          done
+          git checkout -q --detach "$PRODUCT"
+          test "$(git diff "$BASE" "$PRODUCT" | git patch-id --stable | cut -d' ' -f1)" = f7f8c0a3b9c2fb8e1b07aa706711cb23b410a2ee
+          test "$(cat .bazelversion)" = 9.3.1
+          sudo apt-get -qq update
+          sudo apt-get -qq install -y build-essential crossbuild-essential-arm64 libnuma-dev zstd
+          curl -fsSL --retry 3 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-x86_64 -o "$w/bazel.real"
+          test "$(sha256sum "$w/bazel.real" | cut -d' ' -f1)" = 7f775b54bbec487efaf0f49ccda1d2ed02cd34f582edfdd6aeeec76e39ef585c
+          chmod 0755 "$w/bazel.real"
+          python3 -B "$w/stock_archive.py" setup
+          echo "$w/bin" >> "$GITHUB_PATH"
 
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Verify the canonical module and license records
+        id: licenses
+        run: |
+          w="$RUNNER_TEMP/stock-shipping"
+          cd "$w/src"
+          python3 -B "$w/stock_archive.py" license
 
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
+      - name: Classify a failing license check on the exact parent
+        if: '!cancelled() && steps.setup.outcome == ''success'' && steps.licenses.outcome == ''failure'''
+        run: |
+          set -euo pipefail
+          w="$RUNNER_TEMP/stock-shipping"
+          cd "$w/src"
+          git checkout -q --detach "$BASE"
+          trap 'git checkout -q --detach "$PRODUCT"' EXIT
+          python3 -B "$w/stock_archive.py" license baseline
 
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - name: Run the stock license-check unit tests
+        if: '!cancelled() && steps.setup.outcome == ''success'''
+        run: |
+          w="$RUNNER_TEMP/stock-shipping"
+          cd "$w/src"
+          python3 -B "$w/stock_archive.py" test
+
+      - name: Build both public archives, read back the publisher bytes and resolve both target names
+        if: '!cancelled() && steps.setup.outcome == ''success'''
+        run: |
+          w="$RUNNER_TEMP/stock-shipping"
+          cd "$w/src"
+          python3 -B "$w/stock_archive.py" shipping
+
+      - name: Select both declared release writers on stock AMD64 and ARM64
+        if: '!cancelled() && steps.setup.outcome == ''success'''
+        run: |
+          w="$RUNNER_TEMP/stock-shipping"
+          cd "$w/src"
+          python3 -B "$w/stock_archive.py" graphs
+
+      - name: Upload the typed stock receipts
+        if: '!cancelled()'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: stock-release-archives
+          path: ${{ runner.temp }}/stock-shipping/public/*.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Remove the disposable evidence directory
+        if: always()
+        run: |
+          w="$RUNNER_TEMP/stock-shipping"
+          if [[ -x "$w/bazel.real" && -d "$w/src/.git" ]]; then
+            (cd "$w/src" && "$w/bazel.real" --nosystem_rc --nohome_rc shutdown) || true
+          fi
+          rm -rf -- "$w"
