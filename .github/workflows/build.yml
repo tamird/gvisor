@@ -1,67 +1,139 @@
-name: Qualify the reduced Ubuntu builder with the default LLVM compiler
+name: Boot the reduced AMD64 builder's ARM64 release
 on:
   push:
-    branches: [qualification/reduced-builder-default-llvm]
+    branches: [qualification/reduced-builder-native-arm64-handoff]
 permissions:
   contents: read
 jobs:
-  cross:
-    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+  producer:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created
     runs-on: ubuntu-22.04
-    timeout-minutes: 80
+    timeout-minutes: 90
+    outputs:
+      archive_sha: ${{ steps.bind.outputs.archive_sha }}
+      archive_bytes: ${{ steps.bind.outputs.archive_bytes }}
+      manifest_sha: ${{ steps.bind.outputs.manifest_sha }}
     env:
       SOURCE: c115840f8a85010111fa5d72b611d7d9ab1df34b
       COMPILER: 4bee07965270dc7cb4ed89eb6a3b17968b3e0a90
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with: {persist-credentials: false, fetch-depth: 3}
-
-      - name: Bind the Dockerfile and both ELF verifier sources
-        shell: bash
-        run: |
-          set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "$SOURCE"
-          test "$(git rev-parse HEAD^^)" = "$COMPILER"
-          test "$(git diff --name-only HEAD^ HEAD)" = "$(printf '%s\n' .github/qualification/reduced_builder.py .github/workflows/build.yml test/rbe/native_cross_inputs.py test/rbe/runtime_cross.py)"
-          d="$RUNNER_TEMP/builder-cross/runtime-cross"
-          mkdir -p "$d"
-          cp .github/qualification/reduced_builder.py test/rbe/{native_cross_inputs,runtime_cross}.py "$d/"
-          echo "6e5110d042e88f2c8ab8fc3ff63aa66acf81f74e1f9a49c5a59c6cce3c9afabb  $d/native_cross_inputs.py" | sha256sum -c -
-          echo "f78a6a372af5142b0d4f107d1b058944bb9f5897adf7308d0959bcd8e7e9321b  $d/runtime_cross.py" | sha256sum -c -
-          git checkout --detach "$SOURCE"
-          test "$(git diff --name-only HEAD^ HEAD)" = "images/default/Dockerfile"
-          test "$(git rev-parse HEAD:images/default/Dockerfile)" = "82a81262bc83ad8328ee60e2963835ac53fb4ee5"
-          test "$(cat images/default/bazelversion)" = 9.3.1
-          grep -Fx 'bazel_dep(name = "llvm", version = "0.8.24")' MODULE.bazel
-          test "$(uname -m)" = x86_64
-
-      - name: Build the actual Ubuntu image
-        shell: bash
-        run: |
-          set -euo pipefail
-          d="$RUNNER_TEMP/builder-cross"
-          rc=0
-          docker build --progress=plain --tag gvisor-builder:checked --iidfile "$d/image-id" images/default || rc=$?
-          printf '{"source":"%s","compiler":"%s","image_build_exit":%s}\n' "$SOURCE" "$COMPILER" "$rc" > "$d/image.json"
-          test "$rc" = 0
-          test "$(docker image inspect --format '{{.Os}}/{{.Architecture}}' gvisor-builder:checked)" = linux/amd64
-
-      - name: Cross-build the public runtime and check its embedded inputs
-        shell: bash
-        run: |
-          set -euo pipefail
-          d="$RUNNER_TEMP/builder-cross"
-          docker run --rm --entrypoint /usr/bin/python3 \
-            -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/workspace \
-            -e RUNNER_TEMP=/audit -e BUILDER_IMAGE="$(cat "$d/image-id")" \
-            -v "$GITHUB_WORKSPACE:/workspace" -v "$d:/audit" \
-            gvisor-builder:checked -B /audit/runtime-cross/reduced_builder.py
-
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
-        with:
-          name: reduced-ubuntu-default-llvm
-          path: |
-            ${{ runner.temp }}/builder-cross/image.json
-            ${{ runner.temp }}/builder-cross/runtime-cross/verdict.json
-          if-no-files-found: error
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {persist-credentials: false, fetch-depth: 4}
+    - name: Bind original AMD64 builder and cross compiler
+      run: |
+        set -euo pipefail
+        test "$(git rev-parse HEAD^)" = a6ee60cbfde801a347d8da4710c7ad22c3d07747
+        test "$(git rev-parse HEAD^^)" = "$SOURCE"
+        test "$(git rev-parse HEAD^^^)" = "$COMPILER"
+        test "$(uname -m)" = x86_64
+        d="$RUNNER_TEMP/builder-cross/runtime-cross"
+        mkdir -p "$d"
+        cp .github/qualification/{reduced_builder,cross_release_pack}.py test/rbe/{native_cross_inputs,runtime_cross}.py "$d/"
+        test "$(git hash-object "$d/reduced_builder.py")" = 418d15bbf0b69e994d5ac0f0f8989321a88210be
+        test "$(git hash-object "$d/runtime_cross.py")" = 83a26b9ea471725d241410dd8aaf568d92817b1d
+        test "$(git hash-object "$d/native_cross_inputs.py")" = 0698511b2caa444374f9ba98a52470a56cb164da
+        git switch --detach "$SOURCE"
+        test "$(git diff --name-only HEAD^ HEAD)" = images/default/Dockerfile
+        test "$(git rev-parse HEAD:images/default/Dockerfile)" = 82a81262bc83ad8328ee60e2963835ac53fb4ee5
+        test "$(cat images/default/bazelversion)" = 9.3.1
+        grep -Fx 'bazel_dep(name = "llvm", version = "0.8.24")' MODULE.bazel
+    - name: Build the existing reduced Ubuntu image and cross-build its public release
+      run: |
+        set -euo pipefail
+        d="$RUNNER_TEMP/builder-cross"
+        docker build --progress=plain --tag gvisor-builder:checked --iidfile "$d/image-id" images/default
+        test "$(docker image inspect --format '{{.Os}}/{{.Architecture}}' gvisor-builder:checked)" = linux/amd64
+        docker run --rm --entrypoint /bin/bash \
+          -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/workspace \
+          -e RUNNER_TEMP=/audit -e BUILDER_IMAGE="$(cat "$d/image-id")" \
+          -v "$GITHUB_WORKSPACE:/workspace" -v "$d:/audit" gvisor-builder:checked \
+          -ec 'python3 -B /audit/runtime-cross/reduced_builder.py && python3 -B /audit/runtime-cross/cross_release_pack.py'
+    - name: Bind producer output before transfer
+      id: bind
+      run: |
+        set -euo pipefail
+        d="$RUNNER_TEMP/builder-cross"
+        mv "$d/handoff" "$d/transfer"
+        python3 -B - "$d" <<'PY'
+        import hashlib, json, os, pathlib, sys
+        d = pathlib.Path(sys.argv[1])
+        p = json.loads((d/"pack.json").read_text())
+        assert p["verified"] and set(f.name for f in (d/"transfer").iterdir()) == {"manifest.json","release.tar.gz"}
+        m = d/"transfer/manifest.json"
+        a = d/"transfer/release.tar.gz"
+        assert hashlib.sha256(m.read_bytes()).hexdigest() == p["manifestSHA256"]
+        assert a.stat().st_size == p["archiveBytes"] and a.stat().st_size < 200 << 20
+        assert hashlib.sha256(a.read_bytes()).hexdigest() == p["archiveSHA256"]
+        with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+            print("archive_sha=" + p["archiveSHA256"], file=out)
+            print("archive_bytes=" + str(p["archiveBytes"]), file=out)
+            print("manifest_sha=" + p["manifestSHA256"], file=out)
+        PY
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: arm64-cross-release-transfer
+        path: |
+          ${{ runner.temp }}/builder-cross/transfer/release.tar.gz
+          ${{ runner.temp }}/builder-cross/transfer/manifest.json
+        compression-level: 0
+        if-no-files-found: error
+        retention-days: 1
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && !cancelled()
+      with:
+        name: reduced-amd64-producer
+        path: |
+          ${{ runner.temp }}/builder-cross/pack.json
+          ${{ runner.temp }}/builder-cross/runtime-cross/verdict.json
+        if-no-files-found: warn
+        retention-days: 14
+  consumer:
+    needs: producer
+    runs-on: ubuntu-22.04-arm
+    timeout-minutes: 25
+    env:
+      ARCHIVE_SHA256: ${{ needs.producer.outputs.archive_sha }}
+      ARCHIVE_BYTES: ${{ needs.producer.outputs.archive_bytes }}
+      MANIFEST_SHA256: ${{ needs.producer.outputs.manifest_sha }}
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with: {persist-credentials: false, fetch-depth: 3}
+    - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+      with:
+        name: arm64-cross-release-transfer
+        path: test/rbe/payload
+    - name: Verify handoff and prepare the existing static ARM64 guest
+      run: |
+        set -euo pipefail
+        test "$(uname -m)" = aarch64
+        test "$(git rev-parse HEAD^^)" = c115840f8a85010111fa5d72b611d7d9ab1df34b
+        test "$(git hash-object test/rbe/runtime_guest.py)" = b03c7ad2f220a265b111e003f1e094ffa1622cf8
+        test "$(stat -c '%s' test/rbe/payload/release.tar.gz)" = "$ARCHIVE_BYTES"
+        printf '%s  %s\n' "$ARCHIVE_SHA256" test/rbe/payload/release.tar.gz "$MANIFEST_SHA256" test/rbe/payload/manifest.json | sha256sum --check --strict
+        d="$RUNNER_TEMP/cross-native-guest"
+        mkdir -p "$d"
+        curl -fsSL --retry 2 --max-time 120 https://releases.bazel.build/9.3.1/release/bazel-9.3.1-linux-arm64 -o "$d/bazel"
+        echo "10ba9cb76d4ee748d274dcc2981992bb12b74a203dc41a9c2eceeb8f29359366  $d/bazel" | sha256sum --check --strict
+        chmod 755 "$d/bazel"
+        python3 -B test/rbe/cross_release_guest.py fixture
+    - name: Boot the cross-built Sentry under native systrap
+      run: |
+        set -euo pipefail
+        d="$RUNNER_TEMP/cross-native-guest"
+        rc=0
+        env -i HOME="$HOME" USER="$USER" PATH="$PATH" LANG=C.UTF-8 \
+          "$d/bazel" --nosystem_rc --nohome_rc test --build_event_publish_all_actions \
+          --config=aarch64 --jobs=3 --remote_executor= --remote_cache= --strategy=TestRunner=local \
+          --nocache_test_results --flaky_test_attempts=1 --runs_per_test=1 --test_sharding_strategy=disabled \
+          --test_timeout=160 "--build_event_json_file=$d/guest.bep" --noshow_progress \
+          "--test_env=ARCHIVE_SHA256=$ARCHIVE_SHA256" "--test_env=ARCHIVE_BYTES=$ARCHIVE_BYTES" \
+          "--test_env=MANIFEST_SHA256=$MANIFEST_SHA256" //test/rbe:cross_built_release_guest > "$d/bazel.log" 2>&1 || rc=$?
+        python3 -B test/rbe/cross_release_guest.py collect
+        exit "$rc"
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      if: always() && !cancelled()
+      with:
+        name: native-arm64-cross-release-guest
+        path: ${{ runner.temp }}/cross-native-guest/native.json
+        if-no-files-found: warn
+        retention-days: 14
