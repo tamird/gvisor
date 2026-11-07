@@ -1,35 +1,39 @@
-name: CI
-
-"on":
+name: Configure both current releases with empty system binary directories
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/registry-llvm-empty-bin-analysis]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  linux:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 3}
+      - name: Query release dependencies without building actions
+        run: |
+          set -euo pipefail
+          base=facf1d8a895073c09d891f5bb890ab8274b8b020
+          fixed=af5fe68ff1948589e6dbed1caeac40ad8daddbcf
+          test "$(git rev-parse HEAD^)" = "$fixed"
+          test "$(git rev-parse HEAD^^)" = "$base"
+          test "$(git rev-parse HEAD^:tools/gazelle-native-environment.patch)" = 99d3fd3d2e7d0d6eb562eff6eb66a553fefb6d72
+          test "$(git rev-parse HEAD^^:tools/llvm-linux-header-default.patch)" = ff5ed6a117596656f90e3ebaf16a8b1e8975c621
+          git diff --exit-code "$base" "$fixed" -- . ':!MODULE.bazel' ':!tools/BUILD' ':!tools/gazelle-native-environment.patch'
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/lean_release_client.py'
+          for source in "$base" "$fixed"; do
+            mkdir "$RUNNER_TEMP/$source"
+            git archive "$source" | tar -xC "$RUNNER_TEMP/$source"
+            test ! -e "$RUNNER_TEMP/$source/.git"
+            test "$(cat "$RUNNER_TEMP/$source/.bazelversion")" = 9.3.1
+          done
+          cp .github/qualification/lean_release_client.py "$RUNNER_TEMP/lean-client.py"
+          python3 -IB "$RUNNER_TEMP/lean-client.py"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && !cancelled()
+        with:
+          name: registry-release-empty-bin-analysis
+          path: ${{ runner.temp }}/lean-client.json
+          if-no-files-found: error
+          retention-days: 7
