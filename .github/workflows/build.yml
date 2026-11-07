@@ -1,35 +1,81 @@
-name: CI
-
-"on":
+name: Run the two netgofer delivery owners on both native presubmit platforms
+on:
   push:
-    branches:
-      - "*"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
+    branches: [qualification/netgofer-native-peer-profiles]
+permissions: {contents: read}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+  qualify:
+    if: github.repository == 'tamird/gvisor' && github.actor == github.repository_owner && github.event.created && !github.event.deleted && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
     steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=//:release DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {persist-credentials: false, fetch-depth: 4}
+      - name: Bind the two products to the tested full-presubmit integration
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 3c5c3bf063e63d1f8146feb5e5f33ae99a1623d8
+          test "$(git rev-parse HEAD^^)" = fbad38ea661236e230a355fde5d0f87d9cac44bb
+          test "$(git rev-parse HEAD^^^)" = 4eb27c4081e535d69c1257998a6c94256d9812e2
+          git diff --exit-code HEAD^ HEAD -- . ':!.github/workflows/build.yml' ':!.github/qualification/netgofer_profiles.py' ':!.github/qualification/netgofer_profile_cases.json' ':!.github/qualification/exec_cas.py' ':!.github/qualification/source_presubmit_workers.py'
+          d="$RUNNER_TEMP/netgofer-native-profiles"
+          mkdir -p "$d"
+          cp .github/qualification/{exec_cas.py,source_presubmit_workers.py,netgofer_profiles.py,netgofer_profile_cases.json} "$d/"
+          git checkout --quiet --detach HEAD^
+          test "$(git rev-parse HEAD^{tree})" = 979780a7fc74dd3030c9fb046137ec68ccd6bd68
+          printf '%s\n' //pkg/tcpip/link/fdbased:fdbased_test //runsc/gofer/net:netgofer_test > "$d/owner.targets"
+          curl --retry 2 -fsSL --proto '=https' --proto-redir '=https' --max-time 120 https://github.com/bazelbuild/bazelisk/releases/download/v1.27.0/bazelisk-linux-amd64 -o "$d/bazel"
+          cd "$d"
+          echo '4c1f44ee0ae2750e7597ae7b65f85c13d768a3ab2f771ba8a6eef82c1dd55ae1  netgofer_profile_cases.json' | sha256sum --check
+          echo 'e1508323f347ad1465a887bc5d2bfb91cffc232d11e8e997b623227c6b32fb76  bazel' | sha256sum --check
+          chmod 755 bazel
+      - name: Run only the two owners in both ordinary profiles
+        id: execute
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          set -eu
+          umask 077
+          : "${BUILDBUDDY_API_KEY:?missing fork credential}"
+          d="$RUNNER_TEMP/netgofer-native-profiles"
+          rc="$d/client.rc"
+          trap 'rm -f "$rc"' EXIT
+          cat > "$rc" <<'RC'
+          build:source-presubmit-common --remote_executor=grpcs://remote.buildbuddy.io
+          build:source-presubmit-common --remote_cache=grpcs://remote.buildbuddy.io
+          build:source-presubmit-common --bes_backend=grpcs://remote.buildbuddy.io
+          build:source-presubmit-common --bes_results_url=https://app.buildbuddy.io/invocation/
+          RC
+          printf 'build:source-presubmit-common --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY" >>"$rc"
+          unset BUILDBUDDY_API_KEY
+          for arch in amd64 arm64; do
+            profile=source-presubmit
+            if [ "$arch" = arm64 ]; then profile=source-presubmit-arm64; fi
+            code=0
+            "$d/bazel" --nosystem_rc --nohome_rc --host_jvm_args=-Xmx6g --bazelrc="$rc" test \
+              --config="$profile" --jobs=48 --keep_going --noremote_local_fallback --nocache_test_results --flaky_test_attempts=1 \
+              '--modify_execution_info=^TestRunner$=+no-remote-cache' --test_env=GO_TEST_WRAP_TESTV=1 --test_arg=-test.v \
+              --remote_download_outputs=minimal '--remote_download_regex=.*testlogs/(pkg/tcpip/link/fdbased/fdbased_test|runsc/gofer/net/netgofer_test)/test[.](log|xml)$' \
+              --run_under="bash -c 'echo NATIVE_PEER_WORKER=\$(/bin/uname -m); exec \"\$@\"' observe" \
+              --build_event_json_file="$d/$arch.bep" --symlink_prefix="bazel-peer-$arch-" \
+              --target_pattern_file="$d/owner.targets" >"$d/$arch.console" 2>&1 || code=$?
+            echo "$code" > "$d/$arch.exit"
+          done
+      - name: Read each original test log and XML after credential removal
+        id: tests
+        if: always() && !cancelled() && steps.execute.outcome != 'skipped'
+        run: python3 -IB "$RUNNER_TEMP/netgofer-native-profiles/netgofer_profiles.py" tests
+      - name: Read the four original remote TestRunner action assignments
+        if: always() && !cancelled() && steps.tests.outcome == 'success'
+        env:
+          ACCESS: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: python3 -IB "$RUNNER_TEMP/netgofer-native-profiles/netgofer_profiles.py" workers
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always() && !cancelled() && steps.tests.outcome == 'success'
+        with:
+          name: native-peer-delivery
+          path: ${{ runner.temp }}/netgofer-native-profiles/receipt.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Require all original test and worker evidence
+        run: jq -e '.verified == true' "$RUNNER_TEMP/netgofer-native-profiles/receipt.json"
