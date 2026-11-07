@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T00:15:53.625Z",
+    "updatedAt": "2026-11-07T00:23:11.412Z",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -1851,11 +1851,11 @@
       "summary": "Merged as c47f898db on November 6. The earlier source-specific qualification remains below. The Bazel 9 update preserved the reviewed DPDK source and package files. All three targets built on GNU AMD64 and runsc --version succeeded; this run did not exercise vhost traffic. Earlier, the published glibc plugin exited before the guest opened a socket on the vhost bridge; the unchanged parent also exhibited the seccomp startup failure. The separate musl binaries passed the bridge test. On the separate fork revision ddd06cb4a, GNU and musl both selected the external backtrace test. Neither reached plugin compilation or a TestRunner in 30 minutes. The original execution logs identify long-running remote compiles in GNU Make (src/file.c, at least 1,644 seconds) and musl (src/linux/prctl.c, at least 1,435 seconds). These diagnostics do not establish a defect in the plugin or a prerequisite for the ordinary compiler switch.",
       "number": 15153,
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-11-06T02:30:02.489261Z",
+      "updatedAt": "2026-11-07T00:23:11.412Z",
       "followup": {
         "disposition": "Merged upstream",
         "owner": "root",
-        "nextAction": "The prerequisite is landed. Root is resolving the approved musl follow-up’s current-source conflicts; the Buildkite plugin job still depends on #16904.",
+        "nextAction": "The GNU plugin change is on master. The optional musl port is tracked separately while its header dependency and TLDK-specific DPDK patches are evaluated. The default LLVM compiler migration can proceed independently.",
         "sourceHead": "93993d354e440e71b7e6efaacd72be40e542de57",
         "reviewedAt": "2026-11-03T19:17:53Z",
         "reviewDecision": null,
@@ -1876,7 +1876,7 @@
           "https://github.com/tamird/gvisor/actions/runs/41708363052/artifacts/13267960556",
           "https://github.com/google/gvisor/pull/15153#discussion_r4459868583"
         ],
-        "observedAt": "2026-11-06T02:30:02.489261Z",
+        "observedAt": "2026-11-07T00:23:11.412Z",
         "providerHead": "93993d354e440e71b7e6efaacd72be40e542de57"
       },
       "head": "93993d354e440e71b7e6efaacd72be40e542de57",
@@ -4857,10 +4857,18 @@
       "url": "https://github.com/tamird/gvisor/commit/f6df263f8",
       "group": "bazel",
       "status": "Agent work",
-      "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 for its offsets and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn c0511e1cd, a single AMD64 source presubmit built all 2,880 build-only targets. Across 363 test owners, all 373 fresh remote shards passed. Independent analysis matched all 373 configurations to their OCI and Firecracker assignments. On 127967d31, ARM64 analysis selected 2,880 build-only targets and 373 test shards (367 OCI and six Firecracker). The first attempt ran an AMD64 seccomp generator on an ARM64 worker. Setting the ARM64 host platform selected the ARM64 generator. All four uname cases then passed in one fresh remote test, including UnshareUTS. With that platform setting, the full source presubmit on 353c484b4 built all 3,243 selected ARM64 targets. All 373 test shards ran remotely with fresh results: 371 passed, runsc/cmd:cmd_test failed its Sentry boot-posture checks, and runsc/gofer/net:netgofer_test timed out. The 363 test owners and their shard counts match the earlier selection. The six expected Firecracker owners matched native ARM64 execution records. A separate comparison did not verify the individual log digests.\n\nOn f6df263f8, one invocation linked the static race runsc and Sentry for AMD64 and ARM64 on an AMD64 Ubuntu worker. Native Linux also checked both vDSO ABIs and all 21 raw stub offsets. On 3dab3494e, the released toolchain booted rootless systrap guests natively on both architectures. On 2c90e983d, all nine executable hashes and modes matched across Debian, bzip2 and zstd releases per CPU. The AMD64 package booted a systrap guest and the ARM64 CLI ran under QEMU user emulation.\n\nOne Bazel invocation on d41933c99 ran atomicbitops in OCI and sandboxexec on Firecracker on both native CPUs. All four owners passed; both sandboxexec variants had one skipped case. The worker CPU matched each test ELF and fastbuild seccomp stub generator. Using distinct RBE platform labels preserved the ordinary compiler platforms and removed the output path collision, but configured more LLVM compile actions for the two measured objects.",
-      "updatedAt": "2026-11-07T00:14:02.706Z",
+      "summary": "Replace Coral GCC with the hermetic-llvm 0.8.24 toolchain already declared on master. The integration uses #16522 for sidecars, #17067 for the systrap stub, #16516 for its offsets and #16586 for the vDSO. Master and the compiler passed the same 223-entry license audit. The compiler can proceed while #15146’s scanner and #768’s static glibc proposal remain on hold.\n\nOn AMD64, c0511e1cd built all 2,880 build-only targets and passed all 373 fresh remote test shards. On ARM64, 353c484b4 built all 3,243 selected targets and ran all 373 shards. 371 passed. The cmd_test Sentry posture checks failed and netgofer_test timed out. An independent analysis matched the 363 owners and shard counts, including all six ARM64 Firecracker assignments.\n\nA native two-worker comparison reproduced the ARM64 posture counter discrepancy without starting gVisor. The synchronized test operation took effect on both threads on both architectures. Only the ARM64 worker running Linux 5.10.0 reported inconsistent counts. The unchanged posture tests still need a run on a corrected ARM64 kernel. Separately, the fork-only netgofer shutdown candidate passed 16 native ARM64 trials and preserved the final queued frame in all 16 delivery trials. These focused results leave the original full-run count at 371/373.\n\nOn f6df263f8, one invocation linked the static race runsc and Sentry for AMD64 and ARM64 on an AMD64 Ubuntu worker. Native Linux also checked both vDSO ABIs and all 21 raw stub offsets. On 3dab3494e, the released toolchain booted rootless systrap guests natively on both architectures. On 2c90e983d, all nine executable hashes and modes matched across Debian, bzip2 and zstd releases per CPU. The AMD64 package booted a systrap guest and the ARM64 CLI ran under QEMU user emulation.\n\nOne Bazel invocation on d41933c99 ran atomicbitops in OCI and sandboxexec on Firecracker on both native CPUs. All four owners passed; both sandboxexec variants had one skipped case. The worker CPU matched each test ELF and fastbuild seccomp stub generator. Using distinct RBE platform labels preserved the ordinary compiler platforms and removed the output path collision, but configured more LLVM compile actions for the two measured objects.",
+      "updatedAt": "2026-11-07T00:23:11.412Z",
       "head": "f6df263f8e2ce2cbe6a497356613f6785c4800a4",
       "evidence": [
+        {
+          "label": "Native two-architecture control for the worker kernel’s thread accounting",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42317264602/artifacts/13551506317"
+        },
+        {
+          "label": "Native ARM64 netgofer shutdown, queued-frame delivery and request-scope checks",
+          "url": "https://github.com/tamird/gvisor/actions/runs/42317435216/artifacts/13551796085"
+        },
         {
           "label": "Four native AMD64/ARM64 OCI and Firecracker tests in one Bazel command",
           "url": "https://github.com/tamird/gvisor/actions/runs/42315225533/artifacts/13551051033"
@@ -29206,14 +29214,14 @@
       "url": "https://github.com/tamird/gvisor/commit/dd63198c6",
       "group": "bazel",
       "status": "Agent work",
-      "updatedAt": "2026-11-06T16:05:25.166Z",
-      "summary": "The proposed musl port is on hold for a DPDK and toolchain investigation. The plugin patch applied to DPDK 18.11. It failed on 18.11.11, 19.11.14 and 25.11.4 even when applied alone. The TLDK fork calls rte_pktmbuf_dynamic_pool_create, which the current LTS lacks. An upgrade needs a TLDK port. The separate question of who supplies queue.h remains open.\n\nThe approved musl port keeps the DPDK stack trace available across the Go-to-C boundary. #15153 moved the optional plugin build into its external repository. The revision defines the same TestDumpStack there, supplies the two Go sources to its build sandbox, and runs it from make plugin-network-tests. The source files and both vendor patches match the approved revision byte for byte. TestDumpStack passed through Bazel on native AMD64 with GNU and musl. The default build excludes the plugin.\n\nIn a separate musl link comparison at f28370914, the plugin runsc binary linked. The plugin Sentry stopped at the systrap stub link rule tracked by #17067. The successful TCP and UDP guest tests at b317c6e36 used static GNU libc.\n\nOn the reviewed stub changes, all 10 AMD64 and 11 ARM64 offsets matched their ELF symbols and the musl CLI linked. The Sentry then stopped in the old //vdso:vdso rule when /bin/ld could not emit AArch64. This optional plugin port remains under investigation. Alpine packages sys/queue.h in bsd-compat-headers, separately from musl-dev.",
+      "updatedAt": "2026-11-07T00:23:11.412Z",
+      "summary": "The proposed musl port is on hold for a DPDK and toolchain investigation. The plugin patch applied to DPDK 18.11. It failed on 18.11.11, 19.11.14 and 25.11.4 even when applied alone. The TLDK fork calls rte_pktmbuf_dynamic_pool_create, which the current LTS lacks. An upgrade needs a TLDK port. The separate question of who supplies queue.h remains open.\n\nThe tested musl port keeps the DPDK stack trace available across the Go-to-C boundary. #15153 moved the optional plugin build into its external repository. The revision defines the same TestDumpStack there, supplies the two Go sources to its build sandbox, and runs it from make plugin-network-tests. The source files and both vendor patches match the approved revision byte for byte. TestDumpStack passed through Bazel on native AMD64 with GNU and musl. The default build excludes the plugin.\n\nIn a separate musl link comparison at f28370914, the plugin runsc binary linked. The plugin Sentry stopped at the systrap stub link rule tracked by #17067. The successful TCP and UDP guest tests at b317c6e36 used static GNU libc.\n\nOn the reviewed stub changes, all 10 AMD64 and 11 ARM64 offsets matched their ELF symbols and the musl CLI linked. The Sentry then stopped in the old //vdso:vdso rule when /bin/ld could not emit AArch64. This optional plugin port remains under investigation. Alpine packages sys/queue.h in bsd-compat-headers, separately from musl-dev.",
       "followup": {
         "owner": "Agent",
         "sourceHead": "dd63198c66946d7a38279478369bf269243a6ef4",
-        "observedAt": "2026-11-06T13:13:00.663Z",
+        "observedAt": "2026-11-07T00:23:11.412Z",
         "disposition": "The proposed musl port is on hold for a DPDK and toolchain investigation.",
-        "nextAction": "Identify which component should supply queue.h and whether the optional plugin still needs each local fix. An upgrade also needs a port of the TLDK-specific API.",
+        "nextAction": "Keep the optional plugin off the compiler critical path. TLDK main is the exact pinned cec8ff773 and carries DPDK 18.11 patches. DPDK 25.11 on Linux still includes sys/queue.h. A DPDK upgrade alone does not supply that header.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/41384852262",
           "https://github.com/google/gvisor/pull/15153",
@@ -29225,6 +29233,14 @@
         ]
       },
       "evidence": [
+        {
+          "label": "DPDK 25.11 Linux still includes the BSD queue header",
+          "url": "https://github.com/DPDK/dpdk/blob/v25.11/lib/eal/linux/include/rte_os.h"
+        },
+        {
+          "label": "TLDK main and the gVisor pin are identical",
+          "url": "https://github.com/alipay/tldk/compare/cec8ff773...main"
+        },
         {
           "label": "Alpine package that supplies the BSD queue header",
           "url": "https://github.com/alpinelinux/aports/blob/988f183cc/main/libc-dev/APKBUILD#L42-L51"
