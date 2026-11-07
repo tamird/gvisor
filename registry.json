@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor and BuildBuddy contribution map",
-    "updatedAt": "2026-11-07T15:33:26+00:00",
+    "updatedAt": "2026-11-07T15:36:56+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open google/gvisor and buildbuddy-io/buildbuddy PRs by tamird, related golang/tools contributions, selected external prerequisite PRs, working branches, branchless investigations, and external capacity blockers.",
@@ -67505,7 +67505,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-11-07T14:05:57+00:00",
+      "updatedAt": "2026-11-07T15:36:56+00:00",
       "summary": "Restoring 50,000 tmpfs files allocated a temporary pointer cell almost every time the decoder queued a parent pointer. The queue already held a copy of the pointer. Reusing that cell reduced total allocations per decode from 155,164 to 105,078.",
       "findings": [
         {
@@ -73209,6 +73209,49 @@
             {
               "label": "Measured owned wire.Object source",
               "url": "https://github.com/tamird/gvisor/commit/4a268179f4837918fe2e81b7e5b4227bcf97c5bf"
+            }
+          ]
+        },
+        {
+          "title": "Background restore through the first verified guest read",
+          "description": "One AMD64 systrap worker with four CPUs restored wire and graph checkpoints on master 9ee2906f5. Each cache condition had 16 measured pairs. All three image files were entirely resident for the warm trials and entirely evicted for the cold trials when restore started.",
+          "columns": [
+            "Measured interval",
+            "Wire",
+            "Graph",
+            "Comparison"
+          ],
+          "rows": [
+            [
+              "Warm: restore command returned",
+              "393.59 ms",
+              "52.84 ms",
+              "−86.58%"
+            ],
+            [
+              "Warm: guest read and verified all bytes",
+              "760.6 ms",
+              "517.4 ms",
+              "−31.98%, p < 0.001"
+            ],
+            [
+              "Cold: restore command returned",
+              "397.41 ms",
+              "70.45 ms",
+              "−82.27%"
+            ],
+            [
+              "Cold: guest read and verified all bytes",
+              "1.445 s",
+              "1.427 s",
+              "No clear difference, p = 0.119"
+            ]
+          ],
+          "note": "Each interval starts when the restore command is invoked. Verification rehashed 512 MiB of guest memory and drained eight 1 MiB pipes. All 68 restores, including warmup, matched both expected digests.",
+          "evidence": [
+            {
+              "label": "Original benchstat, paired raw timings, file residency and verified guest digests",
+              "url": "https://github.com/tamird/gvisor/actions/runs/42384990607/artifacts/13580057034"
             }
           ]
         }
@@ -83810,5 +83853,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-11-07T15:33:26+00:00"
+  "updatedAt": "2026-11-07T15:36:56+00:00"
 }
